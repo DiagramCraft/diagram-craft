@@ -22468,7 +22468,7 @@
                           },
                           "fieldName": {
                             "type": "string",
-                            "description": "Relationship field name"
+                            "description": "Relationship field name (relation schema name when kind is \"typed\")"
                           },
                           "fieldPredicate": {
                             "type": "string",
@@ -22477,10 +22477,49 @@
                           "kind": {
                             "enum": [
                               "reference",
-                              "containment"
+                              "containment",
+                              "typed"
                             ],
                             "type": "string",
                             "description": "Relationship type"
+                          },
+                          "relationId": {
+                            "type": "string",
+                            "description": "Typed relation instance identifier (kind \"typed\" only)"
+                          },
+                          "relationSchemaId": {
+                            "type": "string",
+                            "description": "Relation schema identifier (kind \"typed\" only)"
+                          },
+                          "relationSchemaColor": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Relation schema color, hex format (kind \"typed\" only)"
+                          },
+                          "relationSchemaIcon": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Relation schema icon identifier (kind \"typed\" only)"
+                          },
+                          "relationFields": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {},
+                            "description": "Redacted relation instance field values (kind \"typed\" only)"
                           }
                         },
                         "required": [
@@ -22522,7 +22561,7 @@
                           },
                           "fieldName": {
                             "type": "string",
-                            "description": "Relationship field name"
+                            "description": "Relationship field name (relation schema name when kind is \"typed\")"
                           },
                           "fieldPredicate": {
                             "type": "string",
@@ -22531,10 +22570,49 @@
                           "kind": {
                             "enum": [
                               "reference",
-                              "containment"
+                              "containment",
+                              "typed"
                             ],
                             "type": "string",
                             "description": "Relationship type"
+                          },
+                          "relationId": {
+                            "type": "string",
+                            "description": "Typed relation instance identifier (kind \"typed\" only)"
+                          },
+                          "relationSchemaId": {
+                            "type": "string",
+                            "description": "Relation schema identifier (kind \"typed\" only)"
+                          },
+                          "relationSchemaColor": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Relation schema color, hex format (kind \"typed\" only)"
+                          },
+                          "relationSchemaIcon": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Relation schema icon identifier (kind \"typed\" only)"
+                          },
+                          "relationFields": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {},
+                            "description": "Redacted relation instance field values (kind \"typed\" only)"
                           }
                         },
                         "required": [
@@ -22642,7 +22720,7 @@
                             },
                             "fieldName": {
                               "type": "string",
-                              "description": "Relationship field name"
+                              "description": "Relationship field name (relation schema name when kind is \"typed\")"
                             },
                             "fieldPredicate": {
                               "type": "string",
@@ -22651,10 +22729,49 @@
                             "kind": {
                               "enum": [
                                 "reference",
-                                "containment"
+                                "containment",
+                                "typed"
                               ],
                               "type": "string",
                               "description": "Relationship type"
+                            },
+                            "relationId": {
+                              "type": "string",
+                              "description": "Typed relation instance identifier (kind \"typed\" only)"
+                            },
+                            "relationSchemaId": {
+                              "type": "string",
+                              "description": "Relation schema identifier (kind \"typed\" only)"
+                            },
+                            "relationSchemaColor": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Relation schema color, hex format (kind \"typed\" only)"
+                            },
+                            "relationSchemaIcon": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Relation schema icon identifier (kind \"typed\" only)"
+                            },
+                            "relationFields": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {},
+                              "description": "Redacted relation instance field values (kind \"typed\" only)"
                             }
                           },
                           "required": [
@@ -22696,7 +22813,7 @@
                             },
                             "fieldName": {
                               "type": "string",
-                              "description": "Relationship field name"
+                              "description": "Relationship field name (relation schema name when kind is \"typed\")"
                             },
                             "fieldPredicate": {
                               "type": "string",
@@ -22705,10 +22822,49 @@
                             "kind": {
                               "enum": [
                                 "reference",
-                                "containment"
+                                "containment",
+                                "typed"
                               ],
                               "type": "string",
                               "description": "Relationship type"
+                            },
+                            "relationId": {
+                              "type": "string",
+                              "description": "Typed relation instance identifier (kind \"typed\" only)"
+                            },
+                            "relationSchemaId": {
+                              "type": "string",
+                              "description": "Relation schema identifier (kind \"typed\" only)"
+                            },
+                            "relationSchemaColor": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Relation schema color, hex format (kind \"typed\" only)"
+                            },
+                            "relationSchemaIcon": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Relation schema icon identifier (kind \"typed\" only)"
+                            },
+                            "relationFields": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {},
+                              "description": "Redacted relation instance field values (kind \"typed\" only)"
                             }
                           },
                           "required": [
@@ -22822,7 +22978,7 @@
                           },
                           "fieldName": {
                             "type": "string",
-                            "description": "Relationship field name"
+                            "description": "Relationship field name (relation schema name when kind is \"typed\")"
                           },
                           "fieldPredicate": {
                             "type": "string",
@@ -22831,10 +22987,49 @@
                           "kind": {
                             "enum": [
                               "reference",
-                              "containment"
+                              "containment",
+                              "typed"
                             ],
                             "type": "string",
                             "description": "Relationship type"
+                          },
+                          "relationId": {
+                            "type": "string",
+                            "description": "Typed relation instance identifier (kind \"typed\" only)"
+                          },
+                          "relationSchemaId": {
+                            "type": "string",
+                            "description": "Relation schema identifier (kind \"typed\" only)"
+                          },
+                          "relationSchemaColor": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Relation schema color, hex format (kind \"typed\" only)"
+                          },
+                          "relationSchemaIcon": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Relation schema icon identifier (kind \"typed\" only)"
+                          },
+                          "relationFields": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {},
+                            "description": "Redacted relation instance field values (kind \"typed\" only)"
                           },
                           "schemaName": {
                             "type": "string",

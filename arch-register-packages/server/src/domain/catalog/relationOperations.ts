@@ -1,8 +1,13 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
+import { PermissionChecker } from '@arch-register/permissions';
 import { logAudit, computeChanges } from '../audit/db/auditLogging';
-import { requireSchemaRead, requireWorkspaceCapability } from '../auth/authorization';
+import {
+  requireSchemaRead,
+  requireWorkspaceCapability,
+  buildApiEntityAuthCtx
+} from '../auth/authorization';
 import { defineOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import {
@@ -24,6 +29,8 @@ import type {
 const dbErrorMessages = {
   foreign: 'Relation endpoints or schema could not be resolved'
 } as const;
+
+const checker = new PermissionChecker();
 
 export const listWorkspaceRelations = async (
   db: DatabaseAdapter,
@@ -262,10 +269,18 @@ export const listTypedRelationsForEntity = async (
       const entity = await db.catalog.getEntity(ws, entityId);
       httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
 
-      const [{ outgoing, incoming }, schemas] = await Promise.all([
+      const [{ outgoing, incoming }, schemas, entityAuthCtx] = await Promise.all([
         db.relation.listRelationsForEntity(ws, entity.id),
-        db.relation.listRelationSchemas(ws)
+        db.relation.listRelationSchemas(ws),
+        buildApiEntityAuthCtx(db, ws, event)
       ]);
+      // Drop relations pointing at an entity the caller can't view, mirroring the equivalent
+      // entity-visibility filtering already applied to generic reference/containment relations
+      // in buildEntityRelations (dataHelpers.ts).
+      const isEntityVisible = (id: string) => {
+        const row = entityAuthCtx.entities.get(id);
+        return row != null && checker.hasEntityPermission(entityAuthCtx, row, 'view_entity');
+      };
       const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
       const toRecord = (row: (typeof outgoing)[number]) => {
         const schema = schemaById.get(row.schema_id);
@@ -274,7 +289,10 @@ export const listTypedRelationsForEntity = async (
           ? (filterRestrictedFieldGroups(authCtx, schema, record) as RelationRecord)
           : record;
       };
-      return { outgoing: outgoing.map(toRecord), incoming: incoming.map(toRecord) };
+      return {
+        outgoing: outgoing.filter(row => isEntityVisible(row.out_entity_id)).map(toRecord),
+        incoming: incoming.filter(row => isEntityVisible(row.in_entity_id)).map(toRecord)
+      };
     }
   );
 };

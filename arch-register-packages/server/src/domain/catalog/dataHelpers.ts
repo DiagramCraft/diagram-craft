@@ -21,7 +21,11 @@ import {
   externalUpdateEnvelopeSchema,
   type ExternalUpdateEnvelope
 } from '@arch-register/api-types/common';
-import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
+import {
+  isFieldViewRestricted,
+  filterRestrictedFieldGroups
+} from '../auth/fieldGroupAccessControl';
+import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
 
 export const handleError = (error: unknown, fallback: string): never =>
   handleDbError(error, fallback, {
@@ -182,9 +186,22 @@ export type RelationRecord = {
   kind: 'reference' | 'containment';
 };
 
+// Same as RelationRecord, plus a 'typed' kind and the metadata needed to render/redact/navigate a
+// typed relation instance edge. Kept distinct from RelationRecord (rather than widening it in
+// place) so DependentRecord — which extends RelationRecord but never carries typed relations —
+// keeps its narrower, exhaustive 'reference' | 'containment' kind.
+export type EntityRelationRecord = Omit<RelationRecord, 'kind'> & {
+  kind: 'reference' | 'containment' | 'typed';
+  relationId?: string;
+  relationSchemaId?: string;
+  relationSchemaColor?: string | null;
+  relationSchemaIcon?: string | null;
+  relationFields?: Record<string, unknown>;
+};
+
 export type RelationsResponse = {
-  outgoing: RelationRecord[];
-  incoming: RelationRecord[];
+  outgoing: EntityRelationRecord[];
+  incoming: EntityRelationRecord[];
 };
 
 export type EntityMutationPayload = {
@@ -403,7 +420,9 @@ export const buildEntityRelations = (
   entity: Entity,
   schemas: InternalEntitySchema[],
   entities: Entity[],
-  authCtx: AuthorizationContext | null
+  authCtx: AuthorizationContext | null,
+  typedRelations?: { outgoing: RelationDbResult[]; incoming: RelationDbResult[] },
+  relationSchemas?: RelationSchemaDbResult[]
 ): RelationsResponse => {
   const schemaMap = new Map(schemas.map(schema => [schema.id, schema]));
   const entitySchema = schemaMap.get(entity.schema_id);
@@ -411,7 +430,7 @@ export const buildEntityRelations = (
     field => !isFieldViewRestricted(authCtx, entitySchema, field.id)
   );
   const entityLookup = new Map(entities.map(row => [row.id, row]));
-  const outgoing: RelationRecord[] = [];
+  const outgoing: EntityRelationRecord[] = [];
   for (const field of outgoingFields) {
     for (const refId of decodeRefs(entity.data[field.id])) {
       const target = entityLookup.get(refId);
@@ -429,7 +448,7 @@ export const buildEntityRelations = (
     }
   }
 
-  const incoming: RelationRecord[] = [];
+  const incoming: EntityRelationRecord[] = [];
   for (const row of entities) {
     if (row.id === entity.id) continue;
     const rowSchema = schemaMap.get(row.schema_id);
@@ -447,6 +466,59 @@ export const buildEntityRelations = (
         fieldName: field.name,
         fieldPredicate: field.predicate,
         kind: field.type
+      });
+    }
+  }
+
+  if (typedRelations && relationSchemas) {
+    const relationSchemaById = new Map(relationSchemas.map(schema => [schema.id, schema]));
+
+    const toRelationFields = (row: RelationDbResult) => {
+      const schema = relationSchemaById.get(row.schema_id);
+      return schema
+        ? (filterRestrictedFieldGroups(authCtx, schema, row.data) as Record<string, unknown>)
+        : row.data;
+    };
+
+    for (const row of typedRelations.outgoing) {
+      const target = entityLookup.get(row.out_entity_id);
+      if (!target) continue;
+      const schema = relationSchemaById.get(row.schema_id);
+      outgoing.push({
+        entityId: row.out_entity_id,
+        publicId: target.public_id ?? row.out_entity_id,
+        entitySlug: target.slug ?? row.out_entity_id,
+        entityName: target.name ?? target.slug ?? row.out_entity_id,
+        entitySchemaId: target.schema_id,
+        fieldName: schema?.name ?? row.schema_name,
+        fieldPredicate: schema?.description || undefined,
+        kind: 'typed',
+        relationId: row.id,
+        relationSchemaId: row.schema_id,
+        relationSchemaColor: schema?.color ?? null,
+        relationSchemaIcon: schema?.icon ?? null,
+        relationFields: toRelationFields(row)
+      });
+    }
+
+    for (const row of typedRelations.incoming) {
+      const source = entityLookup.get(row.in_entity_id);
+      if (!source) continue;
+      const schema = relationSchemaById.get(row.schema_id);
+      incoming.push({
+        entityId: row.in_entity_id,
+        publicId: source.public_id ?? row.in_entity_id,
+        entitySlug: source.slug ?? row.in_entity_id,
+        entityName: source.name ?? source.slug ?? row.in_entity_id,
+        entitySchemaId: source.schema_id,
+        fieldName: schema?.name ?? row.schema_name,
+        fieldPredicate: schema?.description || undefined,
+        kind: 'typed',
+        relationId: row.id,
+        relationSchemaId: row.schema_id,
+        relationSchemaColor: schema?.color ?? null,
+        relationSchemaIcon: schema?.icon ?? null,
+        relationFields: toRelationFields(row)
       });
     }
   }

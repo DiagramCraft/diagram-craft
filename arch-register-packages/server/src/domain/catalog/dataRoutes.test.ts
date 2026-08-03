@@ -11,6 +11,7 @@ import {
   resolveCreateOwner
 } from './dataHelpers';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
+import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
@@ -380,6 +381,116 @@ describe('data route helpers', () => {
       'system-1',
       'component-2'
     ]);
+  });
+
+  const dataFlowRelationSchema: RelationSchemaDbResult = {
+    id: 'relschema-dataflow',
+    workspace: 'default',
+    name: 'Data Flow',
+    description: 'reads/writes',
+    in_schema_ids: ['schema-component'],
+    out_schema_ids: ['schema-component'],
+    fields: [
+      {
+        id: 'protocol',
+        name: 'Protocol',
+        type: 'text',
+        requirementLevel: 'optional',
+        groupId: 'restricted'
+      }
+    ],
+    groups: [
+      { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-allowed'] } }
+    ],
+    shared_field_group_links: [],
+    color: '#00ff00',
+    icon: 'flow',
+    relation_approval_policy: 'disabled',
+    version: 1,
+    created_at: now,
+    updated_at: now
+  };
+
+  const visibleRelationRow: RelationDbResult = {
+    id: 'relation-1',
+    workspace: 'default',
+    schema_id: 'relschema-dataflow',
+    schema_name: 'Data Flow',
+    in_entity_id: 'component-1',
+    in_entity_name: 'Frontend App',
+    out_entity_id: 'component-2',
+    out_entity_name: 'API Gateway',
+    data: { protocol: 'https' },
+    version: 1,
+    approval_policy_override: null,
+    created_at: now,
+    updated_at: now
+  };
+
+  const hiddenRelationRow: RelationDbResult = {
+    ...visibleRelationRow,
+    id: 'relation-2',
+    out_entity_id: 'component-999',
+    out_entity_name: 'Ghost Service'
+  };
+
+  it('merges typed relation instances into outgoing, redacting restricted fields', () => {
+    const relations = buildEntityRelations(
+      component,
+      [domainSchema, systemSchema, componentSchema],
+      [domain, system, component, dependency],
+      restrictedAuthCtx,
+      { outgoing: [visibleRelationRow], incoming: [] },
+      [dataFlowRelationSchema]
+    );
+
+    // system-1 (containment) + the typed relation; depends_on (reference) stays restricted
+    expect(relations.outgoing.map(relation => relation.entityId)).toEqual([
+      'system-1',
+      'component-2'
+    ]);
+    const typed = relations.outgoing.find(relation => relation.kind === 'typed');
+    expect(typed).toMatchObject({
+      entityId: 'component-2',
+      entityName: 'API Gateway',
+      entitySchemaId: 'schema-component',
+      fieldName: 'Data Flow',
+      kind: 'typed',
+      relationId: 'relation-1',
+      relationSchemaId: 'relschema-dataflow',
+      relationSchemaColor: '#00ff00',
+      relationSchemaIcon: 'flow'
+    });
+    // protocol is in the team-restricted group, and restrictedAuthCtx lacks team-allowed
+    expect(typed!.relationFields).toEqual({});
+  });
+
+  it('includes typed relation instance fields once the caller can view the relation schema group', () => {
+    const relations = buildEntityRelations(
+      component,
+      [domainSchema, systemSchema, componentSchema],
+      [domain, system, component, dependency],
+      allowedAuthCtx,
+      { outgoing: [visibleRelationRow], incoming: [] },
+      [dataFlowRelationSchema]
+    );
+
+    const typed = relations.outgoing.find(relation => relation.kind === 'typed');
+    expect(typed!.relationFields).toEqual({ protocol: 'https' });
+  });
+
+  it('drops typed relations whose other endpoint entity is not in the visible entity set', () => {
+    const relations = buildEntityRelations(
+      component,
+      [domainSchema, systemSchema, componentSchema],
+      [domain, system, component, dependency],
+      allowedAuthCtx,
+      { outgoing: [visibleRelationRow, hiddenRelationRow], incoming: [] },
+      [dataFlowRelationSchema]
+    );
+
+    expect(relations.outgoing.some(relation => relation.relationId === 'relation-2')).toBe(false);
+    expect(relations.outgoing.filter(relation => relation.kind === 'typed')).toHaveLength(1);
   });
 
   it('does not traverse dependents through a restricted relation field', () => {
