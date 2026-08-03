@@ -4,6 +4,11 @@ import { createAiChatTools } from './chatTools';
 import type { DatabaseAdapter } from '../../db/database';
 import { Entity, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import { AuditLogDbResult } from '../audit/db/auditDatabase';
+import type {
+  RelationDbCreate,
+  RelationDbResult,
+  RelationSchemaDbResult
+} from '../catalog/db/relationDatabase';
 
 const now = new Date('2026-01-01T00:00:00.000Z');
 
@@ -30,7 +35,8 @@ const schemas: SchemaDbResult[] = [
         name: 'Typed dependency',
         type: 'typedRelation',
         relationSchemaId: 'rel-1',
-        direction: 'out'
+        direction: 'in',
+        groupId: 'finance'
       } as never
     ],
     groups: [{ id: 'finance', name: 'Finance', accessControl: { teamIds: ['team-finance'] } }],
@@ -55,12 +61,58 @@ const schemas: SchemaDbResult[] = [
         schemaId: 'capability',
         minCount: 0,
         maxCount: -1
+      },
+      {
+        id: 'typedConsumers',
+        name: 'Typed consumers',
+        type: 'typedRelation',
+        relationSchemaId: 'rel-1',
+        direction: 'out',
+        groupId: 'finance'
       }
     ],
+    groups: [{ id: 'finance', name: 'Finance', accessControl: { teamIds: ['team-finance'] } }],
     color: null,
     icon: null,
     default_owner: null,
     key_prefix: 'CAP',
+    created_at: now,
+    updated_at: now
+  }
+];
+
+const relationSchema: RelationSchemaDbResult = {
+  id: 'rel-1',
+  workspace: 'ws-1',
+  name: 'Depends on',
+  description: '',
+  in_schema_ids: ['application'],
+  out_schema_ids: ['capability'],
+  fields: [
+    { id: 'secret', name: 'Secret', type: 'text', requirementLevel: null, groupId: 'finance' }
+  ],
+  groups: [{ id: 'finance', name: 'Finance', accessControl: { teamIds: ['team-finance'] } }],
+  color: null,
+  icon: null,
+  relation_approval_policy: 'disabled',
+  version: 1,
+  created_at: now,
+  updated_at: now
+};
+
+const relationRows: RelationDbResult[] = [
+  {
+    id: 'relation-1',
+    workspace: 'ws-1',
+    schema_id: 'rel-1',
+    schema_name: 'Depends on',
+    in_entity_id: 'entity-app-4',
+    in_entity_name: 'Restricted App',
+    out_entity_id: 'entity-cap-1',
+    out_entity_name: 'Payment Processing',
+    data: { secret: 'restricted relation value' },
+    version: 1,
+    approval_policy_override: null,
     created_at: now,
     updated_at: now
   }
@@ -241,6 +293,61 @@ const db = {
     }),
     createEntityVersion: vi.fn(async () => {}),
     pruneAutosaveVersions: vi.fn(async () => {})
+  },
+  relation: {
+    listRelationSchemas: async () => [relationSchema],
+    getRelationSchema: async (_ws: string, schemaId: string) =>
+      relationSchema.id === schemaId ? relationSchema : null,
+    listRelations: async (
+      _ws: string,
+      filters: {
+        schemaId?: string | null;
+        inEntityId?: string | null;
+        outEntityId?: string | null;
+      },
+      pagination: { limit?: number | null; offset?: number | null }
+    ) => {
+      const filtered = relationRows.filter(
+        row =>
+          (filters.schemaId == null || row.schema_id === filters.schemaId) &&
+          (filters.inEntityId == null || row.in_entity_id === filters.inEntityId) &&
+          (filters.outEntityId == null || row.out_entity_id === filters.outEntityId)
+      );
+      const offset = pagination.offset ?? 0;
+      const limit = pagination.limit ?? filtered.length;
+      return { items: filtered.slice(offset, offset + limit), total: filtered.length };
+    },
+    getRelation: async (_ws: string, relationId: string) =>
+      relationRows.find(row => row.id === relationId) ?? null,
+    listRelationsForEntity: async (_ws: string, entityId: string) => ({
+      outgoing: relationRows.filter(row => row.in_entity_id === entityId),
+      incoming: relationRows.filter(row => row.out_entity_id === entityId)
+    }),
+    createRelation: vi.fn(
+      async (input: RelationDbCreate) =>
+        ({
+          ...input,
+          schema_name: relationSchema.name,
+          in_entity_name: entities.find(entity => entity.id === input.in_entity_id)?.name ?? '',
+          out_entity_name: entities.find(entity => entity.id === input.out_entity_id)?.name ?? '',
+          version: input.version ?? 1,
+          approval_policy_override: null
+        }) as RelationDbResult
+    ),
+    updateRelation: vi.fn(
+      async (
+        _ws: string,
+        relationId: string,
+        input: { data: Record<string, unknown>; version: number; updated_at: Date }
+      ) => {
+        const existing = relationRows.find(row => row.id === relationId);
+        return existing ? ({ ...existing, ...input } as RelationDbResult) : null;
+      }
+    ),
+    deleteRelation: vi.fn(
+      async (_ws: string, relationId: string) =>
+        relationRows.find(row => row.id === relationId) ?? null
+    )
   },
   workspace: {
     listTeams: async () => [
@@ -731,6 +838,135 @@ describe('createAiChatTools', () => {
       });
 
       expect(result).toMatchObject({ entity: { id: 'entity-app-4' } });
+    });
+  });
+
+  describe('typed relation owner field restriction', () => {
+    it('filters standalone typed relation reads by owner access and endpoint visibility', async () => {
+      const restrictedTools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
+      const restrictedList = restrictedTools.find(tool => tool.name === 'list_relations');
+      const restrictedGet = restrictedTools.find(tool => tool.name === 'get_relation');
+
+      await expect(restrictedList!.execute?.({})).resolves.toEqual({ total: 0, items: [] });
+      await expect(restrictedGet!.execute?.({ relationId: 'relation-1' })).rejects.toThrow(
+        "Relation 'relation-1' not found"
+      );
+
+      const authorizedTools = createAiChatTools(db, 'ws-1', financeCallerAuthCtx, actor);
+      const authorizedList = authorizedTools.find(tool => tool.name === 'list_relations');
+      const authorizedGet = authorizedTools.find(tool => tool.name === 'get_relation');
+
+      await expect(authorizedList!.execute?.({})).resolves.toMatchObject({
+        total: 1,
+        items: [
+          {
+            _uid: 'relation-1',
+            inEntityId: 'entity-app-4',
+            outEntityId: 'entity-cap-1',
+            fields: { secret: 'restricted relation value' }
+          }
+        ]
+      });
+      await expect(authorizedGet!.execute?.({ relationId: 'relation-1' })).resolves.toMatchObject({
+        _uid: 'relation-1',
+        inEntityId: 'entity-app-4',
+        outEntityId: 'entity-cap-1',
+        fields: { secret: 'restricted relation value' }
+      });
+    });
+
+    it('filters typed relations in entity details and traversal by endpoint direction', async () => {
+      const restrictedTools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
+      const restrictedDetails = restrictedTools.find(tool => tool.name === 'get_entity_details');
+      const restrictedTraverse = restrictedTools.find(tool => tool.name === 'traverse_relations');
+
+      const details = await restrictedDetails!.execute?.({ entityId: 'entity-app-4' });
+      expect(details).toMatchObject({
+        entity: { incomingTypedRelations: [], outgoingTypedRelations: [] }
+      });
+
+      const graph = await restrictedTraverse!.execute?.({
+        entityId: 'entity-app-4',
+        direction: 'outgoing',
+        depth: 1
+      });
+      expect(graph).toMatchObject({ entityId: 'entity-app-4', edges: [] });
+      expect((graph as { nodes: { id: string }[] }).nodes.map(node => node.id)).toEqual([
+        'entity-app-4'
+      ]);
+
+      const authorizedTools = createAiChatTools(db, 'ws-1', financeCallerAuthCtx, actor);
+      const authorizedDetails = authorizedTools.find(tool => tool.name === 'get_entity_details');
+      const authorizedTraverse = authorizedTools.find(tool => tool.name === 'traverse_relations');
+
+      await expect(
+        authorizedDetails!.execute?.({ entityId: 'entity-app-4' })
+      ).resolves.toMatchObject({
+        entity: {
+          outgoingTypedRelations: [
+            {
+              relationId: 'relation-1',
+              target: { id: 'entity-cap-1' },
+              fields: { secret: 'restricted relation value' }
+            }
+          ]
+        }
+      });
+      await expect(
+        authorizedTraverse!.execute?.({ entityId: 'entity-app-4', direction: 'outgoing', depth: 1 })
+      ).resolves.toMatchObject({
+        nodes: expect.arrayContaining([
+          expect.objectContaining({ id: 'entity-app-4' }),
+          expect.objectContaining({ id: 'entity-cap-1' })
+        ]),
+        edges: expect.arrayContaining([
+          expect.objectContaining({
+            sourceId: 'entity-app-4',
+            targetId: 'entity-cap-1',
+            kind: 'typed'
+          })
+        ])
+      });
+    });
+
+    it('requires owner-field edit access for typed relation mutations', async () => {
+      const restrictedTools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
+      const restrictedCreate = restrictedTools.find(tool => tool.name === 'create_relation');
+      const restrictedUpdate = restrictedTools.find(tool => tool.name === 'update_relation');
+      const restrictedDelete = restrictedTools.find(tool => tool.name === 'delete_relation');
+
+      await expect(
+        restrictedCreate!.execute?.({
+          schemaId: 'rel-1',
+          inEntityId: 'entity-app-4',
+          outEntityId: 'entity-cap-1'
+        })
+      ).rejects.toThrow(/owner fields/i);
+      await expect(
+        restrictedUpdate!.execute?.({ relationId: 'relation-1', fields: {} })
+      ).rejects.toThrow(/owner fields/i);
+      await expect(restrictedDelete!.execute?.({ relationId: 'relation-1' })).rejects.toThrow(
+        /owner fields/i
+      );
+
+      const authorizedTools = createAiChatTools(db, 'ws-1', financeCallerAuthCtx, actor);
+      const authorizedCreate = authorizedTools.find(tool => tool.name === 'create_relation');
+      const authorizedUpdate = authorizedTools.find(tool => tool.name === 'update_relation');
+      const authorizedDelete = authorizedTools.find(tool => tool.name === 'delete_relation');
+
+      await expect(
+        authorizedCreate!.execute?.({
+          schemaId: 'rel-1',
+          inEntityId: 'entity-app-4',
+          outEntityId: 'entity-cap-1'
+        })
+      ).resolves.toMatchObject({ schemaId: 'rel-1' });
+      await expect(
+        authorizedUpdate!.execute?.({ relationId: 'relation-1', fields: {} })
+      ).resolves.toMatchObject({ _uid: 'relation-1' });
+      await expect(authorizedDelete!.execute?.({ relationId: 'relation-1' })).resolves.toEqual({
+        success: true
+      });
     });
   });
 });
