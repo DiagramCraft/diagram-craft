@@ -55,6 +55,84 @@ afterEach(() => {
 });
 
 describe('webhook delivery', () => {
+  it('queues relation events only for explicitly enabled relation filters and redacts relation fields', async () => {
+    const enqueueOneOffRun = vi.fn(async input => ({ ...input }));
+    const relationSchema: FieldGroupSchemaShape = {
+      fields: [
+        { id: 'status', name: 'Status' },
+        { id: 'secret', name: 'Secret', groupId: 'restricted' }
+      ],
+      groups: [{ id: 'restricted', accessControl: { teamIds: ['team-1'] } }]
+    };
+    const relationAudit: Parameters<typeof enqueueWebhookDeliveries>[1] = {
+      id: 'relation-audit-1',
+      workspace: 'ws-1',
+      timestamp: new Date('2026-07-15T10:00:00.000Z'),
+      user_id: 'user-1',
+      user_display_name: 'Ada',
+      operation: 'update',
+      entity_type: 'relation',
+      entity_id: 'relation-1',
+      entity_name: 'Payments → Ledger',
+      entity_slug: null,
+      schema_id: 'relation-schema-1',
+      changes: {
+        old: { status: 'draft', secret: 'old' },
+        new: { status: 'active', secret: 'new' }
+      },
+      metadata: {
+        relation: {
+          id: 'relation-1',
+          schema: { id: 'relation-schema-1', name: 'Depends on' },
+          in: { id: 'entity-1', name: 'Payments' },
+          out: { id: 'entity-2', name: 'Ledger' }
+        }
+      }
+    };
+    const filteredDb = {
+      webhook: {
+        listWebhooks: vi.fn(async () => [
+          {
+            ...webhook,
+            event_filter: { operations: ['update'], schema_ids: [] }
+          },
+          {
+            ...webhook,
+            id: 'relation-hook',
+            event_filter: { operations: ['update'], schema_ids: [], relation_schema_ids: [] }
+          }
+        ])
+      },
+      relation: {
+        getRelationSchema: vi.fn(async () => ({
+          ...relationSchema,
+          created_at: new Date('2026-01-01')
+        })),
+        listRelationSchemaVersions: vi.fn(async () => [])
+      },
+      jobs: { enqueueOneOffRun }
+    } as unknown as DatabaseAdapter;
+
+    expect(await enqueueWebhookDeliveries(filteredDb, relationAudit)).toBe(1);
+    const payload = enqueueOneOffRun.mock.calls[0]![0].payload as {
+      event: { type: string; operation: string; relation: unknown; changes: unknown };
+    };
+    expect(payload.event).toMatchObject({
+      type: 'relation.updated',
+      operation: 'update',
+      relation: {
+        id: 'relation-1',
+        schema: { name: 'Depends on' },
+        in: { id: 'entity-1' },
+        out: { id: 'entity-2' }
+      }
+    });
+    expect(payload.event.changes).toEqual({
+      old: { status: 'draft' },
+      new: { status: 'active' }
+    });
+  });
+
   it('queues only enabled webhooks whose operation and schema filters match', async () => {
     const enqueueOneOffRun = vi.fn(async input => ({ ...input }));
     const filteredDb = {
@@ -85,10 +163,10 @@ describe('webhook delivery', () => {
         user_display_name: event.actor.display_name,
         operation: 'create',
         entity_type: 'entity',
-        entity_id: event.entity.id,
-        entity_name: event.entity.name,
-        entity_slug: event.entity.slug,
-        schema_id: event.entity.schema_id,
+        entity_id: event.entity!.id,
+        entity_name: event.entity!.name,
+        entity_slug: event.entity!.slug,
+        schema_id: event.entity!.schema_id,
         changes: event.changes,
         metadata: event.metadata
       })

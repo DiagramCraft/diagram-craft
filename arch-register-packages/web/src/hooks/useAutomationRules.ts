@@ -16,6 +16,7 @@ const keys = {
 export type AutomationRuleInput = {
   name: string;
   description?: string | null;
+  resource_type: 'entity' | 'relation';
   schema_id?: string | null;
   trigger: AutomationRuleTrigger;
   conditions: AutomationCondition[];

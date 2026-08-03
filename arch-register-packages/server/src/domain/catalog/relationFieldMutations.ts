@@ -8,7 +8,8 @@ import {
   flattenRelationAuditFields,
   assertRelationMutationsSupported,
   toApiRelation,
-  validateRelationEndpoints
+  validateRelationEndpoints,
+  relationAuditContext
 } from './relationHelpers';
 import { requireTypedRelationFieldEdit } from './relationAccessControl';
 import type { TypedRelationField } from '@arch-register/api-types/schemaContract';
@@ -79,7 +80,8 @@ export const applyRelationFieldDelta = async (
       entityId: row.id,
       entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
       schemaId: row.schema_id,
-      changes: { new: flattenRelationAuditFields(row) }
+      changes: { new: flattenRelationAuditFields(row) },
+      metadata: { relation: relationAuditContext(row) }
     });
 
     results.push(toApiRelation(row));
@@ -123,7 +125,8 @@ export const applyRelationFieldDelta = async (
       schemaId: row.schema_id,
       changes: computeChanges(flattenRelationAuditFields(oldRow), flattenRelationAuditFields(row), {
         alwaysInclude: ['_inEntityId', '_outEntityId']
-      })
+      }),
+      metadata: { relation: relationAuditContext(row) }
     });
 
     results.push(toApiRelation(row));
@@ -153,7 +156,8 @@ export const applyRelationFieldDelta = async (
       entityId: id,
       entityName: `${oldRow.in_entity_name} → ${oldRow.out_entity_name}`,
       schemaId: oldRow.schema_id,
-      changes: { old: flattenRelationAuditFields(oldRow) }
+      changes: { old: flattenRelationAuditFields(oldRow) },
+      metadata: { relation: relationAuditContext(oldRow) }
     });
   }
 

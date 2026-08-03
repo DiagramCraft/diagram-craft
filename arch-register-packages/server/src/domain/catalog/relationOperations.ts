@@ -17,7 +17,8 @@ import {
   flattenRelationAuditFields,
   assertRelationMutationsSupported,
   toRedactedApiRelation,
-  validateRelationEndpoints
+  validateRelationEndpoints,
+  relationAuditContext
 } from './relationHelpers';
 import {
   canViewTypedRelation,
@@ -233,7 +234,8 @@ export const createWorkspaceRelation = async (
         entityId: row.id,
         entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
         schemaId: row.schema_id,
-        changes: { new: flattenRelationAuditFields(row) }
+        changes: { new: flattenRelationAuditFields(row) },
+        metadata: { relation: relationAuditContext(row) }
       });
 
       return toRedactedApiRelation(row, authCtx, schema);
@@ -302,7 +304,8 @@ export const updateWorkspaceRelation = async (
         entityId: id,
         entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
         schemaId: row.schema_id,
-        changes
+        changes,
+        metadata: { relation: relationAuditContext(row) }
       });
 
       return toRedactedApiRelation(row, authCtx, schema);
@@ -351,7 +354,8 @@ export const deleteWorkspaceRelation = async (
         entityId: id,
         entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
         schemaId: row.schema_id,
-        changes: { old: flattenRelationAuditFields(row) }
+        changes: { old: flattenRelationAuditFields(row) },
+        metadata: { relation: relationAuditContext(row) }
       });
 
       return { success: true, message: `Relation '${id}' deleted` };

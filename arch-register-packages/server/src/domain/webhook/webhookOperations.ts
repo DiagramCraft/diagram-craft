@@ -71,7 +71,20 @@ const normalizeFilter = async (
       message: 'Webhook filter contains an entity type from another workspace'
     }
   );
-  return { operations, schema_ids: schemaIds };
+  if (filter.relation_schema_ids === undefined) {
+    return { operations, schema_ids: schemaIds };
+  }
+  const relationSchemaIds = [...new Set(filter.relation_schema_ids)];
+  const relationSchemas = await db.relation.listRelationSchemas(workspace);
+  const availableRelationSchemas = new Set(relationSchemas.map(schema => schema.id));
+  httpAssert.true(
+    relationSchemaIds.every(id => availableRelationSchemas.has(id)),
+    {
+      status: 400,
+      message: 'Webhook filter contains a relation type from another workspace'
+    }
+  );
+  return { operations, schema_ids: schemaIds, relation_schema_ids: relationSchemaIds };
 };
 
 export const toApiWebhook = (webhook: WorkspaceWebhookDbResult) => ({

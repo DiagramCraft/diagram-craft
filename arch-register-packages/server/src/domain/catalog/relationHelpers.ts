@@ -53,6 +53,21 @@ export const flattenRelationAuditFields = (row: RelationDbResult): Record<string
   ...row.data
 });
 
+/** Stable relation identity used by asynchronous audit consumers, including deleted relations. */
+export type RelationAuditContext = {
+  id: string;
+  schema: { id: string; name: string };
+  in: { id: string; name: string };
+  out: { id: string; name: string };
+};
+
+export const relationAuditContext = (row: RelationDbResult): RelationAuditContext => ({
+  id: row.id,
+  schema: { id: row.schema_id, name: row.schema_name },
+  in: { id: row.in_entity_id, name: row.in_entity_name },
+  out: { id: row.out_entity_id, name: row.out_entity_name }
+});
+
 export const toApiRelation = (row: RelationDbResult): RelationRecord => ({
   _uid: row.id,
   _schema: { id: row.schema_id, name: row.schema_name },

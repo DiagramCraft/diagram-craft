@@ -1,4 +1,5 @@
 import { describe, expect, it } from 'vitest';
+import { randomUUID } from 'node:crypto';
 import { runContractSuiteAgainstBothDrivers } from './harness';
 import {
   createFixtureEntity,
@@ -56,6 +57,96 @@ runContractSuiteAgainstBothDrivers('WatchDatabase', getDb => {
   });
 
   describe('notifications from audit events', () => {
+    it('fans out relation events to both endpoint watchers without duplicates', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const inEntity = await createFixtureEntity(db, workspace, schema);
+      const outEntity = await createFixtureEntity(db, workspace, schema);
+      const actor = await createFixtureUser(db);
+      const sharedWatcher = await createFixtureUser(db);
+      const relationSchemaId = randomUUID();
+      const now = new Date();
+      await db.relation.createRelationSchema({
+        id: relationSchemaId,
+        workspace,
+        name: 'Depends on',
+        description: '',
+        in_schema_ids: [schema],
+        out_schema_ids: [schema],
+        fields: [{ id: 'status', name: 'Status', type: 'text' } as never],
+        groups: [],
+        shared_field_group_links: [],
+        color: null,
+        icon: null,
+        relation_approval_policy: 'disabled',
+        version: 1,
+        created_at: now,
+        updated_at: now
+      });
+      const relation = await db.relation.createRelation({
+        id: randomUUID(),
+        workspace,
+        schema_id: relationSchemaId,
+        in_entity_id: inEntity.id,
+        out_entity_id: outEntity.id,
+        data: { status: 'active' },
+        created_at: now,
+        updated_at: now
+      });
+
+      await db.watch.createWatch({
+        user_id: sharedWatcher.id,
+        workspace,
+        entity_id: inEntity.id,
+        created_at: now
+      });
+      await db.watch.createWatch({
+        user_id: sharedWatcher.id,
+        workspace,
+        entity_id: outEntity.id,
+        created_at: now
+      });
+
+      const auditLog = await db.audit.createAuditLog({
+        workspace,
+        timestamp: now,
+        user_id: actor.id,
+        operation: 'create',
+        entity_type: 'relation',
+        entity_id: relation.id,
+        entity_name: `${inEntity.name} → ${outEntity.name}`,
+        entity_slug: null,
+        schema_id: relationSchemaId,
+        changes: { new: { status: 'active' } },
+        metadata: {
+          relation: {
+            id: relation.id,
+            schema: { id: relationSchemaId, name: 'Depends on' },
+            in: { id: inEntity.id, name: inEntity.name },
+            out: { id: outEntity.id, name: outEntity.name }
+          }
+        }
+      });
+
+      await db.watch.createNotificationsFromAudit({
+        auditLog,
+        changedByDisplayName: actor.display_name
+      });
+      await db.watch.createNotificationsFromAudit({
+        auditLog,
+        changedByDisplayName: actor.display_name
+      });
+
+      const notifications = await db.notification.listNotifications(sharedWatcher.id, workspace);
+      expect(notifications).toHaveLength(1);
+      expect(notifications[0]).toMatchObject({
+        event_type: 'relation.create',
+        resource_type: 'relation',
+        resource_id: relation.id
+      });
+    });
+
     it('fans out a notification to every watcher except the actor', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);

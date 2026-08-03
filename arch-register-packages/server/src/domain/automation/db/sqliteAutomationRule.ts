@@ -29,14 +29,15 @@ export class SqliteAutomationRuleDatabase
   async createRule(input: AutomationRuleDbCreate) {
     this.run(
       `INSERT INTO workspace_automation_rule
-       (id, workspace, created_by, name, description, schema_id, trigger, conditions, actions, enabled, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, workspace, created_by, name, description, resource_type, schema_id, trigger, conditions, actions, enabled, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         input.workspace,
         input.created_by,
         input.name,
         input.description,
+        input.resource_type,
         input.schema_id,
         JSON.stringify(input.trigger),
         JSON.stringify(input.conditions),
@@ -56,12 +57,13 @@ export class SqliteAutomationRuleDatabase
   async updateRule(workspace: string, id: string, input: AutomationRuleDbUpdate) {
     this.run(
       `UPDATE workspace_automation_rule
-       SET name = ?, description = ?, schema_id = ?, trigger = ?, conditions = ?, actions = ?,
+       SET name = ?, description = ?, resource_type = ?, schema_id = ?, trigger = ?, conditions = ?, actions = ?,
            enabled = ?, updated_at = ?
        WHERE workspace = ? AND id = ?`,
       [
         input.name,
         input.description,
+        input.resource_type,
         input.schema_id,
         JSON.stringify(input.trigger),
         JSON.stringify(input.conditions),

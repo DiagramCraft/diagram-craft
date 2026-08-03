@@ -43,7 +43,7 @@ export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Pro
     );
     // Entity audit records also drive webhook delivery. Do not turn a failed
     // enqueue into a successful mutation with a silently missing notification.
-    if (params.entityType === 'entity') throw error;
+    if (params.entityType === 'entity' || params.entityType === 'relation') throw error;
   }
 };
 
@@ -83,7 +83,10 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
     // adapter. Real server adapters always provide it; skip enqueueing quietly
     // for those doubles rather than treating the missing stub as an error.
     const webhookAdapter = (tx as unknown as { webhook?: { listWebhooks?: unknown } }).webhook;
-    if (entityType === 'entity' && typeof webhookAdapter?.listWebhooks === 'function') {
+    if (
+      (entityType === 'entity' || entityType === 'relation') &&
+      typeof webhookAdapter?.listWebhooks === 'function'
+    ) {
       // Keep the audit row and delivery jobs in the same transaction. A failed
       // enqueue rolls back the audit row instead of leaving a false impression
       // that the change was delivered.
@@ -94,14 +97,17 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
     // when a focused unit test's database double doesn't provide the automationRule adapter.
     const automationRuleAdapter = (tx as unknown as { automationRule?: { listRules?: unknown } })
       .automationRule;
-    if (entityType === 'entity' && typeof automationRuleAdapter?.listRules === 'function') {
+    if (
+      (entityType === 'entity' || entityType === 'relation') &&
+      typeof automationRuleAdapter?.listRules === 'function'
+    ) {
       // Rule *matching* runs synchronously here, in the same transaction as the mutation, so a
       // failed enqueue rolls back the audit row rather than silently dropping a rule execution.
       // Rule *actions* run later via the job queue (see automationRuleExecution.ts).
       await enqueueAutomationRuleRuns(tx, auditLog, metadata);
     }
 
-    if (entityType === 'entity') {
+    if (entityType === 'entity' || entityType === 'relation') {
       // Some focused unit tests use partial database doubles without the notification
       // preference adapter. Real server adapters always provide it; skip the gating
       // check quietly for those doubles rather than treating the missing stub as an error.
@@ -109,6 +115,15 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
         tx as unknown as { notificationPreference?: { listOverrides?: unknown } }
       ).notificationPreference;
 
+      const relationContext = metadata['relation'];
+      const relationEndpointIds =
+        entityType === 'relation' && typeof relationContext === 'object' && relationContext != null
+          ? [
+              (relationContext as { in?: { id?: unknown } }).in?.id,
+              (relationContext as { out?: { id?: unknown } }).out?.id
+            ].filter((id): id is string => typeof id === 'string')
+          : [];
+      const watchedEntityIds = entityType === 'relation' ? relationEndpointIds : [entityId];
       let watcherRecipients: Array<{
         userId: string;
         email: string | null;
@@ -122,8 +137,15 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
           emailEnabled: false
         })) ?? [];
       if (typeof notificationPreferenceAdapter?.listOverrides === 'function') {
-        const candidateWatcherIds =
-          watcherUserIds ?? (await tx.watch.listWatcherUserIds(workspace, entityId));
+        const candidateWatcherIds = watcherUserIds ?? [
+          ...new Set(
+            (
+              await Promise.all(
+                watchedEntityIds.map(watchedId => tx.watch.listWatcherUserIds(workspace, watchedId))
+              )
+            ).flat()
+          )
+        ];
         watcherRecipients = (
           await Promise.all(
             candidateWatcherIds.map(async userId => {
@@ -154,6 +176,7 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
       await tx.watch.createNotificationsFromAudit({
         auditLog,
         changedByDisplayName: userDisplayName ?? userId ?? 'system',
+        watchedEntityIds,
         watcherRecipients
       });
     }

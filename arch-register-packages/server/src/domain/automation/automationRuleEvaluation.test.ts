@@ -24,6 +24,7 @@ const baseRule: AutomationRuleDbResult = {
   created_by: 'user-1',
   name: 'Flag deprecated entities',
   description: null,
+  resource_type: 'entity',
   schema_id: null,
   trigger: { kind: 'lifecycle_transition', to: 'Deprecated' },
   conditions: [],
@@ -60,6 +61,54 @@ const makeDb = (rule: AutomationRuleDbResult, enqueueOneOffRun = vi.fn(async inp
   }) as unknown as DatabaseAdapter;
 
 describe('enqueueAutomationRuleRuns', () => {
+  it('matches relation field triggers and carries relation context into the job event', async () => {
+    const relationRule: AutomationRuleDbResult = {
+      ...baseRule,
+      resource_type: 'relation',
+      schema_id: 'relation-schema-1',
+      trigger: { kind: 'relation_field_changed', field: 'status' }
+    };
+    const enqueueOneOffRun = vi.fn(async input => input);
+    const db = {
+      automationRule: { listRules: vi.fn(async () => [relationRule]) },
+      catalog: { getEntity: vi.fn(async () => null) },
+      relation: {
+        getRelation: vi.fn(async () => null),
+        getRelationSchema: vi.fn(async () => ({ fields: [] }))
+      },
+      jobs: { enqueueOneOffRun }
+    } as unknown as DatabaseAdapter;
+    const relationAudit: AuditLogDbResult = {
+      ...baseAuditLog,
+      id: 'relation-audit-1',
+      entity_type: 'relation',
+      entity_id: 'relation-1',
+      entity_name: 'Payments → Ledger',
+      schema_id: 'relation-schema-1',
+      changes: { old: { status: 'draft' }, new: { status: 'active' } },
+      metadata: {
+        relation: {
+          id: 'relation-1',
+          schema: { id: 'relation-schema-1', name: 'Depends on' },
+          in: { id: 'entity-1', name: 'Payments' },
+          out: { id: 'entity-2', name: 'Ledger' }
+        }
+      }
+    };
+
+    expect(await enqueueAutomationRuleRuns(db, relationAudit)).toBe(1);
+    expect(enqueueOneOffRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        payload: expect.objectContaining({
+          event: expect.objectContaining({
+            resourceType: 'relation',
+            relation: expect.objectContaining({ id: 'relation-1' })
+          })
+        })
+      })
+    );
+  });
+
   it('enqueues a job run for a matching lifecycle_transition rule', async () => {
     const enqueueOneOffRun = vi.fn(async input => input);
     const db = makeDb(baseRule, enqueueOneOffRun);

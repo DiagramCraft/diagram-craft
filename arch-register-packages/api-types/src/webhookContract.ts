@@ -6,7 +6,12 @@ export const webhookOperationSchema = z.enum(['create', 'update', 'delete']);
 
 export const webhookEventFilterSchema = z.object({
   operations: z.array(webhookOperationSchema).min(1),
-  schema_ids: z.array(z.string())
+  schema_ids: z.array(z.string()),
+  /**
+   * Relation schema filters are optional for backwards compatibility. When omitted, the webhook
+   * remains entity-only; an explicitly supplied empty array matches all relation schemas.
+   */
+  relation_schema_ids: z.array(z.string()).optional()
 });
 
 const webhookSchema = z.object({

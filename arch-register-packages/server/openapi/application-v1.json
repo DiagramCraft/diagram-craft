@@ -85316,6 +85316,13 @@
                           }
                         ]
                       },
+                      "resource_type": {
+                        "enum": [
+                          "entity",
+                          "relation"
+                        ],
+                        "type": "string"
+                      },
                       "schema_id": {
                         "anyOf": [
                           {
@@ -85348,6 +85355,44 @@
                             },
                             "required": [
                               "kind"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "const": "relation_created"
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "const": "relation_deleted"
+                              }
+                            },
+                            "required": [
+                              "kind"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "const": "relation_field_changed"
+                              },
+                              "field": {
+                                "type": "string",
+                                "minLength": 1
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "field"
                             ]
                           },
                           {
@@ -85548,6 +85593,7 @@
                       "created_by",
                       "name",
                       "description",
+                      "resource_type",
                       "schema_id",
                       "trigger",
                       "conditions",
@@ -85600,6 +85646,14 @@
                       }
                     ]
                   },
+                  "resource_type": {
+                    "enum": [
+                      "entity",
+                      "relation"
+                    ],
+                    "type": "string",
+                    "default": "entity"
+                  },
                   "schema_id": {
                     "anyOf": [
                       {
@@ -85633,6 +85687,44 @@
                         },
                         "required": [
                           "kind"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "const": "relation_created"
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "const": "relation_deleted"
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "const": "relation_field_changed"
+                          },
+                          "field": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "field"
                         ]
                       },
                       {
@@ -85869,6 +85961,13 @@
                         }
                       ]
                     },
+                    "resource_type": {
+                      "enum": [
+                        "entity",
+                        "relation"
+                      ],
+                      "type": "string"
+                    },
                     "schema_id": {
                       "anyOf": [
                         {
@@ -85901,6 +86000,44 @@
                           },
                           "required": [
                             "kind"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "relation_created"
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "relation_deleted"
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "relation_field_changed"
+                            },
+                            "field": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "field"
                           ]
                         },
                         {
@@ -86101,6 +86238,7 @@
                     "created_by",
                     "name",
                     "description",
+                    "resource_type",
                     "schema_id",
                     "trigger",
                     "conditions",
@@ -86163,6 +86301,14 @@
                       }
                     ]
                   },
+                  "resource_type": {
+                    "enum": [
+                      "entity",
+                      "relation"
+                    ],
+                    "type": "string",
+                    "default": "entity"
+                  },
                   "schema_id": {
                     "anyOf": [
                       {
@@ -86196,6 +86342,44 @@
                         },
                         "required": [
                           "kind"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "const": "relation_created"
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "const": "relation_deleted"
+                          }
+                        },
+                        "required": [
+                          "kind"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "const": "relation_field_changed"
+                          },
+                          "field": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "field"
                         ]
                       },
                       {
@@ -86432,6 +86616,13 @@
                         }
                       ]
                     },
+                    "resource_type": {
+                      "enum": [
+                        "entity",
+                        "relation"
+                      ],
+                      "type": "string"
+                    },
                     "schema_id": {
                       "anyOf": [
                         {
@@ -86464,6 +86655,44 @@
                           },
                           "required": [
                             "kind"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "relation_created"
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "relation_deleted"
+                            }
+                          },
+                          "required": [
+                            "kind"
+                          ]
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "const": "relation_field_changed"
+                            },
+                            "field": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "field"
                           ]
                         },
                         {
@@ -86664,6 +86893,7 @@
                     "created_by",
                     "name",
                     "description",
+                    "resource_type",
                     "schema_id",
                     "trigger",
                     "conditions",
@@ -92649,6 +92879,12 @@
                             "items": {
                               "type": "string"
                             }
+                          },
+                          "relation_schema_ids": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
                           }
                         },
                         "required": [
@@ -92729,6 +92965,12 @@
                         "items": {
                           "type": "string"
                         }
+                      },
+                      "relation_schema_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
                       }
                     },
                     "required": [
@@ -92786,6 +93028,12 @@
                               }
                             },
                             "schema_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "relation_schema_ids": {
                               "type": "array",
                               "items": {
                                 "type": "string"
@@ -92888,6 +93136,12 @@
                         "items": {
                           "type": "string"
                         }
+                      },
+                      "relation_schema_ids": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
                       }
                     },
                     "required": [
@@ -92942,6 +93196,12 @@
                           }
                         },
                         "schema_ids": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "relation_schema_ids": {
                           "type": "array",
                           "items": {
                             "type": "string"
@@ -93086,6 +93346,12 @@
                               }
                             },
                             "schema_ids": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              }
+                            },
+                            "relation_schema_ids": {
                               "type": "array",
                               "items": {
                                 "type": "string"

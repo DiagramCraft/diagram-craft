@@ -30,6 +30,7 @@ const rule: AutomationRuleDbResult = {
   created_by: 'user-1',
   name: 'Flag deprecated',
   description: null,
+  resource_type: 'entity',
   schema_id: null,
   trigger: { kind: 'lifecycle_transition', to: 'Deprecated' },
   conditions: [],
@@ -137,6 +138,71 @@ describe('send_notification action', () => {
 });
 
 describe('set_field_value action', () => {
+  it('updates relation fields through the relation audit path', async () => {
+    const relation = {
+      id: 'relation-1',
+      workspace: 'ws-1',
+      schema_id: 'relation-schema-1',
+      schema_name: 'Depends on',
+      in_entity_id: 'entity-1',
+      in_entity_name: 'Payments',
+      out_entity_id: 'entity-2',
+      out_entity_name: 'Ledger',
+      data: { status: 'draft' },
+      version: 1,
+      approval_policy_override: null,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+    const updated = { ...relation, data: { status: 'active' }, version: 2 };
+    const updateRelation = vi.fn(async () => updated);
+    const createAuditLog = vi.fn(async input => ({ ...input, id: 'audit-2' }));
+    const db = {
+      core: {
+        transaction: async (callback: (tx: DatabaseAdapter) => Promise<void>) =>
+          callback(db as never)
+      },
+      relation: {
+        getRelation: vi.fn(async () => relation),
+        getRelationSchema: vi.fn(async () => ({
+          id: 'relation-schema-1',
+          fields: [{ id: 'status' }]
+        })),
+        updateRelation
+      },
+      audit: { createAuditLog },
+      watch: { createNotificationsFromAudit: vi.fn(async () => undefined) }
+    } as unknown as DatabaseAdapter;
+
+    await runAutomationAction({
+      db,
+      rule: { ...rule, resource_type: 'relation' },
+      action: { kind: 'set_field_value', field: 'status', value: 'active' },
+      event: {
+        ...event,
+        resourceType: 'relation',
+        entityId: 'relation-1',
+        entityName: 'Payments → Ledger',
+        relation: {
+          id: 'relation-1',
+          schema: { id: 'relation-schema-1', name: 'Depends on' },
+          in: { id: 'entity-1', name: 'Payments' },
+          out: { id: 'entity-2', name: 'Ledger' }
+        }
+      },
+      chain: ['rule-1']
+    });
+
+    expect(updateRelation).toHaveBeenCalledWith(
+      'ws-1',
+      'relation-1',
+      expect.objectContaining({ data: { status: 'active' }, version: 2 })
+    );
+    expect(createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({ entity_type: 'relation', entity_id: 'relation-1' })
+    );
+  });
+
   it('threads the automation rule chain into the resulting entity update', async () => {
     const entity = {
       id: 'entity-1',

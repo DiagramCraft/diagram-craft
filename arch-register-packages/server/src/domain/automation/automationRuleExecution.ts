@@ -42,7 +42,9 @@ export const createAutomationRuleExecutionHandler =
 
     const authCtx = await buildUserAuthCtx(db, context.workspace, rule.created_by);
     const schema = event.schemaId
-      ? await db.catalog.getSchema(context.workspace, event.schemaId)
+      ? (event.resourceType ?? 'entity') === 'relation'
+        ? await db.relation.getRelationSchema(context.workspace, event.schemaId)
+        : await db.catalog.getSchema(context.workspace, event.schemaId)
       : null;
     if (!isAutomationRuleAuthorized(authCtx, schema, rule)) {
       return { skipped: true, reason: 'rule-owner-no-longer-authorized' };
