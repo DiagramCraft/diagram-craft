@@ -1208,7 +1208,6 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
     const user = await createFixtureUser(db);
-    const relationSchemaId = randomUUID();
 
     const employee = await createSchema(db, workspace, {
       name: 'Employee',
@@ -1304,6 +1303,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
     const user = await createFixtureUser(db);
+    const relationSchemaId = randomUUID();
 
     const targetSchema = await createSchema(db, workspace, { name: 'Target' });
     const openOwnerSchema = await createSchema(db, workspace, {
