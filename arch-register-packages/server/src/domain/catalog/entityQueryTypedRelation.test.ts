@@ -56,6 +56,7 @@ describe('typed scalar relation query compilation', () => {
             fieldId: 'data_flows_out',
             relationSchemaId: relation.id,
             direction: 'out',
+            ownerSchemaIds: [system.id],
             filter: {
               kind: 'predicate',
               path: [],
@@ -97,7 +98,8 @@ describe('typed scalar relation query compilation', () => {
             kind: 'typedRelation',
             fieldId: 'data_flows_out',
             relationSchemaId: relation.id,
-            direction: 'out'
+            direction: 'out',
+            ownerSchemaIds: [system.id]
           }
         ]
       },
@@ -108,7 +110,8 @@ describe('typed scalar relation query compilation', () => {
               kind: 'typedRelation',
               fieldId: 'data_flows_out',
               relationSchemaId: relation.id,
-              direction: 'out'
+              direction: 'out',
+              ownerSchemaIds: [system.id]
             }
           ],
           fieldId: 'status',

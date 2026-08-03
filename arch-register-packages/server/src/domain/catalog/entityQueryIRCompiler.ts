@@ -200,6 +200,15 @@ const schemaScopeClause = (
     .join(', ')})`;
 };
 
+const typedRelationOwnerSchemaClause = (
+  alias: string,
+  ownerSchemaIds: readonly string[],
+  state: CompileState
+): string => {
+  if (ownerSchemaIds.length === 0) return '1=0';
+  return `${alias}.schema_id IN (${ownerSchemaIds.map(id => addParam(state, id)).join(', ')})`;
+};
+
 const requireAssessmentId = (state: CompileState): void => {
   if (!state.assessmentId) {
     throw new UnsupportedEntityQueryIRError(
@@ -402,6 +411,7 @@ const compilePathSteps = (
     const targetId =
       step.direction === 'in' ? `${relationAlias}.out_entity_id` : `${relationAlias}.in_entity_id`;
     const relationSchemaParam = addParam(state, step.relationSchemaId);
+    const ownerSchemaClause = typedRelationOwnerSchemaClause(curAlias, step.ownerSchemaIds, state);
     const filterClause = step.filter
       ? ` AND ${compileRelationNode(
           step.filter,
@@ -425,6 +435,7 @@ const compilePathSteps = (
       `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} ` +
       `WHERE ${relationAlias}.workspace = ${curAlias}.workspace ` +
       `AND ${relationAlias}.schema_id = ${relationSchemaParam} ` +
+      `AND ${ownerSchemaClause} ` +
       `AND ${ownerId} = ${curAlias}.id${filterClause} AND ${rest})`
     );
   }
@@ -596,6 +607,11 @@ const buildProjectionBindings = (
             ? `${relationAlias}.out_entity_id`
             : `${relationAlias}.in_entity_id`;
         const relationSchema = addParam(state, step.relationSchemaId);
+        const ownerSchemaClause = typedRelationOwnerSchemaClause(
+          currentAlias,
+          step.ownerSchemaIds,
+          state
+        );
         const filter = step.filter
           ? ` AND ${compileRelationNode(
               step.filter,
@@ -608,6 +624,7 @@ const buildProjectionBindings = (
         from +=
           `\n      JOIN relation ${relationAlias} ON ${relationAlias}.workspace = ${currentAlias}.workspace` +
           ` AND ${relationAlias}.schema_id = ${relationSchema}` +
+          ` AND ${ownerSchemaClause}` +
           ` AND ${ownerId} = ${currentAlias}.id${filter}` +
           `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId}`;
         selectParts.push(

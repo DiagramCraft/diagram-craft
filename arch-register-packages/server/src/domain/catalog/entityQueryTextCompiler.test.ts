@@ -141,7 +141,28 @@ const TYPED_SYSTEM = makeSchema('typed-system-id', 'Typed System', [
     direction: 'out'
   }
 ]);
+const LOCKED_TYPED_SYSTEM = makeSchema('locked-typed-system-id', 'Locked Typed System', [
+  {
+    id: 'data_flows_out',
+    name: 'Data flows out',
+    type: 'typedRelation',
+    relationSchemaId: DATA_FLOW.id,
+    direction: 'out',
+    groupId: 'typed-restricted'
+  }
+]);
+LOCKED_TYPED_SYSTEM.groups = [
+  {
+    id: 'typed-restricted',
+    name: 'Typed restricted',
+    accessControl: { teamIds: ['team-typed-restricted'] }
+  }
+];
 const typedSchemas: SchemaCatalog = new Map([...schemas, [TYPED_SYSTEM.id, TYPED_SYSTEM]]);
+const collidingTypedSchemas: SchemaCatalog = new Map([
+  ...typedSchemas,
+  [LOCKED_TYPED_SYSTEM.id, LOCKED_TYPED_SYSTEM]
+]);
 const relationSchemas = new Map([[DATA_FLOW.id, DATA_FLOW]]);
 
 const parseOk = (text: string): EntityQuery => {
@@ -414,6 +435,7 @@ describe('parseEntityQueryText — typed scalar relation fields', () => {
                   fieldId: 'data_flows_out',
                   relationSchemaId: DATA_FLOW.id,
                   direction: 'out',
+                  ownerSchemaIds: [TYPED_SYSTEM.id],
                   filter: {
                     kind: 'predicate',
                     path: [],
@@ -456,7 +478,8 @@ describe('parseEntityQueryText — typed scalar relation fields', () => {
               kind: 'typedRelation',
               fieldId: 'data_flows_out',
               relationSchemaId: DATA_FLOW.id,
-              direction: 'out'
+              direction: 'out',
+              ownerSchemaIds: [TYPED_SYSTEM.id]
             }
           ]
         }
@@ -747,6 +770,46 @@ describe('parseEntityQueryText field-group restriction', () => {
   it('defaults to unrestricted when authCtx is omitted (internal/system callers)', () => {
     const result = parseEntityQueryText('schema:Restricted secret = "x"', restrictedSchemas, enums);
     expect(result.ok).toBe(true);
+  });
+
+  it('retains only accessible owner schemas for an unqualified typed-relation field', () => {
+    const noAccess = authCtxWithTeamRoles({});
+    const result = parseEntityQueryText(
+      'data_flows_out',
+      collidingTypedSchemas,
+      enums,
+      noAccess,
+      relationSchemas
+    );
+    expect(result).toEqual({
+      ok: true,
+      query: {
+        root: {
+          kind: 'relationExists',
+          path: [
+            {
+              kind: 'typedRelation',
+              fieldId: 'data_flows_out',
+              relationSchemaId: DATA_FLOW.id,
+              direction: 'out',
+              ownerSchemaIds: [TYPED_SYSTEM.id]
+            }
+          ]
+        }
+      }
+    });
+  });
+
+  it('rejects an explicitly selected typed-relation owner schema that is restricted', () => {
+    const noAccess = authCtxWithTeamRoles({});
+    const result = parseEntityQueryText(
+      'schema:"Locked Typed System" data_flows_out',
+      collidingTypedSchemas,
+      enums,
+      noAccess,
+      relationSchemas
+    );
+    expect(result.ok).toBe(false);
   });
 
   // #2592: a bare (no `schema:` prefix) field id resolves against every schema in the catalog, so

@@ -19,6 +19,8 @@ export type PathStep =
       fieldId: string;
       relationSchemaId: string;
       direction: 'in' | 'out';
+      /** Entity schemas whose viewable typed-relation field granted this hop. */
+      ownerSchemaIds: string[];
       filter?: QueryNode;
     };
 
@@ -53,6 +55,7 @@ export const pathStepSchema: z.ZodType<PathStep> = z.lazy(() =>
       fieldId: z.string(),
       relationSchemaId: z.string(),
       direction: z.enum(['in', 'out']),
+      ownerSchemaIds: z.array(z.string()).min(1),
       filter: queryNodeSchema.optional()
     })
   ])

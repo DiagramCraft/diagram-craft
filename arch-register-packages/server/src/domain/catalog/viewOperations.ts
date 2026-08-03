@@ -67,6 +67,27 @@ const relationFieldIsRestricted = (
   );
 };
 
+const typedRelationOwnerIsRestricted = (
+  step: Extract<PathStep, { kind: 'typedRelation' }>,
+  schemas: SchemaDbResult[],
+  authCtx: WorkspaceAuthorizationContext
+) => {
+  if (!Array.isArray(step.ownerSchemaIds) || step.ownerSchemaIds.length === 0) return true;
+  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  return step.ownerSchemaIds.some(ownerSchemaId => {
+    const schema = schemaById.get(ownerSchemaId);
+    if (!schema) return true;
+    const field = schema.fields.find(
+      candidate =>
+        candidate.id === step.fieldId &&
+        candidate.type === 'typedRelation' &&
+        candidate.relationSchemaId === step.relationSchemaId &&
+        candidate.direction === step.direction
+    );
+    return field == null || isFieldViewRestricted(authCtx, schema, field.id);
+  });
+};
+
 const pathUsesRestrictedField = (
   path: PathStep[],
   schemas: SchemaDbResult[],
@@ -76,7 +97,7 @@ const pathUsesRestrictedField = (
   path.some(step => {
     if (step.kind === 'typedRelation') {
       return (
-        relationFieldIsRestricted(step.fieldId, relationSchemas, authCtx, step.relationSchemaId) ||
+        typedRelationOwnerIsRestricted(step, schemas, authCtx) ||
         (step.filter
           ? nodeUsesRestrictedField(
               step.filter,
