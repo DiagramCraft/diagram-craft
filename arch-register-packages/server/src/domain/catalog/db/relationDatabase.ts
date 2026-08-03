@@ -232,4 +232,15 @@ export type RelationDatabase = {
     ws: string,
     entityId: string
   ): Promise<{ outgoing: RelationDbResult[]; incoming: RelationDbResult[] }>;
+
+  /**
+   * Batch form of listRelationsForEntity: `outgoing` holds every relation where the "in" endpoint
+   * is one of `entityIds`, `incoming` holds every relation where the "out" endpoint is one of
+   * `entityIds` — callers regroup per entity id themselves. Used by getBatchEntityRelations to
+   * avoid an N+1 query per entity in the graph/matrix/explore views.
+   */
+  listRelationsForEntities(
+    ws: string,
+    entityIds: string[]
+  ): Promise<{ outgoing: RelationDbResult[]; incoming: RelationDbResult[] }>;
 };

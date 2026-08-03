@@ -157,6 +157,64 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
       expect(await db.relation.countRelationsForSchema(workspace, relationSchemaId)).toBe(0);
     });
 
+    it('lists relations for a batch of entities, grouped by endpoint', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const appSchemaId = await createFixtureSchema(db, workspace);
+      const dbSchemaId = await createFixtureSchema(db, workspace);
+      const relationSchemaId = await createFixtureRelationSchema(
+        db,
+        workspace,
+        [appSchemaId],
+        [dbSchemaId]
+      );
+
+      const app = await createFixtureCatalogEntity(db, workspace, appSchemaId, {
+        name: 'Checkout Service'
+      });
+      const otherApp = await createFixtureCatalogEntity(db, workspace, appSchemaId, {
+        name: 'Billing Service'
+      });
+      const database = await createFixtureCatalogEntity(db, workspace, dbSchemaId, {
+        name: 'Orders DB'
+      });
+
+      const now = new Date();
+      await db.relation.createRelation({
+        id: randomUUID(),
+        workspace,
+        schema_id: relationSchemaId,
+        in_entity_id: app.id,
+        out_entity_id: database.id,
+        data: { note: 'checkout reads and writes order data' },
+        created_at: now,
+        updated_at: now
+      });
+      await db.relation.createRelation({
+        id: randomUUID(),
+        workspace,
+        schema_id: relationSchemaId,
+        in_entity_id: otherApp.id,
+        out_entity_id: database.id,
+        data: { note: 'billing reads and writes order data' },
+        created_at: now,
+        updated_at: now
+      });
+
+      const batch = await db.relation.listRelationsForEntities(workspace, [app.id, database.id]);
+      expect(batch.outgoing).toHaveLength(1);
+      expect(batch.outgoing[0]!.in_entity_id).toBe(app.id);
+      expect(batch.incoming).toHaveLength(2);
+      expect(new Set(batch.incoming.map(row => row.in_entity_id))).toEqual(
+        new Set([app.id, otherApp.id])
+      );
+
+      expect(await db.relation.listRelationsForEntities(workspace, [])).toEqual({
+        outgoing: [],
+        incoming: []
+      });
+    });
+
     it('renames and removes relation data fields across instances', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);

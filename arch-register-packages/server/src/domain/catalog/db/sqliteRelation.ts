@@ -238,4 +238,20 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
     );
     return { outgoing, incoming };
   }
+
+  async listRelationsForEntities(workspace: string, entityIds: string[]) {
+    if (entityIds.length === 0) return { outgoing: [], incoming: [] };
+    const placeholders = entityIds.map(() => '?').join(',');
+    const outgoing = this.all(
+      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.in_entity_id IN (${placeholders}) ORDER BY r.created_at DESC`,
+      [workspace, ...entityIds],
+      relationMappers.relation
+    );
+    const incoming = this.all(
+      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.out_entity_id IN (${placeholders}) ORDER BY r.created_at DESC`,
+      [workspace, ...entityIds],
+      relationMappers.relation
+    );
+    return { outgoing, incoming };
+  }
 }

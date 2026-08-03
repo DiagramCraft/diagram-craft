@@ -375,9 +375,33 @@ const entityRelationSchema = z.object({
   entitySlug: z.string().describe('Related entity URL slug'),
   entityName: z.string().describe('Related entity name'),
   entitySchemaId: z.string().describe('Related entity schema identifier'),
-  fieldName: z.string().describe('Relationship field name'),
+  fieldName: z
+    .string()
+    .describe('Relationship field name (relation schema name when kind is "typed")'),
   fieldPredicate: z.string().optional().describe('Relationship predicate/label'),
-  kind: z.enum(['reference', 'containment']).describe('Relationship type')
+  kind: z.enum(['reference', 'containment', 'typed']).describe('Relationship type'),
+  relationId: z
+    .string()
+    .optional()
+    .describe('Typed relation instance identifier (kind "typed" only)'),
+  relationSchemaId: z
+    .string()
+    .optional()
+    .describe('Relation schema identifier (kind "typed" only)'),
+  relationSchemaColor: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Relation schema color, hex format (kind "typed" only)'),
+  relationSchemaIcon: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Relation schema icon identifier (kind "typed" only)'),
+  relationFields: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe('Redacted relation instance field values (kind "typed" only)')
 });
 
 const entityRelationsSchema = z.object({

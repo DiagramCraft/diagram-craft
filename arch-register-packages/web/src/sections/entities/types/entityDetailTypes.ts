@@ -31,7 +31,12 @@ export type Relation = {
   entitySchemaId: string;
   fieldName: string;
   fieldPredicate?: string;
-  kind: 'reference' | 'containment';
+  kind: 'reference' | 'containment' | 'typed';
+  relationId?: string;
+  relationSchemaId?: string;
+  relationSchemaColor?: string | null;
+  relationSchemaIcon?: string | null;
+  relationFields?: Record<string, unknown>;
 };
 
 export type RelationGroup = {

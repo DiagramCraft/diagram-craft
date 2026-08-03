@@ -53,8 +53,15 @@ const invalidateRelationEndpoints = async (
 ) => {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: relationKeys.lists() }),
+    // entityKeys.relations/batchRelations now carry typed relations too (graph/topology/matrix/
+    // explore all read from them), so a typed-relation mutation must invalidate those in addition
+    // to the inline field editor's own entityKeys.typedRelations query.
+    queryClient.invalidateQueries({ queryKey: entityKeys.workspaceBatchRelations(workspaceId) }),
     ...entityIds.map(entityId =>
       queryClient.invalidateQueries({ queryKey: entityKeys.typedRelations(workspaceId, entityId) })
+    ),
+    ...entityIds.map(entityId =>
+      queryClient.invalidateQueries({ queryKey: entityKeys.relations(workspaceId, entityId) })
     )
   ]);
 };

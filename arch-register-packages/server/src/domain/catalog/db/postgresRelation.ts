@@ -228,4 +228,22 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
       incoming: mapDatabaseRows(incomingRows, relationMappers.relation)
     };
   }
+
+  async listRelationsForEntities(workspace: string, entityIds: string[]) {
+    if (entityIds.length === 0) return { outgoing: [], incoming: [] };
+    const placeholders = entityIds.map((_, i) => `$${i + 2}`).join(',');
+    const params = [workspace, ...entityIds] as Parameters<typeof this.sql.unsafe>[1];
+    const outgoingRows = await this.sql.unsafe<DatabaseRow[]>(
+      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.in_entity_id IN (${placeholders}) ORDER BY r.created_at DESC`,
+      params
+    );
+    const incomingRows = await this.sql.unsafe<DatabaseRow[]>(
+      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.out_entity_id IN (${placeholders}) ORDER BY r.created_at DESC`,
+      params
+    );
+    return {
+      outgoing: mapDatabaseRows(outgoingRows, relationMappers.relation),
+      incoming: mapDatabaseRows(incomingRows, relationMappers.relation)
+    };
+  }
 }
