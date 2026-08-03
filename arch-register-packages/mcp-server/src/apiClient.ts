@@ -1,6 +1,10 @@
 import type {
+  McpCreateRelationInput,
   McpCreateEntityInput,
+  McpDeleteRelationInput,
+  McpListRelationsInput,
   McpSearchEntitiesInput,
+  McpUpdateRelationInput,
   McpUpdateEntityInput
 } from '@arch-register/api-types/mcpToolsContract';
 
@@ -115,10 +119,120 @@ export class ArchRegisterApiClient {
   }
 
   async getEntityRelations(entityId: string) {
+    const [generic, typed] = await Promise.all([
+      this.request<{
+        outgoing: Array<Record<string, unknown>>;
+        incoming: Array<Record<string, unknown>>;
+      }>('application', `/${encodePath(this.workspace)}/data/${encodePath(entityId)}/relations`),
+      this.getTypedRelationsForEntity(entityId)
+    ]);
+
+    const relationFields = (relation: Record<string, unknown>) =>
+      Object.fromEntries(
+        Object.entries(relation).filter(
+          ([key]) => !key.startsWith('_') && !['canView', 'canEdit', 'canDelete'].includes(key)
+        )
+      );
+    const toTyped = (relation: Record<string, unknown>, direction: 'outgoing' | 'incoming') => {
+      const endpoint = relation[direction === 'outgoing' ? '_out' : '_in'] as Record<
+        string,
+        unknown
+      >;
+      const schema = relation['_schema'] as Record<string, unknown>;
+      return {
+        entityId: String(endpoint?.['id'] ?? ''),
+        publicId: String(endpoint?.['id'] ?? ''),
+        entitySlug: '',
+        entityName: String(endpoint?.['name'] ?? ''),
+        entitySchemaId: '',
+        fieldName: String(schema?.['name'] ?? ''),
+        kind: 'typed' as const,
+        relationId: String(relation['_uid'] ?? ''),
+        relationSchemaId: String(schema?.['id'] ?? ''),
+        relationSchemaName: String(schema?.['name'] ?? ''),
+        fields: relationFields(relation)
+      };
+    };
+
+    return {
+      outgoing: [
+        ...generic.outgoing,
+        ...typed.outgoing.map(relation => toTyped(relation, 'outgoing'))
+      ],
+      incoming: [
+        ...generic.incoming,
+        ...typed.incoming.map(relation => toTyped(relation, 'incoming'))
+      ]
+    };
+  }
+
+  async getTypedRelationsForEntity(entityId: string) {
     return this.request<{
       outgoing: Array<Record<string, unknown>>;
       incoming: Array<Record<string, unknown>>;
-    }>('application', `/${encodePath(this.workspace)}/data/${encodePath(entityId)}/relations`);
+    }>(
+      'integration',
+      `/${encodePath(this.workspace)}/data/${encodePath(entityId)}/typed-relations`
+    );
+  }
+
+  async listRelationSchemas() {
+    return this.request<Array<Record<string, unknown>>>(
+      'integration',
+      `/${encodePath(this.workspace)}/relation-schemas`
+    );
+  }
+
+  async listRelations(input: McpListRelationsInput) {
+    return this.request<{ items: Array<Record<string, unknown>>; total: number }>(
+      'integration',
+      withQuery(`/${encodePath(this.workspace)}/relations`, {
+        schemaId: input.schemaId,
+        inEntityId: input.inEntityId,
+        outEntityId: input.outEntityId,
+        limit: input.limit,
+        offset: input.offset
+      })
+    );
+  }
+
+  async getRelation(relationId: string) {
+    return this.request<Record<string, unknown>>(
+      'integration',
+      `/${encodePath(this.workspace)}/relations/${encodePath(relationId)}`
+    );
+  }
+
+  async createRelation(input: McpCreateRelationInput) {
+    return this.request<Record<string, unknown>>(
+      'integration',
+      `/${encodePath(this.workspace)}/relations`,
+      {
+        method: 'POST',
+        body: JSON.stringify({
+          _schemaId: input.schemaId,
+          _inEntityId: input.inEntityId,
+          _outEntityId: input.outEntityId,
+          ...(input.fields ?? {})
+        })
+      }
+    );
+  }
+
+  async updateRelation(input: McpUpdateRelationInput) {
+    return this.request<Record<string, unknown>>(
+      'integration',
+      `/${encodePath(this.workspace)}/relations/${encodePath(input.relationId)}`,
+      { method: 'PUT', body: JSON.stringify(input.fields) }
+    );
+  }
+
+  async deleteRelation(input: McpDeleteRelationInput) {
+    return this.request<{ success: boolean; message: string }>(
+      'integration',
+      `/${encodePath(this.workspace)}/relations/${encodePath(input.relationId)}`,
+      { method: 'DELETE' }
+    );
   }
 
   async getEntityDependents(entityId: string, transitive: boolean, maxDepth: number) {

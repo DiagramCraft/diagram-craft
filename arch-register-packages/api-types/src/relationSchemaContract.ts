@@ -115,7 +115,7 @@ const relationEndpointSchema = z
   })
   .describe('Typed endpoint constraint for a relation schema');
 
-const relationSchemaSchema = z.object({
+export const relationSchemaSchema = z.object({
   id: z.string().describe('Unique relation schema identifier'),
   workspace: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Relation schema name'),

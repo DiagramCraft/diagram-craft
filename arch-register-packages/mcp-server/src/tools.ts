@@ -1,18 +1,29 @@
 import { McpServer } from '@modelcontextprotocol/sdk/server/mcp.js';
 import {
   mcpCreateEntityInput,
+  mcpCreateRelationInput,
+  mcpDeleteRelationInput,
   mcpGetEntityInput,
+  mcpGetRelationInput,
+  mcpListRelationSchemasInput,
+  mcpListRelationsInput,
   mcpListSchemasInput,
   mcpRelationTraversalInput,
   mcpSearchEntitiesInput,
   mcpUpdateEntityFieldInput,
+  mcpUpdateRelationInput,
   mcpUpdateEntityInput,
   mcpWorkspaceSummaryInput,
   type McpCreateEntityInput,
+  type McpCreateRelationInput,
+  type McpDeleteRelationInput,
   type McpGetEntityInput,
+  type McpGetRelationInput,
+  type McpListRelationsInput,
   type McpRelationTraversalInput,
   type McpSearchEntitiesInput,
   type McpUpdateEntityFieldInput,
+  type McpUpdateRelationInput,
   type McpUpdateEntityInput
 } from '@arch-register/api-types/mcpToolsContract';
 import { ArchRegisterApiError, type ArchRegisterApiClient } from './apiClient';
@@ -166,6 +177,34 @@ const getDependencies = async (api: ArchRegisterApiClient, input: McpRelationTra
   return { entityId: input.entityId, dependencies: relations, truncated };
 };
 
+const getDependents = async (api: ArchRegisterApiClient, input: McpRelationTraversalInput) => {
+  const maxDepth = input.transitive ? input.depth : 1;
+  const queue = [{ entityId: input.entityId, depth: 0 }];
+  const visited = new Set([input.entityId]);
+  const relations: JsonObject[] = [];
+  let truncated = false;
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const result = await api.getEntityRelations(current.entityId);
+    for (const relation of result.incoming) {
+      if (relations.length >= input.limit) {
+        truncated = true;
+        break;
+      }
+      relations.push({ ...relation, depth: current.depth + 1 });
+      const sourceId = relationTargetId(relation);
+      if (current.depth + 1 < maxDepth && sourceId && !visited.has(sourceId)) {
+        visited.add(sourceId);
+        queue.push({ entityId: sourceId, depth: current.depth + 1 });
+      }
+    }
+    if (truncated) break;
+  }
+
+  return { entityId: input.entityId, dependents: relations, truncated };
+};
+
 const registerReadTools = (server: McpServer, api: ArchRegisterApiClient) => {
   server.registerTool(
     'search_entities',
@@ -229,6 +268,37 @@ const registerReadTools = (server: McpServer, api: ArchRegisterApiClient) => {
   );
 
   server.registerTool(
+    'list_relation_schemas',
+    {
+      description: 'List visible typed relation schemas and their relation field definitions.',
+      inputSchema: mcpListRelationSchemasInput.shape
+    },
+    async () => run(() => api.listRelationSchemas())
+  );
+
+  server.registerTool(
+    'list_relations',
+    {
+      description: 'List visible typed relation instances with filters and pagination.',
+      inputSchema: mcpListRelationsInput.shape
+    },
+    async rawInput =>
+      run(() => api.listRelations(mcpListRelationsInput.parse(rawInput) as McpListRelationsInput))
+  );
+
+  server.registerTool(
+    'get_relation',
+    {
+      description: 'Get one visible typed relation instance by ID.',
+      inputSchema: mcpGetRelationInput.shape
+    },
+    async rawInput =>
+      run(() =>
+        api.getRelation((mcpGetRelationInput.parse(rawInput) as McpGetRelationInput).relationId)
+      )
+  );
+
+  server.registerTool(
     'get_entity_dependencies',
     {
       description: 'Return outgoing entity dependencies, optionally traversed to a bounded depth.',
@@ -249,12 +319,8 @@ const registerReadTools = (server: McpServer, api: ArchRegisterApiClient) => {
     async rawInput =>
       run(async () => {
         const input = mcpRelationTraversalInput.parse(rawInput) as McpRelationTraversalInput;
-        const result = await api.getEntityDependents(input.entityId, input.transitive, input.depth);
-        return {
-          entityId: input.entityId,
-          dependents: result.dependents.slice(0, input.limit),
-          truncated: result.truncated || result.dependents.length > input.limit
-        };
+        const result = await getDependents(api, input);
+        return { ...result, dependents: result.dependents.slice(0, input.limit) };
       })
   );
 
@@ -315,6 +381,53 @@ const registerReadTools = (server: McpServer, api: ArchRegisterApiClient) => {
 };
 
 const registerMutationTools = (server: McpServer, api: ArchRegisterApiClient) => {
+  server.registerTool(
+    'create_relation',
+    {
+      description:
+        'Create a typed relation. This has a persistent side effect and requires MCP mutations to be enabled.',
+      inputSchema: mcpCreateRelationInput.shape,
+      annotations: { destructiveHint: false, idempotentHint: false }
+    },
+    async rawInput =>
+      run(async () => {
+        const input = mcpCreateRelationInput.parse(rawInput) as McpCreateRelationInput;
+        const relation = await api.createRelation(input);
+        return { relation, message: `Created relation ${stringValue(relation['_uid'])}.` };
+      })
+  );
+
+  server.registerTool(
+    'update_relation',
+    {
+      description:
+        'Update typed relation fields. This has a persistent side effect and requires MCP mutations to be enabled.',
+      inputSchema: mcpUpdateRelationInput.shape,
+      annotations: { destructiveHint: true, idempotentHint: true }
+    },
+    async rawInput =>
+      run(async () => {
+        const input = mcpUpdateRelationInput.parse(rawInput) as McpUpdateRelationInput;
+        const relation = await api.updateRelation(input);
+        return { relation, message: `Updated relation ${stringValue(relation['_uid'])}.` };
+      })
+  );
+
+  server.registerTool(
+    'delete_relation',
+    {
+      description:
+        'Delete a typed relation. This has a persistent side effect and requires MCP mutations to be enabled.',
+      inputSchema: mcpDeleteRelationInput.shape,
+      annotations: { destructiveHint: true, idempotentHint: true }
+    },
+    async rawInput =>
+      run(async () => {
+        const input = mcpDeleteRelationInput.parse(rawInput) as McpDeleteRelationInput;
+        return api.deleteRelation(input);
+      })
+  );
+
   server.registerTool(
     'create_entity',
     {

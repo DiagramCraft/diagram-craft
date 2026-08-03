@@ -319,7 +319,10 @@ describe('createAiChatTools', () => {
     expect(tools.map(tool => tool.name)).toEqual([
       'query_entities',
       'get_entity_details',
-      'traverse_relations'
+      'traverse_relations',
+      'list_relation_schemas',
+      'list_relations',
+      'get_relation'
     ]);
   });
 

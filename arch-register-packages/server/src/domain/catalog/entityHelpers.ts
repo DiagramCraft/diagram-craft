@@ -4,6 +4,7 @@ import { PermissionChecker } from '@arch-register/permissions';
 import { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
 import type { ExternalMetadata } from '@arch-register/api-types/common';
 import {
+  filterKnownRestrictedFieldGroups,
   filterRestrictedFieldGroups,
   type FieldGroupSchemaShape
 } from '../auth/fieldGroupAccessControl';
@@ -107,3 +108,38 @@ export const toApiEntitySummary = (
   _externalMetadata: filterExternalMetadata(authCtx, schema, entity.generated_metadata),
   ...getEntityCapabilities(authCtx, entity)
 });
+
+const redactHistoricalEntity = (
+  entity: EntityDbResult,
+  authCtx: AuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null
+): EntityDbResult => ({
+  ...entity,
+  data: filterKnownRestrictedFieldGroups(authCtx, schema, entity.data),
+  generated_metadata: filterKnownRestrictedFieldGroups(
+    authCtx,
+    schema,
+    entity.generated_metadata ?? {}
+  ) as EntityDbResult['generated_metadata']
+});
+
+export const toApiHistoricalEntity = (
+  entity: EntityDbResult,
+  authCtx: AuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null,
+  completeness: number | null = null
+): EntityRecord =>
+  toApiEntity(redactHistoricalEntity(entity, authCtx, schema), authCtx, schema, completeness);
+
+export const toApiHistoricalEntitySummary = (
+  entity: EntityDbResult,
+  authCtx: AuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null,
+  completeness: number | null = null
+): EntitySummary =>
+  toApiEntitySummary(
+    redactHistoricalEntity(entity, authCtx, schema),
+    authCtx,
+    schema,
+    completeness
+  );

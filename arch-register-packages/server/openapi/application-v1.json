@@ -39840,7 +39840,10 @@
                                           "enum": [
                                             "query_entities",
                                             "get_entity_details",
-                                            "traverse_relations"
+                                            "traverse_relations",
+                                            "list_relation_schemas",
+                                            "list_relations",
+                                            "get_relation"
                                           ],
                                           "type": "string"
                                         }
@@ -39881,7 +39884,10 @@
                                           "enum": [
                                             "query_entities",
                                             "get_entity_details",
-                                            "traverse_relations"
+                                            "traverse_relations",
+                                            "list_relation_schemas",
+                                            "list_relations",
+                                            "get_relation"
                                           ],
                                           "type": "string"
                                         }
@@ -43911,7 +43917,10 @@
                               "enum": [
                                 "query_entities",
                                 "get_entity_details",
-                                "traverse_relations"
+                                "traverse_relations",
+                                "list_relation_schemas",
+                                "list_relations",
+                                "get_relation"
                               ],
                               "type": "string"
                             }
@@ -43952,7 +43961,10 @@
                               "enum": [
                                 "query_entities",
                                 "get_entity_details",
-                                "traverse_relations"
+                                "traverse_relations",
+                                "list_relation_schemas",
+                                "list_relations",
+                                "get_relation"
                               ],
                               "type": "string"
                             }
@@ -90447,7 +90459,10 @@
                                     "enum": [
                                       "query_entities",
                                       "get_entity_details",
-                                      "traverse_relations"
+                                      "traverse_relations",
+                                      "list_relation_schemas",
+                                      "list_relations",
+                                      "get_relation"
                                     ],
                                     "type": "string"
                                   }
@@ -90488,7 +90503,10 @@
                                     "enum": [
                                       "query_entities",
                                       "get_entity_details",
-                                      "traverse_relations"
+                                      "traverse_relations",
+                                      "list_relation_schemas",
+                                      "list_relations",
+                                      "get_relation"
                                     ],
                                     "type": "string"
                                   }
@@ -90761,7 +90779,10 @@
                                 "enum": [
                                   "query_entities",
                                   "get_entity_details",
-                                  "traverse_relations"
+                                  "traverse_relations",
+                                  "list_relation_schemas",
+                                  "list_relations",
+                                  "get_relation"
                                 ],
                                 "type": "string"
                               }
@@ -90802,7 +90823,10 @@
                                 "enum": [
                                   "query_entities",
                                   "get_entity_details",
-                                  "traverse_relations"
+                                  "traverse_relations",
+                                  "list_relation_schemas",
+                                  "list_relations",
+                                  "get_relation"
                                 ],
                                 "type": "string"
                               }
@@ -91082,7 +91106,10 @@
                                   "enum": [
                                     "query_entities",
                                     "get_entity_details",
-                                    "traverse_relations"
+                                    "traverse_relations",
+                                    "list_relation_schemas",
+                                    "list_relations",
+                                    "get_relation"
                                   ],
                                   "type": "string"
                                 }
@@ -91123,7 +91150,10 @@
                                   "enum": [
                                     "query_entities",
                                     "get_entity_details",
-                                    "traverse_relations"
+                                    "traverse_relations",
+                                    "list_relation_schemas",
+                                    "list_relations",
+                                    "get_relation"
                                   ],
                                   "type": "string"
                                 }
@@ -91419,7 +91449,10 @@
                                   "enum": [
                                     "query_entities",
                                     "get_entity_details",
-                                    "traverse_relations"
+                                    "traverse_relations",
+                                    "list_relation_schemas",
+                                    "list_relations",
+                                    "get_relation"
                                   ],
                                   "type": "string"
                                 }
@@ -91460,7 +91493,10 @@
                                   "enum": [
                                     "query_entities",
                                     "get_entity_details",
-                                    "traverse_relations"
+                                    "traverse_relations",
+                                    "list_relation_schemas",
+                                    "list_relations",
+                                    "get_relation"
                                   ],
                                   "type": "string"
                                 }
@@ -91740,7 +91776,10 @@
                                 "enum": [
                                   "query_entities",
                                   "get_entity_details",
-                                  "traverse_relations"
+                                  "traverse_relations",
+                                  "list_relation_schemas",
+                                  "list_relations",
+                                  "get_relation"
                                 ],
                                 "type": "string"
                               }
@@ -91781,7 +91820,10 @@
                                 "enum": [
                                   "query_entities",
                                   "get_entity_details",
-                                  "traverse_relations"
+                                  "traverse_relations",
+                                  "list_relation_schemas",
+                                  "list_relations",
+                                  "get_relation"
                                 ],
                                 "type": "string"
                               }
@@ -92061,7 +92103,10 @@
                                   "enum": [
                                     "query_entities",
                                     "get_entity_details",
-                                    "traverse_relations"
+                                    "traverse_relations",
+                                    "list_relation_schemas",
+                                    "list_relations",
+                                    "get_relation"
                                   ],
                                   "type": "string"
                                 }
@@ -92102,7 +92147,10 @@
                                   "enum": [
                                     "query_entities",
                                     "get_entity_details",
-                                    "traverse_relations"
+                                    "traverse_relations",
+                                    "list_relation_schemas",
+                                    "list_relations",
+                                    "get_relation"
                                   ],
                                   "type": "string"
                                 }
@@ -92462,7 +92510,10 @@
                                   "enum": [
                                     "query_entities",
                                     "get_entity_details",
-                                    "traverse_relations"
+                                    "traverse_relations",
+                                    "list_relation_schemas",
+                                    "list_relations",
+                                    "get_relation"
                                   ],
                                   "type": "string"
                                 }
@@ -92503,7 +92554,10 @@
                                   "enum": [
                                     "query_entities",
                                     "get_entity_details",
-                                    "traverse_relations"
+                                    "traverse_relations",
+                                    "list_relation_schemas",
+                                    "list_relations",
+                                    "get_relation"
                                   ],
                                   "type": "string"
                                 }
@@ -92798,7 +92852,10 @@
                                     "enum": [
                                       "query_entities",
                                       "get_entity_details",
-                                      "traverse_relations"
+                                      "traverse_relations",
+                                      "list_relation_schemas",
+                                      "list_relations",
+                                      "get_relation"
                                     ],
                                     "type": "string"
                                   }
@@ -92839,7 +92896,10 @@
                                     "enum": [
                                       "query_entities",
                                       "get_entity_details",
-                                      "traverse_relations"
+                                      "traverse_relations",
+                                      "list_relation_schemas",
+                                      "list_relations",
+                                      "get_relation"
                                     ],
                                     "type": "string"
                                   }

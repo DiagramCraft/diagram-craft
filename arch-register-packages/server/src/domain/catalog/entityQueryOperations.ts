@@ -10,7 +10,12 @@ import {
 } from '@arch-register/api-types/assessmentFilter';
 import type { AssessmentDbResult } from '../project/db/projectDatabase';
 
-import { toApiEntity, toApiEntitySummary } from './entityHelpers';
+import {
+  toApiEntity,
+  toApiEntitySummary,
+  toApiHistoricalEntity,
+  toApiHistoricalEntitySummary
+} from './entityHelpers';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { decodeRefs } from '../../types';
 import { handleError, filterEntities, matchesFilterCondition } from './dataHelpers';
@@ -24,6 +29,7 @@ import type { EntityDbResult, EntityQueryDbResult, SchemaDbResult } from './db/c
 import { compileEntityQueryIR, UnsupportedEntityQueryIRError } from './entityQueryIRCompiler';
 import { validateEntityQueryIR, type SchemaCatalog } from './entityQueryIRValidator';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
+import { availableSchemaCatalog, resolveEntitySchemaCatalogAt } from './schemaHistory';
 
 const checker = new PermissionChecker();
 
@@ -195,7 +201,12 @@ export const collectEntitiesFromIR = async (
   const query = options.entityQuery;
   httpAssert.present(query, { status: 400, message: 'EntityQuery is required' });
 
-  const schemaCatalog: SchemaCatalog = new Map(schemas.map(schema => [schema.id, schema]));
+  const historicalSchemas = query.asOf
+    ? await resolveEntitySchemaCatalogAt(db, workspace, schemas, new Date(query.asOf))
+    : null;
+  const schemaCatalog: SchemaCatalog = historicalSchemas
+    ? availableSchemaCatalog(historicalSchemas)
+    : new Map(schemas.map(schema => [schema.id, schema]));
   const validation = validateEntityQueryIR(query, schemaCatalog, authCtx);
   httpAssert.true(validation.ok, {
     status: 400,
@@ -234,20 +245,25 @@ export const collectEntitiesFromIR = async (
 
   return filteredRows.map((row: EntityQueryDbResult) => {
     const completeness = row.completeness;
-    const schema = schemaCatalog.get(row.schema_id) ?? null;
+    const schema =
+      historicalSchemas?.get(row.schema_id) ?? schemaCatalog.get(row.schema_id) ?? null;
     const visibleCompleteness = schema
       ? computeEntityCompleteness(row, schema, authCtx)
       : completeness;
     const apiEntity =
       options.view === 'summary'
         ? (attachProjectLink(
-            toApiEntitySummary(row, authCtx, schema, visibleCompleteness) as EntityRecord,
+            historicalSchemas
+              ? toApiHistoricalEntitySummary(row, authCtx, schema, visibleCompleteness)
+              : (toApiEntitySummary(row, authCtx, schema, visibleCompleteness) as EntityRecord),
             row.id,
             options.projectId,
             projectEntityMap
           ) as EntityRecord)
         : attachProjectLink(
-            toApiEntity(row, authCtx, schema, visibleCompleteness),
+            historicalSchemas
+              ? toApiHistoricalEntity(row, authCtx, schema, visibleCompleteness)
+              : toApiEntity(row, authCtx, schema, visibleCompleteness),
             row.id,
             options.projectId,
             projectEntityMap
@@ -347,6 +363,10 @@ const collectEntities = async (
   const collectionEntityIdSet = collectionEntityIds == null ? null : new Set(collectionEntityIds);
   const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
   const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  const historicalSchemas = asOf
+    ? await resolveEntitySchemaCatalogAt(db, workspace, schemas, asOf)
+    : null;
+  const responseSchemaById = historicalSchemas ?? schemaById;
   const rows: CollectedEntity[] = [];
 
   const hasWorkspaceWideView = authCtx != null && checker.hasWorkspaceWideEntityView(authCtx);
@@ -378,7 +398,7 @@ const collectEntities = async (
       return;
     }
 
-    const schema = schemaById.get(entity.schema_id) ?? null;
+    const schema = responseSchemaById.get(entity.schema_id) ?? null;
     const visibleCompleteness = schema
       ? computeEntityCompleteness(entity, schema, authCtx)
       : completeness;
@@ -386,13 +406,22 @@ const collectEntities = async (
       entity:
         view === 'summary'
           ? (attachProjectLink(
-              toApiEntitySummary(entity, authCtx, schema, visibleCompleteness) as EntityRecord,
+              historicalSchemas
+                ? toApiHistoricalEntitySummary(entity, authCtx, schema, visibleCompleteness)
+                : (toApiEntitySummary(
+                    entity,
+                    authCtx,
+                    schema,
+                    visibleCompleteness
+                  ) as EntityRecord),
               entity.id,
               projectId,
               projectEntityMap
             ) as EntityRecord)
           : attachProjectLink(
-              toApiEntity(entity, authCtx, schema, visibleCompleteness),
+              historicalSchemas
+                ? toApiHistoricalEntity(entity, authCtx, schema, visibleCompleteness)
+                : toApiEntity(entity, authCtx, schema, visibleCompleteness),
               entity.id,
               projectId,
               projectEntityMap

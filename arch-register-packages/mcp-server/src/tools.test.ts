@@ -94,6 +94,9 @@ describe('MCP tools', () => {
       'search_entities',
       'get_entity',
       'list_schemas',
+      'list_relation_schemas',
+      'list_relations',
+      'get_relation',
       'get_entity_dependencies',
       'get_entity_dependents',
       'get_workspace_summary'

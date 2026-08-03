@@ -140,10 +140,10 @@ pnpm install
 
 ## Bootstrap the database
 
-This resets the selected database driver, recreates the schema, and loads seed data:
+This is an explicitly destructive local-development operation. It recreates the selected database schema and loads seed data. Set `NODE_ENV=development` (or `test`) and pass `--reset`:
 
 ```bash
-pnpm bootstrap
+NODE_ENV=development pnpm bootstrap -- --reset
 ```
 
 To seed enabled AI configuration for all bootstrap workspaces, provide the dedicated bootstrap variables and use the
@@ -154,7 +154,7 @@ BOOTSTRAP_AI_PROVIDER=openrouter \
 BOOTSTRAP_AI_MODEL=anthropic/claude-sonnet-4-20250514 \
 BOOTSTRAP_AI_API_KEY=... \
 AI_ENCRYPTION_KEY=... \
-pnpm bootstrap -- --bootstrap-ai
+NODE_ENV=development pnpm bootstrap -- --reset --bootstrap-ai
 ```
 
 The command fails before resetting the database if any required value is missing or the provider is unsupported.
@@ -164,8 +164,6 @@ You should see:
 
 ```
 Bootstrapping database...
-Dropping existing tables...
-Tables dropped.
 Creating schema...
 Schema created.
 Seeding data...
@@ -173,7 +171,7 @@ Seed data loaded.
 Bootstrap complete.
 ```
 
-Re-running `pnpm bootstrap` at any time resets the database to the seed state.
+Re-running the command with `--reset` resets the database to the seed state. Normal server startup only applies pending migrations and never recreates the database.
 
 ## Start the server
 

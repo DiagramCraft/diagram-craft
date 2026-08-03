@@ -35,6 +35,16 @@ export const validateRelationEndpoints = (
   });
 };
 
+/** Relation approval/version workflows are implemented separately in #2574. */
+export const assertRelationMutationsSupported = (schema: RelationSchemaDbResult) => {
+  httpAssert.true(schema.relation_approval_policy !== 'required', {
+    status: 409,
+    statusText: 'Conflict',
+    message:
+      'This relation schema requires an approved change proposal before relation instances can be edited'
+  });
+};
+
 /** Flattens relation field data to top level for audit logging, mirroring `flattenEntityAuditFields`. */
 export const flattenRelationAuditFields = (row: RelationDbResult): Record<string, unknown> => ({
   _schemaId: row.schema_id,

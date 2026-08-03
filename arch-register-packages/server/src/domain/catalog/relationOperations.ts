@@ -15,6 +15,7 @@ import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl'
 import {
   extractRelationFieldData,
   flattenRelationAuditFields,
+  assertRelationMutationsSupported,
   toRedactedApiRelation,
   validateRelationEndpoints
 } from './relationHelpers';
@@ -189,6 +190,7 @@ export const createWorkspaceRelation = async (
         status: 404,
         message: `Relation schema '${schemaId}' not found`
       });
+      assertRelationMutationsSupported(schema);
 
       const [inEntity, outEntity] = await Promise.all([
         db.catalog.getEntity(ws, inEntityId),
@@ -270,6 +272,7 @@ export const updateWorkspaceRelation = async (
         ],
         oldRow.schema_id
       );
+      assertRelationMutationsSupported(schema);
 
       const data = extractRelationFieldData(body);
       const changedFieldIds = Object.keys(data).filter(
@@ -330,6 +333,12 @@ export const deleteWorkspaceRelation = async (
         ],
         row.schema_id
       );
+      const schema = await db.relation.getRelationSchema(ws, row.schema_id);
+      httpAssert.present(schema, {
+        status: 404,
+        message: `Relation schema '${row.schema_id}' not found`
+      });
+      assertRelationMutationsSupported(schema);
 
       await db.relation.deleteRelation(ws, id);
 

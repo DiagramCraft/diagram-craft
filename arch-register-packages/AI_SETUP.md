@@ -68,7 +68,7 @@ BOOTSTRAP_AI_PROVIDER=openrouter \
 BOOTSTRAP_AI_MODEL=anthropic/claude-sonnet-4-20250514 \
 BOOTSTRAP_AI_API_KEY=... \
 AI_ENCRYPTION_KEY=... \
-pnpm --filter @arch-register/server bootstrap -- --bootstrap-ai
+NODE_ENV=development pnpm --filter @arch-register/server bootstrap -- --reset --bootstrap-ai
 ```
 
 `BOOTSTRAP_AI_PROVIDER`, `BOOTSTRAP_AI_MODEL`, and `BOOTSTRAP_AI_API_KEY` are all required, and the provider must be

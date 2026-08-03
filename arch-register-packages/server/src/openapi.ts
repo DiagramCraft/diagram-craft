@@ -4,6 +4,7 @@ import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
 import { workspaceRelationSchemaContract } from '@arch-register/api-types/relationSchemaContract';
 import { workspaceRelationContract } from '@arch-register/api-types/relationContract';
+import { integrationRelationContract } from '@arch-register/api-types/integrationRelationContract';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { workspaceFieldGroupContract } from '@arch-register/api-types/fieldGroupContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
@@ -183,6 +184,7 @@ export const getIntegrationOpenAPISpec = () => {
     .generate(
       {
         ...integrationSchemaContract,
+        ...integrationRelationContract,
         ...entitySyncContract
       },
       {

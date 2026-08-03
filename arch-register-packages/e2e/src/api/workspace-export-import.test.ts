@@ -168,6 +168,44 @@ test.describe('workspace export/import', () => {
     const target = await orpc.workspaces.create({
       body: { name: `ACL import target ${suffix}`, badge: 'AIT' }
     });
+    const targetTeams = await orpc.config.teams.list({ params: { workspace: target.url_slug } });
+    const targetGroup = await orpc.fieldGroups.create({
+      params: { workspace: target.url_slug },
+      body: {
+        name: group.name,
+        fields: [{ id: `secret_${suffix}`, name: 'Secret', type: 'text' }]
+      }
+    });
+    const targetSchemaId = randomUUID();
+    const targetSchemaNow = new Date();
+    await server.db.catalog.createSchema({
+      id: targetSchemaId,
+      workspace: target.id,
+      name: schema.name,
+      description: '',
+      fields: [{ id: `secret_${suffix}`, name: 'Secret', type: 'text', groupId: targetGroup.id }],
+      groups: [
+        {
+          id: targetGroup.id,
+          name: targetGroup.name,
+          accessControl: { teamIds: [targetTeams[0]!.id] }
+        }
+      ],
+      shared_field_group_links: [{ groupId: targetGroup.id, teamIds: [targetTeams[0]!.id] }],
+      templates: [],
+      color: null,
+      icon: null,
+      default_owner: null,
+      key_prefix: `T${suffix.slice(-4)}`,
+      created_at: targetSchemaNow,
+      updated_at: targetSchemaNow
+    });
+    await server.db.workspace.registerPublicIdPrefix(
+      `T${suffix.slice(-4)}`,
+      'schema',
+      targetSchemaId,
+      targetSchemaNow
+    );
     const parsed = await orpc.workspaces.importParse({
       params: { workspace: target.url_slug },
       body: {
@@ -184,6 +222,7 @@ test.describe('workspace export/import', () => {
       }
     });
     expect(execute.success).toBe(true);
+    expect(execute.imported.schemas).toEqual({ created: 0, updated: 1 });
 
     const importedSchemas = await server.db.catalog.listSchemas(target.id);
     const importedSchema = importedSchemas.find(item => item.name === schema.name);

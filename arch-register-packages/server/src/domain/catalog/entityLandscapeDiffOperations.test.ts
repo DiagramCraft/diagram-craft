@@ -36,6 +36,29 @@ vi.mock('./entityHelpers', () => ({
     canAdmin: true,
     canCreateChild: true,
     ...entity.data
+  }),
+  toApiHistoricalEntity: (entity: EntityDbResult) => ({
+    _uid: entity.id,
+    _publicId: entity.public_id,
+    _schema: { id: entity.schema_id, name: entity.schema_name },
+    _name: entity.name,
+    _slug: entity.slug,
+    _namespace: entity.namespace,
+    _description: entity.description,
+    _owner: null,
+    _lifecycle: null,
+    _targetLifecycle: null,
+    _targetLifecycleDate: null,
+    _tags: entity.tags,
+    _links: entity.links,
+    _projectId: entity.project_id,
+    _completeness: entity.completeness,
+    canView: true,
+    canEdit: true,
+    canDelete: true,
+    canAdmin: true,
+    canCreateChild: true,
+    ...entity.data
   })
 }));
 
@@ -141,7 +164,12 @@ const db = {
   },
   catalog: {
     listEntitiesPaginated: vi.fn(async () => []),
-    listSchemas: vi.fn(async () => [])
+    listSchemas: vi.fn(async () => []),
+    getSchema: vi.fn(
+      async (workspace: string, id: string) =>
+        (await db.catalog.listSchemas(workspace)).find(schema => schema.id === id) ?? null
+    ),
+    listSchemaVersions: vi.fn(async () => [])
   }
 } as unknown as DatabaseAdapter;
 
@@ -563,6 +591,81 @@ describe('diffEntityLandscapes', () => {
       ]);
     });
 
+    it('uses the historical ACL when the current schema is relaxed', async () => {
+      const relaxedSchema = {
+        ...restrictedSchema,
+        created_at: new Date('2026-07-30T12:00:00.000Z'),
+        groups: [],
+        fields: restrictedSchema.fields.map(field => ({ ...field, groupId: undefined }))
+      } as unknown as SchemaDbResult;
+      const historicalSchema = {
+        ...restrictedSchema,
+        schema_id: 'schema-1',
+        created_at: new Date('2026-07-29T12:00:00.000Z')
+      };
+      vi.mocked(db.catalog.listSchemas).mockResolvedValue([relaxedSchema] as never);
+      vi.mocked(db.catalog.listSchemaVersions).mockResolvedValue([
+        historicalSchema,
+        { ...relaxedSchema, created_at: new Date('2026-07-30T12:00:00.000Z') }
+      ] as never);
+      vi.mocked(reconstructEntitiesAsOf)
+        .mockResolvedValueOnce([
+          makeEntity('e1', {
+            data: { secret: 'historical-before' },
+            updated_at: new Date('2026-07-29T13:00:00.000Z')
+          })
+        ])
+        .mockResolvedValueOnce([
+          makeEntity('e1', {
+            data: { secret: 'historical-after' },
+            updated_at: new Date('2026-07-30T13:00:00.000Z')
+          })
+        ]);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({}),
+        state({ asOf: '2026-07-29T13:00:00.000Z' }),
+        state({ asOf: '2026-07-30T13:00:00.000Z' })
+      );
+
+      expect(result.changed[0]?.diff).toEqual({
+        data: {
+          before: {},
+          after: { secret: 'historical-after' }
+        }
+      });
+    });
+
+    it('does not expose a restricted field removed from the current schema', async () => {
+      const currentSchema = {
+        ...restrictedSchema,
+        created_at: new Date('2026-07-30T12:00:00.000Z'),
+        fields: restrictedSchema.fields.filter(field => field.id !== 'secret')
+      } as unknown as SchemaDbResult;
+      const historicalSchema = {
+        ...restrictedSchema,
+        schema_id: 'schema-1',
+        created_at: new Date('2026-07-29T12:00:00.000Z')
+      };
+      vi.mocked(db.catalog.listSchemas).mockResolvedValue([currentSchema] as never);
+      vi.mocked(db.catalog.listSchemaVersions).mockResolvedValue([historicalSchema] as never);
+      vi.mocked(reconstructEntitiesAsOf)
+        .mockResolvedValueOnce([makeEntity('e1', { data: { secret: 'old-secret' } })])
+        .mockResolvedValueOnce([makeEntity('e1', { data: {} })]);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({}),
+        state({ asOf: '2026-07-29T13:00:00.000Z' }),
+        state({ asOf: '2026-07-30T13:00:00.000Z' })
+      );
+
+      expect(result.changed[0]?.diff).toEqual({});
+    });
+
     it('does not redact when the caller has view access to the group', async () => {
       const from = [makeEntity('e1', { data: { secret: 'before' } })];
       const to = [makeEntity('e1', { data: { secret: 'after' } })];
@@ -628,7 +731,7 @@ describe('diffEntityLandscapes', () => {
       ]);
     });
 
-    it('behaves unchanged when no schema is found for the entity', async () => {
+    it('fails closed when no historical schema is found for the entity', async () => {
       vi.mocked(db.catalog.listSchemas).mockResolvedValue([] as never);
       const from = [makeEntity('e1', { data: { secret: 'before' } })];
       const to = [makeEntity('e1', { data: { secret: 'after' } })];
@@ -644,9 +747,7 @@ describe('diffEntityLandscapes', () => {
 
       expect(result.changed).toEqual([
         expect.objectContaining({
-          diff: {
-            data: { before: { secret: 'before' }, after: { secret: 'after' } }
-          }
+          diff: {}
         })
       ]);
     });

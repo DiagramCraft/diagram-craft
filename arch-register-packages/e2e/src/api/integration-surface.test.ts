@@ -10,6 +10,10 @@ const test = createApiTest({
 
 const entityId = '00000000-0000-0000-0003-000000000002';
 const schemaId = '00000000-0000-0000-0000-000000000007';
+const relationSchemaId = '00000000-0000-0000-0000-000000000030';
+const relationId = '00000000-0000-0000-0009-000000000001';
+const relationInEntityId = '00000000-0000-0000-0002-000000000001';
+const relationOutEntityId = '00000000-0000-0000-0002-000000000002';
 
 const integrationUrl = (baseUrl: string, path: string) =>
   `${baseUrl}/api/integrations/v1/default${path}`;
@@ -29,6 +33,90 @@ const mutationBody = (name: string) => ({
 });
 
 test.describe('integration entity surface', () => {
+  test('exposes typed relation metadata, paginated reads, and CRUD', async ({ server, auth }) => {
+    const now = new Date();
+    await server.db.relation.createRelationSchema({
+      id: relationSchemaId,
+      workspace: seedIds.workspace.default,
+      name: 'Integration Data Flow',
+      description: '',
+      in_schema_ids: ['00000000-0000-0000-0000-000000000002'],
+      out_schema_ids: ['00000000-0000-0000-0000-000000000002'],
+      fields: [{ id: 'protocol', name: 'Protocol', type: 'text', requirementLevel: 'optional' }],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: now,
+      updated_at: now
+    });
+    await server.db.relation.createRelation({
+      id: relationId,
+      workspace: seedIds.workspace.default,
+      schema_id: relationSchemaId,
+      in_entity_id: relationInEntityId,
+      out_entity_id: relationOutEntityId,
+      data: { protocol: 'https' },
+      created_at: now,
+      updated_at: now
+    });
+
+    const schemas = await fetch(integrationUrl(server.baseUrl, '/relation-schemas'), {
+      headers: { Authorization: auth }
+    });
+    expect(schemas.status).toBe(200);
+    expect(
+      (await schemas.json()).some((schema: { id: string }) => schema.id === relationSchemaId)
+    ).toBe(true);
+
+    const page = await fetch(
+      integrationUrl(server.baseUrl, `/relations?schemaId=${relationSchemaId}&limit=1&offset=0`),
+      { headers: { Authorization: auth } }
+    );
+    expect(page.status).toBe(200);
+    const pageBody = await page.json();
+    expect(pageBody.total).toBeGreaterThan(0);
+    expect(pageBody.items).toHaveLength(1);
+
+    const entityRelations = await fetch(
+      integrationUrl(server.baseUrl, `/data/${relationInEntityId}/typed-relations`),
+      { headers: { Authorization: auth } }
+    );
+    expect(entityRelations.status).toBe(200);
+    expect((await entityRelations.json()).outgoing).toEqual(
+      expect.arrayContaining([expect.objectContaining({ _uid: relationId })])
+    );
+
+    const created = await fetch(integrationUrl(server.baseUrl, '/relations'), {
+      method: 'POST',
+      headers: { Authorization: auth, 'content-type': 'application/json' },
+      body: JSON.stringify({
+        _schemaId: relationSchemaId,
+        _inEntityId: relationInEntityId,
+        _outEntityId: relationOutEntityId,
+        protocol: 'https'
+      })
+    });
+    expect(created.status).toBe(200);
+    const createdBody = await created.json();
+    expect(createdBody.protocol).toBe('https');
+
+    const updated = await fetch(integrationUrl(server.baseUrl, `/relations/${createdBody._uid}`), {
+      method: 'PUT',
+      headers: { Authorization: auth, 'content-type': 'application/json' },
+      body: JSON.stringify({ protocol: 'grpc' })
+    });
+    expect(updated.status).toBe(200);
+    expect((await updated.json()).protocol).toBe('grpc');
+
+    const deleted = await fetch(integrationUrl(server.baseUrl, `/relations/${createdBody._uid}`), {
+      method: 'DELETE',
+      headers: { Authorization: auth }
+    });
+    expect(deleted.status).toBe(200);
+  });
+
   test('supports entity ID and external identity reads and writes', async ({ server, auth }) => {
     const byId = await fetch(integrationUrl(server.baseUrl, `/entities/${entityId}`), {
       headers: { Authorization: auth }
