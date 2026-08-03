@@ -73,6 +73,13 @@ describe('redactVersionState', () => {
     expect(redacted.state.data).toEqual({ visible: 'x', secret: 'y' });
   });
 
+  it('fails closed when a historical schema is required but unavailable', () => {
+    const redacted = redactVersionState(version, authCtxWithNoTeams(), schema, null, {
+      failClosedWhenHistoricalSchemaMissing: true
+    });
+    expect(redacted.state.data).toEqual({});
+  });
+
   it('is a no-op when state has no data object', () => {
     const noDataVersion = { ...version, state: { name: 'Entity' } };
     const redacted = redactVersionState(noDataVersion, authCtxWithNoTeams(), schema);
@@ -101,6 +108,21 @@ describe('redactVersionState', () => {
       redactVersionState(historicalVersion, authCtxWithNoTeams(), schema, historicalSchema).state
         .data
     ).toEqual({});
+  });
+
+  it('keeps historically restricted fields redacted after a current ACL relaxation', () => {
+    const currentSchema: FieldGroupSchemaShape = {
+      fields: [{ ...schema.fields[1]!, groupId: undefined }],
+      groups: []
+    };
+    const historicalSchema: FieldGroupSchemaShape = {
+      fields: schema.fields,
+      groups: schema.groups
+    };
+
+    expect(
+      redactVersionState(version, authCtxWithNoTeams(), currentSchema, historicalSchema).state.data
+    ).toEqual({ visible: 'x' });
   });
 
   it('omits fields unknown to both schemas for authenticated callers', () => {

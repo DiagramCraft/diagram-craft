@@ -156,7 +156,154 @@ const testData = async (
   };
 };
 
+const historicalAclTestData = async (
+  server: TestServer,
+  workspace: string,
+  entityId: string,
+  securityTeamId: string
+) => {
+  const entity = await server.db.catalog.getEntity(workspace, entityId);
+  if (!entity) throw new Error(`Expected entity '${entityId}' to exist`);
+  const schema = await server.db.catalog.getSchema(workspace, entity.schema_id);
+  if (!schema) throw new Error(`Expected schema '${entity.schema_id}' to exist`);
+
+  const historicalAt = new Date('2026-07-30T12:00:00.000Z');
+  const currentAt = new Date('2026-07-30T14:00:00.000Z');
+  const historicalGroups = (schema.groups ?? []).map(group =>
+    group.id === PII_GROUP_ID ? { ...group, accessControl: { teamIds: [securityTeamId] } } : group
+  );
+  const historicalVersion = (schema.version ?? 1) + 1;
+
+  await server.db.catalog.createSchemaVersion({
+    id: randomUUID(),
+    workspace,
+    schema_id: schema.id,
+    version: historicalVersion,
+    name: schema.name,
+    description: schema.description,
+    fields: schema.fields,
+    templates: schema.templates ?? [],
+    groups: historicalGroups,
+    shared_field_group_links: schema.shared_field_group_links ?? [],
+    color: schema.color,
+    icon: schema.icon,
+    change_summary: {},
+    created_by: null,
+    created_at: historicalAt
+  });
+
+  const currentSchema = await server.db.catalog.updateSchema(workspace, schema.id, {
+    name: schema.name,
+    description: schema.description,
+    fields: schema.fields,
+    templates: schema.templates,
+    groups: schema.groups,
+    shared_field_group_links: schema.shared_field_group_links,
+    color: schema.color,
+    icon: schema.icon,
+    default_owner: schema.default_owner,
+    key_prefix: schema.key_prefix,
+    entity_approval_policy: schema.entity_approval_policy,
+    deprecation_policy: schema.deprecation_policy,
+    version: historicalVersion + 1,
+    updated_at: currentAt
+  });
+  if (!currentSchema) throw new Error('Expected current schema update to succeed');
+
+  const versions = await server.db.catalog.listEntityVersions(workspace, entity.id);
+  const version = await server.db.catalog.createEntityVersion({
+    id: randomUUID(),
+    workspace,
+    entity_id: entity.id,
+    version_number: Math.max(...versions.map(item => item.version_number), entity.version ?? 1) + 1,
+    kind: 'saved_version',
+    commit_message: null,
+    created_at: new Date('2026-07-30T13:00:00.000Z'),
+    created_by: null,
+    state: entityToBaseState({
+      ...entity,
+      data: { ...entity.data, pii_scope: 'historical-secret' }
+    }),
+    applied_case_revision_id: null
+  });
+
+  return { entity, version };
+};
+
 test.describe('entity version field-group permissions', () => {
+  test('list and get use the historical ACL when the current schema is less restrictive', async ({
+    server,
+    personas,
+    resources
+  }) => {
+    const data = await historicalAclTestData(
+      server,
+      resources.workspaceId,
+      resources.entityIds.customerPortal,
+      resources.teamIds.security
+    );
+
+    const listed = await personas.workspaceEditor.orpc.entityVersions.list({
+      params: { workspace: 'default', id: data.entity.id }
+    });
+    const listedVersion = listed.find(version => version.id === data.version.id);
+    expect(listedVersion?.state.data).not.toHaveProperty('pii_scope');
+
+    const fetched = await personas.workspaceEditor.orpc.entityVersions.get({
+      params: {
+        workspace: 'default',
+        id: data.entity.id,
+        versionId: data.version.id
+      }
+    });
+    expect(fetched.state.data).not.toHaveProperty('pii_scope');
+  });
+
+  test('list and get omit data when the version schema is unavailable', async ({
+    server,
+    personas,
+    resources
+  }) => {
+    const entity = await server.db.catalog.getEntity(
+      resources.workspaceId,
+      resources.entityIds.customerPortal
+    );
+    if (!entity) throw new Error('Expected entity to exist');
+    const versions = await server.db.catalog.listEntityVersions(resources.workspaceId, entity.id);
+    const missingSchemaVersion = await server.db.catalog.createEntityVersion({
+      id: randomUUID(),
+      workspace: resources.workspaceId,
+      entity_id: entity.id,
+      version_number:
+        Math.max(...versions.map(version => version.version_number), entity.version ?? 1) + 1,
+      kind: 'saved_version',
+      commit_message: null,
+      created_at: new Date(),
+      created_by: null,
+      state: {
+        ...entityToBaseState(entity),
+        schema_id: randomUUID(),
+        data: { ...entity.data, missing_schema_secret: 'must-not-leak' }
+      },
+      applied_case_revision_id: null
+    });
+
+    const listed = await personas.workspaceEditor.orpc.entityVersions.list({
+      params: { workspace: 'default', id: entity.id }
+    });
+    const listedVersion = listed.find(version => version.id === missingSchemaVersion.id);
+    expect(listedVersion?.state.data).toEqual({});
+
+    const fetched = await personas.workspaceEditor.orpc.entityVersions.get({
+      params: {
+        workspace: 'default',
+        id: entity.id,
+        versionId: missingSchemaVersion.id
+      }
+    });
+    expect(fetched.state.data).toEqual({});
+  });
+
   test('promote redacts restricted values for a caller without field-group view access', async ({
     server,
     personas,
