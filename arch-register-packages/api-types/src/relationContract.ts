@@ -52,19 +52,19 @@ export const relationListFiltersSchema = z.object({
   outEntityId: z.string().optional().describe('Filter by "out" endpoint entity identifier')
 });
 
-const relationListResponseSchema = z.object({
+export const relationListResponseSchema = z.object({
   items: z.array(relationRecordSchema).describe('Relation instances on the requested page'),
   total: z.number().int().describe('Total number of relation instances matching the filters')
 });
 
-const deleteRelationResponseSchema = z.object({
+export const deleteRelationResponseSchema = z.object({
   success: z.boolean().describe('Whether the deletion was successful'),
   message: z.string().describe('Status message or error details')
 });
 
 // ── Typed relations for an entity ─────────────────────────────
 
-const entityTypedRelationsSchema = z.object({
+export const entityTypedRelationsSchema = z.object({
   outgoing: z
     .array(relationRecordSchema)
     .describe('Relation instances where this entity is the "in" endpoint'),

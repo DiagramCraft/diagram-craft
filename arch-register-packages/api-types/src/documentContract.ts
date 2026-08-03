@@ -103,7 +103,10 @@ export const documentFieldSchema = z
 export const documentAiToolIdSchema = z.enum([
   'query_entities',
   'get_entity_details',
-  'traverse_relations'
+  'traverse_relations',
+  'list_relation_schemas',
+  'list_relations',
+  'get_relation'
 ]);
 
 export type DocumentAiToolId = z.infer<typeof documentAiToolIdSchema>;
@@ -127,6 +130,21 @@ export const DOCUMENT_AI_READ_ONLY_TOOLS: ReadonlyArray<{
     id: 'traverse_relations',
     label: 'Traverse relations',
     description: 'Explore visible entity relationships across multiple hops.'
+  },
+  {
+    id: 'list_relation_schemas',
+    label: 'List relation schemas',
+    description: 'Inspect typed relation definitions and endpoint constraints.'
+  },
+  {
+    id: 'list_relations',
+    label: 'List typed relations',
+    description: 'Find typed relation instances with optional filters and pagination.'
+  },
+  {
+    id: 'get_relation',
+    label: 'Get typed relation',
+    description: 'Read one typed relation instance and its visible fields.'
   }
 ];
 

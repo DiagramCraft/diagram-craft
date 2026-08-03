@@ -480,17 +480,22 @@
       delivery, and scheduled work.
 
         - @id:ar.integrations.api External clients can use the documented API contract and API tokens to access
-          supported Arch Register operations. Administrators can create workspace-scoped API tokens backed by a
-          system user, restricted to a chosen subset of role capabilities, with an optional expiry date, in addition
-          to the personal API tokens available from account settings.
+          supported Arch Register operations. The stable integration surface exposes entity schemas, typed relation
+          schema metadata, paginated typed relation reads, entity-scoped typed relation traversal, and typed relation
+          instance create/update/delete operations with capability checks, field-group redaction, audit logging, and
+          approval-policy enforcement. Administrators can create workspace-scoped API tokens backed by a system user,
+          restricted to a chosen subset of role capabilities, with an optional expiry date, in addition to the
+          personal API tokens available from account settings.
 
         - @id:ar.integrations.entity-sync External integrations holding the external-update capability can
           idempotently create or update an entity by a durable (source, external key) identity, distinct from the
           entity's internal id, so repeated submissions from a catalog importer converge on the same entity instead
           of creating duplicates.
 
-        - @id:ar.integrations.mcp External AI or automation clients can use the MCP server’s supported discovery and
-          mutation tools.
+        - @id:ar.integrations.mcp External AI or automation clients can use the MCP server’s supported entity and
+          typed-relation discovery, bounded traversal, and mutation tools. Typed relation mutations require the MCP
+          mutation switch and `ent.edit`, while relation fields remain subject to field-group redaction and writes are
+          audited.
 
         - @id:ar.integrations.webhooks Administrators can configure webhooks and inspect supported delivery behavior for
           workspace events.

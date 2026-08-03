@@ -1074,6 +1074,2038 @@
         }
       }
     },
+    "/integrations/v1/{workspace}/relation-schemas": {
+      "get": {
+        "operationId": "integrationRelationSchemas.list",
+        "summary": "List relation schemas for integrations",
+        "description": "Lists typed relation schema metadata, including endpoint constraints, relation fields, field groups, and approval policy.",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique relation schema identifier"
+                      },
+                      "workspace": {
+                        "type": "string",
+                        "description": "Parent workspace identifier"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Relation schema name"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Relation schema description"
+                      },
+                      "in": {
+                        "type": "object",
+                        "properties": {
+                          "schemaIds": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Entity schema identifiers allowed at this endpoint"
+                          }
+                        },
+                        "required": [
+                          "schemaIds"
+                        ],
+                        "description": "Allowed entity schemas for the \"in\" endpoint"
+                      },
+                      "out": {
+                        "type": "object",
+                        "properties": {
+                          "schemaIds": {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Entity schema identifiers allowed at this endpoint"
+                          }
+                        },
+                        "required": [
+                          "schemaIds"
+                        ],
+                        "description": "Allowed entity schemas for the \"out\" endpoint"
+                      },
+                      "fields": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "type": {
+                                  "const": "text",
+                                  "description": "Single-line text field"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "type": {
+                                  "const": "longtext",
+                                  "description": "Multi-line text field"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "type": {
+                                  "const": "boolean",
+                                  "description": "Boolean (true/false) field"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "type": {
+                                  "const": "date",
+                                  "description": "Date field"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "type": {
+                                  "const": "number",
+                                  "description": "Integer number field"
+                                },
+                                "min": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum allowed value"
+                                },
+                                "max": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "description": "Maximum allowed value"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "type": {
+                                  "const": "select",
+                                  "description": "Single-select dropdown field"
+                                },
+                                "enumId": {
+                                  "type": "string",
+                                  "description": "Enumeration identifier for dropdown options"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string",
+                                        "description": "Internal option value"
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "description": "Display label"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
+                                  },
+                                  "description": "Available dropdown options"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type",
+                                "enumId",
+                                "options"
+                              ]
+                            }
+                          ],
+                          "description": "Relation field with resolved options"
+                        },
+                        "description": "Relation field definitions"
+                      },
+                      "groups": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Stable group identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Group display name"
+                            },
+                            "description": {
+                              "type": "string",
+                              "description": "Optional group description"
+                            },
+                            "accessControl": {
+                              "type": "object",
+                              "properties": {
+                                "teamIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Teams whose role determines view/edit access"
+                                }
+                              },
+                              "required": [
+                                "teamIds"
+                              ],
+                              "description": "If set, restricts view/edit of this group to members of the listed teams"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        "description": "Named, presentation-only field groups, in display order"
+                      },
+                      "shared_field_group_links": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "groupId": {
+                              "type": "string",
+                              "description": "Id of the included workspace shared fieldgroup"
+                            },
+                            "teamIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string"
+                              },
+                              "description": "Teams whose role determines view/edit access for this inclusion"
+                            }
+                          },
+                          "required": [
+                            "groupId"
+                          ],
+                          "description": "A schema-local inclusion of a workspace shared fieldgroup"
+                        },
+                        "description": "Included workspace shared fieldgroups, in display order"
+                      },
+                      "color": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Relation schema color (hex format)"
+                      },
+                      "icon": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Relation schema icon identifier"
+                      },
+                      "relation_count": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                        "description": "Number of relation instances using this schema"
+                      },
+                      "version": {
+                        "type": "integer",
+                        "minimum": 1,
+                        "maximum": 9007199254740991,
+                        "description": "Current schema version number"
+                      },
+                      "relation_approval_policy": {
+                        "enum": [
+                          "required",
+                          "disabled"
+                        ],
+                        "type": "string",
+                        "description": "Approval policy for relation instance changes. \"required\" is not yet supported — see #2574."
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601 creation timestamp"
+                      },
+                      "updated_at": {
+                        "type": "string",
+                        "description": "ISO 8601 last update timestamp"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "workspace",
+                      "name",
+                      "description",
+                      "in",
+                      "out",
+                      "fields",
+                      "groups",
+                      "color",
+                      "icon",
+                      "relation_count",
+                      "version",
+                      "created_at",
+                      "updated_at"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/v1/{workspace}/relation-schemas/{id}": {
+      "get": {
+        "operationId": "integrationRelationSchemas.get",
+        "summary": "Get relation schema for integrations",
+        "description": "Retrieves typed relation schema metadata by identifier.",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique relation schema identifier"
+                    },
+                    "workspace": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Relation schema name"
+                    },
+                    "description": {
+                      "type": "string",
+                      "description": "Relation schema description"
+                    },
+                    "in": {
+                      "type": "object",
+                      "properties": {
+                        "schemaIds": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Entity schema identifiers allowed at this endpoint"
+                        }
+                      },
+                      "required": [
+                        "schemaIds"
+                      ],
+                      "description": "Allowed entity schemas for the \"in\" endpoint"
+                    },
+                    "out": {
+                      "type": "object",
+                      "properties": {
+                        "schemaIds": {
+                          "type": "array",
+                          "minItems": 1,
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Entity schema identifiers allowed at this endpoint"
+                        }
+                      },
+                      "required": [
+                        "schemaIds"
+                      ],
+                      "description": "Allowed entity schemas for the \"out\" endpoint"
+                    },
+                    "fields": {
+                      "type": "array",
+                      "items": {
+                        "anyOf": [
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "required",
+                                      "expected",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "type": {
+                                "const": "text",
+                                "description": "Single-line text field"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "required",
+                                      "expected",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "type": {
+                                "const": "longtext",
+                                "description": "Multi-line text field"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "required",
+                                      "expected",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "type": {
+                                "const": "boolean",
+                                "description": "Boolean (true/false) field"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "required",
+                                      "expected",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "type": {
+                                "const": "date",
+                                "description": "Date field"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "required",
+                                      "expected",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "type": {
+                                "const": "number",
+                                "description": "Integer number field"
+                              },
+                              "min": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Minimum allowed value"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Maximum allowed value"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "type"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "required",
+                                      "expected",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Whether the field is required, expected, or optional"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "type": {
+                                "const": "select",
+                                "description": "Single-select dropdown field"
+                              },
+                              "enumId": {
+                                "type": "string",
+                                "description": "Enumeration identifier for dropdown options"
+                              },
+                              "options": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "description": "Internal option value"
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "description": "Display label"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                },
+                                "description": "Available dropdown options"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "type",
+                              "enumId",
+                              "options"
+                            ]
+                          }
+                        ],
+                        "description": "Relation field with resolved options"
+                      },
+                      "description": "Relation field definitions"
+                    },
+                    "groups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Stable group identifier"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Group display name"
+                          },
+                          "description": {
+                            "type": "string",
+                            "description": "Optional group description"
+                          },
+                          "accessControl": {
+                            "type": "object",
+                            "properties": {
+                              "teamIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Teams whose role determines view/edit access"
+                              }
+                            },
+                            "required": [
+                              "teamIds"
+                            ],
+                            "description": "If set, restricts view/edit of this group to members of the listed teams"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name"
+                        ]
+                      },
+                      "description": "Named, presentation-only field groups, in display order"
+                    },
+                    "shared_field_group_links": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "groupId": {
+                            "type": "string",
+                            "description": "Id of the included workspace shared fieldgroup"
+                          },
+                          "teamIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Teams whose role determines view/edit access for this inclusion"
+                          }
+                        },
+                        "required": [
+                          "groupId"
+                        ],
+                        "description": "A schema-local inclusion of a workspace shared fieldgroup"
+                      },
+                      "description": "Included workspace shared fieldgroups, in display order"
+                    },
+                    "color": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Relation schema color (hex format)"
+                    },
+                    "icon": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Relation schema icon identifier"
+                    },
+                    "relation_count": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "Number of relation instances using this schema"
+                    },
+                    "version": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "Current schema version number"
+                    },
+                    "relation_approval_policy": {
+                      "enum": [
+                        "required",
+                        "disabled"
+                      ],
+                      "type": "string",
+                      "description": "Approval policy for relation instance changes. \"required\" is not yet supported — see #2574."
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "name",
+                    "description",
+                    "in",
+                    "out",
+                    "fields",
+                    "groups",
+                    "color",
+                    "icon",
+                    "relation_count",
+                    "version",
+                    "created_at",
+                    "updated_at"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/v1/{workspace}/relations": {
+      "get": {
+        "operationId": "integrationRelations.list",
+        "summary": "List typed relations for integrations",
+        "description": "Lists typed relation instances with endpoint filters and offset pagination. Restricted relation field values are omitted from the response.",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "schemaId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Filter by relation schema identifier"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "inEntityId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Filter by \"in\" endpoint entity identifier"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "outEntityId",
+            "in": "query",
+            "schema": {
+              "type": "string",
+              "description": "Filter by \"out\" endpoint entity identifier"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991,
+              "exclusiveMinimum": 0
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "canView": {
+                            "type": "boolean",
+                            "description": "Whether the user can view this relation instance"
+                          },
+                          "canEdit": {
+                            "type": "boolean",
+                            "description": "Whether the user can edit this relation instance"
+                          },
+                          "canDelete": {
+                            "type": "boolean",
+                            "description": "Whether the user can delete this relation instance"
+                          },
+                          "_uid": {
+                            "type": "string",
+                            "description": "Unique relation instance identifier"
+                          },
+                          "_schema": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ],
+                            "description": "Relation schema reference"
+                          },
+                          "_in": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ],
+                            "description": "The \"in\" endpoint entity"
+                          },
+                          "_out": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ],
+                            "description": "The \"out\" endpoint entity"
+                          },
+                          "_version": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "Optimistic concurrency version"
+                          },
+                          "_createdAt": {
+                            "type": "string",
+                            "description": "ISO 8601 creation timestamp"
+                          },
+                          "_updatedAt": {
+                            "type": "string",
+                            "description": "ISO 8601 last update timestamp"
+                          }
+                        },
+                        "required": [
+                          "canView",
+                          "canEdit",
+                          "canDelete",
+                          "_uid",
+                          "_schema",
+                          "_in",
+                          "_out",
+                          "_version",
+                          "_createdAt",
+                          "_updatedAt"
+                        ],
+                        "additionalProperties": {},
+                        "description": "Complete relation instance record with schema-specific fields"
+                      },
+                      "description": "Relation instances on the requested page"
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Total number of relation instances matching the filters"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "total"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "integrationRelations.create",
+        "summary": "Create a typed relation for integrations",
+        "description": "Creates a typed relation instance between two endpoint entities.",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "_schemaId": {
+                    "type": "string",
+                    "description": "Relation schema identifier"
+                  },
+                  "_inEntityId": {
+                    "type": "string",
+                    "description": "Identifier of the entity at the \"in\" endpoint"
+                  },
+                  "_outEntityId": {
+                    "type": "string",
+                    "description": "Identifier of the entity at the \"out\" endpoint"
+                  }
+                },
+                "required": [
+                  "_schemaId",
+                  "_inEntityId",
+                  "_outEntityId"
+                ],
+                "additionalProperties": {},
+                "description": "Relation instance creation data with schema-specific fields"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "canView": {
+                      "type": "boolean",
+                      "description": "Whether the user can view this relation instance"
+                    },
+                    "canEdit": {
+                      "type": "boolean",
+                      "description": "Whether the user can edit this relation instance"
+                    },
+                    "canDelete": {
+                      "type": "boolean",
+                      "description": "Whether the user can delete this relation instance"
+                    },
+                    "_uid": {
+                      "type": "string",
+                      "description": "Unique relation instance identifier"
+                    },
+                    "_schema": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "description": "Relation schema reference"
+                    },
+                    "_in": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "description": "The \"in\" endpoint entity"
+                    },
+                    "_out": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "description": "The \"out\" endpoint entity"
+                    },
+                    "_version": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "Optimistic concurrency version"
+                    },
+                    "_createdAt": {
+                      "type": "string",
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "_updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    }
+                  },
+                  "required": [
+                    "canView",
+                    "canEdit",
+                    "canDelete",
+                    "_uid",
+                    "_schema",
+                    "_in",
+                    "_out",
+                    "_version",
+                    "_createdAt",
+                    "_updatedAt"
+                  ],
+                  "additionalProperties": {},
+                  "description": "Complete relation instance record with schema-specific fields"
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/v1/{workspace}/relations/{id}": {
+      "get": {
+        "operationId": "integrationRelations.get",
+        "summary": "Get a typed relation for integrations",
+        "description": "Retrieves one typed relation instance with redacted field values.",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "canView": {
+                      "type": "boolean",
+                      "description": "Whether the user can view this relation instance"
+                    },
+                    "canEdit": {
+                      "type": "boolean",
+                      "description": "Whether the user can edit this relation instance"
+                    },
+                    "canDelete": {
+                      "type": "boolean",
+                      "description": "Whether the user can delete this relation instance"
+                    },
+                    "_uid": {
+                      "type": "string",
+                      "description": "Unique relation instance identifier"
+                    },
+                    "_schema": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "description": "Relation schema reference"
+                    },
+                    "_in": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "description": "The \"in\" endpoint entity"
+                    },
+                    "_out": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "description": "The \"out\" endpoint entity"
+                    },
+                    "_version": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "Optimistic concurrency version"
+                    },
+                    "_createdAt": {
+                      "type": "string",
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "_updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    }
+                  },
+                  "required": [
+                    "canView",
+                    "canEdit",
+                    "canDelete",
+                    "_uid",
+                    "_schema",
+                    "_in",
+                    "_out",
+                    "_version",
+                    "_createdAt",
+                    "_updatedAt"
+                  ],
+                  "additionalProperties": {},
+                  "description": "Complete relation instance record with schema-specific fields"
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "integrationRelations.update",
+        "summary": "Update a typed relation for integrations",
+        "description": "Updates typed relation field values; endpoints are immutable.",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "additionalProperties": {},
+                "description": "Relation instance update data with schema-specific fields; the \"in\"/\"out\" endpoints are immutable after creation"
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "canView": {
+                      "type": "boolean",
+                      "description": "Whether the user can view this relation instance"
+                    },
+                    "canEdit": {
+                      "type": "boolean",
+                      "description": "Whether the user can edit this relation instance"
+                    },
+                    "canDelete": {
+                      "type": "boolean",
+                      "description": "Whether the user can delete this relation instance"
+                    },
+                    "_uid": {
+                      "type": "string",
+                      "description": "Unique relation instance identifier"
+                    },
+                    "_schema": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "description": "Relation schema reference"
+                    },
+                    "_in": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "description": "The \"in\" endpoint entity"
+                    },
+                    "_out": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name"
+                      ],
+                      "description": "The \"out\" endpoint entity"
+                    },
+                    "_version": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 9007199254740991,
+                      "description": "Optimistic concurrency version"
+                    },
+                    "_createdAt": {
+                      "type": "string",
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "_updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    }
+                  },
+                  "required": [
+                    "canView",
+                    "canEdit",
+                    "canDelete",
+                    "_uid",
+                    "_schema",
+                    "_in",
+                    "_out",
+                    "_version",
+                    "_createdAt",
+                    "_updatedAt"
+                  ],
+                  "additionalProperties": {},
+                  "description": "Complete relation instance record with schema-specific fields"
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "integrationRelations.remove",
+        "summary": "Delete a typed relation for integrations",
+        "description": "Deletes a typed relation instance.",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Whether the deletion was successful"
+                    },
+                    "message": {
+                      "type": "string",
+                      "description": "Status message or error details"
+                    }
+                  },
+                  "required": [
+                    "success",
+                    "message"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/v1/{workspace}/data/{id}/typed-relations": {
+      "get": {
+        "operationId": "integrationRelations.listForEntity",
+        "summary": "List typed relations for an entity for integrations",
+        "description": "Lists visible typed relations where the entity is either endpoint.",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "outgoing": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "canView": {
+                            "type": "boolean",
+                            "description": "Whether the user can view this relation instance"
+                          },
+                          "canEdit": {
+                            "type": "boolean",
+                            "description": "Whether the user can edit this relation instance"
+                          },
+                          "canDelete": {
+                            "type": "boolean",
+                            "description": "Whether the user can delete this relation instance"
+                          },
+                          "_uid": {
+                            "type": "string",
+                            "description": "Unique relation instance identifier"
+                          },
+                          "_schema": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ],
+                            "description": "Relation schema reference"
+                          },
+                          "_in": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ],
+                            "description": "The \"in\" endpoint entity"
+                          },
+                          "_out": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ],
+                            "description": "The \"out\" endpoint entity"
+                          },
+                          "_version": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "Optimistic concurrency version"
+                          },
+                          "_createdAt": {
+                            "type": "string",
+                            "description": "ISO 8601 creation timestamp"
+                          },
+                          "_updatedAt": {
+                            "type": "string",
+                            "description": "ISO 8601 last update timestamp"
+                          }
+                        },
+                        "required": [
+                          "canView",
+                          "canEdit",
+                          "canDelete",
+                          "_uid",
+                          "_schema",
+                          "_in",
+                          "_out",
+                          "_version",
+                          "_createdAt",
+                          "_updatedAt"
+                        ],
+                        "additionalProperties": {},
+                        "description": "Complete relation instance record with schema-specific fields"
+                      },
+                      "description": "Relation instances where this entity is the \"in\" endpoint"
+                    },
+                    "incoming": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "canView": {
+                            "type": "boolean",
+                            "description": "Whether the user can view this relation instance"
+                          },
+                          "canEdit": {
+                            "type": "boolean",
+                            "description": "Whether the user can edit this relation instance"
+                          },
+                          "canDelete": {
+                            "type": "boolean",
+                            "description": "Whether the user can delete this relation instance"
+                          },
+                          "_uid": {
+                            "type": "string",
+                            "description": "Unique relation instance identifier"
+                          },
+                          "_schema": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ],
+                            "description": "Relation schema reference"
+                          },
+                          "_in": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ],
+                            "description": "The \"in\" endpoint entity"
+                          },
+                          "_out": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ],
+                            "description": "The \"out\" endpoint entity"
+                          },
+                          "_version": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "Optimistic concurrency version"
+                          },
+                          "_createdAt": {
+                            "type": "string",
+                            "description": "ISO 8601 creation timestamp"
+                          },
+                          "_updatedAt": {
+                            "type": "string",
+                            "description": "ISO 8601 last update timestamp"
+                          }
+                        },
+                        "required": [
+                          "canView",
+                          "canEdit",
+                          "canDelete",
+                          "_uid",
+                          "_schema",
+                          "_in",
+                          "_out",
+                          "_version",
+                          "_createdAt",
+                          "_updatedAt"
+                        ],
+                        "additionalProperties": {},
+                        "description": "Complete relation instance record with schema-specific fields"
+                      },
+                      "description": "Relation instances where this entity is the \"out\" endpoint"
+                    }
+                  },
+                  "required": [
+                    "outgoing",
+                    "incoming"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/integrations/v1/{workspace}/entities/{id}": {
       "get": {
         "operationId": "entitySync.getById",

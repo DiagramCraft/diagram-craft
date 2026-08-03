@@ -25,7 +25,15 @@ import { formatPublicId } from '../../utils/publicIds';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { entityRequiresApproval } from '../catalog/entityChangeOperations';
 import { computeEntityCompleteness } from '../../utils/completeness';
+import { logAudit, computeChanges } from '../audit/db/auditLogging';
 import type { DocumentAiToolId } from '@arch-register/api-types/documentContract';
+import type { RelationSchemaDbResult } from '../catalog/db/relationDatabase';
+import {
+  filterRelationFieldData,
+  assertRelationMutationsSupported,
+  validateRelationEndpoints
+} from '../catalog/relationHelpers';
+import { requireWorkspaceCapability } from '../auth/authorization';
 
 const checker = new PermissionChecker();
 
@@ -73,6 +81,24 @@ type TraverseRelationsArgs = {
   depth?: number;
   direction?: 'outgoing' | 'incoming' | 'both';
 };
+
+type ListRelationsArgs = {
+  schemaId?: string;
+  inEntityId?: string;
+  outEntityId?: string;
+  limit?: number;
+  offset?: number;
+};
+
+type GetRelationArgs = { relationId: string };
+type CreateRelationArgs = {
+  schemaId: string;
+  inEntityId: string;
+  outEntityId: string;
+  fields?: Record<string, unknown>;
+};
+type UpdateRelationArgs = { relationId: string; fields: Record<string, unknown> };
+type DeleteRelationArgs = { relationId: string };
 
 const queryEntitiesTool = toolDefinition({
   name: 'query_entities',
@@ -266,7 +292,10 @@ const traverseRelationsTool = toolDefinition({
             targetId: { type: 'string' },
             fieldId: { type: 'string' },
             fieldName: { type: 'string' },
-            kind: { type: 'string', enum: ['reference', 'containment'] }
+            kind: { type: 'string', enum: ['reference', 'containment', 'typed'] },
+            relationId: { type: 'string' },
+            relationSchemaId: { type: 'string' },
+            relationFields: { type: 'object', additionalProperties: true }
           },
           required: ['sourceId', 'targetId', 'fieldId', 'fieldName', 'kind'],
           additionalProperties: false
@@ -276,6 +305,107 @@ const traverseRelationsTool = toolDefinition({
     },
     required: ['entityId', 'nodes', 'edges', 'truncated'],
     additionalProperties: false
+  }
+});
+
+const relationOutputSchema = {
+  type: 'object',
+  additionalProperties: true
+};
+
+const listRelationSchemasTool = toolDefinition({
+  name: 'list_relation_schemas',
+  description: 'List typed relation schemas, endpoint constraints, fields, groups, and metadata.',
+  inputSchema: { type: 'object', properties: {}, additionalProperties: false },
+  outputSchema: { type: 'array', items: relationOutputSchema }
+});
+
+const listRelationsTool = toolDefinition({
+  name: 'list_relations',
+  description:
+    'List visible typed relation instances with optional endpoint filters and pagination.',
+  inputSchema: {
+    type: 'object',
+    properties: {
+      schemaId: { type: 'string' },
+      inEntityId: { type: 'string' },
+      outEntityId: { type: 'string' },
+      limit: { type: 'number', minimum: 1, maximum: 100 },
+      offset: { type: 'number', minimum: 0 }
+    },
+    additionalProperties: false
+  },
+  outputSchema: {
+    type: 'object',
+    properties: {
+      items: { type: 'array', items: relationOutputSchema },
+      total: { type: 'number' }
+    },
+    required: ['items', 'total'],
+    additionalProperties: false
+  }
+});
+
+const getRelationTool = toolDefinition({
+  name: 'get_relation',
+  description: 'Get one visible typed relation instance by ID.',
+  inputSchema: {
+    type: 'object',
+    properties: { relationId: { type: 'string' } },
+    required: ['relationId'],
+    additionalProperties: false
+  },
+  outputSchema: relationOutputSchema
+});
+
+const createRelationTool = toolDefinition({
+  name: 'create_relation',
+  description: 'Create a typed relation instance between two entities; requires explicit approval.',
+  needsApproval: true,
+  inputSchema: {
+    type: 'object',
+    properties: {
+      schemaId: { type: 'string' },
+      inEntityId: { type: 'string' },
+      outEntityId: { type: 'string' },
+      fields: { type: 'object', additionalProperties: true }
+    },
+    required: ['schemaId', 'inEntityId', 'outEntityId'],
+    additionalProperties: false
+  },
+  outputSchema: relationOutputSchema
+});
+
+const updateRelationTool = toolDefinition({
+  name: 'update_relation',
+  description: 'Update typed relation fields; requires explicit approval.',
+  needsApproval: true,
+  inputSchema: {
+    type: 'object',
+    properties: {
+      relationId: { type: 'string' },
+      fields: { type: 'object', additionalProperties: true }
+    },
+    required: ['relationId', 'fields'],
+    additionalProperties: false
+  },
+  outputSchema: relationOutputSchema
+});
+
+const deleteRelationTool = toolDefinition({
+  name: 'delete_relation',
+  description: 'Delete a typed relation instance; requires explicit approval.',
+  needsApproval: true,
+  inputSchema: {
+    type: 'object',
+    properties: { relationId: { type: 'string' } },
+    required: ['relationId'],
+    additionalProperties: false
+  },
+  outputSchema: {
+    type: 'object',
+    properties: { success: { type: 'boolean' } },
+    required: ['success']
   }
 });
 
@@ -352,7 +482,10 @@ const assertNoTypedRelationFieldWrites = (
   }
 };
 
-const summarizeRelationTarget = (entity: Entity, schemaName: string | undefined) => ({
+const summarizeRelationTarget = (
+  entity: Pick<Entity, 'id' | 'name' | 'slug' | 'schema_id'>,
+  schemaName: string | undefined
+) => ({
   id: entity.id,
   name: entity.name,
   slug: entity.slug,
@@ -393,6 +526,7 @@ export const createAiChatTools = (
   actor: EntityMutationActor,
   options: { readOnly?: boolean; toolIds?: readonly DocumentAiToolId[] } = {}
 ) => {
+  const relationDb = (db as unknown as { relation?: DatabaseAdapter['relation'] }).relation;
   const queryEntities = queryEntitiesTool.server(async rawArgs => {
     const args = rawArgs as QueryEntitiesArgs;
     const [schemas, rawEntities] = await Promise.all([
@@ -456,6 +590,168 @@ export const createAiChatTools = (
     };
   });
 
+  const relationSchemaMap = async () => {
+    const schemas = await db.relation.listRelationSchemas(workspaceId);
+    return new Map(schemas.map(schema => [schema.id, schema]));
+  };
+
+  const toAiRelation = (
+    row: Awaited<ReturnType<DatabaseAdapter['relation']['getRelation']>>,
+    schemaMap: Map<string, RelationSchemaDbResult>
+  ) => {
+    if (!row) return null;
+    const schema = schemaMap.get(row.schema_id);
+    return {
+      _uid: row.id,
+      schemaId: row.schema_id,
+      schemaName: row.schema_name,
+      inEntityId: row.in_entity_id,
+      inEntityName: row.in_entity_name,
+      outEntityId: row.out_entity_id,
+      outEntityName: row.out_entity_name,
+      version: row.version,
+      createdAt: row.created_at.toISOString(),
+      updatedAt: row.updated_at.toISOString(),
+      fields: filterRelationFieldData(authCtx, schema, row.data)
+    };
+  };
+
+  const listRelationSchemas = listRelationSchemasTool.server(async () => {
+    const schemas = await db.relation.listRelationSchemas(workspaceId);
+    return schemas;
+  });
+
+  const listRelations = listRelationsTool.server(async rawArgs => {
+    const args = rawArgs as ListRelationsArgs;
+    const schemaMap = await relationSchemaMap();
+    const page = await db.relation.listRelations(
+      workspaceId,
+      {
+        schemaId: args.schemaId ?? null,
+        inEntityId: args.inEntityId ?? null,
+        outEntityId: args.outEntityId ?? null
+      },
+      {
+        limit: Math.min(Math.max(Math.trunc(args.limit ?? 20), 1), 100),
+        offset: Math.max(Math.trunc(args.offset ?? 0), 0)
+      }
+    );
+    return {
+      total: page.total,
+      items: page.items.map(row => toAiRelation(row, schemaMap)).filter(Boolean)
+    };
+  });
+
+  const getRelation = getRelationTool.server(async rawArgs => {
+    const args = rawArgs as GetRelationArgs;
+    const row = await db.relation.getRelation(workspaceId, args.relationId);
+    if (!row) throw new Error(`Relation '${args.relationId}' not found`);
+    const schemaMap = await relationSchemaMap();
+    const result = toAiRelation(row, schemaMap);
+    if (!result) throw new Error(`Relation '${args.relationId}' not found`);
+    return result;
+  });
+
+  const createRelation = createRelationTool.server(async rawArgs => {
+    const args = rawArgs as CreateRelationArgs;
+    if (authCtx) requireWorkspaceCapability(authCtx, 'ent.edit');
+    const schema = await db.relation.getRelationSchema(workspaceId, args.schemaId);
+    if (!schema) throw new Error(`Relation schema '${args.schemaId}' not found`);
+    assertRelationMutationsSupported(schema);
+    const [inEntity, outEntity] = await Promise.all([
+      db.catalog.getEntity(workspaceId, args.inEntityId),
+      db.catalog.getEntity(workspaceId, args.outEntityId)
+    ]);
+    validateRelationEndpoints(schema, inEntity, outEntity);
+    const fields = args.fields ?? {};
+    if (authCtx) requireNoRestrictedFieldWrites(authCtx, schema, Object.keys(fields));
+    const now = new Date();
+    const row = await db.relation.createRelation({
+      id: randomUUID(),
+      workspace: workspaceId,
+      schema_id: schema.id,
+      in_entity_id: inEntity!.id,
+      out_entity_id: outEntity!.id,
+      data: fields,
+      created_at: now,
+      updated_at: now
+    });
+    await logAudit(db, {
+      userId: actor.id,
+      userDisplayName: actor.displayName,
+      workspace: workspaceId,
+      operation: 'create',
+      entityType: 'relation',
+      entityId: row.id,
+      entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
+      schemaId: row.schema_id,
+      changes: {
+        new: {
+          _schemaId: row.schema_id,
+          _inEntityId: row.in_entity_id,
+          _outEntityId: row.out_entity_id,
+          ...row.data
+        }
+      }
+    });
+    return toAiRelation(row, new Map([[schema.id, schema]]));
+  });
+
+  const updateRelation = updateRelationTool.server(async rawArgs => {
+    const args = rawArgs as UpdateRelationArgs;
+    if (authCtx) requireWorkspaceCapability(authCtx, 'ent.edit');
+    const oldRow = await db.relation.getRelation(workspaceId, args.relationId);
+    if (!oldRow) throw new Error(`Relation '${args.relationId}' not found`);
+    const schema = await db.relation.getRelationSchema(workspaceId, oldRow.schema_id);
+    if (!schema) throw new Error(`Relation schema '${oldRow.schema_id}' not found`);
+    assertRelationMutationsSupported(schema);
+    const changed = Object.keys(args.fields).filter(
+      key => JSON.stringify(oldRow.data[key] ?? null) !== JSON.stringify(args.fields[key] ?? null)
+    );
+    if (authCtx) requireNoRestrictedFieldWrites(authCtx, schema, changed);
+    const row = await db.relation.updateRelation(workspaceId, oldRow.id, {
+      data: { ...oldRow.data, ...args.fields },
+      version: oldRow.version + 1,
+      updated_at: new Date()
+    });
+    if (!row) throw new Error(`Relation '${args.relationId}' not found`);
+    await logAudit(db, {
+      userId: actor.id,
+      userDisplayName: actor.displayName,
+      workspace: workspaceId,
+      operation: 'update',
+      entityType: 'relation',
+      entityId: row.id,
+      entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
+      schemaId: row.schema_id,
+      changes: computeChanges({ ...oldRow.data }, { ...row.data })
+    });
+    return toAiRelation(row, new Map([[schema.id, schema]]));
+  });
+
+  const deleteRelation = deleteRelationTool.server(async rawArgs => {
+    const args = rawArgs as DeleteRelationArgs;
+    if (authCtx) requireWorkspaceCapability(authCtx, 'ent.edit');
+    const row = await db.relation.getRelation(workspaceId, args.relationId);
+    if (!row) throw new Error(`Relation '${args.relationId}' not found`);
+    const schema = await db.relation.getRelationSchema(workspaceId, row.schema_id);
+    if (!schema) throw new Error(`Relation schema '${row.schema_id}' not found`);
+    assertRelationMutationsSupported(schema);
+    await db.relation.deleteRelation(workspaceId, row.id);
+    await logAudit(db, {
+      userId: actor.id,
+      userDisplayName: actor.displayName,
+      workspace: workspaceId,
+      operation: 'delete',
+      entityType: 'relation',
+      entityId: row.id,
+      entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
+      schemaId: row.schema_id,
+      changes: { old: { ...row.data } }
+    });
+    return { success: true };
+  });
+
   const getEntityDetails = getEntityDetailsTool.server(async rawArgs => {
     const args = rawArgs as GetEntityDetailsArgs;
     const [schemas, rawEntities] = await Promise.all([
@@ -479,6 +775,11 @@ export const createAiChatTools = (
     const entityLookup = new Map(entities.map(candidate => [candidate.id, candidate]));
     const schema = schemaMap.get(entity.schema_id);
     const includeRelated = args.includeRelated ?? true;
+    const typedRelations =
+      includeRelated && relationDb?.listRelationsForEntity
+        ? await relationDb.listRelationsForEntity(workspaceId, entity.id)
+        : { outgoing: [], incoming: [] };
+    const typedSchemaMap = relationDb?.listRelationSchemas ? await relationSchemaMap() : new Map();
     const outgoingRelations =
       includeRelated && schema
         ? relationFields(schema.fields)
@@ -524,6 +825,37 @@ export const createAiChatTools = (
         })
       : [];
 
+    const outgoingTypedRelations = typedRelations.outgoing.map(row => ({
+      relationId: row.id,
+      relationSchemaId: row.schema_id,
+      relationSchemaName: row.schema_name,
+      target: summarizeRelationTarget(
+        entityLookup.get(row.out_entity_id) ?? {
+          id: row.out_entity_id,
+          name: row.out_entity_name,
+          slug: '',
+          schema_id: ''
+        },
+        undefined
+      ),
+      fields: filterRelationFieldData(authCtx, typedSchemaMap.get(row.schema_id), row.data)
+    }));
+    const incomingTypedRelations = typedRelations.incoming.map(row => ({
+      relationId: row.id,
+      relationSchemaId: row.schema_id,
+      relationSchemaName: row.schema_name,
+      source: summarizeRelationTarget(
+        entityLookup.get(row.in_entity_id) ?? {
+          id: row.in_entity_id,
+          name: row.in_entity_name,
+          slug: '',
+          schema_id: ''
+        },
+        undefined
+      ),
+      fields: filterRelationFieldData(authCtx, typedSchemaMap.get(row.schema_id), row.data)
+    }));
+
     return {
       found: true,
       message: null,
@@ -542,7 +874,9 @@ export const createAiChatTools = (
         data: filterRestrictedFieldGroups(authCtx, schema, entity.data),
         schemaFields: schema?.fields ?? [],
         outgoingRelations,
-        incomingRelations
+        incomingRelations,
+        outgoingTypedRelations,
+        incomingTypedRelations
       }
     };
   });
@@ -832,6 +1166,60 @@ export const createAiChatTools = (
           }
         }
       }
+
+      if (
+        relationDb?.listRelationsForEntity &&
+        (direction === 'outgoing' || direction === 'both')
+      ) {
+        const typed = await relationDb.listRelationsForEntity(workspaceId, currentId);
+        for (const relation of typed.outgoing) {
+          const target =
+            relation.in_entity_id === currentId ? relation.out_entity_id : relation.in_entity_id;
+          const relationSchema = await relationDb.getRelationSchema(
+            workspaceId,
+            relation.schema_id
+          );
+          addEdge(
+            currentId,
+            target,
+            relation.id,
+            relationSchema?.name ?? relation.schema_name,
+            'typed'
+          );
+          if (!visited.has(target)) {
+            visited.add(target);
+            if (nodes.size < MAX_NODES) queue.push({ id: target, depth: depth + 1 });
+            else truncated = true;
+          }
+        }
+      }
+
+      if (
+        relationDb?.listRelationsForEntity &&
+        (direction === 'incoming' || direction === 'both')
+      ) {
+        const typed = await relationDb.listRelationsForEntity(workspaceId, currentId);
+        for (const relation of typed.incoming) {
+          const source =
+            relation.out_entity_id === currentId ? relation.in_entity_id : relation.out_entity_id;
+          const relationSchema = await relationDb.getRelationSchema(
+            workspaceId,
+            relation.schema_id
+          );
+          addEdge(
+            source,
+            currentId,
+            relation.id,
+            relationSchema?.name ?? relation.schema_name,
+            'typed'
+          );
+          if (!visited.has(source)) {
+            visited.add(source);
+            if (nodes.size < MAX_NODES) queue.push({ id: source, depth: depth + 1 });
+            else truncated = true;
+          }
+        }
+      }
     }
 
     return {
@@ -843,10 +1231,29 @@ export const createAiChatTools = (
   });
 
   if (options.readOnly) {
-    const readOnlyTools = [queryEntities, getEntityDetails, traverseRelations];
+    const readOnlyTools = [
+      queryEntities,
+      getEntityDetails,
+      traverseRelations,
+      listRelationSchemas,
+      listRelations,
+      getRelation
+    ];
     if (options.toolIds === undefined) return readOnlyTools;
     const allowedToolIds = new Set(options.toolIds);
     return readOnlyTools.filter(tool => allowedToolIds.has(tool.name as DocumentAiToolId));
   }
-  return [queryEntities, getEntityDetails, createEntity, updateEntity, traverseRelations];
+  return [
+    queryEntities,
+    getEntityDetails,
+    createEntity,
+    updateEntity,
+    traverseRelations,
+    listRelationSchemas,
+    listRelations,
+    getRelation,
+    createRelation,
+    updateRelation,
+    deleteRelation
+  ];
 };

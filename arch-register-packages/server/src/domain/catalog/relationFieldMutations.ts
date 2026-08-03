@@ -6,6 +6,7 @@ import { logAudit, computeChanges } from '../audit/db/auditLogging';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import {
   flattenRelationAuditFields,
+  assertRelationMutationsSupported,
   toApiRelation,
   validateRelationEndpoints
 } from './relationHelpers';
@@ -37,6 +38,7 @@ export const applyRelationFieldDelta = async (
     status: 404,
     message: `Relation schema '${field.relationSchemaId}' not found`
   });
+  assertRelationMutationsSupported(schema);
 
   const results: RelationRecord[] = [];
 
