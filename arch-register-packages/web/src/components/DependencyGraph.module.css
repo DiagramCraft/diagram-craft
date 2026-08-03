@@ -58,6 +58,11 @@
       stroke-dasharray: none;
     }
 
+    &[data-kind="typed"] {
+      stroke-dasharray: 1 3;
+      stroke-width: 2;
+    }
+
     &[data-highlighted="true"] {
       stroke: var(--accent-fg);
       stroke-width: 2.5;
@@ -70,6 +75,11 @@
     stroke-width: 1.5;
     stroke-dasharray: 4 3;
     fill: none;
+
+    &[data-kind="typed"] {
+      stroke-dasharray: 1 3;
+      stroke-width: 2;
+    }
 
     &[data-highlighted="true"] {
       stroke: var(--accent-fg);

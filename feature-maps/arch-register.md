@@ -75,6 +75,8 @@
             types support the same field-group access control, shared-fieldgroup inclusion, field migrations, and
             version history as entity schemas, but only text, long text, boolean, date, number, and select field
             types (no reference, containment, or derived fields, and no templates or approval/deprecation policy).
+            The model overview visualizes both generic schema references and typed relation-schema edges, with typed
+            edges showing the relation type and linking to its definition.
 
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates, fields,
               versions, validation rules, and AI actions for structured content, including marking a field as externally
