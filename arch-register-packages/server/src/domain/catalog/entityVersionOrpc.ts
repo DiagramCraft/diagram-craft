@@ -188,7 +188,11 @@ const entityVersionHandlers = {
       updated,
       entity.schema_id
     );
-    return serializeEntityVersion(redactVersionState(updated, authCtx, schema, historicalSchema));
+    return serializeEntityVersion(
+      redactVersionState(updated, authCtx, schema, historicalSchema, {
+        failClosedWhenHistoricalSchemaMissing: true
+      })
+    );
   }),
 
   restore: entityVersionRouter.entityVersions.restore.handler(async ({ input, context }) => {
@@ -236,7 +240,8 @@ const entityVersionHandlers = {
       schema,
       historicalSchema,
       entity.data,
-      restoredData as Record<string, unknown>
+      restoredData as Record<string, unknown>,
+      { failClosedWhenHistoricalSchemaMissing: true }
     );
 
     const auditUser = context.event.context.user;
@@ -263,7 +268,9 @@ const entityVersionHandlers = {
     });
 
     return serializeEntityVersion(
-      redactVersionState(version, authCtx, versionSchema, historicalSchema)
+      redactVersionState(version, authCtx, versionSchema, historicalSchema, {
+        failClosedWhenHistoricalSchemaMissing: true
+      })
     );
   })
 };
