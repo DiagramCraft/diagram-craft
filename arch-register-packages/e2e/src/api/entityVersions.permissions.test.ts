@@ -66,7 +66,8 @@ const testData = async (
   const schema = await server.db.catalog.getSchema(workspace, entity.schema_id);
   if (!schema) throw new Error(`Expected schema '${entity.schema_id}' to exist`);
 
-  await server.db.catalog.updateSchema(workspace, schema.id, {
+  const schemaUpdatedAt = new Date();
+  const updatedSchema = await server.db.catalog.updateSchema(workspace, schema.id, {
     name: schema.name,
     description: schema.description,
     fields: schema.fields,
@@ -82,7 +83,25 @@ const testData = async (
     entity_approval_policy: schema.entity_approval_policy,
     deprecation_policy: schema.deprecation_policy,
     version: (schema.version ?? 1) + 1,
-    updated_at: new Date()
+    updated_at: schemaUpdatedAt
+  });
+  if (!updatedSchema) throw new Error('Expected schema update to succeed');
+  await server.db.catalog.createSchemaVersion({
+    id: randomUUID(),
+    workspace,
+    schema_id: updatedSchema.id,
+    version: updatedSchema.version ?? 1,
+    name: updatedSchema.name,
+    description: updatedSchema.description,
+    fields: updatedSchema.fields,
+    templates: updatedSchema.templates ?? [],
+    groups: updatedSchema.groups ?? [],
+    shared_field_group_links: updatedSchema.shared_field_group_links ?? [],
+    color: updatedSchema.color,
+    icon: updatedSchema.icon,
+    change_summary: {},
+    created_by: null,
+    created_at: schemaUpdatedAt
   });
 
   const currentData = {
@@ -230,6 +249,57 @@ const historicalAclTestData = async (
   return { entity, version };
 };
 
+const missingHistoricalSchemaTestData = async (
+  server: TestServer,
+  workspace: string,
+  entityId: string
+) => {
+  const entity = await server.db.catalog.getEntity(workspace, entityId);
+  if (!entity) throw new Error(`Expected entity '${entityId}' to exist`);
+  const schema = await server.db.catalog.getSchema(workspace, entity.schema_id);
+  if (!schema) throw new Error(`Expected schema '${entity.schema_id}' to exist`);
+
+  const currentSchema = await server.db.catalog.updateSchema(workspace, schema.id, {
+    name: schema.name,
+    description: schema.description,
+    fields: schema.fields,
+    templates: schema.templates,
+    groups: (schema.groups ?? []).map(group =>
+      group.id === PII_GROUP_ID ? { ...group, accessControl: undefined } : group
+    ),
+    shared_field_group_links: schema.shared_field_group_links,
+    color: schema.color,
+    icon: schema.icon,
+    default_owner: schema.default_owner,
+    key_prefix: schema.key_prefix,
+    entity_approval_policy: schema.entity_approval_policy,
+    deprecation_policy: schema.deprecation_policy,
+    version: (schema.version ?? 1) + 1,
+    updated_at: new Date('2026-07-30T14:00:00.000Z')
+  });
+  if (!currentSchema) throw new Error('Expected current schema update to succeed');
+
+  const versions = await server.db.catalog.listEntityVersions(workspace, entity.id);
+  const version = await server.db.catalog.createEntityVersion({
+    id: randomUUID(),
+    workspace,
+    entity_id: entity.id,
+    version_number:
+      Math.max(...versions.map(item => item.version_number), entity.version ?? 1) + 100,
+    kind: 'autosave',
+    commit_message: null,
+    created_at: new Date('1900-01-01T00:00:00.000Z'),
+    created_by: null,
+    state: entityToBaseState({
+      ...entity,
+      data: { ...entity.data, pii_scope: 'historical-secret' }
+    }),
+    applied_case_revision_id: null
+  });
+
+  return { entity, version };
+};
+
 test.describe('entity version field-group permissions', () => {
   test('list and get use the historical ACL when the current schema is less restrictive', async ({
     server,
@@ -302,6 +372,64 @@ test.describe('entity version field-group permissions', () => {
       }
     });
     expect(fetched.state.data).toEqual({});
+  });
+
+  test('promote omits data when the historical schema is unavailable', async ({
+    server,
+    personas,
+    resources
+  }) => {
+    const data = await missingHistoricalSchemaTestData(
+      server,
+      resources.workspaceId,
+      resources.entityIds.customerPortal
+    );
+
+    const promoted = await personas.workspaceEditor.orpc.entityVersions.promote({
+      params: {
+        workspace: 'default',
+        id: data.entity.id,
+        versionId: data.version.id
+      },
+      body: {}
+    });
+
+    expect(promoted.state.data).toEqual({});
+    const stored = await server.db.catalog.getEntityVersionById(
+      resources.workspaceId,
+      data.version.id
+    );
+    expect(stored?.kind).toBe('saved_version');
+  });
+
+  test('restore rejects when the historical schema is unavailable', async ({
+    server,
+    personas,
+    resources
+  }) => {
+    const data = await missingHistoricalSchemaTestData(
+      server,
+      resources.workspaceId,
+      resources.entityIds.customerPortal
+    );
+    const beforeEntity = await server.db.catalog.getEntity(resources.workspaceId, data.entity.id);
+    const before = await server.db.audit.listAuditLogs(resources.workspaceId);
+
+    await expect(
+      personas.workspaceEditor.orpc.entityVersions.restore({
+        params: {
+          workspace: 'default',
+          id: data.entity.id,
+          versionId: data.version.id
+        },
+        body: {}
+      })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+
+    const afterEntity = await server.db.catalog.getEntity(resources.workspaceId, data.entity.id);
+    const after = await server.db.audit.listAuditLogs(resources.workspaceId);
+    expect(afterEntity?.data).toEqual(beforeEntity?.data);
+    expect(after).toHaveLength(before.length);
   });
 
   test('promote redacts restricted values for a caller without field-group view access', async ({

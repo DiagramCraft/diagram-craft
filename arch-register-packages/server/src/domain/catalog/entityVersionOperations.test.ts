@@ -186,4 +186,17 @@ describe('assertVersionDataCanBeRestored', () => {
       assertVersionDataCanBeRestored(viewer, schema, null, { secret: 'same' }, { secret: 'same' })
     ).not.toThrow();
   });
+
+  it('rejects restores when the historical schema is unavailable in fail-closed mode', () => {
+    expect(() =>
+      assertVersionDataCanBeRestored(
+        authCtxWithNoTeams(),
+        schema,
+        null,
+        { visible: 'same' },
+        { visible: 'same' },
+        { failClosedWhenHistoricalSchemaMissing: true }
+      )
+    ).toThrow();
+  });
 });

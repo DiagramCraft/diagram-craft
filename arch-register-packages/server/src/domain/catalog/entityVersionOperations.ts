@@ -84,9 +84,16 @@ export const assertVersionDataCanBeRestored = (
   currentSchema: FieldGroupSchemaShape,
   historicalSchema: FieldGroupSchemaShape | null,
   currentData: Record<string, unknown>,
-  restoredData: Record<string, unknown>
+  restoredData: Record<string, unknown>,
+  options: { failClosedWhenHistoricalSchemaMissing?: boolean } = {}
 ) => {
   if (!authCtx) return;
+
+  httpAssert.true(!options.failClosedWhenHistoricalSchemaMissing || historicalSchema != null, {
+    status: 403,
+    statusText: 'Forbidden',
+    message: 'You do not have permission to restore a version without its historical schema'
+  });
 
   const changedFieldIds = changedVersionDataFieldIds(currentData, restoredData);
   const knownFieldIds = new Set([
