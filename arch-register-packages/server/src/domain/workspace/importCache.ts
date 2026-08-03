@@ -3,7 +3,9 @@ import type {
   ExportManifest,
   ExportConfig,
   ExportSchema,
+  ExportRelationSchema,
   ExportEntity,
+  ExportRelation,
   ExportProject,
   ExportContentNode,
   ExportDocumentData
@@ -17,7 +19,9 @@ export interface ImportCacheEntry {
   data: {
     config?: ExportConfig;
     schemas?: ExportSchema[];
+    relation_schemas?: ExportRelationSchema[];
     entities?: ExportEntity[];
+    relations?: ExportRelation[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;

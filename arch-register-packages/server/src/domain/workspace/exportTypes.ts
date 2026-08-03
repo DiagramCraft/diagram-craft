@@ -10,7 +10,9 @@ import type {
 export type ExportDataType =
   | 'config'
   | 'schemas'
+  | 'relation_schemas'
   | 'entities'
+  | 'relations'
   | 'projects'
   | 'content_nodes'
   | 'documents';
@@ -29,7 +31,9 @@ export type ExportManifest = {
   files: {
     config?: string;
     schemas?: string;
+    relation_schemas?: string;
     entities?: string;
+    relations?: string;
     projects?: string;
     content_nodes?: string;
     documents?: string;
@@ -39,6 +43,8 @@ export type ExportManifest = {
     entity_count: number;
     project_count: number;
     schema_count: number;
+    relation_schema_count?: number;
+    relation_count?: number;
     content_node_count: number;
     total_content_size_bytes: number;
     document_type_count?: number;
@@ -46,6 +52,7 @@ export type ExportManifest = {
     document_revision_count?: number;
   };
   checksums: Record<string, string>;
+  export_diagnostics?: ExportDiagnostic[];
 };
 
 export type ExportConfig = {
@@ -90,6 +97,22 @@ export type ExportSchema = {
   key_prefix: string | null;
 };
 
+export type ExportRelationSchema = {
+  id: string;
+  name: string;
+  description: string;
+  in_schema_ids: string[];
+  out_schema_ids: string[];
+  fields: unknown[];
+  groups?: import('@arch-register/api-types/relationSchemaContract').RelationSchemaGroup[];
+  shared_field_group_links?: import('@arch-register/api-types/schemaContract').SharedFieldGroupLink[];
+  shared_field_groups?: ExportSharedFieldGroup[];
+  color: string | null;
+  icon: string | null;
+  relation_approval_policy?: 'required' | 'disabled';
+  version?: number;
+};
+
 export type ExportSharedFieldGroup = {
   id: string;
   name: string;
@@ -121,6 +144,18 @@ export type ExportEntity = {
     role: string;
     applies_to: 'self' | 'subtree';
   }>;
+};
+
+export type ExportRelation = {
+  id: string;
+  schema_id: string;
+  in_entity_id: string;
+  out_entity_id: string;
+  data: Record<string, unknown>;
+  version: number;
+  approval_policy_override: 'required' | 'disabled' | null;
+  created_at: string;
+  updated_at: string;
 };
 
 export type ExportProject = {
@@ -212,11 +247,23 @@ export type ExportOptions = {
   include_content?: boolean;
 };
 
+export type ExportDiagnostic = {
+  code: 'missing_reference' | 'filtered_reference' | 'unsupported_data';
+  item_type?: ExportDataType;
+  item_id?: string;
+  message: string;
+};
+
 export type ImportConflict = {
   type: ExportDataType;
   item_id: string;
   item_name: string;
-  conflict_reason: 'duplicate_name' | 'duplicate_slug' | 'missing_dependency' | 'schema_mismatch';
+  conflict_reason:
+    | 'duplicate_name'
+    | 'duplicate_slug'
+    | 'duplicate_identity'
+    | 'missing_dependency'
+    | 'schema_mismatch';
   existing_item?: Record<string, unknown>;
   import_item: Record<string, unknown>;
   suggested_resolution: 'skip' | 'merge' | 'overwrite' | 'rename';
@@ -263,7 +310,15 @@ export type ImportParseResult = {
       count: number;
       conflicts: number;
     };
+    relation_schemas?: {
+      count: number;
+      conflicts: number;
+    };
     entities?: {
+      count: number;
+      conflicts: number;
+    };
+    relations?: {
       count: number;
       conflicts: number;
     };
@@ -313,7 +368,16 @@ export type ImportExecuteResult = {
       created: number;
       updated: number;
     };
+    relation_schemas?: {
+      created: number;
+      updated: number;
+    };
     entities?: {
+      created: number;
+      updated: number;
+      skipped: number;
+    };
+    relations?: {
       created: number;
       updated: number;
       skipped: number;
@@ -341,7 +405,9 @@ export type ImportExecuteResult = {
 export type IdMapping = {
   schemas: Map<string, string>;
   shared_field_groups: Map<string, string>;
+  relation_schemas: Map<string, string>;
   entities: Map<string, string>;
+  relations: Map<string, string>;
   teams: Map<string, string>;
   lifecycle_states: Map<string, string>;
   projects: Map<string, string>;

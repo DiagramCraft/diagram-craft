@@ -6,6 +6,7 @@ import type {
   SchemaDbCreate
 } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
+import type { RelationSchemaDbCreate } from '../catalog/db/relationDatabase';
 
 import type {
   WorkspaceAuthorizationContext,
@@ -21,7 +22,9 @@ import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaCo
 import type {
   ExportConfig,
   ExportSchema,
+  ExportRelationSchema,
   ExportEntity,
+  ExportRelation,
   ExportProject,
   ExportContentNode,
   IdMapping,
@@ -29,6 +32,7 @@ import type {
   ExportSharedFieldGroup
 } from './exportTypes';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
+import { validateRelationEndpoints } from '../catalog/relationHelpers';
 
 type ImportResolution = { action: string; new_name?: string };
 
@@ -49,6 +53,68 @@ const generateSchemaKeyPrefix = (seed: string) => {
   }
 
   return prefix.length >= 2 ? prefix : 'SCM';
+};
+
+const importSharedFieldGroups = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  sources: Array<{ shared_field_groups?: ExportSharedFieldGroup[] }>,
+  preserveIds: boolean,
+  idMapping: IdMapping
+) => {
+  const now = new Date();
+  const sourceSharedGroups = new Map<string, ExportSharedFieldGroup>();
+  for (const source of sources) {
+    for (const group of source.shared_field_groups ?? []) {
+      if (!sourceSharedGroups.has(group.id)) sourceSharedGroups.set(group.id, group);
+    }
+  }
+  if (sourceSharedGroups.size === 0) return;
+
+  const existingSharedGroups = await db.catalog.listSharedFieldGroups(workspace);
+  const existingSharedGroupsById = new Map(existingSharedGroups.map(group => [group.id, group]));
+  const existingSharedGroupsByName = new Map(
+    existingSharedGroups.map(group => [group.name.toLowerCase(), group])
+  );
+  for (const group of sourceSharedGroups.values()) {
+    const existing = preserveIds
+      ? (existingSharedGroupsById.get(group.id) ??
+        existingSharedGroupsByName.get(group.name.toLowerCase()))
+      : existingSharedGroupsByName.get(group.name.toLowerCase());
+    if (!idMapping.shared_field_groups.has(group.id)) {
+      idMapping.shared_field_groups.set(
+        group.id,
+        existing?.id ?? (preserveIds ? group.id : randomUUID())
+      );
+    }
+  }
+  for (const group of sourceSharedGroups.values()) {
+    const nextId = idMapping.shared_field_groups.get(group.id)!;
+    const existing =
+      existingSharedGroupsById.get(nextId) ??
+      existingSharedGroupsByName.get(group.name.toLowerCase());
+    const input = {
+      id: nextId,
+      workspace,
+      name: group.name,
+      description: group.description,
+      fields: group.fields as SchemaDbCreate['fields'],
+      sort_order: group.sort_order,
+      created_at: existing?.created_at ?? now,
+      updated_at: now
+    };
+    if (existing) {
+      await db.catalog.updateSharedFieldGroup(workspace, existing.id, {
+        name: input.name,
+        description: input.description,
+        fields: input.fields,
+        sort_order: input.sort_order,
+        updated_at: input.updated_at
+      });
+    } else {
+      await db.catalog.createSharedFieldGroup(input);
+    }
+  }
 };
 
 export const importConfig = async (
@@ -152,56 +218,7 @@ export const importSchemas = async (
   idMapping: IdMapping
 ): Promise<{ created: number; updated: number }> => {
   const now = new Date();
-  const sourceSharedGroups = new Map<string, ExportSharedFieldGroup>();
-  for (const schema of schemas) {
-    for (const group of schema.shared_field_groups ?? []) {
-      if (!sourceSharedGroups.has(group.id)) sourceSharedGroups.set(group.id, group);
-    }
-  }
-  const existingSharedGroups = await db.catalog.listSharedFieldGroups(workspace);
-  const existingSharedGroupsById = new Map(existingSharedGroups.map(group => [group.id, group]));
-  const existingSharedGroupsByName = new Map(
-    existingSharedGroups.map(group => [group.name.toLowerCase(), group])
-  );
-  for (const group of sourceSharedGroups.values()) {
-    const existing = preserveIds
-      ? (existingSharedGroupsById.get(group.id) ??
-        existingSharedGroupsByName.get(group.name.toLowerCase()))
-      : existingSharedGroupsByName.get(group.name.toLowerCase());
-    if (!idMapping.shared_field_groups.has(group.id)) {
-      idMapping.shared_field_groups.set(
-        group.id,
-        existing?.id ?? (preserveIds ? group.id : randomUUID())
-      );
-    }
-  }
-  for (const group of sourceSharedGroups.values()) {
-    const nextId = idMapping.shared_field_groups.get(group.id)!;
-    const existing =
-      existingSharedGroupsById.get(nextId) ??
-      existingSharedGroupsByName.get(group.name.toLowerCase());
-    const input = {
-      id: nextId,
-      workspace,
-      name: group.name,
-      description: group.description,
-      fields: group.fields as SchemaDbCreate['fields'],
-      sort_order: group.sort_order,
-      created_at: existing?.created_at ?? now,
-      updated_at: now
-    };
-    if (existing) {
-      await db.catalog.updateSharedFieldGroup(workspace, existing.id, {
-        name: input.name,
-        description: input.description,
-        fields: input.fields,
-        sort_order: input.sort_order,
-        updated_at: input.updated_at
-      });
-    } else {
-      await db.catalog.createSharedFieldGroup(input);
-    }
-  }
+  await importSharedFieldGroups(db, workspace, schemas, preserveIds, idMapping);
   const existingSchemas = await db.catalog.listSchemas(workspace);
   const existingSchemasById = new Map(existingSchemas.map(schema => [schema.id, schema]));
   const existingSchemasByName = new Map(
@@ -347,6 +364,102 @@ export const importSchemas = async (
   return { created, updated };
 };
 
+export const importRelationSchemas = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  relationSchemas: ExportRelationSchema[],
+  preserveIds: boolean,
+  resolutions: Record<string, ImportResolution>,
+  idMapping: IdMapping
+): Promise<{ created: number; updated: number }> => {
+  const now = new Date();
+  await importSharedFieldGroups(db, workspace, relationSchemas, preserveIds, idMapping);
+  const existingSchemas = await db.relation.listRelationSchemas(workspace);
+  const existingById = new Map(existingSchemas.map(schema => [schema.id, schema]));
+  const existingByName = new Map(
+    existingSchemas.map(schema => [schema.name.toLowerCase(), schema])
+  );
+  let created = 0;
+  let updated = 0;
+
+  for (const source of relationSchemas) {
+    if (hasSkipResolution(resolutions, source.id)) continue;
+    if (resolutions[source.id]?.action === 'merge') continue;
+
+    const existing =
+      existingById.get(idMapping.relation_schemas.get(source.id) ?? source.id) ??
+      existingByName.get(source.name.toLowerCase());
+    const nextId =
+      idMapping.relation_schemas.get(source.id) ??
+      existing?.id ??
+      (preserveIds ? source.id : randomUUID());
+    idMapping.relation_schemas.set(source.id, nextId);
+    if (source.relation_approval_policy === 'required') {
+      throw new Error(
+        `Relation schema '${source.name}' uses unsupported approval policy 'required'; relation approval workflow is provided by #2574`
+      );
+    }
+
+    const fields = source.fields.map(field => {
+      if (field == null || typeof field !== 'object' || !('groupId' in field)) return field;
+      const groupId = (field as { groupId?: string }).groupId;
+      return groupId
+        ? { ...field, groupId: idMapping.shared_field_groups.get(groupId) ?? groupId }
+        : field;
+    });
+    const input = {
+      id: nextId,
+      workspace,
+      name: source.name,
+      description: source.description,
+      in_schema_ids: source.in_schema_ids.map(id => resolveMappedId(idMapping.schemas, id)!),
+      out_schema_ids: source.out_schema_ids.map(id => resolveMappedId(idMapping.schemas, id)!),
+      fields: fields as RelationSchemaDbCreate['fields'],
+      groups: (source.groups ?? []).map(group => ({
+        ...group,
+        id: idMapping.shared_field_groups.get(group.id) ?? group.id,
+        accessControl: group.accessControl
+          ? { teamIds: group.accessControl.teamIds.map(id => idMapping.teams.get(id) ?? id) }
+          : undefined
+      })),
+      shared_field_group_links: (source.shared_field_group_links ?? []).map(link => ({
+        ...link,
+        groupId: idMapping.shared_field_groups.get(link.groupId) ?? link.groupId,
+        teamIds: link.teamIds?.map(id => idMapping.teams.get(id) ?? id)
+      })),
+      color: source.color,
+      icon: source.icon,
+      relation_approval_policy: 'disabled' as const,
+      version: source.version ?? 1,
+      created_at: existing?.created_at ?? now,
+      updated_at: now
+    };
+
+    if (existing) {
+      await db.relation.updateRelationSchema(workspace, nextId, {
+        name: input.name,
+        description: input.description,
+        in_schema_ids: input.in_schema_ids,
+        out_schema_ids: input.out_schema_ids,
+        fields: input.fields,
+        groups: input.groups,
+        shared_field_group_links: input.shared_field_group_links,
+        color: input.color,
+        icon: input.icon,
+        relation_approval_policy: input.relation_approval_policy,
+        version: input.version,
+        updated_at: input.updated_at
+      });
+      updated++;
+    } else {
+      await db.relation.createRelationSchema(input);
+      created++;
+    }
+  }
+
+  return { created, updated };
+};
+
 export const importEntities = async (
   db: DatabaseAdapter,
   authCtx: WorkspaceAuthorizationContext,
@@ -477,6 +590,157 @@ export const importEntities = async (
       await db.catalog.createEntity(input);
       created++;
     }
+  }
+
+  return { created, updated, skipped };
+};
+
+const listAllRelations = async (db: DatabaseAdapter, workspace: string) => {
+  const pageSize = 200;
+  const relations = [] as Awaited<ReturnType<typeof db.relation.listRelations>>['items'];
+  let offset = 0;
+  while (true) {
+    const page = await db.relation.listRelations(
+      workspace,
+      { schemaId: null, inEntityId: null, outEntityId: null },
+      { limit: pageSize, offset }
+    );
+    if (page.items.length === 0) break;
+    relations.push(...page.items);
+    if (page.items.length < pageSize) break;
+    offset += pageSize;
+  }
+  return relations;
+};
+
+const relationIdentity = (schemaId: string, inEntityId: string, outEntityId: string) =>
+  `${schemaId}\u0000${inEntityId}\u0000${outEntityId}`;
+
+type RelationIdentityRecord = {
+  id: string;
+  schema_id: string;
+  in_entity_id: string;
+  out_entity_id: string;
+};
+
+export const importRelations = async (
+  db: DatabaseAdapter,
+  authCtx: WorkspaceAuthorizationContext,
+  workspace: string,
+  relations: ExportRelation[],
+  preserveIds: boolean,
+  resolutions: Record<string, ImportResolution>,
+  idMapping: IdMapping
+): Promise<{ created: number; updated: number; skipped: number }> => {
+  const now = new Date();
+  const existingRelations = await listAllRelations(db, workspace);
+  const existingById = new Map<string, RelationIdentityRecord>(
+    existingRelations.map(relation => [relation.id, relation])
+  );
+  const existingByIdentity = new Map<string, RelationIdentityRecord>(
+    existingRelations.map(relation => [
+      relationIdentity(relation.schema_id, relation.in_entity_id, relation.out_entity_id),
+      relation
+    ])
+  );
+  const mappedRelations = relations.flatMap(relation => {
+    if (
+      hasSkipResolution(resolutions, relation.id) ||
+      resolutions[relation.id]?.action === 'merge'
+    ) {
+      return [];
+    }
+    const nextId =
+      idMapping.relations.get(relation.id) ?? (preserveIds ? relation.id : randomUUID());
+    idMapping.relations.set(relation.id, nextId);
+    return [{ relation, nextId }];
+  });
+
+  let created = 0;
+  let updated = 0;
+  const skipped = relations.length - mappedRelations.length;
+
+  for (const { relation, nextId } of mappedRelations) {
+    const schemaId = resolveMappedId(idMapping.relation_schemas, relation.schema_id);
+    const schema = await db.relation.getRelationSchema(workspace, schemaId!);
+    httpAssert.present(schema, {
+      status: 409,
+      message: `Relation schema '${relation.schema_id}' is unavailable while importing relation '${relation.id}'`
+    });
+    httpAssert.true(schema.relation_approval_policy !== 'required', {
+      status: 400,
+      message: `Relation schema '${schema.name}' uses unsupported approval policy 'required'; relation approval workflow is provided by #2574`
+    });
+    httpAssert.true(relation.approval_policy_override !== 'required', {
+      status: 400,
+      message: `Relation '${relation.id}' uses unsupported approval policy override 'required'; relation approval workflow is provided by #2574`
+    });
+
+    const [inEntity, outEntity] = await Promise.all([
+      db.catalog.getEntity(workspace, resolveMappedId(idMapping.entities, relation.in_entity_id)!),
+      db.catalog.getEntity(workspace, resolveMappedId(idMapping.entities, relation.out_entity_id)!)
+    ]);
+    validateRelationEndpoints(schema, inEntity, outEntity);
+    requireNoRestrictedFieldWrites(
+      authCtx,
+      schema,
+      Object.keys(relation.data),
+      'You do not have permission to import one or more restricted relation fields'
+    );
+
+    const mappedInEntityId = inEntity!.id;
+    const mappedOutEntityId = outEntity!.id;
+    const existing =
+      existingById.get(nextId) ??
+      existingByIdentity.get(relationIdentity(schema.id, mappedInEntityId, mappedOutEntityId));
+    if (existing && existing.id !== nextId) idMapping.relations.set(relation.id, existing.id);
+    const createdAt = new Date(relation.created_at);
+    const updatedAt = new Date(relation.updated_at);
+    const input = {
+      id: nextId,
+      workspace,
+      schema_id: schema.id,
+      in_entity_id: mappedInEntityId,
+      out_entity_id: mappedOutEntityId,
+      data: relation.data,
+      version: relation.version,
+      approval_policy_override: relation.approval_policy_override,
+      created_at: Number.isNaN(createdAt.getTime()) ? now : createdAt,
+      updated_at: Number.isNaN(updatedAt.getTime()) ? now : updatedAt
+    };
+
+    if (existing) {
+      if (
+        existing.schema_id !== input.schema_id ||
+        existing.in_entity_id !== input.in_entity_id ||
+        existing.out_entity_id !== input.out_entity_id
+      ) {
+        await db.relation.deleteRelation(workspace, existing.id);
+        await db.relation.createRelation(input);
+      } else {
+        await db.relation.updateRelation(workspace, existing.id, {
+          data: input.data,
+          version: input.version,
+          approval_policy_override: input.approval_policy_override,
+          updated_at: input.updated_at
+        });
+      }
+      updated++;
+    } else {
+      await db.relation.createRelation(input);
+      created++;
+    }
+    const stored: RelationIdentityRecord = {
+      id: existing?.id ?? input.id,
+      schema_id: input.schema_id,
+      in_entity_id: input.in_entity_id,
+      out_entity_id: input.out_entity_id
+    };
+    existingById.set(stored.id, stored);
+    existingByIdentity.set(
+      relationIdentity(stored.schema_id, stored.in_entity_id, stored.out_entity_id),
+      stored
+    );
   }
 
   return { created, updated, skipped };

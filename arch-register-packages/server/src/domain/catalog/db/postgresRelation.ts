@@ -32,9 +32,9 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
     try {
       const rows = (await this.sql`
         INSERT INTO relation_schema
-          (id, workspace, name, description, in_schema_ids, out_schema_ids, fields, groups, shared_field_group_links, color, icon, relation_approval_policy, created_at, updated_at)
+          (id, workspace, name, description, in_schema_ids, out_schema_ids, fields, groups, shared_field_group_links, color, icon, relation_approval_policy, version, created_at, updated_at)
         VALUES
-          (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.in_schema_ids)}, ${this.json(input.out_schema_ids)}, ${this.json(input.fields)}, ${this.json(input.groups ?? [])}, ${this.json(input.shared_field_group_links ?? [])}, ${input.color}, ${input.icon}, ${input.relation_approval_policy ?? 'disabled'}, ${input.created_at}, ${input.updated_at})
+          (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.in_schema_ids)}, ${this.json(input.out_schema_ids)}, ${this.json(input.fields)}, ${this.json(input.groups ?? [])}, ${this.json(input.shared_field_group_links ?? [])}, ${input.color}, ${input.icon}, ${input.relation_approval_policy ?? 'disabled'}, ${input.version ?? 1}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `) as DatabaseRow[];
       const [row] = rows;
@@ -181,8 +181,8 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
   async createRelation(input: RelationDbCreate) {
     try {
       await this.sql`
-        INSERT INTO relation (id, workspace, schema_id, in_entity_id, out_entity_id, data, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.schema_id}, ${input.in_entity_id}, ${input.out_entity_id}, ${this.json(input.data)}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO relation (id, workspace, schema_id, in_entity_id, out_entity_id, data, version, approval_policy_override, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.schema_id}, ${input.in_entity_id}, ${input.out_entity_id}, ${this.json(input.data)}, ${input.version ?? 1}, ${input.approval_policy_override ?? null}, ${input.created_at}, ${input.updated_at})
       `;
       return (await this.getRelation(input.workspace, input.id))!;
     } catch (error) {
@@ -192,14 +192,25 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
 
   async updateRelation(workspace: string, id: string, input: RelationDbUpdate) {
     try {
-      const rows = (await this.sql`
-        UPDATE relation
-        SET data = ${this.json(input.data)},
-            version = ${input.version},
-            updated_at = ${input.updated_at}
-        WHERE workspace = ${workspace} AND id = ${id}
-        RETURNING id
-      `) as DatabaseRow[];
+      const rows =
+        input.approval_policy_override === undefined
+          ? ((await this.sql`
+              UPDATE relation
+              SET data = ${this.json(input.data)},
+                  version = ${input.version},
+                  updated_at = ${input.updated_at}
+              WHERE workspace = ${workspace} AND id = ${id}
+              RETURNING id
+            `) as DatabaseRow[])
+          : ((await this.sql`
+              UPDATE relation
+              SET data = ${this.json(input.data)},
+                  version = ${input.version},
+                  approval_policy_override = ${input.approval_policy_override},
+                  updated_at = ${input.updated_at}
+              WHERE workspace = ${workspace} AND id = ${id}
+              RETURNING id
+            `) as DatabaseRow[]);
       if (!rows[0]) return null;
       return await this.getRelation(workspace, id);
     } catch (error) {

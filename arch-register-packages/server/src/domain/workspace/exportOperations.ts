@@ -5,12 +5,16 @@ import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
 import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
+import { filterRelationFieldData } from '../catalog/relationHelpers';
 import type {
   ExportOptions,
   ExportManifest,
   ExportConfig,
   ExportSchema,
+  ExportRelationSchema,
   ExportEntity,
+  ExportRelation,
+  ExportDiagnostic,
   ExportProject,
   ExportContentNode,
   ExportDocumentData
@@ -29,7 +33,9 @@ export const exportWorkspace = async (
   data: {
     config?: ExportConfig;
     schemas?: ExportSchema[];
+    relation_schemas?: ExportRelationSchema[];
     entities?: ExportEntity[];
+    relations?: ExportRelation[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
@@ -52,7 +58,9 @@ export const exportWorkspace = async (
   const data: {
     config?: ExportConfig;
     schemas?: ExportSchema[];
+    relation_schemas?: ExportRelationSchema[];
     entities?: ExportEntity[];
+    relations?: ExportRelation[];
     projects?: ExportProject[];
     content_nodes?: ExportContentNode[];
     documents?: ExportDocumentData;
@@ -62,6 +70,8 @@ export const exportWorkspace = async (
     entity_count: 0,
     project_count: 0,
     schema_count: 0,
+    relation_schema_count: 0,
+    relation_count: 0,
     content_node_count: 0,
     total_content_size_bytes: 0,
     document_type_count: 0,
@@ -80,6 +90,31 @@ export const exportWorkspace = async (
     statistics.schema_count = data.schemas.length;
   }
 
+  const exportDiagnostics: ExportDiagnostic[] = [];
+
+  // Export typed relation schemas. Relation schemas may be useful on their own, but their
+  // endpoint schema dependencies are recorded when entity schemas are not part of the archive.
+  if (options.include.includes('relation_schemas')) {
+    data.relation_schemas = await exportRelationSchemas(db, workspace);
+    statistics.relation_schema_count = data.relation_schemas.length;
+    const entitySchemaIds = new Set(data.schemas?.map(schema => schema.id) ?? []);
+    for (const relationSchema of data.relation_schemas) {
+      const referencedEntitySchemaIds = new Set([
+        ...relationSchema.in_schema_ids,
+        ...relationSchema.out_schema_ids
+      ]);
+      for (const entitySchemaId of referencedEntitySchemaIds) {
+        if (entitySchemaIds.has(entitySchemaId)) continue;
+        exportDiagnostics.push({
+          code: 'missing_reference',
+          item_type: 'relation_schemas',
+          item_id: relationSchema.id,
+          message: `Relation schema '${relationSchema.name}' references entity schema '${entitySchemaId}', which is not included in the export`
+        });
+      }
+    }
+  }
+
   // Export entities
   if (options.include.includes('entities')) {
     data.entities = await exportEntities(
@@ -90,6 +125,19 @@ export const exportWorkspace = async (
       options.include_grants ?? false
     );
     statistics.entity_count = data.entities.length;
+  }
+
+  if (options.include.includes('relations')) {
+    const result = await exportRelations(
+      db,
+      authCtx,
+      workspace,
+      data.relation_schemas,
+      data.entities
+    );
+    data.relations = result.relations;
+    exportDiagnostics.push(...result.diagnostics);
+    statistics.relation_count = data.relations.length;
   }
 
   // Export projects
@@ -138,14 +186,17 @@ export const exportWorkspace = async (
     files: {
       ...(data.config && { config: 'config.json' }),
       ...(data.schemas && { schemas: 'schemas.json' }),
+      ...(data.relation_schemas && { relation_schemas: 'relation-schemas.json' }),
       ...(data.entities && { entities: 'entities.json' }),
+      ...(data.relations && { relations: 'relations.json' }),
       ...(data.projects && { projects: 'projects.json' }),
       ...(data.content_nodes && { content_nodes: 'content-nodes.json' }),
       ...(data.documents && { documents: 'documents.json' }),
       ...(data.content_nodes && options.include_content && { content_directory: 'content/' })
     },
     statistics,
-    checksums: {}
+    checksums: {},
+    ...(exportDiagnostics.length > 0 && { export_diagnostics: exportDiagnostics })
   };
 
   return { manifest, data, contentFiles };
@@ -213,6 +264,113 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
     default_owner: schema.default_owner,
     key_prefix: schema.key_prefix
   }));
+};
+
+const exportRelationSchemas = async (
+  db: DatabaseAdapter,
+  workspace: string
+): Promise<ExportRelationSchema[]> => {
+  const [schemas, sharedGroups] = await Promise.all([
+    db.relation.listRelationSchemas(workspace),
+    db.catalog.listSharedFieldGroups(workspace)
+  ]);
+  const sharedGroupsById = new Map(sharedGroups.map(group => [group.id, group]));
+
+  return schemas.map(schema => ({
+    id: schema.id,
+    name: schema.name,
+    description: schema.description,
+    in_schema_ids: schema.in_schema_ids,
+    out_schema_ids: schema.out_schema_ids,
+    fields: schema.fields,
+    groups: schema.groups ?? [],
+    shared_field_group_links: schema.shared_field_group_links ?? [],
+    shared_field_groups: (schema.shared_field_group_links ?? []).flatMap(link => {
+      const group = sharedGroupsById.get(link.groupId);
+      return group
+        ? [
+            {
+              id: group.id,
+              name: group.name,
+              description: group.description,
+              fields: group.fields,
+              sort_order: group.sort_order
+            }
+          ]
+        : [];
+    }),
+    color: schema.color,
+    icon: schema.icon,
+    relation_approval_policy: schema.relation_approval_policy ?? 'disabled',
+    version: schema.version ?? 1
+  }));
+};
+
+const exportRelations = async (
+  db: DatabaseAdapter,
+  authCtx: WorkspaceAuthorizationContext,
+  workspace: string,
+  relationSchemas?: ExportRelationSchema[],
+  entities?: ExportEntity[]
+): Promise<{ relations: ExportRelation[]; diagnostics: ExportDiagnostic[] }> => {
+  const pageSize = 200;
+  const rows = [] as Awaited<ReturnType<typeof db.relation.listRelations>>['items'];
+  let offset = 0;
+  while (true) {
+    const page = await db.relation.listRelations(
+      workspace,
+      { schemaId: null, inEntityId: null, outEntityId: null },
+      { limit: pageSize, offset }
+    );
+    if (page.items.length === 0) break;
+    rows.push(...page.items);
+    if (page.items.length < pageSize) break;
+    offset += pageSize;
+  }
+
+  const relationSchemaIds = new Set(relationSchemas?.map(schema => schema.id) ?? []);
+  const entityIds = new Set(entities?.map(entity => entity.id) ?? []);
+  const diagnostics: ExportDiagnostic[] = [];
+  const relations: ExportRelation[] = [];
+
+  for (const row of rows) {
+    if (!relationSchemaIds.has(row.schema_id)) {
+      diagnostics.push({
+        code: 'missing_reference',
+        item_type: 'relations',
+        item_id: row.id,
+        message: `Relation '${row.id}' references relation schema '${row.schema_id}', which is not included in the export`
+      });
+      continue;
+    }
+    if (!entityIds.has(row.in_entity_id) || !entityIds.has(row.out_entity_id)) {
+      diagnostics.push({
+        code: 'filtered_reference',
+        item_type: 'relations',
+        item_id: row.id,
+        message: `Relation '${row.id}' was omitted because both endpoint entities must be included in the export`
+      });
+      continue;
+    }
+    const schema = relationSchemas?.find(item => item.id === row.schema_id);
+    relations.push({
+      id: row.id,
+      schema_id: row.schema_id,
+      in_entity_id: row.in_entity_id,
+      out_entity_id: row.out_entity_id,
+      data: filterRelationFieldData(
+        authCtx,
+        schema as Parameters<typeof filterRelationFieldData>[1],
+        row.data
+      ),
+      version: row.version,
+      approval_policy_override: row.approval_policy_override,
+      created_at: row.created_at.toISOString(),
+      updated_at: row.updated_at.toISOString()
+    });
+  }
+
+  return { relations, diagnostics };
 };
 
 const exportEntities = async (

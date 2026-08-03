@@ -193,7 +193,9 @@ export class ZipExtractor {
     manifest: unknown;
     config?: unknown;
     schemas?: unknown;
+    relation_schemas?: unknown;
     entities?: unknown;
+    relations?: unknown;
     projects?: unknown;
     content_nodes?: unknown;
     documents?: unknown;
@@ -207,7 +209,9 @@ export class ZipExtractor {
       'manifest.json',
       'config.json',
       'schemas.json',
+      'relation-schemas.json',
       'entities.json',
+      'relations.json',
       'projects.json',
       'content-nodes.json',
       'documents.json'
@@ -222,7 +226,9 @@ export class ZipExtractor {
       manifest: unknown;
       config?: unknown;
       schemas?: unknown;
+      relation_schemas?: unknown;
       entities?: unknown;
+      relations?: unknown;
       projects?: unknown;
       content_nodes?: unknown;
       documents?: unknown;
@@ -239,8 +245,14 @@ export class ZipExtractor {
     const schemasStr = files.get('schemas.json');
     if (schemasStr) result.schemas = JSON.parse(schemasStr);
 
+    const relationSchemasStr = files.get('relation-schemas.json');
+    if (relationSchemasStr) result.relation_schemas = JSON.parse(relationSchemasStr);
+
     const entitiesStr = files.get('entities.json');
     if (entitiesStr) result.entities = JSON.parse(entitiesStr);
+
+    const relationsStr = files.get('relations.json');
+    if (relationsStr) result.relations = JSON.parse(relationsStr);
 
     const projectsStr = files.get('projects.json');
     if (projectsStr) result.projects = JSON.parse(projectsStr);

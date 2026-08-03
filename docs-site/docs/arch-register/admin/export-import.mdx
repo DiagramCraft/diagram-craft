@@ -18,6 +18,15 @@ normal editing.
 The workspace settings area includes export and import for moving data between workspaces or creating a packaged
 snapshot.
 
+Workspace archives can include entity schemas and entities together with typed relation schemas and relation instances.
+Relation field values follow the same field-group redaction rules as entity values. When an entity filter excludes one
+of a relation's endpoints, that relation is omitted and the archive manifest records a diagnostic; imports also preview
+missing relation-schema or endpoint dependencies before writing data.
+
+The archive format remains version `1.0`. Relation files are optional, so older archives without typed relation sections
+continue to import. Relation history and approval-case records are not included until relation versioning and approval
+workflow support is delivered.
+
 ## Entity-Level Operations
 
 Entity CSV import and export are documented with the entity workflows because they are narrower operational tools tied

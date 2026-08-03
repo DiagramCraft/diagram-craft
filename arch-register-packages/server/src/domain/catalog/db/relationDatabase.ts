@@ -95,6 +95,8 @@ export type RelationDbCreate = {
   in_entity_id: string;
   out_entity_id: string;
   data: Record<string, unknown>;
+  version?: number;
+  approval_policy_override?: 'required' | 'disabled' | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -102,6 +104,7 @@ export type RelationDbCreate = {
 export type RelationDbUpdate = {
   data: Record<string, unknown>;
   version: number;
+  approval_policy_override?: 'required' | 'disabled' | null;
   updated_at: Date;
 };
 

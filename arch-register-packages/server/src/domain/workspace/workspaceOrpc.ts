@@ -31,7 +31,9 @@ import type {
   ExportManifest,
   ExportConfig,
   ExportSchema,
+  ExportRelationSchema,
   ExportEntity,
+  ExportRelation,
   ExportProject,
   ExportContentNode,
   ExportDocumentData
@@ -114,10 +116,22 @@ export const workspaceManagementORPCRouter = wsRouter.router({
         checksums['schemas.json'] = calculateChecksum(content);
       }
 
+      if (data.relation_schemas) {
+        const content = JSON.stringify(data.relation_schemas, null, 2);
+        zipBuilder.addText('relation-schemas.json', content);
+        checksums['relation-schemas.json'] = calculateChecksum(content);
+      }
+
       if (data.entities) {
         const content = JSON.stringify(data.entities, null, 2);
         zipBuilder.addText('entities.json', content);
         checksums['entities.json'] = calculateChecksum(content);
+      }
+
+      if (data.relations) {
+        const content = JSON.stringify(data.relations, null, 2);
+        zipBuilder.addText('relations.json', content);
+        checksums['relations.json'] = calculateChecksum(content);
       }
 
       if (data.projects) {
@@ -221,7 +235,9 @@ export const workspaceManagementORPCRouter = wsRouter.router({
         const result = await parseImport(context.db, authCtx, workspaceId, manifest, {
           config: extracted.config as ExportConfig | undefined,
           schemas: extracted.schemas as ExportSchema[] | undefined,
+          relation_schemas: extracted.relation_schemas as ExportRelationSchema[] | undefined,
           entities: extracted.entities as ExportEntity[] | undefined,
+          relations: extracted.relations as ExportRelation[] | undefined,
           projects: extracted.projects as ExportProject[] | undefined,
           content_nodes: extracted.content_nodes as ExportContentNode[] | undefined,
           documents: extracted.documents as ExportDocumentData | undefined
@@ -238,7 +254,9 @@ export const workspaceManagementORPCRouter = wsRouter.router({
           {
             config: extracted.config as ExportConfig | undefined,
             schemas: extracted.schemas as ExportSchema[] | undefined,
+            relation_schemas: extracted.relation_schemas as ExportRelationSchema[] | undefined,
             entities: extracted.entities as ExportEntity[] | undefined,
+            relations: extracted.relations as ExportRelation[] | undefined,
             projects: extracted.projects as ExportProject[] | undefined,
             content_nodes: extracted.content_nodes as ExportContentNode[] | undefined,
             documents: extracted.documents as ExportDocumentData | undefined

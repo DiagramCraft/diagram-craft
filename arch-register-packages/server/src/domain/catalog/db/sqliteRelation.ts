@@ -31,7 +31,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async createRelationSchema(input: RelationSchemaDbCreate) {
     this.run(
-      'INSERT INTO relation_schema (id, workspace, name, description, in_schema_ids, out_schema_ids, fields, groups, shared_field_group_links, color, icon, relation_approval_policy, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO relation_schema (id, workspace, name, description, in_schema_ids, out_schema_ids, fields, groups, shared_field_group_links, color, icon, relation_approval_policy, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -45,6 +45,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
         input.color,
         input.icon,
         input.relation_approval_policy ?? 'disabled',
+        input.version ?? 1,
         input.created_at.toISOString(),
         input.updated_at.toISOString()
       ]
@@ -195,7 +196,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async createRelation(input: RelationDbCreate) {
     this.run(
-      'INSERT INTO relation (id, workspace, schema_id, in_entity_id, out_entity_id, data, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO relation (id, workspace, schema_id, in_entity_id, out_entity_id, data, version, approval_policy_override, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -203,6 +204,8 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
         input.in_entity_id,
         input.out_entity_id,
         JSON.stringify(input.data),
+        input.version ?? 1,
+        input.approval_policy_override ?? null,
         input.created_at.toISOString(),
         input.updated_at.toISOString()
       ]
@@ -211,10 +214,24 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
   }
 
   async updateRelation(workspace: string, id: string, input: RelationDbUpdate) {
-    this.run(
-      'UPDATE relation SET data = ?, version = ?, updated_at = ? WHERE workspace = ? AND id = ?',
-      [JSON.stringify(input.data), input.version, input.updated_at.toISOString(), workspace, id]
-    );
+    if (input.approval_policy_override === undefined) {
+      this.run(
+        'UPDATE relation SET data = ?, version = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+        [JSON.stringify(input.data), input.version, input.updated_at.toISOString(), workspace, id]
+      );
+    } else {
+      this.run(
+        'UPDATE relation SET data = ?, version = ?, approval_policy_override = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+        [
+          JSON.stringify(input.data),
+          input.version,
+          input.approval_policy_override,
+          input.updated_at.toISOString(),
+          workspace,
+          id
+        ]
+      );
+    }
     return await this.getRelation(workspace, id);
   }
 

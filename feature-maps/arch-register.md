@@ -451,12 +451,15 @@
       and out of Arch Register.
 
         - @id:ar.import-export.workspace-export Authorized users can export selected or complete workspace data,
-          including supported content and configuration. Exported entity data is scrubbed of access-restricted
-          field groups per exporting user, mirroring the redaction applied when viewing entities directly.
+          including supported content, configuration, typed relation schemas, and typed relation instances. Exported
+          entity and relation data is scrubbed of access-restricted field groups per exporting user, mirroring the
+          redaction applied when viewing those records directly. Filtered exports omit relations whose endpoint
+          entities are not included and record the omission in archive diagnostics.
 
         - @id:ar.import-export.workspace-import Authorized users can validate, preview, and execute supported workspace
-          imports. Schema groups, field-group access controls, reusable shared fieldgroups, and their links are
-          preserved with remapped references; imports reject restricted values the importing caller cannot edit.
+          imports. Entity and relation schema groups, field-group access controls, reusable shared fieldgroups, and
+          their links are preserved with remapped references; relation endpoints follow remapped entity IDs; imports
+          reject restricted values the importing caller cannot edit and report missing relation dependencies.
 
         - @id:ar.import-export.workspace-replication Workspace copies preserve schema field groups, shared fieldgroup
           links, and field-group access-control semantics while remapping workspace-local identifiers.

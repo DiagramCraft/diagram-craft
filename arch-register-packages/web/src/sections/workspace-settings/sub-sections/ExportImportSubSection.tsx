@@ -10,10 +10,23 @@ import { downloadBlob } from '../../../lib/browserDownload';
 import { DefinitionImportSubSection } from './DefinitionImportSubSection';
 
 type ImportConflict = {
-  type: 'config' | 'schemas' | 'entities' | 'projects' | 'content_nodes' | 'documents';
+  type:
+    | 'config'
+    | 'schemas'
+    | 'relation_schemas'
+    | 'entities'
+    | 'relations'
+    | 'projects'
+    | 'content_nodes'
+    | 'documents';
   item_id: string;
   item_name: string;
-  conflict_reason: 'duplicate_name' | 'duplicate_slug' | 'missing_dependency' | 'schema_mismatch';
+  conflict_reason:
+    | 'duplicate_name'
+    | 'duplicate_slug'
+    | 'duplicate_identity'
+    | 'missing_dependency'
+    | 'schema_mismatch';
   existing_item?: Record<string, unknown>;
   import_item: Record<string, unknown>;
   suggested_resolution: 'skip' | 'merge' | 'overwrite' | 'rename';
@@ -27,7 +40,9 @@ type ImportParseResult = {
   summary: {
     config?: { lifecycle_states: number; teams: number; roles: number };
     schemas?: { count: number; conflicts: number };
+    relation_schemas?: { count: number; conflicts: number };
     entities?: { count: number; conflicts: number };
+    relations?: { count: number; conflicts: number };
     projects?: { count: number; conflicts: number };
     content_nodes?: { count: number; conflicts: number };
     documents?: { count: number; templates: number; revisions: number; conflicts: number };
@@ -41,7 +56,9 @@ type ImportParseResult = {
 type ExportOptions = {
   include_config: boolean;
   include_schemas: boolean;
+  include_relation_schemas: boolean;
   include_entities: boolean;
+  include_relations: boolean;
   include_projects: boolean;
   include_content_nodes: boolean;
   include_documents: boolean;
@@ -58,7 +75,9 @@ export const ExportImportSubSection = () => {
   const [exportOptions, setExportOptions] = useState<ExportOptions>({
     include_config: true,
     include_schemas: true,
+    include_relation_schemas: true,
     include_entities: true,
+    include_relations: true,
     include_projects: true,
     include_content_nodes: true,
     include_documents: true,
@@ -80,11 +99,20 @@ export const ExportImportSubSection = () => {
     if (!workspace) return;
 
     const include: Array<
-      'config' | 'schemas' | 'entities' | 'projects' | 'content_nodes' | 'documents'
+      | 'config'
+      | 'schemas'
+      | 'relation_schemas'
+      | 'entities'
+      | 'relations'
+      | 'projects'
+      | 'content_nodes'
+      | 'documents'
     > = [];
     if (exportOptions.include_config) include.push('config');
     if (exportOptions.include_schemas) include.push('schemas');
+    if (exportOptions.include_relation_schemas) include.push('relation_schemas');
     if (exportOptions.include_entities) include.push('entities');
+    if (exportOptions.include_relations) include.push('relations');
     if (exportOptions.include_projects) include.push('projects');
     if (exportOptions.include_content_nodes) include.push('content_nodes');
     if (exportOptions.include_documents) include.push('documents');
@@ -204,7 +232,16 @@ export const ExportImportSubSection = () => {
         params: { workspace: workspace.url_slug },
         body: {
           import_id: importId,
-          include: ['config', 'schemas', 'entities', 'projects', 'content_nodes', 'documents'],
+          include: [
+            'config',
+            'schemas',
+            'relation_schemas',
+            'entities',
+            'relations',
+            'projects',
+            'content_nodes',
+            'documents'
+          ],
           conflict_resolutions: conflictResolutions,
           options: { preserve_ids: false, update_references: true }
         }
@@ -283,6 +320,19 @@ export const ExportImportSubSection = () => {
                   </label>
                   <label className={styles.checkboxRow}>
                     <Checkbox
+                      value={exportOptions.include_relation_schemas}
+                      onChange={v =>
+                        setExportOptions(prev => ({
+                          ...prev,
+                          include_relation_schemas: v ?? false
+                        }))
+                      }
+                    />
+                    <span>Relation schemas</span>
+                    <span className={styles.checkboxHint}>typed relation definitions</span>
+                  </label>
+                  <label className={styles.checkboxRow}>
+                    <Checkbox
                       value={exportOptions.include_schemas}
                       onChange={v =>
                         setExportOptions(prev => ({ ...prev, include_schemas: v ?? false }))
@@ -290,6 +340,16 @@ export const ExportImportSubSection = () => {
                     />
                     <span>Schemas</span>
                     <span className={styles.checkboxHint}>entity types and fields</span>
+                  </label>
+                  <label className={styles.checkboxRow}>
+                    <Checkbox
+                      value={exportOptions.include_relations}
+                      onChange={v =>
+                        setExportOptions(prev => ({ ...prev, include_relations: v ?? false }))
+                      }
+                    />
+                    <span>Relations</span>
+                    <span className={styles.checkboxHint}>typed relation instances</span>
                   </label>
                   <label className={styles.checkboxRow}>
                     <Checkbox
@@ -425,12 +485,28 @@ export const ExportImportSubSection = () => {
                         <span className={styles.summaryLabel}>schemas</span>
                       </div>
                     )}
+                    {importSummary.summary.relation_schemas && (
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryCount}>
+                          {importSummary.summary.relation_schemas.count}
+                        </span>
+                        <span className={styles.summaryLabel}>relation schemas</span>
+                      </div>
+                    )}
                     {importSummary.summary.entities && (
                       <div className={styles.summaryItem}>
                         <span className={styles.summaryCount}>
                           {importSummary.summary.entities.count}
                         </span>
                         <span className={styles.summaryLabel}>entities</span>
+                      </div>
+                    )}
+                    {importSummary.summary.relations && (
+                      <div className={styles.summaryItem}>
+                        <span className={styles.summaryCount}>
+                          {importSummary.summary.relations.count}
+                        </span>
+                        <span className={styles.summaryLabel}>relations</span>
                       </div>
                     )}
                     {importSummary.summary.projects && (
@@ -491,9 +567,9 @@ export const ExportImportSubSection = () => {
                             Choose resolution
                           </option>
                           <option value="skip">Skip</option>
-                          <option value="merge">Merge</option>
+                          {conflict.type !== 'relations' && <option value="merge">Merge</option>}
                           <option value="overwrite">Overwrite</option>
-                          <option value="rename">Rename</option>
+                          {conflict.type !== 'relations' && <option value="rename">Rename</option>}
                         </select>
                         {conflictResolutions[conflict.item_id]?.action === 'rename' && (
                           <input

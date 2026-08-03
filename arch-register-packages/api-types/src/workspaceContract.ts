@@ -113,7 +113,16 @@ const definitionImportExecuteResponseSchema = z.object({
 // ── Export/Import schemas ─────────────────────────────────────
 
 const exportDataTypeSchema = z
-  .enum(['config', 'schemas', 'entities', 'projects', 'content_nodes', 'documents'])
+  .enum([
+    'config',
+    'schemas',
+    'relation_schemas',
+    'entities',
+    'relations',
+    'projects',
+    'content_nodes',
+    'documents'
+  ])
   .describe('Type of data to export/import');
 
 const exportRequestSchema = z.object({
@@ -171,6 +180,13 @@ const importParseResponseSchema = z.object({
         })
         .optional()
         .describe('Schema summary'),
+      relation_schemas: z
+        .object({
+          count: z.number().int().describe('Total number of relation schemas'),
+          conflicts: z.number().int().describe('Number of conflicting relation schemas')
+        })
+        .optional()
+        .describe('Typed relation schema summary'),
       entities: z
         .object({
           count: z.number().int().describe('Total number of entities'),
@@ -178,6 +194,13 @@ const importParseResponseSchema = z.object({
         })
         .optional()
         .describe('Entity summary'),
+      relations: z
+        .object({
+          count: z.number().int().describe('Total number of relation instances'),
+          conflicts: z.number().int().describe('Number of conflicting relation instances')
+        })
+        .optional()
+        .describe('Typed relation instance summary'),
       projects: z
         .object({
           count: z.number().int().describe('Total number of projects'),
@@ -210,7 +233,13 @@ const importParseResponseSchema = z.object({
         item_id: z.string().describe('Item identifier'),
         item_name: z.string().describe('Item name'),
         conflict_reason: z
-          .enum(['duplicate_name', 'duplicate_slug', 'missing_dependency', 'schema_mismatch'])
+          .enum([
+            'duplicate_name',
+            'duplicate_slug',
+            'duplicate_identity',
+            'missing_dependency',
+            'schema_mismatch'
+          ])
           .describe('Reason for conflict'),
         existing_item: z.record(z.string(), z.unknown()).optional().describe('Existing item data'),
         import_item: z.record(z.string(), z.unknown()).describe('Import item data'),
@@ -282,6 +311,13 @@ const importExecuteResponseSchema = z.object({
         })
         .optional()
         .describe('Schema import results'),
+      relation_schemas: z
+        .object({
+          created: z.number().int().describe('Number of relation schemas created'),
+          updated: z.number().int().describe('Number of relation schemas updated')
+        })
+        .optional()
+        .describe('Relation schema import results'),
       entities: z
         .object({
           created: z.number().int().describe('Number of entities created'),
@@ -290,6 +326,14 @@ const importExecuteResponseSchema = z.object({
         })
         .optional()
         .describe('Entity import results'),
+      relations: z
+        .object({
+          created: z.number().int().describe('Number of relation instances created'),
+          updated: z.number().int().describe('Number of relation instances updated'),
+          skipped: z.number().int().describe('Number of relation instances skipped')
+        })
+        .optional()
+        .describe('Relation instance import results'),
       projects: z
         .object({
           created: z.number().int().describe('Number of projects created'),
