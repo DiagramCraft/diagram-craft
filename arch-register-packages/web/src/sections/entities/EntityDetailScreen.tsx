@@ -785,7 +785,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             typedRelationsIncoming: typedRelations.incoming,
             relationSchemas
           }}
-          relationsProps={{ outgoing, incoming, schemas }}
+          relationsProps={{ workspaceId, outgoing, incoming, schemas }}
           changeHistoryProps={{
             workspaceId,
             entityId,
@@ -806,6 +806,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           setTab={setTab}
           dependentsCount={incoming.length}
           topologyProps={{
+            workspaceId,
             entity,
             schema,
             color,

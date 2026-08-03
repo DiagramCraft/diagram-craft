@@ -3,6 +3,7 @@ import { TbMinus, TbPlus } from 'react-icons/tb';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { Chip } from '../../../components/Chip';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
+import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import {
@@ -117,6 +118,11 @@ export const ExploreView = ({
   );
 
   const relationFieldOptions = useMemo(() => buildRelationFieldOptions(schemas), [schemas]);
+  const { data: relationSchemas } = useRelationSchemas(workspaceSlug);
+  const relationSchemaMap = useMemo(
+    () => new Map((relationSchemas ?? []).map(schema => [schema.id, schema])),
+    [relationSchemas]
+  );
   const centerIds = useMemo(() => rows.map(row => row._uid).sort(), [rows]);
   const [fetchIds, setFetchIds] = useState<string[]>(centerIds);
 
@@ -282,6 +288,10 @@ export const ExploreView = ({
             <div className={styles.toggleRow}>
               {relationFieldOptions.map(option => {
                 const active = normalizedConfig.relationFieldNames.includes(option.value);
+                const relationSchema =
+                  option.kind === 'typed' && option.relationSchemaId
+                    ? relationSchemaMap.get(option.relationSchemaId)
+                    : undefined;
                 return (
                   <button
                     key={option.value}
@@ -297,6 +307,13 @@ export const ExploreView = ({
                       updateConfig({ relationFieldNames: nextValues });
                     }}
                   >
+                    {option.kind === 'typed' && (
+                      <TypeBadge
+                        color={relationSchema?.color ?? 'var(--accent-fg)'}
+                        icon={relationSchema?.icon}
+                        size={14}
+                      />
+                    )}
                     {option.label}
                   </button>
                 );

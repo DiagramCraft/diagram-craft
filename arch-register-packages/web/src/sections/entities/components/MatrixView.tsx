@@ -7,6 +7,7 @@ import { useEntities, useMultipleEntityRelations } from '../../../hooks/useEntit
 import { getRelationDisplayLabel } from '../../../lib/entityRelations';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { EntityRelation } from '@arch-register/api-types/entityContract';
 import { matrixViewConfigSchema } from '@arch-register/api-types/viewContract';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import {
@@ -54,6 +55,9 @@ type ColMode = 'entity' | 'attribute';
 type RelationFieldOption = {
   value: string;
   label: string;
+  kind: EntityRelation['kind'];
+  color?: string | null;
+  icon?: string | null;
 };
 
 // ── Helpers ───────────────────────────────────────────────────────────────────
@@ -192,19 +196,23 @@ export const MatrixView = ({
   // Available field names for entity × entity "via" filtering
   const availableFieldNames = useMemo((): RelationFieldOption[] => {
     if (colMode !== 'entity' || !effColSchemaId) return [];
-    const names = new Map<string, string>();
+    const options = new Map<string, RelationFieldOption>();
     rows.forEach(row => {
       const rel = relationsMap.get(row._uid);
       if (!rel) return;
       [...rel.outgoing, ...rel.incoming].forEach(r => {
-        if (r.entitySchemaId === effColSchemaId) {
-          names.set(r.fieldName, getRelationDisplayLabel(r));
+        if (r.entitySchemaId === effColSchemaId && !options.has(r.fieldName)) {
+          options.set(r.fieldName, {
+            value: r.fieldName,
+            label: getRelationDisplayLabel(r),
+            kind: r.kind,
+            color: r.relationSchemaColor,
+            icon: r.relationSchemaIcon
+          });
         }
       });
     });
-    return [...names.entries()]
-      .sort((a, b) => a[1].localeCompare(b[1]))
-      .map(([value, label]) => ({ value, label }));
+    return [...options.values()].sort((a, b) => a.label.localeCompare(b.label));
   }, [colMode, rows, relationsMap, effColSchemaId]);
 
   const handleColSchemaChange = (id: string) => {
@@ -252,6 +260,10 @@ export const MatrixView = ({
     colMode === 'entity' && colSchemaEntry
       ? resolveSchemaColor(colSchemaEntry.schema, colSchemaEntry.index)
       : 'var(--accent-fg)';
+
+  const selectedRelationOption = filterFieldName
+    ? (availableFieldNames.find(option => option.value === filterFieldName) ?? null)
+    : null;
 
   const isEmpty = !displayRows.length || !displayCols.length;
   const noRelations =
@@ -328,6 +340,13 @@ export const MatrixView = ({
                 {availableFieldNames.length > 1 && (
                   <label className={styles.selectWrap}>
                     <span className={styles.selectVia}>via</span>
+                    {selectedRelationOption?.kind === 'typed' && (
+                      <TypeBadge
+                        color={selectedRelationOption.color ?? 'var(--accent-fg)'}
+                        icon={selectedRelationOption.icon}
+                        size={14}
+                      />
+                    )}
                     <select
                       className={styles.select}
                       value={filterFieldName ?? 'any'}
@@ -341,6 +360,7 @@ export const MatrixView = ({
                       {availableFieldNames.map(option => (
                         <option key={option.value} value={option.value}>
                           {option.label}
+                          {option.kind === 'typed' ? ' (typed relation)' : ''}
                         </option>
                       ))}
                     </select>
