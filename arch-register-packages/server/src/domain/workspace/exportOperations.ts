@@ -6,6 +6,7 @@ import { PermissionChecker } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
 import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 import { filterRelationFieldData } from '../catalog/relationHelpers';
+import { canViewTypedRelation } from '../catalog/relationAccessControl';
 import type {
   ExportOptions,
   ExportManifest,
@@ -330,6 +331,11 @@ const exportRelations = async (
 
   const relationSchemaIds = new Set(relationSchemas?.map(schema => schema.id) ?? []);
   const entityIds = new Set(entities?.map(entity => entity.id) ?? []);
+  const entitySchemas = await db.catalog.listSchemas(workspace);
+  const entitySchemaById = new Map(entitySchemas.map(schema => [schema.id, schema]));
+  const exportedEntitySchemaByEntityId = new Map(
+    (entities ?? []).map(entity => [entity.id, entitySchemaById.get(entity.schema_id)])
+  );
   const diagnostics: ExportDiagnostic[] = [];
   const relations: ExportRelation[] = [];
 
@@ -349,6 +355,30 @@ const exportRelations = async (
         item_type: 'relations',
         item_id: row.id,
         message: `Relation '${row.id}' was omitted because both endpoint entities must be included in the export`
+      });
+      continue;
+    }
+    if (
+      !canViewTypedRelation(
+        authCtx,
+        [
+          {
+            schema: exportedEntitySchemaByEntityId.get(row.in_entity_id),
+            direction: 'in'
+          },
+          {
+            schema: exportedEntitySchemaByEntityId.get(row.out_entity_id),
+            direction: 'out'
+          }
+        ],
+        row.schema_id
+      )
+    ) {
+      diagnostics.push({
+        code: 'filtered_reference',
+        item_type: 'relations',
+        item_id: row.id,
+        message: `Relation '${row.id}' was omitted because its typed relation owner field is not visible to the exporter`
       });
       continue;
     }

@@ -613,4 +613,112 @@ describe('workspace relation import', () => {
       })
     );
   });
+
+  it('rejects relation imports when no owner field is editable', async () => {
+    const db = makeDb();
+    const relationSchema = {
+      id: 'target-relation-schema',
+      workspace: 'workspace-1',
+      name: 'Depends on',
+      description: '',
+      in_schema_ids: ['target-in-schema'],
+      out_schema_ids: ['target-out-schema'],
+      fields: [],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled' as const,
+      version: 1,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+    const entities = new Map([
+      ['target-in', { id: 'target-in', schema_id: 'target-in-schema' }],
+      ['target-out', { id: 'target-out', schema_id: 'target-out-schema' }]
+    ]);
+    db.relation = {
+      listRelations: vi.fn(async () => ({ items: [], total: 0 })),
+      getRelationSchema: vi.fn(async () => relationSchema),
+      createRelation: vi.fn(),
+      updateRelation: vi.fn(),
+      deleteRelation: vi.fn()
+    };
+    db.catalog.getEntity.mockImplementation(
+      async (_workspace: string, id: string) => entities.get(id) ?? null
+    );
+    db.catalog.getSchema.mockImplementation(async (_workspace: string, id: string) => ({
+      id,
+      workspace: 'workspace-1',
+      name: id,
+      description: '',
+      fields: [
+        {
+          id: `owner-${id}`,
+          name: 'Owner relation',
+          type: 'typedRelation',
+          relationSchemaId: relationSchema.id,
+          direction: id === 'target-in-schema' ? 'in' : 'out',
+          requirementLevel: null,
+          groupId: 'restricted'
+        }
+      ],
+      groups: [{ id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-1'] } }],
+      templates: [],
+      color: null,
+      icon: null,
+      default_owner: null,
+      key_prefix: 'OWN',
+      created_at: new Date(),
+      updated_at: new Date()
+    }));
+
+    const authCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    await expect(
+      importRelations(
+        db,
+        authCtx,
+        'workspace-1',
+        [
+          {
+            id: 'source-relation',
+            schema_id: 'source-relation-schema',
+            in_entity_id: 'source-in',
+            out_entity_id: 'source-out',
+            data: {},
+            version: 1,
+            approval_policy_override: null,
+            created_at: '2026-01-01T00:00:00.000Z',
+            updated_at: '2026-01-01T00:00:00.000Z'
+          }
+        ],
+        false,
+        {},
+        {
+          schemas: new Map(),
+          shared_field_groups: new Map(),
+          relation_schemas: new Map([['source-relation-schema', relationSchema.id]]),
+          entities: new Map([
+            ['source-in', 'target-in'],
+            ['source-out', 'target-out']
+          ]),
+          relations: new Map(),
+          teams: new Map(),
+          lifecycle_states: new Map(),
+          projects: new Map(),
+          content_nodes: new Map()
+        }
+      )
+    ).rejects.toMatchObject({ status: 403 });
+    expect(db.relation.createRelation).not.toHaveBeenCalled();
+  });
 });

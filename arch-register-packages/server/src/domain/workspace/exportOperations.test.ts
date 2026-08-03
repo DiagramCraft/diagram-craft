@@ -203,7 +203,7 @@ describe('exportSchemas field-group metadata', () => {
     const authCtx = buildAuthorizationContext({
       userId: 'user-1',
       globalRoles: [],
-      workspaceRole: 'owner',
+      workspaceRole: 'editor',
       teamAssignments: [],
       schemas: [],
       entities: [],
@@ -346,5 +346,91 @@ describe('typed relation export', () => {
     expect(manifest.export_diagnostics).toEqual([
       expect.objectContaining({ code: 'filtered_reference', item_id: relation.id })
     ]);
+  });
+
+  it('omits relations hidden by owner-field ACLs, while allowing an accessible binding', async () => {
+    const db = makeRelationDb();
+    const restrictedOwnerField = {
+      id: 'relation-owner',
+      name: 'Relation owner',
+      type: 'typedRelation',
+      relationSchemaId: relationSchema.id,
+      direction: 'in',
+      requirementLevel: null,
+      groupId: 'owner-restricted'
+    };
+    const restrictedOtherField = {
+      ...restrictedOwnerField,
+      id: 'relation-other-owner',
+      direction: 'out'
+    };
+    db.catalog.listSchemas.mockResolvedValue([
+      {
+        ...schemaWithRestrictedGroup,
+        id: 'schema-1',
+        fields: [restrictedOwnerField],
+        groups: [
+          {
+            id: 'owner-restricted',
+            name: 'Owner restricted',
+            accessControl: { teamIds: ['team-1'] }
+          }
+        ]
+      },
+      {
+        ...schemaWithRestrictedGroup,
+        id: 'schema-2',
+        fields: [restrictedOtherField],
+        groups: [
+          {
+            id: 'owner-restricted',
+            name: 'Owner restricted',
+            accessControl: { teamIds: ['team-1'] }
+          }
+        ]
+      }
+    ]);
+
+    const authCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const hidden = await exportWorkspace(db, undefined, authCtx, 'workspace-1', {
+      include: ['schemas', 'relation_schemas', 'entities', 'relations']
+    });
+    expect(hidden.data.relations).toEqual([]);
+    expect(hidden.manifest.export_diagnostics).toEqual([
+      expect.objectContaining({ code: 'filtered_reference', item_id: relation.id })
+    ]);
+
+    db.catalog.listSchemas.mockResolvedValue([
+      {
+        ...schemaWithRestrictedGroup,
+        id: 'schema-1',
+        fields: [restrictedOwnerField],
+        groups: [
+          {
+            id: 'owner-restricted',
+            name: 'Owner restricted',
+            accessControl: { teamIds: ['team-1'] }
+          }
+        ]
+      },
+      { ...schemaWithRestrictedGroup, id: 'schema-2', fields: [], groups: [] }
+    ]);
+    db.relation.listRelations
+      .mockReset()
+      .mockResolvedValueOnce({ items: [relation], total: 1 })
+      .mockResolvedValueOnce({ items: [], total: 1 });
+    const visible = await exportWorkspace(db, undefined, authCtx, 'workspace-1', {
+      include: ['schemas', 'relation_schemas', 'entities', 'relations']
+    });
+    expect(visible.data.relations).toHaveLength(1);
   });
 });

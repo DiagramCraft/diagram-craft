@@ -615,20 +615,10 @@ export const updateEntity = async (
             status: 400,
             message: `'${fieldId}' is not a typedRelation field on schema '${schema.name}'`
           });
-          // Both the entity schema's own field-group access AND the target relation
-          // schema's field-group access (enforced inside applyRelationFieldDelta) must
-          // allow edit — most-restrictive-wins precedence between the two scopes.
-          if (authCtx) {
-            requireNoRestrictedFieldWrites(
-              authCtx,
-              schema,
-              [fieldId],
-              `You do not have permission to edit the restricted field '${field.name}'`
-            );
-          }
           await applyRelationFieldDelta(tx, {
             workspace,
             ownerEntityId: oldRow.id,
+            ownerSchema: schema,
             field,
             delta,
             authCtx,

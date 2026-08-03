@@ -18,6 +18,7 @@ import {
   relationDeltasSchema
 } from '@arch-register/api-types/entityContract';
 import { filterRelationFieldData } from './relationHelpers';
+import { canViewTypedRelationFromEndpoint } from './relationAccessControl';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import {
   externalUpdateEnvelopeSchema,
@@ -491,6 +492,9 @@ export const buildEntityRelations = (
       )?.name;
 
     for (const row of typedRelations.outgoing) {
+      if (!canViewTypedRelationFromEndpoint(authCtx, entitySchema, row.schema_id, 'in')) {
+        continue;
+      }
       const target = entityLookup.get(row.out_entity_id);
       if (!target) continue;
       const schema = relationSchemaById.get(row.schema_id);
@@ -511,6 +515,9 @@ export const buildEntityRelations = (
     }
 
     for (const row of typedRelations.incoming) {
+      if (!canViewTypedRelationFromEndpoint(authCtx, entitySchema, row.schema_id, 'out')) {
+        continue;
+      }
       const source = entityLookup.get(row.in_entity_id);
       if (!source) continue;
       const schema = relationSchemaById.get(row.schema_id);

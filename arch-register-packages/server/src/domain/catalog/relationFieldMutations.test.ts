@@ -14,6 +14,21 @@ const outField: TypedRelationField = {
   direction: 'out'
 };
 
+const ownerSchema = {
+  id: 'schema-1',
+  workspace: 'ws-1',
+  name: 'Owner schema',
+  description: '',
+  fields: [outField],
+  groups: [],
+  color: null,
+  icon: null,
+  default_owner: null,
+  key_prefix: 'OWN',
+  created_at: now,
+  updated_at: now
+};
+
 const makeDb = () => {
   const relationRows = new Map<string, Record<string, unknown>>([
     [
@@ -95,6 +110,7 @@ describe('applyRelationFieldDelta', () => {
     const results = await applyRelationFieldDelta(db, {
       workspace: 'ws-1',
       ownerEntityId: 'entity-1',
+      ownerSchema,
       field: outField,
       delta: { update: [{ id: 'rel-1', data: { note: 'changed' } }] },
       authCtx: null,
@@ -112,6 +128,7 @@ describe('applyRelationFieldDelta', () => {
       applyRelationFieldDelta(db, {
         workspace: 'ws-1',
         ownerEntityId: 'entity-3',
+        ownerSchema,
         field: outField,
         delta: { update: [{ id: 'rel-1', data: { note: 'changed' } }] },
         authCtx: null,
@@ -128,6 +145,7 @@ describe('applyRelationFieldDelta', () => {
     await applyRelationFieldDelta(db, {
       workspace: 'ws-1',
       ownerEntityId: 'entity-1',
+      ownerSchema,
       field: outField,
       delta: { delete: ['rel-1'] },
       authCtx: null,
@@ -144,6 +162,7 @@ describe('applyRelationFieldDelta', () => {
       applyRelationFieldDelta(db, {
         workspace: 'ws-1',
         ownerEntityId: 'entity-3',
+        ownerSchema,
         field: outField,
         delta: { delete: ['rel-1'] },
         authCtx: null,
