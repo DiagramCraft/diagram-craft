@@ -1,6 +1,9 @@
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
+import {
+  isReferenceOrContainmentField,
+  isTypedRelationField
+} from '@arch-register/api-types/schemaContract';
 import {
   exploreViewConfigSchema,
   type ExploreViewConfig
@@ -43,6 +46,8 @@ export type ExploreConnector = {
 export type ExploreRelationFieldOption = {
   label: string;
   value: string;
+  kind: 'typed' | 'reference' | 'containment';
+  relationSchemaId?: string;
 };
 
 export type ExploreGraph = {
@@ -85,19 +90,28 @@ export const parseExploreConfigValue = (raw: string | undefined): ExploreViewCon
 export const buildRelationFieldOptions = (
   schemas: EntitySchema[]
 ): ExploreRelationFieldOption[] => {
-  const labels = new Map<string, string>();
+  const options = new Map<string, ExploreRelationFieldOption>();
 
   for (const schema of schemas) {
     for (const field of schema.fields) {
       if (isReferenceOrContainmentField(field)) {
-        labels.set(field.name, field.predicate ?? field.name);
+        options.set(field.name, {
+          value: field.name,
+          label: field.predicate ?? field.name,
+          kind: field.type
+        });
+      } else if (isTypedRelationField(field)) {
+        options.set(field.name, {
+          value: field.name,
+          label: field.name,
+          kind: 'typed',
+          relationSchemaId: field.relationSchemaId
+        });
       }
     }
   }
 
-  return [...labels.entries()]
-    .sort((a, b) => a[1].localeCompare(b[1]))
-    .map(([value, label]) => ({ label, value }));
+  return [...options.values()].sort((a, b) => a.label.localeCompare(b.label));
 };
 
 export const buildDefaultRelationFieldNames = (schemas: EntitySchema[]): string[] => {
@@ -105,7 +119,7 @@ export const buildDefaultRelationFieldNames = (schemas: EntitySchema[]): string[
 
   for (const schema of schemas) {
     for (const field of schema.fields) {
-      if (field.type === 'reference') {
+      if (field.type === 'reference' || isTypedRelationField(field)) {
         names.add(field.name);
       }
     }

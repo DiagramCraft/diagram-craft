@@ -4,6 +4,7 @@ import type { EntityRelationData } from '../../../hooks/useEntities';
 import {
   buildDefaultRelationFieldNames,
   buildExploreGraph,
+  buildRelationFieldOptions,
   normalizeExploreConfig,
   parseExploreConfigValue
 } from './ExploreView.helpers';
@@ -120,6 +121,43 @@ describe('buildExploreGraph', () => {
         })
       ])
     );
+  });
+
+  it('includes typed relations by default and when explicitly selected', () => {
+    const relationsMap = relationMap({
+      a: {
+        outgoing: [
+          {
+            entityId: 'right-1',
+            publicId: 'RIGHT1',
+            entitySlug: 'right-1',
+            entityName: 'Right 1',
+            entitySchemaId: 'service',
+            fieldName: 'Data Flow',
+            kind: 'typed',
+            relationSchemaColor: '#ff0000'
+          }
+        ]
+      }
+    });
+
+    const defaultGraph = buildExploreGraph({
+      centerEntities: [entity('a', 'App A')],
+      relationsMap,
+      config: { leftDepth: 0, rightDepth: 1, relationFieldNames: [] }
+    });
+    expect(
+      defaultGraph.columns.find(column => column.index === 1)?.entities.map(e => e.entityId)
+    ).toEqual(['right-1']);
+
+    const explicitGraph = buildExploreGraph({
+      centerEntities: [entity('a', 'App A')],
+      relationsMap,
+      config: { leftDepth: 0, rightDepth: 1, relationFieldNames: ['Data Flow'] }
+    });
+    expect(
+      explicitGraph.columns.find(column => column.index === 1)?.entities.map(e => e.entityId)
+    ).toEqual(['right-1']);
   });
 
   it('adds one more derived hop only on the expanded side', () => {
@@ -304,43 +342,69 @@ describe('normalizeExploreConfig', () => {
   });
 });
 
-describe('buildDefaultRelationFieldNames', () => {
-  it('includes reference fields and excludes containment fields', () => {
-    const schemas = [
+const schemasWithTypedRelation = [
+  {
+    id: 'application',
+    workspace: 'ws',
+    name: 'Application',
+    description: '',
+    key_prefix: 'APP',
+    fields: [
       {
-        id: 'application',
-        workspace: 'ws',
-        name: 'Application',
-        description: '',
-        key_prefix: 'APP',
-        fields: [
-          {
-            id: 'dependsOn',
-            name: 'Depends On',
-            type: 'reference',
-            schemaId: 'service',
-            minCount: 0,
-            maxCount: -1,
-            requirementLevel: null
-          },
-          {
-            id: 'parent',
-            name: 'Parent',
-            type: 'containment',
-            schemaId: 'application',
-            minCount: 0,
-            maxCount: 1,
-            requirementLevel: null
-          }
-        ],
-        color: null,
-        icon: null,
-        entity_count: 0,
-        created_at: '',
-        updated_at: ''
+        id: 'dependsOn',
+        name: 'Depends On',
+        type: 'reference',
+        schemaId: 'service',
+        minCount: 0,
+        maxCount: -1,
+        requirementLevel: null
+      },
+      {
+        id: 'parent',
+        name: 'Parent',
+        type: 'containment',
+        schemaId: 'application',
+        minCount: 0,
+        maxCount: 1,
+        requirementLevel: null
+      },
+      {
+        id: 'dataFlow',
+        name: 'Data Flow',
+        type: 'typedRelation',
+        relationSchemaId: 'rel-data-flow',
+        direction: 'out',
+        requirementLevel: null
       }
-    ] as EntitySchema[];
+    ],
+    color: null,
+    icon: null,
+    entity_count: 0,
+    created_at: '',
+    updated_at: ''
+  }
+] as EntitySchema[];
 
-    expect(buildDefaultRelationFieldNames(schemas)).toEqual(['Depends On']);
+describe('buildDefaultRelationFieldNames', () => {
+  it('includes reference and typed-relation fields, excludes containment fields', () => {
+    expect(buildDefaultRelationFieldNames(schemasWithTypedRelation)).toEqual([
+      'Data Flow',
+      'Depends On'
+    ]);
+  });
+});
+
+describe('buildRelationFieldOptions', () => {
+  it('includes typed-relation fields alongside reference/containment fields', () => {
+    const options = buildRelationFieldOptions(schemasWithTypedRelation);
+    expect(options).toContainEqual({
+      value: 'Data Flow',
+      label: 'Data Flow',
+      kind: 'typed',
+      relationSchemaId: 'rel-data-flow'
+    });
+    expect(options.map(o => o.value)).toEqual(
+      expect.arrayContaining(['Depends On', 'Parent', 'Data Flow'])
+    );
   });
 });
