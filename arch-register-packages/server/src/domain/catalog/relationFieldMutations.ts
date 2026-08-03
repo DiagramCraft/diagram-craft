@@ -10,9 +10,11 @@ import {
   toApiRelation,
   validateRelationEndpoints
 } from './relationHelpers';
+import { requireTypedRelationFieldEdit } from './relationAccessControl';
 import type { TypedRelationField } from '@arch-register/api-types/schemaContract';
 import type { RelationFieldDelta } from '@arch-register/api-types/entityContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
+import type { SchemaDbResult } from './db/catalogDatabase';
 
 export type RelationMutationActor = { id: string; displayName: string | null };
 
@@ -26,13 +28,15 @@ export const applyRelationFieldDelta = async (
   params: {
     workspace: string;
     ownerEntityId: string;
+    ownerSchema: SchemaDbResult;
     field: TypedRelationField;
     delta: RelationFieldDelta;
     authCtx: AuthorizationContext | null;
     actor: RelationMutationActor;
   }
 ): Promise<RelationRecord[]> => {
-  const { workspace, ownerEntityId, field, delta, authCtx, actor } = params;
+  const { workspace, ownerEntityId, ownerSchema, field, delta, authCtx, actor } = params;
+  requireTypedRelationFieldEdit(authCtx, ownerSchema, field);
   const schema = await db.relation.getRelationSchema(workspace, field.relationSchemaId);
   httpAssert.present(schema, {
     status: 404,

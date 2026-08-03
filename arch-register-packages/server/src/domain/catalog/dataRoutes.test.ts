@@ -529,6 +529,35 @@ describe('data route helpers', () => {
     expect(relations.outgoing.filter(relation => relation.kind === 'typed')).toHaveLength(1);
   });
 
+  it('hides typed relation edges when the owner field is not viewable', () => {
+    const schemaWithRestrictedTypedRelation = {
+      ...componentSchema,
+      fields: [
+        ...componentSchema.fields,
+        {
+          id: 'data_flow',
+          name: 'Data flow',
+          type: 'typedRelation',
+          relationSchemaId: 'relschema-dataflow',
+          direction: 'in',
+          requirementLevel: null,
+          groupId: 'restricted'
+        }
+      ]
+    } as SchemaDbResult;
+
+    const restricted = buildEntityRelations(
+      component,
+      [domainSchema, systemSchema, schemaWithRestrictedTypedRelation],
+      [domain, system, component, dependency],
+      restrictedAuthCtx,
+      { outgoing: [visibleRelationRow], incoming: [] },
+      [dataFlowRelationSchema]
+    );
+
+    expect(restricted.outgoing.some(relation => relation.relationId === 'relation-1')).toBe(false);
+  });
+
   it('does not traverse dependents through a restricted relation field', () => {
     const restricted = buildEntityDependents(
       dependency.id,

@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { PermissionChecker } from '@arch-register/permissions';
+import { ENTITY_DEFAULTS } from '../../constants';
 import { logAudit, computeChanges } from '../audit/db/auditLogging';
 import {
   requireSchemaRead,
@@ -18,6 +19,11 @@ import {
   toRedactedApiRelation,
   validateRelationEndpoints
 } from './relationHelpers';
+import {
+  canViewTypedRelation,
+  canViewTypedRelationFromEndpoint,
+  requireTypedRelationEdit
+} from './relationAccessControl';
 import type {
   RelationRecord,
   RelationListFilters,
@@ -29,6 +35,49 @@ const dbErrorMessages = {
 } as const;
 
 const checker = new PermissionChecker();
+
+const listAllRelations = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  filters: RelationListFilters
+) => {
+  const rows: Awaited<ReturnType<typeof db.relation.listRelations>>['items'] = [];
+  const pageSize = ENTITY_DEFAULTS.PAGE_SIZE;
+  let offset = 0;
+  while (true) {
+    const page = await db.relation.listRelations(
+      workspace,
+      {
+        schemaId: filters.schemaId ?? null,
+        inEntityId: filters.inEntityId ?? null,
+        outEntityId: filters.outEntityId ?? null
+      },
+      { limit: pageSize, offset }
+    );
+    if (page.items.length === 0) break;
+    rows.push(...page.items);
+    if (page.items.length < pageSize || rows.length >= page.total) break;
+    offset += pageSize;
+  }
+  return rows;
+};
+
+const getOwnerSchemas = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  row: { in_entity_id: string; out_entity_id: string }
+) => {
+  const [inEntity, outEntity, schemas] = await Promise.all([
+    db.catalog.getEntity(workspace, row.in_entity_id),
+    db.catalog.getEntity(workspace, row.out_entity_id),
+    db.catalog.listSchemas(workspace)
+  ]);
+  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  return {
+    inSchema: inEntity ? schemaById.get(inEntity.schema_id) : undefined,
+    outSchema: outEntity ? schemaById.get(outEntity.schema_id) : undefined
+  };
+};
 
 export const listWorkspaceRelations = async (
   db: DatabaseAdapter,
@@ -44,23 +93,39 @@ export const listWorkspaceRelations = async (
     { fallback: 'Failed to retrieve relations', dbErrorMessages },
     async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
-      const { items, total } = await db.relation.listRelations(
-        ws,
-        {
-          schemaId: filters.schemaId ?? null,
-          inEntityId: filters.inEntityId ?? null,
-          outEntityId: filters.outEntityId ?? null
-        },
-        pagination
-      );
-      const schemas = await db.relation.listRelationSchemas(ws);
+      const [rows, schemas, entities] = await Promise.all([
+        listAllRelations(db, ws, filters),
+        db.relation.listRelationSchemas(ws),
+        db.catalog.listEntities(ws)
+      ]);
+      const entitySchemaIdByEntity = new Map(entities.map(entity => [entity.id, entity.schema_id]));
+      const entitySchemas = await db.catalog.listSchemas(ws);
+      const entitySchemaById = new Map(entitySchemas.map(schema => [schema.id, schema]));
       const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+      const visibleRows = rows.filter(row =>
+        canViewTypedRelation(
+          authCtx,
+          [
+            {
+              schema: entitySchemaById.get(entitySchemaIdByEntity.get(row.in_entity_id) ?? ''),
+              direction: 'in'
+            },
+            {
+              schema: entitySchemaById.get(entitySchemaIdByEntity.get(row.out_entity_id) ?? ''),
+              direction: 'out'
+            }
+          ],
+          row.schema_id
+        )
+      );
+      const offset = pagination.offset ?? 0;
+      const limit = pagination.limit ?? ENTITY_DEFAULTS.PAGE_SIZE;
       return {
-        items: items.map(row => {
+        items: visibleRows.slice(offset, offset + limit).map(row => {
           const schema = schemaById.get(row.schema_id);
           return toRedactedApiRelation(row, authCtx, schema);
         }),
-        total
+        total: visibleRows.length
       };
     }
   );
@@ -81,6 +146,18 @@ export const getWorkspaceRelation = async (
       requireSchemaRead(authCtx);
       const row = await db.relation.getRelation(ws, id);
       httpAssert.present(row, { status: 404, message: `Relation '${id}' not found` });
+      const { inSchema, outSchema } = await getOwnerSchemas(db, ws, row);
+      httpAssert.true(
+        canViewTypedRelation(
+          authCtx,
+          [
+            { schema: inSchema, direction: 'in' },
+            { schema: outSchema, direction: 'out' }
+          ],
+          row.schema_id
+        ),
+        { status: 404, message: `Relation '${id}' not found` }
+      );
       const schema = await db.relation.getRelationSchema(ws, row.schema_id);
       return toRedactedApiRelation(row, authCtx, schema);
     }
@@ -120,6 +197,18 @@ export const createWorkspaceRelation = async (
         db.catalog.getEntity(ws, outEntityId)
       ]);
       validateRelationEndpoints(schema, inEntity, outEntity);
+      const { inSchema, outSchema } = await getOwnerSchemas(db, ws, {
+        in_entity_id: inEntity!.id,
+        out_entity_id: outEntity!.id
+      });
+      requireTypedRelationEdit(
+        authCtx,
+        [
+          { schema: inSchema, direction: 'in' },
+          { schema: outSchema, direction: 'out' }
+        ],
+        schema.id
+      );
 
       const data = extractRelationFieldData(body);
       requireNoRestrictedFieldWrites(authCtx, schema, Object.keys(data));
@@ -174,6 +263,15 @@ export const updateWorkspaceRelation = async (
         status: 404,
         message: `Relation schema '${oldRow.schema_id}' not found`
       });
+      const { inSchema, outSchema } = await getOwnerSchemas(db, ws, oldRow);
+      requireTypedRelationEdit(
+        authCtx,
+        [
+          { schema: inSchema, direction: 'in' },
+          { schema: outSchema, direction: 'out' }
+        ],
+        oldRow.schema_id
+      );
       assertRelationMutationsSupported(schema);
 
       const data = extractRelationFieldData(body);
@@ -226,6 +324,15 @@ export const deleteWorkspaceRelation = async (
       requireWorkspaceCapability(authCtx, 'ent.edit');
       const row = await db.relation.getRelation(ws, id);
       httpAssert.present(row, { status: 404, message: `Relation '${id}' not found` });
+      const { inSchema, outSchema } = await getOwnerSchemas(db, ws, row);
+      requireTypedRelationEdit(
+        authCtx,
+        [
+          { schema: inSchema, direction: 'in' },
+          { schema: outSchema, direction: 'out' }
+        ],
+        row.schema_id
+      );
       const schema = await db.relation.getRelationSchema(ws, row.schema_id);
       httpAssert.present(schema, {
         status: 404,
@@ -266,6 +373,7 @@ export const listTypedRelationsForEntity = async (
       requireSchemaRead(authCtx);
       const entity = await db.catalog.getEntity(ws, entityId);
       httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+      const entitySchema = await db.catalog.getSchema(ws, entity.schema_id);
 
       const [{ outgoing, incoming }, schemas, entityAuthCtx] = await Promise.all([
         db.relation.listRelationsForEntity(ws, entity.id),
@@ -285,8 +393,20 @@ export const listTypedRelationsForEntity = async (
         return toRedactedApiRelation(row, authCtx, schema);
       };
       return {
-        outgoing: outgoing.filter(row => isEntityVisible(row.out_entity_id)).map(toRecord),
-        incoming: incoming.filter(row => isEntityVisible(row.in_entity_id)).map(toRecord)
+        outgoing: outgoing
+          .filter(
+            row =>
+              isEntityVisible(row.out_entity_id) &&
+              canViewTypedRelationFromEndpoint(authCtx, entitySchema, row.schema_id, 'in')
+          )
+          .map(toRecord),
+        incoming: incoming
+          .filter(
+            row =>
+              isEntityVisible(row.in_entity_id) &&
+              canViewTypedRelationFromEndpoint(authCtx, entitySchema, row.schema_id, 'out')
+          )
+          .map(toRecord)
       };
     }
   );

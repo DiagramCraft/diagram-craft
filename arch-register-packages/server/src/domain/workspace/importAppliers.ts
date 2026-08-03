@@ -33,6 +33,7 @@ import type {
 } from './exportTypes';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import { validateRelationEndpoints } from '../catalog/relationHelpers';
+import { requireTypedRelationEdit } from '../catalog/relationAccessControl';
 
 type ImportResolution = { action: string; new_name?: string };
 
@@ -686,6 +687,18 @@ export const importRelations = async (
       db.catalog.getEntity(workspace, resolveMappedId(idMapping.entities, relation.out_entity_id)!)
     ]);
     validateRelationEndpoints(schema, inEntity, outEntity);
+    const [inSchema, outSchema] = await Promise.all([
+      db.catalog.getSchema(workspace, inEntity!.schema_id),
+      db.catalog.getSchema(workspace, outEntity!.schema_id)
+    ]);
+    requireTypedRelationEdit(
+      authCtx,
+      [
+        { schema: inSchema, direction: 'in' },
+        { schema: outSchema, direction: 'out' }
+      ],
+      schema.id
+    );
     requireNoRestrictedFieldWrites(
       authCtx,
       schema,
