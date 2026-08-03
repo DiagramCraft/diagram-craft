@@ -18,7 +18,7 @@ import {
   relationDeltasSchema
 } from '@arch-register/api-types/entityContract';
 import { filterRelationFieldData } from './relationHelpers';
-import { canViewTypedRelationFromEndpoint } from './relationAccessControl';
+import { canViewTypedRelationFromEndpoint, canViewTypedRelation } from './relationAccessControl';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import {
   externalUpdateEnvelopeSchema,
@@ -188,8 +188,8 @@ export type RelationRecord = {
 
 // Same as RelationRecord, plus a 'typed' kind and the metadata needed to render/redact/navigate a
 // typed relation instance edge. Kept distinct from RelationRecord (rather than widening it in
-// place) so DependentRecord — which extends RelationRecord but never carries typed relations —
-// keeps its narrower, exhaustive 'reference' | 'containment' kind.
+// place) so plain reference/containment call sites keep the narrower, exhaustive
+// 'reference' | 'containment' kind.
 export type EntityRelationRecord = Omit<RelationRecord, 'kind'> & {
   kind: 'reference' | 'containment' | 'typed';
   relationId?: string;
@@ -541,7 +541,7 @@ export const buildEntityRelations = (
   return { outgoing, incoming };
 };
 
-export type DependentRecord = RelationRecord & {
+export type DependentRecord = EntityRelationRecord & {
   schemaName: string;
   lifecycleState: string | null;
   depth: number;
@@ -555,27 +555,33 @@ export type DependentsResponse = {
 
 const MAX_DEPENDENTS_NODES = 500;
 
+type IncomingIndexEntry = {
+  entity: Entity;
+  fieldName: string;
+  fieldPredicate?: string;
+  kind: 'reference' | 'containment' | 'typed';
+  relationId?: string;
+  relationSchemaId?: string;
+  relationSchemaColor?: string | null;
+  relationSchemaIcon?: string | null;
+  relationFields?: Record<string, unknown>;
+};
+
 export const buildEntityDependents = (
   entityId: string,
   entities: Entity[],
   schemas: InternalEntitySchema[],
   options: { transitive: boolean; maxDepth?: number },
-  authCtx: AuthorizationContext | null
+  authCtx: AuthorizationContext | null,
+  typedRelations?: RelationDbResult[],
+  relationSchemas?: RelationSchemaDbResult[]
 ): DependentsResponse => {
   const maxDepth = options.maxDepth ?? 5;
   const schemaMap = new Map(schemas.map(s => [s.id, s]));
   const entityMap = new Map(entities.map(e => [e.id, e]));
 
   // Build inverse index: for each entity id, which entities reference it
-  const incomingIndex = new Map<
-    string,
-    Array<{
-      entity: Entity;
-      fieldName: string;
-      fieldPredicate?: string;
-      kind: 'reference' | 'containment';
-    }>
-  >();
+  const incomingIndex = new Map<string, IncomingIndexEntry[]>();
   for (const entity of entities) {
     const schema = schemaMap.get(entity.schema_id);
     if (!schema) continue;
@@ -594,6 +600,55 @@ export const buildEntityDependents = (
     }
   }
 
+  if (typedRelations && relationSchemas) {
+    const relationSchemaById = new Map(relationSchemas.map(schema => [schema.id, schema]));
+
+    for (const row of typedRelations) {
+      const inEntity = entityMap.get(row.in_entity_id);
+      if (!inEntity) continue;
+
+      const inSchema = schemaMap.get(inEntity.schema_id);
+      const outEntity = entityMap.get(row.out_entity_id);
+      const outSchema = outEntity ? schemaMap.get(outEntity.schema_id) : undefined;
+
+      if (
+        !canViewTypedRelation(
+          authCtx,
+          [
+            { schema: inSchema, direction: 'in' },
+            { schema: outSchema, direction: 'out' }
+          ],
+          row.schema_id
+        )
+      ) {
+        continue;
+      }
+
+      const relationSchema = relationSchemaById.get(row.schema_id);
+      // The in-entity's own schema field name bound to this relation (see relationFieldMutations.ts:
+      // a field with direction 'in' creates relations with that entity as in_entity_id), falling back
+      // to the relation schema's own name.
+      const fieldName = inSchema?.fields.find(
+        field =>
+          isTypedRelationField(field) &&
+          field.relationSchemaId === row.schema_id &&
+          field.direction === 'in'
+      )?.name;
+
+      if (!incomingIndex.has(row.out_entity_id)) incomingIndex.set(row.out_entity_id, []);
+      incomingIndex.get(row.out_entity_id)!.push({
+        entity: inEntity,
+        fieldName: fieldName ?? relationSchema?.name ?? row.schema_name,
+        kind: 'typed',
+        relationId: row.id,
+        relationSchemaId: row.schema_id,
+        relationSchemaColor: relationSchema?.color ?? null,
+        relationSchemaIcon: relationSchema?.icon ?? null,
+        relationFields: filterRelationFieldData(authCtx, relationSchema, row.data)
+      });
+    }
+  }
+
   const visited = new Set<string>([entityId]);
   const dependents: DependentRecord[] = [];
   let truncated = false;
@@ -609,7 +664,17 @@ export const buildEntityDependents = (
       continue;
     }
 
-    for (const { entity, fieldName, fieldPredicate, kind } of incomingIndex.get(currentId) ?? []) {
+    for (const {
+      entity,
+      fieldName,
+      fieldPredicate,
+      kind,
+      relationId,
+      relationSchemaId,
+      relationSchemaColor,
+      relationSchemaIcon,
+      relationFields
+    } of incomingIndex.get(currentId) ?? []) {
       if (visited.has(entity.id)) continue;
       visited.add(entity.id);
 
@@ -630,6 +695,11 @@ export const buildEntityDependents = (
         fieldName,
         fieldPredicate,
         kind,
+        relationId,
+        relationSchemaId,
+        relationSchemaColor,
+        relationSchemaIcon,
+        relationFields,
         depth: depth + 1,
         viaPath
       });

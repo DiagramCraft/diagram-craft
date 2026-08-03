@@ -127,7 +127,27 @@ export const getEntityDependents = async (
     const entities = authCtx
       ? entitiesRaw.filter(row => checker.hasEntityPermission(authCtx, row, 'view_entity'))
       : entitiesRaw;
-    return buildEntityDependents(entity.id, entities, schemas, options, authCtx);
+    const [typedRelationsRaw, relationSchemas] = await Promise.all([
+      db.relation.listRelationsForEntities(
+        workspace,
+        entities.map(row => row.id)
+      ),
+      db.relation.listRelationSchemas(workspace)
+    ]);
+    const typedRelations = [
+      ...new Map(
+        [...typedRelationsRaw.outgoing, ...typedRelationsRaw.incoming].map(row => [row.id, row])
+      ).values()
+    ];
+    return buildEntityDependents(
+      entity.id,
+      entities,
+      schemas,
+      options,
+      authCtx,
+      typedRelations,
+      relationSchemas
+    );
   } catch (error) {
     return handleError(error, 'Failed to retrieve entity dependents');
   }
