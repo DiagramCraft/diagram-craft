@@ -6,7 +6,12 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { AutomationRuleDbResult } from './db/automationRuleDatabase';
-import { createAutomationRule, updateAutomationRule } from './automationRuleOperations';
+import {
+  AUTOMATION_RULE_REDACTED_LITERAL,
+  createAutomationRule,
+  listAutomationRules,
+  updateAutomationRule
+} from './automationRuleOperations';
 
 const authorizationMocks = vi.hoisted(() => ({
   buildApiAuthCtx: vi.fn()
@@ -98,6 +103,102 @@ const baseInput: AutomationRuleInput = {
   actions: [{ kind: 'set_field_value', field: 'title', value: 'flagged' }],
   enabled: true
 };
+
+const sensitiveRule: AutomationRuleDbResult = {
+  id: 'rule-1',
+  workspace: 'ws-1',
+  created_by: 'user-1',
+  name: 'Sensitive rule',
+  description: 'Visible rule description',
+  schema_id: 'schema-1',
+  trigger: { kind: 'lifecycle_transition', from: 'draft', to: 'published' },
+  conditions: [{ field: 'salary', operator: 'equals', value: 100000 }],
+  actions: [
+    { kind: 'create_audit_note', note: 'Salary exceeded threshold' },
+    {
+      kind: 'send_notification',
+      recipient: { kind: 'reference_owner', field: 'salary' },
+      message: 'Salary requires review'
+    },
+    { kind: 'set_field_value', field: 'title', value: 'flagged' }
+  ],
+  enabled: true,
+  created_at: now,
+  updated_at: now
+};
+
+describe('listAutomationRules redaction', () => {
+  it('redacts literals for a workspace admin without restricted field-group view access', async () => {
+    const db = makeDb();
+    db.automationRule.listRules = vi.fn(async () => [sensitiveRule]);
+
+    const result = await listAutomationRules(db, 'ws-1', eventFor(peopleManagerRole));
+    const rule = result[0]!;
+
+    expect(rule.name).toBe('Sensitive rule');
+    expect(rule.description).toBe('Visible rule description');
+    expect(rule.trigger).toEqual({
+      kind: 'lifecycle_transition',
+      from: AUTOMATION_RULE_REDACTED_LITERAL,
+      to: AUTOMATION_RULE_REDACTED_LITERAL
+    });
+    expect(rule.conditions[0]).toMatchObject({
+      field: 'salary',
+      value: AUTOMATION_RULE_REDACTED_LITERAL
+    });
+    expect(rule.actions).toEqual([
+      { kind: 'create_audit_note', note: AUTOMATION_RULE_REDACTED_LITERAL },
+      {
+        kind: 'send_notification',
+        recipient: { kind: 'reference_owner', field: 'salary' },
+        message: AUTOMATION_RULE_REDACTED_LITERAL
+      },
+      {
+        kind: 'set_field_value',
+        field: 'title',
+        value: AUTOMATION_RULE_REDACTED_LITERAL
+      }
+    ]);
+  });
+
+  it('keeps literals for a caller with restricted field-group view access', async () => {
+    const db = makeDb();
+    db.automationRule.listRules = vi.fn(async () => [sensitiveRule]);
+
+    const result = await listAutomationRules(
+      db,
+      'ws-1',
+      eventFor(peopleManagerRole, [{ teamId: 'team-restricted', role: 'team_reviewer' }])
+    );
+
+    expect(result[0]).toMatchObject({
+      trigger: sensitiveRule.trigger,
+      conditions: sensitiveRule.conditions,
+      actions: sensitiveRule.actions
+    });
+  });
+
+  it('redacts unscoped rules when a referenced field is restricted in any workspace schema', async () => {
+    const db = makeDb();
+    const unrestrictedSchema = { ...restrictedSchema, id: 'schema-2', groups: [] };
+    db.catalog.listSchemas = vi.fn(async () => [restrictedSchema, unrestrictedSchema]);
+    db.automationRule.listRules = vi.fn(async () => [{ ...sensitiveRule, schema_id: null }]);
+
+    const result = await listAutomationRules(db, 'ws-1', eventFor(peopleManagerRole));
+
+    expect(result[0]!.conditions[0]!.value).toBe(AUTOMATION_RULE_REDACTED_LITERAL);
+  });
+
+  it('fails closed when a schema-scoped rule references a missing schema', async () => {
+    const db = makeDb();
+    db.catalog.listSchemas = vi.fn(async () => []);
+    db.automationRule.listRules = vi.fn(async () => [sensitiveRule]);
+
+    const result = await listAutomationRules(db, 'ws-1', eventFor(peopleManagerRole));
+
+    expect(result[0]!.conditions[0]!.value).toBe(AUTOMATION_RULE_REDACTED_LITERAL);
+  });
+});
 
 describe('createAutomationRule', () => {
   it('rejects a condition referencing a field the author cannot view', async () => {
