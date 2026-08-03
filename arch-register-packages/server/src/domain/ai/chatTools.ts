@@ -14,7 +14,7 @@ import {
   type EntityMutationActor,
   updateEntityWithAudit
 } from '../catalog/entityMutations';
-import { Entity } from '../catalog/db/catalogDatabase';
+import { Entity, type SchemaDbResult } from '../catalog/db/catalogDatabase';
 import { equalEntityValue } from '../catalog/entityDiff';
 import {
   SchemaField,
@@ -33,6 +33,11 @@ import {
   assertRelationMutationsSupported,
   validateRelationEndpoints
 } from '../catalog/relationHelpers';
+import {
+  canViewTypedRelation,
+  canViewTypedRelationFromEndpoint,
+  requireTypedRelationEdit
+} from '../catalog/relationAccessControl';
 import { requireWorkspaceCapability } from '../auth/authorization';
 
 const checker = new PermissionChecker();
@@ -595,6 +600,84 @@ export const createAiChatTools = (
     return new Map(schemas.map(schema => [schema.id, schema]));
   };
 
+  type RelationEndpointAccess = {
+    inEntity: Entity | null;
+    outEntity: Entity | null;
+    endpoints: Array<{
+      schema: SchemaDbResult | undefined;
+      direction: 'in' | 'out';
+    }>;
+  };
+
+  const getRelationEndpointAccess = (
+    inEntity: Entity | null,
+    outEntity: Entity | null,
+    entitySchemaMap: Map<string, SchemaDbResult>
+  ): RelationEndpointAccess => ({
+    inEntity,
+    outEntity,
+    endpoints: [
+      {
+        schema: inEntity ? entitySchemaMap.get(inEntity.schema_id) : undefined,
+        direction: 'in'
+      },
+      {
+        schema: outEntity ? entitySchemaMap.get(outEntity.schema_id) : undefined,
+        direction: 'out'
+      }
+    ]
+  });
+
+  const loadRelationEndpointAccess = async (
+    inEntityId: string,
+    outEntityId: string
+  ): Promise<RelationEndpointAccess> => {
+    const [inEntity, outEntity, schemas] = await Promise.all([
+      db.catalog.getEntity(workspaceId, inEntityId),
+      db.catalog.getEntity(workspaceId, outEntityId),
+      db.catalog.listSchemas(workspaceId)
+    ]);
+    return getRelationEndpointAccess(
+      inEntity,
+      outEntity,
+      new Map(schemas.map(schema => [schema.id, schema]))
+    );
+  };
+
+  const loadVisibleRelationEndpoints = async () => {
+    const [schemas, rawEntities] = await Promise.all([
+      db.catalog.listSchemas(workspaceId),
+      listAllCatalogEntities(db, workspaceId)
+    ]);
+    const visibleEntities = getVisibleEntities(rawEntities, authCtx);
+    return {
+      entityMap: new Map(visibleEntities.map(entity => [entity.id, entity])),
+      schemaMap: new Map(schemas.map(schema => [schema.id, schema]))
+    };
+  };
+
+  const listAllRelationRows = async (
+    filters: Parameters<DatabaseAdapter['relation']['listRelations']>[1]
+  ) => {
+    const rows: Awaited<ReturnType<DatabaseAdapter['relation']['listRelations']>>['items'] = [];
+    const pageSize = 100;
+    let offset = 0;
+
+    while (true) {
+      const page = await db.relation.listRelations(workspaceId, filters, {
+        limit: pageSize,
+        offset
+      });
+      rows.push(...page.items);
+      if (page.items.length === 0 || page.items.length < pageSize || rows.length >= page.total) {
+        break;
+      }
+      offset += page.items.length;
+    }
+
+    return rows;
+  };
+
   const toAiRelation = (
     row: Awaited<ReturnType<DatabaseAdapter['relation']['getRelation']>>,
     schemaMap: Map<string, RelationSchemaDbResult>
@@ -624,21 +707,32 @@ export const createAiChatTools = (
   const listRelations = listRelationsTool.server(async rawArgs => {
     const args = rawArgs as ListRelationsArgs;
     const schemaMap = await relationSchemaMap();
-    const page = await db.relation.listRelations(
-      workspaceId,
-      {
-        schemaId: args.schemaId ?? null,
-        inEntityId: args.inEntityId ?? null,
-        outEntityId: args.outEntityId ?? null
-      },
-      {
-        limit: Math.min(Math.max(Math.trunc(args.limit ?? 20), 1), 100),
-        offset: Math.max(Math.trunc(args.offset ?? 0), 0)
-      }
-    );
+    const { entityMap, schemaMap: entitySchemaMap } = await loadVisibleRelationEndpoints();
+    const rows = await listAllRelationRows({
+      schemaId: args.schemaId ?? null,
+      inEntityId: args.inEntityId ?? null,
+      outEntityId: args.outEntityId ?? null
+    });
+    const visibleRows = rows.filter(row => {
+      const access = getRelationEndpointAccess(
+        entityMap.get(row.in_entity_id) ?? null,
+        entityMap.get(row.out_entity_id) ?? null,
+        entitySchemaMap
+      );
+      return (
+        access.inEntity !== null &&
+        access.outEntity !== null &&
+        canViewTypedRelation(authCtx, access.endpoints, row.schema_id)
+      );
+    });
+    const limit = Math.min(Math.max(Math.trunc(args.limit ?? 20), 1), 100);
+    const offset = Math.max(Math.trunc(args.offset ?? 0), 0);
     return {
-      total: page.total,
-      items: page.items.map(row => toAiRelation(row, schemaMap)).filter(Boolean)
+      total: visibleRows.length,
+      items: visibleRows
+        .slice(offset, offset + limit)
+        .map(row => toAiRelation(row, schemaMap))
+        .filter(Boolean)
     };
   });
 
@@ -646,6 +740,19 @@ export const createAiChatTools = (
     const args = rawArgs as GetRelationArgs;
     const row = await db.relation.getRelation(workspaceId, args.relationId);
     if (!row) throw new Error(`Relation '${args.relationId}' not found`);
+    const { entityMap, schemaMap: entitySchemaMap } = await loadVisibleRelationEndpoints();
+    const access = getRelationEndpointAccess(
+      entityMap.get(row.in_entity_id) ?? null,
+      entityMap.get(row.out_entity_id) ?? null,
+      entitySchemaMap
+    );
+    if (
+      access.inEntity === null ||
+      access.outEntity === null ||
+      !canViewTypedRelation(authCtx, access.endpoints, row.schema_id)
+    ) {
+      throw new Error(`Relation '${args.relationId}' not found`);
+    }
     const schemaMap = await relationSchemaMap();
     const result = toAiRelation(row, schemaMap);
     if (!result) throw new Error(`Relation '${args.relationId}' not found`);
@@ -658,11 +765,9 @@ export const createAiChatTools = (
     const schema = await db.relation.getRelationSchema(workspaceId, args.schemaId);
     if (!schema) throw new Error(`Relation schema '${args.schemaId}' not found`);
     assertRelationMutationsSupported(schema);
-    const [inEntity, outEntity] = await Promise.all([
-      db.catalog.getEntity(workspaceId, args.inEntityId),
-      db.catalog.getEntity(workspaceId, args.outEntityId)
-    ]);
-    validateRelationEndpoints(schema, inEntity, outEntity);
+    const endpointAccess = await loadRelationEndpointAccess(args.inEntityId, args.outEntityId);
+    validateRelationEndpoints(schema, endpointAccess.inEntity, endpointAccess.outEntity);
+    if (authCtx) requireTypedRelationEdit(authCtx, endpointAccess.endpoints, schema.id);
     const fields = args.fields ?? {};
     if (authCtx) requireNoRestrictedFieldWrites(authCtx, schema, Object.keys(fields));
     const now = new Date();
@@ -670,8 +775,8 @@ export const createAiChatTools = (
       id: randomUUID(),
       workspace: workspaceId,
       schema_id: schema.id,
-      in_entity_id: inEntity!.id,
-      out_entity_id: outEntity!.id,
+      in_entity_id: endpointAccess.inEntity!.id,
+      out_entity_id: endpointAccess.outEntity!.id,
       data: fields,
       created_at: now,
       updated_at: now
@@ -705,6 +810,11 @@ export const createAiChatTools = (
     const schema = await db.relation.getRelationSchema(workspaceId, oldRow.schema_id);
     if (!schema) throw new Error(`Relation schema '${oldRow.schema_id}' not found`);
     assertRelationMutationsSupported(schema);
+    const endpointAccess = await loadRelationEndpointAccess(
+      oldRow.in_entity_id,
+      oldRow.out_entity_id
+    );
+    if (authCtx) requireTypedRelationEdit(authCtx, endpointAccess.endpoints, oldRow.schema_id);
     const changed = Object.keys(args.fields).filter(
       key => JSON.stringify(oldRow.data[key] ?? null) !== JSON.stringify(args.fields[key] ?? null)
     );
@@ -737,6 +847,8 @@ export const createAiChatTools = (
     const schema = await db.relation.getRelationSchema(workspaceId, row.schema_id);
     if (!schema) throw new Error(`Relation schema '${row.schema_id}' not found`);
     assertRelationMutationsSupported(schema);
+    const endpointAccess = await loadRelationEndpointAccess(row.in_entity_id, row.out_entity_id);
+    if (authCtx) requireTypedRelationEdit(authCtx, endpointAccess.endpoints, row.schema_id);
     await db.relation.deleteRelation(workspaceId, row.id);
     await logAudit(db, {
       userId: actor.id,
@@ -825,36 +937,36 @@ export const createAiChatTools = (
         })
       : [];
 
-    const outgoingTypedRelations = typedRelations.outgoing.map(row => ({
-      relationId: row.id,
-      relationSchemaId: row.schema_id,
-      relationSchemaName: row.schema_name,
-      target: summarizeRelationTarget(
-        entityLookup.get(row.out_entity_id) ?? {
-          id: row.out_entity_id,
-          name: row.out_entity_name,
-          slug: '',
-          schema_id: ''
-        },
-        undefined
-      ),
-      fields: filterRelationFieldData(authCtx, typedSchemaMap.get(row.schema_id), row.data)
-    }));
-    const incomingTypedRelations = typedRelations.incoming.map(row => ({
-      relationId: row.id,
-      relationSchemaId: row.schema_id,
-      relationSchemaName: row.schema_name,
-      source: summarizeRelationTarget(
-        entityLookup.get(row.in_entity_id) ?? {
-          id: row.in_entity_id,
-          name: row.in_entity_name,
-          slug: '',
-          schema_id: ''
-        },
-        undefined
-      ),
-      fields: filterRelationFieldData(authCtx, typedSchemaMap.get(row.schema_id), row.data)
-    }));
+    const outgoingTypedRelations = typedRelations.outgoing.flatMap(row => {
+      const target = entityLookup.get(row.out_entity_id);
+      if (!target || !canViewTypedRelationFromEndpoint(authCtx, schema, row.schema_id, 'in')) {
+        return [];
+      }
+      return [
+        {
+          relationId: row.id,
+          relationSchemaId: row.schema_id,
+          relationSchemaName: row.schema_name,
+          target: summarizeRelationTarget(target, schemaMap.get(target.schema_id)?.name),
+          fields: filterRelationFieldData(authCtx, typedSchemaMap.get(row.schema_id), row.data)
+        }
+      ];
+    });
+    const incomingTypedRelations = typedRelations.incoming.flatMap(row => {
+      const source = entityLookup.get(row.in_entity_id);
+      if (!source || !canViewTypedRelationFromEndpoint(authCtx, schema, row.schema_id, 'out')) {
+        return [];
+      }
+      return [
+        {
+          relationId: row.id,
+          relationSchemaId: row.schema_id,
+          relationSchemaName: row.schema_name,
+          source: summarizeRelationTarget(source, schemaMap.get(source.schema_id)?.name),
+          fields: filterRelationFieldData(authCtx, typedSchemaMap.get(row.schema_id), row.data)
+        }
+      ];
+    });
 
     return {
       found: true,
@@ -1173,8 +1285,12 @@ export const createAiChatTools = (
       ) {
         const typed = await relationDb.listRelationsForEntity(workspaceId, currentId);
         for (const relation of typed.outgoing) {
-          const target =
-            relation.in_entity_id === currentId ? relation.out_entity_id : relation.in_entity_id;
+          if (!canViewTypedRelationFromEndpoint(authCtx, schema, relation.schema_id, 'in')) {
+            continue;
+          }
+          const targetEntity = entityMap.get(relation.out_entity_id);
+          if (!targetEntity) continue;
+          const target = targetEntity.id;
           const relationSchema = await relationDb.getRelationSchema(
             workspaceId,
             relation.schema_id
@@ -1200,8 +1316,12 @@ export const createAiChatTools = (
       ) {
         const typed = await relationDb.listRelationsForEntity(workspaceId, currentId);
         for (const relation of typed.incoming) {
-          const source =
-            relation.out_entity_id === currentId ? relation.in_entity_id : relation.out_entity_id;
+          if (!canViewTypedRelationFromEndpoint(authCtx, schema, relation.schema_id, 'out')) {
+            continue;
+          }
+          const sourceEntity = entityMap.get(relation.in_entity_id);
+          if (!sourceEntity) continue;
+          const source = sourceEntity.id;
           const relationSchema = await relationDb.getRelationSchema(
             workspaceId,
             relation.schema_id
