@@ -13,36 +13,46 @@ export const redactVersionState = (
   version: EntityVersionDbResult,
   authCtx: WorkspaceAuthorizationContext | null,
   schema: FieldGroupSchemaShape | null,
-  historicalSchema: FieldGroupSchemaShape | null = null
+  historicalSchema: FieldGroupSchemaShape | null = null,
+  options: { failClosedWhenHistoricalSchemaMissing?: boolean } = {}
 ): EntityVersionDbResult => {
   const data = version.state['data'];
   if (data == null || typeof data !== 'object') return version;
 
   if (!authCtx) return version;
 
+  if (options.failClosedWhenHistoricalSchemaMissing && historicalSchema == null) {
+    return {
+      ...version,
+      state: {
+        ...version.state,
+        data: {}
+      }
+    };
+  }
+
   const schemas = [schema, historicalSchema].filter(
     (candidate): candidate is FieldGroupSchemaShape => candidate != null
   );
   if (schemas.length === 0) return version;
-  const knownFields = new Map<string, FieldGroupSchemaShape>();
-  for (const candidate of schemas) {
-    for (const field of candidate.fields) {
-      // The current schema takes precedence over the historical schema when a field exists in
-      // both. Fields that only exist in a historical snapshot still need to be redacted.
-      if (!knownFields.has(field.id) || candidate === schema) {
-        knownFields.set(field.id, candidate);
-      }
-    }
-  }
 
   const redactedData: Record<string, unknown> = {};
   for (const [fieldId, value] of Object.entries(data as Record<string, unknown>)) {
-    const fieldSchema = knownFields.get(fieldId);
-    if (!fieldSchema) continue;
-    Object.assign(
-      redactedData,
-      filterRestrictedFieldGroups(authCtx, fieldSchema, { [fieldId]: value })
+    const fieldSchemas = schemas.filter(candidate =>
+      candidate.fields.some(field => field.id === fieldId)
     );
+    if (fieldSchemas.length === 0) continue;
+
+    // Apply every schema that knows the field. This intentionally makes the most restrictive
+    // historical/current ACL win, so a later ACL relaxation cannot expose an old value.
+    const isRestricted = fieldSchemas.some(
+      fieldSchema =>
+        !Object.hasOwn(
+          filterRestrictedFieldGroups(authCtx, fieldSchema, { [fieldId]: value }),
+          fieldId
+        )
+    );
+    if (!isRestricted) redactedData[fieldId] = value;
   }
 
   return {

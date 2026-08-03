@@ -21,6 +21,7 @@ import {
   serializeEntityVersion
 } from './entityVersionOperations';
 import { entityVersionContract } from '@arch-register/api-types/entityVersionContract';
+import type { SchemaDbResult, SchemaVersionDbResult } from './db/catalogDatabase';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -33,26 +34,60 @@ const entityVersionRouter = implement(entityVersionContract)
   .use(workspaceScoped)
   .use(entityScoped);
 
+type SchemaLookup = {
+  schema: SchemaDbResult | null;
+  schemaVersions: SchemaVersionDbResult[];
+};
+
+const createVersionSchemaResolver = (db: DatabaseAdapter, workspace: string) => {
+  const lookups = new Map<string, Promise<SchemaLookup>>();
+
+  const getSchemaLookup = (schemaId: string): Promise<SchemaLookup> => {
+    const existing = lookups.get(schemaId);
+    if (existing) return existing;
+
+    const lookup = Promise.all([
+      db.catalog.getSchema(workspace, schemaId),
+      db.catalog.listSchemaVersions(workspace, schemaId)
+    ]).then(([schema, schemaVersions]) => ({ schema, schemaVersions }));
+    lookups.set(schemaId, lookup);
+    return lookup;
+  };
+
+  return async (
+    version: { state: Record<string, unknown>; created_at: Date },
+    fallbackSchemaId?: string,
+    useFallbackSchema = false
+  ) => {
+    const schemaId = String(version.state['schema_id'] ?? fallbackSchemaId ?? '');
+    const [versionLookup, fallbackSchema] = await Promise.all([
+      schemaId
+        ? getSchemaLookup(schemaId)
+        : Promise.resolve({ schema: null, schemaVersions: [] as SchemaVersionDbResult[] }),
+      useFallbackSchema && fallbackSchemaId && fallbackSchemaId !== schemaId
+        ? db.catalog.getSchema(workspace, fallbackSchemaId)
+        : Promise.resolve(null)
+    ]);
+
+    const historicalSchema =
+      [...versionLookup.schemaVersions]
+        .filter(schemaVersion => schemaVersion.created_at <= version.created_at)
+        .sort((left, right) => right.created_at.getTime() - left.created_at.getTime())[0] ?? null;
+
+    return {
+      schema: versionLookup.schema ?? fallbackSchema,
+      historicalSchema
+    };
+  };
+};
+
 const getVersionSchemas = async (
   db: DatabaseAdapter,
   workspace: string,
   version: { state: Record<string, unknown>; created_at: Date },
   fallbackSchemaId?: string
 ) => {
-  const schemaId = String(version.state['schema_id'] ?? fallbackSchemaId ?? '');
-  const [versionSchema, fallbackSchema, schemaVersions] = await Promise.all([
-    schemaId ? db.catalog.getSchema(workspace, schemaId) : Promise.resolve(null),
-    fallbackSchemaId && fallbackSchemaId !== schemaId
-      ? db.catalog.getSchema(workspace, fallbackSchemaId)
-      : Promise.resolve(null),
-    schemaId ? db.catalog.listSchemaVersions(workspace, schemaId) : Promise.resolve([])
-  ]);
-  const schema = versionSchema ?? fallbackSchema;
-  const historicalSchema =
-    [...schemaVersions]
-      .filter(schemaVersion => schemaVersion.created_at <= version.created_at)
-      .sort((left, right) => right.created_at.getTime() - left.created_at.getTime())[0] ?? null;
-  return { schema, historicalSchema };
+  return createVersionSchemaResolver(db, workspace)(version, fallbackSchemaId, true);
 };
 
 const entityVersionHandlers = {
@@ -70,21 +105,16 @@ const entityVersionHandlers = {
       'You do not have access to view this entity'
     );
     const versions = await context.db.catalog.listEntityVersions(workspace, entity.id);
-    const schemaIds = new Set(
-      versions.map(version => String(version.state['schema_id'] ?? entity.schema_id))
-    );
-    const schemas = await Promise.all(
-      [...schemaIds].map(schemaId => context.db.catalog.getSchema(workspace, schemaId))
-    );
-    const schemaById = new Map(schemas.filter(s => s != null).map(s => [s.id, s]));
-    return versions.map(version =>
-      serializeEntityVersion(
-        redactVersionState(
-          version,
-          authCtx,
-          schemaById.get(String(version.state['schema_id'] ?? entity.schema_id)) ?? null
-        )
-      )
+    const resolveVersionSchemas = createVersionSchemaResolver(context.db, workspace);
+    return Promise.all(
+      versions.map(async version => {
+        const { schema, historicalSchema } = await resolveVersionSchemas(version, entity.schema_id);
+        return serializeEntityVersion(
+          redactVersionState(version, authCtx, schema, historicalSchema, {
+            failClosedWhenHistoricalSchemaMissing: true
+          })
+        );
+      })
     );
   }),
 
@@ -110,9 +140,13 @@ const entityVersionHandlers = {
       code: 'BAD_REQUEST',
       message: 'Version does not belong to this entity'
     });
-    const schemaId = String(version.state['schema_id'] ?? entity.schema_id);
-    const schema = await context.db.catalog.getSchema(workspace, schemaId);
-    return serializeEntityVersion(redactVersionState(version, authCtx, schema ?? null));
+    const resolveVersionSchemas = createVersionSchemaResolver(context.db, workspace);
+    const { schema, historicalSchema } = await resolveVersionSchemas(version, entity.schema_id);
+    return serializeEntityVersion(
+      redactVersionState(version, authCtx, schema, historicalSchema, {
+        failClosedWhenHistoricalSchemaMissing: true
+      })
+    );
   }),
 
   promote: entityVersionRouter.entityVersions.promote.handler(async ({ input, context }) => {
