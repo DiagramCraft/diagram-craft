@@ -479,6 +479,42 @@ describe('data route helpers', () => {
     expect(typed!.relationFields).toEqual({ protocol: 'https' });
   });
 
+  it('omits unknown typed relation field keys', () => {
+    const relations = buildEntityRelations(
+      component,
+      [domainSchema, systemSchema, componentSchema],
+      [domain, system, component, dependency],
+      allowedAuthCtx,
+      {
+        outgoing: [{ ...visibleRelationRow, data: { protocol: 'https', removed: 'secret' } }],
+        incoming: []
+      },
+      [dataFlowRelationSchema]
+    );
+
+    const typed = relations.outgoing.find(relation => relation.kind === 'typed');
+    expect(typed!.relationFields).toEqual({ protocol: 'https' });
+  });
+
+  it('omits typed relation field values when the relation schema is missing', () => {
+    const relations = buildEntityRelations(
+      component,
+      [domainSchema, systemSchema, componentSchema],
+      [domain, system, component, dependency],
+      allowedAuthCtx,
+      { outgoing: [visibleRelationRow], incoming: [] },
+      []
+    );
+
+    const typed = relations.outgoing.find(relation => relation.kind === 'typed');
+    expect(typed).toMatchObject({
+      entityId: 'component-2',
+      relationId: 'relation-1',
+      relationSchemaId: 'relschema-dataflow',
+      relationFields: {}
+    });
+  });
+
   it('drops typed relations whose other endpoint entity is not in the visible entity set', () => {
     const relations = buildEntityRelations(
       component,

@@ -17,15 +17,13 @@ import {
   type RelationDeltas,
   relationDeltasSchema
 } from '@arch-register/api-types/entityContract';
+import { filterRelationFieldData } from './relationHelpers';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import {
   externalUpdateEnvelopeSchema,
   type ExternalUpdateEnvelope
 } from '@arch-register/api-types/common';
-import {
-  isFieldViewRestricted,
-  filterRestrictedFieldGroups
-} from '../auth/fieldGroupAccessControl';
+import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
 
 export const handleError = (error: unknown, fallback: string): never =>
@@ -476,9 +474,7 @@ export const buildEntityRelations = (
 
     const toRelationFields = (row: RelationDbResult) => {
       const schema = relationSchemaById.get(row.schema_id);
-      return schema
-        ? (filterRestrictedFieldGroups(authCtx, schema, row.data) as Record<string, unknown>)
-        : row.data;
+      return filterRelationFieldData(authCtx, schema, row.data);
     };
 
     // The entity-schema field name for this relation, on the field bound to whichever

@@ -1,7 +1,9 @@
 import type { RelationDbResult } from './db/relationDatabase';
 import type { RelationSchemaDbResult } from './db/relationDatabase';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
+import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 
 /** Reserved (underscore-prefixed) keys are metadata; everything else is relation field data. */
 export const extractRelationFieldData = (body: Record<string, unknown>): Record<string, unknown> =>
@@ -57,3 +59,36 @@ export const toApiRelation = (row: RelationDbResult): RelationRecord => ({
   canDelete: true,
   ...row.data
 });
+
+/**
+ * Redacts relation instance data for an external response.
+ *
+ * Relation instances can outlive their schema metadata in imported or historical data. In that
+ * case there is no trustworthy field definition or ACL to apply, so fail closed and expose no
+ * relation field values. For a known schema, only currently declared field ids are retained before
+ * applying the normal field-group access rules; this also prevents removed/unknown keys from
+ * bypassing redaction.
+ */
+export const filterRelationFieldData = (
+  authCtx: WorkspaceAuthorizationContext | null,
+  schema: RelationSchemaDbResult | null | undefined,
+  data: Record<string, unknown>
+): Record<string, unknown> => {
+  if (!schema) return {};
+
+  const fieldIds = new Set(schema.fields.map(field => field.id));
+  const declaredData = Object.fromEntries(
+    Object.entries(data).filter(([fieldId]) => fieldIds.has(fieldId))
+  );
+  return filterRestrictedFieldGroups(authCtx, schema, declaredData);
+};
+
+export const toRedactedApiRelation = (
+  row: RelationDbResult,
+  authCtx: WorkspaceAuthorizationContext | null,
+  schema: RelationSchemaDbResult | null | undefined
+): RelationRecord =>
+  toApiRelation({
+    ...row,
+    data: filterRelationFieldData(authCtx, schema, row.data)
+  });
