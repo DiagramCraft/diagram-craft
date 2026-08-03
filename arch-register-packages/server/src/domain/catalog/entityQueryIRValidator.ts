@@ -307,9 +307,9 @@ const validateNode = (
       return hopsUsedBefore;
     case 'predicate': {
       const hopsAfterPath = validatePathSteps(
-      node.path,
-      schemas,
-      relationSchemas,
+        node.path,
+        schemas,
+        relationSchemas,
         [...path, 'path'],
         hopsUsedBefore,
         errors,
@@ -317,9 +317,11 @@ const validateNode = (
       );
       if (!isKnownFieldId(node.fieldId, schemas, authCtx)) {
         errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
-      } else if ([...schemas.values()].some(schema =>
-        schema.fields.some(field => field.id === node.fieldId && field.type === 'typedRelation')
-      )) {
+      } else if (
+        [...schemas.values()].some(schema =>
+          schema.fields.some(field => field.id === node.fieldId && field.type === 'typedRelation')
+        )
+      ) {
         errors.push({
           path: [...path, 'fieldId'],
           message: `Field '${node.fieldId}' is a typed relation and is not queryable`
@@ -389,7 +391,9 @@ const queryUsesTypedRelation = (node: QueryNode): boolean => {
     case 'predicate':
     case 'relationExists':
       return node.path.some(
-        step => step.kind === 'typedRelation' || (step.filter ? queryUsesTypedRelation(step.filter) : false)
+        step =>
+          step.kind === 'typedRelation' ||
+          (step.filter ? queryUsesTypedRelation(step.filter) : false)
       );
     case 'freeText':
       return false;
@@ -445,7 +449,8 @@ export const validateEntityQueryIR = (
   ) {
     errors.push({
       path: ['asOf'],
-      message: 'Typed relation queries are not supported with asOf until relation history is available'
+      message:
+        'Typed relation queries are not supported with asOf until relation history is available'
     });
   }
   validateNode(query.root, schemas, relationSchemas, ['root'], 0, true, errors, authCtx);
@@ -486,7 +491,7 @@ export const validateEntityQueryIR = (
     if (projection.source === 'relation' && !relationProjectionStep) {
       errors.push({
         path: [...projectionPath, 'source'],
-        message: "Relation projections require a typedRelation path step"
+        message: 'Relation projections require a typedRelation path step'
       });
     } else if (
       relationProjectionStep &&
@@ -505,14 +510,22 @@ export const validateEntityQueryIR = (
         path: [...projectionPath, 'fieldId'],
         message: `Unknown or restricted relation field '${projection.fieldId}'`
       });
-    } else if (projection.source !== 'relation' && !isKnownFieldId(projection.fieldId, schemas, authCtx)) {
+    } else if (
+      projection.source !== 'relation' &&
+      !isKnownFieldId(projection.fieldId, schemas, authCtx)
+    ) {
       errors.push({
         path: [...projectionPath, 'fieldId'],
         message: `Unknown field '${projection.fieldId}'`
       });
-    } else if (projection.source !== 'relation' && [...schemas.values()].some(schema =>
-      schema.fields.some(field => field.id === projection.fieldId && field.type === 'typedRelation')
-    )) {
+    } else if (
+      projection.source !== 'relation' &&
+      [...schemas.values()].some(schema =>
+        schema.fields.some(
+          field => field.id === projection.fieldId && field.type === 'typedRelation'
+        )
+      )
+    ) {
       errors.push({
         path: [...projectionPath, 'fieldId'],
         message: `Field '${projection.fieldId}' is a typed relation and is not queryable`

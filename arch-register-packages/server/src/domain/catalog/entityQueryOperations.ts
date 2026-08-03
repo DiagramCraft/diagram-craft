@@ -345,15 +345,22 @@ const collectEntities = async (
   // Assessment conditions are evaluated against the joined assessment's bulk response map;
   // everything else, including `_completeness` (a materialized column, #2346), is evaluated in SQL.
   const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
-  const [schemas, relationSchemas, projectEntities, joinedAssessment, collectionEntityIds] = await Promise.all([
-    db.catalog.listSchemas(workspace),
-    db.relation.listRelationSchemas(workspace),
-    projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
-    resolveJoinedAssessment(db, workspace, authCtx, assessmentId, assessmentConditions.length > 0),
-    collectionId && authCtx
-      ? db.view.listCollectionEntityIds(authCtx.userId, workspace, collectionId)
-      : Promise.resolve(null)
-  ]);
+  const [schemas, relationSchemas, projectEntities, joinedAssessment, collectionEntityIds] =
+    await Promise.all([
+      db.catalog.listSchemas(workspace),
+      db.relation.listRelationSchemas(workspace),
+      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
+      resolveJoinedAssessment(
+        db,
+        workspace,
+        authCtx,
+        assessmentId,
+        assessmentConditions.length > 0
+      ),
+      collectionId && authCtx
+        ? db.view.listCollectionEntityIds(authCtx.userId, workspace, collectionId)
+        : Promise.resolve(null)
+    ]);
   if (entityQuery) {
     return collectEntitiesFromIR(
       db,
@@ -621,13 +628,20 @@ export const getEntityTree = async (
   } = normalized;
   try {
     const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
-    const [schemas, relationSchemas, allEntitiesRaw, projectEntities, joinedAssessment] = await Promise.all([
-      db.catalog.listSchemas(workspace),
-      db.relation.listRelationSchemas(workspace),
-      listAllCatalogEntities(db, workspace, { projectId, projectScope }),
-      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
-      resolveJoinedAssessment(db, workspace, authCtx, assessmentId, assessmentConditions.length > 0)
-    ]);
+    const [schemas, relationSchemas, allEntitiesRaw, projectEntities, joinedAssessment] =
+      await Promise.all([
+        db.catalog.listSchemas(workspace),
+        db.relation.listRelationSchemas(workspace),
+        listAllCatalogEntities(db, workspace, { projectId, projectScope }),
+        projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
+        resolveJoinedAssessment(
+          db,
+          workspace,
+          authCtx,
+          assessmentId,
+          assessmentConditions.length > 0
+        )
+      ]);
     const structuredMatchIds = entityQuery
       ? new Set(
           (
@@ -641,7 +655,7 @@ export const getEntityTree = async (
               collectionId && authCtx
                 ? await db.view.listCollectionEntityIds(authCtx.userId, workspace, collectionId)
                 : null,
-              relationSchemas,
+              relationSchemas
             )
           ).map(row => row.entity._uid)
         )

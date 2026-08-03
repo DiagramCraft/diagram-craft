@@ -5,10 +5,7 @@ import {
   type PathStep,
   type QueryNode
 } from '@arch-register/api-types/entityQueryIR';
-import type {
-  SchemaField,
-  TypedRelationField
-} from '@arch-register/api-types/schemaContract';
+import type { SchemaField, TypedRelationField } from '@arch-register/api-types/schemaContract';
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
 import {
@@ -348,10 +345,7 @@ const resolveRelationField = (
   const relationSchema = relationSchemas.get(relationSchemaId);
   const field = relationSchema?.fields.find(candidate => candidate.id === fieldId);
   if (!relationSchema) {
-    throw new TextCompileError(
-      `Unknown relation schema '${relationSchemaId}'`,
-      offset
-    );
+    throw new TextCompileError(`Unknown relation schema '${relationSchemaId}'`, offset);
   }
   if (!field || isFieldViewRestricted(authCtx, relationSchema, fieldId)) {
     throw new TextCompileError(
@@ -640,15 +634,7 @@ const parseStep = (
     let filter: QueryNode | undefined;
     if (peek(state).kind === 'LBRACKET') {
       advance(state);
-      filter = parseOrExpr(
-        state,
-        ownerSchemaId,
-        undefined,
-        schemas,
-        relationSchemas,
-        enums,
-        false
-      );
+      filter = parseOrExpr(state, ownerSchemaId, undefined, schemas, relationSchemas, enums, false);
       expect(state, 'RBRACKET');
     }
     return {
@@ -707,15 +693,7 @@ const parseStep = (
         false
       );
     } else {
-      filter = parseOrExpr(
-        state,
-        nextSchemaId,
-        undefined,
-        schemas,
-        relationSchemas,
-        enums,
-        false
-      );
+      filter = parseOrExpr(state, nextSchemaId, undefined, schemas, relationSchemas, enums, false);
     }
     expect(state, 'RBRACKET');
   }

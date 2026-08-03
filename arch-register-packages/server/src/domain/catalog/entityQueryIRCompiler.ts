@@ -398,13 +398,9 @@ const compilePathSteps = (
     const relationAlias = nextRelationAlias(state);
     const targetAlias = nextAlias(state);
     const ownerId =
-      step.direction === 'in'
-        ? `${relationAlias}.in_entity_id`
-        : `${relationAlias}.out_entity_id`;
+      step.direction === 'in' ? `${relationAlias}.in_entity_id` : `${relationAlias}.out_entity_id`;
     const targetId =
-      step.direction === 'in'
-        ? `${relationAlias}.out_entity_id`
-        : `${relationAlias}.in_entity_id`;
+      step.direction === 'in' ? `${relationAlias}.out_entity_id` : `${relationAlias}.in_entity_id`;
     const relationSchemaParam = addParam(state, step.relationSchemaId);
     const filterClause = step.filter
       ? ` AND ${compileRelationNode(

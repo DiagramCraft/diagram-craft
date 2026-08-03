@@ -141,10 +141,7 @@ const TYPED_SYSTEM = makeSchema('typed-system-id', 'Typed System', [
     direction: 'out'
   }
 ]);
-const typedSchemas: SchemaCatalog = new Map([
-  ...schemas,
-  [TYPED_SYSTEM.id, TYPED_SYSTEM]
-]);
+const typedSchemas: SchemaCatalog = new Map([...schemas, [TYPED_SYSTEM.id, TYPED_SYSTEM]]);
 const relationSchemas = new Map([[DATA_FLOW.id, DATA_FLOW]]);
 
 const parseOk = (text: string): EntityQuery => {
@@ -402,7 +399,13 @@ describe('parseEntityQueryText — typed scalar relation fields', () => {
         root: {
           kind: 'and',
           children: [
-            { kind: 'predicate', path: [], fieldId: '_schemaId', op: 'equals', value: TYPED_SYSTEM.id },
+            {
+              kind: 'predicate',
+              path: [],
+              fieldId: '_schemaId',
+              op: 'equals',
+              value: TYPED_SYSTEM.id
+            },
             {
               kind: 'predicate',
               path: [

@@ -95,7 +95,9 @@ const pathUsesRestrictedField = (
         : fieldIsRestricted(step.fieldId, schemas, authCtx);
     return (
       stepRestricted ||
-      (step.filter ? nodeUsesRestrictedField(step.filter, schemas, authCtx, undefined, relationSchemas) : false)
+      (step.filter
+        ? nodeUsesRestrictedField(step.filter, schemas, authCtx, undefined, relationSchemas)
+        : false)
     );
   });
 
@@ -111,14 +113,33 @@ const nodeUsesRestrictedField = (
     case 'and':
     case 'or':
       return node.children.some(child =>
-        nodeUsesRestrictedField(child, schemas, authCtx, rootSchemaId, relationSchemas, currentRelationSchemaId)
+        nodeUsesRestrictedField(
+          child,
+          schemas,
+          authCtx,
+          rootSchemaId,
+          relationSchemas,
+          currentRelationSchemaId
+        )
       );
     case 'not':
-      return nodeUsesRestrictedField(node.child, schemas, authCtx, rootSchemaId, relationSchemas, currentRelationSchemaId);
+      return nodeUsesRestrictedField(
+        node.child,
+        schemas,
+        authCtx,
+        rootSchemaId,
+        relationSchemas,
+        currentRelationSchemaId
+      );
     case 'predicate':
       return (
         (currentRelationSchemaId
-          ? relationFieldIsRestricted(node.fieldId, relationSchemas, authCtx, currentRelationSchemaId)
+          ? relationFieldIsRestricted(
+              node.fieldId,
+              relationSchemas,
+              authCtx,
+              currentRelationSchemaId
+            )
           : fieldIsRestricted(
               node.fieldId,
               schemas,
@@ -235,12 +256,17 @@ export const savedViewUsesRestrictedField = (
     projection =>
       (projection.source === 'relation'
         ? (() => {
-            const step = [...projection.path].reverse().find(candidate => candidate.kind === 'typedRelation');
-            return step == null || relationFieldIsRestricted(
-              projection.fieldId,
-              relationSchemas,
-              authCtx,
-              step.relationSchemaId
+            const step = [...projection.path]
+              .reverse()
+              .find(candidate => candidate.kind === 'typedRelation');
+            return (
+              step == null ||
+              relationFieldIsRestricted(
+                projection.fieldId,
+                relationSchemas,
+                authCtx,
+                step.relationSchemaId
+              )
             );
           })()
         : fieldIsRestricted(
@@ -259,11 +285,14 @@ const assertSavedViewAccessible = (
   authCtx: WorkspaceAuthorizationContext,
   relationSchemas: RelationSchemaDbResult[] = []
 ) => {
-  httpAssert.true(!savedViewUsesRestrictedField(filters, config, schemas, authCtx, relationSchemas), {
-    status: 403,
-    statusText: 'Forbidden',
-    message: 'You do not have permission to access fields used by this saved view'
-  });
+  httpAssert.true(
+    !savedViewUsesRestrictedField(filters, config, schemas, authCtx, relationSchemas),
+    {
+      status: 403,
+      statusText: 'Forbidden',
+      message: 'You do not have permission to access fields used by this saved view'
+    }
+  );
 };
 
 export const toApi = (view: SavedViewDbResult): ApiSavedView => ({

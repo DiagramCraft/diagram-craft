@@ -347,7 +347,11 @@ const entityHandlers = {
 const buildQueryCatalogs = async (
   db: DatabaseAdapter,
   workspace: string
-): Promise<{ schemas: SchemaCatalog; enums: EnumCatalog; relationSchemas: RelationSchemaCatalog }> => {
+): Promise<{
+  schemas: SchemaCatalog;
+  enums: EnumCatalog;
+  relationSchemas: RelationSchemaCatalog;
+}> => {
   const [schemas, enums, relationSchemas] = await Promise.all([
     db.catalog.listSchemas(workspace),
     db.catalog.listEnums(workspace),
