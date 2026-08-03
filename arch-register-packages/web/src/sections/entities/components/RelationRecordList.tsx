@@ -22,7 +22,7 @@ export const formatRelationFieldValue = (field: RelationField, value: unknown): 
 
 export type RelationDirection = 'outgoing' | 'incoming';
 
-const RelationRecordCard = ({
+export const RelationRecordCard = ({
   record,
   direction,
   relationSchema,

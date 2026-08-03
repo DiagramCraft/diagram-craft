@@ -11,7 +11,8 @@ import type { Relation } from '../types/entityDetailTypes';
 import styles from './EntityTopologyTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import { EmptyState } from '../../../components/EmptyState';
-import { groupRelationsByField } from './entityTopologyState';
+import { groupRelationsByField, groupRelationsByRelationSchema } from './entityTopologyState';
+import { RelationDetailPopover } from './RelationDetailPopover';
 
 type EdgePath = {
   key: string;
@@ -19,6 +20,7 @@ type EdgePath = {
 };
 
 type Props = {
+  workspaceId: string;
   entity: EntityRecord;
   schema: EntitySchema | null;
   color: string;
@@ -30,6 +32,7 @@ type Props = {
 };
 
 export const EntityTopologyTab = ({
+  workspaceId,
   entity,
   schema,
   color,
@@ -43,12 +46,24 @@ export const EntityTopologyTab = ({
   const children = useMemo(() => incoming.filter(r => r.kind === 'containment'), [incoming]);
   const consumesRefs = useMemo(() => outgoing.filter(r => r.kind === 'reference'), [outgoing]);
   const usedByRefs = useMemo(() => incoming.filter(r => r.kind === 'reference'), [incoming]);
+  const typedOutgoing = useMemo(() => outgoing.filter(r => r.kind === 'typed'), [outgoing]);
+  const typedIncoming = useMemo(() => incoming.filter(r => r.kind === 'typed'), [incoming]);
+
+  const [relationPopover, setRelationPopover] = useState<{
+    relationId: string;
+    x: number;
+    y: number;
+  } | null>(null);
+
+  const handleTypedRelationClick = useCallback((relationId: string, e: React.MouseEvent) => {
+    setRelationPopover({ relationId, x: e.clientX, y: e.clientY });
+  }, []);
 
   const containerRef = useRef<HTMLDivElement>(null);
   const entityBoxRef = useRef<HTMLDivElement>(null);
   const refCardRefs = useRef<Map<string, HTMLElement>>(new Map());
   const [edges, setEdges] = useState<EdgePath[]>([]);
-  const topologyVersion = `${parents.length}:${children.length}:${consumesRefs.length}:${usedByRefs.length}`;
+  const topologyVersion = `${parents.length}:${children.length}:${consumesRefs.length}:${usedByRefs.length}:${typedOutgoing.length}:${typedIncoming.length}`;
 
   const resolveRelColor = useCallback(
     (rel: Relation) => {
@@ -138,7 +153,14 @@ export const EntityTopologyTab = ({
     };
   }, [topologyVersion]);
 
-  const isEmpty = parents.length + children.length + consumesRefs.length + usedByRefs.length === 0;
+  const isEmpty =
+    parents.length +
+      children.length +
+      consumesRefs.length +
+      usedByRefs.length +
+      typedOutgoing.length +
+      typedIncoming.length ===
+    0;
 
   return (
     <div className={styles.topologyPage} ref={containerRef}>
@@ -315,10 +337,99 @@ export const EntityTopologyTab = ({
         </div>
       )}
 
+      {(typedOutgoing.length > 0 || typedIncoming.length > 0) && (
+        <div className={styles.topoRefsGrid}>
+          <div className={`${styles.topoRefsCol} ${styles.topoRefsColIn}`}>
+            {typedIncoming.length === 0 && (
+              <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>
+                No incoming relationships
+              </div>
+            )}
+            {groupRelationsByRelationSchema(typedIncoming).map(group => (
+              <div key={group.key} className={styles.topoRefGroup}>
+                <div className={styles.topoAxisLabel}>{group.label}</div>
+                {group.relations.map((r, i) => {
+                  const { schema: rs } = resolveRelColor(r);
+                  const rc = r.relationSchemaColor ?? 'var(--accent-fg)';
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      ref={setCardRef(`in-typed-${group.key}-${i}`) as React.Ref<HTMLButtonElement>}
+                      className={styles.topoRefCard}
+                      onClick={e => r.relationId && handleTypedRelationClick(r.relationId, e)}
+                    >
+                      <span className={styles.topoCardBar} style={{ background: rc }} />
+                      <TypeBadge color={rc} icon={r.relationSchemaIcon ?? undefined} size={14} />
+                      <div className={styles.topoRefBody}>
+                        <div className={styles.topoCardName}>{r.entityName}</div>
+                        {rs && (
+                          <div className={`${styles.topoRefKind} ${sharedStyles.dim}`}>
+                            {rs.name}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+          <div className={`${styles.topoRefsCol} ${styles.topoRefsColOut}`}>
+            {typedOutgoing.length === 0 && (
+              <div className={`${styles.topoRefsEmpty} ${sharedStyles.dim}`}>
+                No outgoing relationships
+              </div>
+            )}
+            {groupRelationsByRelationSchema(typedOutgoing).map(group => (
+              <div key={group.key} className={styles.topoRefGroup}>
+                <div className={styles.topoAxisLabel}>{group.label}</div>
+                {group.relations.map((r, i) => {
+                  const { schema: rs } = resolveRelColor(r);
+                  const rc = r.relationSchemaColor ?? 'var(--accent-fg)';
+                  return (
+                    <button
+                      key={i}
+                      type="button"
+                      ref={
+                        setCardRef(`out-typed-${group.key}-${i}`) as React.Ref<HTMLButtonElement>
+                      }
+                      className={styles.topoRefCard}
+                      onClick={e => r.relationId && handleTypedRelationClick(r.relationId, e)}
+                    >
+                      <span className={styles.topoCardBar} style={{ background: rc }} />
+                      <TypeBadge color={rc} icon={r.relationSchemaIcon ?? undefined} size={14} />
+                      <div className={styles.topoRefBody}>
+                        <div className={styles.topoCardName}>{r.entityName}</div>
+                        {rs && (
+                          <div className={`${styles.topoRefKind} ${sharedStyles.dim}`}>
+                            {rs.name}
+                          </div>
+                        )}
+                      </div>
+                    </button>
+                  );
+                })}
+              </div>
+            ))}
+          </div>
+        </div>
+      )}
+
       {isEmpty && (
         <EmptyState
           title="No relationships defined"
           subtitle="Add reference or containment fields to see the topology."
+        />
+      )}
+
+      {relationPopover && (
+        <RelationDetailPopover
+          workspaceId={workspaceId}
+          relationId={relationPopover.relationId}
+          x={relationPopover.x}
+          y={relationPopover.y}
+          onClose={() => setRelationPopover(null)}
         />
       )}
     </div>
