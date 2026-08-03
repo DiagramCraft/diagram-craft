@@ -22,6 +22,7 @@ describe('EntityRelationsTab', () => {
   it('renders a navigation-only relation row as an anchor', () => {
     const markup = renderToStaticMarkup(
       <EntityRelationsTab
+        workspaceId="ws-1"
         schemas={[]}
         incoming={[]}
         outgoing={[
