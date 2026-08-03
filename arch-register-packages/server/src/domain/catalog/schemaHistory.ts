@@ -1,5 +1,6 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
+import type { SchemaDbResult } from './db/catalogDatabase';
 
 type VersionedSchema = FieldGroupSchemaShape & { created_at: Date };
 
@@ -46,3 +47,40 @@ export const getRelationSchemaAt = async (
   ]);
   return selectSchemaAt(current, versions, asOf);
 };
+
+export type HistoricalSchemaCatalog = Map<string, SchemaDbResult | null>;
+
+/**
+ * Resolves the entity schemas needed by a temporal read. Keep the current schema metadata so
+ * callers can continue to build API records, but replace its fields/groups with the definition
+ * that was applicable at `asOf`. A missing historical definition is deliberately retained as
+ * null so temporal serializers can fail closed instead of falling back to the current schema.
+ */
+export const resolveEntitySchemaCatalogAt = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  schemas: SchemaDbResult[],
+  asOf: Date
+): Promise<HistoricalSchemaCatalog> => {
+  const resolved = await Promise.all(
+    schemas.map(async schema => {
+      const historical = await getEntitySchemaAt(db, workspace, schema.id, asOf);
+      return [
+        schema.id,
+        historical
+          ? {
+              ...schema,
+              fields: historical.fields,
+              groups: historical.groups
+            }
+          : null
+      ] as const;
+    })
+  );
+  return new Map(resolved);
+};
+
+export const availableSchemaCatalog = (
+  schemas: HistoricalSchemaCatalog
+): Map<string, SchemaDbResult> =>
+  new Map([...schemas].filter((entry): entry is [string, SchemaDbResult] => entry[1] != null));
