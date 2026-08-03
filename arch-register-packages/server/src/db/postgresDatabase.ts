@@ -41,6 +41,15 @@ const schemaPath = join(__dirname, 'schema.postgres.sql');
 const PGCRYPTO_EXISTS_NOTICE = 'extension "pgcrypto" already exists, skipping';
 const logger = createLogger('postgres');
 
+/**
+ * PostgreSQL-backed database adapter.
+ *
+ * Call {@link initialize} when connecting to an existing database so pending
+ * migrations are applied. Use `core.reset()` only for destructive bootstrap or
+ * test setup; it recreates the base schema and reapplies every migration.
+ * Transaction callbacks must use the adapter passed to them. That adapter is
+ * bound to the transaction and cannot be closed or reset independently.
+ */
 export class PostgresDatabase implements DatabaseAdapter {
   private readonly sql: PostgresSqlClient;
 
@@ -111,7 +120,9 @@ export class PostgresDatabase implements DatabaseAdapter {
       core: {
         driver: 'postgres',
         isTransaction: true,
-        close: async () => {},
+        close: async () => {
+          throw new Error('Cannot close a transaction-bound database adapter');
+        },
         reset: async () => {
           throw new Error('Cannot reset a transaction-bound database adapter');
         },
@@ -174,6 +185,7 @@ export class PostgresDatabase implements DatabaseAdapter {
       close: async () => {
         await this.sql.end();
       },
+      // Destructive operation intended for bootstrap and test setup.
       reset: async () => {
         try {
           // Drop schema_migrations first to allow clean migration re-run
@@ -219,6 +231,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     };
   }
 
+  /** Apply any pending PostgreSQL migrations without recreating the schema. */
   async initialize(): Promise<void> {
     await runPostgresMigrations(this.sql);
   }
