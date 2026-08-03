@@ -13,6 +13,7 @@
   will-change: transform, opacity;
   z-index: 100;
   color: var(--panel-fg);
+  font-family: var(--font-sans);
   font-size: 12px;
   margin-right: 0.2rem;
 
