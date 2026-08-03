@@ -76,6 +76,9 @@ const makeDb = (entities: EntityDbResult[]) => {
     },
     view: {
       listCollectionEntityIds: vi.fn(async () => [])
+    },
+    relation: {
+      listRelationSchemas: vi.fn(async () => [])
     }
   } as unknown as DatabaseAdapter;
 };
@@ -281,6 +284,9 @@ describe('listEntities with asOf', () => {
       workspace: {
         listTeams: vi.fn(async () => []),
         listLifecycleStates: vi.fn(async () => [])
+      },
+      relation: {
+        listRelationSchemas: vi.fn(async () => [])
       }
     } as unknown as DatabaseAdapter;
   };
@@ -392,6 +398,9 @@ describe('listEntities / countEntities with joined assessment', () => {
         ),
         getProject: vi.fn(async () => ({ id: 'proj-1', workspace: 'ws-1', owner: 'team-1' })),
         listAssessmentResponses
+      },
+      relation: {
+        listRelationSchemas: vi.fn(async () => [])
       }
     } as unknown as DatabaseAdapter;
   };

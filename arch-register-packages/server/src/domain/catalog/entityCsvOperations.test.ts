@@ -105,6 +105,9 @@ const makeDb = (entities: EntityDbResult[]) => {
     },
     view: {
       listCollectionEntityIds: vi.fn(async () => [])
+    },
+    relation: {
+      listRelationSchemas: vi.fn(async () => [])
     }
   } as unknown as DatabaseAdapter;
 };
@@ -238,6 +241,7 @@ describe('exportEntitiesCsv', () => {
       ...base,
       catalog: { ...base.catalog, listSchemas: vi.fn(async () => [typedRelationSchema]) },
       relation: {
+        listRelationSchemas: vi.fn(async () => []),
         listRelations: vi.fn(async () => ({
           items: [
             {
