@@ -28,7 +28,7 @@ vi.mock('../../utils/logger', () => ({
 import { exportWorkspace } from './exportOperations';
 import { parseImport } from './importParseOperations';
 import { executeImport } from './importExecutionOperations';
-import { importEntities, importRelations } from './importAppliers';
+import { importEntities, importRelations, importSchemas } from './importAppliers';
 
 const makeAuthCtx = (): AuthorizationContext => ({ userId: 'user-1' }) as AuthorizationContext;
 
@@ -381,6 +381,77 @@ describe('workspace export/import guards', () => {
     expect(db.catalog.updateSchema).not.toHaveBeenCalled();
   });
 
+  it('preserves field-group ACL metadata when updating an existing schema', async () => {
+    const db = makeDb();
+    const existingSchema = {
+      id: 'existing-schema',
+      name: 'Service',
+      description: '',
+      fields: [],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      default_owner: null,
+      key_prefix: 'SVC',
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+    db.catalog.listSchemas.mockResolvedValue([existingSchema]);
+
+    const idMapping = {
+      schemas: new Map([['source-schema', existingSchema.id]]),
+      shared_field_groups: new Map([['source-group', 'target-group']]),
+      relation_schemas: new Map(),
+      entities: new Map(),
+      relations: new Map(),
+      teams: new Map([['source-team', 'target-team']]),
+      lifecycle_states: new Map(),
+      projects: new Map(),
+      content_nodes: new Map()
+    };
+    const groups = [
+      { id: 'source-group', name: 'Restricted', accessControl: { teamIds: ['source-team'] } }
+    ];
+    const sharedFieldGroupLinks = [{ groupId: 'source-group', teamIds: ['source-team'] }];
+
+    await importSchemas(
+      db,
+      'workspace-1',
+      [
+        {
+          id: 'source-schema',
+          name: 'Service',
+          fields: [],
+          groups,
+          shared_field_group_links: sharedFieldGroupLinks,
+          color: null,
+          icon: null,
+          default_owner: null,
+          key_prefix: null
+        }
+      ],
+      false,
+      { 'source-schema': { action: 'merge' } },
+      idMapping
+    );
+
+    expect(db.catalog.updateSchema).toHaveBeenCalledWith(
+      'workspace-1',
+      existingSchema.id,
+      expect.objectContaining({
+        groups: [
+          {
+            id: 'target-group',
+            name: 'Restricted',
+            accessControl: { teamIds: ['target-team'] }
+          }
+        ],
+        shared_field_group_links: [{ groupId: 'target-group', teamIds: ['target-team'] }]
+      })
+    );
+  });
+
   it('compensates staged storage when the database transaction fails', async () => {
     hasWorkspaceCapability.mockReturnValue(true);
     const db = makeDb();
@@ -520,6 +591,53 @@ describe('workspace entity import field-group authorization', () => {
       )
     ).rejects.toMatchObject({ status: 403 });
     expect(db.catalog.createEntity).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unavailable schema before writing any entities', async () => {
+    const db = makeDb();
+    const mapping = {
+      schemas: new Map([['missing-schema', 'missing-schema']]),
+      shared_field_groups: new Map(),
+      relation_schemas: new Map(),
+      entities: new Map(),
+      relations: new Map(),
+      teams: new Map(),
+      lifecycle_states: new Map(),
+      projects: new Map(),
+      content_nodes: new Map()
+    };
+
+    await expect(
+      importEntities(
+        db,
+        makeAuthCtx(),
+        'workspace-1',
+        [
+          {
+            id: 'entity-1',
+            public_id: 'WS-1',
+            schema_id: 'missing-schema',
+            name: 'Missing schema entity',
+            slug: 'missing-schema-entity',
+            namespace: 'default',
+            description: '',
+            owner: null,
+            lifecycle: null,
+            target_lifecycle: null,
+            target_lifecycle_date: null,
+            tags: [],
+            links: [],
+            data: {},
+            project_id: null
+          }
+        ],
+        true,
+        {},
+        mapping
+      )
+    ).rejects.toMatchObject({ status: 409 });
+    expect(db.catalog.createEntity).not.toHaveBeenCalled();
+    expect(db.catalog.updateEntity).not.toHaveBeenCalled();
   });
 });
 

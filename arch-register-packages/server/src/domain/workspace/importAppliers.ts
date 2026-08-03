@@ -330,6 +330,8 @@ export const importSchemas = async (
         description: input.description,
         fields: input.fields,
         templates: input.templates,
+        groups: input.groups,
+        shared_field_group_links: input.shared_field_group_links,
         color: input.color,
         icon: input.icon,
         default_owner: input.default_owner,
@@ -489,19 +491,26 @@ export const importEntities = async (
   let created = 0;
   let updated = 0;
   const skipped = 0;
+  const schemasById = new Map<
+    string,
+    NonNullable<Awaited<ReturnType<typeof db.catalog.getSchema>>>
+  >();
 
   for (const { entity, nextId } of mappedEntities) {
     const existing = existingEntities.get(nextId);
     const schemaId = resolveMappedId(idMapping.schemas, entity.schema_id) ?? entity.schema_id;
     const schema = await db.catalog.getSchema(workspace, schemaId);
-    if (schema) {
-      requireNoRestrictedFieldWrites(
-        authCtx,
-        schema,
-        Object.keys(entity.data),
-        'You do not have permission to import one or more restricted fields on this entity'
-      );
-    }
+    httpAssert.present(schema, {
+      status: 409,
+      message: `Schema '${schemaId}' is unavailable while importing entity '${entity.id}'`
+    });
+    schemasById.set(schema.id, schema);
+    requireNoRestrictedFieldWrites(
+      authCtx,
+      schema,
+      Object.keys(entity.data),
+      'You do not have permission to import one or more restricted fields on this entity'
+    );
     if (!existing) continue;
     if (schema && entityRequiresApproval(schema, existing)) {
       throw new Error(
@@ -513,13 +522,9 @@ export const importEntities = async (
   for (const { entity, nextId } of mappedEntities) {
     const existing = existingEntities.get(nextId);
     const schemaId = resolveMappedId(idMapping.schemas, entity.schema_id) ?? entity.schema_id;
-    const schema = await db.catalog.getSchema(workspace, schemaId);
+    const schema = schemasById.get(schemaId)!;
     let publicId = preserveIds ? (entity.public_id ?? nextId) : null;
     if (!publicId || usedPublicIds.has(publicId)) {
-      httpAssert.present(schema, {
-        status: 409,
-        message: `Schema '${schemaId}' is unavailable while importing entity '${entity.id}'`
-      });
       do {
         publicId = formatPublicId(
           schema.key_prefix,
