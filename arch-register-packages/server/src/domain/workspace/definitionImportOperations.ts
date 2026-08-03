@@ -7,7 +7,11 @@ import type {
   DefinitionImportSelection,
   DefinitionImportSource
 } from '@arch-register/api-types/workspaceContract';
-import type { SchemaField } from '@arch-register/api-types/schemaContract';
+import type {
+  SchemaField,
+  SchemaGroup,
+  SharedFieldGroupLink
+} from '@arch-register/api-types/schemaContract';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import type { DocumentAiAction, DocumentField } from '@arch-register/api-types/documentContract';
 import type { DatabaseAdapter } from '../../db/database';
@@ -32,6 +36,15 @@ type ImportableSchema = {
   description: string;
   key_prefix: string;
   fields: SchemaField[];
+  groups: SchemaGroup[];
+  shared_field_group_links: SharedFieldGroupLink[];
+  shared_field_groups: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    fields: SchemaField[];
+    sort_order: number;
+  }>;
   color: string | null;
   icon: string | null;
   default_owner_name: string | null;
@@ -64,6 +77,7 @@ type DefinitionSource = {
   schemas: ImportableSchema[];
   enums: ImportableEnum[];
   documentTypes: ImportableDocumentType[];
+  teamNames: Record<string, string>;
 };
 
 type DefinitionImportPlan = {
@@ -143,6 +157,9 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
       .slice(0, 5)
       .toUpperCase(),
     fields: schema.fields.map(toCanonicalField),
+    groups: [],
+    shared_field_group_links: [],
+    shared_field_groups: [],
     color: schema.color,
     icon: schema.icon,
     default_owner_name: null,
@@ -163,7 +180,8 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
     aiActions: [],
     color: documentType.color,
     icon: documentType.icon
-  }))
+  })),
+  teamNames: {}
 });
 
 const sourceFromWorkspace = async (
@@ -172,11 +190,12 @@ const sourceFromWorkspace = async (
 ): Promise<DefinitionSource> => {
   const workspaceRow = await db.workspace.getWorkspace(workspace);
   httpAssert.present(workspaceRow, { status: 404, message: `Workspace '${workspace}' not found` });
-  const [schemas, enums, documentTypes, teams] = await Promise.all([
+  const [schemas, enums, documentTypes, teams, sharedFieldGroups] = await Promise.all([
     db.catalog.listSchemas(workspace),
     db.catalog.listEnums(workspace),
     db.document.listDocumentTypes(workspace, true),
-    db.workspace.listTeams(workspace)
+    db.workspace.listTeams(workspace),
+    db.catalog.listSharedFieldGroups(workspace)
   ]);
   const teamNames = new Map(teams.map(team => [team.id, team.name]));
 
@@ -191,6 +210,12 @@ const sourceFromWorkspace = async (
       description: schema.description,
       key_prefix: schema.key_prefix,
       fields: schema.fields,
+      groups: schema.groups ?? [],
+      shared_field_group_links: schema.shared_field_group_links ?? [],
+      shared_field_groups: (schema.shared_field_group_links ?? []).flatMap(link => {
+        const group = sharedFieldGroups.find(item => item.id === link.groupId);
+        return group ? [{ ...group, fields: group.fields }] : [];
+      }),
       color: schema.color,
       icon: schema.icon,
       default_owner_name: schema.default_owner
@@ -215,7 +240,8 @@ const sourceFromWorkspace = async (
         aiActions: documentType.aiActions ?? [],
         color: documentType.color,
         icon: documentType.icon
-      }))
+      })),
+    teamNames: Object.fromEntries(teamNames)
   };
 };
 
@@ -569,6 +595,21 @@ export const executeDefinitionImport = async (
 
       const schemaIdMap = new Map(plan.schemas.map(schema => [schema.id, randomUUID()]));
       const enumIdMap = new Map(plan.enums.map(enumeration => [enumeration.id, randomUUID()]));
+      const sharedFieldGroupMap = new Map(
+        plan.schemas
+          .flatMap(schema => schema.shared_field_groups)
+          .map(group => [group.id, randomUUID()])
+      );
+      const targetTeams = await db.workspace.listTeams(ws);
+      const targetTeamByName = new Map(targetTeams.map(team => [lower(team.name), team.id]));
+      const teamIdMap = new Map(
+        Object.entries((await getSource(db, ws, input.source, event)).teamNames).flatMap(
+          ([sourceId, name]) => {
+            const targetId = targetTeamByName.get(lower(name));
+            return targetId ? [[sourceId, targetId] as const] : [];
+          }
+        )
+      );
       const now = new Date();
       await db.core.transaction(async tx => {
         for (const enumeration of plan.enums) {
@@ -584,8 +625,31 @@ export const executeDefinitionImport = async (
           await tx.catalog.createEnum(row);
         }
 
+        const sharedGroups = new Map<
+          string,
+          (typeof plan.schemas)[number]['shared_field_groups'][number]
+        >();
+        for (const schema of plan.schemas) {
+          for (const group of schema.shared_field_groups) sharedGroups.set(group.id, group);
+        }
+        for (const group of sharedGroups.values()) {
+          await tx.catalog.createSharedFieldGroup({
+            id: sharedFieldGroupMap.get(group.id)!,
+            workspace: ws,
+            name: group.name,
+            description: group.description,
+            fields: group.fields,
+            sort_order: group.sort_order,
+            created_at: now,
+            updated_at: now
+          });
+        }
+
         for (const schema of plan.schemas) {
           const fields = schema.fields.map(field => {
+            if (field.groupId && sharedFieldGroupMap.has(field.groupId)) {
+              return { ...field, groupId: sharedFieldGroupMap.get(field.groupId)! };
+            }
             if (isReferenceOrContainmentField(field)) {
               return { ...field, schemaId: schemaIdMap.get(field.schemaId) ?? field.schemaId };
             }
@@ -601,6 +665,20 @@ export const executeDefinitionImport = async (
             description: schema.description,
             key_prefix: schema.key_prefix,
             fields,
+            groups: schema.groups.map(group => ({
+              ...group,
+              id: sharedFieldGroupMap.get(group.id) ?? group.id,
+              accessControl: group.accessControl
+                ? {
+                    teamIds: group.accessControl.teamIds.map(id => teamIdMap.get(id) ?? id)
+                  }
+                : undefined
+            })),
+            shared_field_group_links: schema.shared_field_group_links.map(link => ({
+              ...link,
+              groupId: sharedFieldGroupMap.get(link.groupId) ?? link.groupId,
+              teamIds: link.teamIds?.map(id => teamIdMap.get(id) ?? id)
+            })),
             templates: [],
             color: schema.color,
             icon: schema.icon,

@@ -1,5 +1,64 @@
 import { expect, test } from '../helpers/fixtures';
 
+test('workspace replication preserves field-group ACL metadata and restricted values', async ({
+  orpc,
+  server
+}) => {
+  const suffix = Date.now().toString();
+  const source = await orpc.workspaces.create({
+    body: { name: `ACL replication source ${suffix}`, badge: 'ARS' }
+  });
+  const teams = await orpc.config.teams.list({ params: { workspace: source.url_slug } });
+  const group = await orpc.fieldGroups.create({
+    params: { workspace: source.url_slug },
+    body: {
+      name: `Replication shared group ${suffix}`,
+      fields: [{ id: `replication_secret_${suffix}`, name: 'Secret', type: 'text' }]
+    }
+  });
+  const schema = await orpc.schemas.create({
+    params: { workspace: source.url_slug },
+    body: {
+      name: `ACL replication schema ${suffix}`,
+      shared_field_group_links: [{ groupId: group.id, teamIds: [teams[0]!.id] }]
+    }
+  });
+  await orpc.entities.create({
+    params: { workspace: source.url_slug },
+    body: {
+      _schemaId: schema.id,
+      _name: `ACL replication entity ${suffix}`,
+      [`replication_secret_${suffix}`]: 'replicated secret'
+    } as never
+  });
+
+  const copied = await orpc.workspaces.create({
+    body: {
+      name: `ACL replication target ${suffix}`,
+      badge: 'ART',
+      replicate_from: source.id,
+      include: ['schemas', 'entities', 'settings']
+    }
+  });
+  const copiedSchema = (await server.db.catalog.listSchemas(copied.id)).find(
+    item => item.name === schema.name
+  );
+  expect(copiedSchema).toEqual(
+    expect.objectContaining({
+      groups: expect.arrayContaining([
+        expect.objectContaining({ accessControl: { teamIds: expect.any(Array) } })
+      ]),
+      shared_field_group_links: expect.arrayContaining([
+        expect.objectContaining({ groupId: expect.not.stringMatching(group.id) })
+      ])
+    })
+  );
+  const copiedEntity = (await server.db.catalog.listEntities(copied.id)).find(
+    item => item.name === `ACL replication entity ${suffix}`
+  );
+  expect(copiedEntity?.data[`replication_secret_${suffix}`]).toBe('replicated secret');
+});
+
 const suggestedResolutions = (parseResult: {
   conflicts: Array<{
     item_id: string;

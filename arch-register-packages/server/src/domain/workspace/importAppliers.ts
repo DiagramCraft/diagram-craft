@@ -25,8 +25,10 @@ import type {
   ExportProject,
   ExportContentNode,
   IdMapping,
-  ExportDocumentData
+  ExportDocumentData,
+  ExportSharedFieldGroup
 } from './exportTypes';
+import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 
 type ImportResolution = { action: string; new_name?: string };
 
@@ -150,6 +152,56 @@ export const importSchemas = async (
   idMapping: IdMapping
 ): Promise<{ created: number; updated: number }> => {
   const now = new Date();
+  const sourceSharedGroups = new Map<string, ExportSharedFieldGroup>();
+  for (const schema of schemas) {
+    for (const group of schema.shared_field_groups ?? []) {
+      if (!sourceSharedGroups.has(group.id)) sourceSharedGroups.set(group.id, group);
+    }
+  }
+  const existingSharedGroups = await db.catalog.listSharedFieldGroups(workspace);
+  const existingSharedGroupsById = new Map(existingSharedGroups.map(group => [group.id, group]));
+  const existingSharedGroupsByName = new Map(
+    existingSharedGroups.map(group => [group.name.toLowerCase(), group])
+  );
+  for (const group of sourceSharedGroups.values()) {
+    const existing = preserveIds
+      ? (existingSharedGroupsById.get(group.id) ??
+        existingSharedGroupsByName.get(group.name.toLowerCase()))
+      : existingSharedGroupsByName.get(group.name.toLowerCase());
+    if (!idMapping.shared_field_groups.has(group.id)) {
+      idMapping.shared_field_groups.set(
+        group.id,
+        existing?.id ?? (preserveIds ? group.id : randomUUID())
+      );
+    }
+  }
+  for (const group of sourceSharedGroups.values()) {
+    const nextId = idMapping.shared_field_groups.get(group.id)!;
+    const existing =
+      existingSharedGroupsById.get(nextId) ??
+      existingSharedGroupsByName.get(group.name.toLowerCase());
+    const input = {
+      id: nextId,
+      workspace,
+      name: group.name,
+      description: group.description,
+      fields: group.fields as SchemaDbCreate['fields'],
+      sort_order: group.sort_order,
+      created_at: existing?.created_at ?? now,
+      updated_at: now
+    };
+    if (existing) {
+      await db.catalog.updateSharedFieldGroup(workspace, existing.id, {
+        name: input.name,
+        description: input.description,
+        fields: input.fields,
+        sort_order: input.sort_order,
+        updated_at: input.updated_at
+      });
+    } else {
+      await db.catalog.createSharedFieldGroup(input);
+    }
+  }
   const existingSchemas = await db.catalog.listSchemas(workspace);
   const existingSchemasById = new Map(existingSchemas.map(schema => [schema.id, schema]));
   const existingSchemasByName = new Map(
@@ -181,6 +233,12 @@ export const importSchemas = async (
     const existing =
       existingSchemasById.get(nextId) ?? existingSchemasByName.get(schema.name.toLowerCase());
     const fields = schema.fields.map(field => {
+      if (field != null && typeof field === 'object' && 'groupId' in field) {
+        const groupId = (field as { groupId?: string }).groupId;
+        if (groupId && idMapping.shared_field_groups.has(groupId)) {
+          return { ...field, groupId: idMapping.shared_field_groups.get(groupId) };
+        }
+      }
       if (
         field != null &&
         typeof field === 'object' &&
@@ -227,6 +285,18 @@ export const importSchemas = async (
       name: schema.name,
       description: existing?.description ?? '',
       fields,
+      groups: (schema.groups ?? []).map(group => ({
+        ...group,
+        id: idMapping.shared_field_groups.get(group.id) ?? group.id,
+        accessControl: group.accessControl
+          ? { teamIds: group.accessControl.teamIds.map(id => idMapping.teams.get(id) ?? id) }
+          : undefined
+      })),
+      shared_field_group_links: (schema.shared_field_group_links ?? []).map(link => ({
+        ...link,
+        groupId: idMapping.shared_field_groups.get(link.groupId) ?? link.groupId,
+        teamIds: link.teamIds?.map(id => idMapping.teams.get(id) ?? id)
+      })),
       templates,
       color: schema.color,
       icon: schema.icon,
@@ -279,7 +349,7 @@ export const importSchemas = async (
 
 export const importEntities = async (
   db: DatabaseAdapter,
-  _authCtx: WorkspaceAuthorizationContext,
+  authCtx: WorkspaceAuthorizationContext,
   workspace: string,
   entities: ExportEntity[],
   preserveIds: boolean,
@@ -309,9 +379,17 @@ export const importEntities = async (
 
   for (const { entity, nextId } of mappedEntities) {
     const existing = existingEntities.get(nextId);
-    if (!existing) continue;
     const schemaId = resolveMappedId(idMapping.schemas, entity.schema_id) ?? entity.schema_id;
     const schema = await db.catalog.getSchema(workspace, schemaId);
+    if (schema) {
+      requireNoRestrictedFieldWrites(
+        authCtx,
+        schema,
+        Object.keys(entity.data),
+        'You do not have permission to import one or more restricted fields on this entity'
+      );
+    }
+    if (!existing) continue;
     if (schema && entityRequiresApproval(schema, existing)) {
       throw new Error(
         `Entity ${existing.id} requires an approved change proposal before it can be imported`
@@ -337,8 +415,9 @@ export const importEntities = async (
       } while (usedPublicIds.has(publicId));
     }
     usedPublicIds.add(publicId);
-    const mappedOwner = resolveMappedId(idMapping.teams, entity.owner);
-    const mappedLifecycle = resolveMappedId(idMapping.lifecycle_states, entity.lifecycle);
+    const mappedOwner = entity.owner == null ? null : (idMapping.teams.get(entity.owner) ?? null);
+    const mappedLifecycle =
+      entity.lifecycle == null ? null : (idMapping.lifecycle_states.get(entity.lifecycle) ?? null);
     const completeness = schema
       ? computeEntityCompleteness(
           {
@@ -361,7 +440,10 @@ export const importEntities = async (
       description: entity.description,
       owner: mappedOwner,
       lifecycle: mappedLifecycle,
-      target_lifecycle: resolveMappedId(idMapping.lifecycle_states, entity.target_lifecycle),
+      target_lifecycle:
+        entity.target_lifecycle == null
+          ? null
+          : (idMapping.lifecycle_states.get(entity.target_lifecycle) ?? null),
       target_lifecycle_date: entity.target_lifecycle_date,
       tags: entity.tags,
       links: entity.links as EntityDbCreate['links'],

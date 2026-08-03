@@ -26,6 +26,7 @@ const resolveMappedId = (mapping: Map<string, string>, id: string | null | undef
 };
 const createIdMapping = (): IdMapping => ({
   schemas: new Map(),
+  shared_field_groups: new Map(),
   entities: new Map(),
   teams: new Map(),
   lifecycle_states: new Map(),
@@ -35,6 +36,7 @@ const createIdMapping = (): IdMapping => ({
 
 const toSerializableMapping = (mapping: IdMapping): WorkspaceImportPlan['id_mapping'] => ({
   schemas: Object.fromEntries(mapping.schemas),
+  shared_field_groups: Object.fromEntries(mapping.shared_field_groups),
   entities: Object.fromEntries(mapping.entities),
   teams: Object.fromEntries(mapping.teams),
   lifecycle_states: Object.fromEntries(mapping.lifecycle_states),
@@ -137,6 +139,27 @@ export const buildImportPlan = async (
     assign(data.config.lifecycle_states, mapping.lifecycle_states);
   }
   if (options.include.includes('schemas') && data.schemas) assign(data.schemas, mapping.schemas);
+  if (options.include.includes('schemas') && data.schemas) {
+    const existingSharedGroups = await db.catalog.listSharedFieldGroups(workspace);
+    const existingById = new Map(existingSharedGroups.map(group => [group.id, group]));
+    const existingByName = new Map(
+      existingSharedGroups.map(group => [group.name.toLowerCase(), group])
+    );
+    const sharedGroups = new Map(
+      data.schemas
+        .flatMap(schema => schema.shared_field_groups ?? [])
+        .map(group => [group.id, group])
+    );
+    for (const group of sharedGroups.values()) {
+      const existing = options.preserve_ids
+        ? (existingById.get(group.id) ?? existingByName.get(group.name.toLowerCase()))
+        : existingByName.get(group.name.toLowerCase());
+      mapping.shared_field_groups.set(
+        group.id,
+        existing?.id ?? (options.preserve_ids ? group.id : randomUUID())
+      );
+    }
+  }
   if (options.include.includes('entities') && data.entities)
     assign(data.entities, mapping.entities);
   if (options.include.includes('projects') && data.projects)

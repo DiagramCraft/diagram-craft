@@ -184,11 +184,29 @@ const exportConfig = async (db: DatabaseAdapter, workspace: string): Promise<Exp
 
 const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<ExportSchema[]> => {
   const schemas = await db.catalog.listSchemas(workspace);
+  const sharedGroups = await db.catalog.listSharedFieldGroups(workspace);
+  const sharedGroupsById = new Map(sharedGroups.map(group => [group.id, group]));
 
   return schemas.map(schema => ({
     id: schema.id,
     name: schema.name,
     fields: schema.fields,
+    groups: schema.groups ?? [],
+    shared_field_group_links: schema.shared_field_group_links ?? [],
+    shared_field_groups: (schema.shared_field_group_links ?? []).flatMap(link => {
+      const group = sharedGroupsById.get(link.groupId);
+      return group
+        ? [
+            {
+              id: group.id,
+              name: group.name,
+              description: group.description,
+              fields: group.fields,
+              sort_order: group.sort_order
+            }
+          ]
+        : [];
+    }),
     templates: schema.templates ?? [],
     color: schema.color,
     icon: schema.icon,

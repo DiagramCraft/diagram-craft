@@ -455,7 +455,11 @@
           field groups per exporting user, mirroring the redaction applied when viewing entities directly.
 
         - @id:ar.import-export.workspace-import Authorized users can validate, preview, and execute supported workspace
-          imports.
+          imports. Schema groups, field-group access controls, reusable shared fieldgroups, and their links are
+          preserved with remapped references; imports reject restricted values the importing caller cannot edit.
+
+        - @id:ar.import-export.workspace-replication Workspace copies preserve schema field groups, shared fieldgroup
+          links, and field-group access-control semantics while remapping workspace-local identifiers.
 
         - @id:ar.import-export.definition-import Workspace administrators can preview and atomically import selected
           schemas, reusable enums, and active document types from built-in templates or another administered workspace,

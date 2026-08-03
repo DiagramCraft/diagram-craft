@@ -1,5 +1,5 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import { buildAuthorizationContext, type AuthorizationContext } from '@arch-register/permissions';
 
 const hasWorkspaceCapability = vi.fn();
 
@@ -28,6 +28,7 @@ vi.mock('../../utils/logger', () => ({
 import { exportWorkspace } from './exportOperations';
 import { parseImport } from './importParseOperations';
 import { executeImport } from './importExecutionOperations';
+import { importEntities } from './importAppliers';
 
 const makeAuthCtx = (): AuthorizationContext => ({ userId: 'user-1' }) as AuthorizationContext;
 
@@ -65,6 +66,14 @@ const makeDb = () =>
     },
     catalog: {
       listSchemas: vi.fn(async () => []),
+      getSchema: vi.fn(async () => null),
+      listSharedFieldGroups: vi.fn(async () => []),
+      createSharedFieldGroup: vi.fn(async input => input),
+      updateSharedFieldGroup: vi.fn(async (_ws, _id, input) => ({
+        id: _id,
+        workspace: _ws,
+        ...input
+      })),
       listEntities: vi.fn(async () => []),
       createSchema: vi.fn(async input => input),
       updateSchema: vi.fn(async (_ws, _id, input) => ({
@@ -438,5 +447,75 @@ describe('workspace export/import guards', () => {
     expect(staged.commit).toHaveBeenCalledOnce();
     expect(staged.rollback).toHaveBeenCalledOnce();
     expect(db.project.createProject).not.toHaveBeenCalled();
+  });
+});
+
+describe('workspace entity import field-group authorization', () => {
+  it('rejects restricted values before writing them', async () => {
+    const db = makeDb();
+    const schema = {
+      id: 'schema-1',
+      workspace: 'workspace-1',
+      name: 'Restricted schema',
+      fields: [{ id: 'secret', name: 'Secret', type: 'text', groupId: 'restricted' }],
+      groups: [{ id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-1'] } }],
+      templates: [],
+      color: null,
+      icon: null,
+      default_owner: null,
+      key_prefix: 'RST',
+      created_at: new Date(),
+      updated_at: new Date()
+    } as any;
+    db.catalog.getSchema.mockResolvedValue(schema);
+    const authCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: 'viewer',
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    const mapping = {
+      schemas: new Map([['source-schema', 'schema-1']]),
+      shared_field_groups: new Map(),
+      entities: new Map(),
+      teams: new Map(),
+      lifecycle_states: new Map(),
+      projects: new Map(),
+      content_nodes: new Map()
+    };
+
+    await expect(
+      importEntities(
+        db,
+        authCtx,
+        'workspace-1',
+        [
+          {
+            id: 'entity-1',
+            public_id: null,
+            schema_id: 'source-schema',
+            name: 'Restricted entity',
+            slug: 'restricted-entity',
+            namespace: 'default',
+            description: '',
+            owner: null,
+            lifecycle: null,
+            target_lifecycle: null,
+            target_lifecycle_date: null,
+            tags: [],
+            links: [],
+            data: { secret: 'must-not-write' },
+            project_id: null
+          }
+        ],
+        false,
+        {},
+        mapping
+      )
+    ).rejects.toMatchObject({ status: 403 });
+    expect(db.catalog.createEntity).not.toHaveBeenCalled();
   });
 });

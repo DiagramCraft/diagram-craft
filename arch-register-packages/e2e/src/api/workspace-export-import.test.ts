@@ -1,5 +1,8 @@
 import { test, expect } from '../helpers/fixtures';
 import { NONEXISTENT_UUID } from '../helpers/testIds';
+import { createTestORPCClient } from '../helpers/fixtures';
+import { makeAuthHeader } from '../helpers/seedHelper';
+import { hashPassword } from '@arch-register/server/utils/password';
 
 const suggestedResolutions = (parseResult: {
   conflicts: Array<{
@@ -15,6 +18,104 @@ const suggestedResolutions = (parseResult: {
   );
 
 test.describe('workspace export/import', () => {
+  test('preserves field-group ACLs and hides restricted values after import', async ({
+    orpc,
+    server
+  }) => {
+    const suffix = Date.now().toString();
+    const source = await orpc.workspaces.create({
+      body: { name: `ACL export source ${suffix}`, badge: 'AES' }
+    });
+    const teams = await orpc.config.teams.list({ params: { workspace: source.url_slug } });
+    const group = await orpc.fieldGroups.create({
+      params: { workspace: source.url_slug },
+      body: {
+        name: `Restricted shared group ${suffix}`,
+        fields: [{ id: `secret_${suffix}`, name: 'Secret', type: 'text' }]
+      }
+    });
+    const schema = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: {
+        name: `ACL export schema ${suffix}`,
+        shared_field_group_links: [{ groupId: group.id, teamIds: [teams[0]!.id] }]
+      }
+    });
+    const entity = await orpc.entities.create({
+      params: { workspace: source.url_slug },
+      body: {
+        _schemaId: schema.id,
+        _name: `ACL export entity ${suffix}`,
+        [`secret_${suffix}`]: 'imported secret'
+      } as never
+    });
+
+    const archive = await orpc.workspaces.export({
+      params: { workspace: source.url_slug },
+      body: { include: ['schemas', 'entities'], options: { include_content: false } }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `ACL import target ${suffix}`, badge: 'AIT' }
+    });
+    const parsed = await orpc.workspaces.importParse({
+      params: { workspace: target.url_slug },
+      body: {
+        file: new File([archive.body as Blob], 'acl-export.zip', { type: 'application/zip' })
+      }
+    });
+    const execute = await orpc.workspaces.importExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        import_id: (parsed as any).import_id,
+        include: ['schemas', 'entities'],
+        conflict_resolutions: suggestedResolutions(parsed as any),
+        options: { preserve_ids: false, update_references: true }
+      }
+    });
+    expect(execute.success).toBe(true);
+
+    const importedSchemas = await server.db.catalog.listSchemas(target.id);
+    const importedSchema = importedSchemas.find(item => item.name === schema.name);
+    expect(importedSchema).toEqual(
+      expect.objectContaining({
+        groups: expect.arrayContaining([
+          expect.objectContaining({ accessControl: { teamIds: expect.any(Array) } })
+        ]),
+        shared_field_group_links: expect.arrayContaining([
+          expect.objectContaining({ teamIds: expect.any(Array) })
+        ])
+      })
+    );
+    const importedEntity = (await server.db.catalog.listEntities(target.id)).find(
+      item => item.name === entity._name
+    );
+    expect(importedEntity?.data[`secret_${suffix}`]).toBe('imported secret');
+
+    const now = new Date();
+    const viewerId = `00000000-0000-0000-0000-${suffix.slice(-12).padStart(12, '0')}`;
+    await server.db.auth.createUser({
+      id: viewerId,
+      user_id: `acl-import-viewer-${suffix}`,
+      email: `acl-import-viewer-${suffix}@e2e.test`,
+      display_name: 'ACL import viewer',
+      auth_provider: 'local',
+      password_hash: await hashPassword('TestPassword123!'),
+      oidc_issuer: null,
+      oidc_subject: null,
+      is_active: true,
+      color: null,
+      created_at: now,
+      updated_at: now,
+      last_login_at: null
+    });
+    await server.db.workspace.setWorkspaceMemberRole(target.id, viewerId, 'viewer', now);
+    const viewer = createTestORPCClient(server.baseUrl, await makeAuthHeader(server.db, viewerId));
+    const visible = await viewer.entities.get({
+      params: { workspace: target.url_slug, id: importedEntity!.id }
+    });
+    expect(visible).not.toHaveProperty(`secret_${suffix}`);
+  });
+
   test.describe('export', () => {
     test('POST /api/:workspace/export exports workspace with all data types', async ({ orpc }) => {
       const response = await orpc.workspaces.export({
