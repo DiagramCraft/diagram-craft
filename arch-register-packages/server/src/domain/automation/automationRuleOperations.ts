@@ -15,20 +15,110 @@ import { listJobRuns } from '../jobs/jobOperations';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
 
-export const toApiAutomationRule = (rule: AutomationRuleDbResult) => ({
-  id: rule.id,
-  workspace: rule.workspace,
-  created_by: rule.created_by,
-  name: rule.name,
-  description: rule.description,
-  schema_id: rule.schema_id,
-  trigger: rule.trigger,
-  conditions: rule.conditions,
-  actions: rule.actions,
-  enabled: rule.enabled,
-  created_at: rule.created_at.toISOString(),
-  updated_at: rule.updated_at.toISOString()
-});
+export const AUTOMATION_RULE_REDACTED_LITERAL = '[redacted]';
+
+const hasFieldReferences = (
+  rule: Pick<AutomationRuleDbResult, 'trigger' | 'conditions' | 'actions'>
+) =>
+  rule.trigger.kind === 'field_changed' ||
+  rule.conditions.length > 0 ||
+  rule.actions.some(
+    action =>
+      action.kind === 'set_field_value' ||
+      (action.kind === 'send_notification' && action.recipient.kind === 'reference_owner')
+  );
+
+const hasRestrictedFieldReference = (
+  authCtx: WorkspaceAuthorizationContext,
+  rule: Pick<AutomationRuleDbResult, 'trigger' | 'conditions' | 'actions'>,
+  schemas: SchemaDbResult[],
+  schemaMissing: boolean
+) => {
+  if (schemaMissing || schemas.length === 0) return hasFieldReferences(rule);
+
+  const isRestricted = (fieldId: string) =>
+    schemas.some(schema => isFieldViewRestricted(authCtx, schema, fieldId));
+
+  return (
+    (rule.trigger.kind === 'field_changed' && isRestricted(rule.trigger.field)) ||
+    rule.conditions.some(condition => isRestricted(condition.field)) ||
+    rule.actions.some(action => {
+      if (action.kind === 'set_field_value') return isRestricted(action.field);
+      return (
+        action.kind === 'send_notification' &&
+        action.recipient.kind === 'reference_owner' &&
+        isRestricted(action.recipient.field)
+      );
+    })
+  );
+};
+
+const redactAutomationRule = (
+  rule: AutomationRuleDbResult,
+  authCtx: WorkspaceAuthorizationContext,
+  schemas: SchemaDbResult[],
+  schemaMissing: boolean
+) => {
+  if (!hasRestrictedFieldReference(authCtx, rule, schemas, schemaMissing)) return rule;
+
+  const redactString = (value: string | null | undefined) =>
+    value == null ? value : AUTOMATION_RULE_REDACTED_LITERAL;
+
+  return {
+    ...rule,
+    trigger:
+      rule.trigger.kind === 'lifecycle_transition'
+        ? {
+            ...rule.trigger,
+            from: redactString(rule.trigger.from),
+            to: redactString(rule.trigger.to)
+          }
+        : rule.trigger,
+    conditions: rule.conditions.map(condition =>
+      Object.hasOwn(condition, 'value')
+        ? { ...condition, value: AUTOMATION_RULE_REDACTED_LITERAL }
+        : condition
+    ),
+    actions: rule.actions.map(action => {
+      if (action.kind === 'create_audit_note') {
+        return { ...action, note: AUTOMATION_RULE_REDACTED_LITERAL };
+      }
+      if (action.kind === 'send_notification') {
+        return { ...action, message: AUTOMATION_RULE_REDACTED_LITERAL };
+      }
+      return { ...action, value: AUTOMATION_RULE_REDACTED_LITERAL };
+    })
+  };
+};
+
+const ruleSchemas = (rule: AutomationRuleDbResult, schemas: SchemaDbResult[]) => {
+  if (rule.schema_id == null) return { schemas, schemaMissing: false };
+  const schema = schemas.find(candidate => candidate.id === rule.schema_id);
+  return { schemas: schema ? [schema] : [], schemaMissing: schema == null };
+};
+
+export const toApiAutomationRule = (
+  rule: AutomationRuleDbResult,
+  authCtx: WorkspaceAuthorizationContext,
+  schemas: SchemaDbResult[]
+) => {
+  const { schemas: candidateSchemas, schemaMissing } = ruleSchemas(rule, schemas);
+  const redacted = redactAutomationRule(rule, authCtx, candidateSchemas, schemaMissing);
+  return {
+    id: redacted.id,
+    workspace: redacted.workspace,
+    created_by: redacted.created_by,
+    name: redacted.name,
+    description: redacted.description,
+    schema_id: redacted.schema_id,
+    trigger: redacted.trigger,
+    conditions: redacted.conditions,
+    actions: redacted.actions,
+    enabled: redacted.enabled,
+    created_at: redacted.created_at.toISOString(),
+    updated_at: redacted.updated_at.toISOString()
+  };
+};
 
 const authorize = async (db: DatabaseAdapter, workspace: string, event: AuthenticatedEvent) => {
   const ws = await resolveWorkspace(db.catalog, workspace);
@@ -109,6 +199,8 @@ const validateInput = async (
       });
     }
   }
+
+  return schemas;
 };
 
 export const listAutomationRules = async (
@@ -116,8 +208,11 @@ export const listAutomationRules = async (
   workspace: string,
   event: AuthenticatedEvent
 ) => {
-  const { ws } = await authorize(db, workspace, event);
-  return (await db.automationRule.listRules(ws)).map(toApiAutomationRule);
+  const { ws, authCtx } = await authorize(db, workspace, event);
+  const schemas = await db.catalog.listSchemas(ws);
+  return (await db.automationRule.listRules(ws)).map(rule =>
+    toApiAutomationRule(rule, authCtx, schemas)
+  );
 };
 
 export const createAutomationRule = async (
@@ -127,7 +222,7 @@ export const createAutomationRule = async (
   event: AuthenticatedEvent
 ) => {
   const { ws, authCtx } = await authorize(db, workspace, event);
-  await validateInput(db, ws, input, authCtx);
+  const schemas = await validateInput(db, ws, input, authCtx);
   const now = new Date();
   const rule = await db.automationRule.createRule({
     id: randomUUID(),
@@ -143,7 +238,7 @@ export const createAutomationRule = async (
     created_at: now,
     updated_at: now
   });
-  return toApiAutomationRule(rule);
+  return toApiAutomationRule(rule, authCtx, schemas);
 };
 
 export const updateAutomationRule = async (
@@ -156,7 +251,7 @@ export const updateAutomationRule = async (
   const { ws, authCtx } = await authorize(db, workspace, event);
   const existing = await db.automationRule.getRule(ws, id);
   httpAssert.present(existing, { status: 404, message: 'Automation rule not found' });
-  await validateInput(db, ws, input, authCtx);
+  const schemas = await validateInput(db, ws, input, authCtx);
   const updated = await db.automationRule.updateRule(ws, id, {
     name: input.name,
     description: input.description ?? null,
@@ -168,7 +263,7 @@ export const updateAutomationRule = async (
     updated_at: new Date()
   });
   httpAssert.present(updated, { status: 404, message: 'Automation rule not found' });
-  return toApiAutomationRule(updated);
+  return toApiAutomationRule(updated, authCtx, schemas);
 };
 
 export const deleteAutomationRule = async (

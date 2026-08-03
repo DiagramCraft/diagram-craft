@@ -499,8 +499,9 @@
           sending an in-app notification, or setting a field value on the triggering entity. Field conditions and
           field-targeting actions respect the rule author's current field-group access. Rules are matched synchronously on
           every entity mutation and rechecked before asynchronous actions execute, so access revocation or field reassignment
-          cannot leave an existing rule with restricted access. Administrators can inspect recent rule runs, including failures,
-          from workspace settings.
+          cannot leave an existing rule with restricted access. Rule definitions redact stored literals associated with
+          restricted field references for callers without field-group view access, while retaining field identifiers.
+          Administrators can inspect recent rule runs, including failures, from workspace settings.
 
         - @id:ar.integrations.external-content @status:experimental Configured external content providers can be mounted
           and synchronized into supported workspace content workflows.
