@@ -15,7 +15,7 @@ vi.mock('../../utils/logger', () => ({
 
 const database = (transaction: DatabaseAdapter['core']['transaction']) =>
   ({
-    core: { driver: 'sqlite', close: vi.fn(), reset: vi.fn(), transaction }
+    core: { driver: 'sqlite', close: vi.fn(), transaction }
   }) as unknown as DatabaseAdapter;
 
 const storageWith = (mutation: StagedStorageMutation): StorageAdapter => ({

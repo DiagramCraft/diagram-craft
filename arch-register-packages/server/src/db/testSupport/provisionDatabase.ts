@@ -5,6 +5,7 @@ import { join } from 'node:path';
 import postgres from 'postgres';
 import type { DatabaseAdapter, DbDriver } from '../database';
 import { createDatabase } from '../factory';
+import { recreatePostgresSchema } from '../maintenance/recreateDatabase';
 
 export type ProvisionedDatabase = {
   driver: DbDriver;
@@ -37,15 +38,12 @@ export const provisionPostgresDatabase = async (): Promise<ProvisionedDatabase> 
 
   const schema = `db_test_${randomBytes(8).toString('hex')}`;
 
-  const adminSql = postgres(baseUrl, { max: 1, onnotice: () => undefined });
-  await adminSql`CREATE SCHEMA ${adminSql(schema)}`;
-  await adminSql.end();
+  await recreatePostgresSchema(baseUrl, schema);
 
   process.env['DB_DRIVER'] = 'postgres';
   process.env['DATABASE_URL'] = baseUrl;
 
   const db = await createDatabase({ initialize: false, postgresSchema: schema });
-  await db.core.reset();
 
   return {
     driver: 'postgres',

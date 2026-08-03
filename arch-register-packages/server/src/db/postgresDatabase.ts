@@ -1,10 +1,7 @@
-import { readFile } from 'node:fs/promises';
-import { dirname, join } from 'node:path';
-import { fileURLToPath } from 'node:url';
 import postgres from 'postgres';
 import type { DatabaseAdapter } from './database';
-import { getMigrationTables, runPostgresMigrations } from './migrate';
-import { normalizePostgresError, type PostgresSqlClient } from './postgresBase';
+import { runPostgresMigrations } from './migrate';
+import { type PostgresSqlClient } from './postgresBase';
 import { PostgresAuditDatabase } from '../domain/audit/db/postgresAudit';
 import { PostgresCatalogDatabase } from '../domain/catalog/db/postgresCatalog';
 import { PostgresAuthDatabase } from '../domain/auth/db/postgresAuth';
@@ -36,8 +33,6 @@ import { PostgresExternalIdentityDatabase } from '../domain/externalIdentity/db/
 import { PostgresRelationDatabase } from '../domain/catalog/db/postgresRelation';
 import { createLogger } from '../utils/logger';
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
-const schemaPath = join(__dirname, 'schema.postgres.sql');
 const PGCRYPTO_EXISTS_NOTICE = 'extension "pgcrypto" already exists, skipping';
 const logger = createLogger('postgres');
 
@@ -45,8 +40,7 @@ const logger = createLogger('postgres');
  * PostgreSQL-backed database adapter.
  *
  * Call {@link initialize} when connecting to an existing database so pending
- * migrations are applied. Use `core.reset()` only for destructive bootstrap or
- * test setup; it recreates the base schema and reapplies every migration.
+ * migrations are applied.
  * Transaction callbacks must use the adapter passed to them. That adapter is
  * bound to the transaction and cannot be closed or reset independently.
  */
@@ -123,9 +117,6 @@ export class PostgresDatabase implements DatabaseAdapter {
         close: async () => {
           throw new Error('Cannot close a transaction-bound database adapter');
         },
-        reset: async () => {
-          throw new Error('Cannot reset a transaction-bound database adapter');
-        },
         transaction: async callback => callback(bound)
       }
     };
@@ -184,45 +175,6 @@ export class PostgresDatabase implements DatabaseAdapter {
       driver: 'postgres' as const,
       close: async () => {
         await this.sql.end();
-      },
-      // Destructive operation intended for bootstrap and test setup.
-      reset: async () => {
-        try {
-          // Drop schema_migrations first to allow clean migration re-run
-          await this.sql`DROP TABLE IF EXISTS schema_migrations CASCADE`;
-
-          // Drop tables created by migrations (in reverse order)
-          const migrationTables = await getMigrationTables('postgres');
-          for (const table of migrationTables) {
-            await this.sql`DROP TABLE IF EXISTS ${this.sql(table)} CASCADE`;
-          }
-
-          // Drop base schema tables
-          await this.sql`DROP TABLE IF EXISTS ai_message CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS ai_conversation CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS workspace_ai_config CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS global_role_assignment CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS team_membership CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS workspace_member CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS workspace_role CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS users CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS audit_log CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS content_node CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS project CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS entity_grant CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS entity CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS entity_schema CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS workspace_lifecycle_state CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS workspace_owner CASCADE`;
-          await this.sql`DROP TABLE IF EXISTS workspace CASCADE`;
-
-          // Recreate base schema and run migrations
-          const schemaSql = await readFile(schemaPath, 'utf8');
-          await this.sql.unsafe(schemaSql);
-          await runPostgresMigrations(this.sql);
-        } catch (error) {
-          throw normalizePostgresError(error);
-        }
       },
       transaction: async <T>(callback: (db: DatabaseAdapter) => Promise<T>): Promise<T> =>
         (await this.sql.begin(async sql =>

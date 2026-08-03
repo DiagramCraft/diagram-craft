@@ -1,6 +1,4 @@
-import { mkdir, readFile, rm } from 'node:fs/promises';
 import { readFileSync } from 'node:fs';
-import { dirname } from 'node:path';
 import Database from 'better-sqlite3';
 import type { DatabaseAdapter } from './database';
 import { runSqliteMigrations } from './migrate';
@@ -35,7 +33,6 @@ import { SqliteRelationDatabase } from '../domain/catalog/db/sqliteRelation';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
-  private readonly filePath: string;
 
   readonly core;
   readonly workspace;
@@ -69,7 +66,6 @@ export class SqliteDatabase implements DatabaseAdapter {
   private transactionTail: Promise<void> = Promise.resolve();
 
   constructor(filePath: string) {
-    this.filePath = filePath;
     this.db = new Database(filePath);
     this.configure();
     this.initializeSchema();
@@ -110,16 +106,6 @@ export class SqliteDatabase implements DatabaseAdapter {
       close: async () => {
         this.db.close();
       },
-      reset: async () => {
-        this.db.close();
-        await rm(this.filePath, { force: true });
-        await mkdir(dirname(this.filePath), { recursive: true });
-        this.db = new Database(this.filePath);
-        this.configure();
-        const schemaSql = await readFile(new URL('./schema.sqlite.sql', import.meta.url), 'utf8');
-        this.db.exec(schemaSql);
-        runSqliteMigrations(this.db);
-      },
       transaction: async <T>(callback: (db: DatabaseAdapter) => Promise<T>): Promise<T> => {
         const previous = this.transactionTail;
         let release!: () => void;
@@ -151,9 +137,6 @@ export class SqliteDatabase implements DatabaseAdapter {
         isTransaction: true,
         close: async () => {
           throw new Error('Cannot close a transaction-bound database adapter');
-        },
-        reset: async () => {
-          throw new Error('Cannot reset a transaction-bound database adapter');
         },
         transaction: async callback => callback(this.transactionAdapter())
       },
