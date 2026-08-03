@@ -13,7 +13,14 @@ export const MAX_PATH_HOPS = 6;
 
 export type PathStep =
   | { kind: 'forward'; fieldId: string; filter?: QueryNode }
-  | { kind: 'backward'; fieldId: string; ownerSchemaId: string; filter?: QueryNode };
+  | { kind: 'backward'; fieldId: string; ownerSchemaId: string; filter?: QueryNode }
+  | {
+      kind: 'typedRelation';
+      fieldId: string;
+      relationSchemaId: string;
+      direction: 'in' | 'out';
+      filter?: QueryNode;
+    };
 
 export type QueryNode =
   | { kind: 'and'; children: QueryNode[] }
@@ -40,6 +47,13 @@ export const pathStepSchema: z.ZodType<PathStep> = z.lazy(() =>
       // never carries an unresolved/ambiguous backward step.
       ownerSchemaId: z.string(),
       filter: queryNodeSchema.optional()
+    }),
+    z.object({
+      kind: z.literal('typedRelation'),
+      fieldId: z.string(),
+      relationSchemaId: z.string(),
+      direction: z.enum(['in', 'out']),
+      filter: queryNodeSchema.optional()
     })
   ])
 );
@@ -47,12 +61,15 @@ export const pathStepSchema: z.ZodType<PathStep> = z.lazy(() =>
 export type ProjectionField = {
   path: PathStep[];
   fieldId: string;
+  /** Defaults to the entity at the end of `path`; `relation` reads the matching relation row. */
+  source?: 'entity' | 'relation';
   alias?: string;
 };
 
 export const projectionFieldSchema = z.object({
   path: z.array(pathStepSchema),
   fieldId: z.string(),
+  source: z.enum(['entity', 'relation']).optional(),
   alias: z.string().min(1).optional()
 });
 

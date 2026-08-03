@@ -7,6 +7,7 @@ import {
 } from './entityQueryTextCompiler';
 import type { SchemaCatalog } from './entityQueryIRValidator';
 import type { SchemaDbResult, WorkspaceEnumDbResult } from './db/catalogDatabase';
+import type { RelationSchemaDbResult } from './db/relationDatabase';
 import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 
 const now = new Date('2026-06-29T12:00:00.000Z');
@@ -115,6 +116,33 @@ const enums: EnumCatalog = new Map([
     ])
   ]
 ]);
+
+const DATA_FLOW: RelationSchemaDbResult = {
+  id: 'data-flow-id',
+  workspace: 'ws-1',
+  name: 'Data Flow',
+  description: '',
+  in_schema_ids: [SYSTEM.id],
+  out_schema_ids: [SYSTEM.id],
+  fields: [{ id: 'status', name: 'Status', type: 'text' }],
+  groups: [],
+  color: null,
+  icon: null,
+  created_at: now,
+  updated_at: now
+};
+
+const TYPED_SYSTEM = makeSchema('typed-system-id', 'Typed System', [
+  {
+    id: 'data_flows_out',
+    name: 'Data flows out',
+    type: 'typedRelation',
+    relationSchemaId: DATA_FLOW.id,
+    direction: 'out'
+  }
+]);
+const typedSchemas: SchemaCatalog = new Map([...schemas, [TYPED_SYSTEM.id, TYPED_SYSTEM]]);
+const relationSchemas = new Map([[DATA_FLOW.id, DATA_FLOW]]);
 
 const parseOk = (text: string): EntityQuery => {
   const result = parseEntityQueryText(text, schemas, enums);
@@ -351,6 +379,87 @@ describe('parseEntityQueryText — worked examples (specs/QUERY_LANGUAGE_IR_EXAM
             }
           }
         ]
+      }
+    });
+  });
+});
+
+describe('parseEntityQueryText — typed scalar relation fields', () => {
+  it('parses a typed relation hop with a scalar relation-instance filter', () => {
+    const result = parseEntityQueryText(
+      'schema:"Typed System" data_flows_out[status = "active"]._name = "B"',
+      typedSchemas,
+      enums,
+      null,
+      relationSchemas
+    );
+    expect(result).toEqual({
+      ok: true,
+      query: {
+        root: {
+          kind: 'and',
+          children: [
+            {
+              kind: 'predicate',
+              path: [],
+              fieldId: '_schemaId',
+              op: 'equals',
+              value: TYPED_SYSTEM.id
+            },
+            {
+              kind: 'predicate',
+              path: [
+                {
+                  kind: 'typedRelation',
+                  fieldId: 'data_flows_out',
+                  relationSchemaId: DATA_FLOW.id,
+                  direction: 'out',
+                  filter: {
+                    kind: 'predicate',
+                    path: [],
+                    fieldId: 'status',
+                    op: 'equals',
+                    value: 'active'
+                  }
+                }
+              ],
+              fieldId: '_name',
+              op: 'equals',
+              value: 'B'
+            }
+          ]
+        }
+      }
+    });
+    if (result.ok) {
+      expect(printEntityQueryText(result.query, typedSchemas, relationSchemas)).toBe(
+        'schema:"Typed System" AND data_flows_out[status = "active"]._name = "B"'
+      );
+    }
+  });
+
+  it('uses a bare typed relation hop as relationExists', () => {
+    const result = parseEntityQueryText(
+      'data_flows_out',
+      typedSchemas,
+      enums,
+      null,
+      relationSchemas
+    );
+    expect(result).toEqual({
+      ok: true,
+      query: {
+        root: {
+          kind: 'relationExists',
+          path: [
+            {
+              kind: 'typedRelation',
+              fieldId: 'data_flows_out',
+              relationSchemaId: DATA_FLOW.id,
+              direction: 'out'
+            }
+          ]
+        }
       }
     });
   });

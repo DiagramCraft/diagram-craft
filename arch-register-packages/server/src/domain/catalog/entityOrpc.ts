@@ -47,7 +47,11 @@ import {
   printEntityQueryText,
   type EnumCatalog
 } from './entityQueryTextCompiler';
-import { validateEntityQueryIR, type SchemaCatalog } from './entityQueryIRValidator';
+import {
+  validateEntityQueryIR,
+  type RelationSchemaCatalog,
+  type SchemaCatalog
+} from './entityQueryIRValidator';
 import { diffEntityLandscapes } from './entityLandscapeDiffOperations';
 
 type ORPCContext = {
@@ -343,24 +347,30 @@ const entityHandlers = {
 const buildQueryCatalogs = async (
   db: DatabaseAdapter,
   workspace: string
-): Promise<{ schemas: SchemaCatalog; enums: EnumCatalog }> => {
-  const [schemas, enums] = await Promise.all([
+): Promise<{
+  schemas: SchemaCatalog;
+  enums: EnumCatalog;
+  relationSchemas: RelationSchemaCatalog;
+}> => {
+  const [schemas, enums, relationSchemas] = await Promise.all([
     db.catalog.listSchemas(workspace),
-    db.catalog.listEnums(workspace)
+    db.catalog.listEnums(workspace),
+    db.relation.listRelationSchemas(workspace)
   ]);
   return {
     schemas: new Map(schemas.map(schema => [schema.id, schema])),
-    enums: new Map(enums.map(en => [en.id, en]))
+    enums: new Map(enums.map(en => [en.id, en])),
+    relationSchemas: new Map(relationSchemas.map(schema => [schema.id, schema]))
   };
 };
 
 const entityQueryTextHandlers = {
   parseText: entityRouter.entityQueryText.parseText.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
-    const { schemas, enums } = await buildQueryCatalogs(context.db, workspace);
-    const result = parseEntityQueryText(input.query.text, schemas, enums, authCtx);
+    const { schemas, enums, relationSchemas } = await buildQueryCatalogs(context.db, workspace);
+    const result = parseEntityQueryText(input.query.text, schemas, enums, authCtx, relationSchemas);
     if (!result.ok) return result;
-    const validation = validateEntityQueryIR(result.query, schemas, authCtx);
+    const validation = validateEntityQueryIR(result.query, schemas, authCtx, relationSchemas);
     if (!validation.ok) {
       return {
         ok: false,
@@ -375,8 +385,8 @@ const entityQueryTextHandlers = {
 
   printText: entityRouter.entityQueryText.printText.handler(async ({ input, context }) => {
     const { workspace } = context;
-    const { schemas } = await buildQueryCatalogs(context.db, workspace);
-    return { text: printEntityQueryText(input.body.query, schemas) };
+    const { schemas, relationSchemas } = await buildQueryCatalogs(context.db, workspace);
+    return { text: printEntityQueryText(input.body.query, schemas, relationSchemas) };
   })
 };
 

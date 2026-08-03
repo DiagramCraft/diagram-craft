@@ -3,12 +3,12 @@ import {
   type WorkspaceAuthorizationContext,
   type FieldGroupAccess
 } from '@arch-register/permissions';
-import type { SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
+import type { SchemaGroup } from '@arch-register/api-types/schemaContract';
 import { httpAssert } from '../../utils/httpAssert';
 
 export type FieldGroupSchemaShape = {
-  fields: SchemaField[];
-  groups?: SchemaGroup[];
+  fields: Array<{ id: string; name?: string; groupId?: string; [key: string]: unknown }>;
+  groups?: Array<{ id: string; name?: string; accessControl?: SchemaGroup['accessControl'] }>;
 };
 
 const groupAccessByFieldId = (

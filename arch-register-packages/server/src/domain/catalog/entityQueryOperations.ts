@@ -26,6 +26,7 @@ import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { listAllCatalogEntities } from './entityLoader';
 import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
 import type { EntityDbResult, EntityQueryDbResult, SchemaDbResult } from './db/catalogDatabase';
+import type { RelationSchemaDbResult } from './db/relationDatabase';
 import { compileEntityQueryIR, UnsupportedEntityQueryIRError } from './entityQueryIRCompiler';
 import { validateEntityQueryIR, type SchemaCatalog } from './entityQueryIRValidator';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
@@ -196,7 +197,8 @@ export const collectEntitiesFromIR = async (
   options: NormalizedEntityQueryOptions,
   schemas: SchemaDbResult[],
   projectEntities: Awaited<ReturnType<DatabaseAdapter['project']['listProjectEntities']>>,
-  collectionEntityIds: string[] | null
+  collectionEntityIds: string[] | null,
+  relationSchemas: RelationSchemaDbResult[] = []
 ): Promise<CollectedEntity[]> => {
   const query = options.entityQuery;
   httpAssert.present(query, { status: 400, message: 'EntityQuery is required' });
@@ -207,7 +209,8 @@ export const collectEntitiesFromIR = async (
   const schemaCatalog: SchemaCatalog = historicalSchemas
     ? availableSchemaCatalog(historicalSchemas)
     : new Map(schemas.map(schema => [schema.id, schema]));
-  const validation = validateEntityQueryIR(query, schemaCatalog, authCtx);
+  const relationSchemaCatalog = new Map(relationSchemas.map(schema => [schema.id, schema]));
+  const validation = validateEntityQueryIR(query, schemaCatalog, authCtx, relationSchemaCatalog);
   httpAssert.true(validation.ok, {
     status: 400,
     message: validation.ok
@@ -227,7 +230,8 @@ export const collectEntitiesFromIR = async (
       db.core.driver,
       workspace,
       { visibleEntityIds },
-      authCtx
+      authCtx,
+      relationSchemaCatalog
     );
   } catch (error) {
     if (error instanceof UnsupportedEntityQueryIRError) {
@@ -341,14 +345,22 @@ const collectEntities = async (
   // Assessment conditions are evaluated against the joined assessment's bulk response map;
   // everything else, including `_completeness` (a materialized column, #2346), is evaluated in SQL.
   const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
-  const [schemas, projectEntities, joinedAssessment, collectionEntityIds] = await Promise.all([
-    db.catalog.listSchemas(workspace),
-    projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
-    resolveJoinedAssessment(db, workspace, authCtx, assessmentId, assessmentConditions.length > 0),
-    collectionId && authCtx
-      ? db.view.listCollectionEntityIds(authCtx.userId, workspace, collectionId)
-      : Promise.resolve(null)
-  ]);
+  const [schemas, relationSchemas, projectEntities, joinedAssessment, collectionEntityIds] =
+    await Promise.all([
+      db.catalog.listSchemas(workspace),
+      db.relation.listRelationSchemas(workspace),
+      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
+      resolveJoinedAssessment(
+        db,
+        workspace,
+        authCtx,
+        assessmentId,
+        assessmentConditions.length > 0
+      ),
+      collectionId && authCtx
+        ? db.view.listCollectionEntityIds(authCtx.userId, workspace, collectionId)
+        : Promise.resolve(null)
+    ]);
   if (entityQuery) {
     return collectEntitiesFromIR(
       db,
@@ -357,7 +369,8 @@ const collectEntities = async (
       normalizeEntityQueryOptions(options),
       schemas,
       projectEntities,
-      collectionEntityIds
+      collectionEntityIds,
+      relationSchemas
     );
   }
   const collectionEntityIdSet = collectionEntityIds == null ? null : new Set(collectionEntityIds);
@@ -615,12 +628,20 @@ export const getEntityTree = async (
   } = normalized;
   try {
     const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
-    const [schemas, allEntitiesRaw, projectEntities, joinedAssessment] = await Promise.all([
-      db.catalog.listSchemas(workspace),
-      listAllCatalogEntities(db, workspace, { projectId, projectScope }),
-      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
-      resolveJoinedAssessment(db, workspace, authCtx, assessmentId, assessmentConditions.length > 0)
-    ]);
+    const [schemas, relationSchemas, allEntitiesRaw, projectEntities, joinedAssessment] =
+      await Promise.all([
+        db.catalog.listSchemas(workspace),
+        db.relation.listRelationSchemas(workspace),
+        listAllCatalogEntities(db, workspace, { projectId, projectScope }),
+        projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
+        resolveJoinedAssessment(
+          db,
+          workspace,
+          authCtx,
+          assessmentId,
+          assessmentConditions.length > 0
+        )
+      ]);
     const structuredMatchIds = entityQuery
       ? new Set(
           (
@@ -633,7 +654,8 @@ export const getEntityTree = async (
               projectEntities,
               collectionId && authCtx
                 ? await db.view.listCollectionEntityIds(authCtx.userId, workspace, collectionId)
-                : null
+                : null,
+              relationSchemas
             )
           ).map(row => row.entity._uid)
         )

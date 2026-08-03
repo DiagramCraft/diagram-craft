@@ -70,8 +70,8 @@ export const resolveEntitySchemaCatalogAt = async (
         historical
           ? {
               ...schema,
-              fields: historical.fields,
-              groups: historical.groups
+              fields: historical.fields as SchemaDbResult['fields'],
+              groups: historical.groups as SchemaDbResult['groups']
             }
           : null
       ] as const;
