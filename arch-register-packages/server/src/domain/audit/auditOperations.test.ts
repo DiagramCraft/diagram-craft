@@ -41,7 +41,7 @@ const schema: SchemaDbResult = {
   icon: null,
   default_owner: null,
   key_prefix: 'T',
-  created_at: new Date(),
+  created_at: new Date('2026-01-01T00:00:00.000Z'),
   updated_at: new Date(),
   fields: [
     { id: 'name', name: 'Name', requirementLevel: null, type: 'text' } as never,
@@ -57,8 +57,6 @@ const schema: SchemaDbResult = {
     { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
   ]
 };
-
-const schemaById = new Map([[schema.id, schema]]);
 
 const relationSchema: RelationSchemaDbResult = {
   id: 'relation-schema-1',
@@ -69,7 +67,7 @@ const relationSchema: RelationSchemaDbResult = {
   out_schema_ids: ['schema-1'],
   color: null,
   icon: null,
-  created_at: new Date(),
+  created_at: new Date('2026-01-01T00:00:00.000Z'),
   updated_at: new Date(),
   fields: [
     { id: 'name', name: 'Name', requirementLevel: null, type: 'text' } as never,
@@ -85,9 +83,6 @@ const relationSchema: RelationSchemaDbResult = {
     { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
   ]
 };
-
-const relationSchemaById = new Map([[relationSchema.id, relationSchema]]);
-const emptyRelationSchemaById = new Map<string, RelationSchemaDbResult>();
 
 const makeEntry = (overrides: Partial<AuditLogEntry> = {}): AuditLogEntry => ({
   id: 'audit-1',
@@ -113,12 +108,7 @@ const makeEntry = (overrides: Partial<AuditLogEntry> = {}): AuditLogEntry => ({
 describe('redactAuditEntryChanges', () => {
   it('omits restricted field values for a caller without view access', () => {
     const entry = makeEntry();
-    const result = redactAuditEntryChanges(
-      entry,
-      authCtxWithTeamRoles({}),
-      schemaById,
-      emptyRelationSchemaById
-    );
+    const result = redactAuditEntryChanges(entry, authCtxWithTeamRoles({}), schema, null);
     expect(result.changes).toEqual({
       old: { name: 'old-name' },
       new: { name: 'new-name' }
@@ -128,51 +118,37 @@ describe('redactAuditEntryChanges', () => {
   it('keeps restricted field values for a caller with view access', () => {
     const entry = makeEntry();
     const authCtx = authCtxWithTeamRoles({ 'team-restricted': ['team_reviewer'] });
-    const result = redactAuditEntryChanges(entry, authCtx, schemaById, emptyRelationSchemaById);
+    const result = redactAuditEntryChanges(entry, authCtx, schema, null);
     expect(result.changes).toEqual(entry.changes);
   });
 
   it('leaves non-entity, non-relation entries untouched', () => {
     const entry = makeEntry({ entity_type: 'project', schema_id: null });
-    const result = redactAuditEntryChanges(
-      entry,
-      authCtxWithTeamRoles({}),
-      schemaById,
-      emptyRelationSchemaById
-    );
+    const result = redactAuditEntryChanges(entry, authCtxWithTeamRoles({}), null, null);
     expect(result.changes).toEqual(entry.changes);
   });
 
-  it('leaves entries with no matching schema untouched', () => {
+  it('fails closed for entries with no matching schema', () => {
     const entry = makeEntry({ schema_id: 'unknown-schema' });
-    const result = redactAuditEntryChanges(
-      entry,
-      authCtxWithTeamRoles({}),
-      schemaById,
-      emptyRelationSchemaById
-    );
-    expect(result.changes).toEqual(entry.changes);
+    const result = redactAuditEntryChanges(entry, authCtxWithTeamRoles({}), null, null);
+    expect(result.changes).toEqual({ old: {}, new: {} });
+  });
+
+  it('fails closed for entity entries without a schema id', () => {
+    const entry = makeEntry({ schema_id: null });
+    const result = redactAuditEntryChanges(entry, authCtxWithTeamRoles({}), null, null);
+    expect(result.changes).toEqual({ old: {}, new: {} });
   });
 
   it('handles create entries with only a "new" side', () => {
     const entry = makeEntry({ operation: 'create', changes: { new: { name: 'x', secret: 'y' } } });
-    const result = redactAuditEntryChanges(
-      entry,
-      authCtxWithTeamRoles({}),
-      schemaById,
-      emptyRelationSchemaById
-    );
+    const result = redactAuditEntryChanges(entry, authCtxWithTeamRoles({}), schema, null);
     expect(result.changes).toEqual({ new: { name: 'x' } });
   });
 
   it('omits restricted relation field values for a caller without view access', () => {
     const entry = makeEntry({ entity_type: 'relation', schema_id: relationSchema.id });
-    const result = redactAuditEntryChanges(
-      entry,
-      authCtxWithTeamRoles({}),
-      schemaById,
-      relationSchemaById
-    );
+    const result = redactAuditEntryChanges(entry, authCtxWithTeamRoles({}), null, relationSchema);
     expect(result.changes).toEqual({
       old: { name: 'old-name' },
       new: { name: 'new-name' }
@@ -182,29 +158,19 @@ describe('redactAuditEntryChanges', () => {
   it('keeps restricted relation field values for a caller with view access', () => {
     const entry = makeEntry({ entity_type: 'relation', schema_id: relationSchema.id });
     const authCtx = authCtxWithTeamRoles({ 'team-restricted': ['team_reviewer'] });
-    const result = redactAuditEntryChanges(entry, authCtx, schemaById, relationSchemaById);
+    const result = redactAuditEntryChanges(entry, authCtx, null, relationSchema);
     expect(result.changes).toEqual(entry.changes);
   });
 
-  it('leaves relation entries with no matching relation schema untouched', () => {
+  it('fails closed for relation entries with no matching schema', () => {
     const entry = makeEntry({ entity_type: 'relation', schema_id: 'unknown-relation-schema' });
-    const result = redactAuditEntryChanges(
-      entry,
-      authCtxWithTeamRoles({}),
-      schemaById,
-      relationSchemaById
-    );
-    expect(result.changes).toEqual(entry.changes);
+    const result = redactAuditEntryChanges(entry, authCtxWithTeamRoles({}), null, null);
+    expect(result.changes).toEqual({ old: {}, new: {} });
   });
 
   it('leaves relation_schema entries untouched (no schema_id is ever logged for them)', () => {
     const entry = makeEntry({ entity_type: 'relation_schema', schema_id: null });
-    const result = redactAuditEntryChanges(
-      entry,
-      authCtxWithTeamRoles({}),
-      schemaById,
-      relationSchemaById
-    );
+    const result = redactAuditEntryChanges(entry, authCtxWithTeamRoles({}), null, null);
     expect(result.changes).toEqual(entry.changes);
   });
 });
@@ -250,14 +216,22 @@ describe('listAuditLog', () => {
     metadata: {}
   };
 
-  const makeDb = (rows: AuditLogDbResult[] = [rawRow]): DatabaseAdapter =>
+  const makeDb = (
+    rows: AuditLogDbResult[] = [rawRow],
+    currentSchema = schema,
+    schemaVersions: unknown[] = []
+  ): DatabaseAdapter =>
     ({
       catalog: {
-        listSchemas: vi.fn(async () => [schema]),
+        listSchemas: vi.fn(async () => [currentSchema]),
+        getSchema: vi.fn(async () => currentSchema),
+        listSchemaVersions: vi.fn(async () => schemaVersions),
         getEntity: vi.fn(async () => ({ id: 'e-1', workspace: 'ws-1', public_id: 'ENT-1' }))
       },
       relation: {
-        listRelationSchemas: vi.fn(async () => [relationSchema])
+        listRelationSchemas: vi.fn(async () => [relationSchema]),
+        getRelationSchema: vi.fn(async () => relationSchema),
+        listRelationSchemaVersions: vi.fn(async () => [])
       },
       audit: {
         listAuditLogs: vi.fn(async () => rows)
@@ -306,5 +280,30 @@ describe('listAuditLog', () => {
     const result = await listAuditLog(makeDb([relationRawRow]), 'ws-1', {}, event);
 
     expect(result[0]!.changes).toEqual(relationRawRow.changes);
+  });
+
+  it('uses the historical schema when current field-group access changed', async () => {
+    const currentSchema = {
+      ...schema,
+      fields: [{ id: 'name', name: 'Name', requirementLevel: null, type: 'text' } as never],
+      groups: []
+    };
+    const historicalSchema = {
+      ...schema,
+      created_at: new Date('2026-01-01T00:00:00.000Z')
+    };
+    vi.mocked(buildApiAuthCtx).mockResolvedValueOnce(authCtxWithTeamRoles({}));
+
+    const result = await listAuditLog(
+      makeDb([rawRow], currentSchema, [historicalSchema]),
+      'ws-1',
+      {},
+      event
+    );
+
+    expect(result[0]!.changes).toEqual({
+      old: { name: 'old-name' },
+      new: { name: 'new-name' }
+    });
   });
 });

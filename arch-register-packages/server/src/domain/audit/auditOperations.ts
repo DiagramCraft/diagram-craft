@@ -5,10 +5,10 @@ import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { toApiAuditLogEntry, filterAndPaginateAuditLogs, computeAuditStats } from './auditHelpers';
 import { listEntities } from '../catalog/entityQueryOperations';
 import { parseEntityQuery, buildEntityQueryForExecution } from '../catalog/entityQuery';
-import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
+import { filterKnownRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
-import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
-import type { RelationSchemaDbResult } from '../catalog/db/relationDatabase';
+import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
+import { getEntitySchemaAt, getRelationSchemaAt } from '../catalog/schemaHistory';
 import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
 import type { AuditLogDbResult } from './db/auditDatabase';
 
@@ -22,23 +22,19 @@ export const stripAuditChanges = (rows: AuditLogDbResult[]): Omit<AuditLogDbResu
 export const redactAuditEntryChanges = (
   entry: AuditLogEntry,
   authCtx: WorkspaceAuthorizationContext | null,
-  schemaById: Map<string, SchemaDbResult>,
-  relationSchemaById: Map<string, RelationSchemaDbResult>
+  schema: FieldGroupSchemaShape | null,
+  relationSchema: FieldGroupSchemaShape | null
 ): AuditLogEntry => {
-  if (!entry.schema_id) return entry;
   if (entry.entity_type !== 'entity' && entry.entity_type !== 'relation') return entry;
-  const schema =
-    entry.entity_type === 'entity'
-      ? (schemaById.get(entry.schema_id) ?? null)
-      : (relationSchemaById.get(entry.schema_id) ?? null);
+  const applicableSchema = entry.entity_type === 'entity' ? schema : relationSchema;
   return {
     ...entry,
     changes: {
       old: entry.changes.old
-        ? filterRestrictedFieldGroups(authCtx, schema, entry.changes.old)
+        ? filterKnownRestrictedFieldGroups(authCtx, applicableSchema, entry.changes.old)
         : entry.changes.old,
       new: entry.changes.new
-        ? filterRestrictedFieldGroups(authCtx, schema, entry.changes.new)
+        ? filterKnownRestrictedFieldGroups(authCtx, applicableSchema, entry.changes.new)
         : entry.changes.new
     }
   };
@@ -145,14 +141,8 @@ export const listAuditLog = async (
     entityIds = matchingEntities.map(e => e._uid);
   }
 
-  const [rows, schemas, relationSchemas] = await Promise.all([
-    db.audit.listAuditLogs(ws),
-    db.catalog.listSchemas(ws),
-    db.relation.listRelationSchemas(ws)
-  ]);
-  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
-  const relationSchemaById = new Map(relationSchemas.map(schema => [schema.id, schema]));
-  const entries = filterAndPaginateAuditLogs(rows, {
+  const rows = await db.audit.listAuditLogs(ws);
+  const filteredEntries = filterAndPaginateAuditLogs(rows, {
     entityType: filters.entityType ?? null,
     entityId: filters.entityId ?? null,
     entityIds,
@@ -162,9 +152,22 @@ export const listAuditLog = async (
     endDate: filters.endDate ?? null,
     limit: filters.limit ?? 50,
     offset: filters.offset ?? 0
-  })
-    .map(entry => toApiAuditLogEntry(entry))
-    .map(entry => redactAuditEntryChanges(entry, authCtx, schemaById, relationSchemaById));
+  });
+  const entries = await Promise.all(
+    filteredEntries.map(async rawEntry => {
+      const entry = toApiAuditLogEntry(rawEntry);
+      const asOf = rawEntry.timestamp;
+      const schema =
+        rawEntry.entity_type === 'entity' && rawEntry.schema_id
+          ? await getEntitySchemaAt(db, ws, rawEntry.schema_id, asOf)
+          : null;
+      const relationSchema =
+        rawEntry.entity_type === 'relation' && rawEntry.schema_id
+          ? await getRelationSchemaAt(db, ws, rawEntry.schema_id, asOf)
+          : null;
+      return redactAuditEntryChanges(entry, authCtx, schema, relationSchema);
+    })
+  );
 
   return await Promise.all(entries.map(entry => resolveAuditPublicIds(db, ws, entry)));
 };

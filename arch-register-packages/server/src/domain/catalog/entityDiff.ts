@@ -1,5 +1,6 @@
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import {
+  filterKnownRestrictedFieldGroups,
   filterRestrictedFieldGroups,
   type FieldGroupSchemaShape
 } from '../auth/fieldGroupAccessControl';
@@ -73,6 +74,31 @@ export const redactDataDiff = (
     (dataDiff.before ?? {}) as Record<string, unknown>
   );
   const after = filterRestrictedFieldGroups(
+    authCtx,
+    toSchema,
+    (dataDiff.after ?? {}) as Record<string, unknown>
+  );
+
+  const { data: _data, ...rest } = diff;
+  return equalEntityValue(before, after) ? rest : { ...rest, data: { before, after } };
+};
+
+/** Historical-schema variant used by external proposal serializers. Unknown fields fail closed. */
+export const redactKnownDataDiff = (
+  diff: Record<string, EntityFieldDiff>,
+  authCtx: WorkspaceAuthorizationContext | null,
+  fromSchema: FieldGroupSchemaShape | null,
+  toSchema: FieldGroupSchemaShape | null
+): Record<string, EntityFieldDiff> => {
+  const dataDiff = diff.data;
+  if (!dataDiff) return diff;
+
+  const before = filterKnownRestrictedFieldGroups(
+    authCtx,
+    fromSchema,
+    (dataDiff.before ?? {}) as Record<string, unknown>
+  );
+  const after = filterKnownRestrictedFieldGroups(
     authCtx,
     toSchema,
     (dataDiff.after ?? {}) as Record<string, unknown>
