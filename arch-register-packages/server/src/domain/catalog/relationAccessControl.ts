@@ -1,29 +1,29 @@
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
-import {
-  isTypedRelationField,
-  type TypedRelationField
-} from '@arch-register/api-types/schemaContract';
+import type { TypedRelationField } from '@arch-register/api-types/schemaContract';
 import type { SchemaDbResult } from './db/catalogDatabase';
 import {
   isFieldEditRestricted,
   isFieldViewRestricted,
   requireNoRestrictedFieldWrites
 } from '../auth/fieldGroupAccessControl';
+import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
 import { httpAssert } from '../../utils/httpAssert';
 
 export type RelationEndpointDirection = 'in' | 'out';
 
 const matchingOwnerFields = (
-  schema: SchemaDbResult | null | undefined,
+  schema: FieldGroupSchemaShape | null | undefined,
   relationSchemaId: string,
   direction: RelationEndpointDirection
 ): TypedRelationField[] =>
-  (schema?.fields ?? []).filter(
-    (field): field is TypedRelationField =>
-      isTypedRelationField(field) &&
-      field.relationSchemaId === relationSchemaId &&
-      field.direction === direction
-  );
+  (schema?.fields ?? []).filter(field => {
+    const candidate = field as unknown as Record<string, unknown>;
+    return (
+      candidate['type'] === 'typedRelation' &&
+      candidate['relationSchemaId'] === relationSchemaId &&
+      candidate['direction'] === direction
+    );
+  }) as unknown as TypedRelationField[];
 
 /**
  * Returns whether a relation can be surfaced through an endpoint. Multiple bindings for the
@@ -32,7 +32,7 @@ const matchingOwnerFields = (
  */
 export const canViewTypedRelationFromEndpoint = (
   authCtx: WorkspaceAuthorizationContext | null,
-  schema: SchemaDbResult | null | undefined,
+  schema: FieldGroupSchemaShape | null | undefined,
   relationSchemaId: string,
   direction: RelationEndpointDirection
 ) => {
@@ -45,7 +45,7 @@ export const canViewTypedRelationFromEndpoint = (
 /** Same as canViewTypedRelationFromEndpoint, but for writes. */
 export const canEditTypedRelationFromEndpoint = (
   authCtx: WorkspaceAuthorizationContext | null,
-  schema: SchemaDbResult | null | undefined,
+  schema: FieldGroupSchemaShape | null | undefined,
   relationSchemaId: string,
   direction: RelationEndpointDirection
 ) => {
@@ -62,7 +62,7 @@ export const canEditTypedRelationFromEndpoint = (
 export const canViewTypedRelation = (
   authCtx: WorkspaceAuthorizationContext | null,
   endpoints: Array<{
-    schema: SchemaDbResult | null | undefined;
+    schema: FieldGroupSchemaShape | null | undefined;
     direction: RelationEndpointDirection;
   }>,
   relationSchemaId: string
@@ -74,7 +74,7 @@ export const canViewTypedRelation = (
 export const canEditTypedRelation = (
   authCtx: WorkspaceAuthorizationContext | null,
   endpoints: Array<{
-    schema: SchemaDbResult | null | undefined;
+    schema: FieldGroupSchemaShape | null | undefined;
     direction: RelationEndpointDirection;
   }>,
   relationSchemaId: string

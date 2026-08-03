@@ -212,4 +212,17 @@ describe('computeChanges with flattened entity audit fields', () => {
       new: { _tags: ['core', 'payments'] }
     });
   });
+
+  it('can retain stable relation endpoint metadata on update changes', () => {
+    expect(
+      computeChanges(
+        { _inEntityId: 'in-1', _outEntityId: 'out-1', value: 'old' },
+        { _inEntityId: 'in-1', _outEntityId: 'out-1', value: 'new' },
+        { alwaysInclude: ['_inEntityId', '_outEntityId'] }
+      )
+    ).toEqual({
+      old: { value: 'old', _inEntityId: 'in-1', _outEntityId: 'out-1' },
+      new: { value: 'new', _inEntityId: 'in-1', _outEntityId: 'out-1' }
+    });
+  });
 });

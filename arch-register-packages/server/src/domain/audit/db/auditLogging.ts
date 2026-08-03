@@ -175,7 +175,8 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
  */
 export const computeChanges = (
   oldData: Record<string, unknown>,
-  newData: Record<string, unknown>
+  newData: Record<string, unknown>,
+  options: { alwaysInclude?: string[] } = {}
 ): { old: Record<string, unknown>; new: Record<string, unknown> } => {
   const old: Record<string, unknown> = {};
   const newChanges: Record<string, unknown> = {};
@@ -195,6 +196,12 @@ export const computeChanges = (
       old[key] = undefined;
       newChanges[key] = newValue;
     }
+  }
+
+  for (const key of options.alwaysInclude ?? []) {
+    if (!(key in oldData) || !(key in newData)) continue;
+    old[key] = oldData[key];
+    newChanges[key] = newData[key];
   }
 
   return { old, new: newChanges };

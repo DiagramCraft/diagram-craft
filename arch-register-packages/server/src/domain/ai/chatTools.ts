@@ -31,6 +31,7 @@ import type { RelationSchemaDbResult } from '../catalog/db/relationDatabase';
 import {
   filterRelationFieldData,
   assertRelationMutationsSupported,
+  flattenRelationAuditFields,
   validateRelationEndpoints
 } from '../catalog/relationHelpers';
 import {
@@ -790,14 +791,7 @@ export const createAiChatTools = (
       entityId: row.id,
       entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
       schemaId: row.schema_id,
-      changes: {
-        new: {
-          _schemaId: row.schema_id,
-          _inEntityId: row.in_entity_id,
-          _outEntityId: row.out_entity_id,
-          ...row.data
-        }
-      }
+      changes: { new: flattenRelationAuditFields(row) }
     });
     return toAiRelation(row, new Map([[schema.id, schema]]));
   });
@@ -834,7 +828,9 @@ export const createAiChatTools = (
       entityId: row.id,
       entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
       schemaId: row.schema_id,
-      changes: computeChanges({ ...oldRow.data }, { ...row.data })
+      changes: computeChanges(flattenRelationAuditFields(oldRow), flattenRelationAuditFields(row), {
+        alwaysInclude: ['_inEntityId', '_outEntityId']
+      })
     });
     return toAiRelation(row, new Map([[schema.id, schema]]));
   });
@@ -859,7 +855,7 @@ export const createAiChatTools = (
       entityId: row.id,
       entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
       schemaId: row.schema_id,
-      changes: { old: { ...row.data } }
+      changes: { old: flattenRelationAuditFields(row) }
     });
     return { success: true };
   });

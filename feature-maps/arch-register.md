@@ -483,8 +483,9 @@
         - @id:ar.integrations.api External clients can use the documented API contract and API tokens to access
           supported Arch Register operations. The stable integration surface exposes entity schemas, typed relation
           schema metadata, paginated typed relation reads, entity-scoped typed relation traversal, and typed relation
-          instance create/update/delete operations with capability checks, field-group redaction, audit logging, and
-          approval-policy enforcement. Administrators can create workspace-scoped API tokens backed by a system user,
+          instance create/update/delete operations with capability checks, field-group redaction (including typed
+          relation owner-field ACLs in audit entries), audit logging, and approval-policy enforcement. Administrators
+          can create workspace-scoped API tokens backed by a system user,
           restricted to a chosen subset of role capabilities, with an optional expiry date, in addition to the
           personal API tokens available from account settings.
 
