@@ -80,11 +80,22 @@ export type ExportSchema = {
   id: string;
   name: string;
   fields: unknown[];
+  groups?: import('@arch-register/api-types/schemaContract').SchemaGroup[];
+  shared_field_group_links?: import('@arch-register/api-types/schemaContract').SharedFieldGroupLink[];
+  shared_field_groups?: ExportSharedFieldGroup[];
   templates?: import('@arch-register/api-types/schemaContract').EntityTemplate[];
   color: string | null;
   icon: string | null;
   default_owner: string | null;
   key_prefix: string | null;
+};
+
+export type ExportSharedFieldGroup = {
+  id: string;
+  name: string;
+  description: string | null;
+  fields: unknown[];
+  sort_order: number;
 };
 
 export type ExportEntity = {
@@ -329,6 +340,7 @@ export type ImportExecuteResult = {
 
 export type IdMapping = {
   schemas: Map<string, string>;
+  shared_field_groups: Map<string, string>;
   entities: Map<string, string>;
   teams: Map<string, string>;
   lifecycle_states: Map<string, string>;

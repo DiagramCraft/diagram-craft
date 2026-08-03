@@ -89,6 +89,7 @@ const makeDb = () =>
     },
     catalog: {
       listSchemas: vi.fn(async () => [schemaWithRestrictedGroup]),
+      listSharedFieldGroups: vi.fn(async () => []),
       listEntities: vi.fn(async () => [makeEntity()])
     }
   }) as any;
@@ -175,5 +176,52 @@ describe('exportEntities field-group redaction', () => {
     });
 
     expect(data.entities).toEqual([expect.objectContaining({ data: { name: 'x', secret: 'y' } })]);
+  });
+});
+
+describe('exportSchemas field-group metadata', () => {
+  it('exports local ACLs, shared links, and shared group definitions', async () => {
+    const db = makeDb();
+    db.catalog.listSharedFieldGroups.mockResolvedValue([
+      {
+        id: 'shared-1',
+        workspace: 'workspace-1',
+        name: 'Shared restricted',
+        description: 'Restricted fields',
+        fields: [{ id: 'secret', name: 'Secret', type: 'text' }],
+        sort_order: 1,
+        created_at: new Date(),
+        updated_at: new Date()
+      }
+    ]);
+    db.catalog.listSchemas.mockResolvedValue([
+      {
+        ...schemaWithRestrictedGroup,
+        shared_field_group_links: [{ groupId: 'shared-1', teamIds: ['team-1'] }]
+      }
+    ]);
+    const authCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: 'owner',
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const { data } = await exportWorkspace(db, undefined, authCtx, 'workspace-1', {
+      include: ['schemas']
+    });
+
+    expect(data.schemas).toEqual([
+      expect.objectContaining({
+        groups: schemaWithRestrictedGroup.groups,
+        shared_field_group_links: [{ groupId: 'shared-1', teamIds: ['team-1'] }],
+        shared_field_groups: [
+          expect.objectContaining({ id: 'shared-1', name: 'Shared restricted' })
+        ]
+      })
+    ]);
   });
 });

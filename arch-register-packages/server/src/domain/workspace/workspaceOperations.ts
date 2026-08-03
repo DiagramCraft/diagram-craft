@@ -408,12 +408,14 @@ export const createWorkspace = async (
         if (typeof replicate_from === 'string' && replicate_from) {
           const includeSet = normalizeInclude(include);
 
-          const [srcLifecycle, srcTeams, srcRoles, srcSchemas] = await Promise.all([
-            db.workspace.listLifecycleStates(replicate_from),
-            db.workspace.listTeams(replicate_from),
-            db.workspace.listCustomWorkspaceRoles(replicate_from),
-            db.catalog.listSchemas(replicate_from)
-          ]);
+          const [srcLifecycle, srcTeams, srcRoles, srcSchemas, srcSharedFieldGroups] =
+            await Promise.all([
+              db.workspace.listLifecycleStates(replicate_from),
+              db.workspace.listTeams(replicate_from),
+              db.workspace.listCustomWorkspaceRoles(replicate_from),
+              db.catalog.listSchemas(replicate_from),
+              db.catalog.listSharedFieldGroups(replicate_from)
+            ]);
 
           const lifecycleMap = new Map<string, string>();
           const teamMap = new Map<string, string>();
@@ -464,13 +466,42 @@ export const createWorkspace = async (
           const schemaMap = new Map<string, string>();
           if (includeSet.has('schemas')) {
             for (const schema of srcSchemas) schemaMap.set(schema.id, randomUUID());
+            const sharedFieldGroupMap = new Map<string, string>();
+            for (const group of srcSharedFieldGroups)
+              sharedFieldGroupMap.set(group.id, randomUUID());
+            for (const group of srcSharedFieldGroups) {
+              await db.catalog.createSharedFieldGroup({
+                ...group,
+                id: sharedFieldGroupMap.get(group.id)!,
+                workspace: row.id,
+                created_at: timestamp,
+                updated_at: timestamp
+              });
+            }
             for (const schema of srcSchemas) {
               const remappedFields = schema.fields.map(field => {
+                if (field.groupId && sharedFieldGroupMap.has(field.groupId)) {
+                  return { ...field, groupId: sharedFieldGroupMap.get(field.groupId)! };
+                }
                 if (isReferenceOrContainmentField(field)) {
                   return { ...field, schemaId: schemaMap.get(field.schemaId) ?? field.schemaId };
                 }
                 return field;
               });
+              const remappedGroups = (schema.groups ?? []).map(group => ({
+                ...group,
+                id: sharedFieldGroupMap.get(group.id) ?? group.id,
+                accessControl: group.accessControl
+                  ? {
+                      teamIds: group.accessControl.teamIds.map(id => teamMap.get(id) ?? id)
+                    }
+                  : undefined
+              }));
+              const remappedSharedLinks = (schema.shared_field_group_links ?? []).map(link => ({
+                ...link,
+                groupId: sharedFieldGroupMap.get(link.groupId) ?? link.groupId,
+                teamIds: link.teamIds?.map(id => teamMap.get(id) ?? id)
+              }));
               const relationshipFieldIds = new Set(
                 schema.fields.filter(isReferenceOrContainmentField).map(field => field.id)
               );
@@ -505,6 +536,8 @@ export const createWorkspace = async (
                 icon: schema.icon,
                 fields: remappedFields,
                 templates,
+                groups: remappedGroups,
+                shared_field_group_links: remappedSharedLinks,
                 default_owner: schema.default_owner
                   ? (teamMap.get(schema.default_owner) ?? null)
                   : null,
