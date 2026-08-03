@@ -84,6 +84,32 @@ const relationSchema: RelationSchemaDbResult = {
   ]
 };
 
+const typedRelationOwnerSchema: SchemaDbResult = {
+  ...schema,
+  id: 'owner-schema-1',
+  created_at: new Date('2026-01-01T00:00:00.000Z'),
+  fields: [
+    {
+      id: 'incomingRelation',
+      name: 'Incoming relation',
+      requirementLevel: null,
+      type: 'typedRelation',
+      relationSchemaId: relationSchema.id,
+      direction: 'in',
+      groupId: 'restricted'
+    } as never,
+    {
+      id: 'outgoingRelation',
+      name: 'Outgoing relation',
+      requirementLevel: null,
+      type: 'typedRelation',
+      relationSchemaId: relationSchema.id,
+      direction: 'out',
+      groupId: 'restricted'
+    } as never
+  ]
+};
+
 const makeEntry = (overrides: Partial<AuditLogEntry> = {}): AuditLogEntry => ({
   id: 'audit-1',
   workspace: 'ws-1',
@@ -210,8 +236,18 @@ describe('listAuditLog', () => {
     entity_slug: null,
     schema_id: relationSchema.id,
     changes: {
-      old: { name: 'old-name', secret: 'old-secret' },
-      new: { name: 'new-name', secret: 'new-secret' }
+      old: {
+        _inEntityId: 'entity-in',
+        _outEntityId: 'entity-out',
+        name: 'old-name',
+        secret: 'old-secret'
+      },
+      new: {
+        _inEntityId: 'entity-in',
+        _outEntityId: 'entity-out',
+        name: 'new-name',
+        secret: 'new-secret'
+      }
     },
     metadata: {}
   };
@@ -226,12 +262,18 @@ describe('listAuditLog', () => {
         listSchemas: vi.fn(async () => [currentSchema]),
         getSchema: vi.fn(async () => currentSchema),
         listSchemaVersions: vi.fn(async () => schemaVersions),
-        getEntity: vi.fn(async () => ({ id: 'e-1', workspace: 'ws-1', public_id: 'ENT-1' }))
+        getEntity: vi.fn(async (_workspace: string, id: string) => ({
+          id,
+          workspace: 'ws-1',
+          schema_id: currentSchema.id,
+          public_id: id === 'e-1' ? 'ENT-1' : null
+        }))
       },
       relation: {
         listRelationSchemas: vi.fn(async () => [relationSchema]),
         getRelationSchema: vi.fn(async () => relationSchema),
-        listRelationSchemaVersions: vi.fn(async () => [])
+        listRelationSchemaVersions: vi.fn(async () => []),
+        getRelation: vi.fn(async () => null)
       },
       audit: {
         listAuditLogs: vi.fn(async () => rows)
@@ -279,7 +321,10 @@ describe('listAuditLog', () => {
 
     const result = await listAuditLog(makeDb([relationRawRow]), 'ws-1', {}, event);
 
-    expect(result[0]!.changes).toEqual(relationRawRow.changes);
+    expect(result[0]!.changes).toEqual({
+      old: { name: 'old-name', secret: 'old-secret' },
+      new: { name: 'new-name', secret: 'new-secret' }
+    });
   });
 
   it('uses the historical schema when current field-group access changed', async () => {
@@ -305,5 +350,60 @@ describe('listAuditLog', () => {
       old: { name: 'old-name' },
       new: { name: 'new-name' }
     });
+  });
+
+  it('omits relation entries whose endpoint owner fields are not viewable', async () => {
+    vi.mocked(buildApiAuthCtx).mockResolvedValueOnce(authCtxWithTeamRoles({}));
+
+    const rows = (['create', 'update', 'delete'] as const).map(operation => ({
+      ...relationRawRow,
+      id: `relation-${operation}`,
+      operation,
+      entity_name: 'Restricted Source → Restricted Target'
+    }));
+
+    const result = await listAuditLog(makeDb(rows, typedRelationOwnerSchema), 'ws-1', {}, event);
+
+    expect(result).toEqual([]);
+  });
+
+  it('keeps a relation entry when its endpoint owner fields are viewable', async () => {
+    vi.mocked(buildApiAuthCtx).mockResolvedValueOnce(
+      authCtxWithTeamRoles({ 'team-restricted': ['team_reviewer'] })
+    );
+
+    const result = await listAuditLog(
+      makeDb([relationRawRow], typedRelationOwnerSchema),
+      'ws-1',
+      {},
+      event
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0]!.entity_name).toBe('Entity A -> Entity B');
+    expect(result[0]!.changes).toEqual({
+      old: { name: 'old-name', secret: 'old-secret' },
+      new: { name: 'new-name', secret: 'new-secret' }
+    });
+  });
+
+  it('uses historical endpoint schemas for relation owner-field access', async () => {
+    const currentSchema = {
+      ...typedRelationOwnerSchema,
+      created_at: new Date('2026-06-01T00:00:00.000Z'),
+      fields: typedRelationOwnerSchema.fields.map(field => ({ ...field, groupId: undefined })),
+      groups: []
+    };
+    const historicalSchema = typedRelationOwnerSchema;
+    vi.mocked(buildApiAuthCtx).mockResolvedValueOnce(authCtxWithTeamRoles({}));
+
+    const result = await listAuditLog(
+      makeDb([relationRawRow], currentSchema, [historicalSchema]),
+      'ws-1',
+      {},
+      event
+    );
+
+    expect(result).toEqual([]);
   });
 });

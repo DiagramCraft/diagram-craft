@@ -9,6 +9,7 @@ import { filterKnownRestrictedFieldGroups } from '../auth/fieldGroupAccessContro
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
 import { getEntitySchemaAt, getRelationSchemaAt } from '../catalog/schemaHistory';
+import { canViewTypedRelation } from '../catalog/relationAccessControl';
 import { AuditLogEntry, AuditStats } from '@arch-register/api-types/auditContract';
 import type { AuditLogDbResult } from './db/auditDatabase';
 
@@ -37,6 +38,83 @@ export const redactAuditEntryChanges = (
         ? filterKnownRestrictedFieldGroups(authCtx, applicableSchema, entry.changes.new)
         : entry.changes.new
     }
+  };
+};
+
+type ResolvedAuditSchemas = {
+  schema: FieldGroupSchemaShape | null;
+  relationSchema: FieldGroupSchemaShape | null;
+};
+
+const relationEndpointIdsFromAuditEntry = (entry: AuditLogDbResult) => {
+  const snapshots = [entry.changes.new, entry.changes.old];
+  const readId = (key: '_inEntityId' | '_outEntityId') =>
+    snapshots
+      .map(snapshot => snapshot?.[key])
+      .find((value): value is string => typeof value === 'string' && value.length > 0) ?? null;
+
+  return { inEntityId: readId('_inEntityId'), outEntityId: readId('_outEntityId') };
+};
+
+const resolveRelationAuditSchemas = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entry: AuditLogDbResult,
+  authCtx: WorkspaceAuthorizationContext | null
+): Promise<ResolvedAuditSchemas | null> => {
+  if (!entry.schema_id) return null;
+
+  const relationSchema = await getRelationSchemaAt(db, workspace, entry.schema_id, entry.timestamp);
+  if (!relationSchema) return null;
+
+  let { inEntityId, outEntityId } = relationEndpointIdsFromAuditEntry(entry);
+  if (!inEntityId || !outEntityId) {
+    const relation = await db.relation.getRelation(workspace, entry.entity_id);
+    inEntityId ??= relation?.in_entity_id ?? null;
+    outEntityId ??= relation?.out_entity_id ?? null;
+  }
+  if (!inEntityId || !outEntityId) return null;
+
+  const [inEntity, outEntity] = await Promise.all([
+    db.catalog.getEntity(workspace, inEntityId),
+    db.catalog.getEntity(workspace, outEntityId)
+  ]);
+  if (!inEntity || !outEntity) return null;
+
+  const [inSchema, outSchema] = await Promise.all([
+    getEntitySchemaAt(db, workspace, inEntity.schema_id, entry.timestamp),
+    getEntitySchemaAt(db, workspace, outEntity.schema_id, entry.timestamp)
+  ]);
+  if (!inSchema || !outSchema) return null;
+
+  return canViewTypedRelation(
+    authCtx,
+    [
+      { schema: inSchema, direction: 'in' },
+      { schema: outSchema, direction: 'out' }
+    ],
+    entry.schema_id
+  )
+    ? { schema: null, relationSchema }
+    : null;
+};
+
+const resolveAuditSchemas = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entry: AuditLogDbResult,
+  authCtx: WorkspaceAuthorizationContext | null
+): Promise<ResolvedAuditSchemas | null> => {
+  if (entry.entity_type === 'relation') {
+    return resolveRelationAuditSchemas(db, workspace, entry, authCtx);
+  }
+
+  return {
+    schema:
+      entry.entity_type === 'entity' && entry.schema_id
+        ? await getEntitySchemaAt(db, workspace, entry.schema_id, entry.timestamp)
+        : null,
+    relationSchema: null
   };
 };
 
@@ -142,30 +220,36 @@ export const listAuditLog = async (
   }
 
   const rows = await db.audit.listAuditLogs(ws);
-  const filteredEntries = filterAndPaginateAuditLogs(rows, {
+  const auditFilters = {
     entityType: filters.entityType ?? null,
     entityId: filters.entityId ?? null,
     entityIds,
     schemaId: filters.owner || filters.lifecycle ? null : (filters.schemaId ?? null),
     operation: filters.operation ?? null,
     startDate: filters.startDate ?? null,
-    endDate: filters.endDate ?? null,
-    limit: filters.limit ?? 50,
-    offset: filters.offset ?? 0
+    endDate: filters.endDate ?? null
+  };
+  const candidateRows = filterAndPaginateAuditLogs(rows, {
+    ...auditFilters,
+    limit: rows.length,
+    offset: 0
   });
+  const preparedEntries = (
+    await Promise.all(
+      candidateRows.map(async rawEntry => {
+        const schemas = await resolveAuditSchemas(db, ws, rawEntry, authCtx);
+        return schemas ? { rawEntry, schemas } : null;
+      })
+    )
+  ).filter((entry): entry is NonNullable<typeof entry> => entry != null);
+  const paginatedEntries = preparedEntries.slice(
+    filters.offset ?? 0,
+    (filters.offset ?? 0) + (filters.limit ?? 50)
+  );
   const entries = await Promise.all(
-    filteredEntries.map(async rawEntry => {
+    paginatedEntries.map(async ({ rawEntry, schemas }) => {
       const entry = toApiAuditLogEntry(rawEntry);
-      const asOf = rawEntry.timestamp;
-      const schema =
-        rawEntry.entity_type === 'entity' && rawEntry.schema_id
-          ? await getEntitySchemaAt(db, ws, rawEntry.schema_id, asOf)
-          : null;
-      const relationSchema =
-        rawEntry.entity_type === 'relation' && rawEntry.schema_id
-          ? await getRelationSchemaAt(db, ws, rawEntry.schema_id, asOf)
-          : null;
-      return redactAuditEntryChanges(entry, authCtx, schema, relationSchema);
+      return redactAuditEntryChanges(entry, authCtx, schemas.schema, schemas.relationSchema);
     })
   );
 

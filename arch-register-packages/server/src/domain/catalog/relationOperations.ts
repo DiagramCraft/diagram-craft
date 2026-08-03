@@ -291,7 +291,8 @@ export const updateWorkspaceRelation = async (
 
       const changes = computeChanges(
         flattenRelationAuditFields(oldRow),
-        flattenRelationAuditFields(row)
+        flattenRelationAuditFields(row),
+        { alwaysInclude: ['_inEntityId', '_outEntityId'] }
       );
       await logAudit(db, {
         userId: authCtx.userId,

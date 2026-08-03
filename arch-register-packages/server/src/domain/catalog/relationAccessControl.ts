@@ -9,12 +9,13 @@ import {
   isFieldViewRestricted,
   requireNoRestrictedFieldWrites
 } from '../auth/fieldGroupAccessControl';
+import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
 import { httpAssert } from '../../utils/httpAssert';
 
 export type RelationEndpointDirection = 'in' | 'out';
 
 const matchingOwnerFields = (
-  schema: SchemaDbResult | null | undefined,
+  schema: FieldGroupSchemaShape | null | undefined,
   relationSchemaId: string,
   direction: RelationEndpointDirection
 ): TypedRelationField[] =>
@@ -32,7 +33,7 @@ const matchingOwnerFields = (
  */
 export const canViewTypedRelationFromEndpoint = (
   authCtx: WorkspaceAuthorizationContext | null,
-  schema: SchemaDbResult | null | undefined,
+  schema: FieldGroupSchemaShape | null | undefined,
   relationSchemaId: string,
   direction: RelationEndpointDirection
 ) => {
@@ -45,7 +46,7 @@ export const canViewTypedRelationFromEndpoint = (
 /** Same as canViewTypedRelationFromEndpoint, but for writes. */
 export const canEditTypedRelationFromEndpoint = (
   authCtx: WorkspaceAuthorizationContext | null,
-  schema: SchemaDbResult | null | undefined,
+  schema: FieldGroupSchemaShape | null | undefined,
   relationSchemaId: string,
   direction: RelationEndpointDirection
 ) => {
@@ -62,7 +63,7 @@ export const canEditTypedRelationFromEndpoint = (
 export const canViewTypedRelation = (
   authCtx: WorkspaceAuthorizationContext | null,
   endpoints: Array<{
-    schema: SchemaDbResult | null | undefined;
+    schema: FieldGroupSchemaShape | null | undefined;
     direction: RelationEndpointDirection;
   }>,
   relationSchemaId: string
@@ -74,7 +75,7 @@ export const canViewTypedRelation = (
 export const canEditTypedRelation = (
   authCtx: WorkspaceAuthorizationContext | null,
   endpoints: Array<{
-    schema: SchemaDbResult | null | undefined;
+    schema: FieldGroupSchemaShape | null | undefined;
     direction: RelationEndpointDirection;
   }>,
   relationSchemaId: string

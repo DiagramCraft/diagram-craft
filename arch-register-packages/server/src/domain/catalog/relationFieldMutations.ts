@@ -121,7 +121,9 @@ export const applyRelationFieldDelta = async (
       entityId: update.id,
       entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
       schemaId: row.schema_id,
-      changes: computeChanges(flattenRelationAuditFields(oldRow), flattenRelationAuditFields(row))
+      changes: computeChanges(flattenRelationAuditFields(oldRow), flattenRelationAuditFields(row), {
+        alwaysInclude: ['_inEntityId', '_outEntityId']
+      })
     });
 
     results.push(toApiRelation(row));
