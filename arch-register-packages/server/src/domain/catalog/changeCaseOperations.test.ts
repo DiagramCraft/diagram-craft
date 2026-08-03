@@ -68,10 +68,10 @@ describe('toApiMember', () => {
     expect(api.proposed_state['data']).toEqual({ visible: 'v-after', secret: 'after' });
   });
 
-  it('is a no-op when the state has no matching schema', () => {
+  it('fails closed when the state has no matching schema', () => {
     const api = toApiMember(member, authCtxWithNoTeams(), new Map());
-    expect(api.base_state['data']).toEqual({ visible: 'v-before', secret: 'before' });
-    expect(api.proposed_state['data']).toEqual({ visible: 'v-after', secret: 'after' });
+    expect(api.base_state['data']).toEqual({});
+    expect(api.proposed_state['data']).toEqual({});
   });
 });
 

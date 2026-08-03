@@ -49,14 +49,15 @@ import {
   buildDiff,
   equalEntityValue,
   mutableStateKeys,
-  redactDataDiff,
+  redactKnownDataDiff,
   type EntityFieldDiff
 } from './entityDiff';
 import {
-  filterRestrictedFieldGroups,
-  requireNoRestrictedFieldWrites
+  filterKnownRestrictedFieldGroups,
+  requireNoRestrictedFieldWrites,
+  type FieldGroupSchemaShape
 } from '../auth/fieldGroupAccessControl';
-import type { SchemaDbResult } from './db/catalogDatabase';
+import { getEntitySchemaAt } from './schemaHistory';
 
 export const ENTITY_CHANGE_CASE_KIND = 'entity.change-case';
 export const ENTITY_CHANGE_CASE_BULK_KIND = 'entity.change-case.bulk';
@@ -269,7 +270,7 @@ export const toApiApprovalRevision = (
   caseId: string | null,
   createdByName: string | null,
   authCtx: WorkspaceAuthorizationContext | null,
-  schemaById: Map<string, SchemaDbResult>
+  schemaById: Map<string, FieldGroupSchemaShape>
 ): EntityChangeApprovalRevision => {
   const baseSchema = schemaById.get(String(revision.base_state['schema_id'])) ?? null;
   const proposedSchema = schemaById.get(String(revision.proposed_state['schema_id'])) ?? null;
@@ -281,7 +282,7 @@ export const toApiApprovalRevision = (
     baseVersion: revision.base_version,
     baseState: {
       ...revision.base_state,
-      data: filterRestrictedFieldGroups(
+      data: filterKnownRestrictedFieldGroups(
         authCtx,
         baseSchema,
         (revision.base_state['data'] ?? {}) as Record<string, unknown>
@@ -289,13 +290,13 @@ export const toApiApprovalRevision = (
     },
     proposedState: {
       ...revision.proposed_state,
-      data: filterRestrictedFieldGroups(
+      data: filterKnownRestrictedFieldGroups(
         authCtx,
         proposedSchema,
         (revision.proposed_state['data'] ?? {}) as Record<string, unknown>
       )
     },
-    diff: redactDataDiff(
+    diff: redactKnownDataDiff(
       revision.diff as Record<string, EntityFieldDiff>,
       authCtx,
       baseSchema,
@@ -329,13 +330,18 @@ const findCaseForRevision = async (
 const schemaByIdForStates = async (
   db: DatabaseAdapter,
   workspace: string,
-  states: Record<string, unknown>[]
-): Promise<Map<string, SchemaDbResult>> => {
+  states: Record<string, unknown>[],
+  asOf: Date
+): Promise<Map<string, FieldGroupSchemaShape>> => {
   const schemaIds = new Set(states.map(state => String(state['schema_id'])));
   const schemas = await Promise.all(
-    [...schemaIds].map(schemaId => db.catalog.getSchema(workspace, schemaId))
+    [...schemaIds].map(schemaId => getEntitySchemaAt(db, workspace, schemaId, asOf))
   );
-  return new Map(schemas.filter((s): s is SchemaDbResult => s != null).map(s => [s.id, s]));
+  return new Map(
+    [...schemaIds]
+      .map((schemaId, index) => [schemaId, schemas[index]] as const)
+      .filter((entry): entry is [string, FieldGroupSchemaShape] => entry[1] != null)
+  );
 };
 
 const toApiApproval = async (
@@ -344,13 +350,14 @@ const toApiApproval = async (
   authCtx: WorkspaceAuthorizationContext | null
 ): Promise<EntityChangeApproval> => {
   const revisions = await db.entityChange.listApprovalRevisions(proposal.workspace, proposal.id);
-  const schemaById = await schemaByIdForStates(
-    db,
-    proposal.workspace,
-    revisions.flatMap(revision => [revision.base_state, revision.proposed_state])
-  );
   const apiRevisions = await Promise.all(
     revisions.map(async revision => {
+      const schemaById = await schemaByIdForStates(
+        db,
+        proposal.workspace,
+        [revision.base_state, revision.proposed_state],
+        revision.created_at
+      );
       const caseRow = await findCaseForRevision(
         db,
         proposal.workspace,
@@ -385,7 +392,7 @@ export const toApiBulkApprovalRevision = (
   caseId: string | null,
   createdByName: string | null,
   authCtx: WorkspaceAuthorizationContext | null,
-  schemaById: Map<string, SchemaDbResult>
+  schemaById: Map<string, FieldGroupSchemaShape>
 ): EntityChangeBulkApprovalRevision => {
   const first = members[0]!;
   return {
@@ -400,7 +407,7 @@ export const toApiBulkApprovalRevision = (
         baseVersion: member.base_version,
         baseState: {
           ...member.base_state,
-          data: filterRestrictedFieldGroups(
+          data: filterKnownRestrictedFieldGroups(
             authCtx,
             baseSchema,
             (member.base_state['data'] ?? {}) as Record<string, unknown>
@@ -408,13 +415,13 @@ export const toApiBulkApprovalRevision = (
         },
         proposedState: {
           ...member.proposed_state,
-          data: filterRestrictedFieldGroups(
+          data: filterKnownRestrictedFieldGroups(
             authCtx,
             proposedSchema,
             (member.proposed_state['data'] ?? {}) as Record<string, unknown>
           )
         },
-        diff: redactDataDiff(
+        diff: redactKnownDataDiff(
           member.diff as Record<string, EntityFieldDiff>,
           authCtx,
           baseSchema,
@@ -468,17 +475,16 @@ const toApiBulkApproval = async (
       })
     )
   );
-  const schemaById = await schemaByIdForStates(
-    db,
-    proposal.workspace,
-    [...membersByRevisionNumber.values()].flatMap(members =>
-      members.flatMap(member => [member.base_state, member.proposed_state])
-    )
-  );
   const apiRevisions = await Promise.all(
     revisionNumbers.map(async revisionNumber => {
       const revision = revisions.find(candidate => candidate.revision_number === revisionNumber)!;
       const members = membersByRevisionNumber.get(revisionNumber)!;
+      const schemaById = await schemaByIdForStates(
+        db,
+        proposal.workspace,
+        members.flatMap(member => [member.base_state, member.proposed_state]),
+        revision.created_at
+      );
       const caseRow = await findCaseForBulkRevision(
         db,
         proposal.workspace,

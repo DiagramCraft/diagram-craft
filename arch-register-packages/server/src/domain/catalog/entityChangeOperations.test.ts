@@ -97,10 +97,11 @@ describe('toApiApprovalRevision', () => {
     });
   });
 
-  it('is a no-op when the state has no matching schema', () => {
+  it('fails closed when the state has no matching schema', () => {
     const api = toApiApprovalRevision(revision, null, null, authCtxWithNoTeams(), new Map());
-    expect(api.baseState['data']).toEqual({ visible: 'v-before', secret: 'before' });
-    expect(api.proposedState['data']).toEqual({ visible: 'v-after', secret: 'after' });
+    expect(api.baseState['data']).toEqual({});
+    expect(api.proposedState['data']).toEqual({});
+    expect(api.diff).toEqual({});
   });
 });
 

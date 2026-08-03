@@ -4,9 +4,10 @@ import type { AuditLogDbResult } from '../audit/db/auditDatabase';
 import { enqueueOneOffJobRun } from '../jobs/jobOperations';
 import { RetryableJobError } from '../jobs/jobRetry';
 import {
-  filterAllRestrictedFieldGroups,
+  filterKnownAllRestrictedFieldGroups,
   type FieldGroupSchemaShape
 } from '../auth/fieldGroupAccessControl';
+import { getEntitySchemaAt } from '../catalog/schemaHistory';
 import { UnsafeOutboundHostError } from './webhookRequest';
 import { sendWebhookRequest } from './webhookRequest';
 
@@ -46,10 +47,10 @@ export const auditLogToWebhookEvent = (
   },
   changes: {
     old: auditLog.changes.old
-      ? filterAllRestrictedFieldGroups(schema, auditLog.changes.old)
+      ? filterKnownAllRestrictedFieldGroups(schema, auditLog.changes.old)
       : auditLog.changes.old,
     new: auditLog.changes.new
-      ? filterAllRestrictedFieldGroups(schema, auditLog.changes.new)
+      ? filterKnownAllRestrictedFieldGroups(schema, auditLog.changes.new)
       : auditLog.changes.new
   },
   metadata: auditLog.metadata
@@ -68,7 +69,7 @@ export const enqueueWebhookDeliveries = async (db: DatabaseAdapter, auditLog: Au
   );
   if (matching.length === 0) return 0;
   const schema = auditLog.schema_id
-    ? await db.catalog.getSchema(auditLog.workspace, auditLog.schema_id)
+    ? await getEntitySchemaAt(db, auditLog.workspace, auditLog.schema_id, auditLog.timestamp)
     : null;
   const event = auditLogToWebhookEvent(auditLog, schema);
   for (const webhook of matching) {

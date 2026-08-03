@@ -93,6 +93,26 @@ export const filterRestrictedFieldGroups = (
 };
 
 /**
+ * Redacts an externally returned field-value object against one historical schema. Unlike the
+ * general-purpose filter above, unknown fields and unavailable schemas fail closed.
+ */
+export const filterKnownRestrictedFieldGroups = (
+  authCtx: WorkspaceAuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null | undefined,
+  data: Record<string, unknown>
+): Record<string, unknown> => {
+  if (!schema) return {};
+  const byField = authCtx ? groupAccessByFieldId(authCtx, schema) : new Map();
+  const knownFieldIds = new Set(schema.fields.map(field => field.id));
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    if (!knownFieldIds.has(key) || (authCtx && byField.get(key) === 'none')) continue;
+    result[key] = value;
+  }
+  return result;
+};
+
+/**
  * Omits values for every field whose group has team-scoped accessControl, regardless of caller.
  * Used for contexts with no live principal to redact against (e.g. webhook delivery) — the
  * unattended, always-on egress path defaults to least privilege rather than bypassing.
@@ -113,6 +133,27 @@ export const filterAllRestrictedFieldGroups = (
   for (const [key, value] of Object.entries(data)) {
     const field = schema.fields.find(f => f.id === key);
     if (field?.groupId && restrictedGroupIds.has(field.groupId)) continue;
+    result[key] = value;
+  }
+  return result;
+};
+
+/** Same as filterKnownRestrictedFieldGroups for unattended outbound delivery. */
+export const filterKnownAllRestrictedFieldGroups = (
+  schema: FieldGroupSchemaShape | null | undefined,
+  data: Record<string, unknown>
+): Record<string, unknown> => {
+  if (!schema) return {};
+  const restrictedGroupIds = new Set(
+    (schema.groups ?? [])
+      .filter(group => group.accessControl && group.accessControl.teamIds.length > 0)
+      .map(group => group.id)
+  );
+  const fieldsById = new Map(schema.fields.map(field => [field.id, field]));
+  const result: Record<string, unknown> = {};
+  for (const [key, value] of Object.entries(data)) {
+    const field = fieldsById.get(key);
+    if (!field || (field.groupId && restrictedGroupIds.has(field.groupId))) continue;
     result[key] = value;
   }
   return result;

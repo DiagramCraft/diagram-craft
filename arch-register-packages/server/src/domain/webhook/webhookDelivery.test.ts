@@ -69,7 +69,10 @@ describe('webhook delivery', () => {
           { ...webhook, id: 'hook-disabled', enabled: false }
         ])
       },
-      catalog: { getSchema: vi.fn(async () => null) },
+      catalog: {
+        getSchema: vi.fn(async () => null),
+        listSchemaVersions: vi.fn(async () => [])
+      },
       jobs: { enqueueOneOffRun }
     } as unknown as DatabaseAdapter;
 
@@ -111,7 +114,10 @@ describe('webhook delivery', () => {
     };
     const restrictedDb = {
       webhook: { listWebhooks: vi.fn(async () => [webhook]) },
-      catalog: { getSchema: vi.fn(async () => schema) },
+      catalog: {
+        getSchema: vi.fn(async () => ({ ...schema, created_at: new Date('2026-01-01') })),
+        listSchemaVersions: vi.fn(async () => [])
+      },
       jobs: { enqueueOneOffRun }
     } as unknown as DatabaseAdapter;
 
@@ -139,6 +145,52 @@ describe('webhook delivery', () => {
       old: { _name: 'Payments' },
       new: { _name: 'Payments Inc' }
     });
+  });
+
+  it('uses the historical schema when current field-group access changed', async () => {
+    const enqueueOneOffRun = vi.fn(async input => ({ ...input }));
+    const currentSchema: FieldGroupSchemaShape = {
+      fields: [{ id: 'secret', name: 'Secret' } as never],
+      groups: []
+    };
+    const historicalSchema: FieldGroupSchemaShape = {
+      fields: [{ id: 'secret', name: 'Secret', groupId: 'restricted' } as never],
+      groups: [{ id: 'restricted', accessControl: { teamIds: ['team-1'] } } as never]
+    };
+    const historicalVersion = {
+      ...historicalSchema,
+      created_at: new Date('2026-01-01T00:00:00.000Z')
+    };
+    const restrictedDb = {
+      webhook: { listWebhooks: vi.fn(async () => [webhook]) },
+      catalog: {
+        getSchema: vi.fn(async () => ({
+          ...currentSchema,
+          created_at: new Date('2026-08-01T00:00:00.000Z')
+        })),
+        listSchemaVersions: vi.fn(async () => [historicalVersion])
+      },
+      jobs: { enqueueOneOffRun }
+    } as unknown as DatabaseAdapter;
+
+    await enqueueWebhookDeliveries(restrictedDb, {
+      id: 'audit-historical-1',
+      workspace: 'ws-1',
+      timestamp: new Date('2026-07-15T10:00:00.000Z'),
+      user_id: 'user-1',
+      user_display_name: 'Ada',
+      operation: 'create',
+      entity_type: 'entity',
+      entity_id: 'entity-1',
+      entity_name: 'Payments',
+      entity_slug: 'payments',
+      schema_id: 'schema-1',
+      changes: { new: { secret: 'historical-secret' } },
+      metadata: {}
+    });
+
+    const payload = enqueueOneOffRun.mock.calls[0]![0].payload as { event: { changes: unknown } };
+    expect(payload.event.changes).toEqual({ new: {} });
   });
 
   it('sends the exact signed payload and delivery headers', async () => {

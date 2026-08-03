@@ -12,17 +12,13 @@ import {
 import { updateEntity } from './entityMutationOperations';
 import { allocateEntityPublicId } from './entityMutationOperations';
 import { createEntityWithAudit, entityToBaseState } from './entityMutations';
-import type {
-  Entity,
-  EntityDbCreate,
-  EntityVersionDbResult,
-  SchemaDbResult
-} from './db/catalogDatabase';
+import type { Entity, EntityDbCreate, EntityVersionDbResult } from './db/catalogDatabase';
 import {
-  filterRestrictedFieldGroups,
+  filterKnownRestrictedFieldGroups,
   requireNoRestrictedFieldWrites,
   type FieldGroupSchemaShape
 } from '../auth/fieldGroupAccessControl';
+import { getEntitySchemaAt } from './schemaHistory';
 import { equalEntityValue } from './entityDiff';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import {
@@ -112,7 +108,7 @@ const redactMemberStateData = (
   if (data == null || typeof data !== 'object') return state;
   return {
     ...state,
-    data: filterRestrictedFieldGroups(authCtx, schema, data as Record<string, unknown>)
+    data: filterKnownRestrictedFieldGroups(authCtx, schema, data as Record<string, unknown>)
   };
 };
 
@@ -124,8 +120,22 @@ const toApiChangeCase = async (
 ): Promise<ChangeCase> => {
   const revision = await db.changeCase.getLatestRevision(ws, changeCase.id);
   const members = revision ? await db.changeCase.listMembers(ws, revision.id) : [];
-  const schemas = members.length > 0 ? await db.catalog.listSchemas(ws) : [];
-  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  const schemaIds = new Set(
+    members
+      .flatMap(member => [member.base_state, member.proposed_state])
+      .map(state => String(state['schema_id'] ?? ''))
+      .filter(Boolean)
+  );
+  const schemas = await Promise.all(
+    [...schemaIds].map(schemaId =>
+      getEntitySchemaAt(db, ws, schemaId, revision?.created_at ?? changeCase.updated_at)
+    )
+  );
+  const schemaById = new Map(
+    [...schemaIds]
+      .map((schemaId, index) => [schemaId, schemas[index]] as const)
+      .filter((entry): entry is [string, FieldGroupSchemaShape] => entry[1] != null)
+  );
   return {
     id: changeCase.id,
     workspace: changeCase.workspace,
@@ -145,7 +155,7 @@ const toApiChangeCase = async (
 export const toApiMember = (
   member: ChangeCaseMemberDbResult,
   authCtx: AuthorizationContext | null,
-  schemaById: Map<string, SchemaDbResult>
+  schemaById: Map<string, FieldGroupSchemaShape>
 ) => {
   const baseState = member.base_state;
   const proposedState = member.proposed_state;

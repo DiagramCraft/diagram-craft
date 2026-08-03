@@ -60,7 +60,8 @@ const makeTransactionalDatabase = (events: string[], enqueueError?: Error) => {
     }
   };
   const catalog = {
-    getSchema: async () => null
+    getSchema: async () => null,
+    listSchemaVersions: async () => []
   };
   const webhook = {
     listWebhooks: async () => [
