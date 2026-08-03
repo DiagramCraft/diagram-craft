@@ -16,6 +16,7 @@ export type AutomationRuleDbResult = {
   created_by: string | null;
   name: string;
   description: string | null;
+  resource_type: 'entity' | 'relation';
   schema_id: string | null;
   trigger: AutomationRuleTrigger;
   conditions: AutomationCondition[];
@@ -49,6 +50,9 @@ export const automationRuleMapper = (row: DatabaseRow): AutomationRuleDbResult =
   created_by: row['created_by'] == null ? null : String(row['created_by']),
   name: String(row['name']),
   description: row['description'] == null ? null : String(row['description']),
+  resource_type: String(
+    row['resource_type'] ?? 'entity'
+  ) as AutomationRuleDbResult['resource_type'],
   schema_id: row['schema_id'] == null ? null : String(row['schema_id']),
   trigger: parseDatabaseJson(row['trigger'], { kind: 'entity_created' }, 'automation_rule.trigger'),
   conditions: parseDatabaseJson(row['conditions'], [], 'automation_rule.conditions'),

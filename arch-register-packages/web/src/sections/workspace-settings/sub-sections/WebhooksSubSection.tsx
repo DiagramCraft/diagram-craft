@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react';
 import { TbCopy, TbEdit, TbKey, TbPlus, TbTrash, TbWebhook } from 'react-icons/tb';
 import type { Webhook, WebhookOperation } from '@arch-register/api-types/webhookContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
@@ -13,6 +14,7 @@ import { Chip } from '../../../components/Chip';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { useWebhookOperations, useWebhooks, type WebhookInput } from '../../../hooks/useWebhooks';
+import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import styles from './WebhooksSubSection.module.css';
 
 const OPERATIONS: Array<{ value: WebhookOperation; label: string }> = [
@@ -24,6 +26,7 @@ const OPERATIONS: Array<{ value: WebhookOperation; label: string }> = [
 const EditorDialog = ({
   webhook,
   schemas,
+  relationSchemas,
   pending,
   error,
   onClose,
@@ -31,6 +34,7 @@ const EditorDialog = ({
 }: {
   webhook: Webhook | 'new' | null;
   schemas: EntitySchema[];
+  relationSchemas: RelationSchema[];
   pending: boolean;
   error: Error | null;
   onClose: () => void;
@@ -39,6 +43,7 @@ const EditorDialog = ({
   const [url, setUrl] = useState('');
   const [operations, setOperations] = useState<WebhookOperation[]>([]);
   const [schemaIds, setSchemaIds] = useState<string[]>([]);
+  const [relationSchemaIds, setRelationSchemaIds] = useState<string[] | undefined>(undefined);
   const [enabled, setEnabled] = useState(true);
 
   useEffect(() => {
@@ -48,6 +53,7 @@ const EditorDialog = ({
       webhook === 'new' ? ['create', 'update', 'delete'] : webhook.event_filter.operations
     );
     setSchemaIds(webhook === 'new' ? [] : webhook.event_filter.schema_ids);
+    setRelationSchemaIds(webhook === 'new' ? [] : webhook.event_filter.relation_schema_ids);
     setEnabled(webhook === 'new' ? true : webhook.enabled);
   }, [webhook]);
 
@@ -68,7 +74,17 @@ const EditorDialog = ({
           type: 'default',
           disabled: pending || url.trim() === '' || operations.length === 0,
           onClick: () =>
-            onSave({ url, event_filter: { operations, schema_ids: schemaIds }, enabled })
+            onSave({
+              url,
+              event_filter: {
+                operations,
+                schema_ids: schemaIds,
+                ...(relationSchemaIds !== undefined
+                  ? { relation_schema_ids: relationSchemaIds }
+                  : {})
+              },
+              enabled
+            })
         }
       ]}
     >
@@ -94,6 +110,24 @@ const EditorDialog = ({
                   onChange={() => setOperations(toggle(operations, operation.value))}
                 />
                 {operation.label}
+              </label>
+            ))}
+          </div>
+        </div>
+        <div className={styles.field}>
+          <span className={styles.label}>Relation types</span>
+          <span className={styles.hint}>
+            No selection sends events for every relation type. Existing entity-only webhooks remain
+            entity-only until relation types are enabled here.
+          </span>
+          <div className={styles.checks}>
+            {relationSchemas.map(schema => (
+              <label className={styles.check} key={schema.id}>
+                <Checkbox
+                  value={relationSchemaIds?.includes(schema.id) ?? false}
+                  onChange={() => setRelationSchemaIds(toggle(relationSchemaIds ?? [], schema.id))}
+                />
+                {schema.name}
               </label>
             ))}
           </div>
@@ -153,6 +187,7 @@ export const WebhooksSubSection = ({
   schemas: EntitySchema[];
 }) => {
   const { data: webhooks = [], isLoading, error } = useWebhooks(workspaceSlug);
+  const { data: relationSchemas = [] } = useRelationSchemas(workspaceSlug);
   const operations = useWebhookOperations(workspaceSlug);
   const [editor, setEditor] = useState<Webhook | 'new' | null>(null);
   const [secret, setSecret] = useState<string | null>(null);
@@ -208,11 +243,21 @@ export const WebhooksSubSection = ({
                 </Table.Cell>
                 <Table.Cell>{webhook.event_filter.operations.join(', ')}</Table.Cell>
                 <Table.Cell>
-                  {webhook.event_filter.schema_ids.length === 0
+                  {webhook.event_filter.schema_ids.length === 0 &&
+                  webhook.event_filter.relation_schema_ids === undefined
                     ? 'All'
-                    : webhook.event_filter.schema_ids
-                        .map(id => schemas.find(schema => schema.id === id)?.name ?? id)
-                        .join(', ')}
+                    : [
+                        ...webhook.event_filter.schema_ids.map(
+                          id => schemas.find(schema => schema.id === id)?.name ?? id
+                        ),
+                        ...(webhook.event_filter.relation_schema_ids === undefined
+                          ? []
+                          : webhook.event_filter.relation_schema_ids.length === 0
+                            ? ['All relations']
+                            : webhook.event_filter.relation_schema_ids.map(
+                                id => relationSchemas.find(schema => schema.id === id)?.name ?? id
+                              ))
+                      ].join(', ')}
                 </Table.Cell>
                 <Table.Cell>
                   <Chip
@@ -255,6 +300,7 @@ export const WebhooksSubSection = ({
       <EditorDialog
         webhook={editor}
         schemas={schemas}
+        relationSchemas={relationSchemas}
         pending={operations.create.isPending || operations.update.isPending}
         error={(operations.create.error ?? operations.update.error) as Error | null}
         onClose={() => setEditor(null)}

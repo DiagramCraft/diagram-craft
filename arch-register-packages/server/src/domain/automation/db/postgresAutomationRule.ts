@@ -31,9 +31,9 @@ export class PostgresAutomationRuleDatabase implements AutomationRuleDatabase {
   async createRule(input: AutomationRuleDbCreate) {
     const rows = await this.sql<DatabaseRow[]>`
       INSERT INTO workspace_automation_rule
-        (id, workspace, created_by, name, description, schema_id, trigger, conditions, actions, enabled, created_at, updated_at)
+        (id, workspace, created_by, name, description, resource_type, schema_id, trigger, conditions, actions, enabled, created_at, updated_at)
       VALUES (
-        ${input.id}, ${input.workspace}, ${input.created_by}, ${input.name}, ${input.description}, ${input.schema_id},
+        ${input.id}, ${input.workspace}, ${input.created_by}, ${input.name}, ${input.description}, ${input.resource_type}, ${input.schema_id},
         ${this.json(input.trigger)}, ${this.json(input.conditions)}, ${this.json(input.actions)},
         ${input.enabled}, ${input.created_at}, ${input.updated_at}
       )
@@ -45,7 +45,7 @@ export class PostgresAutomationRuleDatabase implements AutomationRuleDatabase {
   async updateRule(workspace: string, id: string, input: AutomationRuleDbUpdate) {
     const rows = await this.sql<DatabaseRow[]>`
       UPDATE workspace_automation_rule
-      SET name = ${input.name}, description = ${input.description}, schema_id = ${input.schema_id},
+      SET name = ${input.name}, description = ${input.description}, resource_type = ${input.resource_type}, schema_id = ${input.schema_id},
           trigger = ${this.json(input.trigger)}, conditions = ${this.json(input.conditions)},
           actions = ${this.json(input.actions)}, enabled = ${input.enabled},
           updated_at = ${input.updated_at}

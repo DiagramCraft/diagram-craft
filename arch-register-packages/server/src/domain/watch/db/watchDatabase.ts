@@ -13,6 +13,8 @@ export type WatchDbCreate = WatchDbResult;
 export type CreateNotificationsFromAuditInput = {
   auditLog: AuditLogDbResult;
   changedByDisplayName: string;
+  /** Entity ids whose watchers should receive this event; relations use both endpoints. */
+  watchedEntityIds?: string[];
   watcherUserIds?: string[];
   watcherRecipients?: Array<{
     userId: string;

@@ -8,6 +8,7 @@ import type {
   AutomationRuleTrigger
 } from '@arch-register/api-types/automationRuleContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
@@ -30,13 +31,25 @@ import {
   type AutomationRuleInput
 } from '../../../hooks/useAutomationRules';
 import styles from './AutomationRulesSubSection.module.css';
+import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 
 type TriggerKind = AutomationRuleTrigger['kind'];
 type ActionKind = AutomationAction['kind'];
+type AutomationSchema = Pick<EntitySchema, 'id' | 'name'> & {
+  fields: Array<{
+    id: string;
+    name: string;
+    type?: string;
+    options?: { value: string; label: string }[];
+  }>;
+};
 
 const TRIGGER_LABELS: Record<TriggerKind, string> = {
   entity_created: 'Entity created',
   entity_deleted: 'Entity deleted',
+  relation_created: 'Relation created',
+  relation_deleted: 'Relation deleted',
+  relation_field_changed: 'Relation field changed',
   field_changed: 'Field changed',
   lifecycle_transition: 'Lifecycle transition'
 };
@@ -55,7 +68,9 @@ const OPERATOR_LABELS: Record<AutomationConditionOperator, string> = {
 };
 
 const describeTrigger = (trigger: AutomationRuleTrigger) => {
-  if (trigger.kind === 'field_changed') return `Field changed: ${trigger.field}`;
+  if (trigger.kind === 'field_changed' || trigger.kind === 'relation_field_changed') {
+    return `Field changed: ${trigger.field}`;
+  }
   if (trigger.kind === 'lifecycle_transition') {
     const from = trigger.from ?? 'any';
     const to = trigger.to ?? 'any';
@@ -67,7 +82,7 @@ const describeTrigger = (trigger: AutomationRuleTrigger) => {
 const describeAction = (action: AutomationAction) => ACTION_LABELS[action.kind];
 
 const defaultTriggerFor = (kind: TriggerKind): AutomationRuleTrigger => {
-  if (kind === 'field_changed') return { kind, field: '' };
+  if (kind === 'field_changed' || kind === 'relation_field_changed') return { kind, field: '' };
   if (kind === 'lifecycle_transition') return { kind, from: undefined, to: undefined };
   return { kind };
 };
@@ -89,7 +104,7 @@ const STATIC_METADATA_FIELDS: FieldOption[] = [
 ];
 
 const fieldOptionsFor = (
-  schemas: EntitySchema[],
+  schemas: AutomationSchema[],
   schemaId: string,
   lifecycleStates: WorkspaceLifecycleState[]
 ): FieldOption[] => {
@@ -102,7 +117,7 @@ const fieldOptionsFor = (
     }
   ];
 
-  let customFields: EntitySchema['fields'] = [];
+  let customFields: AutomationSchema['fields'] = [];
   if (schemaId) {
     customFields = schemas.find(s => s.id === schemaId)?.fields ?? [];
   } else if (schemas[0]) {
@@ -330,6 +345,7 @@ const ActionRow = ({
 const EditorDialog = ({
   rule,
   schemas,
+  relationSchemas,
   lifecycleStates,
   pending,
   error,
@@ -337,7 +353,8 @@ const EditorDialog = ({
   onSave
 }: {
   rule: AutomationRule | 'new' | null;
-  schemas: EntitySchema[];
+  schemas: AutomationSchema[];
+  relationSchemas: RelationSchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   pending: boolean;
   error: Error | null;
@@ -347,6 +364,7 @@ const EditorDialog = ({
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
   const [schemaId, setSchemaId] = useState<string>('');
+  const [resourceType, setResourceType] = useState<'entity' | 'relation'>('entity');
   const [trigger, setTrigger] = useState<AutomationRuleTrigger>({ kind: 'entity_created' });
   const [conditions, setConditions] = useState<AutomationCondition[]>([]);
   const [actions, setActions] = useState<AutomationAction[]>([]);
@@ -358,6 +376,7 @@ const EditorDialog = ({
       setName('');
       setDescription('');
       setSchemaId('');
+      setResourceType('entity');
       setTrigger({ kind: 'entity_created' });
       setConditions([]);
       setActions([{ kind: 'create_audit_note', note: '' }]);
@@ -366,6 +385,7 @@ const EditorDialog = ({
       setName(rule.name);
       setDescription(rule.description ?? '');
       setSchemaId(rule.schema_id ?? '');
+      setResourceType(rule.resource_type);
       setTrigger(rule.trigger);
       setConditions(rule.conditions);
       setActions(rule.actions);
@@ -373,9 +393,11 @@ const EditorDialog = ({
     }
   }, [rule]);
 
+  const availableSchemas: AutomationSchema[] =
+    resourceType === 'relation' ? relationSchemas : schemas;
   const availableFields = useMemo(
-    () => fieldOptionsFor(schemas, schemaId, lifecycleStates),
-    [schemas, schemaId, lifecycleStates]
+    () => fieldOptionsFor(availableSchemas, schemaId, lifecycleStates),
+    [availableSchemas, schemaId, lifecycleStates]
   );
 
   if (!rule) return null;
@@ -383,7 +405,8 @@ const EditorDialog = ({
   const isValid =
     name.trim() !== '' &&
     actions.length > 0 &&
-    (trigger.kind !== 'field_changed' || trigger.field.trim() !== '');
+    ((trigger.kind !== 'field_changed' && trigger.kind !== 'relation_field_changed') ||
+      trigger.field.trim() !== '');
 
   return (
     <Dialog
@@ -401,6 +424,7 @@ const EditorDialog = ({
             onSave({
               name,
               description: description.trim() === '' ? null : description,
+              resource_type: resourceType,
               schema_id: schemaId === '' ? null : schemaId,
               trigger,
               conditions,
@@ -417,14 +441,33 @@ const EditorDialog = ({
         <FormElement label="Description">
           <TextInput value={description} onChange={value => setDescription(value ?? '')} />
         </FormElement>
-        <FormElement label="Entity type">
+        <FormElement label="Resource type">
+          <Select.Root
+            value={resourceType}
+            onChange={value => {
+              const next = (value as 'entity' | 'relation') ?? 'entity';
+              setResourceType(next);
+              setSchemaId('');
+              setTrigger(
+                next === 'relation' ? { kind: 'relation_created' } : { kind: 'entity_created' }
+              );
+            }}
+            style={{ width: '100%' }}
+          >
+            <Select.Item value="entity">Entity</Select.Item>
+            <Select.Item value="relation">Typed relation</Select.Item>
+          </Select.Root>
+        </FormElement>
+        <FormElement label={resourceType === 'relation' ? 'Relation type' : 'Entity type'}>
           <Select.Root
             value={schemaId}
             onChange={value => setSchemaId(value ?? '')}
             style={{ width: '100%' }}
           >
-            <Select.Item value="">All entity types</Select.Item>
-            {schemas.map(schema => (
+            <Select.Item value="">
+              {resourceType === 'relation' ? 'All relation types' : 'All entity types'}
+            </Select.Item>
+            {availableSchemas.map(schema => (
               <Select.Item key={schema.id} value={schema.id}>
                 {schema.name}
               </Select.Item>
@@ -440,19 +483,31 @@ const EditorDialog = ({
             }
             style={{ width: '100%' }}
           >
-            {Object.entries(TRIGGER_LABELS).map(([value, label]) => (
-              <Select.Item key={value} value={value}>
-                {label}
-              </Select.Item>
-            ))}
+            {Object.entries(TRIGGER_LABELS)
+              .filter(([value]) =>
+                resourceType === 'relation'
+                  ? value.startsWith('relation_')
+                  : !value.startsWith('relation_')
+              )
+              .map(([value, label]) => (
+                <Select.Item key={value} value={value}>
+                  {label}
+                </Select.Item>
+              ))}
           </Select.Root>
         </FormElement>
 
-        {trigger.kind === 'field_changed' && (
+        {(trigger.kind === 'field_changed' || trigger.kind === 'relation_field_changed') && (
           <FormElement label="Field id">
             <TextInput
               value={trigger.field}
-              onChange={value => setTrigger({ kind: 'field_changed', field: value ?? '' })}
+              onChange={value =>
+                setTrigger(
+                  trigger.kind === 'relation_field_changed'
+                    ? { kind: 'relation_field_changed', field: value ?? '' }
+                    : { kind: 'field_changed', field: value ?? '' }
+                )
+              }
               placeholder="e.g. _owner, or a custom field id"
             />
           </FormElement>
@@ -582,6 +637,7 @@ export const AutomationRulesSubSection = ({
 }) => {
   const [tab, setTab] = useState<AutomationTab>('rules');
   const { data: rules = [], isLoading, error } = useAutomationRules(workspaceSlug);
+  const { data: relationSchemas = [] } = useRelationSchemas(workspaceSlug);
   const operations = useAutomationRuleOperations(workspaceSlug);
   const [editor, setEditor] = useState<AutomationRule | 'new' | null>(null);
   const [deleteId, setDeleteId] = useState<string | null>(null);
@@ -652,7 +708,9 @@ export const AutomationRulesSubSection = ({
                         {rule.description && <div className={styles.muted}>{rule.description}</div>}
                       </Table.Cell>
                       <Table.Cell>
-                        {schemas.find(schema => schema.id === rule.schema_id)?.name ?? 'All'}
+                        {(rule.resource_type === 'relation' ? relationSchemas : schemas).find(
+                          schema => schema.id === rule.schema_id
+                        )?.name ?? 'All'}
                       </Table.Cell>
                       <Table.Cell>{describeTrigger(rule.trigger)}</Table.Cell>
                       <Table.Cell>{rule.actions.map(describeAction).join(', ')}</Table.Cell>
@@ -747,6 +805,7 @@ export const AutomationRulesSubSection = ({
       <EditorDialog
         rule={editor}
         schemas={schemas}
+        relationSchemas={relationSchemas}
         lifecycleStates={lifecycleStates}
         pending={operations.create.isPending || operations.update.isPending}
         error={(operations.create.error ?? operations.update.error) as Error | null}

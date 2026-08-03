@@ -500,7 +500,7 @@
           audited.
 
         - @id:ar.integrations.webhooks Administrators can configure webhooks and inspect supported delivery behavior for
-          workspace events.
+          workspace events, including typed-relation create, update, and delete events filtered by relation schema.
 
         - @id:ar.integrations.jobs Administrators can create and configure supported recurring jobs, inspect scheduled
           jobs, job servers, run history, and supported cancellation operations.
@@ -510,9 +510,10 @@
               data.
 
         - @id:ar.integrations.automation-rules Workspace administrators can define, edit, and delete workspace-scoped
-          automation rules that match an entity trigger (creation, deletion, a field change, or a lifecycle transition)
-          and an optional set of field conditions, then run one or more configured actions — recording an audit note,
-          sending an in-app notification, or setting a field value on the triggering entity. Field conditions and
+          automation rules that match entity or typed-relation triggers (creation, deletion, or a field change; entity
+          rules also support lifecycle transitions) and an optional set of field conditions, then run one or more
+          configured actions — recording an audit note, sending an in-app notification, or setting a field value on the
+          triggering subject. Field conditions and
           field-targeting actions respect the rule author's current field-group access. Rules are matched synchronously on
           every entity mutation and rechecked before asynchronous actions execute, so access revocation or field reassignment
           cannot leave an existing rule with restricted access. Rule definitions redact stored literals associated with

@@ -16,6 +16,7 @@ const rule: AutomationRuleDbResult = {
   created_by: 'user-1',
   name: 'Set salary',
   description: null,
+  resource_type: 'entity',
   schema_id: 'schema-1',
   trigger: { kind: 'entity_created' },
   conditions: [],

@@ -65,20 +65,52 @@ export class PostgresWatchDatabase extends PostgresDatabaseBase implements Watch
 
   async createNotificationsFromAudit(input: CreateNotificationsFromAuditInput) {
     const { auditLog, changedByDisplayName } = input;
+    const relation = auditLog.metadata['relation'];
+    const relationContext =
+      auditLog.entity_type === 'relation' && typeof relation === 'object' && relation != null
+        ? (relation as { schema?: { name?: string }; in?: { id?: string }; out?: { id?: string } })
+        : null;
+    const isRelation = auditLog.entity_type === 'relation';
+    const watchedEntityIds = [
+      ...(input.watchedEntityIds ?? []),
+      ...(!isRelation ? [auditLog.entity_id] : []),
+      ...(relationContext?.in?.id ? [relationContext.in.id] : []),
+      ...(relationContext?.out?.id ? [relationContext.out.id] : [])
+    ].filter((id, index, ids) => ids.indexOf(id) === index);
     try {
       const watcherRecipients =
         input.watcherRecipients ??
         (
-          input.watcherUserIds ??
-          (await this.listWatcherUserIds(auditLog.workspace, auditLog.entity_id))
+          input.watcherUserIds ?? [
+            ...new Set(
+              (
+                await Promise.all(
+                  watchedEntityIds.map(entityId =>
+                    this.listWatcherUserIds(auditLog.workspace, entityId)
+                  )
+                )
+              ).flat()
+            )
+          ]
         ).map(userId => ({ userId, email: null, inAppEnabled: true, emailEnabled: false }));
 
       for (const recipient of watcherRecipients) {
         if (recipient.userId === auditLog.user_id) continue;
         if (!recipient.inAppEnabled && !recipient.emailEnabled) continue;
-        const entitySlug = auditLog.entity_slug ?? auditLog.entity_id;
         const notificationId = randomUUID();
-        const deliveryKey = `entity-watch:${auditLog.id}:user:${recipient.userId}`;
+        const deliveryKey = `${isRelation ? 'relation' : 'entity'}-watch:${auditLog.id}:user:${recipient.userId}`;
+        const title = isRelation
+          ? (relationContext?.schema?.name ?? auditLog.entity_name)
+          : auditLog.entity_name;
+        const message = isRelation
+          ? `${changedByDisplayName} ${auditLog.operation}d this relation`
+          : `${changedByDisplayName} ${auditLog.operation}d this entity`;
+        const presentationMetadata = isRelation
+          ? { relation: relationContext, schemaId: auditLog.schema_id }
+          : {
+              entitySlug: auditLog.entity_slug ?? auditLog.entity_id,
+              schemaId: auditLog.schema_id
+            };
         await this.sql`
           INSERT INTO user_inbox_notification (
             id, user_id, workspace, category, event_type, resource_type, resource_id,
@@ -88,10 +120,10 @@ export class PostgresWatchDatabase extends PostgresDatabaseBase implements Watch
           )
           VALUES (
             ${notificationId}, ${recipient.userId}, ${auditLog.workspace}, 'information',
-            ${`entity.${auditLog.operation}`}, 'entity', ${auditLog.entity_id}, NULL, NULL,
-            ${auditLog.user_id}, ${changedByDisplayName}, ${auditLog.entity_name},
-            ${`${changedByDisplayName} ${auditLog.operation}d this entity`}, NULL,
-            ${this.json({ entitySlug, schemaId: auditLog.schema_id })}, ${auditLog.timestamp},
+            ${`${auditLog.entity_type}.${auditLog.operation}`}, ${isRelation ? 'relation' : 'entity'}, ${auditLog.entity_id}, NULL, NULL,
+            ${auditLog.user_id}, ${changedByDisplayName}, ${title},
+            ${message}, NULL,
+            ${this.json(presentationMetadata)}, ${auditLog.timestamp},
             NOW(), NULL, ${deliveryKey}, ${recipient.inAppEnabled}
           )
           ON CONFLICT (user_id, delivery_key) DO NOTHING

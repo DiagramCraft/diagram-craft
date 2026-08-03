@@ -6,6 +6,9 @@ import { jobRunListQuerySchema, jobRunPageSchema } from '@arch-register/api-type
 export const automationRuleTriggerSchema = z.discriminatedUnion('kind', [
   z.object({ kind: z.literal('entity_created') }),
   z.object({ kind: z.literal('entity_deleted') }),
+  z.object({ kind: z.literal('relation_created') }),
+  z.object({ kind: z.literal('relation_deleted') }),
+  z.object({ kind: z.literal('relation_field_changed'), field: z.string().min(1) }),
   z.object({ kind: z.literal('field_changed'), field: z.string().min(1) }),
   z.object({
     kind: z.literal('lifecycle_transition'),
@@ -53,6 +56,7 @@ const automationRuleSchema = z.object({
   created_by: z.string().nullable(),
   name: z.string(),
   description: z.string().nullable(),
+  resource_type: z.enum(['entity', 'relation']),
   schema_id: z.string().nullable(),
   trigger: automationRuleTriggerSchema,
   conditions: z.array(automationConditionSchema),
@@ -65,6 +69,7 @@ const automationRuleSchema = z.object({
 const automationRuleInputSchema = z.object({
   name: z.string().trim().min(1),
   description: z.string().trim().nullable().optional(),
+  resource_type: z.enum(['entity', 'relation']).default('entity'),
   schema_id: z.string().min(1).nullable().optional(),
   trigger: automationRuleTriggerSchema,
   conditions: z.array(automationConditionSchema).default([]),

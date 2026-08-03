@@ -97,6 +97,7 @@ const makeDb = (existingRule?: AutomationRuleDbResult) =>
 const baseInput: AutomationRuleInput = {
   name: 'Flag high earners',
   description: null,
+  resource_type: 'entity',
   schema_id: 'schema-1',
   trigger: { kind: 'entity_created' },
   conditions: [{ field: 'salary', operator: 'equals', value: 100000 }],
@@ -110,6 +111,7 @@ const sensitiveRule: AutomationRuleDbResult = {
   created_by: 'user-1',
   name: 'Sensitive rule',
   description: 'Visible rule description',
+  resource_type: 'entity',
   schema_id: 'schema-1',
   trigger: { kind: 'lifecycle_transition', from: 'draft', to: 'published' },
   conditions: [{ field: 'salary', operator: 'equals', value: 100000 }],
@@ -330,6 +332,7 @@ describe('updateAutomationRule', () => {
     created_by: 'user-1',
     name: 'Flag high earners',
     description: null,
+    resource_type: 'entity',
     schema_id: 'schema-1',
     trigger: { kind: 'entity_created' },
     conditions: [],

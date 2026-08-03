@@ -3,6 +3,7 @@ import { PermissionChecker } from '@arch-register/permissions';
 import type { AutomationAction } from '@arch-register/api-types/automationRuleContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { Entity } from '../catalog/db/catalogDatabase';
+import type { RelationDbResult } from '../catalog/db/relationDatabase';
 import type { AutomationRuleDbResult } from './db/automationRuleDatabase';
 import type { AutomationRuleEvent } from './automationRuleEvaluation';
 import { buildUserAuthCtx } from '../auth/authorization';
@@ -12,6 +13,8 @@ import { normalizeEntityRelationFields, relationFields } from '../catalog/dataHe
 import { updateEntityWithAudit, type EntityMutationActor } from '../catalog/entityMutations';
 import { RetryableJobError } from '../jobs/jobRetry';
 import { computeEntityCompleteness } from '../../utils/completeness';
+import { computeChanges, logAudit } from '../audit/db/auditLogging';
+import { flattenRelationAuditFields, relationAuditContext } from '../catalog/relationHelpers';
 
 const checker = new PermissionChecker();
 
@@ -36,6 +39,9 @@ export type AutomationActionHandler = (context: AutomationActionContext) => Prom
 const loadEntity = async (context: AutomationActionContext): Promise<Entity | null> =>
   context.db.catalog.getEntity(context.event.workspace, context.event.entityId);
 
+const loadRelation = async (context: AutomationActionContext): Promise<RelationDbResult | null> =>
+  context.db.relation.getRelation(context.event.workspace, context.event.entityId);
+
 const handleCreateAuditNote: AutomationActionHandler = async context => {
   if (context.action.kind !== 'create_audit_note') return;
   const { db, rule, action, event } = context;
@@ -57,7 +63,9 @@ const handleCreateAuditNote: AutomationActionHandler = async context => {
       ruleId: rule.id,
       ruleName: rule.name,
       note: action.note,
-      sourceAuditLogId: event.auditLogId
+      sourceAuditLogId: event.auditLogId,
+      resourceType: event.resourceType ?? 'entity',
+      relation: event.relation
     }
   });
 };
@@ -70,6 +78,22 @@ const resolveOwnerTeamRecipients = async (
   if (!entity?.owner || !db.workspace?.listTeamAssignments) return [];
   const assignments = await db.workspace.listTeamAssignments(workspace);
   return assignments.filter(a => a.team_id === entity.owner).map(a => a.user_id);
+};
+
+const resolveRelationOwnerRecipients = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  relation: RelationDbResult
+): Promise<string[]> => {
+  const [inEntity, outEntity] = await Promise.all([
+    db.catalog.getEntity(workspace, relation.in_entity_id),
+    db.catalog.getEntity(workspace, relation.out_entity_id)
+  ]);
+  const recipients = await Promise.all([
+    resolveOwnerTeamRecipients(db, workspace, inEntity),
+    resolveOwnerTeamRecipients(db, workspace, outEntity)
+  ]);
+  return [...new Set(recipients.flat())];
 };
 
 const resolveReferenceOwnerRecipients = async (
@@ -100,15 +124,20 @@ const handleSendNotification: AutomationActionHandler = async context => {
   const { db, rule, action, event } = context;
   if (!db.notification) return;
 
-  const entity = await loadEntity(context);
-  if (!entity) return;
+  const isRelation = (event.resourceType ?? 'entity') === 'relation';
+  const entity = isRelation ? null : await loadEntity(context);
+  const relation = isRelation ? await loadRelation(context) : null;
+  if (!entity && !relation) return;
 
   let recipientIds: string[];
   if (action.recipient.kind === 'user') {
     recipientIds = [action.recipient.userId];
   } else if (action.recipient.kind === 'owner_team') {
-    recipientIds = await resolveOwnerTeamRecipients(db, event.workspace, entity);
+    recipientIds = relation
+      ? await resolveRelationOwnerRecipients(db, event.workspace, relation)
+      : await resolveOwnerTeamRecipients(db, event.workspace, entity);
   } else {
+    if (!entity) throw new Error('Relation automation rules cannot use reference-owner recipients');
     recipientIds = await resolveReferenceOwnerRecipients(
       db,
       event.workspace,
@@ -119,11 +148,28 @@ const handleSendNotification: AutomationActionHandler = async context => {
 
   const uniqueRecipients = [...new Set(recipientIds)];
   const now = new Date();
-  const actionRoute = `/entities/${encodeURIComponent(entity.public_id ?? entity.id)}`;
+  const subjectEntity = entity;
+  const actionRoute = subjectEntity
+    ? `/entities/${encodeURIComponent(subjectEntity.public_id ?? subjectEntity.id)}`
+    : null;
 
   for (const userId of uniqueRecipients) {
     const authCtx = await buildUserAuthCtx(db, event.workspace, userId);
-    if (!checker.hasEntityPermission(authCtx, entity, 'view_entity')) continue;
+    if (subjectEntity && !checker.hasEntityPermission(authCtx, subjectEntity, 'view_entity'))
+      continue;
+    if (relation) {
+      const endpointEntities = await Promise.all([
+        db.catalog.getEntity(event.workspace, relation.in_entity_id),
+        db.catalog.getEntity(event.workspace, relation.out_entity_id)
+      ]);
+      if (
+        !endpointEntities.some(
+          endpoint => endpoint && checker.hasEntityPermission(authCtx, endpoint, 'view_entity')
+        )
+      ) {
+        continue;
+      }
+    }
     if (!(await isChannelEnabled(db, userId, event.workspace, 'automation-rule', 'in_app'))) {
       continue;
     }
@@ -134,16 +180,20 @@ const handleSendNotification: AutomationActionHandler = async context => {
       workspace: event.workspace,
       category: 'information',
       event_type: 'automation-rule.notification',
-      resource_type: 'entity',
-      resource_id: entity.id,
+      resource_type: relation ? 'relation' : 'entity',
+      resource_id: relation?.id ?? entity!.id,
       case_id: null,
       assignment_id: null,
       actor_user_id: null,
       actor_display_name: 'Automation rule',
-      title: entity.name,
+      title: relation?.schema_name ?? entity!.name,
       message: action.message,
       action_route: actionRoute,
-      presentation_metadata: { ruleId: rule.id, ruleName: rule.name },
+      presentation_metadata: {
+        ruleId: rule.id,
+        ruleName: rule.name,
+        ...(relation ? { relation: relationAuditContext(relation) } : {})
+      },
       occurred_at: now,
       delivery_key: `automation-rule:${rule.id}:${event.auditLogId}:user:${userId}`,
       in_app_enabled: true
@@ -154,6 +204,59 @@ const handleSendNotification: AutomationActionHandler = async context => {
 const handleSetFieldValue: AutomationActionHandler = async context => {
   if (context.action.kind !== 'set_field_value') return;
   const { db, action, event, rule, chain } = context;
+
+  if ((event.resourceType ?? 'entity') === 'relation') {
+    const relation = await loadRelation(context);
+    if (!relation) {
+      throw new Error(`Automation rule '${rule.name}' could not find relation '${event.entityId}'`);
+    }
+    const schema = await db.relation.getRelationSchema(event.workspace, relation.schema_id);
+    if (!schema) {
+      throw new Error(
+        `Automation rule '${rule.name}' could not find relation schema '${relation.schema_id}'`
+      );
+    }
+    const field = schema.fields.find(candidate => candidate.id === action.field);
+    if (!field) {
+      throw new Error(
+        `Automation rule '${rule.name}' references unknown relation field '${action.field}' on schema '${schema.id}'`
+      );
+    }
+    const nextData = { ...relation.data, [action.field]: action.value };
+    await db.core.transaction(async tx => {
+      const row = await tx.relation.updateRelation(event.workspace, relation.id, {
+        data: nextData,
+        version: relation.version + 1,
+        updated_at: new Date()
+      });
+      if (!row) {
+        throw new Error(
+          `Automation rule '${rule.name}' could not update relation '${relation.id}'`
+        );
+      }
+      await logAudit(tx, {
+        userId: AUTOMATION_RULE_SYSTEM_ACTOR.id,
+        userDisplayName: AUTOMATION_RULE_SYSTEM_ACTOR.displayName,
+        workspace: event.workspace,
+        operation: 'update',
+        entityType: 'relation',
+        entityId: relation.id,
+        entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
+        schemaId: row.schema_id,
+        changes: computeChanges(
+          flattenRelationAuditFields(relation),
+          flattenRelationAuditFields(row)
+        ),
+        metadata: {
+          automationRuleChain: chain,
+          source: 'automation-rule',
+          ruleId: rule.id,
+          relation: relationAuditContext(row)
+        }
+      });
+    });
+    return;
+  }
 
   const entity = await loadEntity(context);
   if (!entity) {

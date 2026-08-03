@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuditLogDbResult } from '../audit/db/auditDatabase';
 import { flattenEntityAuditFields } from '../audit/db/auditFieldFlattening';
+import { flattenRelationAuditFields, type RelationAuditContext } from '../catalog/relationHelpers';
 import { enqueueOneOffJobRun } from '../jobs/jobOperations';
 import type {
   AutomationCondition,
@@ -26,6 +27,7 @@ export type AutomationRuleEvent = {
   version: '1';
   auditLogId: string;
   workspace: string;
+  resourceType?: 'entity' | 'relation';
   operation: AuditLogDbResult['operation'];
   entityId: string;
   entityName: string;
@@ -34,16 +36,29 @@ export type AutomationRuleEvent = {
   actor: { id: string | null; displayName: string | null };
   occurredAt: string;
   changes: AuditLogDbResult['changes'];
+  relation?: RelationAuditContext;
 };
 
 const matchesTrigger = (trigger: AutomationRuleTrigger, auditLog: AuditLogDbResult): boolean => {
   switch (trigger.kind) {
     case 'entity_created':
-      return auditLog.operation === 'create';
+      return auditLog.entity_type === 'entity' && auditLog.operation === 'create';
     case 'entity_deleted':
-      return auditLog.operation === 'delete';
+      return auditLog.entity_type === 'entity' && auditLog.operation === 'delete';
+    case 'relation_created':
+      return auditLog.entity_type === 'relation' && auditLog.operation === 'create';
+    case 'relation_deleted':
+      return auditLog.entity_type === 'relation' && auditLog.operation === 'delete';
+    case 'relation_field_changed':
+      return (
+        auditLog.entity_type === 'relation' &&
+        auditLog.operation === 'update' &&
+        (Object.hasOwn(auditLog.changes.old ?? {}, trigger.field) ||
+          Object.hasOwn(auditLog.changes.new ?? {}, trigger.field))
+      );
     case 'field_changed':
       return (
+        auditLog.entity_type === 'entity' &&
         auditLog.operation === 'update' &&
         (Object.hasOwn(auditLog.changes.old ?? {}, trigger.field) ||
           Object.hasOwn(auditLog.changes.new ?? {}, trigger.field))
@@ -99,6 +114,12 @@ const resolveFieldValues = async (
   if (auditLog.operation === 'create') return auditLog.changes.new ?? {};
   if (auditLog.operation === 'delete') return auditLog.changes.old ?? {};
 
+  if (auditLog.entity_type === 'relation') {
+    const relation = await db.relation.getRelation(auditLog.workspace, auditLog.entity_id);
+    if (relation) return flattenRelationAuditFields(relation);
+    return { ...(auditLog.changes.old ?? {}), ...(auditLog.changes.new ?? {}) };
+  }
+
   const entity = await db.catalog.getEntity(auditLog.workspace, auditLog.entity_id);
   if (entity) return flattenEntityAuditFields(entity);
   return { ...(auditLog.changes.old ?? {}), ...(auditLog.changes.new ?? {}) };
@@ -108,6 +129,7 @@ const toAutomationRuleEvent = (auditLog: AuditLogDbResult): AutomationRuleEvent 
   version: '1',
   auditLogId: auditLog.id,
   workspace: auditLog.workspace,
+  resourceType: auditLog.entity_type === 'relation' ? 'relation' : 'entity',
   operation: auditLog.operation,
   entityId: auditLog.entity_id,
   entityName: auditLog.entity_name,
@@ -115,7 +137,10 @@ const toAutomationRuleEvent = (auditLog: AuditLogDbResult): AutomationRuleEvent 
   schemaId: auditLog.schema_id,
   actor: { id: auditLog.user_id, displayName: auditLog.user_display_name },
   occurredAt: auditLog.timestamp.toISOString(),
-  changes: auditLog.changes
+  changes: auditLog.changes,
+  ...(auditLog.entity_type === 'relation' && auditLog.metadata['relation']
+    ? { relation: auditLog.metadata['relation'] as RelationAuditContext }
+    : {})
 });
 
 /**
@@ -134,7 +159,7 @@ export const enqueueAutomationRuleRuns = async (
   auditLog: AuditLogDbResult,
   metadata?: Record<string, unknown>
 ): Promise<number> => {
-  if (auditLog.entity_type !== 'entity') return 0;
+  if (auditLog.entity_type !== 'entity' && auditLog.entity_type !== 'relation') return 0;
 
   const chain = Array.isArray(metadata?.['automationRuleChain'])
     ? (metadata!['automationRuleChain'] as unknown[]).filter(
@@ -147,6 +172,7 @@ export const enqueueAutomationRuleRuns = async (
   const matchingRules = rules.filter(
     (rule): rule is AutomationRuleDbResult =>
       rule.enabled &&
+      rule.resource_type === (auditLog.entity_type === 'relation' ? 'relation' : 'entity') &&
       (rule.schema_id == null || rule.schema_id === auditLog.schema_id) &&
       matchesTrigger(rule.trigger, auditLog) &&
       !chain.includes(rule.id)
@@ -155,7 +181,9 @@ export const enqueueAutomationRuleRuns = async (
 
   const fieldValues = await resolveFieldValues(db, auditLog);
   const schema = auditLog.schema_id
-    ? await db.catalog.getSchema(auditLog.workspace, auditLog.schema_id)
+    ? auditLog.entity_type === 'relation'
+      ? await db.relation.getRelationSchema(auditLog.workspace, auditLog.schema_id)
+      : await db.catalog.getSchema(auditLog.workspace, auditLog.schema_id)
     : null;
   const authContexts = new Map<string, Promise<Awaited<ReturnType<typeof buildUserAuthCtx>>>>();
   const toRun: AutomationRuleDbResult[] = [];

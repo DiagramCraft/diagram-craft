@@ -20,7 +20,7 @@ export const isAutomationRuleAuthorized = (
   if (!schema) return false;
 
   if (
-    rule.trigger.kind === 'field_changed' &&
+    (rule.trigger.kind === 'field_changed' || rule.trigger.kind === 'relation_field_changed') &&
     isFieldViewRestricted(authCtx, schema, rule.trigger.field)
   ) {
     return false;

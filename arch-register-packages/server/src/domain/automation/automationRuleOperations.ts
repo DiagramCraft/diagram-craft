@@ -14,6 +14,7 @@ import { AUTOMATION_RULE_JOB_TYPE } from './automationRuleEvaluation';
 import { listJobRuns } from '../jobs/jobOperations';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
+import type { RelationSchemaDbResult } from '../catalog/db/relationDatabase';
 
 export const AUTOMATION_RULE_REDACTED_LITERAL = '[redacted]';
 
@@ -21,6 +22,7 @@ const hasFieldReferences = (
   rule: Pick<AutomationRuleDbResult, 'trigger' | 'conditions' | 'actions'>
 ) =>
   rule.trigger.kind === 'field_changed' ||
+  rule.trigger.kind === 'relation_field_changed' ||
   rule.conditions.length > 0 ||
   rule.actions.some(
     action =>
@@ -31,7 +33,7 @@ const hasFieldReferences = (
 const hasRestrictedFieldReference = (
   authCtx: WorkspaceAuthorizationContext,
   rule: Pick<AutomationRuleDbResult, 'trigger' | 'conditions' | 'actions'>,
-  schemas: SchemaDbResult[],
+  schemas: Array<SchemaDbResult | RelationSchemaDbResult>,
   schemaMissing: boolean
 ) => {
   if (schemaMissing || schemas.length === 0) return hasFieldReferences(rule);
@@ -40,7 +42,8 @@ const hasRestrictedFieldReference = (
     schemas.some(schema => isFieldViewRestricted(authCtx, schema, fieldId));
 
   return (
-    (rule.trigger.kind === 'field_changed' && isRestricted(rule.trigger.field)) ||
+    ((rule.trigger.kind === 'field_changed' || rule.trigger.kind === 'relation_field_changed') &&
+      isRestricted(rule.trigger.field)) ||
     rule.conditions.some(condition => isRestricted(condition.field)) ||
     rule.actions.some(action => {
       if (action.kind === 'set_field_value') return isRestricted(action.field);
@@ -56,7 +59,7 @@ const hasRestrictedFieldReference = (
 const redactAutomationRule = (
   rule: AutomationRuleDbResult,
   authCtx: WorkspaceAuthorizationContext,
-  schemas: SchemaDbResult[],
+  schemas: Array<SchemaDbResult | RelationSchemaDbResult>,
   schemaMissing: boolean
 ) => {
   if (!hasRestrictedFieldReference(authCtx, rule, schemas, schemaMissing)) return rule;
@@ -91,7 +94,10 @@ const redactAutomationRule = (
   };
 };
 
-const ruleSchemas = (rule: AutomationRuleDbResult, schemas: SchemaDbResult[]) => {
+const ruleSchemas = (
+  rule: AutomationRuleDbResult,
+  schemas: Array<SchemaDbResult | RelationSchemaDbResult>
+) => {
   if (rule.schema_id == null) return { schemas, schemaMissing: false };
   const schema = schemas.find(candidate => candidate.id === rule.schema_id);
   return { schemas: schema ? [schema] : [], schemaMissing: schema == null };
@@ -100,7 +106,7 @@ const ruleSchemas = (rule: AutomationRuleDbResult, schemas: SchemaDbResult[]) =>
 export const toApiAutomationRule = (
   rule: AutomationRuleDbResult,
   authCtx: WorkspaceAuthorizationContext,
-  schemas: SchemaDbResult[]
+  schemas: Array<SchemaDbResult | RelationSchemaDbResult>
 ) => {
   const { schemas: candidateSchemas, schemaMissing } = ruleSchemas(rule, schemas);
   const redacted = redactAutomationRule(rule, authCtx, candidateSchemas, schemaMissing);
@@ -110,6 +116,7 @@ export const toApiAutomationRule = (
     created_by: redacted.created_by,
     name: redacted.name,
     description: redacted.description,
+    resource_type: redacted.resource_type,
     schema_id: redacted.schema_id,
     trigger: redacted.trigger,
     conditions: redacted.conditions,
@@ -133,15 +140,19 @@ const validateInput = async (
   input: AutomationRuleInput,
   authCtx: WorkspaceAuthorizationContext
 ) => {
-  let schemas: SchemaDbResult[] = [];
+  let schemas: Array<SchemaDbResult | RelationSchemaDbResult> = [];
   const hasAccessSensitiveAction = input.actions.some(
     action =>
       action.kind === 'set_field_value' ||
       (action.kind === 'send_notification' && action.recipient.kind === 'reference_owner')
   );
-  const hasAccessSensitiveTrigger = input.trigger.kind === 'field_changed';
+  const hasAccessSensitiveTrigger =
+    input.trigger.kind === 'field_changed' || input.trigger.kind === 'relation_field_changed';
   if (input.schema_id != null) {
-    const schema = await db.catalog.getSchema(workspace, input.schema_id);
+    const schema =
+      input.resource_type === 'relation'
+        ? await db.relation.getRelationSchema(workspace, input.schema_id)
+        : await db.catalog.getSchema(workspace, input.schema_id);
     httpAssert.true(schema != null, {
       status: 400,
       message: 'Automation rule references an entity type from another workspace'
@@ -150,14 +161,37 @@ const validateInput = async (
   } else if (input.conditions.length > 0 || hasAccessSensitiveAction || hasAccessSensitiveTrigger) {
     // Rule isn't scoped to a single schema, so a condition or action field could resolve against
     // any schema in the workspace — check restriction against all of them.
-    schemas = await db.catalog.listSchemas(workspace);
+    schemas =
+      input.resource_type === 'relation'
+        ? await db.relation.listRelationSchemas(workspace)
+        : await db.catalog.listSchemas(workspace);
   }
   httpAssert.true(input.actions.length > 0, {
     status: 400,
     message: 'A rule needs at least one action'
   });
 
-  if (input.trigger.kind === 'field_changed') {
+  if (input.resource_type === 'relation' && input.trigger.kind === 'lifecycle_transition') {
+    httpAssert.true(false, {
+      status: 400,
+      message: 'Relation automation rules do not support lifecycle transitions'
+    });
+  }
+
+  if (input.resource_type === 'relation' && input.trigger.kind.startsWith('entity_')) {
+    httpAssert.true(false, {
+      status: 400,
+      message: 'Relation automation rules must use relation triggers'
+    });
+  }
+  if (input.resource_type === 'entity' && input.trigger.kind.startsWith('relation_')) {
+    httpAssert.true(false, {
+      status: 400,
+      message: 'Entity automation rules must use entity triggers'
+    });
+  }
+
+  if (input.trigger.kind === 'field_changed' || input.trigger.kind === 'relation_field_changed') {
     const triggerField = input.trigger.field;
     const restricted = schemas.some(schema => isFieldViewRestricted(authCtx, schema, triggerField));
     httpAssert.true(!restricted, {
@@ -189,6 +223,12 @@ const validateInput = async (
         );
       }
     } else if (action.kind === 'send_notification') {
+      if (input.resource_type === 'relation' && action.recipient.kind === 'reference_owner') {
+        httpAssert.true(false, {
+          status: 400,
+          message: 'Relation automation rules cannot use reference-owner recipients'
+        });
+      }
       if (action.recipient.kind !== 'reference_owner') continue;
       const field = action.recipient.field;
       const restricted = schemas.some(schema => isFieldViewRestricted(authCtx, schema, field));
@@ -209,9 +249,16 @@ export const listAutomationRules = async (
   event: AuthenticatedEvent
 ) => {
   const { ws, authCtx } = await authorize(db, workspace, event);
-  const schemas = await db.catalog.listSchemas(ws);
+  const [entitySchemas, relationSchemas] = await Promise.all([
+    db.catalog.listSchemas(ws),
+    db.relation?.listRelationSchemas ? db.relation.listRelationSchemas(ws) : Promise.resolve([])
+  ]);
   return (await db.automationRule.listRules(ws)).map(rule =>
-    toApiAutomationRule(rule, authCtx, schemas)
+    toApiAutomationRule(
+      rule,
+      authCtx,
+      rule.resource_type === 'relation' ? relationSchemas : entitySchemas
+    )
   );
 };
 
@@ -230,6 +277,7 @@ export const createAutomationRule = async (
     created_by: authCtx.userId,
     name: input.name,
     description: input.description ?? null,
+    resource_type: input.resource_type,
     schema_id: input.schema_id ?? null,
     trigger: input.trigger,
     conditions: input.conditions,
@@ -255,6 +303,7 @@ export const updateAutomationRule = async (
   const updated = await db.automationRule.updateRule(ws, id, {
     name: input.name,
     description: input.description ?? null,
+    resource_type: input.resource_type,
     schema_id: input.schema_id ?? null,
     trigger: input.trigger,
     conditions: input.conditions,
