@@ -6,8 +6,10 @@
  * | Edge - .eEdge
  *   | [data-kind="containment"] - containment edge variant
  *   | [data-highlighted="true"] - highlighted state
+ *   | --edge-color custom property - per-edge color override (e.g. typed relation schema color)
  * | Arc Edge - .eArcEdge
  *   | [data-highlighted="true"] - highlighted state
+ * | Edge Hit Area - .eEdgeHitArea - invisible wide-stroke overlay for click handling
  */
 
 .cDependencyGraph {
@@ -47,7 +49,7 @@
   }
 
   .eEdge {
-    stroke: var(--base-fg-more-dim);
+    stroke: var(--edge-color, var(--base-fg-more-dim));
     stroke-width: 1.5;
     stroke-dasharray: 4 3;
     fill: none;
@@ -64,7 +66,7 @@
   }
 
   .eArcEdge {
-    stroke: var(--base-fg-more-dim);
+    stroke: var(--edge-color, var(--base-fg-more-dim));
     stroke-width: 1.5;
     stroke-dasharray: 4 3;
     fill: none;
@@ -74,6 +76,14 @@
       stroke-width: 2.5;
       opacity: 1;
     }
+  }
+
+  .eEdgeHitArea {
+    stroke: transparent;
+    stroke-width: 12;
+    fill: none;
+    pointer-events: stroke;
+    cursor: pointer;
   }
 
   .eEdgeLabel {

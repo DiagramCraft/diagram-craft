@@ -20,6 +20,8 @@ export type DependencyGraphEdge = {
   to: string;
   label?: string;
   kind?: string;
+  color?: string;
+  relationId?: string;
 };
 
 export type LayoutOptions = {
@@ -47,10 +49,37 @@ type Props<T> = {
   renderNode: (node: DependencyGraphNode<T>) => React.ReactNode;
   onNodeClick?: (id: string) => void;
   onNodeContextMenu?: (id: string, event: React.MouseEvent) => void;
+  onEdgeClick?: (edge: DependencyGraphEdge, event: React.MouseEvent) => void;
   highlightedIds?: ReadonlySet<string>;
 };
 
 const PADDING = 48;
+const FANOUT_SPACING = 16;
+
+const pairKey = (from: string, to: string): string => [from, to].sort().join('::');
+
+// Groups edges rendered in the same visual bucket (straight vs. hierarchy-arc) by their
+// unordered endpoint pair, so multiple edges between the same two nodes can fan out instead
+// of overlapping exactly.
+const groupEdgesByPair = (edgeList: DependencyGraphEdge[]): Map<string, DependencyGraphEdge[]> => {
+  const map = new Map<string, DependencyGraphEdge[]>();
+  for (const edge of edgeList) {
+    const key = pairKey(edge.from, edge.to);
+    if (!map.has(key)) map.set(key, []);
+    map.get(key)!.push(edge);
+  }
+  return map;
+};
+
+const getFanoutOffset = (
+  groups: Map<string, DependencyGraphEdge[]>,
+  edge: DependencyGraphEdge
+): number => {
+  const group = groups.get(pairKey(edge.from, edge.to));
+  if (!group || group.length <= 1) return 0;
+  const index = group.indexOf(edge);
+  return (index - (group.length - 1) / 2) * FANOUT_SPACING;
+};
 
 /**
  * Distance from rectangle center to its border along direction (ux, uy).
@@ -121,6 +150,7 @@ export const DependencyGraph = <T,>({
   renderNode,
   onNodeClick,
   onNodeContextMenu,
+  onEdgeClick,
   highlightedIds
 }: Props<T>) => {
   const [hoveredNodeId, setHoveredNodeId] = useState<string | null>(null);
@@ -138,6 +168,21 @@ export const DependencyGraph = <T,>({
       edges.filter(e => e.from === hoveredNodeId || e.to === hoveredNodeId).map(e => e.id)
     );
   }, [hoveredNodeId, edges]);
+
+  // Parallel-edge fan-out: straight edges and hierarchy arcs are mutually exclusive rendering
+  // buckets per edge (gated by kind === 'containment' + layout), so each bucket is grouped
+  // independently by unordered endpoint pair.
+  const straightPairGroups = useMemo(() => {
+    const straightEdges = edges.filter(
+      e => e.from !== e.to && !(layout === 'hierarchy' && e.kind !== 'containment')
+    );
+    return groupEdgesByPair(straightEdges);
+  }, [edges, layout]);
+
+  const arcPairGroups = useMemo(() => {
+    if (layout !== 'hierarchy') return new Map<string, DependencyGraphEdge[]>();
+    return groupEdgesByPair(edges.filter(e => e.from !== e.to && e.kind !== 'containment'));
+  }, [edges, layout]);
 
   useEffect(() => {
     const svg = svgRef.current;
@@ -270,10 +315,22 @@ export const DependencyGraph = <T,>({
       if (p.x > maxX) maxX = p.x;
       if (p.y > maxY) maxY = p.y;
     }
-    const vbMinX = minX - nodeWidth / 2 - PADDING;
-    const vbMinY = minY - nodeHeight / 2 - PADDING;
-    const vbMaxX = maxX + nodeWidth / 2 + PADDING;
-    let vbMaxY = maxY + nodeHeight / 2 + PADDING;
+    // Fanned-out parallel edges bow sideways from their midpoint by up to this much beyond the
+    // node bounds; pad the viewBox on every side by the largest fan-out group's extent so curves
+    // don't get clipped.
+    const pairCounts = new Map<string, number>();
+    for (const edge of edges) {
+      if (edge.from === edge.to) continue;
+      const key = pairKey(edge.from, edge.to);
+      pairCounts.set(key, (pairCounts.get(key) ?? 0) + 1);
+    }
+    const maxGroupSize = Math.max(1, ...Array.from(pairCounts.values()));
+    const fanoutPadding = ((maxGroupSize - 1) / 2) * FANOUT_SPACING;
+
+    const vbMinX = minX - nodeWidth / 2 - PADDING - fanoutPadding;
+    const vbMinY = minY - nodeHeight / 2 - PADDING - fanoutPadding;
+    const vbMaxX = maxX + nodeWidth / 2 + PADDING + fanoutPadding;
+    let vbMaxY = maxY + nodeHeight / 2 + PADDING + fanoutPadding;
 
     // For hierarchy layout, extend the viewBox downward to include arc peaks for reference edges
     if (layout === 'hierarchy') {
@@ -348,22 +405,41 @@ export const DependencyGraph = <T,>({
           const midX = (x1 + x2) / 2;
           const midY = (y1 + y2) / 2;
 
+          const fanout = getFanoutOffset(straightPairGroups, edge);
+          let d = `M ${x1} ${y1} L ${x2} ${y2}`;
+          let labelX = midX;
+          let labelY = midY;
+          if (fanout !== 0) {
+            const [pux, puy] = [-uy, ux];
+            const cx = midX + pux * fanout;
+            const cy = midY + puy * fanout;
+            d = `M ${x1} ${y1} Q ${cx} ${cy} ${x2} ${y2}`;
+            const t = 0.5;
+            labelX = (1 - t) * (1 - t) * x1 + 2 * (1 - t) * t * cx + t * t * x2;
+            labelY = (1 - t) * (1 - t) * y1 + 2 * (1 - t) * t * cy + t * t * y2;
+          }
+
+          const edgeStyle = edge.color
+            ? ({ '--edge-color': edge.color } as React.CSSProperties)
+            : undefined;
+
           return (
             <g key={edge.id}>
-              <line
-                x1={x1}
-                y1={y1}
-                x2={x2}
-                y2={y2}
+              <path
+                d={d}
                 className={styles.eEdge}
                 data-kind={edge.kind}
                 data-highlighted={connectedEdges.has(edge.id)}
                 markerEnd="url(#dep-arrow)"
+                style={edgeStyle}
               />
+              {onEdgeClick && (
+                <path d={d} className={styles.eEdgeHitArea} onClick={e => onEdgeClick(edge, e)} />
+              )}
               {edge.label && (
                 <text
-                  x={midX}
-                  y={midY}
+                  x={labelX}
+                  y={labelY}
                   className={styles.eEdgeLabel}
                   data-highlighted={connectedEdges.has(edge.id)}
                   textAnchor="middle"
@@ -453,10 +529,13 @@ export const DependencyGraph = <T,>({
             const dist = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
             if (dist === 0) return null;
 
-            // Control point bows downward (positive Y = below the nodes)
-            const cx = (x1 + x2) / 2;
+            // Control point bows downward (positive Y = below the nodes), plus a perpendicular
+            // fan-out offset when multiple edges share this endpoint pair.
             const arcHeight = Math.max(dist * 0.35, nodeHeight);
-            const cy = (y1 + y2) / 2 + arcHeight;
+            const fanout = getFanoutOffset(arcPairGroups, edge);
+            const [pux, puy] = normalize(-(y2 - y1), x2 - x1);
+            const cx = (x1 + x2) / 2 + pux * fanout;
+            const cy = (y1 + y2) / 2 + arcHeight + puy * fanout;
 
             // Source trim: tangent from source toward the control point
             const [ustx, usty] = normalize(cx - x1, cy - y1);
@@ -475,15 +554,27 @@ export const DependencyGraph = <T,>({
             const t = 0.5;
             const labelX = (1 - t) * (1 - t) * sx + 2 * (1 - t) * t * cx + t * t * ex;
             const labelY = (1 - t) * (1 - t) * sy + 2 * (1 - t) * t * cy + t * t * ey;
+            const arcD = `M ${sx} ${sy} Q ${cx} ${cy} ${ex} ${ey}`;
+            const arcStyle = edge.color
+              ? ({ '--edge-color': edge.color } as React.CSSProperties)
+              : undefined;
 
             return (
               <g key={edge.id}>
                 <path
-                  d={`M ${sx} ${sy} Q ${cx} ${cy} ${ex} ${ey}`}
+                  d={arcD}
                   className={styles.eArcEdge}
                   data-highlighted={connectedEdges.has(edge.id)}
                   markerEnd="url(#dep-arrow)"
+                  style={arcStyle}
                 />
+                {onEdgeClick && (
+                  <path
+                    d={arcD}
+                    className={styles.eEdgeHitArea}
+                    onClick={e => onEdgeClick(edge, e)}
+                  />
+                )}
                 {edge.label && (
                   <text
                     x={labelX}

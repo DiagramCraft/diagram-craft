@@ -9,7 +9,8 @@ import { httpAssert } from '../../utils/httpAssert';
 import {
   ContainmentField,
   SchemaField,
-  isReferenceOrContainmentField
+  isReferenceOrContainmentField,
+  isTypedRelationField
 } from '@arch-register/api-types/schemaContract';
 import {
   EntityLink,
@@ -480,6 +481,19 @@ export const buildEntityRelations = (
         : row.data;
     };
 
+    // The entity-schema field name for this relation, on the field bound to whichever
+    // endpoint direction `entity` occupies for a given row (see relationFieldMutations.ts:
+    // a field with direction 'in' creates relations with entity as in_entity_id, so it's the
+    // matching field for the "outgoing" loop below, where entity.id === row.in_entity_id).
+    // Falls back to the relation schema's own name if no such field is found.
+    const findFieldName = (relationSchemaId: string, direction: 'in' | 'out'): string | undefined =>
+      entitySchema?.fields.find(
+        field =>
+          isTypedRelationField(field) &&
+          field.relationSchemaId === relationSchemaId &&
+          field.direction === direction
+      )?.name;
+
     for (const row of typedRelations.outgoing) {
       const target = entityLookup.get(row.out_entity_id);
       if (!target) continue;
@@ -490,8 +504,7 @@ export const buildEntityRelations = (
         entitySlug: target.slug ?? row.out_entity_id,
         entityName: target.name ?? target.slug ?? row.out_entity_id,
         entitySchemaId: target.schema_id,
-        fieldName: schema?.name ?? row.schema_name,
-        fieldPredicate: schema?.description || undefined,
+        fieldName: findFieldName(row.schema_id, 'in') ?? schema?.name ?? row.schema_name,
         kind: 'typed',
         relationId: row.id,
         relationSchemaId: row.schema_id,
@@ -511,8 +524,7 @@ export const buildEntityRelations = (
         entitySlug: source.slug ?? row.in_entity_id,
         entityName: source.name ?? source.slug ?? row.in_entity_id,
         entitySchemaId: source.schema_id,
-        fieldName: schema?.name ?? row.schema_name,
-        fieldPredicate: schema?.description || undefined,
+        fieldName: findFieldName(row.schema_id, 'out') ?? schema?.name ?? row.schema_name,
         kind: 'typed',
         relationId: row.id,
         relationSchemaId: row.schema_id,

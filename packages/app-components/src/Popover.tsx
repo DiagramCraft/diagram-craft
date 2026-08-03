@@ -1,5 +1,6 @@
 import { TbX } from 'react-icons/tb';
-import React from 'react';
+import React, { useEffect, useRef } from 'react';
+import { createPortal } from 'react-dom';
 import { usePortal } from './PortalContext';
 import styles from './Popover.module.css';
 import { Popover as BaseUIPopover } from '@base-ui/react/popover';
@@ -98,8 +99,55 @@ type ContentProps = {
   closeButton?: boolean;
 };
 
+type ImperativeProps = {
+  x: number;
+  y: number;
+  children: React.ReactNode;
+  onClose: () => void;
+  className?: string;
+};
+
+// Opens a popover anchored at an arbitrary viewport point (e.g. a click position) rather than
+// at a trigger element. Deliberately self-contained (no BaseUIPopover.Root/Positioner) since
+// those are built around tracking a trigger element's position, which doesn't exist here —
+// outside-click/Escape dismissal is implemented directly instead.
+const Imperative = ({ x, y, children, onClose, className }: ImperativeProps) => {
+  const portal = usePortal();
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    const handlePointerDown = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') onClose();
+    };
+    document.addEventListener('mousedown', handlePointerDown, true);
+    document.addEventListener('keydown', handleKeyDown, true);
+    return () => {
+      document.removeEventListener('mousedown', handlePointerDown, true);
+      document.removeEventListener('keydown', handleKeyDown, true);
+    };
+  }, [onClose]);
+
+  return createPortal(
+    <div
+      ref={ref}
+      className={`${styles.cPopover} ${className ?? ''}`}
+      style={{ position: 'fixed', left: x, top: y }}
+    >
+      {children}
+      <button type="button" className={styles.eClose} aria-label="Close" onClick={onClose}>
+        <TbX />
+      </button>
+    </div>,
+    portal ?? document.body
+  );
+};
+
 export const Popover = {
   Root,
   Trigger,
-  Content
+  Content,
+  Imperative
 };
