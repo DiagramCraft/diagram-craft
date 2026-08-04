@@ -8,17 +8,10 @@
 
 .header {
   margin-bottom: 16px;
-  display: flex;
-  align-items: center;
-  gap: 12px;
 }
 
 .count {
   color: var(--base-fg-more-dim);
   font-family: var(--font-mono);
   font-variant-numeric: tabular-nums;
-}
-
-.schemaSelect {
-  min-width: 220px;
 }

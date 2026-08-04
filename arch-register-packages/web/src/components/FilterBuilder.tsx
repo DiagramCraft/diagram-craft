@@ -20,7 +20,7 @@ import {
 } from '@arch-register/api-types/assessmentFilter';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 
-const TEXT_OPERATORS = [
+export const TEXT_OPERATORS = [
   { value: 'equals', label: 'Equals' },
   { value: 'not_equals', label: 'Not equals' },
   { value: 'contains', label: 'Contains' },
@@ -30,7 +30,7 @@ const TEXT_OPERATORS = [
   { value: 'not_empty', label: 'Is not empty' }
 ];
 
-const DATE_OPERATORS = [
+export const DATE_OPERATORS = [
   { value: 'on', label: 'On' },
   { value: 'before', label: 'Before' },
   { value: 'after', label: 'After' },
@@ -38,14 +38,14 @@ const DATE_OPERATORS = [
   { value: 'not_empty', label: 'Is not empty' }
 ];
 
-const SELECT_OPERATORS = [
+export const SELECT_OPERATORS = [
   { value: 'equals', label: 'Equals' },
   { value: 'not_equals', label: 'Not equals' },
   { value: 'empty', label: 'Is empty' },
   { value: 'not_empty', label: 'Is not empty' }
 ];
 
-const NUMBER_OPERATORS = [
+export const NUMBER_OPERATORS = [
   { value: 'equals', label: 'Equals' },
   { value: 'not_equals', label: 'Not equals' },
   { value: 'gt', label: 'Greater than' },
@@ -66,7 +66,7 @@ const PRESENCE_OPERATORS = [
   { value: 'empty', label: 'No response' }
 ];
 
-type FieldDef = {
+export type FieldDef = {
   id: string;
   name: string;
   type: 'text' | 'date' | 'select' | 'boolean' | 'number' | 'rating' | 'presence';
@@ -286,7 +286,10 @@ export const FilterBuilder = ({
   );
 };
 
-const FilterRow = ({
+// Exported so relation-specific filter UIs (RelationFilterBuilder.tsx) can reuse the same
+// field/operator/value row rendering without duplicating it — only the `fields` list construction
+// differs between entity and relation schemas.
+export const FilterRow = ({
   condition,
   fields,
   onUpdate,
