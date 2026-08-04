@@ -20,7 +20,8 @@ import {
   toRedactedApiRelation,
   validateRelationEndpoints,
   relationAuditContext,
-  relationToBaseState
+  relationToBaseState,
+  createRelationVersionSchemaResolver
 } from './relationHelpers';
 import {
   assertVersionCanBeRestored,
@@ -463,14 +464,15 @@ export const restoreWorkspaceRelationVersion = async (
         status: 400,
         message: 'Relation version does not contain a valid data state'
       });
-      // Relation schemas have no field groups spanning schema-version history yet (#2569), so
-      // there is only ever "the current schema" to validate a restore against.
+      const resolveVersionSchemas = createRelationVersionSchemaResolver(db, ws);
+      const { historicalSchema } = await resolveVersionSchemas(version, row.schema_id);
       assertVersionDataCanBeRestored(
         authCtx,
         schema,
-        null,
+        historicalSchema,
         row.data,
-        restoredData as Record<string, unknown>
+        restoredData as Record<string, unknown>,
+        { failClosedWhenHistoricalSchemaMissing: true }
       );
 
       const timestamp = new Date();
@@ -517,7 +519,11 @@ export const restoreWorkspaceRelationVersion = async (
       });
       await db.catalog.pruneAutosaveVersions(ws, nextRow.id, RELATION_AUTOSAVE_KEEP_COUNT);
 
-      return serializeEntityVersion(redactVersionState(version, authCtx, schema));
+      return serializeEntityVersion(
+        redactVersionState(version, authCtx, schema, historicalSchema, {
+          failClosedWhenHistoricalSchemaMissing: true
+        })
+      );
     }
   );
 };

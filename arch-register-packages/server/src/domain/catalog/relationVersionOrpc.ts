@@ -13,6 +13,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import { orpcAssert } from '../../utils/orpcAssert';
 import { redactVersionState, serializeEntityVersion } from './entityVersionOperations';
 import { canViewTypedRelation } from './relationAccessControl';
+import { createRelationVersionSchemaResolver } from './relationHelpers';
 import { restoreWorkspaceRelationVersion } from './relationOperations';
 import { relationVersionContract } from '@arch-register/api-types/relationVersionContract';
 
@@ -44,12 +45,6 @@ const getOwnerSchemas = async (
   };
 };
 
-// Redaction below is always evaluated against the relation's *current* schema — unlike entity
-// version redaction, there is no historical-schema resolution wired up for relations yet, so
-// `redactVersionState` is called without `historicalSchema`/`failClosedWhenHistoricalSchemaMissing`
-// (the latter would zero out every relation version's data, since a historical schema never
-// resolves here). Revisit once relation schema-version history informs field-group ACLs the way
-// entity_schema_version does.
 const relationVersionHandlers = {
   list: relationVersionRouter.relationVersions.list.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
@@ -67,10 +62,17 @@ const relationVersionHandlers = {
       ),
       { status: 404, message: `Relation '${input.params.id}' not found` }
     );
-    const schema = await context.db.relation.getRelationSchema(workspace, row.schema_id);
     const versions = await context.db.catalog.listEntityVersions(workspace, row.id);
-    return versions.map(version =>
-      serializeEntityVersion(redactVersionState(version, authCtx, schema))
+    const resolveVersionSchemas = createRelationVersionSchemaResolver(context.db, workspace);
+    return Promise.all(
+      versions.map(async version => {
+        const { schema, historicalSchema } = await resolveVersionSchemas(version, row.schema_id);
+        return serializeEntityVersion(
+          redactVersionState(version, authCtx, schema, historicalSchema, {
+            failClosedWhenHistoricalSchemaMissing: true
+          })
+        );
+      })
     );
   }),
 
@@ -99,8 +101,13 @@ const relationVersionHandlers = {
       code: 'BAD_REQUEST',
       message: 'Version does not belong to this relation'
     });
-    const schema = await context.db.relation.getRelationSchema(workspace, row.schema_id);
-    return serializeEntityVersion(redactVersionState(version, authCtx, schema));
+    const resolveVersionSchemas = createRelationVersionSchemaResolver(context.db, workspace);
+    const { schema, historicalSchema } = await resolveVersionSchemas(version, row.schema_id);
+    return serializeEntityVersion(
+      redactVersionState(version, authCtx, schema, historicalSchema, {
+        failClosedWhenHistoricalSchemaMissing: true
+      })
+    );
   }),
 
   restore: relationVersionRouter.relationVersions.restore.handler(async ({ input, context }) =>

@@ -141,6 +141,25 @@ const makeDb = (
   const db = {
     relation: {
       getRelationSchema: vi.fn(async () => relationSchema),
+      listRelationSchemaVersions: vi.fn(async () => [
+        {
+          id: 'relation-schema-version-1',
+          workspace: 'ws-1',
+          schema_id: relationSchema.id,
+          version: 1,
+          name: relationSchema.name,
+          description: relationSchema.description,
+          in_schema_ids: relationSchema.in_schema_ids,
+          out_schema_ids: relationSchema.out_schema_ids,
+          fields: relationSchema.fields,
+          groups: relationSchema.groups,
+          color: relationSchema.color,
+          icon: relationSchema.icon,
+          change_summary: {},
+          created_by: null,
+          created_at: now
+        }
+      ]),
       createRelation,
       updateRelation,
       deleteRelation,
@@ -215,6 +234,39 @@ describe('updateWorkspaceRelation — version history', () => {
     );
     expect(pruneAutosaveVersions).toHaveBeenCalledWith('ws-1', existing.id, 50);
   });
+
+  it('ignores reserved endpoint metadata in the update body — endpoints are immutable after creation', async () => {
+    const existing = makeRelationRow({ version: 1, data: { note: 'before' } });
+    const { db, updateRelation } = makeDb(existing);
+
+    // _inEntityId/_outEntityId are the reserved (underscore-prefixed) metadata keys the create
+    // body uses for endpoints (relationContract.ts's relationCreateBodySchema) — a client sending
+    // them on update (there is no such field in relationUpdateBodySchema, but nothing stops a
+    // caller from including them) must not be able to move a relation's endpoints this way.
+    const row = await updateWorkspaceRelation(
+      db,
+      'ws-1',
+      existing.id,
+      { note: 'after', _inEntityId: 'some-other-entity', _outEntityId: 'yet-another-entity' },
+      eventForAuthCtx()
+    );
+
+    // RelationDbUpdate has no endpoint fields at all — nothing endpoint-related reaches the DB
+    // layer regardless of what a client sends in the body, and the reserved keys are stripped
+    // before merging into field data rather than silently stored under those names.
+    expect(updateRelation).toHaveBeenCalledWith(
+      'ws-1',
+      existing.id,
+      expect.objectContaining({ data: { note: 'after' } })
+    );
+    const updateCallArgs = updateRelation.mock.calls[0]![2] as Record<string, unknown>;
+    expect(Object.keys(updateCallArgs)).not.toContain('in_entity_id');
+    expect(Object.keys(updateCallArgs)).not.toContain('out_entity_id');
+    expect(updateCallArgs['data']).toEqual({ note: 'after' });
+
+    expect(row._in.id).toBe(inEntity.id);
+    expect(row._out.id).toBe(outEntity.id);
+  });
 });
 
 describe('deleteWorkspaceRelation — version history', () => {
@@ -255,7 +307,14 @@ describe('restoreWorkspaceRelationVersion', () => {
       created_at: now,
       created_by: 'user-1',
       created_by_name: 'User',
-      state: { id: existing.id, data: { note: 'old' } },
+      // Endpoint fields are always immutable in practice, but the stored state snapshot happens
+      // to carry them (relationToBaseState) — restore must ignore them regardless.
+      state: {
+        id: existing.id,
+        in_entity_id: 'some-other-entity',
+        out_entity_id: 'yet-another-entity',
+        data: { note: 'old' }
+      },
       applied_case_revision_id: null
     };
     const { db, createEntityVersion, updateRelation, pruneAutosaveVersions } = makeDb(
@@ -278,6 +337,9 @@ describe('restoreWorkspaceRelationVersion', () => {
       existing.id,
       expect.objectContaining({ data: { note: 'old' }, version: 3 })
     );
+    const restoreCallArgs = updateRelation.mock.calls[0]![2] as Record<string, unknown>;
+    expect(Object.keys(restoreCallArgs)).not.toContain('in_entity_id');
+    expect(Object.keys(restoreCallArgs)).not.toContain('out_entity_id');
     expect(createEntityVersion).toHaveBeenCalledWith(
       expect.objectContaining({
         entity_id: existing.id,
