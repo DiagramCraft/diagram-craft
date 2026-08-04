@@ -22,6 +22,15 @@ export type PathStep =
       /** Entity schemas whose viewable typed-relation field granted this hop. */
       ownerSchemaIds: string[];
       filter?: QueryNode;
+    }
+  | {
+      // Relation -> its `in`/`out` entity endpoint. Only legal as `path[0]`, and only under a
+      // relation-rooted query (`EntityQuery.schemaId` resolving to a relation schema, or an
+      // explicit `root_kind: 'relation'`). Every subsequent step is an ordinary
+      // forward/backward/typedRelation step over the resulting entity. Unlike `typedRelation`
+      // there's exactly one entity per direction, so no owner-schema/fan-out bookkeeping is needed.
+      kind: 'endpoint';
+      direction: 'in' | 'out';
     };
 
 export type QueryNode =
@@ -57,6 +66,10 @@ export const pathStepSchema: z.ZodType<PathStep> = z.lazy(() =>
       direction: z.enum(['in', 'out']),
       ownerSchemaIds: z.array(z.string()).min(1),
       filter: queryNodeSchema.optional()
+    }),
+    z.object({
+      kind: z.literal('endpoint'),
+      direction: z.enum(['in', 'out'])
     })
   ])
 );
@@ -98,6 +111,15 @@ export const queryNodeSchema: z.ZodType<QueryNode> = z.lazy(() =>
 // query execution context rather than query text (specs/QUERY_LANGUAGE.md §4.4, §4.5).
 //
 export const entityQuerySchema = z.object({
+  // Which catalog-record kind the query is rooted at. Usually left unset: when `schemaId` is
+  // present, the root kind is derived by resolving it against the entity/relation schema
+  // registries (entity and relation schemas live in disjoint id spaces), so callers building a
+  // schema-scoped relation query never need to set this explicitly. It only matters as an
+  // explicit fallback for the schema-less "browse everything" case, where it defaults to
+  // 'entity' for backward compatibility with pre-existing queries and saved views. If both
+  // `schemaId` and `root_kind` are supplied and disagree with the schema lookup, that's a
+  // validation error, not a silent override.
+  root_kind: z.enum(['entity', 'relation']).optional(),
   schemaId: z.string().optional(),
   assessmentId: z.string().optional(),
   projectId: z.string().optional(),

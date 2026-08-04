@@ -91,6 +91,12 @@ export type RelationDbResult = {
   updated_at: Date;
 };
 
+// Row shape produced by a compiled relation-rooted EntityQuery (entityQueryIRCompiler.ts):
+// the same denormalized shape as RelationDbResult, plus the query's projections object.
+export type RelationQueryDbResult = RelationDbResult & {
+  projections: Record<string, unknown>;
+};
+
 export type RelationDbCreate = {
   id: string;
   workspace: string;
@@ -192,6 +198,14 @@ export const relationMappers = {
         : (String(row['approval_policy_override']) as RelationDbResult['approval_policy_override']),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
+  }),
+  relationQuery: (row: DatabaseRow): RelationQueryDbResult => ({
+    ...relationMappers.relation(row),
+    projections: parseDatabaseJson<Record<string, unknown>>(
+      row['projections'],
+      {},
+      'relation_query.projections'
+    )
   })
 };
 
@@ -223,6 +237,11 @@ export type RelationDatabase = {
   removeRelationDataField(ws: string, schemaId: string, fieldId: string): Promise<number>;
 
   countRelationsForSchema(ws: string, schemaId: string): Promise<number>;
+
+  // Runs a relation-rooted query compiled by entityQueryIRCompiler.ts's compileEntityQueryIR
+  // (root_kind resolves to 'relation'). Dialect-generic raw SQL execution, mirroring
+  // CatalogDatabase.runCompiledEntityQuery — the SQL text already encodes all filtering.
+  runCompiledRelationQuery(sql: string, params: unknown[]): Promise<RelationQueryDbResult[]>;
 
   listRelations(
     ws: string,

@@ -39,6 +39,16 @@ const PSEUDO_FIELD_IDS = new Set([
   '_assessment'
 ]);
 
+// Mirrors entityQueryIRValidator.ts's RELATION_PSEUDO_FIELD_IDS.
+const RELATION_PSEUDO_FIELD_IDS = new Set([
+  '_id',
+  '_schemaId',
+  '_inEntityId',
+  '_outEntityId',
+  '_createdAt',
+  '_updatedAt'
+]);
+
 const fieldIsRestricted = (
   fieldId: string,
   schemas: SchemaDbResult[],
@@ -60,6 +70,7 @@ const relationFieldIsRestricted = (
   authCtx: WorkspaceAuthorizationContext,
   relationSchemaId: string
 ) => {
+  if (RELATION_PSEUDO_FIELD_IDS.has(fieldId)) return false;
   const schema = relationSchemas.find(candidate => candidate.id === relationSchemaId);
   return (
     !schema?.fields.some(field => field.id === fieldId) ||
@@ -110,6 +121,9 @@ const pathUsesRestrictedField = (
           : false)
       );
     }
+    // 'endpoint' has no field/ACL of its own to restrict — visibility of the entity it lands on
+    // is governed by ordinary entity view permissions, not schema field-group ACL.
+    if (step.kind === 'endpoint') return false;
     const stepRestricted =
       step.kind === 'backward'
         ? fieldIsRestricted(step.fieldId, schemas, authCtx, step.ownerSchemaId)
@@ -152,14 +166,22 @@ const nodeUsesRestrictedField = (
         relationSchemas,
         currentRelationSchemaId
       );
-    case 'predicate':
+    case 'predicate': {
+      // At the true root (empty path) of a relation-rooted query, `rootSchemaId` names a relation
+      // schema rather than an entity schema — resolve the field against relationSchemas there too,
+      // same as inside a typedRelation.filter scope (`currentRelationSchemaId`).
+      const rootRelationSchemaId =
+        node.path.length === 0 && rootSchemaId && relationSchemas.some(s => s.id === rootSchemaId)
+          ? rootSchemaId
+          : undefined;
+      const effectiveRelationSchemaId = currentRelationSchemaId ?? rootRelationSchemaId;
       return (
-        (currentRelationSchemaId
+        (effectiveRelationSchemaId
           ? relationFieldIsRestricted(
               node.fieldId,
               relationSchemas,
               authCtx,
-              currentRelationSchemaId
+              effectiveRelationSchemaId
             )
           : fieldIsRestricted(
               node.fieldId,
@@ -168,6 +190,7 @@ const nodeUsesRestrictedField = (
               node.path.length === 0 ? rootSchemaId : undefined
             )) || pathUsesRestrictedField(node.path, schemas, authCtx, relationSchemas)
       );
+    }
     case 'relationExists':
       return pathUsesRestrictedField(node.path, schemas, authCtx, relationSchemas);
     case 'freeText':
@@ -273,31 +296,62 @@ export const savedViewUsesRestrictedField = (
   relationSchemas: RelationSchemaDbResult[] = []
 ) =>
   nodeUsesRestrictedField(filters.root, schemas, authCtx, filters.schemaId, relationSchemas) ||
-  (filters.projections ?? []).some(
-    projection =>
-      (projection.source === 'relation'
-        ? (() => {
-            const step = [...projection.path]
-              .reverse()
-              .find(candidate => candidate.kind === 'typedRelation');
-            return (
-              step == null ||
-              relationFieldIsRestricted(
-                projection.fieldId,
-                relationSchemas,
-                authCtx,
-                step.relationSchemaId
-              )
-            );
-          })()
+  (filters.projections ?? []).some(projection => {
+    if (projection.source === 'relation') {
+      const step = [...projection.path]
+        .reverse()
+        .find(candidate => candidate.kind === 'typedRelation');
+      return (
+        step == null ||
+        relationFieldIsRestricted(
+          projection.fieldId,
+          relationSchemas,
+          authCtx,
+          step.relationSchemaId
+        ) ||
+        pathUsesRestrictedField(projection.path, schemas, authCtx, relationSchemas)
+      );
+    }
+    const rootRelationSchemaId =
+      projection.path.length === 0 &&
+      filters.schemaId &&
+      relationSchemas.some(s => s.id === filters.schemaId)
+        ? filters.schemaId
+        : undefined;
+    return (
+      (rootRelationSchemaId
+        ? relationFieldIsRestricted(
+            projection.fieldId,
+            relationSchemas,
+            authCtx,
+            rootRelationSchemaId
+          )
         : fieldIsRestricted(
             projection.fieldId,
             schemas,
             authCtx,
             projection.path.length === 0 ? filters.schemaId : undefined
           )) || pathUsesRestrictedField(projection.path, schemas, authCtx, relationSchemas)
-  ) ||
+    );
+  }) ||
   configUsesRestrictedField(config, schemas, authCtx);
+
+// Relation-rooted saved views (#2689) only support the table view mode in this pass — tree/radar/
+// matrix/map/explore/graph/topology are entity-semantic and don't have a relation-rooted
+// equivalent yet. Structural constraint, not an ACL check, so it applies regardless of authCtx.
+const assertRelationRootViewModeAllowed = (
+  filters: EntityQuery,
+  viewMode: string,
+  relationSchemas: RelationSchemaDbResult[]
+) => {
+  const isRelationRoot =
+    filters.root_kind === 'relation' ||
+    (filters.schemaId != null && relationSchemas.some(schema => schema.id === filters.schemaId));
+  httpAssert.true(!isRelationRoot || viewMode === 'table', {
+    status: 400,
+    message: `Relation-rooted saved views only support the 'table' view mode, got '${viewMode}'`
+  });
+};
 
 const assertSavedViewAccessible = (
   filters: EntityQuery,
@@ -388,12 +442,19 @@ export const createSavedView = async (
     message: 'projectId is required for project-scoped views'
   });
 
-  if (authCtx) {
-    const [schemas, relationSchemas] = await Promise.all([
-      db.catalog.listSchemas(workspace),
-      db.relation.listRelationSchemas(workspace)
-    ]);
-    assertSavedViewAccessible(body.filters, body.config ?? null, schemas, authCtx, relationSchemas);
+  {
+    const relationSchemas = await db.relation.listRelationSchemas(workspace);
+    assertRelationRootViewModeAllowed(body.filters, body.viewMode, relationSchemas);
+    if (authCtx) {
+      const schemas = await db.catalog.listSchemas(workspace);
+      assertSavedViewAccessible(
+        body.filters,
+        body.config ?? null,
+        schemas,
+        authCtx,
+        relationSchemas
+      );
+    }
   }
 
   const now = new Date();
@@ -427,18 +488,23 @@ export const updateSavedView = async (
   const existing = await db.view.getSavedView(workspace, id);
   httpAssert.true(existing, { status: 404, message: 'View not found' });
 
-  if (authCtx) {
-    const [schemas, relationSchemas] = await Promise.all([
-      db.catalog.listSchemas(workspace),
-      db.relation.listRelationSchemas(workspace)
-    ]);
-    assertSavedViewAccessible(
+  {
+    const relationSchemas = await db.relation.listRelationSchemas(workspace);
+    assertRelationRootViewModeAllowed(
       body.filters ?? existing.filters,
-      body.config === undefined ? existing.config : body.config,
-      schemas,
-      authCtx,
+      body.viewMode ?? existing.view_mode,
       relationSchemas
     );
+    if (authCtx) {
+      const schemas = await db.catalog.listSchemas(workspace);
+      assertSavedViewAccessible(
+        body.filters ?? existing.filters,
+        body.config === undefined ? existing.config : body.config,
+        schemas,
+        authCtx,
+        relationSchemas
+      );
+    }
   }
 
   const updated = await db.view.updateSavedView(workspace, id, {

@@ -1,9 +1,10 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import type { DatabaseAdapter } from '../../db/database';
 import type { SchemaDbResult } from './db/catalogDatabase';
 import type { RelationSchemaDbResult } from './db/relationDatabase';
 import { buildAuthorizationContext } from '@arch-register/permissions';
-import { savedViewUsesRestrictedField } from './viewOperations';
+import { savedViewUsesRestrictedField, createSavedView } from './viewOperations';
 
 const now = new Date('2026-08-03T00:00:00.000Z');
 
@@ -123,5 +124,53 @@ describe('savedViewUsesRestrictedField typed-relation owner access', () => {
         relationSchema
       ])
     ).toBe(true);
+  });
+
+  it('resolves a relation-rooted root-level predicate against the relation schema, not entity schemas', () => {
+    const relationRootQuery: EntityQuery = {
+      schemaId: relationSchema.id,
+      root: { kind: 'predicate', path: [], fieldId: 'note', op: 'equals', value: 'x' }
+    };
+    // 'note' is a relation field, unrestricted on relationSchema — not restricted.
+    expect(
+      savedViewUsesRestrictedField(
+        relationRootQuery,
+        null,
+        [openOwner, lockedOwner],
+        authWithoutAccess,
+        [relationSchema]
+      )
+    ).toBe(false);
+  });
+});
+
+describe('createSavedView relation-rooted viewMode restriction', () => {
+  const makeDb = () =>
+    ({
+      relation: { listRelationSchemas: vi.fn(async () => [relationSchema]) },
+      catalog: { listSchemas: vi.fn(async () => [openOwner, lockedOwner]) },
+      view: { createSavedView: vi.fn(async (input: unknown) => input) }
+    }) as unknown as DatabaseAdapter;
+
+  it('rejects a non-table viewMode for a relation-rooted saved view', async () => {
+    const db = makeDb();
+    await expect(
+      createSavedView(db, 'ws-1', {
+        name: 'My relations',
+        viewMode: 'cards',
+        filters: { schemaId: relationSchema.id, root: { kind: 'and', children: [] } }
+      } as never)
+    ).rejects.toThrow();
+  });
+
+  it('allows the table viewMode for a relation-rooted saved view', async () => {
+    const db = makeDb();
+    await expect(
+      createSavedView(db, 'ws-1', {
+        name: 'My relations',
+        viewMode: 'table',
+        filters: { schemaId: relationSchema.id, root: { kind: 'and', children: [] } }
+      } as never)
+    ).resolves.toBeDefined();
   });
 });

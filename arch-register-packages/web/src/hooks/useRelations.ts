@@ -1,5 +1,6 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type { RelationListFilters } from '@arch-register/api-types/relationContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { relationKeys } from '../queries/relations';
 import { entityKeys } from '../queries/entities';
 import { orpcClient } from '../lib/orpcClient';
@@ -18,6 +19,34 @@ export const useRelations = (
         query: filters
       }),
     enabled: queryOptions?.enabled ?? !!workspaceId
+  });
+
+  return {
+    ...query,
+    data: query.data?.items ?? [],
+    total: query.data?.total
+  };
+};
+
+// Hook for browsing relation instances via the relation-rooted structured query engine (#2689) —
+// supports filtering/sorting/search on relation fields and endpoint entity fields, unlike
+// useRelations' schema/endpoint-only filters.
+export const useRelationsQuery = (
+  workspaceId: string,
+  relationQuery: EntityQuery | null,
+  options: { view?: 'summary' | 'full'; limit?: number; offset?: number } = {},
+  queryOptions?: { enabled?: boolean }
+) => {
+  const query = useQuery({
+    queryKey: relationKeys.list(workspaceId, { relationQuery, ...options }),
+    queryFn: () =>
+      orpcClient.relations.query({
+        params: { workspace: workspaceId },
+        // Serialized to a JSON string, mirroring entityListQuery.ts's toEntityListQuery —
+        // relationQueryListFiltersSchema's preprocess step parses it back out server-side.
+        query: { relationQuery: JSON.stringify(relationQuery!), ...options }
+      }),
+    enabled: (queryOptions?.enabled ?? true) && !!workspaceId && relationQuery != null
   });
 
   return {

@@ -1,6 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndId, foreignKeySchema } from '@arch-register/api-types/common';
+import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
 // ── Relation instance ────────────────────────────────────────
 
@@ -55,6 +56,36 @@ export const relationListFiltersSchema = z.object({
 export const relationListResponseSchema = z.object({
   items: z.array(relationRecordSchema).describe('Relation instances on the requested page'),
   total: z.number().int().describe('Total number of relation instances matching the filters')
+});
+
+// ── Relation-rooted structured query (#2689) ─────────────────
+//
+// Additive endpoint: reuses the same EntityQuery IR/DSL as entity querying (see
+// entityQueryIR.ts), scoped to a relation schema so its root kind resolves to 'relation'. Does
+// not change the `list`/`get`/`create`/`update`/`remove`/`listForEntity` endpoints above, which
+// keep serving the existing entity-embedded relation UX unchanged.
+const relationQueryRequestSchema = z.preprocess(value => {
+  if (typeof value !== 'string') return value;
+  try {
+    return JSON.parse(value);
+  } catch {
+    return value;
+  }
+}, entityQuerySchema);
+
+export const relationQueryListFiltersSchema = z.object({
+  relationQuery: relationQueryRequestSchema.describe(
+    'Structured EntityQuery IR rooted at a relation schema, serialized as JSON when sent as a GET query parameter'
+  ),
+  view: z.enum(['summary', 'full']).optional().describe('Response detail level'),
+  limit: z.preprocess(
+    v => (v !== undefined ? Number(v) : undefined),
+    z.number().int().positive().optional().describe('Maximum number of relations to return')
+  ),
+  offset: z.preprocess(
+    v => (v !== undefined ? Number(v) : undefined),
+    z.number().int().min(0).optional().describe('Number of relations to skip for pagination')
+  )
 });
 
 export const deleteRelationResponseSchema = z.object({
@@ -113,6 +144,20 @@ export const workspaceRelationContract = oc.tag('Relations').router({
           })
         })
       )
+      .output(relationListResponseSchema),
+    query: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/relations/query',
+        inputStructure: 'detailed',
+        summary: 'Query relation instances',
+        description:
+          'Lists relation instances via the structured EntityQuery IR, rooted at a relation ' +
+          'schema — supports filtering, sorting, search-free-field predicates, and projections, ' +
+          'unlike the simpler schema/endpoint-only filters on GET /{workspace}/relations.',
+        tags: ['Relations']
+      })
+      .input(z.object({ params: ws, query: relationQueryListFiltersSchema }))
       .output(relationListResponseSchema),
     get: oc
       .route({
@@ -185,4 +230,5 @@ export type RelationRecord = z.infer<typeof relationRecordSchema>;
 export type RelationCreateBody = z.infer<typeof relationCreateBodySchema>;
 export type RelationUpdateBody = z.infer<typeof relationUpdateBodySchema>;
 export type RelationListFilters = z.infer<typeof relationListFiltersSchema>;
+export type RelationQueryListFilters = z.infer<typeof relationQueryListFiltersSchema>;
 export type EntityTypedRelations = z.infer<typeof entityTypedRelationsSchema>;

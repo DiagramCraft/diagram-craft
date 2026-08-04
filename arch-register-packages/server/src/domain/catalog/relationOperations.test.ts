@@ -8,7 +8,8 @@ import {
   createWorkspaceRelation,
   updateWorkspaceRelation,
   deleteWorkspaceRelation,
-  restoreWorkspaceRelationVersion
+  restoreWorkspaceRelationVersion,
+  queryWorkspaceRelations
 } from './relationOperations';
 import type { EntityVersionDbResult, EntityVersionSummaryDbResult } from './db/catalogDatabase';
 
@@ -214,6 +215,67 @@ describe('createWorkspaceRelation — version history', () => {
       })
     );
     expect(pruneAutosaveVersions).toHaveBeenCalledWith('ws-1', 'relation-1', 50);
+  });
+});
+
+describe('queryWorkspaceRelations (#2689)', () => {
+  it('compiles and executes a relation-rooted query, redacting the result via toRedactedApiRelation', async () => {
+    const row = makeRelationRow();
+    const db = {
+      core: { driver: 'sqlite' },
+      relation: {
+        listRelationSchemas: vi.fn(async () => [relationSchema]),
+        listRelations: vi.fn(async () => ({ items: [row], total: 1 })),
+        runCompiledRelationQuery: vi.fn(async () => [{ ...row, projections: {} }])
+      },
+      catalog: {
+        listSchemas: vi.fn(async () => [entitySchema]),
+        listEntities: vi.fn(async () => [inEntity, outEntity]),
+        runCompiledEntityQuery: vi.fn(async () => [])
+      }
+    } as unknown as DatabaseAdapter;
+
+    const page = await queryWorkspaceRelations(
+      db,
+      'ws-1',
+      { schemaId: relationSchema.id, root: { kind: 'and', children: [] } },
+      {},
+      eventForAuthCtx()
+    );
+
+    expect(page.total).toBe(1);
+    expect(page.items[0]!._uid).toBe(row.id);
+    expect(db.relation.runCompiledRelationQuery).toHaveBeenCalledTimes(1);
+    const [sql] = (db.relation.runCompiledRelationQuery as ReturnType<typeof vi.fn>).mock.calls[0]!;
+    expect(sql).toContain('scoped_relation');
+  });
+
+  it('rejects an invalid relation-rooted query with a 400', async () => {
+    const db = {
+      core: { driver: 'sqlite' },
+      relation: {
+        listRelationSchemas: vi.fn(async () => [relationSchema]),
+        listRelations: vi.fn(async () => ({ items: [], total: 0 })),
+        runCompiledRelationQuery: vi.fn(async () => [])
+      },
+      catalog: {
+        listSchemas: vi.fn(async () => [entitySchema]),
+        listEntities: vi.fn(async () => [])
+      }
+    } as unknown as DatabaseAdapter;
+
+    await expect(
+      queryWorkspaceRelations(
+        db,
+        'ws-1',
+        {
+          schemaId: relationSchema.id,
+          root: { kind: 'predicate', path: [], fieldId: 'unknown_field', op: 'equals', value: 'x' }
+        },
+        {},
+        eventForAuthCtx()
+      )
+    ).rejects.toThrow();
   });
 });
 

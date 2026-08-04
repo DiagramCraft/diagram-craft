@@ -1,5 +1,5 @@
 import { useState, useMemo } from 'react';
-import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch, useLocation } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
@@ -20,7 +20,8 @@ import {
   TbPinned,
   TbBookmark,
   TbLayoutSidebarLeftCollapse,
-  TbLayoutSidebarLeftExpand
+  TbLayoutSidebarLeftExpand,
+  TbArrowsRightLeft
 } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import type { SavedView } from '@arch-register/api-types/viewContract';
@@ -60,6 +61,8 @@ export const EntitiesSidebar = ({
 }) => {
   const navigate = useNavigate();
   const { entityId: routeEntityId } = useParams({ strict: false });
+  const { pathname } = useLocation();
+  const onRelationsRoute = pathname.endsWith('/entities/relations');
   const { permissions } = useWorkspaceContext();
   const search = useSearch({ strict: false });
   const sidebarTab = search.sidebarTab ?? 'filters';
@@ -291,11 +294,23 @@ export const EntitiesSidebar = ({
               icon={<TbDatabase size={12} />}
               label="All entities"
               testId="entity-filter-all"
-              active={activeFilterKind === 'all'}
+              active={activeFilterKind === 'all' && !onRelationsRoute}
               onClick={() =>
                 navigateEntities({ type: undefined, status: undefined, owner: undefined })
               }
               trailing={<span className="dim mono">{totalEntities}</span>}
+            />
+            <TreeRow
+              icon={<TbArrowsRightLeft size={12} />}
+              label="All relations"
+              testId="entity-filter-all-relations"
+              active={onRelationsRoute}
+              onClick={() =>
+                navigate({
+                  to: '/$workspaceSlug/entities/relations',
+                  params: { workspaceSlug }
+                })
+              }
             />
             <SidebarGroupLabel>By type</SidebarGroupLabel>
             {schemas.map((s, i) => (

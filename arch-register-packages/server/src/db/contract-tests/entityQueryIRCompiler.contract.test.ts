@@ -1673,4 +1673,162 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(await runFor(asOfHistorical, 'draft')).toEqual([owner.id]);
     expect(await runFor(asOfHistorical, 'final')).toEqual([]);
   });
+
+  it('executes a relation-rooted query end to end (#2689)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'System' });
+    const relationSchema = await db.relation.createRelationSchema({
+      id: randomUUID(),
+      workspace,
+      name: 'Depends On',
+      description: '',
+      in_schema_ids: [schema.id],
+      out_schema_ids: [schema.id],
+      fields: [{ id: 'status', name: 'Status', type: 'text' }],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    const entityA = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'A' });
+    const entityB = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'B' });
+    const entityC = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'C' });
+    const matching = await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: relationSchema.id,
+      in_entity_id: entityA.id,
+      out_entity_id: entityB.id,
+      data: { status: 'active' },
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: relationSchema.id,
+      in_entity_id: entityA.id,
+      out_entity_id: entityC.id,
+      data: { status: 'inactive' },
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+    const relationSchemas = new Map([[relationSchema.id, relationSchema]]);
+
+    // Scalar predicate directly on the relation row.
+    const scalarQuery: EntityQuery = {
+      schemaId: relationSchema.id,
+      root: { kind: 'predicate', path: [], fieldId: 'status', op: 'equals', value: 'active' }
+    };
+    const scalarValidation = validateEntityQueryIR(scalarQuery, schemas, null, relationSchemas);
+    expect(scalarValidation.ok, JSON.stringify(scalarValidation)).toBe(true);
+    const scalarCompiled = compileEntityQueryIR(
+      scalarQuery,
+      schemas,
+      driver,
+      workspace,
+      {},
+      null,
+      relationSchemas
+    );
+    const scalarRows = await db.relation.runCompiledRelationQuery(
+      scalarCompiled.sql,
+      scalarCompiled.params
+    );
+    expect(scalarRows.map(row => row.id)).toEqual([matching.id]);
+    expect(scalarRows[0]!.in_entity_name).toBe('A');
+    expect(scalarRows[0]!.out_entity_name).toBe('B');
+
+    // endpoint traversal: relations whose 'out' endpoint is named 'C'.
+    const endpointQuery: EntityQuery = {
+      schemaId: relationSchema.id,
+      root: {
+        kind: 'predicate',
+        path: [{ kind: 'endpoint', direction: 'out' }],
+        fieldId: '_name',
+        op: 'equals',
+        value: 'C'
+      }
+    };
+    const endpointValidation = validateEntityQueryIR(endpointQuery, schemas, null, relationSchemas);
+    expect(endpointValidation.ok, JSON.stringify(endpointValidation)).toBe(true);
+    const endpointCompiled = compileEntityQueryIR(
+      endpointQuery,
+      schemas,
+      driver,
+      workspace,
+      {},
+      null,
+      relationSchemas
+    );
+    const endpointRows = await db.relation.runCompiledRelationQuery(
+      endpointCompiled.sql,
+      endpointCompiled.params
+    );
+    expect(endpointRows.map(row => row.out_entity_id)).toEqual([entityC.id]);
+
+    // visibleRelationIds gates which relations are returned, mirroring visibleEntityIds.
+    const gatedCompiled = compileEntityQueryIR(
+      { schemaId: relationSchema.id, root: { kind: 'and', children: [] } },
+      schemas,
+      driver,
+      workspace,
+      { visibleRelationIds: [] },
+      null,
+      relationSchemas
+    );
+    const gatedRows = await db.relation.runCompiledRelationQuery(
+      gatedCompiled.sql,
+      gatedCompiled.params
+    );
+    expect(gatedRows).toHaveLength(0);
+  });
+
+  it('lists relations through listRelationsWithCount using the relation-rooted query engine (#2689)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'System' });
+    const relationSchema = await db.relation.createRelationSchema({
+      id: randomUUID(),
+      workspace,
+      name: 'Depends On',
+      description: '',
+      in_schema_ids: [schema.id],
+      out_schema_ids: [schema.id],
+      fields: [{ id: 'status', name: 'Status', type: 'text' }],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    const entityA = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'A' });
+    const entityB = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'B' });
+    await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: relationSchema.id,
+      in_entity_id: entityA.id,
+      out_entity_id: entityB.id,
+      data: { status: 'active' },
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    const { listRelationsWithCount } = await import('../../domain/catalog/entityQueryOperations');
+    const page = await listRelationsWithCount(db, workspace, null, {
+      relationQuery: { schemaId: relationSchema.id, root: { kind: 'and', children: [] } }
+    });
+    expect(page.total).toBe(1);
+    expect(page.items[0]!._schema.id).toBe(relationSchema.id);
+    expect(page.items[0]!['status']).toBe('active');
+  });
 });

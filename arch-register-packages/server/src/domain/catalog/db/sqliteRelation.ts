@@ -152,6 +152,10 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
     return Number(row?.count ?? 0);
   }
 
+  async runCompiledRelationQuery(sql: string, params: unknown[]) {
+    return this.all(sql, params, relationMappers.relationQuery);
+  }
+
   async listRelations(
     workspace: string,
     filters: RelationListDbFilters,
