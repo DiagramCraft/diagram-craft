@@ -24,6 +24,7 @@ import {
 import { createWorkspaceEntityORPCHandler } from './domain/catalog/entityOrpc';
 import { createEntitySyncORPCHandler } from './domain/externalIdentity/entitySyncOrpc';
 import { createEntityVersionORPCHandler } from './domain/catalog/entityVersionOrpc';
+import { createRelationVersionORPCHandler } from './domain/catalog/relationVersionOrpc';
 import { createEntityChangeORPCHandler } from './domain/catalog/entityChangeOrpc';
 import { createWorkspaceTemplateORPCHandler } from './domain/catalog/templateOrpc';
 import { createWorkspaceViewORPCHandler } from './domain/catalog/viewOrpc';
@@ -169,6 +170,7 @@ export const createApp = (
   app.use(createWorkspaceEntityORPCHandler(db));
   app.use(createEntitySyncORPCHandler(db));
   app.use(createEntityVersionORPCHandler(db));
+  app.use(createRelationVersionORPCHandler(db));
   app.use(createEntityChangeORPCHandler(db));
   app.use(createEntityDeprecationORPCHandler(db));
   app.use(createWorkspaceTemplateORPCHandler(db));

@@ -82,7 +82,7 @@ describe('typed scalar relation query compilation', () => {
       null,
       relationSchemas
     );
-    expect(compiled.sql).toContain('JOIN catalog_record pb_rel_query_path_0_1');
+    expect(compiled.sql).toContain('JOIN scoped_relation pb_rel_query_path_0_1');
     expect(compiled.sql).toContain('pb_rel_query_path_0_1.out_record_id = pb_root_query_path_0.id');
     expect(compiled.sql).toContain("json_extract(pb_rel_query_path_0_1.data, '$.status')");
     expect(compiled.params).toContain(relation.id);

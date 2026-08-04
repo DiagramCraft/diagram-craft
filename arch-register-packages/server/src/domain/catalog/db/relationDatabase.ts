@@ -69,7 +69,8 @@ export const RELATION_SELECT_SQL = `
     eout.name AS out_entity_name,
     rs.name   AS schema_name
   FROM catalog_record r
-  JOIN catalog_record ein ON ein.id  = r.in_record_id  AND ein.kind = 'entity' AND r.kind = 'relation'
+  JOIN catalog_record ein ON ein.id  = r.in_record_id  AND ein.kind = 'entity'
+    AND r.kind = 'relation' AND r.deleted_at IS NULL
   JOIN catalog_record eout ON eout.id = r.out_record_id AND eout.kind = 'entity'
   JOIN relation_schema rs ON rs.id   = r.schema_id
 `;

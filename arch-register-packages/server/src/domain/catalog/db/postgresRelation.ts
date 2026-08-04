@@ -131,7 +131,7 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
 
   async countRelationsForSchema(workspace: string, schemaId: string) {
     const [row] = await this.sql<{ count: string }[]>`
-      SELECT COUNT(*) AS count FROM catalog_record WHERE kind = 'relation' AND workspace = ${workspace} AND schema_id = ${schemaId}
+      SELECT COUNT(*) AS count FROM catalog_record WHERE kind = 'relation' AND deleted_at IS NULL AND workspace = ${workspace} AND schema_id = ${schemaId}
     `;
     return Number(row?.count ?? 0);
   }
@@ -154,7 +154,7 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
     const where = whereParts.join(' AND ');
 
     const [countRow] = await this.sql.unsafe<{ count: string }[]>(
-      `SELECT COUNT(*) AS count FROM catalog_record r WHERE r.kind = 'relation' AND ${where}`,
+      `SELECT COUNT(*) AS count FROM catalog_record r WHERE r.kind = 'relation' AND r.deleted_at IS NULL AND ${where}`,
       params as Parameters<typeof this.sql.unsafe>[1]
     );
 
@@ -222,7 +222,7 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
     const existing = await this.getRelation(workspace, id);
     if (!existing) return null;
     await this
-      .sql`DELETE FROM catalog_record WHERE workspace = ${workspace} AND id = ${id} AND kind = 'relation'`;
+      .sql`UPDATE catalog_record SET deleted_at = NOW() WHERE workspace = ${workspace} AND id = ${id} AND kind = 'relation'`;
     return existing;
   }
 

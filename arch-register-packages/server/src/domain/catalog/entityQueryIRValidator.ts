@@ -448,25 +448,6 @@ const projectionUsesAssessmentField = (fieldId: string, path: PathStep[]): boole
   fieldId.startsWith(ASSESSMENT_FIELD_PREFIX) ||
   pathUsesAssessmentField(path);
 
-const queryUsesTypedRelation = (node: QueryNode): boolean => {
-  switch (node.kind) {
-    case 'and':
-    case 'or':
-      return node.children.some(queryUsesTypedRelation);
-    case 'not':
-      return queryUsesTypedRelation(node.child);
-    case 'predicate':
-    case 'relationExists':
-      return node.path.some(
-        step =>
-          step.kind === 'typedRelation' ||
-          (step.filter ? queryUsesTypedRelation(step.filter) : false)
-      );
-    case 'freeText':
-      return false;
-  }
-};
-
 const projectionAlias = (projection: NonNullable<EntityQuery['projections']>[number]): string => {
   if (projection.alias) return projection.alias;
   const path = projection.path
@@ -506,19 +487,6 @@ export const validateEntityQueryIR = (
   }
   if (query.asOf != null && Number.isNaN(Date.parse(query.asOf))) {
     errors.push({ path: ['asOf'], message: `Invalid asOf date '${query.asOf}'` });
-  }
-  if (
-    query.asOf != null &&
-    (queryUsesTypedRelation(query.root) ||
-      (query.projections ?? []).some(projection =>
-        projection.path.some(step => step.kind === 'typedRelation')
-      ))
-  ) {
-    errors.push({
-      path: ['asOf'],
-      message:
-        'Typed relation queries are not supported with asOf until relation history is available'
-    });
   }
   validateNode(query.root, schemas, relationSchemas, ['root'], 0, true, errors, authCtx);
 

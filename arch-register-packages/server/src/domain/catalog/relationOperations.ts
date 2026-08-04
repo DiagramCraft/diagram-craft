@@ -11,6 +11,7 @@ import {
 } from '../auth/authorization';
 import { defineOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
+import { orpcAssert } from '../../utils/orpcAssert';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import {
   extractRelationFieldData,
@@ -18,8 +19,18 @@ import {
   assertRelationMutationsSupported,
   toRedactedApiRelation,
   validateRelationEndpoints,
-  relationAuditContext
+  relationAuditContext,
+  relationToBaseState,
+  createRelationVersionSchemaResolver
 } from './relationHelpers';
+import {
+  assertVersionCanBeRestored,
+  assertVersionDataCanBeRestored,
+  redactVersionState,
+  serializeEntityVersion
+} from './entityVersionOperations';
+
+const RELATION_AUTOSAVE_KEEP_COUNT = 50;
 import {
   canViewTypedRelation,
   canViewTypedRelationFromEndpoint,
@@ -238,6 +249,20 @@ export const createWorkspaceRelation = async (
         metadata: { relation: relationAuditContext(row) }
       });
 
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace: ws,
+        entity_id: row.id,
+        version_number: row.version,
+        kind: 'autosave',
+        commit_message: null,
+        created_at: timestamp,
+        created_by: authCtx.userId,
+        state: relationToBaseState(row),
+        applied_case_revision_id: null
+      });
+      await db.catalog.pruneAutosaveVersions(ws, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
+
       return toRedactedApiRelation(row, authCtx, schema);
     }
   );
@@ -308,6 +333,20 @@ export const updateWorkspaceRelation = async (
         metadata: { relation: relationAuditContext(row) }
       });
 
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace: ws,
+        entity_id: row.id,
+        version_number: row.version,
+        kind: 'autosave',
+        commit_message: null,
+        created_at: timestamp,
+        created_by: authCtx.userId,
+        state: relationToBaseState(row),
+        applied_case_revision_id: null
+      });
+      await db.catalog.pruneAutosaveVersions(ws, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
+
       return toRedactedApiRelation(row, authCtx, schema);
     }
   );
@@ -346,6 +385,25 @@ export const deleteWorkspaceRelation = async (
 
       await db.relation.deleteRelation(ws, id);
 
+      // Soft delete (relationDatabase.ts), so the row is still there for the FK from
+      // record_version — mirrors deleteEntity's nextVersionNumber computation, since deleting a
+      // relation doesn't bump its own `version` counter the way create/update do.
+      const existingVersions = await db.catalog.listEntityVersions(ws, row.id);
+      const nextVersionNumber =
+        existingVersions.reduce((max, v) => Math.max(max, v.version_number), 0) + 1;
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace: ws,
+        entity_id: row.id,
+        version_number: nextVersionNumber,
+        kind: 'deleted',
+        commit_message: null,
+        created_at: new Date(),
+        created_by: authCtx.userId,
+        state: relationToBaseState(row),
+        applied_case_revision_id: null
+      });
+
       await logAudit(db, {
         userId: authCtx.userId,
         workspace: ws,
@@ -359,6 +417,113 @@ export const deleteWorkspaceRelation = async (
       });
 
       return { success: true, message: `Relation '${id}' deleted` };
+    }
+  );
+};
+
+export const restoreWorkspaceRelationVersion = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  id: string,
+  versionId: string,
+  commitMessage: string | null,
+  event: AuthenticatedEvent
+): Promise<ReturnType<typeof serializeEntityVersion>> => {
+  return defineOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to restore relation version', dbErrorMessages },
+    async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ent.edit');
+      const row = await db.relation.getRelation(ws, id);
+      httpAssert.present(row, { status: 404, message: `Relation '${id}' not found` });
+
+      const schema = await db.relation.getRelationSchema(ws, row.schema_id);
+      httpAssert.present(schema, {
+        status: 404,
+        message: `Relation schema '${row.schema_id}' not found`
+      });
+      const { inSchema, outSchema } = await getOwnerSchemas(db, ws, row);
+      requireTypedRelationEdit(
+        authCtx,
+        [
+          { schema: inSchema, direction: 'in' },
+          { schema: outSchema, direction: 'out' }
+        ],
+        row.schema_id
+      );
+      assertRelationMutationsSupported(schema);
+
+      const version = await db.catalog.getEntityVersionById(ws, versionId);
+      orpcAssert.present(version, { code: 'NOT_FOUND', message: 'Version not found' });
+      assertVersionCanBeRestored(version, row.id);
+
+      const restoredData = version.state['data'];
+      httpAssert.true(restoredData != null && typeof restoredData === 'object', {
+        status: 400,
+        message: 'Relation version does not contain a valid data state'
+      });
+      const resolveVersionSchemas = createRelationVersionSchemaResolver(db, ws);
+      const { historicalSchema } = await resolveVersionSchemas(version, row.schema_id);
+      assertVersionDataCanBeRestored(
+        authCtx,
+        schema,
+        historicalSchema,
+        row.data,
+        restoredData as Record<string, unknown>,
+        { failClosedWhenHistoricalSchemaMissing: true }
+      );
+
+      const timestamp = new Date();
+      const nextRow = await db.relation.updateRelation(ws, id, {
+        data: restoredData as Record<string, unknown>,
+        version: row.version + 1,
+        updated_at: timestamp
+      });
+      httpAssert.present(nextRow, { status: 404, message: `Relation '${id}' not found` });
+
+      const changes = computeChanges(
+        flattenRelationAuditFields(row),
+        flattenRelationAuditFields(nextRow),
+        { alwaysInclude: ['_inEntityId', '_outEntityId'] }
+      );
+      await logAudit(db, {
+        userId: authCtx.userId,
+        workspace: ws,
+        operation: 'update',
+        entityType: 'relation',
+        entityId: id,
+        entityName: `${nextRow.in_entity_name} → ${nextRow.out_entity_name}`,
+        schemaId: nextRow.schema_id,
+        changes,
+        metadata: {
+          relation: relationAuditContext(nextRow),
+          restore_from_version_id: version.id,
+          restore_from_version_created_at: version.created_at.toISOString(),
+          restore_commit_message: commitMessage
+        }
+      });
+
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace: ws,
+        entity_id: nextRow.id,
+        version_number: nextRow.version,
+        kind: 'restored',
+        commit_message: commitMessage,
+        created_at: timestamp,
+        created_by: authCtx.userId,
+        state: relationToBaseState(nextRow),
+        applied_case_revision_id: null
+      });
+      await db.catalog.pruneAutosaveVersions(ws, nextRow.id, RELATION_AUTOSAVE_KEEP_COUNT);
+
+      return serializeEntityVersion(
+        redactVersionState(version, authCtx, schema, historicalSchema, {
+          failClosedWhenHistoricalSchemaMissing: true
+        })
+      );
     }
   );
 };

@@ -1,9 +1,55 @@
 import type { RelationDbResult } from './db/relationDatabase';
-import type { RelationSchemaDbResult } from './db/relationDatabase';
+import type { RelationSchemaDbResult, RelationSchemaVersionDbResult } from './db/relationDatabase';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
+import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
+
+/**
+ * Resolves the relation schema (and, for a given version's created_at, the relation_schema_version
+ * that was live at that time) so version redaction can apply the field-group ACL that actually
+ * applied when the version was recorded — mirroring entityVersionOrpc.ts's
+ * createVersionSchemaResolver, simplified because a relation's schema_id never changes after
+ * creation (RelationDbUpdate has no schema_id field), unlike an entity's.
+ */
+export const createRelationVersionSchemaResolver = (db: DatabaseAdapter, workspace: string) => {
+  const lookups = new Map<
+    string,
+    Promise<{
+      schema: RelationSchemaDbResult | null;
+      schemaVersions: RelationSchemaVersionDbResult[];
+    }>
+  >();
+
+  const getSchemaLookup = (schemaId: string) => {
+    const existing = lookups.get(schemaId);
+    if (existing) return existing;
+    const lookup = Promise.all([
+      db.relation.getRelationSchema(workspace, schemaId),
+      db.relation.listRelationSchemaVersions(workspace, schemaId)
+    ]).then(([schema, schemaVersions]) => ({ schema, schemaVersions }));
+    lookups.set(schemaId, lookup);
+    return lookup;
+  };
+
+  return async (
+    version: { state: Record<string, unknown>; created_at: Date },
+    fallbackSchemaId?: string
+  ) => {
+    const schemaId = String(version.state['schema_id'] ?? fallbackSchemaId ?? '');
+    const { schema, schemaVersions } = schemaId
+      ? await getSchemaLookup(schemaId)
+      : { schema: null, schemaVersions: [] as RelationSchemaVersionDbResult[] };
+
+    const historicalSchema =
+      [...schemaVersions]
+        .filter(schemaVersion => schemaVersion.created_at <= version.created_at)
+        .sort((left, right) => right.created_at.getTime() - left.created_at.getTime())[0] ?? null;
+
+    return { schema, historicalSchema };
+  };
+};
 
 /** Reserved (underscore-prefixed) keys are metadata; everything else is relation field data. */
 export const extractRelationFieldData = (body: Record<string, unknown>): Record<string, unknown> =>
@@ -35,7 +81,11 @@ export const validateRelationEndpoints = (
   });
 };
 
-/** Relation approval/version workflows are implemented separately in #2574. */
+/**
+ * Relation instances get create/update/delete version history via record_version (#2687) —
+ * deletion is a soft delete (relationDatabase.ts), same as entities. Approval workflow (planned
+ * changes, change cases, governance) is not yet implemented for relations.
+ */
 export const assertRelationMutationsSupported = (schema: RelationSchemaDbResult) => {
   httpAssert.true(schema.relation_approval_policy !== 'required', {
     status: 409,
@@ -44,6 +94,24 @@ export const assertRelationMutationsSupported = (schema: RelationSchemaDbResult)
       'This relation schema requires an approved change proposal before relation instances can be edited'
   });
 };
+
+/**
+ * Snapshot of relation instance state written to record_version on create/update, mirroring
+ * `entityToBaseState` (entityMutations.ts). Endpoint ids are part of a relation's identity (there
+ * is no slug/namespace/name to snapshot instead).
+ */
+export const relationToBaseState = (row: RelationDbResult): Record<string, unknown> => ({
+  id: row.id,
+  workspace: row.workspace,
+  schema_id: row.schema_id,
+  in_entity_id: row.in_entity_id,
+  out_entity_id: row.out_entity_id,
+  data: row.data,
+  version: row.version,
+  approval_policy_override: row.approval_policy_override,
+  created_at: row.created_at,
+  updated_at: row.updated_at
+});
 
 /** Flattens relation field data to top level for audit logging, mirroring `flattenEntityAuditFields`. */
 export const flattenRelationAuditFields = (row: RelationDbResult): Record<string, unknown> => ({
