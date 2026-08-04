@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import {
   resolveFieldSchemaScope,
+  resolveRelationFieldSchemaScope,
   validateEntityQueryIR,
+  type RelationSchemaCatalog,
   type SchemaCatalog
 } from './entityQueryIRValidator';
 import type { SchemaDbResult } from './db/catalogDatabase';
+import type { RelationSchemaDbResult } from './db/relationDatabase';
 import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 
 const now = new Date('2026-06-29T12:00:00.000Z');
@@ -495,5 +498,79 @@ describe('validateEntityQueryIR field-group restriction', () => {
       const scope = resolveFieldSchemaScope('eol_date', collidingSchemas, noAccess);
       expect(scope.needsScoping).toBe(false);
     });
+  });
+});
+
+// #2701: relation-schema counterpart to the entity-side "field id collision across schemas" coverage
+// above — resolveRelationFieldSchemaScope must flag the same kind of collision so the compiler can scope
+// relation-rooted SQL to only the relation schemas that actually grant the field.
+describe('resolveRelationFieldSchemaScope', () => {
+  const now = new Date('2026-06-29T12:00:00.000Z');
+
+  const makeRelationSchema = (
+    id: string,
+    fields: RelationSchemaDbResult['fields'] = []
+  ): RelationSchemaDbResult => ({
+    id,
+    workspace: 'ws-1',
+    name: id,
+    description: '',
+    in_schema_ids: [],
+    out_schema_ids: [],
+    fields,
+    groups: [],
+    color: null,
+    icon: null,
+    created_at: now,
+    updated_at: now
+  });
+
+  const RESTRICTED_RELATION = makeRelationSchema('restricted-relation-schema', [
+    { id: 'note', name: 'Note', type: 'text', groupId: 'restricted' },
+    { id: 'eol_date', name: 'EOL Date', type: 'date' }
+  ]);
+  RESTRICTED_RELATION.groups = [
+    { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+  ];
+
+  const UNRESTRICTED_COLLIDER_RELATION = makeRelationSchema('collider-relation-schema', [
+    { id: 'note', name: 'Note', type: 'text' }
+  ]);
+
+  const collidingRelationSchemas: RelationSchemaCatalog = new Map([
+    [RESTRICTED_RELATION.id, RESTRICTED_RELATION],
+    [UNRESTRICTED_COLLIDER_RELATION.id, UNRESTRICTED_COLLIDER_RELATION]
+  ]);
+
+  const authCtxWithTeamRoles = (roles: Record<string, TeamRole[]>) =>
+    buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: Object.entries(roles).flatMap(([teamId, teamRoles]) =>
+        teamRoles.map(role => ({ teamId, role }))
+      ),
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+  it('reports the granting relation schema and flags scoping as needed', () => {
+    const noAccess = authCtxWithTeamRoles({});
+    const scope = resolveRelationFieldSchemaScope('note', collidingRelationSchemas, noAccess);
+    expect(scope.needsScoping).toBe(true);
+    expect(scope.grantedSchemaIds).toEqual(new Set([UNRESTRICTED_COLLIDER_RELATION.id]));
+  });
+
+  it('needs no scoping for a non-colliding relation field', () => {
+    const noAccess = authCtxWithTeamRoles({});
+    const scope = resolveRelationFieldSchemaScope('eol_date', collidingRelationSchemas, noAccess);
+    expect(scope.needsScoping).toBe(false);
+  });
+
+  it('grants both schemas once the caller has view access to the restricted group', () => {
+    const viewer = authCtxWithTeamRoles({ 'team-restricted': ['team_reviewer'] });
+    const scope = resolveRelationFieldSchemaScope('note', collidingRelationSchemas, viewer);
+    expect(scope.needsScoping).toBe(false);
   });
 });

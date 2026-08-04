@@ -82,6 +82,23 @@ export const resolveFieldSchemaScope = (
   return { grantedSchemaIds, needsScoping };
 };
 
+// Relation-schema counterpart to resolveFieldSchemaScope, for relation-rooted queries (#2701) — a
+// relation field id can likewise be defined by multiple relation schemas.
+export const resolveRelationFieldSchemaScope = (
+  fieldId: string,
+  relationSchemas: RelationSchemaCatalog,
+  authCtx: WorkspaceAuthorizationContext | null
+): FieldSchemaScope => {
+  const grantedSchemaIds = new Set<string>();
+  let needsScoping = false;
+  for (const schema of relationSchemas.values()) {
+    if (!schema.fields.some(f => f.id === fieldId)) continue;
+    if (isFieldViewRestricted(authCtx, schema, fieldId)) needsScoping = true;
+    else grantedSchemaIds.add(schema.id);
+  }
+  return { grantedSchemaIds, needsScoping };
+};
+
 export const resolveTypedRelationOwnerSchemaScope = (
   fieldId: string,
   relationSchemaId: string,
