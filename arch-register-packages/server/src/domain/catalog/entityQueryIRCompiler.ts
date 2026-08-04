@@ -433,7 +433,7 @@ const compilePathSteps = (
     return (
       `EXISTS (SELECT 1 FROM catalog_record ${relationAlias} ` +
       `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} ` +
-      `WHERE ${relationAlias}.kind = 'relation' ` +
+      `WHERE ${relationAlias}.kind = 'relation' AND ${relationAlias}.deleted_at IS NULL ` +
       `AND ${relationAlias}.workspace = ${curAlias}.workspace ` +
       `AND ${relationAlias}.schema_id = ${relationSchemaParam} ` +
       `AND ${ownerSchemaClause} ` +
@@ -624,6 +624,7 @@ const buildProjectionBindings = (
           : '';
         from +=
           `\n      JOIN catalog_record ${relationAlias} ON ${relationAlias}.kind = 'relation'` +
+          ` AND ${relationAlias}.deleted_at IS NULL` +
           ` AND ${relationAlias}.workspace = ${currentAlias}.workspace` +
           ` AND ${relationAlias}.schema_id = ${relationSchema}` +
           ` AND ${ownerSchemaClause}` +
@@ -753,7 +754,7 @@ const projectionValue = (
   const source =
     `FROM ${binding.name} ${bindingAlias} ` +
     (projection.source === 'relation'
-      ? `JOIN catalog_record ${relationAlias} ON ${relationAlias}.id = ${bindingAlias}.relation_${projection.path.length}_id AND ${relationAlias}.kind = 'relation' `
+      ? `JOIN catalog_record ${relationAlias} ON ${relationAlias}.id = ${bindingAlias}.relation_${projection.path.length}_id AND ${relationAlias}.kind = 'relation' AND ${relationAlias}.deleted_at IS NULL `
       : `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} `) +
     `WHERE ${bindingAlias}.root_id = ${ROOT_ALIAS}.id${scope ? ` AND ${scope}` : ''}`;
 

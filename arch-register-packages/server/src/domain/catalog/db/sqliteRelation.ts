@@ -146,7 +146,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async countRelationsForSchema(workspace: string, schemaId: string) {
     const row = this.get<{ count: number }>(
-      "SELECT COUNT(*) AS count FROM catalog_record WHERE kind = 'relation' AND workspace = ? AND schema_id = ?",
+      "SELECT COUNT(*) AS count FROM catalog_record WHERE kind = 'relation' AND deleted_at IS NULL AND workspace = ? AND schema_id = ?",
       [workspace, schemaId]
     );
     return Number(row?.count ?? 0);
@@ -175,7 +175,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
     const where = whereParts.join(' AND ');
 
     const countRow = this.get<{ count: number }>(
-      `SELECT COUNT(*) AS count FROM catalog_record r WHERE r.kind = 'relation' AND ${where}`,
+      `SELECT COUNT(*) AS count FROM catalog_record r WHERE r.kind = 'relation' AND r.deleted_at IS NULL AND ${where}`,
       params
     );
     const rows = this.all(
@@ -239,10 +239,10 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
   async deleteRelation(workspace: string, id: string) {
     const existing = await this.getRelation(workspace, id);
     if (!existing) return null;
-    this.run("DELETE FROM catalog_record WHERE workspace = ? AND id = ? AND kind = 'relation'", [
-      workspace,
-      id
-    ]);
+    this.run(
+      "UPDATE catalog_record SET deleted_at = ? WHERE workspace = ? AND id = ? AND kind = 'relation'",
+      [new Date().toISOString(), workspace, id]
+    );
     return existing;
   }
 

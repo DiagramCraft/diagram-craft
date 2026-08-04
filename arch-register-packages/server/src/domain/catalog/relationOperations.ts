@@ -375,10 +375,26 @@ export const deleteWorkspaceRelation = async (
       });
       assertRelationMutationsSupported(schema);
 
-      // Hard delete (see relationDatabase.ts) — no 'deleted' record_version is written here since
-      // it would be cascade-deleted along with this row (#2687 excludes delete history until
-      // relations move to soft-delete).
       await db.relation.deleteRelation(ws, id);
+
+      // Soft delete (relationDatabase.ts), so the row is still there for the FK from
+      // record_version — mirrors deleteEntity's nextVersionNumber computation, since deleting a
+      // relation doesn't bump its own `version` counter the way create/update do.
+      const existingVersions = await db.catalog.listEntityVersions(ws, row.id);
+      const nextVersionNumber =
+        existingVersions.reduce((max, v) => Math.max(max, v.version_number), 0) + 1;
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace: ws,
+        entity_id: row.id,
+        version_number: nextVersionNumber,
+        kind: 'deleted',
+        commit_message: null,
+        created_at: new Date(),
+        created_by: authCtx.userId,
+        state: relationToBaseState(row),
+        applied_case_revision_id: null
+      });
 
       await logAudit(db, {
         userId: authCtx.userId,

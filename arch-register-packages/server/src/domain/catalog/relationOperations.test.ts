@@ -4,7 +4,12 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
-import { createWorkspaceRelation, updateWorkspaceRelation } from './relationOperations';
+import {
+  createWorkspaceRelation,
+  updateWorkspaceRelation,
+  deleteWorkspaceRelation
+} from './relationOperations';
+import type { EntityVersionSummaryDbResult } from './db/catalogDatabase';
 
 const authorizationMocks = vi.hoisted(() => ({
   buildApiAuthCtx: vi.fn()
@@ -118,7 +123,10 @@ const makeRelationRow = (overrides: Partial<RelationDbResult> = {}): RelationDbR
   ...overrides
 });
 
-const makeDb = (existingRow?: RelationDbResult) => {
+const makeDb = (
+  existingRow?: RelationDbResult,
+  existingVersions: EntityVersionSummaryDbResult[] = []
+) => {
   const createEntityVersion = vi.fn(async () => ({}));
   const pruneAutosaveVersions = vi.fn(async () => {});
   const createRelation = vi.fn(async () => makeRelationRow());
@@ -126,12 +134,14 @@ const makeDb = (existingRow?: RelationDbResult) => {
     async (_ws: string, _id: string, input: { version: number; data: Record<string, unknown> }) =>
       makeRelationRow({ version: input.version, data: input.data, updated_at: new Date() })
   );
+  const deleteRelation = vi.fn(async () => existingRow ?? makeRelationRow());
 
   const db = {
     relation: {
       getRelationSchema: vi.fn(async () => relationSchema),
       createRelation,
       updateRelation,
+      deleteRelation,
       getRelation: vi.fn(async () => existingRow ?? makeRelationRow())
     },
     catalog: {
@@ -140,11 +150,19 @@ const makeDb = (existingRow?: RelationDbResult) => {
       ),
       listSchemas: vi.fn(async () => [entitySchema]),
       createEntityVersion,
-      pruneAutosaveVersions
+      pruneAutosaveVersions,
+      listEntityVersions: vi.fn(async () => existingVersions)
     }
   } as unknown as DatabaseAdapter;
 
-  return { db, createEntityVersion, pruneAutosaveVersions, createRelation, updateRelation };
+  return {
+    db,
+    createEntityVersion,
+    pruneAutosaveVersions,
+    createRelation,
+    updateRelation,
+    deleteRelation
+  };
 };
 
 describe('createWorkspaceRelation — version history', () => {
@@ -193,5 +211,30 @@ describe('updateWorkspaceRelation — version history', () => {
       })
     );
     expect(pruneAutosaveVersions).toHaveBeenCalledWith('ws-1', existing.id, 50);
+  });
+});
+
+describe('deleteWorkspaceRelation — version history', () => {
+  it('soft-deletes and writes a deleted record_version continuing the version sequence', async () => {
+    const existing = makeRelationRow({ version: 2 });
+    const priorVersions = [
+      { version_number: 1 },
+      { version_number: 2 }
+    ] as EntityVersionSummaryDbResult[];
+    const { db, createEntityVersion, deleteRelation } = makeDb(existing, priorVersions);
+
+    const result = await deleteWorkspaceRelation(db, 'ws-1', existing.id, eventForAuthCtx());
+
+    expect(result.success).toBe(true);
+    expect(deleteRelation).toHaveBeenCalledWith('ws-1', existing.id);
+    expect(createEntityVersion).toHaveBeenCalledTimes(1);
+    expect(createEntityVersion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity_id: existing.id,
+        kind: 'deleted',
+        version_number: 3,
+        state: expect.objectContaining({ id: existing.id })
+      })
+    );
   });
 });

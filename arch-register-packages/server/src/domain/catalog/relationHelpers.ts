@@ -36,10 +36,9 @@ export const validateRelationEndpoints = (
 };
 
 /**
- * Relation instances get basic create/update version history via record_version (#2687), but
- * delete history and approval workflows are not yet implemented — relation deletion is still a
- * hard delete (see relationDatabase.ts), so a version row written just before it would be
- * cascade-deleted along with the row. Both remain excluded until relations move to soft-delete.
+ * Relation instances get create/update/delete version history via record_version (#2687) —
+ * deletion is a soft delete (relationDatabase.ts), same as entities. Approval workflow (planned
+ * changes, change cases, governance) is not yet implemented for relations.
  */
 export const assertRelationMutationsSupported = (schema: RelationSchemaDbResult) => {
   httpAssert.true(schema.relation_approval_policy !== 'required', {
