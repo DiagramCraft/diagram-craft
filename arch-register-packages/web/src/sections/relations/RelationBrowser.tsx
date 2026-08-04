@@ -1,4 +1,4 @@
-import { useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
   TbFilter,
@@ -7,6 +7,8 @@ import {
   TbCopy,
   TbPencil,
   TbTrash,
+  TbDownload,
+  TbUpload,
   TbChevronLeft,
   TbChevronRight
 } from 'react-icons/tb';
@@ -30,7 +32,12 @@ import { SaveViewDialog } from '../entities/components/EntityBrowser';
 import { RelationEditDialog } from '../../dialogs/RelationEditDialog';
 import { useRelationBrowserData } from './useRelationBrowserData';
 import { RelationFilterBuilder } from './RelationFilterBuilder';
-import { buildRelationSavedViewPayload } from './relationBrowserState';
+import {
+  buildRelationQueryFromFilters,
+  buildRelationSavedViewPayload
+} from './relationBrowserState';
+import { exportRelationsToCSV } from '../../lib/relationCsv';
+import { downloadBlob } from '../../lib/browserDownload';
 
 // Standalone relation-rooted browser (#2689): lists relation instances via the /relations/query
 // endpoint, distinct from the entity-embedded relation tab (EntityRelationsTab/RelationRecordList),
@@ -92,6 +99,26 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     () => savedViews.find(view => view.id === search.viewId) ?? null,
     [savedViews, search.viewId]
   );
+
+  const handleExport = useCallback(async () => {
+    try {
+      const blob = await exportRelationsToCSV(
+        workspaceId,
+        buildRelationQueryFromFilters(conditions)
+      );
+      downloadBlob(blob, `relations-${new Date().toISOString().split('T')[0]}.csv`);
+    } catch (error) {
+      console.error('Relation export failed:', error);
+      alert('Failed to export relations. Please try again.');
+    }
+  }, [conditions, workspaceId]);
+
+  const handleImport = useCallback(() => {
+    navigate({
+      to: '/$workspaceSlug/entities/relations/import',
+      params: { workspaceSlug: workspaceId }
+    });
+  }, [navigate, workspaceId]);
 
   const fieldIds = activeSchema?.fields.map(field => field.id) ?? [];
   const columnCount = 5 + fieldIds.length;
@@ -156,6 +183,19 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
       label: 'Save View As...',
       icon: <TbCopy size={14} />,
       onClick: () => setIsSavingView(true)
+    });
+  }
+
+  menuItems.push({
+    label: 'Export CSV',
+    icon: <TbDownload size={14} />,
+    onClick: handleExport
+  });
+  if (permissions.canCreateEntities) {
+    menuItems.push({
+      label: 'Import CSV',
+      icon: <TbUpload size={14} />,
+      onClick: handleImport
     });
   }
 

@@ -40,6 +40,10 @@ export const LazyRelationBrowserScreen = lazyRouteComponent(
   () => import('../../sections/relations/RelationBrowserScreen'),
   'RelationBrowserScreen'
 );
+export const LazyRelationImportScreen = lazyRouteComponent(
+  () => import('../../sections/relations/RelationImportScreen'),
+  'RelationImportScreen'
+);
 export const LazyAssistantScreen = lazyRouteComponent(
   () => import('../../sections/ai-assistant/AssistantScreen'),
   'AssistantScreen'

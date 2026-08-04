@@ -17,6 +17,12 @@ import {
   listWorkspaceRelationSchemas,
   getWorkspaceRelationSchema
 } from './relationSchemaOperations';
+import {
+  commitRelationsImportOperation,
+  downloadRelationImportTemplateOperation,
+  exportRelationsCsvOperation,
+  parseRelationsImportOperation
+} from './relationCsvOperations';
 import { workspaceRelationContract } from '@arch-register/api-types/relationContract';
 import { integrationRelationContract } from '@arch-register/api-types/integrationRelationContract';
 
@@ -51,6 +57,39 @@ export const workspaceRelationORPCRouter = relationRouter.router({
         context.event
       );
     }),
+    exportCsv: relationRouter.relations.exportCsv.handler(async ({ input, context }) =>
+      exportRelationsCsvOperation(
+        context.db,
+        input.params.workspace,
+        context.event,
+        input.query.relationQuery
+      )
+    ),
+    importParse: relationRouter.relations.importParse.handler(async ({ input, context }) =>
+      parseRelationsImportOperation(
+        context.db,
+        input.params.workspace,
+        context.event,
+        input.body.csvContent
+      )
+    ),
+    importCommit: relationRouter.relations.importCommit.handler(async ({ input, context }) =>
+      commitRelationsImportOperation(
+        context.db,
+        input.params.workspace,
+        context.event,
+        input.body.relations
+      )
+    ),
+    downloadTemplate: relationRouter.relations.downloadTemplate.handler(
+      async ({ input, context }) =>
+        downloadRelationImportTemplateOperation(
+          context.db,
+          input.params.workspace,
+          context.event,
+          input.params.id
+        )
+    ),
     get: relationRouter.relations.get.handler(async ({ input, context }) => {
       return await getWorkspaceRelation(
         context.db,

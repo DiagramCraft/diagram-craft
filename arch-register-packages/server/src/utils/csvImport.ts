@@ -25,12 +25,19 @@ export type CsvParseResult = {
   validRows: number;
 };
 
+export type CsvParseOptions = {
+  requiredFields?: string[];
+};
+
 /**
  * Parses CSV content into structured data
  * @param csvContent Raw CSV string content
  * @returns Parsed CSV data with headers and rows
  */
-export const parseCsv = (csvContent: string): CsvParseResult => {
+export const parseCsv = (
+  csvContent: string,
+  { requiredFields = ['Name'] }: CsvParseOptions = {}
+): CsvParseResult => {
   const lines = csvContent.split(/\r?\n/).filter(line => line.trim());
 
   if (lines.length === 0) {
@@ -78,9 +85,10 @@ export const parseCsv = (csvContent: string): CsvParseResult => {
       }
     }
 
-    // Check for missing required fields (Name is always required)
-    if (!data['Name'] || data['Name'].trim() === '') {
-      errors.push('Name is required');
+    for (const requiredField of requiredFields) {
+      if (!data[requiredField] || data[requiredField].trim() === '') {
+        errors.push(`${requiredField} is required`);
+      }
     }
 
     rows.push({
