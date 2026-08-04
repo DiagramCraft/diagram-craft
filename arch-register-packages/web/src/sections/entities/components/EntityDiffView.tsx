@@ -7,7 +7,9 @@ import { useMemo } from 'react';
 import { EmptyState } from '../../../components/EmptyState';
 import { formatDate } from '../../../utils/dateFormat';
 import { useEntityLandscapeDiff } from '../../../hooks/useEntities';
+import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { EntityLandscapeDiffTable } from './EntityLandscapeDiffTable';
+import { RelationLandscapeDiffTable } from './RelationLandscapeDiffTable';
 import styles from './EntityDiffView.module.css';
 
 export const EntityDiffView = ({
@@ -45,6 +47,17 @@ export const EntityDiffView = ({
         schemas.map(schema => [schema.id, { color: schema.color ?? '#888', icon: schema.icon }])
       ),
     [schemas]
+  );
+  const { data: relationSchemas = [] } = useRelationSchemas(workspaceId, true);
+  const relationSchemaMap = useMemo(
+    () =>
+      new Map(
+        relationSchemas.map(schema => [
+          schema.id,
+          { color: schema.color ?? '#888', icon: schema.icon }
+        ])
+      ),
+    [relationSchemas]
   );
   const filters = useMemo(
     () => ({
@@ -109,6 +122,16 @@ export const EntityDiffView = ({
         <div className={styles.headerCounts}>
           {diff.added.length} added &middot; {diff.removed.length} removed &middot;{' '}
           {diff.changed.length} changed
+          {(diff.relations.added.length > 0 ||
+            diff.relations.removed.length > 0 ||
+            diff.relations.changed.length > 0) && (
+            <>
+              {' '}
+              &middot; {diff.relations.added.length} relations added &middot;{' '}
+              {diff.relations.removed.length} relations removed &middot;{' '}
+              {diff.relations.changed.length} relations changed
+            </>
+          )}
         </div>
       </div>
 
@@ -116,6 +139,14 @@ export const EntityDiffView = ({
         diff={diff}
         schemaMap={schemaMap}
         schemas={schemas}
+        lifecycleStates={lifecycleStates}
+        teams={teams}
+      />
+
+      <RelationLandscapeDiffTable
+        diff={diff.relations}
+        relationSchemaMap={relationSchemaMap}
+        relationSchemas={relationSchemas}
         lifecycleStates={lifecycleStates}
         teams={teams}
       />

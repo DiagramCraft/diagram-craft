@@ -1,4 +1,5 @@
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type { ChangeCaseMemberEntry } from './snapshotDisplay';
@@ -149,6 +150,73 @@ export function mapEntityLandscapeDiffToChangeRows(
         rows.push({
           label: field?.name ?? fieldId,
           ...(hasCurrent ? { current: resolveFieldVal(field, currentData[fieldId]) } : {}),
+          from,
+          to
+        });
+      }
+      continue;
+    }
+
+    const label = LANDSCAPE_DIFF_FIELD_LABELS[key] ?? key;
+    const from = resolveLandscapeDiffValue(key, before, lifecycleStates, teams);
+    const to = resolveLandscapeDiffValue(key, after, lifecycleStates, teams);
+    if (from === to) continue;
+    rows.push({
+      label,
+      ...(hasCurrent
+        ? { current: resolveLandscapeDiffValue(key, fieldDiff.current, lifecycleStates, teams) }
+        : {}),
+      from,
+      to
+    });
+  }
+
+  return rows;
+}
+
+type AnyRelationField = RelationSchema['fields'][number];
+
+function resolveRelationFieldVal(field: AnyRelationField | undefined, value: unknown): string {
+  if (value == null || value === '') return '—';
+  if (field?.type === 'select') {
+    const opt = (field as Extract<AnyRelationField, { type: 'select' }>).options.find(
+      o => o.value === String(value)
+    );
+    return opt?.label ?? String(value);
+  }
+  if (Array.isArray(value)) return value.length > 0 ? value.join(', ') : '—';
+  if (typeof value === 'boolean') return value ? 'Yes' : 'No';
+  return String(value);
+}
+
+// Relation equivalent of mapEntityLandscapeDiffToChangeRows. Relation endpoints (_in/_out) are
+// immutable, so the backend diff for a relation only ever contains field-data changes keyed under
+// `data` — there's no top-level built-in-field case to handle the way entities have
+// name/lifecycle/owner/etc.
+export function mapRelationLandscapeDiffToChangeRows(
+  diff: Record<string, { current?: unknown; before: unknown; after: unknown }>,
+  schema: RelationSchema | null,
+  lifecycleStates: WorkspaceLifecycleState[],
+  teams: WorkspaceTeam[]
+): ChangeRow[] {
+  const rows: ChangeRow[] = [];
+
+  for (const [key, fieldDiff] of Object.entries(diff)) {
+    const { before, after } = fieldDiff;
+    const hasCurrent = Object.hasOwn(fieldDiff, 'current');
+    if (key === 'data') {
+      const beforeData = (before ?? {}) as Record<string, unknown>;
+      const afterData = (after ?? {}) as Record<string, unknown>;
+      const currentData = (fieldDiff.current ?? {}) as Record<string, unknown>;
+      const fieldIds = new Set([...Object.keys(beforeData), ...Object.keys(afterData)]);
+      for (const fieldId of fieldIds) {
+        const field = schema?.fields.find(f => f.id === fieldId);
+        const from = resolveRelationFieldVal(field, beforeData[fieldId]);
+        const to = resolveRelationFieldVal(field, afterData[fieldId]);
+        if (from === to) continue;
+        rows.push({
+          label: field?.name ?? fieldId,
+          ...(hasCurrent ? { current: resolveRelationFieldVal(field, currentData[fieldId]) } : {}),
           from,
           to
         });
