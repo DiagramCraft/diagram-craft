@@ -55,7 +55,10 @@ const makeDb = () => {
   ]);
   return {
     catalog: {
-      getEntity: vi.fn(async (_ws: string, id: string) => entities.get(id) ?? null)
+      getEntity: vi.fn(async (_ws: string, id: string) => entities.get(id) ?? null),
+      createEntityVersion: vi.fn(async () => ({})),
+      pruneAutosaveVersions: vi.fn(async () => {}),
+      listEntityVersions: vi.fn(async () => [])
     },
     relation: {
       getRelationSchema: vi.fn(async () => ({
@@ -171,5 +174,76 @@ describe('applyRelationFieldDelta', () => {
     ).rejects.toThrow();
 
     expect(db.relation.deleteRelation).not.toHaveBeenCalled();
+  });
+});
+
+describe('applyRelationFieldDelta — version history', () => {
+  it('writes a record_version row and prunes autosaves after creating a relation', async () => {
+    const db = makeDb();
+
+    await applyRelationFieldDelta(db, {
+      workspace: 'ws-1',
+      ownerEntityId: 'entity-1',
+      ownerSchema,
+      field: outField,
+      delta: { create: [{ otherEntityId: 'entity-2', data: { note: 'new' } }] },
+      authCtx: null,
+      actor
+    });
+
+    expect(db.catalog.createEntityVersion).toHaveBeenCalledTimes(1);
+    expect(db.catalog.createEntityVersion).toHaveBeenCalledWith(
+      expect.objectContaining({ kind: 'autosave', version_number: 1, created_by: 'user-1' })
+    );
+    expect(db.catalog.pruneAutosaveVersions).toHaveBeenCalledWith('ws-1', expect.any(String), 50);
+  });
+
+  it('writes a record_version row and prunes autosaves after updating a relation', async () => {
+    const db = makeDb();
+
+    await applyRelationFieldDelta(db, {
+      workspace: 'ws-1',
+      ownerEntityId: 'entity-1',
+      ownerSchema,
+      field: outField,
+      delta: { update: [{ id: 'rel-1', data: { note: 'changed' } }] },
+      authCtx: null,
+      actor
+    });
+
+    expect(db.catalog.createEntityVersion).toHaveBeenCalledTimes(1);
+    expect(db.catalog.createEntityVersion).toHaveBeenCalledWith(
+      expect.objectContaining({ entity_id: 'rel-1', kind: 'autosave', created_by: 'user-1' })
+    );
+    expect(db.catalog.pruneAutosaveVersions).toHaveBeenCalledWith('ws-1', 'rel-1', 50);
+  });
+
+  it('writes a deleted-kind record_version row after deleting a relation', async () => {
+    const db = makeDb();
+    (db.catalog.listEntityVersions as ReturnType<typeof vi.fn>).mockResolvedValue([
+      { version_number: 1 },
+      { version_number: 2 }
+    ]);
+
+    await applyRelationFieldDelta(db, {
+      workspace: 'ws-1',
+      ownerEntityId: 'entity-1',
+      ownerSchema,
+      field: outField,
+      delta: { delete: ['rel-1'] },
+      authCtx: null,
+      actor
+    });
+
+    expect(db.catalog.createEntityVersion).toHaveBeenCalledTimes(1);
+    expect(db.catalog.createEntityVersion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity_id: 'rel-1',
+        kind: 'deleted',
+        version_number: 3,
+        created_by: 'user-1'
+      })
+    );
+    expect(db.catalog.pruneAutosaveVersions).not.toHaveBeenCalled();
   });
 });
