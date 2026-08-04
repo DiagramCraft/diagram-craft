@@ -668,9 +668,9 @@ describe('data route helpers', () => {
       [dataFlowRelationSchema]
     );
 
-    expect(result.dependents.filter(dependent => dependent.entityId === 'component-1')).toHaveLength(
-      1
-    );
+    expect(
+      result.dependents.filter(dependent => dependent.entityId === 'component-1')
+    ).toHaveLength(1);
   });
 
   it('excludes typed relations whose dependent entity is not in the visible entity set', () => {
