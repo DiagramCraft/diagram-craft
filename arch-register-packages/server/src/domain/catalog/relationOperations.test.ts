@@ -7,9 +7,10 @@ import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 import {
   createWorkspaceRelation,
   updateWorkspaceRelation,
-  deleteWorkspaceRelation
+  deleteWorkspaceRelation,
+  restoreWorkspaceRelationVersion
 } from './relationOperations';
-import type { EntityVersionSummaryDbResult } from './db/catalogDatabase';
+import type { EntityVersionDbResult, EntityVersionSummaryDbResult } from './db/catalogDatabase';
 
 const authorizationMocks = vi.hoisted(() => ({
   buildApiAuthCtx: vi.fn()
@@ -125,7 +126,8 @@ const makeRelationRow = (overrides: Partial<RelationDbResult> = {}): RelationDbR
 
 const makeDb = (
   existingRow?: RelationDbResult,
-  existingVersions: EntityVersionSummaryDbResult[] = []
+  existingVersions: EntityVersionSummaryDbResult[] = [],
+  versionToRestore: EntityVersionDbResult | null = null
 ) => {
   const createEntityVersion = vi.fn(async () => ({}));
   const pruneAutosaveVersions = vi.fn(async () => {});
@@ -151,7 +153,8 @@ const makeDb = (
       listSchemas: vi.fn(async () => [entitySchema]),
       createEntityVersion,
       pruneAutosaveVersions,
-      listEntityVersions: vi.fn(async () => existingVersions)
+      listEntityVersions: vi.fn(async () => existingVersions),
+      getEntityVersionById: vi.fn(async () => versionToRestore)
     }
   } as unknown as DatabaseAdapter;
 
@@ -236,5 +239,56 @@ describe('deleteWorkspaceRelation — version history', () => {
         state: expect.objectContaining({ id: existing.id })
       })
     );
+  });
+});
+
+describe('restoreWorkspaceRelationVersion', () => {
+  it('re-applies the version data, writes a restored record_version, and returns the restored-from version', async () => {
+    const existing = makeRelationRow({ version: 2, data: { note: 'current' } });
+    const versionToRestore: EntityVersionDbResult = {
+      id: 'version-1',
+      workspace: 'ws-1',
+      entity_id: existing.id,
+      version_number: 1,
+      kind: 'autosave',
+      commit_message: null,
+      created_at: now,
+      created_by: 'user-1',
+      created_by_name: 'User',
+      state: { id: existing.id, data: { note: 'old' } },
+      applied_case_revision_id: null
+    };
+    const { db, createEntityVersion, updateRelation, pruneAutosaveVersions } = makeDb(
+      existing,
+      [],
+      versionToRestore
+    );
+
+    const result = await restoreWorkspaceRelationVersion(
+      db,
+      'ws-1',
+      existing.id,
+      'version-1',
+      'restoring an old note',
+      eventForAuthCtx()
+    );
+
+    expect(updateRelation).toHaveBeenCalledWith(
+      'ws-1',
+      existing.id,
+      expect.objectContaining({ data: { note: 'old' }, version: 3 })
+    );
+    expect(createEntityVersion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity_id: existing.id,
+        kind: 'restored',
+        version_number: 3,
+        commit_message: 'restoring an old note',
+        state: expect.objectContaining({ data: { note: 'old' } })
+      })
+    );
+    expect(pruneAutosaveVersions).toHaveBeenCalledWith('ws-1', existing.id, 50);
+    // The response reflects the version that was restored from, mirroring entityVersionOrpc.ts.
+    expect(result.id).toBe('version-1');
   });
 });

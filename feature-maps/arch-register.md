@@ -121,9 +121,12 @@
           picks another entity from schemas the relation type allows and fills in the relation's own fields (subject
           to field-group access control); these changes are saved together with the rest of the entity's edits in one
           atomic update. Each existing instance can also be expanded inline to edit its fields, or opened in a detail
-          dialog showing its audit trail of create/update/delete events. Versioning and change-approval specifically
-          for relation instances are not yet supported; when an entity's changes go through change-approval,
-          in-progress relation edits are not yet guaranteed to carry through the proposal/approval workflow. The
+          dialog showing its audit trail of create/update/delete events. Relation instances now retain version
+          history on create/update/delete and can be restored to an earlier version via the API, mirroring entity
+          version history's redaction and restore semantics; this is not yet surfaced in the relation instance UI
+          the way entity history is (@id:ar.entities.history). Change-approval specifically for relation instances is
+          not yet supported; when an entity's changes go through change-approval, in-progress relation edits are not
+          yet guaranteed to carry through the proposal/approval workflow. The
           entity detail screen's Relations tab and Topology view also surface typed relation instances (grouped by
           relation schema in Topology, using the schema's own color), each expandable in place to view field values
           and open the same audit-trail history dialog.

@@ -157,7 +157,9 @@ export const workspaceRelationContract = oc.tag('Relations').router({
         path: '/{workspace}/relations/{id}',
         inputStructure: 'detailed',
         summary: 'Delete relation instance',
-        description: 'Permanently deletes a relation instance. This operation cannot be undone.',
+        description:
+          'Deletes a relation instance. The instance and its version history are retained ' +
+          'internally but no longer visible or resolvable through any relation API.',
         tags: ['Relations']
       })
       .input(z.object({ params: wsAndId }))

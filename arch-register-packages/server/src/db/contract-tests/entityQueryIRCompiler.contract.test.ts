@@ -1475,4 +1475,194 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     );
     expect(restrictedValidation.ok).toBe(false);
   });
+
+  it('does not let a relation instance version leak into an asOf entity query (#2687)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'Service' });
+    const relationSchema = await db.relation.createRelationSchema({
+      id: randomUUID(),
+      workspace,
+      name: 'Depends On',
+      description: '',
+      in_schema_ids: [schema.id],
+      out_schema_ids: [schema.id],
+      fields: [],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    const entityA = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'A' });
+    const entityB = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'B' });
+    const relation = await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: relationSchema.id,
+      in_entity_id: entityA.id,
+      out_entity_id: entityB.id,
+      data: {},
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    // Simulates what relationOperations.ts now writes on relation create — a record_version row
+    // sharing the same table entities' asOf reconstruction reads from.
+    await db.catalog.createEntityVersion({
+      id: randomUUID(),
+      workspace,
+      entity_id: relation.id,
+      version_number: 1,
+      kind: 'autosave',
+      commit_message: null,
+      created_at: new Date(),
+      created_by: null,
+      state: {
+        id: relation.id,
+        workspace,
+        schema_id: relationSchema.id,
+        in_entity_id: entityA.id,
+        out_entity_id: entityB.id,
+        data: {},
+        version: 1,
+        approval_policy_override: null,
+        created_at: relation.created_at.toISOString(),
+        updated_at: relation.updated_at.toISOString()
+      },
+      applied_case_revision_id: null
+    });
+
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+    const query: EntityQuery = {
+      asOf: new Date().toISOString(),
+      schemaId: schema.id,
+      root: { kind: 'predicate', path: [], fieldId: '_id', op: 'not_empty', value: null }
+    };
+
+    const matches = await runQuery(db, driver, workspace, schemas, query);
+    const ids = matches.map(result => result.id);
+    expect(ids.sort()).toEqual([entityA.id, entityB.id].sort());
+    expect(ids).not.toContain(relation.id);
+  });
+
+  it('reconstructs a typed relation hop and its field data as of a point in time (#2687)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const relationSchemaId = randomUUID();
+    const ownerSchema = await createSchema(db, workspace, {
+      name: 'Owner',
+      fields: [
+        {
+          id: 'depends_on',
+          name: 'Depends on',
+          type: 'typedRelation',
+          relationSchemaId,
+          direction: 'out'
+        }
+      ]
+    });
+    const relationSchema = await db.relation.createRelationSchema({
+      id: relationSchemaId,
+      workspace,
+      name: 'Depends On',
+      description: '',
+      in_schema_ids: [ownerSchema.id],
+      out_schema_ids: [ownerSchema.id],
+      fields: [{ id: 'status', name: 'Status', type: 'text', requirementLevel: 'optional' }],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    const owner = await createFixtureCatalogEntity(db, workspace, ownerSchema.id, {
+      name: 'Owner Entity'
+    });
+    const target = await createFixtureCatalogEntity(db, workspace, ownerSchema.id, {
+      name: 'Target Entity'
+    });
+    // Must postdate both entities' own created_at (set to "now" by the fixture helper above), or
+    // an asOf point between them would find neither entity to have existed yet.
+    const afterEntities = Date.now();
+    const historicalDate = new Date(afterEntities + 1000);
+    const liveDate = new Date(afterEntities + 3000);
+    const relation = await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: relationSchema.id,
+      in_entity_id: target.id,
+      out_entity_id: owner.id,
+      data: { status: 'final' },
+      version: 2,
+      created_at: historicalDate,
+      updated_at: liveDate
+    });
+    await db.catalog.createEntityVersion({
+      id: randomUUID(),
+      workspace,
+      entity_id: relation.id,
+      version_number: 1,
+      kind: 'autosave',
+      commit_message: null,
+      created_at: historicalDate,
+      created_by: null,
+      state: {
+        id: relation.id,
+        workspace,
+        schema_id: relationSchema.id,
+        in_entity_id: target.id,
+        out_entity_id: owner.id,
+        data: { status: 'draft' },
+        version: 1,
+        approval_policy_override: null,
+        created_at: historicalDate.toISOString(),
+        updated_at: historicalDate.toISOString()
+      },
+      applied_case_revision_id: null
+    });
+
+    const schemas: SchemaCatalog = new Map([[ownerSchema.id, ownerSchema]]);
+    const relationSchemas = new Map([[relationSchema.id, relationSchema]]);
+    const path = (value: string) => [
+      {
+        kind: 'typedRelation' as const,
+        fieldId: 'depends_on',
+        relationSchemaId: relationSchema.id,
+        direction: 'out' as const,
+        ownerSchemaIds: [ownerSchema.id],
+        filter: {
+          kind: 'predicate' as const,
+          path: [],
+          fieldId: 'status',
+          op: 'equals' as const,
+          value
+        }
+      }
+    ];
+    const runFor = async (asOf: string | undefined, statusValue: string) => {
+      const query: EntityQuery = {
+        asOf,
+        root: { kind: 'relationExists', path: path(statusValue) }
+      };
+      const validation = validateEntityQueryIR(query, schemas, null, relationSchemas);
+      expect(validation.ok, JSON.stringify(validation)).toBe(true);
+      const compiled = compileEntityQueryIR(query, schemas, driver, workspace, {}, null, relationSchemas);
+      const rows = await db.catalog.runCompiledEntityQuery(compiled.sql, compiled.params);
+      return rows.map(row => row.id);
+    };
+
+    // Live state has status 'final' — matches 'final', not 'draft'.
+    expect(await runFor(undefined, 'final')).toEqual([owner.id]);
+    expect(await runFor(undefined, 'draft')).toEqual([]);
+
+    // asOf the historical point, the relation had status 'draft', not the live 'final'.
+    const asOfHistorical = new Date(historicalDate.getTime() + 1000).toISOString();
+    expect(await runFor(asOfHistorical, 'draft')).toEqual([owner.id]);
+    expect(await runFor(asOfHistorical, 'final')).toEqual([]);
+  });
 });

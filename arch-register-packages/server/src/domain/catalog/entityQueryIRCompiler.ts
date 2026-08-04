@@ -47,6 +47,11 @@ export class UnsupportedEntityQueryIRError extends Error {}
 // at any traversal position read a plain column (`assessment_values`) instead of each needing their
 // own correlated subquery.
 const SCOPE_CTE = 'scoped_entity';
+// Every typed-relation join is drawn from this CTE rather than raw `catalog_record`, mirroring
+// SCOPE_CTE's role for entities: it's the one place asOf point-in-time reconstruction is applied
+// to relation rows, so a historical query sees relation existence/data as it was at that time
+// rather than always reading the live row (#2687).
+const RELATION_SCOPE_CTE = 'scoped_relation';
 const ROOT_ALIAS = 'e0';
 
 type CompileState = {
@@ -431,10 +436,9 @@ const compilePathSteps = (
       terminal
     );
     return (
-      `EXISTS (SELECT 1 FROM catalog_record ${relationAlias} ` +
+      `EXISTS (SELECT 1 FROM ${RELATION_SCOPE_CTE} ${relationAlias} ` +
       `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} ` +
-      `WHERE ${relationAlias}.kind = 'relation' AND ${relationAlias}.deleted_at IS NULL ` +
-      `AND ${relationAlias}.workspace = ${curAlias}.workspace ` +
+      `WHERE ${relationAlias}.workspace = ${curAlias}.workspace ` +
       `AND ${relationAlias}.schema_id = ${relationSchemaParam} ` +
       `AND ${ownerSchemaClause} ` +
       `AND ${ownerId} = ${curAlias}.id${filterClause} AND ${rest})`
@@ -623,9 +627,7 @@ const buildProjectionBindings = (
             )}`
           : '';
         from +=
-          `\n      JOIN catalog_record ${relationAlias} ON ${relationAlias}.kind = 'relation'` +
-          ` AND ${relationAlias}.deleted_at IS NULL` +
-          ` AND ${relationAlias}.workspace = ${currentAlias}.workspace` +
+          `\n      JOIN ${RELATION_SCOPE_CTE} ${relationAlias} ON ${relationAlias}.workspace = ${currentAlias}.workspace` +
           ` AND ${relationAlias}.schema_id = ${relationSchema}` +
           ` AND ${ownerSchemaClause}` +
           ` AND ${ownerId} = ${currentAlias}.id${filter}` +
@@ -754,7 +756,7 @@ const projectionValue = (
   const source =
     `FROM ${binding.name} ${bindingAlias} ` +
     (projection.source === 'relation'
-      ? `JOIN catalog_record ${relationAlias} ON ${relationAlias}.id = ${bindingAlias}.relation_${projection.path.length}_id AND ${relationAlias}.kind = 'relation' AND ${relationAlias}.deleted_at IS NULL `
+      ? `JOIN ${RELATION_SCOPE_CTE} ${relationAlias} ON ${relationAlias}.id = ${bindingAlias}.relation_${projection.path.length}_id `
       : `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} `) +
     `WHERE ${bindingAlias}.root_id = ${ROOT_ALIAS}.id${scope ? ` AND ${scope}` : ''}`;
 
@@ -982,6 +984,9 @@ const buildTemporalSource = (state: CompileState): string => {
                ORDER BY v.created_at DESC, v.version_number DESC
              ) AS row_number
       FROM record_version v
+      -- record_version is shared with relation instances (#2687) — without this join, a
+      -- relation's version rows would be reconstructed as phantom near-empty "entities" here.
+      JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'entity'
       WHERE v.workspace = ${workspaceParam}
         AND v.created_at <= ${asOfParam}
     ),
@@ -1088,6 +1093,127 @@ const buildScopeCte = (state: CompileState): string => {
   return `${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn}\n      FROM catalog_record e\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.kind = 'entity'\n        AND e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopedWhere}\n    )`;
 };
 
+// JSON/JSONB shape matching relationToBaseState (relationHelpers.ts) — this is exactly what
+// relationOperations.ts writes into record_version.state for a relation, so the live fallback
+// branch below and the version-history branch in buildTemporalRelationSource produce identically
+// shaped rows for temporalRelationProjection to read uniformly.
+const liveRelationState = (dialect: EntityQueryDialect): string =>
+  dialect === 'postgres'
+    ? `jsonb_build_object(
+        'id', r.id,
+        'workspace', r.workspace,
+        'schema_id', r.schema_id,
+        'in_entity_id', r.in_record_id,
+        'out_entity_id', r.out_record_id,
+        'data', r.data,
+        'version', r.version,
+        'approval_policy_override', r.approval_policy_override,
+        'created_at', r.created_at,
+        'updated_at', r.updated_at
+      )`
+    : `json_object(
+        'id', r.id,
+        'workspace', r.workspace,
+        'schema_id', r.schema_id,
+        'in_entity_id', r.in_record_id,
+        'out_entity_id', r.out_record_id,
+        'data', json(r.data),
+        'version', r.version,
+        'approval_policy_override', r.approval_policy_override,
+        'created_at', r.created_at,
+        'updated_at', r.updated_at
+      )`;
+
+const temporalRelationProjection = (
+  stateColumn: string,
+  recordIdColumn: string,
+  workspaceColumn: string,
+  dialect: EntityQueryDialect
+): string => {
+  const text = (fieldId: string) => stateText(stateColumn, fieldId, dialect);
+  const json = (fieldId: string) => stateJson(stateColumn, fieldId, dialect);
+  const uuid = (fieldId: string) =>
+    dialect === 'postgres' ? `NULLIF(${text(fieldId)}, '')::uuid` : text(fieldId);
+  const emptyObject = dialect === 'postgres' ? "'{}'::jsonb" : "'{}'";
+
+  return [
+    `${recordIdColumn} AS id`,
+    `${workspaceColumn} AS workspace`,
+    `${uuid('schema_id')} AS schema_id`,
+    `${uuid('in_entity_id')} AS in_record_id`,
+    `${uuid('out_entity_id')} AS out_record_id`,
+    `COALESCE(${json('data')}, ${emptyObject}) AS data`,
+    `COALESCE(${text('version')}, '1') AS version`,
+    `${text('approval_policy_override')} AS approval_policy_override`,
+    `${text('created_at')} AS created_at`,
+    `${text('updated_at')} AS updated_at`
+  ].join(',\n      ');
+};
+
+// Relation-instance counterpart of buildTemporalSource. Simpler than the entity version: relations
+// have no planned-changes/change-case layering yet (#2687 excludes it), so this is just "latest
+// version at or before asOf" with a live-row fallback for relations that predate version tracking
+// — no future_state overlay needed.
+const buildTemporalRelationSource = (state: CompileState): string => {
+  const asOf = state.asOf!;
+  const workspaceParam = addParam(state, state.workspace);
+  const asOfParam = addParam(state, asOf.toISOString());
+  const fallbackWorkspaceParam = addParam(state, state.workspace);
+  const fallbackCreatedParam = addParam(state, asOf.toISOString());
+  const projection = temporalRelationProjection(
+    'final_relation_state.state',
+    'final_relation_state.record_id',
+    'final_relation_state.workspace',
+    state.dialect
+  );
+
+  return `
+    latest_relation_version AS (
+      SELECT v.*,
+             ROW_NUMBER() OVER (
+               PARTITION BY v.record_id
+               ORDER BY v.created_at DESC, v.version_number DESC
+             ) AS row_number
+      FROM record_version v
+      -- record_version is shared with entities — restrict to relation-owned versions only.
+      JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'relation'
+      WHERE v.workspace = ${workspaceParam}
+        AND v.created_at <= ${asOfParam}
+    ),
+    final_relation_state AS (
+      SELECT v.record_id, v.workspace, v.state
+      FROM latest_relation_version v
+      WHERE v.row_number = 1
+        AND v.kind <> 'deleted'
+      UNION ALL
+      SELECT r.id, r.workspace, ${liveRelationState(state.dialect)}
+      FROM catalog_record r
+      WHERE r.kind = 'relation'
+        AND r.workspace = ${fallbackWorkspaceParam}
+        AND r.deleted_at IS NULL
+        AND r.created_at <= ${fallbackCreatedParam}
+        AND NOT EXISTS (
+          SELECT 1 FROM record_version any_version
+          WHERE any_version.workspace = r.workspace
+            AND any_version.record_id = r.id
+        )
+    ),
+    temporal_relation_source AS (
+      SELECT ${projection}
+      FROM final_relation_state
+    )`;
+};
+
+// Relation-instance counterpart of buildScopeCte. Live queries read catalog_record directly;
+// temporal queries reconstruct relation state from record_version via buildTemporalRelationSource.
+const buildRelationScopeCte = (state: CompileState): string => {
+  if (state.asOf) {
+    return `${buildTemporalRelationSource(state)},\n    ${RELATION_SCOPE_CTE} AS (\n      SELECT * FROM temporal_relation_source\n    )`;
+  }
+  const workspaceParam = addParam(state, state.workspace);
+  return `${RELATION_SCOPE_CTE} AS (\n      SELECT r.*\n      FROM catalog_record r\n      WHERE r.kind = 'relation'\n        AND r.workspace = ${workspaceParam}\n        AND r.deleted_at IS NULL\n    )`;
+};
+
 // Compiles a validated EntityQuery into a full `WITH scoped_entity AS (...) SELECT ...` statement,
 // joining the same denormalized owner/lifecycle/schema-name columns `ENTITY_SELECT_SQL`
 // (catalogDatabase.ts) already attaches for a live entity row. Callers must validate the query
@@ -1126,6 +1252,7 @@ export const compileEntityQueryIR = (
   }
 
   const cte = buildScopeCte(state);
+  const relationCte = buildRelationScopeCte(state);
   const projectionCtes = buildProjectionBindings(query, schemas, relationSchemas, state);
   const projectionObject = compileProjectionObject(query.projections ?? [], schemas, state);
   const whereParts: string[] = [];
@@ -1135,7 +1262,7 @@ export const compileEntityQueryIR = (
   whereParts.push(compileNode(query.root, ROOT_ALIAS, schemas, relationSchemas, state, true));
 
   const sql = `
-    WITH${state.asOf ? ' RECURSIVE' : ''} ${cte}${projectionCtes.length > 0 ? `,\n    ${projectionCtes.join(',\n    ')}` : ''}
+    WITH${state.asOf ? ' RECURSIVE' : ''} ${cte},\n    ${relationCte}${projectionCtes.length > 0 ? `,\n    ${projectionCtes.join(',\n    ')}` : ''}
     SELECT ${ROOT_ALIAS}.*,
       wo.name   AS owner_name,
       ls.label  AS lifecycle_label,
