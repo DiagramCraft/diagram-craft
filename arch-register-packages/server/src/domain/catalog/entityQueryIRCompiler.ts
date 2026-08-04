@@ -17,6 +17,7 @@ import {
 } from './db/filterBuilder';
 import {
   resolveFieldSchemaScope,
+  resolveRelationFieldSchemaScope,
   type RelationSchemaCatalog,
   type SchemaCatalog
 } from './entityQueryIRValidator';
@@ -223,6 +224,21 @@ const schemaScopeClause = (
     .join(', ')})`;
 };
 
+// Relation-schema counterpart to schemaScopeClause, for relation-rooted predicates/projections (#2701).
+const relationSchemaScopeClause = (
+  alias: string,
+  fieldId: string,
+  relationSchemas: RelationSchemaCatalog,
+  state: CompileState
+): string | null => {
+  const scope = resolveRelationFieldSchemaScope(fieldId, relationSchemas, state.authCtx);
+  if (!scope.needsScoping) return null;
+  if (scope.grantedSchemaIds.size === 0) return '1=0';
+  return `${alias}.schema_id IN (${[...scope.grantedSchemaIds]
+    .map(id => addParam(state, id))
+    .join(', ')})`;
+};
+
 const typedRelationOwnerSchemaClause = (
   alias: string,
   ownerSchemaIds: readonly string[],
@@ -380,7 +396,8 @@ const compileRelationRootPredicateTerminal =
         `Operator '${op}' has no SQL translation for field '${fieldId}'`
       );
     }
-    return clause;
+    const scopeClause = relationSchemaScopeClause(alias, fieldId, state.relationSchemas, state);
+    return scopeClause ? `(${clause} AND ${scopeClause})` : clause;
   };
 
 const projectionRawValueRelation = (
@@ -839,10 +856,18 @@ const projectionValue = (
   const binding = projectionBindingFor(projection, state);
   if (!binding) {
     if (state.rootKind === 'relation' && projection.path.length === 0) {
-      // Root-level projection of a relation-rooted query: e0 is a relation row, read directly (no
-      // cross-schema field-id collision scoping for relation schemas in this pass).
+      // Root-level projection of a relation-rooted query: e0 is a relation row, read directly. A
+      // colliding field id needs e0 itself gated to the granting relation schemas, mirroring the
+      // entity root-level projection branch below (#2701).
+      const raw = projectionRawValueRelation(ROOT_ALIAS, projection.fieldId, state.dialect);
+      const scope = relationSchemaScopeClause(
+        ROOT_ALIAS,
+        projection.fieldId,
+        state.relationSchemas,
+        state
+      );
       return {
-        value: projectionRawValueRelation(ROOT_ALIAS, projection.fieldId, state.dialect),
+        value: scope ? `(CASE WHEN ${scope} THEN ${raw} ELSE NULL END)` : raw,
         isArray: false
       };
     }

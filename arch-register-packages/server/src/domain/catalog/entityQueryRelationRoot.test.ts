@@ -4,6 +4,7 @@ import type { RelationSchemaDbResult } from './db/relationDatabase';
 import type { SchemaDbResult } from './db/catalogDatabase';
 import { validateEntityQueryIR } from './entityQueryIRValidator';
 import { compileEntityQueryIR } from './entityQueryIRCompiler';
+import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 
 const now = new Date('2026-06-29T12:00:00.000Z');
 
@@ -212,5 +213,122 @@ describe('relation-rooted query compilation', () => {
     );
     expect(compiled.sql).toContain('FROM scoped_entity e0');
     expect(compiled.sql).toContain('JOIN entity_schema es');
+  });
+});
+
+// #2701: a relation field id colliding across two relation schemas (one restricted, one not) must be
+// scoped to only the granting schema(s) in the compiled SQL — mirrors the entity-rooted coverage in
+// entityQueryIRCompiler.contract.test.ts's "scopes compiled SQL to the schemas that granted a field id
+// colliding across schemas" test.
+describe('relation-rooted query compilation — field id collision scoping', () => {
+  const restrictedRelation: RelationSchemaDbResult = {
+    id: 'restricted-relation',
+    workspace: 'ws-1',
+    name: 'Restricted Relation',
+    description: '',
+    in_schema_ids: ['system'],
+    out_schema_ids: ['system'],
+    fields: [{ id: 'note', name: 'Note', type: 'text', groupId: 'restricted' }],
+    groups: [
+      { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+    ],
+    color: null,
+    icon: null,
+    created_at: now,
+    updated_at: now
+  };
+  const unrestrictedCollider: RelationSchemaDbResult = {
+    id: 'collider-relation',
+    workspace: 'ws-1',
+    name: 'Collider Relation',
+    description: '',
+    in_schema_ids: ['system'],
+    out_schema_ids: ['system'],
+    fields: [{ id: 'note', name: 'Note', type: 'text' }],
+    groups: [],
+    color: null,
+    icon: null,
+    created_at: now,
+    updated_at: now
+  };
+  const collidingRelationSchemas = new Map([
+    [restrictedRelation.id, restrictedRelation],
+    [unrestrictedCollider.id, unrestrictedCollider]
+  ]);
+
+  const noAccess = buildAuthorizationContext({
+    userId: 'user-1',
+    globalRoles: [],
+    workspaceRole: null,
+    teamAssignments: [],
+    schemas: [],
+    entities: [],
+    grants: []
+  });
+
+  it('scopes a root predicate on a colliding relation field to the granting schema', () => {
+    // No schemaId (schema-less "browse all relations"), so both colliding relation schemas are in play.
+    const query: EntityQuery = {
+      root_kind: 'relation',
+      root: { kind: 'predicate', path: [], fieldId: 'note', op: 'equals', value: 'x' }
+    };
+    const compiled = compileEntityQueryIR(
+      query,
+      schemas,
+      'sqlite',
+      'ws-1',
+      {},
+      noAccess,
+      collidingRelationSchemas
+    );
+    expect(compiled.sql).toContain('e0.schema_id IN (?)');
+    expect(compiled.params).toContain(unrestrictedCollider.id);
+    expect(compiled.params).not.toContain(restrictedRelation.id);
+  });
+
+  it('does not scope a root predicate on a colliding relation field once access is granted', () => {
+    const viewer = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [{ teamId: 'team-restricted', role: 'team_reviewer' as TeamRole }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    const query: EntityQuery = {
+      root_kind: 'relation',
+      root: { kind: 'predicate', path: [], fieldId: 'note', op: 'equals', value: 'x' }
+    };
+    const compiled = compileEntityQueryIR(
+      query,
+      schemas,
+      'sqlite',
+      'ws-1',
+      {},
+      viewer,
+      collidingRelationSchemas
+    );
+    expect(compiled.sql).not.toContain('schema_id IN');
+  });
+
+  it('nulls out a root projection of a colliding relation field for a non-granting row', () => {
+    const query: EntityQuery = {
+      root_kind: 'relation',
+      root: { kind: 'and', children: [] },
+      projections: [{ path: [], fieldId: 'note' }]
+    };
+    const compiled = compileEntityQueryIR(
+      query,
+      schemas,
+      'sqlite',
+      'ws-1',
+      {},
+      noAccess,
+      collidingRelationSchemas
+    );
+    expect(compiled.sql).toContain('CASE WHEN e0.schema_id IN (?) THEN');
+    expect(compiled.sql).toContain("json_extract(e0.data, '$.note')");
+    expect(compiled.params).toContain(unrestrictedCollider.id);
   });
 });
