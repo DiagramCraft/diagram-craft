@@ -578,6 +578,166 @@ describe('data route helpers', () => {
     expect(allowed.dependents.map(dependent => dependent.entityId)).toEqual(['component-1']);
   });
 
+  const visibleRelationRowReversed: RelationDbResult = {
+    ...visibleRelationRow,
+    id: 'relation-3',
+    in_entity_id: 'component-2',
+    in_entity_name: 'API Gateway',
+    out_entity_id: 'component-1',
+    out_entity_name: 'Frontend App'
+  };
+
+  it('includes typed relation instances as dependents, redacting restricted relation fields', () => {
+    const restricted = buildEntityDependents(
+      component.id,
+      [domain, system, component, dependency],
+      [domainSchema, systemSchema, componentSchema],
+      { transitive: false },
+      restrictedAuthCtx,
+      [visibleRelationRowReversed],
+      [dataFlowRelationSchema]
+    );
+
+    expect(restricted.dependents).toMatchObject([
+      {
+        entityId: 'component-2',
+        kind: 'typed',
+        relationId: 'relation-3',
+        relationSchemaId: 'relschema-dataflow',
+        depth: 1
+      }
+    ]);
+    expect(restricted.dependents[0]!.relationFields).toEqual({});
+
+    const allowed = buildEntityDependents(
+      component.id,
+      [domain, system, component, dependency],
+      [domainSchema, systemSchema, componentSchema],
+      { transitive: false },
+      allowedAuthCtx,
+      [visibleRelationRowReversed],
+      [dataFlowRelationSchema]
+    );
+    expect(allowed.dependents[0]!.relationFields).toEqual({ protocol: 'https' });
+  });
+
+  it('follows typed relation edges across multiple hops in transitive traversal', () => {
+    const secondHop: RelationDbResult = {
+      ...visibleRelationRow,
+      id: 'relation-hop2',
+      in_entity_id: 'system-1',
+      in_entity_name: 'Customer Portal',
+      out_entity_id: 'component-1',
+      out_entity_name: 'Frontend App'
+    };
+
+    // Under restrictedAuthCtx the 'depends_on' reference field is hidden, so the first hop
+    // (component-1 -> component-2) is only reachable through the typed relation edge.
+    const restricted = buildEntityDependents(
+      dependency.id,
+      [domain, system, component, dependency],
+      [domainSchema, systemSchema, componentSchema],
+      { transitive: true },
+      restrictedAuthCtx,
+      [visibleRelationRow, secondHop],
+      [dataFlowRelationSchema]
+    );
+
+    expect(restricted.dependents).toMatchObject([
+      { entityId: 'component-1', kind: 'typed', relationId: 'relation-1', depth: 1 },
+      { entityId: 'system-1', kind: 'typed', relationId: 'relation-hop2', depth: 2 }
+    ]);
+    expect(restricted.dependents[1]!.viaPath).toEqual([
+      { entityId: 'component-2', entityName: 'API Gateway' }
+    ]);
+  });
+
+  it('dedupes a dependent reachable via multiple typed relation instances', () => {
+    const parallelEdge: RelationDbResult = {
+      ...visibleRelationRow,
+      id: 'relation-parallel'
+    };
+
+    const result = buildEntityDependents(
+      dependency.id,
+      [domain, system, component, dependency],
+      [domainSchema, systemSchema, componentSchema],
+      { transitive: false },
+      restrictedAuthCtx,
+      [visibleRelationRow, parallelEdge],
+      [dataFlowRelationSchema]
+    );
+
+    expect(
+      result.dependents.filter(dependent => dependent.entityId === 'component-1')
+    ).toHaveLength(1);
+  });
+
+  it('excludes typed relations whose dependent entity is not in the visible entity set', () => {
+    const relationFromMissingEntity: RelationDbResult = {
+      ...visibleRelationRow,
+      id: 'relation-missing',
+      in_entity_id: 'component-999',
+      in_entity_name: 'Ghost Service'
+    };
+
+    const result = buildEntityDependents(
+      dependency.id,
+      [domain, system, component, dependency],
+      [domainSchema, systemSchema, componentSchema],
+      { transitive: false },
+      restrictedAuthCtx,
+      [relationFromMissingEntity],
+      [dataFlowRelationSchema]
+    );
+
+    expect(result.dependents.some(dependent => dependent.relationId === 'relation-missing')).toBe(
+      false
+    );
+  });
+
+  it('hides typed relation dependents when neither owner field endpoint is viewable', () => {
+    // component and dependency share schema-component in these fixtures, so both the 'in' and
+    // 'out' typedRelation bindings must be restricted for canViewTypedRelation's OR-across-
+    // endpoints check to hide the edge (an unbound endpoint would otherwise keep it visible).
+    const schemaWithRestrictedTypedRelation = {
+      ...componentSchema,
+      fields: [
+        ...componentSchema.fields,
+        {
+          id: 'data_flow_in',
+          name: 'Data flow (in)',
+          type: 'typedRelation',
+          relationSchemaId: 'relschema-dataflow',
+          direction: 'in',
+          requirementLevel: null,
+          groupId: 'restricted'
+        },
+        {
+          id: 'data_flow_out',
+          name: 'Data flow (out)',
+          type: 'typedRelation',
+          relationSchemaId: 'relschema-dataflow',
+          direction: 'out',
+          requirementLevel: null,
+          groupId: 'restricted'
+        }
+      ]
+    } as SchemaDbResult;
+
+    const restricted = buildEntityDependents(
+      dependency.id,
+      [domain, system, component, dependency],
+      [domainSchema, systemSchema, schemaWithRestrictedTypedRelation],
+      { transitive: false },
+      restrictedAuthCtx,
+      [visibleRelationRow],
+      [dataFlowRelationSchema]
+    );
+
+    expect(restricted.dependents).toEqual([]);
+  });
+
   it('builds validated entity grant inputs', () => {
     expect(
       buildEntityGrantInputs(

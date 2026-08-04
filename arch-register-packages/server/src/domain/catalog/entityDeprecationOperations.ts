@@ -49,7 +49,7 @@ const permissionChecker = new PermissionChecker();
 // ── Impact calculation ─────────────────────────────────────────
 
 const toImpactEntry = (
-  dependent: DependentRecord,
+  dependent: DependentRecord & { kind: 'reference' | 'containment' },
   entityLookup: Map<string, Entity>
 ): DeprecationImpactEntry => ({
   entityId: dependent.entityId,
@@ -79,7 +79,14 @@ const computeDirectImpact = async (
     { transitive: false },
     null
   );
-  return dependents.map(dependent => toImpactEntry(dependent, entityLookup));
+  // No typedRelations/relationSchemas passed above, so 'typed' dependents never occur here; the
+  // filter narrows the type accordingly (deprecation impact tracking doesn't cover typed relations).
+  return dependents
+    .filter(
+      (dependent): dependent is DependentRecord & { kind: 'reference' | 'containment' } =>
+        dependent.kind !== 'typed'
+    )
+    .map(dependent => toImpactEntry(dependent, entityLookup));
 };
 
 const groupByOwnerTeam = (
