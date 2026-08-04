@@ -1,19 +1,21 @@
-import { TbCode, TbDatabase, TbFolder, TbFolders } from 'react-icons/tb';
+import { TbArrowsRightLeft, TbCode, TbDatabase, TbFolder, TbFolders } from 'react-icons/tb';
 import type {
   EntitySearchResult,
   ProjectFileSearchResult,
   ProjectSearchResult,
+  RelationSearchResult,
   SchemaSearchResult,
   SearchResponse
 } from '@arch-register/api-types/searchContract';
 
-export type SearchFilter = 'all' | 'entities' | 'projects' | 'files' | 'schemas';
+export type SearchFilter = 'all' | 'entities' | 'projects' | 'files' | 'schemas' | 'relations';
 
 export type SearchPreview =
   | { type: 'project'; data: ProjectSearchResult }
   | { type: 'file'; data: ProjectFileSearchResult }
   | { type: 'entity'; data: EntitySearchResult }
-  | { type: 'schema'; data: SchemaSearchResult };
+  | { type: 'schema'; data: SchemaSearchResult }
+  | { type: 'relation'; data: RelationSearchResult };
 
 export type RowId = { kind: string; id: string };
 
@@ -31,7 +33,8 @@ export const CATEGORY_DEFS: Array<{ value: SearchFilter; label: string; icon: ty
     { value: 'entities', label: 'Entities', icon: TbDatabase },
     { value: 'projects', label: 'Projects', icon: TbFolders },
     { value: 'files', label: 'Diagrams', icon: TbFolder },
-    { value: 'schemas', label: 'Schemas', icon: TbCode }
+    { value: 'schemas', label: 'Schemas', icon: TbCode },
+    { value: 'relations', label: 'Relations', icon: TbArrowsRightLeft }
   ];
 
 export const EMPTY_RESULTS: SearchResponse = {
@@ -39,7 +42,8 @@ export const EMPTY_RESULTS: SearchResponse = {
   projects: [],
   files: [],
   entities: [],
-  schemas: []
+  schemas: [],
+  relations: []
 };
 
 export const buildSearchGroups = (results: SearchResponse, filter: SearchFilter): SearchGroup[] => {
@@ -72,6 +76,17 @@ export const buildSearchGroups = (results: SearchResponse, filter: SearchFilter)
       rows: results.schemas.map(schema => ({ kind: 'schema', id: schema.schemaId, data: schema }))
     });
   }
+  if (filter === 'all' || filter === 'relations') {
+    groups.push({
+      id: 'relations',
+      label: 'Relations',
+      rows: results.relations.map(relation => ({
+        kind: 'relation',
+        id: relation.relationId,
+        data: relation
+      }))
+    });
+  }
   return groups.filter(group => group.rows.length > 0);
 };
 
@@ -80,11 +95,13 @@ export const getSearchCategoryCounts = (results: SearchResponse) => ({
     results.entities.length +
     results.projects.length +
     results.files.length +
-    results.schemas.length,
+    results.schemas.length +
+    results.relations.length,
   entities: results.entities.length,
   projects: results.projects.length,
   files: results.files.length,
-  schemas: results.schemas.length
+  schemas: results.schemas.length,
+  relations: results.relations.length
 });
 
 export const findSearchPreview = (
@@ -107,6 +124,10 @@ export const findSearchPreview = (
   if (selected.kind === 'schema') {
     const data = results.schemas.find(schema => schema.schemaId === selected.id);
     return data ? { type: 'schema', data } : null;
+  }
+  if (selected.kind === 'relation') {
+    const data = results.relations.find(relation => relation.relationId === selected.id);
+    return data ? { type: 'relation', data } : null;
   }
   return null;
 };

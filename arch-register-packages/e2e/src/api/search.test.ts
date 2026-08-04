@@ -100,7 +100,14 @@ test.describe('search routes', () => {
       params: { workspace: 'default' },
       query: { q: '  ' }
     });
-    expect(result).toEqual({ query: '', projects: [], files: [], entities: [], schemas: [] });
+    expect(result).toEqual({
+      query: '',
+      projects: [],
+      files: [],
+      entities: [],
+      schemas: [],
+      relations: []
+    });
   });
 
   test('GET /api/:workspace/search finds matching projects and files', async ({
@@ -320,7 +327,8 @@ test.describe('search routes', () => {
       })
     ).rejects.toMatchObject({
       code: 'BAD_REQUEST',
-      message: 'types must be a comma-separated list of: projects, files, entities, schemas'
+      message:
+        'types must be a comma-separated list of: projects, files, entities, schemas, relations'
     });
   });
 

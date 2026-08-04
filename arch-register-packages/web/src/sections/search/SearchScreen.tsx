@@ -2,7 +2,10 @@ import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { TbSearch } from 'react-icons/tb';
 import { useNavigate, useSearch as useRouterSearch } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import type { ProjectFileSearchResult } from '@arch-register/api-types/searchContract';
+import type {
+  ProjectFileSearchResult,
+  RelationSearchResult
+} from '@arch-register/api-types/searchContract';
 import { useSearch } from '../../hooks/useSearch';
 import { SearchInput } from '../../components/SearchInput';
 import styles from './SearchScreen.module.css';
@@ -211,6 +214,9 @@ export const SearchScreen = () => {
         }
       } else if (row.kind === 'schema') {
         navigateToSchema(row.id);
+      } else if (row.kind === 'relation') {
+        const r = row.data as RelationSearchResult;
+        navigateToEntity(r.inEntityPublicId);
       }
     },
     [

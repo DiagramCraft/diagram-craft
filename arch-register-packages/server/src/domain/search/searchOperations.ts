@@ -5,16 +5,19 @@ import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { SEARCH_DEFAULTS } from '../../constants';
 import { PermissionChecker, type AuthorizationContext } from '@arch-register/permissions';
 import type { EntityDbResult } from '../catalog/db/catalogDatabase';
+import type { RelationDbResult } from '../catalog/db/relationDatabase';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import {
   filterRestrictedFieldGroups,
   type FieldGroupSchemaShape
 } from '../auth/fieldGroupAccessControl';
+import { canViewTypedRelation } from '../catalog/relationAccessControl';
+import { listAllRelations } from '../catalog/relationOperations';
 
 const checker = new PermissionChecker();
 
-export const SEARCH_TYPES = ['projects', 'files', 'entities', 'schemas'] as const;
+export const SEARCH_TYPES = ['projects', 'files', 'entities', 'schemas', 'relations'] as const;
 type SearchType = (typeof SEARCH_TYPES)[number];
 
 const includesQuery = (value: unknown, query: string) =>
@@ -73,6 +76,14 @@ const collectMatchedFields = (
     .map(([key]) => key)
     .sort();
 
+const collectMatchedRelationMetadata = (relation: RelationDbResult, query: string) => {
+  const matches: string[] = [];
+  if (includesQuery(relation.schema_name, query)) matches.push('schema');
+  if (includesQuery(relation.in_entity_name, query)) matches.push('inEntity');
+  if (includesQuery(relation.out_entity_name, query)) matches.push('outEntity');
+  return matches;
+};
+
 const collectFieldMatches = (fields: SchemaField[], query: string) =>
   fields
     .filter(field => includesQuery(field.id, query) || includesQuery(field.name, query))
@@ -107,21 +118,23 @@ export const searchWorkspace = async (
   const limitPerType = params.limitPerType ?? SEARCH_DEFAULTS.LIMIT_PER_TYPE;
   const types = parseTypesFromString(params.types);
 
-  const empty = { query: q, projects: [], files: [], entities: [], schemas: [] };
+  const empty = { query: q, projects: [], files: [], entities: [], schemas: [], relations: [] };
   if (q === '') return empty;
 
   const normalizedQuery = q.toLowerCase();
 
-  const [projects, schemas, entities] = await Promise.all([
+  const [projects, schemas, entities, relations, relationSchemas] = await Promise.all([
     types.includes('projects') || types.includes('files')
       ? db.project.listProjects(ws)
       : Promise.resolve([]),
-    types.includes('schemas') || types.includes('entities')
+    types.includes('schemas') || types.includes('entities') || types.includes('relations')
       ? db.catalog.listSchemas(ws)
       : Promise.resolve([]),
-    types.includes('entities') || types.includes('files')
+    types.includes('entities') || types.includes('files') || types.includes('relations')
       ? listAllCatalogEntities(db, ws)
-      : Promise.resolve([])
+      : Promise.resolve([]),
+    types.includes('relations') ? listAllRelations(db, ws, {}) : Promise.resolve([]),
+    types.includes('relations') ? db.relation.listRelationSchemas(ws) : Promise.resolve([])
   ]);
 
   const visibleEntities =
@@ -129,6 +142,27 @@ export const searchWorkspace = async (
       ? entities
       : entities.filter(entity => checker.hasEntityPermission(authCtx, entity, 'view_entity'));
   const visibleProjects = projects.filter(project => canAccessProject(authCtx, project.owner));
+
+  const entityById = new Map(entities.map(entity => [entity.id, entity]));
+  const entitySchemaIdByEntityId = new Map(entities.map(entity => [entity.id, entity.schema_id]));
+  const entitySchemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  const relationSchemaById = new Map(relationSchemas.map(schema => [schema.id, schema]));
+  const visibleRelations = relations.filter(relation =>
+    canViewTypedRelation(
+      authCtx,
+      [
+        {
+          schema: entitySchemaById.get(entitySchemaIdByEntityId.get(relation.in_entity_id) ?? ''),
+          direction: 'in'
+        },
+        {
+          schema: entitySchemaById.get(entitySchemaIdByEntityId.get(relation.out_entity_id) ?? ''),
+          direction: 'out'
+        }
+      ],
+      relation.schema_id
+    )
+  );
 
   const projectsResults = types.includes('projects')
     ? visibleProjects
@@ -345,11 +379,44 @@ export const searchWorkspace = async (
         .slice(0, limitPerType)
     : [];
 
+  const relationResults = types.includes('relations')
+    ? visibleRelations
+        .map(relation => {
+          const matchedFields = collectMatchedFields(
+            authCtx,
+            relationSchemaById.get(relation.schema_id),
+            relation.data,
+            normalizedQuery
+          );
+          const matchedMetadata = collectMatchedRelationMetadata(relation, normalizedQuery);
+          if (matchedFields.length === 0 && matchedMetadata.length === 0) return null;
+          return {
+            relationId: relation.id,
+            schemaId: relation.schema_id,
+            schemaName: relation.schema_name,
+            inEntityId: relation.in_entity_id,
+            inEntityPublicId:
+              entityById.get(relation.in_entity_id)?.public_id ?? relation.in_entity_id,
+            inEntityName: relation.in_entity_name,
+            outEntityId: relation.out_entity_id,
+            outEntityPublicId:
+              entityById.get(relation.out_entity_id)?.public_id ?? relation.out_entity_id,
+            outEntityName: relation.out_entity_name,
+            matchedFields,
+            matchedMetadata
+          };
+        })
+        .filter((relation): relation is NonNullable<typeof relation> => relation !== null)
+        .sort((a, b) => a.schemaName.localeCompare(b.schemaName))
+        .slice(0, limitPerType)
+    : [];
+
   return {
     query: q,
     projects: projectsResults,
     files: filesResults.slice(0, limitPerType),
     entities: entityResults,
-    schemas: schemaResults
+    schemas: schemaResults,
+    relations: relationResults
   };
 };

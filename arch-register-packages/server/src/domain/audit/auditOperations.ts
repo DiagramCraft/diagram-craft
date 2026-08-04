@@ -56,6 +56,13 @@ const relationEndpointIdsFromAuditEntry = (entry: AuditLogDbResult) => {
   return { inEntityId: readId('_inEntityId'), outEntityId: readId('_outEntityId') };
 };
 
+// Relation audit entries get a record-level visibility check (an entry is dropped entirely if the
+// viewer can't see one of the relation's endpoint entities) that entity audit entries don't have —
+// entity audit visibility is governed only by `ws.audit` plus field-level redaction in
+// `redactAuditEntryChanges`. This is an intentional asymmetry (relations can leak owner-restricted
+// endpoint entities through their audit trail in a way entities can't leak themselves), not
+// duplicated logic to unify: the endpoint resolution and `canViewTypedRelation` check below have no
+// entity-side equivalent to share code with.
 const resolveRelationAuditSchemas = async (
   db: DatabaseAdapter,
   workspace: string,

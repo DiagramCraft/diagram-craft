@@ -1,4 +1,11 @@
-import { TbArrowRight, TbCode, TbDatabase, TbFolder, TbFolders } from 'react-icons/tb';
+import {
+  TbArrowRight,
+  TbArrowsRightLeft,
+  TbCode,
+  TbDatabase,
+  TbFolder,
+  TbFolders
+} from 'react-icons/tb';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { Chip } from '../../../components/Chip';
 import { StatusChip } from '../../../components/StatusChip';
@@ -251,6 +258,48 @@ export const PreviewPane = ({
             Open{' '}
             {f.scope === 'project' ? 'in project' : f.scope === 'entity' ? 'entity' : 'workspace'}{' '}
             <TbArrowRight size={11} />
+          </button>
+        </div>
+      </div>
+    );
+  }
+
+  if (preview.type === 'relation') {
+    const r = preview.data;
+    return (
+      <div className={styles.previewBody}>
+        <div className={styles.previewHead}>
+          <span className={styles.previewIcon}>
+            <TbArrowsRightLeft size={16} />
+          </span>
+          <div style={{ flex: 1, minWidth: 0 }}>
+            <div className={styles.previewEyebrow}>{r.schemaName}</div>
+            <div className={styles.previewTitle}>
+              <Hi s={r.inEntityName} q={q} /> → <Hi s={r.outEntityName} q={q} />
+            </div>
+          </div>
+        </div>
+        <dl className={styles.previewProps}>
+          <dt>Schema</dt>
+          <dd>
+            <Hi s={r.schemaName} q={q} />
+          </dd>
+          <dt>In entity</dt>
+          <dd>
+            <Hi s={r.inEntityName} q={q} />
+          </dd>
+          <dt>Out entity</dt>
+          <dd>
+            <Hi s={r.outEntityName} q={q} />
+          </dd>
+        </dl>
+        <div className={styles.previewActions}>
+          <button
+            type="button"
+            className={styles.previewBtn}
+            onClick={() => onEntityClick(r.inEntityPublicId)}
+          >
+            Open in entity <TbArrowRight size={11} />
           </button>
         </div>
       </div>

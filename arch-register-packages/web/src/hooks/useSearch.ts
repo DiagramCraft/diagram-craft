@@ -11,7 +11,7 @@ export const searchKeys = {
     query: string,
     options: {
       limitPerType?: number | null;
-      types?: Array<'projects' | 'files' | 'entities' | 'schemas'> | null;
+      types?: Array<'projects' | 'files' | 'entities' | 'schemas' | 'relations'> | null;
     }
   ) => [...searchKeys.workspaceSearches(workspaceId), query, options] as const
 };
@@ -22,7 +22,7 @@ export const useSearch = (
   params: {
     q: string;
     limitPerType?: number | null;
-    types?: Array<'projects' | 'files' | 'entities' | 'schemas'> | null;
+    types?: Array<'projects' | 'files' | 'entities' | 'schemas' | 'relations'> | null;
   },
   queryOptions?: { enabled?: boolean }
 ) => {

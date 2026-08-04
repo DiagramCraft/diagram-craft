@@ -11,6 +11,20 @@ import { httpAssert } from '../../utils/httpAssert';
 
 export type RelationEndpointDirection = 'in' | 'out';
 
+/**
+ * Relations are deliberately not modeled on `EntityAction`/`PermissionChecker.hasEntityPermission`
+ * (see arch-register-packages/permissions/src/PermissionChecker.ts). That model is owner- and
+ * containment-hierarchy-scoped: it walks ancestor entities via `containment`-type schema fields
+ * to propagate team permissions down a tree. Relations have no `owner`/`lifecycle` fields and no
+ * containment hierarchy to walk, so there's no structural projection of a relation that the
+ * entity permission machinery could consume. Instead, relation authorization is: a flat workspace
+ * capability (`ent.edit`, see `requireWorkspaceCapability` call sites in relationOperations.ts)
+ * plus the endpoint-based field-group visibility checks below (an entity's owner-restricted
+ * `typedRelation` field can hide relations through that endpoint). This is a permanent design
+ * choice, not an unfinished unification — see #2708 for the (deferred, not yet decided) question
+ * of whether relations should someday gain their own ownership/lifecycle semantics.
+ */
+
 const matchingOwnerFields = (
   schema: FieldGroupSchemaShape | null | undefined,
   relationSchemaId: string,
