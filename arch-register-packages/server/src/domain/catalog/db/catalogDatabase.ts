@@ -35,11 +35,11 @@ export const ENTITY_SELECT_SQL = `
     ls.label  AS lifecycle_label,
     tls.label AS target_lifecycle_label,
     es.name   AS schema_name
-  FROM entity e
+  FROM catalog_record e
   LEFT JOIN workspace_owner wo            ON wo.id  = e.owner
   LEFT JOIN workspace_lifecycle_state ls  ON ls.id  = e.lifecycle
   LEFT JOIN workspace_lifecycle_state tls ON tls.id = e.target_lifecycle
-  JOIN entity_schema es ON es.id = e.schema_id
+  JOIN entity_schema es ON es.id = e.schema_id AND e.kind = 'entity'
 `;
 
 export type EntityListDbFilters = {

@@ -140,10 +140,10 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     newFieldId: string
   ) {
     const rows = (await this.sql`
-      UPDATE entity
+      UPDATE catalog_record
       SET data = (data - ${oldFieldId}::text)
         || jsonb_build_object(${newFieldId}::text, data -> ${oldFieldId}::text)
-      WHERE workspace = ${workspace} AND schema_id = ${schemaId} AND data ? ${oldFieldId}::text
+      WHERE kind = 'entity' AND workspace = ${workspace} AND schema_id = ${schemaId} AND data ? ${oldFieldId}::text
       RETURNING id
     `) as DatabaseRow[];
     return rows.length;
@@ -151,9 +151,9 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async removeEntityDataField(workspace: string, schemaId: string, fieldId: string) {
     const rows = (await this.sql`
-      UPDATE entity
+      UPDATE catalog_record
       SET data = data - ${fieldId}::text
-      WHERE workspace = ${workspace} AND schema_id = ${schemaId} AND data ? ${fieldId}::text
+      WHERE kind = 'entity' AND workspace = ${workspace} AND schema_id = ${schemaId} AND data ? ${fieldId}::text
       RETURNING id
     `) as DatabaseRow[];
     return rows.length;
@@ -373,10 +373,11 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createEntity(input: EntityDbCreate) {
     try {
       await this.sql`
-        INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, generated_metadata, project_id, version, approval_policy_override, completeness, created_at, updated_at)
+        INSERT INTO catalog_record (id, workspace, kind, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, generated_metadata, project_id, version, approval_policy_override, completeness, created_at, updated_at)
         VALUES (
           ${input.id},
           ${input.workspace},
+          'entity',
           ${input.public_id},
           ${input.slug},
           ${input.namespace},
@@ -408,7 +409,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async updateEntity(workspace: string, id: string, input: EntityDbUpdate) {
     try {
       const result = await this.sql`
-        UPDATE entity
+        UPDATE catalog_record
         SET slug = ${input.slug},
             namespace = ${input.namespace},
             name = ${input.name},
@@ -427,7 +428,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             approval_policy_override = COALESCE(${input.approval_policy_override ?? null}, approval_policy_override),
             completeness = ${input.completeness},
             updated_at = ${input.updated_at}
-        WHERE workspace = ${workspace} AND id = ${id}
+        WHERE workspace = ${workspace} AND id = ${id} AND kind = 'entity'
       `;
       if (result.count === 0) return null;
       return await this.getEntity(workspace, id);
@@ -444,7 +445,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   ) {
     try {
       const result = await this.sql`
-        UPDATE entity
+        UPDATE catalog_record
         SET slug = ${input.slug},
             namespace = ${input.namespace},
             name = ${input.name},
@@ -463,7 +464,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             approval_policy_override = COALESCE(${input.approval_policy_override ?? null}, approval_policy_override),
             completeness = ${input.completeness},
             updated_at = ${input.updated_at}
-        WHERE workspace = ${workspace} AND id = ${id} AND version = ${expectedVersion}
+        WHERE workspace = ${workspace} AND id = ${id} AND kind = 'entity' AND version = ${expectedVersion}
       `;
       if (result.count === 0) return null;
       return await this.getEntity(workspace, id);
@@ -479,9 +480,9 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   ) {
     try {
       const result = await this.sql`
-        UPDATE entity
+        UPDATE catalog_record
         SET approval_policy_override = ${override}, version = version + 1, updated_at = NOW()
-        WHERE workspace = ${workspace} AND id = ${id}
+        WHERE workspace = ${workspace} AND id = ${id} AND kind = 'entity'
       `;
       return result.count === 0 ? null : await this.getEntity(workspace, id);
     } catch (error) {
@@ -494,17 +495,17 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   // concurrency checks on a concurrent user update, or create a new entity_version snapshot.
   async updateEntityCompleteness(workspace: string, id: string, completeness: number) {
     await this.sql`
-      UPDATE entity
+      UPDATE catalog_record
       SET completeness = ${completeness}
-      WHERE workspace = ${workspace} AND id = ${id} AND completeness != ${completeness}
+      WHERE workspace = ${workspace} AND id = ${id} AND kind = 'entity' AND completeness != ${completeness}
     `;
   }
 
   async updateEntityDerivedFields(workspace: string, id: string, data: Record<string, unknown>) {
     await this.sql`
-      UPDATE entity
+      UPDATE catalog_record
       SET data = ${this.json(data)}
-      WHERE workspace = ${workspace} AND id = ${id}
+      WHERE workspace = ${workspace} AND id = ${id} AND kind = 'entity'
     `;
   }
 
@@ -513,9 +514,9 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   // checks on a concurrent user update, or create a new entity_version snapshot.
   async touchEntityAttestation(workspace: string, id: string, attestedAt: Date) {
     await this.sql`
-      UPDATE entity
+      UPDATE catalog_record
       SET last_attested_at = ${attestedAt.toISOString()}
-      WHERE workspace = ${workspace} AND id = ${id}
+      WHERE workspace = ${workspace} AND id = ${id} AND kind = 'entity'
     `;
   }
 
@@ -524,9 +525,9 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       const row = await this.getEntity(workspace, id);
       if (!row) return null;
       await this.sql`
-        UPDATE entity
+        UPDATE catalog_record
         SET deleted_at = NOW(), owner = NULL, lifecycle = NULL, target_lifecycle = NULL
-        WHERE workspace = ${workspace} AND id = ${id}
+        WHERE workspace = ${workspace} AND id = ${id} AND kind = 'entity'
       `;
       return row;
     } catch (error) {
@@ -616,18 +617,18 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async createEntityVersion(input: EntityVersionDbCreate) {
     const [row] = (await this.sql`
-      INSERT INTO entity_version (id, workspace, entity_id, version_number, kind, commit_message, created_at, created_by, state, applied_case_revision_id)
+      INSERT INTO record_version (id, workspace, record_id, version_number, kind, commit_message, created_at, created_by, state, applied_case_revision_id)
       VALUES (${input.id}, ${input.workspace}, ${input.entity_id}, ${input.version_number}, ${input.kind}, ${input.commit_message}, ${input.created_at}, ${input.created_by}, ${this.json(input.state)}, ${input.applied_case_revision_id})
-      RETURNING *
+      RETURNING *, record_id AS entity_id
     `) as DatabaseRow[];
     return catalogMappers.entityVersion(row!);
   }
 
   async listEntityVersions(workspace: string, entityId: string) {
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT v.*, u.display_name AS created_by_name FROM entity_version v
+      SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name FROM record_version v
       LEFT JOIN users u ON u.id = v.created_by
-      WHERE v.workspace = ${workspace} AND v.entity_id = ${entityId}
+      WHERE v.workspace = ${workspace} AND v.record_id = ${entityId}
       ORDER BY v.created_at DESC
     `;
     return mapDatabaseRows(rows, catalogMappers.entityVersion);
@@ -636,11 +637,11 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async listEntityVersionsByIds(workspace: string, entityIds: string[]) {
     if (entityIds.length === 0) return [];
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT v.id, v.workspace, v.entity_id, v.version_number, v.kind, v.commit_message,
+      SELECT v.id, v.workspace, v.record_id AS entity_id, v.version_number, v.kind, v.commit_message,
         v.created_at, v.created_by, v.applied_case_revision_id, u.display_name AS created_by_name
-      FROM entity_version v LEFT JOIN users u ON u.id = v.created_by
-      WHERE v.workspace = ${workspace} AND v.entity_id = ANY(${entityIds})
-      ORDER BY v.entity_id, v.created_at DESC
+      FROM record_version v LEFT JOIN users u ON u.id = v.created_by
+      WHERE v.workspace = ${workspace} AND v.record_id = ANY(${entityIds})
+      ORDER BY v.record_id, v.created_at DESC
     `;
     return mapDatabaseRows(rows, catalogMappers.entityVersionSummary);
   }
@@ -648,11 +649,11 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async listEntityVersionsAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT v.*, u.display_name AS created_by_name FROM entity_version v
+      SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name FROM record_version v
       LEFT JOIN users u ON u.id = v.created_by
       WHERE v.workspace = ${workspace} AND v.created_at <= ${asOf}
-      ${entityIds != null ? this.sql`AND v.entity_id = ANY(${entityIds})` : this.sql``}
-      ORDER BY v.entity_id, v.created_at ASC
+      ${entityIds != null ? this.sql`AND v.record_id = ANY(${entityIds})` : this.sql``}
+      ORDER BY v.record_id, v.created_at ASC
     `;
     return mapDatabaseRows(rows, catalogMappers.entityVersion);
   }
@@ -664,8 +665,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     commitMessage: string | null
   ) {
     const [row] = (await this.sql`
-      UPDATE entity_version SET kind = ${kind}, commit_message = ${commitMessage}
-      WHERE workspace = ${workspace} AND id = ${versionId} RETURNING *
+      UPDATE record_version SET kind = ${kind}, commit_message = ${commitMessage}
+      WHERE workspace = ${workspace} AND id = ${versionId} RETURNING *, record_id AS entity_id
     `) as DatabaseRow[];
     return row ? catalogMappers.entityVersion(row) : null;
   }
@@ -673,14 +674,14 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async getEntityVersionById(workspace: string, id: string) {
     const [row] = await this.sql<
       DatabaseRow[]
-    >`SELECT v.*, u.display_name AS created_by_name FROM entity_version v LEFT JOIN users u ON u.id = v.created_by WHERE v.workspace = ${workspace} AND v.id = ${id}`;
+    >`SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name FROM record_version v LEFT JOIN users u ON u.id = v.created_by WHERE v.workspace = ${workspace} AND v.id = ${id}`;
     return row ? catalogMappers.entityVersion(row) : null;
   }
 
   async listPlannedEntityChangesAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT m.id, c.workspace, m.entity_id,
+      SELECT m.id, c.workspace, m.record_id AS entity_id,
              c.id AS case_id, r.id AS case_revision_id,
              c.project_id,
              CASE WHEN c.milestone_id IS NULL THEN c.effective_date ELSE NULL END AS target_date,
@@ -688,7 +689,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
              COALESCE(r.message, c.description) AS commit_message,
              r.created_at, r.created_by, u.display_name AS created_by_name,
              m.proposed_state
-      FROM entity_change_case_entity_version m
+      FROM record_change_case_record_version m
       JOIN entity_change_case_revision r ON r.id = m.revision_id
       JOIN entity_change_case c ON c.id = r.case_id
       LEFT JOIN users u ON u.id = r.created_by
@@ -696,8 +697,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
         AND r.status IN ('draft', 'submitted', 'changes_requested')
         AND r.created_at <= ${asOf}
         AND (c.milestone_id IS NOT NULL OR c.effective_date IS NULL OR c.effective_date <= ${asOf.toISOString().slice(0, 10)})
-        ${entityIds != null ? this.sql`AND m.entity_id = ANY(${entityIds})` : this.sql``}
-      ORDER BY m.entity_id, r.created_at ASC
+        ${entityIds != null ? this.sql`AND m.record_id = ANY(${entityIds})` : this.sql``}
+      ORDER BY m.record_id, r.created_at ASC
     `;
     return mapDatabaseRows(rows, catalogMappers.plannedEntityChange);
   }
@@ -705,16 +706,16 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async listEntityIdsWithVersionHistory(workspace: string, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
     const rows = await this.sql<
-      { entity_id: string }[]
-    >`SELECT DISTINCT entity_id FROM entity_version WHERE workspace = ${workspace} ${entityIds != null ? this.sql`AND entity_id = ANY(${entityIds})` : this.sql``}`;
-    return rows.map(row => row.entity_id);
+      { record_id: string }[]
+    >`SELECT DISTINCT record_id FROM record_version WHERE workspace = ${workspace} ${entityIds != null ? this.sql`AND record_id = ANY(${entityIds})` : this.sql``}`;
+    return rows.map(row => row.record_id);
   }
 
   async listTimelineMarkers(workspace: string) {
     return this.sql<TimelineMarkerDbResult[]>`
       SELECT date, type, COUNT(*)::int AS count FROM (
         SELECT COALESCE(c.effective_date, m.target_date)::text AS date, 'future_update' AS type FROM entity_change_case c LEFT JOIN project_milestone m ON m.id = c.milestone_id WHERE c.workspace = ${workspace} AND c.status = 'planned' AND COALESCE(c.effective_date, m.target_date) IS NOT NULL
-        UNION ALL SELECT created_at::date::text AS date, 'saved_version' AS type FROM entity_version WHERE workspace = ${workspace} AND kind = 'saved_version'
+        UNION ALL SELECT created_at::date::text AS date, 'saved_version' AS type FROM record_version WHERE workspace = ${workspace} AND kind = 'saved_version'
         UNION ALL SELECT COALESCE(c.effective_date, m.target_date)::text AS date, 'applied' AS type FROM entity_change_case c LEFT JOIN project_milestone m ON m.id = c.milestone_id WHERE c.workspace = ${workspace} AND c.status = 'applied' AND COALESCE(c.effective_date, m.target_date) IS NOT NULL
       ) markers GROUP BY date, type ORDER BY date ASC
     `;
@@ -722,7 +723,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async pruneAutosaveVersions(workspace: string, entityId: string, keepCount: number) {
     await this
-      .sql`DELETE FROM entity_version WHERE workspace = ${workspace} AND entity_id = ${entityId} AND kind = 'autosave' AND id NOT IN (SELECT id FROM entity_version WHERE workspace = ${workspace} AND entity_id = ${entityId} AND kind = 'autosave' ORDER BY created_at DESC LIMIT ${keepCount})`;
+      .sql`DELETE FROM record_version WHERE workspace = ${workspace} AND record_id = ${entityId} AND kind = 'autosave' AND id NOT IN (SELECT id FROM record_version WHERE workspace = ${workspace} AND record_id = ${entityId} AND kind = 'autosave' ORDER BY created_at DESC LIMIT ${keepCount})`;
   }
 
   async reassignSnapshotsFromMilestone(

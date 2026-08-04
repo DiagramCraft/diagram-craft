@@ -63,12 +63,14 @@ export type RelationSchemaVersionDbCreate = RelationSchemaVersionDbResult;
 
 export const RELATION_SELECT_SQL = `
   SELECT r.*,
+    r.in_record_id  AS in_entity_id,
+    r.out_record_id AS out_entity_id,
     ein.name  AS in_entity_name,
     eout.name AS out_entity_name,
     rs.name   AS schema_name
-  FROM relation r
-  JOIN entity ein         ON ein.id  = r.in_entity_id
-  JOIN entity eout        ON eout.id = r.out_entity_id
+  FROM catalog_record r
+  JOIN catalog_record ein ON ein.id  = r.in_record_id  AND ein.kind = 'entity' AND r.kind = 'relation'
+  JOIN catalog_record eout ON eout.id = r.out_record_id AND eout.kind = 'entity'
   JOIN relation_schema rs ON rs.id   = r.schema_id
 `;
 

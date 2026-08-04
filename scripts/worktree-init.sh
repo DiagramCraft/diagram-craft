@@ -143,7 +143,7 @@ for e in reg.get('worktrees', []):
     echo ""
     echo "Bootstrapping AR server database..."
     mkdir -p "${AR_SERVER_DIR}/data"
-    (cd "${AR_SERVER_DIR}" && pnpm bootstrap)
+    (cd "${AR_SERVER_DIR}" && pnpm bootstrap -- --reset)
     echo "AR server database bootstrapped."
   fi
 

@@ -110,10 +110,10 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
     newFieldId: string
   ) {
     const rows = (await this.sql`
-      UPDATE relation
+      UPDATE catalog_record
       SET data = (data - ${oldFieldId}::text)
         || jsonb_build_object(${newFieldId}::text, data -> ${oldFieldId}::text)
-      WHERE workspace = ${workspace} AND schema_id = ${schemaId} AND data ? ${oldFieldId}::text
+      WHERE kind = 'relation' AND workspace = ${workspace} AND schema_id = ${schemaId} AND data ? ${oldFieldId}::text
       RETURNING id
     `) as DatabaseRow[];
     return rows.length;
@@ -121,9 +121,9 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
 
   async removeRelationDataField(workspace: string, schemaId: string, fieldId: string) {
     const rows = (await this.sql`
-      UPDATE relation
+      UPDATE catalog_record
       SET data = data - ${fieldId}::text
-      WHERE workspace = ${workspace} AND schema_id = ${schemaId} AND data ? ${fieldId}::text
+      WHERE kind = 'relation' AND workspace = ${workspace} AND schema_id = ${schemaId} AND data ? ${fieldId}::text
       RETURNING id
     `) as DatabaseRow[];
     return rows.length;
@@ -131,7 +131,7 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
 
   async countRelationsForSchema(workspace: string, schemaId: string) {
     const [row] = await this.sql<{ count: string }[]>`
-      SELECT COUNT(*) AS count FROM relation WHERE workspace = ${workspace} AND schema_id = ${schemaId}
+      SELECT COUNT(*) AS count FROM catalog_record WHERE kind = 'relation' AND workspace = ${workspace} AND schema_id = ${schemaId}
     `;
     return Number(row?.count ?? 0);
   }
@@ -149,12 +149,12 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
       return `$${params.length}`;
     };
     if (filters.schemaId) whereParts.push(`r.schema_id = ${addParam(filters.schemaId)}`);
-    if (filters.inEntityId) whereParts.push(`r.in_entity_id = ${addParam(filters.inEntityId)}`);
-    if (filters.outEntityId) whereParts.push(`r.out_entity_id = ${addParam(filters.outEntityId)}`);
+    if (filters.inEntityId) whereParts.push(`r.in_record_id = ${addParam(filters.inEntityId)}`);
+    if (filters.outEntityId) whereParts.push(`r.out_record_id = ${addParam(filters.outEntityId)}`);
     const where = whereParts.join(' AND ');
 
     const [countRow] = await this.sql.unsafe<{ count: string }[]>(
-      `SELECT COUNT(*) AS count FROM relation r WHERE ${where}`,
+      `SELECT COUNT(*) AS count FROM catalog_record r WHERE r.kind = 'relation' AND ${where}`,
       params as Parameters<typeof this.sql.unsafe>[1]
     );
 
@@ -181,8 +181,8 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
   async createRelation(input: RelationDbCreate) {
     try {
       await this.sql`
-        INSERT INTO relation (id, workspace, schema_id, in_entity_id, out_entity_id, data, version, approval_policy_override, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.schema_id}, ${input.in_entity_id}, ${input.out_entity_id}, ${this.json(input.data)}, ${input.version ?? 1}, ${input.approval_policy_override ?? null}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO catalog_record (id, workspace, kind, schema_id, in_record_id, out_record_id, data, version, approval_policy_override, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, 'relation', ${input.schema_id}, ${input.in_entity_id}, ${input.out_entity_id}, ${this.json(input.data)}, ${input.version ?? 1}, ${input.approval_policy_override ?? null}, ${input.created_at}, ${input.updated_at})
       `;
       return (await this.getRelation(input.workspace, input.id))!;
     } catch (error) {
@@ -195,20 +195,20 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
       const rows =
         input.approval_policy_override === undefined
           ? ((await this.sql`
-              UPDATE relation
+              UPDATE catalog_record
               SET data = ${this.json(input.data)},
                   version = ${input.version},
                   updated_at = ${input.updated_at}
-              WHERE workspace = ${workspace} AND id = ${id}
+              WHERE workspace = ${workspace} AND id = ${id} AND kind = 'relation'
               RETURNING id
             `) as DatabaseRow[])
           : ((await this.sql`
-              UPDATE relation
+              UPDATE catalog_record
               SET data = ${this.json(input.data)},
                   version = ${input.version},
                   approval_policy_override = ${input.approval_policy_override},
                   updated_at = ${input.updated_at}
-              WHERE workspace = ${workspace} AND id = ${id}
+              WHERE workspace = ${workspace} AND id = ${id} AND kind = 'relation'
               RETURNING id
             `) as DatabaseRow[]);
       if (!rows[0]) return null;
@@ -221,17 +221,18 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
   async deleteRelation(workspace: string, id: string) {
     const existing = await this.getRelation(workspace, id);
     if (!existing) return null;
-    await this.sql`DELETE FROM relation WHERE workspace = ${workspace} AND id = ${id}`;
+    await this
+      .sql`DELETE FROM catalog_record WHERE workspace = ${workspace} AND id = ${id} AND kind = 'relation'`;
     return existing;
   }
 
   async listRelationsForEntity(workspace: string, entityId: string) {
     const outgoingRows = await this.sql.unsafe<DatabaseRow[]>(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.in_entity_id = $2 ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.in_record_id = $2 ORDER BY r.created_at DESC`,
       [workspace, entityId]
     );
     const incomingRows = await this.sql.unsafe<DatabaseRow[]>(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.out_entity_id = $2 ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.out_record_id = $2 ORDER BY r.created_at DESC`,
       [workspace, entityId]
     );
     return {
@@ -245,11 +246,11 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
     const placeholders = entityIds.map((_, i) => `$${i + 2}`).join(',');
     const params = [workspace, ...entityIds] as Parameters<typeof this.sql.unsafe>[1];
     const outgoingRows = await this.sql.unsafe<DatabaseRow[]>(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.in_entity_id IN (${placeholders}) ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.in_record_id IN (${placeholders}) ORDER BY r.created_at DESC`,
       params
     );
     const incomingRows = await this.sql.unsafe<DatabaseRow[]>(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.out_entity_id IN (${placeholders}) ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.out_record_id IN (${placeholders}) ORDER BY r.created_at DESC`,
       params
     );
     return {

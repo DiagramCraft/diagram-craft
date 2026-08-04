@@ -89,7 +89,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         await tx`DELETE FROM content_node WHERE workspace = ${id}`;
         await tx`DELETE FROM project WHERE workspace = ${id}`;
         await tx`DELETE FROM entity_grant WHERE workspace = ${id}`;
-        await tx`DELETE FROM entity WHERE workspace = ${id}`;
+        await tx`DELETE FROM catalog_record WHERE workspace = ${id}`;
         await tx`DELETE FROM entity_schema WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_member WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_role WHERE workspace = ${id}`;
@@ -126,7 +126,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
         if (stateIds.length === 0) {
           await tx`
-            UPDATE entity
+            UPDATE catalog_record
             SET lifecycle = NULL,
                 target_lifecycle = NULL
             WHERE workspace = ${workspace}
@@ -136,14 +136,14 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         }
 
         await tx`
-          UPDATE entity
+          UPDATE catalog_record
           SET lifecycle = NULL
           WHERE workspace = ${workspace}
             AND lifecycle IS NOT NULL
             AND lifecycle NOT IN ${tx(stateIds)}
         `;
         await tx`
-          UPDATE entity
+          UPDATE catalog_record
           SET target_lifecycle = NULL
           WHERE workspace = ${workspace}
             AND target_lifecycle IS NOT NULL

@@ -407,9 +407,9 @@ const compilePathSteps = (
     const relationAlias = nextRelationAlias(state);
     const targetAlias = nextAlias(state);
     const ownerId =
-      step.direction === 'in' ? `${relationAlias}.in_entity_id` : `${relationAlias}.out_entity_id`;
+      step.direction === 'in' ? `${relationAlias}.in_record_id` : `${relationAlias}.out_record_id`;
     const targetId =
-      step.direction === 'in' ? `${relationAlias}.out_entity_id` : `${relationAlias}.in_entity_id`;
+      step.direction === 'in' ? `${relationAlias}.out_record_id` : `${relationAlias}.in_record_id`;
     const relationSchemaParam = addParam(state, step.relationSchemaId);
     const ownerSchemaClause = typedRelationOwnerSchemaClause(curAlias, step.ownerSchemaIds, state);
     const filterClause = step.filter
@@ -431,9 +431,10 @@ const compilePathSteps = (
       terminal
     );
     return (
-      `EXISTS (SELECT 1 FROM relation ${relationAlias} ` +
+      `EXISTS (SELECT 1 FROM catalog_record ${relationAlias} ` +
       `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} ` +
-      `WHERE ${relationAlias}.workspace = ${curAlias}.workspace ` +
+      `WHERE ${relationAlias}.kind = 'relation' ` +
+      `AND ${relationAlias}.workspace = ${curAlias}.workspace ` +
       `AND ${relationAlias}.schema_id = ${relationSchemaParam} ` +
       `AND ${ownerSchemaClause} ` +
       `AND ${ownerId} = ${curAlias}.id${filterClause} AND ${rest})`
@@ -600,12 +601,12 @@ const buildProjectionBindings = (
         const targetAlias = `pb_${binding.name}_${stepIndex + 1}`;
         const ownerId =
           step.direction === 'in'
-            ? `${relationAlias}.in_entity_id`
-            : `${relationAlias}.out_entity_id`;
+            ? `${relationAlias}.in_record_id`
+            : `${relationAlias}.out_record_id`;
         const targetId =
           step.direction === 'in'
-            ? `${relationAlias}.out_entity_id`
-            : `${relationAlias}.in_entity_id`;
+            ? `${relationAlias}.out_record_id`
+            : `${relationAlias}.in_record_id`;
         const relationSchema = addParam(state, step.relationSchemaId);
         const ownerSchemaClause = typedRelationOwnerSchemaClause(
           currentAlias,
@@ -622,7 +623,8 @@ const buildProjectionBindings = (
             )}`
           : '';
         from +=
-          `\n      JOIN relation ${relationAlias} ON ${relationAlias}.workspace = ${currentAlias}.workspace` +
+          `\n      JOIN catalog_record ${relationAlias} ON ${relationAlias}.kind = 'relation'` +
+          ` AND ${relationAlias}.workspace = ${currentAlias}.workspace` +
           ` AND ${relationAlias}.schema_id = ${relationSchema}` +
           ` AND ${ownerSchemaClause}` +
           ` AND ${ownerId} = ${currentAlias}.id${filter}` +
@@ -751,7 +753,7 @@ const projectionValue = (
   const source =
     `FROM ${binding.name} ${bindingAlias} ` +
     (projection.source === 'relation'
-      ? `JOIN relation ${relationAlias} ON ${relationAlias}.id = ${bindingAlias}.relation_${projection.path.length}_id `
+      ? `JOIN catalog_record ${relationAlias} ON ${relationAlias}.id = ${bindingAlias}.relation_${projection.path.length}_id AND ${relationAlias}.kind = 'relation' `
       : `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} `) +
     `WHERE ${bindingAlias}.root_id = ${ROOT_ALIAS}.id${scope ? ` AND ${scope}` : ''}`;
 
@@ -928,7 +930,7 @@ const buildTemporalSource = (state: CompileState): string => {
   const workspaceParam = addParam(state, state.workspace);
   const asOfParam = addParam(state, asOf.toISOString());
   const projectClause = projectScopeClause(
-    'v.entity_id',
+    'v.record_id',
     'v.workspace',
     stateText('v.state', 'project_id', state.dialect),
     state
@@ -975,44 +977,45 @@ const buildTemporalSource = (state: CompileState): string => {
     latest_entity_version AS (
       SELECT v.*,
              ROW_NUMBER() OVER (
-               PARTITION BY v.entity_id
+               PARTITION BY v.record_id
                ORDER BY v.created_at DESC, v.version_number DESC
              ) AS row_number
-      FROM entity_version v
+      FROM record_version v
       WHERE v.workspace = ${workspaceParam}
         AND v.created_at <= ${asOfParam}
     ),
     baseline_entity_state AS (
-      SELECT v.entity_id, v.workspace, v.state
+      SELECT v.record_id AS entity_id, v.workspace, v.state
       FROM latest_entity_version v
       WHERE v.row_number = 1
         AND v.kind <> 'deleted'
         AND ${projectClause}
       UNION ALL
       SELECT e.id, e.workspace, ${liveEntityState(state.dialect)}
-      FROM entity e
-      WHERE e.workspace = ${fallbackWorkspaceParam}
+      FROM catalog_record e
+      WHERE e.kind = 'entity'
+        AND e.workspace = ${fallbackWorkspaceParam}
         AND e.deleted_at IS NULL
         AND e.created_at <= ${fallbackCreatedParam}
         AND NOT EXISTS (
-          SELECT 1 FROM entity_version any_version
+          SELECT 1 FROM record_version any_version
           WHERE any_version.workspace = e.workspace
-            AND any_version.entity_id = e.id
+            AND any_version.record_id = e.id
         )
         AND ${fallbackProjectClause}
     ),
     active_future_events AS (
-      SELECT m.entity_id,
+      SELECT m.record_id AS entity_id,
              c.id AS case_id,
              c.effective_date,
              r.created_at,
              r.revision_number,
              m.proposed_state,
              ROW_NUMBER() OVER (
-               PARTITION BY m.entity_id
+               PARTITION BY m.record_id
                ORDER BY c.effective_date, r.created_at, r.revision_number, c.id
              ) AS event_number
-      FROM entity_change_case_entity_version m
+      FROM record_change_case_record_version m
       JOIN entity_change_case_revision r
         ON r.id = m.revision_id
        AND r.is_active = ${state.dialect === 'postgres' ? 'TRUE' : '1'}
@@ -1081,7 +1084,7 @@ const buildScopeCte = (state: CompileState): string => {
         ? '1=0'
         : `e.id IN (${state.visibleEntityIds.map(id => addParam(state, id)).join(', ')})`;
   const scopedWhere = `${scopeClause} AND ${visibleClause || '1=1'}`;
-  return `${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn}\n      FROM entity e\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopedWhere}\n    )`;
+  return `${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn}\n      FROM catalog_record e\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.kind = 'entity'\n        AND e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopedWhere}\n    )`;
 };
 
 // Compiles a validated EntityQuery into a full `WITH scoped_entity AS (...) SELECT ...` statement,

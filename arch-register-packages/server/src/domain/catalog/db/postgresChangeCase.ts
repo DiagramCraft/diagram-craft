@@ -23,7 +23,7 @@ export class PostgresChangeCaseDatabase extends PostgresDatabaseBase implements 
       `;
       for (const member of input.members) {
         await this.sql`
-          INSERT INTO entity_change_case_entity_version (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff)
+          INSERT INTO record_change_case_record_version (id, revision_id, workspace, record_id, base_version, base_state, proposed_state, diff)
           VALUES (${randomUUID()}, ${revisionId}, ${input.workspace}, ${member.entity_id}, ${member.base_version}, ${this.json(member.base_state)}, ${this.json(member.proposed_state)}, ${this.json(member.diff)})
         `;
       }
@@ -52,8 +52,8 @@ export class PostgresChangeCaseDatabase extends PostgresDatabaseBase implements 
     const rows = await this.sql`
       SELECT DISTINCT c.* FROM entity_change_case c
       JOIN entity_change_case_revision r ON r.case_id = c.id
-      JOIN entity_change_case_entity_version m ON m.revision_id = r.id
-      WHERE c.workspace = ${workspace} AND c.purpose = 'planned_change' AND m.entity_id = ${entityId}
+      JOIN record_change_case_record_version m ON m.revision_id = r.id
+      WHERE c.workspace = ${workspace} AND c.purpose = 'planned_change' AND m.record_id = ${entityId}
       ORDER BY c.updated_at DESC
     `;
     return mapDatabaseRows(rows as DatabaseRow[], changeCaseMappers.case);
@@ -70,7 +70,7 @@ export class PostgresChangeCaseDatabase extends PostgresDatabaseBase implements 
         c.created_at AS case_created_at, c.updated_at AS case_updated_at,
         c.closed_at AS case_closed_at, r.message AS revision_message,
         m.id AS member_id, m.revision_id AS member_revision_id,
-        m.workspace AS member_workspace, m.entity_id AS member_entity_id,
+        m.workspace AS member_workspace, m.record_id AS member_entity_id,
         m.base_version AS member_base_version,
         m.applied_version_id AS member_applied_version_id
       FROM entity_change_case c
@@ -80,10 +80,10 @@ export class PostgresChangeCaseDatabase extends PostgresDatabaseBase implements 
           FROM entity_change_case_revision latest
           WHERE latest.workspace = c.workspace AND latest.case_id = c.id
         )
-      JOIN entity_change_case_entity_version m ON m.revision_id = r.id
+      JOIN record_change_case_record_version m ON m.revision_id = r.id
       WHERE c.workspace = ${workspace} AND c.purpose = 'planned_change'
-        AND m.entity_id = ANY(${entityIds})
-      ORDER BY m.entity_id, c.updated_at DESC
+        AND m.record_id = ANY(${entityIds})
+      ORDER BY m.record_id, c.updated_at DESC
     `;
     return mapDatabaseRows(rows as DatabaseRow[], changeCaseMappers.timelineMember);
   }
@@ -108,9 +108,9 @@ export class PostgresChangeCaseDatabase extends PostgresDatabaseBase implements 
 
   async listMembers(workspace: string, revisionId: string) {
     const rows = await this.sql`
-      SELECT * FROM entity_change_case_entity_version
+      SELECT * FROM record_change_case_record_version
       WHERE workspace = ${workspace} AND revision_id = ${revisionId}
-      ORDER BY entity_id
+      ORDER BY record_id
     `;
     return mapDatabaseRows(rows as DatabaseRow[], changeCaseMappers.member);
   }
@@ -119,11 +119,11 @@ export class PostgresChangeCaseDatabase extends PostgresDatabaseBase implements 
     try {
       const id = randomUUID();
       await this.sql`
-        INSERT INTO entity_change_case_entity_version (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff)
+        INSERT INTO record_change_case_record_version (id, revision_id, workspace, record_id, base_version, base_state, proposed_state, diff)
         VALUES (${id}, ${revisionId}, ${workspace}, ${member.entity_id}, ${member.base_version}, ${this.json(member.base_state)}, ${this.json(member.proposed_state)}, ${this.json(member.diff)})
       `;
       const rows = await this
-        .sql`SELECT * FROM entity_change_case_entity_version WHERE workspace = ${workspace} AND id = ${id}`;
+        .sql`SELECT * FROM record_change_case_record_version WHERE workspace = ${workspace} AND id = ${id}`;
       return changeCaseMappers.member(rows[0] as DatabaseRow);
     } catch (error) {
       return normalizePostgresError(error);
@@ -132,7 +132,7 @@ export class PostgresChangeCaseDatabase extends PostgresDatabaseBase implements 
 
   async removeMember(workspace: string, memberId: string) {
     const rows = await this.sql`
-      DELETE FROM entity_change_case_entity_version
+      DELETE FROM record_change_case_record_version
       WHERE workspace = ${workspace} AND id = ${memberId}
       RETURNING *
     `;
@@ -146,7 +146,7 @@ export class PostgresChangeCaseDatabase extends PostgresDatabaseBase implements 
     diff: Record<string, unknown>
   ) {
     const rows = await this.sql`
-      UPDATE entity_change_case_entity_version
+      UPDATE record_change_case_record_version
       SET proposed_state = ${this.json(proposedState)}, diff = ${this.json(diff)}
       WHERE workspace = ${workspace} AND id = ${memberId}
       RETURNING *
@@ -190,7 +190,7 @@ export class PostgresChangeCaseDatabase extends PostgresDatabaseBase implements 
 
   async markMemberApplied(workspace: string, memberId: string, appliedVersionId: string) {
     await this.sql`
-      UPDATE entity_change_case_entity_version
+      UPDATE record_change_case_record_version
       SET applied_version_id = ${appliedVersionId}
       WHERE workspace = ${workspace} AND id = ${memberId}
     `;
