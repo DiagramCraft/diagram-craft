@@ -23,6 +23,7 @@ ALTER TABLE catalog_record ADD CONSTRAINT catalog_record_kind_check CHECK (kind 
 
 ALTER TABLE catalog_record ALTER COLUMN slug DROP NOT NULL;
 ALTER TABLE catalog_record ALTER COLUMN namespace DROP NOT NULL;
+ALTER TABLE catalog_record ALTER COLUMN namespace DROP DEFAULT;
 ALTER TABLE catalog_record ALTER COLUMN name DROP NOT NULL;
 ALTER TABLE catalog_record ALTER COLUMN public_id DROP NOT NULL;
 

@@ -76,7 +76,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       this.run('DELETE FROM content_node WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM project WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM entity_grant WHERE workspace = ?', [workspaceId]);
-      this.run('DELETE FROM entity WHERE workspace = ?', [workspaceId]);
+      this.run('DELETE FROM catalog_record WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM entity_schema WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_member WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_role WHERE workspace = ?', [workspaceId]);
@@ -105,7 +105,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
 
       if (stateIds.length === 0) {
         this.run(
-          'UPDATE entity SET lifecycle = NULL, target_lifecycle = NULL WHERE workspace = ?',
+          'UPDATE catalog_record SET lifecycle = NULL, target_lifecycle = NULL WHERE workspace = ?',
           [workspace]
         );
         this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspace]);
@@ -114,13 +114,13 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
 
       const placeholders = stateIds.map(() => '?').join(', ');
       this.run(
-        `UPDATE entity
+        `UPDATE catalog_record
          SET lifecycle = NULL
          WHERE workspace = ? AND lifecycle IS NOT NULL AND lifecycle NOT IN (${placeholders})`,
         [workspace, ...stateIds]
       );
       this.run(
-        `UPDATE entity
+        `UPDATE catalog_record
          SET target_lifecycle = NULL
          WHERE workspace = ? AND target_lifecycle IS NOT NULL AND target_lifecycle NOT IN (${placeholders})`,
         [workspace, ...stateIds]

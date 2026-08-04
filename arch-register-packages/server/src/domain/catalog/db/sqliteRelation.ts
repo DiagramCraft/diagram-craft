@@ -126,9 +126,9 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
     newFieldId: string
   ) {
     const result = this.run(
-      `UPDATE relation
+      `UPDATE catalog_record
        SET data = json_set(json_remove(data, '$."' || ? || '"'), '$."' || ? || '"', json_extract(data, '$."' || ? || '"'))
-       WHERE workspace = ? AND schema_id = ? AND json_extract(data, '$."' || ? || '"') IS NOT NULL`,
+       WHERE kind = 'relation' AND workspace = ? AND schema_id = ? AND json_extract(data, '$."' || ? || '"') IS NOT NULL`,
       [oldFieldId, newFieldId, oldFieldId, workspace, schemaId, oldFieldId]
     );
     return result.changes;
@@ -136,9 +136,9 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async removeRelationDataField(workspace: string, schemaId: string, fieldId: string) {
     const result = this.run(
-      `UPDATE relation
+      `UPDATE catalog_record
        SET data = json_remove(data, '$."' || ? || '"')
-       WHERE workspace = ? AND schema_id = ? AND json_extract(data, '$."' || ? || '"') IS NOT NULL`,
+       WHERE kind = 'relation' AND workspace = ? AND schema_id = ? AND json_extract(data, '$."' || ? || '"') IS NOT NULL`,
       [fieldId, workspace, schemaId, fieldId]
     );
     return result.changes;
@@ -146,7 +146,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async countRelationsForSchema(workspace: string, schemaId: string) {
     const row = this.get<{ count: number }>(
-      'SELECT COUNT(*) AS count FROM relation WHERE workspace = ? AND schema_id = ?',
+      "SELECT COUNT(*) AS count FROM catalog_record WHERE kind = 'relation' AND workspace = ? AND schema_id = ?",
       [workspace, schemaId]
     );
     return Number(row?.count ?? 0);
@@ -165,17 +165,17 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
       params.push(filters.schemaId);
     }
     if (filters.inEntityId) {
-      whereParts.push('r.in_entity_id = ?');
+      whereParts.push('r.in_record_id = ?');
       params.push(filters.inEntityId);
     }
     if (filters.outEntityId) {
-      whereParts.push('r.out_entity_id = ?');
+      whereParts.push('r.out_record_id = ?');
       params.push(filters.outEntityId);
     }
     const where = whereParts.join(' AND ');
 
     const countRow = this.get<{ count: number }>(
-      `SELECT COUNT(*) AS count FROM relation r WHERE ${where}`,
+      `SELECT COUNT(*) AS count FROM catalog_record r WHERE r.kind = 'relation' AND ${where}`,
       params
     );
     const rows = this.all(
@@ -187,6 +187,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
   }
 
   async getRelation(workspace: string, id: string) {
+    // RELATION_SELECT_SQL's join already restricts r.kind = 'relation'.
     return this.get(
       `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.id = ?`,
       [workspace, id],
@@ -196,7 +197,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async createRelation(input: RelationDbCreate) {
     this.run(
-      'INSERT INTO relation (id, workspace, schema_id, in_entity_id, out_entity_id, data, version, approval_policy_override, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      "INSERT INTO catalog_record (id, workspace, kind, schema_id, in_record_id, out_record_id, data, version, approval_policy_override, created_at, updated_at) VALUES (?, ?, 'relation', ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         input.id,
         input.workspace,
@@ -216,12 +217,12 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
   async updateRelation(workspace: string, id: string, input: RelationDbUpdate) {
     if (input.approval_policy_override === undefined) {
       this.run(
-        'UPDATE relation SET data = ?, version = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+        "UPDATE catalog_record SET data = ?, version = ?, updated_at = ? WHERE workspace = ? AND id = ? AND kind = 'relation'",
         [JSON.stringify(input.data), input.version, input.updated_at.toISOString(), workspace, id]
       );
     } else {
       this.run(
-        'UPDATE relation SET data = ?, version = ?, approval_policy_override = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+        "UPDATE catalog_record SET data = ?, version = ?, approval_policy_override = ?, updated_at = ? WHERE workspace = ? AND id = ? AND kind = 'relation'",
         [
           JSON.stringify(input.data),
           input.version,
@@ -238,18 +239,21 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
   async deleteRelation(workspace: string, id: string) {
     const existing = await this.getRelation(workspace, id);
     if (!existing) return null;
-    this.run('DELETE FROM relation WHERE workspace = ? AND id = ?', [workspace, id]);
+    this.run("DELETE FROM catalog_record WHERE workspace = ? AND id = ? AND kind = 'relation'", [
+      workspace,
+      id
+    ]);
     return existing;
   }
 
   async listRelationsForEntity(workspace: string, entityId: string) {
     const outgoing = this.all(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.in_entity_id = ? ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.in_record_id = ? ORDER BY r.created_at DESC`,
       [workspace, entityId],
       relationMappers.relation
     );
     const incoming = this.all(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.out_entity_id = ? ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.out_record_id = ? ORDER BY r.created_at DESC`,
       [workspace, entityId],
       relationMappers.relation
     );
@@ -260,12 +264,12 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
     if (entityIds.length === 0) return { outgoing: [], incoming: [] };
     const placeholders = entityIds.map(() => '?').join(',');
     const outgoing = this.all(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.in_entity_id IN (${placeholders}) ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.in_record_id IN (${placeholders}) ORDER BY r.created_at DESC`,
       [workspace, ...entityIds],
       relationMappers.relation
     );
     const incoming = this.all(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.out_entity_id IN (${placeholders}) ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.out_record_id IN (${placeholders}) ORDER BY r.created_at DESC`,
       [workspace, ...entityIds],
       relationMappers.relation
     );

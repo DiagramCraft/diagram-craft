@@ -43,8 +43,8 @@ export class SqliteChangeCaseDatabase extends SqliteDatabaseBase implements Chan
     );
     for (const member of input.members) {
       this.run(
-        `INSERT INTO entity_change_case_entity_version
-         (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff)
+        `INSERT INTO record_change_case_record_version
+         (id, revision_id, workspace, record_id, base_version, base_state, proposed_state, diff)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           randomUUID(),
@@ -83,8 +83,8 @@ export class SqliteChangeCaseDatabase extends SqliteDatabaseBase implements Chan
     return this.all(
       `SELECT DISTINCT c.* FROM entity_change_case c
        JOIN entity_change_case_revision r ON r.case_id = c.id
-       JOIN entity_change_case_entity_version m ON m.revision_id = r.id
-       WHERE c.workspace = ? AND c.purpose = 'planned_change' AND m.entity_id = ?
+       JOIN record_change_case_record_version m ON m.revision_id = r.id
+       WHERE c.workspace = ? AND c.purpose = 'planned_change' AND m.record_id = ?
        ORDER BY c.updated_at DESC`,
       [workspace, entityId],
       changeCaseMappers.case
@@ -102,7 +102,7 @@ export class SqliteChangeCaseDatabase extends SqliteDatabaseBase implements Chan
          c.created_at AS case_created_at, c.updated_at AS case_updated_at,
          c.closed_at AS case_closed_at, r.message AS revision_message,
          m.id AS member_id, m.revision_id AS member_revision_id,
-         m.workspace AS member_workspace, m.entity_id AS member_entity_id,
+         m.workspace AS member_workspace, m.record_id AS member_entity_id,
          m.base_version AS member_base_version,
          m.applied_version_id AS member_applied_version_id
        FROM entity_change_case c
@@ -112,10 +112,10 @@ export class SqliteChangeCaseDatabase extends SqliteDatabaseBase implements Chan
            FROM entity_change_case_revision latest
            WHERE latest.workspace = c.workspace AND latest.case_id = c.id
          )
-       JOIN entity_change_case_entity_version m ON m.revision_id = r.id
+       JOIN record_change_case_record_version m ON m.revision_id = r.id
        WHERE c.workspace = ? AND c.purpose = 'planned_change'
-         AND m.entity_id IN (${entityIds.map(() => '?').join(',')})
-       ORDER BY m.entity_id, c.updated_at DESC`,
+         AND m.record_id IN (${entityIds.map(() => '?').join(',')})
+       ORDER BY m.record_id, c.updated_at DESC`,
       [workspace, ...entityIds],
       changeCaseMappers.timelineMember
     );
@@ -143,9 +143,9 @@ export class SqliteChangeCaseDatabase extends SqliteDatabaseBase implements Chan
 
   async listMembers(workspace: string, revisionId: string) {
     return this.all(
-      `SELECT * FROM entity_change_case_entity_version
+      `SELECT * FROM record_change_case_record_version
        WHERE workspace = ? AND revision_id = ?
-       ORDER BY entity_id`,
+       ORDER BY record_id`,
       [workspace, revisionId],
       changeCaseMappers.member
     );
@@ -154,8 +154,8 @@ export class SqliteChangeCaseDatabase extends SqliteDatabaseBase implements Chan
   async addMember(workspace: string, revisionId: string, member: ChangeCaseMemberInput) {
     const id = randomUUID();
     this.run(
-      `INSERT INTO entity_change_case_entity_version
-       (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff)
+      `INSERT INTO record_change_case_record_version
+       (id, revision_id, workspace, record_id, base_version, base_state, proposed_state, diff)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         id,
@@ -169,7 +169,7 @@ export class SqliteChangeCaseDatabase extends SqliteDatabaseBase implements Chan
       ]
     );
     return this.get(
-      'SELECT * FROM entity_change_case_entity_version WHERE workspace = ? AND id = ?',
+      'SELECT * FROM record_change_case_record_version WHERE workspace = ? AND id = ?',
       [workspace, id],
       changeCaseMappers.member
     )!;
@@ -177,12 +177,12 @@ export class SqliteChangeCaseDatabase extends SqliteDatabaseBase implements Chan
 
   async removeMember(workspace: string, memberId: string) {
     const existing = await this.get(
-      'SELECT * FROM entity_change_case_entity_version WHERE workspace = ? AND id = ?',
+      'SELECT * FROM record_change_case_record_version WHERE workspace = ? AND id = ?',
       [workspace, memberId],
       changeCaseMappers.member
     );
     if (!existing) return null;
-    this.run('DELETE FROM entity_change_case_entity_version WHERE workspace = ? AND id = ?', [
+    this.run('DELETE FROM record_change_case_record_version WHERE workspace = ? AND id = ?', [
       workspace,
       memberId
     ]);
@@ -196,12 +196,12 @@ export class SqliteChangeCaseDatabase extends SqliteDatabaseBase implements Chan
     diff: Record<string, unknown>
   ) {
     const result = this.run(
-      'UPDATE entity_change_case_entity_version SET proposed_state = ?, diff = ? WHERE workspace = ? AND id = ?',
+      'UPDATE record_change_case_record_version SET proposed_state = ?, diff = ? WHERE workspace = ? AND id = ?',
       [JSON.stringify(proposedState), JSON.stringify(diff), workspace, memberId]
     );
     if (result.changes === 0) return null;
     return this.get(
-      'SELECT * FROM entity_change_case_entity_version WHERE workspace = ? AND id = ?',
+      'SELECT * FROM record_change_case_record_version WHERE workspace = ? AND id = ?',
       [workspace, memberId],
       changeCaseMappers.member
     );
@@ -241,7 +241,7 @@ export class SqliteChangeCaseDatabase extends SqliteDatabaseBase implements Chan
 
   async markMemberApplied(workspace: string, memberId: string, appliedVersionId: string) {
     this.run(
-      'UPDATE entity_change_case_entity_version SET applied_version_id = ? WHERE workspace = ? AND id = ?',
+      'UPDATE record_change_case_record_version SET applied_version_id = ? WHERE workspace = ? AND id = ?',
       [appliedVersionId, workspace, memberId]
     );
   }

@@ -16,12 +16,12 @@ export class PostgresEntityChangeDatabase
   implements EntityChangeDatabase
 {
   private proposalSelect = `
-    SELECT c.*, m.entity_id,
+    SELECT c.*, m.record_id AS entity_id,
       CASE c.status WHEN 'planned' THEN 'open' WHEN 'in_approval' THEN 'open'
         WHEN 'applied' THEN 'approved' ELSE c.status END AS status
     FROM entity_change_case c
     LEFT JOIN entity_change_case_revision r ON r.case_id = c.id
-    LEFT JOIN entity_change_case_entity_version m ON m.revision_id = r.id`;
+    LEFT JOIN record_change_case_record_version m ON m.revision_id = r.id`;
 
   async createApproval(input: EntityChangeApprovalDbCreate) {
     try {
@@ -43,7 +43,7 @@ export class PostgresEntityChangeDatabase
 
   async getOpenApproval(workspace: string, entityId: string) {
     const rows = await this.sql.unsafe<DatabaseRow[]>(
-      `${this.proposalSelect} WHERE c.purpose = 'requested_change' AND c.workspace = $1 AND m.entity_id = $2 AND c.status IN ('planned', 'in_approval') ORDER BY r.revision_number DESC LIMIT 1`,
+      `${this.proposalSelect} WHERE c.purpose = 'requested_change' AND c.workspace = $1 AND m.record_id = $2 AND c.status IN ('planned', 'in_approval') ORDER BY r.revision_number DESC LIMIT 1`,
       [workspace, entityId]
     );
     return rows[0] ? entityChangeMappers.approval(rows[0]) : null;
@@ -97,7 +97,7 @@ export class PostgresEntityChangeDatabase
       await this
         .sql`INSERT INTO entity_change_case_revision (id, case_id, workspace, revision_number, policy_version, resolved_policy, message, created_by, status, is_active, created_at, resolved_at) VALUES (${input.id}, ${input.proposal_id}, ${input.workspace}, ${input.revision_number}, ${input.policy_version}, ${this.json(input.resolved_policy)}, ${input.message}, ${input.created_by}, ${targetStatus}, ${isActive}, ${input.created_at}, ${input.resolved_at ?? null})`;
       await this
-        .sql`INSERT INTO entity_change_case_entity_version (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff) VALUES (${randomUUID()}, ${input.id}, ${input.workspace}, ${input.entity_id}, ${input.base_version}, ${this.json(input.base_state)}, ${this.json(input.proposed_state)}, ${this.json(input.diff)})`;
+        .sql`INSERT INTO record_change_case_record_version (id, revision_id, workspace, record_id, base_version, base_state, proposed_state, diff) VALUES (${randomUUID()}, ${input.id}, ${input.workspace}, ${input.entity_id}, ${input.base_version}, ${this.json(input.base_state)}, ${this.json(input.proposed_state)}, ${this.json(input.diff)})`;
       await this
         .sql`UPDATE entity_change_case SET status = 'in_approval', updated_at = ${input.created_at} WHERE id = ${input.proposal_id}`;
       return (await this.getApprovalRevision(input.workspace, input.id))!;
@@ -107,10 +107,10 @@ export class PostgresEntityChangeDatabase
   }
 
   private revisionSelect =
-    `SELECT r.*, m.entity_id, m.base_version, m.base_state, m.proposed_state, m.diff, r.case_id AS proposal_id FROM entity_change_case_revision r JOIN entity_change_case_entity_version m ON m.revision_id = r.id`;
+    `SELECT r.*, m.record_id AS entity_id, m.base_version, m.base_state, m.proposed_state, m.diff, r.case_id AS proposal_id FROM entity_change_case_revision r JOIN record_change_case_record_version m ON m.revision_id = r.id`;
 
   private revisionMemberSelect =
-    `SELECT r.*, m.id AS member_id, m.entity_id, m.base_version, m.base_state, m.proposed_state, m.diff, r.case_id AS proposal_id FROM entity_change_case_revision r JOIN entity_change_case_entity_version m ON m.revision_id = r.id`;
+    `SELECT r.*, m.id AS member_id, m.record_id AS entity_id, m.base_version, m.base_state, m.proposed_state, m.diff, r.case_id AS proposal_id FROM entity_change_case_revision r JOIN record_change_case_record_version m ON m.revision_id = r.id`;
 
   async createBulkApprovalRevision(input: EntityChangeBulkApprovalRevisionDbCreate) {
     try {
@@ -125,7 +125,7 @@ export class PostgresEntityChangeDatabase
         .sql`INSERT INTO entity_change_case_revision (id, case_id, workspace, revision_number, policy_version, resolved_policy, message, created_by, status, is_active, created_at, resolved_at) VALUES (${input.id}, ${input.proposal_id}, ${input.workspace}, ${input.revision_number}, ${input.policy_version}, ${this.json(input.resolved_policy)}, ${input.message}, ${input.created_by}, ${targetStatus}, ${isActive}, ${input.created_at}, ${input.resolved_at ?? null})`;
       for (const member of input.members) {
         await this
-          .sql`INSERT INTO entity_change_case_entity_version (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff) VALUES (${randomUUID()}, ${input.id}, ${input.workspace}, ${member.entity_id}, ${member.base_version}, ${this.json(member.base_state)}, ${this.json(member.proposed_state)}, ${this.json(member.diff)})`;
+          .sql`INSERT INTO record_change_case_record_version (id, revision_id, workspace, record_id, base_version, base_state, proposed_state, diff) VALUES (${randomUUID()}, ${input.id}, ${input.workspace}, ${member.entity_id}, ${member.base_version}, ${this.json(member.base_state)}, ${this.json(member.proposed_state)}, ${this.json(member.diff)})`;
       }
       await this
         .sql`UPDATE entity_change_case SET status = 'in_approval', updated_at = ${input.created_at} WHERE id = ${input.proposal_id}`;
@@ -137,7 +137,7 @@ export class PostgresEntityChangeDatabase
 
   async getApprovalRevisionMembers(workspace: string, revisionId: string) {
     const rows = await this.sql.unsafe<DatabaseRow[]>(
-      `${this.revisionMemberSelect} WHERE r.workspace = $1 AND r.id = $2 ORDER BY m.entity_id`,
+      `${this.revisionMemberSelect} WHERE r.workspace = $1 AND r.id = $2 ORDER BY m.record_id`,
       [workspace, revisionId]
     );
     return mapDatabaseRows(rows, entityChangeMappers.approvalRevisionMember);

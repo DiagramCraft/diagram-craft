@@ -125,19 +125,19 @@ export const changeCaseMappers = {
     id: String(row['id']),
     revision_id: String(row['revision_id']),
     workspace: String(row['workspace']),
-    entity_id: String(row['entity_id']),
+    entity_id: String(row['entity_id'] ?? row['record_id']),
     base_version: Number(row['base_version']),
     base_state: parseDatabaseJson(
       row['base_state'],
       {},
-      'entity_change_case_entity_version.base_state'
+      'record_change_case_record_version.base_state'
     ),
     proposed_state: parseDatabaseJson(
       row['proposed_state'],
       {},
-      'entity_change_case_entity_version.proposed_state'
+      'record_change_case_record_version.proposed_state'
     ),
-    diff: parseDatabaseJson(row['diff'], {}, 'entity_change_case_entity_version.diff'),
+    diff: parseDatabaseJson(row['diff'], {}, 'record_change_case_record_version.diff'),
     applied_version_id: row['applied_version_id'] == null ? null : String(row['applied_version_id'])
   }),
   timelineMember: (row: DatabaseRow): ChangeCaseTimelineMemberSummaryDbResult => ({

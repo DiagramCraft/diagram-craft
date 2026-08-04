@@ -16,12 +16,12 @@ import { entityChangeMappers } from './entityChangeDatabase';
  */
 export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements EntityChangeDatabase {
   private proposalSelect = `
-    SELECT c.*, m.entity_id,
+    SELECT c.*, m.record_id AS entity_id,
       CASE c.status WHEN 'planned' THEN 'open' WHEN 'in_approval' THEN 'open'
         WHEN 'applied' THEN 'approved' ELSE c.status END AS status
     FROM entity_change_case c
     LEFT JOIN entity_change_case_revision r ON r.case_id = c.id
-    LEFT JOIN entity_change_case_entity_version m ON m.revision_id = r.id`;
+    LEFT JOIN record_change_case_record_version m ON m.revision_id = r.id`;
 
   async createApproval(input: EntityChangeApprovalDbCreate) {
     this.run(
@@ -50,7 +50,7 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
 
   async getOpenApproval(workspace: string, entityId: string) {
     return this.get(
-      `${this.proposalSelect} WHERE c.purpose = 'requested_change' AND c.workspace = ? AND m.entity_id = ? AND c.status IN ('planned', 'in_approval') ORDER BY r.revision_number DESC LIMIT 1`,
+      `${this.proposalSelect} WHERE c.purpose = 'requested_change' AND c.workspace = ? AND m.record_id = ? AND c.status IN ('planned', 'in_approval') ORDER BY r.revision_number DESC LIMIT 1`,
       [workspace, entityId],
       entityChangeMappers.approval
     );
@@ -120,8 +120,8 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
       ]
     );
     this.run(
-      `INSERT INTO entity_change_case_entity_version
-       (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff)
+      `INSERT INTO record_change_case_record_version
+       (id, revision_id, workspace, record_id, base_version, base_state, proposed_state, diff)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         randomUUID(),
@@ -142,16 +142,16 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
   }
 
   private revisionSelect = `
-    SELECT r.*, m.entity_id, m.base_version, m.base_state, m.proposed_state, m.diff,
+    SELECT r.*, m.record_id AS entity_id, m.base_version, m.base_state, m.proposed_state, m.diff,
       r.case_id AS proposal_id
     FROM entity_change_case_revision r
-    JOIN entity_change_case_entity_version m ON m.revision_id = r.id`;
+    JOIN record_change_case_record_version m ON m.revision_id = r.id`;
 
   private revisionMemberSelect = `
-    SELECT r.*, m.id AS member_id, m.entity_id, m.base_version, m.base_state, m.proposed_state, m.diff,
+    SELECT r.*, m.id AS member_id, m.record_id AS entity_id, m.base_version, m.base_state, m.proposed_state, m.diff,
       r.case_id AS proposal_id
     FROM entity_change_case_revision r
-    JOIN entity_change_case_entity_version m ON m.revision_id = r.id`;
+    JOIN record_change_case_record_version m ON m.revision_id = r.id`;
 
   async createBulkApprovalRevision(input: EntityChangeBulkApprovalRevisionDbCreate) {
     const targetStatus = input.status === 'approved' ? 'applied' : input.status;
@@ -180,8 +180,8 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
     );
     for (const member of input.members) {
       this.run(
-        `INSERT INTO entity_change_case_entity_version
-         (id, revision_id, workspace, entity_id, base_version, base_state, proposed_state, diff)
+        `INSERT INTO record_change_case_record_version
+         (id, revision_id, workspace, record_id, base_version, base_state, proposed_state, diff)
          VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
         [
           randomUUID(),
@@ -204,7 +204,7 @@ export class SqliteEntityChangeDatabase extends SqliteDatabaseBase implements En
 
   async getApprovalRevisionMembers(workspace: string, revisionId: string) {
     return this.all(
-      `${this.revisionMemberSelect} WHERE r.workspace = ? AND r.id = ? ORDER BY m.entity_id`,
+      `${this.revisionMemberSelect} WHERE r.workspace = ? AND r.id = ? ORDER BY m.record_id`,
       [workspace, revisionId],
       entityChangeMappers.approvalRevisionMember
     );

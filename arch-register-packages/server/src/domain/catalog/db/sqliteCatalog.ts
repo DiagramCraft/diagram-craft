@@ -161,9 +161,9 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     newFieldId: string
   ) {
     const result = this.run(
-      `UPDATE entity
+      `UPDATE catalog_record
        SET data = json_set(json_remove(data, '$."' || ? || '"'), '$."' || ? || '"', json_extract(data, '$."' || ? || '"'))
-       WHERE workspace = ? AND schema_id = ? AND json_extract(data, '$."' || ? || '"') IS NOT NULL`,
+       WHERE kind = 'entity' AND workspace = ? AND schema_id = ? AND json_extract(data, '$."' || ? || '"') IS NOT NULL`,
       [oldFieldId, newFieldId, oldFieldId, workspace, schemaId, oldFieldId]
     );
     return result.changes;
@@ -171,9 +171,9 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async removeEntityDataField(workspace: string, schemaId: string, fieldId: string) {
     const result = this.run(
-      `UPDATE entity
+      `UPDATE catalog_record
        SET data = json_remove(data, '$."' || ? || '"')
-       WHERE workspace = ? AND schema_id = ? AND json_extract(data, '$."' || ? || '"') IS NOT NULL`,
+       WHERE kind = 'entity' AND workspace = ? AND schema_id = ? AND json_extract(data, '$."' || ? || '"') IS NOT NULL`,
       [fieldId, workspace, schemaId, fieldId]
     );
     return result.changes;
@@ -381,7 +381,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createEntity(input: EntityDbCreate) {
     this.run(
-      'INSERT INTO entity (id, workspace, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, generated_metadata, project_id, version, approval_policy_override, completeness, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      "INSERT INTO catalog_record (id, workspace, kind, public_id, slug, namespace, name, description, owner, lifecycle, target_lifecycle, target_lifecycle_date, tags, links, schema_id, data, generated_metadata, project_id, version, approval_policy_override, completeness, created_at, updated_at) VALUES (?, ?, 'entity', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         input.id,
         input.workspace,
@@ -412,7 +412,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateEntity(workspace: string, id: string, input: EntityDbUpdate) {
     this.run(
-      'UPDATE entity SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, target_lifecycle = ?, target_lifecycle_date = ?, tags = ?, links = ?, schema_id = ?, data = ?, generated_metadata = COALESCE(?, generated_metadata), project_id = ?, version = version + 1, approval_policy_override = COALESCE(?, approval_policy_override), completeness = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      "UPDATE catalog_record SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, target_lifecycle = ?, target_lifecycle_date = ?, tags = ?, links = ?, schema_id = ?, data = ?, generated_metadata = COALESCE(?, generated_metadata), project_id = ?, version = version + 1, approval_policy_override = COALESCE(?, approval_policy_override), completeness = ?, updated_at = ? WHERE workspace = ? AND id = ? AND kind = 'entity'",
       [
         input.slug,
         input.namespace,
@@ -445,7 +445,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     expectedVersion: number
   ) {
     const result = this.run(
-      'UPDATE entity SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, target_lifecycle = ?, target_lifecycle_date = ?, tags = ?, links = ?, schema_id = ?, data = ?, generated_metadata = COALESCE(?, generated_metadata), project_id = ?, version = version + 1, approval_policy_override = COALESCE(?, approval_policy_override), completeness = ?, updated_at = ? WHERE workspace = ? AND id = ? AND version = ?',
+      "UPDATE catalog_record SET slug = ?, namespace = ?, name = ?, description = ?, owner = ?, lifecycle = ?, target_lifecycle = ?, target_lifecycle_date = ?, tags = ?, links = ?, schema_id = ?, data = ?, generated_metadata = COALESCE(?, generated_metadata), project_id = ?, version = version + 1, approval_policy_override = COALESCE(?, approval_policy_override), completeness = ?, updated_at = ? WHERE workspace = ? AND id = ? AND kind = 'entity' AND version = ?",
       [
         input.slug,
         input.namespace,
@@ -478,7 +478,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     override: 'required' | 'disabled' | null
   ) {
     const result = this.run(
-      'UPDATE entity SET approval_policy_override = ?, version = version + 1, updated_at = ? WHERE workspace = ? AND id = ?',
+      "UPDATE catalog_record SET approval_policy_override = ?, version = version + 1, updated_at = ? WHERE workspace = ? AND id = ? AND kind = 'entity'",
       [override, new Date().toISOString(), workspace, id]
     );
     return result.changes === 0 ? null : await this.getEntity(workspace, id);
@@ -489,35 +489,33 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
   // concurrency checks on a concurrent user update, or create a new entity_version snapshot.
   async updateEntityCompleteness(workspace: string, id: string, completeness: number) {
     this.run(
-      'UPDATE entity SET completeness = ? WHERE workspace = ? AND id = ? AND completeness != ?',
+      "UPDATE catalog_record SET completeness = ? WHERE workspace = ? AND id = ? AND kind = 'entity' AND completeness != ?",
       [completeness, workspace, id, completeness]
     );
   }
 
   async updateEntityDerivedFields(workspace: string, id: string, data: Record<string, unknown>) {
-    this.run('UPDATE entity SET data = ? WHERE workspace = ? AND id = ?', [
-      JSON.stringify(data),
-      workspace,
-      id
-    ]);
+    this.run(
+      "UPDATE catalog_record SET data = ? WHERE workspace = ? AND id = ? AND kind = 'entity'",
+      [JSON.stringify(data), workspace, id]
+    );
   }
 
   // System-maintained attestation stamp — does not bump `version` or `updated_at`, since
   // confirming existing data isn't itself an edit and must not trip optimistic concurrency
   // checks on a concurrent user update, or create a new entity_version snapshot.
   async touchEntityAttestation(workspace: string, id: string, attestedAt: Date) {
-    this.run('UPDATE entity SET last_attested_at = ? WHERE workspace = ? AND id = ?', [
-      attestedAt.toISOString(),
-      workspace,
-      id
-    ]);
+    this.run(
+      "UPDATE catalog_record SET last_attested_at = ? WHERE workspace = ? AND id = ? AND kind = 'entity'",
+      [attestedAt.toISOString(), workspace, id]
+    );
   }
 
   async deleteEntity(workspace: string, id: string) {
     const row = await this.getEntity(workspace, id);
     if (!row) return null;
     this.run(
-      'UPDATE entity SET deleted_at = ?, owner = NULL, lifecycle = NULL, target_lifecycle = NULL WHERE workspace = ? AND id = ?',
+      "UPDATE catalog_record SET deleted_at = ?, owner = NULL, lifecycle = NULL, target_lifecycle = NULL WHERE workspace = ? AND id = ? AND kind = 'entity'",
       [new Date().toISOString(), workspace, id]
     );
     return row;
@@ -606,8 +604,8 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createEntityVersion(input: EntityVersionDbCreate) {
     this.run(
-      `INSERT INTO entity_version
-       (id, workspace, entity_id, version_number, kind, commit_message, created_at, created_by, state, applied_case_revision_id)
+      `INSERT INTO record_version
+       (id, workspace, record_id, version_number, kind, commit_message, created_at, created_by, state, applied_case_revision_id)
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
@@ -623,8 +621,8 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       ]
     );
     return (await this.get(
-      `SELECT v.*, u.display_name AS created_by_name
-       FROM entity_version v LEFT JOIN users u ON u.id = v.created_by
+      `SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name
+       FROM record_version v LEFT JOIN users u ON u.id = v.created_by
        WHERE v.id = ?`,
       [input.id],
       catalogMappers.entityVersion
@@ -633,9 +631,9 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async listEntityVersions(workspace: string, entityId: string) {
     return this.all(
-      `SELECT v.*, u.display_name AS created_by_name
-       FROM entity_version v LEFT JOIN users u ON u.id = v.created_by
-       WHERE v.workspace = ? AND v.entity_id = ? ORDER BY v.created_at DESC`,
+      `SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name
+       FROM record_version v LEFT JOIN users u ON u.id = v.created_by
+       WHERE v.workspace = ? AND v.record_id = ? ORDER BY v.created_at DESC`,
       [workspace, entityId],
       catalogMappers.entityVersion
     );
@@ -644,11 +642,11 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
   async listEntityVersionsByIds(workspace: string, entityIds: string[]) {
     if (entityIds.length === 0) return [];
     return this.all(
-      `SELECT v.id, v.workspace, v.entity_id, v.version_number, v.kind, v.commit_message,
+      `SELECT v.id, v.workspace, v.record_id AS entity_id, v.version_number, v.kind, v.commit_message,
          v.created_at, v.created_by, v.applied_case_revision_id, u.display_name AS created_by_name
-       FROM entity_version v LEFT JOIN users u ON u.id = v.created_by
-       WHERE v.workspace = ? AND v.entity_id IN (${entityIds.map(() => '?').join(',')})
-       ORDER BY v.entity_id, v.created_at DESC`,
+       FROM record_version v LEFT JOIN users u ON u.id = v.created_by
+       WHERE v.workspace = ? AND v.record_id IN (${entityIds.map(() => '?').join(',')})
+       ORDER BY v.record_id, v.created_at DESC`,
       [workspace, ...entityIds],
       catalogMappers.entityVersionSummary
     );
@@ -657,12 +655,12 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
   async listEntityVersionsAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
     const filter =
-      entityIds != null ? `AND v.entity_id IN (${entityIds.map(() => '?').join(',')})` : '';
+      entityIds != null ? `AND v.record_id IN (${entityIds.map(() => '?').join(',')})` : '';
     return this.all(
-      `SELECT v.*, u.display_name AS created_by_name
-       FROM entity_version v LEFT JOIN users u ON u.id = v.created_by
+      `SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name
+       FROM record_version v LEFT JOIN users u ON u.id = v.created_by
        WHERE v.workspace = ? AND v.created_at <= ? ${filter}
-       ORDER BY v.entity_id, v.created_at ASC`,
+       ORDER BY v.record_id, v.created_at ASC`,
       [workspace, asOf.toISOString(), ...(entityIds ?? [])],
       catalogMappers.entityVersion
     );
@@ -675,12 +673,12 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     commitMessage: string | null
   ) {
     this.run(
-      `UPDATE entity_version SET kind = ?, commit_message = ? WHERE workspace = ? AND id = ?`,
+      `UPDATE record_version SET kind = ?, commit_message = ? WHERE workspace = ? AND id = ?`,
       [kind, commitMessage, workspace, versionId]
     );
     return this.get(
-      `SELECT v.*, u.display_name AS created_by_name
-       FROM entity_version v LEFT JOIN users u ON u.id = v.created_by
+      `SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name
+       FROM record_version v LEFT JOIN users u ON u.id = v.created_by
        WHERE v.workspace = ? AND v.id = ?`,
       [workspace, versionId],
       catalogMappers.entityVersion
@@ -690,9 +688,9 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
   async listPlannedEntityChangesAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
     const entityFilter =
-      entityIds != null ? `AND m.entity_id IN (${entityIds.map(() => '?').join(',')})` : '';
+      entityIds != null ? `AND m.record_id IN (${entityIds.map(() => '?').join(',')})` : '';
     return this.all(
-      `SELECT m.id, c.workspace, m.entity_id,
+      `SELECT m.id, c.workspace, m.record_id AS entity_id,
               c.id AS case_id, r.id AS case_revision_id,
               c.project_id,
               CASE WHEN c.milestone_id IS NULL THEN c.effective_date ELSE NULL END AS target_date,
@@ -700,7 +698,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
               COALESCE(r.message, c.description) AS commit_message,
               r.created_at, r.created_by, u.display_name AS created_by_name,
               m.proposed_state
-       FROM entity_change_case_entity_version m
+       FROM record_change_case_record_version m
        JOIN entity_change_case_revision r ON r.id = m.revision_id
        JOIN entity_change_case c ON c.id = r.case_id
        LEFT JOIN users u ON u.id = r.created_by
@@ -709,7 +707,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
          AND r.created_at <= ?
          AND (c.milestone_id IS NOT NULL OR c.effective_date IS NULL OR c.effective_date <= ?)
          ${entityFilter}
-       ORDER BY m.entity_id, r.created_at ASC`,
+       ORDER BY m.record_id, r.created_at ASC`,
       [workspace, asOf.toISOString(), asOf.toISOString().slice(0, 10), ...(entityIds ?? [])],
       catalogMappers.plannedEntityChange
     );
@@ -721,11 +719,11 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     // 'future_update' snapshot alone doesn't give us any real baseline state to reconstruct
     // from, so it must not suppress the live-state fallback.
     const entityFilter =
-      entityIds != null ? `AND entity_id IN (${entityIds.map(() => '?').join(',')})` : '';
+      entityIds != null ? `AND record_id IN (${entityIds.map(() => '?').join(',')})` : '';
     return this.all(
-      `SELECT DISTINCT entity_id FROM entity_version WHERE workspace = ? ${entityFilter}`,
+      `SELECT DISTINCT record_id FROM record_version WHERE workspace = ? ${entityFilter}`,
       [workspace, ...(entityIds ?? [])],
-      (row: Record<string, unknown>) => String(row['entity_id'])
+      (row: Record<string, unknown>) => String(row['record_id'])
     );
   }
 
@@ -738,7 +736,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
          WHERE c.workspace = ? AND c.status = 'planned' AND COALESCE(c.effective_date, m.target_date) IS NOT NULL
          UNION ALL
          SELECT substr(created_at, 1, 10) AS date, 'saved_version' AS type
-         FROM entity_version
+         FROM record_version
          WHERE workspace = ? AND kind = 'saved_version'
          UNION ALL
          SELECT COALESCE(c.effective_date, m.target_date) AS date, 'applied' AS type
@@ -759,11 +757,11 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async pruneAutosaveVersions(workspace: string, entityId: string, keepCount: number) {
     this.run(
-      `DELETE FROM entity_version
-       WHERE workspace = ? AND entity_id = ? AND kind = 'autosave'
+      `DELETE FROM record_version
+       WHERE workspace = ? AND record_id = ? AND kind = 'autosave'
          AND id NOT IN (
-           SELECT id FROM entity_version
-           WHERE workspace = ? AND entity_id = ? AND kind = 'autosave'
+           SELECT id FROM record_version
+           WHERE workspace = ? AND record_id = ? AND kind = 'autosave'
            ORDER BY created_at DESC
            LIMIT ?
          )`,
@@ -795,7 +793,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async getEntityVersionById(workspace: string, id: string) {
     return this.get(
-      `SELECT v.*, u.display_name AS created_by_name FROM entity_version v LEFT JOIN users u ON u.id = v.created_by WHERE v.workspace = ? AND v.id = ?`,
+      `SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name FROM record_version v LEFT JOIN users u ON u.id = v.created_by WHERE v.workspace = ? AND v.id = ?`,
       [workspace, id],
       catalogMappers.entityVersion
     );
