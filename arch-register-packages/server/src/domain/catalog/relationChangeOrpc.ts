@@ -6,6 +6,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
+  bypassRelationApproval,
   getRelationChangeApproval,
   resubmitRelationChangeApproval,
   submitRelationChangeApproval,
@@ -56,6 +57,15 @@ export const createRelationChangeORPCRouter = () =>
           input.params.approvalId,
           context.event,
           input.body.reason
+        )
+      ),
+      bypass: router.relationChanges.bypass.handler(({ input, context }) =>
+        bypassRelationApproval(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          context.event,
+          input.body
         )
       )
     }

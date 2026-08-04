@@ -55,6 +55,10 @@ const withdrawRelationChangeApprovalBodySchema = z.object({
   reason: z.string().optional()
 });
 
+const relationApprovalBypassRequestBodySchema = relationChangeApprovalRequestBodySchema.extend({
+  reason: z.string().min(1)
+});
+
 export const relationChangeContract = oc.tag('Relation change approval').router({
   relationChanges: {
     get: oc
@@ -117,7 +121,28 @@ export const relationChangeContract = oc.tag('Relation change approval').router(
           body: withdrawRelationChangeApprovalBodySchema
         })
       )
-      .output(relationChangeApprovalSchema)
+      .output(relationChangeApprovalSchema),
+    bypass: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/relations/{id}/approval-bypass',
+        inputStructure: 'detailed',
+        summary: 'Apply an audited relation approval bypass',
+        description:
+          'Directly writes a relation change without going through approval, for holders of the ' +
+          'entity approval override capability. Mirrors the entity approval bypass: if the ' +
+          'relation has an open proposal, it is marked approved and its governance case cancelled.',
+        tags: ['Relation change approval']
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          body: relationApprovalBypassRequestBodySchema
+        })
+      )
+      .output(
+        z.object({ relationId: z.string(), version: z.number().int(), bypassed: z.literal(true) })
+      )
   }
 });
 
@@ -128,4 +153,7 @@ export type RelationChangeApprovalRequestBody = z.infer<
 >;
 export type WithdrawRelationChangeApprovalBody = z.infer<
   typeof withdrawRelationChangeApprovalBodySchema
+>;
+export type RelationApprovalBypassRequestBody = z.infer<
+  typeof relationApprovalBypassRequestBodySchema
 >;

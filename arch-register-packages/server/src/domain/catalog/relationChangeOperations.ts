@@ -42,6 +42,7 @@ import { canViewTypedRelation } from './relationAccessControl';
 import { logAudit, computeChanges } from '../audit/db/auditLogging';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
 import type {
+  RelationApprovalBypassRequestBody,
   RelationChangeApproval,
   RelationChangeApprovalRequestBody,
   RelationChangeApprovalRevision
@@ -457,6 +458,114 @@ export const withdrawRelationChangeApproval = async (
     (await db.entityChange.getApproval(workspace, proposal.id))!,
     authCtx
   );
+};
+
+/**
+ * Mirrors bypassEntityApproval (entityChangeOperations.ts): a direct, audited write that skips
+ * approval entirely for holders of `ent.override`. If the relation has an open proposal, it is
+ * marked approved and its governance case cancelled rather than left dangling against a base
+ * version the bypass just moved past.
+ */
+export const bypassRelationApproval = async (
+  db: DatabaseAdapter,
+  workspaceName: string,
+  relationId: string,
+  event: AuthenticatedEvent,
+  body: RelationApprovalBypassRequestBody
+) => {
+  const workspace = await resolveWorkspace(db.catalog, workspaceName);
+  const { authCtx, relation } = await assertCanPropose(db, workspace, relationId, event);
+  const canonicalRelationId = relation.id;
+  requireWorkspaceCapability(authCtx, 'ent.override');
+  const updated = await db.core.transaction(async tx => {
+    const now = new Date();
+    if (relation.version !== body.baseVersion) return null;
+    const { data } = await buildProposedRelation(
+      tx,
+      workspace,
+      relation,
+      body.proposedState,
+      authCtx
+    );
+    const row = await tx.relation.updateRelation(workspace, canonicalRelationId, {
+      data,
+      version: relation.version + 1,
+      updated_at: now
+    });
+    if (row == null) return null;
+
+    const actorUserId = event.context.user.id;
+    await logAudit(tx, {
+      userId: actorUserId,
+      workspace,
+      operation: 'update',
+      entityType: 'relation',
+      entityId: canonicalRelationId,
+      entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
+      schemaId: row.schema_id,
+      changes: computeChanges(
+        flattenRelationAuditFields(relation),
+        flattenRelationAuditFields(row),
+        {
+          alwaysInclude: ['_inEntityId', '_outEntityId']
+        }
+      ),
+      metadata: {
+        relation: relationAuditContext(row),
+        approvalBypass: true,
+        reason: body.reason
+      }
+    });
+
+    await tx.catalog.createEntityVersion({
+      id: randomUUID(),
+      workspace,
+      entity_id: canonicalRelationId,
+      version_number: row.version,
+      kind: 'autosave',
+      commit_message: null,
+      created_at: now,
+      created_by: actorUserId,
+      state: relationToBaseState(row),
+      applied_case_revision_id: null
+    });
+
+    const proposal = await tx.entityChange.getOpenApproval(workspace, canonicalRelationId);
+    if (proposal) {
+      const revision = await tx.entityChange.getLatestApprovalRevision(workspace, proposal.id);
+      if (revision) {
+        await tx.entityChange.updateApprovalRevisionStatus(workspace, revision.id, 'approved', now);
+        await tx.entityChange.updateApprovalStatus(workspace, proposal.id, 'approved', now, now);
+        const caseRow = await findCaseForRevision(tx, workspace, canonicalRelationId, revision.id);
+        if (caseRow) {
+          const cancelled = await tx.governance.cancelCaseIfOpen(caseRow.id, now);
+          if (cancelled) {
+            const supersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(
+              caseRow.id,
+              now
+            );
+            await resolveAssignmentNotifications(tx, supersededIds, now);
+            await resolveCaseNotifications(tx, cancelled.id, now);
+            await recordGovernanceEvent(tx, cancelled, {
+              eventType: 'admin_override',
+              actorUserId,
+              previousStatus: 'open',
+              resultingStatus: 'cancelled',
+              reason: body.reason,
+              metadata: { proposalId: proposal.id, revisionId: revision.id }
+            });
+          }
+        }
+      }
+    }
+    return row;
+  });
+  httpAssert.present(updated, {
+    status: 409,
+    statusText: 'Conflict',
+    message: 'The relation changed while the bypass was being applied'
+  });
+  return { relationId: canonicalRelationId, version: updated.version, bypassed: true as const };
 };
 
 /**

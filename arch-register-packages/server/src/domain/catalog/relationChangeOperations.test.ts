@@ -8,6 +8,7 @@ import type {
   EntityChangeApprovalRevisionDbResult
 } from './db/entityChangeDatabase';
 import {
+  bypassRelationApproval,
   getRelationChangeApproval,
   submitRelationChangeApproval,
   withdrawRelationChangeApproval,
@@ -295,6 +296,89 @@ describe('withdrawRelationChangeApproval', () => {
       'withdrawn',
       expect.any(Date),
       expect.any(Date)
+    );
+  });
+});
+
+describe('bypassRelationApproval', () => {
+  it('writes the proposed data directly, versions it, and audits the bypass', async () => {
+    const { db, updateRelation, createEntityVersion } = makeDb({});
+
+    const result = await bypassRelationApproval(db, 'ws-1', 'relation-1', eventForAuthCtx(), {
+      baseVersion: 1,
+      proposedState: { data: { note: 'after' } },
+      reason: 'urgent fix'
+    });
+
+    expect(result).toEqual({ relationId: 'relation-1', version: 2, bypassed: true });
+    expect(updateRelation).toHaveBeenCalledWith(
+      'ws-1',
+      'relation-1',
+      expect.objectContaining({ data: { note: 'after' }, version: 2 })
+    );
+    expect(createEntityVersion).toHaveBeenCalledWith(
+      expect.objectContaining({ entity_id: 'relation-1', kind: 'autosave' })
+    );
+    expect(db.audit.createAuditLog).toHaveBeenCalledWith(
+      expect.objectContaining({
+        metadata: expect.objectContaining({ approvalBypass: true, reason: 'urgent fix' })
+      })
+    );
+  });
+
+  it('rejects when the relation changed since baseVersion', async () => {
+    const { db, updateRelation } = makeDb({});
+
+    await expect(
+      bypassRelationApproval(db, 'ws-1', 'relation-1', eventForAuthCtx(), {
+        baseVersion: 99,
+        proposedState: { data: { note: 'after' } },
+        reason: 'urgent fix'
+      })
+    ).rejects.toMatchObject({ status: 409 });
+    expect(updateRelation).not.toHaveBeenCalled();
+  });
+
+  it('approves and cancels an open proposal that the bypass superseded', async () => {
+    const openApproval: EntityChangeApprovalDbResult = {
+      id: 'approval-1',
+      workspace: 'ws-1',
+      entity_id: 'relation-1',
+      status: 'open',
+      initiator_user_id: 'user-2',
+      created_at: now,
+      updated_at: now,
+      closed_at: null
+    };
+    const { db, updateApprovalRevisionStatus, updateApprovalStatus } = makeDb({ openApproval });
+
+    await bypassRelationApproval(db, 'ws-1', 'relation-1', eventForAuthCtx(), {
+      baseVersion: 1,
+      proposedState: { data: { note: 'after' } },
+      reason: 'urgent fix'
+    });
+
+    expect(updateApprovalRevisionStatus).toHaveBeenCalledWith(
+      'ws-1',
+      'revision-1',
+      'approved',
+      expect.any(Date)
+    );
+    expect(updateApprovalStatus).toHaveBeenCalledWith(
+      'ws-1',
+      'approval-1',
+      'approved',
+      expect.any(Date),
+      expect.any(Date)
+    );
+    expect(db.governance.cancelCaseIfOpen).toHaveBeenCalledWith(
+      'governance-case-1',
+      expect.any(Date)
+    );
+    expect(governanceMocks.recordGovernanceEvent).toHaveBeenCalledWith(
+      db,
+      { id: 'governance-case-1' },
+      expect.objectContaining({ eventType: 'admin_override' })
     );
   });
 });
