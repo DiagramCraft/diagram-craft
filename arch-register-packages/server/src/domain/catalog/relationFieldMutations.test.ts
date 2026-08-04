@@ -237,7 +237,12 @@ describe('applyRelationFieldDelta — version history', () => {
 
     expect(db.catalog.createEntityVersion).toHaveBeenCalledTimes(1);
     expect(db.catalog.createEntityVersion).toHaveBeenCalledWith(
-      expect.objectContaining({ entity_id: 'rel-1', kind: 'deleted', version_number: 3, created_by: 'user-1' })
+      expect.objectContaining({
+        entity_id: 'rel-1',
+        kind: 'deleted',
+        version_number: 3,
+        created_by: 'user-1'
+      })
     );
     expect(db.catalog.pruneAutosaveVersions).not.toHaveBeenCalled();
   });
