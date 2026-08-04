@@ -129,6 +129,97 @@ test.describe('workspace export/import', () => {
     );
   });
 
+  test('exports and imports typed relation CSV rows', async ({ orpc, server }) => {
+    const suffix = randomUUID();
+    const schemaKeyPrefix = Array.from(suffix.replaceAll('-', '').slice(0, 4), character =>
+      String.fromCharCode(65 + Number.parseInt(character, 16))
+    ).join('');
+    const workspace = await orpc.workspaces.create({
+      body: { name: `Relation CSV workspace ${suffix}`, badge: 'RCV' }
+    });
+    const schema = await orpc.schemas.create({
+      params: { workspace: workspace.url_slug },
+      body: {
+        name: `Relation CSV entity schema ${suffix}`,
+        key_prefix: `R${schemaKeyPrefix}`
+      }
+    });
+    const inEntity = await orpc.entities.create({
+      params: { workspace: workspace.url_slug },
+      body: { _schemaId: schema.id, _name: `CSV source in ${suffix}` } as never
+    });
+    const outEntity = await orpc.entities.create({
+      params: { workspace: workspace.url_slug },
+      body: { _schemaId: schema.id, _name: `CSV source out ${suffix}` } as never
+    });
+    const relationSchemaId = randomUUID();
+    const now = new Date();
+    await server.db.relation.createRelationSchema({
+      id: relationSchemaId,
+      workspace: workspace.id,
+      name: `Relation CSV type ${suffix}`,
+      description: '',
+      in_schema_ids: [schema.id],
+      out_schema_ids: [schema.id],
+      fields: [{ id: 'note', name: 'Note', type: 'text', requirementLevel: 'optional' }],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      version: 1,
+      created_at: now,
+      updated_at: now
+    });
+    await server.db.relation.createRelation({
+      id: randomUUID(),
+      workspace: workspace.id,
+      schema_id: relationSchemaId,
+      in_entity_id: inEntity._uid,
+      out_entity_id: outEntity._uid,
+      data: { note: 'before' },
+      created_at: now,
+      updated_at: now
+    });
+
+    const exported = await orpc.relations.exportCsv({
+      params: { workspace: workspace.url_slug },
+      query: {
+        relationQuery: JSON.stringify({
+          root_kind: 'relation',
+          root: { kind: 'and', children: [] }
+        }) as never
+      }
+    });
+    const csv = await exported.body.text();
+    expect(csv).toContain('_schemaId;_inEntityId;_outEntityId;Note');
+    expect(csv).toContain(`${relationSchemaId};${inEntity._uid};${outEntity._uid};before`);
+
+    const parsed = await orpc.relations.importParse({
+      params: { workspace: workspace.url_slug },
+      body: {
+        csvContent: `_schemaId;_inEntityId;_outEntityId;Note\n${relationSchemaId};${inEntity._uid};${outEntity._uid};after`
+      }
+    });
+    expect(parsed.validRows).toBe(1);
+    expect(parsed.relations[0]).toMatchObject({ isUpdate: true });
+
+    const committed = await orpc.relations.importCommit({
+      params: { workspace: workspace.url_slug },
+      body: { relations: parsed.relations.map(row => row.relation!).filter(Boolean) }
+    });
+    expect(committed).toMatchObject({ created: 0, updated: 1 });
+
+    const relations = (
+      await server.db.relation.listRelations(
+        workspace.id,
+        { schemaId: relationSchemaId, inEntityId: null, outEntityId: null },
+        {}
+      )
+    ).items;
+    expect(relations[0]?.data).toEqual({ note: 'after' });
+  });
+
   test('preserves field-group ACLs and hides restricted values after import', async ({
     orpc,
     server

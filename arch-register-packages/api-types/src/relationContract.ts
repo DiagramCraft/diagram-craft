@@ -73,6 +73,33 @@ const relationQueryRequestSchema = z.preprocess(value => {
   }
 }, entityQuerySchema);
 
+const relationCsvExportQuerySchema = z.object({
+  relationQuery: relationQueryRequestSchema.describe(
+    'Structured relation-rooted query serialized as JSON when sent as a GET query parameter'
+  )
+});
+
+const relationImportRowSchema = z.object({
+  rowNumber: z.number().int(),
+  errors: z.array(z.string()),
+  relation: z.record(z.string(), z.unknown()).nullable(),
+  isUpdate: z.boolean(),
+  existingId: z.string().optional(),
+  matchType: z.enum(['natural-key', 'none']).optional()
+});
+
+const relationImportParseResponseSchema = z.object({
+  totalRows: z.number().int(),
+  validRows: z.number().int(),
+  relations: z.array(relationImportRowSchema)
+});
+
+const relationImportCommitResponseSchema = z.object({
+  created: z.number().int(),
+  updated: z.number().int(),
+  ids: z.array(z.string())
+});
+
 export const relationQueryListFiltersSchema = z.object({
   relationQuery: relationQueryRequestSchema.describe(
     'Structured EntityQuery IR rooted at a relation schema, serialized as JSON when sent as a GET query parameter'
@@ -159,6 +186,76 @@ export const workspaceRelationContract = oc.tag('Relations').router({
       })
       .input(z.object({ params: ws, query: relationQueryListFiltersSchema }))
       .output(relationListResponseSchema),
+    exportCsv: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/relations/export',
+        inputStructure: 'detailed',
+        outputStructure: 'detailed',
+        summary: 'Export relations to CSV',
+        description: 'Exports relation instances matching a structured relation query to CSV.',
+        tags: ['Relations']
+      })
+      .input(z.object({ params: ws, query: relationCsvExportQuerySchema }))
+      .output(
+        z.object({
+          headers: z.record(z.string(), z.string()),
+          body: z.instanceof(Blob)
+        })
+      ),
+    importParse: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/relations/import/parse',
+        inputStructure: 'detailed',
+        summary: 'Parse relation import CSV',
+        description: 'Validates and previews relation instances from a CSV file.',
+        tags: ['Relations']
+      })
+      .input(
+        z.object({
+          params: ws,
+          body: z.object({ csvContent: z.string().describe('CSV file content') })
+        })
+      )
+      .output(relationImportParseResponseSchema),
+    importCommit: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/relations/import/commit',
+        inputStructure: 'detailed',
+        summary: 'Commit relation import',
+        description: 'Creates or updates relation instances from parsed CSV rows.',
+        tags: ['Relations']
+      })
+      .input(
+        z.object({
+          params: ws,
+          body: z.object({
+            relations: z
+              .array(z.record(z.string(), z.unknown()))
+              .describe('Relation rows to import')
+          })
+        })
+      )
+      .output(relationImportCommitResponseSchema),
+    downloadTemplate: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/relations/import/template/{id}',
+        inputStructure: 'detailed',
+        outputStructure: 'detailed',
+        summary: 'Download relation import template',
+        description: 'Downloads a CSV template for a relation schema.',
+        tags: ['Relations']
+      })
+      .input(z.object({ params: wsAndId }))
+      .output(
+        z.object({
+          headers: z.record(z.string(), z.string()),
+          body: z.instanceof(Blob)
+        })
+      ),
     get: oc
       .route({
         method: 'GET',

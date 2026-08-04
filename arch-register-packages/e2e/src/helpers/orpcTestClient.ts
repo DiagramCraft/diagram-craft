@@ -6,6 +6,7 @@ import { projectContract } from '@arch-register/api-types/projectContract';
 import { authPublicContract, authProtectedContract } from '@arch-register/api-types/authContract';
 import { devContract } from '@arch-register/api-types/devContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
+import { workspaceRelationContract } from '@arch-register/api-types/relationContract';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { workspaceFieldGroupContract } from '@arch-register/api-types/fieldGroupContract';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
@@ -70,6 +71,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     makeClient(contract, baseUrl, auth, '/api/application/v1');
   const documents = makeApplication(documentContract);
   const applicationEntities = makeApplication(workspaceEntityContract).entities;
+  const applicationRelations = makeApplication(workspaceRelationContract).relations;
   const applicationSchemas = makeApplication(workspaceSchemaContract).schemas;
   const applicationProjects = makeApplication(projectContract).projects;
   const applicationSearch = makeApplication(searchContract).search;
@@ -126,6 +128,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     authProtected: make(authProtectedContract).authProtected,
     dev: make(devContract).dev,
     entities: applicationEntities,
+    relations: applicationRelations,
     entityQueryText: make(workspaceEntityContract).entityQueryText,
     enums: applicationEnums,
     fieldGroups: applicationFieldGroups,

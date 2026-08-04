@@ -492,6 +492,12 @@
           from access-restricted field groups are scrubbed from import previews, and CSV updates cannot write or
           clear fields in field groups the importer lacks edit access to.
 
+        - @id:ar.import-export.relation-csv Users can import and export typed relation instances through CSV
+          workflows. Exports include relation-schema and endpoint entity IDs plus fields when all rows share one
+          relation type; mixed-type exports contain only the identifiers. Imports validate endpoint constraints and
+          relation fields, then upsert by relation type and endpoint pair while respecting relation and field-group
+          access controls.
+
     - @id:ar.integrations Arch Register exposes integration surfaces for external clients, content sources, event
       delivery, and scheduled work.
 

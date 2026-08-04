@@ -16,7 +16,8 @@ import {
   LazyEntityDetailScreen,
   LazyImportScreen,
   LazyMarkdownEditorScreen,
-  LazyRelationBrowserScreen
+  LazyRelationBrowserScreen,
+  LazyRelationImportScreen
 } from './lazyWorkspaceScreens';
 
 const EntityContentFolderRoute = () => {
@@ -142,6 +143,26 @@ export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     })
   );
 
+  const relationImportRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'entities/relations/import',
+      component: LazyRelationImportScreen
+    }),
+    ctx => ({
+      variant: 'standard',
+      activeRailItem: 'entities',
+      breadcrumbs: buildEntityBreadcrumbs(ctx, false),
+      primarySidebar: (
+        <EntitiesSidebar
+          schemas={ctx.schemas}
+          lifecycleStates={ctx.lifecycleStates}
+          workspaceSlug={ctx.workspaceSlug}
+        />
+      )
+    })
+  );
+
   const entityMarkdownRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -165,6 +186,7 @@ export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   return [
     entityBrowserRoute,
     importRoute,
+    relationImportRoute,
     relationBrowserRoute,
     entityDetailRoute,
     entityContentFolderRoute,
