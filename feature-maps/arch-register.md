@@ -134,7 +134,13 @@
           exposed in the web UI (API-only so far). The
           entity detail screen's Relations tab and Topology view also surface typed relation instances (grouped by
           relation schema in Topology, using the schema's own color), each expandable in place to view field values
-          and open the same audit-trail history dialog.
+          and open the same audit-trail history dialog. Relation instances can additionally be browsed as
+          first-class records in their own right: a standalone Relations browser (a relation schema picker plus a
+          table of matching relation instances) lists relation instances via the same structured query engine
+          entities use, supporting scalar-field filters on the relation itself, filters on its "in"/"out" endpoint
+          entities, and asOf/historical reconstruction — table view only for now, and separate from the
+          entity-embedded Relations tab above, which is unaffected. Saved views can persist a relation-rooted query
+          the same way they persist an entity-rooted one.
 
         - @id:ar.entities.content Users can attach and manage structured or Markdown-based content associated with an
           entity.

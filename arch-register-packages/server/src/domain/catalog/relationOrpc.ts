@@ -6,6 +6,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   listWorkspaceRelations,
+  queryWorkspaceRelations,
   getWorkspaceRelation,
   createWorkspaceRelation,
   updateWorkspaceRelation,
@@ -37,6 +38,16 @@ export const workspaceRelationORPCRouter = relationRouter.router({
         input.params.workspace,
         { schemaId, inEntityId, outEntityId },
         { limit, offset },
+        context.event
+      );
+    }),
+    query: relationRouter.relations.query.handler(async ({ input, context }) => {
+      const { relationQuery, view, limit, offset } = input.query;
+      return await queryWorkspaceRelations(
+        context.db,
+        input.params.workspace,
+        relationQuery,
+        { view, limit, offset },
         context.event
       );
     }),

@@ -112,7 +112,12 @@ export const buildEntityDisplayFields = (
   for (const projection of projections) {
     const alias =
       projection.alias ??
-      [...projection.path.map(step => step.fieldId), projection.fieldId].join('.');
+      [
+        ...projection.path.map(step =>
+          step.kind === 'endpoint' ? `endpoint(${step.direction})` : step.fieldId
+        ),
+        projection.fieldId
+      ].join('.');
     const id = `${PROJECTION_FIELD_PREFIX}${alias}`;
     if (seen.has(id)) continue;
     seen.add(id);

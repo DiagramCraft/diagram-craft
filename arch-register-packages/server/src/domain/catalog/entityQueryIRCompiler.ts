@@ -29,6 +29,11 @@ export type CompiledEntityQuery = { sql: string; params: unknown[] };
 
 export type CompiledEntityQueryOptions = {
   visibleEntityIds?: readonly string[];
+  // Relation-root visibility gate. Unlike entity visibility (a per-entity ACL check), relation
+  // visibility depends on both endpoint entities' schemas and the relation schema's viewable
+  // typed-relation grant, so it can't be recomputed as flat SQL — callers precompute it in JS
+  // (mirrors canViewTypedRelation) and pass the resulting id set in.
+  visibleRelationIds?: readonly string[];
 };
 
 // Raised for a fieldId/op combination that has no SQL translation in this dialect today. As of
@@ -59,6 +64,10 @@ type CompileState = {
   workspace: string;
   authCtx: WorkspaceAuthorizationContext | null;
   relationSchemas: RelationSchemaCatalog;
+  // Which catalog-record kind ROOT_ALIAS (e0) is bound to — 'relation' means e0 reads from
+  // RELATION_SCOPE_CTE instead of SCOPE_CTE. Every alias reached via an 'endpoint' path step is
+  // always an entity, regardless of this flag.
+  rootKind: 'entity' | 'relation';
   assessmentId: string | undefined;
   projectId: string | undefined;
   projectScope: 'project' | 'all';
@@ -71,6 +80,7 @@ type CompileState = {
   bindingByPath: Map<string, ProjectionBinding>;
   compilingBinding: boolean;
   visibleEntityIds?: readonly string[];
+  visibleRelationIds?: readonly string[];
 };
 
 type ProjectionBinding = {
@@ -114,6 +124,9 @@ const relationIsMultiValued = (
 ): boolean =>
   path.some(step => {
     if (step.kind === 'typedRelation') return true;
+    // 'endpoint' (relation -> its in/out entity) is exactly one entity per direction, never
+    // multi-valued.
+    if (step.kind === 'endpoint') return false;
     const fields =
       step.kind === 'backward'
         ? [schemas.get(step.ownerSchemaId)?.fields.find(field => field.id === step.fieldId)]
@@ -128,13 +141,18 @@ const relationIsMultiValued = (
 const effectiveProjectionAlias = (projection: ProjectionField): string => {
   if (projection.alias) return projection.alias;
   const path = projection.path
-    .map(step =>
-      step.kind === 'forward'
-        ? step.fieldId
-        : step.kind === 'backward'
-          ? `<-${step.ownerSchemaId}.${step.fieldId}`
-          : step.fieldId
-    )
+    .map(step => {
+      switch (step.kind) {
+        case 'forward':
+          return step.fieldId;
+        case 'backward':
+          return `<-${step.ownerSchemaId}.${step.fieldId}`;
+        case 'endpoint':
+          return `endpoint(${step.direction})`;
+        case 'typedRelation':
+          return step.fieldId;
+      }
+    })
     .join('.');
   return path ? `${path}.${projection.fieldId}` : projection.fieldId;
 };
@@ -312,11 +330,25 @@ const compileFreeTextTerminal = (
     )
     .join(' OR ')})`;
 
+// Mirrors ENTITY_BUILTIN_COLUMNS for relation rows. Kept local (not filterBuilder.ts) since these
+// pseudo-fields only exist for relation-rooted queries/projections.
+const RELATION_BUILTIN_COLUMNS: Record<string, string> = {
+  _id: 'id',
+  _schemaId: 'schema_id',
+  _inEntityId: 'in_record_id',
+  _outEntityId: 'out_record_id',
+  _createdAt: 'created_at',
+  _updatedAt: 'updated_at'
+};
+
 const resolveRelationColumn = (
   alias: string,
   fieldId: string,
   dialect: EntityQueryDialect
 ): { col: string; kind: 'scalar' } | null => {
+  if (Object.hasOwn(RELATION_BUILTIN_COLUMNS, fieldId)) {
+    return { col: `${alias}.${RELATION_BUILTIN_COLUMNS[fieldId]}`, kind: 'scalar' };
+  }
   if (!isValidFieldId(fieldId)) return null;
   return {
     col:
@@ -325,6 +357,45 @@ const resolveRelationColumn = (
         : `json_extract(${alias}.data, '$.${fieldId}')`,
     kind: 'scalar'
   };
+};
+
+const RELATION_PSEUDO_FIELD_IDS = new Set(Object.keys(RELATION_BUILTIN_COLUMNS));
+
+const compileRelationRootPredicateTerminal =
+  (fieldId: string, op: FilterCondition['op'], value: unknown, state: CompileState) =>
+  (alias: string): string => {
+    const resolved = resolveRelationColumn(alias, fieldId, state.dialect);
+    if (!resolved) {
+      throw new UnsupportedEntityQueryIRError(`Field '${fieldId}' has no SQL translation`);
+    }
+    const clause = buildConditionClause(
+      resolved.col,
+      { fieldId, op, value },
+      v => addParam(state, v),
+      state.dialect,
+      resolved.kind
+    );
+    if (!clause) {
+      throw new UnsupportedEntityQueryIRError(
+        `Operator '${op}' has no SQL translation for field '${fieldId}'`
+      );
+    }
+    return clause;
+  };
+
+const projectionRawValueRelation = (
+  alias: string,
+  fieldId: string,
+  dialect: EntityQueryDialect
+): string => {
+  if (Object.hasOwn(RELATION_BUILTIN_COLUMNS, fieldId)) {
+    const column = `${alias}.${RELATION_BUILTIN_COLUMNS[fieldId]}`;
+    return dialect === 'postgres' ? `to_jsonb(${column})` : column;
+  }
+  assertValidFieldId(fieldId);
+  return dialect === 'postgres'
+    ? `${alias}.data->'${fieldId}'`
+    : `json_extract(${alias}.data, '$.${fieldId}')`;
 };
 
 const compileRelationNode = (
@@ -359,10 +430,17 @@ const compileRelationNode = (
           'Relation-instance filters cannot traverse nested entity paths'
         );
       }
-      const relationSchema = relationSchemas.get(relationSchemaId);
-      const field = relationSchema?.fields.find(candidate => candidate.id === node.fieldId);
       const resolved = resolveRelationColumn(alias, node.fieldId, state.dialect);
-      if (!relationSchema || !field || !resolved) {
+      if (!RELATION_PSEUDO_FIELD_IDS.has(node.fieldId)) {
+        const relationSchema = relationSchemas.get(relationSchemaId);
+        const field = relationSchema?.fields.find(candidate => candidate.id === node.fieldId);
+        if (!relationSchema || !field) {
+          throw new UnsupportedEntityQueryIRError(
+            `Relation schema '${relationSchemaId}' has no scalar field '${node.fieldId}'`
+          );
+        }
+      }
+      if (!resolved) {
         throw new UnsupportedEntityQueryIRError(
           `Relation schema '${relationSchemaId}' has no scalar field '${node.fieldId}'`
         );
@@ -408,6 +486,23 @@ const compilePathSteps = (
   if (index >= steps.length) return terminal(curAlias);
 
   const step = steps[index]!;
+  if (step.kind === 'endpoint') {
+    // Relation -> its in/out entity endpoint. curAlias is a relation-scope alias here (r0 or a
+    // subsequent relation alias reached via typedRelation); the target is an ordinary entity.
+    const alias = nextAlias(state);
+    const targetId =
+      step.direction === 'in' ? `${curAlias}.in_record_id` : `${curAlias}.out_record_id`;
+    const rest = compilePathSteps(
+      steps,
+      index + 1,
+      alias,
+      schemas,
+      relationSchemas,
+      state,
+      terminal
+    );
+    return `EXISTS (SELECT 1 FROM ${SCOPE_CTE} ${alias} WHERE ${alias}.id = ${targetId} AND ${rest})`;
+  }
   if (step.kind === 'typedRelation') {
     const relationAlias = nextRelationAlias(state);
     const targetAlias = nextAlias(state);
@@ -542,6 +637,14 @@ const compileNode = (
         const binding = state.bindingByPath.get(pathKey(node.path));
         if (binding) return compileBoundNode(node, alias, binding, schemas, state);
       }
+      if (alias === ROOT_ALIAS && state.rootKind === 'relation' && node.path.length === 0) {
+        return compileRelationRootPredicateTerminal(
+          node.fieldId,
+          node.op,
+          node.value,
+          state
+        )(alias);
+      }
       return compilePathSteps(
         node.path,
         0,
@@ -596,10 +699,23 @@ const buildProjectionBindings = (
     const rootAlias = `pb_root_${binding.name}`;
     let currentAlias = rootAlias;
     const selectParts = [`${rootAlias}.id AS root_id`];
-    let from = `FROM ${SCOPE_CTE} ${rootAlias}`;
+    // A binding's root row is always the query root, so it's drawn from whichever scope CTE
+    // ROOT_ALIAS itself binds to (relation root paths always start with an 'endpoint' step).
+    let from = `FROM ${state.rootKind === 'relation' ? RELATION_SCOPE_CTE : SCOPE_CTE} ${rootAlias}`;
 
     state.compilingBinding = true;
     binding.path.forEach((step, stepIndex) => {
+      if (step.kind === 'endpoint') {
+        const targetAlias = `pb_${binding.name}_${stepIndex + 1}`;
+        const targetId =
+          step.direction === 'in'
+            ? `${currentAlias}.in_record_id`
+            : `${currentAlias}.out_record_id`;
+        from += `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId}`;
+        selectParts.push(`${targetAlias}.id AS hop_${stepIndex + 1}_id`);
+        currentAlias = targetAlias;
+        return;
+      }
       if (step.kind === 'typedRelation') {
         const relationAlias = `pb_rel_${binding.name}_${stepIndex + 1}`;
         const targetAlias = `pb_${binding.name}_${stepIndex + 1}`;
@@ -722,6 +838,14 @@ const projectionValue = (
   const isArray = relationIsMultiValued(projection.path, schemas, state.relationSchemas);
   const binding = projectionBindingFor(projection, state);
   if (!binding) {
+    if (state.rootKind === 'relation' && projection.path.length === 0) {
+      // Root-level projection of a relation-rooted query: e0 is a relation row, read directly (no
+      // cross-schema field-id collision scoping for relation schemas in this pass).
+      return {
+        value: projectionRawValueRelation(ROOT_ALIAS, projection.fieldId, state.dialect),
+        isArray: false
+      };
+    }
     const raw = projectionRawValue(ROOT_ALIAS, projection.fieldId, state.dialect);
     // Root-level projection (no path): reading `data->fieldId` off e0 directly, so a colliding
     // field id needs e0 itself gated to the granting schemas, else a non-granting row's own
@@ -1211,7 +1335,13 @@ const buildRelationScopeCte = (state: CompileState): string => {
     return `${buildTemporalRelationSource(state)},\n    ${RELATION_SCOPE_CTE} AS (\n      SELECT * FROM temporal_relation_source\n    )`;
   }
   const workspaceParam = addParam(state, state.workspace);
-  return `${RELATION_SCOPE_CTE} AS (\n      SELECT r.*\n      FROM catalog_record r\n      WHERE r.kind = 'relation'\n        AND r.workspace = ${workspaceParam}\n        AND r.deleted_at IS NULL\n    )`;
+  const visibleClause =
+    state.visibleRelationIds == null
+      ? ''
+      : state.visibleRelationIds.length === 0
+        ? '1=0'
+        : `r.id IN (${state.visibleRelationIds.map(id => addParam(state, id)).join(', ')})`;
+  return `${RELATION_SCOPE_CTE} AS (\n      SELECT r.*\n      FROM catalog_record r\n      WHERE r.kind = 'relation'\n        AND r.workspace = ${workspaceParam}\n        AND r.deleted_at IS NULL\n        AND ${visibleClause || '1=1'}\n    )`;
 };
 
 // Compiles a validated EntityQuery into a full `WITH scoped_entity AS (...) SELECT ...` statement,
@@ -1228,11 +1358,21 @@ export const compileEntityQueryIR = (
   authCtx: WorkspaceAuthorizationContext | null = null,
   relationSchemas: RelationSchemaCatalog = new Map()
 ): CompiledEntityQuery => {
+  // Resolves the same way entityQueryIRValidator.ts's resolveRootKind does: schemaId, when
+  // present, is looked up against both registries and wins; callers must have already validated
+  // the query, so a schemaId that resolves to neither registry can't occur here.
+  const rootKind: 'entity' | 'relation' = query.schemaId
+    ? relationSchemas.has(query.schemaId) && !schemas.has(query.schemaId)
+      ? 'relation'
+      : 'entity'
+    : (query.root_kind ?? 'entity');
+
   const state: CompileState = {
     dialect,
     workspace,
     authCtx,
     relationSchemas,
+    rootKind,
     assessmentId: query.assessmentId,
     projectId: query.projectId,
     projectScope: query.projectScope ?? 'all',
@@ -1244,7 +1384,8 @@ export const compileEntityQueryIR = (
     projectionBindings: [],
     bindingByPath: new Map(),
     compilingBinding: false,
-    visibleEntityIds: options.visibleEntityIds
+    visibleEntityIds: options.visibleEntityIds,
+    visibleRelationIds: options.visibleRelationIds
   };
 
   if (state.asOf && Number.isNaN(state.asOf.getTime())) {
@@ -1261,8 +1402,28 @@ export const compileEntityQueryIR = (
   }
   whereParts.push(compileNode(query.root, ROOT_ALIAS, schemas, relationSchemas, state, true));
 
-  const sql = `
-    WITH${state.asOf ? ' RECURSIVE' : ''} ${cte},\n    ${relationCte}${projectionCtes.length > 0 ? `,\n    ${projectionCtes.join(',\n    ')}` : ''}
+  const withClause = `WITH${state.asOf ? ' RECURSIVE' : ''} ${cte},\n    ${relationCte}${projectionCtes.length > 0 ? `,\n    ${projectionCtes.join(',\n    ')}` : ''}`;
+
+  const sql =
+    rootKind === 'relation'
+      ? `
+    ${withClause}
+    SELECT ${ROOT_ALIAS}.*,
+      ${ROOT_ALIAS}.in_record_id  AS in_entity_id,
+      ${ROOT_ALIAS}.out_record_id AS out_entity_id,
+      rs.name    AS schema_name,
+      in_e.name  AS in_entity_name,
+      out_e.name AS out_entity_name,
+      ${projectionObject} AS projections
+    FROM ${RELATION_SCOPE_CTE} ${ROOT_ALIAS}
+    JOIN relation_schema rs        ON rs.id = ${ROOT_ALIAS}.schema_id
+    LEFT JOIN catalog_record in_e  ON in_e.id = ${ROOT_ALIAS}.in_record_id
+    LEFT JOIN catalog_record out_e ON out_e.id = ${ROOT_ALIAS}.out_record_id
+    WHERE ${whereParts.join(' AND ')}
+    ORDER BY in_e.name, out_e.name, ${ROOT_ALIAS}.id
+  `
+      : `
+    ${withClause}
     SELECT ${ROOT_ALIAS}.*,
       wo.name   AS owner_name,
       ls.label  AS lifecycle_label,

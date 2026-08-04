@@ -41,6 +41,8 @@ import type {
   RelationListFilters,
   EntityTypedRelations
 } from '@arch-register/api-types/relationContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import { listRelationsWithCount, type RelationListPage } from './entityQueryOperations';
 
 const dbErrorMessages = {
   foreign: 'Relation endpoints or schema could not be resolved'
@@ -48,7 +50,7 @@ const dbErrorMessages = {
 
 const checker = new PermissionChecker();
 
-const listAllRelations = async (
+export const listAllRelations = async (
   db: DatabaseAdapter,
   workspace: string,
   filters: RelationListFilters
@@ -139,6 +141,30 @@ export const listWorkspaceRelations = async (
         }),
         total: visibleRows.length
       };
+    }
+  );
+};
+
+export const queryWorkspaceRelations = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  relationQuery: EntityQuery,
+  options: { view?: 'summary' | 'full'; limit?: number; offset?: number },
+  event: AuthenticatedEvent
+): Promise<RelationListPage> => {
+  return defineOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to retrieve relations', dbErrorMessages },
+    async ({ ws, authCtx }) => {
+      requireSchemaRead(authCtx);
+      return listRelationsWithCount(db, ws, authCtx, {
+        relationQuery,
+        view: options.view,
+        limit: options.limit,
+        offset: options.offset
+      });
     }
   );
 };

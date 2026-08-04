@@ -136,6 +136,14 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
     return Number(row?.count ?? 0);
   }
 
+  async runCompiledRelationQuery(sql: string, params: unknown[]) {
+    const rows = await this.sql.unsafe<DatabaseRow[]>(
+      sql,
+      params as Parameters<typeof this.sql.unsafe>[1]
+    );
+    return mapDatabaseRows(rows, relationMappers.relationQuery);
+  }
+
   async listRelations(
     workspace: string,
     filters: RelationListDbFilters,

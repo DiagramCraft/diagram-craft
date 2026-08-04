@@ -839,7 +839,7 @@ const parsePredicate = (
   const comparatorToken = peek(state);
 
   if (comparatorToken.kind === 'COMPARATOR') {
-    if (last.step.filter) {
+    if (last.step.kind !== 'endpoint' && last.step.filter) {
       throw new TextCompileError(
         `'[...]' cannot be combined with a trailing comparator on the same segment`,
         comparatorToken.offset
@@ -1165,6 +1165,11 @@ const printPathSteps = (
         ? `[${printNode(step.filter, schemaId, schemas, relationSchemas)}]`
         : '';
       return `<-${ownerName}.${step.fieldId}${filterText}`;
+    }
+    if (step.kind === 'endpoint') {
+      // The text DSL is entity-only for now; relation-rooted IRs (the only place an 'endpoint'
+      // step can appear) are built programmatically, never printed as query text.
+      throw new Error("'endpoint' path steps are not supported by the query text compiler");
     }
     const relationSchema = relationSchemas.get(step.relationSchemaId);
     const targetSchemaIds =

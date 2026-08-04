@@ -42,6 +42,18 @@ const PSEUDO_FIELD_IDS = new Set([
   '_assessment'
 ]);
 
+// Underscore pseudo-fields matched against a relation row itself, under a relation-rooted query.
+// Deliberately a much smaller set than the entity one: relations have no slug/namespace/name/
+// lifecycle/tags/description/completeness/owner.
+const RELATION_PSEUDO_FIELD_IDS = new Set([
+  '_id',
+  '_schemaId',
+  '_inEntityId',
+  '_outEntityId',
+  '_createdAt',
+  '_updatedAt'
+]);
+
 // Which schema ids actually grant unrestricted access to a field id, and whether at least one
 // schema in the catalog restricts it. A field id can be defined by multiple schemas (e.g. two
 // unrelated schemas both use `salary`); resolution at the parse/validate layer intentionally
@@ -107,6 +119,48 @@ const isKnownFieldId = (
 ): boolean => {
   if (PSEUDO_FIELD_IDS.has(fieldId) || fieldId.startsWith('_assessment:')) return true;
   return resolveFieldSchemaScope(fieldId, schemas, authCtx).grantedSchemaIds.size > 0;
+};
+
+// Resolves the root catalog-record kind a query addresses. When `schemaId` is set, it's looked up
+// against both schema registries (they occupy disjoint id spaces) and that lookup wins; the
+// explicit `root_kind` field is only consulted for the schema-less "browse everything" case, and
+// otherwise only checked for consistency against the schema-derived kind.
+const resolveRootKind = (
+  query: EntityQuery,
+  schemas: SchemaCatalog,
+  relationSchemas: RelationSchemaCatalog,
+  errors: ValidationError[]
+): 'entity' | 'relation' => {
+  let resolvedFromSchema: 'entity' | 'relation' | undefined;
+  if (query.schemaId) {
+    if (schemas.has(query.schemaId)) resolvedFromSchema = 'entity';
+    else if (relationSchemas.has(query.schemaId)) resolvedFromSchema = 'relation';
+    else errors.push({ path: ['schemaId'], message: `Unknown schemaId '${query.schemaId}'` });
+  }
+  if (resolvedFromSchema && query.root_kind && query.root_kind !== resolvedFromSchema) {
+    errors.push({
+      path: ['root_kind'],
+      message: `root_kind '${query.root_kind}' does not match schemaId '${query.schemaId}', which resolves to '${resolvedFromSchema}'`
+    });
+  }
+  return resolvedFromSchema ?? query.root_kind ?? 'entity';
+};
+
+const isKnownRelationFieldId = (
+  fieldId: string,
+  relationSchemas: RelationSchemaCatalog,
+  authCtx: WorkspaceAuthorizationContext | null
+): boolean => {
+  if (RELATION_PSEUDO_FIELD_IDS.has(fieldId)) return true;
+  for (const schema of relationSchemas.values()) {
+    if (
+      schema.fields.some(f => f.id === fieldId) &&
+      !isFieldViewRestricted(authCtx, schema, fieldId)
+    ) {
+      return true;
+    }
+  }
+  return false;
 };
 
 const relationFieldById = (
@@ -192,7 +246,11 @@ const validatePathSteps = (
   path: (string | number)[],
   hopsUsedBefore: number,
   errors: ValidationError[],
-  authCtx: WorkspaceAuthorizationContext | null
+  authCtx: WorkspaceAuthorizationContext | null,
+  // Only true for the outermost path of a relation-rooted query (query.root/relationExists path,
+  // or a top-level projection path) — never for a path nested inside a PathStep.filter, where
+  // we're already scoped to a specific entity/relation instance, not the query root.
+  allowEndpointFirst: boolean = false
 ): number => {
   let hopsUsed = hopsUsedBefore;
   steps.forEach((step, index) => {
@@ -205,7 +263,15 @@ const validatePathSteps = (
       });
     }
 
-    if (step.kind === 'backward') {
+    if (step.kind === 'endpoint') {
+      if (!allowEndpointFirst || index !== 0) {
+        errors.push({
+          path: stepPath,
+          message:
+            "'endpoint' path step is only valid as the first step of a relation-rooted query path"
+        });
+      }
+    } else if (step.kind === 'backward') {
       const ownerSchema = schemas.get(step.ownerSchemaId);
       if (!ownerSchema) {
         errors.push({
@@ -302,7 +368,7 @@ const validatePathSteps = (
       }
     }
 
-    if (step.filter && step.kind !== 'typedRelation') {
+    if (step.kind !== 'endpoint' && step.kind !== 'typedRelation' && step.filter) {
       hopsUsed = validateNode(
         step.filter,
         schemas,
@@ -311,7 +377,8 @@ const validatePathSteps = (
         hopsUsed,
         false,
         errors,
-        authCtx
+        authCtx,
+        'entity'
       );
     }
   });
@@ -326,8 +393,15 @@ const validateNode = (
   hopsUsedBefore: number,
   allowFreeText: boolean,
   errors: ValidationError[],
-  authCtx: WorkspaceAuthorizationContext | null
+  authCtx: WorkspaceAuthorizationContext | null,
+  // 'relation' only at the true root of a relation-rooted query; always 'entity' once nested past
+  // an 'endpoint' path step (or for an entity-rooted query throughout).
+  rootKind: 'entity' | 'relation' = 'entity'
 ): number => {
+  // Only true for the outermost call (mirrors allowFreeText's own top-of-tree semantics): a path
+  // step's own nested filter is validated via validateNode with rootKind forced to 'entity'
+  // (see validatePathSteps), so allowEndpointFirst naturally stays false once nested.
+  const allowEndpointFirst = allowFreeText && rootKind === 'relation';
   switch (node.kind) {
     case 'and':
     case 'or': {
@@ -344,7 +418,8 @@ const validateNode = (
           hopsUsedBefore,
           allowFreeText,
           errors,
-          authCtx
+          authCtx,
+          rootKind
         );
         maxHops = Math.max(maxHops, childHops);
       });
@@ -359,9 +434,17 @@ const validateNode = (
         hopsUsedBefore,
         allowFreeText,
         errors,
-        authCtx
+        authCtx,
+        rootKind
       );
     case 'freeText':
+      if (rootKind === 'relation') {
+        errors.push({
+          path,
+          message: "'freeText' is not supported for relation-rooted queries"
+        });
+        return hopsUsedBefore;
+      }
       if (!allowFreeText) {
         errors.push({
           path,
@@ -380,9 +463,14 @@ const validateNode = (
         [...path, 'path'],
         hopsUsedBefore,
         errors,
-        authCtx
+        authCtx,
+        allowEndpointFirst
       );
-      if (!isKnownFieldId(node.fieldId, schemas, authCtx)) {
+      if (node.path.length === 0 && rootKind === 'relation') {
+        if (!isKnownRelationFieldId(node.fieldId, relationSchemas, authCtx)) {
+          errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
+        }
+      } else if (!isKnownFieldId(node.fieldId, schemas, authCtx)) {
         errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
       } else if (
         [...schemas.values()].some(schema =>
@@ -410,7 +498,8 @@ const validateNode = (
         [...path, 'path'],
         hopsUsedBefore,
         errors,
-        authCtx
+        authCtx,
+        allowEndpointFirst
       );
     }
   }
@@ -421,7 +510,9 @@ const validateNode = (
 // traversal field, not an assessment address), but it can appear at any depth, including inside a
 // PathStep.filter (the `[...]` scoping, §4.3).
 const pathUsesAssessmentField = (steps: PathStep[]): boolean =>
-  steps.some(step => step.filter != null && nodeUsesAssessmentField(step.filter));
+  steps.some(
+    step => step.kind !== 'endpoint' && step.filter != null && nodeUsesAssessmentField(step.filter)
+  );
 
 const nodeUsesAssessmentField = (node: QueryNode): boolean => {
   switch (node.kind) {
@@ -451,13 +542,18 @@ const projectionUsesAssessmentField = (fieldId: string, path: PathStep[]): boole
 const projectionAlias = (projection: NonNullable<EntityQuery['projections']>[number]): string => {
   if (projection.alias) return projection.alias;
   const path = projection.path
-    .map(step =>
-      step.kind === 'forward'
-        ? step.fieldId
-        : step.kind === 'backward'
-          ? `<-${step.ownerSchemaId}.${step.fieldId}`
-          : `${step.fieldId}[${step.relationSchemaId}]`
-    )
+    .map(step => {
+      switch (step.kind) {
+        case 'forward':
+          return step.fieldId;
+        case 'backward':
+          return `<-${step.ownerSchemaId}.${step.fieldId}`;
+        case 'typedRelation':
+          return `${step.fieldId}[${step.relationSchemaId}]`;
+        case 'endpoint':
+          return `endpoint(${step.direction})`;
+      }
+    })
     .join('.');
   return path ? `${path}.${projection.fieldId}` : projection.fieldId;
 };
@@ -469,10 +565,17 @@ export const validateEntityQueryIR = (
   relationSchemas: RelationSchemaCatalog = new Map()
 ): ValidationResult => {
   const errors: ValidationError[] = [];
-  if (query.schemaId && !schemas.has(query.schemaId)) {
-    errors.push({ path: ['schemaId'], message: `Unknown schemaId '${query.schemaId}'` });
+  const rootKind = resolveRootKind(query, schemas, relationSchemas, errors);
+  const rootUsesAssessmentField =
+    nodeUsesAssessmentField(query.root) ||
+    (query.projections ?? []).some(p => projectionUsesAssessmentField(p.fieldId, p.path));
+  if (rootKind === 'relation' && (query.assessmentId || rootUsesAssessmentField)) {
+    errors.push({
+      path: ['assessmentId'],
+      message: 'Assessment fields/assessmentId are not supported for relation-rooted queries'
+    });
   }
-  if (!query.assessmentId && nodeUsesAssessmentField(query.root)) {
+  if (rootKind === 'entity' && !query.assessmentId && nodeUsesAssessmentField(query.root)) {
     errors.push({
       path: ['assessmentId'],
       message:
@@ -488,7 +591,7 @@ export const validateEntityQueryIR = (
   if (query.asOf != null && Number.isNaN(Date.parse(query.asOf))) {
     errors.push({ path: ['asOf'], message: `Invalid asOf date '${query.asOf}'` });
   }
-  validateNode(query.root, schemas, relationSchemas, ['root'], 0, true, errors, authCtx);
+  validateNode(query.root, schemas, relationSchemas, ['root'], 0, true, errors, authCtx, rootKind);
 
   const aliases = new Set<string>();
   for (const [index, projection] of (query.projections ?? []).entries()) {
@@ -500,10 +603,28 @@ export const validateEntityQueryIR = (
       [...projectionPath, 'path'],
       0,
       errors,
-      authCtx
+      authCtx,
+      rootKind === 'relation'
     );
+    if (rootKind === 'relation' && projection.path.length === 0) {
+      if (!isKnownRelationFieldId(projection.fieldId, relationSchemas, authCtx)) {
+        errors.push({
+          path: [...projectionPath, 'fieldId'],
+          message: `Unknown field '${projection.fieldId}'`
+        });
+      }
+      const alias = projectionAlias(projection);
+      if (aliases.has(alias)) {
+        errors.push({
+          path: [...projectionPath, 'alias'],
+          message: `Duplicate projection alias '${alias}'`
+        });
+      }
+      aliases.add(alias);
+      continue;
+    }
     projection.path.forEach((step, stepIndex) => {
-      if (step.filter) {
+      if (step.kind !== 'endpoint' && step.filter) {
         errors.push({
           path: [...projectionPath, 'path', stepIndex, 'filter'],
           message: 'Projection paths cannot contain scoped filters'

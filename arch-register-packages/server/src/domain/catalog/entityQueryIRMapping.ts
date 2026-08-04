@@ -8,7 +8,11 @@ import type { EntityQuery, QueryNode } from '@arch-register/api-types/entityQuer
 export const filterConditionsToEntityQueryIR = (
   schemaId: string | null,
   assessmentId: string | null,
-  conditions: FilterCondition[]
+  conditions: FilterCondition[],
+  // Only needed for the schema-less "browse all relations" case: when `schemaId` is set, the
+  // root kind is derivable from which schema registry it resolves against, so callers building a
+  // schema-scoped relation query don't need to pass this.
+  rootKind?: 'entity' | 'relation'
 ): EntityQuery => {
   const root: QueryNode = {
     kind: 'and',
@@ -23,6 +27,7 @@ export const filterConditionsToEntityQueryIR = (
   return {
     ...(schemaId ? { schemaId } : {}),
     ...(assessmentId ? { assessmentId } : {}),
+    ...(rootKind ? { root_kind: rootKind } : {}),
     root
   };
 };
