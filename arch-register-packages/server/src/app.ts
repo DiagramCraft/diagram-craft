@@ -64,6 +64,7 @@ import { createWebhookORPCHandler } from './domain/webhook/webhookOrpc';
 import { createAutomationRuleORPCHandler } from './domain/automation/automationRuleOrpc';
 import { createDocumentORPCHandler } from './domain/document/documentOrpc';
 import { createEntityGovernanceRegistry } from './domain/catalog/entityChangeOperations';
+import { createRelationGovernanceRegistry } from './domain/catalog/relationChangeOperations';
 import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
 import { createDeprecationGovernanceRegistry } from './domain/catalog/entityDeprecationOperations';
 import { createDocumentGovernanceRegistry } from './domain/document/documentWorkflowOperations';
@@ -201,6 +202,7 @@ export const createApp = (
   app.use(createDiscussionORPCHandler(db));
   const governanceRegistry = new Map([
     ...createEntityGovernanceRegistry(),
+    ...createRelationGovernanceRegistry(),
     ...createDeprecationGovernanceRegistry(),
     ...createDocumentGovernanceRegistry(),
     ...createAssessmentGovernanceRegistry()
