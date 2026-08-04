@@ -40,6 +40,8 @@ import { discussionContract } from '@arch-register/api-types/discussionContract'
 import { entityChangeContract } from '@arch-register/api-types/entityChangeContract';
 import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
 import { entityVersionContract } from '@arch-register/api-types/entityVersionContract';
+import { relationVersionContract } from '@arch-register/api-types/relationVersionContract';
+import { relationChangeContract } from '@arch-register/api-types/relationChangeContract';
 import { governanceContract } from '@arch-register/api-types/governanceContract';
 import { governanceReminderConfigContract } from '@arch-register/api-types/governanceReminderConfigContract';
 import { milestoneContract } from '@arch-register/api-types/milestoneContract';
@@ -84,6 +86,8 @@ export const allContracts = {
   ...entityChangeContract,
   ...entityDeprecationContract,
   ...entityVersionContract,
+  ...relationVersionContract,
+  ...relationChangeContract,
   ...governanceContract,
   ...governanceReminderConfigContract,
   ...milestoneContract,
@@ -145,6 +149,8 @@ export const getApplicationOpenAPISpec = () => {
       ...governanceReminderConfigContract,
       ...entityVersionContract,
       ...entityChangeContract,
+      ...relationVersionContract,
+      ...relationChangeContract,
       ...entityDeprecationContract,
       ...assessmentContract,
       ...assessmentResponseContract,

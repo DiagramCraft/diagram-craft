@@ -47,9 +47,9 @@ import type { RelationDbResult } from './db/relationDatabase';
 import {
   relationToBaseState,
   flattenRelationAuditFields,
-  relationAuditContext
+  relationAuditContext,
+  requireRelationCaseMemberEditAccess
 } from './relationHelpers';
-import { requireTypedRelationEdit } from './relationAccessControl';
 import { logAudit, computeChanges } from '../audit/db/auditLogging';
 
 const getProjectOrThrow = async (db: DatabaseAdapter, ws: string, projectId: string) => {
@@ -75,40 +75,6 @@ const assertEntityBelongsToProject = async (
 // Relation instances aren't project-scoped (relationOperations.ts has no equivalent of
 // assertEntityBelongsToProject), so a relation case member is identified purely by record id —
 // no project-membership check applies to it the way it does for an entity member.
-
-const getRelationOwnerSchemas = async (
-  db: DatabaseAdapter,
-  ws: string,
-  relation: { in_entity_id: string; out_entity_id: string }
-) => {
-  const [inEntity, outEntity, schemas] = await Promise.all([
-    db.catalog.getEntity(ws, relation.in_entity_id),
-    db.catalog.getEntity(ws, relation.out_entity_id),
-    db.catalog.listSchemas(ws)
-  ]);
-  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
-  return {
-    inSchema: inEntity ? schemaById.get(inEntity.schema_id) : undefined,
-    outSchema: outEntity ? schemaById.get(outEntity.schema_id) : undefined
-  };
-};
-
-const requireRelationCaseMemberEditAccess = async (
-  db: DatabaseAdapter,
-  ws: string,
-  authCtx: AuthorizationContext,
-  relation: RelationDbResult
-) => {
-  const { inSchema, outSchema } = await getRelationOwnerSchemas(db, ws, relation);
-  requireTypedRelationEdit(
-    authCtx,
-    [
-      { schema: inSchema, direction: 'in' },
-      { schema: outSchema, direction: 'out' }
-    ],
-    relation.schema_id
-  );
-};
 
 const buildRelationMemberInput = (
   relation: RelationDbResult,

@@ -5,6 +5,48 @@ import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
+import { requireTypedRelationEdit } from './relationAccessControl';
+
+/**
+ * Resolves a relation's endpoint entities' schemas, needed by requireTypedRelationEdit's
+ * OR-across-endpoints permission model. Shared by every surface that needs to authorize editing
+ * an *existing* relation instance without already having its owner schemas to hand (relationOperations.ts
+ * has its own copy fetched inline where it already has other schema lookups in flight; this one is
+ * for callers — changeCaseOperations.ts, relationChangeOperations.ts — that don't).
+ */
+export const getRelationOwnerSchemas = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  relation: { in_entity_id: string; out_entity_id: string }
+) => {
+  const [inEntity, outEntity, schemas] = await Promise.all([
+    db.catalog.getEntity(workspace, relation.in_entity_id),
+    db.catalog.getEntity(workspace, relation.out_entity_id),
+    db.catalog.listSchemas(workspace)
+  ]);
+  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  return {
+    inSchema: inEntity ? schemaById.get(inEntity.schema_id) : undefined,
+    outSchema: outEntity ? schemaById.get(outEntity.schema_id) : undefined
+  };
+};
+
+export const requireRelationCaseMemberEditAccess = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: WorkspaceAuthorizationContext,
+  relation: RelationDbResult
+) => {
+  const { inSchema, outSchema } = await getRelationOwnerSchemas(db, workspace, relation);
+  requireTypedRelationEdit(
+    authCtx,
+    [
+      { schema: inSchema, direction: 'in' },
+      { schema: outSchema, direction: 'out' }
+    ],
+    relation.schema_id
+  );
+};
 
 /**
  * Resolves the relation schema (and, for a given version's created_at, the relation_schema_version
