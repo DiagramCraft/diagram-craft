@@ -229,6 +229,18 @@ describe('addRelationToChangeCase', () => {
       })
     ).rejects.toMatchObject({ status: 409 });
   });
+
+  it('rejects a proposed state that changes a relation endpoint', async () => {
+    const { db, relation, addMember } = makeDb({});
+
+    await expect(
+      addRelationToChangeCase(db, 'ws-1', project.id, changeCase.id, eventForAuthCtx(), {
+        relationId: relation.id,
+        proposedState: { data: { note: 'after' }, in_entity_id: 'entity-other' }
+      })
+    ).rejects.toMatchObject({ status: 400 });
+    expect(addMember).not.toHaveBeenCalled();
+  });
 });
 
 describe('applyChangeCase — relation members', () => {

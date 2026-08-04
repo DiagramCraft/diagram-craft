@@ -36,7 +36,8 @@ import {
   requireRelationCaseMemberEditAccess,
   getRelationOwnerSchemas,
   flattenRelationAuditFields,
-  relationAuditContext
+  relationAuditContext,
+  assertRelationProposalEndpointsUnchanged
 } from './relationHelpers';
 import { canViewTypedRelation } from './relationAccessControl';
 import { logAudit, computeChanges } from '../audit/db/auditLogging';
@@ -110,6 +111,7 @@ const buildProposedRelation = async (
   });
   const schema = await db.relation.getRelationSchema(workspace, schemaId);
   httpAssert.present(schema, { status: 400, message: 'The proposed relation schema does not exist' });
+  assertRelationProposalEndpointsUnchanged(relation, proposedState);
 
   const data =
     proposedState['data'] != null && typeof proposedState['data'] === 'object'

@@ -83,7 +83,10 @@ export const relationChangeContract = oc.tag('Relation change approval').router(
         summary: 'Submit a relation change approval request',
         description:
           'Proposes a change to a relation instance that requires approval before it takes ' +
-          'effect, creating a governance case for eligible approvers.',
+          'effect, creating a governance case for eligible approvers. A proposal may change field ' +
+          'data only — endpoints are immutable, in a proposal as much as in a direct write, and a ' +
+          'proposal that includes an endpoint change is rejected. Re-pointing a relation is only ' +
+          'possible by deleting it and creating a new one.',
         tags: ['Relation change approval']
       })
       .input(z.object({ params: wsAndId, body: relationChangeApprovalRequestBodySchema }))

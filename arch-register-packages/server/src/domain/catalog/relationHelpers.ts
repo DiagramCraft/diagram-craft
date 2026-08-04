@@ -31,6 +31,30 @@ export const getRelationOwnerSchemas = async (
   };
 };
 
+/**
+ * Relation endpoints are immutable outside a proposal too (see the endpoint-immutability
+ * regression tests in relationOperations.test.ts) — delete-and-recreate is the only supported way
+ * to re-point a relation. Both change-case surfaces (the single-relation approval workflow in
+ * relationChangeOperations.ts and the multi-record planned-change workflow in
+ * changeCaseOperations.ts) build their proposed state from an arbitrary caller-supplied
+ * `proposedState` object, so both need this same guard — otherwise an endpoint change is either
+ * silently dropped or silently applied depending on which surface reads it.
+ */
+export const assertRelationProposalEndpointsUnchanged = (
+  relation: { in_entity_id: string; out_entity_id: string },
+  proposedState: Record<string, unknown>
+) => {
+  const proposedInEntityId = String(proposedState['in_entity_id'] ?? relation.in_entity_id);
+  const proposedOutEntityId = String(proposedState['out_entity_id'] ?? relation.out_entity_id);
+  httpAssert.true(
+    proposedInEntityId === relation.in_entity_id && proposedOutEntityId === relation.out_entity_id,
+    {
+      status: 400,
+      message: 'Changing a relation endpoint is not supported by a relation change proposal'
+    }
+  );
+};
+
 export const requireRelationCaseMemberEditAccess = async (
   db: DatabaseAdapter,
   workspace: string,

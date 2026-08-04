@@ -48,7 +48,8 @@ import {
   relationToBaseState,
   flattenRelationAuditFields,
   relationAuditContext,
-  requireRelationCaseMemberEditAccess
+  requireRelationCaseMemberEditAccess,
+  assertRelationProposalEndpointsUnchanged
 } from './relationHelpers';
 import { logAudit, computeChanges } from '../audit/db/auditLogging';
 
@@ -760,6 +761,7 @@ export const addRelationToChangeCase = async (
         message: `Relation '${body.relationId}' not found`
       });
       await requireRelationCaseMemberEditAccess(db, ws, authCtx, relation);
+      assertRelationProposalEndpointsUnchanged(relation, body.proposedState);
 
       await requireNoRestrictedRelationCaseMemberWrites(db, ws, authCtx, relation, body.proposedState);
 
@@ -856,6 +858,7 @@ export const updateChangeCaseMemberProposedState = async (
         await requireNoRestrictedCaseMemberWrites(db, ws, authCtx, subject.entity, body.proposedState);
       } else {
         await requireRelationCaseMemberEditAccess(db, ws, authCtx, subject.relation);
+        assertRelationProposalEndpointsUnchanged(subject.relation, body.proposedState);
         await requireNoRestrictedRelationCaseMemberWrites(
           db,
           ws,

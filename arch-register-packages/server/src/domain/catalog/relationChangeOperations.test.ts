@@ -261,6 +261,18 @@ describe('submitRelationChangeApproval', () => {
       })
     ).rejects.toMatchObject({ status: 400 });
   });
+
+  it('rejects a proposal that changes a relation endpoint', async () => {
+    const requiredSchema = { ...relationSchema, relation_approval_policy: 'required' as const };
+    const { db } = makeDb({ schema: requiredSchema });
+
+    await expect(
+      submitRelationChangeApproval(db, 'ws-1', 'relation-1', eventForAuthCtx(), {
+        baseVersion: 1,
+        proposedState: { data: { note: 'after' }, in_entity_id: 'entity-other' }
+      })
+    ).rejects.toMatchObject({ status: 400 });
+  });
 });
 
 describe('withdrawRelationChangeApproval', () => {
@@ -324,6 +336,19 @@ describe('bypassRelationApproval', () => {
         metadata: expect.objectContaining({ approvalBypass: true, reason: 'urgent fix' })
       })
     );
+  });
+
+  it('rejects a bypass that changes a relation endpoint', async () => {
+    const { db, updateRelation } = makeDb({});
+
+    await expect(
+      bypassRelationApproval(db, 'ws-1', 'relation-1', eventForAuthCtx(), {
+        baseVersion: 1,
+        proposedState: { data: { note: 'after' }, out_entity_id: 'entity-other' },
+        reason: 'urgent fix'
+      })
+    ).rejects.toMatchObject({ status: 400 });
+    expect(updateRelation).not.toHaveBeenCalled();
   });
 
   it('rejects when the relation changed since baseVersion', async () => {

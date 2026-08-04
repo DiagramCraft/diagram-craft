@@ -206,7 +206,10 @@ export const changeCaseContract = oc.tag('ChangeCases').router({
         summary: 'Add a relation instance to an existing change case',
         description:
           'Adds a new member relation instance to a not-yet-applied change case. Relations are ' +
-          'not project-scoped, so this only requires edit access to the relation itself.',
+          'not project-scoped, so this only requires edit access to the relation itself. The ' +
+          'proposed state may change field data only — a change that includes a different ' +
+          'endpoint is rejected; re-pointing a relation is only possible by deleting it and ' +
+          'creating a new one.',
         tags: ['ChangeCases']
       })
       .input(
