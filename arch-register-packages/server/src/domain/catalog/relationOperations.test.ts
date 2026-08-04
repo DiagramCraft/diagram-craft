@@ -226,7 +226,8 @@ describe('queryWorkspaceRelations (#2689)', () => {
       relation: {
         listRelationSchemas: vi.fn(async () => [relationSchema]),
         listRelations: vi.fn(async () => ({ items: [row], total: 1 })),
-        runCompiledRelationQuery: vi.fn(async () => [{ ...row, projections: {} }])
+        runCompiledRelationQuery: vi.fn(async () => [{ ...row, projections: {} }]),
+        runCompiledRelationCountQuery: vi.fn(async () => 1)
       },
       catalog: {
         listSchemas: vi.fn(async () => [entitySchema]),
@@ -246,6 +247,7 @@ describe('queryWorkspaceRelations (#2689)', () => {
     expect(page.total).toBe(1);
     expect(page.items[0]!._uid).toBe(row.id);
     expect(db.relation.runCompiledRelationQuery).toHaveBeenCalledTimes(1);
+    expect(db.relation.runCompiledRelationCountQuery).toHaveBeenCalledTimes(1);
     const [sql] = (db.relation.runCompiledRelationQuery as ReturnType<typeof vi.fn>).mock.calls[0]!;
     expect(sql).toContain('scoped_relation');
   });
@@ -256,7 +258,8 @@ describe('queryWorkspaceRelations (#2689)', () => {
       relation: {
         listRelationSchemas: vi.fn(async () => [relationSchema]),
         listRelations: vi.fn(async () => ({ items: [], total: 0 })),
-        runCompiledRelationQuery: vi.fn(async () => [])
+        runCompiledRelationQuery: vi.fn(async () => []),
+        runCompiledRelationCountQuery: vi.fn(async () => 0)
       },
       catalog: {
         listSchemas: vi.fn(async () => [entitySchema]),
@@ -276,6 +279,48 @@ describe('queryWorkspaceRelations (#2689)', () => {
         eventForAuthCtx()
       )
     ).rejects.toThrow();
+  });
+
+  it('pushes limit/offset into the compiled SQL and returns the server-computed total (#2700)', async () => {
+    const row = makeRelationRow();
+    const runCompiledRelationQuery = vi.fn(async (_sql: string, _params: unknown[]) => [
+      { ...row, projections: {} }
+    ]);
+    const runCompiledRelationCountQuery = vi.fn(async (_sql: string, _params: unknown[]) => 42);
+    const db = {
+      core: { driver: 'sqlite' },
+      relation: {
+        listRelationSchemas: vi.fn(async () => [relationSchema]),
+        listRelations: vi.fn(async () => ({ items: [row], total: 1 })),
+        runCompiledRelationQuery,
+        runCompiledRelationCountQuery
+      },
+      catalog: {
+        listSchemas: vi.fn(async () => [entitySchema]),
+        listEntities: vi.fn(async () => [inEntity, outEntity]),
+        runCompiledEntityQuery: vi.fn(async () => [])
+      }
+    } as unknown as DatabaseAdapter;
+
+    const page = await queryWorkspaceRelations(
+      db,
+      'ws-1',
+      { schemaId: relationSchema.id, root: { kind: 'and', children: [] } },
+      { limit: 25, offset: 50 },
+      eventForAuthCtx()
+    );
+
+    // total comes from the COUNT query, not items.length, so it can exceed the page size.
+    expect(page.total).toBe(42);
+    expect(page.items).toHaveLength(1);
+
+    const [rowSql, rowParams] = runCompiledRelationQuery.mock.calls[0]!;
+    expect(rowSql).toMatch(/LIMIT \?\s*OFFSET \?\s*$/);
+    expect(rowParams.slice(-2)).toEqual([25, 50]);
+
+    const [countSql] = runCompiledRelationCountQuery.mock.calls[0]!;
+    expect(countSql).toContain('SELECT COUNT(*) AS count');
+    expect(countSql).not.toContain('LIMIT');
   });
 });
 

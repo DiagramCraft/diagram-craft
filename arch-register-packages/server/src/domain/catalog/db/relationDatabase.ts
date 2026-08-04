@@ -243,6 +243,10 @@ export type RelationDatabase = {
   // CatalogDatabase.runCompiledEntityQuery — the SQL text already encodes all filtering.
   runCompiledRelationQuery(sql: string, params: unknown[]): Promise<RelationQueryDbResult[]>;
 
+  // Runs a `SELECT COUNT(*)` compiled by entityQueryIRCompiler.ts's compileEntityQueryCountIR —
+  // the total-row companion to runCompiledRelationQuery used for paginated relation queries (#2700).
+  runCompiledRelationCountQuery(sql: string, params: unknown[]): Promise<number>;
+
   listRelations(
     ws: string,
     filters: RelationListDbFilters,

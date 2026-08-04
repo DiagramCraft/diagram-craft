@@ -35,6 +35,12 @@ export type CompiledEntityQueryOptions = {
   // typed-relation grant, so it can't be recomputed as flat SQL — callers precompute it in JS
   // (mirrors canViewTypedRelation) and pass the resulting id set in.
   visibleRelationIds?: readonly string[];
+  // SQL-level pagination for the relation-rooted path only (see compileEntityQueryIR). The
+  // entity-rooted path still collects-then-slices in JS because collectEntitiesFromIR applies a
+  // JS-only post-filter (collectionEntityIds) after the compiled query runs, which SQL LIMIT/OFFSET
+  // would silently under-fill against — see #2700.
+  limit?: number;
+  offset?: number;
 };
 
 // Raised for a fieldId/op combination that has no SQL translation in this dialect today. As of
@@ -82,6 +88,8 @@ type CompileState = {
   compilingBinding: boolean;
   visibleEntityIds?: readonly string[];
   visibleRelationIds?: readonly string[];
+  limit?: number;
+  offset?: number;
 };
 
 type ProjectionBinding = {
@@ -1369,20 +1377,19 @@ const buildRelationScopeCte = (state: CompileState): string => {
   return `${RELATION_SCOPE_CTE} AS (\n      SELECT r.*\n      FROM catalog_record r\n      WHERE r.kind = 'relation'\n        AND r.workspace = ${workspaceParam}\n        AND r.deleted_at IS NULL\n        AND ${visibleClause || '1=1'}\n    )`;
 };
 
-// Compiles a validated EntityQuery into a full `WITH scoped_entity AS (...) SELECT ...` statement,
-// joining the same denormalized owner/lifecycle/schema-name columns `ENTITY_SELECT_SQL`
-// (catalogDatabase.ts) already attaches for a live entity row. Callers must validate the query
-// first (entityQueryIRValidator.ts) — this function assumes a structurally valid IR and does not
-// re-check hop counts or backward-step ownership.
-export const compileEntityQueryIR = (
+// Shared setup for compileEntityQueryIR and compileEntityQueryCountIR: resolves rootKind, builds
+// the CompileState, the scope/projection CTEs, and the WHERE clause. Both the row query and the
+// count query filter on exactly the same WHERE clause, so factoring this out keeps them from
+// silently diverging.
+const buildQueryFragments = (
   query: EntityQuery,
   schemas: SchemaCatalog,
   dialect: EntityQueryDialect,
   workspace: string,
-  options: CompiledEntityQueryOptions = {},
-  authCtx: WorkspaceAuthorizationContext | null = null,
-  relationSchemas: RelationSchemaCatalog = new Map()
-): CompiledEntityQuery => {
+  options: CompiledEntityQueryOptions,
+  authCtx: WorkspaceAuthorizationContext | null,
+  relationSchemas: RelationSchemaCatalog
+) => {
   // Resolves the same way entityQueryIRValidator.ts's resolveRootKind does: schemaId, when
   // present, is looked up against both registries and wins; callers must have already validated
   // the query, so a schemaId that resolves to neither registry can't occur here.
@@ -1410,7 +1417,9 @@ export const compileEntityQueryIR = (
     bindingByPath: new Map(),
     compilingBinding: false,
     visibleEntityIds: options.visibleEntityIds,
-    visibleRelationIds: options.visibleRelationIds
+    visibleRelationIds: options.visibleRelationIds,
+    limit: options.limit,
+    offset: options.offset
   };
 
   if (state.asOf && Number.isNaN(state.asOf.getTime())) {
@@ -1429,6 +1438,42 @@ export const compileEntityQueryIR = (
 
   const withClause = `WITH${state.asOf ? ' RECURSIVE' : ''} ${cte},\n    ${relationCte}${projectionCtes.length > 0 ? `,\n    ${projectionCtes.join(',\n    ')}` : ''}`;
 
+  return { rootKind, state, withClause, whereParts, projectionObject };
+};
+
+// Compiles a validated EntityQuery into a full `WITH scoped_entity AS (...) SELECT ...` statement,
+// joining the same denormalized owner/lifecycle/schema-name columns `ENTITY_SELECT_SQL`
+// (catalogDatabase.ts) already attaches for a live entity row. Callers must validate the query
+// first (entityQueryIRValidator.ts) — this function assumes a structurally valid IR and does not
+// re-check hop counts or backward-step ownership.
+export const compileEntityQueryIR = (
+  query: EntityQuery,
+  schemas: SchemaCatalog,
+  dialect: EntityQueryDialect,
+  workspace: string,
+  options: CompiledEntityQueryOptions = {},
+  authCtx: WorkspaceAuthorizationContext | null = null,
+  relationSchemas: RelationSchemaCatalog = new Map()
+): CompiledEntityQuery => {
+  const { rootKind, state, withClause, whereParts, projectionObject } = buildQueryFragments(
+    query,
+    schemas,
+    dialect,
+    workspace,
+    options,
+    authCtx,
+    relationSchemas
+  );
+
+  // Only the relation-rooted branch pushes LIMIT/OFFSET into SQL today (#2700) — the entity-rooted
+  // branch still relies on collect-then-slice in JS because collectEntitiesFromIR applies a
+  // JS-only post-filter (collectionEntityIds) after this query runs, which SQL LIMIT/OFFSET would
+  // silently under-fill against. See #2713 for lifting that restriction.
+  const limitOffsetClause =
+    rootKind === 'relation' && state.limit != null
+      ? `\n    LIMIT ${addParam(state, state.limit)}${state.offset != null ? ` OFFSET ${addParam(state, state.offset)}` : ''}`
+      : '';
+
   const sql =
     rootKind === 'relation'
       ? `
@@ -1445,7 +1490,7 @@ export const compileEntityQueryIR = (
     LEFT JOIN catalog_record in_e  ON in_e.id = ${ROOT_ALIAS}.in_record_id
     LEFT JOIN catalog_record out_e ON out_e.id = ${ROOT_ALIAS}.out_record_id
     WHERE ${whereParts.join(' AND ')}
-    ORDER BY in_e.name, out_e.name, ${ROOT_ALIAS}.id
+    ORDER BY in_e.name, out_e.name, ${ROOT_ALIAS}.id${limitOffsetClause}
   `
       : `
     ${withClause}
@@ -1462,6 +1507,48 @@ export const compileEntityQueryIR = (
     JOIN entity_schema es ON es.id = ${ROOT_ALIAS}.schema_id
     WHERE ${whereParts.join(' AND ')}
     ORDER BY ${ROOT_ALIAS}.name, ${ROOT_ALIAS}.id
+  `;
+
+  return { sql, params: state.params };
+};
+
+// Compiles the same relation-rooted query as compileEntityQueryIR but as a `SELECT COUNT(*)`
+// instead of row data, with no ORDER BY/LIMIT/OFFSET — used to compute an accurate `total` for
+// paginated relation queries (#2700) without collecting every row into memory. Entity-rooted
+// counting still goes through the JS collect-then-.length path (see #2713).
+export const compileEntityQueryCountIR = (
+  query: EntityQuery,
+  schemas: SchemaCatalog,
+  dialect: EntityQueryDialect,
+  workspace: string,
+  options: CompiledEntityQueryOptions = {},
+  authCtx: WorkspaceAuthorizationContext | null = null,
+  relationSchemas: RelationSchemaCatalog = new Map()
+): CompiledEntityQuery => {
+  const { rootKind, state, withClause, whereParts } = buildQueryFragments(
+    query,
+    schemas,
+    dialect,
+    workspace,
+    options,
+    authCtx,
+    relationSchemas
+  );
+
+  if (rootKind !== 'relation') {
+    throw new UnsupportedEntityQueryIRError(
+      'compileEntityQueryCountIR only supports relation-rooted queries'
+    );
+  }
+
+  const sql = `
+    ${withClause}
+    SELECT COUNT(*) AS count
+    FROM ${RELATION_SCOPE_CTE} ${ROOT_ALIAS}
+    JOIN relation_schema rs        ON rs.id = ${ROOT_ALIAS}.schema_id
+    LEFT JOIN catalog_record in_e  ON in_e.id = ${ROOT_ALIAS}.in_record_id
+    LEFT JOIN catalog_record out_e ON out_e.id = ${ROOT_ALIAS}.out_record_id
+    WHERE ${whereParts.join(' AND ')}
   `;
 
   return { sql, params: state.params };
