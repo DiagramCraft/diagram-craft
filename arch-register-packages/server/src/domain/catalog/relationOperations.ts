@@ -30,7 +30,7 @@ import {
   serializeEntityVersion
 } from './entityVersionOperations';
 
-const RELATION_AUTOSAVE_KEEP_COUNT = 50;
+export const RELATION_AUTOSAVE_KEEP_COUNT = 50;
 import {
   canViewTypedRelation,
   canViewTypedRelationFromEndpoint,

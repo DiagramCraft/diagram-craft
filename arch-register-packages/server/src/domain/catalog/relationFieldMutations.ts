@@ -9,9 +9,11 @@ import {
   assertRelationMutationsSupported,
   toApiRelation,
   validateRelationEndpoints,
-  relationAuditContext
+  relationAuditContext,
+  relationToBaseState
 } from './relationHelpers';
 import { requireTypedRelationFieldEdit } from './relationAccessControl';
+import { RELATION_AUTOSAVE_KEEP_COUNT } from './relationOperations';
 import type { TypedRelationField } from '@arch-register/api-types/schemaContract';
 import type { RelationFieldDelta } from '@arch-register/api-types/entityContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
@@ -85,6 +87,20 @@ export const applyRelationFieldDelta = async (
       metadata: { relation: relationAuditContext(row) }
     });
 
+    await db.catalog.createEntityVersion({
+      id: randomUUID(),
+      workspace,
+      entity_id: row.id,
+      version_number: row.version,
+      kind: 'autosave',
+      commit_message: null,
+      created_at: timestamp,
+      created_by: actor.id,
+      state: relationToBaseState(row),
+      applied_case_revision_id: null
+    });
+    await db.catalog.pruneAutosaveVersions(workspace, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
+
     results.push(toApiRelation(row));
   }
 
@@ -131,6 +147,20 @@ export const applyRelationFieldDelta = async (
       metadata: { relation: relationAuditContext(row) }
     });
 
+    await db.catalog.createEntityVersion({
+      id: randomUUID(),
+      workspace,
+      entity_id: row.id,
+      version_number: row.version,
+      kind: 'autosave',
+      commit_message: null,
+      created_at: timestamp,
+      created_by: actor.id,
+      state: relationToBaseState(row),
+      applied_case_revision_id: null
+    });
+    await db.catalog.pruneAutosaveVersions(workspace, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
+
     results.push(toApiRelation(row));
   }
 
@@ -160,6 +190,22 @@ export const applyRelationFieldDelta = async (
       schemaId: oldRow.schema_id,
       changes: { old: flattenRelationAuditFields(oldRow) },
       metadata: { relation: relationAuditContext(oldRow) }
+    });
+
+    const existingVersions = await db.catalog.listEntityVersions(workspace, id);
+    const nextVersionNumber =
+      existingVersions.reduce((max, v) => Math.max(max, v.version_number), 0) + 1;
+    await db.catalog.createEntityVersion({
+      id: randomUUID(),
+      workspace,
+      entity_id: id,
+      version_number: nextVersionNumber,
+      kind: 'deleted',
+      commit_message: null,
+      created_at: new Date(),
+      created_by: actor.id,
+      state: relationToBaseState(oldRow),
+      applied_case_revision_id: null
     });
   }
 
