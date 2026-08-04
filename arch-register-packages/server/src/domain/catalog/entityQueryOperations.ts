@@ -30,7 +30,11 @@ import { listAllCatalogEntities } from './entityLoader';
 import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
 import type { EntityDbResult, EntityQueryDbResult, SchemaDbResult } from './db/catalogDatabase';
 import type { RelationSchemaDbResult } from './db/relationDatabase';
-import { compileEntityQueryIR, UnsupportedEntityQueryIRError } from './entityQueryIRCompiler';
+import {
+  compileEntityQueryIR,
+  compileEntityQueryCountIR,
+  UnsupportedEntityQueryIRError
+} from './entityQueryIRCompiler';
 import { validateEntityQueryIR, type SchemaCatalog } from './entityQueryIRValidator';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import { availableSchemaCatalog, resolveEntitySchemaCatalogAt } from './schemaHistory';
@@ -861,14 +865,19 @@ const visibleRelationIdsForQuery = async (
     .map(row => row.id);
 };
 
-export const collectRelationsFromIR = async (
+// Resolves the shared prerequisites (schema catalog validation, visible-relation-id gate) and
+// compiles both the row query and (when a limit is set) the count query with identical WHERE
+// clauses. Split out so listRelationsWithCount can run the row and count queries concurrently.
+const compileRelationQueries = async (
   db: DatabaseAdapter,
   workspace: string,
   authCtx: WorkspaceAuthorizationContext | null,
   options: RelationQueryOptions,
   schemas: SchemaDbResult[],
-  relationSchemas: RelationSchemaDbResult[]
-): Promise<RelationRecord[]> => {
+  relationSchemas: RelationSchemaDbResult[],
+  limit: number | null,
+  offset: number
+) => {
   const query = options.relationQuery;
   const schemaCatalog: SchemaCatalog = new Map(schemas.map(schema => [schema.id, schema]));
   const relationSchemaCatalog = new Map(relationSchemas.map(schema => [schema.id, schema]));
@@ -881,9 +890,17 @@ export const collectRelationsFromIR = async (
   });
 
   const visibleRelationIds = await visibleRelationIdsForQuery(db, workspace, authCtx);
-  let compiledQuery: ReturnType<typeof compileEntityQueryIR>;
   try {
-    compiledQuery = compileEntityQueryIR(
+    const rowQuery = compileEntityQueryIR(
+      query,
+      schemaCatalog,
+      db.core.driver,
+      workspace,
+      { visibleRelationIds, limit: limit ?? undefined, offset },
+      authCtx,
+      relationSchemaCatalog
+    );
+    const countQuery = compileEntityQueryCountIR(
       query,
       schemaCatalog,
       db.core.driver,
@@ -892,13 +909,34 @@ export const collectRelationsFromIR = async (
       authCtx,
       relationSchemaCatalog
     );
+    return { rowQuery, countQuery, relationSchemaCatalog };
   } catch (error) {
     if (error instanceof UnsupportedEntityQueryIRError) {
       httpAssert.true(false, { status: 400, message: error.message });
     }
     throw error;
   }
-  const rows = await db.relation.runCompiledRelationQuery(compiledQuery.sql, compiledQuery.params);
+};
+
+export const collectRelationsFromIR = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: WorkspaceAuthorizationContext | null,
+  options: RelationQueryOptions,
+  schemas: SchemaDbResult[],
+  relationSchemas: RelationSchemaDbResult[]
+): Promise<RelationRecord[]> => {
+  const { rowQuery, relationSchemaCatalog } = await compileRelationQueries(
+    db,
+    workspace,
+    authCtx,
+    options,
+    schemas,
+    relationSchemas,
+    null,
+    0
+  );
+  const rows = await db.relation.runCompiledRelationQuery(rowQuery.sql, rowQuery.params);
   const schemaById = relationSchemaCatalog;
   return rows.map(row => {
     const schema = schemaById.get(row.schema_id);
@@ -920,17 +958,26 @@ export const listRelationsWithCount = async (
       db.catalog.listSchemas(workspace),
       db.relation.listRelationSchemas(workspace)
     ]);
-    const items = await collectRelationsFromIR(
+    const { rowQuery, countQuery, relationSchemaCatalog } = await compileRelationQueries(
       db,
       workspace,
       authCtx,
       options,
       schemas,
-      relationSchemas
+      relationSchemas,
+      safeLimit,
+      safeOffset
     );
-    const windowed =
-      safeLimit != null ? items.slice(safeOffset, safeOffset + safeLimit) : items.slice(safeOffset);
-    return { items: windowed, total: items.length };
+    const [rows, total] = await Promise.all([
+      db.relation.runCompiledRelationQuery(rowQuery.sql, rowQuery.params),
+      db.relation.runCompiledRelationCountQuery(countQuery.sql, countQuery.params)
+    ]);
+    const items = rows.map(row => {
+      const schema = relationSchemaCatalog.get(row.schema_id);
+      const apiRelation = toRedactedApiRelation(row, authCtx, schema);
+      return withRelationQueryProjections(apiRelation, row.projections);
+    });
+    return { items, total };
   } catch (error) {
     return handleError(error, 'Failed to retrieve relations');
   }

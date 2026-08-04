@@ -3,7 +3,11 @@ import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { RelationSchemaDbResult } from './db/relationDatabase';
 import type { SchemaDbResult } from './db/catalogDatabase';
 import { validateEntityQueryIR } from './entityQueryIRValidator';
-import { compileEntityQueryIR } from './entityQueryIRCompiler';
+import {
+  compileEntityQueryIR,
+  compileEntityQueryCountIR,
+  UnsupportedEntityQueryIRError
+} from './entityQueryIRCompiler';
 import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 
 const now = new Date('2026-06-29T12:00:00.000Z');
@@ -213,6 +217,111 @@ describe('relation-rooted query compilation', () => {
     );
     expect(compiled.sql).toContain('FROM scoped_entity e0');
     expect(compiled.sql).toContain('JOIN entity_schema es');
+  });
+});
+
+// #2700: push LIMIT/OFFSET into the compiled SQL for relation-rooted queries instead of
+// collect-all-then-slice in JS, plus a companion COUNT(*) query for an accurate total.
+describe('relation-rooted query pagination (#2700)', () => {
+  const query: EntityQuery = {
+    schemaId: dataFlow.id,
+    root: { kind: 'and', children: [] }
+  };
+
+  it('appends LIMIT/OFFSET after ORDER BY when both are set', () => {
+    const compiled = compileEntityQueryIR(
+      query,
+      schemas,
+      'sqlite',
+      'ws-1',
+      { limit: 25, offset: 50 },
+      null,
+      relationSchemas
+    );
+    expect(compiled.sql).toMatch(/ORDER BY[\s\S]*LIMIT \?\s*OFFSET \?\s*$/);
+    expect(compiled.params.slice(-2)).toEqual([25, 50]);
+  });
+
+  it('appends only LIMIT when offset is not set', () => {
+    const compiled = compileEntityQueryIR(
+      query,
+      schemas,
+      'sqlite',
+      'ws-1',
+      { limit: 25 },
+      null,
+      relationSchemas
+    );
+    expect(compiled.sql).toMatch(/LIMIT \?\s*$/);
+    expect(compiled.sql).not.toContain('OFFSET');
+    expect(compiled.params.at(-1)).toBe(25);
+  });
+
+  it('omits LIMIT/OFFSET entirely when neither is set', () => {
+    const compiled = compileEntityQueryIR(
+      query,
+      schemas,
+      'sqlite',
+      'ws-1',
+      {},
+      null,
+      relationSchemas
+    );
+    expect(compiled.sql).not.toContain('LIMIT');
+    expect(compiled.sql).not.toContain('OFFSET');
+  });
+
+  it('uses dialect-correct placeholders for LIMIT/OFFSET on postgres', () => {
+    const compiled = compileEntityQueryIR(
+      query,
+      schemas,
+      'postgres',
+      'ws-1',
+      { limit: 10, offset: 20 },
+      null,
+      relationSchemas
+    );
+    expect(compiled.sql).toMatch(/LIMIT \$\d+\s*OFFSET \$\d+\s*$/);
+  });
+
+  it('compiles a COUNT(*) query with the same WHERE clause and no ORDER BY/LIMIT/OFFSET', () => {
+    const filtered: EntityQuery = {
+      schemaId: dataFlow.id,
+      root: { kind: 'predicate', path: [], fieldId: 'status', op: 'equals', value: 'active' }
+    };
+    const rowQuery = compileEntityQueryIR(
+      filtered,
+      schemas,
+      'sqlite',
+      'ws-1',
+      { limit: 10, offset: 0 },
+      null,
+      relationSchemas
+    );
+    const countQuery = compileEntityQueryCountIR(
+      filtered,
+      schemas,
+      'sqlite',
+      'ws-1',
+      {},
+      null,
+      relationSchemas
+    );
+    expect(countQuery.sql).toContain('SELECT COUNT(*) AS count');
+    expect(countQuery.sql).toContain("json_extract(e0.data, '$.status')");
+    expect(countQuery.sql).not.toContain('ORDER BY');
+    expect(countQuery.sql).not.toContain('LIMIT');
+    expect(countQuery.params).toEqual(rowQuery.params.slice(0, countQuery.params.length));
+  });
+
+  it('rejects compileEntityQueryCountIR for an entity-rooted query', () => {
+    const entityQuery: EntityQuery = {
+      schemaId: system.id,
+      root: { kind: 'and', children: [] }
+    };
+    expect(() =>
+      compileEntityQueryCountIR(entityQuery, schemas, 'sqlite', 'ws-1', {}, null, relationSchemas)
+    ).toThrow(UnsupportedEntityQueryIRError);
   });
 });
 

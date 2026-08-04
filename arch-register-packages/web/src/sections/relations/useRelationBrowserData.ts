@@ -5,6 +5,7 @@ import { useRelationSchemas } from '../../hooks/useRelationSchemas';
 import { useRelationsQuery } from '../../hooks/useRelations';
 import { useSchemas } from '../../hooks/useSchemas';
 import { useEnums } from '../../hooks/useEnums';
+import { useRelationBrowserPagination } from './useRelationBrowserPagination';
 import {
   buildRelationQueryFromFilters,
   filterConditionsFromRelationQuery,
@@ -51,14 +52,17 @@ export const useRelationBrowserData = (workspaceId: string) => {
 
   const relationQuery = useMemo(() => buildRelationQueryFromFilters(conditions), [conditions]);
 
+  const { goToNextPage, goToPreviousPage, handlePageSizeChange, pageIndex, pageSize } =
+    useRelationBrowserPagination(conditions);
+
   const {
     data: relations,
     total,
     isLoading
   } = useRelationsQuery(workspaceId, relationQuery, {
     view: 'full',
-    limit: 200,
-    offset: 0
+    limit: pageSize,
+    offset: pageIndex * pageSize
   });
 
   const activeSchemaId = resolveSingleSchemaFilter(conditions);
@@ -73,6 +77,11 @@ export const useRelationBrowserData = (workspaceId: string) => {
     activeSchema,
     relations,
     total: total ?? 0,
-    isLoading
+    isLoading,
+    goToNextPage,
+    goToPreviousPage,
+    handlePageSizeChange,
+    pageIndex,
+    pageSize
   };
 };

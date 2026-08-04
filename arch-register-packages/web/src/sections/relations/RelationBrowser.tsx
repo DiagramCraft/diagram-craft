@@ -1,12 +1,22 @@
 import { useMemo, useRef, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
-import { TbFilter, TbDots, TbCheck, TbCopy, TbPencil, TbTrash } from 'react-icons/tb';
+import {
+  TbFilter,
+  TbDots,
+  TbCheck,
+  TbCopy,
+  TbPencil,
+  TbTrash,
+  TbChevronLeft,
+  TbChevronRight
+} from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import styles from './RelationBrowser.module.css';
 import filterStyles from '../entities/components/EntityBrowser.module.css';
 import { Title } from '../../components/Title';
+import { FilterDropdown } from '../../components/FilterDropdown';
 import { Table } from '../../components/table/Table';
 import { useTableSort } from '../../components/table/useTableSort';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
@@ -49,7 +59,12 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     activeSchema,
     relations,
     total,
-    isLoading
+    isLoading,
+    goToNextPage,
+    goToPreviousPage,
+    handlePageSizeChange,
+    pageIndex,
+    pageSize
   } = useRelationBrowserData(workspaceId);
   const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
   const filterPopoverRef = useRef<PopoverActions | null>(null);
@@ -331,6 +346,41 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
           )}
         </Table.Body>
       </Table.Root>
+
+      <div className={filterStyles.pagination}>
+        <FilterDropdown
+          label="Page Size"
+          variant={'secondary'}
+          value={String(pageSize)}
+          onChange={handlePageSizeChange}
+          options={[
+            { value: '25', label: '25' },
+            { value: '50', label: '50' },
+            { value: '100', label: '100' },
+            { value: '200', label: '200' }
+          ]}
+        />
+        <div style={{ marginLeft: 'auto' }}>
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<TbChevronLeft size={12} />}
+            disabled={pageIndex === 0}
+            onClick={goToPreviousPage}
+          >
+            Prev
+          </Button>
+          <Button
+            size="sm"
+            variant="secondary"
+            icon={<TbChevronRight size={12} />}
+            disabled={pageIndex * pageSize + relations.length >= total}
+            onClick={goToNextPage}
+          >
+            Next
+          </Button>
+        </div>
+      </div>
 
       {detail && (
         <RelationDetailPopover

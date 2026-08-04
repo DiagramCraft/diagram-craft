@@ -1831,4 +1831,87 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(page.items[0]!._schema.id).toBe(relationSchema.id);
     expect(page.items[0]!['status']).toBe('active');
   });
+
+  it('paginates relation-rooted queries via SQL LIMIT/OFFSET with an accurate total across pages (#2700)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'System' });
+    const relationSchema = await db.relation.createRelationSchema({
+      id: randomUUID(),
+      workspace,
+      name: 'Depends On',
+      description: '',
+      in_schema_ids: [schema.id],
+      out_schema_ids: [schema.id],
+      fields: [],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    const entities = await Promise.all(
+      Array.from({ length: 6 }, (_, i) =>
+        createFixtureCatalogEntity(db, workspace, schema.id, { name: `E${i}` })
+      )
+    );
+    for (let i = 0; i < 5; i++) {
+      await db.relation.createRelation({
+        id: randomUUID(),
+        workspace,
+        schema_id: relationSchema.id,
+        in_entity_id: entities[i]!.id,
+        out_entity_id: entities[i + 1]!.id,
+        data: {},
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+    }
+
+    const { listRelationsWithCount } = await import('../../domain/catalog/entityQueryOperations');
+    const relationQuery = {
+      schemaId: relationSchema.id,
+      root: { kind: 'and' as const, children: [] }
+    };
+
+    const firstPage = await listRelationsWithCount(db, workspace, null, {
+      relationQuery,
+      limit: 2,
+      offset: 0
+    });
+    expect(firstPage.items).toHaveLength(2);
+    expect(firstPage.total).toBe(5);
+
+    const secondPage = await listRelationsWithCount(db, workspace, null, {
+      relationQuery,
+      limit: 2,
+      offset: 2
+    });
+    expect(secondPage.items).toHaveLength(2);
+    expect(secondPage.total).toBe(5);
+
+    const lastPage = await listRelationsWithCount(db, workspace, null, {
+      relationQuery,
+      limit: 2,
+      offset: 4
+    });
+    expect(lastPage.items).toHaveLength(1);
+    expect(lastPage.total).toBe(5);
+
+    // No overlap between pages, and every relation is reachable across pages.
+    const allIds = new Set(
+      [...firstPage.items, ...secondPage.items, ...lastPage.items].map(item => item._uid)
+    );
+    expect(allIds.size).toBe(5);
+
+    const pastEnd = await listRelationsWithCount(db, workspace, null, {
+      relationQuery,
+      limit: 2,
+      offset: 10
+    });
+    expect(pastEnd.items).toHaveLength(0);
+    expect(pastEnd.total).toBe(5);
+  });
 });
