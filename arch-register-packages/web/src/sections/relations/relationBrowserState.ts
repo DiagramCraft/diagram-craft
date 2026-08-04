@@ -1,5 +1,10 @@
 import type { EntityQuery, QueryNode } from '@arch-register/api-types/entityQueryIR';
-import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import type {
+  CreateSavedViewRequest,
+  FilterCondition,
+  SavedView
+} from '@arch-register/api-types/viewContract';
+import type { RelationSearchParams } from '../../routes/searchParams';
 
 // Encodes which "side" of the relation a filter condition targets into a flat fieldId, the same
 // way ASSESSMENT_FIELD_PREFIX lets a flat FilterCondition[] address a joined assessment's fields
@@ -54,6 +59,63 @@ export const buildRelationQueryFromFilters = (conditions: FilterCondition[]): En
     kind: 'and',
     children: conditions.map(conditionToNode)
   }
+});
+
+// Reverse of buildRelationQueryFromFilters/conditionToNode above — used to load a saved view's
+// `filters` (or the URL's `entityQuery`) back into the browser's flat FilterCondition[]. Unlike
+// entityBrowserState.ts's filterConditionsFromEntityQuery, `_schemaId` is NOT stripped here: for
+// relations it's a real filterable condition (RELATION_TYPE_FIELD_ID), not a separate `schemaId`
+// field on the query.
+const nodeToCondition = (node: QueryNode): FilterCondition | null => {
+  if (node.kind !== 'predicate') return null;
+  const endpoint = node.path[0];
+  const fieldId =
+    endpoint?.kind === 'endpoint'
+      ? endpointFieldId(endpoint.direction, node.fieldId)
+      : node.fieldId;
+  return { fieldId, op: node.op, value: node.value };
+};
+
+export const filterConditionsFromRelationQuery = (query: EntityQuery): FilterCondition[] =>
+  (query.root.kind === 'and' ? query.root.children : [query.root])
+    .map(nodeToCondition)
+    .filter((c): c is FilterCondition => c != null);
+
+export const parseRelationQueryFromSearch = (search: RelationSearchParams): EntityQuery | null => {
+  if (!search.entityQuery) return null;
+  try {
+    const parsed: unknown = JSON.parse(search.entityQuery);
+    return parsed != null && typeof parsed === 'object' ? (parsed as EntityQuery) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const toSavedRelationViewSearch = (view: SavedView): RelationSearchParams => ({
+  viewId: view.id,
+  entityQuery: JSON.stringify(view.filters)
+});
+
+export const buildRelationSavedViewPayload = ({
+  name,
+  description,
+  isAdminView,
+  conditions
+}: {
+  name: string;
+  description: string;
+  isAdminView: boolean;
+  conditions: FilterCondition[];
+}): CreateSavedViewRequest => ({
+  scope: 'workspace',
+  projectId: null,
+  projectScope: null,
+  name,
+  description: description || null,
+  isAdminView,
+  viewMode: 'table',
+  filters: buildRelationQueryFromFilters(conditions),
+  config: null
 });
 
 // The relation-rooted query IR's builtin field id for a relation's own schema (RELATION_BUILTIN_COLUMNS

@@ -5,7 +5,8 @@ import {
   validateDiagramSearch,
   validateEntityDetailSearch,
   validateEntitySearch,
-  validateMarkdownSearch
+  validateMarkdownSearch,
+  validateRelationSearch
 } from '../searchParams';
 import { buildEntityBreadcrumbs, getAllParams } from '../../layouts/workspaceShellDescriptors';
 import { withWorkspaceShell, type WorkspaceShellBuilder } from './workspaceShellRoute';
@@ -124,6 +125,7 @@ export const createEntityWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: 'entities/relations',
+      validateSearch: validateRelationSearch,
       component: LazyRelationBrowserScreen
     }),
     ctx => ({
