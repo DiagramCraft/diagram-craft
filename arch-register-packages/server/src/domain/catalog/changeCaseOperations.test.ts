@@ -73,6 +73,17 @@ describe('toApiMember', () => {
     expect(api.base_state['data']).toEqual({});
     expect(api.proposed_state['data']).toEqual({});
   });
+
+  it('redacts all data when the caller cannot view the relation through either endpoint', () => {
+    const api = toApiMember(member, authCtxWithNoTeams(), schemaById, false);
+    expect(api.base_state['data']).toEqual({});
+    expect(api.proposed_state['data']).toEqual({});
+  });
+
+  it('applies field-group redaction as normal when endpoint-visible', () => {
+    const api = toApiMember(member, authCtxWithNoTeams(), schemaById, true);
+    expect(api.base_state['data']).toEqual({ visible: 'v-before' });
+  });
 });
 
 describe('requireNoRestrictedCaseMemberWrites', () => {

@@ -5,6 +5,72 @@ import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
+import { requireTypedRelationEdit } from './relationAccessControl';
+
+/**
+ * Resolves a relation's endpoint entities' schemas, needed by requireTypedRelationEdit's
+ * OR-across-endpoints permission model. Shared by every surface that needs to authorize editing
+ * an *existing* relation instance without already having its owner schemas to hand (relationOperations.ts
+ * has its own copy fetched inline where it already has other schema lookups in flight; this one is
+ * for callers — changeCaseOperations.ts, relationChangeOperations.ts — that don't).
+ */
+export const getRelationOwnerSchemas = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  relation: { in_entity_id: string; out_entity_id: string }
+) => {
+  const [inEntity, outEntity, schemas] = await Promise.all([
+    db.catalog.getEntity(workspace, relation.in_entity_id),
+    db.catalog.getEntity(workspace, relation.out_entity_id),
+    db.catalog.listSchemas(workspace)
+  ]);
+  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  return {
+    inSchema: inEntity ? schemaById.get(inEntity.schema_id) : undefined,
+    outSchema: outEntity ? schemaById.get(outEntity.schema_id) : undefined
+  };
+};
+
+/**
+ * Relation endpoints are immutable outside a proposal too (see the endpoint-immutability
+ * regression tests in relationOperations.test.ts) — delete-and-recreate is the only supported way
+ * to re-point a relation. Both change-case surfaces (the single-relation approval workflow in
+ * relationChangeOperations.ts and the multi-record planned-change workflow in
+ * changeCaseOperations.ts) build their proposed state from an arbitrary caller-supplied
+ * `proposedState` object, so both need this same guard — otherwise an endpoint change is either
+ * silently dropped or silently applied depending on which surface reads it.
+ */
+export const assertRelationProposalEndpointsUnchanged = (
+  relation: { in_entity_id: string; out_entity_id: string },
+  proposedState: Record<string, unknown>
+) => {
+  const proposedInEntityId = String(proposedState['in_entity_id'] ?? relation.in_entity_id);
+  const proposedOutEntityId = String(proposedState['out_entity_id'] ?? relation.out_entity_id);
+  httpAssert.true(
+    proposedInEntityId === relation.in_entity_id && proposedOutEntityId === relation.out_entity_id,
+    {
+      status: 400,
+      message: 'Changing a relation endpoint is not supported by a relation change proposal'
+    }
+  );
+};
+
+export const requireRelationCaseMemberEditAccess = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: WorkspaceAuthorizationContext,
+  relation: RelationDbResult
+) => {
+  const { inSchema, outSchema } = await getRelationOwnerSchemas(db, workspace, relation);
+  requireTypedRelationEdit(
+    authCtx,
+    [
+      { schema: inSchema, direction: 'in' },
+      { schema: outSchema, direction: 'out' }
+    ],
+    relation.schema_id
+  );
+};
 
 /**
  * Resolves the relation schema (and, for a given version's created_at, the relation_schema_version
@@ -82,16 +148,35 @@ export const validateRelationEndpoints = (
 };
 
 /**
- * Relation instances get create/update/delete version history via record_version (#2687) —
- * deletion is a soft delete (relationDatabase.ts), same as entities. Approval workflow (planned
- * changes, change cases, governance) is not yet implemented for relations.
+ * Mirrors `entityRequiresApproval` (entityChangeOperations.ts): an instance-level override always
+ * wins; absent an override, the schema's policy decides. Relation schemas/instances already carry
+ * `relation_approval_policy`/`approval_policy_override` (same columns as entities), but until this
+ * fix the columns were only half-consulted — see `assertRelationMutationsSupported` below.
  */
-export const assertRelationMutationsSupported = (schema: RelationSchemaDbResult) => {
-  httpAssert.true(schema.relation_approval_policy !== 'required', {
+export const relationRequiresApproval = (
+  schema: { relation_approval_policy?: 'required' | 'disabled' },
+  relation: { approval_policy_override: 'required' | 'disabled' | null }
+) =>
+  relation.approval_policy_override === 'required' ||
+  (relation.approval_policy_override !== 'disabled' &&
+    (schema.relation_approval_policy ?? 'disabled') === 'required');
+
+/**
+ * Gates direct edits to an *existing* relation instance the same way `entityRequiresApproval`
+ * gates entity update/restore (entityMutationOperations.ts, entityVersionOrpc.ts) — create and
+ * delete are deliberately never gated here either, matching entity semantics: creating something
+ * new has no prior approved state to protect, and deleting doesn't either. Change-case/proposal
+ * support for relations (#2693) is still not implemented — today this only blocks a direct edit,
+ * it does not offer a proposal path, same as it did before this fix.
+ */
+export const assertRelationMutationsSupported = (
+  schema: RelationSchemaDbResult,
+  relation: { approval_policy_override: 'required' | 'disabled' | null }
+) => {
+  httpAssert.true(!relationRequiresApproval(schema, relation), {
     status: 409,
     statusText: 'Conflict',
-    message:
-      'This relation schema requires an approved change proposal before relation instances can be edited'
+    message: 'This relation instance requires an approved change proposal before it can be edited'
   });
 };
 

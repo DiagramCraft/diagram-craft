@@ -66,6 +66,13 @@ const existingChangeCaseMemberBodySchema = z.object({
   proposedState: z.record(z.string(), z.unknown()).describe('Proposed future state for the entity')
 });
 
+const existingRelationChangeCaseMemberBodySchema = z.object({
+  relationId: z.string().describe('Existing relation instance to include in the case'),
+  proposedState: z
+    .record(z.string(), z.unknown())
+    .describe('Proposed future state for the relation instance')
+});
+
 const newEntityDraftSchema = z.object({
   draftId: z.string().min(1).describe('Temporary client-side entity identifier'),
   state: z
@@ -191,6 +198,24 @@ export const changeCaseContract = oc.tag('ChangeCases').router({
       })
       .input(z.object({ params: wsProjectAndCaseId, body: existingChangeCaseMemberBodySchema }))
       .output(changeCaseSchema),
+    addRelationMember: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/projects/{id}/change-cases/{caseId}/relation-members',
+        inputStructure: 'detailed',
+        summary: 'Add a relation instance to an existing change case',
+        description:
+          'Adds a new member relation instance to a not-yet-applied change case. Relations are ' +
+          'not project-scoped, so this only requires edit access to the relation itself. The ' +
+          'proposed state may change field data only — a change that includes a different ' +
+          'endpoint is rejected; re-pointing a relation is only possible by deleting it and ' +
+          'creating a new one.',
+        tags: ['ChangeCases']
+      })
+      .input(
+        z.object({ params: wsProjectAndCaseId, body: existingRelationChangeCaseMemberBodySchema })
+      )
+      .output(changeCaseSchema),
     removeMember: oc
       .route({
         method: 'DELETE',
@@ -301,3 +326,6 @@ export type UpdateChangeCaseRequest = z.infer<typeof updateChangeCaseBodySchema>
 export type SaveChangeCaseDraftRequest = z.infer<typeof saveChangeCaseDraftBodySchema>;
 export type ChangeCaseApplyConflict = z.infer<typeof changeCaseApplyConflictSchema>;
 export type ApplyChangeCaseRequest = z.infer<typeof applyChangeCaseBodySchema>;
+export type AddRelationChangeCaseMemberRequest = z.infer<
+  typeof existingRelationChangeCaseMemberBodySchema
+>;

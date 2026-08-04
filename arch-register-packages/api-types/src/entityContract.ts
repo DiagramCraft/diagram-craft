@@ -14,6 +14,7 @@ import {
   changeCaseSummarySchema
 } from '@arch-register/api-types/changeCaseContract';
 import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
+import { relationRecordSchema } from '@arch-register/api-types/relationContract';
 
 // ── Query text ⇄ IR (specs/QUERY_LANGUAGE.md §4) ───────────────
 
@@ -292,7 +293,27 @@ const entityLandscapeDiffResponseSchema = z.object({
       entity: entityRecordSchema.describe('The entity in the to state'),
       diff: z.record(z.string(), entityLandscapeDiffFieldSchema)
     })
-  )
+  ),
+  relations: z
+    .object({
+      added: z
+        .array(relationRecordSchema)
+        .describe('Relation instances present only in the to state'),
+      removed: z
+        .array(relationRecordSchema)
+        .describe('Relation instances present only in the from state'),
+      changed: z.array(
+        z.object({
+          relation: relationRecordSchema.describe('The relation instance in the to state'),
+          diff: z.record(z.string(), entityLandscapeDiffFieldSchema)
+        })
+      )
+    })
+    .describe(
+      'Relation instance additions/removals/field changes between the two states. Endpoints are ' +
+        'immutable, so a relation only ever appears here for existence or field-data changes, ' +
+        'never a re-pointed endpoint.'
+    )
 });
 
 // ── Facets ────────────────────────────────────────────────────

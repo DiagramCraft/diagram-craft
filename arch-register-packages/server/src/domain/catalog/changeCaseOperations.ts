@@ -18,7 +18,7 @@ import {
   requireNoRestrictedFieldWrites,
   type FieldGroupSchemaShape
 } from '../auth/fieldGroupAccessControl';
-import { getEntitySchemaAt } from './schemaHistory';
+import { getEntitySchemaAt, getRelationSchemaAt } from './schemaHistory';
 import { equalEntityValue } from './entityDiff';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import {
@@ -40,8 +40,20 @@ import type {
   ApplyChangeCaseRequest,
   CreateChangeCaseRequest,
   SaveChangeCaseDraftRequest,
-  UpdateChangeCaseRequest
+  UpdateChangeCaseRequest,
+  AddRelationChangeCaseMemberRequest
 } from '@arch-register/api-types/changeCaseContract';
+import type { RelationDbResult } from './db/relationDatabase';
+import {
+  relationToBaseState,
+  flattenRelationAuditFields,
+  relationAuditContext,
+  requireRelationCaseMemberEditAccess,
+  assertRelationProposalEndpointsUnchanged,
+  getRelationOwnerSchemas
+} from './relationHelpers';
+import { canViewTypedRelation } from './relationAccessControl';
+import { logAudit, computeChanges } from '../audit/db/auditLogging';
 
 const getProjectOrThrow = async (db: DatabaseAdapter, ws: string, projectId: string) => {
   const project = await db.project.getProject(ws, projectId);
@@ -61,6 +73,65 @@ const assertEntityBelongsToProject = async (
     status: 400,
     message: `Entity '${entity.id}' is not part of this project`
   });
+};
+
+// Relation instances aren't project-scoped (relationOperations.ts has no equivalent of
+// assertEntityBelongsToProject), so a relation case member is identified purely by record id —
+// no project-membership check applies to it the way it does for an entity member.
+
+const buildRelationMemberInput = (
+  relation: RelationDbResult,
+  proposedState: Record<string, unknown>
+) => ({
+  entity_id: relation.id,
+  base_version: relation.version,
+  base_state: relationToBaseState(relation),
+  proposed_state: proposedState,
+  diff: {}
+});
+
+export const requireNoRestrictedRelationCaseMemberWrites = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: AuthorizationContext,
+  relation: RelationDbResult,
+  proposedState: Record<string, unknown>
+) => {
+  const schemaId = String(proposedState['schema_id'] ?? relation.schema_id);
+  const schema = await db.relation.getRelationSchema(workspace, schemaId);
+  httpAssert.present(schema, { status: 400, message: `Relation schema '${schemaId}' not found` });
+
+  const proposedData = asRecord(proposedState['data']);
+  const changedFieldIds = Object.keys(proposedData).filter(
+    fieldId => !equalEntityValue(relation.data[fieldId], proposedData[fieldId])
+  );
+  requireNoRestrictedFieldWrites(
+    authCtx,
+    schema,
+    changedFieldIds,
+    'You do not have permission to edit one or more restricted fields on this relation'
+  );
+};
+
+/**
+ * A change-case member's record_id can belong to either an entity or a relation instance
+ * (#2693) — the member table itself carries no kind column, so dispatch by trying the entity
+ * lookup first (the overwhelmingly common case) and falling back to relation.
+ */
+type CaseMemberSubject =
+  | { kind: 'entity'; entity: Entity }
+  | { kind: 'relation'; relation: RelationDbResult };
+
+const getCaseMemberSubject = async (
+  db: DatabaseAdapter,
+  ws: string,
+  recordId: string
+): Promise<CaseMemberSubject | null> => {
+  const entity = await db.catalog.getEntity(ws, recordId);
+  if (entity) return { kind: 'entity', entity };
+  const relation = await db.relation.getRelation(ws, recordId);
+  if (relation) return { kind: 'relation', relation };
+  return null;
 };
 
 const resolveEffectiveDate = async (
@@ -112,6 +183,57 @@ const redactMemberStateData = (
   };
 };
 
+/** A member's state carries `in_entity_id`/`out_entity_id` only when it belongs to a relation. */
+const memberStateEndpoints = (member: ChangeCaseMemberDbResult) => {
+  const state =
+    member.base_state['in_entity_id'] != null ? member.base_state : member.proposed_state;
+  const inEntityId = state['in_entity_id'];
+  const outEntityId = state['out_entity_id'];
+  return typeof inEntityId === 'string' && typeof outEntityId === 'string'
+    ? {
+        in_entity_id: inEntityId,
+        out_entity_id: outEntityId,
+        schema_id: String(state['schema_id'] ?? '')
+      }
+    : null;
+};
+
+/**
+ * Whether the caller can see a relation member's data at all through either of its endpoints'
+ * typedRelation fields. Mirrors the same endpoint-ACL gate relationChangeOperations.ts's
+ * `subjectVisible` and relationOperations.ts's direct-write path already enforce — a change case
+ * itself is visible to anyone with project edit access, but an individual relation member can
+ * still be endpoint-restricted independent of that, and should be redacted the same way a direct
+ * read of the relation would be.
+ */
+const resolveRelationMemberVisibility = async (
+  db: DatabaseAdapter,
+  ws: string,
+  authCtx: AuthorizationContext | null,
+  members: ChangeCaseMemberDbResult[]
+): Promise<Map<string, boolean>> => {
+  const visibility = new Map<string, boolean>();
+  await Promise.all(
+    members.map(async member => {
+      const endpoints = memberStateEndpoints(member);
+      if (!endpoints) return;
+      const { inSchema, outSchema } = await getRelationOwnerSchemas(db, ws, endpoints);
+      visibility.set(
+        member.id,
+        canViewTypedRelation(
+          authCtx,
+          [
+            { schema: inSchema, direction: 'in' },
+            { schema: outSchema, direction: 'out' }
+          ],
+          endpoints.schema_id
+        )
+      );
+    })
+  );
+  return visibility;
+};
+
 const toApiChangeCase = async (
   db: DatabaseAdapter,
   ws: string,
@@ -126,11 +248,17 @@ const toApiChangeCase = async (
       .map(state => String(state['schema_id'] ?? ''))
       .filter(Boolean)
   );
-  const schemas = await Promise.all(
-    [...schemaIds].map(schemaId =>
-      getEntitySchemaAt(db, ws, schemaId, revision?.created_at ?? changeCase.updated_at)
-    )
-  );
+  const asOf = revision?.created_at ?? changeCase.updated_at;
+  const [schemas, relationMemberVisibility] = await Promise.all([
+    Promise.all(
+      [...schemaIds].map(
+        async schemaId =>
+          (await getEntitySchemaAt(db, ws, schemaId, asOf)) ??
+          (await getRelationSchemaAt(db, ws, schemaId, asOf))
+      )
+    ),
+    resolveRelationMemberVisibility(db, ws, authCtx, members)
+  ]);
   const schemaById = new Map(
     [...schemaIds]
       .map((schemaId, index) => [schemaId, schemas[index]] as const)
@@ -148,17 +276,30 @@ const toApiChangeCase = async (
     commit_message: revision?.message ?? null,
     created_at: changeCase.created_at.toISOString(),
     updated_at: changeCase.updated_at.toISOString(),
-    members: members.map(member => toApiMember(member, authCtx, schemaById))
+    members: members.map(member =>
+      toApiMember(member, authCtx, schemaById, relationMemberVisibility.get(member.id) ?? true)
+    )
   };
 };
 
 export const toApiMember = (
   member: ChangeCaseMemberDbResult,
   authCtx: AuthorizationContext | null,
-  schemaById: Map<string, FieldGroupSchemaShape>
+  schemaById: Map<string, FieldGroupSchemaShape>,
+  endpointVisible = true
 ) => {
   const baseState = member.base_state;
   const proposedState = member.proposed_state;
+  if (!endpointVisible) {
+    return {
+      id: member.id,
+      entity_id: member.entity_id,
+      base_version: member.base_version,
+      base_state: { ...baseState, data: {} },
+      proposed_state: { ...proposedState, data: {} },
+      applied_version_id: member.applied_version_id
+    };
+  }
   const baseSchema = schemaById.get(String(baseState['schema_id'] ?? '')) ?? null;
   const proposedSchema = schemaById.get(String(proposedState['schema_id'] ?? '')) ?? baseSchema;
   return {
@@ -289,6 +430,15 @@ const toEntityMutationPayload = (
     ...data
   };
 };
+
+/**
+ * Relation counterpart of toEntityMutationPayload — much simpler since a relation proposal only
+ * ever concerns field `data` (relationOperations.ts's updateWorkspaceRelation is the same:
+ * schema_id/endpoints are immutable, so there is nothing else to resolve here). Accepts either a
+ * relationToBaseState-shaped state (`{ data: {...}, ... }`) or the field values directly.
+ */
+const toRelationMutationData = (state: Record<string, unknown>): Record<string, unknown> =>
+  asRecord(state['data'] ?? state);
 
 const createProjectScopedDraftEntities = async (
   tx: DatabaseAdapter,
@@ -645,6 +795,68 @@ export const addEntityToChangeCase = async (
   );
 };
 
+/**
+ * Relation counterpart of addEntityToChangeCase. Relations aren't project-scoped, so there is no
+ * assertEntityBelongsToProject equivalent — a relation can be proposed as part of any change
+ * case in the workspace as long as the caller can edit it.
+ */
+export const addRelationToChangeCase = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  projectId: string,
+  caseId: string,
+  event: AuthenticatedEvent,
+  body: AddRelationChangeCaseMemberRequest
+): Promise<ChangeCase> => {
+  return defineEntityOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to add relation to change case' },
+    async ({ ws, authCtx }) => {
+      const project = await getProjectOrThrow(db, ws, projectId);
+      requireCaseEditAccess(authCtx, project);
+
+      const changeCase = await getCaseOrThrow(db, ws, caseId);
+      httpAssert.true(changeCase.project_id === project.id, {
+        status: 400,
+        message: 'Change case does not belong to this project'
+      });
+      const revision = await getActiveRevisionOrThrow(db, ws, caseId);
+
+      const relation = await db.relation.getRelation(ws, body.relationId);
+      httpAssert.present(relation, {
+        status: 404,
+        message: `Relation '${body.relationId}' not found`
+      });
+      await requireRelationCaseMemberEditAccess(db, ws, authCtx, relation);
+      assertRelationProposalEndpointsUnchanged(relation, body.proposedState);
+
+      await requireNoRestrictedRelationCaseMemberWrites(
+        db,
+        ws,
+        authCtx,
+        relation,
+        body.proposedState
+      );
+
+      const existingMembers = await db.changeCase.listMembers(ws, revision.id);
+      httpAssert.true(!existingMembers.some(member => member.entity_id === relation.id), {
+        status: 409,
+        message: 'This relation is already part of the change case'
+      });
+
+      await db.changeCase.addMember(
+        ws,
+        revision.id,
+        buildRelationMemberInput(relation, body.proposedState)
+      );
+
+      return toApiChangeCase(db, ws, changeCase, authCtx);
+    }
+  );
+};
+
 export const removeEntityFromChangeCase = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -709,16 +921,33 @@ export const updateChangeCaseMemberProposedState = async (
       const member = members.find(candidate => candidate.id === memberId);
       httpAssert.present(member, { status: 404, message: 'Change case member not found' });
 
-      const entity = await db.catalog.getEntity(ws, member.entity_id);
-      httpAssert.present(entity, { status: 404, message: 'Entity not found' });
-      requireEntityAction(
-        authCtx,
-        entity,
-        'edit_entity',
-        `You do not have permission to edit entity '${entity.id}'`
-      );
-
-      await requireNoRestrictedCaseMemberWrites(db, ws, authCtx, entity, body.proposedState);
+      const subject = await getCaseMemberSubject(db, ws, member.entity_id);
+      httpAssert.present(subject, { status: 404, message: 'Record not found' });
+      if (subject.kind === 'entity') {
+        requireEntityAction(
+          authCtx,
+          subject.entity,
+          'edit_entity',
+          `You do not have permission to edit entity '${subject.entity.id}'`
+        );
+        await requireNoRestrictedCaseMemberWrites(
+          db,
+          ws,
+          authCtx,
+          subject.entity,
+          body.proposedState
+        );
+      } else {
+        await requireRelationCaseMemberEditAccess(db, ws, authCtx, subject.relation);
+        assertRelationProposalEndpointsUnchanged(subject.relation, body.proposedState);
+        await requireNoRestrictedRelationCaseMemberWrites(
+          db,
+          ws,
+          authCtx,
+          subject.relation,
+          body.proposedState
+        );
+      }
 
       const updated = await db.changeCase.updateMemberProposedState(
         ws,
@@ -977,12 +1206,13 @@ const buildConflicts = async (
   const members = await db.changeCase.listMembers(ws, revision.id);
   const conflicts = await Promise.all(
     members.map(async member => {
-      const entity = await db.catalog.getEntity(ws, member.entity_id);
-      httpAssert.present(entity, {
+      const subject = await getCaseMemberSubject(db, ws, member.entity_id);
+      httpAssert.present(subject, {
         status: 404,
-        message: `Entity '${member.entity_id}' no longer exists`
+        message: `Record '${member.entity_id}' no longer exists`
       });
-      const currentVersion = entity.version ?? 1;
+      const currentVersion =
+        subject.kind === 'entity' ? (subject.entity.version ?? 1) : subject.relation.version;
       return {
         memberId: member.id,
         entityId: member.entity_id,
@@ -1065,48 +1295,99 @@ export const applyChangeCase = async (
         const txMembers = await tx.changeCase.listMembers(ws, revision.id);
 
         for (const member of txMembers) {
-          const entity = await tx.catalog.getEntity(ws, member.entity_id);
-          httpAssert.present(entity, {
+          const subject = await getCaseMemberSubject(tx, ws, member.entity_id);
+          httpAssert.present(subject, {
             status: 404,
-            message: `Entity '${member.entity_id}' no longer exists`
+            message: `Record '${member.entity_id}' no longer exists`
           });
-          httpAssert.true((entity.version ?? 1) === member.base_version, {
+          const currentVersion =
+            subject.kind === 'entity' ? (subject.entity.version ?? 1) : subject.relation.version;
+          httpAssert.true(currentVersion === member.base_version, {
             status: 409,
-            message: `Entity '${member.entity_id}' changed since this case was planned; conflicts must be re-resolved`
+            message: `Record '${member.entity_id}' changed since this case was planned; conflicts must be re-resolved`
           });
         }
 
         for (const member of txMembers) {
-          const entity = await tx.catalog.getEntity(ws, member.entity_id);
-          httpAssert.present(entity, {
+          const subject = await getCaseMemberSubject(tx, ws, member.entity_id);
+          httpAssert.present(subject, {
             status: 404,
-            message: `Entity '${member.entity_id}' no longer exists`
+            message: `Record '${member.entity_id}' no longer exists`
           });
           const resolution = body.resolutions.find(candidate => candidate.memberId === member.id)!;
 
-          const resolvedEntityData = toEntityMutationPayload(
-            entity,
-            resolution.resolvedEntityData,
-            project.id
-          );
-          await updateEntity(tx, ws, member.entity_id, resolvedEntityData, authCtx, actor, {
-            versionKind: 'case_applied',
-            appliedCaseRevisionId: revision.id,
-            projectId: project.id
-          });
+          if (subject.kind === 'entity') {
+            const resolvedEntityData = toEntityMutationPayload(
+              subject.entity,
+              resolution.resolvedEntityData,
+              project.id
+            );
+            await updateEntity(tx, ws, member.entity_id, resolvedEntityData, authCtx, actor, {
+              versionKind: 'case_applied',
+              appliedCaseRevisionId: revision.id,
+              projectId: project.id
+            });
 
-          const versions: EntityVersionDbResult[] = await tx.catalog.listEntityVersions(
-            ws,
-            member.entity_id
-          );
-          const appliedVersion: EntityVersionDbResult | undefined = versions.find(
-            v => v.applied_case_revision_id === revision.id
-          );
-          httpAssert.present(appliedVersion, {
-            status: 500,
-            message: `Failed to record the applied version for entity '${member.entity_id}'`
-          });
-          await tx.changeCase.markMemberApplied(ws, member.id, appliedVersion.id);
+            const versions: EntityVersionDbResult[] = await tx.catalog.listEntityVersions(
+              ws,
+              member.entity_id
+            );
+            const appliedVersion: EntityVersionDbResult | undefined = versions.find(
+              v => v.applied_case_revision_id === revision.id
+            );
+            httpAssert.present(appliedVersion, {
+              status: 500,
+              message: `Failed to record the applied version for entity '${member.entity_id}'`
+            });
+            await tx.changeCase.markMemberApplied(ws, member.id, appliedVersion.id);
+          } else {
+            const resolvedData = toRelationMutationData(resolution.resolvedEntityData);
+            const timestamp = new Date();
+            const nextRelation = await tx.relation.updateRelation(ws, member.entity_id, {
+              data: resolvedData,
+              version: subject.relation.version + 1,
+              updated_at: timestamp
+            });
+            httpAssert.present(nextRelation, {
+              status: 404,
+              message: `Relation '${member.entity_id}' no longer exists`
+            });
+
+            await logAudit(tx, {
+              userId: actor.id,
+              userDisplayName: actor.displayName,
+              workspace: ws,
+              operation: 'update',
+              entityType: 'relation',
+              entityId: member.entity_id,
+              entityName: `${nextRelation.in_entity_name} → ${nextRelation.out_entity_name}`,
+              schemaId: nextRelation.schema_id,
+              changes: computeChanges(
+                flattenRelationAuditFields(subject.relation),
+                flattenRelationAuditFields(nextRelation),
+                { alwaysInclude: ['_inEntityId', '_outEntityId'] }
+              ),
+              metadata: {
+                relation: relationAuditContext(nextRelation),
+                applied_case_revision_id: revision.id
+              }
+            });
+
+            const appliedVersionId = randomUUID();
+            await tx.catalog.createEntityVersion({
+              id: appliedVersionId,
+              workspace: ws,
+              entity_id: member.entity_id,
+              version_number: nextRelation.version,
+              kind: 'case_applied',
+              commit_message: null,
+              created_at: timestamp,
+              created_by: actor.id,
+              state: relationToBaseState(nextRelation),
+              applied_case_revision_id: revision.id
+            });
+            await tx.changeCase.markMemberApplied(ws, member.id, appliedVersionId);
+          }
         }
 
         const now = new Date();

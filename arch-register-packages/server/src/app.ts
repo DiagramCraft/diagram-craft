@@ -26,6 +26,7 @@ import { createEntitySyncORPCHandler } from './domain/externalIdentity/entitySyn
 import { createEntityVersionORPCHandler } from './domain/catalog/entityVersionOrpc';
 import { createRelationVersionORPCHandler } from './domain/catalog/relationVersionOrpc';
 import { createEntityChangeORPCHandler } from './domain/catalog/entityChangeOrpc';
+import { createRelationChangeORPCHandler } from './domain/catalog/relationChangeOrpc';
 import { createWorkspaceTemplateORPCHandler } from './domain/catalog/templateOrpc';
 import { createWorkspaceViewORPCHandler } from './domain/catalog/viewOrpc';
 import { createWorkspaceDashboardORPCHandler } from './domain/dashboard/dashboardOrpc';
@@ -63,6 +64,7 @@ import { createWebhookORPCHandler } from './domain/webhook/webhookOrpc';
 import { createAutomationRuleORPCHandler } from './domain/automation/automationRuleOrpc';
 import { createDocumentORPCHandler } from './domain/document/documentOrpc';
 import { createEntityGovernanceRegistry } from './domain/catalog/entityChangeOperations';
+import { createRelationGovernanceRegistry } from './domain/catalog/relationChangeOperations';
 import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
 import { createDeprecationGovernanceRegistry } from './domain/catalog/entityDeprecationOperations';
 import { createDocumentGovernanceRegistry } from './domain/document/documentWorkflowOperations';
@@ -172,6 +174,7 @@ export const createApp = (
   app.use(createEntityVersionORPCHandler(db));
   app.use(createRelationVersionORPCHandler(db));
   app.use(createEntityChangeORPCHandler(db));
+  app.use(createRelationChangeORPCHandler(db));
   app.use(createEntityDeprecationORPCHandler(db));
   app.use(createWorkspaceTemplateORPCHandler(db));
   app.use(createWorkspaceViewORPCHandler(db));
@@ -199,6 +202,7 @@ export const createApp = (
   app.use(createDiscussionORPCHandler(db));
   const governanceRegistry = new Map([
     ...createEntityGovernanceRegistry(),
+    ...createRelationGovernanceRegistry(),
     ...createDeprecationGovernanceRegistry(),
     ...createDocumentGovernanceRegistry(),
     ...createAssessmentGovernanceRegistry()

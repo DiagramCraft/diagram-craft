@@ -613,6 +613,18 @@ export type CatalogDatabase = {
     asOf: Date,
     entityIds?: string[]
   ): Promise<EntityVersionDbResult[]>;
+  /**
+   * Relation counterpart of listEntityVersionsAsOf, for relation landscape-diff reconstruction
+   * (relationSnapshotReconstruction.ts). Shares the `record_version` table and
+   * `EntityVersionDbResult` shape (a version row's `entity_id` is really a generic record id) but
+   * must independently filter to `catalog_record.kind = 'relation'` — the two are mutually
+   * exclusive, unlike the untyped raw table.
+   */
+  listRelationVersionsAsOf(
+    ws: string,
+    asOf: Date,
+    relationIds?: string[]
+  ): Promise<EntityVersionDbResult[]>;
   updateEntityVersionKind(
     ws: string,
     versionId: string,
@@ -645,6 +657,12 @@ export type CatalogDatabase = {
     ws: string,
     asOf: Date,
     entityIds?: string[]
+  ): Promise<PlannedEntityChangeDbResult[]>;
+  /** Relation counterpart of listPlannedEntityChangesAsOf — see listRelationVersionsAsOf. */
+  listPlannedRelationChangesAsOf(
+    ws: string,
+    asOf: Date,
+    relationIds?: string[]
   ): Promise<PlannedEntityChangeDbResult[]>;
   listTimelineMarkers(ws: string): Promise<TimelineMarkerDbResult[]>;
   listEntityIdsWithVersionHistory(ws: string, entityIds?: string[]): Promise<string[]>;

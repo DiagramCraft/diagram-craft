@@ -43,7 +43,8 @@ export const applyRelationFieldDelta = async (
     status: 404,
     message: `Relation schema '${field.relationSchemaId}' not found`
   });
-  assertRelationMutationsSupported(schema);
+  // Only updates to an *existing* relation are gated on approval policy, mirroring the standalone
+  // /relations endpoints (relationOperations.ts) — create/delete are never gated.
 
   const results: RelationRecord[] = [];
 
@@ -99,6 +100,7 @@ export const applyRelationFieldDelta = async (
       status: 400,
       message: `Relation '${update.id}' is not connected to this entity`
     });
+    assertRelationMutationsSupported(schema, oldRow);
 
     const changedFieldIds = Object.keys(update.data).filter(
       key => JSON.stringify(oldRow.data[key] ?? null) !== JSON.stringify(update.data[key] ?? null)

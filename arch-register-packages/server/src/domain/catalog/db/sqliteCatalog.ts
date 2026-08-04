@@ -658,10 +658,28 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       entityIds != null ? `AND v.record_id IN (${entityIds.map(() => '?').join(',')})` : '';
     return this.all(
       `SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name
-       FROM record_version v LEFT JOIN users u ON u.id = v.created_by
+       FROM record_version v
+       JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'entity'
+       LEFT JOIN users u ON u.id = v.created_by
        WHERE v.workspace = ? AND v.created_at <= ? ${filter}
        ORDER BY v.record_id, v.created_at ASC`,
       [workspace, asOf.toISOString(), ...(entityIds ?? [])],
+      catalogMappers.entityVersion
+    );
+  }
+
+  async listRelationVersionsAsOf(workspace: string, asOf: Date, relationIds?: string[]) {
+    if (relationIds != null && relationIds.length === 0) return [];
+    const filter =
+      relationIds != null ? `AND v.record_id IN (${relationIds.map(() => '?').join(',')})` : '';
+    return this.all(
+      `SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name
+       FROM record_version v
+       JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'relation'
+       LEFT JOIN users u ON u.id = v.created_by
+       WHERE v.workspace = ? AND v.created_at <= ? ${filter}
+       ORDER BY v.record_id, v.created_at ASC`,
+      [workspace, asOf.toISOString(), ...(relationIds ?? [])],
       catalogMappers.entityVersion
     );
   }
@@ -699,6 +717,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
               r.created_at, r.created_by, u.display_name AS created_by_name,
               m.proposed_state
        FROM record_change_case_record_version m
+       JOIN catalog_record cr ON cr.id = m.record_id AND cr.kind = 'entity'
        JOIN entity_change_case_revision r ON r.id = m.revision_id
        JOIN entity_change_case c ON c.id = r.case_id
        LEFT JOIN users u ON u.id = r.created_by
@@ -713,15 +732,47 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     );
   }
 
+  async listPlannedRelationChangesAsOf(workspace: string, asOf: Date, relationIds?: string[]) {
+    if (relationIds != null && relationIds.length === 0) return [];
+    const relationFilter =
+      relationIds != null ? `AND m.record_id IN (${relationIds.map(() => '?').join(',')})` : '';
+    return this.all(
+      `SELECT m.id, c.workspace, m.record_id AS entity_id,
+              c.id AS case_id, r.id AS case_revision_id,
+              c.project_id,
+              CASE WHEN c.milestone_id IS NULL THEN c.effective_date ELSE NULL END AS target_date,
+              c.milestone_id,
+              COALESCE(r.message, c.description) AS commit_message,
+              r.created_at, r.created_by, u.display_name AS created_by_name,
+              m.proposed_state
+       FROM record_change_case_record_version m
+       JOIN catalog_record cr ON cr.id = m.record_id AND cr.kind = 'relation'
+       JOIN entity_change_case_revision r ON r.id = m.revision_id
+       JOIN entity_change_case c ON c.id = r.case_id
+       LEFT JOIN users u ON u.id = r.created_by
+       WHERE c.workspace = ?
+         AND r.status IN ('draft', 'submitted', 'changes_requested')
+         AND r.created_at <= ?
+         AND (c.milestone_id IS NOT NULL OR c.effective_date IS NULL OR c.effective_date <= ?)
+         ${relationFilter}
+       ORDER BY m.record_id, r.created_at ASC`,
+      [workspace, asOf.toISOString(), asOf.toISOString().slice(0, 10), ...(relationIds ?? [])],
+      catalogMappers.plannedEntityChange
+    );
+  }
+
   async listEntityIdsWithVersionHistory(workspace: string, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
     // Only 'autosave'/'saved_version'/'deleted' count as "own history" checkpoints — a
     // 'future_update' snapshot alone doesn't give us any real baseline state to reconstruct
     // from, so it must not suppress the live-state fallback.
     const entityFilter =
-      entityIds != null ? `AND record_id IN (${entityIds.map(() => '?').join(',')})` : '';
+      entityIds != null ? `AND v.record_id IN (${entityIds.map(() => '?').join(',')})` : '';
     return this.all(
-      `SELECT DISTINCT record_id FROM record_version WHERE workspace = ? ${entityFilter}`,
+      `SELECT DISTINCT v.record_id
+       FROM record_version v
+       JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'entity'
+       WHERE v.workspace = ? ${entityFilter}`,
       [workspace, ...(entityIds ?? [])],
       (row: Record<string, unknown>) => String(row['record_id'])
     );

@@ -1,6 +1,7 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
 import type { SchemaDbResult } from './db/catalogDatabase';
+import type { RelationSchemaDbResult } from './db/relationDatabase';
 
 type VersionedSchema = FieldGroupSchemaShape & { created_at: Date };
 
@@ -84,3 +85,30 @@ export const availableSchemaCatalog = (
   schemas: HistoricalSchemaCatalog
 ): Map<string, SchemaDbResult> =>
   new Map([...schemas].filter((entry): entry is [string, SchemaDbResult] => entry[1] != null));
+
+export type HistoricalRelationSchemaCatalog = Map<string, RelationSchemaDbResult | null>;
+
+/** Relation counterpart of resolveEntitySchemaCatalogAt. */
+export const resolveRelationSchemaCatalogAt = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  schemas: RelationSchemaDbResult[],
+  asOf: Date
+): Promise<HistoricalRelationSchemaCatalog> => {
+  const resolved = await Promise.all(
+    schemas.map(async schema => {
+      const historical = await getRelationSchemaAt(db, workspace, schema.id, asOf);
+      return [
+        schema.id,
+        historical
+          ? {
+              ...schema,
+              fields: historical.fields as RelationSchemaDbResult['fields'],
+              groups: historical.groups as RelationSchemaDbResult['groups']
+            }
+          : null
+      ] as const;
+    })
+  );
+  return new Map(resolved);
+};

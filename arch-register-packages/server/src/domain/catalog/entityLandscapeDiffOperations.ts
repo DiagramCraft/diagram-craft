@@ -26,11 +26,18 @@ import {
   matchesAssessmentConditions
 } from '@arch-register/api-types/assessmentFilter';
 import type { EntityDbResult } from './db/catalogDatabase';
+import type { RelationDbResult } from './db/relationDatabase';
 import {
   availableSchemaCatalog,
   resolveEntitySchemaCatalogAt,
-  type HistoricalSchemaCatalog
+  resolveRelationSchemaCatalogAt,
+  type HistoricalSchemaCatalog,
+  type HistoricalRelationSchemaCatalog
 } from './schemaHistory';
+import { reconstructRelationsAsOf } from './relationSnapshotReconstruction';
+import { getRelationOwnerSchemas, toRedactedApiRelation } from './relationHelpers';
+import { canViewTypedRelation } from './relationAccessControl';
+import type { RelationRecord } from '@arch-register/api-types/relationContract';
 
 const entityState = (entity: EntityDbResult): Record<string, unknown> => ({
   slug: entity.slug,
@@ -46,6 +53,14 @@ const entityState = (entity: EntityDbResult): Record<string, unknown> => ({
   schema_id: entity.schema_id,
   data: entity.data,
   project_id: entity.project_id
+});
+
+// Only the two mutable fields matter for a relation (see assertRelationProposalEndpointsUnchanged
+// — endpoints are immutable) — buildDiff's fixed mutableStateKeys list still works unmodified
+// here since every other key is simply absent from both sides and compares equal.
+const relationState = (relation: RelationDbResult): Record<string, unknown> => ({
+  schema_id: relation.schema_id,
+  data: relation.data
 });
 
 type ProjectScope = {
@@ -214,6 +229,49 @@ const reconstructState = async (
   return applyStateFilters(db, workspace, authCtx, state, visible, schemas);
 };
 
+/**
+ * Relation counterpart of reconstructState. Simpler on two axes: relations aren't project-scoped
+ * (only their planned changes are, via the owning change case's project_id — see
+ * reconstructRelationsAsOf/resolveFutureUpdatesByRecord), so there's no candidate-id/link
+ * filtering to do here; and there's no query-condition/search filtering support for relations yet
+ * (out of scope — the landscape-diff state has no relation-side filter fields), so every visible
+ * reconstructed relation is included.
+ */
+const reconstructRelationState = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: AuthorizationContext,
+  state: EntityLandscapeDiffState,
+  projectId: string | undefined,
+  now: Date
+): Promise<RelationDbResult[]> => {
+  const reconstructed = await reconstructRelationsAsOf(
+    db,
+    workspace,
+    parseStateDate(state),
+    authCtx,
+    undefined,
+    state.includePlannedChanges,
+    projectId,
+    state.includeOverdueChanges ? undefined : now
+  );
+
+  const visibility = await Promise.all(
+    reconstructed.map(async relation => {
+      const { inSchema, outSchema } = await getRelationOwnerSchemas(db, workspace, relation);
+      return canViewTypedRelation(
+        authCtx,
+        [
+          { schema: inSchema, direction: 'in' },
+          { schema: outSchema, direction: 'out' }
+        ],
+        relation.schema_id
+      );
+    })
+  );
+  return reconstructed.filter((_, index) => visibility[index]);
+};
+
 const toApi = (
   entity: EntityDbResult,
   authCtx: AuthorizationContext,
@@ -359,5 +417,69 @@ export const diffEntityLandscapes = async (
       return { entity: toApi(entry.entity, authCtx, toSchemas, true), diff };
     });
 
-  return { added, removed, changed };
+  // Relations aren't project-scoped themselves (only their planned changes are), so the
+  // "current" scenario-comparison enrichment entities get above isn't attempted here — that's a
+  // deliberately narrower relation feature set than entities have, not an omission: relations
+  // only diff added/removed/changed between the two states directly.
+  const relationSchemas = await db.relation.listRelationSchemas(workspace);
+  const [fromRelationSchemas, toRelationSchemas] = await Promise.all([
+    resolveRelationSchemaCatalogAt(db, workspace, relationSchemas, parseStateDate(from)),
+    resolveRelationSchemaCatalogAt(db, workspace, relationSchemas, parseStateDate(to))
+  ]);
+  const [fromRelations, toRelations] = await Promise.all([
+    reconstructRelationState(db, workspace, authCtx, from, scopes[0]?.projectId, now),
+    reconstructRelationState(db, workspace, authCtx, to, scopes[1]?.projectId, now)
+  ]);
+  const fromRelationById = new Map(fromRelations.map(relation => [relation.id, relation]));
+  const toRelationById = new Map(toRelations.map(relation => [relation.id, relation]));
+
+  const relationSchemaFor = (
+    relation: RelationDbResult,
+    catalog: HistoricalRelationSchemaCatalog
+  ) => catalog.get(relation.schema_id) ?? null;
+
+  const relationsAdded: RelationRecord[] = [...toRelationById.values()]
+    .filter(relation => !fromRelationById.has(relation.id))
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map(relation =>
+      toRedactedApiRelation(relation, authCtx, relationSchemaFor(relation, toRelationSchemas))
+    );
+  const relationsRemoved: RelationRecord[] = [...fromRelationById.values()]
+    .filter(relation => !toRelationById.has(relation.id))
+    .sort((a, b) => a.id.localeCompare(b.id))
+    .map(relation =>
+      toRedactedApiRelation(relation, authCtx, relationSchemaFor(relation, fromRelationSchemas))
+    );
+  const relationsChanged = [...toRelationById.values()]
+    .filter(relation => fromRelationById.has(relation.id))
+    .map(relation => ({
+      relation,
+      diff: buildDiff(relationState(fromRelationById.get(relation.id)!), relationState(relation))
+    }))
+    .filter(entry => Object.keys(entry.diff).length > 0)
+    .sort((a, b) => a.relation.id.localeCompare(b.relation.id))
+    .map(entry => {
+      const fromRelation = fromRelationById.get(entry.relation.id)!;
+      const diff = redactKnownDataDiff(
+        entry.diff,
+        authCtx,
+        relationSchemaFor(fromRelation, fromRelationSchemas),
+        relationSchemaFor(entry.relation, toRelationSchemas)
+      );
+      return {
+        relation: toRedactedApiRelation(
+          entry.relation,
+          authCtx,
+          relationSchemaFor(entry.relation, toRelationSchemas)
+        ),
+        diff
+      };
+    });
+
+  return {
+    added,
+    removed,
+    changed,
+    relations: { added: relationsAdded, removed: relationsRemoved, changed: relationsChanged }
+  };
 };

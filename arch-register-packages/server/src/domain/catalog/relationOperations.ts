@@ -202,7 +202,8 @@ export const createWorkspaceRelation = async (
         status: 404,
         message: `Relation schema '${schemaId}' not found`
       });
-      assertRelationMutationsSupported(schema);
+      // Creating a relation instance is never gated on approval policy, mirroring entity create —
+      // there is no prior approved state to protect yet.
 
       const [inEntity, outEntity] = await Promise.all([
         db.catalog.getEntity(ws, inEntityId),
@@ -299,7 +300,7 @@ export const updateWorkspaceRelation = async (
         ],
         oldRow.schema_id
       );
-      assertRelationMutationsSupported(schema);
+      assertRelationMutationsSupported(schema, oldRow);
 
       const data = extractRelationFieldData(body);
       const changedFieldIds = Object.keys(data).filter(
@@ -381,7 +382,7 @@ export const deleteWorkspaceRelation = async (
         status: 404,
         message: `Relation schema '${row.schema_id}' not found`
       });
-      assertRelationMutationsSupported(schema);
+      // Deleting a relation instance is never gated on approval policy, mirroring entity delete.
 
       await db.relation.deleteRelation(ws, id);
 
@@ -453,7 +454,7 @@ export const restoreWorkspaceRelationVersion = async (
         ],
         row.schema_id
       );
-      assertRelationMutationsSupported(schema);
+      assertRelationMutationsSupported(schema, row);
 
       const version = await db.catalog.getEntityVersionById(ws, versionId);
       orpcAssert.present(version, { code: 'NOT_FOUND', message: 'Version not found' });

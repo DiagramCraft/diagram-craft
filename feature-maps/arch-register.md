@@ -124,9 +124,14 @@
           dialog showing its audit trail of create/update/delete events. Relation instances now retain version
           history on create/update/delete and can be restored to an earlier version via the API, mirroring entity
           version history's redaction and restore semantics; this is not yet surfaced in the relation instance UI
-          the way entity history is (@id:ar.entities.history). Change-approval specifically for relation instances is
-          not yet supported; when an entity's changes go through change-approval, in-progress relation edits are not
-          yet guaranteed to carry through the proposal/approval workflow. The
+          the way entity history is (@id:ar.entities.history). Relation instances can also go through
+          change-approval: a relation can require approval before edits apply (same policy-override precedence as
+          entities), a single-relation proposal can be submitted/resubmitted/withdrawn/bypassed via the API mirroring
+          the entity change-approval workflow, and a project's planned-change case can include relation instances
+          alongside entities as members (endpoints are immutable and a proposal that changes one is rejected).
+          Approved and applied relation changes are wired into the same governance engine, timeline markers, and
+          workspace landscape-diff as entities; this relation change-approval/planned-change surface is not yet
+          exposed in the web UI (API-only so far). The
           entity detail screen's Relations tab and Topology view also surface typed relation instances (grouped by
           relation schema in Topology, using the schema's own color), each expandable in place to view field values
           and open the same audit-trail history dialog.

@@ -3,6 +3,7 @@ import { buildAuthorizationContext, type TeamRole } from '@arch-register/permiss
 import type { DatabaseAdapter } from '../../db/database';
 import type { EntityLandscapeDiffState } from '@arch-register/api-types/entityContract';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
+import type { RelationDbResult } from './db/relationDatabase';
 
 vi.mock('../auth/authorization', () => ({
   filterVisibleEntities: (_authCtx: unknown, entities: EntityDbResult[]) => entities,
@@ -11,6 +12,10 @@ vi.mock('../auth/authorization', () => ({
 
 vi.mock('./entitySnapshotReconstruction', () => ({
   reconstructEntitiesAsOf: vi.fn()
+}));
+
+vi.mock('./relationSnapshotReconstruction', () => ({
+  reconstructRelationsAsOf: vi.fn()
 }));
 
 vi.mock('./entityHelpers', () => ({
@@ -63,6 +68,7 @@ vi.mock('./entityHelpers', () => ({
 }));
 
 import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
+import { reconstructRelationsAsOf } from './relationSnapshotReconstruction';
 import { diffEntityLandscapes } from './entityLandscapeDiffOperations';
 
 const now = new Date('2026-07-30T12:00:00.000Z');
@@ -169,7 +175,16 @@ const db = {
       async (workspace: string, id: string) =>
         (await db.catalog.listSchemas(workspace)).find(schema => schema.id === id) ?? null
     ),
-    listSchemaVersions: vi.fn(async () => [])
+    listSchemaVersions: vi.fn(async () => []),
+    getEntity: vi.fn(async () => null)
+  },
+  relation: {
+    listRelationSchemas: vi.fn(async () => []),
+    listRelationSchemaVersions: vi.fn(async () => []),
+    getRelationSchema: vi.fn(
+      async (workspace: string, id: string) =>
+        (await db.relation.listRelationSchemas(workspace)).find(schema => schema.id === id) ?? null
+    )
   }
 } as unknown as DatabaseAdapter;
 
@@ -179,6 +194,10 @@ beforeEach(() => {
   vi.mocked(db.project.listProjectEntityLinks).mockResolvedValue([] as never);
   vi.mocked(db.catalog.listEntitiesPaginated).mockResolvedValue([] as never);
   vi.mocked(db.catalog.listSchemas).mockResolvedValue([] as never);
+  vi.mocked(db.catalog.getEntity).mockResolvedValue(null as never);
+  vi.mocked(db.relation.listRelationSchemas).mockResolvedValue([] as never);
+  vi.mocked(db.relation.listRelationSchemaVersions).mockResolvedValue([] as never);
+  vi.mocked(reconstructRelationsAsOf).mockResolvedValue([]);
 });
 
 describe('diffEntityLandscapes', () => {
@@ -750,6 +769,159 @@ describe('diffEntityLandscapes', () => {
           diff: {}
         })
       ]);
+    });
+  });
+
+  describe('relations', () => {
+    const makeRelation = (
+      id: string,
+      overrides: Partial<RelationDbResult> = {}
+    ): RelationDbResult => ({
+      id,
+      workspace: 'ws-1',
+      schema_id: 'rel-schema-1',
+      schema_name: 'Depends On',
+      in_entity_id: 'entity-in',
+      in_entity_name: 'In',
+      out_entity_id: 'entity-out',
+      out_entity_name: 'Out',
+      data: {},
+      version: 1,
+      approval_policy_override: null,
+      created_at: now,
+      updated_at: now,
+      ...overrides
+    });
+
+    const relationSchema = {
+      id: 'rel-schema-1',
+      workspace: 'ws-1',
+      name: 'Depends On',
+      description: '',
+      in_schema_ids: [],
+      out_schema_ids: [],
+      fields: [
+        { id: 'note', name: 'Note', requirementLevel: null, type: 'text' },
+        {
+          id: 'secretNote',
+          name: 'Secret note',
+          requirementLevel: null,
+          type: 'text',
+          groupId: 'restricted'
+        }
+      ],
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: new Date('2020-01-01T00:00:00.000Z'),
+      updated_at: now
+    } as never;
+
+    it('classifies added, removed, and changed relations', async () => {
+      vi.mocked(db.relation.listRelationSchemas).mockResolvedValue([relationSchema] as never);
+      const from = [makeRelation('removed'), makeRelation('changed', { data: { note: 'before' } })];
+      const to = [makeRelation('added'), makeRelation('changed', { data: { note: 'after' } })];
+      vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+      vi.mocked(reconstructRelationsAsOf).mockResolvedValueOnce(from).mockResolvedValueOnce(to);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({}),
+        state({ asOf: '2026-07-29T12:00:00.000Z' }),
+        state({ asOf: '2026-07-30T12:00:00.000Z' })
+      );
+
+      expect(result.relations.added.map(relation => relation._uid)).toEqual(['added']);
+      expect(result.relations.removed.map(relation => relation._uid)).toEqual(['removed']);
+      expect(result.relations.changed).toEqual([
+        expect.objectContaining({
+          relation: expect.objectContaining({ _uid: 'changed', note: 'after' }),
+          diff: { data: { before: { note: 'before' }, after: { note: 'after' } } }
+        })
+      ]);
+    });
+
+    it('redacts restricted relation fields for a caller without view access to the group', async () => {
+      vi.mocked(db.relation.listRelationSchemas).mockResolvedValue([relationSchema] as never);
+      const from = [makeRelation('r1', { data: { note: 'before', secretNote: 'shh-before' } })];
+      const to = [makeRelation('r1', { data: { note: 'after', secretNote: 'shh-after' } })];
+      vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+      vi.mocked(reconstructRelationsAsOf).mockResolvedValueOnce(from).mockResolvedValueOnce(to);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({}),
+        state({}),
+        state({})
+      );
+
+      expect(result.relations.changed).toEqual([
+        expect.objectContaining({
+          diff: { data: { before: { note: 'before' }, after: { note: 'after' } } }
+        })
+      ]);
+      expect(result.relations.changed[0]!.relation['secretNote']).toBeUndefined();
+    });
+
+    it('excludes a relation the caller cannot view through either endpoint', async () => {
+      vi.mocked(db.relation.listRelationSchemas).mockResolvedValue([relationSchema] as never);
+      const ownerSchema = {
+        id: 'owner-schema',
+        workspace: 'ws-1',
+        name: 'Service',
+        description: '',
+        color: null,
+        icon: null,
+        default_owner: null,
+        key_prefix: 'SVC',
+        created_at: now,
+        updated_at: now,
+        fields: [
+          {
+            id: 'depends-on',
+            name: 'Depends On',
+            requirementLevel: null,
+            type: 'typedRelation',
+            relationSchemaId: 'rel-schema-1',
+            direction: 'in',
+            groupId: 'restricted'
+          },
+          {
+            id: 'depended-on-by',
+            name: 'Depended On By',
+            requirementLevel: null,
+            type: 'typedRelation',
+            relationSchemaId: 'rel-schema-1',
+            direction: 'out',
+            groupId: 'restricted'
+          }
+        ],
+        groups: [
+          { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+        ]
+      } as never;
+      vi.mocked(db.catalog.listSchemas).mockResolvedValue([ownerSchema] as never);
+      vi.mocked(db.catalog.getEntity).mockImplementation(
+        async (_ws: string, id: string) => ({ id, schema_id: 'owner-schema' }) as never
+      );
+      const to = [makeRelation('r1')];
+      vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+      vi.mocked(reconstructRelationsAsOf).mockResolvedValueOnce([]).mockResolvedValueOnce(to);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({}),
+        state({}),
+        state({})
+      );
+
+      expect(result.relations.added).toEqual([]);
     });
   });
 });

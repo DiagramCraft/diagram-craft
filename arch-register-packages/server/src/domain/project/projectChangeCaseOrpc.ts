@@ -10,6 +10,7 @@ import {
   getChangeCase,
   createChangeCase,
   addEntityToChangeCase,
+  addRelationToChangeCase,
   removeEntityFromChangeCase,
   updateChangeCaseMemberProposedState,
   updateChangeCaseFields,
@@ -78,6 +79,18 @@ export const changeCaseORPCRouter = changeCaseRouter.router({
         input.body
       );
     }),
+    addRelationMember: changeCaseRouter.changeCases.addRelationMember.handler(
+      async ({ input, context }) => {
+        return await addRelationToChangeCase(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          input.params.caseId,
+          context.event,
+          input.body
+        );
+      }
+    ),
     removeMember: changeCaseRouter.changeCases.removeMember.handler(async ({ input, context }) => {
       return await removeEntityFromChangeCase(
         context.db,
