@@ -1,4 +1,12 @@
-import { TbChevronRight, TbCode, TbDatabase, TbFolder, TbFolders, TbHome } from 'react-icons/tb';
+import {
+  TbArrowsRightLeft,
+  TbChevronRight,
+  TbCode,
+  TbDatabase,
+  TbFolder,
+  TbFolders,
+  TbHome
+} from 'react-icons/tb';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { Chip } from '../../../components/Chip';
 import { StatusChip } from '../../../components/StatusChip';
@@ -8,6 +16,7 @@ import type {
   EntitySearchResult,
   ProjectFileSearchResult,
   ProjectSearchResult,
+  RelationSearchResult,
   SchemaSearchResult
 } from '@arch-register/api-types/searchContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -255,6 +264,51 @@ export const ResultRow = ({
               <span className={sharedStyles.dim}>/</span>
               fields
             </span>
+          </div>
+        </div>
+        <RowGo onOpen={onOpen} />
+      </div>
+    );
+  }
+
+  if (row.kind === 'relation') {
+    const r = row.data as RelationSearchResult;
+    return (
+      <div
+        className={`${styles.row} ${isSelected ? styles.rowSelected : ''}`}
+        onMouseEnter={onSelect}
+        onClick={onSelect}
+        onDoubleClick={onOpen}
+      >
+        <span className={styles.rowIcon}>
+          <TbArrowsRightLeft size={14} />
+        </span>
+        <div className={styles.rowBody}>
+          <div className={styles.rowTitle}>
+            <button
+              type="button"
+              className={styles.rowName}
+              aria-label={`Search result: ${r.schemaName}`}
+              onClick={ev => {
+                ev.stopPropagation();
+                onOpen();
+              }}
+            >
+              <Hi s={r.inEntityName} q={q} /> → <Hi s={r.outEntityName} q={q} />
+            </button>
+            <Chip tone="ghost">{r.schemaName}</Chip>
+          </div>
+          <div className={styles.rowMeta}>
+            <span className={styles.rowPath}>
+              <TbHome size={10} /> Relations
+              <span className={sharedStyles.dim}>/</span>
+              <Hi s={r.schemaName} q={q} />
+            </span>
+            {r.matchedFields.slice(0, 3).map(f => (
+              <Chip key={f} tone="ghost">
+                field:{f}
+              </Chip>
+            ))}
           </div>
         </div>
         <RowGo onOpen={onOpen} />

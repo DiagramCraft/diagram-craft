@@ -243,7 +243,7 @@ export const validateAccountSettingsSearch = (
 // Search params
 export type SearchRouteSearchParams = {
   q?: string;
-  category?: 'all' | 'entities' | 'projects' | 'files' | 'schemas';
+  category?: 'all' | 'entities' | 'projects' | 'files' | 'schemas' | 'relations';
 };
 
 export const validateSearchSearch = (raw: Record<string, unknown>): SearchRouteSearchParams => ({
@@ -253,7 +253,8 @@ export const validateSearchSearch = (raw: Record<string, unknown>): SearchRouteS
     raw.category === 'entities' ||
     raw.category === 'projects' ||
     raw.category === 'files' ||
-    raw.category === 'schemas'
+    raw.category === 'schemas' ||
+    raw.category === 'relations'
       ? raw.category
       : undefined
 });

@@ -400,3 +400,147 @@ describe('searchWorkspace entity field-group redaction', () => {
     ]);
   });
 });
+
+describe('searchWorkspace relations', () => {
+  beforeEach(() => {
+    vi.clearAllMocks();
+  });
+
+  const inEntity = {
+    id: 'in-entity',
+    public_id: 'ENT-IN',
+    schema_id: 'schema-1',
+    schema_name: 'Component',
+    name: 'In Entity',
+    slug: 'in-entity',
+    description: '',
+    owner: null,
+    owner_name: null,
+    lifecycle: null,
+    lifecycle_label: null,
+    target_lifecycle: null,
+    target_lifecycle_label: null,
+    tags: [],
+    links: [],
+    data: {},
+    namespace: '',
+    workspace: 'ws-1',
+    visibility_mode: null,
+    created_at: new Date(),
+    updated_at: new Date(),
+    target_lifecycle_date: null
+  };
+  const outEntity = { ...inEntity, id: 'out-entity', public_id: 'ENT-OUT', name: 'Out Entity' };
+
+  const entitySchema = {
+    id: 'schema-1',
+    workspace: 'ws-1',
+    name: 'Component',
+    description: '',
+    color: null,
+    icon: null,
+    default_owner: null,
+    key_prefix: 'CMP',
+    created_at: new Date(),
+    updated_at: new Date(),
+    fields: [],
+    groups: []
+  };
+
+  const relationSchema = {
+    id: 'rel-schema-1',
+    workspace: 'ws-1',
+    name: 'Depends On',
+    description: '',
+    in_schema_ids: ['schema-1'],
+    out_schema_ids: ['schema-1'],
+    fields: [{ id: 'note', name: 'Note', type: 'text' }],
+    groups: [],
+    color: null,
+    icon: null
+  };
+
+  const relation = {
+    id: 'relation-1',
+    workspace: 'ws-1',
+    schema_id: 'rel-schema-1',
+    schema_name: 'Depends On',
+    in_entity_id: 'in-entity',
+    in_entity_name: 'In Entity',
+    out_entity_id: 'out-entity',
+    out_entity_name: 'Out Entity',
+    data: { note: 'critical-dependency' },
+    version: 1,
+    approval_policy_override: null,
+    created_at: new Date(),
+    updated_at: new Date()
+  };
+
+  const makeRelationDb = (): DatabaseAdapter =>
+    ({
+      catalog: {
+        listSchemas: vi.fn(async () => [entitySchema]),
+        listEntities: vi.fn(async () => [inEntity, outEntity]),
+        listEntitiesPaginated: vi.fn(
+          async (_ws: string, _filters: unknown, { offset }: { limit: number; offset: number }) =>
+            offset === 0 ? [inEntity, outEntity] : []
+        )
+      },
+      project: {
+        listProjects: vi.fn(async () => []),
+        listContentNodes: vi.fn(async () => []),
+        listEntityContentNodes: vi.fn(async () => []),
+        listWorkspaceContentNodes: vi.fn(async () => [])
+      },
+      relation: {
+        listRelationSchemas: vi.fn(async () => [relationSchema]),
+        listRelations: vi.fn(
+          async (_ws: string, _filters: unknown, { offset }: { offset: number }) =>
+            offset === 0 ? { items: [relation], total: 1 } : { items: [], total: 1 }
+        )
+      }
+    }) as unknown as DatabaseAdapter;
+
+  it('matches relations by schema field data and includes endpoint public ids', async () => {
+    const result = await searchWorkspace(
+      makeRelationDb(),
+      'default',
+      { q: 'critical-dependency', types: 'relations' },
+      { context: { user: { id: 'user-1' } } } as never
+    );
+
+    expect(result.relations).toEqual([
+      expect.objectContaining({
+        relationId: 'relation-1',
+        schemaName: 'Depends On',
+        inEntityPublicId: 'ENT-IN',
+        outEntityPublicId: 'ENT-OUT',
+        matchedFields: ['note']
+      })
+    ]);
+  });
+
+  it('matches relations by endpoint entity name metadata', async () => {
+    const result = await searchWorkspace(
+      makeRelationDb(),
+      'default',
+      { q: 'Out Entity', types: 'relations' },
+      { context: { user: { id: 'user-1' } } } as never
+    );
+
+    expect(result.relations).toEqual([
+      expect.objectContaining({ relationId: 'relation-1', matchedMetadata: ['outEntity'] })
+    ]);
+  });
+
+  it('does not return relations when types excludes relations', async () => {
+    const result = await searchWorkspace(
+      makeRelationDb(),
+      'default',
+      { q: 'critical-dependency', types: 'entities' },
+      { context: { user: { id: 'user-1' } } } as never
+    );
+
+    expect(result.relations).toEqual([]);
+  });
+});

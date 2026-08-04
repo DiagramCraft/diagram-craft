@@ -7,6 +7,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 import { filterRelationFieldData } from '../catalog/relationHelpers';
 import { canViewTypedRelation } from '../catalog/relationAccessControl';
+import { listAllRelations } from '../catalog/relationOperations';
 import type {
   ExportOptions,
   ExportManifest,
@@ -18,10 +19,35 @@ import type {
   ExportDiagnostic,
   ExportProject,
   ExportContentNode,
-  ExportDocumentData
+  ExportDocumentData,
+  ExportSharedFieldGroup
 } from './exportTypes';
+import type { SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
+import type { SharedFieldGroupDbResult } from '../catalog/db/catalogDatabase';
 
 const checker = new PermissionChecker();
+
+// Shared by exportSchemas and exportRelationSchemas: both resolve a schema's
+// `shared_field_group_links` into the full `ExportSharedFieldGroup` definitions the archive embeds
+// alongside the schema, so an import can recreate the groups without a separate lookup pass.
+const resolveSharedFieldGroups = (
+  links: SharedFieldGroupLink[] | undefined,
+  sharedGroupsById: Map<string, SharedFieldGroupDbResult>
+): ExportSharedFieldGroup[] =>
+  (links ?? []).flatMap(link => {
+    const group = sharedGroupsById.get(link.groupId);
+    return group
+      ? [
+          {
+            id: group.id,
+            name: group.name,
+            description: group.description,
+            fields: group.fields,
+            sort_order: group.sort_order
+          }
+        ]
+      : [];
+  });
 
 export const exportWorkspace = async (
   db: DatabaseAdapter,
@@ -245,20 +271,10 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
     fields: schema.fields,
     groups: schema.groups ?? [],
     shared_field_group_links: schema.shared_field_group_links ?? [],
-    shared_field_groups: (schema.shared_field_group_links ?? []).flatMap(link => {
-      const group = sharedGroupsById.get(link.groupId);
-      return group
-        ? [
-            {
-              id: group.id,
-              name: group.name,
-              description: group.description,
-              fields: group.fields,
-              sort_order: group.sort_order
-            }
-          ]
-        : [];
-    }),
+    shared_field_groups: resolveSharedFieldGroups(
+      schema.shared_field_group_links,
+      sharedGroupsById
+    ),
     templates: schema.templates ?? [],
     color: schema.color,
     icon: schema.icon,
@@ -286,20 +302,10 @@ const exportRelationSchemas = async (
     fields: schema.fields,
     groups: schema.groups ?? [],
     shared_field_group_links: schema.shared_field_group_links ?? [],
-    shared_field_groups: (schema.shared_field_group_links ?? []).flatMap(link => {
-      const group = sharedGroupsById.get(link.groupId);
-      return group
-        ? [
-            {
-              id: group.id,
-              name: group.name,
-              description: group.description,
-              fields: group.fields,
-              sort_order: group.sort_order
-            }
-          ]
-        : [];
-    }),
+    shared_field_groups: resolveSharedFieldGroups(
+      schema.shared_field_group_links,
+      sharedGroupsById
+    ),
     color: schema.color,
     icon: schema.icon,
     relation_approval_policy: schema.relation_approval_policy ?? 'disabled',
@@ -314,20 +320,7 @@ const exportRelations = async (
   relationSchemas?: ExportRelationSchema[],
   entities?: ExportEntity[]
 ): Promise<{ relations: ExportRelation[]; diagnostics: ExportDiagnostic[] }> => {
-  const pageSize = 200;
-  const rows = [] as Awaited<ReturnType<typeof db.relation.listRelations>>['items'];
-  let offset = 0;
-  while (true) {
-    const page = await db.relation.listRelations(
-      workspace,
-      { schemaId: null, inEntityId: null, outEntityId: null },
-      { limit: pageSize, offset }
-    );
-    if (page.items.length === 0) break;
-    rows.push(...page.items);
-    if (page.items.length < pageSize) break;
-    offset += pageSize;
-  }
+  const rows = await listAllRelations(db, workspace, {});
 
   const relationSchemaIds = new Set(relationSchemas?.map(schema => schema.id) ?? []);
   const entityIds = new Set(entities?.map(entity => entity.id) ?? []);

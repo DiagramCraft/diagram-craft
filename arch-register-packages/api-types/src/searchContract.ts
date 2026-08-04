@@ -49,6 +49,20 @@ const entitySearchResultSchema = z.object({
   matchedMetadata: z.array(z.string()).describe('Metadata fields that matched the search query')
 });
 
+const relationSearchResultSchema = z.object({
+  relationId: z.string().describe('Relation instance identifier'),
+  schemaId: z.string().describe('Relation schema identifier'),
+  schemaName: z.string().describe('Relation schema name'),
+  inEntityId: z.string().describe('Identifier of the entity at the "in" endpoint'),
+  inEntityPublicId: z.string().describe('Public identifier of the entity at the "in" endpoint'),
+  inEntityName: z.string().describe('Name of the entity at the "in" endpoint'),
+  outEntityId: z.string().describe('Identifier of the entity at the "out" endpoint'),
+  outEntityPublicId: z.string().describe('Public identifier of the entity at the "out" endpoint'),
+  outEntityName: z.string().describe('Name of the entity at the "out" endpoint'),
+  matchedFields: z.array(z.string()).describe('Field IDs that matched the search query'),
+  matchedMetadata: z.array(z.string()).describe('Metadata fields that matched the search query')
+});
+
 const schemaFieldMatchSchema = z.object({
   fieldId: z.string().describe('Field identifier'),
   fieldName: z.string().describe('Field name')
@@ -65,7 +79,8 @@ const searchResponseSchema = z.object({
   projects: z.array(projectSearchResultSchema).describe('Matching projects'),
   files: z.array(fileSearchResultSchema).describe('Matching files (diagrams, markdown, etc.)'),
   entities: z.array(entitySearchResultSchema).describe('Matching entities'),
-  schemas: z.array(schemaSearchResultSchema).describe('Matching schemas')
+  schemas: z.array(schemaSearchResultSchema).describe('Matching schemas'),
+  relations: z.array(relationSearchResultSchema).describe('Matching relation instances')
 });
 
 // ── Contract ──────────────────────────────────────────────────
@@ -79,7 +94,7 @@ export const searchContract = oc.tag('Search').router({
         inputStructure: 'detailed',
         summary: 'Search workspace content',
         description:
-          'Performs a full-text search across projects, files, entities, and schemas within the workspace. Returns results grouped by type with configurable limits per type.',
+          'Performs a full-text search across projects, files, entities, schemas, and relations within the workspace. Returns results grouped by type with configurable limits per type.',
         tags: ['Search']
       })
       .input(
@@ -100,7 +115,7 @@ export const searchContract = oc.tag('Search').router({
               .string()
               .optional()
               .describe(
-                'Comma-separated list of types to search (projects, files, entities, schemas)'
+                'Comma-separated list of types to search (projects, files, entities, schemas, relations)'
               )
           })
         })
@@ -113,4 +128,5 @@ export type ProjectSearchResult = z.infer<typeof projectSearchResultSchema>;
 export type ProjectFileSearchResult = z.infer<typeof fileSearchResultSchema>;
 export type EntitySearchResult = z.infer<typeof entitySearchResultSchema>;
 export type SchemaSearchResult = z.infer<typeof schemaSearchResultSchema>;
+export type RelationSearchResult = z.infer<typeof relationSearchResultSchema>;
 export type SearchResponse = z.infer<typeof searchResponseSchema>;

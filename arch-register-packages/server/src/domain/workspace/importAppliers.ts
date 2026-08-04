@@ -34,6 +34,7 @@ import type {
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import { validateRelationEndpoints } from '../catalog/relationHelpers';
 import { requireTypedRelationEdit } from '../catalog/relationAccessControl';
+import { listAllRelations } from '../catalog/relationOperations';
 
 type ImportResolution = { action: string; new_name?: string };
 
@@ -601,24 +602,6 @@ export const importEntities = async (
   return { created, updated, skipped };
 };
 
-const listAllRelations = async (db: DatabaseAdapter, workspace: string) => {
-  const pageSize = 200;
-  const relations = [] as Awaited<ReturnType<typeof db.relation.listRelations>>['items'];
-  let offset = 0;
-  while (true) {
-    const page = await db.relation.listRelations(
-      workspace,
-      { schemaId: null, inEntityId: null, outEntityId: null },
-      { limit: pageSize, offset }
-    );
-    if (page.items.length === 0) break;
-    relations.push(...page.items);
-    if (page.items.length < pageSize) break;
-    offset += pageSize;
-  }
-  return relations;
-};
-
 const relationIdentity = (schemaId: string, inEntityId: string, outEntityId: string) =>
   `${schemaId}\u0000${inEntityId}\u0000${outEntityId}`;
 
@@ -639,7 +622,7 @@ export const importRelations = async (
   idMapping: IdMapping
 ): Promise<{ created: number; updated: number; skipped: number }> => {
   const now = new Date();
-  const existingRelations = await listAllRelations(db, workspace);
+  const existingRelations = await listAllRelations(db, workspace, {});
   const existingById = new Map<string, RelationIdentityRecord>(
     existingRelations.map(relation => [relation.id, relation])
   );

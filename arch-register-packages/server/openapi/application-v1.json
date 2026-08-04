@@ -50478,7 +50478,7 @@
       "get": {
         "operationId": "search.query",
         "summary": "Search workspace content",
-        "description": "Performs a full-text search across projects, files, entities, and schemas within the workspace. Returns results grouped by type with configurable limits per type.",
+        "description": "Performs a full-text search across projects, files, entities, schemas, and relations within the workspace. Returns results grouped by type with configurable limits per type.",
         "tags": [
           "Search",
           "Search"
@@ -50520,7 +50520,7 @@
             "in": "query",
             "schema": {
               "type": "string",
-              "description": "Comma-separated list of types to search (projects, files, entities, schemas)"
+              "description": "Comma-separated list of types to search (projects, files, entities, schemas, relations)"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -50952,6 +50952,78 @@
                         ]
                       },
                       "description": "Matching schemas"
+                    },
+                    "relations": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "relationId": {
+                            "type": "string",
+                            "description": "Relation instance identifier"
+                          },
+                          "schemaId": {
+                            "type": "string",
+                            "description": "Relation schema identifier"
+                          },
+                          "schemaName": {
+                            "type": "string",
+                            "description": "Relation schema name"
+                          },
+                          "inEntityId": {
+                            "type": "string",
+                            "description": "Identifier of the entity at the \"in\" endpoint"
+                          },
+                          "inEntityPublicId": {
+                            "type": "string",
+                            "description": "Public identifier of the entity at the \"in\" endpoint"
+                          },
+                          "inEntityName": {
+                            "type": "string",
+                            "description": "Name of the entity at the \"in\" endpoint"
+                          },
+                          "outEntityId": {
+                            "type": "string",
+                            "description": "Identifier of the entity at the \"out\" endpoint"
+                          },
+                          "outEntityPublicId": {
+                            "type": "string",
+                            "description": "Public identifier of the entity at the \"out\" endpoint"
+                          },
+                          "outEntityName": {
+                            "type": "string",
+                            "description": "Name of the entity at the \"out\" endpoint"
+                          },
+                          "matchedFields": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Field IDs that matched the search query"
+                          },
+                          "matchedMetadata": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            },
+                            "description": "Metadata fields that matched the search query"
+                          }
+                        },
+                        "required": [
+                          "relationId",
+                          "schemaId",
+                          "schemaName",
+                          "inEntityId",
+                          "inEntityPublicId",
+                          "inEntityName",
+                          "outEntityId",
+                          "outEntityPublicId",
+                          "outEntityName",
+                          "matchedFields",
+                          "matchedMetadata"
+                        ]
+                      },
+                      "description": "Matching relation instances"
                     }
                   },
                   "required": [
@@ -50959,7 +51031,8 @@
                     "projects",
                     "files",
                     "entities",
-                    "schemas"
+                    "schemas",
+                    "relations"
                   ]
                 }
               }

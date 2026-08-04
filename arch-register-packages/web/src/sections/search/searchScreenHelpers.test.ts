@@ -71,7 +71,8 @@ describe('search result transformations', () => {
     entities: [{ entityId: 'entity-1', publicId: 'APP-1' }],
     projects: [{ id: 'project-1' }],
     files: [{ fileId: 'file-1' }],
-    schemas: [{ schemaId: 'schema-1' }]
+    schemas: [{ schemaId: 'schema-1' }],
+    relations: [{ relationId: 'relation-1' }]
   } as unknown as SearchResponse;
 
   it('builds filtered groups in the display order', () => {
@@ -79,7 +80,8 @@ describe('search result transformations', () => {
       'entities',
       'projects',
       'files',
-      'schemas'
+      'schemas',
+      'relations'
     ]);
     expect(buildSearchGroups(results, 'files')).toEqual([
       {
@@ -92,11 +94,12 @@ describe('search result transformations', () => {
 
   it('counts categories and resolves selected previews', () => {
     expect(getSearchCategoryCounts(results)).toEqual({
-      all: 4,
+      all: 5,
       entities: 1,
       projects: 1,
       files: 1,
-      schemas: 1
+      schemas: 1,
+      relations: 1
     });
     expect(findSearchPreview({ kind: 'project', id: 'project-1' }, results)).toEqual({
       type: 'project',
