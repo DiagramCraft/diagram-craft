@@ -375,7 +375,7 @@ AR_DB_PATH="${AR_SERVER_DIR}/data/arch-register.sqlite"
 if [ ! -f "${AR_DB_PATH}" ]; then
   echo "Bootstrapping AR server database..."
   mkdir -p "${AR_SERVER_DIR}/data"
-  (cd "${AR_SERVER_DIR}" && pnpm bootstrap)
+  (cd "${AR_SERVER_DIR}" && pnpm bootstrap -- --reset)
   echo "AR server database bootstrapped."
 fi
 
