@@ -18,8 +18,11 @@ import {
   assertRelationMutationsSupported,
   toRedactedApiRelation,
   validateRelationEndpoints,
-  relationAuditContext
+  relationAuditContext,
+  relationToBaseState
 } from './relationHelpers';
+
+const RELATION_AUTOSAVE_KEEP_COUNT = 50;
 import {
   canViewTypedRelation,
   canViewTypedRelationFromEndpoint,
@@ -238,6 +241,20 @@ export const createWorkspaceRelation = async (
         metadata: { relation: relationAuditContext(row) }
       });
 
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace: ws,
+        entity_id: row.id,
+        version_number: row.version,
+        kind: 'autosave',
+        commit_message: null,
+        created_at: timestamp,
+        created_by: authCtx.userId,
+        state: relationToBaseState(row),
+        applied_case_revision_id: null
+      });
+      await db.catalog.pruneAutosaveVersions(ws, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
+
       return toRedactedApiRelation(row, authCtx, schema);
     }
   );
@@ -308,6 +325,20 @@ export const updateWorkspaceRelation = async (
         metadata: { relation: relationAuditContext(row) }
       });
 
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace: ws,
+        entity_id: row.id,
+        version_number: row.version,
+        kind: 'autosave',
+        commit_message: null,
+        created_at: timestamp,
+        created_by: authCtx.userId,
+        state: relationToBaseState(row),
+        applied_case_revision_id: null
+      });
+      await db.catalog.pruneAutosaveVersions(ws, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
+
       return toRedactedApiRelation(row, authCtx, schema);
     }
   );
@@ -344,6 +375,9 @@ export const deleteWorkspaceRelation = async (
       });
       assertRelationMutationsSupported(schema);
 
+      // Hard delete (see relationDatabase.ts) — no 'deleted' record_version is written here since
+      // it would be cascade-deleted along with this row (#2687 excludes delete history until
+      // relations move to soft-delete).
       await db.relation.deleteRelation(ws, id);
 
       await logAudit(db, {

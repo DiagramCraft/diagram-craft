@@ -35,7 +35,12 @@ export const validateRelationEndpoints = (
   });
 };
 
-/** Relation approval/version workflows are implemented separately in #2574. */
+/**
+ * Relation instances get basic create/update version history via record_version (#2687), but
+ * delete history and approval workflows are not yet implemented — relation deletion is still a
+ * hard delete (see relationDatabase.ts), so a version row written just before it would be
+ * cascade-deleted along with the row. Both remain excluded until relations move to soft-delete.
+ */
 export const assertRelationMutationsSupported = (schema: RelationSchemaDbResult) => {
   httpAssert.true(schema.relation_approval_policy !== 'required', {
     status: 409,
@@ -44,6 +49,24 @@ export const assertRelationMutationsSupported = (schema: RelationSchemaDbResult)
       'This relation schema requires an approved change proposal before relation instances can be edited'
   });
 };
+
+/**
+ * Snapshot of relation instance state written to record_version on create/update, mirroring
+ * `entityToBaseState` (entityMutations.ts). Endpoint ids are part of a relation's identity (there
+ * is no slug/namespace/name to snapshot instead).
+ */
+export const relationToBaseState = (row: RelationDbResult): Record<string, unknown> => ({
+  id: row.id,
+  workspace: row.workspace,
+  schema_id: row.schema_id,
+  in_entity_id: row.in_entity_id,
+  out_entity_id: row.out_entity_id,
+  data: row.data,
+  version: row.version,
+  approval_policy_override: row.approval_policy_override,
+  created_at: row.created_at,
+  updated_at: row.updated_at
+});
 
 /** Flattens relation field data to top level for audit logging, mirroring `flattenEntityAuditFields`. */
 export const flattenRelationAuditFields = (row: RelationDbResult): Record<string, unknown> => ({

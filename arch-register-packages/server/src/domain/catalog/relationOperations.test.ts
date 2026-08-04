@@ -1,0 +1,197 @@
+import { describe, expect, it, vi } from 'vitest';
+import { buildAuthorizationContext } from '@arch-register/permissions';
+import type { DatabaseAdapter } from '../../db/database';
+import type { AuthenticatedEvent } from '../../middleware/auth';
+import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
+import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
+import { createWorkspaceRelation, updateWorkspaceRelation } from './relationOperations';
+
+const authorizationMocks = vi.hoisted(() => ({
+  buildApiAuthCtx: vi.fn()
+}));
+
+vi.mock('../auth/authorization', async () => ({
+  ...(await vi.importActual<typeof import('../auth/authorization')>('../auth/authorization')),
+  buildApiAuthCtx: authorizationMocks.buildApiAuthCtx
+}));
+
+vi.mock('../workspace/resolveWorkspace', () => ({
+  resolveWorkspace: vi.fn(async () => 'ws-1')
+}));
+
+vi.mock('../audit/db/auditLogging', async () => ({
+  ...(await vi.importActual<typeof import('../audit/db/auditLogging')>('../audit/db/auditLogging')),
+  logAudit: vi.fn(async () => {})
+}));
+
+const now = new Date('2026-06-29T12:00:00.000Z');
+
+const authCtx = buildAuthorizationContext({
+  userId: 'user-1',
+  globalRoles: [],
+  workspaceRole: 'editor',
+  teamAssignments: [],
+  schemas: [],
+  entities: [],
+  grants: []
+});
+
+const event = {} as AuthenticatedEvent;
+const eventForAuthCtx = () => {
+  authorizationMocks.buildApiAuthCtx.mockResolvedValueOnce(authCtx);
+  return event;
+};
+
+const entitySchema: SchemaDbResult = {
+  id: 'schema-app',
+  workspace: 'ws-1',
+  name: 'App',
+  description: '',
+  fields: [],
+  color: null,
+  icon: null,
+  default_owner: null,
+  key_prefix: 'APP',
+  created_at: now,
+  updated_at: now
+};
+
+const makeEntity = (id: string): EntityDbResult => ({
+  id,
+  workspace: 'ws-1',
+  public_id: `APP-${id}`,
+  slug: id,
+  namespace: 'default',
+  name: id,
+  description: '',
+  owner: null,
+  lifecycle: null,
+  target_lifecycle: null,
+  target_lifecycle_date: null,
+  tags: [],
+  links: [],
+  schema_id: entitySchema.id,
+  data: {},
+  project_id: null,
+  created_at: now,
+  updated_at: now,
+  owner_name: null,
+  lifecycle_label: null,
+  target_lifecycle_label: null,
+  schema_name: entitySchema.name,
+  completeness: 0
+});
+
+const inEntity = makeEntity('entity-in');
+const outEntity = makeEntity('entity-out');
+
+const relationSchema: RelationSchemaDbResult = {
+  id: 'relation-schema-1',
+  workspace: 'ws-1',
+  name: 'Depends On',
+  description: '',
+  in_schema_ids: [entitySchema.id],
+  out_schema_ids: [entitySchema.id],
+  fields: [{ id: 'note', name: 'Note', type: 'text', requirementLevel: 'optional' } as never],
+  groups: [],
+  color: null,
+  icon: null,
+  relation_approval_policy: 'disabled',
+  created_at: now,
+  updated_at: now
+};
+
+const makeRelationRow = (overrides: Partial<RelationDbResult> = {}): RelationDbResult => ({
+  id: 'relation-1',
+  workspace: 'ws-1',
+  schema_id: relationSchema.id,
+  schema_name: relationSchema.name,
+  in_entity_id: inEntity.id,
+  in_entity_name: inEntity.name,
+  out_entity_id: outEntity.id,
+  out_entity_name: outEntity.name,
+  data: {},
+  version: 1,
+  approval_policy_override: null,
+  created_at: now,
+  updated_at: now,
+  ...overrides
+});
+
+const makeDb = (existingRow?: RelationDbResult) => {
+  const createEntityVersion = vi.fn(async () => ({}));
+  const pruneAutosaveVersions = vi.fn(async () => {});
+  const createRelation = vi.fn(async () => makeRelationRow());
+  const updateRelation = vi.fn(
+    async (_ws: string, _id: string, input: { version: number; data: Record<string, unknown> }) =>
+      makeRelationRow({ version: input.version, data: input.data, updated_at: new Date() })
+  );
+
+  const db = {
+    relation: {
+      getRelationSchema: vi.fn(async () => relationSchema),
+      createRelation,
+      updateRelation,
+      getRelation: vi.fn(async () => existingRow ?? makeRelationRow())
+    },
+    catalog: {
+      getEntity: vi.fn(async (_ws: string, id: string) =>
+        id === inEntity.id ? inEntity : id === outEntity.id ? outEntity : null
+      ),
+      listSchemas: vi.fn(async () => [entitySchema]),
+      createEntityVersion,
+      pruneAutosaveVersions
+    }
+  } as unknown as DatabaseAdapter;
+
+  return { db, createEntityVersion, pruneAutosaveVersions, createRelation, updateRelation };
+};
+
+describe('createWorkspaceRelation — version history', () => {
+  it('writes a record_version row and prunes autosaves after creating a relation', async () => {
+    const { db, createEntityVersion, pruneAutosaveVersions } = makeDb();
+
+    const row = await createWorkspaceRelation(
+      db,
+      'ws-1',
+      { _schemaId: relationSchema.id, _inEntityId: inEntity.id, _outEntityId: outEntity.id },
+      eventForAuthCtx()
+    );
+
+    expect(row._uid).toBe('relation-1');
+    expect(createEntityVersion).toHaveBeenCalledTimes(1);
+    expect(createEntityVersion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity_id: 'relation-1',
+        kind: 'autosave',
+        version_number: 1,
+        state: expect.objectContaining({
+          id: 'relation-1',
+          in_entity_id: inEntity.id,
+          out_entity_id: outEntity.id
+        })
+      })
+    );
+    expect(pruneAutosaveVersions).toHaveBeenCalledWith('ws-1', 'relation-1', 50);
+  });
+});
+
+describe('updateWorkspaceRelation — version history', () => {
+  it('writes a new record_version row reflecting the bumped version on update', async () => {
+    const existing = makeRelationRow({ version: 1, data: { note: 'before' } });
+    const { db, createEntityVersion, pruneAutosaveVersions } = makeDb(existing);
+
+    await updateWorkspaceRelation(db, 'ws-1', existing.id, { note: 'after' }, eventForAuthCtx());
+
+    expect(createEntityVersion).toHaveBeenCalledTimes(1);
+    expect(createEntityVersion).toHaveBeenCalledWith(
+      expect.objectContaining({
+        entity_id: existing.id,
+        kind: 'autosave',
+        version_number: 2,
+        state: expect.objectContaining({ data: { note: 'after' } })
+      })
+    );
+    expect(pruneAutosaveVersions).toHaveBeenCalledWith('ws-1', existing.id, 50);
+  });
+});
