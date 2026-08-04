@@ -49,8 +49,10 @@ import {
   flattenRelationAuditFields,
   relationAuditContext,
   requireRelationCaseMemberEditAccess,
-  assertRelationProposalEndpointsUnchanged
+  assertRelationProposalEndpointsUnchanged,
+  getRelationOwnerSchemas
 } from './relationHelpers';
+import { canViewTypedRelation } from './relationAccessControl';
 import { logAudit, computeChanges } from '../audit/db/auditLogging';
 
 const getProjectOrThrow = async (db: DatabaseAdapter, ws: string, projectId: string) => {
@@ -181,6 +183,57 @@ const redactMemberStateData = (
   };
 };
 
+/** A member's state carries `in_entity_id`/`out_entity_id` only when it belongs to a relation. */
+const memberStateEndpoints = (member: ChangeCaseMemberDbResult) => {
+  const state =
+    member.base_state['in_entity_id'] != null ? member.base_state : member.proposed_state;
+  const inEntityId = state['in_entity_id'];
+  const outEntityId = state['out_entity_id'];
+  return typeof inEntityId === 'string' && typeof outEntityId === 'string'
+    ? {
+        in_entity_id: inEntityId,
+        out_entity_id: outEntityId,
+        schema_id: String(state['schema_id'] ?? '')
+      }
+    : null;
+};
+
+/**
+ * Whether the caller can see a relation member's data at all through either of its endpoints'
+ * typedRelation fields. Mirrors the same endpoint-ACL gate relationChangeOperations.ts's
+ * `subjectVisible` and relationOperations.ts's direct-write path already enforce — a change case
+ * itself is visible to anyone with project edit access, but an individual relation member can
+ * still be endpoint-restricted independent of that, and should be redacted the same way a direct
+ * read of the relation would be.
+ */
+const resolveRelationMemberVisibility = async (
+  db: DatabaseAdapter,
+  ws: string,
+  authCtx: AuthorizationContext | null,
+  members: ChangeCaseMemberDbResult[]
+): Promise<Map<string, boolean>> => {
+  const visibility = new Map<string, boolean>();
+  await Promise.all(
+    members.map(async member => {
+      const endpoints = memberStateEndpoints(member);
+      if (!endpoints) return;
+      const { inSchema, outSchema } = await getRelationOwnerSchemas(db, ws, endpoints);
+      visibility.set(
+        member.id,
+        canViewTypedRelation(
+          authCtx,
+          [
+            { schema: inSchema, direction: 'in' },
+            { schema: outSchema, direction: 'out' }
+          ],
+          endpoints.schema_id
+        )
+      );
+    })
+  );
+  return visibility;
+};
+
 const toApiChangeCase = async (
   db: DatabaseAdapter,
   ws: string,
@@ -196,13 +249,16 @@ const toApiChangeCase = async (
       .filter(Boolean)
   );
   const asOf = revision?.created_at ?? changeCase.updated_at;
-  const schemas = await Promise.all(
-    [...schemaIds].map(
-      async schemaId =>
-        (await getEntitySchemaAt(db, ws, schemaId, asOf)) ??
-        (await getRelationSchemaAt(db, ws, schemaId, asOf))
-    )
-  );
+  const [schemas, relationMemberVisibility] = await Promise.all([
+    Promise.all(
+      [...schemaIds].map(
+        async schemaId =>
+          (await getEntitySchemaAt(db, ws, schemaId, asOf)) ??
+          (await getRelationSchemaAt(db, ws, schemaId, asOf))
+      )
+    ),
+    resolveRelationMemberVisibility(db, ws, authCtx, members)
+  ]);
   const schemaById = new Map(
     [...schemaIds]
       .map((schemaId, index) => [schemaId, schemas[index]] as const)
@@ -220,17 +276,30 @@ const toApiChangeCase = async (
     commit_message: revision?.message ?? null,
     created_at: changeCase.created_at.toISOString(),
     updated_at: changeCase.updated_at.toISOString(),
-    members: members.map(member => toApiMember(member, authCtx, schemaById))
+    members: members.map(member =>
+      toApiMember(member, authCtx, schemaById, relationMemberVisibility.get(member.id) ?? true)
+    )
   };
 };
 
 export const toApiMember = (
   member: ChangeCaseMemberDbResult,
   authCtx: AuthorizationContext | null,
-  schemaById: Map<string, FieldGroupSchemaShape>
+  schemaById: Map<string, FieldGroupSchemaShape>,
+  endpointVisible = true
 ) => {
   const baseState = member.base_state;
   const proposedState = member.proposed_state;
+  if (!endpointVisible) {
+    return {
+      id: member.id,
+      entity_id: member.entity_id,
+      base_version: member.base_version,
+      base_state: { ...baseState, data: {} },
+      proposed_state: { ...proposedState, data: {} },
+      applied_version_id: member.applied_version_id
+    };
+  }
   const baseSchema = schemaById.get(String(baseState['schema_id'] ?? '')) ?? null;
   const proposedSchema = schemaById.get(String(proposedState['schema_id'] ?? '')) ?? baseSchema;
   return {
