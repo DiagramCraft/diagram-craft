@@ -3671,6 +3671,29 @@ export const seedSavedViews: SavedViewDbResult[] = [
     },
     created_at: now,
     updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0020-000000000008',
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    project_scope: null,
+    name: 'Sensitive Data Flows',
+    description: 'Data flow relations carrying sensitive data between systems.',
+    is_admin_view: false,
+    view_mode: 'table',
+    filters: {
+      root_kind: 'relation',
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'data_classification',
+        op: 'equals',
+        value: 'sensitive'
+      }
+    },
+    config: null,
+    created_at: now,
+    updated_at: now
   }
 ];
 

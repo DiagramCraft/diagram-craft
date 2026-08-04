@@ -44,6 +44,7 @@ import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
 import { toSavedViewSearch } from './components/entityBrowserState';
+import { toSavedRelationViewSearch } from '../relations/relationBrowserState';
 import type { Collection } from '@arch-register/api-types/collectionContract';
 
 export const EntitiesSidebar = ({
@@ -190,11 +191,12 @@ export const EntitiesSidebar = ({
   };
 
   const applySavedView = (view: SavedView) => {
+    const isRelationView = view.filters.root_kind === 'relation';
     navigate({
-      to: '/$workspaceSlug/entities',
+      to: isRelationView ? '/$workspaceSlug/entities/relations' : '/$workspaceSlug/entities',
       params: { workspaceSlug },
       search: {
-        ...toSavedViewSearch(view),
+        ...(isRelationView ? toSavedRelationViewSearch(view) : toSavedViewSearch(view)),
         sidebarTab: 'views'
         // biome-ignore lint/suspicious/noExplicitAny: bypass
       } as any

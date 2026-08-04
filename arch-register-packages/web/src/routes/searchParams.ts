@@ -75,6 +75,17 @@ export type EntitySearchParams = SharedEntityBrowserSearchParams;
 export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearchParams =>
   validateSharedEntityBrowserSearch(raw);
 
+// Relation browser params
+export type RelationSearchParams = {
+  viewId?: string;
+  entityQuery?: string; // JSON string of structured EntityQuery IR (root_kind: 'relation')
+};
+
+export const validateRelationSearch = (raw: Record<string, unknown>): RelationSearchParams => ({
+  viewId: typeof raw.viewId === 'string' ? raw.viewId : undefined,
+  entityQuery: typeof raw.entityQuery === 'string' ? raw.entityQuery : undefined
+});
+
 // Entity detail params
 export type EntityDetailSearchParams = {
   contentQuery?: string;

@@ -1,16 +1,26 @@
-import { useRef } from 'react';
-import { useNavigate } from '@tanstack/react-router';
-import { TbFilter } from 'react-icons/tb';
+import { useMemo, useRef, useState } from 'react';
+import { useNavigate, useSearch } from '@tanstack/react-router';
+import { TbFilter, TbDots, TbCheck, TbCopy, TbPencil, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import styles from './RelationBrowser.module.css';
 import filterStyles from '../entities/components/EntityBrowser.module.css';
 import { Title } from '../../components/Title';
 import { Table } from '../../components/table/Table';
 import { useTableSort } from '../../components/table/useTableSort';
+import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
+import { EntityNavigationLink } from '../../components/EntityNavigationLink';
 import { useFieldGroupAccess } from '../../auth/useFieldGroupAccess';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
+import { useDeleteRelation } from '../../hooks/useRelations';
+import { RelationDetailPopover } from '../entities/components/RelationDetailPopover';
+import { SaveViewDialog } from '../entities/components/EntityBrowser';
+import { RelationEditDialog } from '../../dialogs/RelationEditDialog';
 import { useRelationBrowserData } from './useRelationBrowserData';
 import { RelationFilterBuilder } from './RelationFilterBuilder';
+import { buildRelationSavedViewPayload } from './relationBrowserState';
 
 // Standalone relation-rooted browser (#2689): lists relation instances via the /relations/query
 // endpoint, distinct from the entity-embedded relation tab (EntityRelationsTab/RelationRecordList),
@@ -23,6 +33,12 @@ import { RelationFilterBuilder } from './RelationFilterBuilder';
 // A "Type" column is always shown; per-schema field *columns* only make sense once the filters
 // narrow to exactly one schema (`activeSchema`), since which fields exist depends on which schema a
 // given row belongs to — that's the one place activeSchema is still needed.
+//
+// Row detail, entity links, and saved views (#2699): clicking a row opens the same
+// RelationDetailPopover used elsewhere for typed relations (graph/topology views); "In"/"Out" cells
+// link out to the entity detail screen via EntityNavigationLink, same as RelationRecordList.tsx.
+// Saved views reuse the entity browser's SaveViewDialog and useSavedViews hooks as-is — the server
+// already accepts relation-rooted saved views (root_kind: 'relation', viewMode forced to 'table').
 export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
   const {
     relationSchemas,
@@ -38,9 +54,32 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
   const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
   const filterPopoverRef = useRef<PopoverActions | null>(null);
   const navigate = useNavigate();
+  const search = useSearch({ strict: false });
+  const { permissions } = useWorkspaceContext();
+
+  const [detail, setDetail] = useState<{ relationId: string; x: number; y: number } | null>(null);
+  const [isSavingView, setIsSavingView] = useState(false);
+  const [editRelationId, setEditRelationId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    relationId: string;
+    inEntityId: string;
+    outEntityId: string;
+    label: string;
+  } | null>(null);
+  const deleteMutation = useDeleteRelation(workspaceId);
+
+  const { data: savedViews = [] } = useSavedViews(workspaceId, {
+    enabled: search.viewId != null || isSavingView
+  });
+  const createSavedViewMutation = useCreateSavedView(workspaceId);
+  const updateSavedViewMutation = useUpdateSavedView(workspaceId);
+  const activeSavedView = useMemo(
+    () => savedViews.find(view => view.id === search.viewId) ?? null,
+    [savedViews, search.viewId]
+  );
 
   const fieldIds = activeSchema?.fields.map(field => field.id) ?? [];
-  const columnCount = 4 + fieldIds.length;
+  const columnCount = 5 + fieldIds.length;
 
   const comparators: Record<
     string,
@@ -55,6 +94,55 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     comparators[fieldId] = (a, b) => compareFieldValues(a[fieldId], b[fieldId]);
   }
   const { sorted, sort, toggleSort } = useTableSort(relations, comparators);
+
+  const handleSaveView = async (
+    name: string,
+    description: string,
+    _scope: unknown,
+    isAdminView: boolean
+  ) => {
+    try {
+      await createSavedViewMutation.mutateAsync(
+        buildRelationSavedViewPayload({ name, description, isAdminView, conditions })
+      );
+    } catch {
+      // Error handling is done by TanStack Query
+    }
+  };
+
+  const handleUpdateSavedView = async () => {
+    if (!permissions.canManageViews || activeSavedView == null) return;
+    const payload = buildRelationSavedViewPayload({
+      name: activeSavedView.name,
+      description: activeSavedView.description ?? '',
+      isAdminView: activeSavedView.isAdminView,
+      conditions
+    });
+    try {
+      await updateSavedViewMutation.mutateAsync({
+        id: activeSavedView.id,
+        body: { viewMode: 'table', filters: payload.filters, config: payload.config }
+      });
+    } catch {
+      // Error handling is done by TanStack Query
+    }
+  };
+
+  const menuItems: MenuItem[] = [];
+  if (permissions.canManageViews) {
+    if (activeSavedView != null) {
+      menuItems.push({
+        label: `Save View (${activeSavedView.name})`,
+        icon: <TbCheck size={14} />,
+        onClick: handleUpdateSavedView
+      });
+    }
+    menuItems.push({
+      label: 'Save View As...',
+      icon: <TbCopy size={14} />,
+      onClick: () => setIsSavingView(true)
+    });
+  }
 
   return (
     <div className={styles.screen}>
@@ -76,6 +164,16 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
             )
           }
           description="Browse and filter typed relation instances across the workspace."
+          menu={
+            menuItems.length > 0 && (
+              <DropdownMenu
+                trigger={
+                  <Button aria-label="Relation browser actions" icon={<TbDots size={14} />} />
+                }
+                items={menuItems}
+              />
+            )
+          }
         />
       </div>
 
@@ -151,6 +249,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
             <Table.SortableHeaderCell sortKey="_updatedAt" sort={sort} onSort={toggleSort}>
               Updated
             </Table.SortableHeaderCell>
+            <Table.HeaderCell aria-label="Actions" style={{ width: 40 }} />
           </Table.Row>
         </Table.Head>
         <Table.Body>
@@ -160,19 +259,125 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
             </Table.EmptyRow>
           ) : (
             sorted.map(relation => (
-              <Table.Row key={relation._uid}>
-                <Table.Cell>{relation._in.name}</Table.Cell>
-                <Table.Cell>{relation._out.name}</Table.Cell>
+              <Table.Row
+                key={relation._uid}
+                onClick={e => setDetail({ relationId: relation._uid, x: e.clientX, y: e.clientY })}
+              >
+                <Table.Cell>
+                  <EntityNavigationLink
+                    publicId={relation._in.id}
+                    className={styles.entityLink}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {relation._in.name}
+                  </EntityNavigationLink>
+                </Table.Cell>
+                <Table.Cell>
+                  <EntityNavigationLink
+                    publicId={relation._out.id}
+                    className={styles.entityLink}
+                    onClick={e => e.stopPropagation()}
+                  >
+                    {relation._out.name}
+                  </EntityNavigationLink>
+                </Table.Cell>
                 <Table.Cell>{relation._schema.name}</Table.Cell>
                 {fieldIds.map(fieldId => (
                   <Table.Cell key={fieldId}>{formatFieldValue(relation[fieldId])}</Table.Cell>
                 ))}
                 <Table.Cell>{new Date(relation._updatedAt).toLocaleString()}</Table.Cell>
+                <Table.Cell interactive>
+                  {(relation.canEdit || relation.canDelete) && (
+                    <DropdownMenu
+                      trigger={
+                        <Button
+                          variant="ghost"
+                          aria-label="Relation actions"
+                          icon={<TbDots size={14} />}
+                        />
+                      }
+                      items={[
+                        ...(relation.canEdit
+                          ? [
+                              {
+                                label: 'Edit',
+                                icon: <TbPencil size={14} />,
+                                onClick: () => setEditRelationId(relation._uid)
+                              }
+                            ]
+                          : []),
+                        ...(relation.canDelete
+                          ? [
+                              {
+                                label: 'Delete',
+                                icon: <TbTrash size={14} />,
+                                danger: true,
+                                onClick: () =>
+                                  setDeleteTarget({
+                                    relationId: relation._uid,
+                                    inEntityId: relation._in.id,
+                                    outEntityId: relation._out.id,
+                                    label: `${relation._in.name} → ${relation._out.name}`
+                                  })
+                              }
+                            ]
+                          : [])
+                      ]}
+                    />
+                  )}
+                </Table.Cell>
               </Table.Row>
             ))
           )}
         </Table.Body>
       </Table.Root>
+
+      {detail && (
+        <RelationDetailPopover
+          workspaceId={workspaceId}
+          relationId={detail.relationId}
+          x={detail.x}
+          y={detail.y}
+          onClose={() => setDetail(null)}
+        />
+      )}
+
+      <SaveViewDialog
+        open={isSavingView}
+        onClose={() => setIsSavingView(false)}
+        onSave={handleSaveView}
+        showAdminOption={permissions.canManageAdminViews}
+      />
+
+      <RelationEditDialog
+        open={editRelationId != null}
+        onClose={() => setEditRelationId(null)}
+        workspaceId={workspaceId}
+        relationId={editRelationId}
+      />
+
+      <DeleteConfirmationDialog
+        open={deleteTarget != null}
+        title="Delete relation?"
+        message={
+          <>
+            The relation <b>{deleteTarget?.label}</b> will be permanently deleted.
+          </>
+        }
+        detail="This can't be undone."
+        confirmLabel="Delete relation"
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteMutation.mutate({
+              relationId: deleteTarget.relationId,
+              inEntityId: deleteTarget.inEntityId,
+              outEntityId: deleteTarget.outEntityId
+            });
+            setDeleteTarget(null);
+          }
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };
