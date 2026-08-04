@@ -82,16 +82,35 @@ export const validateRelationEndpoints = (
 };
 
 /**
- * Relation instances get create/update/delete version history via record_version (#2687) —
- * deletion is a soft delete (relationDatabase.ts), same as entities. Approval workflow (planned
- * changes, change cases, governance) is not yet implemented for relations.
+ * Mirrors `entityRequiresApproval` (entityChangeOperations.ts): an instance-level override always
+ * wins; absent an override, the schema's policy decides. Relation schemas/instances already carry
+ * `relation_approval_policy`/`approval_policy_override` (same columns as entities), but until this
+ * fix the columns were only half-consulted — see `assertRelationMutationsSupported` below.
  */
-export const assertRelationMutationsSupported = (schema: RelationSchemaDbResult) => {
-  httpAssert.true(schema.relation_approval_policy !== 'required', {
+export const relationRequiresApproval = (
+  schema: { relation_approval_policy?: 'required' | 'disabled' },
+  relation: { approval_policy_override: 'required' | 'disabled' | null }
+) =>
+  relation.approval_policy_override === 'required' ||
+  (relation.approval_policy_override !== 'disabled' &&
+    (schema.relation_approval_policy ?? 'disabled') === 'required');
+
+/**
+ * Gates direct edits to an *existing* relation instance the same way `entityRequiresApproval`
+ * gates entity update/restore (entityMutationOperations.ts, entityVersionOrpc.ts) — create and
+ * delete are deliberately never gated here either, matching entity semantics: creating something
+ * new has no prior approved state to protect, and deleting doesn't either. Change-case/proposal
+ * support for relations (#2693) is still not implemented — today this only blocks a direct edit,
+ * it does not offer a proposal path, same as it did before this fix.
+ */
+export const assertRelationMutationsSupported = (
+  schema: RelationSchemaDbResult,
+  relation: { approval_policy_override: 'required' | 'disabled' | null }
+) => {
+  httpAssert.true(!relationRequiresApproval(schema, relation), {
     status: 409,
     statusText: 'Conflict',
-    message:
-      'This relation schema requires an approved change proposal before relation instances can be edited'
+    message: 'This relation instance requires an approved change proposal before it can be edited'
   });
 };
 

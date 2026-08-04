@@ -765,7 +765,7 @@ export const createAiChatTools = (
     if (authCtx) requireWorkspaceCapability(authCtx, 'ent.edit');
     const schema = await db.relation.getRelationSchema(workspaceId, args.schemaId);
     if (!schema) throw new Error(`Relation schema '${args.schemaId}' not found`);
-    assertRelationMutationsSupported(schema);
+    // Creating a relation instance is never gated on approval policy, mirroring entity create.
     const endpointAccess = await loadRelationEndpointAccess(args.inEntityId, args.outEntityId);
     validateRelationEndpoints(schema, endpointAccess.inEntity, endpointAccess.outEntity);
     if (authCtx) requireTypedRelationEdit(authCtx, endpointAccess.endpoints, schema.id);
@@ -803,7 +803,7 @@ export const createAiChatTools = (
     if (!oldRow) throw new Error(`Relation '${args.relationId}' not found`);
     const schema = await db.relation.getRelationSchema(workspaceId, oldRow.schema_id);
     if (!schema) throw new Error(`Relation schema '${oldRow.schema_id}' not found`);
-    assertRelationMutationsSupported(schema);
+    assertRelationMutationsSupported(schema, oldRow);
     const endpointAccess = await loadRelationEndpointAccess(
       oldRow.in_entity_id,
       oldRow.out_entity_id
@@ -842,7 +842,7 @@ export const createAiChatTools = (
     if (!row) throw new Error(`Relation '${args.relationId}' not found`);
     const schema = await db.relation.getRelationSchema(workspaceId, row.schema_id);
     if (!schema) throw new Error(`Relation schema '${row.schema_id}' not found`);
-    assertRelationMutationsSupported(schema);
+    // Deleting a relation instance is never gated on approval policy, mirroring entity delete.
     const endpointAccess = await loadRelationEndpointAccess(row.in_entity_id, row.out_entity_id);
     if (authCtx) requireTypedRelationEdit(authCtx, endpointAccess.endpoints, row.schema_id);
     await db.relation.deleteRelation(workspaceId, row.id);

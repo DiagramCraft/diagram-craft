@@ -127,7 +127,8 @@ const makeRelationRow = (overrides: Partial<RelationDbResult> = {}): RelationDbR
 const makeDb = (
   existingRow?: RelationDbResult,
   existingVersions: EntityVersionSummaryDbResult[] = [],
-  versionToRestore: EntityVersionDbResult | null = null
+  versionToRestore: EntityVersionDbResult | null = null,
+  schemaOverride: RelationSchemaDbResult = relationSchema
 ) => {
   const createEntityVersion = vi.fn(async () => ({}));
   const pruneAutosaveVersions = vi.fn(async () => {});
@@ -140,21 +141,21 @@ const makeDb = (
 
   const db = {
     relation: {
-      getRelationSchema: vi.fn(async () => relationSchema),
+      getRelationSchema: vi.fn(async () => schemaOverride),
       listRelationSchemaVersions: vi.fn(async () => [
         {
           id: 'relation-schema-version-1',
           workspace: 'ws-1',
-          schema_id: relationSchema.id,
+          schema_id: schemaOverride.id,
           version: 1,
-          name: relationSchema.name,
-          description: relationSchema.description,
-          in_schema_ids: relationSchema.in_schema_ids,
-          out_schema_ids: relationSchema.out_schema_ids,
-          fields: relationSchema.fields,
-          groups: relationSchema.groups,
-          color: relationSchema.color,
-          icon: relationSchema.icon,
+          name: schemaOverride.name,
+          description: schemaOverride.description,
+          in_schema_ids: schemaOverride.in_schema_ids,
+          out_schema_ids: schemaOverride.out_schema_ids,
+          fields: schemaOverride.fields,
+          groups: schemaOverride.groups,
+          color: schemaOverride.color,
+          icon: schemaOverride.icon,
           change_summary: {},
           created_by: null,
           created_at: now
@@ -352,5 +353,76 @@ describe('restoreWorkspaceRelationVersion', () => {
     expect(pruneAutosaveVersions).toHaveBeenCalledWith('ws-1', existing.id, 50);
     // The response reflects the version that was restored from, mirroring entityVersionOrpc.ts.
     expect(result.id).toBe('version-1');
+  });
+});
+
+describe('relation approval policy resolution', () => {
+  const requiredSchema: RelationSchemaDbResult = {
+    ...relationSchema,
+    relation_approval_policy: 'required'
+  };
+
+  it('never gates create, even under a required-approval schema (mirrors entity create)', async () => {
+    const { db } = makeDb(undefined, [], null, requiredSchema);
+
+    await expect(
+      createWorkspaceRelation(
+        db,
+        'ws-1',
+        { _schemaId: requiredSchema.id, _inEntityId: inEntity.id, _outEntityId: outEntity.id },
+        eventForAuthCtx()
+      )
+    ).resolves.toMatchObject({ _uid: 'relation-1' });
+  });
+
+  it('never gates delete, even under a required-approval schema (mirrors entity delete)', async () => {
+    const existing = makeRelationRow({ schema_id: requiredSchema.id });
+    const { db } = makeDb(existing, [], null, requiredSchema);
+
+    await expect(
+      deleteWorkspaceRelation(db, 'ws-1', existing.id, eventForAuthCtx())
+    ).resolves.toMatchObject({ success: true });
+  });
+
+  it('blocks a direct update when the schema requires approval and there is no override', async () => {
+    const existing = makeRelationRow({
+      schema_id: requiredSchema.id,
+      approval_policy_override: null
+    });
+    const { db } = makeDb(existing, [], null, requiredSchema);
+
+    await expect(
+      updateWorkspaceRelation(db, 'ws-1', existing.id, { note: 'after' }, eventForAuthCtx())
+    ).rejects.toMatchObject({ status: 409 });
+  });
+
+  it('allows a direct update when an instance override disables approval despite a required schema policy', async () => {
+    const existing = makeRelationRow({
+      schema_id: requiredSchema.id,
+      approval_policy_override: 'disabled'
+    });
+    const { db } = makeDb(existing, [], null, requiredSchema);
+
+    await expect(
+      updateWorkspaceRelation(db, 'ws-1', existing.id, { note: 'after' }, eventForAuthCtx())
+    ).resolves.toMatchObject({ _uid: existing.id });
+  });
+
+  it('blocks a direct update when an instance override requires approval despite a disabled schema policy', async () => {
+    const existing = makeRelationRow({ approval_policy_override: 'required' });
+    const { db } = makeDb(existing);
+
+    await expect(
+      updateWorkspaceRelation(db, 'ws-1', existing.id, { note: 'after' }, eventForAuthCtx())
+    ).rejects.toMatchObject({ status: 409 });
+  });
+
+  it('allows a direct update under a disabled schema policy with no override', async () => {
+    const existing = makeRelationRow({ approval_policy_override: null });
+    const { db } = makeDb(existing);
+
+    await expect(
+      updateWorkspaceRelation(db, 'ws-1', existing.id, { note: 'after' }, eventForAuthCtx())
+    ).resolves.toMatchObject({ _uid: existing.id });
   });
 });
