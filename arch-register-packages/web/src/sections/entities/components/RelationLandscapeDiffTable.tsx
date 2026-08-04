@@ -1,43 +1,41 @@
 import { Fragment, useMemo, useState } from 'react';
 import { TbChevronRight, TbChevronDown } from 'react-icons/tb';
 import type { EntityLandscapeDiff } from '@arch-register/api-types/entityContract';
-import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { EmptyState } from '../../../components/EmptyState';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { Table } from '../../../components/table/Table';
-import { mapEntityLandscapeDiffToChangeRows } from './entityTimelineHelpers';
+import { mapRelationLandscapeDiffToChangeRows } from './entityTimelineHelpers';
 import styles from './EntityLandscapeDiffTable.module.css';
 
 type SchemaInfo = { color: string; icon: string | null };
-type DiffEntity = EntityLandscapeDiff['added'][number];
+type DiffRelation = EntityLandscapeDiff['relations']['added'][number];
 
-export const EntityLandscapeDiffTable = ({
+export const RelationLandscapeDiffTable = ({
   diff,
-  schemaMap,
-  schemas,
+  relationSchemaMap,
+  relationSchemas,
   lifecycleStates,
   teams,
-  addedTitle = 'Added',
-  removedTitle = 'Removed',
-  currentValueLabel,
+  addedTitle = 'Relations Added',
+  removedTitle = 'Relations Removed',
   fromValueLabel = 'Current Value',
   toValueLabel = 'New Value'
 }: {
-  diff: EntityLandscapeDiff;
-  schemaMap: Map<string, SchemaInfo>;
-  schemas: EntitySchema[];
+  diff: EntityLandscapeDiff['relations'];
+  relationSchemaMap: Map<string, SchemaInfo>;
+  relationSchemas: RelationSchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
   addedTitle?: string;
   removedTitle?: string;
-  currentValueLabel?: string;
   fromValueLabel?: string;
   toValueLabel?: string;
 }) => {
   const [expandedIds, setExpandedIds] = useState<Set<string>>(new Set());
-  const schemaById = useMemo(() => new Map(schemas.map(s => [s.id, s])), [schemas]);
+  const schemaById = useMemo(() => new Map(relationSchemas.map(s => [s.id, s])), [relationSchemas]);
 
   const toggleExpanded = (id: string) =>
     setExpandedIds(prev => {
@@ -50,21 +48,23 @@ export const EntityLandscapeDiffTable = ({
   const { added, removed, changed } = diff;
   const hasChanges = added.length > 0 || removed.length > 0 || changed.length > 0;
 
+  if (!hasChanges) {
+    return (
+      <EmptyState
+        title="No relation changes"
+        subtitle="No relations were added, removed, or modified."
+      />
+    );
+  }
+
   return (
     <div className={styles.wrap}>
-      {!hasChanges && (
-        <EmptyState
-          title="No entity changes"
-          subtitle="No entities were added, removed, or modified."
-        />
-      )}
-
       {added.length > 0 && (
         <div className={styles.section}>
           <div className={styles.sectionTitle}>
             {addedTitle} ({added.length})
           </div>
-          <EntityList entities={added} schemaMap={schemaMap} />
+          <RelationList relations={added} relationSchemaMap={relationSchemaMap} />
         </div>
       )}
 
@@ -73,7 +73,7 @@ export const EntityLandscapeDiffTable = ({
           <div className={styles.sectionTitle}>
             {removedTitle} ({removed.length})
           </div>
-          <EntityList entities={removed} schemaMap={schemaMap} />
+          <RelationList relations={removed} relationSchemaMap={relationSchemaMap} />
         </div>
       )}
 
@@ -84,27 +84,26 @@ export const EntityLandscapeDiffTable = ({
             <Table.Head>
               <Table.Row>
                 <Table.HeaderCell />
-                <Table.HeaderCell>Entity</Table.HeaderCell>
+                <Table.HeaderCell>Type</Table.HeaderCell>
+                <Table.HeaderCell>In</Table.HeaderCell>
+                <Table.HeaderCell>Out</Table.HeaderCell>
               </Table.Row>
             </Table.Head>
             <Table.Body>
-              {changed.map(({ entity, diff: fieldDiff }) => {
-                const schemaInfo = schemaMap.get(entity._schema.id);
-                const schema = schemaById.get(entity._schema.id) ?? null;
-                const expanded = expandedIds.has(entity._uid);
-                const changeRows = mapEntityLandscapeDiffToChangeRows(
+              {changed.map(({ relation, diff: fieldDiff }) => {
+                const schemaInfo = relationSchemaMap.get(relation._schema.id);
+                const schema = schemaById.get(relation._schema.id) ?? null;
+                const expanded = expandedIds.has(relation._uid);
+                const changeRows = mapRelationLandscapeDiffToChangeRows(
                   fieldDiff,
                   schema,
                   lifecycleStates,
                   teams
                 );
 
-                const labelWidth = currentValueLabel ? '16%' : '20%';
-                const width = currentValueLabel ? '28%' : '40%';
-
                 return (
-                  <Fragment key={entity._uid}>
-                    <Table.Row onClick={() => toggleExpanded(entity._uid)}>
+                  <Fragment key={relation._uid}>
+                    <Table.Row onClick={() => toggleExpanded(relation._uid)}>
                       <Table.Cell width={24}>
                         <button
                           type="button"
@@ -119,10 +118,11 @@ export const EntityLandscapeDiffTable = ({
                           {schemaInfo && (
                             <TypeBadge color={schemaInfo.color} icon={schemaInfo.icon} size={16} />
                           )}
-                          <span className={styles.entityName}>{entity._name}</span>
-                          <span className={styles.entityPublicId}>{entity._publicId}</span>
+                          <span className={styles.entityName}>{relation._schema.name}</span>
                         </div>
                       </Table.Cell>
+                      <Table.Cell>{relation._in.name}</Table.Cell>
+                      <Table.Cell>{relation._out.name}</Table.Cell>
                     </Table.Row>
                     {expanded && (
                       <Table.DetailRow>
@@ -130,28 +130,18 @@ export const EntityLandscapeDiffTable = ({
                           <Table.Root>
                             <Table.Head>
                               <Table.Row>
-                                <Table.HeaderCell width={labelWidth}>Field</Table.HeaderCell>
-                                {currentValueLabel && (
-                                  <Table.HeaderCell width={width}>
-                                    {currentValueLabel}
-                                  </Table.HeaderCell>
-                                )}
-                                <Table.HeaderCell width={width}>{fromValueLabel}</Table.HeaderCell>
-                                <Table.HeaderCell width={width}>{toValueLabel}</Table.HeaderCell>
+                                <Table.HeaderCell width="20%">Field</Table.HeaderCell>
+                                <Table.HeaderCell width="40%">{fromValueLabel}</Table.HeaderCell>
+                                <Table.HeaderCell width="40%">{toValueLabel}</Table.HeaderCell>
                               </Table.Row>
                             </Table.Head>
                             <Table.Body>
                               {changeRows.length === 0 ? (
-                                <Table.EmptyRow colSpan={currentValueLabel ? 4 : 3}>
-                                  Restricted changes
-                                </Table.EmptyRow>
+                                <Table.EmptyRow colSpan={3}>Restricted changes</Table.EmptyRow>
                               ) : (
                                 changeRows.map((change, idx) => (
                                   <Table.Row key={idx}>
                                     <Table.Cell>{change.label}</Table.Cell>
-                                    {currentValueLabel && (
-                                      <Table.Cell>{change.current ?? '—'}</Table.Cell>
-                                    )}
                                     <Table.Cell>{change.from}</Table.Cell>
                                     <Table.Cell>{change.to}</Table.Cell>
                                   </Table.Row>
@@ -173,33 +163,36 @@ export const EntityLandscapeDiffTable = ({
   );
 };
 
-const EntityList = ({
-  entities,
-  schemaMap
+const RelationList = ({
+  relations,
+  relationSchemaMap
 }: {
-  entities: DiffEntity[];
-  schemaMap: Map<string, SchemaInfo>;
+  relations: DiffRelation[];
+  relationSchemaMap: Map<string, SchemaInfo>;
 }) => (
   <Table.Root>
     <Table.Head>
       <Table.Row>
-        <Table.HeaderCell>Entity</Table.HeaderCell>
+        <Table.HeaderCell>Type</Table.HeaderCell>
+        <Table.HeaderCell>In</Table.HeaderCell>
+        <Table.HeaderCell>Out</Table.HeaderCell>
       </Table.Row>
     </Table.Head>
     <Table.Body>
-      {entities.map(entity => {
-        const schemaInfo = schemaMap.get(entity._schema.id);
+      {relations.map(relation => {
+        const schemaInfo = relationSchemaMap.get(relation._schema.id);
         return (
-          <Table.Row key={entity._uid}>
+          <Table.Row key={relation._uid}>
             <Table.Cell>
               <div className={styles.entityRow}>
                 {schemaInfo && (
                   <TypeBadge color={schemaInfo.color} icon={schemaInfo.icon} size={16} />
                 )}
-                <span className={styles.entityName}>{entity._name}</span>
-                <span className={styles.entityPublicId}>{entity._publicId}</span>
+                <span className={styles.entityName}>{relation._schema.name}</span>
               </div>
             </Table.Cell>
+            <Table.Cell>{relation._in.name}</Table.Cell>
+            <Table.Cell>{relation._out.name}</Table.Cell>
           </Table.Row>
         );
       })}

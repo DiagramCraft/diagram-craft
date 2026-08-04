@@ -9,8 +9,10 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { EmptyState } from '../../components/EmptyState';
 import { useChangeCasesByProject } from '../../hooks/useChangeCases';
 import { useEntityLandscapeDiff } from '../../hooks/useEntities';
+import { useRelationSchemas } from '../../hooks/useRelationSchemas';
 import { useMilestones } from '../../hooks/useMilestones';
 import { EntityLandscapeDiffTable } from '../entities/components/EntityLandscapeDiffTable';
+import { RelationLandscapeDiffTable } from '../entities/components/RelationLandscapeDiffTable';
 import { getProjectScenarioDate, toMilestonesById } from '../entities/components/snapshotDisplay';
 import { formatDate } from '../../utils/dateFormat';
 import styles from './ProjectChangesSummaryTab.module.css';
@@ -45,6 +47,17 @@ export const ProjectChangesSummaryTab = ({
   includeOverdueChanges: boolean;
   onIncludeOverdueChangesChange: (include: boolean) => void;
 }) => {
+  const { data: relationSchemas = [] } = useRelationSchemas(workspaceId, true);
+  const relationSchemaMap = useMemo(
+    () =>
+      new Map(
+        relationSchemas.map(schema => [
+          schema.id,
+          { color: schema.color ?? '#888', icon: schema.icon }
+        ])
+      ),
+    [relationSchemas]
+  );
   const [comparisonProjectId, setComparisonProjectId] = useState<string | null>(null);
   const comparisonProject = projects.find(
     projectOption => projectOption.id === comparisonProjectId
@@ -174,6 +187,17 @@ export const ProjectChangesSummaryTab = ({
           fromValueLabel={project.name}
           toValueLabel={comparisonProject.name}
         />
+        <RelationLandscapeDiffTable
+          diff={comparisonDiff.relations}
+          relationSchemaMap={relationSchemaMap}
+          relationSchemas={relationSchemas}
+          lifecycleStates={lifecycleStates}
+          teams={teams}
+          addedTitle={`Relations only in ${comparisonProject.name}`}
+          removedTitle={`Relations only in ${project.name}`}
+          fromValueLabel={project.name}
+          toValueLabel={comparisonProject.name}
+        />
       </div>
     );
   }
@@ -201,6 +225,16 @@ export const ProjectChangesSummaryTab = ({
         <div className={styles.headerCounts}>
           {diff.added.length} added &middot; {diff.removed.length} removed &middot;{' '}
           {diff.changed.length} changed
+          {(diff.relations.added.length > 0 ||
+            diff.relations.removed.length > 0 ||
+            diff.relations.changed.length > 0) && (
+            <>
+              {' '}
+              &middot; {diff.relations.added.length} relations added &middot;{' '}
+              {diff.relations.removed.length} relations removed &middot;{' '}
+              {diff.relations.changed.length} relations changed
+            </>
+          )}
         </div>
         <label className={styles.overdueToggle}>
           <Checkbox
@@ -216,6 +250,14 @@ export const ProjectChangesSummaryTab = ({
         diff={diff}
         schemaMap={schemaMap}
         schemas={schemas}
+        lifecycleStates={lifecycleStates}
+        teams={teams}
+      />
+
+      <RelationLandscapeDiffTable
+        diff={diff.relations}
+        relationSchemaMap={relationSchemaMap}
+        relationSchemas={relationSchemas}
         lifecycleStates={lifecycleStates}
         teams={teams}
       />
