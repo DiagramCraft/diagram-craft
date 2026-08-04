@@ -16,7 +16,10 @@ import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 export const createRelationVersionSchemaResolver = (db: DatabaseAdapter, workspace: string) => {
   const lookups = new Map<
     string,
-    Promise<{ schema: RelationSchemaDbResult | null; schemaVersions: RelationSchemaVersionDbResult[] }>
+    Promise<{
+      schema: RelationSchemaDbResult | null;
+      schemaVersions: RelationSchemaVersionDbResult[];
+    }>
   >();
 
   const getSchemaLookup = (schemaId: string) => {

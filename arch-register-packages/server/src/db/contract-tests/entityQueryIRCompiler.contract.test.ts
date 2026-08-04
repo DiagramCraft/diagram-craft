@@ -1651,7 +1651,15 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       };
       const validation = validateEntityQueryIR(query, schemas, null, relationSchemas);
       expect(validation.ok, JSON.stringify(validation)).toBe(true);
-      const compiled = compileEntityQueryIR(query, schemas, driver, workspace, {}, null, relationSchemas);
+      const compiled = compileEntityQueryIR(
+        query,
+        schemas,
+        driver,
+        workspace,
+        {},
+        null,
+        relationSchemas
+      );
       const rows = await db.catalog.runCompiledEntityQuery(compiled.sql, compiled.params);
       return rows.map(row => row.id);
     };
