@@ -11421,6 +11421,1389 @@
         }
       }
     },
+    "/{workspace}/relations/query": {
+      "get": {
+        "operationId": "relations.query",
+        "summary": "Query relation instances",
+        "description": "Lists relation instances via the structured EntityQuery IR, rooted at a relation schema — supports filtering, sorting, search-free-field predicates, and projections, unlike the simpler schema/endpoint-only filters on GET /{workspace}/relations.",
+        "tags": [
+          "Relations",
+          "Relations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "relationQuery",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "object",
+              "properties": {
+                "root_kind": {
+                  "enum": [
+                    "entity",
+                    "relation"
+                  ],
+                  "type": "string"
+                },
+                "schemaId": {
+                  "type": "string"
+                },
+                "assessmentId": {
+                  "type": "string"
+                },
+                "projectId": {
+                  "type": "string"
+                },
+                "projectScope": {
+                  "enum": [
+                    "project",
+                    "all"
+                  ],
+                  "type": "string",
+                  "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                },
+                "asOf": {
+                  "type": "string"
+                },
+                "includePlannedChanges": {
+                  "type": "boolean"
+                },
+                "projections": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "path": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "forward"
+                                },
+                                "fieldId": {
+                                  "type": "string"
+                                },
+                                "filter": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "and"
+                                        },
+                                        "children": {
+                                          "type": "array",
+                                          "items": {}
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "children"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "or"
+                                        },
+                                        "children": {
+                                          "type": "array",
+                                          "items": {}
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "children"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "not"
+                                        },
+                                        "child": {}
+                                      },
+                                      "required": [
+                                        "kind"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "predicate"
+                                        },
+                                        "path": {
+                                          "type": "array",
+                                          "items": {}
+                                        },
+                                        "fieldId": {
+                                          "type": "string"
+                                        },
+                                        "op": {
+                                          "enum": [
+                                            "equals",
+                                            "not_equals",
+                                            "contains",
+                                            "starts_with",
+                                            "ends_with",
+                                            "empty",
+                                            "not_empty",
+                                            "before",
+                                            "after",
+                                            "on",
+                                            "gt",
+                                            "lt",
+                                            "gte",
+                                            "lte"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "value": {}
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "path",
+                                        "fieldId",
+                                        "op"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationExists"
+                                        },
+                                        "path": {
+                                          "type": "array",
+                                          "items": {}
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "path"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "fieldId"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "backward"
+                                },
+                                "fieldId": {
+                                  "type": "string"
+                                },
+                                "ownerSchemaId": {
+                                  "type": "string"
+                                },
+                                "filter": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "and"
+                                        },
+                                        "children": {
+                                          "type": "array",
+                                          "items": {}
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "children"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "or"
+                                        },
+                                        "children": {
+                                          "type": "array",
+                                          "items": {}
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "children"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "not"
+                                        },
+                                        "child": {}
+                                      },
+                                      "required": [
+                                        "kind"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "predicate"
+                                        },
+                                        "path": {
+                                          "type": "array",
+                                          "items": {}
+                                        },
+                                        "fieldId": {
+                                          "type": "string"
+                                        },
+                                        "op": {
+                                          "enum": [
+                                            "equals",
+                                            "not_equals",
+                                            "contains",
+                                            "starts_with",
+                                            "ends_with",
+                                            "empty",
+                                            "not_empty",
+                                            "before",
+                                            "after",
+                                            "on",
+                                            "gt",
+                                            "lt",
+                                            "gte",
+                                            "lte"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "value": {}
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "path",
+                                        "fieldId",
+                                        "op"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationExists"
+                                        },
+                                        "path": {
+                                          "type": "array",
+                                          "items": {}
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "path"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "fieldId",
+                                "ownerSchemaId"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "typedRelation"
+                                },
+                                "fieldId": {
+                                  "type": "string"
+                                },
+                                "relationSchemaId": {
+                                  "type": "string"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "in",
+                                    "out"
+                                  ],
+                                  "type": "string"
+                                },
+                                "ownerSchemaIds": {
+                                  "type": "array",
+                                  "minItems": 1,
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "filter": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "and"
+                                        },
+                                        "children": {
+                                          "type": "array",
+                                          "items": {}
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "children"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "or"
+                                        },
+                                        "children": {
+                                          "type": "array",
+                                          "items": {}
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "children"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "not"
+                                        },
+                                        "child": {}
+                                      },
+                                      "required": [
+                                        "kind"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "freeText"
+                                        },
+                                        "value": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "value"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "predicate"
+                                        },
+                                        "path": {
+                                          "type": "array",
+                                          "items": {}
+                                        },
+                                        "fieldId": {
+                                          "type": "string"
+                                        },
+                                        "op": {
+                                          "enum": [
+                                            "equals",
+                                            "not_equals",
+                                            "contains",
+                                            "starts_with",
+                                            "ends_with",
+                                            "empty",
+                                            "not_empty",
+                                            "before",
+                                            "after",
+                                            "on",
+                                            "gt",
+                                            "lt",
+                                            "gte",
+                                            "lte"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "value": {}
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "path",
+                                        "fieldId",
+                                        "op"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "relationExists"
+                                        },
+                                        "path": {
+                                          "type": "array",
+                                          "items": {}
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "path"
+                                      ]
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "fieldId",
+                                "relationSchemaId",
+                                "direction",
+                                "ownerSchemaIds"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "endpoint"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "in",
+                                    "out"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "direction"
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      "fieldId": {
+                        "type": "string"
+                      },
+                      "source": {
+                        "enum": [
+                          "entity",
+                          "relation"
+                        ],
+                        "type": "string"
+                      },
+                      "alias": {
+                        "type": "string",
+                        "minLength": 1
+                      }
+                    },
+                    "required": [
+                      "path",
+                      "fieldId"
+                    ]
+                  }
+                },
+                "root": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "and"
+                        },
+                        "children": {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "and"
+                                  },
+                                  "children": {
+                                    "type": "array",
+                                    "items": {}
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "children"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "or"
+                                  },
+                                  "children": {
+                                    "type": "array",
+                                    "items": {}
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "children"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "not"
+                                  },
+                                  "child": {}
+                                },
+                                "required": [
+                                  "kind"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "freeText"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "value"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "predicate"
+                                  },
+                                  "path": {
+                                    "type": "array",
+                                    "items": {}
+                                  },
+                                  "fieldId": {
+                                    "type": "string"
+                                  },
+                                  "op": {
+                                    "enum": [
+                                      "equals",
+                                      "not_equals",
+                                      "contains",
+                                      "starts_with",
+                                      "ends_with",
+                                      "empty",
+                                      "not_empty",
+                                      "before",
+                                      "after",
+                                      "on",
+                                      "gt",
+                                      "lt",
+                                      "gte",
+                                      "lte"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "value": {}
+                                },
+                                "required": [
+                                  "kind",
+                                  "path",
+                                  "fieldId",
+                                  "op"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationExists"
+                                  },
+                                  "path": {
+                                    "type": "array",
+                                    "items": {}
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "path"
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "children"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "or"
+                        },
+                        "children": {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "and"
+                                  },
+                                  "children": {
+                                    "type": "array",
+                                    "items": {}
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "children"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "or"
+                                  },
+                                  "children": {
+                                    "type": "array",
+                                    "items": {}
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "children"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "not"
+                                  },
+                                  "child": {}
+                                },
+                                "required": [
+                                  "kind"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "freeText"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "value"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "predicate"
+                                  },
+                                  "path": {
+                                    "type": "array",
+                                    "items": {}
+                                  },
+                                  "fieldId": {
+                                    "type": "string"
+                                  },
+                                  "op": {
+                                    "enum": [
+                                      "equals",
+                                      "not_equals",
+                                      "contains",
+                                      "starts_with",
+                                      "ends_with",
+                                      "empty",
+                                      "not_empty",
+                                      "before",
+                                      "after",
+                                      "on",
+                                      "gt",
+                                      "lt",
+                                      "gte",
+                                      "lte"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "value": {}
+                                },
+                                "required": [
+                                  "kind",
+                                  "path",
+                                  "fieldId",
+                                  "op"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationExists"
+                                  },
+                                  "path": {
+                                    "type": "array",
+                                    "items": {}
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "path"
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "children"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "not"
+                        },
+                        "child": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "and"
+                                },
+                                "children": {
+                                  "type": "array",
+                                  "items": {}
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "children"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "or"
+                                },
+                                "children": {
+                                  "type": "array",
+                                  "items": {}
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "children"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "not"
+                                },
+                                "child": {}
+                              },
+                              "required": [
+                                "kind"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "freeText"
+                                },
+                                "value": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "value"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "predicate"
+                                },
+                                "path": {
+                                  "type": "array",
+                                  "items": {}
+                                },
+                                "fieldId": {
+                                  "type": "string"
+                                },
+                                "op": {
+                                  "enum": [
+                                    "equals",
+                                    "not_equals",
+                                    "contains",
+                                    "starts_with",
+                                    "ends_with",
+                                    "empty",
+                                    "not_empty",
+                                    "before",
+                                    "after",
+                                    "on",
+                                    "gt",
+                                    "lt",
+                                    "gte",
+                                    "lte"
+                                  ],
+                                  "type": "string"
+                                },
+                                "value": {}
+                              },
+                              "required": [
+                                "kind",
+                                "path",
+                                "fieldId",
+                                "op"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "relationExists"
+                                },
+                                "path": {
+                                  "type": "array",
+                                  "items": {}
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "path"
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "child"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "freeText"
+                        },
+                        "value": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "value"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "predicate"
+                        },
+                        "path": {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "forward"
+                                  },
+                                  "fieldId": {
+                                    "type": "string"
+                                  },
+                                  "filter": {}
+                                },
+                                "required": [
+                                  "kind",
+                                  "fieldId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "backward"
+                                  },
+                                  "fieldId": {
+                                    "type": "string"
+                                  },
+                                  "ownerSchemaId": {
+                                    "type": "string"
+                                  },
+                                  "filter": {}
+                                },
+                                "required": [
+                                  "kind",
+                                  "fieldId",
+                                  "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "typedRelation"
+                                  },
+                                  "fieldId": {
+                                    "type": "string"
+                                  },
+                                  "relationSchemaId": {
+                                    "type": "string"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "in",
+                                      "out"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "ownerSchemaIds": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "filter": {}
+                                },
+                                "required": [
+                                  "kind",
+                                  "fieldId",
+                                  "relationSchemaId",
+                                  "direction",
+                                  "ownerSchemaIds"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "endpoint"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "in",
+                                      "out"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
+                                ]
+                              }
+                            ]
+                          }
+                        },
+                        "fieldId": {
+                          "type": "string"
+                        },
+                        "op": {
+                          "enum": [
+                            "equals",
+                            "not_equals",
+                            "contains",
+                            "starts_with",
+                            "ends_with",
+                            "empty",
+                            "not_empty",
+                            "before",
+                            "after",
+                            "on",
+                            "gt",
+                            "lt",
+                            "gte",
+                            "lte"
+                          ],
+                          "type": "string"
+                        },
+                        "value": {}
+                      },
+                      "required": [
+                        "kind",
+                        "path",
+                        "fieldId",
+                        "op"
+                      ]
+                    },
+                    {
+                      "type": "object",
+                      "properties": {
+                        "kind": {
+                          "const": "relationExists"
+                        },
+                        "path": {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "forward"
+                                  },
+                                  "fieldId": {
+                                    "type": "string"
+                                  },
+                                  "filter": {}
+                                },
+                                "required": [
+                                  "kind",
+                                  "fieldId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "backward"
+                                  },
+                                  "fieldId": {
+                                    "type": "string"
+                                  },
+                                  "ownerSchemaId": {
+                                    "type": "string"
+                                  },
+                                  "filter": {}
+                                },
+                                "required": [
+                                  "kind",
+                                  "fieldId",
+                                  "ownerSchemaId"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "typedRelation"
+                                  },
+                                  "fieldId": {
+                                    "type": "string"
+                                  },
+                                  "relationSchemaId": {
+                                    "type": "string"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "in",
+                                      "out"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "ownerSchemaIds": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "filter": {}
+                                },
+                                "required": [
+                                  "kind",
+                                  "fieldId",
+                                  "relationSchemaId",
+                                  "direction",
+                                  "ownerSchemaIds"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "endpoint"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "in",
+                                      "out"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
+                                ]
+                              }
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "kind",
+                        "path"
+                      ]
+                    }
+                  ]
+                }
+              },
+              "required": [
+                "root"
+              ],
+              "description": "Structured EntityQuery IR rooted at a relation schema, serialized as JSON when sent as a GET query parameter"
+            },
+            "style": "deepObject",
+            "explode": true,
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "view",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "enum": [
+                "summary",
+                "full"
+              ],
+              "type": "string",
+              "description": "Response detail level"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": -9007199254740991,
+              "maximum": 9007199254740991,
+              "exclusiveMinimum": 0,
+              "description": "Maximum number of relations to return"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "required": false,
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "Number of relations to skip for pagination"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "canView": {
+                            "type": "boolean",
+                            "description": "Whether the user can view this relation instance"
+                          },
+                          "canEdit": {
+                            "type": "boolean",
+                            "description": "Whether the user can edit this relation instance"
+                          },
+                          "canDelete": {
+                            "type": "boolean",
+                            "description": "Whether the user can delete this relation instance"
+                          },
+                          "_uid": {
+                            "type": "string",
+                            "description": "Unique relation instance identifier"
+                          },
+                          "_schema": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ],
+                            "description": "Relation schema reference"
+                          },
+                          "_in": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ],
+                            "description": "The \"in\" endpoint entity"
+                          },
+                          "_out": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name"
+                            ],
+                            "description": "The \"out\" endpoint entity"
+                          },
+                          "_version": {
+                            "type": "integer",
+                            "minimum": 1,
+                            "maximum": 9007199254740991,
+                            "description": "Optimistic concurrency version"
+                          },
+                          "_createdAt": {
+                            "type": "string",
+                            "description": "ISO 8601 creation timestamp"
+                          },
+                          "_updatedAt": {
+                            "type": "string",
+                            "description": "ISO 8601 last update timestamp"
+                          }
+                        },
+                        "required": [
+                          "canView",
+                          "canEdit",
+                          "canDelete",
+                          "_uid",
+                          "_schema",
+                          "_in",
+                          "_out",
+                          "_version",
+                          "_createdAt",
+                          "_updatedAt"
+                        ],
+                        "additionalProperties": {},
+                        "description": "Complete relation instance record with schema-specific fields"
+                      },
+                      "description": "Relation instances on the requested page"
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Total number of relation instances matching the filters"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "total"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/relations/{id}": {
       "get": {
         "operationId": "relations.get",
@@ -12048,6 +13431,13 @@
                         "query": {
                           "type": "object",
                           "properties": {
+                            "root_kind": {
+                              "enum": [
+                                "entity",
+                                "relation"
+                              ],
+                              "type": "string"
+                            },
                             "schemaId": {
                               "type": "string"
                             },
@@ -12591,6 +13981,25 @@
                                             "relationSchemaId",
                                             "direction",
                                             "ownerSchemaIds"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "endpoint"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "in",
+                                                "out"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
                                           ]
                                         }
                                       ]
@@ -13201,6 +14610,25 @@
                                               "direction",
                                               "ownerSchemaIds"
                                             ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "endpoint"
+                                              },
+                                              "direction": {
+                                                "enum": [
+                                                  "in",
+                                                  "out"
+                                                ],
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "direction"
+                                            ]
                                           }
                                         ]
                                       }
@@ -13317,6 +14745,25 @@
                                               "direction",
                                               "ownerSchemaIds"
                                             ]
+                                          },
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "kind": {
+                                                "const": "endpoint"
+                                              },
+                                              "direction": {
+                                                "enum": [
+                                                  "in",
+                                                  "out"
+                                                ],
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "kind",
+                                              "direction"
+                                            ]
                                           }
                                         ]
                                       }
@@ -13411,6 +14858,13 @@
                   "query": {
                     "type": "object",
                     "properties": {
+                      "root_kind": {
+                        "enum": [
+                          "entity",
+                          "relation"
+                        ],
+                        "type": "string"
+                      },
                       "schemaId": {
                         "type": "string"
                       },
@@ -13870,6 +15324,25 @@
                                       "relationSchemaId",
                                       "direction",
                                       "ownerSchemaIds"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "const": "endpoint"
+                                      },
+                                      "direction": {
+                                        "enum": [
+                                          "in",
+                                          "out"
+                                        ],
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "direction"
                                     ]
                                   }
                                 ]
@@ -14396,6 +15869,25 @@
                                         "direction",
                                         "ownerSchemaIds"
                                       ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "endpoint"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "in",
+                                            "out"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
+                                      ]
                                     }
                                   ]
                                 }
@@ -14511,6 +16003,25 @@
                                         "relationSchemaId",
                                         "direction",
                                         "ownerSchemaIds"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "endpoint"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "in",
+                                            "out"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -14686,6 +16197,13 @@
             "schema": {
               "type": "object",
               "properties": {
+                "root_kind": {
+                  "enum": [
+                    "entity",
+                    "relation"
+                  ],
+                  "type": "string"
+                },
                 "schemaId": {
                   "type": "string"
                 },
@@ -15145,6 +16663,25 @@
                                 "relationSchemaId",
                                 "direction",
                                 "ownerSchemaIds"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "endpoint"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "in",
+                                    "out"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "direction"
                               ]
                             }
                           ]
@@ -15671,6 +17208,25 @@
                                   "direction",
                                   "ownerSchemaIds"
                                 ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "endpoint"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "in",
+                                      "out"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
+                                ]
                               }
                             ]
                           }
@@ -15786,6 +17342,25 @@
                                   "relationSchemaId",
                                   "direction",
                                   "ownerSchemaIds"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "endpoint"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "in",
+                                      "out"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -17249,6 +18824,13 @@
             "schema": {
               "type": "object",
               "properties": {
+                "root_kind": {
+                  "enum": [
+                    "entity",
+                    "relation"
+                  ],
+                  "type": "string"
+                },
                 "schemaId": {
                   "type": "string"
                 },
@@ -17708,6 +19290,25 @@
                                 "relationSchemaId",
                                 "direction",
                                 "ownerSchemaIds"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "endpoint"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "in",
+                                    "out"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "direction"
                               ]
                             }
                           ]
@@ -18234,6 +19835,25 @@
                                   "direction",
                                   "ownerSchemaIds"
                                 ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "endpoint"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "in",
+                                      "out"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
+                                ]
                               }
                             ]
                           }
@@ -18349,6 +19969,25 @@
                                   "relationSchemaId",
                                   "direction",
                                   "ownerSchemaIds"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "endpoint"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "in",
+                                      "out"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -21029,6 +22668,13 @@
             "schema": {
               "type": "object",
               "properties": {
+                "root_kind": {
+                  "enum": [
+                    "entity",
+                    "relation"
+                  ],
+                  "type": "string"
+                },
                 "schemaId": {
                   "type": "string"
                 },
@@ -21488,6 +23134,25 @@
                                 "relationSchemaId",
                                 "direction",
                                 "ownerSchemaIds"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "endpoint"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "in",
+                                    "out"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "direction"
                               ]
                             }
                           ]
@@ -22014,6 +23679,25 @@
                                   "direction",
                                   "ownerSchemaIds"
                                 ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "endpoint"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "in",
+                                      "out"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
+                                ]
                               }
                             ]
                           }
@@ -22129,6 +23813,25 @@
                                   "relationSchemaId",
                                   "direction",
                                   "ownerSchemaIds"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "endpoint"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "in",
+                                      "out"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -26706,6 +28409,13 @@
             "schema": {
               "type": "object",
               "properties": {
+                "root_kind": {
+                  "enum": [
+                    "entity",
+                    "relation"
+                  ],
+                  "type": "string"
+                },
                 "schemaId": {
                   "type": "string"
                 },
@@ -27165,6 +28875,25 @@
                                 "relationSchemaId",
                                 "direction",
                                 "ownerSchemaIds"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "endpoint"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "in",
+                                    "out"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "direction"
                               ]
                             }
                           ]
@@ -27691,6 +29420,25 @@
                                   "direction",
                                   "ownerSchemaIds"
                                 ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "endpoint"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "in",
+                                      "out"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
+                                ]
                               }
                             ]
                           }
@@ -27806,6 +29554,25 @@
                                   "relationSchemaId",
                                   "direction",
                                   "ownerSchemaIds"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "endpoint"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "in",
+                                      "out"
+                                    ],
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "direction"
                                 ]
                               }
                             ]
@@ -55833,6 +57600,13 @@
                       "filters": {
                         "type": "object",
                         "properties": {
+                          "root_kind": {
+                            "enum": [
+                              "entity",
+                              "relation"
+                            ],
+                            "type": "string"
+                          },
                           "schemaId": {
                             "type": "string"
                           },
@@ -56376,6 +58150,25 @@
                                           "relationSchemaId",
                                           "direction",
                                           "ownerSchemaIds"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "endpoint"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "in",
+                                              "out"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
                                         ]
                                       }
                                     ]
@@ -56986,6 +58779,25 @@
                                             "direction",
                                             "ownerSchemaIds"
                                           ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "endpoint"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "in",
+                                                "out"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
+                                          ]
                                         }
                                       ]
                                     }
@@ -57101,6 +58913,25 @@
                                             "relationSchemaId",
                                             "direction",
                                             "ownerSchemaIds"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "endpoint"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "in",
+                                                "out"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
                                           ]
                                         }
                                       ]
@@ -57666,6 +59497,13 @@
                   "filters": {
                     "type": "object",
                     "properties": {
+                      "root_kind": {
+                        "enum": [
+                          "entity",
+                          "relation"
+                        ],
+                        "type": "string"
+                      },
                       "schemaId": {
                         "type": "string"
                       },
@@ -58125,6 +59963,25 @@
                                       "relationSchemaId",
                                       "direction",
                                       "ownerSchemaIds"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "const": "endpoint"
+                                      },
+                                      "direction": {
+                                        "enum": [
+                                          "in",
+                                          "out"
+                                        ],
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "direction"
                                     ]
                                   }
                                 ]
@@ -58651,6 +60508,25 @@
                                         "direction",
                                         "ownerSchemaIds"
                                       ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "endpoint"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "in",
+                                            "out"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
+                                      ]
                                     }
                                   ]
                                 }
@@ -58766,6 +60642,25 @@
                                         "relationSchemaId",
                                         "direction",
                                         "ownerSchemaIds"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "endpoint"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "in",
+                                            "out"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -59301,6 +61196,13 @@
                     "filters": {
                       "type": "object",
                       "properties": {
+                        "root_kind": {
+                          "enum": [
+                            "entity",
+                            "relation"
+                          ],
+                          "type": "string"
+                        },
                         "schemaId": {
                           "type": "string"
                         },
@@ -59844,6 +61746,25 @@
                                         "relationSchemaId",
                                         "direction",
                                         "ownerSchemaIds"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "endpoint"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "in",
+                                            "out"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -60454,6 +62375,25 @@
                                           "direction",
                                           "ownerSchemaIds"
                                         ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "endpoint"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "in",
+                                              "out"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
+                                        ]
                                       }
                                     ]
                                   }
@@ -60569,6 +62509,25 @@
                                           "relationSchemaId",
                                           "direction",
                                           "ownerSchemaIds"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "endpoint"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "in",
+                                              "out"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
                                         ]
                                       }
                                     ]
@@ -61125,6 +63084,13 @@
                   "filters": {
                     "type": "object",
                     "properties": {
+                      "root_kind": {
+                        "enum": [
+                          "entity",
+                          "relation"
+                        ],
+                        "type": "string"
+                      },
                       "schemaId": {
                         "type": "string"
                       },
@@ -61584,6 +63550,25 @@
                                       "relationSchemaId",
                                       "direction",
                                       "ownerSchemaIds"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "const": "endpoint"
+                                      },
+                                      "direction": {
+                                        "enum": [
+                                          "in",
+                                          "out"
+                                        ],
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "direction"
                                     ]
                                   }
                                 ]
@@ -62110,6 +64095,25 @@
                                         "direction",
                                         "ownerSchemaIds"
                                       ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "endpoint"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "in",
+                                            "out"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
+                                      ]
                                     }
                                   ]
                                 }
@@ -62225,6 +64229,25 @@
                                         "relationSchemaId",
                                         "direction",
                                         "ownerSchemaIds"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "endpoint"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "in",
+                                            "out"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -62755,6 +64778,13 @@
                     "filters": {
                       "type": "object",
                       "properties": {
+                        "root_kind": {
+                          "enum": [
+                            "entity",
+                            "relation"
+                          ],
+                          "type": "string"
+                        },
                         "schemaId": {
                           "type": "string"
                         },
@@ -63298,6 +65328,25 @@
                                         "relationSchemaId",
                                         "direction",
                                         "ownerSchemaIds"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "endpoint"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "in",
+                                            "out"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
@@ -63908,6 +65957,25 @@
                                           "direction",
                                           "ownerSchemaIds"
                                         ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "endpoint"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "in",
+                                              "out"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
+                                        ]
                                       }
                                     ]
                                   }
@@ -64023,6 +66091,25 @@
                                           "relationSchemaId",
                                           "direction",
                                           "ownerSchemaIds"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "endpoint"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "in",
+                                              "out"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
                                         ]
                                       }
                                     ]
@@ -92088,6 +94175,13 @@
                   "entityQuery": {
                     "type": "object",
                     "properties": {
+                      "root_kind": {
+                        "enum": [
+                          "entity",
+                          "relation"
+                        ],
+                        "type": "string"
+                      },
                       "schemaId": {
                         "type": "string"
                       },
@@ -92547,6 +94641,25 @@
                                       "relationSchemaId",
                                       "direction",
                                       "ownerSchemaIds"
+                                    ]
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "kind": {
+                                        "const": "endpoint"
+                                      },
+                                      "direction": {
+                                        "enum": [
+                                          "in",
+                                          "out"
+                                        ],
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "kind",
+                                      "direction"
                                     ]
                                   }
                                 ]
@@ -93073,6 +95186,25 @@
                                         "direction",
                                         "ownerSchemaIds"
                                       ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "endpoint"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "in",
+                                            "out"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
+                                      ]
                                     }
                                   ]
                                 }
@@ -93188,6 +95320,25 @@
                                         "relationSchemaId",
                                         "direction",
                                         "ownerSchemaIds"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "kind": {
+                                          "const": "endpoint"
+                                        },
+                                        "direction": {
+                                          "enum": [
+                                            "in",
+                                            "out"
+                                          ],
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "kind",
+                                        "direction"
                                       ]
                                     }
                                   ]
