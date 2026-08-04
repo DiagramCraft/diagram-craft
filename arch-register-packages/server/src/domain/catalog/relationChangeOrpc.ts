@@ -15,9 +15,7 @@ import {
 
 type ORPCContext = { db: DatabaseAdapter; event: AuthenticatedEvent };
 
-const router = implement(relationChangeContract)
-  .$context<ORPCContext>()
-  .use(orpcErrorMiddleware);
+const router = implement(relationChangeContract).$context<ORPCContext>().use(orpcErrorMiddleware);
 
 export const createRelationChangeORPCRouter = () =>
   router.router({

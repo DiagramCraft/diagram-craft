@@ -115,7 +115,8 @@ export const relationChangeContract = oc.tag('Relation change approval').router(
         path: '/{workspace}/relations/{id}/change-approvals/{approvalId}/withdraw',
         inputStructure: 'detailed',
         summary: 'Withdraw a relation change approval request',
-        description: 'Withdraws a not-yet-decided relation change proposal and cancels its governance case.',
+        description:
+          'Withdraws a not-yet-decided relation change proposal and cancels its governance case.',
         tags: ['Relation change approval']
       })
       .input(

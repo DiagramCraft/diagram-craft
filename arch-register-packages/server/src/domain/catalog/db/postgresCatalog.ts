@@ -650,9 +650,23 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     if (entityIds != null && entityIds.length === 0) return [];
     const rows = await this.sql<DatabaseRow[]>`
       SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name FROM record_version v
+      JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'entity'
       LEFT JOIN users u ON u.id = v.created_by
       WHERE v.workspace = ${workspace} AND v.created_at <= ${asOf}
       ${entityIds != null ? this.sql`AND v.record_id = ANY(${entityIds})` : this.sql``}
+      ORDER BY v.record_id, v.created_at ASC
+    `;
+    return mapDatabaseRows(rows, catalogMappers.entityVersion);
+  }
+
+  async listRelationVersionsAsOf(workspace: string, asOf: Date, relationIds?: string[]) {
+    if (relationIds != null && relationIds.length === 0) return [];
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name FROM record_version v
+      JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'relation'
+      LEFT JOIN users u ON u.id = v.created_by
+      WHERE v.workspace = ${workspace} AND v.created_at <= ${asOf}
+      ${relationIds != null ? this.sql`AND v.record_id = ANY(${relationIds})` : this.sql``}
       ORDER BY v.record_id, v.created_at ASC
     `;
     return mapDatabaseRows(rows, catalogMappers.entityVersion);
@@ -690,6 +704,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
              r.created_at, r.created_by, u.display_name AS created_by_name,
              m.proposed_state
       FROM record_change_case_record_version m
+      JOIN catalog_record cr ON cr.id = m.record_id AND cr.kind = 'entity'
       JOIN entity_change_case_revision r ON r.id = m.revision_id
       JOIN entity_change_case c ON c.id = r.case_id
       LEFT JOIN users u ON u.id = r.created_by
@@ -703,11 +718,40 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     return mapDatabaseRows(rows, catalogMappers.plannedEntityChange);
   }
 
+  async listPlannedRelationChangesAsOf(workspace: string, asOf: Date, relationIds?: string[]) {
+    if (relationIds != null && relationIds.length === 0) return [];
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT m.id, c.workspace, m.record_id AS entity_id,
+             c.id AS case_id, r.id AS case_revision_id,
+             c.project_id,
+             CASE WHEN c.milestone_id IS NULL THEN c.effective_date ELSE NULL END AS target_date,
+             c.milestone_id,
+             COALESCE(r.message, c.description) AS commit_message,
+             r.created_at, r.created_by, u.display_name AS created_by_name,
+             m.proposed_state
+      FROM record_change_case_record_version m
+      JOIN catalog_record cr ON cr.id = m.record_id AND cr.kind = 'relation'
+      JOIN entity_change_case_revision r ON r.id = m.revision_id
+      JOIN entity_change_case c ON c.id = r.case_id
+      LEFT JOIN users u ON u.id = r.created_by
+      WHERE c.workspace = ${workspace}
+        AND r.status IN ('draft', 'submitted', 'changes_requested')
+        AND r.created_at <= ${asOf}
+        AND (c.milestone_id IS NOT NULL OR c.effective_date IS NULL OR c.effective_date <= ${asOf.toISOString().slice(0, 10)})
+        ${relationIds != null ? this.sql`AND m.record_id = ANY(${relationIds})` : this.sql``}
+      ORDER BY m.record_id, r.created_at ASC
+    `;
+    return mapDatabaseRows(rows, catalogMappers.plannedEntityChange);
+  }
+
   async listEntityIdsWithVersionHistory(workspace: string, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
-    const rows = await this.sql<
-      { record_id: string }[]
-    >`SELECT DISTINCT record_id FROM record_version WHERE workspace = ${workspace} ${entityIds != null ? this.sql`AND record_id = ANY(${entityIds})` : this.sql``}`;
+    const rows = await this.sql<{ record_id: string }[]>`
+      SELECT DISTINCT v.record_id FROM record_version v
+      JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'entity'
+      WHERE v.workspace = ${workspace}
+      ${entityIds != null ? this.sql`AND v.record_id = ANY(${entityIds})` : this.sql``}
+    `;
     return rows.map(row => row.record_id);
   }
 

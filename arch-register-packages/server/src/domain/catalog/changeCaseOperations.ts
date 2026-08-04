@@ -832,7 +832,13 @@ export const addRelationToChangeCase = async (
       await requireRelationCaseMemberEditAccess(db, ws, authCtx, relation);
       assertRelationProposalEndpointsUnchanged(relation, body.proposedState);
 
-      await requireNoRestrictedRelationCaseMemberWrites(db, ws, authCtx, relation, body.proposedState);
+      await requireNoRestrictedRelationCaseMemberWrites(
+        db,
+        ws,
+        authCtx,
+        relation,
+        body.proposedState
+      );
 
       const existingMembers = await db.changeCase.listMembers(ws, revision.id);
       httpAssert.true(!existingMembers.some(member => member.entity_id === relation.id), {
@@ -924,7 +930,13 @@ export const updateChangeCaseMemberProposedState = async (
           'edit_entity',
           `You do not have permission to edit entity '${subject.entity.id}'`
         );
-        await requireNoRestrictedCaseMemberWrites(db, ws, authCtx, subject.entity, body.proposedState);
+        await requireNoRestrictedCaseMemberWrites(
+          db,
+          ws,
+          authCtx,
+          subject.entity,
+          body.proposedState
+        );
       } else {
         await requireRelationCaseMemberEditAccess(db, ws, authCtx, subject.relation);
         assertRelationProposalEndpointsUnchanged(subject.relation, body.proposedState);

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { DatabaseError } from '../database';
+import { DatabaseError, type DatabaseAdapter } from '../database';
 import {
   createFixtureProject,
   createFixtureSchema,
@@ -721,6 +721,81 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       expect(afterEffectiveDate[0]?.case_id).toBe(futureCase.id);
     });
 
+    it('excludes relation members from an unscoped listPlannedEntityChangesAsOf', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const inEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const outEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const project = await createFixtureProject(db, workspace);
+      const user = await createFixtureUser(db);
+      const now = new Date();
+
+      const relationSchemaId = randomUUID();
+      await db.relation.createRelationSchema({
+        id: relationSchemaId,
+        workspace,
+        name: `Relation schema ${relationSchemaId}`,
+        description: '',
+        in_schema_ids: [schema],
+        out_schema_ids: [schema],
+        fields: [],
+        groups: [],
+        shared_field_group_links: [],
+        color: null,
+        icon: null,
+        relation_approval_policy: 'disabled',
+        created_at: now,
+        updated_at: now
+      });
+      const relation = await db.relation.createRelation({
+        id: randomUUID(),
+        workspace,
+        schema_id: relationSchemaId,
+        in_entity_id: inEntity.id,
+        out_entity_id: outEntity.id,
+        data: {},
+        created_at: now,
+        updated_at: now
+      });
+
+      await db.changeCase.createCase({
+        id: randomUUID(),
+        workspace,
+        project_id: project.id,
+        name: null,
+        description: null,
+        effective_date: '2030-01-01',
+        milestone_id: null,
+        message: null,
+        created_by: user.id,
+        created_at: now,
+        members: [
+          {
+            entity_id: entity.id,
+            base_version: 1,
+            base_state: {},
+            proposed_state: { name: 'Planned Name' },
+            diff: {}
+          },
+          {
+            entity_id: relation.id,
+            base_version: 1,
+            base_state: {},
+            proposed_state: { data: { note: 'after' } },
+            diff: {}
+          }
+        ]
+      });
+
+      const changes = await db.catalog.listPlannedEntityChangesAsOf(
+        workspace,
+        new Date('2030-06-01T00:00:00.000Z')
+      );
+      expect(changes.map(c => c.entity_id)).toEqual([entity.id]);
+    });
+
     it('lists timeline markers grouped by date and type', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
@@ -750,6 +825,205 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       expect(markers[0]!.type).toBe('future_update');
       expect(markers[0]!.count).toBe(1);
       expect(markers[0]!.date).toContain('2030-06-15');
+    });
+
+    it('excludes relation version rows from an unscoped listEntityVersionsAsOf', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const inEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const outEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const now = new Date();
+
+      const relationSchemaId = randomUUID();
+      await db.relation.createRelationSchema({
+        id: relationSchemaId,
+        workspace,
+        name: `Relation schema ${relationSchemaId}`,
+        description: '',
+        in_schema_ids: [schema],
+        out_schema_ids: [schema],
+        fields: [],
+        groups: [],
+        shared_field_group_links: [],
+        color: null,
+        icon: null,
+        relation_approval_policy: 'disabled',
+        created_at: now,
+        updated_at: now
+      });
+      const relation = await db.relation.createRelation({
+        id: randomUUID(),
+        workspace,
+        schema_id: relationSchemaId,
+        in_entity_id: inEntity.id,
+        out_entity_id: outEntity.id,
+        data: {},
+        created_at: now,
+        updated_at: now
+      });
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace,
+        entity_id: relation.id,
+        version_number: 1,
+        kind: 'autosave',
+        commit_message: null,
+        created_at: now,
+        created_by: null,
+        state: { schema_id: relationSchemaId, data: {} },
+        applied_case_revision_id: null
+      });
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace,
+        entity_id: entity.id,
+        version_number: 1,
+        kind: 'autosave',
+        commit_message: null,
+        created_at: now,
+        created_by: null,
+        state: { schema_id: schema, data: {} },
+        applied_case_revision_id: null
+      });
+
+      // An unscoped call (no candidateEntityIds — the workspace-wide asOf browser/landscape-diff
+      // path) must return the entity's version row but never the relation's.
+      const versions = await db.catalog.listEntityVersionsAsOf(workspace, new Date());
+      expect(versions.map(v => v.entity_id)).toEqual([entity.id]);
+    });
+
+    it('excludes relation ids from an unscoped listEntityIdsWithVersionHistory', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const inEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const outEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const now = new Date();
+
+      const relationSchemaId = randomUUID();
+      await db.relation.createRelationSchema({
+        id: relationSchemaId,
+        workspace,
+        name: `Relation schema ${relationSchemaId}`,
+        description: '',
+        in_schema_ids: [schema],
+        out_schema_ids: [schema],
+        fields: [],
+        groups: [],
+        shared_field_group_links: [],
+        color: null,
+        icon: null,
+        relation_approval_policy: 'disabled',
+        created_at: now,
+        updated_at: now
+      });
+      const relation = await db.relation.createRelation({
+        id: randomUUID(),
+        workspace,
+        schema_id: relationSchemaId,
+        in_entity_id: inEntity.id,
+        out_entity_id: outEntity.id,
+        data: {},
+        created_at: now,
+        updated_at: now
+      });
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace,
+        entity_id: relation.id,
+        version_number: 1,
+        kind: 'autosave',
+        commit_message: null,
+        created_at: now,
+        created_by: null,
+        state: { schema_id: relationSchemaId, data: {} },
+        applied_case_revision_id: null
+      });
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace,
+        entity_id: entity.id,
+        version_number: 1,
+        kind: 'autosave',
+        commit_message: null,
+        created_at: now,
+        created_by: null,
+        state: { schema_id: schema, data: {} },
+        applied_case_revision_id: null
+      });
+
+      const withHistory = await db.catalog.listEntityIdsWithVersionHistory(workspace);
+      expect(withHistory).toEqual([entity.id]);
+    });
+
+    it('counts a change case whose only member is a relation instance', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const inEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const outEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const project = await createFixtureProject(db, workspace);
+      const user = await createFixtureUser(db);
+      const now = new Date();
+
+      const relationSchemaId = randomUUID();
+      await db.relation.createRelationSchema({
+        id: relationSchemaId,
+        workspace,
+        name: `Relation schema ${relationSchemaId}`,
+        description: '',
+        in_schema_ids: [schema],
+        out_schema_ids: [schema],
+        fields: [{ id: 'note', name: 'Note', type: 'text', requirementLevel: 'optional' }],
+        groups: [],
+        shared_field_group_links: [],
+        color: null,
+        icon: null,
+        relation_approval_policy: 'disabled',
+        created_at: now,
+        updated_at: now
+      });
+      const relation = await db.relation.createRelation({
+        id: randomUUID(),
+        workspace,
+        schema_id: relationSchemaId,
+        in_entity_id: inEntity.id,
+        out_entity_id: outEntity.id,
+        data: {},
+        created_at: now,
+        updated_at: now
+      });
+
+      await db.changeCase.createCase({
+        id: randomUUID(),
+        workspace,
+        project_id: project.id,
+        name: null,
+        description: null,
+        effective_date: '2031-03-10',
+        milestone_id: null,
+        message: null,
+        created_by: user.id,
+        created_at: now,
+        members: [
+          {
+            entity_id: relation.id,
+            base_version: 1,
+            base_state: {},
+            proposed_state: {},
+            diff: {}
+          }
+        ]
+      });
+
+      const markers = await db.catalog.listTimelineMarkers(workspace);
+      expect(markers).toHaveLength(1);
+      expect(markers[0]!.type).toBe('future_update');
+      expect(markers[0]!.count).toBe(1);
+      expect(markers[0]!.date).toContain('2031-03-10');
     });
 
     it('reassigns cases off a milestone, backfilling the effective date', async () => {
@@ -798,6 +1072,125 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const reloaded = await db.changeCase.getCase(workspace, changeCase.id);
       expect(reloaded!.milestone_id).toBeNull();
       expect(reloaded!.effective_date).toBe('2031-01-01');
+    });
+  });
+
+  describe('relation version history', () => {
+    const setupRelation = async (db: DatabaseAdapter, workspace: string, schema: string) => {
+      const inEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const outEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const now = new Date();
+      const relationSchemaId = randomUUID();
+      await db.relation.createRelationSchema({
+        id: relationSchemaId,
+        workspace,
+        name: `Relation schema ${relationSchemaId}`,
+        description: '',
+        in_schema_ids: [schema],
+        out_schema_ids: [schema],
+        fields: [],
+        groups: [],
+        shared_field_group_links: [],
+        color: null,
+        icon: null,
+        relation_approval_policy: 'disabled',
+        created_at: now,
+        updated_at: now
+      });
+      const relation = await db.relation.createRelation({
+        id: randomUUID(),
+        workspace,
+        schema_id: relationSchemaId,
+        in_entity_id: inEntity.id,
+        out_entity_id: outEntity.id,
+        data: {},
+        created_at: now,
+        updated_at: now
+      });
+      return { relation, relationSchemaId, inEntity, outEntity };
+    };
+
+    it('lists relation version rows as of a date, excluding entity versions', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const { relation } = await setupRelation(db, workspace, schema);
+      const now = new Date();
+
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace,
+        entity_id: relation.id,
+        version_number: 1,
+        kind: 'autosave',
+        commit_message: null,
+        created_at: now,
+        created_by: null,
+        state: { schema_id: relation.schema_id, data: {} },
+        applied_case_revision_id: null
+      });
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace,
+        entity_id: entity.id,
+        version_number: 1,
+        kind: 'autosave',
+        commit_message: null,
+        created_at: now,
+        created_by: null,
+        state: { schema_id: schema, data: {} },
+        applied_case_revision_id: null
+      });
+
+      const versions = await db.catalog.listRelationVersionsAsOf(workspace, new Date());
+      expect(versions.map(v => v.entity_id)).toEqual([relation.id]);
+    });
+
+    it('lists planned relation changes as of a date, excluding entity members', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const { relation } = await setupRelation(db, workspace, schema);
+      const project = await createFixtureProject(db, workspace);
+      const user = await createFixtureUser(db);
+      const now = new Date();
+
+      await db.changeCase.createCase({
+        id: randomUUID(),
+        workspace,
+        project_id: project.id,
+        name: null,
+        description: null,
+        effective_date: '2030-01-01',
+        milestone_id: null,
+        message: null,
+        created_by: user.id,
+        created_at: now,
+        members: [
+          {
+            entity_id: entity.id,
+            base_version: 1,
+            base_state: {},
+            proposed_state: { name: 'Planned Name' },
+            diff: {}
+          },
+          {
+            entity_id: relation.id,
+            base_version: 1,
+            base_state: {},
+            proposed_state: { data: { note: 'after' } },
+            diff: {}
+          }
+        ]
+      });
+
+      const changes = await db.catalog.listPlannedRelationChangesAsOf(
+        workspace,
+        new Date('2030-06-01T00:00:00.000Z')
+      );
+      expect(changes.map(c => c.entity_id)).toEqual([relation.id]);
     });
   });
 

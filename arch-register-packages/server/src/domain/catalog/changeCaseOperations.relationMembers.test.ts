@@ -118,7 +118,9 @@ const revision = {
   resolved_at: null
 };
 
-const makeMember = (overrides: Partial<ChangeCaseMemberDbResult> = {}): ChangeCaseMemberDbResult => ({
+const makeMember = (
+  overrides: Partial<ChangeCaseMemberDbResult> = {}
+): ChangeCaseMemberDbResult => ({
   id: 'member-1',
   revision_id: revision.id,
   workspace: 'ws-1',
@@ -131,15 +133,16 @@ const makeMember = (overrides: Partial<ChangeCaseMemberDbResult> = {}): ChangeCa
   ...overrides
 });
 
-const makeDb = (options: {
-  relation?: RelationDbResult;
-  members?: ChangeCaseMemberDbResult[];
-}) => {
+const makeDb = (options: { relation?: RelationDbResult; members?: ChangeCaseMemberDbResult[] }) => {
   const relation = options.relation ?? makeRelation();
   const members = options.members ?? [];
   const addMember = vi.fn(async () => {});
   const updateRelation = vi.fn(
-    async (_ws: string, _id: string, input: { data: Record<string, unknown>; version: number }) => ({
+    async (
+      _ws: string,
+      _id: string,
+      input: { data: Record<string, unknown>; version: number }
+    ) => ({
       ...relation,
       data: input.data,
       version: input.version
@@ -190,14 +193,10 @@ describe('addRelationToChangeCase', () => {
   it('adds a relation instance as a change case member with a relation-shaped base_state', async () => {
     const { db, relation, addMember } = makeDb({});
 
-    await addRelationToChangeCase(
-      db,
-      'ws-1',
-      project.id,
-      changeCase.id,
-      eventForAuthCtx(),
-      { relationId: relation.id, proposedState: { data: { note: 'after' } } }
-    );
+    await addRelationToChangeCase(db, 'ws-1', project.id, changeCase.id, eventForAuthCtx(), {
+      relationId: relation.id,
+      proposedState: { data: { note: 'after' } }
+    });
 
     expect(addMember).toHaveBeenCalledWith(
       'ws-1',

@@ -17,7 +17,10 @@ import {
   resolveCaseNotifications
 } from '../governance/governanceOperations';
 import type { GovernanceCaseDbResult } from '../governance/db/governanceDatabase';
-import type { AuthorizationContext, WorkspaceAuthorizationContext } from '@arch-register/permissions';
+import type {
+  AuthorizationContext,
+  WorkspaceAuthorizationContext
+} from '@arch-register/permissions';
 import {
   buildDiff,
   equalEntityValue,
@@ -110,7 +113,10 @@ const buildProposedRelation = async (
     message: 'Changing a relation schema is not supported by a relation change proposal'
   });
   const schema = await db.relation.getRelationSchema(workspace, schemaId);
-  httpAssert.present(schema, { status: 400, message: 'The proposed relation schema does not exist' });
+  httpAssert.present(schema, {
+    status: 400,
+    message: 'The proposed relation schema does not exist'
+  });
   assertRelationProposalEndpointsUnchanged(relation, proposedState);
 
   const data =

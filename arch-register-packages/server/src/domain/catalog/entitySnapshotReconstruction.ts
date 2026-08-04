@@ -9,12 +9,12 @@ import type { AuthorizationContext } from '@arch-register/permissions';
 import { canAccessProject } from '../auth/authorization';
 import { listAllCatalogEntities } from './entityLoader';
 
-const mergeState = (
+export const mergeState = (
   base: Record<string, unknown>,
   overlay: Record<string, unknown> | null
 ): Record<string, unknown> => (overlay ? { ...base, ...overlay } : base);
 
-const parseDate = (value: unknown, fallback: Date): Date => {
+export const parseDate = (value: unknown, fallback: Date): Date => {
   if (typeof value === 'string' || value instanceof Date) {
     const parsed = new Date(value);
     if (!Number.isNaN(parsed.getTime())) return parsed;
@@ -67,36 +67,28 @@ const entityToState = (entity: EntityDbResult): Record<string, unknown> => ({
 // using immutable `entity_version` history rather than the live `entity` table. Entities with no
 // version baseline at or before `asOf`, or whose latest baseline is a `deleted` version,
 // are excluded (they didn't exist yet / no longer existed at that point in time).
-export const reconstructEntitiesAsOf = async (
+/**
+ * Resolves which planned change(s) apply to each record as of a reconstruction, shared by both
+ * `reconstructEntitiesAsOf` and `reconstructRelationsAsOf` (relationSnapshotReconstruction.ts) —
+ * the project-access filtering, milestone target-date resolution, overdue exclusion, and
+ * case-revision-grouped ordering are all record-kind-agnostic, since they operate purely on
+ * `entity_change_case`/`record_change_case_record_version` rows (keyed generically on `record_id`,
+ * aliased `entity_id` in `PlannedEntityChangeDbResult` for historical/entity-path reasons).
+ */
+export const resolveFutureUpdatesByRecord = async (
   db: DatabaseAdapter,
   workspace: string,
-  asOf: Date,
   authCtx: AuthorizationContext | null,
-  candidateEntityIds?: string[],
-  includePlannedChanges = true,
-  plannedChangesProjectId?: string | null,
+  plannedChanges: PlannedEntityChangeDbResult[],
+  plannedChangesProjectId: string | null | undefined,
   excludeOverdueChangesBefore?: Date
-): Promise<EntityDbResult[]> => {
-  const [baselineVersions, plannedChanges, schemas, owners, lifecycles] = await Promise.all([
-    db.catalog.listEntityVersionsAsOf(workspace, asOf, candidateEntityIds),
-    includePlannedChanges
-      ? db.catalog.listPlannedEntityChangesAsOf(workspace, asOf, candidateEntityIds)
-      : Promise.resolve([]),
-    db.catalog.listSchemas(workspace),
-    db.workspace.listTeams(workspace),
-    db.workspace.listLifecycleStates(workspace)
-  ]);
-
+): Promise<Map<string, PlannedEntityChangeDbResult[]>> => {
   // Landscape comparisons can scope planned changes to one project while retaining the same
   // reconstruction and authorization rules used by the workspace browser.
   const applicablePlannedChanges =
     plannedChangesProjectId == null
       ? plannedChanges
       : plannedChanges.filter(change => change.project_id === plannedChangesProjectId);
-
-  const schemaNameMap = new Map(schemas.map(s => [s.id, s.name]));
-  const ownerNameMap = new Map(owners.map(o => [o.id, o.name]));
-  const lifecycleLabelMap = new Map(lifecycles.map(l => [l.id, l.label]));
 
   // A planned change always carries the `project_id` it was planned under. Applying it here
   // must not leak the contents of a project the requesting user can't otherwise see (e.g. via
@@ -141,13 +133,6 @@ export const reconstructEntitiesAsOf = async (
           .map(m => [m.id, m.target_date] as const)
   );
 
-  // `listEntityVersionsAsOf` returns rows ordered by (entity_id, created_at ASC), so the last
-  // row seen per entity is its latest version baseline at or before `asOf`.
-  const baselineByEntity = new Map<string, EntityVersionDbResult>();
-  for (const version of baselineVersions) {
-    baselineByEntity.set(version.entity_id, version);
-  }
-
   // Landscape diffing can exclude "overdue" changes — planned changes whose target date has
   // already passed (relative to `excludeOverdueChangesBefore`, typically "now") but were never
   // applied. Without this, a change scheduled for last month keeps showing up as a "future"
@@ -173,7 +158,7 @@ export const reconstructEntitiesAsOf = async (
   }
 
   // A case revision is one coordinated future event. Preserve that ordering for every member
-  // instead of letting each entity independently order its member changes.
+  // instead of letting each record independently order its member changes.
   const orderedFutureGroups = [...futureUpdateGroups.values()].sort((a, b) =>
     compareFutureUpdates(a[0]!, b[0]!, milestoneTargetDates)
   );
@@ -184,6 +169,49 @@ export const reconstructEntitiesAsOf = async (
       futureUpdatesByEntity.set(update.entity_id, list);
     }
   }
+
+  return futureUpdatesByEntity;
+};
+
+export const reconstructEntitiesAsOf = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  asOf: Date,
+  authCtx: AuthorizationContext | null,
+  candidateEntityIds?: string[],
+  includePlannedChanges = true,
+  plannedChangesProjectId?: string | null,
+  excludeOverdueChangesBefore?: Date
+): Promise<EntityDbResult[]> => {
+  const [baselineVersions, plannedChanges, schemas, owners, lifecycles] = await Promise.all([
+    db.catalog.listEntityVersionsAsOf(workspace, asOf, candidateEntityIds),
+    includePlannedChanges
+      ? db.catalog.listPlannedEntityChangesAsOf(workspace, asOf, candidateEntityIds)
+      : Promise.resolve([]),
+    db.catalog.listSchemas(workspace),
+    db.workspace.listTeams(workspace),
+    db.workspace.listLifecycleStates(workspace)
+  ]);
+
+  const schemaNameMap = new Map(schemas.map(s => [s.id, s.name]));
+  const ownerNameMap = new Map(owners.map(o => [o.id, o.name]));
+  const lifecycleLabelMap = new Map(lifecycles.map(l => [l.id, l.label]));
+
+  // `listEntityVersionsAsOf` returns rows ordered by (entity_id, created_at ASC), so the last
+  // row seen per entity is its latest version baseline at or before `asOf`.
+  const baselineByEntity = new Map<string, EntityVersionDbResult>();
+  for (const version of baselineVersions) {
+    baselineByEntity.set(version.entity_id, version);
+  }
+
+  const futureUpdatesByEntity = await resolveFutureUpdatesByRecord(
+    db,
+    workspace,
+    authCtx,
+    plannedChanges,
+    plannedChangesProjectId,
+    excludeOverdueChangesBefore
+  );
 
   const buildResult = (
     entityId: string,
@@ -236,9 +264,9 @@ export const reconstructEntitiesAsOf = async (
 
     let state = baseline.state;
 
-    const futureUpdates = (futureUpdatesByEntity.get(entityId) ?? []).sort((a, b) =>
-      compareFutureUpdates(a, b, milestoneTargetDates)
-    );
+    // Already in date order — resolveFutureUpdatesByRecord builds this list by walking
+    // date-sorted case-revision groups, so re-sorting here would just re-derive the same order.
+    const futureUpdates = futureUpdatesByEntity.get(entityId) ?? [];
     for (const update of futureUpdates) {
       state = mergeState(state, update.proposed_state);
     }
@@ -281,9 +309,7 @@ export const reconstructEntitiesAsOf = async (
     if (live.created_at > asOf) continue;
 
     let state = entityToState(live);
-    const futureUpdates = (futureUpdatesByEntity.get(live.id) ?? []).sort((a, b) =>
-      compareFutureUpdates(a, b, milestoneTargetDates)
-    );
+    const futureUpdates = futureUpdatesByEntity.get(live.id) ?? [];
     for (const update of futureUpdates) {
       state = mergeState(state, update.proposed_state);
     }
