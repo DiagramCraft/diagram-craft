@@ -168,40 +168,46 @@ export const enqueueAutomationRuleRuns = async (
     : [];
   if (chain.length >= AUTOMATION_RULE_MAX_CHAIN_LENGTH) return 0;
 
-  const rules = await db.automationRule.listRules(auditLog.workspace);
-  const matchingRules = rules.filter(
-    (rule): rule is AutomationRuleDbResult =>
-      rule.enabled &&
-      rule.resource_type === (auditLog.entity_type === 'relation' ? 'relation' : 'entity') &&
-      (rule.schema_id == null || rule.schema_id === auditLog.schema_id) &&
-      matchesTrigger(rule.trigger, auditLog) &&
-      !chain.includes(rule.id)
-  );
-  if (matchingRules.length === 0) return 0;
-
-  const fieldValues = await resolveFieldValues(db, auditLog);
   const schema = auditLog.schema_id
     ? auditLog.entity_type === 'relation'
       ? await db.relation.getRelationSchema(auditLog.workspace, auditLog.schema_id)
       : await db.catalog.getSchema(auditLog.workspace, auditLog.schema_id)
     : null;
+  if (!schema) return 0;
+
+  const rules = await db.automationRule.listRules(auditLog.workspace);
+  const candidateRules = rules.filter(
+    (rule): rule is AutomationRuleDbResult =>
+      rule.enabled &&
+      rule.resource_type === (auditLog.entity_type === 'relation' ? 'relation' : 'entity') &&
+      (rule.schema_id == null || rule.schema_id === auditLog.schema_id) &&
+      !chain.includes(rule.id)
+  );
+  if (candidateRules.length === 0) return 0;
+
   const authContexts = new Map<string, Promise<Awaited<ReturnType<typeof buildUserAuthCtx>>>>();
-  const toRun: AutomationRuleDbResult[] = [];
-  for (const rule of matchingRules) {
-    if (!schema || !rule.created_by) continue;
+  const authorizedMatchingRules: AutomationRuleDbResult[] = [];
+  for (const rule of candidateRules) {
+    if (!rule.created_by) continue;
     let authCtxPromise = authContexts.get(rule.created_by);
     if (!authCtxPromise) {
       authCtxPromise = buildUserAuthCtx(db, auditLog.workspace, rule.created_by);
       authContexts.set(rule.created_by, authCtxPromise);
     }
     const authCtx = await authCtxPromise;
-    if (
-      isAutomationRuleAuthorized(authCtx, schema, rule) &&
-      evaluateConditions(rule.conditions, fieldValues)
-    ) {
-      toRun.push(rule);
+    if (isAutomationRuleAuthorized(authCtx, schema, rule) && matchesTrigger(rule.trigger, auditLog)) {
+      authorizedMatchingRules.push(rule);
     }
   }
+
+  if (authorizedMatchingRules.length === 0) return 0;
+
+  const fieldValues = authorizedMatchingRules.some(rule => rule.conditions.length > 0)
+    ? await resolveFieldValues(db, auditLog)
+    : {};
+  const toRun = authorizedMatchingRules.filter(
+    rule => rule.conditions.length === 0 || evaluateConditions(rule.conditions, fieldValues)
+  );
   if (toRun.length === 0) return 0;
 
   const event = toAutomationRuleEvent(auditLog);
