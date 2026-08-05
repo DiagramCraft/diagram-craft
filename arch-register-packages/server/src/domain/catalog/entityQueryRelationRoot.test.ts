@@ -150,6 +150,7 @@ describe('relation-rooted query compilation', () => {
     expect(compiled.sql).toContain('JOIN relation_schema rs');
     expect(compiled.sql).toContain('LEFT JOIN catalog_record in_e');
     expect(compiled.sql).toContain('LEFT JOIN catalog_record out_e');
+    expect(compiled.sql).toContain('AND (r.schema_id = ?)');
     expect(compiled.params).toContain('active');
   });
 
@@ -180,6 +181,55 @@ describe('relation-rooted query compilation', () => {
     );
     expect(compiled.sql).toContain('FROM scoped_relation pb_root_query_path_0');
     expect(compiled.params).toContain('System B');
+  });
+
+  it('keeps root relation rows eligible when a typed-relation path adds source constraints', () => {
+    const typedSystem: SchemaDbResult = {
+      ...system,
+      fields: [
+        {
+          id: 'data_flows_out',
+          name: 'Data flows out',
+          type: 'typedRelation',
+          relationSchemaId: dataFlow.id,
+          direction: 'out'
+        }
+      ]
+    };
+    const typedSchemas = new Map([[typedSystem.id, typedSystem]]);
+    const query: EntityQuery = {
+      schemaId: dataFlow.id,
+      root: {
+        kind: 'predicate',
+        path: [
+          { kind: 'endpoint', direction: 'out' },
+          {
+            kind: 'typedRelation',
+            fieldId: 'data_flows_out',
+            relationSchemaId: dataFlow.id,
+            direction: 'out',
+            ownerSchemaIds: [typedSystem.id]
+          }
+        ],
+        fieldId: '_name',
+        op: 'equals',
+        value: 'System B'
+      }
+    };
+    const compiled = compileEntityQueryIR(
+      query,
+      typedSchemas,
+      'sqlite',
+      'ws-1',
+      {},
+      null,
+      relationSchemas
+    );
+
+    expect(compiled.sql).toContain('LEFT JOIN scoped_entity in_relation_source_endpoint');
+    expect(compiled.sql).toContain(
+      'OR (r.schema_id = ? AND out_relation_source_endpoint.schema_id IN (?))'
+    );
   });
 
   it('applies the SQL relation visibility policy on the relation scope CTE', () => {
@@ -238,7 +288,7 @@ describe('relation-rooted query compilation', () => {
     );
 
     expect(compiled.sql).toContain('FROM temporal_relation_source r');
-    expect(compiled.sql).toContain('WHERE (1=0)');
+    expect(compiled.sql).toContain('WHERE (r.schema_id = ?) AND (1=0)');
   });
 
   it('leaves entity-rooted compilation untouched (no root_kind set)', () => {
