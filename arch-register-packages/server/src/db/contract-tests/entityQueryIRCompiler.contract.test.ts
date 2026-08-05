@@ -988,6 +988,212 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(hiddenMatches[0]!.projections['technology_releases.eol_date']).toEqual([]);
   });
 
+  it('fails closed for nested projections when target schemas or fields are unavailable', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const user = await createFixtureUser(db);
+    const targetSchema = await createSchema(db, workspace, {
+      name: 'Projection target',
+      fields: [
+        { id: 'visible', name: 'Visible', type: 'text' },
+        { id: 'restricted', name: 'Restricted', type: 'text', groupId: 'restricted' }
+      ],
+      groups: [
+        {
+          id: 'restricted',
+          name: 'Restricted',
+          accessControl: { teamIds: ['team-restricted'] }
+        }
+      ]
+    });
+    const ownerSchema = await createSchema(db, workspace, {
+      name: 'Projection owner',
+      fields: [
+        {
+          id: 'target',
+          name: 'Target',
+          type: 'reference',
+          schemaId: targetSchema.id,
+          minCount: 0,
+          maxCount: 1
+        }
+      ]
+    });
+    const unrelatedSchema = await createSchema(db, workspace, {
+      name: 'Projection field collider',
+      fields: [
+        { id: 'secret', name: 'Secret', type: 'text' },
+        { id: 'visible', name: 'Visible', type: 'text' },
+        { id: 'restricted', name: 'Restricted', type: 'text' }
+      ]
+    });
+
+    const target = await createFixtureCatalogEntity(db, workspace, targetSchema.id, {
+      data: {
+        visible: 'visible value',
+        secret: 'stale secret',
+        restricted: 'restricted value'
+      }
+    });
+    const owner = await createFixtureCatalogEntity(db, workspace, ownerSchema.id, {
+      data: { target: [target.id] }
+    });
+    const authCtx = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [],
+      schemas: [ownerSchema, targetSchema, unrelatedSchema],
+      entities: [owner, target],
+      grants: []
+    });
+    const path = [{ kind: 'forward' as const, fieldId: 'target' }];
+    const query: EntityQuery = {
+      schemaId: ownerSchema.id,
+      root: { kind: 'predicate', path: [], fieldId: '_id', op: 'equals', value: owner.id },
+      projections: [
+        { path, fieldId: 'visible', alias: 'visible' },
+        { path, fieldId: 'secret', alias: 'secret' },
+        { path, fieldId: 'restricted', alias: 'restricted' }
+      ]
+    };
+
+    const run = async (schemas: SchemaCatalog) => {
+      const validation = validateEntityQueryIR(query, schemas, authCtx);
+      expect(validation.ok, JSON.stringify(validation)).toBe(true);
+      const compiled = compileEntityQueryIR(query, schemas, driver, workspace, {}, authCtx);
+      const rows = await db.catalog.runCompiledEntityQuery(compiled.sql, compiled.params);
+      expect(rows).toHaveLength(1);
+      return rows[0]!.projections;
+    };
+
+    const knownSchemas: SchemaCatalog = new Map([
+      [ownerSchema.id, ownerSchema],
+      [targetSchema.id, targetSchema],
+      [unrelatedSchema.id, unrelatedSchema]
+    ]);
+    expect(await run(knownSchemas)).toEqual({
+      visible: 'visible value',
+      secret: null,
+      restricted: null
+    });
+
+    await db.catalog.deleteSchema(workspace, targetSchema.id);
+    const missingTargetSchemas: SchemaCatalog = new Map([
+      [ownerSchema.id, ownerSchema],
+      [unrelatedSchema.id, unrelatedSchema]
+    ]);
+    expect(await run(missingTargetSchemas)).toEqual({
+      visible: null,
+      secret: null,
+      restricted: null
+    });
+
+    const page = await listEntitiesWithCount(db, workspace, authCtx, {
+      entityQuery: query,
+      view: 'full'
+    });
+    expect(page.items[0]?._projections).toEqual({
+      visible: null,
+      secret: null,
+      restricted: null
+    });
+  });
+
+  it('fails closed for nested projections when the target schema is unavailable as of a date', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const user = await createFixtureUser(db);
+    const asOf = new Date(Date.now() + 24 * 60 * 60 * 1000);
+    const targetSchemaId = randomUUID();
+    const createDatedSchema = async (
+      id: string,
+      name: string,
+      fields: SchemaDbResult['fields'],
+      createdAt: Date
+    ) =>
+      db.catalog.createSchema({
+        id,
+        workspace,
+        name,
+        description: '',
+        fields,
+        templates: [],
+        groups: [],
+        shared_field_group_links: [],
+        color: null,
+        icon: null,
+        default_owner: null,
+        key_prefix: id.slice(0, 8).toUpperCase(),
+        created_at: createdAt,
+        updated_at: createdAt
+      });
+
+    const ownerSchema = await createDatedSchema(
+      randomUUID(),
+      'Historical projection owner',
+      [
+        {
+          id: 'target',
+          name: 'Target',
+          type: 'reference',
+          schemaId: targetSchemaId,
+          minCount: 0,
+          maxCount: 1
+        }
+      ],
+      new Date(asOf.getTime() - 2 * 24 * 60 * 60 * 1000)
+    );
+    const unrelatedSchema = await createDatedSchema(
+      randomUUID(),
+      'Historical projection field collider',
+      [{ id: 'secret', name: 'Secret', type: 'text' }],
+      new Date(asOf.getTime() - 2 * 24 * 60 * 60 * 1000)
+    );
+    const targetSchema = await createDatedSchema(
+      targetSchemaId,
+      'Future projection target',
+      [{ id: 'secret', name: 'Secret', type: 'text' }],
+      new Date(asOf.getTime() + 24 * 60 * 60 * 1000)
+    );
+    const target = await createFixtureCatalogEntity(db, workspace, targetSchema.id, {
+      data: { secret: 'historical secret' },
+      created_at: new Date(asOf.getTime() - 60 * 60 * 1000)
+    });
+    const owner = await createFixtureCatalogEntity(db, workspace, ownerSchema.id, {
+      data: { target: [target.id] },
+      created_at: new Date(asOf.getTime() - 60 * 60 * 1000)
+    });
+    const authCtx = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: 'admin',
+      teamAssignments: [],
+      schemas: [ownerSchema, targetSchema, unrelatedSchema],
+      entities: [owner, target],
+      grants: []
+    });
+    const query: EntityQuery = {
+      schemaId: ownerSchema.id,
+      asOf: asOf.toISOString(),
+      root: { kind: 'predicate', path: [], fieldId: '_id', op: 'equals', value: owner.id },
+      projections: [
+        {
+          path: [{ kind: 'forward', fieldId: 'target' }],
+          fieldId: 'secret',
+          alias: 'secret'
+        }
+      ]
+    };
+
+    const page = await listEntitiesWithCount(db, workspace, authCtx, {
+      entityQuery: query,
+      view: 'full'
+    });
+    expect(page.total).toBe(1);
+    expect(page.items[0]?._projections).toEqual({ secret: null });
+  });
+
   it('rejects projection reuse when independent multi-valued witnesses are ambiguous', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
