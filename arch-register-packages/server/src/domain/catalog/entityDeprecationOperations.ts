@@ -39,7 +39,12 @@ import {
 } from '../governance/governanceOperations';
 import { isEligibleForAssignment } from '../governance/governanceEligibility';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
-import { PermissionChecker } from '@arch-register/permissions';
+import {
+  PermissionChecker,
+  type AuthorizationContext,
+  type WorkspaceAuthorizationContext
+} from '@arch-register/permissions';
+import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 
 export const ENTITY_DEPRECATION_CASE_KIND = 'entity.deprecation';
 const DEPRECATION_POLICY_VERSION = 'entity.deprecation:v1';
@@ -65,7 +70,8 @@ const toImpactEntry = (
 const computeDirectImpact = async (
   db: DatabaseAdapter,
   workspace: string,
-  entityId: string
+  entityId: string,
+  authCtx: AuthorizationContext | null
 ): Promise<DeprecationImpactEntry[]> => {
   const [schemas, entities] = await Promise.all([
     db.catalog.listSchemas(workspace),
@@ -77,7 +83,7 @@ const computeDirectImpact = async (
     entities,
     schemas,
     { transitive: false },
-    null
+    authCtx
   );
   // No typedRelations/relationSchemas passed above, so 'typed' dependents never occur here; the
   // filter narrows the type accordingly (deprecation impact tracking doesn't cover typed relations).
@@ -87,6 +93,42 @@ const computeDirectImpact = async (
         dependent.kind !== 'typed'
     )
     .map(dependent => toImpactEntry(dependent, entityLookup));
+};
+
+const filterImpactForCaller = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  impact: DeprecationImpactEntry[],
+  authCtx: WorkspaceAuthorizationContext
+): Promise<DeprecationImpactEntry[]> => {
+  if (impact.length === 0) return impact;
+
+  const [schemas, entities] = await Promise.all([
+    db.catalog.listSchemas(workspace),
+    listAllCatalogEntities(db, workspace)
+  ]);
+  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  const entityById = new Map(entities.map(entity => [entity.id, entity]));
+
+  return impact.filter(entry => {
+    const sourceEntity = entityById.get(entry.entityId);
+    const sourceSchema = sourceEntity ? schemaById.get(sourceEntity.schema_id) : undefined;
+    if (!sourceSchema) return false;
+
+    // Baseline entries intentionally retain the public field name rather than a field id. Resolve
+    // the source field against the current schema and fail closed when the schema has changed or
+    // contains an ambiguous match.
+    const matchingFields = sourceSchema.fields.filter(
+      field =>
+        field.type === entry.kind &&
+        (field.type === 'reference' || field.type === 'containment') &&
+        field.name === entry.fieldName
+    );
+    return (
+      matchingFields.length === 1 &&
+      !isFieldViewRestricted(authCtx, sourceSchema, matchingFields[0]!.id)
+    );
+  });
 };
 
 const groupByOwnerTeam = (
@@ -184,14 +226,17 @@ const toApiAck = (
 const toApiCase = async (
   db: DatabaseAdapter,
   caseRow: GovernanceCaseDbResult,
-  entity: Entity
+  entity: Entity,
+  authCtx: AuthorizationContext
 ): Promise<DeprecationCase> => {
-  const [assignments, acks, currentImpact] = await Promise.all([
+  const storedBaselineImpact =
+    (caseRow.payload['baselineImpact'] as DeprecationImpactEntry[]) ?? [];
+  const [assignments, acks, baselineImpact, currentImpact] = await Promise.all([
     db.governance.listAssignmentsForCase(caseRow.id),
     db.entityDeprecation.listAcksForCase(caseRow.id),
-    computeDirectImpact(db, caseRow.workspace, caseRow.subject_id)
+    filterImpactForCaller(db, caseRow.workspace, storedBaselineImpact, authCtx),
+    computeDirectImpact(db, caseRow.workspace, caseRow.subject_id, authCtx)
   ]);
-  const baselineImpact = (caseRow.payload['baselineImpact'] as DeprecationImpactEntry[]) ?? [];
   const phase = assignments.some(a => a.action === 'acknowledge')
     ? 'scheduled'
     : 'pending_approval';
@@ -281,7 +326,7 @@ export const getEntityDeprecation = async (
   httpAssert.present(entity, { status: 404, message: 'Entity not found' });
   requireEntityAction(authCtx, entity, 'view_entity');
   const caseRow = await getOpenCase(db, workspace, entity.id);
-  return caseRow ? await toApiCase(db, caseRow, entity) : null;
+  return caseRow ? await toApiCase(db, caseRow, entity, authCtx) : null;
 };
 
 // ── Propose ──────────────────────────────────────────────────────
@@ -294,7 +339,7 @@ export const proposeEntityDeprecation = async (
   body: ProposeDeprecationBody
 ): Promise<DeprecationCase> => {
   const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const { entity } = await assertCanPropose(db, workspace, entityId, event);
+  const { authCtx, entity } = await assertCanPropose(db, workspace, entityId, event);
   const canonicalEntityId = entity.id;
   const schema = await db.catalog.getSchema(workspace, entity.schema_id);
   httpAssert.present(schema, { status: 404, message: 'Entity schema not found' });
@@ -334,7 +379,7 @@ export const proposeEntityDeprecation = async (
     httpAssert.present(project, { status: 400, message: 'The related project does not exist' });
   }
 
-  const baselineImpact = await computeDirectImpact(db, workspace, canonicalEntityId);
+  const baselineImpact = await computeDirectImpact(db, workspace, canonicalEntityId, null);
 
   const eligibleApproverIds = await listEligibleApproverIds(
     db,
@@ -393,7 +438,7 @@ export const proposeEntityDeprecation = async (
       now
     )
   );
-  return await toApiCase(db, caseRow, entity);
+  return await toApiCase(db, caseRow, entity, authCtx);
 };
 
 // ── Governance registry (approve / acknowledge domain effects) ──
@@ -596,7 +641,7 @@ export const acknowledgeEntityDeprecation = async (
     db.governance.getCase(workspace, caseRow.id)
   ]);
   httpAssert.present(refreshedCase, { status: 404, message: 'Deprecation case not found' });
-  return await toApiCase(db, refreshedCase, refreshedEntity ?? entity);
+  return await toApiCase(db, refreshedCase, refreshedEntity ?? entity, authCtx);
 };
 
 // ── Refresh scope ─────────────────────────────────────────────────
@@ -625,7 +670,7 @@ export const refreshEntityDeprecationScope = async (
     message: 'You cannot refresh this deprecation scope'
   });
 
-  const currentImpact = await computeDirectImpact(db, workspace, entity.id);
+  const currentImpact = await computeDirectImpact(db, workspace, entity.id, null);
   const existingAcks = await db.entityDeprecation.listAcksForCase(caseRow.id);
   const knownTeams = new Set(existingAcks.map(ack => ack.owner_team_id));
   const byTeam = groupByOwnerTeam(currentImpact);
@@ -670,7 +715,7 @@ export const refreshEntityDeprecationScope = async (
       metadata: { newlyAffectedTeams, addedEntityIds, removedEntityIds }
     }).then(() => caseRow);
   });
-  return await toApiCase(db, updatedCase, entity);
+  return await toApiCase(db, updatedCase, entity, authCtx);
 };
 
 // ── Postpone ───────────────────────────────────────────────────────
@@ -741,7 +786,7 @@ export const postponeEntityDeprecation = async (
   });
 
   const refreshedEntity = await db.catalog.getEntity(workspace, entityId);
-  return await toApiCase(db, caseRow, refreshedEntity ?? entity);
+  return await toApiCase(db, caseRow, refreshedEntity ?? entity, authCtx);
 };
 
 // ── Finalize ─────────────────────────────────────────────────────
@@ -864,7 +909,7 @@ export const finalizeEntityDeprecation = async (
   });
 
   const refreshedEntity = await db.catalog.getEntity(workspace, entityId);
-  return await toApiCase(db, completedCase, refreshedEntity ?? entity);
+  return await toApiCase(db, completedCase, refreshedEntity ?? entity, authCtx);
 };
 
 // ── Cancel ─────────────────────────────────────────────────────────
@@ -941,5 +986,5 @@ export const cancelEntityDeprecation = async (
   });
 
   const refreshedEntity = await db.catalog.getEntity(workspace, entityId);
-  return await toApiCase(db, cancelledCase, refreshedEntity ?? entity);
+  return await toApiCase(db, cancelledCase, refreshedEntity ?? entity, authCtx);
 };
