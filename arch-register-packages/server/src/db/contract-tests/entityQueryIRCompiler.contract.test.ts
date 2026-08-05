@@ -1448,6 +1448,10 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
         authCtx,
         relationSchemas
       );
+      expect(compiled.sql).toContain('LEFT JOIN scoped_entity in_relation_source_endpoint');
+      expect(compiled.sql).toMatch(
+        /r\.schema_id = (?:\$\d+|\?) AND out_relation_source_endpoint\.schema_id IN \((?:\$\d+|\?)(?:, (?:\$\d+|\?))*\)/
+      );
       return db.catalog.runCompiledEntityQuery(compiled.sql, compiled.params);
     };
 

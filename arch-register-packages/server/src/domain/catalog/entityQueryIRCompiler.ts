@@ -85,6 +85,7 @@ type CompileState = {
   projectionBindings: ProjectionBinding[];
   bindingByPath: Map<string, ProjectionBinding>;
   compilingBinding: boolean;
+  relationSourceConstraints: readonly RelationSourceConstraint[];
   visibleEntityIds?: readonly string[];
   relationVisibility?: TypedRelationVisibilityPolicy;
   limit?: number;
@@ -94,6 +95,12 @@ type CompileState = {
 type ProjectionBinding = {
   name: string;
   path: PathStep[];
+};
+
+type RelationSourceConstraint = {
+  relationSchemaId: string;
+  ownerDirection?: 'in' | 'out';
+  ownerSchemaIds?: readonly string[];
 };
 
 const addParam = (state: CompileState, value: unknown): string => {
@@ -141,6 +148,40 @@ const relationVisibilityClause = (
   return `(${ownerClause}${endpointClauses.length > 0 ? ` OR ${endpointClauses.join(' OR ')}` : ''})`;
 };
 
+const relationSourceSchemaIds = (state: CompileState): readonly string[] => [
+  ...new Set(state.relationSourceConstraints.map(constraint => constraint.relationSchemaId))
+];
+
+const relationSourceSchemaClause = (alias: string, state: CompileState): string => {
+  const schemaIds = relationSourceSchemaIds(state);
+  if (schemaIds.length === 0) return '1=1';
+  return `${alias}.schema_id IN (${schemaIds.map(schemaId => addParam(state, schemaId)).join(', ')})`;
+};
+
+const relationSourceConstraintClause = (
+  relationAlias: string,
+  inEndpointAlias: string,
+  outEndpointAlias: string,
+  state: CompileState
+): string => {
+  if (state.relationSourceConstraints.length === 0) return '1=1';
+
+  return `(${state.relationSourceConstraints
+    .map(constraint => {
+      const schemaClause = `${relationAlias}.schema_id = ${addParam(state, constraint.relationSchemaId)}`;
+      if (!constraint.ownerDirection || !constraint.ownerSchemaIds) return schemaClause;
+      const endpointAlias = constraint.ownerDirection === 'in' ? inEndpointAlias : outEndpointAlias;
+      const ownerSchemaClause =
+        constraint.ownerSchemaIds.length === 0
+          ? '1=0'
+          : `${endpointAlias}.schema_id IN (${constraint.ownerSchemaIds
+              .map(schemaId => addParam(state, schemaId))
+              .join(', ')})`;
+      return `(${schemaClause} AND ${ownerSchemaClause})`;
+    })
+    .join(' OR ')})`;
+};
+
 const pathKey = (path: PathStep[]): string => JSON.stringify(path);
 
 const pathStartsWith = (path: PathStep[], prefix: PathStep[]): boolean =>
@@ -160,6 +201,64 @@ const collectRootPathOccurrences = (node: QueryNode, occurrences: PathStep[][]):
       if (node.path.length > 0) occurrences.push(node.path);
       return;
   }
+};
+
+const collectRelationSourceConstraintsFromPath = (
+  path: PathStep[],
+  constraints: Map<string, RelationSourceConstraint>
+): void => {
+  path.forEach(step => {
+    if (step.kind === 'typedRelation') {
+      const constraint: RelationSourceConstraint = {
+        relationSchemaId: step.relationSchemaId,
+        ownerDirection: step.direction,
+        ownerSchemaIds: step.ownerSchemaIds
+      };
+      constraints.set(JSON.stringify(constraint), constraint);
+    }
+    if (step.kind !== 'endpoint' && step.filter) {
+      collectRelationSourceConstraintsFromNode(step.filter, constraints);
+    }
+  });
+};
+
+const collectRelationSourceConstraintsFromNode = (
+  node: QueryNode,
+  constraints: Map<string, RelationSourceConstraint>
+): void => {
+  switch (node.kind) {
+    case 'and':
+    case 'or':
+      node.children.forEach(child => collectRelationSourceConstraintsFromNode(child, constraints));
+      return;
+    case 'not':
+      collectRelationSourceConstraintsFromNode(node.child, constraints);
+      return;
+    case 'predicate':
+    case 'relationExists':
+      collectRelationSourceConstraintsFromPath(node.path, constraints);
+      return;
+    case 'freeText':
+      return;
+  }
+};
+
+const collectRelationSourceConstraints = (
+  query: EntityQuery,
+  rootKind: 'entity' | 'relation'
+): readonly RelationSourceConstraint[] => {
+  const constraints = new Map<string, RelationSourceConstraint>();
+  if (rootKind === 'relation' && query.schemaId) {
+    const constraint: RelationSourceConstraint = { relationSchemaId: query.schemaId };
+    constraints.set(JSON.stringify(constraint), constraint);
+  }
+
+  collectRelationSourceConstraintsFromNode(query.root, constraints);
+  query.projections?.forEach(projection =>
+    collectRelationSourceConstraintsFromPath(projection.path, constraints)
+  );
+
+  return [...constraints.values()];
 };
 
 const relationIsMultiValued = (
@@ -1358,8 +1457,16 @@ const buildTemporalRelationSource = (state: CompileState): string => {
   const asOf = state.asOf!;
   const workspaceParam = addParam(state, state.workspace);
   const asOfParam = addParam(state, asOf.toISOString());
+  const latestRelationSchemaClause =
+    relationSourceSchemaIds(state).length > 0
+      ? `AND ${relationSourceSchemaClause('cr', state)}`
+      : '';
   const fallbackWorkspaceParam = addParam(state, state.workspace);
   const fallbackCreatedParam = addParam(state, asOf.toISOString());
+  const fallbackRelationSchemaClause =
+    relationSourceSchemaIds(state).length > 0
+      ? `AND ${relationSourceSchemaClause('r', state)}`
+      : '';
   const eventWorkspaceParam = addParam(state, state.workspace);
   const eventCreatedParam = addParam(state, asOf.toISOString());
   const eventDateParam = addParam(state, asOf.toISOString().slice(0, 10));
@@ -1378,6 +1485,10 @@ const buildTemporalRelationSource = (state: CompileState): string => {
     'final_relation_state.workspace',
     state.dialect
   );
+  const eventRelationSchemaClause =
+    relationSourceSchemaIds(state).length > 0
+      ? `AND ${relationSourceSchemaClause('cr', state)}`
+      : '';
 
   return `
     latest_relation_version AS (
@@ -1391,6 +1502,7 @@ const buildTemporalRelationSource = (state: CompileState): string => {
       JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'relation'
       WHERE v.workspace = ${workspaceParam}
         AND v.created_at <= ${asOfParam}
+        ${latestRelationSchemaClause}
     ),
     baseline_relation_state AS (
       SELECT v.record_id, v.workspace, v.state
@@ -1404,6 +1516,7 @@ const buildTemporalRelationSource = (state: CompileState): string => {
         AND r.workspace = ${fallbackWorkspaceParam}
         AND r.deleted_at IS NULL
         AND r.created_at <= ${fallbackCreatedParam}
+        ${fallbackRelationSchemaClause}
         AND NOT EXISTS (
           SELECT 1 FROM record_version any_version
           WHERE any_version.workspace = r.workspace
@@ -1434,6 +1547,7 @@ const buildTemporalRelationSource = (state: CompileState): string => {
         AND c.effective_date IS NOT NULL
         AND c.effective_date <= ${eventDateParam}
         AND ${caseProjectClause}
+        ${eventRelationSchemaClause}
     ),
     future_relation_state (record_id, workspace, state, event_number) AS (
       SELECT b.record_id, b.workspace, b.state, ${initialEventNumber}
@@ -1480,24 +1594,48 @@ const buildRelationScopeCte = (state: CompileState): string => {
        AND out_visibility_endpoint.id = r.out_record_id
        AND out_visibility_endpoint.kind = 'entity'`
     : '';
+  const needsSourceEndpointJoins = state.relationSourceConstraints.some(
+    constraint => constraint.ownerDirection != null
+  );
+  const sourceEndpointJoins = needsSourceEndpointJoins
+    ? `
+      LEFT JOIN ${SCOPE_CTE} in_relation_source_endpoint
+        ON in_relation_source_endpoint.workspace = r.workspace
+       AND in_relation_source_endpoint.id = r.in_record_id
+      LEFT JOIN ${SCOPE_CTE} out_relation_source_endpoint
+        ON out_relation_source_endpoint.workspace = r.workspace
+       AND out_relation_source_endpoint.id = r.out_record_id`
+    : '';
   if (state.asOf) {
     const source = buildTemporalRelationSource(state);
+    const sourceClause = relationSourceConstraintClause(
+      'r',
+      'in_relation_source_endpoint',
+      'out_relation_source_endpoint',
+      state
+    );
     const visibilityClause = relationVisibilityClause(
       'r',
       'in_visibility_endpoint',
       'out_visibility_endpoint',
       state
     );
-    return `${source},\n    ${RELATION_SCOPE_CTE} AS (\n      SELECT r.*\n      FROM temporal_relation_source r${endpointJoins}\n      WHERE ${visibilityClause}\n    )`;
+    return `${source},\n    ${RELATION_SCOPE_CTE} AS (\n      SELECT r.*\n      FROM temporal_relation_source r${sourceEndpointJoins}${endpointJoins}\n      WHERE ${sourceClause} AND ${visibilityClause}\n    )`;
   }
   const workspaceParam = addParam(state, state.workspace);
+  const sourceClause = relationSourceConstraintClause(
+    'r',
+    'in_relation_source_endpoint',
+    'out_relation_source_endpoint',
+    state
+  );
   const visibilityClause = relationVisibilityClause(
     'r',
     'in_visibility_endpoint',
     'out_visibility_endpoint',
     state
   );
-  return `${RELATION_SCOPE_CTE} AS (\n      SELECT r.*\n      FROM catalog_record r${endpointJoins}\n      WHERE r.kind = 'relation'\n        AND r.workspace = ${workspaceParam}\n        AND r.deleted_at IS NULL\n        AND ${visibilityClause}\n    )`;
+  return `${RELATION_SCOPE_CTE} AS (\n      SELECT r.*\n      FROM catalog_record r${sourceEndpointJoins}${endpointJoins}\n      WHERE r.kind = 'relation'\n        AND r.workspace = ${workspaceParam}\n        AND r.deleted_at IS NULL\n        AND ${sourceClause}\n        AND ${visibilityClause}\n    )`;
 };
 
 // Shared setup for compileEntityQueryIR and compileEntityQueryCountIR: resolves rootKind, builds
@@ -1539,6 +1677,7 @@ const buildQueryFragments = (
     projectionBindings: [],
     bindingByPath: new Map(),
     compilingBinding: false,
+    relationSourceConstraints: collectRelationSourceConstraints(query, rootKind),
     visibleEntityIds: options.visibleEntityIds,
     relationVisibility: options.relationVisibility,
     limit: options.limit,

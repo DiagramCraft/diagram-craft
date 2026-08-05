@@ -87,6 +87,10 @@ describe('typed scalar relation query compilation', () => {
     expect(compiled.sql).toContain("json_extract(pb_rel_query_path_0_1.data, '$.status')");
     expect(compiled.params).toContain(relation.id);
     expect(compiled.params).toContain('active');
+    expect(compiled.sql).toContain('LEFT JOIN scoped_entity in_relation_source_endpoint');
+    expect(compiled.sql).toContain(
+      'r.schema_id = ? AND out_relation_source_endpoint.schema_id IN (?)'
+    );
   });
 
   it('projects a scalar relation field through a typed relation path', () => {
@@ -131,5 +135,36 @@ describe('typed scalar relation query compilation', () => {
     );
     expect(compiled.sql).toContain('relation_query_path_0');
     expect(compiled.sql).toContain("pv_relation_query_path_0.data->'status'");
+  });
+
+  it('narrows the relation source for a projection-only typed relation path', () => {
+    const path = [
+      {
+        kind: 'typedRelation' as const,
+        fieldId: 'data_flows_out',
+        relationSchemaId: relation.id,
+        direction: 'out' as const,
+        ownerSchemaIds: [system.id]
+      }
+    ];
+    const query: EntityQuery = {
+      root: { kind: 'and', children: [] },
+      projections: [{ path, fieldId: 'status', source: 'relation' }]
+    };
+    expect(validateEntityQueryIR(query, schemas, null, relationSchemas)).toEqual({ ok: true });
+
+    const compiled = compileEntityQueryIR(
+      query,
+      schemas,
+      'postgres',
+      'ws-1',
+      {},
+      null,
+      relationSchemas
+    );
+    expect(compiled.sql).toContain('LEFT JOIN scoped_entity in_relation_source_endpoint');
+    expect(compiled.sql).toMatch(
+      /r\.schema_id = \$\d+ AND out_relation_source_endpoint\.schema_id IN \(\$\d+\)/
+    );
   });
 });
