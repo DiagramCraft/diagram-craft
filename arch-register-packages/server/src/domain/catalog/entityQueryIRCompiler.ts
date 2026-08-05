@@ -558,6 +558,17 @@ const projectionRawValueRelation = (
     : `json_extract(${alias}.data, '$.${fieldId}')`;
 };
 
+const projectionRawValueRelationData = (
+  dataExpression: string,
+  fieldId: string,
+  dialect: EntityQueryDialect
+): string => {
+  assertValidFieldId(fieldId);
+  return dialect === 'postgres'
+    ? `${dataExpression}->'${fieldId}'`
+    : `json_extract(${dataExpression}, '$.${fieldId}')`;
+};
+
 const compileRelationNode = (
   node: QueryNode,
   alias: string,
@@ -910,6 +921,7 @@ const buildProjectionBindings = (
           `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId}`;
         selectParts.push(
           `${relationAlias}.id AS relation_${stepIndex + 1}_id`,
+          `${relationAlias}.data AS relation_${stepIndex + 1}_data`,
           `${targetAlias}.id AS hop_${stepIndex + 1}_id`
         );
         currentAlias = targetAlias;
@@ -1034,12 +1046,13 @@ const projectionValue = (
   }
   const targetAlias = `pv_target_${binding.name}`;
   const targetId = `${bindingAlias}.hop_${projection.path.length}_id`;
-  const relationAlias = `pv_relation_${binding.name}`;
   const raw =
     projection.source === 'relation'
-      ? state.dialect === 'postgres'
-        ? `${relationAlias}.data->'${projection.fieldId}'`
-        : `json_extract(${relationAlias}.data, '$.${projection.fieldId}')`
+      ? projectionRawValueRelationData(
+          `${bindingAlias}.relation_${projection.path.length}_data`,
+          projection.fieldId,
+          state.dialect
+        )
       : projectionRawValue(targetAlias, projection.fieldId, state.dialect);
   const scope =
     projection.source === 'relation'
@@ -1048,7 +1061,7 @@ const projectionValue = (
   const source =
     `FROM ${binding.name} ${bindingAlias} ` +
     (projection.source === 'relation'
-      ? `JOIN ${RELATION_SCOPE_CTE} ${relationAlias} ON ${relationAlias}.id = ${bindingAlias}.relation_${projection.path.length}_id `
+      ? ''
       : `JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} `) +
     `WHERE ${bindingAlias}.root_id = ${ROOT_ALIAS}.id${scope ? ` AND ${scope}` : ''}`;
 
