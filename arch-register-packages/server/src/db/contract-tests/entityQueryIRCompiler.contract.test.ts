@@ -1339,7 +1339,10 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       description: '',
       in_schema_ids: [targetSchema.id],
       out_schema_ids: [openOwnerSchema.id, lockedOwnerSchema.id],
-      fields: [{ id: 'note', name: 'Note', type: 'text', requirementLevel: 'optional' }],
+      fields: [
+        { id: 'note', name: 'Note', type: 'text', requirementLevel: 'optional' },
+        { id: 'status', name: 'Status', type: 'text', requirementLevel: 'optional' }
+      ],
       groups: [],
       shared_field_group_links: [],
       color: null,
@@ -1358,7 +1361,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const lockedOwner = await createFixtureCatalogEntity(db, workspace, lockedOwnerSchema.id, {
       name: 'Locked Owner'
     });
-    const relationData = { note: 'visible relation note' };
+    const relationData = { note: 'visible relation note', status: 'active' };
     await db.relation.createRelation({
       id: randomUUID(),
       workspace,
@@ -1421,6 +1424,12 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
           fieldId: 'note',
           source: 'relation',
           alias: 'relation_note'
+        },
+        {
+          path: path([openOwnerSchema.id]),
+          fieldId: 'status',
+          source: 'relation',
+          alias: 'relation_status'
         }
       ]
     };
@@ -1459,6 +1468,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(noAccessMatches.map(entity => entity.id)).toEqual([openOwner.id]);
     expect(noAccessMatches[0]?.projections['target_name']).toEqual(['Target Entity']);
     expect(noAccessMatches[0]?.projections['relation_note']).toEqual([relationData.note]);
+    expect(noAccessMatches[0]?.projections['relation_status']).toEqual([relationData.status]);
 
     const privilegedMatches = await compileAndRun(privileged, [
       openOwnerSchema.id,

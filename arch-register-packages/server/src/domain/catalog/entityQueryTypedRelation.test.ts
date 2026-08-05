@@ -34,7 +34,10 @@ const relation: RelationSchemaDbResult = {
   description: '',
   in_schema_ids: ['system'],
   out_schema_ids: ['system'],
-  fields: [{ id: 'status', name: 'Status', type: 'text' }],
+  fields: [
+    { id: 'status', name: 'Status', type: 'text' },
+    { id: 'note', name: 'Note', type: 'text' }
+  ],
   groups: [],
   color: null,
   icon: null,
@@ -120,6 +123,19 @@ describe('typed scalar relation query compilation', () => {
           ],
           fieldId: 'status',
           source: 'relation'
+        },
+        {
+          path: [
+            {
+              kind: 'typedRelation',
+              fieldId: 'data_flows_out',
+              relationSchemaId: relation.id,
+              direction: 'out',
+              ownerSchemaIds: [system.id]
+            }
+          ],
+          fieldId: 'note',
+          source: 'relation'
         }
       ]
     };
@@ -133,8 +149,11 @@ describe('typed scalar relation query compilation', () => {
       null,
       relationSchemas
     );
-    expect(compiled.sql).toContain('relation_query_path_0');
-    expect(compiled.sql).toContain("pv_relation_query_path_0.data->'status'");
+    expect(compiled.sql).toContain('query_path_0 AS');
+    expect(compiled.sql).toContain('pb_rel_query_path_0_1.data AS relation_1_data');
+    expect(compiled.sql).toContain("pv_query_path_0.relation_1_data->'status'");
+    expect(compiled.sql).toContain("pv_query_path_0.relation_1_data->'note'");
+    expect(compiled.sql).not.toContain('JOIN scoped_relation pv_relation_query_path_0');
   });
 
   it('narrows the relation source for a projection-only typed relation path', () => {
