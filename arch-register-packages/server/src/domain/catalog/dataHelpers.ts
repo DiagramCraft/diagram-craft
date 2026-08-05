@@ -618,7 +618,8 @@ export const buildEntityDependents = (
             { schema: inSchema, direction: 'in' },
             { schema: outSchema, direction: 'out' }
           ],
-          row.schema_id
+          row.schema_id,
+          row.owner
         )
       ) {
         continue;

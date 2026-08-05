@@ -206,7 +206,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async createRelation(input: RelationDbCreate) {
     this.run(
-      "INSERT INTO catalog_record (id, workspace, kind, schema_id, in_record_id, out_record_id, data, version, approval_policy_override, created_at, updated_at) VALUES (?, ?, 'relation', ?, ?, ?, ?, ?, ?, ?, ?)",
+      "INSERT INTO catalog_record (id, workspace, kind, schema_id, in_record_id, out_record_id, data, owner, lifecycle, version, approval_policy_override, created_at, updated_at) VALUES (?, ?, 'relation', ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)",
       [
         input.id,
         input.workspace,
@@ -214,6 +214,8 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
         input.in_entity_id,
         input.out_entity_id,
         JSON.stringify(input.data),
+        input.owner ?? null,
+        input.lifecycle ?? null,
         input.version ?? 1,
         input.approval_policy_override ?? null,
         input.created_at.toISOString(),
@@ -224,24 +226,30 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
   }
 
   async updateRelation(workspace: string, id: string, input: RelationDbUpdate) {
-    if (input.approval_policy_override === undefined) {
-      this.run(
-        "UPDATE catalog_record SET data = ?, version = ?, updated_at = ? WHERE workspace = ? AND id = ? AND kind = 'relation'",
-        [JSON.stringify(input.data), input.version, input.updated_at.toISOString(), workspace, id]
-      );
-    } else {
-      this.run(
-        "UPDATE catalog_record SET data = ?, version = ?, approval_policy_override = ?, updated_at = ? WHERE workspace = ? AND id = ? AND kind = 'relation'",
-        [
-          JSON.stringify(input.data),
-          input.version,
-          input.approval_policy_override,
-          input.updated_at.toISOString(),
-          workspace,
-          id
-        ]
-      );
+    // undefined = leave unchanged, so owner/lifecycle/approval_policy_override are only added
+    // to the SET clause when the caller actually supplied a value (including explicit null).
+    const setClauses = ['data = ?', 'version = ?'];
+    const params: unknown[] = [JSON.stringify(input.data), input.version];
+
+    if (input.owner !== undefined) {
+      setClauses.push('owner = ?');
+      params.push(input.owner);
     }
+    if (input.lifecycle !== undefined) {
+      setClauses.push('lifecycle = ?');
+      params.push(input.lifecycle);
+    }
+    if (input.approval_policy_override !== undefined) {
+      setClauses.push('approval_policy_override = ?');
+      params.push(input.approval_policy_override);
+    }
+    setClauses.push('updated_at = ?');
+    params.push(input.updated_at.toISOString());
+
+    this.run(
+      `UPDATE catalog_record SET ${setClauses.join(', ')} WHERE workspace = ? AND id = ? AND kind = 'relation'`,
+      [...params, workspace, id]
+    );
     return await this.getRelation(workspace, id);
   }
 

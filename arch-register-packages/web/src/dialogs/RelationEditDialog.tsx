@@ -1,8 +1,11 @@
 import { useEffect, useState } from 'react';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { Select } from '@diagram-craft/app-components/Select';
 import { LoadingState } from '../components/LoadingState';
 import { useRelation, useUpdateRelation } from '../hooks/useRelations';
 import { useRelationSchemas } from '../hooks/useRelationSchemas';
+import { useTeams, useLifecycleStates } from '../hooks/useWorkspaceConfig';
 import { RelationFieldInput } from './RelationFieldInput';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 
@@ -30,11 +33,15 @@ const toFieldValue = (field: RelationSchema['fields'][number], raw: string): unk
 export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: Props) => {
   const { data: record } = useRelation(workspaceId, relationId ?? '');
   const { data: relationSchemas } = useRelationSchemas(workspaceId, open && !!relationId);
+  const { data: teams = [] } = useTeams(workspaceId, open);
+  const { data: lifecycleStates = [] } = useLifecycleStates(workspaceId, open);
   const relationSchema = relationSchemas?.find(schema => schema.id === record?._schema.id);
   const activeFields = activeFieldsOf(relationSchema);
   const updateMutation = useUpdateRelation(workspaceId);
 
   const [values, setValues] = useState<Record<string, string>>({});
+  const [owner, setOwner] = useState('');
+  const [lifecycle, setLifecycle] = useState('');
 
   useEffect(() => {
     if (!open || !record) return;
@@ -42,6 +49,8 @@ export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: P
     const initial: Record<string, string> = {};
     for (const field of fields) initial[field.id] = String(record[field.id] ?? '');
     setValues(initial);
+    setOwner(record._owner?.id ?? '');
+    setLifecycle(record._lifecycle?.id ?? '');
   }, [open, record, relationSchemas]);
 
   const handleSave = async () => {
@@ -51,6 +60,12 @@ export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: P
       const raw = values[field.id] ?? '';
       if (raw === String(record[field.id] ?? '')) continue;
       data[field.id] = toFieldValue(field, raw);
+    }
+    if (record.canAdmin && owner !== (record._owner?.id ?? '')) {
+      data['_owner'] = owner === '' ? null : owner;
+    }
+    if (record.canEdit && lifecycle !== (record._lifecycle?.id ?? '')) {
+      data['_lifecycle'] = lifecycle === '' ? null : lifecycle;
     }
     if (Object.keys(data).length > 0) {
       try {
@@ -81,18 +96,50 @@ export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: P
     >
       {!record ? (
         <LoadingState text="Loading relation..." size="sm" />
-      ) : activeFields.length === 0 ? (
-        <div className="dim">This relation type has no editable fields.</div>
       ) : (
         <div style={{ display: 'flex', flexDirection: 'column', gap: 12 }}>
-          {activeFields.map(field => (
-            <RelationFieldInput
-              key={field.id}
-              field={field}
-              value={values[field.id] ?? ''}
-              onChange={value => setValues(v => ({ ...v, [field.id]: value }))}
-            />
-          ))}
+          <FormElement label="Owner">
+            <Select.Root
+              value={owner || undefined}
+              disabled={!record.canAdmin}
+              onChange={next => setOwner(next ?? '')}
+              placeholder="—"
+              style={{ width: '100%' }}
+            >
+              {teams.map(team => (
+                <Select.Item key={team.id} value={team.id}>
+                  {team.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </FormElement>
+          <FormElement label="Lifecycle">
+            <Select.Root
+              value={lifecycle || undefined}
+              disabled={!record.canEdit}
+              onChange={next => setLifecycle(next ?? '')}
+              placeholder="—"
+              style={{ width: '100%' }}
+            >
+              {lifecycleStates.map(state => (
+                <Select.Item key={state.id} value={state.id}>
+                  {state.label}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </FormElement>
+          {activeFields.length === 0 ? (
+            <div className="dim">This relation type has no other editable fields.</div>
+          ) : (
+            activeFields.map(field => (
+              <RelationFieldInput
+                key={field.id}
+                field={field}
+                value={values[field.id] ?? ''}
+                onChange={value => setValues(v => ({ ...v, [field.id]: value }))}
+              />
+            ))
+          )}
         </div>
       )}
     </Dialog>

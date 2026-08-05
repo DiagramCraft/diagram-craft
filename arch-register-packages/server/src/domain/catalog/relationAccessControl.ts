@@ -1,4 +1,4 @@
-import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
+import { PermissionChecker, type WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { TypedRelationField } from '@arch-register/api-types/schemaContract';
 import type { SchemaDbResult } from './db/catalogDatabase';
 import {
@@ -11,18 +11,20 @@ import { httpAssert } from '../../utils/httpAssert';
 
 export type RelationEndpointDirection = 'in' | 'out';
 
+const checker = new PermissionChecker();
+
 /**
- * Relations are deliberately not modeled on `EntityAction`/`PermissionChecker.hasEntityPermission`
- * (see arch-register-packages/permissions/src/PermissionChecker.ts). That model is owner- and
- * containment-hierarchy-scoped: it walks ancestor entities via `containment`-type schema fields
- * to propagate team permissions down a tree. Relations have no `owner`/`lifecycle` fields and no
- * containment hierarchy to walk, so there's no structural projection of a relation that the
- * entity permission machinery could consume. Instead, relation authorization is: a flat workspace
- * capability (`ent.edit`, see `requireWorkspaceCapability` call sites in relationOperations.ts)
- * plus the endpoint-based field-group visibility checks below (an entity's owner-restricted
- * `typedRelation` field can hide relations through that endpoint). This is a permanent design
- * choice, not an unfinished unification — see #2708 for the (deferred, not yet decided) question
- * of whether relations should someday gain their own ownership/lifecycle semantics.
+ * Relations have their own `owner`/`lifecycle` fields (#2708), but no containment hierarchy to
+ * walk — so relation authorization only ever uses the "direct owner" half of
+ * `PermissionChecker`'s model (see `PermissionChecker.hasRelationOwnerAction` in
+ * arch-register-packages/permissions/src/PermissionChecker.ts), never ancestor/descendant
+ * propagation, and deliberately excludes the general workspace-capability branch of
+ * `hasRelationPermission`/`getRelationActions` — every caller reaching these checks has already
+ * passed a `requireWorkspaceCapability('ent.edit')` gate, so composing with that branch here
+ * would trivially satisfy the OR for anyone and defeat the endpoint-based field-group
+ * restriction below. Only a resource-level grant (owner team or global admin) can override that
+ * restriction — a user can view/edit a relation if either the endpoint check or the relation's
+ * own owner-team role grants it.
  */
 
 const matchingOwnerFields = (
@@ -70,8 +72,10 @@ export const canEditTypedRelationFromEndpoint = (
 };
 
 /**
- * Endpoint-agnostic relation APIs use OR semantics across both endpoint bindings. This keeps
- * standalone relation access compatible with relation schemas that are surfaced by either side.
+ * Endpoint-agnostic relation APIs use OR semantics across both endpoint bindings, plus the
+ * relation's own owner-team role when `owner` is supplied (omit/null for call sites that don't
+ * have a relation row in scope — this is a widening-only addition, never narrows access below
+ * what the endpoint checks alone would already allow).
  */
 export const canViewTypedRelation = (
   authCtx: WorkspaceAuthorizationContext | null,
@@ -79,11 +83,13 @@ export const canViewTypedRelation = (
     schema: FieldGroupSchemaShape | null | undefined;
     direction: RelationEndpointDirection;
   }>,
-  relationSchemaId: string
+  relationSchemaId: string,
+  owner: string | null = null
 ) =>
   endpoints.some(endpoint =>
     canViewTypedRelationFromEndpoint(authCtx, endpoint.schema, relationSchemaId, endpoint.direction)
-  );
+  ) ||
+  (authCtx != null && checker.hasRelationOwnerAction(authCtx, { owner }, 'view_relation'));
 
 export const canEditTypedRelation = (
   authCtx: WorkspaceAuthorizationContext | null,
@@ -91,11 +97,13 @@ export const canEditTypedRelation = (
     schema: FieldGroupSchemaShape | null | undefined;
     direction: RelationEndpointDirection;
   }>,
-  relationSchemaId: string
+  relationSchemaId: string,
+  owner: string | null = null
 ) =>
   endpoints.some(endpoint =>
     canEditTypedRelationFromEndpoint(authCtx, endpoint.schema, relationSchemaId, endpoint.direction)
-  );
+  ) ||
+  (authCtx != null && checker.hasRelationOwnerAction(authCtx, { owner }, 'edit_relation'));
 
 /** Enforces the exact owner field selected by an inline entity mutation. */
 export const requireTypedRelationFieldEdit = (
@@ -118,9 +126,10 @@ export const requireTypedRelationEdit = (
     schema: SchemaDbResult | null | undefined;
     direction: RelationEndpointDirection;
   }>,
-  relationSchemaId: string
+  relationSchemaId: string,
+  owner: string | null = null
 ) => {
-  if (canEditTypedRelation(authCtx, endpoints, relationSchemaId)) return;
+  if (canEditTypedRelation(authCtx, endpoints, relationSchemaId, owner)) return;
   httpAssert.true(false, {
     status: 403,
     statusText: 'Forbidden',

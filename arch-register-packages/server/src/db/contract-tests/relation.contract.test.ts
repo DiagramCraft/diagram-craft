@@ -5,6 +5,22 @@ import type { DatabaseAdapter } from '../database';
 import { createFixtureSchema, createFixtureWorkspace } from './projectFixtures';
 import { createFixtureCatalogEntity } from './catalogFixtures';
 
+const createFixtureTeam = async (db: DatabaseAdapter, workspace: string) => {
+  const teamId = randomUUID();
+  await db.workspace.replaceTeams(workspace, [
+    {
+      id: teamId,
+      workspace,
+      name: `Team ${teamId}`,
+      sort_order: 0,
+      color: null,
+      description: '',
+      created_at: new Date()
+    }
+  ]);
+  return teamId;
+};
+
 const createFixtureRelationSchema = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -155,6 +171,59 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
       expect(deleted!.id).toBe(relation.id);
       expect(await db.relation.getRelation(workspace, relation.id)).toBeNull();
       expect(await db.relation.countRelationsForSchema(workspace, relationSchemaId)).toBe(0);
+    });
+
+    it('defaults owner/lifecycle at creation and supports independent updates, including clearing to null', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const appSchemaId = await createFixtureSchema(db, workspace);
+      const dbSchemaId = await createFixtureSchema(db, workspace);
+      const relationSchemaId = await createFixtureRelationSchema(
+        db,
+        workspace,
+        [appSchemaId],
+        [dbSchemaId]
+      );
+      const teamId = await createFixtureTeam(db, workspace);
+
+      const app = await createFixtureCatalogEntity(db, workspace, appSchemaId, {
+        owner: teamId
+      });
+      const database = await createFixtureCatalogEntity(db, workspace, dbSchemaId);
+
+      const now = new Date();
+      // Simulates createWorkspaceRelation's default-copy from the "in" entity.
+      const relation = await db.relation.createRelation({
+        id: randomUUID(),
+        workspace,
+        schema_id: relationSchemaId,
+        in_entity_id: app.id,
+        out_entity_id: database.id,
+        data: {},
+        owner: teamId,
+        created_at: now,
+        updated_at: now
+      });
+      expect(relation.owner).toBe(teamId);
+      expect(relation.owner_name).toBeTruthy();
+      expect(relation.lifecycle).toBeNull();
+
+      // Omitting owner/lifecycle on update leaves them unchanged.
+      const afterDataUpdate = await db.relation.updateRelation(workspace, relation.id, {
+        data: { note: 'updated' },
+        version: 2,
+        updated_at: new Date()
+      });
+      expect(afterDataUpdate!.owner).toBe(teamId);
+
+      // Explicitly clearing owner to null.
+      const afterClear = await db.relation.updateRelation(workspace, relation.id, {
+        data: { note: 'updated' },
+        owner: null,
+        version: 3,
+        updated_at: new Date()
+      });
+      expect(afterClear!.owner).toBeNull();
     });
 
     it('lists relations for a batch of entities, grouped by endpoint', async () => {

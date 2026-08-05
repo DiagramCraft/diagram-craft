@@ -2266,6 +2266,10 @@
                             "type": "boolean",
                             "description": "Whether the user can delete this relation instance"
                           },
+                          "canAdmin": {
+                            "type": "boolean",
+                            "description": "Whether the user can manage relation ownership"
+                          },
                           "_uid": {
                             "type": "string",
                             "description": "Unique relation instance identifier"
@@ -2318,6 +2322,52 @@
                             ],
                             "description": "The \"out\" endpoint entity"
                           },
+                          "_owner": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Relation owner"
+                          },
+                          "_lifecycle": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Current lifecycle state"
+                          },
                           "_version": {
                             "type": "integer",
                             "minimum": 1,
@@ -2337,10 +2387,13 @@
                           "canView",
                           "canEdit",
                           "canDelete",
+                          "canAdmin",
                           "_uid",
                           "_schema",
                           "_in",
                           "_out",
+                          "_owner",
+                          "_lifecycle",
                           "_version",
                           "_createdAt",
                           "_updatedAt"
@@ -2403,6 +2456,60 @@
                   "_outEntityId": {
                     "type": "string",
                     "description": "Identifier of the entity at the \"out\" endpoint"
+                  },
+                  "_owner": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "additionalProperties": {}
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Relation owner (defaults to the \"in\" entity's owner)"
+                  },
+                  "_lifecycle": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "additionalProperties": {}
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Current lifecycle state (defaults to the \"in\" entity's lifecycle)"
                   }
                 },
                 "required": [
@@ -2435,6 +2542,10 @@
                     "canDelete": {
                       "type": "boolean",
                       "description": "Whether the user can delete this relation instance"
+                    },
+                    "canAdmin": {
+                      "type": "boolean",
+                      "description": "Whether the user can manage relation ownership"
                     },
                     "_uid": {
                       "type": "string",
@@ -2488,6 +2599,52 @@
                       ],
                       "description": "The \"out\" endpoint entity"
                     },
+                    "_owner": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Relation owner"
+                    },
+                    "_lifecycle": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Current lifecycle state"
+                    },
                     "_version": {
                       "type": "integer",
                       "minimum": 1,
@@ -2507,10 +2664,13 @@
                     "canView",
                     "canEdit",
                     "canDelete",
+                    "canAdmin",
                     "_uid",
                     "_schema",
                     "_in",
                     "_out",
+                    "_owner",
+                    "_lifecycle",
                     "_version",
                     "_createdAt",
                     "_updatedAt"
@@ -2571,6 +2731,10 @@
                       "type": "boolean",
                       "description": "Whether the user can delete this relation instance"
                     },
+                    "canAdmin": {
+                      "type": "boolean",
+                      "description": "Whether the user can manage relation ownership"
+                    },
                     "_uid": {
                       "type": "string",
                       "description": "Unique relation instance identifier"
@@ -2623,6 +2787,52 @@
                       ],
                       "description": "The \"out\" endpoint entity"
                     },
+                    "_owner": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Relation owner"
+                    },
+                    "_lifecycle": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Current lifecycle state"
+                    },
                     "_version": {
                       "type": "integer",
                       "minimum": 1,
@@ -2642,10 +2852,13 @@
                     "canView",
                     "canEdit",
                     "canDelete",
+                    "canAdmin",
                     "_uid",
                     "_schema",
                     "_in",
                     "_out",
+                    "_owner",
+                    "_lifecycle",
                     "_version",
                     "_createdAt",
                     "_updatedAt"
@@ -2690,6 +2903,62 @@
             "application/json": {
               "schema": {
                 "type": "object",
+                "properties": {
+                  "_owner": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "additionalProperties": {}
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Relation owner"
+                  },
+                  "_lifecycle": {
+                    "anyOf": [
+                      {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id"
+                            ],
+                            "additionalProperties": {}
+                          }
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Current lifecycle state"
+                  }
+                },
                 "additionalProperties": {},
                 "description": "Relation instance update data with schema-specific fields; the \"in\"/\"out\" endpoints are immutable after creation"
               }
@@ -2715,6 +2984,10 @@
                     "canDelete": {
                       "type": "boolean",
                       "description": "Whether the user can delete this relation instance"
+                    },
+                    "canAdmin": {
+                      "type": "boolean",
+                      "description": "Whether the user can manage relation ownership"
                     },
                     "_uid": {
                       "type": "string",
@@ -2768,6 +3041,52 @@
                       ],
                       "description": "The \"out\" endpoint entity"
                     },
+                    "_owner": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Relation owner"
+                    },
+                    "_lifecycle": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Current lifecycle state"
+                    },
                     "_version": {
                       "type": "integer",
                       "minimum": 1,
@@ -2787,10 +3106,13 @@
                     "canView",
                     "canEdit",
                     "canDelete",
+                    "canAdmin",
                     "_uid",
                     "_schema",
                     "_in",
                     "_out",
+                    "_owner",
+                    "_lifecycle",
                     "_version",
                     "_createdAt",
                     "_updatedAt"
@@ -2909,6 +3231,10 @@
                             "type": "boolean",
                             "description": "Whether the user can delete this relation instance"
                           },
+                          "canAdmin": {
+                            "type": "boolean",
+                            "description": "Whether the user can manage relation ownership"
+                          },
                           "_uid": {
                             "type": "string",
                             "description": "Unique relation instance identifier"
@@ -2961,6 +3287,52 @@
                             ],
                             "description": "The \"out\" endpoint entity"
                           },
+                          "_owner": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Relation owner"
+                          },
+                          "_lifecycle": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Current lifecycle state"
+                          },
                           "_version": {
                             "type": "integer",
                             "minimum": 1,
@@ -2980,10 +3352,13 @@
                           "canView",
                           "canEdit",
                           "canDelete",
+                          "canAdmin",
                           "_uid",
                           "_schema",
                           "_in",
                           "_out",
+                          "_owner",
+                          "_lifecycle",
                           "_version",
                           "_createdAt",
                           "_updatedAt"
@@ -3010,6 +3385,10 @@
                             "type": "boolean",
                             "description": "Whether the user can delete this relation instance"
                           },
+                          "canAdmin": {
+                            "type": "boolean",
+                            "description": "Whether the user can manage relation ownership"
+                          },
                           "_uid": {
                             "type": "string",
                             "description": "Unique relation instance identifier"
@@ -3062,6 +3441,52 @@
                             ],
                             "description": "The \"out\" endpoint entity"
                           },
+                          "_owner": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Relation owner"
+                          },
+                          "_lifecycle": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string"
+                                  },
+                                  "name": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "name"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Current lifecycle state"
+                          },
                           "_version": {
                             "type": "integer",
                             "minimum": 1,
@@ -3081,10 +3506,13 @@
                           "canView",
                           "canEdit",
                           "canDelete",
+                          "canAdmin",
                           "_uid",
                           "_schema",
                           "_in",
                           "_out",
+                          "_owner",
+                          "_lifecycle",
                           "_version",
                           "_createdAt",
                           "_updatedAt"

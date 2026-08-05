@@ -8,7 +8,8 @@ import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 const relationCapabilitiesSchema = z.object({
   canView: z.boolean().describe('Whether the user can view this relation instance'),
   canEdit: z.boolean().describe('Whether the user can edit this relation instance'),
-  canDelete: z.boolean().describe('Whether the user can delete this relation instance')
+  canDelete: z.boolean().describe('Whether the user can delete this relation instance'),
+  canAdmin: z.boolean().describe('Whether the user can manage relation ownership')
 });
 
 const relationSummarySchema = relationCapabilitiesSchema.extend({
@@ -16,6 +17,8 @@ const relationSummarySchema = relationCapabilitiesSchema.extend({
   _schema: foreignKeySchema.describe('Relation schema reference'),
   _in: foreignKeySchema.describe('The "in" endpoint entity'),
   _out: foreignKeySchema.describe('The "out" endpoint entity'),
+  _owner: foreignKeySchema.nullable().describe('Relation owner'),
+  _lifecycle: foreignKeySchema.nullable().describe('Current lifecycle state'),
   _version: z.number().int().min(1).describe('Optimistic concurrency version'),
   _createdAt: z.string().describe('ISO 8601 creation timestamp'),
   _updatedAt: z.string().describe('ISO 8601 last update timestamp')
@@ -28,17 +31,33 @@ export const relationRecordSchema = relationSummarySchema
 
 // ── Mutation input ────────────────────────────────────────────
 
+const relationOwnerOrIdSchema = z
+  .union([z.string(), z.object({ id: z.string() }).passthrough()])
+  .nullable()
+  .optional()
+  .describe('Owner reference (ID string or object with id)');
+
 export const relationCreateBodySchema = z
   .object({
     _schemaId: z.string().describe('Relation schema identifier'),
     _inEntityId: z.string().describe('Identifier of the entity at the "in" endpoint'),
-    _outEntityId: z.string().describe('Identifier of the entity at the "out" endpoint')
+    _outEntityId: z.string().describe('Identifier of the entity at the "out" endpoint'),
+    // Optional — omit to default-copy from the "in" entity's current owner/lifecycle (#2708).
+    _owner: relationOwnerOrIdSchema.describe(
+      'Relation owner (defaults to the "in" entity\'s owner)'
+    ),
+    _lifecycle: relationOwnerOrIdSchema.describe(
+      'Current lifecycle state (defaults to the "in" entity\'s lifecycle)'
+    )
   })
   .catchall(z.unknown())
   .describe('Relation instance creation data with schema-specific fields');
 
 export const relationUpdateBodySchema = z
-  .object({})
+  .object({
+    _owner: relationOwnerOrIdSchema.describe('Relation owner'),
+    _lifecycle: relationOwnerOrIdSchema.describe('Current lifecycle state')
+  })
   .catchall(z.unknown())
   .describe(
     'Relation instance update data with schema-specific fields; the "in"/"out" endpoints are ' +

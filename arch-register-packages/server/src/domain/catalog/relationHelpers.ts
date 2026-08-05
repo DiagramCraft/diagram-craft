@@ -1,11 +1,13 @@
 import type { RelationDbResult } from './db/relationDatabase';
 import type { RelationSchemaDbResult, RelationSchemaVersionDbResult } from './db/relationDatabase';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
-import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
+import { PermissionChecker, type WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 import { requireTypedRelationEdit } from './relationAccessControl';
+
+const checker = new PermissionChecker();
 
 /**
  * Resolves a relation's endpoint entities' schemas, needed by requireTypedRelationEdit's
@@ -68,7 +70,8 @@ export const requireRelationCaseMemberEditAccess = async (
       { schema: inSchema, direction: 'in' },
       { schema: outSchema, direction: 'out' }
     ],
-    relation.schema_id
+    relation.schema_id,
+    relation.owner
   );
 };
 
@@ -120,6 +123,21 @@ export const createRelationVersionSchemaResolver = (db: DatabaseAdapter, workspa
 /** Reserved (underscore-prefixed) keys are metadata; everything else is relation field data. */
 export const extractRelationFieldData = (body: Record<string, unknown>): Record<string, unknown> =>
   Object.fromEntries(Object.entries(body).filter(([key]) => !key.startsWith('_')));
+
+/** Normalizes a relation's `_owner`/`_lifecycle` mutation input (id string or `{ id }` object) to
+ *  a plain id, mirroring dataHelpers.ts's extractId for the analogous entity mutation fields. */
+export const extractRelationOwnerOrLifecycleId = (value: unknown): string | null => {
+  if (typeof value === 'string') return value.trim() === '' ? null : value;
+  if (
+    value != null &&
+    typeof value === 'object' &&
+    'id' in value &&
+    typeof (value as Record<string, unknown>)['id'] === 'string'
+  ) {
+    return (value as Record<string, unknown>)['id'] as string;
+  }
+  return null;
+};
 
 /**
  * Validates that both endpoint entities exist in the workspace and match the relation schema's
@@ -192,6 +210,8 @@ export const relationToBaseState = (row: RelationDbResult): Record<string, unkno
   in_entity_id: row.in_entity_id,
   out_entity_id: row.out_entity_id,
   data: row.data,
+  owner: row.owner,
+  lifecycle: row.lifecycle,
   version: row.version,
   approval_policy_override: row.approval_policy_override,
   created_at: row.created_at,
@@ -203,6 +223,8 @@ export const flattenRelationAuditFields = (row: RelationDbResult): Record<string
   _schemaId: row.schema_id,
   _inEntityId: row.in_entity_id,
   _outEntityId: row.out_entity_id,
+  _owner: row.owner,
+  _lifecycle: row.lifecycle,
   ...row.data
 });
 
@@ -221,20 +243,30 @@ export const relationAuditContext = (row: RelationDbResult): RelationAuditContex
   out: { id: row.out_entity_id, name: row.out_entity_name }
 });
 
-export const toApiRelation = (row: RelationDbResult): RelationRecord => ({
+export const toApiRelation = (
+  row: RelationDbResult,
+  authCtx: WorkspaceAuthorizationContext | null = null
+): RelationRecord => ({
   _uid: row.id,
   _schema: { id: row.schema_id, name: row.schema_name },
   _in: { id: row.in_entity_id, name: row.in_entity_name },
   _out: { id: row.out_entity_id, name: row.out_entity_name },
+  _owner: row.owner ? { id: row.owner, name: row.owner_name ?? row.owner } : null,
+  _lifecycle: row.lifecycle
+    ? { id: row.lifecycle, name: row.lifecycle_label ?? row.lifecycle }
+    : null,
   _version: row.version,
   _createdAt: row.created_at.toISOString(),
   _updatedAt: row.updated_at.toISOString(),
-  // Fine-grained per-relation-instance ACL (mirroring entity_grant) is not in scope for #2569;
-  // access is currently governed only by the workspace-level 'ent.edit'/'ws.view' capabilities
-  // checked in relationOperations.ts, plus field-group access control on individual fields.
+  // canView/canEdit/canDelete stay permissive placeholders (fine-grained per-relation-instance
+  // ACL mirroring entity_grant is not in scope for #2569) — access is actually governed by the
+  // workspace-level 'ent.edit'/'ws.view' capabilities checked in relationOperations.ts, plus
+  // field-group access control on individual fields. canAdmin is new with #2708 and can be
+  // computed directly from the relation's own owner team, mirroring getEntityCapabilities.
   canView: true,
   canEdit: true,
   canDelete: true,
+  canAdmin: authCtx == null || checker.hasRelationPermission(authCtx, row, 'admin_relation'),
   ...row.data
 });
 
@@ -266,7 +298,10 @@ export const toRedactedApiRelation = (
   authCtx: WorkspaceAuthorizationContext | null,
   schema: RelationSchemaDbResult | null | undefined
 ): RelationRecord =>
-  toApiRelation({
-    ...row,
-    data: filterRelationFieldData(authCtx, schema, row.data)
-  });
+  toApiRelation(
+    {
+      ...row,
+      data: filterRelationFieldData(authCtx, schema, row.data)
+    },
+    authCtx
+  );

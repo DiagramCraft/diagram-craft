@@ -67,12 +67,16 @@ export const RELATION_SELECT_SQL = `
     r.out_record_id AS out_entity_id,
     ein.name  AS in_entity_name,
     eout.name AS out_entity_name,
-    rs.name   AS schema_name
+    rs.name   AS schema_name,
+    wo.name   AS owner_name,
+    ls.label  AS lifecycle_label
   FROM catalog_record r
   JOIN catalog_record ein ON ein.id  = r.in_record_id  AND ein.kind = 'entity'
     AND r.kind = 'relation' AND r.deleted_at IS NULL
   JOIN catalog_record eout ON eout.id = r.out_record_id AND eout.kind = 'entity'
   JOIN relation_schema rs ON rs.id   = r.schema_id
+  LEFT JOIN workspace_owner wo           ON wo.id = r.owner
+  LEFT JOIN workspace_lifecycle_state ls ON ls.id = r.lifecycle
 `;
 
 export type RelationDbResult = {
@@ -85,6 +89,10 @@ export type RelationDbResult = {
   out_entity_id: string;
   out_entity_name: string;
   data: Record<string, unknown>;
+  owner: string | null;
+  owner_name: string | null;
+  lifecycle: string | null;
+  lifecycle_label: string | null;
   version: number;
   approval_policy_override: 'required' | 'disabled' | null;
   created_at: Date;
@@ -104,6 +112,10 @@ export type RelationDbCreate = {
   in_entity_id: string;
   out_entity_id: string;
   data: Record<string, unknown>;
+  /** Omit to leave unowned (e.g. seed/import/chat-tool creation paths); the primary
+   *  createWorkspaceRelation flow always supplies this, copied from the "in" entity's owner. */
+  owner?: string | null;
+  lifecycle?: string | null;
   version?: number;
   approval_policy_override?: 'required' | 'disabled' | null;
   created_at: Date;
@@ -113,6 +125,10 @@ export type RelationDbCreate = {
 export type RelationDbUpdate = {
   data: Record<string, unknown>;
   version: number;
+  /** undefined = leave unchanged (most callers — automation, AI tools, field mutations, CSV
+   *  import — never touch ownership); null = explicitly clear; a string = set to that owner. */
+  owner?: string | null;
+  lifecycle?: string | null;
   approval_policy_override?: 'required' | 'disabled' | null;
   updated_at: Date;
 };
@@ -191,6 +207,10 @@ export const relationMappers = {
     out_entity_id: String(row['out_entity_id']),
     out_entity_name: String(row['out_entity_name']),
     data: parseDatabaseJson(row['data'], {}, 'relation.data'),
+    owner: row['owner'] == null ? null : String(row['owner']),
+    owner_name: row['owner_name'] == null ? null : String(row['owner_name']),
+    lifecycle: row['lifecycle'] == null ? null : String(row['lifecycle']),
+    lifecycle_label: row['lifecycle_label'] == null ? null : String(row['lifecycle_label']),
     version: Number(row['version'] ?? 1),
     approval_policy_override:
       row['approval_policy_override'] == null

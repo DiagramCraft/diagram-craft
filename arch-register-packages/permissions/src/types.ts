@@ -51,7 +51,11 @@ export type WorkspaceCapability =
 
 export type EntityRole = 'editor' | 'contributor' | 'entity_admin';
 
-export type EntityAction = 'view_entity' | 'edit_entity' | 'create_child' | 'admin_entity';
+export type CatalogRecordAction = 'view' | 'edit' | 'admin';
+
+export type EntityAction = `${CatalogRecordAction}_entity` | 'create_child';
+
+export type RelationAction = `${CatalogRecordAction}_relation`;
 
 export type ProjectAction = 'edit_project' | 'delete_project' | 'manage_files';
 
@@ -91,6 +95,15 @@ export type Entity = {
   data: Record<string, unknown>;
   created_at: Date;
   updated_at: Date;
+};
+
+// Minimal relation projection needed by PermissionChecker's direct-owner-only relation
+// permission logic — relations have no containment hierarchy or schema/data fields to walk.
+export type Relation = {
+  id: string;
+  workspace: string;
+  owner: string | null;
+  lifecycle: string | null;
 };
 
 // ── Owner Types ───────────────────────────────────────────────

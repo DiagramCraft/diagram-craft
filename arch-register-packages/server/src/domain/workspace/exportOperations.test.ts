@@ -11,6 +11,9 @@ vi.mock('@arch-register/permissions', async importOriginal => {
       hasWorkspaceCapability(...args: Parameters<typeof hasWorkspaceCapability>) {
         return hasWorkspaceCapability(...args);
       }
+      hasRelationOwnerAction() {
+        return false;
+      }
     }
   };
 });

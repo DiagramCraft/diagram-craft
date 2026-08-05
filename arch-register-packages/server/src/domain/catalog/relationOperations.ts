@@ -15,6 +15,7 @@ import { orpcAssert } from '../../utils/orpcAssert';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import {
   extractRelationFieldData,
+  extractRelationOwnerOrLifecycleId,
   flattenRelationAuditFields,
   assertRelationMutationsSupported,
   toRedactedApiRelation,
@@ -129,7 +130,8 @@ export const listWorkspaceRelations = async (
               direction: 'out'
             }
           ],
-          row.schema_id
+          row.schema_id,
+          row.owner
         )
       );
       const offset = pagination.offset ?? 0;
@@ -192,7 +194,8 @@ export const getWorkspaceRelation = async (
             { schema: inSchema, direction: 'in' },
             { schema: outSchema, direction: 'out' }
           ],
-          row.schema_id
+          row.schema_id,
+          row.owner
         ),
         { status: 404, message: `Relation '${id}' not found` }
       );
@@ -252,6 +255,24 @@ export const createWorkspaceRelation = async (
       const data = extractRelationFieldData(body);
       requireNoRestrictedFieldWrites(authCtx, schema, Object.keys(data));
 
+      // Default-copy owner/lifecycle from the "in" entity at creation time, unless the caller
+      // explicitly overrides one or both — after this, ownership/lifecycle are fully independent
+      // of the source entity (see #2708). Overriding to a specific owner team requires the same
+      // admin_relation right as reassigning an existing relation's owner.
+      const owner =
+        '_owner' in body ? extractRelationOwnerOrLifecycleId(body['_owner']) : inEntity!.owner;
+      const lifecycle =
+        '_lifecycle' in body
+          ? extractRelationOwnerOrLifecycleId(body['_lifecycle'])
+          : inEntity!.lifecycle;
+      if ('_owner' in body && owner !== inEntity!.owner) {
+        httpAssert.true(checker.hasRelationPermission(authCtx, { owner }, 'admin_relation'), {
+          status: 403,
+          statusText: 'Forbidden',
+          message: 'You do not have permission to assign this relation to the given owner'
+        });
+      }
+
       const timestamp = new Date();
       const row = await db.relation.createRelation({
         id: randomUUID(),
@@ -260,6 +281,8 @@ export const createWorkspaceRelation = async (
         in_entity_id: inEntity!.id,
         out_entity_id: outEntity!.id,
         data,
+        owner,
+        lifecycle,
         created_at: timestamp,
         updated_at: timestamp
       });
@@ -324,7 +347,8 @@ export const updateWorkspaceRelation = async (
           { schema: inSchema, direction: 'in' },
           { schema: outSchema, direction: 'out' }
         ],
-        oldRow.schema_id
+        oldRow.schema_id,
+        oldRow.owner
       );
       assertRelationMutationsSupported(schema, oldRow);
 
@@ -334,10 +358,24 @@ export const updateWorkspaceRelation = async (
       );
       requireNoRestrictedFieldWrites(authCtx, schema, changedFieldIds);
 
+      const nextOwner =
+        '_owner' in body ? extractRelationOwnerOrLifecycleId(body['_owner']) : undefined;
+      const nextLifecycle =
+        '_lifecycle' in body ? extractRelationOwnerOrLifecycleId(body['_lifecycle']) : undefined;
+      if (nextOwner !== undefined && nextOwner !== oldRow.owner) {
+        httpAssert.true(checker.hasRelationPermission(authCtx, oldRow, 'admin_relation'), {
+          status: 403,
+          statusText: 'Forbidden',
+          message: 'You do not have permission to change ownership of this relation'
+        });
+      }
+
       const nextData = { ...oldRow.data, ...data };
       const timestamp = new Date();
       const row = await db.relation.updateRelation(ws, id, {
         data: nextData,
+        owner: nextOwner,
+        lifecycle: nextLifecycle,
         version: oldRow.version + 1,
         updated_at: timestamp
       });
@@ -401,7 +439,8 @@ export const deleteWorkspaceRelation = async (
           { schema: inSchema, direction: 'in' },
           { schema: outSchema, direction: 'out' }
         ],
-        row.schema_id
+        row.schema_id,
+        row.owner
       );
       const schema = await db.relation.getRelationSchema(ws, row.schema_id);
       httpAssert.present(schema, {
@@ -478,7 +517,8 @@ export const restoreWorkspaceRelationVersion = async (
           { schema: inSchema, direction: 'in' },
           { schema: outSchema, direction: 'out' }
         ],
-        row.schema_id
+        row.schema_id,
+        row.owner
       );
       assertRelationMutationsSupported(schema, row);
 

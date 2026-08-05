@@ -46,12 +46,15 @@ const record: RelationRecord = {
   _schema: { id: 'rel-schema-1', name: 'Depends on' },
   _in: { id: 'entity-2', name: 'Other Entity' },
   _out: { id: 'entity-1', name: 'My Entity' },
+  _owner: null,
+  _lifecycle: null,
   _version: 1,
   _createdAt: '',
   _updatedAt: '',
   canView: true,
   canEdit: true,
   canDelete: true,
+  canAdmin: true,
   protocol: 'https'
 };
 
