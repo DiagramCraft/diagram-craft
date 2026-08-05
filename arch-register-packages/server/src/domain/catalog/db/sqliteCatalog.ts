@@ -610,7 +610,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       [
         input.id,
         input.workspace,
-        input.entity_id,
+        input.record_id,
         input.version_number,
         input.kind,
         input.commit_message,
@@ -621,7 +621,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       ]
     );
     return (await this.get(
-      `SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name
+      `SELECT v.*, u.display_name AS created_by_name
        FROM record_version v LEFT JOIN users u ON u.id = v.created_by
        WHERE v.id = ?`,
       [input.id],
@@ -631,7 +631,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async listEntityVersions(workspace: string, entityId: string) {
     return this.all(
-      `SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name
+      `SELECT v.*, u.display_name AS created_by_name
        FROM record_version v LEFT JOIN users u ON u.id = v.created_by
        WHERE v.workspace = ? AND v.record_id = ? ORDER BY v.created_at DESC`,
       [workspace, entityId],
@@ -642,7 +642,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
   async listEntityVersionsByIds(workspace: string, entityIds: string[]) {
     if (entityIds.length === 0) return [];
     return this.all(
-      `SELECT v.id, v.workspace, v.record_id AS entity_id, v.version_number, v.kind, v.commit_message,
+      `SELECT v.id, v.workspace, v.record_id, v.version_number, v.kind, v.commit_message,
          v.created_at, v.created_by, v.applied_case_revision_id, u.display_name AS created_by_name
        FROM record_version v LEFT JOIN users u ON u.id = v.created_by
        WHERE v.workspace = ? AND v.record_id IN (${entityIds.map(() => '?').join(',')})
@@ -657,7 +657,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     const filter =
       entityIds != null ? `AND v.record_id IN (${entityIds.map(() => '?').join(',')})` : '';
     return this.all(
-      `SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name
+      `SELECT v.*, u.display_name AS created_by_name
        FROM record_version v
        JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'entity'
        LEFT JOIN users u ON u.id = v.created_by
@@ -673,7 +673,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     const filter =
       relationIds != null ? `AND v.record_id IN (${relationIds.map(() => '?').join(',')})` : '';
     return this.all(
-      `SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name
+      `SELECT v.*, u.display_name AS created_by_name
        FROM record_version v
        JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'relation'
        LEFT JOIN users u ON u.id = v.created_by
@@ -695,7 +695,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       [kind, commitMessage, workspace, versionId]
     );
     return this.get(
-      `SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name
+      `SELECT v.*, u.display_name AS created_by_name
        FROM record_version v LEFT JOIN users u ON u.id = v.created_by
        WHERE v.workspace = ? AND v.id = ?`,
       [workspace, versionId],
@@ -844,7 +844,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async getEntityVersionById(workspace: string, id: string) {
     return this.get(
-      `SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name FROM record_version v LEFT JOIN users u ON u.id = v.created_by WHERE v.workspace = ? AND v.id = ?`,
+      `SELECT v.*, u.display_name AS created_by_name FROM record_version v LEFT JOIN users u ON u.id = v.created_by WHERE v.workspace = ? AND v.id = ?`,
       [workspace, id],
       catalogMappers.entityVersion
     );

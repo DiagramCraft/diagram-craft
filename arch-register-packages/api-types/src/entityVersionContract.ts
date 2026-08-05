@@ -21,7 +21,7 @@ const entityVersionKindSchema = z
 export const entityVersionSchema = z.object({
   id: z.string().describe('Version identifier'),
   workspace: z.string().describe('Workspace identifier'),
-  entity_id: z.string().describe('Entity identifier'),
+  record_id: z.string().describe('Catalog record identifier'),
   version_number: z.number().describe('Sequential version number for this entity'),
   kind: entityVersionKindSchema,
   commit_message: z.string().nullable().describe('Commit message describing the version'),

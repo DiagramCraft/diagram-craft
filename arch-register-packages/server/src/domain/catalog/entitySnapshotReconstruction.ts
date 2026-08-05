@@ -197,11 +197,11 @@ export const reconstructEntitiesAsOf = async (
   const ownerNameMap = new Map(owners.map(o => [o.id, o.name]));
   const lifecycleLabelMap = new Map(lifecycles.map(l => [l.id, l.label]));
 
-  // `listEntityVersionsAsOf` returns rows ordered by (entity_id, created_at ASC), so the last
+  // `listEntityVersionsAsOf` returns rows ordered by (record_id, created_at ASC), so the last
   // row seen per entity is its latest version baseline at or before `asOf`.
   const baselineByEntity = new Map<string, EntityVersionDbResult>();
   for (const version of baselineVersions) {
-    baselineByEntity.set(version.entity_id, version);
+    baselineByEntity.set(version.record_id, version);
   }
 
   const futureUpdatesByEntity = await resolveFutureUpdatesByRecord(

@@ -21,7 +21,7 @@ const relationVersionKindSchema = z
 export const relationVersionSchema = z.object({
   id: z.string().describe('Version identifier'),
   workspace: z.string().describe('Workspace identifier'),
-  entity_id: z.string().describe('Relation instance identifier'),
+  record_id: z.string().describe('Catalog record identifier'),
   version_number: z.number().describe('Sequential version number for this relation instance'),
   kind: relationVersionKindSchema,
   commit_message: z.string().nullable().describe('Commit message describing the version'),

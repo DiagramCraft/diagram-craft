@@ -302,7 +302,7 @@ export const createWorkspaceRelation = async (
       await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace: ws,
-        entity_id: row.id,
+        record_id: row.id,
         version_number: row.version,
         kind: 'autosave',
         commit_message: null,
@@ -401,7 +401,7 @@ export const updateWorkspaceRelation = async (
       await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace: ws,
-        entity_id: row.id,
+        record_id: row.id,
         version_number: row.version,
         kind: 'autosave',
         commit_message: null,
@@ -460,7 +460,7 @@ export const deleteWorkspaceRelation = async (
       await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace: ws,
-        entity_id: row.id,
+        record_id: row.id,
         version_number: nextVersionNumber,
         kind: 'deleted',
         commit_message: null,
@@ -575,7 +575,7 @@ export const restoreWorkspaceRelationVersion = async (
       await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace: ws,
-        entity_id: nextRow.id,
+        record_id: nextRow.id,
         version_number: nextRow.version,
         kind: 'restored',
         commit_message: commitMessage,

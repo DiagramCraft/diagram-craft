@@ -602,7 +602,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         const version = await db.catalog.createEntityVersion({
           id: randomUUID(),
           workspace,
-          entity_id: entity.id,
+          record_id: entity.id,
           version_number: i + 1,
           kind: 'autosave',
           commit_message: null,
@@ -633,7 +633,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace,
-        entity_id: entityWithHistory.id,
+        record_id: entityWithHistory.id,
         version_number: 1,
         kind: 'autosave',
         commit_message: null,
@@ -866,7 +866,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace,
-        entity_id: relation.id,
+        record_id: relation.id,
         version_number: 1,
         kind: 'autosave',
         commit_message: null,
@@ -878,7 +878,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace,
-        entity_id: entity.id,
+        record_id: entity.id,
         version_number: 1,
         kind: 'autosave',
         commit_message: null,
@@ -891,7 +891,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       // An unscoped call (no candidateEntityIds — the workspace-wide asOf browser/landscape-diff
       // path) must return the entity's version row but never the relation's.
       const versions = await db.catalog.listEntityVersionsAsOf(workspace, new Date());
-      expect(versions.map(v => v.entity_id)).toEqual([entity.id]);
+      expect(versions.map(v => v.record_id)).toEqual([entity.id]);
     });
 
     it('excludes relation ids from an unscoped listEntityIdsWithVersionHistory', async () => {
@@ -933,7 +933,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace,
-        entity_id: relation.id,
+        record_id: relation.id,
         version_number: 1,
         kind: 'autosave',
         commit_message: null,
@@ -945,7 +945,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace,
-        entity_id: entity.id,
+        record_id: entity.id,
         version_number: 1,
         kind: 'autosave',
         commit_message: null,
@@ -1121,7 +1121,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace,
-        entity_id: relation.id,
+        record_id: relation.id,
         version_number: 1,
         kind: 'autosave',
         commit_message: null,
@@ -1133,7 +1133,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace,
-        entity_id: entity.id,
+        record_id: entity.id,
         version_number: 1,
         kind: 'autosave',
         commit_message: null,
@@ -1144,7 +1144,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       });
 
       const versions = await db.catalog.listRelationVersionsAsOf(workspace, new Date());
-      expect(versions.map(v => v.entity_id)).toEqual([relation.id]);
+      expect(versions.map(v => v.record_id)).toEqual([relation.id]);
     });
 
     it('lists planned relation changes as of a date, excluding entity members', async () => {

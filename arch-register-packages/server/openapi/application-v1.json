@@ -24397,9 +24397,9 @@
                               "type": "string",
                               "description": "Workspace identifier"
                             },
-                            "entity_id": {
+                            "record_id": {
                               "type": "string",
-                              "description": "Entity identifier"
+                              "description": "Catalog record identifier"
                             },
                             "version_number": {
                               "type": "number",
@@ -24459,7 +24459,7 @@
                           "required": [
                             "id",
                             "workspace",
-                            "entity_id",
+                            "record_id",
                             "version_number",
                             "kind",
                             "commit_message",
@@ -77042,9 +77042,9 @@
                         "type": "string",
                         "description": "Workspace identifier"
                       },
-                      "entity_id": {
+                      "record_id": {
                         "type": "string",
-                        "description": "Entity identifier"
+                        "description": "Catalog record identifier"
                       },
                       "version_number": {
                         "type": "number",
@@ -77112,7 +77112,7 @@
                     "required": [
                       "id",
                       "workspace",
-                      "entity_id",
+                      "record_id",
                       "version_number",
                       "kind",
                       "commit_message",
@@ -77181,9 +77181,9 @@
                       "type": "string",
                       "description": "Workspace identifier"
                     },
-                    "entity_id": {
+                    "record_id": {
                       "type": "string",
-                      "description": "Entity identifier"
+                      "description": "Catalog record identifier"
                     },
                     "version_number": {
                       "type": "number",
@@ -77251,7 +77251,7 @@
                   "required": [
                     "id",
                     "workspace",
-                    "entity_id",
+                    "record_id",
                     "version_number",
                     "kind",
                     "commit_message",
@@ -77335,9 +77335,9 @@
                       "type": "string",
                       "description": "Workspace identifier"
                     },
-                    "entity_id": {
+                    "record_id": {
                       "type": "string",
-                      "description": "Entity identifier"
+                      "description": "Catalog record identifier"
                     },
                     "version_number": {
                       "type": "number",
@@ -77405,7 +77405,7 @@
                   "required": [
                     "id",
                     "workspace",
-                    "entity_id",
+                    "record_id",
                     "version_number",
                     "kind",
                     "commit_message",
@@ -77489,9 +77489,9 @@
                       "type": "string",
                       "description": "Workspace identifier"
                     },
-                    "entity_id": {
+                    "record_id": {
                       "type": "string",
-                      "description": "Entity identifier"
+                      "description": "Catalog record identifier"
                     },
                     "version_number": {
                       "type": "number",
@@ -77559,7 +77559,7 @@
                   "required": [
                     "id",
                     "workspace",
-                    "entity_id",
+                    "record_id",
                     "version_number",
                     "kind",
                     "commit_message",
@@ -79328,9 +79328,9 @@
                         "type": "string",
                         "description": "Workspace identifier"
                       },
-                      "entity_id": {
+                      "record_id": {
                         "type": "string",
-                        "description": "Relation instance identifier"
+                        "description": "Catalog record identifier"
                       },
                       "version_number": {
                         "type": "number",
@@ -79398,7 +79398,7 @@
                     "required": [
                       "id",
                       "workspace",
-                      "entity_id",
+                      "record_id",
                       "version_number",
                       "kind",
                       "commit_message",
@@ -79467,9 +79467,9 @@
                       "type": "string",
                       "description": "Workspace identifier"
                     },
-                    "entity_id": {
+                    "record_id": {
                       "type": "string",
-                      "description": "Relation instance identifier"
+                      "description": "Catalog record identifier"
                     },
                     "version_number": {
                       "type": "number",
@@ -79537,7 +79537,7 @@
                   "required": [
                     "id",
                     "workspace",
-                    "entity_id",
+                    "record_id",
                     "version_number",
                     "kind",
                     "commit_message",
@@ -79621,9 +79621,9 @@
                       "type": "string",
                       "description": "Workspace identifier"
                     },
-                    "entity_id": {
+                    "record_id": {
                       "type": "string",
-                      "description": "Relation instance identifier"
+                      "description": "Catalog record identifier"
                     },
                     "version_number": {
                       "type": "number",
@@ -79691,7 +79691,7 @@
                   "required": [
                     "id",
                     "workspace",
-                    "entity_id",
+                    "record_id",
                     "version_number",
                     "kind",
                     "commit_message",

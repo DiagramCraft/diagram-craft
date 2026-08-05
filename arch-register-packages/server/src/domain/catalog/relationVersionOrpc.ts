@@ -97,7 +97,7 @@ const relationVersionHandlers = {
       input.params.versionId
     );
     orpcAssert.present(version, { code: 'NOT_FOUND', message: 'Version not found' });
-    orpcAssert.true(version.entity_id === row.id, {
+    orpcAssert.true(version.record_id === row.id, {
       code: 'BAD_REQUEST',
       message: 'Version does not belong to this relation'
     });

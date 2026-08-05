@@ -759,7 +759,7 @@ export const deleteEntity = async (
     await db.catalog.createEntityVersion({
       id: randomUUID(),
       workspace,
-      entity_id: row.id,
+      record_id: row.id,
       version_number: nextVersionNumber,
       kind: 'deleted',
       commit_message: null,

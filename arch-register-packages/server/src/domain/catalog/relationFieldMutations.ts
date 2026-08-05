@@ -119,7 +119,7 @@ export const applyRelationFieldDelta = async (
     await db.catalog.createEntityVersion({
       id: randomUUID(),
       workspace,
-      entity_id: row.id,
+      record_id: row.id,
       version_number: row.version,
       kind: 'autosave',
       commit_message: null,
@@ -197,7 +197,7 @@ export const applyRelationFieldDelta = async (
     await db.catalog.createEntityVersion({
       id: randomUUID(),
       workspace,
-      entity_id: row.id,
+      record_id: row.id,
       version_number: row.version,
       kind: 'autosave',
       commit_message: null,
@@ -245,7 +245,7 @@ export const applyRelationFieldDelta = async (
     await db.catalog.createEntityVersion({
       id: randomUUID(),
       workspace,
-      entity_id: id,
+      record_id: id,
       version_number: nextVersionNumber,
       kind: 'deleted',
       commit_message: null,

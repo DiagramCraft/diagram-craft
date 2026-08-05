@@ -459,7 +459,7 @@ export const seedBootstrapData = async (
       await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace: workspace.id,
-        entity_id: entity.id,
+        record_id: entity.id,
         version_number: entity.version ?? 1,
         kind: 'autosave',
         commit_message: null,

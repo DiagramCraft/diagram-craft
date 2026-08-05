@@ -274,7 +274,7 @@ export type EntityVersionKind =
 export type EntityVersionDbResult = {
   id: string;
   workspace: string;
-  entity_id: string;
+  record_id: string;
   version_number: number;
   kind: EntityVersionKind;
   commit_message: string | null;
@@ -383,7 +383,7 @@ export const catalogMappers = {
   entityVersion: (row: DatabaseRow): EntityVersionDbResult => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
-    entity_id: String(row['entity_id']),
+    record_id: String(row['record_id']),
     version_number: Number(row['version_number']),
     kind: row['kind'] as EntityVersionKind,
     commit_message: row['commit_message'] == null ? null : String(row['commit_message']),
@@ -397,7 +397,7 @@ export const catalogMappers = {
   entityVersionSummary: (row: DatabaseRow): EntityVersionSummaryDbResult => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
-    entity_id: String(row['entity_id']),
+    record_id: String(row['record_id']),
     version_number: Number(row['version_number']),
     kind: row['kind'] as EntityVersionKind,
     commit_message: row['commit_message'] == null ? null : String(row['commit_message']),
@@ -616,9 +616,8 @@ export type CatalogDatabase = {
   /**
    * Relation counterpart of listEntityVersionsAsOf, for relation landscape-diff reconstruction
    * (relationSnapshotReconstruction.ts). Shares the `record_version` table and
-   * `EntityVersionDbResult` shape (a version row's `entity_id` is really a generic record id) but
-   * must independently filter to `catalog_record.kind = 'relation'` — the two are mutually
-   * exclusive, unlike the untyped raw table.
+   * `EntityVersionDbResult` shape but must independently filter to `catalog_record.kind =
+   * 'relation'` — the two are mutually exclusive, unlike the untyped raw table.
    */
   listRelationVersionsAsOf(
     ws: string,

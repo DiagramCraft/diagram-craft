@@ -68,7 +68,7 @@ const schema: SchemaDbResult = {
 const baseVersion = (overrides: Partial<EntityVersionDbResult>): EntityVersionDbResult => ({
   id: 'version-1',
   workspace: 'ws-1',
-  entity_id: 'entity-1',
+  record_id: 'entity-1',
   version_number: 1,
   kind: 'autosave',
   commit_message: null,
@@ -109,12 +109,12 @@ const makeDb = (
     async (_workspace: string, asOf: Date, entityIds?: string[]) =>
       versions
         .filter(v => {
-          if (entityIds != null && !entityIds.includes(v.entity_id)) return false;
+          if (entityIds != null && !entityIds.includes(v.record_id)) return false;
           return v.created_at <= asOf;
         })
         .sort(
           (a, b) =>
-            a.entity_id.localeCompare(b.entity_id) ||
+            a.record_id.localeCompare(b.record_id) ||
             a.created_at.getTime() - b.created_at.getTime()
         )
   );
@@ -129,7 +129,7 @@ const makeDb = (
 
   const listEntityIdsWithVersionHistory = vi.fn(
     async (_workspace: string, entityIds?: string[]) => {
-      const ids = new Set(versions.map(v => v.entity_id));
+      const ids = new Set(versions.map(v => v.record_id));
       return [...ids].filter(id => entityIds == null || entityIds.includes(id));
     }
   );
@@ -172,7 +172,7 @@ describe('reconstructEntitiesAsOf', () => {
   it('excludes an entity created after asOf', async () => {
     const versions = [
       baseVersion({
-        entity_id: 'entity-1',
+        record_id: 'entity-1',
         created_at: new Date('2026-03-01T00:00:00.000Z'),
         state: { id: 'entity-1', name: 'Late Entity', schema_id: 'schema-1' }
       })
@@ -193,7 +193,7 @@ describe('reconstructEntitiesAsOf', () => {
     const versions = [
       baseVersion({
         id: 'version-create',
-        entity_id: 'entity-1',
+        record_id: 'entity-1',
         created_at: new Date('2026-01-01T00:00:00.000Z'),
         state: {
           id: 'entity-1',
@@ -206,7 +206,7 @@ describe('reconstructEntitiesAsOf', () => {
       }),
       baseVersion({
         id: 'version-update',
-        entity_id: 'entity-1',
+        record_id: 'entity-1',
         created_at: new Date('2026-02-01T00:00:00.000Z'),
         state: {
           id: 'entity-1',
@@ -243,13 +243,13 @@ describe('reconstructEntitiesAsOf', () => {
     const versions = [
       baseVersion({
         id: 'version-create',
-        entity_id: 'entity-1',
+        record_id: 'entity-1',
         created_at: new Date('2026-01-01T00:00:00.000Z'),
         state: { id: 'entity-1', name: 'Doomed Entity', schema_id: 'schema-1', data: {} }
       }),
       baseVersion({
         id: 'version-deleted',
-        entity_id: 'entity-1',
+        record_id: 'entity-1',
         kind: 'deleted',
         created_at: new Date('2026-02-01T00:00:00.000Z'),
         state: { id: 'entity-1', name: 'Doomed Entity', schema_id: 'schema-1', data: {} }
@@ -278,7 +278,7 @@ describe('reconstructEntitiesAsOf', () => {
     const versions = [
       baseVersion({
         id: 'version-create',
-        entity_id: 'entity-1',
+        record_id: 'entity-1',
         created_at: new Date('2026-01-01T00:00:00.000Z'),
         state: {
           id: 'entity-1',
@@ -343,7 +343,7 @@ describe('reconstructEntitiesAsOf', () => {
     const makeVersions = () => [
       baseVersion({
         id: 'version-create',
-        entity_id: 'entity-1',
+        record_id: 'entity-1',
         created_at: new Date('2026-01-01T00:00:00.000Z'),
         state: { id: 'entity-1', name: 'Current Name', schema_id: 'schema-1', data: {} }
       })
@@ -476,12 +476,12 @@ describe('reconstructEntitiesAsOf', () => {
   it('respects candidateEntityIds to scope reconstruction to a project-linked entity set', async () => {
     const versions = [
       baseVersion({
-        entity_id: 'entity-1',
+        record_id: 'entity-1',
         created_at: new Date('2026-01-01T00:00:00.000Z'),
         state: { id: 'entity-1', name: 'In Scope', schema_id: 'schema-1', data: {} }
       }),
       baseVersion({
-        entity_id: 'entity-2',
+        record_id: 'entity-2',
         created_at: new Date('2026-01-01T00:00:00.000Z'),
         state: { id: 'entity-2', name: 'Out Of Scope', schema_id: 'schema-1', data: {} }
       })
@@ -503,7 +503,7 @@ describe('reconstructEntitiesAsOf', () => {
   describe('excludeOverdueChangesBefore', () => {
     const makeVersions = () => [
       baseVersion({
-        entity_id: 'entity-1',
+        record_id: 'entity-1',
         created_at: new Date('2026-01-01T00:00:00.000Z'),
         state: { id: 'entity-1', name: 'Current Name', schema_id: 'schema-1', data: {} }
       })
@@ -662,7 +662,7 @@ describe('reconstructEntitiesAsOf', () => {
 
     it('does not fall back for an entity whose latest real version is a deleted marker', async () => {
       const deleted = baseVersion({
-        entity_id: 'entity-gone',
+        record_id: 'entity-gone',
         kind: 'deleted',
         created_at: new Date('2026-01-15T00:00:00.000Z'),
         state: { id: 'entity-gone', name: 'Gone Entity', schema_id: 'schema-1', data: {} }
@@ -705,7 +705,7 @@ describe('reconstructEntitiesAsOf', () => {
       // confused with an entity that has literally zero version history. The former should be
       // excluded (we have no data for that date); only the latter should fall back to live state.
       const firstEverEdit = baseVersion({
-        entity_id: 'entity-1',
+        record_id: 'entity-1',
         created_at: new Date('2026-02-10T00:00:00.000Z'), // "today"
         state: { id: 'entity-1', name: 'New Name', schema_id: 'schema-1', data: {} }
       });

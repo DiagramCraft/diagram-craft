@@ -734,7 +734,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     await db.catalog.createEntityVersion({
       id: randomUUID(),
       workspace,
-      entity_id: entity.id,
+      record_id: entity.id,
       version_number: 1,
       kind: 'autosave',
       commit_message: null,
@@ -803,7 +803,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     await db.catalog.createEntityVersion({
       id: randomUUID(),
       workspace,
-      entity_id: entity.id,
+      record_id: entity.id,
       version_number: 1,
       kind: 'autosave',
       commit_message: null,
@@ -1527,7 +1527,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     await db.catalog.createEntityVersion({
       id: randomUUID(),
       workspace,
-      entity_id: relation.id,
+      record_id: relation.id,
       version_number: 1,
       kind: 'autosave',
       commit_message: null,
@@ -1619,7 +1619,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     await db.catalog.createEntityVersion({
       id: randomUUID(),
       workspace,
-      entity_id: relation.id,
+      record_id: relation.id,
       version_number: 1,
       kind: 'autosave',
       commit_message: null,
@@ -1725,7 +1725,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     await db.catalog.createEntityVersion({
       id: randomUUID(),
       workspace,
-      entity_id: relation.id,
+      record_id: relation.id,
       version_number: 1,
       kind: 'autosave',
       commit_message: null,
@@ -1870,7 +1870,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       await db.catalog.createEntityVersion({
         id: randomUUID(),
         workspace,
-        entity_id: relation.id,
+        record_id: relation.id,
         version_number: 1,
         kind: 'autosave',
         commit_message: null,
