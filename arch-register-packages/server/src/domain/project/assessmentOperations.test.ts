@@ -289,9 +289,7 @@ describe('getAssessment team_acknowledge_status', () => {
     const row = {
       ...assessment('assessment-1', project.id),
       scope: ['schema-missing'],
-      scope_conditions: [
-        { fieldId: 'removed-field', op: 'equals' as const, value: 'classified' }
-      ]
+      scope_conditions: [{ fieldId: 'removed-field', op: 'equals' as const, value: 'classified' }]
     };
     const db = {
       project: {

@@ -206,9 +206,7 @@ describe('upsertAssessmentResponse', () => {
   it('does not return responses when membership depends on an unavailable scope field', async () => {
     const assessment = makeAssessment('open', {
       scope: ['schema-missing'],
-      scope_conditions: [
-        { fieldId: 'removed-field', op: 'equals' as const, value: 'classified' }
-      ]
+      scope_conditions: [{ fieldId: 'removed-field', op: 'equals' as const, value: 'classified' }]
     });
     const db = {
       project: {

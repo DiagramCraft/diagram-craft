@@ -287,9 +287,9 @@ describe('buildAssessmentResultsCsvData', () => {
     });
     const entity = makeEntity({ data: { 'removed-field': 'classified' } });
 
-    expect(isEntityInAssessmentScope(entity, staleAssessment, { authCtx: caller, schemas: [] })).toBe(
-      false
-    );
+    expect(
+      isEntityInAssessmentScope(entity, staleAssessment, { authCtx: caller, schemas: [] })
+    ).toBe(false);
     expect(
       buildAssessmentResultsCsvData([entity], [makeResponse()], staleAssessment, [], {
         authCtx: caller,
@@ -313,11 +313,14 @@ describe('buildAssessmentResultsCsvData', () => {
       entities: [],
       grants: []
     });
-    const entity = makeEntity({ schema_id: 'schema-missing', data: { 'removed-field': 'classified' } });
+    const entity = makeEntity({
+      schema_id: 'schema-missing',
+      data: { 'removed-field': 'classified' }
+    });
 
-    expect(isEntityInAssessmentScope(entity, staleAssessment, { authCtx: caller, schemas: [] })).toBe(
-      false
-    );
+    expect(
+      isEntityInAssessmentScope(entity, staleAssessment, { authCtx: caller, schemas: [] })
+    ).toBe(false);
   });
 
   it('evaluates restricted scope conditions for a caller with view access', () => {
