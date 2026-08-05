@@ -42,7 +42,7 @@ export const reconstructRelationsAsOf = async (
   // row seen per relation is its latest version baseline at or before `asOf`.
   const baselineByRelation = new Map<string, EntityVersionDbResult>();
   for (const version of baselineVersions) {
-    baselineByRelation.set(version.entity_id, version);
+    baselineByRelation.set(version.record_id, version);
   }
 
   const futureUpdatesByRelation = await resolveFutureUpdatesByRecord(

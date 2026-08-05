@@ -249,7 +249,7 @@ describe('listEntities with asOf', () => {
           .map((v, i) => ({
             id: `version-${i}`,
             workspace: 'ws-1',
-            entity_id: v.entity_id,
+            record_id: v.entity_id,
             version_number: 1,
             kind: v.status === 'autosave' || v.status === 'saved_version' ? v.status : 'deleted',
             commit_message: null,
@@ -261,7 +261,7 @@ describe('listEntities with asOf', () => {
           }))
           .sort(
             (a, b) =>
-              a.entity_id.localeCompare(b.entity_id) ||
+              a.record_id.localeCompare(b.record_id) ||
               a.created_at.getTime() - b.created_at.getTime()
           )
     );

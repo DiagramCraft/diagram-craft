@@ -618,15 +618,15 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createEntityVersion(input: EntityVersionDbCreate) {
     const [row] = (await this.sql`
       INSERT INTO record_version (id, workspace, record_id, version_number, kind, commit_message, created_at, created_by, state, applied_case_revision_id)
-      VALUES (${input.id}, ${input.workspace}, ${input.entity_id}, ${input.version_number}, ${input.kind}, ${input.commit_message}, ${input.created_at}, ${input.created_by}, ${this.json(input.state)}, ${input.applied_case_revision_id})
-      RETURNING *, record_id AS entity_id
+      VALUES (${input.id}, ${input.workspace}, ${input.record_id}, ${input.version_number}, ${input.kind}, ${input.commit_message}, ${input.created_at}, ${input.created_by}, ${this.json(input.state)}, ${input.applied_case_revision_id})
+      RETURNING *
     `) as DatabaseRow[];
     return catalogMappers.entityVersion(row!);
   }
 
   async listEntityVersions(workspace: string, entityId: string) {
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name FROM record_version v
+      SELECT v.*, u.display_name AS created_by_name FROM record_version v
       LEFT JOIN users u ON u.id = v.created_by
       WHERE v.workspace = ${workspace} AND v.record_id = ${entityId}
       ORDER BY v.created_at DESC
@@ -637,7 +637,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async listEntityVersionsByIds(workspace: string, entityIds: string[]) {
     if (entityIds.length === 0) return [];
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT v.id, v.workspace, v.record_id AS entity_id, v.version_number, v.kind, v.commit_message,
+      SELECT v.id, v.workspace, v.record_id, v.version_number, v.kind, v.commit_message,
         v.created_at, v.created_by, v.applied_case_revision_id, u.display_name AS created_by_name
       FROM record_version v LEFT JOIN users u ON u.id = v.created_by
       WHERE v.workspace = ${workspace} AND v.record_id = ANY(${entityIds})
@@ -649,7 +649,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async listEntityVersionsAsOf(workspace: string, asOf: Date, entityIds?: string[]) {
     if (entityIds != null && entityIds.length === 0) return [];
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name FROM record_version v
+      SELECT v.*, u.display_name AS created_by_name FROM record_version v
       JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'entity'
       LEFT JOIN users u ON u.id = v.created_by
       WHERE v.workspace = ${workspace} AND v.created_at <= ${asOf}
@@ -662,7 +662,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async listRelationVersionsAsOf(workspace: string, asOf: Date, relationIds?: string[]) {
     if (relationIds != null && relationIds.length === 0) return [];
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name FROM record_version v
+      SELECT v.*, u.display_name AS created_by_name FROM record_version v
       JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'relation'
       LEFT JOIN users u ON u.id = v.created_by
       WHERE v.workspace = ${workspace} AND v.created_at <= ${asOf}
@@ -680,7 +680,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   ) {
     const [row] = (await this.sql`
       UPDATE record_version SET kind = ${kind}, commit_message = ${commitMessage}
-      WHERE workspace = ${workspace} AND id = ${versionId} RETURNING *, record_id AS entity_id
+      WHERE workspace = ${workspace} AND id = ${versionId} RETURNING *
     `) as DatabaseRow[];
     return row ? catalogMappers.entityVersion(row) : null;
   }
@@ -688,7 +688,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async getEntityVersionById(workspace: string, id: string) {
     const [row] = await this.sql<
       DatabaseRow[]
-    >`SELECT v.*, v.record_id AS entity_id, u.display_name AS created_by_name FROM record_version v LEFT JOIN users u ON u.id = v.created_by WHERE v.workspace = ${workspace} AND v.id = ${id}`;
+    >`SELECT v.*, u.display_name AS created_by_name FROM record_version v LEFT JOIN users u ON u.id = v.created_by WHERE v.workspace = ${workspace} AND v.id = ${id}`;
     return row ? catalogMappers.entityVersion(row) : null;
   }
 

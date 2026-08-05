@@ -19,7 +19,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase entity versions', getDb => {
   ) => ({
     id: randomUUID(),
     workspace: '',
-    entity_id: entityId,
+    record_id: entityId,
     version_number: overrides.version_number ?? 1,
     kind: overrides.kind ?? ('autosave' as const),
     commit_message: null,

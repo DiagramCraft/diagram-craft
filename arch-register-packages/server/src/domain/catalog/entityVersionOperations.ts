@@ -130,7 +130,7 @@ export const serializeEntityVersion = (version: EntityVersionDbResult) => ({
 });
 
 export const assertVersionCanBeRestored = (version: EntityVersionDbResult, entityId: string) => {
-  orpcAssert.true(version.entity_id === entityId, {
+  orpcAssert.true(version.record_id === entityId, {
     code: 'BAD_REQUEST',
     message: 'Version does not belong to this entity'
   });
