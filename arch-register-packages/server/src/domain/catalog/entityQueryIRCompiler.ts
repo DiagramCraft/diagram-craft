@@ -1307,16 +1307,29 @@ const temporalRelationProjection = (
   ].join(',\n      ');
 };
 
-// Relation-instance counterpart of buildTemporalSource. Simpler than the entity version: relations
-// have no planned-changes/change-case layering yet (#2687 excludes it), so this is just "latest
-// version at or before asOf" with a live-row fallback for relations that predate version tracking
-// — no future_state overlay needed.
+// Relation-instance counterpart of buildTemporalSource. Mirrors the entity version's baseline +
+// active-future-events + recursive future_state overlay so includePlannedChanges works for
+// relation-rooted queries too (#2693 already wired record_change_case_record_version for relations
+// generically; this just gives the SQL compiler's relation branch the same overlay the entity
+// branch and the JS reconstruction path in relationSnapshotReconstruction.ts already have — #2702).
 const buildTemporalRelationSource = (state: CompileState): string => {
   const asOf = state.asOf!;
   const workspaceParam = addParam(state, state.workspace);
   const asOfParam = addParam(state, asOf.toISOString());
   const fallbackWorkspaceParam = addParam(state, state.workspace);
   const fallbackCreatedParam = addParam(state, asOf.toISOString());
+  const eventWorkspaceParam = addParam(state, state.workspace);
+  const eventCreatedParam = addParam(state, asOf.toISOString());
+  const eventDateParam = addParam(state, asOf.toISOString().slice(0, 10));
+  const caseProjectClause =
+    state.projectScope === 'project' && state.projectId && state.includePlannedChanges
+      ? `(c.project_id IS NULL OR c.project_id = ${addParam(state, state.projectId)})`
+      : 'c.project_id IS NULL';
+  const mergeStates =
+    state.dialect === 'postgres'
+      ? 'future_relation_state.state || event.proposed_state'
+      : 'json_patch(future_relation_state.state, event.proposed_state)';
+  const initialEventNumber = state.dialect === 'postgres' ? '0::bigint' : '0';
   const projection = temporalRelationProjection(
     'final_relation_state.state',
     'final_relation_state.record_id',
@@ -1337,7 +1350,7 @@ const buildTemporalRelationSource = (state: CompileState): string => {
       WHERE v.workspace = ${workspaceParam}
         AND v.created_at <= ${asOfParam}
     ),
-    final_relation_state AS (
+    baseline_relation_state AS (
       SELECT v.record_id, v.workspace, v.state
       FROM latest_relation_version v
       WHERE v.row_number = 1
@@ -1355,9 +1368,56 @@ const buildTemporalRelationSource = (state: CompileState): string => {
             AND any_version.record_id = r.id
         )
     ),
+    active_future_relation_events AS (
+      SELECT m.record_id,
+             c.id AS case_id,
+             c.effective_date,
+             r.created_at,
+             r.revision_number,
+             m.proposed_state,
+             ROW_NUMBER() OVER (
+               PARTITION BY m.record_id
+               ORDER BY c.effective_date, r.created_at, r.revision_number, c.id
+             ) AS event_number
+      FROM record_change_case_record_version m
+      JOIN catalog_record cr ON cr.id = m.record_id AND cr.kind = 'relation'
+      JOIN entity_change_case_revision r
+        ON r.id = m.revision_id
+       AND r.is_active = ${state.dialect === 'postgres' ? 'TRUE' : '1'}
+      JOIN entity_change_case c ON c.id = r.case_id
+      WHERE c.workspace = ${eventWorkspaceParam}
+        AND c.status IN ('planned', 'in_approval')
+        AND r.status IN ('draft', 'submitted', 'changes_requested')
+        AND r.created_at <= ${eventCreatedParam}
+        AND c.effective_date IS NOT NULL
+        AND c.effective_date <= ${eventDateParam}
+        AND ${caseProjectClause}
+    ),
+    future_relation_state (record_id, workspace, state, event_number) AS (
+      SELECT b.record_id, b.workspace, b.state, ${initialEventNumber}
+      FROM baseline_relation_state b
+      UNION ALL
+      SELECT future_relation_state.record_id,
+             future_relation_state.workspace,
+             ${mergeStates},
+             event.event_number
+      FROM future_relation_state
+      JOIN active_future_relation_events event
+        ON event.record_id = future_relation_state.record_id
+       AND event.event_number = future_relation_state.event_number + 1
+    ),
+    final_relation_state AS (
+      SELECT record_id, workspace, state,
+             ROW_NUMBER() OVER (
+               PARTITION BY record_id
+               ORDER BY event_number DESC
+             ) AS row_number
+      FROM future_relation_state
+    ),
     temporal_relation_source AS (
       SELECT ${projection}
       FROM final_relation_state
+      WHERE final_relation_state.row_number = 1
     )`;
 };
 

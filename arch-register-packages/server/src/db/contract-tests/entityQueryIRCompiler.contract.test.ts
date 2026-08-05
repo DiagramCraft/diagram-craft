@@ -1674,6 +1674,121 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(await runFor(asOfHistorical, 'final')).toEqual([]);
   });
 
+  it('applies active future changes to relation-rooted asOf queries (#2702)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const project = await createFixtureProject(db, workspace);
+    const user = await createFixtureUser(db);
+    const schema = await createSchema(db, workspace, { name: 'System' });
+    const relationSchema = await db.relation.createRelationSchema({
+      id: randomUUID(),
+      workspace,
+      name: 'Depends On',
+      description: '',
+      in_schema_ids: [schema.id],
+      out_schema_ids: [schema.id],
+      fields: [{ id: 'status', name: 'Status', type: 'text' }],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    const entityA = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'A' });
+    const entityB = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'B' });
+    const relation = await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: relationSchema.id,
+      in_entity_id: entityA.id,
+      out_entity_id: entityB.id,
+      data: { status: 'current' },
+      created_at: new Date('2026-01-01T00:00:00.000Z'),
+      updated_at: new Date('2026-01-01T00:00:00.000Z')
+    });
+    await db.catalog.createEntityVersion({
+      id: randomUUID(),
+      workspace,
+      entity_id: relation.id,
+      version_number: 1,
+      kind: 'autosave',
+      commit_message: null,
+      created_at: new Date('2026-01-01T00:00:00.000Z'),
+      created_by: null,
+      state: {
+        id: relation.id,
+        workspace,
+        schema_id: relationSchema.id,
+        in_entity_id: entityA.id,
+        out_entity_id: entityB.id,
+        data: { status: 'current' },
+        version: 1,
+        approval_policy_override: null,
+        created_at: relation.created_at.toISOString(),
+        updated_at: relation.updated_at.toISOString()
+      },
+      applied_case_revision_id: null
+    });
+    await db.changeCase.createCase({
+      id: randomUUID(),
+      workspace,
+      project_id: project.id,
+      name: 'planned relation status change',
+      description: null,
+      effective_date: '2030-01-01',
+      milestone_id: null,
+      message: 'planned relation status change',
+      created_by: user.id,
+      created_at: new Date('2026-01-02T00:00:00.000Z'),
+      members: [
+        {
+          entity_id: relation.id,
+          base_version: 1,
+          base_state: { data: { status: 'current' } },
+          proposed_state: { data: { status: 'proposed' } },
+          diff: {}
+        }
+      ]
+    });
+
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+    const relationSchemas = new Map([[relationSchema.id, relationSchema]]);
+    const runFor = async (asOf: string | undefined) => {
+      const query: EntityQuery = {
+        asOf,
+        projectId: project.id,
+        projectScope: 'project',
+        schemaId: relationSchema.id,
+        root: { kind: 'predicate', path: [], fieldId: 'status', op: 'equals', value: 'proposed' }
+      };
+      const validation = validateEntityQueryIR(query, schemas, null, relationSchemas);
+      expect(validation.ok, JSON.stringify(validation)).toBe(true);
+      const compiled = compileEntityQueryIR(
+        query,
+        schemas,
+        driver,
+        workspace,
+        {},
+        null,
+        relationSchemas
+      );
+      const rows = await db.relation.runCompiledRelationQuery(compiled.sql, compiled.params);
+      return rows.map(row => row.id);
+    };
+
+    // Live state has status 'current' — the proposed change hasn't been applied yet.
+    expect(await runFor(undefined)).toEqual([]);
+
+    // asOf before the case's effective_date: proposed change not yet in effect.
+    expect(await runFor('2026-06-01T00:00:00.000Z')).toEqual([]);
+
+    // asOf past the effective_date: the planned change is folded into the reconstructed state,
+    // matching how the entity-rooted path already applies active_future_events (#2702).
+    expect(await runFor('2030-02-01T00:00:00.000Z')).toEqual([relation.id]);
+  });
+
   it('executes a relation-rooted query end to end (#2689)', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
