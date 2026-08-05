@@ -617,6 +617,20 @@ export const listTypedRelationsForEntity = async (
         db.relation.listRelationSchemas(ws),
         buildApiEntityAuthCtx(db, ws, event)
       ]);
+      const endpointEntityIds = new Set([
+        ...outgoing.map(row => row.out_entity_id),
+        ...incoming.map(row => row.in_entity_id)
+      ]);
+      const endpointSchemas = new Map<string, Awaited<ReturnType<typeof db.catalog.getSchema>>>();
+      await Promise.all(
+        [...endpointEntityIds].map(async endpointEntityId => {
+          const endpoint = await db.catalog.getEntity(ws, endpointEntityId);
+          endpointSchemas.set(
+            endpointEntityId,
+            endpoint ? await db.catalog.getSchema(ws, endpoint.schema_id) : null
+          );
+        })
+      );
       // Drop relations pointing at an entity the caller can't view, mirroring the equivalent
       // entity-visibility filtering already applied to generic reference/containment relations
       // in buildEntityRelations (dataHelpers.ts).
@@ -634,6 +648,15 @@ export const listTypedRelationsForEntity = async (
           .filter(
             row =>
               isEntityVisible(row.out_entity_id) &&
+              canViewTypedRelation(
+                authCtx,
+                [
+                  { schema: entitySchema, direction: 'in' },
+                  { schema: endpointSchemas.get(row.out_entity_id), direction: 'out' }
+                ],
+                row.schema_id,
+                row.owner
+              ) &&
               canViewTypedRelationFromEndpoint(authCtx, entitySchema, row.schema_id, 'in')
           )
           .map(toRecord),
@@ -641,6 +664,15 @@ export const listTypedRelationsForEntity = async (
           .filter(
             row =>
               isEntityVisible(row.in_entity_id) &&
+              canViewTypedRelation(
+                authCtx,
+                [
+                  { schema: endpointSchemas.get(row.in_entity_id), direction: 'in' },
+                  { schema: entitySchema, direction: 'out' }
+                ],
+                row.schema_id,
+                row.owner
+              ) &&
               canViewTypedRelationFromEndpoint(authCtx, entitySchema, row.schema_id, 'out')
           )
           .map(toRecord)

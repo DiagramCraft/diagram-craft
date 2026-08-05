@@ -8,7 +8,10 @@ import {
 import type { RelationDbResult, RelationSchemaDbResult } from '../catalog/db/relationDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { filterLiveFieldGroups, type FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
-import { canViewTypedRelationFromEndpoint } from '../catalog/relationAccessControl';
+import {
+  canViewTypedRelation,
+  canViewTypedRelationFromEndpoint
+} from '../catalog/relationAccessControl';
 
 export type DiagramCraftSchemaField =
   | Extract<SchemaField, { type: 'text' | 'longtext' | 'boolean' | 'date' | 'number' }>
@@ -146,6 +149,21 @@ export const toDiagramCraftRelationReferences = (
     const inEntity = entityById.get(row.in_entity_id);
     const outEntity = entityById.get(row.out_entity_id);
     if (!inEntity || !outEntity) continue;
+
+    const inSchema = schemaById.get(inEntity.schema_id);
+    const outSchema = schemaById.get(outEntity.schema_id);
+    if (
+      !canViewTypedRelation(
+        authCtx,
+        [
+          { schema: inSchema, direction: 'in' },
+          { schema: outSchema, direction: 'out' }
+        ],
+        row.schema_id
+      )
+    ) {
+      continue;
+    }
 
     addReference(inEntity, 'in', row.schema_id, outEntity.id);
     addReference(outEntity, 'out', row.schema_id, inEntity.id);

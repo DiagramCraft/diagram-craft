@@ -244,6 +244,7 @@ describe('relation-rooted query compilation', () => {
       'ws-1',
       {
         relationVisibility: {
+          entitySchemaIds: ['system'],
           endpointScopes: [
             {
               relationSchemaId: dataFlow.id,
@@ -278,6 +279,7 @@ describe('relation-rooted query compilation', () => {
       'ws-1',
       {
         relationVisibility: {
+          entitySchemaIds: ['system'],
           endpointScopes: [],
           ownerIds: [],
           allOwners: false
@@ -288,7 +290,38 @@ describe('relation-rooted query compilation', () => {
     );
 
     expect(compiled.sql).toContain('FROM temporal_relation_source r');
-    expect(compiled.sql).toContain('WHERE (r.schema_id = ?) AND (1=0)');
+    expect(compiled.sql).toContain(
+      'WHERE (r.schema_id = ?) AND ((in_visibility_endpoint.schema_id IN (?) AND out_visibility_endpoint.schema_id IN (?)) AND (1=0))'
+    );
+  });
+
+  it('keeps endpoint availability fail-closed for owner-wide visibility', () => {
+    const query: EntityQuery = {
+      schemaId: dataFlow.id,
+      root: { kind: 'and', children: [] }
+    };
+    const compiled = compileEntityQueryIR(
+      query,
+      schemas,
+      'sqlite',
+      'ws-1',
+      {
+        relationVisibility: {
+          entitySchemaIds: ['system'],
+          endpointScopes: [],
+          ownerIds: [],
+          allOwners: true
+        }
+      },
+      null,
+      relationSchemas
+    );
+
+    expect(compiled.sql).toContain('JOIN catalog_record in_visibility_endpoint');
+    expect(compiled.sql).toContain(
+      'in_visibility_endpoint.schema_id IN (?) AND out_visibility_endpoint.schema_id IN (?)'
+    );
+    expect(compiled.sql).toContain('AND 1=1');
   });
 
   it('pushes safe root schema and identity candidates into temporal reconstruction', () => {

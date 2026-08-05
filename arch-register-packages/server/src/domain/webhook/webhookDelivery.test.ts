@@ -246,6 +246,40 @@ describe('webhook delivery', () => {
     });
   });
 
+  it('fails closed when one relation endpoint schema is missing', () => {
+    const relationAudit = {
+      id: 'relation-audit-missing-endpoint-schema',
+      workspace: 'ws-1',
+      timestamp: new Date('2026-07-15T10:00:00.000Z'),
+      user_id: 'user-1',
+      user_display_name: 'Ada',
+      operation: 'update' as const,
+      entity_type: 'relation' as const,
+      entity_id: 'relation-1',
+      entity_name: 'Payments → Ledger',
+      entity_slug: null,
+      schema_id: 'relation-schema-1',
+      changes: { new: { status: 'active' } },
+      metadata: {
+        relation: {
+          id: 'relation-1',
+          schema: { id: 'relation-schema-1', name: 'Depends on' },
+          in: { id: 'entity-1', name: 'Payments' },
+          out: { id: 'entity-2', name: 'Ledger' }
+        }
+      }
+    };
+    const unboundEndpointSchema: FieldGroupSchemaShape = { fields: [], groups: [] };
+
+    const event = auditLogToWebhookEvent(relationAudit, null, null, {
+      in: null,
+      out: unboundEndpointSchema
+    });
+
+    expect(event).not.toHaveProperty('relation');
+    expect(event.metadata).not.toHaveProperty('relation');
+  });
+
   it('queues only enabled webhooks whose operation and schema filters match', async () => {
     const enqueueOneOffRun = vi.fn(async input => ({ ...input }));
     const filteredDb = {

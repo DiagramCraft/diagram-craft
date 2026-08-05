@@ -492,11 +492,23 @@ export const buildEntityRelations = (
       )?.name;
 
     for (const row of typedRelations.outgoing) {
-      if (!canViewTypedRelationFromEndpoint(authCtx, entitySchema, row.schema_id, 'in')) {
-        continue;
-      }
       const target = entityLookup.get(row.out_entity_id);
       if (!target) continue;
+      const targetSchema = schemaMap.get(target.schema_id);
+      if (
+        !canViewTypedRelation(
+          authCtx,
+          [
+            { schema: entitySchema, direction: 'in' },
+            { schema: targetSchema, direction: 'out' }
+          ],
+          row.schema_id,
+          row.owner
+        ) ||
+        !canViewTypedRelationFromEndpoint(authCtx, entitySchema, row.schema_id, 'in')
+      ) {
+        continue;
+      }
       const schema = relationSchemaById.get(row.schema_id);
       outgoing.push({
         entityId: row.out_entity_id,
@@ -515,11 +527,23 @@ export const buildEntityRelations = (
     }
 
     for (const row of typedRelations.incoming) {
-      if (!canViewTypedRelationFromEndpoint(authCtx, entitySchema, row.schema_id, 'out')) {
-        continue;
-      }
       const source = entityLookup.get(row.in_entity_id);
       if (!source) continue;
+      const sourceSchema = schemaMap.get(source.schema_id);
+      if (
+        !canViewTypedRelation(
+          authCtx,
+          [
+            { schema: sourceSchema, direction: 'in' },
+            { schema: entitySchema, direction: 'out' }
+          ],
+          row.schema_id,
+          row.owner
+        ) ||
+        !canViewTypedRelationFromEndpoint(authCtx, entitySchema, row.schema_id, 'out')
+      ) {
+        continue;
+      }
       const schema = relationSchemaById.get(row.schema_id);
       incoming.push({
         entityId: row.in_entity_id,
