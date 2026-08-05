@@ -239,6 +239,39 @@ describe('createAutomationRule', () => {
     expect(rule.name).toBe('Flag high earners');
   });
 
+  it('rejects a condition referencing a removed field', async () => {
+    const db = makeDb();
+    const input: AutomationRuleInput = {
+      ...baseInput,
+      conditions: [{ field: 'removed', operator: 'is_not_empty' }]
+    };
+
+    await expect(
+      createAutomationRule(db, 'ws-1', input, eventFor(peopleManagerRole))
+    ).rejects.toThrow('unknown or unavailable field');
+    expect(db.automationRule.createRule).not.toHaveBeenCalled();
+  });
+
+  it('rejects an unscoped condition that is unavailable in a workspace schema', async () => {
+    const db = makeDb();
+    const otherSchema = {
+      ...restrictedSchema,
+      id: 'schema-2',
+      fields: [{ id: 'title', name: 'Title', type: 'text', requirementLevel: null }]
+    } as SchemaDbResult;
+    db.catalog.listSchemas = vi.fn(async () => [restrictedSchema, otherSchema]);
+    const input: AutomationRuleInput = {
+      ...baseInput,
+      schema_id: null,
+      conditions: [{ field: 'salary', operator: 'is_not_empty' }]
+    };
+
+    await expect(
+      createAutomationRule(db, 'ws-1', input, eventFor(peopleManagerRole))
+    ).rejects.toThrow('unknown or unavailable field');
+    expect(db.automationRule.createRule).not.toHaveBeenCalled();
+  });
+
   it('rejects a set_field_value action targeting a field the author cannot edit', async () => {
     const db = makeDb();
     const input: AutomationRuleInput = {
@@ -347,6 +380,19 @@ describe('updateAutomationRule', () => {
     await expect(
       updateAutomationRule(db, 'ws-1', 'rule-1', baseInput, eventFor(peopleManagerRole))
     ).rejects.toThrow('restricted field');
+    expect(db.automationRule.updateRule).not.toHaveBeenCalled();
+  });
+
+  it('rejects adding a removed-field condition to an existing rule', async () => {
+    const db = makeDb(existingRule);
+    const input: AutomationRuleInput = {
+      ...baseInput,
+      conditions: [{ field: 'removed', operator: 'is_not_empty' }]
+    };
+
+    await expect(
+      updateAutomationRule(db, 'ws-1', 'rule-1', input, eventFor(peopleManagerRole))
+    ).rejects.toThrow('unknown or unavailable field');
     expect(db.automationRule.updateRule).not.toHaveBeenCalled();
   });
 

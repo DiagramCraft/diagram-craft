@@ -12,6 +12,7 @@ const schema = {
 } as unknown as SchemaDbResult;
 
 const rule = {
+  resource_type: 'entity' as const,
   trigger: { kind: 'entity_created' as const },
   conditions: [{ field: 'salary', operator: 'equals' as const, value: 100000 }],
   actions: [{ kind: 'set_field_value' as const, field: 'title', value: 'high earner' }]
@@ -80,5 +81,29 @@ describe('isAutomationRuleAuthorized', () => {
         writeRule
       )
     ).toBe(true);
+  });
+
+  it('denies conditions that reference an unknown field', () => {
+    expect(
+      isAutomationRuleAuthorized(
+        contextFor([{ teamId: 'finance', role: 'team_reviewer' }]),
+        schema,
+        { ...rule, conditions: [{ field: 'removed', operator: 'is_not_empty' as const }] }
+      )
+    ).toBe(false);
+  });
+
+  it('denies rules when their schema is unavailable', () => {
+    expect(isAutomationRuleAuthorized(contextFor([]), null, rule)).toBe(false);
+  });
+
+  it('denies a set_field_value action targeting an unknown field', () => {
+    expect(
+      isAutomationRuleAuthorized(contextFor([]), schema, {
+        ...rule,
+        conditions: [],
+        actions: [{ kind: 'set_field_value' as const, field: 'removed', value: 'x' }]
+      })
+    ).toBe(false);
   });
 });
