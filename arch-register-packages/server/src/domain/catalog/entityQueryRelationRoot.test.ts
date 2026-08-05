@@ -291,6 +291,77 @@ describe('relation-rooted query compilation', () => {
     expect(compiled.sql).toContain('WHERE (r.schema_id = ?) AND (1=0)');
   });
 
+  it('pushes safe root schema and identity candidates into temporal reconstruction', () => {
+    const query: EntityQuery = {
+      root_kind: 'relation',
+      asOf: '2026-06-29T12:00:00.000Z',
+      root: {
+        kind: 'and',
+        children: [
+          { kind: 'predicate', path: [], fieldId: '_schemaId', op: 'equals', value: dataFlow.id },
+          { kind: 'predicate', path: [], fieldId: '_inEntityId', op: 'equals', value: 'entity-in' },
+          { kind: 'predicate', path: [], fieldId: '_id', op: 'equals', value: 'relation-1' },
+          { kind: 'predicate', path: [], fieldId: 'status', op: 'equals', value: 'active' }
+        ]
+      }
+    };
+
+    const compiled = compileEntityQueryIR(
+      query,
+      schemas,
+      'sqlite',
+      'ws-1',
+      {},
+      null,
+      relationSchemas
+    );
+
+    expect(compiled.sql).toContain('latest_relation_version');
+    expect(compiled.sql).toContain('active_future_relation_events');
+    expect(compiled.sql).toContain(
+      'AND (cr.schema_id IN (?) OR (cr.id IN (?) AND cr.in_record_id IN (?)))'
+    );
+    expect(compiled.params).toEqual(
+      expect.arrayContaining([dataFlow.id, 'relation-1', 'entity-in', 'active'])
+    );
+  });
+
+  it('does not narrow temporal reconstruction from OR or NOT branches', () => {
+    const query: EntityQuery = {
+      root_kind: 'relation',
+      asOf: '2026-06-29T12:00:00.000Z',
+      root: {
+        kind: 'or',
+        children: [
+          { kind: 'predicate', path: [], fieldId: '_id', op: 'equals', value: 'relation-1' },
+          {
+            kind: 'not',
+            child: {
+              kind: 'predicate',
+              path: [],
+              fieldId: '_id',
+              op: 'equals',
+              value: 'relation-2'
+            }
+          }
+        ]
+      }
+    };
+
+    const compiled = compileEntityQueryIR(
+      query,
+      schemas,
+      'sqlite',
+      'ws-1',
+      {},
+      null,
+      relationSchemas
+    );
+
+    expect(compiled.sql).not.toContain('cr.id IN (?)');
+    expect(compiled.sql).not.toContain('cr.schema_id IN (?)');
+  });
+
   it('leaves entity-rooted compilation untouched (no root_kind set)', () => {
     const query: EntityQuery = {
       schemaId: system.id,
