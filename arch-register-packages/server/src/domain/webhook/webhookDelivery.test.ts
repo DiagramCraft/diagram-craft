@@ -110,6 +110,18 @@ describe('webhook delivery', () => {
         })),
         listRelationSchemaVersions: vi.fn(async () => [])
       },
+      catalog: {
+        getEntity: vi.fn(async (_workspace: string, id: string) => ({
+          id,
+          schema_id: id === 'entity-1' ? 'entity-schema-in' : 'entity-schema-out'
+        })),
+        getSchema: vi.fn(async () => ({
+          fields: [],
+          groups: [],
+          created_at: new Date('2026-01-01')
+        })),
+        listSchemaVersions: vi.fn(async () => [])
+      },
       jobs: { enqueueOneOffRun }
     } as unknown as DatabaseAdapter;
 
@@ -127,6 +139,107 @@ describe('webhook delivery', () => {
         out: { id: 'entity-2' }
       }
     });
+    expect(payload.event.changes).toEqual({
+      old: { status: 'draft' },
+      new: { status: 'active' }
+    });
+  });
+
+  it('omits relation endpoint context when historical owner fields are inaccessible', async () => {
+    const enqueueOneOffRun = vi.fn(async input => ({ ...input }));
+    const relationSchema: FieldGroupSchemaShape = {
+      fields: [{ id: 'status', name: 'Status' }],
+      groups: []
+    };
+    const historicalOwnerSchema: FieldGroupSchemaShape = {
+      fields: [
+        {
+          id: 'dependsOnIn',
+          name: 'Depends on (in)',
+          type: 'typedRelation',
+          relationSchemaId: 'relation-schema-1',
+          direction: 'in',
+          groupId: 'restricted'
+        } as never,
+        {
+          id: 'dependsOnOut',
+          name: 'Depends on (out)',
+          type: 'typedRelation',
+          relationSchemaId: 'relation-schema-1',
+          direction: 'out',
+          groupId: 'restricted'
+        } as never
+      ],
+      groups: [{ id: 'restricted', accessControl: { teamIds: ['team-1'] } } as never]
+    };
+    const ownerSchemaVersion = {
+      ...historicalOwnerSchema,
+      created_at: new Date('2026-01-01T00:00:00.000Z')
+    };
+    const enqueueDb = {
+      webhook: {
+        listWebhooks: vi.fn(async () => [
+          {
+            ...webhook,
+            event_filter: { operations: ['update'], schema_ids: [], relation_schema_ids: [] }
+          }
+        ])
+      },
+      relation: {
+        getRelationSchema: vi.fn(async () => ({
+          ...relationSchema,
+          created_at: new Date('2026-01-01')
+        })),
+        listRelationSchemaVersions: vi.fn(async () => [])
+      },
+      catalog: {
+        getEntity: vi.fn(async (_workspace: string, id: string) => ({
+          id,
+          schema_id: id === 'entity-1' ? 'entity-schema-in' : 'entity-schema-out'
+        })),
+        getSchema: vi.fn(async () => ({
+          ...historicalOwnerSchema,
+          fields: historicalOwnerSchema.fields.map(field => ({ ...field, groupId: undefined })),
+          groups: [],
+          created_at: new Date('2026-08-01T00:00:00.000Z')
+        })),
+        listSchemaVersions: vi.fn(async () => [ownerSchemaVersion])
+      },
+      jobs: { enqueueOneOffRun }
+    } as unknown as DatabaseAdapter;
+
+    await enqueueWebhookDeliveries(enqueueDb, {
+      id: 'relation-audit-hidden-endpoints',
+      workspace: 'ws-1',
+      timestamp: new Date('2026-07-15T10:00:00.000Z'),
+      user_id: 'user-1',
+      user_display_name: 'Ada',
+      operation: 'update',
+      entity_type: 'relation',
+      entity_id: 'relation-1',
+      entity_name: 'Payments → Ledger',
+      entity_slug: null,
+      schema_id: 'relation-schema-1',
+      changes: {
+        old: { status: 'draft' },
+        new: { status: 'active' }
+      },
+      metadata: {
+        source: 'test',
+        relation: {
+          id: 'relation-1',
+          schema: { id: 'relation-schema-1', name: 'Depends on' },
+          in: { id: 'entity-1', name: 'Payments' },
+          out: { id: 'entity-2', name: 'Ledger' }
+        }
+      }
+    });
+
+    const payload = enqueueOneOffRun.mock.calls[0]![0].payload as {
+      event: { relation?: unknown; metadata: Record<string, unknown>; changes: unknown };
+    };
+    expect(payload.event.relation).toBeUndefined();
+    expect(payload.event.metadata).toEqual({ source: 'test' });
     expect(payload.event.changes).toEqual({
       old: { status: 'draft' },
       new: { status: 'active' }
