@@ -184,10 +184,14 @@ describe('enqueueAutomationRuleRuns', () => {
   it('fails closed when the audit schema is unavailable', async () => {
     const getEntity = vi.fn(async () => ({ owner: null, data: { salary: 100000 } }));
     const db = {
-      automationRule: { listRules: vi.fn(async () => [{
-        ...baseRule,
-        conditions: [{ field: 'salary', operator: 'equals', value: 100000 }]
-      }]) },
+      automationRule: {
+        listRules: vi.fn(async () => [
+          {
+            ...baseRule,
+            conditions: [{ field: 'salary', operator: 'equals', value: 100000 }]
+          }
+        ])
+      },
       catalog: {
         getEntity,
         getSchema: vi.fn(async () => null)
@@ -201,10 +205,14 @@ describe('enqueueAutomationRuleRuns', () => {
 
   it('skips a condition on a declared restricted field', async () => {
     const db = {
-      automationRule: { listRules: vi.fn(async () => [{
-        ...baseRule,
-        conditions: [{ field: 'salary', operator: 'equals', value: 100000 }]
-      }]) },
+      automationRule: {
+        listRules: vi.fn(async () => [
+          {
+            ...baseRule,
+            conditions: [{ field: 'salary', operator: 'equals', value: 100000 }]
+          }
+        ])
+      },
       catalog: {
         getEntity: vi.fn(async () => ({ owner: null, data: { salary: 100000 } })),
         getSchema: vi.fn(async () => ({

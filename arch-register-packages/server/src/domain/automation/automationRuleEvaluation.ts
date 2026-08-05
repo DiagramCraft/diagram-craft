@@ -195,7 +195,10 @@ export const enqueueAutomationRuleRuns = async (
       authContexts.set(rule.created_by, authCtxPromise);
     }
     const authCtx = await authCtxPromise;
-    if (isAutomationRuleAuthorized(authCtx, schema, rule) && matchesTrigger(rule.trigger, auditLog)) {
+    if (
+      isAutomationRuleAuthorized(authCtx, schema, rule) &&
+      matchesTrigger(rule.trigger, auditLog)
+    ) {
       authorizedMatchingRules.push(rule);
     }
   }

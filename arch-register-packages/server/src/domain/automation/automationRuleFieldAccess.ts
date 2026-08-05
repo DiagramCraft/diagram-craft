@@ -29,8 +29,7 @@ const RELATION_PSEUDO_FIELD_IDS = new Set([
 export const isAutomationPseudoField = (
   resourceType: AutomationRuleResourceType,
   fieldId: string
-) =>
-  (resourceType === 'entity' ? ENTITY_PSEUDO_FIELD_IDS : RELATION_PSEUDO_FIELD_IDS).has(fieldId);
+) => (resourceType === 'entity' ? ENTITY_PSEUDO_FIELD_IDS : RELATION_PSEUDO_FIELD_IDS).has(fieldId);
 
 export const isAutomationReadFieldKnown = (
   resourceType: AutomationRuleResourceType,
