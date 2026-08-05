@@ -1245,6 +1245,30 @@ export const createAiChatTools = (
       edges.push({ sourceId, targetId, fieldId, fieldName, kind });
     };
 
+    const canViewTypedRelationAtBothEndpoints = (
+      firstEndpointSchema: SchemaDbResult | undefined,
+      firstDirection: 'in' | 'out',
+      secondEndpointSchema: SchemaDbResult | undefined,
+      secondDirection: 'in' | 'out',
+      relationSchemaId: string
+    ) => {
+      if (authCtx !== null && (!firstEndpointSchema || !secondEndpointSchema)) return false;
+      return (
+        canViewTypedRelationFromEndpoint(
+          authCtx,
+          firstEndpointSchema,
+          relationSchemaId,
+          firstDirection
+        ) &&
+        canViewTypedRelationFromEndpoint(
+          authCtx,
+          secondEndpointSchema,
+          relationSchemaId,
+          secondDirection
+        )
+      );
+    };
+
     while (queue.length > 0) {
       const { id: currentId, depth } = queue.shift()!;
       const current = entityMap.get(currentId);
@@ -1292,11 +1316,20 @@ export const createAiChatTools = (
       ) {
         const typed = await relationDb.listRelationsForEntity(workspaceId, currentId);
         for (const relation of typed.outgoing) {
-          if (!canViewTypedRelationFromEndpoint(authCtx, schema, relation.schema_id, 'in')) {
-            continue;
-          }
           const targetEntity = entityMap.get(relation.out_entity_id);
           if (!targetEntity) continue;
+          const targetSchema = schemaMap.get(targetEntity.schema_id);
+          if (
+            !canViewTypedRelationAtBothEndpoints(
+              schema,
+              'in',
+              targetSchema,
+              'out',
+              relation.schema_id
+            )
+          ) {
+            continue;
+          }
           const target = targetEntity.id;
           const relationSchema = await relationDb.getRelationSchema(
             workspaceId,
@@ -1323,11 +1356,20 @@ export const createAiChatTools = (
       ) {
         const typed = await relationDb.listRelationsForEntity(workspaceId, currentId);
         for (const relation of typed.incoming) {
-          if (!canViewTypedRelationFromEndpoint(authCtx, schema, relation.schema_id, 'out')) {
-            continue;
-          }
           const sourceEntity = entityMap.get(relation.in_entity_id);
           if (!sourceEntity) continue;
+          const sourceSchema = schemaMap.get(sourceEntity.schema_id);
+          if (
+            !canViewTypedRelationAtBothEndpoints(
+              schema,
+              'out',
+              sourceSchema,
+              'in',
+              relation.schema_id
+            )
+          ) {
+            continue;
+          }
           const source = sourceEntity.id;
           const relationSchema = await relationDb.getRelationSchema(
             workspaceId,
