@@ -40,7 +40,7 @@ import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import { availableSchemaCatalog, resolveEntitySchemaCatalogAt } from './schemaHistory';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import { toRedactedApiRelation } from './relationHelpers';
-import { canViewTypedRelation } from './relationAccessControl';
+import { buildTypedRelationVisibilityPolicy } from './relationAccessControl';
 
 const checker = new PermissionChecker();
 
@@ -811,61 +811,7 @@ const withRelationQueryProjections = (
 ): RelationRecord =>
   Object.keys(projections).length > 0 ? { ...relation, _projections: projections } : relation;
 
-const listAllWorkspaceRelationRows = async (db: DatabaseAdapter, workspace: string) => {
-  const rows: Awaited<ReturnType<typeof db.relation.listRelations>>['items'] = [];
-  const pageSize = ENTITY_DEFAULTS.PAGE_SIZE;
-  let offset = 0;
-  while (true) {
-    const page = await db.relation.listRelations(
-      workspace,
-      { schemaId: null, inEntityId: null, outEntityId: null },
-      { limit: pageSize, offset }
-    );
-    if (page.items.length === 0) break;
-    rows.push(...page.items);
-    if (page.items.length < pageSize || rows.length >= page.total) break;
-    offset += pageSize;
-  }
-  return rows;
-};
-
-// Relation visibility can't be recomputed as flat SQL (it depends on both endpoint entities'
-// schemas and the relation schema's viewable typed-relation grant), so — like
-// visibleEntityIdsForQuery — it's precomputed in JS and passed into the compiler as an id set.
-const visibleRelationIdsForQuery = async (
-  db: DatabaseAdapter,
-  workspace: string,
-  authCtx: WorkspaceAuthorizationContext | null
-): Promise<readonly string[] | undefined> => {
-  if (authCtx == null) return undefined;
-  const [rows, entities, entitySchemas] = await Promise.all([
-    listAllWorkspaceRelationRows(db, workspace),
-    db.catalog.listEntities(workspace),
-    db.catalog.listSchemas(workspace)
-  ]);
-  const entitySchemaIdByEntity = new Map(entities.map(entity => [entity.id, entity.schema_id]));
-  const entitySchemaById = new Map(entitySchemas.map(schema => [schema.id, schema]));
-  return rows
-    .filter(row =>
-      canViewTypedRelation(
-        authCtx,
-        [
-          {
-            schema: entitySchemaById.get(entitySchemaIdByEntity.get(row.in_entity_id) ?? ''),
-            direction: 'in'
-          },
-          {
-            schema: entitySchemaById.get(entitySchemaIdByEntity.get(row.out_entity_id) ?? ''),
-            direction: 'out'
-          }
-        ],
-        row.schema_id
-      )
-    )
-    .map(row => row.id);
-};
-
-// Resolves the shared prerequisites (schema catalog validation, visible-relation-id gate) and
+// Resolves the shared prerequisites (schema catalog validation, relation visibility policy) and
 // compiles both the row query and (when a limit is set) the count query with identical WHERE
 // clauses. Split out so listRelationsWithCount can run the row and count queries concurrently.
 const compileRelationQueries = async (
@@ -889,14 +835,24 @@ const compileRelationQueries = async (
       : validation.errors.map(error => `${error.path.join('.')}: ${error.message}`).join('; ')
   });
 
-  const visibleRelationIds = await visibleRelationIdsForQuery(db, workspace, authCtx);
+  const relationSchemasForPolicy =
+    query.schemaId == null
+      ? relationSchemas
+      : relationSchemaCatalog.has(query.schemaId)
+        ? [relationSchemaCatalog.get(query.schemaId)!]
+        : relationSchemas;
+  const relationVisibility = buildTypedRelationVisibilityPolicy(
+    authCtx,
+    schemaCatalog.values(),
+    relationSchemasForPolicy
+  );
   try {
     const rowQuery = compileEntityQueryIR(
       query,
       schemaCatalog,
       db.core.driver,
       workspace,
-      { visibleRelationIds, limit: limit ?? undefined, offset },
+      { relationVisibility, limit: limit ?? undefined, offset },
       authCtx,
       relationSchemaCatalog
     );
@@ -905,7 +861,7 @@ const compileRelationQueries = async (
       schemaCatalog,
       db.core.driver,
       workspace,
-      { visibleRelationIds },
+      { relationVisibility },
       authCtx,
       relationSchemaCatalog
     );

@@ -23,6 +23,7 @@ import {
 } from './entityQueryIRValidator';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
+import type { TypedRelationVisibilityPolicy } from './relationAccessControl';
 
 export type EntityQueryDialect = 'postgres' | 'sqlite';
 
@@ -30,11 +31,9 @@ export type CompiledEntityQuery = { sql: string; params: unknown[] };
 
 export type CompiledEntityQueryOptions = {
   visibleEntityIds?: readonly string[];
-  // Relation-root visibility gate. Unlike entity visibility (a per-entity ACL check), relation
-  // visibility depends on both endpoint entities' schemas and the relation schema's viewable
-  // typed-relation grant, so it can't be recomputed as flat SQL — callers precompute it in JS
-  // (mirrors canViewTypedRelation) and pass the resulting id set in.
-  visibleRelationIds?: readonly string[];
+  // Relation-root visibility policy. It is compiled to SQL against the relation's endpoint
+  // schema ids and owner, avoiding a workspace-wide relation scan and large id-list parameter.
+  relationVisibility?: TypedRelationVisibilityPolicy;
   // SQL-level pagination for the relation-rooted path only (see compileEntityQueryIR). The
   // entity-rooted path still collects-then-slices in JS because collectEntitiesFromIR applies a
   // JS-only post-filter (collectionEntityIds) after the compiled query runs, which SQL LIMIT/OFFSET
@@ -87,7 +86,7 @@ type CompileState = {
   bindingByPath: Map<string, ProjectionBinding>;
   compilingBinding: boolean;
   visibleEntityIds?: readonly string[];
-  visibleRelationIds?: readonly string[];
+  relationVisibility?: TypedRelationVisibilityPolicy;
   limit?: number;
   offset?: number;
 };
@@ -104,6 +103,43 @@ const addParam = (state: CompileState, value: unknown): string => {
 
 const nextAlias = (state: CompileState): string => `e${state.nextAliasIndex++}`;
 const nextRelationAlias = (state: CompileState): string => `r${state.nextRelationAliasIndex++}`;
+
+const relationEndpointSchemaClause = (
+  alias: string,
+  schemaIds: 'all' | readonly string[],
+  state: CompileState
+): string => {
+  if (schemaIds === 'all') return '1=1';
+  if (schemaIds.length === 0) return '1=0';
+  return `${alias}.schema_id IN (${schemaIds.map(schemaId => addParam(state, schemaId)).join(', ')})`;
+};
+
+const relationVisibilityClause = (
+  relationAlias: string,
+  inEndpointAlias: string,
+  outEndpointAlias: string,
+  state: CompileState
+): string => {
+  const policy = state.relationVisibility;
+  if (policy == null || policy.allOwners) return '1=1';
+
+  const ownerClause =
+    policy.ownerIds.length === 0
+      ? '1=0'
+      : `${relationAlias}.owner IN (${policy.ownerIds.map(ownerId => addParam(state, ownerId)).join(', ')})`;
+  const endpointClauses = policy.endpointScopes.map(scope => {
+    const inClause = relationEndpointSchemaClause(inEndpointAlias, scope.inEntitySchemaIds, state);
+    const outClause = relationEndpointSchemaClause(
+      outEndpointAlias,
+      scope.outEntitySchemaIds,
+      state
+    );
+    const relationSchemaParam = addParam(state, scope.relationSchemaId);
+    return `(${relationAlias}.schema_id = ${relationSchemaParam} AND (${inClause} OR ${outClause}))`;
+  });
+
+  return `(${ownerClause}${endpointClauses.length > 0 ? ` OR ${endpointClauses.join(' OR ')}` : ''})`;
+};
 
 const pathKey = (path: PathStep[]): string => JSON.stringify(path);
 
@@ -1263,6 +1299,8 @@ const liveRelationState = (dialect: EntityQueryDialect): string =>
         'in_entity_id', r.in_record_id,
         'out_entity_id', r.out_record_id,
         'data', r.data,
+        'owner', r.owner,
+        'lifecycle', r.lifecycle,
         'version', r.version,
         'approval_policy_override', r.approval_policy_override,
         'created_at', r.created_at,
@@ -1275,6 +1313,8 @@ const liveRelationState = (dialect: EntityQueryDialect): string =>
         'in_entity_id', r.in_record_id,
         'out_entity_id', r.out_record_id,
         'data', json(r.data),
+        'owner', r.owner,
+        'lifecycle', r.lifecycle,
         'version', r.version,
         'approval_policy_override', r.approval_policy_override,
         'created_at', r.created_at,
@@ -1300,6 +1340,8 @@ const temporalRelationProjection = (
     `${uuid('in_entity_id')} AS in_record_id`,
     `${uuid('out_entity_id')} AS out_record_id`,
     `COALESCE(${json('data')}, ${emptyObject}) AS data`,
+    `${uuid('owner')} AS owner`,
+    `${uuid('lifecycle')} AS lifecycle`,
     `COALESCE(${text('version')}, '1') AS version`,
     `${text('approval_policy_override')} AS approval_policy_override`,
     `${text('created_at')} AS created_at`,
@@ -1424,17 +1466,38 @@ const buildTemporalRelationSource = (state: CompileState): string => {
 // Relation-instance counterpart of buildScopeCte. Live queries read catalog_record directly;
 // temporal queries reconstruct relation state from record_version via buildTemporalRelationSource.
 const buildRelationScopeCte = (state: CompileState): string => {
+  const policy = state.relationVisibility;
+  const needsEndpointJoins =
+    policy != null && !policy.allOwners && policy.endpointScopes.length > 0;
+  const endpointJoins = needsEndpointJoins
+    ? `
+      JOIN catalog_record in_visibility_endpoint
+        ON in_visibility_endpoint.workspace = r.workspace
+       AND in_visibility_endpoint.id = r.in_record_id
+       AND in_visibility_endpoint.kind = 'entity'
+      JOIN catalog_record out_visibility_endpoint
+        ON out_visibility_endpoint.workspace = r.workspace
+       AND out_visibility_endpoint.id = r.out_record_id
+       AND out_visibility_endpoint.kind = 'entity'`
+    : '';
   if (state.asOf) {
-    return `${buildTemporalRelationSource(state)},\n    ${RELATION_SCOPE_CTE} AS (\n      SELECT * FROM temporal_relation_source\n    )`;
+    const source = buildTemporalRelationSource(state);
+    const visibilityClause = relationVisibilityClause(
+      'r',
+      'in_visibility_endpoint',
+      'out_visibility_endpoint',
+      state
+    );
+    return `${source},\n    ${RELATION_SCOPE_CTE} AS (\n      SELECT r.*\n      FROM temporal_relation_source r${endpointJoins}\n      WHERE ${visibilityClause}\n    )`;
   }
   const workspaceParam = addParam(state, state.workspace);
-  const visibleClause =
-    state.visibleRelationIds == null
-      ? ''
-      : state.visibleRelationIds.length === 0
-        ? '1=0'
-        : `r.id IN (${state.visibleRelationIds.map(id => addParam(state, id)).join(', ')})`;
-  return `${RELATION_SCOPE_CTE} AS (\n      SELECT r.*\n      FROM catalog_record r\n      WHERE r.kind = 'relation'\n        AND r.workspace = ${workspaceParam}\n        AND r.deleted_at IS NULL\n        AND ${visibleClause || '1=1'}\n    )`;
+  const visibilityClause = relationVisibilityClause(
+    'r',
+    'in_visibility_endpoint',
+    'out_visibility_endpoint',
+    state
+  );
+  return `${RELATION_SCOPE_CTE} AS (\n      SELECT r.*\n      FROM catalog_record r${endpointJoins}\n      WHERE r.kind = 'relation'\n        AND r.workspace = ${workspaceParam}\n        AND r.deleted_at IS NULL\n        AND ${visibilityClause}\n    )`;
 };
 
 // Shared setup for compileEntityQueryIR and compileEntityQueryCountIR: resolves rootKind, builds
@@ -1477,7 +1540,7 @@ const buildQueryFragments = (
     bindingByPath: new Map(),
     compilingBinding: false,
     visibleEntityIds: options.visibleEntityIds,
-    visibleRelationIds: options.visibleRelationIds,
+    relationVisibility: options.relationVisibility,
     limit: options.limit,
     offset: options.offset
   };

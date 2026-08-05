@@ -4,7 +4,8 @@ import type { SchemaDbResult } from './db/catalogDatabase';
 import {
   canEditTypedRelation,
   canViewTypedRelation,
-  canViewTypedRelationFromEndpoint
+  canViewTypedRelationFromEndpoint,
+  buildTypedRelationVisibilityPolicy
 } from './relationAccessControl';
 
 const schema = (groupId?: string): SchemaDbResult => ({
@@ -91,6 +92,46 @@ describe('typed relation owner-field access', () => {
 });
 
 describe('relation owner composition (#2708)', () => {
+  it('compiles endpoint visibility and relation-owner overrides into a query policy', () => {
+    const policy = buildTypedRelationVisibilityPolicy(
+      authCtx(null),
+      [schema('restricted')],
+      [{ id: 'relation-schema-1' }]
+    );
+
+    expect(policy).toEqual({
+      endpointScopes: [
+        {
+          relationSchemaId: 'relation-schema-1',
+          inEntitySchemaIds: 'all',
+          outEntitySchemaIds: []
+        }
+      ],
+      ownerIds: [],
+      allOwners: false
+    });
+  });
+
+  it('includes owner teams that can view relations in the SQL policy', () => {
+    const teamAdmin = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [{ teamId: 'team-owner', role: 'team_admin' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    expect(
+      buildTypedRelationVisibilityPolicy(
+        teamAdmin,
+        [schema('restricted')],
+        [{ id: 'relation-schema-1' }]
+      )?.ownerIds
+    ).toEqual(['team-owner']);
+  });
+
   it('grants edit to a relation owner-team admin even when the endpoint field is restricted', () => {
     const teamAdmin = buildAuthorizationContext({
       userId: 'user-1',

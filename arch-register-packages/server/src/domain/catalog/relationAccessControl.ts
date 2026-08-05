@@ -11,7 +11,63 @@ import { httpAssert } from '../../utils/httpAssert';
 
 export type RelationEndpointDirection = 'in' | 'out';
 
+export type TypedRelationVisibilityEndpointScope = 'all' | readonly string[];
+
+export type TypedRelationVisibilityPolicy = {
+  endpointScopes: readonly {
+    relationSchemaId: string;
+    inEntitySchemaIds: TypedRelationVisibilityEndpointScope;
+    outEntitySchemaIds: TypedRelationVisibilityEndpointScope;
+  }[];
+  ownerIds: readonly string[];
+  allOwners: boolean;
+};
+
 const checker = new PermissionChecker();
+
+/**
+ * Compiles the endpoint field-group rules into a small SQL-friendly policy. The query compiler
+ * applies this policy against relation rows and their endpoint schema ids, avoiding the previous
+ * workspace-wide relation scan and id-list materialization.
+ */
+export const buildTypedRelationVisibilityPolicy = (
+  authCtx: WorkspaceAuthorizationContext | null,
+  entitySchemas: Iterable<SchemaDbResult>,
+  relationSchemas: Iterable<{ id: string }>
+): TypedRelationVisibilityPolicy | undefined => {
+  if (authCtx == null) return undefined;
+
+  const schemas = [...entitySchemas];
+  const relationSchemaIds = [...relationSchemas].map(schema => schema.id);
+  const allOwners = checker.hasRelationOwnerAction(authCtx, { owner: null }, 'view_relation');
+  const ownerIds = allOwners
+    ? []
+    : [...authCtx.teamIds].filter(teamId =>
+        checker.hasRelationOwnerAction(authCtx, { owner: teamId }, 'view_relation')
+      );
+
+  const endpointScope = (
+    relationSchemaId: string,
+    direction: RelationEndpointDirection
+  ): TypedRelationVisibilityEndpointScope => {
+    const allowedSchemaIds = schemas
+      .filter(schema =>
+        canViewTypedRelationFromEndpoint(authCtx, schema, relationSchemaId, direction)
+      )
+      .map(schema => schema.id);
+    return allowedSchemaIds.length === schemas.length ? 'all' : allowedSchemaIds;
+  };
+
+  return {
+    endpointScopes: relationSchemaIds.map(relationSchemaId => ({
+      relationSchemaId,
+      inEntitySchemaIds: endpointScope(relationSchemaId, 'in'),
+      outEntitySchemaIds: endpointScope(relationSchemaId, 'out')
+    })),
+    ownerIds,
+    allOwners
+  };
+};
 
 /**
  * Relations have their own `owner`/`lifecycle` fields (#2708), but no containment hierarchy to

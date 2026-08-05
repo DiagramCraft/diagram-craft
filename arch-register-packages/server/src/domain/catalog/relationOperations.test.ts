@@ -315,6 +315,8 @@ describe('queryWorkspaceRelations (#2689)', () => {
     expect(page.items[0]!._uid).toBe(row.id);
     expect(db.relation.runCompiledRelationQuery).toHaveBeenCalledTimes(1);
     expect(db.relation.runCompiledRelationCountQuery).toHaveBeenCalledTimes(1);
+    expect(db.relation.listRelations).not.toHaveBeenCalled();
+    expect(db.catalog.listEntities).not.toHaveBeenCalled();
     const [sql] = (db.relation.runCompiledRelationQuery as ReturnType<typeof vi.fn>).mock.calls[0]!;
     expect(sql).toContain('scoped_relation');
   });

@@ -182,7 +182,7 @@ describe('relation-rooted query compilation', () => {
     expect(compiled.params).toContain('System B');
   });
 
-  it('applies visibleRelationIds as a WHERE filter on the relation scope CTE', () => {
+  it('applies the SQL relation visibility policy on the relation scope CTE', () => {
     const query: EntityQuery = {
       schemaId: dataFlow.id,
       root: { kind: 'and', children: [] }
@@ -192,13 +192,53 @@ describe('relation-rooted query compilation', () => {
       schemas,
       'sqlite',
       'ws-1',
-      { visibleRelationIds: ['rel-1', 'rel-2'] },
+      {
+        relationVisibility: {
+          endpointScopes: [
+            {
+              relationSchemaId: dataFlow.id,
+              inEntitySchemaIds: ['system'],
+              outEntitySchemaIds: []
+            }
+          ],
+          ownerIds: [],
+          allOwners: false
+        }
+      },
       null,
       relationSchemas
     );
-    expect(compiled.sql).toContain('r.id IN (?, ?)');
-    expect(compiled.params).toContain('rel-1');
-    expect(compiled.params).toContain('rel-2');
+    expect(compiled.sql).toContain('JOIN catalog_record in_visibility_endpoint');
+    expect(compiled.sql).toContain('in_visibility_endpoint.schema_id IN (?)');
+    expect(compiled.sql).toContain('OR 1=0');
+    expect(compiled.params).toContain(dataFlow.id);
+    expect(compiled.params).toContain('system');
+  });
+
+  it('applies the same relation visibility policy to asOf relation scopes', () => {
+    const query: EntityQuery = {
+      schemaId: dataFlow.id,
+      asOf: '2026-06-29T12:00:00.000Z',
+      root: { kind: 'and', children: [] }
+    };
+    const compiled = compileEntityQueryIR(
+      query,
+      schemas,
+      'sqlite',
+      'ws-1',
+      {
+        relationVisibility: {
+          endpointScopes: [],
+          ownerIds: [],
+          allOwners: false
+        }
+      },
+      null,
+      relationSchemas
+    );
+
+    expect(compiled.sql).toContain('FROM temporal_relation_source r');
+    expect(compiled.sql).toContain('WHERE (1=0)');
   });
 
   it('leaves entity-rooted compilation untouched (no root_kind set)', () => {
