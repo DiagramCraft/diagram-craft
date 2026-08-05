@@ -235,7 +235,8 @@ const reconstructState = async (
  * reconstructRelationsAsOf/resolveFutureUpdatesByRecord), so there's no candidate-id/link
  * filtering to do here; and there's no query-condition/search filtering support for relations yet
  * (out of scope — the landscape-diff state has no relation-side filter fields), so every visible
- * reconstructed relation is included.
+ * reconstructed relation is included. Endpoint visibility is evaluated against the schema
+ * catalog resolved for this state's timestamp, rather than the live catalog.
  */
 const reconstructRelationState = async (
   db: DatabaseAdapter,
@@ -243,7 +244,8 @@ const reconstructRelationState = async (
   authCtx: AuthorizationContext,
   state: EntityLandscapeDiffState,
   projectId: string | undefined,
-  now: Date
+  now: Date,
+  endpointSchemas: HistoricalSchemaCatalog
 ): Promise<RelationDbResult[]> => {
   const reconstructed = await reconstructRelationsAsOf(
     db,
@@ -258,7 +260,12 @@ const reconstructRelationState = async (
 
   const visibility = await Promise.all(
     reconstructed.map(async relation => {
-      const { inSchema, outSchema } = await getRelationOwnerSchemas(db, workspace, relation);
+      const { inSchema, outSchema } = await getRelationOwnerSchemas(
+        db,
+        workspace,
+        relation,
+        endpointSchemas
+      );
       return canViewTypedRelation(
         authCtx,
         [
@@ -427,8 +434,8 @@ export const diffEntityLandscapes = async (
     resolveRelationSchemaCatalogAt(db, workspace, relationSchemas, parseStateDate(to))
   ]);
   const [fromRelations, toRelations] = await Promise.all([
-    reconstructRelationState(db, workspace, authCtx, from, scopes[0]?.projectId, now),
-    reconstructRelationState(db, workspace, authCtx, to, scopes[1]?.projectId, now)
+    reconstructRelationState(db, workspace, authCtx, from, scopes[0]?.projectId, now, fromSchemas),
+    reconstructRelationState(db, workspace, authCtx, to, scopes[1]?.projectId, now, toSchemas)
   ]);
   const fromRelationById = new Map(fromRelations.map(relation => [relation.id, relation]));
   const toRelationById = new Map(toRelations.map(relation => [relation.id, relation]));

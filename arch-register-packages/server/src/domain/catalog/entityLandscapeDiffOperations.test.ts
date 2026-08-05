@@ -194,6 +194,7 @@ beforeEach(() => {
   vi.mocked(db.project.listProjectEntityLinks).mockResolvedValue([] as never);
   vi.mocked(db.catalog.listEntitiesPaginated).mockResolvedValue([] as never);
   vi.mocked(db.catalog.listSchemas).mockResolvedValue([] as never);
+  vi.mocked(db.catalog.listSchemaVersions).mockResolvedValue([] as never);
   vi.mocked(db.catalog.getEntity).mockResolvedValue(null as never);
   vi.mocked(db.relation.listRelationSchemas).mockResolvedValue([] as never);
   vi.mocked(db.relation.listRelationSchemaVersions).mockResolvedValue([] as never);
@@ -824,10 +825,52 @@ describe('diffEntityLandscapes', () => {
       updated_at: now
     } as never;
 
+    const makeOwnerSchema = (createdAt: Date, groupId?: string) => {
+      const inField = {
+        id: 'depends-on',
+        name: 'Depends On',
+        requirementLevel: null,
+        type: 'typedRelation',
+        relationSchemaId: 'rel-schema-1',
+        direction: 'in' as const,
+        ...(groupId ? { groupId } : {})
+      };
+      const outField = {
+        id: 'depended-on-by',
+        name: 'Depended On By',
+        requirementLevel: null,
+        type: 'typedRelation',
+        relationSchemaId: 'rel-schema-1',
+        direction: 'out' as const,
+        ...(groupId ? { groupId } : {})
+      };
+      return {
+        id: 'owner-schema',
+        workspace: 'ws-1',
+        name: 'Service',
+        description: '',
+        color: null,
+        icon: null,
+        default_owner: null,
+        key_prefix: 'SVC',
+        created_at: createdAt,
+        updated_at: now,
+        fields: [inField, outField],
+        groups: groupId
+          ? [{ id: groupId, name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }]
+          : []
+      } as never;
+    };
+
     it('classifies added, removed, and changed relations', async () => {
       vi.mocked(db.relation.listRelationSchemas).mockResolvedValue([relationSchema] as never);
       vi.mocked(db.catalog.listSchemas).mockResolvedValue([
-        { id: 'schema-1', fields: [], groups: [] }
+        {
+          id: 'schema-1',
+          fields: [],
+          groups: [],
+          created_at: new Date('2020-01-01T00:00:00.000Z')
+        }
       ] as never);
       vi.mocked(db.catalog.getEntity).mockImplementation(
         async (_ws: string, id: string) => ({ id, schema_id: 'schema-1' }) as never
@@ -858,7 +901,12 @@ describe('diffEntityLandscapes', () => {
     it('redacts restricted relation fields for a caller without view access to the group', async () => {
       vi.mocked(db.relation.listRelationSchemas).mockResolvedValue([relationSchema] as never);
       vi.mocked(db.catalog.listSchemas).mockResolvedValue([
-        { id: 'schema-1', fields: [], groups: [] }
+        {
+          id: 'schema-1',
+          fields: [],
+          groups: [],
+          created_at: new Date('2020-01-01T00:00:00.000Z')
+        }
       ] as never);
       vi.mocked(db.catalog.getEntity).mockImplementation(
         async (_ws: string, id: string) => ({ id, schema_id: 'schema-1' }) as never
@@ -935,6 +983,85 @@ describe('diffEntityLandscapes', () => {
         authCtxWithTeamRoles({}),
         state({}),
         state({})
+      );
+
+      expect(result.relations.added).toEqual([]);
+    });
+
+    it('uses the historical endpoint ACL when the current schema is relaxed', async () => {
+      const historicalAt = new Date('2026-07-29T12:00:00.000Z');
+      const currentSchema = makeOwnerSchema(now);
+      const historicalSchema = makeOwnerSchema(historicalAt, 'restricted');
+      vi.mocked(db.relation.listRelationSchemas).mockResolvedValue([relationSchema] as never);
+      vi.mocked(db.catalog.listSchemas).mockResolvedValue([currentSchema] as never);
+      vi.mocked(db.catalog.listSchemaVersions).mockResolvedValue([historicalSchema] as never);
+      vi.mocked(db.catalog.getEntity).mockImplementation(
+        async (_ws: string, id: string) => ({ id, schema_id: 'owner-schema' }) as never
+      );
+      vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+      vi.mocked(reconstructRelationsAsOf)
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([makeRelation('historical-relation')]);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({}),
+        state({ asOf: historicalAt.toISOString() }),
+        state({ asOf: historicalAt.toISOString() })
+      );
+
+      expect(result.relations.added).toEqual([]);
+    });
+
+    it('uses the historical endpoint ACL when the current schema is restricted', async () => {
+      const historicalAt = new Date('2026-07-29T12:00:00.000Z');
+      const currentSchema = makeOwnerSchema(now, 'restricted');
+      const historicalSchema = makeOwnerSchema(historicalAt);
+      vi.mocked(db.relation.listRelationSchemas).mockResolvedValue([relationSchema] as never);
+      vi.mocked(db.catalog.listSchemas).mockResolvedValue([currentSchema] as never);
+      vi.mocked(db.catalog.listSchemaVersions).mockResolvedValue([historicalSchema] as never);
+      vi.mocked(db.catalog.getEntity).mockImplementation(
+        async (_ws: string, id: string) => ({ id, schema_id: 'owner-schema' }) as never
+      );
+      vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+      vi.mocked(reconstructRelationsAsOf)
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([makeRelation('historical-relation')]);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({}),
+        state({ asOf: historicalAt.toISOString() }),
+        state({ asOf: historicalAt.toISOString() })
+      );
+
+      expect(result.relations.added.map(relation => relation._uid)).toEqual([
+        'historical-relation'
+      ]);
+    });
+
+    it('fails closed when an endpoint schema was not available at the historical timestamp', async () => {
+      const historicalAt = new Date('2026-07-29T12:00:00.000Z');
+      const currentSchema = makeOwnerSchema(new Date('2026-08-01T12:00:00.000Z'));
+      vi.mocked(db.relation.listRelationSchemas).mockResolvedValue([relationSchema] as never);
+      vi.mocked(db.catalog.listSchemas).mockResolvedValue([currentSchema] as never);
+      vi.mocked(db.catalog.listSchemaVersions).mockResolvedValue([]);
+      vi.mocked(db.catalog.getEntity).mockImplementation(
+        async (_ws: string, id: string) => ({ id, schema_id: 'owner-schema' }) as never
+      );
+      vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
+      vi.mocked(reconstructRelationsAsOf)
+        .mockResolvedValueOnce([])
+        .mockResolvedValueOnce([makeRelation('historical-relation')]);
+
+      const result = await diffEntityLandscapes(
+        db,
+        'ws-1',
+        authCtxWithTeamRoles({}),
+        state({ asOf: historicalAt.toISOString() }),
+        state({ asOf: historicalAt.toISOString() })
       );
 
       expect(result.relations.added).toEqual([]);
