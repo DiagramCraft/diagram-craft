@@ -61,11 +61,13 @@ Example of a complete form using multiple `FormElement` components.
 
 ## Accessibility
 
-`FormElement` includes built-in accessibility features:
+`FormElement` is built on [base-ui's `Field`](https://base-ui.com/react/components/field) primitive and includes built-in accessibility features:
 
-- Uses semantic `<label>` element with `htmlFor` attribute
+- Uses a semantic `<label>` element associated with the input via `htmlFor`/`id`
 - Error messages have `role="alert"` for screen reader announcements
-- Hint and error messages are properly associated with their inputs via `id` attributes
+- Hint and error messages are associated with their input via `aria-describedby`
+
+`FormElement` automatically generates and wires an `id` onto its single child element (and sets `aria-describedby` when a hint or error is present), so callers no longer need to manage `id`/`htmlFor` manually. Pass `htmlFor` explicitly only if you need to take over id association yourself (for example, to point at a nested input) — when passed, `FormElement` will not modify the child's props.
 
 ## Styling
 

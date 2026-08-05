@@ -1,4 +1,5 @@
-import { ReactNode, CSSProperties } from 'react';
+import { Field } from '@base-ui/react/field';
+import { ReactElement, ReactNode, CSSProperties, useId, isValidElement, cloneElement } from 'react';
 import styles from './FormElement.module.css';
 
 export type FormElementProps = {
@@ -22,26 +23,45 @@ export const FormElement = ({
   style,
   className
 }: FormElementProps) => {
-  const hintId = hint ? `${htmlFor ?? 'field'}-hint` : undefined;
-  const errorId = error ? `${htmlFor ?? 'field'}-error` : undefined;
+  const generatedId = useId();
+  const controlId = htmlFor ?? generatedId;
+  const hintId = hint && !error ? `${controlId}-hint` : undefined;
+  const errorId = error ? `${controlId}-error` : undefined;
+  const describedBy = [hintId, errorId].filter(Boolean).join(' ') || undefined;
+
+  // Only wire id/aria-describedby onto a single element child, and only when the
+  // caller hasn't already taken ownership of association via htmlFor, or already
+  // set these props themselves.
+  const wiredChild =
+    isValidElement(children) && !htmlFor
+      ? cloneElement(children as ReactElement<Record<string, unknown>>, {
+          id: (children.props as Record<string, unknown>).id ?? controlId,
+          'aria-describedby':
+            (children.props as Record<string, unknown>)['aria-describedby'] ?? describedBy
+        })
+      : children;
 
   return (
-    <div className={`${styles.cFormElement} ${className ?? ''}`} style={style}>
-      <label className={styles.eLabel} htmlFor={htmlFor}>
+    <Field.Root
+      className={`${styles.cFormElement} ${className ?? ''}`}
+      style={style}
+      invalid={!!error}
+    >
+      <Field.Label className={styles.eLabel} htmlFor={controlId}>
         {label}
         {!required && <span className={styles.eOptional}>(optional)</span>}
-      </label>
-      <div>{children}</div>
+      </Field.Label>
+      <div>{wiredChild}</div>
       {hint && !error && (
-        <div id={hintId} className={styles.eHint}>
+        <Field.Description id={hintId} className={styles.eHint}>
           {hint}
-        </div>
+        </Field.Description>
       )}
       {error && (
-        <div id={errorId} className={styles.eError} role="alert">
+        <Field.Error match id={errorId} role="alert" className={styles.eError}>
           {error}
-        </div>
+        </Field.Error>
       )}
-    </div>
+    </Field.Root>
   );
 };

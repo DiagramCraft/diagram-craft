@@ -36,6 +36,9 @@ const Root = (props: RootProps) => {
         data-field-state={props.isIndeterminate ? 'indeterminate' : props.state}
         disabled={props.disabled}
         style={props.style ?? {}}
+        id={props.id}
+        aria-describedby={props['aria-describedby']}
+        aria-labelledby={props['aria-labelledby']}
       >
         <BaseUISelect.Value className={styles.eValue}>
           {props.isIndeterminate ? (
@@ -73,6 +76,9 @@ type RootProps = {
   disabled?: boolean;
   placeholder?: string;
   style?: CSSProperties;
+  id?: string;
+  'aria-describedby'?: string;
+  'aria-labelledby'?: string;
 };
 
 const Item = (props: ItemProps) => {
