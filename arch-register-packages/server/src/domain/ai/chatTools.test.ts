@@ -861,6 +861,84 @@ describe('createAiChatTools', () => {
       }
     });
 
+    it('fails closed in outgoing traversal when a visible target schema is missing', async () => {
+      const relation = {
+        ...relationRows[0]!,
+        id: 'relation-missing-outgoing-endpoint-schema',
+        in_entity_id: 'entity-app-3',
+        in_entity_name: 'Orphan Service',
+        out_entity_id: 'entity-cap-2',
+        out_entity_name: 'Card Network'
+      };
+      const originalListSchemas = db.catalog.listSchemas;
+      relationRows.push(relation);
+      db.catalog.listSchemas = async () => schemas.filter(schema => schema.id !== 'capability');
+
+      try {
+        const tools = createAiChatTools(db, 'ws-1', financeCallerAuthCtx, actor);
+        const traverseRelations = tools.find(tool => tool.name === 'traverse_relations');
+
+        const result = await traverseRelations!.execute?.({
+          entityId: 'entity-app-3',
+          depth: 1,
+          direction: 'outgoing'
+        });
+
+        expect(result).toMatchObject({ entityId: 'entity-app-3', edges: [] });
+        expect((result as { nodes: { id: string }[] }).nodes.map(node => node.id)).toEqual([
+          'entity-app-3'
+        ]);
+        expect(JSON.stringify(result)).not.toContain('entity-cap-2');
+      } finally {
+        db.catalog.listSchemas = originalListSchemas;
+        relationRows.splice(relationRows.indexOf(relation), 1);
+      }
+    });
+
+    it('fails closed in incoming traversal when a visible source schema is missing', async () => {
+      const relation = {
+        ...relationRows[0]!,
+        id: 'relation-missing-incoming-endpoint-schema',
+        in_entity_id: 'entity-app-3',
+        in_entity_name: 'Orphan Service',
+        out_entity_id: 'entity-cap-2',
+        out_entity_name: 'Card Network'
+      };
+      const originalListSchemas = db.catalog.listSchemas;
+      relationRows.push(relation);
+      db.catalog.listSchemas = async () => schemas.filter(schema => schema.id !== 'application');
+
+      try {
+        const tools = createAiChatTools(db, 'ws-1', financeCallerAuthCtx, actor);
+        const traverseRelations = tools.find(tool => tool.name === 'traverse_relations');
+
+        const result = await traverseRelations!.execute?.({
+          entityId: 'entity-cap-2',
+          depth: 1,
+          direction: 'incoming'
+        });
+
+        expect((result as { nodes: { id: string }[] }).nodes.map(node => node.id)).not.toContain(
+          'entity-app-3'
+        );
+        expect(
+          (result as { edges: { sourceId: string; targetId: string; kind: string }[] }).edges
+        ).not.toEqual(
+          expect.arrayContaining([
+            expect.objectContaining({
+              sourceId: 'entity-app-3',
+              targetId: 'entity-cap-2',
+              kind: 'typed'
+            })
+          ])
+        );
+        expect(JSON.stringify(result)).not.toContain('entity-app-3');
+      } finally {
+        db.catalog.listSchemas = originalListSchemas;
+        relationRows.splice(relationRows.indexOf(relation), 1);
+      }
+    });
+
     it('cannot match or preview a restricted field via query_entities for a caller without group access', async () => {
       const tools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
       const queryEntities = tools.find(tool => tool.name === 'query_entities');
