@@ -95668,7 +95668,14 @@
                           "description": "Percentage of entities with an assigned owner"
                         },
                         "percentCompleteness80Plus": {
-                          "type": "number",
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
                           "description": "Percentage of entities with 80% or more fields filled"
                         }
                       },
@@ -95858,52 +95865,59 @@
                       "description": "Analysis of entities missing owners by schema"
                     },
                     "completeness": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "schemaId": {
-                            "type": "string",
-                            "description": "Schema identifier"
-                          },
-                          "schemaName": {
-                            "type": "string",
-                            "description": "Schema name"
-                          },
-                          "totalCount": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991,
-                            "description": "Total number of entities"
-                          },
-                          "below50Count": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991,
-                            "description": "Number of entities with less than 50% fields filled"
-                          },
-                          "between50And79Count": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991,
-                            "description": "Number of entities with 50-79% fields filled"
-                          },
-                          "above80Count": {
-                            "type": "integer",
-                            "minimum": -9007199254740991,
-                            "maximum": 9007199254740991,
-                            "description": "Number of entities with 80% or more fields filled"
+                      "anyOf": [
+                        {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "schemaId": {
+                                "type": "string",
+                                "description": "Schema identifier"
+                              },
+                              "schemaName": {
+                                "type": "string",
+                                "description": "Schema name"
+                              },
+                              "totalCount": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Total number of entities"
+                              },
+                              "below50Count": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Number of entities with less than 50% fields filled"
+                              },
+                              "between50And79Count": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Number of entities with 50-79% fields filled"
+                              },
+                              "above80Count": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "description": "Number of entities with 80% or more fields filled"
+                              }
+                            },
+                            "required": [
+                              "schemaId",
+                              "schemaName",
+                              "totalCount",
+                              "below50Count",
+                              "between50And79Count",
+                              "above80Count"
+                            ]
                           }
                         },
-                        "required": [
-                          "schemaId",
-                          "schemaName",
-                          "totalCount",
-                          "below50Count",
-                          "between50And79Count",
-                          "above80Count"
-                        ]
-                      },
+                        {
+                          "type": "null"
+                        }
+                      ],
                       "description": "Analysis of entity field completeness by schema"
                     },
                     "schemaUtilization": {

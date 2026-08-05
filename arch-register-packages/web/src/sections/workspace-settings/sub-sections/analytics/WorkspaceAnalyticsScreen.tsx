@@ -72,8 +72,12 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
         />
         <StatCard
           label="Completeness 80%+"
-          value={formatPercent(analytics.summary.percentCompleteness80Plus)}
-          sub="Using the existing completeness score"
+          value={
+            analytics.summary.percentCompleteness80Plus == null
+              ? 'Unavailable'
+              : formatPercent(analytics.summary.percentCompleteness80Plus)
+          }
+          sub="Scoped to fields visible to you"
         />
         <button
           type="button"
@@ -132,69 +136,78 @@ export const WorkspaceAnalyticsScreen = ({ analyticsView }: { analyticsView?: 's
       </Section>
 
       <Section title="Completeness" sub="Field completeness distribution per schema.">
-        <Table.Root layout="fixed" bordered={false}>
-          <Table.Head>
-            <Table.Row>
-              <Table.HeaderCell width={160}>Schema</Table.HeaderCell>
-              <Table.HeaderCell>Completeness mix</Table.HeaderCell>
-            </Table.Row>
-          </Table.Head>
-          <Table.Body>
-            {analytics.completeness.map(row => (
-              <Table.Row key={row.schemaId}>
-                <Table.Cell>
-                  {row.totalCount > 0 ? (
-                    <button
-                      type="button"
-                      className={styles.linkButton}
-                      onClick={() => navigateToEntities({ type: row.schemaId })}
-                    >
-                      {row.schemaName}
-                    </button>
-                  ) : (
-                    row.schemaName
-                  )}
-                </Table.Cell>
-                <Table.Cell>
-                  <StackedBar
-                    buckets={[
-                      {
-                        label: 'Below 50%',
-                        count: row.below50Count,
-                        percent: row.totalCount > 0 ? (row.below50Count / row.totalCount) * 100 : 0,
-                        color: 'var(--error-fg)',
-                        onClick:
-                          row.below50Count > 0
-                            ? () => navigateToEntities(completenessSearch(row.schemaId, 'below50'))
-                            : undefined
-                      },
-                      {
-                        label: '50–79%',
-                        count: row.between50And79Count,
-                        percent:
-                          row.totalCount > 0 ? (row.between50And79Count / row.totalCount) * 100 : 0,
-                        color: 'var(--warning-fg)',
-                        onClick:
-                          row.between50And79Count > 0
-                            ? () =>
-                                navigateToEntities(
-                                  completenessSearch(row.schemaId, 'between50And79')
-                                )
-                            : undefined
-                      },
-                      {
-                        label: '80%+',
-                        count: row.above80Count,
-                        percent: row.totalCount > 0 ? (row.above80Count / row.totalCount) * 100 : 0,
-                        color: 'var(--green)'
-                      }
-                    ]}
-                  />
-                </Table.Cell>
+        {analytics.completeness == null ? (
+          <EmptyState compact title="Completeness is unavailable for some entities." />
+        ) : (
+          <Table.Root layout="fixed" bordered={false}>
+            <Table.Head>
+              <Table.Row>
+                <Table.HeaderCell width={160}>Schema</Table.HeaderCell>
+                <Table.HeaderCell>Completeness mix</Table.HeaderCell>
               </Table.Row>
-            ))}
-          </Table.Body>
-        </Table.Root>
+            </Table.Head>
+            <Table.Body>
+              {analytics.completeness.map(row => (
+                <Table.Row key={row.schemaId}>
+                  <Table.Cell>
+                    {row.totalCount > 0 ? (
+                      <button
+                        type="button"
+                        className={styles.linkButton}
+                        onClick={() => navigateToEntities({ type: row.schemaId })}
+                      >
+                        {row.schemaName}
+                      </button>
+                    ) : (
+                      row.schemaName
+                    )}
+                  </Table.Cell>
+                  <Table.Cell>
+                    <StackedBar
+                      buckets={[
+                        {
+                          label: 'Below 50%',
+                          count: row.below50Count,
+                          percent:
+                            row.totalCount > 0 ? (row.below50Count / row.totalCount) * 100 : 0,
+                          color: 'var(--error-fg)',
+                          onClick:
+                            row.below50Count > 0
+                              ? () =>
+                                  navigateToEntities(completenessSearch(row.schemaId, 'below50'))
+                              : undefined
+                        },
+                        {
+                          label: '50–79%',
+                          count: row.between50And79Count,
+                          percent:
+                            row.totalCount > 0
+                              ? (row.between50And79Count / row.totalCount) * 100
+                              : 0,
+                          color: 'var(--warning-fg)',
+                          onClick:
+                            row.between50And79Count > 0
+                              ? () =>
+                                  navigateToEntities(
+                                    completenessSearch(row.schemaId, 'between50And79')
+                                  )
+                              : undefined
+                        },
+                        {
+                          label: '80%+',
+                          count: row.above80Count,
+                          percent:
+                            row.totalCount > 0 ? (row.above80Count / row.totalCount) * 100 : 0,
+                          color: 'var(--green)'
+                        }
+                      ]}
+                    />
+                  </Table.Cell>
+                </Table.Row>
+              ))}
+            </Table.Body>
+          </Table.Root>
+        )}
       </Section>
 
       <div className={styles.sideBySide}>
