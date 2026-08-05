@@ -5,6 +5,7 @@ import type {
   GlobalPermission,
   GlobalRole,
   ProjectAction,
+  RelationAction,
   TeamRole,
   WorkspaceCapability,
   WorkspaceRole,
@@ -25,6 +26,16 @@ export const ROLE_ACTIONS: Record<EntityRole, EntityAction[]> = {
   editor: ['view_entity', 'edit_entity'],
   contributor: ['view_entity', 'edit_entity', 'create_child'],
   entity_admin: ['view_entity', 'edit_entity', 'create_child', 'admin_entity']
+};
+
+/**
+ * Maps entity roles to the relation actions they can perform — same role vocabulary as
+ * ROLE_ACTIONS, just without create_child (relations have no children).
+ */
+export const RELATION_ROLE_ACTIONS: Record<EntityRole, RelationAction[]> = {
+  editor: ['view_relation', 'edit_relation'],
+  contributor: ['view_relation', 'edit_relation'],
+  entity_admin: ['view_relation', 'edit_relation', 'admin_relation']
 };
 
 export const TEAM_ROLE_PERMISSIONS: Record<

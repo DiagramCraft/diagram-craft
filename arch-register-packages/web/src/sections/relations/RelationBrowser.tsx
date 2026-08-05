@@ -25,6 +25,7 @@ import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { EntityNavigationLink } from '../../components/EntityNavigationLink';
 import { useFieldGroupAccess } from '../../auth/useFieldGroupAccess';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useTeams, useLifecycleStates } from '../../hooks/useWorkspaceConfig';
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { useDeleteRelation } from '../../hooks/useRelations';
 import { RelationDetailPopover } from '../entities/components/RelationDetailPopover';
@@ -74,6 +75,8 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     pageSize
   } = useRelationBrowserData(workspaceId);
   const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
+  const { data: owners = [] } = useTeams(workspaceId);
+  const { data: lifecycleStates = [] } = useLifecycleStates(workspaceId);
   const filterPopoverRef = useRef<PopoverActions | null>(null);
   const navigate = useNavigate();
   const search = useSearch({ strict: false });
@@ -121,7 +124,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
   }, [navigate, workspaceId]);
 
   const fieldIds = activeSchema?.fields.map(field => field.id) ?? [];
-  const columnCount = 5 + fieldIds.length;
+  const columnCount = 7 + fieldIds.length;
 
   const comparators: Record<
     string,
@@ -130,6 +133,9 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     _in: (a, b) => a._in.name.localeCompare(b._in.name),
     _out: (a, b) => a._out.name.localeCompare(b._out.name),
     _schema: (a, b) => a._schema.name.localeCompare(b._schema.name),
+    _owner: (a, b) => compareFieldValues(a._owner?.name ?? null, b._owner?.name ?? null),
+    _lifecycle: (a, b) =>
+      compareFieldValues(a._lifecycle?.name ?? null, b._lifecycle?.name ?? null),
     _updatedAt: (a, b) => a._updatedAt.localeCompare(b._updatedAt)
   };
   for (const fieldId of fieldIds) {
@@ -263,6 +269,8 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
               relationSchemas={relationSchemas}
               entitySchemas={entitySchemas}
               enums={enums}
+              owners={owners}
+              lifecycleStates={lifecycleStates}
               getFieldGroupAccess={getFieldGroupAccess}
             />
           </Popover.Content>
@@ -290,6 +298,12 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
             </Table.SortableHeaderCell>
             <Table.SortableHeaderCell sortKey="_schema" sort={sort} onSort={toggleSort}>
               Type
+            </Table.SortableHeaderCell>
+            <Table.SortableHeaderCell sortKey="_owner" sort={sort} onSort={toggleSort}>
+              Owner
+            </Table.SortableHeaderCell>
+            <Table.SortableHeaderCell sortKey="_lifecycle" sort={sort} onSort={toggleSort}>
+              Lifecycle
             </Table.SortableHeaderCell>
             {fieldIds.map(fieldId => (
               <Table.SortableHeaderCell
@@ -337,6 +351,8 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
                   </EntityNavigationLink>
                 </Table.Cell>
                 <Table.Cell>{relation._schema.name}</Table.Cell>
+                <Table.Cell>{relation._owner?.name ?? ''}</Table.Cell>
+                <Table.Cell>{relation._lifecycle?.name ?? ''}</Table.Cell>
                 {fieldIds.map(fieldId => (
                   <Table.Cell key={fieldId}>{formatFieldValue(relation[fieldId])}</Table.Cell>
                 ))}

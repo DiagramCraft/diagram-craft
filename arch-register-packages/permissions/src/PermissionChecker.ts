@@ -6,12 +6,14 @@ import type {
   EntitySchema,
   GlobalPermission,
   ProjectAction,
+  Relation,
+  RelationAction,
   TeamRole,
   WorkspaceAuthorizationContext,
   WorkspaceCapability
 } from './types.js';
 import { decodeRefs } from './utils.js';
-import { ROLE_ACTIONS, TEAM_ROLE_PERMISSIONS } from './constants.js';
+import { RELATION_ROLE_ACTIONS, ROLE_ACTIONS, TEAM_ROLE_PERMISSIONS } from './constants.js';
 
 /**
  * Pure permission checker.
@@ -45,6 +47,67 @@ export class PermissionChecker {
   ): boolean {
     const actions = this.getEntityActions(context, entity);
     return actions.has(action);
+  }
+
+  /**
+   * Check if user has a specific assigned permission on a relation.
+   *
+   * Unlike hasEntityPermission, this only checks the "direct owner" sources (global admin,
+   * workspace role, and the relation's own owner team) — relations have no containment
+   * hierarchy to walk and no per-record grants, so there's no ancestor-propagation or
+   * grant-matching analogue to run.
+   *
+   * @param context - Workspace-level authorization context (relations don't need the
+   *   entity-map/grant-list fields of the fuller AuthorizationContext)
+   * @param relation - The relation to check permissions for (only `owner` is used)
+   * @param action - The specific action to check (view_relation, edit_relation, admin_relation)
+   * @returns true if the user has the permission, false otherwise
+   */
+  hasRelationPermission(
+    context: WorkspaceAuthorizationContext,
+    relation: Pick<Relation, 'owner'>,
+    action: RelationAction
+  ): boolean {
+    const actions = this.getRelationActions(context, relation);
+    return actions.has(action);
+  }
+
+  /**
+   * Check if user has a specific relation action via global admin or the relation's own
+   * direct-owner-team role — deliberately excluding the generic workspace-capability branch
+   * that hasRelationPermission/getRelationActions also grants from.
+   *
+   * This narrower check exists for relationAccessControl.ts's OR-with-endpoint-field-group-check
+   * composition: every caller reaching that composition has already passed a
+   * requireWorkspaceCapability('ent.edit') gate, so OR-ing in the full workspace-capability
+   * branch there would be trivially true for everyone and would silently defeat the field-group
+   * restriction it's meant to compose with. Only a resource-level grant (owner team or global
+   * admin) should be able to override that restriction, mirroring how field-group access control
+   * is itself scoped to specific teams rather than the general edit capability.
+   */
+  hasRelationOwnerAction(
+    context: WorkspaceAuthorizationContext,
+    relation: Pick<Relation, 'owner'>,
+    action: RelationAction
+  ): boolean {
+    if (!context.workspaceCapabilityCeiling && context.globalPermissions.has('admin_platform')) {
+      if (RELATION_ROLE_ACTIONS['entity_admin'].includes(action)) return true;
+    }
+    if (relation.owner) {
+      for (const role of this.getTeamRoles(context, relation.owner)) {
+        for (const entityAction of TEAM_ROLE_PERMISSIONS[role].directEntityActions) {
+          if (entityAction === 'create_child') continue;
+          const relationAction = entityAction.replace('_entity', '_relation') as RelationAction;
+          if (
+            relationAction === action &&
+            this.isRelationActionAllowedByCeiling(context, relationAction)
+          ) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
   /**
@@ -249,6 +312,69 @@ export class PermissionChecker {
     }
 
     return actions;
+  }
+
+  /**
+   * Get all relation actions available to the user for a specific relation.
+   *
+   * Deliberately narrower than getEntityActions: no collectAncestorIds/getParentIds walk
+   * (relations have no containment hierarchy) and no entity-grant loop (grants are
+   * entity_id-scoped and have no relation analogue).
+   */
+  protected getRelationActions(
+    context: WorkspaceAuthorizationContext,
+    relation: Pick<Relation, 'owner'>
+  ): Set<RelationAction> {
+    const actions = new Set<RelationAction>();
+
+    if (!context.workspaceCapabilityCeiling && context.globalPermissions.has('admin_platform')) {
+      RELATION_ROLE_ACTIONS['entity_admin'].forEach(action => actions.add(action));
+    }
+
+    if (
+      context.workspaceRole != null ||
+      context.workspaceCapabilityCeiling != null ||
+      context.globalPermissions.has('admin_platform')
+    ) {
+      if (this.hasWorkspaceCapability(context, 'ent.edit')) {
+        RELATION_ROLE_ACTIONS['contributor'].forEach(action => actions.add(action));
+      } else if (this.hasWorkspaceCapability(context, 'ent.propose')) {
+        RELATION_ROLE_ACTIONS['editor'].forEach(action => actions.add(action));
+      } else if (this.hasWorkspaceCapability(context, 'content.view')) {
+        actions.add('view_relation');
+      }
+    }
+
+    if (relation.owner) {
+      for (const role of this.getTeamRoles(context, relation.owner)) {
+        for (const entityAction of TEAM_ROLE_PERMISSIONS[role].directEntityActions) {
+          if (entityAction === 'create_child') continue;
+          const relationAction = entityAction.replace('_entity', '_relation') as RelationAction;
+          if (this.isRelationActionAllowedByCeiling(context, relationAction)) {
+            actions.add(relationAction);
+          }
+        }
+      }
+    }
+
+    return actions;
+  }
+
+  private isRelationActionAllowedByCeiling(
+    context: WorkspaceAuthorizationContext,
+    action: RelationAction
+  ): boolean {
+    const ceiling = context.workspaceCapabilityCeiling;
+    if (!ceiling) return true;
+
+    switch (action) {
+      case 'view_relation':
+        return ceiling.has('content.view') || ceiling.has('ent.edit') || ceiling.has('ent.propose');
+      case 'edit_relation':
+        return ceiling.has('ent.edit') || ceiling.has('ent.propose');
+      case 'admin_relation':
+        return false;
+    }
   }
 
   private isProjectActionAllowedByCeiling(

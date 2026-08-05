@@ -106,6 +106,10 @@ export const reconstructRelationsAsOf = async (
       out_entity_id: outEntityId,
       out_entity_name: entityNameById.get(outEntityId) ?? outEntityId,
       data: (state['data'] as Record<string, unknown> | undefined) ?? {},
+      owner: (state['owner'] as string | null | undefined) ?? null,
+      owner_name: null,
+      lifecycle: (state['lifecycle'] as string | null | undefined) ?? null,
+      lifecycle_label: null,
       version: Number(state['version'] ?? 1),
       approval_policy_override:
         (state['approval_policy_override'] as 'required' | 'disabled' | null) ?? null,

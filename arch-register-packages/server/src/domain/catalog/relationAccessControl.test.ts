@@ -89,3 +89,70 @@ describe('typed relation owner-field access', () => {
     ).toBe(true);
   });
 });
+
+describe('relation owner composition (#2708)', () => {
+  it('grants edit to a relation owner-team admin even when the endpoint field is restricted', () => {
+    const teamAdmin = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [{ teamId: 'team-owner', role: 'team_admin' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    expect(
+      canEditTypedRelation(
+        teamAdmin,
+        [{ schema: schema('restricted'), direction: 'out' }],
+        'relation-schema-1',
+        'team-owner'
+      )
+    ).toBe(true);
+  });
+
+  it('does not grant edit merely from generic ent.edit capability when neither owner nor endpoint access applies', () => {
+    // Regression: composing with the full workspace-capability branch would make this true for
+    // anyone with 'ent.edit', silently defeating the endpoint field-group restriction.
+    const editorNotOwner = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [{ teamId: 'some-other-team', role: 'team_admin' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    expect(
+      canEditTypedRelation(
+        editorNotOwner,
+        [{ schema: schema('restricted'), direction: 'out' }],
+        'relation-schema-1',
+        'team-owner'
+      )
+    ).toBe(false);
+  });
+
+  it('a global admin can edit through owner composition regardless of the endpoint restriction', () => {
+    const globalAdmin = buildAuthorizationContext({
+      userId: 'admin',
+      globalRoles: ['global_admin'],
+      workspaceRole: null,
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    expect(
+      canEditTypedRelation(
+        globalAdmin,
+        [{ schema: schema('restricted'), direction: 'out' }],
+        'relation-schema-1',
+        null
+      )
+    ).toBe(true);
+  });
+});

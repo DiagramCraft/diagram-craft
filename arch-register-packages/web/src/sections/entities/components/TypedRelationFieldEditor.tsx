@@ -1,13 +1,19 @@
 import { useState } from 'react';
 import { TbChevronRight, TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import type { TypedRelationField } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RelationRecordDraft } from '@arch-register/api-types/entityContract';
+import type {
+  WorkspaceLifecycleState,
+  WorkspaceOwnerOption
+} from '@arch-register/api-types/workspaceContract';
 import type { TypedRelationFieldEditState } from '../../../lib/entityEditState';
 import { useEntitiesBySchema } from '../../../hooks/useEntities';
+import { useTeams, useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
 import { RelationFieldInput } from '../../../dialogs/RelationFieldInput';
 import { KEY_FIELD_COUNT, formatRelationFieldValue } from './RelationRecordList';
 import sharedStyles from '../EntityDetailScreen.module.css';
@@ -45,6 +51,11 @@ export const TypedRelationFieldEditor = ({
   const otherSchemaIds = relationSchema?.[otherEndpoint].schemaIds ?? [];
   const otherEntityQueries = useEntitiesBySchema(workspaceId, adding ? otherSchemaIds : []);
   const otherEntityCandidates = otherEntityQueries.flatMap(query => query.data ?? []);
+  const { data: teams = [] } = useTeams(workspaceId, expandedUid != null || adding);
+  const { data: lifecycleStates = [] } = useLifecycleStates(
+    workspaceId,
+    expandedUid != null || adding
+  );
 
   const activeFields = (relationSchema?.fields ?? []).filter(f => !f.archived);
 
@@ -126,6 +137,46 @@ export const TypedRelationFieldEditor = ({
             </div>
             {expanded && !removed && !disabled && (
               <div style={{ padding: '8px 10px 8px 16px' }}>
+                <div style={{ marginBottom: 8 }}>
+                  <FormElement label="Owner">
+                    <Select.Root
+                      value={
+                        (String(pendingUpdate?.['_owner'] ?? record._owner?.id ?? '') ||
+                          undefined) as string | undefined
+                      }
+                      disabled={!record.canAdmin}
+                      onChange={value => onUpdateField(record._uid, '_owner', value ?? '')}
+                      placeholder="—"
+                      style={{ width: '100%' }}
+                    >
+                      {teams.map(team => (
+                        <Select.Item key={team.id} value={team.id}>
+                          {team.name}
+                        </Select.Item>
+                      ))}
+                    </Select.Root>
+                  </FormElement>
+                </div>
+                <div style={{ marginBottom: 8 }}>
+                  <FormElement label="Lifecycle">
+                    <Select.Root
+                      value={
+                        (String(pendingUpdate?.['_lifecycle'] ?? record._lifecycle?.id ?? '') ||
+                          undefined) as string | undefined
+                      }
+                      disabled={!record.canEdit}
+                      onChange={value => onUpdateField(record._uid, '_lifecycle', value ?? '')}
+                      placeholder="—"
+                      style={{ width: '100%' }}
+                    >
+                      {lifecycleStates.map(state => (
+                        <Select.Item key={state.id} value={state.id}>
+                          {state.label}
+                        </Select.Item>
+                      ))}
+                    </Select.Root>
+                  </FormElement>
+                </div>
                 {activeFields.map((f, index) => (
                   <div key={f.id} style={{ marginBottom: index < activeFields.length - 1 ? 8 : 0 }}>
                     <RelationFieldInput
@@ -163,6 +214,8 @@ export const TypedRelationFieldEditor = ({
           <NewRelationDraftForm
             fields={activeFields}
             candidates={otherEntityCandidates}
+            teams={teams}
+            lifecycleStates={lifecycleStates}
             onCancel={() => setAdding(false)}
             onConfirm={draft => {
               onCreate(draft);
@@ -181,16 +234,22 @@ export const TypedRelationFieldEditor = ({
 const NewRelationDraftForm = ({
   fields,
   candidates,
+  teams,
+  lifecycleStates,
   onCancel,
   onConfirm
 }: {
   fields: RelationSchema['fields'];
   candidates: { _uid: string; _name?: string | null; _slug: string }[];
+  teams: WorkspaceOwnerOption[];
+  lifecycleStates: WorkspaceLifecycleState[];
   onCancel: () => void;
   onConfirm: (draft: RelationRecordDraft) => void;
 }) => {
   const [otherEntityId, setOtherEntityId] = useState('');
   const [values, setValues] = useState<Record<string, string>>({});
+  const [owner, setOwner] = useState('');
+  const [lifecycle, setLifecycle] = useState('');
 
   const setField = (id: string, value: string) => setValues(v => ({ ...v, [id]: value }));
 
@@ -204,6 +263,10 @@ const NewRelationDraftForm = ({
       else if (f.type === 'number') data[f.id] = Number(val);
       else data[f.id] = val;
     }
+    // Owner/lifecycle default-copy from the "in" entity server-side when omitted — only send an
+    // explicit override when the user actually picked one (#2708).
+    if (owner !== '') data['_owner'] = owner;
+    if (lifecycle !== '') data['_lifecycle'] = lifecycle;
     onConfirm({ otherEntityId, data });
   };
 
@@ -228,6 +291,38 @@ const NewRelationDraftForm = ({
           </Select.Item>
         ))}
       </Select.Root>
+      <div style={{ marginBottom: 8 }}>
+        <FormElement label="Owner">
+          <Select.Root
+            value={owner || undefined}
+            onChange={value => setOwner(value ?? '')}
+            placeholder="Defaults to the selected entity's owner"
+            style={{ width: '100%' }}
+          >
+            {teams.map(team => (
+              <Select.Item key={team.id} value={team.id}>
+                {team.name}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </FormElement>
+      </div>
+      <div style={{ marginBottom: 8 }}>
+        <FormElement label="Lifecycle">
+          <Select.Root
+            value={lifecycle || undefined}
+            onChange={value => setLifecycle(value ?? '')}
+            placeholder="Defaults to the selected entity's lifecycle"
+            style={{ width: '100%' }}
+          >
+            {lifecycleStates.map(state => (
+              <Select.Item key={state.id} value={state.id}>
+                {state.label}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </FormElement>
+      </div>
       {fields.map(f => (
         <div key={f.id} style={{ marginBottom: 8 }}>
           <RelationFieldInput

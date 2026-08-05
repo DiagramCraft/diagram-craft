@@ -118,6 +118,10 @@ const makeRelationRow = (overrides: Partial<RelationDbResult> = {}): RelationDbR
   out_entity_id: outEntity.id,
   out_entity_name: outEntity.name,
   data: {},
+  owner: null,
+  owner_name: null,
+  lifecycle: null,
+  lifecycle_label: null,
   version: 1,
   approval_policy_override: null,
   created_at: now,
@@ -215,6 +219,69 @@ describe('createWorkspaceRelation — version history', () => {
       })
     );
     expect(pruneAutosaveVersions).toHaveBeenCalledWith('ws-1', 'relation-1', 50);
+  });
+});
+
+describe('createWorkspaceRelation — owner/lifecycle (#2708)', () => {
+  it('defaults owner/lifecycle from the "in" entity when not overridden', async () => {
+    const { db, createRelation } = makeDb();
+
+    await createWorkspaceRelation(
+      db,
+      'ws-1',
+      { _schemaId: relationSchema.id, _inEntityId: inEntity.id, _outEntityId: outEntity.id },
+      eventForAuthCtx()
+    );
+
+    expect(createRelation).toHaveBeenCalledWith(
+      expect.objectContaining({ owner: inEntity.owner, lifecycle: inEntity.lifecycle })
+    );
+  });
+
+  it('rejects an explicit owner override without admin_relation on the target team', async () => {
+    const { db } = makeDb();
+
+    await expect(
+      createWorkspaceRelation(
+        db,
+        'ws-1',
+        {
+          _schemaId: relationSchema.id,
+          _inEntityId: inEntity.id,
+          _outEntityId: outEntity.id,
+          _owner: 'team-other'
+        },
+        eventForAuthCtx()
+      )
+    ).rejects.toMatchObject({ status: 403 });
+  });
+
+  it('honors an explicit owner override when the caller is admin on the target team', async () => {
+    const teamAdminAuthCtx = buildAuthorizationContext({
+      userId: 'user-2',
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [{ teamId: 'team-other', role: 'team_admin' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    authorizationMocks.buildApiAuthCtx.mockResolvedValueOnce(teamAdminAuthCtx);
+    const { db, createRelation } = makeDb();
+
+    await createWorkspaceRelation(
+      db,
+      'ws-1',
+      {
+        _schemaId: relationSchema.id,
+        _inEntityId: inEntity.id,
+        _outEntityId: outEntity.id,
+        _owner: 'team-other'
+      },
+      event
+    );
+
+    expect(createRelation).toHaveBeenCalledWith(expect.objectContaining({ owner: 'team-other' }));
   });
 });
 

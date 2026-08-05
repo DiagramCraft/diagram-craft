@@ -1,10 +1,11 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import { PermissionChecker, type AuthorizationContext } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
 import { logAudit, computeChanges } from '../audit/db/auditLogging';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import {
+  extractRelationOwnerOrLifecycleId,
   flattenRelationAuditFields,
   assertRelationMutationsSupported,
   toApiRelation,
@@ -20,6 +21,8 @@ import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { SchemaDbResult } from './db/catalogDatabase';
 
 export type RelationMutationActor = { id: string; displayName: string | null };
+
+const checker = new PermissionChecker();
 
 /**
  * Applies one typedRelation field's create/update/delete delta as part of the owning entity's
@@ -60,7 +63,31 @@ export const applyRelationFieldDelta = async (
     ]);
     validateRelationEndpoints(schema, inEntity, outEntity);
 
-    if (authCtx) requireNoRestrictedFieldWrites(authCtx, schema, Object.keys(draft.data));
+    // `_owner`/`_lifecycle` are reserved metadata keys, not schema field data — same convention
+    // as extractRelationFieldData for the standalone /relations endpoints.
+    const {
+      _owner: createOwnerRaw,
+      _lifecycle: createLifecycleRaw,
+      ...createFieldData
+    } = draft.data;
+
+    if (authCtx) requireNoRestrictedFieldWrites(authCtx, schema, Object.keys(createFieldData));
+
+    // Default-copy owner/lifecycle from the "in" entity, matching createWorkspaceRelation
+    // (relationOperations.ts), unless the caller explicitly overrides one or both.
+    const owner =
+      '_owner' in draft.data ? extractRelationOwnerOrLifecycleId(createOwnerRaw) : inEntity!.owner;
+    const lifecycle =
+      '_lifecycle' in draft.data
+        ? extractRelationOwnerOrLifecycleId(createLifecycleRaw)
+        : inEntity!.lifecycle;
+    if (authCtx && '_owner' in draft.data && owner !== inEntity!.owner) {
+      httpAssert.true(checker.hasRelationPermission(authCtx, { owner }, 'admin_relation'), {
+        status: 403,
+        statusText: 'Forbidden',
+        message: 'You do not have permission to assign this relation to the given owner'
+      });
+    }
 
     const timestamp = new Date();
     const row = await db.relation.createRelation({
@@ -69,7 +96,9 @@ export const applyRelationFieldDelta = async (
       schema_id: schema.id,
       in_entity_id: inEntity!.id,
       out_entity_id: outEntity!.id,
-      data: draft.data,
+      data: createFieldData,
+      owner,
+      lifecycle,
       created_at: timestamp,
       updated_at: timestamp
     });
@@ -101,7 +130,7 @@ export const applyRelationFieldDelta = async (
     });
     await db.catalog.pruneAutosaveVersions(workspace, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
 
-    results.push(toApiRelation(row));
+    results.push(toApiRelation(row, authCtx));
   }
 
   for (const update of delta.update ?? []) {
@@ -118,15 +147,33 @@ export const applyRelationFieldDelta = async (
     });
     assertRelationMutationsSupported(schema, oldRow);
 
-    const changedFieldIds = Object.keys(update.data).filter(
-      key => JSON.stringify(oldRow.data[key] ?? null) !== JSON.stringify(update.data[key] ?? null)
+    // `_owner`/`_lifecycle` are reserved metadata keys, not schema field data — same convention
+    // as extractRelationFieldData for the standalone /relations endpoints.
+    const { _owner: ownerRaw, _lifecycle: lifecycleRaw, ...fieldData } = update.data;
+
+    const changedFieldIds = Object.keys(fieldData).filter(
+      key => JSON.stringify(oldRow.data[key] ?? null) !== JSON.stringify(fieldData[key] ?? null)
     );
     if (authCtx) requireNoRestrictedFieldWrites(authCtx, schema, changedFieldIds);
 
-    const nextData = { ...oldRow.data, ...update.data };
+    const nextOwner =
+      '_owner' in update.data ? extractRelationOwnerOrLifecycleId(ownerRaw) : undefined;
+    const nextLifecycle =
+      '_lifecycle' in update.data ? extractRelationOwnerOrLifecycleId(lifecycleRaw) : undefined;
+    if (authCtx && nextOwner !== undefined && nextOwner !== oldRow.owner) {
+      httpAssert.true(checker.hasRelationPermission(authCtx, oldRow, 'admin_relation'), {
+        status: 403,
+        statusText: 'Forbidden',
+        message: 'You do not have permission to change ownership of this relation'
+      });
+    }
+
+    const nextData = { ...oldRow.data, ...fieldData };
     const timestamp = new Date();
     const row = await db.relation.updateRelation(workspace, update.id, {
       data: nextData,
+      owner: nextOwner,
+      lifecycle: nextLifecycle,
       version: oldRow.version + 1,
       updated_at: timestamp
     });
@@ -161,7 +208,7 @@ export const applyRelationFieldDelta = async (
     });
     await db.catalog.pruneAutosaveVersions(workspace, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
 
-    results.push(toApiRelation(row));
+    results.push(toApiRelation(row, authCtx));
   }
 
   for (const id of delta.delete ?? []) {

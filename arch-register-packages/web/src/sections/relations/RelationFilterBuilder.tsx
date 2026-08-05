@@ -4,6 +4,10 @@ import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import type {
+  WorkspaceLifecycleState,
+  WorkspaceOwnerOption
+} from '@arch-register/api-types/workspaceContract';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 import { FilterRow, type FieldDef } from '../../components/FilterBuilder';
 import { EmptyState } from '../../components/EmptyState';
@@ -21,6 +25,11 @@ type Props = {
   relationSchemas: RelationSchema[];
   entitySchemas: EntitySchema[];
   enums: WorkspaceEnum[];
+  // Owner/lifecycle options for the relation-level _owner/_lifecycle fields (#2708) — pass
+  // useTeams(workspaceId).data/useLifecycleStates(workspaceId).data, mirroring FilterBuilder.tsx's
+  // entity-level _owner/_lifecycle fields.
+  owners?: WorkspaceOwnerOption[];
+  lifecycleStates?: WorkspaceLifecycleState[];
   // Resolves a field group's access for the current caller — pass `useFieldGroupAccess(workspaceId)`.
   // Defaults to unrestricted, matching FilterBuilder.tsx's own no-context fallback.
   getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
@@ -80,6 +89,8 @@ export const RelationFilterBuilder = ({
   relationSchemas,
   entitySchemas,
   enums,
+  owners = [],
+  lifecycleStates = [],
   getFieldGroupAccess = () => 'edit'
 }: Props) => {
   const fields = React.useMemo(() => {
@@ -88,6 +99,20 @@ export const RelationFilterBuilder = ({
       name: 'Type',
       type: 'select',
       options: relationSchemas.map(schema => ({ value: schema.id, label: schema.name }))
+    };
+
+    const ownerField: FieldDef = {
+      id: '_owner',
+      name: 'Owner',
+      type: 'select',
+      options: owners.map(o => ({ value: o.id, label: o.name }))
+    };
+
+    const lifecycleField: FieldDef = {
+      id: '_lifecycle',
+      name: 'Lifecycle',
+      type: 'select',
+      options: lifecycleStates.map(s => ({ value: s.id, label: s.label }))
     };
 
     // Own fields: the union of every relation schema's fields, deduped by field id — the browser
@@ -133,8 +158,15 @@ export const RelationFilterBuilder = ({
       return result;
     };
 
-    return [typeField, ...ownFields, ...endpointFields('in'), ...endpointFields('out')];
-  }, [relationSchemas, entitySchemas, enums, getFieldGroupAccess]);
+    return [
+      typeField,
+      ownerField,
+      lifecycleField,
+      ...ownFields,
+      ...endpointFields('in'),
+      ...endpointFields('out')
+    ];
+  }, [relationSchemas, entitySchemas, enums, owners, lifecycleStates, getFieldGroupAccess]);
 
   const addCondition = () => {
     const first = fields[0];

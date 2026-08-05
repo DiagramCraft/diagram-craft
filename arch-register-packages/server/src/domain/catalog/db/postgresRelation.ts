@@ -197,8 +197,8 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
   async createRelation(input: RelationDbCreate) {
     try {
       await this.sql`
-        INSERT INTO catalog_record (id, workspace, kind, schema_id, in_record_id, out_record_id, data, version, approval_policy_override, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, 'relation', ${input.schema_id}, ${input.in_entity_id}, ${input.out_entity_id}, ${this.json(input.data)}, ${input.version ?? 1}, ${input.approval_policy_override ?? null}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO catalog_record (id, workspace, kind, schema_id, in_record_id, out_record_id, data, owner, lifecycle, version, approval_policy_override, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, 'relation', ${input.schema_id}, ${input.in_entity_id}, ${input.out_entity_id}, ${this.json(input.data)}, ${input.owner ?? null}, ${input.lifecycle ?? null}, ${input.version ?? 1}, ${input.approval_policy_override ?? null}, ${input.created_at}, ${input.updated_at})
       `;
       return (await this.getRelation(input.workspace, input.id))!;
     } catch (error) {
@@ -208,25 +208,35 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
 
   async updateRelation(workspace: string, id: string, input: RelationDbUpdate) {
     try {
-      const rows =
-        input.approval_policy_override === undefined
-          ? ((await this.sql`
-              UPDATE catalog_record
-              SET data = ${this.json(input.data)},
-                  version = ${input.version},
-                  updated_at = ${input.updated_at}
-              WHERE workspace = ${workspace} AND id = ${id} AND kind = 'relation'
-              RETURNING id
-            `) as DatabaseRow[])
-          : ((await this.sql`
-              UPDATE catalog_record
-              SET data = ${this.json(input.data)},
-                  version = ${input.version},
-                  approval_policy_override = ${input.approval_policy_override},
-                  updated_at = ${input.updated_at}
-              WHERE workspace = ${workspace} AND id = ${id} AND kind = 'relation'
-              RETURNING id
-            `) as DatabaseRow[]);
+      // undefined = leave unchanged, so owner/lifecycle/approval_policy_override are only
+      // added to the SET clause when the caller actually supplied a value (including explicit
+      // null) — mirrors sqliteRelation.ts's updateRelation.
+      const setClauses = ['data = $1::jsonb', 'version = $2'];
+      const params: unknown[] = [JSON.stringify(input.data), input.version];
+
+      if (input.owner !== undefined) {
+        params.push(input.owner);
+        setClauses.push(`owner = $${params.length}`);
+      }
+      if (input.lifecycle !== undefined) {
+        params.push(input.lifecycle);
+        setClauses.push(`lifecycle = $${params.length}`);
+      }
+      if (input.approval_policy_override !== undefined) {
+        params.push(input.approval_policy_override);
+        setClauses.push(`approval_policy_override = $${params.length}`);
+      }
+      params.push(input.updated_at);
+      setClauses.push(`updated_at = $${params.length}`);
+      params.push(workspace);
+      const workspaceIdx = params.length;
+      params.push(id);
+      const idIdx = params.length;
+
+      const rows = await this.sql.unsafe<DatabaseRow[]>(
+        `UPDATE catalog_record SET ${setClauses.join(', ')} WHERE workspace = $${workspaceIdx} AND id = $${idIdx} AND kind = 'relation' RETURNING id`,
+        params as Parameters<typeof this.sql.unsafe>[1]
+      );
       if (!rows[0]) return null;
       return await this.getRelation(workspace, id);
     } catch (error) {

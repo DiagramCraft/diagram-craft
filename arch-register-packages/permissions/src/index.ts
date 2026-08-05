@@ -11,10 +11,13 @@ export type {
   WorkspaceMember,
   EntityRole,
   EntityAction,
+  CatalogRecordAction,
+  RelationAction,
   ProjectAction,
   EntityGrantScope,
   EntitySchema,
   Entity,
+  Relation,
   EntityGrant,
   WorkspaceTeam,
   WorkspaceAuthorizationContext,
@@ -28,6 +31,7 @@ export { encodeRefs, decodeRefs } from './utils.js';
 // Export constants and helper functions
 export {
   ROLE_ACTIONS,
+  RELATION_ROLE_ACTIONS,
   GLOBAL_ROLES,
   GLOBAL_ROLE_PERMISSIONS,
   TEAM_ROLE_PERMISSIONS,
