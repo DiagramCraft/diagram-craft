@@ -53,11 +53,23 @@ const relationEndpointIdsFromAuditEntry = (entry: AuditLogDbResult) => {
       .map(snapshot => snapshot?.[key])
       .find((value): value is string => typeof value === 'string' && value.length > 0) ?? null;
 
-  return { inEntityId: readId('_inEntityId'), outEntityId: readId('_outEntityId') };
+  const relationContext = entry.metadata['relation'];
+  const readContextId = (key: 'in' | 'out') => {
+    if (typeof relationContext !== 'object' || relationContext == null) return null;
+    const endpoint = (relationContext as Record<string, unknown>)[key];
+    if (typeof endpoint !== 'object' || endpoint == null) return null;
+    const id = (endpoint as Record<string, unknown>)['id'];
+    return typeof id === 'string' && id.length > 0 ? id : null;
+  };
+
+  return {
+    inEntityId: readId('_inEntityId') ?? readContextId('in'),
+    outEntityId: readId('_outEntityId') ?? readContextId('out')
+  };
 };
 
-// Relation audit entries get a record-level visibility check (an entry is dropped entirely if the
-// viewer can't see one of the relation's endpoint entities) that entity audit entries don't have —
+// Relation-scoped audit entries get a record-level visibility check (an entry is dropped entirely if
+// the viewer can't see one of the relation's endpoint entities) that entity audit entries don't have —
 // entity audit visibility is governed only by `ws.audit` plus field-level redaction in
 // `redactAuditEntryChanges`. This is an intentional asymmetry (relations can leak owner-restricted
 // endpoint entities through their audit trail in a way entities can't leak themselves), not
@@ -113,6 +125,18 @@ const resolveAuditSchemas = async (
   authCtx: WorkspaceAuthorizationContext | null
 ): Promise<ResolvedAuditSchemas | null> => {
   if (entry.entity_type === 'relation') {
+    return resolveRelationAuditSchemas(db, workspace, entry, authCtx);
+  }
+
+  // Relation automation notes carry the triggering relation's audit context in metadata rather
+  // than in changes. Apply the same historical endpoint visibility gate as the source relation;
+  // otherwise the note would expose endpoint ids/names through ws.audit.
+  const relationMetadata = entry.metadata['relation'];
+  if (
+    entry.entity_type === 'automation_note' &&
+    (entry.metadata['resourceType'] === 'relation' ||
+      (typeof relationMetadata === 'object' && relationMetadata != null))
+  ) {
     return resolveRelationAuditSchemas(db, workspace, entry, authCtx);
   }
 

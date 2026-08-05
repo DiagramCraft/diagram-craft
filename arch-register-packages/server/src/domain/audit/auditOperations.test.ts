@@ -252,6 +252,22 @@ describe('listAuditLog', () => {
     metadata: {}
   };
 
+  const relationAutomationNoteRawRow: AuditLogDbResult = {
+    ...relationRawRow,
+    id: 'audit-automation-note-1',
+    entity_type: 'automation_note',
+    changes: { new: { note: 'Review this relation' } },
+    metadata: {
+      resourceType: 'relation',
+      relation: {
+        id: 'r-1',
+        schema: { id: relationSchema.id, name: relationSchema.name },
+        in: { id: 'entity-in', name: 'Restricted Source' },
+        out: { id: 'entity-out', name: 'Restricted Target' }
+      }
+    }
+  };
+
   const makeDb = (
     rows: AuditLogDbResult[] = [rawRow],
     currentSchema = schema,
@@ -399,6 +415,54 @@ describe('listAuditLog', () => {
 
     const result = await listAuditLog(
       makeDb([relationRawRow], currentSchema, [historicalSchema]),
+      'ws-1',
+      {},
+      event
+    );
+
+    expect(result).toEqual([]);
+  });
+
+  it('omits relation automation notes whose endpoint owner fields are not viewable', async () => {
+    vi.mocked(buildApiAuthCtx).mockResolvedValueOnce(authCtxWithTeamRoles({}));
+
+    const result = await listAuditLog(
+      makeDb([relationAutomationNoteRawRow], typedRelationOwnerSchema),
+      'ws-1',
+      {},
+      event
+    );
+
+    expect(result).toEqual([]);
+  });
+
+  it('keeps relation context on automation notes for a caller with endpoint access', async () => {
+    vi.mocked(buildApiAuthCtx).mockResolvedValueOnce(
+      authCtxWithTeamRoles({ 'team-restricted': ['team_reviewer'] })
+    );
+
+    const result = await listAuditLog(
+      makeDb([relationAutomationNoteRawRow], typedRelationOwnerSchema),
+      'ws-1',
+      {},
+      event
+    );
+
+    expect(result).toHaveLength(1);
+    expect(result[0]!.metadata).toEqual(relationAutomationNoteRawRow.metadata);
+  });
+
+  it('uses historical endpoint schemas for relation automation-note access', async () => {
+    const currentSchema = {
+      ...typedRelationOwnerSchema,
+      created_at: new Date('2026-06-01T00:00:00.000Z'),
+      fields: typedRelationOwnerSchema.fields.map(field => ({ ...field, groupId: undefined })),
+      groups: []
+    };
+    vi.mocked(buildApiAuthCtx).mockResolvedValueOnce(authCtxWithTeamRoles({}));
+
+    const result = await listAuditLog(
+      makeDb([relationAutomationNoteRawRow], currentSchema, [typedRelationOwnerSchema]),
       'ws-1',
       {},
       event
