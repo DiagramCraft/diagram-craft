@@ -842,6 +842,25 @@ describe('createAiChatTools', () => {
       }
     });
 
+    it('fails closed in entity details when a visible target schema is missing', async () => {
+      const originalListSchemas = db.catalog.listSchemas;
+      db.catalog.listSchemas = async () => schemas.filter(schema => schema.id !== 'capability');
+
+      try {
+        const tools = createAiChatTools(db, 'ws-1', financeCallerAuthCtx, actor);
+        const getEntityDetails = tools.find(tool => tool.name === 'get_entity_details');
+
+        const result = await getEntityDetails!.execute?.({ entityId: 'entity-app-4' });
+
+        expect(result).toMatchObject({
+          found: true,
+          entity: { outgoingTypedRelations: [] }
+        });
+      } finally {
+        db.catalog.listSchemas = originalListSchemas;
+      }
+    });
+
     it('cannot match or preview a restricted field via query_entities for a caller without group access', async () => {
       const tools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
       const queryEntities = tools.find(tool => tool.name === 'query_entities');
