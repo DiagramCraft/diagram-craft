@@ -154,16 +154,22 @@ const relationVisibilityClause = (
     policy.ownerIds.length === 0
       ? '1=0'
       : `${relationAlias}.owner IN (${policy.ownerIds.map(ownerId => addParam(state, ownerId)).join(', ')})`;
-  const endpointClauses = policy.endpointScopes.map(scope => {
-    const relationSchemaParam = addParam(state, scope.relationSchemaId);
-    const inClause = relationEndpointSchemaClause(inEndpointAlias, scope.inEntitySchemaIds, state);
-    const outClause = relationEndpointSchemaClause(
-      outEndpointAlias,
-      scope.outEntitySchemaIds,
-      state
-    );
-    return `(${relationAlias}.schema_id = ${relationSchemaParam} AND (${inClause} OR ${outClause}))`;
-  });
+  const endpointClauses = policy.allOwners
+    ? []
+    : policy.endpointScopes.map(scope => {
+        const relationSchemaParam = addParam(state, scope.relationSchemaId);
+        const inClause = relationEndpointSchemaClause(
+          inEndpointAlias,
+          scope.inEntitySchemaIds,
+          state
+        );
+        const outClause = relationEndpointSchemaClause(
+          outEndpointAlias,
+          scope.outEntitySchemaIds,
+          state
+        );
+        return `(${relationAlias}.schema_id = ${relationSchemaParam} AND (${inClause} OR ${outClause}))`;
+      });
 
   const accessClause = policy.allOwners
     ? '1=1'

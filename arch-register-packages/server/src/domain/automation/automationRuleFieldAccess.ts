@@ -37,12 +37,12 @@ export const isAutomationReadFieldKnown = (
   fieldId: string
 ) =>
   isAutomationPseudoField(resourceType, fieldId) ||
-  (schema != null && schema.fields.some(field => field.id === fieldId));
+  (schema?.fields.some(field => field.id === fieldId) ?? false);
 
 export const isAutomationWriteFieldKnown = (
   schema: AutomationRuleSchema | null | undefined,
   fieldId: string
-) => schema != null && schema.fields.some(field => field.id === fieldId);
+) => schema?.fields.some(field => field.id === fieldId) ?? false;
 
 export const isAutomationReadFieldKnownAcrossSchemas = (
   resourceType: AutomationRuleResourceType,
