@@ -200,16 +200,9 @@ describe('diagram craft transforms', () => {
     } as never;
     const authCtx = authCtxWithTeamRoles({});
 
-    const references = toDiagramCraftRelationReferences(
-      [row],
-      [source, target],
-      schemas,
-      authCtx
-    );
+    const references = toDiagramCraftRelationReferences([row], [source, target], schemas, authCtx);
 
-    expect(references).toEqual(
-      new Map([['source', new Map([['flows_to_visible', ['target']]])]])
-    );
+    expect(references).toEqual(new Map([['source', new Map([['flows_to_visible', ['target']]])]]));
 
     const result = toDiagramCraftData(
       source,
