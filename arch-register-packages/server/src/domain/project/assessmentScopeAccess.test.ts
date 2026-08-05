@@ -5,6 +5,7 @@ import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
 import {
   assertAssessmentScopeConditionsAuthorized,
   mergeVisibleAssessmentScopeConditions,
+  restrictedAssessmentScopeConditions,
   visibleAssessmentScopeConditions
 } from './assessmentScopeAccess';
 
@@ -64,6 +65,66 @@ describe('assessment scope field-group authorization', () => {
     expect(visibleAssessmentScopeConditions(assessment, [schema], authCtx())).toEqual([
       { fieldId: '_owner', op: 'equals', value: 'team-service' }
     ]);
+  });
+
+  it('treats an unknown condition field as inaccessible instead of evaluating raw data', () => {
+    const staleAssessment: Pick<AssessmentDbResult, 'scope' | 'scope_conditions'> = {
+      ...assessment,
+      scope_conditions: [
+        { fieldId: 'removed-field', op: 'equals', value: 'classified' },
+        { fieldId: '_owner', op: 'equals', value: 'team-service' }
+      ]
+    };
+
+    expect(restrictedAssessmentScopeConditions(staleAssessment, [schema], authCtx())).toEqual([
+      { fieldId: 'removed-field', op: 'equals', value: 'classified' }
+    ]);
+    expect(visibleAssessmentScopeConditions(staleAssessment, [schema], authCtx())).toEqual([
+      { fieldId: '_owner', op: 'equals', value: 'team-service' }
+    ]);
+  });
+
+  it('rejects a new condition whose field is unavailable', () => {
+    expect(() =>
+      assertAssessmentScopeConditionsAuthorized(
+        ['schema-service'],
+        [{ fieldId: 'removed-field', op: 'equals', value: 'classified' }],
+        [schema],
+        authCtx()
+      )
+    ).toThrow('unavailable field');
+  });
+
+  it('treats a condition as inaccessible when a scoped schema is unavailable', () => {
+    const staleAssessment: Pick<AssessmentDbResult, 'scope' | 'scope_conditions'> = {
+      scope: ['schema-missing'],
+      scope_conditions: [{ fieldId: 'removed-field', op: 'equals', value: 'classified' }]
+    };
+
+    expect(restrictedAssessmentScopeConditions(staleAssessment, [], authCtx())).toEqual(
+      staleAssessment.scope_conditions
+    );
+    expect(visibleAssessmentScopeConditions(staleAssessment, [], authCtx())).toEqual([]);
+  });
+
+  it('requires a custom condition field in every scoped schema', () => {
+    const secondSchema = {
+      id: 'schema-other',
+      fields: [],
+      groups: []
+    } as unknown as SchemaDbResult;
+    const multiSchemaAssessment: Pick<AssessmentDbResult, 'scope' | 'scope_conditions'> = {
+      scope: ['schema-service', 'schema-other'],
+      scope_conditions: [{ fieldId: 'secret', op: 'equals', value: 'classified' }]
+    };
+
+    expect(
+      restrictedAssessmentScopeConditions(
+        multiSchemaAssessment,
+        [schema, secondSchema],
+        authCtx([{ teamId: 'team-security', role: 'team_reviewer' }])
+      )
+    ).toEqual(multiSchemaAssessment.scope_conditions);
   });
 
   it('preserves hidden predicates when a caller updates visible conditions', () => {

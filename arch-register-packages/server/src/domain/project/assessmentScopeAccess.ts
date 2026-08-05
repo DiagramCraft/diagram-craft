@@ -5,6 +5,23 @@ import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import { httpAssert } from '../../utils/httpAssert';
 
+// These are the entity-level fields that matchesFilterCondition evaluates without consulting a
+// schema. Everything else must resolve to a declared field in every schema in the assessment
+// scope before an authenticated caller may use it to determine membership.
+const ASSESSMENT_SCOPE_BUILTIN_FIELD_IDS = new Set([
+  '_schemaId',
+  '_lifecycle',
+  '_owner',
+  '_name',
+  '_slug',
+  '_description',
+  '_namespace',
+  '_completeness',
+  '_updatedAt',
+  '_effectiveActivityAt',
+  '_tags'
+]);
+
 const conditionIsRestricted = (
   condition: FilterCondition,
   scope: string[],
@@ -13,13 +30,19 @@ const conditionIsRestricted = (
 ): boolean => {
   if (!authCtx) return false;
 
-  return schemas
-    .filter(schema => scope.includes(schema.id))
-    .some(
-      schema =>
-        schema.fields.some(field => field.id === condition.fieldId) &&
-        isFieldViewRestricted(authCtx, schema, condition.fieldId)
-    );
+  if (ASSESSMENT_SCOPE_BUILTIN_FIELD_IDS.has(condition.fieldId)) return false;
+
+  const scopedSchemas = scope.map(schemaId => schemas.find(schema => schema.id === schemaId));
+  if (scopedSchemas.length === 0 || scopedSchemas.some(schema => schema == null)) return true;
+  const resolvedSchemas = scopedSchemas.filter(
+    (schema): schema is SchemaDbResult => schema != null
+  );
+
+  return resolvedSchemas.some(
+    schema =>
+      !schema.fields.some(field => field.id === condition.fieldId) ||
+      isFieldViewRestricted(authCtx, schema, condition.fieldId)
+  );
 };
 
 export const restrictedAssessmentScopeConditions = (
@@ -52,7 +75,7 @@ export const assertAssessmentScopeConditionsAuthorized = (
   httpAssert.true(restricted.length === 0, {
     status: 403,
     statusText: 'Forbidden',
-    message: `Assessment scope condition references a restricted field: ${restricted[0]?.fieldId}`
+    message: `Assessment scope condition references a restricted field or an unavailable field: ${restricted[0]?.fieldId}`
   });
 };
 
