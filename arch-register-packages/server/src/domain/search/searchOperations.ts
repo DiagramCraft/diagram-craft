@@ -9,7 +9,7 @@ import type { RelationDbResult } from '../catalog/db/relationDatabase';
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import {
-  filterRestrictedFieldGroups,
+  filterKnownRestrictedFieldGroups,
   type FieldGroupSchemaShape
 } from '../auth/fieldGroupAccessControl';
 import { canViewTypedRelation } from '../catalog/relationAccessControl';
@@ -71,7 +71,7 @@ const collectMatchedFields = (
   data: EntityDbResult['data'],
   query: string
 ) =>
-  Object.entries(filterRestrictedFieldGroups(authCtx, schema, data))
+  Object.entries(filterKnownRestrictedFieldGroups(authCtx, schema, data))
     .filter(([, value]) => includesQuery(value, query))
     .map(([key]) => key)
     .sort();

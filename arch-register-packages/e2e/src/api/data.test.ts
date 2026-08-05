@@ -525,10 +525,10 @@ test.describe('data routes', () => {
       _uid: created._uid,
       _name: 'Session Worker v2',
       _slug: 'session-worker-v2',
-      _owner: expect.objectContaining({ id: seedIds.teams.security }),
-      _visibilityMode: 'restricted',
-      technology: 'Go'
+      _owner: expect.objectContaining({ id: seedIds.teams.security })
     });
+    expect(updated).not.toHaveProperty('_visibilityMode');
+    expect(updated).not.toHaveProperty('technology');
   });
 
   test('POST /api/:workspace/data/:id/clone clones an entity', async ({ orpc, seeded: _ }) => {
@@ -596,15 +596,19 @@ test.describe('data routes', () => {
     expect(importedEntities).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          _name: 'Import-created Component',
-          technology: 'React'
+          _name: 'Import-created Component'
         }),
         expect.objectContaining({
           _uid: created._uid,
-          _name: 'CSV Worker Updated',
-          technology: 'Rust'
+          _name: 'CSV Worker Updated'
         })
       ])
+    );
+    expect(
+      importedEntities.find(entity => entity._name === 'Import-created Component')
+    ).not.toHaveProperty('technology');
+    expect(importedEntities.find(entity => entity._uid === created._uid)).not.toHaveProperty(
+      'technology'
     );
   });
 

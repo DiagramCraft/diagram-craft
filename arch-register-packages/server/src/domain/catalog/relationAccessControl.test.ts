@@ -47,6 +47,19 @@ const authCtx = (role: 'team_editor' | 'team_reviewer' | null) =>
   });
 
 describe('typed relation owner-field access', () => {
+  it('fails closed for an unavailable endpoint schema for authenticated callers', () => {
+    expect(canViewTypedRelationFromEndpoint(authCtx(null), null, 'relation-schema-1', 'out')).toBe(
+      false
+    );
+  });
+
+  it('preserves the system bypass for an unavailable endpoint schema', () => {
+    expect(canViewTypedRelationFromEndpoint(null, null, 'relation-schema-1', 'out')).toBe(true);
+    expect(
+      canEditTypedRelation(null, [{ schema: null, direction: 'out' }], 'relation-schema-1')
+    ).toBe(true);
+  });
+
   it('hides a relation when its only owner field is not viewable', () => {
     expect(
       canViewTypedRelationFromEndpoint(
@@ -103,7 +116,7 @@ describe('relation owner composition (#2708)', () => {
       endpointScopes: [
         {
           relationSchemaId: 'relation-schema-1',
-          inEntitySchemaIds: 'all',
+          inEntitySchemaIds: ['schema-1'],
           outEntitySchemaIds: []
         }
       ],

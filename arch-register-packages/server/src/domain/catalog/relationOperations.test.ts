@@ -8,6 +8,8 @@ import {
   createWorkspaceRelation,
   updateWorkspaceRelation,
   deleteWorkspaceRelation,
+  listWorkspaceRelations,
+  getWorkspaceRelation,
   restoreWorkspaceRelationVersion,
   queryWorkspaceRelations
 } from './relationOperations';
@@ -147,6 +149,8 @@ const makeDb = (
   const db = {
     relation: {
       getRelationSchema: vi.fn(async () => schemaOverride),
+      listRelationSchemas: vi.fn(async () => [schemaOverride]),
+      listRelations: vi.fn(async () => ({ items: [existingRow ?? makeRelationRow()], total: 1 })),
       listRelationSchemaVersions: vi.fn(async () => [
         {
           id: 'relation-schema-version-1',
@@ -176,6 +180,7 @@ const makeDb = (
         id === inEntity.id ? inEntity : id === outEntity.id ? outEntity : null
       ),
       listSchemas: vi.fn(async () => [entitySchema]),
+      listEntities: vi.fn(async () => [inEntity, outEntity]),
       createEntityVersion,
       pruneAutosaveVersions,
       listEntityVersions: vi.fn(async () => existingVersions),
@@ -286,6 +291,20 @@ describe('createWorkspaceRelation — owner/lifecycle (#2708)', () => {
 });
 
 describe('queryWorkspaceRelations (#2689)', () => {
+  it('hides relations whose endpoint owner schemas are unavailable', async () => {
+    const { db } = makeDb();
+    vi.mocked(db.catalog.listSchemas).mockResolvedValue([]);
+
+    const listed = await listWorkspaceRelations(db, 'ws-1', {}, {}, eventForAuthCtx());
+    expect(listed).toEqual({ items: [], total: 0 });
+
+    await expect(
+      getWorkspaceRelation(db, 'ws-1', 'relation-1', eventForAuthCtx())
+    ).rejects.toMatchObject({
+      status: 404
+    });
+  });
+
   it('compiles and executes a relation-rooted query, redacting the result via toRedactedApiRelation', async () => {
     const row = makeRelationRow();
     const db = {

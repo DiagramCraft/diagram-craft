@@ -125,10 +125,9 @@ const nextRelationAlias = (state: CompileState): string => `r${state.nextRelatio
 
 const relationEndpointSchemaClause = (
   alias: string,
-  schemaIds: 'all' | readonly string[],
+  schemaIds: readonly string[],
   state: CompileState
 ): string => {
-  if (schemaIds === 'all') return '1=1';
   if (schemaIds.length === 0) return '1=0';
   return `${alias}.schema_id IN (${schemaIds.map(schemaId => addParam(state, schemaId)).join(', ')})`;
 };
@@ -147,13 +146,13 @@ const relationVisibilityClause = (
       ? '1=0'
       : `${relationAlias}.owner IN (${policy.ownerIds.map(ownerId => addParam(state, ownerId)).join(', ')})`;
   const endpointClauses = policy.endpointScopes.map(scope => {
+    const relationSchemaParam = addParam(state, scope.relationSchemaId);
     const inClause = relationEndpointSchemaClause(inEndpointAlias, scope.inEntitySchemaIds, state);
     const outClause = relationEndpointSchemaClause(
       outEndpointAlias,
       scope.outEntitySchemaIds,
       state
     );
-    const relationSchemaParam = addParam(state, scope.relationSchemaId);
     return `(${relationAlias}.schema_id = ${relationSchemaParam} AND (${inClause} OR ${outClause}))`;
   });
 

@@ -87,6 +87,8 @@ const relationSchema: RelationSchemaDbResult = {
   updated_at: now
 };
 
+const ownerSchema = { id: 'owner-schema', fields: [], groups: [] };
+
 const makeRelation = (overrides: Partial<RelationDbResult> = {}): RelationDbResult => ({
   id: 'relation-1',
   workspace: 'ws-1',
@@ -154,8 +156,10 @@ const makeDb = (options: {
       updateRelation
     },
     catalog: {
-      getEntity: vi.fn(async () => null),
-      listSchemas: vi.fn(async () => []),
+      getEntity: vi.fn(async (_ws: string, id: string) =>
+        id === 'entity-in' || id === 'entity-out' ? { id, schema_id: ownerSchema.id } : null
+      ),
+      listSchemas: vi.fn(async () => [ownerSchema]),
       createEntityVersion
     },
     entityChange: {

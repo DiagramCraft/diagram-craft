@@ -826,6 +826,12 @@ describe('diffEntityLandscapes', () => {
 
     it('classifies added, removed, and changed relations', async () => {
       vi.mocked(db.relation.listRelationSchemas).mockResolvedValue([relationSchema] as never);
+      vi.mocked(db.catalog.listSchemas).mockResolvedValue([
+        { id: 'schema-1', fields: [], groups: [] }
+      ] as never);
+      vi.mocked(db.catalog.getEntity).mockImplementation(
+        async (_ws: string, id: string) => ({ id, schema_id: 'schema-1' }) as never
+      );
       const from = [makeRelation('removed'), makeRelation('changed', { data: { note: 'before' } })];
       const to = [makeRelation('added'), makeRelation('changed', { data: { note: 'after' } })];
       vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce([]).mockResolvedValueOnce([]);
@@ -851,6 +857,12 @@ describe('diffEntityLandscapes', () => {
 
     it('redacts restricted relation fields for a caller without view access to the group', async () => {
       vi.mocked(db.relation.listRelationSchemas).mockResolvedValue([relationSchema] as never);
+      vi.mocked(db.catalog.listSchemas).mockResolvedValue([
+        { id: 'schema-1', fields: [], groups: [] }
+      ] as never);
+      vi.mocked(db.catalog.getEntity).mockImplementation(
+        async (_ws: string, id: string) => ({ id, schema_id: 'schema-1' }) as never
+      );
       const from = [makeRelation('r1', { data: { note: 'before', secretNote: 'shh-before' } })];
       const to = [makeRelation('r1', { data: { note: 'after', secretNote: 'shh-after' } })];
       vi.mocked(reconstructEntitiesAsOf).mockResolvedValueOnce([]).mockResolvedValueOnce([]);

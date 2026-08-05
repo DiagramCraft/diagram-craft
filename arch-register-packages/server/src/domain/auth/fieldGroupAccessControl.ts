@@ -113,6 +113,19 @@ export const filterKnownRestrictedFieldGroups = (
 };
 
 /**
+ * Redacts values for a live API response. Authenticated callers get the strict known-field
+ * behavior; internal/system callers retain the historical ACL bypass semantics.
+ */
+export const filterLiveFieldGroups = (
+  authCtx: WorkspaceAuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null | undefined,
+  data: Record<string, unknown>
+): Record<string, unknown> =>
+  authCtx
+    ? filterKnownRestrictedFieldGroups(authCtx, schema, data)
+    : filterRestrictedFieldGroups(null, schema, data);
+
+/**
  * Omits values for every field whose group has team-scoped accessControl, regardless of caller.
  * Used for contexts with no live principal to redact against (e.g. webhook delivery) — the
  * unattended, always-on egress path defaults to least privilege rather than bypassing.

@@ -24,7 +24,7 @@ import { entityRequiresApproval } from './entityChangeOperations';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import {
   requireNoRestrictedFieldWrites,
-  filterRestrictedFieldGroups
+  filterKnownRestrictedFieldGroups
 } from '../auth/fieldGroupAccessControl';
 import { equalEntityValue } from './entityDiff';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
@@ -186,7 +186,7 @@ export const importParse = async (
               ...(existingEntity.links && existingEntity.links.length > 0
                 ? { _links: existingEntity.links }
                 : {}),
-              ...filterRestrictedFieldGroups(authCtx, schema, existingEntity.data)
+              ...filterKnownRestrictedFieldGroups(authCtx, schema, existingEntity.data)
             }
           : null,
       constraintViolations: constraintViolations.length > 0 ? constraintViolations : undefined

@@ -8,7 +8,7 @@ import {
   extractRelationOwnerOrLifecycleId,
   flattenRelationAuditFields,
   assertRelationMutationsSupported,
-  toApiRelation,
+  toRedactedApiRelation,
   validateRelationEndpoints,
   relationAuditContext,
   relationToBaseState
@@ -130,7 +130,7 @@ export const applyRelationFieldDelta = async (
     });
     await db.catalog.pruneAutosaveVersions(workspace, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
 
-    results.push(toApiRelation(row, authCtx));
+    results.push(toRedactedApiRelation(row, authCtx, schema));
   }
 
   for (const update of delta.update ?? []) {
@@ -208,7 +208,7 @@ export const applyRelationFieldDelta = async (
     });
     await db.catalog.pruneAutosaveVersions(workspace, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
 
-    results.push(toApiRelation(row, authCtx));
+    results.push(toRedactedApiRelation(row, authCtx, schema));
   }
 
   for (const id of delta.delete ?? []) {

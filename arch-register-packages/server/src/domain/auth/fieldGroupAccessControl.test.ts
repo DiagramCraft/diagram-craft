@@ -1,6 +1,8 @@
 import { describe, expect, it } from 'vitest';
 import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 import {
+  filterKnownRestrictedFieldGroups,
+  filterLiveFieldGroups,
   filterRestrictedFieldGroups,
   isFieldViewRestricted,
   requireNoRestrictedFieldWrites
@@ -68,6 +70,45 @@ describe('filterRestrictedFieldGroups', () => {
     });
     const data = { name: 'x', secret: 'y', reviewOnly: 'z' };
     expect(filterRestrictedFieldGroups(authCtx, schema, data)).toEqual(data);
+  });
+});
+
+describe('filterKnownRestrictedFieldGroups', () => {
+  it('fails closed when the schema is missing', () => {
+    expect(filterKnownRestrictedFieldGroups(null, null, { secret: 'hidden' })).toEqual({});
+  });
+
+  it('drops stale keys while preserving declared fields for system callers', () => {
+    expect(
+      filterKnownRestrictedFieldGroups(null, schema, {
+        name: 'x',
+        secret: 'y',
+        stale: 'must not escape'
+      })
+    ).toEqual({ name: 'x', secret: 'y' });
+  });
+
+  it('applies field-group restrictions to declared fields', () => {
+    const authCtx = authCtxWithTeamRoles({});
+    expect(
+      filterKnownRestrictedFieldGroups(authCtx, schema, {
+        name: 'x',
+        secret: 'y',
+        stale: 'must not escape'
+      })
+    ).toEqual({ name: 'x' });
+  });
+});
+
+describe('filterLiveFieldGroups', () => {
+  it('keeps the system bypass when the schema is unavailable', () => {
+    expect(filterLiveFieldGroups(null, null, { secret: 'internal' })).toEqual({
+      secret: 'internal'
+    });
+  });
+
+  it('fails closed for authenticated callers when the schema is unavailable', () => {
+    expect(filterLiveFieldGroups(authCtxWithTeamRoles({}), null, { secret: 'hidden' })).toEqual({});
   });
 });
 

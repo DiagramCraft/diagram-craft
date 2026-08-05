@@ -62,8 +62,29 @@ describe('toApiEntity', () => {
   });
 
   it('spreads entity.data into the result', () => {
-    const result = toApiEntity(baseEntity, null, null);
+    const result = toApiEntity(baseEntity, null, {
+      fields: [{ id: 'custom', name: 'Custom', type: 'text' }],
+      groups: []
+    });
     expect(result.custom).toBe('value');
+  });
+
+  it('fails closed for missing schemas and stale field keys', () => {
+    const missingSchema = toApiEntity(
+      { ...baseEntity, data: { custom: 'value', stale: 'secret' } },
+      authCtxWithTeamRoles({}),
+      null
+    );
+    expect(missingSchema).not.toHaveProperty('custom');
+    expect(missingSchema).not.toHaveProperty('stale');
+
+    const knownSchema = toApiEntity(
+      { ...baseEntity, data: { custom: 'value', stale: 'secret' } },
+      authCtxWithTeamRoles({}),
+      { fields: [{ id: 'custom', name: 'Custom', type: 'text' }], groups: [] }
+    );
+    expect(knownSchema.custom).toBe('value');
+    expect(knownSchema).not.toHaveProperty('stale');
   });
 
   it('grants all capabilities when authCtx is null', () => {

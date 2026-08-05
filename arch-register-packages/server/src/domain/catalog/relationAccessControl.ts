@@ -11,7 +11,10 @@ import { httpAssert } from '../../utils/httpAssert';
 
 export type RelationEndpointDirection = 'in' | 'out';
 
-export type TypedRelationVisibilityEndpointScope = 'all' | readonly string[];
+// This is deliberately an explicit list rather than an "all" sentinel. An "all" branch would
+// also admit relation rows whose endpoint entity refers to a schema that is no longer present in
+// the workspace catalog.
+export type TypedRelationVisibilityEndpointScope = readonly string[];
 
 export type TypedRelationVisibilityPolicy = {
   endpointScopes: readonly {
@@ -55,7 +58,7 @@ export const buildTypedRelationVisibilityPolicy = (
         canViewTypedRelationFromEndpoint(authCtx, schema, relationSchemaId, direction)
       )
       .map(schema => schema.id);
-    return allowedSchemaIds.length === schemas.length ? 'all' : allowedSchemaIds;
+    return allowedSchemaIds;
   };
 
   return {
@@ -100,7 +103,8 @@ const matchingOwnerFields = (
 /**
  * Returns whether a relation can be surfaced through an endpoint. Multiple bindings for the
  * same relation schema use OR semantics: one accessible binding is enough to expose the edge.
- * An unbound endpoint retains the legacy relation-schema-only behavior.
+ * A missing endpoint schema is not an unbound endpoint: authenticated callers cannot use it to
+ * surface a relation because there is no trustworthy owner-field definition to authorize.
  */
 export const canViewTypedRelationFromEndpoint = (
   authCtx: WorkspaceAuthorizationContext | null,
@@ -108,6 +112,9 @@ export const canViewTypedRelationFromEndpoint = (
   relationSchemaId: string,
   direction: RelationEndpointDirection
 ) => {
+  // null auth contexts are internal/system callers and retain the existing bypass semantics.
+  // External callers must fail closed when the endpoint schema has disappeared or is unavailable.
+  if (!schema) return authCtx == null;
   const fields = matchingOwnerFields(schema, relationSchemaId, direction);
   return (
     fields.length === 0 || fields.some(field => !isFieldViewRestricted(authCtx, schema, field.id))
