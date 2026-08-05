@@ -34,6 +34,11 @@ type WebhookEventBase = {
   metadata: Record<string, unknown>;
 };
 
+type RelationEndpointSchemas = {
+  in: FieldGroupSchemaShape | null;
+  out: FieldGroupSchemaShape | null;
+};
+
 export type WebhookEvent =
   | (WebhookEventBase & {
       type: `entity.${'created' | 'updated' | 'deleted'}`;
@@ -43,8 +48,45 @@ export type WebhookEvent =
   | (WebhookEventBase & {
       type: `relation.${'created' | 'updated' | 'deleted'}`;
       entity?: never;
-      relation: RelationAuditContext;
+      relation?: RelationAuditContext;
     });
+
+const isWebhookVisibleRelationEndpoint = (
+  schema: FieldGroupSchemaShape | null,
+  relationSchemaId: string,
+  direction: 'in' | 'out'
+) => {
+  if (!schema) return false;
+
+  const fields = schema.fields.filter(field => {
+    const candidate = field as Record<string, unknown>;
+    return (
+      candidate['type'] === 'typedRelation' &&
+      candidate['relationSchemaId'] === relationSchemaId &&
+      candidate['direction'] === direction
+    );
+  });
+
+  // An endpoint with no binding retains the legacy relation-schema-only visibility behavior.
+  return (
+    fields.length === 0 ||
+    fields.some(field => {
+      const group = (schema.groups ?? []).find(candidate => candidate.id === field.groupId);
+      return !(group?.accessControl && group.accessControl.teamIds.length > 0);
+    })
+  );
+};
+
+const isWebhookVisibleRelation = (
+  relation: RelationAuditContext,
+  endpointSchemas: RelationEndpointSchemas | null
+) => {
+  if (!endpointSchemas) return false;
+  return (
+    isWebhookVisibleRelationEndpoint(endpointSchemas.in, relation.schema.id, 'in') ||
+    isWebhookVisibleRelationEndpoint(endpointSchemas.out, relation.schema.id, 'out')
+  );
+};
 
 const relationContextFromAudit = (auditLog: AuditLogDbResult): RelationAuditContext => {
   const value = auditLog.metadata['relation'];
@@ -80,7 +122,8 @@ const relationContextFromAudit = (auditLog: AuditLogDbResult): RelationAuditCont
 export const auditLogToWebhookEvent = (
   auditLog: AuditLogDbResult,
   schema: FieldGroupSchemaShape | null,
-  relationSchema: FieldGroupSchemaShape | null = null
+  relationSchema: FieldGroupSchemaShape | null = null,
+  relationEndpointSchemas: RelationEndpointSchemas | null = null
 ): WebhookEvent => {
   const changes = {
     old: auditLog.changes.old
@@ -96,6 +139,11 @@ export const auditLogToWebhookEvent = (
         )
       : auditLog.changes.new
   };
+  const relation = auditLog.entity_type === 'relation' ? relationContextFromAudit(auditLog) : null;
+  const relationVisible =
+    relation != null && isWebhookVisibleRelation(relation, relationEndpointSchemas);
+  const metadata = { ...auditLog.metadata };
+  if (relation != null && !relationVisible) delete metadata['relation'];
   const base = {
     version: '1' as const,
     id: auditLog.id,
@@ -105,15 +153,20 @@ export const auditLogToWebhookEvent = (
     workspace_id: auditLog.workspace,
     actor: { id: auditLog.user_id, display_name: auditLog.user_display_name },
     changes,
-    metadata: auditLog.metadata
+    metadata
   };
 
   if (auditLog.entity_type === 'relation') {
-    return {
-      ...base,
-      type: `${base.type}` as `relation.${'created' | 'updated' | 'deleted'}`,
-      relation: relationContextFromAudit(auditLog)
-    };
+    return relationVisible
+      ? {
+          ...base,
+          type: `${base.type}` as `relation.${'created' | 'updated' | 'deleted'}`,
+          relation: relation!
+        }
+      : {
+          ...base,
+          type: `${base.type}` as `relation.${'created' | 'updated' | 'deleted'}`
+        };
   }
   return {
     ...base,
@@ -148,15 +201,35 @@ export const enqueueWebhookDeliveries = async (db: DatabaseAdapter, auditLog: Au
     );
   });
   if (matching.length === 0) return 0;
-  const schema =
-    auditLog.entity_type === 'entity' && auditLog.schema_id
-      ? await getEntitySchemaAt(db, auditLog.workspace, auditLog.schema_id, auditLog.timestamp)
-      : null;
-  const relationSchema =
-    auditLog.entity_type === 'relation' && auditLog.schema_id
-      ? await getRelationSchemaAt(db, auditLog.workspace, auditLog.schema_id, auditLog.timestamp)
-      : null;
-  const event = auditLogToWebhookEvent(auditLog, schema, relationSchema);
+  let schema: FieldGroupSchemaShape | null = null;
+  let relationSchema: FieldGroupSchemaShape | null = null;
+  let relationEndpointSchemas: RelationEndpointSchemas | null = null;
+  if (auditLog.entity_type === 'entity' && auditLog.schema_id) {
+    schema = await getEntitySchemaAt(
+      db,
+      auditLog.workspace,
+      auditLog.schema_id,
+      auditLog.timestamp
+    );
+  } else if (auditLog.entity_type === 'relation' && auditLog.schema_id) {
+    const relation = relationContextFromAudit(auditLog);
+    const [resolvedRelationSchema, inEntity, outEntity] = await Promise.all([
+      getRelationSchemaAt(db, auditLog.workspace, auditLog.schema_id, auditLog.timestamp),
+      db.catalog.getEntity(auditLog.workspace, relation.in.id),
+      db.catalog.getEntity(auditLog.workspace, relation.out.id)
+    ]);
+    relationSchema = resolvedRelationSchema;
+    const [inSchema, outSchema] = await Promise.all([
+      inEntity?.schema_id
+        ? getEntitySchemaAt(db, auditLog.workspace, inEntity.schema_id, auditLog.timestamp)
+        : Promise.resolve(null),
+      outEntity?.schema_id
+        ? getEntitySchemaAt(db, auditLog.workspace, outEntity.schema_id, auditLog.timestamp)
+        : Promise.resolve(null)
+    ]);
+    relationEndpointSchemas = { in: inSchema, out: outSchema };
+  }
+  const event = auditLogToWebhookEvent(auditLog, schema, relationSchema, relationEndpointSchemas);
   for (const webhook of matching) {
     await enqueueOneOffJobRun(db, {
       id: randomUUID(),
