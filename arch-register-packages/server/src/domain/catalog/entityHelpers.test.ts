@@ -85,6 +85,20 @@ describe('toApiEntity', () => {
     );
     expect(knownSchema.custom).toBe('value');
     expect(knownSchema).not.toHaveProperty('stale');
+
+    const danglingGroup = toApiEntity(
+      { ...baseEntity, data: { custom: 'value', dangling: 'secret' } },
+      authCtxWithTeamRoles({}),
+      {
+        fields: [
+          { id: 'custom', name: 'Custom', type: 'text' },
+          { id: 'dangling', name: 'Dangling', type: 'text', groupId: 'deleted-group' }
+        ],
+        groups: []
+      }
+    );
+    expect(danglingGroup.custom).toBe('value');
+    expect(danglingGroup).not.toHaveProperty('dangling');
   });
 
   it('grants all capabilities when authCtx is null', () => {

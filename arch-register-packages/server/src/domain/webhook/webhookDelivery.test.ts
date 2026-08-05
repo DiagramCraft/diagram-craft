@@ -338,6 +338,89 @@ describe('webhook delivery', () => {
     });
   });
 
+  it('strips field values whose group reference is dangling', async () => {
+    const enqueueOneOffRun = vi.fn(async input => ({ ...input }));
+    const legacySchema: FieldGroupSchemaShape = {
+      fields: [
+        { id: '_name', name: 'Name' } as never,
+        { id: 'secret', name: 'Secret', groupId: 'deleted-group' } as never
+      ]
+    };
+    const restrictedDb = {
+      webhook: { listWebhooks: vi.fn(async () => [webhook]) },
+      catalog: {
+        getSchema: vi.fn(async () => ({ ...legacySchema, created_at: new Date('2026-01-01') })),
+        listSchemaVersions: vi.fn(async () => [])
+      },
+      jobs: { enqueueOneOffRun }
+    } as unknown as DatabaseAdapter;
+
+    await enqueueWebhookDeliveries(restrictedDb, {
+      id: 'audit-dangling-group',
+      workspace: 'ws-1',
+      timestamp: new Date('2026-07-15T10:00:00.000Z'),
+      user_id: 'user-1',
+      user_display_name: 'Ada',
+      operation: 'create',
+      entity_type: 'entity',
+      entity_id: 'entity-1',
+      entity_name: 'Payments',
+      entity_slug: 'payments',
+      schema_id: 'schema-1',
+      changes: { new: { _name: 'Payments', secret: 'must-not-escape' } },
+      metadata: {}
+    });
+
+    const payload = enqueueOneOffRun.mock.calls[0]![0].payload as { event: { changes: unknown } };
+    expect(payload.event.changes).toEqual({ new: { _name: 'Payments' } });
+  });
+
+  it('hides relation context when its owner field has a dangling group reference', () => {
+    const ownerSchema: FieldGroupSchemaShape = {
+      fields: [
+        {
+          id: 'dependsOn',
+          name: 'Depends on',
+          type: 'typedRelation',
+          relationSchemaId: 'relation-schema-1',
+          direction: 'in',
+          groupId: 'deleted-group'
+        } as never
+      ],
+      groups: []
+    };
+    const relationEvent = auditLogToWebhookEvent(
+      {
+        id: 'relation-audit-dangling-group',
+        workspace: 'ws-1',
+        timestamp: new Date('2026-07-15T10:00:00.000Z'),
+        user_id: 'user-1',
+        user_display_name: 'Ada',
+        operation: 'update',
+        entity_type: 'relation',
+        entity_id: 'relation-1',
+        entity_name: 'Payments → Ledger',
+        entity_slug: null,
+        schema_id: 'relation-schema-1',
+        changes: { new: { status: 'active' } },
+        metadata: {
+          relation: {
+            id: 'relation-1',
+            schema: { id: 'relation-schema-1', name: 'Depends on' },
+            in: { id: 'entity-1', name: 'Payments' },
+            out: { id: 'entity-2', name: 'Ledger' }
+          }
+        }
+      },
+      { fields: [{ id: 'status', name: 'Status' }], groups: [] },
+      null,
+      { in: ownerSchema, out: null }
+    );
+
+    expect(relationEvent.relation).toBeUndefined();
+    expect(relationEvent.metadata).toEqual({});
+  });
+
   it('uses the historical schema when current field-group access changed', async () => {
     const enqueueOneOffRun = vi.fn(async input => ({ ...input }));
     const currentSchema: FieldGroupSchemaShape = {

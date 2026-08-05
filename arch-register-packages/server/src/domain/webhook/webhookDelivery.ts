@@ -71,8 +71,10 @@ const isWebhookVisibleRelationEndpoint = (
   return (
     fields.length === 0 ||
     fields.some(field => {
+      if (field.groupId == null) return true;
       const group = (schema.groups ?? []).find(candidate => candidate.id === field.groupId);
-      return !(group?.accessControl && group.accessControl.teamIds.length > 0);
+      if (!group) return false;
+      return !(group.accessControl && group.accessControl.teamIds.length > 0);
     })
   );
 };
@@ -118,7 +120,8 @@ const relationContextFromAudit = (auditLog: AuditLogDbResult): RelationAuditCont
 };
 
 // `schema` redacts restricted field-group values from `changes` unconditionally (there is no
-// live principal to redact against in the async delivery path) — see filterAllRestrictedFieldGroups.
+// live principal to redact against in the async delivery path) — see
+// filterKnownAllRestrictedFieldGroups.
 export const auditLogToWebhookEvent = (
   auditLog: AuditLogDbResult,
   schema: FieldGroupSchemaShape | null,
