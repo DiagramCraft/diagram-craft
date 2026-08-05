@@ -888,6 +888,15 @@ export const createAiChatTools = (
         ? await relationDb.listRelationsForEntity(workspaceId, entity.id)
         : { outgoing: [], incoming: [] };
     const typedSchemaMap = relationDb?.listRelationSchemas ? await relationSchemaMap() : new Map();
+    const canViewTypedRelationInDetails = (
+      ownerSchema: SchemaDbResult | undefined,
+      otherEndpointSchema: SchemaDbResult | undefined,
+      relationSchemaId: string,
+      direction: 'in' | 'out'
+    ) => {
+      if (authCtx !== null && (!ownerSchema || !otherEndpointSchema)) return false;
+      return canViewTypedRelationFromEndpoint(authCtx, ownerSchema, relationSchemaId, direction);
+    };
     const outgoingRelations =
       includeRelated && schema
         ? relationFields(schema.fields)
@@ -935,7 +944,11 @@ export const createAiChatTools = (
 
     const outgoingTypedRelations = typedRelations.outgoing.flatMap(row => {
       const target = entityLookup.get(row.out_entity_id);
-      if (!target || !canViewTypedRelationFromEndpoint(authCtx, schema, row.schema_id, 'in')) {
+      const targetSchema = target ? schemaMap.get(target.schema_id) : undefined;
+      if (
+        !target ||
+        !canViewTypedRelationInDetails(schema, targetSchema, row.schema_id, 'in')
+      ) {
         return [];
       }
       return [
@@ -950,7 +963,11 @@ export const createAiChatTools = (
     });
     const incomingTypedRelations = typedRelations.incoming.flatMap(row => {
       const source = entityLookup.get(row.in_entity_id);
-      if (!source || !canViewTypedRelationFromEndpoint(authCtx, schema, row.schema_id, 'out')) {
+      const sourceSchema = source ? schemaMap.get(source.schema_id) : undefined;
+      if (
+        !source ||
+        !canViewTypedRelationInDetails(schema, sourceSchema, row.schema_id, 'out')
+      ) {
         return [];
       }
       return [
