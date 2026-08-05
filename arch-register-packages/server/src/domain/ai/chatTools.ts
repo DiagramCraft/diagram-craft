@@ -945,10 +945,7 @@ export const createAiChatTools = (
     const outgoingTypedRelations = typedRelations.outgoing.flatMap(row => {
       const target = entityLookup.get(row.out_entity_id);
       const targetSchema = target ? schemaMap.get(target.schema_id) : undefined;
-      if (
-        !target ||
-        !canViewTypedRelationInDetails(schema, targetSchema, row.schema_id, 'in')
-      ) {
+      if (!target || !canViewTypedRelationInDetails(schema, targetSchema, row.schema_id, 'in')) {
         return [];
       }
       return [
@@ -964,10 +961,7 @@ export const createAiChatTools = (
     const incomingTypedRelations = typedRelations.incoming.flatMap(row => {
       const source = entityLookup.get(row.in_entity_id);
       const sourceSchema = source ? schemaMap.get(source.schema_id) : undefined;
-      if (
-        !source ||
-        !canViewTypedRelationInDetails(schema, sourceSchema, row.schema_id, 'out')
-      ) {
+      if (!source || !canViewTypedRelationInDetails(schema, sourceSchema, row.schema_id, 'out')) {
         return [];
       }
       return [
