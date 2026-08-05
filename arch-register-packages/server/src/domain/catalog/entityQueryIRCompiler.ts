@@ -23,6 +23,7 @@ import {
 } from './entityQueryIRValidator';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
+import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import type { TypedRelationVisibilityPolicy } from './relationAccessControl';
 
 export type EntityQueryDialect = 'postgres' | 'sqlite';
@@ -84,6 +85,7 @@ type CompileState = {
   nextRelationAliasIndex: number;
   projectionBindings: ProjectionBinding[];
   bindingByPath: Map<string, ProjectionBinding>;
+  projectionPathSchemas: Map<string, ProjectionPathSchemaInfo>;
   compilingBinding: boolean;
   relationSourceConstraints: readonly RelationSourceConstraint[];
   relationRootTemporalCandidate: RelationRootTemporalCandidate | null;
@@ -96,6 +98,11 @@ type CompileState = {
 type ProjectionBinding = {
   name: string;
   path: PathStep[];
+};
+
+type ProjectionPathSchemaInfo = {
+  entitySchemaIdsByStep: readonly (readonly string[])[];
+  terminalEntitySchemaIds: readonly string[];
 };
 
 type RelationSourceConstraint = {
@@ -427,6 +434,90 @@ const relationIsMultiValued = (
     );
   });
 
+const availableSchemaIds = <T>(
+  schemaIds: Iterable<string>,
+  schemas: ReadonlyMap<string, T>
+): string[] => [...new Set(schemaIds)].filter(schemaId => schemas.has(schemaId));
+
+const resolveProjectionPathSchemaInfo = (
+  path: PathStep[],
+  query: EntityQuery,
+  rootKind: 'entity' | 'relation',
+  schemas: SchemaCatalog,
+  relationSchemas: RelationSchemaCatalog
+): ProjectionPathSchemaInfo => {
+  let currentEntitySchemaIds =
+    rootKind === 'entity'
+      ? availableSchemaIds(
+          query.schemaId && schemas.has(query.schemaId) ? [query.schemaId] : schemas.keys(),
+          schemas
+        )
+      : [];
+  let currentRelationSchemaIds =
+    rootKind === 'relation'
+      ? availableSchemaIds(
+          query.schemaId && relationSchemas.has(query.schemaId)
+            ? [query.schemaId]
+            : relationSchemas.keys(),
+          relationSchemas
+        )
+      : [];
+  let currentKind = rootKind;
+  const entitySchemaIdsByStep: (readonly string[])[] = [];
+
+  for (const step of path) {
+    if (step.kind === 'endpoint') {
+      const targetSchemaIds = currentRelationSchemaIds.flatMap(schemaId => {
+        const schema = relationSchemas.get(schemaId);
+        return step.direction === 'in'
+          ? (schema?.in_schema_ids ?? [])
+          : (schema?.out_schema_ids ?? []);
+      });
+      currentEntitySchemaIds = availableSchemaIds(targetSchemaIds, schemas);
+      currentRelationSchemaIds = [];
+      currentKind = 'entity';
+      entitySchemaIdsByStep.push(currentEntitySchemaIds);
+      continue;
+    }
+
+    if (step.kind === 'typedRelation') {
+      const relationSchema = relationSchemas.get(step.relationSchemaId);
+      const targetSchemaIds =
+        step.direction === 'out'
+          ? (relationSchema?.in_schema_ids ?? [])
+          : (relationSchema?.out_schema_ids ?? []);
+      currentEntitySchemaIds = availableSchemaIds(targetSchemaIds, schemas);
+      currentRelationSchemaIds = [];
+      currentKind = 'entity';
+      entitySchemaIdsByStep.push(currentEntitySchemaIds);
+      continue;
+    }
+
+    if (step.kind === 'backward') {
+      currentEntitySchemaIds = availableSchemaIds([step.ownerSchemaId], schemas);
+      currentRelationSchemaIds = [];
+      currentKind = 'entity';
+      entitySchemaIdsByStep.push(currentEntitySchemaIds);
+      continue;
+    }
+
+    const targetSchemaIds = currentEntitySchemaIds.flatMap(schemaId => {
+      const schema = schemas.get(schemaId);
+      const field = schema?.fields.find(candidate => candidate.id === step.fieldId);
+      return field && isReferenceOrContainmentField(field) ? [field.schemaId] : [];
+    });
+    currentEntitySchemaIds = availableSchemaIds(targetSchemaIds, schemas);
+    currentRelationSchemaIds = [];
+    currentKind = 'entity';
+    entitySchemaIdsByStep.push(currentEntitySchemaIds);
+  }
+
+  return {
+    entitySchemaIdsByStep,
+    terminalEntitySchemaIds: currentKind === 'entity' ? currentEntitySchemaIds : []
+  };
+};
+
 const effectiveProjectionAlias = (projection: ProjectionField): string => {
   if (projection.alias) return projection.alias;
   const path = projection.path
@@ -510,6 +601,54 @@ const schemaScopeClause = (
   return `${alias}.schema_id IN (${[...scope.grantedSchemaIds]
     .map(id => addParam(state, id))
     .join(', ')})`;
+};
+
+const projectionTargetSchemaClause = (
+  alias: string,
+  schemaIds: readonly string[],
+  state: CompileState
+): string => {
+  // Internal/system callers retain the existing unrestricted behavior, including for legacy
+  // rows whose target schema metadata is unavailable.
+  if (state.authCtx == null) return '';
+  if (schemaIds.length === 0) return '1=0';
+  return `${alias}.schema_id IN (${schemaIds.map(id => addParam(state, id)).join(', ')})`;
+};
+
+const projectionEntityFieldSchemaClause = (
+  alias: string,
+  fieldId: string,
+  schemaIds: readonly string[],
+  schemas: SchemaCatalog,
+  state: CompileState
+): string | null => {
+  if (state.authCtx == null) return null;
+
+  // Metadata and assessment pseudo-fields are not declared in entity schemas. The enclosing
+  // target-schema join still prevents a missing target schema from contributing a value.
+  if (
+    fieldId === '_id' ||
+    fieldId === ASSESSMENT_PRESENCE_FIELD_ID ||
+    fieldId.startsWith(ASSESSMENT_FIELD_PREFIX) ||
+    Object.hasOwn(ENTITY_BUILTIN_COLUMNS, fieldId) ||
+    Object.hasOwn(ENTITY_ARRAY_COLUMNS, fieldId)
+  ) {
+    return null;
+  }
+
+  const targetSchemas = new Map(
+    schemaIds.flatMap(schemaId => {
+      const schema = schemas.get(schemaId);
+      return schema ? [[schemaId, schema] as const] : [];
+    })
+  );
+  const grantedSchemaIds = [...targetSchemas.values()]
+    .filter(schema => schema.fields.some(field => field.id === fieldId))
+    .filter(schema => !isFieldViewRestricted(state.authCtx, schema, fieldId))
+    .map(schema => schema.id);
+
+  if (grantedSchemaIds.length === 0) return '1=0';
+  return `${alias}.schema_id IN (${grantedSchemaIds.map(id => addParam(state, id)).join(', ')})`;
 };
 
 // Relation-schema counterpart to schemaScopeClause, for relation-rooted predicates/projections (#2701).
@@ -1010,10 +1149,32 @@ const buildProjectionBindings = (
   state.bindingByPath = new Map(
     state.projectionBindings.map(binding => [pathKey(binding.path), binding])
   );
+  const projectionPaths = new Map<string, PathStep[]>();
+  for (const binding of state.projectionBindings) {
+    projectionPaths.set(pathKey(binding.path), binding.path);
+  }
+  for (const projection of projections) {
+    if (projection.path.length > 0) projectionPaths.set(pathKey(projection.path), projection.path);
+  }
+  state.projectionPathSchemas = new Map(
+    [...projectionPaths].map(([key, path]) => {
+      return [
+        key,
+        resolveProjectionPathSchemaInfo(path, query, state.rootKind, schemas, relationSchemas)
+      ];
+    })
+  );
 
   return state.projectionBindings.map(binding => {
     const rootAlias = `pb_root_${binding.name}`;
     let currentAlias = rootAlias;
+    const pathSchemaInfo = resolveProjectionPathSchemaInfo(
+      binding.path,
+      query,
+      state.rootKind,
+      schemas,
+      relationSchemas
+    );
     const selectParts = [`${rootAlias}.id AS root_id`];
     // A binding's root row is always the query root, so it's drawn from whichever scope CTE
     // ROOT_ALIAS itself binds to (relation root paths always start with an 'endpoint' step).
@@ -1027,7 +1188,14 @@ const buildProjectionBindings = (
           step.direction === 'in'
             ? `${currentAlias}.in_record_id`
             : `${currentAlias}.out_record_id`;
-        from += `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId}`;
+        const targetSchemaClause = projectionTargetSchemaClause(
+          targetAlias,
+          pathSchemaInfo.entitySchemaIdsByStep[stepIndex] ?? [],
+          state
+        );
+        from +=
+          `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId}` +
+          (targetSchemaClause ? ` AND ${targetSchemaClause}` : '');
         selectParts.push(`${targetAlias}.id AS hop_${stepIndex + 1}_id`);
         currentAlias = targetAlias;
         return;
@@ -1058,12 +1226,18 @@ const buildProjectionBindings = (
               state
             )}`
           : '';
+        const targetSchemaClause = projectionTargetSchemaClause(
+          targetAlias,
+          pathSchemaInfo.entitySchemaIdsByStep[stepIndex] ?? [],
+          state
+        );
         from +=
           `\n      JOIN ${RELATION_SCOPE_CTE} ${relationAlias} ON ${relationAlias}.workspace = ${currentAlias}.workspace` +
           ` AND ${relationAlias}.schema_id = ${relationSchema}` +
           ` AND ${ownerSchemaClause}` +
           ` AND ${ownerId} = ${currentAlias}.id${filter}` +
-          `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId}`;
+          `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId}` +
+          (targetSchemaClause ? ` AND ${targetSchemaClause}` : '');
         selectParts.push(
           `${relationAlias}.id AS relation_${stepIndex + 1}_id`,
           `${relationAlias}.data AS relation_${stepIndex + 1}_data`,
@@ -1092,7 +1266,14 @@ const buildProjectionBindings = (
       const filter = step.filter
         ? ` AND ${compileNode(step.filter, targetAlias, schemas, relationSchemas, state, false)}`
         : '';
-      from += `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${relation}${ownerSchema}${forwardScope}${filter}`;
+      const targetSchemaClause = projectionTargetSchemaClause(
+        targetAlias,
+        pathSchemaInfo.entitySchemaIdsByStep[stepIndex] ?? [],
+        state
+      );
+      from +=
+        `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${relation}${ownerSchema}${forwardScope}` +
+        `${targetSchemaClause ? ` AND ${targetSchemaClause}` : ''}${filter}`;
       selectParts.push(`${targetAlias}.id AS hop_${stepIndex + 1}_id`);
       currentAlias = targetAlias;
     });
@@ -1202,7 +1383,13 @@ const projectionValue = (
   const scope =
     projection.source === 'relation'
       ? null
-      : schemaScopeClause(targetAlias, projection.fieldId, schemas, state);
+      : projectionEntityFieldSchemaClause(
+          targetAlias,
+          projection.fieldId,
+          state.projectionPathSchemas.get(pathKey(projection.path))?.terminalEntitySchemaIds ?? [],
+          schemas,
+          state
+        );
   const source =
     `FROM ${binding.name} ${bindingAlias} ` +
     (projection.source === 'relation'
@@ -1824,6 +2011,7 @@ const buildQueryFragments = (
     nextRelationAliasIndex: 1,
     projectionBindings: [],
     bindingByPath: new Map(),
+    projectionPathSchemas: new Map(),
     compilingBinding: false,
     relationSourceConstraints: collectRelationSourceConstraints(query, rootKind),
     relationRootTemporalCandidate: collectRelationRootTemporalCandidate(
