@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import {
   toApiAssessmentResponse,
   countCompletedEntities,
-  buildAssessmentResultsCsvData
+  buildAssessmentResultsCsvData,
+  isEntityInAssessmentScope
 } from './assessmentResponseHelpers';
 import type { AssessmentDbResult, AssessmentResponseDbResult } from './db/projectDatabase';
 import type { EntityDbResult, WorkspaceEnumDbResult } from '../catalog/db/catalogDatabase';
@@ -268,6 +269,55 @@ describe('buildAssessmentResultsCsvData', () => {
     });
 
     expect(result.rows).toEqual([]);
+  });
+
+  it('fails closed for an unknown scope condition instead of matching a stale raw value', () => {
+    const staleAssessment = makeAssessment({
+      scope_conditions: [{ fieldId: 'removed-field', op: 'equals', value: 'classified' }]
+    });
+    const caller = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      workspaceCapabilityCeiling: ['content.view'],
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    const entity = makeEntity({ data: { 'removed-field': 'classified' } });
+
+    expect(isEntityInAssessmentScope(entity, staleAssessment, { authCtx: caller, schemas: [] })).toBe(
+      false
+    );
+    expect(
+      buildAssessmentResultsCsvData([entity], [makeResponse()], staleAssessment, [], {
+        authCtx: caller,
+        schemas: []
+      }).rows
+    ).toEqual([]);
+  });
+
+  it('fails closed for a scope condition whose schema is unavailable', () => {
+    const staleAssessment = makeAssessment({
+      scope: ['schema-missing'],
+      scope_conditions: [{ fieldId: 'removed-field', op: 'equals', value: 'classified' }]
+    });
+    const caller = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      workspaceCapabilityCeiling: ['content.view'],
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    const entity = makeEntity({ schema_id: 'schema-missing', data: { 'removed-field': 'classified' } });
+
+    expect(isEntityInAssessmentScope(entity, staleAssessment, { authCtx: caller, schemas: [] })).toBe(
+      false
+    );
   });
 
   it('evaluates restricted scope conditions for a caller with view access', () => {

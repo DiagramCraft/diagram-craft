@@ -32,6 +32,7 @@ vi.mock('../audit/db/auditLogging', () => ({
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 const condition = { fieldId: 'secret', op: 'equals', value: 'classified' } as const;
+const unknownCondition = { fieldId: 'removed-field', op: 'equals', value: 'classified' } as const;
 const schema = {
   id: 'schema-service',
   fields: [{ id: 'secret', groupId: 'restricted' }],
@@ -165,5 +166,25 @@ describe('assessment scope condition operations', () => {
     if (allowed) await expect(result).resolves.toMatchObject({ scope_conditions: [condition] });
     else await expect(result).rejects.toMatchObject({ status: 403 });
     expect(db.project.updateAssessment).toHaveBeenCalledTimes(allowed ? 1 : 0);
+  });
+
+  it('rejects unknown condition fields on create and update', async () => {
+    setAuthContext(makeAuthContext('admin'));
+    const db = makeDb();
+
+    await expect(
+      createAssessment(db, 'ws-1', { ...createBody, scope_conditions: [unknownCondition] }, event)
+    ).rejects.toMatchObject({ status: 403 });
+    await expect(
+      updateAssessment(
+        db,
+        'ws-1',
+        'assessment-1',
+        { ...updateBody, scope_conditions: [unknownCondition] },
+        event
+      )
+    ).rejects.toMatchObject({ status: 403 });
+    expect(db.project.createAssessment).not.toHaveBeenCalled();
+    expect(db.project.updateAssessment).not.toHaveBeenCalled();
   });
 });
