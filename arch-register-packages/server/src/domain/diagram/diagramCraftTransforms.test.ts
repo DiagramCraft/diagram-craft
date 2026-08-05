@@ -150,6 +150,74 @@ describe('diagram craft transforms', () => {
     ).not.toHaveProperty('classification');
   });
 
+  it('redacts restricted duplicate typed relation bindings individually', () => {
+    const source = {
+      id: 'source',
+      schema_id: 'schema-1',
+      name: 'Source'
+    } as Entity;
+    const target = {
+      id: 'target',
+      schema_id: 'schema-2',
+      name: 'Target'
+    } as Entity;
+    const schemas = [
+      {
+        id: 'schema-1',
+        fields: [
+          {
+            id: 'flows_to_visible',
+            name: 'Flows to',
+            type: 'typedRelation',
+            relationSchemaId: 'relation-1',
+            direction: 'in'
+          },
+          {
+            id: 'flows_to_restricted',
+            name: 'Restricted flows to',
+            type: 'typedRelation',
+            relationSchemaId: 'relation-1',
+            direction: 'in',
+            groupId: 'restricted'
+          }
+        ],
+        groups: [
+          {
+            id: 'restricted',
+            name: 'Restricted',
+            accessControl: { teamIds: ['team-restricted'] }
+          }
+        ]
+      },
+      { id: 'schema-2', fields: [], groups: [] }
+    ] as SchemaDbResult[];
+    const row = {
+      id: 'relation-instance',
+      schema_id: 'relation-1',
+      in_entity_id: 'source',
+      out_entity_id: 'target',
+      data: {}
+    } as never;
+    const authCtx = authCtxWithTeamRoles({});
+
+    const references = toDiagramCraftRelationReferences([row], [source, target], schemas, authCtx);
+
+    expect(references).toEqual(new Map([['source', new Map([['flows_to_visible', ['target']]])]]));
+
+    const result = toDiagramCraftData(
+      source,
+      schemas[0]!,
+      authCtx,
+      new Map([
+        ['flows_to_visible', [target.id]],
+        ['flows_to_restricted', [target.id]]
+      ])
+    );
+
+    expect(result).toMatchObject({ flows_to_visible: target.id });
+    expect(result).not.toHaveProperty('flows_to_restricted');
+  });
+
   it('omits relation edges when one endpoint schema is unavailable', () => {
     const source = {
       id: 'source',

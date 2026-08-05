@@ -7,7 +7,11 @@ import {
 } from '@arch-register/api-types/schemaContract';
 import type { RelationDbResult, RelationSchemaDbResult } from '../catalog/db/relationDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
-import { filterLiveFieldGroups, type FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
+import {
+  filterLiveFieldGroups,
+  isFieldViewRestricted,
+  type FieldGroupSchemaShape
+} from '../auth/fieldGroupAccessControl';
 import {
   canViewTypedRelation,
   canViewTypedRelationFromEndpoint
@@ -135,7 +139,8 @@ export const toDiagramCraftRelationReferences = (
       field =>
         isTypedRelationField(field) &&
         field.relationSchemaId === relationSchemaId &&
-        field.direction === direction
+        field.direction === direction &&
+        !isFieldViewRestricted(authCtx, schema, field.id)
     )) {
       const entityReferences = references.get(entity.id) ?? new Map<string, Set<string>>();
       const fieldReferences = entityReferences.get(field.id) ?? new Set<string>();
@@ -182,25 +187,28 @@ export const toDiagramCraftData = (
   schema: FieldGroupSchemaShape | null,
   authCtx: AuthorizationContext | null,
   relationReferences: Map<string, string[]> = new Map()
-): DiagramCraftEntityResponse => ({
-  _uid: row.id,
-  _workspace: row.workspace,
-  _schemaId: row.schema_id,
-  _name: row.name,
-  _slug: row.slug,
-  _namespace: row.namespace,
-  _description: row.description,
-  _owner: row.owner,
-  _lifecycle: row.lifecycle,
-  _targetLifecycle: row.target_lifecycle,
-  _targetLifecycleDate: row.target_lifecycle_date,
-  _tags: row.tags,
-  _links: row.links,
-  _projectId: row.project_id,
-  name: row.name,
-  description: row.description,
-  ...filterLiveFieldGroups(authCtx, schema, row.data),
-  ...Object.fromEntries(
+): DiagramCraftEntityResponse => {
+  const relationData = Object.fromEntries(
     [...relationReferences].map(([fieldId, entityIds]) => [fieldId, entityIds.join(',')])
-  )
-});
+  );
+
+  return {
+    _uid: row.id,
+    _workspace: row.workspace,
+    _schemaId: row.schema_id,
+    _name: row.name,
+    _slug: row.slug,
+    _namespace: row.namespace,
+    _description: row.description,
+    _owner: row.owner,
+    _lifecycle: row.lifecycle,
+    _targetLifecycle: row.target_lifecycle,
+    _targetLifecycleDate: row.target_lifecycle_date,
+    _tags: row.tags,
+    _links: row.links,
+    _projectId: row.project_id,
+    name: row.name,
+    description: row.description,
+    ...filterLiveFieldGroups(authCtx, schema, { ...row.data, ...relationData })
+  };
+};
