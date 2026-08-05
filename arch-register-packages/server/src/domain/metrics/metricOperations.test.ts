@@ -142,6 +142,20 @@ const makeDomain = (id: string, overrides: Partial<EntityDbResult> = {}): Entity
   ...overrides
 });
 
+const makeDataReadGuard = (fieldId: string, value: unknown) => {
+  const read = vi.fn();
+  const data = new Proxy(
+    { parent: 'd1', [fieldId]: value },
+    {
+      get: (target, property, receiver) => {
+        if (property === fieldId) read();
+        return Reflect.get(target, property, receiver);
+      }
+    }
+  );
+  return { data, read };
+};
+
 const numericMetric: MetricConfig = {
   sourceSchemaId: 'service',
   source: { kind: 'field', fieldId: 'score' },
@@ -659,6 +673,117 @@ describe('computeBoxMetrics - enum sources', () => {
   });
 });
 
+describe('computeBoxMetrics - stale metric sources', () => {
+  it('returns an empty result without reading a removed numeric field', () => {
+    const guarded = makeDataReadGuard('score', 42);
+    const entity = makeService('s1', 'd1', { data: guarded.data });
+    const currentServiceSchema: SchemaDbResult = {
+      ...serviceSchema,
+      fields: serviceSchema.fields.filter(field => field.id !== 'score')
+    };
+
+    const result = computeBoxMetrics(
+      ['d1'],
+      numericMetric,
+      [makeDomain('d1'), entity],
+      [domainSchema, currentServiceSchema],
+      lifecycleStates,
+      null,
+      alwaysMatch
+    );
+
+    expect(result.results[0]).toMatchObject({
+      value: null,
+      sourceCount: 0,
+      populatedCount: 0
+    });
+    expect(guarded.read).not.toHaveBeenCalled();
+  });
+
+  it('returns an empty result without reading a field from a missing source schema', () => {
+    const guarded = makeDataReadGuard('score', 42);
+    const result = computeBoxMetrics(
+      ['d1'],
+      numericMetric,
+      [makeDomain('d1'), makeService('s1', 'd1', { data: guarded.data })],
+      [domainSchema],
+      lifecycleStates,
+      null,
+      alwaysMatch
+    );
+
+    expect(result.results[0]).toMatchObject({
+      value: null,
+      sourceCount: 0,
+      populatedCount: 0
+    });
+    expect(guarded.read).not.toHaveBeenCalled();
+  });
+
+  it('returns an empty result without reading a field with an incompatible type', () => {
+    const guarded = makeDataReadGuard('score', 42);
+    const entity = makeService('s1', 'd1', { data: guarded.data });
+    const incompatibleServiceSchema: SchemaDbResult = {
+      ...serviceSchema,
+      fields: serviceSchema.fields.map(field =>
+        field.id === 'score' ? { ...field, type: 'text' as const } : field
+      )
+    };
+
+    const result = computeBoxMetrics(
+      ['d1'],
+      numericMetric,
+      [makeDomain('d1'), entity],
+      [domainSchema, incompatibleServiceSchema],
+      lifecycleStates,
+      null,
+      alwaysMatch
+    );
+
+    expect(result.results[0]).toMatchObject({
+      value: null,
+      sourceCount: 0,
+      populatedCount: 0
+    });
+    expect(guarded.read).not.toHaveBeenCalled();
+  });
+
+  it('returns an empty enum result without reading an undeclared field', () => {
+    const guarded = makeDataReadGuard('tier', 'gold');
+    const entity = makeService('s1', 'd1', { data: guarded.data });
+    const currentServiceSchema: SchemaDbResult = {
+      ...serviceSchema,
+      fields: serviceSchema.fields.filter(field => field.id !== 'tier')
+    };
+    const metric: MetricConfig = {
+      sourceSchemaId: 'service',
+      source: { kind: 'enum', fieldId: 'tier' },
+      aggregation: 'count'
+    };
+
+    const result = computeBoxMetrics(
+      ['d1'],
+      metric,
+      [makeDomain('d1'), entity],
+      [domainSchema, currentServiceSchema],
+      lifecycleStates,
+      null,
+      alwaysMatch,
+      tierEnumOptions
+    );
+
+    expect(result.results[0]).toMatchObject({
+      value: 0,
+      sourceCount: 0,
+      populatedCount: 0,
+      dominantValue: null,
+      dominantLabel: null,
+      distribution: []
+    });
+    expect(guarded.read).not.toHaveBeenCalled();
+  });
+});
+
 describe('computeBoxMetrics - restricted field groups', () => {
   const restrictedServiceSchema: SchemaDbResult = {
     ...serviceSchema,
@@ -872,6 +997,7 @@ describe('getBoxMetrics', () => {
       assessment?: AssessmentDbResult | null;
       responses?: AssessmentResponseDbResult[];
       enums?: Record<string, { value: string; label: string }[]>;
+      schemas?: SchemaDbResult[];
     } = {}
   ) => {
     const listEntitiesPaginated = vi.fn(
@@ -888,7 +1014,7 @@ describe('getBoxMetrics', () => {
     return {
       core: { driver: 'sqlite' },
       catalog: {
-        listSchemas: vi.fn(async () => schemas),
+        listSchemas: vi.fn(async () => options.schemas ?? schemas),
         listEntitiesPaginated,
         // Real filtering is exercised end-to-end by the contract-test suite
         // (`entityQueryIRCompiler.contract.test.ts`/`seededEntityQuery.contract.test.ts`); here
@@ -1092,6 +1218,36 @@ describe('getBoxMetrics', () => {
       metric
     });
     expect(result.results[0]).toMatchObject({ dominantValue: 'silver', dominantLabel: 'Silver' });
+  });
+
+  it('returns an empty result for a stale enum source without reading its raw value', async () => {
+    const guarded = makeDataReadGuard('tier', 'gold');
+    const currentServiceSchema: SchemaDbResult = {
+      ...serviceSchema,
+      fields: serviceSchema.fields.filter(field => field.id !== 'tier')
+    };
+    const entities = [makeDomain('d1'), makeService('s1', 'd1', { data: guarded.data })];
+    const db = makeDb(entities, { schemas: [domainSchema, currentServiceSchema] });
+    const metric: MetricConfig = {
+      sourceSchemaId: 'service',
+      source: { kind: 'enum', fieldId: 'tier' },
+      aggregation: 'count'
+    };
+
+    const result = await getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
+      boxEntityIds: ['d1'],
+      metric
+    });
+
+    expect(result.results[0]).toMatchObject({
+      value: 0,
+      sourceCount: 0,
+      populatedCount: 0,
+      dominantValue: null,
+      dominantLabel: null,
+      distribution: []
+    });
+    expect(guarded.read).not.toHaveBeenCalled();
   });
 
   it('rejects a non-count, non-worst aggregation for an enum source', async () => {
