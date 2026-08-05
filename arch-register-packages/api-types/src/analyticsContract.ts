@@ -78,6 +78,7 @@ const analyticsResponseSchema = z.object({
       percentWithOwner: z.number().describe('Percentage of entities with an assigned owner'),
       percentCompleteness80Plus: z
         .number()
+        .nullable()
         .describe('Percentage of entities with 80% or more fields filled')
     })
     .describe('High-level summary statistics'),
@@ -90,6 +91,7 @@ const analyticsResponseSchema = z.object({
     .describe('Analysis of entities missing owners by schema'),
   completeness: z
     .array(schemaCompletenessSchema)
+    .nullable()
     .describe('Analysis of entity field completeness by schema'),
   schemaUtilization: z.array(schemaCountSchema).describe('Number of entities per schema'),
   activityTrends: z
