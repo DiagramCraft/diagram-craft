@@ -15,6 +15,7 @@ import { redactVersionState, serializeEntityVersion } from './entityVersionOpera
 import { canViewTypedRelation } from './relationAccessControl';
 import { createRelationVersionSchemaResolver } from './relationHelpers';
 import { restoreWorkspaceRelationVersion } from './relationOperations';
+import { getEntitySchemaAt } from './schemaHistory';
 import { relationVersionContract } from '@arch-register/api-types/relationVersionContract';
 
 type ORPCContext = {
@@ -28,20 +29,22 @@ const relationVersionRouter = implement(relationVersionContract)
   .use(workspaceScoped)
   .use(entityScoped);
 
-const getOwnerSchemas = async (
+const createOwnerSchemaResolver = (
   db: DatabaseAdapter,
   workspace: string,
   row: { in_entity_id: string; out_entity_id: string }
 ) => {
-  const [inEntity, outEntity, schemas] = await Promise.all([
+  const endpointEntities = Promise.all([
     db.catalog.getEntity(workspace, row.in_entity_id),
-    db.catalog.getEntity(workspace, row.out_entity_id),
-    db.catalog.listSchemas(workspace)
+    db.catalog.getEntity(workspace, row.out_entity_id)
   ]);
-  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
-  return {
-    inSchema: inEntity ? schemaById.get(inEntity.schema_id) : undefined,
-    outSchema: outEntity ? schemaById.get(outEntity.schema_id) : undefined
+  return async (at: Date) => {
+    const [inEntity, outEntity] = await endpointEntities;
+    const [inSchema, outSchema] = await Promise.all([
+      inEntity ? getEntitySchemaAt(db, workspace, inEntity.schema_id, at) : null,
+      outEntity ? getEntitySchemaAt(db, workspace, outEntity.schema_id, at) : null
+    ]);
+    return { inSchema, outSchema };
   };
 };
 
@@ -50,22 +53,25 @@ const relationVersionHandlers = {
     const { workspace, authCtx } = context;
     const row = await context.db.relation.getRelation(workspace, input.params.id);
     httpAssert.present(row, { status: 404, message: `Relation '${input.params.id}' not found` });
-    const { inSchema, outSchema } = await getOwnerSchemas(context.db, workspace, row);
-    httpAssert.true(
-      canViewTypedRelation(
-        authCtx,
-        [
-          { schema: inSchema, direction: 'in' },
-          { schema: outSchema, direction: 'out' }
-        ],
-        row.schema_id
-      ),
-      { status: 404, message: `Relation '${input.params.id}' not found` }
-    );
     const versions = await context.db.catalog.listEntityVersions(workspace, row.id);
+    const resolveOwnerSchemas = createOwnerSchemaResolver(context.db, workspace, row);
     const resolveVersionSchemas = createRelationVersionSchemaResolver(context.db, workspace);
-    return Promise.all(
+    const visibleVersions = await Promise.all(
       versions.map(async version => {
+        const { inSchema, outSchema } = await resolveOwnerSchemas(version.created_at);
+        if (
+          !canViewTypedRelation(
+            authCtx,
+            [
+              { schema: inSchema, direction: 'in' },
+              { schema: outSchema, direction: 'out' }
+            ],
+            row.schema_id
+          )
+        ) {
+          return null;
+        }
+
         const { schema, historicalSchema } = await resolveVersionSchemas(version, row.schema_id);
         return serializeEntityVersion(
           redactVersionState(version, authCtx, schema, historicalSchema, {
@@ -74,24 +80,13 @@ const relationVersionHandlers = {
         );
       })
     );
+    return visibleVersions.filter(version => version != null);
   }),
 
   get: relationVersionRouter.relationVersions.get.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
     const row = await context.db.relation.getRelation(workspace, input.params.id);
     httpAssert.present(row, { status: 404, message: `Relation '${input.params.id}' not found` });
-    const { inSchema, outSchema } = await getOwnerSchemas(context.db, workspace, row);
-    httpAssert.true(
-      canViewTypedRelation(
-        authCtx,
-        [
-          { schema: inSchema, direction: 'in' },
-          { schema: outSchema, direction: 'out' }
-        ],
-        row.schema_id
-      ),
-      { status: 404, message: `Relation '${input.params.id}' not found` }
-    );
     const version = await context.db.catalog.getEntityVersionById(
       workspace,
       input.params.versionId
@@ -101,6 +96,19 @@ const relationVersionHandlers = {
       code: 'BAD_REQUEST',
       message: 'Version does not belong to this relation'
     });
+    const resolveOwnerSchemas = createOwnerSchemaResolver(context.db, workspace, row);
+    const { inSchema, outSchema } = await resolveOwnerSchemas(version.created_at);
+    httpAssert.true(
+      canViewTypedRelation(
+        authCtx,
+        [
+          { schema: inSchema, direction: 'in' },
+          { schema: outSchema, direction: 'out' }
+        ],
+        row.schema_id
+      ),
+      { status: 404, message: `Relation '${input.params.id}' not found` }
+    );
     const resolveVersionSchemas = createRelationVersionSchemaResolver(context.db, workspace);
     const { schema, historicalSchema } = await resolveVersionSchemas(version, row.schema_id);
     return serializeEntityVersion(
