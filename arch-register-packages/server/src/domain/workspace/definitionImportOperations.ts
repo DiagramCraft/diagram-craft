@@ -27,7 +27,12 @@ import {
   type SymbolicField
 } from '../catalog/schemaTemplates';
 import type { SchemaDbCreate, WorkspaceEnumDbCreate } from '../catalog/db/catalogDatabase';
-import { buildSchemaChangeSummary } from '../catalog/schemaHelpers';
+import {
+  buildSchemaChangeSummary,
+  findUnresolvedFieldGroupReferences,
+  assertResolvedFieldGroupReferences
+} from '../catalog/schemaHelpers';
+import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 import { writeAudit } from '../audit/db/auditLogging';
 
 type ImportableSchema = {
@@ -365,6 +370,26 @@ const buildPlan = async (
     selectedDocumentTypeIds.has(type.id)
   );
 
+  for (const schema of schemas) {
+    const unresolved = findUnresolvedFieldGroupReferences(schema.fields, schema.groups);
+    if (unresolved.length > 0) {
+      errors.push(
+        ...unresolved.map(
+          reference =>
+            `Schema '${schema.name}' field '${reference.fieldName}' references missing field group '${reference.groupId}'`
+        )
+      );
+      continue;
+    }
+    try {
+      validateDerivedFieldGroupAccess(schema.fields, schema.groups);
+    } catch (error) {
+      errors.push(
+        error instanceof Error ? `Schema '${schema.name}': ${error.message}` : String(error)
+      );
+    }
+  }
+
   const [existingSchemas, existingEnums, existingDocumentTypes] = await Promise.all([
     db.catalog.listSchemas(targetWorkspace),
     db.catalog.listEnums(targetWorkspace),
@@ -658,6 +683,18 @@ export const executeDefinitionImport = async (
             }
             return field;
           });
+          const groups = schema.groups.map(group => ({
+            ...group,
+            id: sharedFieldGroupMap.get(group.id) ?? group.id,
+            accessControl: group.accessControl
+              ? {
+                  teamIds: group.accessControl.teamIds.map(id => teamIdMap.get(id) ?? id)
+                }
+              : undefined
+          }));
+          assertResolvedFieldGroupReferences(fields, groups);
+          validateDerivedFieldGroupAccess(fields, groups);
+
           const row: SchemaDbCreate = {
             id: schemaIdMap.get(schema.id)!,
             workspace: ws,
@@ -665,15 +702,7 @@ export const executeDefinitionImport = async (
             description: schema.description,
             key_prefix: schema.key_prefix,
             fields,
-            groups: schema.groups.map(group => ({
-              ...group,
-              id: sharedFieldGroupMap.get(group.id) ?? group.id,
-              accessControl: group.accessControl
-                ? {
-                    teamIds: group.accessControl.teamIds.map(id => teamIdMap.get(id) ?? id)
-                  }
-                : undefined
-            })),
+            groups,
             shared_field_group_links: schema.shared_field_group_links.map(link => ({
               ...link,
               groupId: sharedFieldGroupMap.get(link.groupId) ?? link.groupId,
@@ -703,7 +732,7 @@ export const executeDefinitionImport = async (
             description: row.description,
             fields,
             templates: [],
-            groups: [],
+            groups,
             color: row.color,
             icon: row.icon,
             change_summary: buildSchemaChangeSummary(null, fields),

@@ -23,6 +23,7 @@ const field = (id: string, type: AssessmentField['type'] = 'text'): AssessmentFi
 };
 
 const context = { objectType: 'assessment' as const, objectId: 'assessment-1' };
+const entityContext = { objectType: 'entity' as const, objectId: 'entity-1' };
 
 const schemaText = (id: string, groupId?: string): SchemaField => ({
   id,
@@ -133,6 +134,43 @@ describe('derived fields', () => {
         [{ id: 'hr', name: 'HR', accessControl: { teamIds: ['team-hr'] } }]
       )
     ).toThrow(/salary_copy.*salary/);
+  });
+
+  it('rejects a derived field that references a field with an unresolved group', () => {
+    expect(() =>
+      validateDerivedFieldGroupAccess(
+        [schemaText('salary', 'missing'), derivedSchemaText('salary_copy', 'field("salary")')],
+        []
+      )
+    ).toThrow(/salary_copy.*salary.*unresolved field group.*missing/);
+  });
+
+  it('removes legacy derived values with unresolved direct and transitive dependencies', () => {
+    const fields = [
+      schemaText('salary', 'missing'),
+      derivedSchemaText('salary_copy', 'field("salary")'),
+      derivedSchemaText('salary_label', 'field("salary_copy")')
+    ];
+
+    expect(
+      materializeDerivedFields(
+        fields,
+        { salary: 'secret', salary_copy: 'secret', salary_label: 'secret' },
+        entityContext,
+        []
+      )
+    ).toEqual({ salary: 'secret' });
+  });
+
+  it('removes a derived value whose own group is unresolved', () => {
+    expect(
+      materializeDerivedFields(
+        [schemaText('input'), derivedSchemaText('output', 'field("input")', 'missing')],
+        { input: 'value', output: 'stale' },
+        entityContext,
+        []
+      )
+    ).toEqual({ input: 'value' });
   });
 
   it('allows a derived field in an equally or more restrictive group', () => {

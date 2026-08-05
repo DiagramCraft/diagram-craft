@@ -200,6 +200,51 @@ describe('workspace export/import guards', () => {
     expect(result.errors).toContain('You do not have permission to import content nodes');
   });
 
+  it('reports unresolved field groups during schema import planning', async () => {
+    hasWorkspaceCapability.mockReturnValue(true);
+    const result = await parseImport(
+      makeDb(),
+      makeAuthCtx(),
+      'workspace-1',
+      {
+        version: '1.0',
+        format: 'zip-multi-file',
+        exported_at: '2026-01-01T00:00:00.000Z',
+        exported_by: 'User',
+        source_workspace: { id: 'source', name: 'Source', url_slug: 'source' },
+        export_options: ['schemas'],
+        files: {},
+        statistics: {
+          entity_count: 0,
+          project_count: 0,
+          schema_count: 1,
+          content_node_count: 0,
+          total_content_size_bytes: 0
+        },
+        checksums: {}
+      },
+      {
+        schemas: [
+          {
+            id: 'source-schema',
+            name: 'Service',
+            fields: [{ id: 'secret', name: 'Secret', type: 'text', groupId: 'deleted-group' }],
+            groups: [],
+            color: null,
+            icon: null,
+            default_owner: null,
+            key_prefix: null
+          }
+        ]
+      }
+    );
+
+    expect(result.valid).toBe(false);
+    expect(result.errors).toContain(
+      "Schema 'Service' field 'Secret' references missing field group 'deleted-group'"
+    );
+  });
+
   it('diagnoses document templates that reference an unavailable type', async () => {
     hasWorkspaceCapability.mockReturnValue(true);
     const result = await parseImport(
@@ -453,6 +498,46 @@ describe('workspace export/import guards', () => {
         shared_field_group_links: [{ groupId: 'target-group', teamIds: ['target-team'] }]
       })
     );
+  });
+
+  it('rejects an imported schema that references a missing field group', async () => {
+    const db = makeDb();
+    const idMapping = {
+      schemas: new Map(),
+      shared_field_groups: new Map(),
+      relation_schemas: new Map(),
+      entities: new Map(),
+      relations: new Map(),
+      teams: new Map(),
+      lifecycle_states: new Map(),
+      projects: new Map(),
+      content_nodes: new Map()
+    };
+
+    await expect(
+      importSchemas(
+        db,
+        'workspace-1',
+        [
+          {
+            id: 'source-schema',
+            name: 'Service',
+            fields: [{ id: 'secret', name: 'Secret', type: 'text', groupId: 'deleted-group' }],
+            groups: [],
+            color: null,
+            icon: null,
+            default_owner: null,
+            key_prefix: null
+          }
+        ],
+        false,
+        {},
+        idMapping
+      )
+    ).rejects.toThrow("Field 'Secret' references missing field group 'deleted-group'");
+
+    expect(db.catalog.createSchema).not.toHaveBeenCalled();
+    expect(db.catalog.updateSchema).not.toHaveBeenCalled();
   });
 
   it('compensates staged storage when the database transaction fails', async () => {

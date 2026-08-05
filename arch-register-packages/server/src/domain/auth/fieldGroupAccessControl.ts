@@ -3,8 +3,9 @@ import {
   type WorkspaceAuthorizationContext,
   type FieldGroupAccess
 } from '@arch-register/permissions';
-import type { SchemaGroup } from '@arch-register/api-types/schemaContract';
+import type { SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
 import { httpAssert } from '../../utils/httpAssert';
+import { getDerivedFieldIdsWithUnresolvedGroups } from '../derived/derivedFields';
 
 export type FieldGroupSchemaShape = {
   fields: Array<{ id: string; name?: string; groupId?: string; [key: string]: unknown }>;
@@ -30,6 +31,18 @@ const groupAccessByFieldId = (
     }
   }
   return byField;
+};
+
+const unresolvedDerivedFieldIds = (schema: FieldGroupSchemaShape): Set<string> => {
+  try {
+    return getDerivedFieldIdsWithUnresolvedGroups(
+      schema.fields as unknown as SchemaField[],
+      (schema.groups ?? []) as SchemaGroup[]
+    );
+  } catch {
+    // A malformed legacy derived definition must not make an external serializer fail open.
+    return new Set(schema.fields.filter(field => field.type === 'derived').map(field => field.id));
+  }
 };
 
 /**
@@ -86,11 +99,12 @@ export const filterRestrictedFieldGroups = (
 ): Record<string, unknown> => {
   if (!authCtx || !schema) return data;
   const byField = groupAccessByFieldId(authCtx, schema);
-  if (byField.size === 0) return data;
+  const unsafeDerivedIds = unresolvedDerivedFieldIds(schema);
+  if (byField.size === 0 && unsafeDerivedIds.size === 0) return data;
 
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
-    if (byField.get(key) === 'none') continue;
+    if (byField.get(key) === 'none' || unsafeDerivedIds.has(key)) continue;
     result[key] = value;
   }
   return result;
@@ -107,10 +121,15 @@ export const filterKnownRestrictedFieldGroups = (
 ): Record<string, unknown> => {
   if (!schema) return {};
   const byField = authCtx ? groupAccessByFieldId(authCtx, schema) : new Map();
+  const unsafeDerivedIds = authCtx ? unresolvedDerivedFieldIds(schema) : new Set<string>();
   const knownFieldIds = new Set(schema.fields.map(field => field.id));
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
-    if (!knownFieldIds.has(key) || (authCtx && byField.get(key) === 'none')) continue;
+    if (
+      !knownFieldIds.has(key) ||
+      (authCtx && (byField.get(key) === 'none' || unsafeDerivedIds.has(key)))
+    )
+      continue;
     result[key] = value;
   }
   return result;
@@ -139,6 +158,7 @@ export const filterAllRestrictedFieldGroups = (
   data: Record<string, unknown>
 ): Record<string, unknown> => {
   if (!schema) return data;
+  const unsafeDerivedIds = unresolvedDerivedFieldIds(schema);
   const restrictedGroupIds = new Set(
     (schema.groups ?? [])
       .filter(group => group.accessControl && group.accessControl.teamIds.length > 0)
@@ -150,8 +170,9 @@ export const filterAllRestrictedFieldGroups = (
   for (const [key, value] of Object.entries(data)) {
     const field = schema.fields.find(f => f.id === key);
     if (
-      field?.groupId != null &&
-      (!knownGroupIds.has(field.groupId) || restrictedGroupIds.has(field.groupId))
+      unsafeDerivedIds.has(key) ||
+      (field?.groupId != null &&
+        (!knownGroupIds.has(field.groupId) || restrictedGroupIds.has(field.groupId)))
     ) {
       continue;
     }
@@ -166,6 +187,7 @@ export const filterKnownAllRestrictedFieldGroups = (
   data: Record<string, unknown>
 ): Record<string, unknown> => {
   if (!schema) return {};
+  const unsafeDerivedIds = unresolvedDerivedFieldIds(schema);
   const restrictedGroupIds = new Set(
     (schema.groups ?? [])
       .filter(group => group.accessControl && group.accessControl.teamIds.length > 0)
@@ -178,6 +200,7 @@ export const filterKnownAllRestrictedFieldGroups = (
     const field = fieldsById.get(key);
     if (
       !field ||
+      unsafeDerivedIds.has(key) ||
       (field.groupId != null &&
         (!knownGroupIds.has(field.groupId) || restrictedGroupIds.has(field.groupId)))
     ) {

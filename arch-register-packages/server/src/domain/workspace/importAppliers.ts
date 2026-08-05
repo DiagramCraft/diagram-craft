@@ -19,6 +19,7 @@ import { entityRequiresApproval } from '../catalog/entityChangeOperations';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
+import type { SchemaGroup, SchemaField } from '@arch-register/api-types/schemaContract';
 import type {
   ExportConfig,
   ExportSchema,
@@ -35,6 +36,8 @@ import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl'
 import { validateRelationEndpoints } from '../catalog/relationHelpers';
 import { requireTypedRelationEdit } from '../catalog/relationAccessControl';
 import { listAllRelations } from '../catalog/relationOperations';
+import { assertResolvedFieldGroupReferences } from '../catalog/schemaHelpers';
+import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 
 type ImportResolution = { action: string; new_name?: string };
 
@@ -325,6 +328,12 @@ export const importSchemas = async (
       updated_at: now
     };
 
+    assertResolvedFieldGroupReferences(input.fields, input.groups ?? []);
+    validateDerivedFieldGroupAccess(
+      input.fields as SchemaField[],
+      (input.groups ?? []) as SchemaGroup[]
+    );
+
     if (existing) {
       const previousKeyPrefix = existing.key_prefix;
       const row = await db.catalog.updateSchema(workspace, nextId, {
@@ -438,6 +447,11 @@ export const importRelationSchemas = async (
       created_at: existing?.created_at ?? now,
       updated_at: now
     };
+
+    assertResolvedFieldGroupReferences(
+      input.fields as Array<{ id: string; name?: string; groupId?: string }>,
+      input.groups as SchemaGroup[]
+    );
 
     if (existing) {
       await db.relation.updateRelationSchema(workspace, nextId, {

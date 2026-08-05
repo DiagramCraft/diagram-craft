@@ -360,10 +360,15 @@ export const updateWorkspaceSchema = async (
             await tx.catalog.updateEntityDerivedFields(
               ws,
               entity.id,
-              materializeDerivedFields(finalFields, entity.data, {
-                objectType: 'entity',
-                objectId: entity.id
-              })
+              materializeDerivedFields(
+                finalFields,
+                entity.data,
+                {
+                  objectType: 'entity',
+                  objectId: entity.id
+                },
+                compiledNext.groups ?? []
+              )
             );
           }
         }
