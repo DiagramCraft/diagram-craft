@@ -88,6 +88,13 @@ export const availableSchemaCatalog = (
 
 export type HistoricalRelationSchemaCatalog = Map<string, RelationSchemaDbResult | null>;
 
+export const availableRelationSchemaCatalog = (
+  schemas: HistoricalRelationSchemaCatalog
+): Map<string, RelationSchemaDbResult> =>
+  new Map(
+    [...schemas].filter((entry): entry is [string, RelationSchemaDbResult] => entry[1] != null)
+  );
+
 /** Relation counterpart of resolveEntitySchemaCatalogAt. */
 export const resolveRelationSchemaCatalogAt = async (
   db: DatabaseAdapter,

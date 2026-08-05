@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
-import { selectSchemaAt } from './schemaHistory';
+import type { RelationSchemaDbResult } from './db/relationDatabase';
+import { availableRelationSchemaCatalog, selectSchemaAt } from './schemaHistory';
 
 const visibleSchema = {
   fields: [{ id: 'secret', name: 'Secret', type: 'text' }],
@@ -44,5 +45,34 @@ describe('selectSchemaAt', () => {
     );
 
     expect(selected?.fields[0]?.groupId).toBe('restricted');
+  });
+});
+
+describe('availableRelationSchemaCatalog', () => {
+  it('omits unavailable historical schemas so query consumers fail closed', () => {
+    const available: RelationSchemaDbResult = {
+      id: 'available',
+      workspace: 'workspace-1',
+      name: 'Available',
+      description: '',
+      in_schema_ids: [],
+      out_schema_ids: [],
+      fields: [],
+      groups: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: new Date('2026-01-01'),
+      updated_at: new Date('2026-01-01')
+    };
+
+    expect(
+      availableRelationSchemaCatalog(
+        new Map<string, RelationSchemaDbResult | null>([
+          ['available', available],
+          ['unavailable', null]
+        ])
+      )
+    ).toEqual(new Map([['available', available]]));
   });
 });
