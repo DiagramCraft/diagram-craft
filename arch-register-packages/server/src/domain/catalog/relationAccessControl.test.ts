@@ -102,6 +102,43 @@ describe('typed relation owner-field access', () => {
       )
     ).toBe(true);
   });
+
+  it('fails closed when a missing endpoint is paired with a known unbound endpoint', () => {
+    expect(
+      canViewTypedRelation(
+        authCtx(null),
+        [
+          { schema: null, direction: 'out' },
+          { schema: schema(), direction: 'in' }
+        ],
+        'relation-schema-1'
+      )
+    ).toBe(false);
+  });
+
+  it('checks endpoint availability before relation-owner overrides', () => {
+    const teamAdmin = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [{ teamId: 'team-owner', role: 'team_admin' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    expect(
+      canViewTypedRelation(
+        teamAdmin,
+        [
+          { schema: null, direction: 'out' },
+          { schema: schema(), direction: 'in' }
+        ],
+        'relation-schema-1',
+        'team-owner'
+      )
+    ).toBe(false);
+  });
 });
 
 describe('relation owner composition (#2708)', () => {
@@ -113,6 +150,7 @@ describe('relation owner composition (#2708)', () => {
     );
 
     expect(policy).toEqual({
+      entitySchemaIds: ['schema-1'],
       endpointScopes: [
         {
           relationSchemaId: 'relation-schema-1',

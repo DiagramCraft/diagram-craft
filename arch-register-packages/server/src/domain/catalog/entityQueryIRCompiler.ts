@@ -139,7 +139,16 @@ const relationVisibilityClause = (
   state: CompileState
 ): string => {
   const policy = state.relationVisibility;
-  if (policy == null || policy.allOwners) return '1=1';
+  if (policy == null) return '1=1';
+
+  // Endpoint availability is a prerequisite for every authenticated visibility branch. Keep it
+  // outside the owner/endpoint OR so an owner override cannot surface a relation whose endpoint
+  // schema has disappeared from the catalog.
+  const endpointAvailability = `(${relationEndpointSchemaClause(
+    inEndpointAlias,
+    policy.entitySchemaIds,
+    state
+  )} AND ${relationEndpointSchemaClause(outEndpointAlias, policy.entitySchemaIds, state)})`;
 
   const ownerClause =
     policy.ownerIds.length === 0
@@ -156,7 +165,11 @@ const relationVisibilityClause = (
     return `(${relationAlias}.schema_id = ${relationSchemaParam} AND (${inClause} OR ${outClause}))`;
   });
 
-  return `(${ownerClause}${endpointClauses.length > 0 ? ` OR ${endpointClauses.join(' OR ')}` : ''})`;
+  const accessClause = policy.allOwners
+    ? '1=1'
+    : `(${ownerClause}${endpointClauses.length > 0 ? ` OR ${endpointClauses.join(' OR ')}` : ''})`;
+
+  return `(${endpointAvailability} AND ${accessClause})`;
 };
 
 const relationSourceSchemaIds = (state: CompileState): readonly string[] => [
@@ -1711,8 +1724,7 @@ const buildTemporalRelationSource = (state: CompileState): string => {
 // temporal queries reconstruct relation state from record_version via buildTemporalRelationSource.
 const buildRelationScopeCte = (state: CompileState): string => {
   const policy = state.relationVisibility;
-  const needsEndpointJoins =
-    policy != null && !policy.allOwners && policy.endpointScopes.length > 0;
+  const needsEndpointJoins = policy != null;
   const endpointJoins = needsEndpointJoins
     ? `
       JOIN catalog_record in_visibility_endpoint

@@ -17,6 +17,8 @@ export type RelationEndpointDirection = 'in' | 'out';
 export type TypedRelationVisibilityEndpointScope = readonly string[];
 
 export type TypedRelationVisibilityPolicy = {
+  /** Entity schema ids currently present in the workspace catalog. */
+  entitySchemaIds: readonly string[];
   endpointScopes: readonly {
     relationSchemaId: string;
     inEntitySchemaIds: TypedRelationVisibilityEndpointScope;
@@ -62,6 +64,7 @@ export const buildTypedRelationVisibilityPolicy = (
   };
 
   return {
+    entitySchemaIds: schemas.map(schema => schema.id),
     endpointScopes: relationSchemaIds.map(relationSchemaId => ({
       relationSchemaId,
       inEntitySchemaIds: endpointScope(relationSchemaId, 'in'),
@@ -148,11 +151,25 @@ export const canViewTypedRelation = (
   }>,
   relationSchemaId: string,
   owner: string | null = null
-) =>
-  endpoints.some(endpoint =>
-    canViewTypedRelationFromEndpoint(authCtx, endpoint.schema, relationSchemaId, endpoint.direction)
-  ) ||
-  (authCtx != null && checker.hasRelationOwnerAction(authCtx, { owner }, 'view_relation'));
+) => {
+  // Endpoint-specific access correctly fails closed for an unavailable schema. Preserve that
+  // invariant across endpoint-agnostic access: a known, unbound endpoint must not make a relation
+  // visible when its other endpoint has no schema definition to authorize against. This guard also
+  // runs before relation-owner overrides, which do not provide a trustworthy endpoint definition.
+  if (authCtx != null && endpoints.some(endpoint => !endpoint.schema)) return false;
+
+  return (
+    endpoints.some(endpoint =>
+      canViewTypedRelationFromEndpoint(
+        authCtx,
+        endpoint.schema,
+        relationSchemaId,
+        endpoint.direction
+      )
+    ) ||
+    (authCtx != null && checker.hasRelationOwnerAction(authCtx, { owner }, 'view_relation'))
+  );
+};
 
 export const canEditTypedRelation = (
   authCtx: WorkspaceAuthorizationContext | null,

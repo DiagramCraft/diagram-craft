@@ -81,7 +81,10 @@ const isWebhookVisibleRelation = (
   relation: RelationAuditContext,
   endpointSchemas: RelationEndpointSchemas | null
 ) => {
-  if (!endpointSchemas) return false;
+  // An unbound endpoint is intentionally visible through the legacy relation-schema policy, but a
+  // missing endpoint schema has no trustworthy owner-field definition and must fail closed before
+  // the endpoint OR is evaluated.
+  if (!endpointSchemas?.in || !endpointSchemas.out) return false;
   return (
     isWebhookVisibleRelationEndpoint(endpointSchemas.in, relation.schema.id, 'in') ||
     isWebhookVisibleRelationEndpoint(endpointSchemas.out, relation.schema.id, 'out')

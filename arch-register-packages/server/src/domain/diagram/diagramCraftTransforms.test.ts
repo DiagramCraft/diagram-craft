@@ -150,6 +150,31 @@ describe('diagram craft transforms', () => {
     ).not.toHaveProperty('classification');
   });
 
+  it('omits relation edges when one endpoint schema is unavailable', () => {
+    const source = {
+      id: 'source',
+      schema_id: 'missing-schema',
+      name: 'Source'
+    } as Entity;
+    const target = {
+      id: 'target',
+      schema_id: 'schema-2',
+      name: 'Target'
+    } as Entity;
+    const schemas = [{ id: 'schema-2', fields: [] }] as unknown as SchemaDbResult[];
+    const row = {
+      id: 'relation-instance',
+      schema_id: 'relation-1',
+      in_entity_id: 'source',
+      out_entity_id: 'target',
+      data: {}
+    } as never;
+
+    expect(
+      toDiagramCraftRelationReferences([row], [source, target], schemas, authCtxWithTeamRoles({}))
+    ).toEqual(new Map());
+  });
+
   it('adds name and description metadata fields when missing', () => {
     const schema = {
       id: 'schema-1',

@@ -2063,6 +2063,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       workspace,
       {
         relationVisibility: {
+          entitySchemaIds: [schema.id],
           endpointScopes: [],
           ownerIds: [],
           allOwners: false
@@ -2076,6 +2077,45 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       gatedCompiled.params
     );
     expect(gatedRows).toHaveLength(0);
+
+    const missingSchema = await createSchema(db, workspace, { name: 'Deleted endpoint schema' });
+    const danglingEndpoint = await createFixtureCatalogEntity(db, workspace, missingSchema.id, {
+      name: 'Dangling endpoint'
+    });
+    const danglingRelation = await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: relationSchema.id,
+      in_entity_id: danglingEndpoint.id,
+      out_entity_id: entityB.id,
+      data: { status: 'dangling' },
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    await db.catalog.deleteSchema(workspace, missingSchema.id);
+
+    const ownerWideCompiled = compileEntityQueryIR(
+      { schemaId: relationSchema.id, root: { kind: 'and', children: [] } },
+      schemas,
+      driver,
+      workspace,
+      {
+        relationVisibility: {
+          entitySchemaIds: [schema.id],
+          endpointScopes: [],
+          ownerIds: [],
+          allOwners: true
+        }
+      },
+      null,
+      relationSchemas
+    );
+    const ownerWideRows = await db.relation.runCompiledRelationQuery(
+      ownerWideCompiled.sql,
+      ownerWideCompiled.params
+    );
+    expect(ownerWideRows.map(row => row.id)).toEqual(expect.arrayContaining([matching.id]));
+    expect(ownerWideRows.map(row => row.id)).not.toContain(danglingRelation.id);
   });
 
   it('lists relations through listRelationsWithCount using the relation-rooted query engine (#2689)', async () => {

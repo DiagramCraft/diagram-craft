@@ -794,6 +794,54 @@ describe('createAiChatTools', () => {
       }
     });
 
+    it('fails closed when a missing endpoint is paired with a known unbound endpoint', async () => {
+      const knownUnboundSchema = {
+        ...schemas[0]!,
+        id: 'known-unbound',
+        name: 'Known unbound endpoint',
+        fields: [],
+        groups: []
+      };
+      const missingEndpoint = {
+        ...entities[0]!,
+        id: 'entity-missing-schema',
+        schema_id: 'missing'
+      };
+      const knownUnboundEndpoint = {
+        ...entities[1]!,
+        id: 'entity-known-unbound',
+        schema_id: knownUnboundSchema.id
+      };
+      const relation = {
+        ...relationRows[0]!,
+        id: 'relation-missing-endpoint-schema',
+        in_entity_id: missingEndpoint.id,
+        in_entity_name: missingEndpoint.name,
+        out_entity_id: knownUnboundEndpoint.id,
+        out_entity_name: knownUnboundEndpoint.name
+      };
+      const originalListSchemas = db.catalog.listSchemas;
+      entities.push(missingEndpoint, knownUnboundEndpoint);
+      relationRows.push(relation);
+      db.catalog.listSchemas = async () => [...schemas, knownUnboundSchema];
+
+      try {
+        const tools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
+        const listRelations = tools.find(tool => tool.name === 'list_relations');
+        const getRelation = tools.find(tool => tool.name === 'get_relation');
+
+        expect(await listRelations!.execute?.({})).toMatchObject({ total: 0, items: [] });
+        await expect(getRelation!.execute?.({ relationId: relation.id })).rejects.toThrow(
+          `Relation '${relation.id}' not found`
+        );
+      } finally {
+        db.catalog.listSchemas = originalListSchemas;
+        relationRows.splice(relationRows.indexOf(relation), 1);
+        entities.splice(entities.indexOf(missingEndpoint), 1);
+        entities.splice(entities.indexOf(knownUnboundEndpoint), 1);
+      }
+    });
+
     it('cannot match or preview a restricted field via query_entities for a caller without group access', async () => {
       const tools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
       const queryEntities = tools.find(tool => tool.name === 'query_entities');
