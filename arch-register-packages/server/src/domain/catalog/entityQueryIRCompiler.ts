@@ -86,6 +86,7 @@ type CompileState = {
   bindingByPath: Map<string, ProjectionBinding>;
   compilingBinding: boolean;
   relationSourceConstraints: readonly RelationSourceConstraint[];
+  relationRootTemporalCandidate: RelationRootTemporalCandidate | null;
   visibleEntityIds?: readonly string[];
   relationVisibility?: TypedRelationVisibilityPolicy;
   limit?: number;
@@ -101,6 +102,17 @@ type RelationSourceConstraint = {
   relationSchemaId: string;
   ownerDirection?: 'in' | 'out';
   ownerSchemaIds?: readonly string[];
+};
+
+// Stable relation-root predicates can narrow temporal reconstruction without inspecting the
+// version state JSON. Keep this separate from relationSourceConstraints: the latter describes all
+// relation schemas needed by the shared scoped_relation CTE, including nested typed-relation
+// hops, while this candidate describes only the root relation branch.
+type RelationRootTemporalCandidate = {
+  relationSchemaIds: readonly string[];
+  relationIds: readonly string[];
+  inEntityIds: readonly string[];
+  outEntityIds: readonly string[];
 };
 
 const addParam = (state: CompileState, value: unknown): string => {
@@ -156,6 +168,57 @@ const relationSourceSchemaClause = (alias: string, state: CompileState): string 
   const schemaIds = relationSourceSchemaIds(state);
   if (schemaIds.length === 0) return '1=1';
   return `${alias}.schema_id IN (${schemaIds.map(schemaId => addParam(state, schemaId)).join(', ')})`;
+};
+
+const relationRootTemporalCandidateClause = (alias: string, state: CompileState): string | null => {
+  const candidate = state.relationRootTemporalCandidate;
+  if (!candidate) return null;
+
+  const branches: string[] = [];
+  if (candidate.relationSchemaIds.length > 0) {
+    branches.push(
+      `${alias}.schema_id IN (${candidate.relationSchemaIds
+        .map(schemaId => addParam(state, schemaId))
+        .join(', ')})`
+    );
+  }
+
+  const identityParts: string[] = [];
+  if (candidate.relationIds.length > 0) {
+    identityParts.push(
+      `${alias}.id IN (${candidate.relationIds.map(id => addParam(state, id)).join(', ')})`
+    );
+  }
+  if (candidate.inEntityIds.length > 0) {
+    identityParts.push(
+      `${alias}.in_record_id IN (${candidate.inEntityIds
+        .map(id => addParam(state, id))
+        .join(', ')})`
+    );
+  }
+  if (candidate.outEntityIds.length > 0) {
+    identityParts.push(
+      `${alias}.out_record_id IN (${candidate.outEntityIds
+        .map(id => addParam(state, id))
+        .join(', ')})`
+    );
+  }
+  if (identityParts.length > 0) branches.push(`(${identityParts.join(' AND ')})`);
+
+  if (branches.length === 0) return null;
+  return branches.length === 1 ? branches[0]! : `(${branches.join(' OR ')})`;
+};
+
+const relationTemporalSourceClause = (alias: string, state: CompileState): string => {
+  const clauses: string[] = [];
+  const sourceSchemaIds = relationSourceSchemaIds(state);
+  if (sourceSchemaIds.length > 0) clauses.push(relationSourceSchemaClause(alias, state));
+
+  const rootCandidateClause = relationRootTemporalCandidateClause(alias, state);
+  if (rootCandidateClause) clauses.push(rootCandidateClause);
+
+  if (clauses.length === 0) return '1=1';
+  return clauses.length === 1 ? clauses[0]! : `(${clauses.join(' OR ')})`;
 };
 
 const relationSourceConstraintClause = (
@@ -259,6 +322,70 @@ const collectRelationSourceConstraints = (
   );
 
   return [...constraints.values()];
+};
+
+const isStringValue = (value: unknown): value is string => typeof value === 'string';
+
+// Only collect positive, pathless identity predicates. Skipping OR/NOT branches is deliberate:
+// a candidate extracted from a negated or partially-known branch could exclude a valid relation.
+const collectRelationRootTemporalCandidate = (
+  query: EntityQuery,
+  rootKind: 'entity' | 'relation',
+  relationSchemas: RelationSchemaCatalog,
+  authCtx: WorkspaceAuthorizationContext | null
+): RelationRootTemporalCandidate | null => {
+  if (rootKind !== 'relation') return null;
+
+  const relationSchemaIds = new Set<string>();
+  const relationIds = new Set<string>();
+  const inEntityIds = new Set<string>();
+  const outEntityIds = new Set<string>();
+
+  if (query.schemaId) relationSchemaIds.add(query.schemaId);
+
+  const collect = (node: QueryNode): void => {
+    switch (node.kind) {
+      case 'and':
+        node.children.forEach(collect);
+        return;
+      case 'or':
+      case 'not':
+        return;
+      case 'predicate': {
+        if (node.path.length > 0) return;
+        if (node.op === 'equals' && isStringValue(node.value)) {
+          if (node.fieldId === '_schemaId') relationSchemaIds.add(node.value);
+          if (node.fieldId === '_id') relationIds.add(node.value);
+          if (node.fieldId === '_inEntityId') inEntityIds.add(node.value);
+          if (node.fieldId === '_outEntityId') outEntityIds.add(node.value);
+        }
+
+        const scope = resolveRelationFieldSchemaScope(node.fieldId, relationSchemas, authCtx);
+        if (scope.needsScoping) scope.grantedSchemaIds.forEach(id => relationSchemaIds.add(id));
+        return;
+      }
+      case 'relationExists':
+      case 'freeText':
+        return;
+    }
+  };
+  collect(query.root);
+
+  if (
+    relationSchemaIds.size === 0 &&
+    relationIds.size === 0 &&
+    inEntityIds.size === 0 &&
+    outEntityIds.size === 0
+  ) {
+    return null;
+  }
+
+  return {
+    relationSchemaIds: [...relationSchemaIds],
+    relationIds: [...relationIds],
+    inEntityIds: [...inEntityIds],
+    outEntityIds: [...outEntityIds]
+  };
 };
 
 const relationIsMultiValued = (
@@ -1470,16 +1597,10 @@ const buildTemporalRelationSource = (state: CompileState): string => {
   const asOf = state.asOf!;
   const workspaceParam = addParam(state, state.workspace);
   const asOfParam = addParam(state, asOf.toISOString());
-  const latestRelationSchemaClause =
-    relationSourceSchemaIds(state).length > 0
-      ? `AND ${relationSourceSchemaClause('cr', state)}`
-      : '';
+  const temporalRelationSourceClause = relationTemporalSourceClause('cr', state);
   const fallbackWorkspaceParam = addParam(state, state.workspace);
   const fallbackCreatedParam = addParam(state, asOf.toISOString());
-  const fallbackRelationSchemaClause =
-    relationSourceSchemaIds(state).length > 0
-      ? `AND ${relationSourceSchemaClause('r', state)}`
-      : '';
+  const fallbackRelationSourceClause = relationTemporalSourceClause('r', state);
   const eventWorkspaceParam = addParam(state, state.workspace);
   const eventCreatedParam = addParam(state, asOf.toISOString());
   const eventDateParam = addParam(state, asOf.toISOString().slice(0, 10));
@@ -1498,10 +1619,7 @@ const buildTemporalRelationSource = (state: CompileState): string => {
     'final_relation_state.workspace',
     state.dialect
   );
-  const eventRelationSchemaClause =
-    relationSourceSchemaIds(state).length > 0
-      ? `AND ${relationSourceSchemaClause('cr', state)}`
-      : '';
+  const eventRelationSourceClause = relationTemporalSourceClause('cr', state);
 
   return `
     latest_relation_version AS (
@@ -1515,7 +1633,7 @@ const buildTemporalRelationSource = (state: CompileState): string => {
       JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'relation'
       WHERE v.workspace = ${workspaceParam}
         AND v.created_at <= ${asOfParam}
-        ${latestRelationSchemaClause}
+        AND ${temporalRelationSourceClause}
     ),
     baseline_relation_state AS (
       SELECT v.record_id, v.workspace, v.state
@@ -1529,7 +1647,7 @@ const buildTemporalRelationSource = (state: CompileState): string => {
         AND r.workspace = ${fallbackWorkspaceParam}
         AND r.deleted_at IS NULL
         AND r.created_at <= ${fallbackCreatedParam}
-        ${fallbackRelationSchemaClause}
+        AND ${fallbackRelationSourceClause}
         AND NOT EXISTS (
           SELECT 1 FROM record_version any_version
           WHERE any_version.workspace = r.workspace
@@ -1560,7 +1678,7 @@ const buildTemporalRelationSource = (state: CompileState): string => {
         AND c.effective_date IS NOT NULL
         AND c.effective_date <= ${eventDateParam}
         AND ${caseProjectClause}
-        ${eventRelationSchemaClause}
+        AND ${eventRelationSourceClause}
     ),
     future_relation_state (record_id, workspace, state, event_number) AS (
       SELECT b.record_id, b.workspace, b.state, ${initialEventNumber}
@@ -1691,6 +1809,12 @@ const buildQueryFragments = (
     bindingByPath: new Map(),
     compilingBinding: false,
     relationSourceConstraints: collectRelationSourceConstraints(query, rootKind),
+    relationRootTemporalCandidate: collectRelationRootTemporalCandidate(
+      query,
+      rootKind,
+      relationSchemas,
+      authCtx
+    ),
     visibleEntityIds: options.visibleEntityIds,
     relationVisibility: options.relationVisibility,
     limit: options.limit,
