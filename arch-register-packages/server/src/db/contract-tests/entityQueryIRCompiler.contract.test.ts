@@ -1888,13 +1888,20 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     );
     expect(endpointRows.map(row => row.out_entity_id)).toEqual([entityC.id]);
 
-    // visibleRelationIds gates which relations are returned, mirroring visibleEntityIds.
+    // An empty SQL visibility policy gates which relations are returned without materializing
+    // the workspace's relation ids in application code.
     const gatedCompiled = compileEntityQueryIR(
       { schemaId: relationSchema.id, root: { kind: 'and', children: [] } },
       schemas,
       driver,
       workspace,
-      { visibleRelationIds: [] },
+      {
+        relationVisibility: {
+          endpointScopes: [],
+          ownerIds: [],
+          allOwners: false
+        }
+      },
       null,
       relationSchemas
     );
