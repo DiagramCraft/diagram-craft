@@ -23,7 +23,11 @@ const groupAccessByFieldId = (
   );
   const byField = new Map<string, FieldGroupAccess>();
   for (const field of schema.fields) {
-    if (field.groupId) byField.set(field.id, accessByGroupId.get(field.groupId) ?? 'edit');
+    if (field.groupId != null) {
+      // A field that names a group which is not present in the schema is malformed or stale.
+      // Treat it as inaccessible instead of inheriting the unrestricted-group default.
+      byField.set(field.id, accessByGroupId.get(field.groupId) ?? 'none');
+    }
   }
   return byField;
 };
@@ -140,12 +144,17 @@ export const filterAllRestrictedFieldGroups = (
       .filter(group => group.accessControl && group.accessControl.teamIds.length > 0)
       .map(group => group.id)
   );
-  if (restrictedGroupIds.size === 0) return data;
+  const knownGroupIds = new Set((schema.groups ?? []).map(group => group.id));
 
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     const field = schema.fields.find(f => f.id === key);
-    if (field?.groupId && restrictedGroupIds.has(field.groupId)) continue;
+    if (
+      field?.groupId != null &&
+      (!knownGroupIds.has(field.groupId) || restrictedGroupIds.has(field.groupId))
+    ) {
+      continue;
+    }
     result[key] = value;
   }
   return result;
@@ -162,11 +171,18 @@ export const filterKnownAllRestrictedFieldGroups = (
       .filter(group => group.accessControl && group.accessControl.teamIds.length > 0)
       .map(group => group.id)
   );
+  const knownGroupIds = new Set((schema.groups ?? []).map(group => group.id));
   const fieldsById = new Map(schema.fields.map(field => [field.id, field]));
   const result: Record<string, unknown> = {};
   for (const [key, value] of Object.entries(data)) {
     const field = fieldsById.get(key);
-    if (!field || (field.groupId && restrictedGroupIds.has(field.groupId))) continue;
+    if (
+      !field ||
+      (field.groupId != null &&
+        (!knownGroupIds.has(field.groupId) || restrictedGroupIds.has(field.groupId)))
+    ) {
+      continue;
+    }
     result[key] = value;
   }
   return result;

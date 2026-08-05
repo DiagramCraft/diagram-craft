@@ -160,7 +160,15 @@ describe('exportEntities field-group redaction', () => {
   it('exports unchanged data for an entity whose schema has no restricted groups', async () => {
     const db = makeDb();
     db.catalog.listSchemas.mockResolvedValue([
-      { ...schemaWithRestrictedGroup, id: 'schema-2', groups: [] }
+      {
+        ...schemaWithRestrictedGroup,
+        id: 'schema-2',
+        fields: schemaWithRestrictedGroup.fields.map((field: Record<string, unknown>) => ({
+          ...field,
+          groupId: undefined
+        })),
+        groups: []
+      }
     ]);
     db.catalog.listEntities.mockResolvedValue([{ ...makeEntity(), schema_id: 'schema-2' }]);
 
@@ -200,6 +208,42 @@ describe('exportEntities field-group redaction', () => {
     });
 
     expect(data.entities).toEqual([expect.objectContaining({ data: {} })]);
+  });
+
+  it('fails closed for an entity field whose group reference is dangling', async () => {
+    const db = makeDb();
+    db.catalog.listSchemas.mockResolvedValue([
+      {
+        ...schemaWithRestrictedGroup,
+        fields: [
+          { id: 'name', name: 'Name', requirementLevel: null, type: 'text' },
+          {
+            id: 'secret',
+            name: 'Secret',
+            requirementLevel: null,
+            type: 'text',
+            groupId: 'deleted-group'
+          }
+        ],
+        groups: undefined
+      }
+    ]);
+
+    const authCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const { data } = await exportWorkspace(db, undefined, authCtx, 'workspace-1', {
+      include: ['entities']
+    });
+
+    expect(data.entities).toEqual([expect.objectContaining({ data: { name: 'x' } })]);
   });
 });
 
