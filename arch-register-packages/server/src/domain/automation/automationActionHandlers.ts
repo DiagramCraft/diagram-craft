@@ -15,6 +15,7 @@ import { RetryableJobError } from '../jobs/jobRetry';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { computeChanges, logAudit } from '../audit/db/auditLogging';
 import { flattenRelationAuditFields, relationAuditContext } from '../catalog/relationHelpers';
+import { canViewRelationNotification } from '../catalog/relationNotificationAccess';
 
 const checker = new PermissionChecker();
 
@@ -166,6 +167,17 @@ const handleSendNotification: AutomationActionHandler = async context => {
         !endpointEntities.some(
           endpoint => endpoint && checker.hasEntityPermission(authCtx, endpoint, 'view_entity')
         )
+      ) {
+        continue;
+      }
+      if (
+        !(await canViewRelationNotification(db, event.workspace, authCtx, {
+          relationSchemaId: relation.schema_id,
+          inEntityId: relation.in_entity_id,
+          outEntityId: relation.out_entity_id,
+          at: new Date(event.occurredAt),
+          owner: relation.owner
+        }))
       ) {
         continue;
       }

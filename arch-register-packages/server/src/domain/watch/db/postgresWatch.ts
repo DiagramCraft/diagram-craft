@@ -92,11 +92,18 @@ export class PostgresWatchDatabase extends PostgresDatabaseBase implements Watch
               ).flat()
             )
           ]
-        ).map(userId => ({ userId, email: null, inAppEnabled: true, emailEnabled: false }));
+        ).map(userId => ({
+          userId,
+          email: null,
+          inAppEnabled: true,
+          emailEnabled: false,
+          relationVisible: false
+        }));
 
       for (const recipient of watcherRecipients) {
         if (recipient.userId === auditLog.user_id) continue;
         if (!recipient.inAppEnabled && !recipient.emailEnabled) continue;
+        if (isRelation && recipient.relationVisible !== true) continue;
         const notificationId = randomUUID();
         const deliveryKey = `${isRelation ? 'relation' : 'entity'}-watch:${auditLog.id}:user:${recipient.userId}`;
         const title = isRelation
