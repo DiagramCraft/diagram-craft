@@ -1377,7 +1377,7 @@ export const applyChangeCase = async (
             await tx.catalog.createEntityVersion({
               id: appliedVersionId,
               workspace: ws,
-              entity_id: member.entity_id,
+              record_id: member.entity_id,
               version_number: nextRelation.version,
               kind: 'case_applied',
               commit_message: null,

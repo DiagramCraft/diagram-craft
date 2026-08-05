@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { computeActivityTrend, computeWorkspaceAnalytics } from './workspaceAnalyticsOperations';
 import { computeEntityCompleteness } from '../../utils/completeness';
+import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { LifecycleStateDbResult } from '../workspace/db/workspaceDatabase';
 import type { AuditLogDbResult } from '../audit/db/auditDatabase';
@@ -54,6 +55,42 @@ const lifecycleStates: LifecycleStateDbResult[] = [
     created_at: now
   }
 ];
+
+const restrictedSchema: SchemaDbResult = {
+  ...schemas[0]!,
+  id: 'schema-restricted',
+  name: 'Restricted Service',
+  fields: [
+    { id: 'publicField', name: 'Public field', type: 'text', requirementLevel: 'required' },
+    {
+      id: 'secretField',
+      name: 'Secret field',
+      type: 'text',
+      requirementLevel: 'required',
+      groupId: 'restricted'
+    }
+  ],
+  groups: [
+    {
+      id: 'restricted',
+      name: 'Restricted',
+      accessControl: { teamIds: ['team-restricted'] }
+    }
+  ]
+};
+
+const authContextWithTeamRoles = (roles: Record<string, TeamRole[]>) =>
+  buildAuthorizationContext({
+    userId: 'analytics-user',
+    globalRoles: [],
+    workspaceRole: null,
+    teamAssignments: Object.entries(roles).flatMap(([teamId, teamRoles]) =>
+      teamRoles.map(role => ({ teamId, role }))
+    ),
+    schemas: [],
+    entities: [],
+    grants: []
+  });
 
 const makeEntity = (overrides: Partial<EntityDbResult>): EntityDbResult => {
   const merged = {
@@ -166,7 +203,7 @@ describe('computeWorkspaceAnalytics', () => {
       missingOwnerPercent: 66.7
     });
 
-    expect(analytics.completeness[0]).toMatchObject({
+    expect(analytics.completeness?.[0]).toMatchObject({
       schemaId: 'schema-service',
       below50Count: 1,
       between50And79Count: 1,
@@ -194,6 +231,70 @@ describe('computeWorkspaceAnalytics', () => {
       count: 0,
       percent: 0
     });
+  });
+
+  it('recomputes completeness from fields visible to the caller', () => {
+    const entity = makeEntity({
+      id: 'restricted-service',
+      schema_id: restrictedSchema.id,
+      schema_name: restrictedSchema.name,
+      description: '',
+      data: { publicField: 'visible', secretField: 'hidden' }
+    });
+    const authorized = computeWorkspaceAnalytics(
+      [entity],
+      [restrictedSchema],
+      lifecycleStates,
+      90,
+      [],
+      now,
+      authContextWithTeamRoles({ 'team-restricted': ['team_reviewer'] })
+    );
+    const restricted = computeWorkspaceAnalytics(
+      [entity],
+      [restrictedSchema],
+      lifecycleStates,
+      90,
+      [],
+      now,
+      authContextWithTeamRoles({})
+    );
+
+    expect(authorized.summary.percentCompleteness80Plus).toBe(100);
+    expect(restricted.summary.percentCompleteness80Plus).toBe(0);
+    expect(authorized.completeness?.[0]).toMatchObject({
+      above80Count: 1,
+      between50And79Count: 0,
+      below50Count: 0
+    });
+    expect(restricted.completeness?.[0]).toMatchObject({
+      above80Count: 0,
+      between50And79Count: 1,
+      below50Count: 0
+    });
+    expect(restricted.summary.totalEntities).toBe(authorized.summary.totalEntities);
+    expect(restricted.schemaUtilization).toEqual(authorized.schemaUtilization);
+    expect(restricted.coverage).toEqual(authorized.coverage);
+    expect(restricted.lifecycleBreakdown).toEqual(authorized.lifecycleBreakdown);
+  });
+
+  it('omits completeness analytics when a visible entity schema is missing', () => {
+    const analytics = computeWorkspaceAnalytics(
+      [makeEntity({ schema_id: 'missing-schema', schema_name: 'Missing schema' })],
+      schemas,
+      lifecycleStates,
+      90,
+      [],
+      now
+    );
+
+    expect(analytics.summary.totalEntities).toBe(1);
+    expect(analytics.summary.percentCompleteness80Plus).toBeNull();
+    expect(analytics.completeness).toBeNull();
+    expect(analytics.schemaUtilization).toEqual([
+      { schemaId: 'schema-service', schemaName: 'Service', count: 0 },
+      { schemaId: 'schema-team', schemaName: 'Team', count: 0 }
+    ]);
   });
 
   it('builds zero-filled UTC activity buckets from entity creates and updates only', () => {

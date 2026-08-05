@@ -1391,7 +1391,7 @@ const buildTemporalSource = (state: CompileState): string => {
   const stateProjectColumn = (column: string) => stateText(column, 'project_id', state.dialect);
   const temporalProjection = temporalEntityProjection(
     'final_state.state',
-    'final_state.entity_id',
+    'final_state.record_id',
     'final_state.workspace',
     state.dialect
   );
@@ -1407,7 +1407,7 @@ const buildTemporalSource = (state: CompileState): string => {
       ? `(c.project_id IS NULL OR c.project_id = ${addParam(state, state.projectId)})`
       : 'c.project_id IS NULL';
   const temporalScopeClause = projectScopeClause(
-    'final_state.entity_id',
+    'final_state.record_id',
     'final_state.workspace',
     stateProjectColumn('final_state.state'),
     state
@@ -1417,7 +1417,7 @@ const buildTemporalSource = (state: CompileState): string => {
       ? ''
       : state.visibleEntityIds.length === 0
         ? '1=0'
-        : `final_state.entity_id IN (${state.visibleEntityIds.map(id => addParam(state, id)).join(', ')})`;
+        : `final_state.record_id IN (${state.visibleEntityIds.map(id => addParam(state, id)).join(', ')})`;
   const temporalScope = `${temporalScopeClause} AND ${visibleClause || '1=1'}`;
 
   return `
@@ -1435,7 +1435,7 @@ const buildTemporalSource = (state: CompileState): string => {
         AND v.created_at <= ${asOfParam}
     ),
     baseline_entity_state AS (
-      SELECT v.record_id AS entity_id, v.workspace, v.state
+      SELECT v.record_id, v.workspace, v.state
       FROM latest_entity_version v
       WHERE v.row_number = 1
         AND v.kind <> 'deleted'
@@ -1455,7 +1455,7 @@ const buildTemporalSource = (state: CompileState): string => {
         AND ${fallbackProjectClause}
     ),
     active_future_events AS (
-      SELECT m.record_id AS entity_id,
+      SELECT m.record_id,
              c.id AS case_id,
              c.effective_date,
              r.created_at,
@@ -1478,23 +1478,23 @@ const buildTemporalSource = (state: CompileState): string => {
         AND c.effective_date <= ${eventDateParam}
         AND ${caseProjectClause}
     ),
-    future_state (entity_id, workspace, state, event_number) AS (
-      SELECT b.entity_id, b.workspace, b.state, ${initialEventNumber}
+    future_state (record_id, workspace, state, event_number) AS (
+      SELECT b.record_id, b.workspace, b.state, ${initialEventNumber}
       FROM baseline_entity_state b
       UNION ALL
-      SELECT future_state.entity_id,
+      SELECT future_state.record_id,
              future_state.workspace,
              ${mergeStates},
              event.event_number
       FROM future_state
       JOIN active_future_events event
-        ON event.entity_id = future_state.entity_id
+        ON event.record_id = future_state.record_id
        AND event.event_number = future_state.event_number + 1
     ),
     final_state AS (
-      SELECT entity_id, workspace, state,
+      SELECT record_id, workspace, state,
              ROW_NUMBER() OVER (
-               PARTITION BY entity_id
+               PARTITION BY record_id
                ORDER BY event_number DESC
              ) AS row_number
       FROM future_state

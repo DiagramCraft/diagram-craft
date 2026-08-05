@@ -111,7 +111,7 @@ runContractSuiteAgainstBothDrivers('ChangeCaseDatabase', getDb => {
       await db.catalog.createEntityVersion({
         id: versionId,
         workspace,
-        entity_id: m.entity_id,
+        record_id: m.entity_id,
         version_number: (m.entity_id === entityA.id ? entityAVersion : entityBVersion) + 1,
         kind: 'case_applied',
         commit_message: null,

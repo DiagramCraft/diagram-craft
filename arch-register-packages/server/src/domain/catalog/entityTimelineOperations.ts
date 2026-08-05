@@ -50,7 +50,7 @@ export const getTimelineViewData = async (
       }
 
       for (const version of versions) {
-        result[version.entity_id]?.versions.push(serializeTimelineVersion(version));
+        result[version.record_id]?.versions.push(serializeTimelineVersion(version));
       }
 
       for (const change of changes) {

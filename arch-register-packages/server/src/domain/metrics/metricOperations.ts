@@ -1,4 +1,3 @@
-import { HTTPError } from 'h3';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
@@ -28,6 +27,44 @@ type EnumOption = { value: string; label: string };
 
 const isEnumSourceKind = (kind: MetricConfig['source']['kind']) =>
   kind === 'enum' || kind === 'assessmentEnum';
+
+const isMetricSourceAvailable = (
+  metric: MetricConfig,
+  schemas: SchemaDbResult[],
+  assessmentFields?: readonly { id: string; type: string }[]
+): boolean => {
+  const sourceSchema = schemas.find(schema => schema.id === metric.sourceSchemaId);
+  if (!sourceSchema) return false;
+  const source = metric.source;
+
+  if (source.kind === 'field') {
+    return sourceSchema.fields.some(
+      field => field.id === source.fieldId && field.type === 'number'
+    );
+  }
+
+  if (source.kind === 'enum') {
+    return sourceSchema.fields.some(
+      field => field.id === source.fieldId && field.type === 'select'
+    );
+  }
+
+  if (source.kind === 'assessmentRating') {
+    return (
+      assessmentFields == null ||
+      assessmentFields.some(field => field.id === source.fieldId && field.type === 'rating')
+    );
+  }
+
+  if (source.kind === 'assessmentEnum') {
+    return (
+      assessmentFields == null ||
+      assessmentFields.some(field => field.id === source.fieldId && field.type === 'enum')
+    );
+  }
+
+  return true;
+};
 
 const extractValue = (
   entity: EntityDbResult,
@@ -208,16 +245,21 @@ export const computeBoxMetrics = (
   responsesByEntity: Map<string, Record<string, string | number | boolean>> | null,
   isFilterMatch: (entity: EntityDbResult) => boolean,
   enumOptions: EnumOption[] | null = null,
-  authCtx: AuthorizationContext | null = null
+  authCtx: AuthorizationContext | null = null,
+  sourceAvailableOverride?: boolean
 ): MetricRollupResponse => {
-  const childrenOf = buildContainmentChildrenIndex(schemas, entities, authCtx);
   const entityById = new Map(entities.map(e => [e.id, e]));
   const lifecycleSortOrder = new Map(lifecycleStates.map(s => [s.id, s.sort_order]));
   const worstDirection = metric.worstDirection ?? 'high';
   const sourceSchema = schemas.find(s => s.id === metric.sourceSchemaId);
+  const sourceAvailable =
+    isMetricSourceAvailable(metric, schemas) && sourceAvailableOverride !== false;
+  const childrenOf = sourceAvailable
+    ? buildContainmentChildrenIndex(schemas, entities, authCtx)
+    : new Map<string, string[]>();
 
   const results = boxEntityIds.map(boxEntityId => {
-    const sourceEntities = collectDescendantIds(boxEntityId, childrenOf)
+    const sourceEntities = (sourceAvailable ? collectDescendantIds(boxEntityId, childrenOf) : [])
       .map(id => entityById.get(id))
       .filter(
         (entity): entity is EntityDbResult =>
@@ -319,12 +361,7 @@ const resolveEnumOptions = async (
     const fieldId = source.fieldId;
     const schema = schemas.find(s => s.id === metric.sourceSchemaId);
     const field = schema?.fields.find(f => f.id === fieldId);
-    if (field?.type !== 'select') {
-      throw new HTTPError({
-        status: 400,
-        message: `Field '${fieldId}' on schema '${metric.sourceSchemaId}' is not a select field`
-      });
-    }
+    if (field?.type !== 'select') return null;
     enumId = field.enumId;
   } else if (source.kind === 'assessmentEnum') {
     httpAssert.present(joinedAssessment, {
@@ -333,12 +370,7 @@ const resolveEnumOptions = async (
     });
     const fieldId = source.fieldId;
     const field = joinedAssessment.assessment.fields.find(f => f.id === fieldId);
-    if (field?.type !== 'enum') {
-      throw new HTTPError({
-        status: 400,
-        message: `Assessment field '${fieldId}' is not an enum field`
-      });
-    }
+    if (field?.type !== 'enum') return null;
     inlineOptions = getInlineAssessmentEnumOptions(field);
     enumId = 'enumId' in field ? field.enumId : undefined;
   } else {
@@ -434,7 +466,21 @@ export const getBoxMetrics = async (
     });
   }
 
-  const enumOptions = await resolveEnumOptions(db, workspace, metric, schemas, joinedAssessment);
+  if (metric.source.kind === 'assessmentEnum') {
+    httpAssert.present(joinedAssessment, {
+      status: 400,
+      message: 'Metric requires an assessment source, but no assessment is joined'
+    });
+  }
+
+  const sourceAvailable = isMetricSourceAvailable(
+    metric,
+    schemas,
+    joinedAssessment?.assessment.fields
+  );
+  const enumOptions = sourceAvailable
+    ? await resolveEnumOptions(db, workspace, metric, schemas, joinedAssessment)
+    : null;
 
   const visibleEntities = filterVisibleEntities(authCtx, allEntities);
   const scopedEntities = visibleEntities;
@@ -469,6 +515,7 @@ export const getBoxMetrics = async (
     joinedAssessment?.responsesByEntity ?? null,
     isFilterMatch,
     enumOptions,
-    authCtx
+    authCtx,
+    sourceAvailable
   );
 };

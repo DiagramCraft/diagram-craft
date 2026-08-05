@@ -37,7 +37,7 @@ const schema: FieldGroupSchemaShape = {
 const version: EntityVersionDbResult = {
   id: 'v1',
   workspace: 'ws-1',
-  entity_id: 'e1',
+  record_id: 'e1',
   version_number: 1,
   kind: 'autosave',
   commit_message: null,

@@ -23,7 +23,7 @@ const createTemporalEntityVersion = async (
   return server.db.catalog.createEntityVersion({
     id: randomUUID(),
     workspace: entity.workspace,
-    entity_id: entity.id,
+    record_id: entity.id,
     version_number: Math.max(...versions.map(version => version.version_number), 0) + 1,
     kind: 'saved_version',
     commit_message: null,

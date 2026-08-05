@@ -138,7 +138,7 @@ const testData = async (
     server.db.catalog.createEntityVersion({
       id: randomUUID(),
       workspace,
-      entity_id: entity.id,
+      record_id: entity.id,
       version_number: nextVersionNumber++,
       kind,
       commit_message: null,
@@ -233,7 +233,7 @@ const historicalAclTestData = async (
   const version = await server.db.catalog.createEntityVersion({
     id: randomUUID(),
     workspace,
-    entity_id: entity.id,
+    record_id: entity.id,
     version_number: Math.max(...versions.map(item => item.version_number), entity.version ?? 1) + 1,
     kind: 'saved_version',
     commit_message: null,
@@ -283,7 +283,7 @@ const missingHistoricalSchemaTestData = async (
   const version = await server.db.catalog.createEntityVersion({
     id: randomUUID(),
     workspace,
-    entity_id: entity.id,
+    record_id: entity.id,
     version_number:
       Math.max(...versions.map(item => item.version_number), entity.version ?? 1) + 100,
     kind: 'autosave',
@@ -343,7 +343,7 @@ test.describe('entity version field-group permissions', () => {
     const missingSchemaVersion = await server.db.catalog.createEntityVersion({
       id: randomUUID(),
       workspace: resources.workspaceId,
-      entity_id: entity.id,
+      record_id: entity.id,
       version_number:
         Math.max(...versions.map(version => version.version_number), entity.version ?? 1) + 1,
       kind: 'saved_version',

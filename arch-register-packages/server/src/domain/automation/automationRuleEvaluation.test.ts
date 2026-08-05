@@ -74,7 +74,7 @@ describe('enqueueAutomationRuleRuns', () => {
       catalog: { getEntity: vi.fn(async () => null) },
       relation: {
         getRelation: vi.fn(async () => null),
-        getRelationSchema: vi.fn(async () => ({ fields: [] }))
+        getRelationSchema: vi.fn(async () => ({ fields: [{ id: 'status' }] }))
       },
       jobs: { enqueueOneOffRun }
     } as unknown as DatabaseAdapter;
@@ -158,6 +158,72 @@ describe('enqueueAutomationRuleRuns', () => {
 
     expect(await enqueueAutomationRuleRuns(db, baseAuditLog)).toBe(0);
     expect(enqueueOneOffRun).not.toHaveBeenCalled();
+  });
+
+  it('does not read live entity data for a stale condition field', async () => {
+    const rule: AutomationRuleDbResult = {
+      ...baseRule,
+      conditions: [{ field: 'removed', operator: 'is_not_empty' }]
+    };
+    const getEntity = vi.fn(async () => ({ owner: null, data: { removed: 'secret' } }));
+    const enqueueOneOffRun = vi.fn(async input => input);
+    const db = {
+      automationRule: { listRules: vi.fn(async () => [rule]) },
+      catalog: {
+        getEntity,
+        getSchema: vi.fn(async () => ({ fields: [{ id: 'title' }] }))
+      },
+      jobs: { enqueueOneOffRun }
+    } as unknown as DatabaseAdapter;
+
+    expect(await enqueueAutomationRuleRuns(db, baseAuditLog)).toBe(0);
+    expect(getEntity).not.toHaveBeenCalled();
+    expect(enqueueOneOffRun).not.toHaveBeenCalled();
+  });
+
+  it('fails closed when the audit schema is unavailable', async () => {
+    const getEntity = vi.fn(async () => ({ owner: null, data: { salary: 100000 } }));
+    const db = {
+      automationRule: {
+        listRules: vi.fn(async () => [
+          {
+            ...baseRule,
+            conditions: [{ field: 'salary', operator: 'equals', value: 100000 }]
+          }
+        ])
+      },
+      catalog: {
+        getEntity,
+        getSchema: vi.fn(async () => null)
+      },
+      jobs: { enqueueOneOffRun: vi.fn(async input => input) }
+    } as unknown as DatabaseAdapter;
+
+    expect(await enqueueAutomationRuleRuns(db, baseAuditLog)).toBe(0);
+    expect(getEntity).not.toHaveBeenCalled();
+  });
+
+  it('skips a condition on a declared restricted field', async () => {
+    const db = {
+      automationRule: {
+        listRules: vi.fn(async () => [
+          {
+            ...baseRule,
+            conditions: [{ field: 'salary', operator: 'equals', value: 100000 }]
+          }
+        ])
+      },
+      catalog: {
+        getEntity: vi.fn(async () => ({ owner: null, data: { salary: 100000 } })),
+        getSchema: vi.fn(async () => ({
+          fields: [{ id: 'salary', groupId: 'restricted' }],
+          groups: [{ id: 'restricted', accessControl: { teamIds: ['finance'] } }]
+        }))
+      },
+      jobs: { enqueueOneOffRun: vi.fn(async input => input) }
+    } as unknown as DatabaseAdapter;
+
+    expect(await enqueueAutomationRuleRuns(db, baseAuditLog)).toBe(0);
   });
 
   it('does not re-enqueue a rule that already fired earlier in the chain (self-trigger guard)', async () => {

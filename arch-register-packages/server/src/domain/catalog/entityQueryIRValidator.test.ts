@@ -417,6 +417,32 @@ describe('validateEntityQueryIR field-group restriction', () => {
     });
   });
 
+  it('treats a field with a dangling group reference as unknown', () => {
+    const dangling = makeSchema('dangling-schema', [
+      { id: 'dangling_secret', name: 'Dangling secret', type: 'text', groupId: 'deleted-group' }
+    ]);
+    const schemasWithDanglingGroup: SchemaCatalog = new Map([
+      ...restrictedSchemas,
+      [dangling.id, dangling]
+    ]);
+    const query: EntityQuery = {
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'dangling_secret',
+        op: 'equals',
+        value: 'x'
+      }
+    };
+
+    expect(
+      validateEntityQueryIR(query, schemasWithDanglingGroup, authCtxWithTeamRoles({}))
+    ).toEqual({
+      ok: false,
+      errors: [{ path: ['root', 'fieldId'], message: "Unknown field 'dangling_secret'" }]
+    });
+  });
+
   it('allows a restricted field once the caller has view or edit access', () => {
     const viewer = authCtxWithTeamRoles({ 'team-restricted': ['team_reviewer'] });
     const query: EntityQuery = {

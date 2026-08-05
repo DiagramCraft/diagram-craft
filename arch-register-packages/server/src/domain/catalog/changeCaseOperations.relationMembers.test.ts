@@ -265,7 +265,7 @@ describe('applyChangeCase — relation members', () => {
     );
     expect(createEntityVersion).toHaveBeenCalledWith(
       expect.objectContaining({
-        entity_id: 'relation-1',
+        record_id: 'relation-1',
         kind: 'case_applied',
         version_number: 2,
         applied_case_revision_id: revision.id,

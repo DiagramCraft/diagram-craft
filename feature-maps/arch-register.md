@@ -535,10 +535,12 @@
           rules also support lifecycle transitions) and an optional set of field conditions, then run one or more
           configured actions — recording an audit note, sending an in-app notification, or setting a field value on the
           triggering subject. Field conditions and
-          field-targeting actions respect the rule author's current field-group access. Rules are matched synchronously on
-          every entity mutation and rechecked before asynchronous actions execute, so access revocation or field reassignment
-          cannot leave an existing rule with restricted access. Rule definitions redact stored literals associated with
-          restricted field references for callers without field-group view access, while retaining field identifiers.
+          field-targeting actions respect the rule author's current field-group access, and field references must remain
+          available in the applicable entity or relation schema. Rules are matched synchronously on every entity mutation
+          and rechecked before asynchronous actions execute, so access revocation, field reassignment, or removed fields
+          cannot leave an existing rule with restricted or stale access. Rule definitions redact stored literals associated
+          with restricted or unavailable field references for callers without field-group view access, while retaining field
+          identifiers.
           Administrators can inspect recent rule runs, including failures, from workspace settings.
 
         - @id:ar.integrations.external-content @status:experimental Configured external content providers can be mounted

@@ -337,7 +337,7 @@ describe('bypassRelationApproval', () => {
       expect.objectContaining({ data: { note: 'after' }, version: 2 })
     );
     expect(createEntityVersion).toHaveBeenCalledWith(
-      expect.objectContaining({ entity_id: 'relation-1', kind: 'autosave' })
+      expect.objectContaining({ record_id: 'relation-1', kind: 'autosave' })
     );
     expect(db.audit.createAuditLog).toHaveBeenCalledWith(
       expect.objectContaining({
@@ -626,7 +626,7 @@ describe('createRelationGovernanceRegistry', () => {
       );
       expect(createEntityVersion).toHaveBeenCalledWith(
         expect.objectContaining({
-          entity_id: 'relation-1',
+          record_id: 'relation-1',
           kind: 'case_applied',
           applied_case_revision_id: 'revision-1'
         })

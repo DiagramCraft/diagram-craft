@@ -78,4 +78,33 @@ describe('automation rule execution authorization', () => {
     expect(result).toEqual({ skipped: true, reason: 'rule-owner-no-longer-authorized' });
     expect(updateEntity).not.toHaveBeenCalled();
   });
+
+  it('skips queued actions that target a removed field', async () => {
+    vi.mocked(buildUserAuthCtx).mockResolvedValue(
+      buildAuthorizationContext({
+        userId: 'user-1',
+        globalRoles: [],
+        workspaceRole: null,
+        workspaceRoles: [],
+        teamAssignments: [],
+        schemas: [],
+        entities: [],
+        grants: []
+      })
+    );
+    const db = {
+      automationRule: { getRule: vi.fn(async () => rule) },
+      catalog: {
+        getSchema: vi.fn(async () => ({ fields: [{ id: 'title' }] }))
+      }
+    } as unknown as DatabaseAdapter;
+
+    const result = await createAutomationRuleExecutionHandler(db)({
+      jobId: 'job-1',
+      workspace: 'ws-1',
+      payload: { ruleId: rule.id, automationRuleChain: [rule.id], event }
+    });
+
+    expect(result).toEqual({ skipped: true, reason: 'rule-owner-no-longer-authorized' });
+  });
 });

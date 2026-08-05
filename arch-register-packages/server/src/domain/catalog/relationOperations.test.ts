@@ -213,7 +213,7 @@ describe('createWorkspaceRelation — version history', () => {
     expect(createEntityVersion).toHaveBeenCalledTimes(1);
     expect(createEntityVersion).toHaveBeenCalledWith(
       expect.objectContaining({
-        entity_id: 'relation-1',
+        record_id: 'relation-1',
         kind: 'autosave',
         version_number: 1,
         state: expect.objectContaining({
@@ -422,7 +422,7 @@ describe('updateWorkspaceRelation — version history', () => {
     expect(createEntityVersion).toHaveBeenCalledTimes(1);
     expect(createEntityVersion).toHaveBeenCalledWith(
       expect.objectContaining({
-        entity_id: existing.id,
+        record_id: existing.id,
         kind: 'autosave',
         version_number: 2,
         state: expect.objectContaining({ data: { note: 'after' } })
@@ -481,7 +481,7 @@ describe('deleteWorkspaceRelation — version history', () => {
     expect(createEntityVersion).toHaveBeenCalledTimes(1);
     expect(createEntityVersion).toHaveBeenCalledWith(
       expect.objectContaining({
-        entity_id: existing.id,
+        record_id: existing.id,
         kind: 'deleted',
         version_number: 3,
         state: expect.objectContaining({ id: existing.id })
@@ -496,7 +496,7 @@ describe('restoreWorkspaceRelationVersion', () => {
     const versionToRestore: EntityVersionDbResult = {
       id: 'version-1',
       workspace: 'ws-1',
-      entity_id: existing.id,
+      record_id: existing.id,
       version_number: 1,
       kind: 'autosave',
       commit_message: null,
@@ -538,7 +538,7 @@ describe('restoreWorkspaceRelationVersion', () => {
     expect(Object.keys(restoreCallArgs)).not.toContain('out_entity_id');
     expect(createEntityVersion).toHaveBeenCalledWith(
       expect.objectContaining({
-        entity_id: existing.id,
+        record_id: existing.id,
         kind: 'restored',
         version_number: 3,
         commit_message: 'restoring an old note',

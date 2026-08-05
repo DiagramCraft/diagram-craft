@@ -2,6 +2,7 @@ import type {
   ActivityTrendBucket,
   WorkspaceAnalytics
 } from '@arch-register/api-types/analyticsContract';
+import type { AuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import {
@@ -15,6 +16,7 @@ import type { LifecycleStateDbResult } from '../workspace/db/workspaceDatabase';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import type { AuditLogDbResult } from '../audit/db/auditDatabase';
 import { stripAuditChanges } from '../audit/auditOperations';
+import { computeEntityCompleteness } from '../../utils/completeness';
 
 const roundPercent = (count: number, total: number) =>
   total === 0 ? 0 : Math.round((count / total) * 1000) / 10;
@@ -33,13 +35,12 @@ const makeLifecycleBucket = (
   percent: roundPercent(count, total)
 });
 
-const summarizeCompleteness = (entities: EntityDbResult[]) => {
+const summarizeCompleteness = (scores: number[]) => {
   let above80Count = 0;
   let below50Count = 0;
   let between50And79Count = 0;
 
-  for (const entity of entities) {
-    const score = entity.completeness;
+  for (const score of scores) {
     if (score < 50) below50Count++;
     else if (score < 80) between50And79Count++;
     else above80Count++;
@@ -88,10 +89,23 @@ export const computeWorkspaceAnalytics = (
   lifecycleStates: LifecycleStateDbResult[],
   staleAfterDays = 90,
   auditRows: Omit<AuditLogDbResult, 'changes'>[] = [],
-  now = new Date()
+  now = new Date(),
+  authCtx: AuthorizationContext | null = null
 ): WorkspaceAnalytics => {
   const totalEntities = entities.length;
   const lifecycleStatesSorted = [...lifecycleStates].sort((a, b) => a.sort_order - b.sort_order);
+  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  const completenessScores = entities.map(entity => {
+    const schema = schemaById.get(entity.schema_id);
+    return schema ? computeEntityCompleteness(entity, schema, authCtx) : null;
+  });
+  const completenessByEntityId = new Map(
+    entities.map((entity, index) => [entity.id, completenessScores[index]])
+  );
+  const completenessAvailable = completenessScores.every(score => score !== null);
+  const visibleCompletenessScores = completenessScores.filter(
+    (score): score is number => score !== null
+  );
 
   // Single pass: group entities by schema and count by lifecycle
   const entitiesBySchema = new Map<string, EntityDbResult[]>();
@@ -121,7 +135,9 @@ export const computeWorkspaceAnalytics = (
     makeLifecycleBucket(null, 'Unassigned', null, lifecycleCounts.get(null) ?? 0, totalEntities)
   ];
 
-  const summaryCompleteness = summarizeCompleteness(entities);
+  const summaryCompleteness = completenessAvailable
+    ? summarizeCompleteness(visibleCompletenessScores)
+    : null;
 
   const coverage = schemas
     .map(schema => {
@@ -178,17 +194,21 @@ export const computeWorkspaceAnalytics = (
         a.schemaName.localeCompare(b.schemaName)
     );
 
-  const completeness = schemas
-    .map(schema => {
-      const schemaEntities = entitiesBySchema.get(schema.id) ?? [];
-      return {
-        schemaId: schema.id,
-        schemaName: schema.name,
-        totalCount: schemaEntities.length,
-        ...summarizeCompleteness(schemaEntities)
-      };
-    })
-    .sort((a, b) => b.totalCount - a.totalCount || a.schemaName.localeCompare(b.schemaName));
+  const completeness = completenessAvailable
+    ? schemas
+        .map(schema => {
+          const schemaEntities = entitiesBySchema.get(schema.id) ?? [];
+          return {
+            schemaId: schema.id,
+            schemaName: schema.name,
+            totalCount: schemaEntities.length,
+            ...summarizeCompleteness(
+              schemaEntities.map(entity => completenessByEntityId.get(entity.id)!)
+            )
+          };
+        })
+        .sort((a, b) => b.totalCount - a.totalCount || a.schemaName.localeCompare(b.schemaName))
+    : null;
 
   const schemaUtilization = schemas
     .map(schema => ({
@@ -235,7 +255,10 @@ export const computeWorkspaceAnalytics = (
     summary: {
       totalEntities,
       percentWithOwner: roundPercent(entitiesWithOwner, totalEntities),
-      percentCompleteness80Plus: roundPercent(summaryCompleteness.above80Count, totalEntities)
+      percentCompleteness80Plus:
+        summaryCompleteness == null
+          ? null
+          : roundPercent(summaryCompleteness.above80Count, totalEntities)
     },
     lifecycleBreakdown,
     coverage,
@@ -272,6 +295,8 @@ export const getWorkspaceAnalytics = async (
     schemas,
     lifecycleStates,
     staleAfterDays,
-    stripAuditChanges(auditRows)
+    stripAuditChanges(auditRows),
+    new Date(),
+    authCtx
   );
 };

@@ -2,7 +2,7 @@ import { describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { AssessmentDbResult } from './db/projectDatabase';
-import { upsertAssessmentResponse } from './assessmentResponseOperations';
+import { listAssessmentResponses, upsertAssessmentResponse } from './assessmentResponseOperations';
 import { logAudit } from '../audit/db/auditLogging';
 
 vi.mock('../auth/authorization', () => ({
@@ -201,5 +201,36 @@ describe('upsertAssessmentResponse', () => {
       'entity-1',
       expect.any(Date)
     );
+  });
+
+  it('does not return responses when membership depends on an unavailable scope field', async () => {
+    const assessment = makeAssessment('open', {
+      scope: ['schema-missing'],
+      scope_conditions: [{ fieldId: 'removed-field', op: 'equals' as const, value: 'classified' }]
+    });
+    const db = {
+      project: {
+        getProject: vi.fn(async () => ({ id: 'proj-1', owner: null })),
+        getAssessmentById: vi.fn(async () => assessment),
+        listAssessmentResponses: vi.fn(async () => [
+          {
+            id: 'resp-1',
+            workspace: 'ws-1',
+            assessment_id: 'asmnt-1',
+            entity_id: 'entity-1',
+            occurrence: 1,
+            values: {},
+            created_at: now,
+            updated_at: now,
+            updated_by: null,
+            updated_by_name: null
+          }
+        ])
+      },
+      catalog: { listSchemas: vi.fn(async () => []) }
+    } as unknown as DatabaseAdapter;
+
+    await expect(listAssessmentResponses(db, 'ws-1', 'asmnt-1', event)).resolves.toEqual([]);
+    expect(db.project.listAssessmentResponses).not.toHaveBeenCalled();
   });
 });

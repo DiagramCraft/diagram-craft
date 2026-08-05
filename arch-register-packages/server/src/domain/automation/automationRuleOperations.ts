@@ -15,6 +15,12 @@ import { listJobRuns } from '../jobs/jobOperations';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { RelationSchemaDbResult } from '../catalog/db/relationDatabase';
+import {
+  isAutomationReadFieldKnown,
+  isAutomationReadFieldKnownAcrossSchemas,
+  isAutomationWriteFieldKnown,
+  isAutomationWriteFieldKnownAcrossSchemas
+} from './automationRuleFieldAccess';
 
 export const AUTOMATION_RULE_REDACTED_LITERAL = '[redacted]';
 
@@ -32,25 +38,30 @@ const hasFieldReferences = (
 
 const hasRestrictedFieldReference = (
   authCtx: WorkspaceAuthorizationContext,
-  rule: Pick<AutomationRuleDbResult, 'trigger' | 'conditions' | 'actions'>,
+  rule: Pick<AutomationRuleDbResult, 'resource_type' | 'trigger' | 'conditions' | 'actions'>,
   schemas: Array<SchemaDbResult | RelationSchemaDbResult>,
   schemaMissing: boolean
 ) => {
   if (schemaMissing || schemas.length === 0) return hasFieldReferences(rule);
 
-  const isRestricted = (fieldId: string) =>
+  const isRestrictedOrUnknown = (fieldId: string) =>
+    !isAutomationReadFieldKnownAcrossSchemas(rule.resource_type, schemas, fieldId) ||
+    schemas.some(schema => isFieldViewRestricted(authCtx, schema, fieldId));
+
+  const isWriteRestrictedOrUnknown = (fieldId: string) =>
+    !isAutomationWriteFieldKnownAcrossSchemas(schemas, fieldId) ||
     schemas.some(schema => isFieldViewRestricted(authCtx, schema, fieldId));
 
   return (
     ((rule.trigger.kind === 'field_changed' || rule.trigger.kind === 'relation_field_changed') &&
-      isRestricted(rule.trigger.field)) ||
-    rule.conditions.some(condition => isRestricted(condition.field)) ||
+      isRestrictedOrUnknown(rule.trigger.field)) ||
+    rule.conditions.some(condition => isRestrictedOrUnknown(condition.field)) ||
     rule.actions.some(action => {
-      if (action.kind === 'set_field_value') return isRestricted(action.field);
+      if (action.kind === 'set_field_value') return isWriteRestrictedOrUnknown(action.field);
       return (
         action.kind === 'send_notification' &&
         action.recipient.kind === 'reference_owner' &&
-        isRestricted(action.recipient.field)
+        isRestrictedOrUnknown(action.recipient.field)
       );
     })
   );
@@ -193,6 +204,14 @@ const validateInput = async (
 
   if (input.trigger.kind === 'field_changed' || input.trigger.kind === 'relation_field_changed') {
     const triggerField = input.trigger.field;
+    const known =
+      input.schema_id != null
+        ? isAutomationReadFieldKnown(input.resource_type, schemas[0], triggerField)
+        : isAutomationReadFieldKnownAcrossSchemas(input.resource_type, schemas, triggerField);
+    httpAssert.true(known, {
+      status: 400,
+      message: `Automation rule trigger references an unknown or unavailable field: ${triggerField}`
+    });
     const restricted = schemas.some(schema => isFieldViewRestricted(authCtx, schema, triggerField));
     httpAssert.true(!restricted, {
       status: 403,
@@ -202,6 +221,14 @@ const validateInput = async (
   }
 
   for (const condition of input.conditions) {
+    const known =
+      input.schema_id != null
+        ? isAutomationReadFieldKnown(input.resource_type, schemas[0], condition.field)
+        : isAutomationReadFieldKnownAcrossSchemas(input.resource_type, schemas, condition.field);
+    httpAssert.true(known, {
+      status: 400,
+      message: `Automation rule condition references an unknown or unavailable field: ${condition.field}`
+    });
     const restricted = schemas.some(schema =>
       isFieldViewRestricted(authCtx, schema, condition.field)
     );
@@ -214,6 +241,14 @@ const validateInput = async (
 
   for (const action of input.actions) {
     if (action.kind === 'set_field_value') {
+      const known =
+        input.schema_id != null
+          ? isAutomationWriteFieldKnown(schemas[0], action.field)
+          : isAutomationWriteFieldKnownAcrossSchemas(schemas, action.field);
+      httpAssert.true(known, {
+        status: 400,
+        message: `Automation rule action references an unknown or unavailable field: ${action.field}`
+      });
       for (const schema of schemas) {
         requireNoRestrictedFieldWrites(
           authCtx,
@@ -231,6 +266,14 @@ const validateInput = async (
       }
       if (action.recipient.kind !== 'reference_owner') continue;
       const field = action.recipient.field;
+      const known =
+        input.schema_id != null
+          ? isAutomationReadFieldKnown(input.resource_type, schemas[0], field)
+          : isAutomationReadFieldKnownAcrossSchemas(input.resource_type, schemas, field);
+      httpAssert.true(known, {
+        status: 400,
+        message: `Automation rule notification recipient references an unknown or unavailable field: ${field}`
+      });
       const restricted = schemas.some(schema => isFieldViewRestricted(authCtx, schema, field));
       httpAssert.true(!restricted, {
         status: 403,

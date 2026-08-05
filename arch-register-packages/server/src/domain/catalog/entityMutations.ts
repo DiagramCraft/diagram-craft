@@ -92,7 +92,7 @@ export const createEntityWithAudit = async (
   await db.catalog.createEntityVersion({
     id: crypto.randomUUID(),
     workspace: params.workspace,
-    entity_id: row.id,
+    record_id: row.id,
     version_number: row.version ?? 1,
     kind: 'autosave',
     commit_message: null,
@@ -164,7 +164,7 @@ export const updateEntityWithAudit = async (
   await db.catalog.createEntityVersion({
     id: crypto.randomUUID(),
     workspace: params.workspace,
-    entity_id: params.entityId,
+    record_id: params.entityId,
     version_number: row.version ?? 1,
     kind: params.versionKind ?? 'autosave',
     commit_message: null,
@@ -212,7 +212,7 @@ export const updateEntityWithAuditIfVersion = async (
   await db.catalog.createEntityVersion({
     id: crypto.randomUUID(),
     workspace: params.workspace,
-    entity_id: params.entityId,
+    record_id: params.entityId,
     version_number: row.version ?? 1,
     kind: params.versionKind ?? 'autosave',
     commit_message: null,

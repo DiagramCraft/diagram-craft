@@ -136,7 +136,7 @@ const entityVersionHandlers = {
       input.params.versionId
     );
     orpcAssert.present(version, { code: 'NOT_FOUND', message: 'Version not found' });
-    orpcAssert.true(version.entity_id === entity.id, {
+    orpcAssert.true(version.record_id === entity.id, {
       code: 'BAD_REQUEST',
       message: 'Version does not belong to this entity'
     });
@@ -167,7 +167,7 @@ const entityVersionHandlers = {
       input.params.versionId
     );
     orpcAssert.present(existing, { code: 'NOT_FOUND', message: 'Version not found' });
-    orpcAssert.true(existing.entity_id === entity.id, {
+    orpcAssert.true(existing.record_id === entity.id, {
       code: 'BAD_REQUEST',
       message: 'Version does not belong to this entity'
     });

@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 import {
   filterKnownRestrictedFieldGroups,
+  filterKnownAllRestrictedFieldGroups,
   filterLiveFieldGroups,
   filterRestrictedFieldGroups,
+  isFieldEditRestricted,
   isFieldViewRestricted,
-  requireNoRestrictedFieldWrites
+  requireNoRestrictedFieldWrites,
+  restrictedFieldIds
 } from './fieldGroupAccessControl';
 import type { FieldGroupSchemaShape } from './fieldGroupAccessControl';
 
@@ -46,6 +49,18 @@ const schema: FieldGroupSchemaShape = {
   ]
 };
 
+const danglingSchema: FieldGroupSchemaShape = {
+  fields: [
+    { id: 'name', name: 'Name', type: 'text' },
+    { id: 'dangling', name: 'Dangling', type: 'text', groupId: 'deleted-group' }
+  ],
+  groups: []
+};
+
+const legacyDanglingSchema: FieldGroupSchemaShape = {
+  fields: [{ id: 'dangling', name: 'Dangling', type: 'text', groupId: 'deleted-group' }]
+};
+
 describe('filterRestrictedFieldGroups', () => {
   it('returns data unchanged when authCtx is null', () => {
     const data = { name: 'x', secret: 'y' };
@@ -70,6 +85,16 @@ describe('filterRestrictedFieldGroups', () => {
     });
     const data = { name: 'x', secret: 'y', reviewOnly: 'z' };
     expect(filterRestrictedFieldGroups(authCtx, schema, data)).toEqual(data);
+  });
+
+  it('omits fields whose group reference does not resolve', () => {
+    const authCtx = authCtxWithTeamRoles({});
+    expect(
+      filterRestrictedFieldGroups(authCtx, danglingSchema, {
+        name: 'visible',
+        dangling: 'must not escape'
+      })
+    ).toEqual({ name: 'visible' });
   });
 });
 
@@ -98,6 +123,19 @@ describe('filterKnownRestrictedFieldGroups', () => {
       })
     ).toEqual({ name: 'x' });
   });
+
+  it('fails closed for a dangling group in a legacy schema fixture', () => {
+    const authCtx = authCtxWithTeamRoles({});
+    expect(
+      filterKnownRestrictedFieldGroups(authCtx, legacyDanglingSchema, { dangling: 'hidden' })
+    ).toEqual({});
+  });
+
+  it('fails closed for dangling groups in unattended redaction', () => {
+    expect(
+      filterKnownAllRestrictedFieldGroups(legacyDanglingSchema, { dangling: 'hidden' })
+    ).toEqual({});
+  });
 });
 
 describe('filterLiveFieldGroups', () => {
@@ -121,6 +159,14 @@ describe('isFieldViewRestricted', () => {
     const authCtx = authCtxWithTeamRoles({});
     expect(isFieldViewRestricted(authCtx, null, 'secret')).toBe(false);
     expect(isFieldViewRestricted(authCtx, undefined, 'secret')).toBe(false);
+  });
+
+  it('treats a dangling group as inaccessible for reads and writes', () => {
+    const authCtx = authCtxWithTeamRoles({});
+    expect(isFieldViewRestricted(authCtx, danglingSchema, 'dangling')).toBe(true);
+    expect(isFieldEditRestricted(authCtx, danglingSchema, 'dangling')).toBe(true);
+    expect(restrictedFieldIds(authCtx, danglingSchema)).toEqual(new Set(['dangling']));
+    expect(() => requireNoRestrictedFieldWrites(authCtx, danglingSchema, ['dangling'])).toThrow();
   });
 
   it('is false for ungrouped fields', () => {

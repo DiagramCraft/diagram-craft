@@ -9,6 +9,7 @@ import {
   updateAssessmentStatus
 } from './assessmentOperations';
 import type { GovernanceCaseDbResult } from '../governance/db/governanceDatabase';
+import { listAllCatalogEntities } from '../catalog/entityLoader';
 
 vi.mock('../auth/authorization', () => ({
   buildApiAuthCtx: vi.fn(async () => ({ userId: 'user-1' })),
@@ -282,5 +283,49 @@ describe('getAssessment team_acknowledge_status', () => {
         resolved_at: resolvedAt.toISOString()
       }
     ]);
+  });
+
+  it('fails closed for stale scope conditions in assessment statistics and API output', async () => {
+    const row = {
+      ...assessment('assessment-1', project.id),
+      scope: ['schema-missing'],
+      scope_conditions: [{ fieldId: 'removed-field', op: 'equals' as const, value: 'classified' }]
+    };
+    const db = {
+      project: {
+        getAssessmentById: vi.fn(async () => row),
+        getProject: vi.fn(async () => project),
+        listAssessmentResponses: vi.fn(async () => [
+          {
+            id: 'response-1',
+            workspace: 'ws-1',
+            assessment_id: row.id,
+            entity_id: 'entity-1',
+            occurrence: 1,
+            values: {},
+            created_at: now,
+            updated_at: now,
+            updated_by: null,
+            updated_by_name: null
+          }
+        ])
+      },
+      catalog: { listSchemas: vi.fn(async () => []) },
+      governance: { listCases: vi.fn(async () => []) },
+      workspace: { listTeams: vi.fn(async () => []) }
+    } as unknown as DatabaseAdapter;
+    vi.mocked(listAllCatalogEntities).mockResolvedValueOnce([
+      {
+        id: 'entity-1',
+        schema_id: 'schema-missing',
+        data: { 'removed-field': 'classified' }
+      }
+    ] as never);
+
+    const result = await getAssessment(db, 'ws-1', row.id, event);
+
+    expect(result.scope_conditions).toEqual([]);
+    expect(result.response_count).toBe(0);
+    expect(result.completed_entity_count).toBe(0);
   });
 });

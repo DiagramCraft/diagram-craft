@@ -528,7 +528,7 @@ export const bypassRelationApproval = async (
     await tx.catalog.createEntityVersion({
       id: randomUUID(),
       workspace,
-      entity_id: canonicalRelationId,
+      record_id: canonicalRelationId,
       version_number: row.version,
       kind: 'autosave',
       commit_message: null,
@@ -727,7 +727,7 @@ export const createRelationGovernanceRegistry = (): GovernanceRegistry =>
           await tx.catalog.createEntityVersion({
             id: randomUUID(),
             workspace: caseRow.workspace,
-            entity_id: relationId,
+            record_id: relationId,
             version_number: nextRelation.version,
             kind: 'case_applied',
             commit_message: null,
