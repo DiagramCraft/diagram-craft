@@ -19,6 +19,7 @@ import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { EntityDbResult } from './db/catalogDatabase';
 import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
 import { defineOperation } from '../operation';
+import { resolveRelationSchemaCatalogAt } from './schemaHistory';
 
 const BASE_COLUMNS = ['_schemaId', '_inEntityId', '_outEntityId'] as const;
 const BASE_COLUMN_SET = new Set<string>(BASE_COLUMNS);
@@ -82,28 +83,43 @@ export const exportRelationsCsv = async (
   now = new Date()
 ) => {
   requireSchemaRead(authCtx);
-  const [relationSchemas, relations] = await Promise.all([
+  const [relationSchemas, schemas] = await Promise.all([
     db.relation.listRelationSchemas(workspace),
-    collectRelationsFromIR(
-      db,
-      workspace,
-      authCtx,
-      { relationQuery },
-      await db.catalog.listSchemas(workspace),
-      await db.relation.listRelationSchemas(workspace)
-    )
+    db.catalog.listSchemas(workspace)
   ]);
+  const relations = await collectRelationsFromIR(
+    db,
+    workspace,
+    authCtx,
+    { relationQuery },
+    schemas,
+    relationSchemas
+  );
 
   const relationSchemaById = new Map(relationSchemas.map(schema => [schema.id, schema]));
+  const responseRelationSchemaById = relationQuery.asOf
+    ? await resolveRelationSchemaCatalogAt(
+        db,
+        workspace,
+        relationSchemas,
+        new Date(relationQuery.asOf)
+      )
+    : new Map(relationSchemas.map(schema => [schema.id, schema]));
   const schemaIds = [...new Set(relations.map(relation => relation._schema.id))];
-  const singleSchema =
+  const currentSingleSchema =
     schemaIds.length === 1 && schemaIds[0] != null
       ? relationSchemaById.get(schemaIds[0])
       : undefined;
-  const fields = singleSchema ? relationFieldsForExport(authCtx, singleSchema) : [];
+  const historicalSingleSchema =
+    schemaIds.length === 1 && schemaIds[0] != null
+      ? responseRelationSchemaById.get(schemaIds[0])
+      : undefined;
+  const fields = historicalSingleSchema
+    ? relationFieldsForExport(authCtx, historicalSingleSchema)
+    : [];
   const columns = [...BASE_COLUMNS, ...fields.map(field => field.name)];
   const rows = relations.map(relation => relationRowToCsv(relation, fields));
-  const filename = `${singleSchema ? relationSchemaName(singleSchema) : 'relations'}-${
+  const filename = `${currentSingleSchema ? relationSchemaName(currentSingleSchema) : 'relations'}-${
     now.toISOString().split('T')[0]
   }.csv`;
   return csvResponse(generateCsv(rows, columns), filename);

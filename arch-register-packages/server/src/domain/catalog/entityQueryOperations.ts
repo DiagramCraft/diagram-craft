@@ -37,7 +37,12 @@ import {
 } from './entityQueryIRCompiler';
 import { validateEntityQueryIR, type SchemaCatalog } from './entityQueryIRValidator';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
-import { availableSchemaCatalog, resolveEntitySchemaCatalogAt } from './schemaHistory';
+import {
+  availableRelationSchemaCatalog,
+  availableSchemaCatalog,
+  resolveEntitySchemaCatalogAt,
+  resolveRelationSchemaCatalogAt
+} from './schemaHistory';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import { toRedactedApiRelation } from './relationHelpers';
 import { buildTypedRelationVisibilityPolicy } from './relationAccessControl';
@@ -219,7 +224,12 @@ export const collectEntitiesFromIR = async (
   const schemaCatalog: SchemaCatalog = historicalSchemas
     ? availableSchemaCatalog(historicalSchemas)
     : new Map(schemas.map(schema => [schema.id, schema]));
-  const relationSchemaCatalog = new Map(relationSchemas.map(schema => [schema.id, schema]));
+  const historicalRelationSchemas = query.asOf
+    ? await resolveRelationSchemaCatalogAt(db, workspace, relationSchemas, new Date(query.asOf))
+    : null;
+  const relationSchemaCatalog = historicalRelationSchemas
+    ? availableRelationSchemaCatalog(historicalRelationSchemas)
+    : new Map(relationSchemas.map(schema => [schema.id, schema]));
   const validation = validateEntityQueryIR(query, schemaCatalog, authCtx, relationSchemaCatalog);
   httpAssert.true(validation.ok, {
     status: 400,
@@ -825,8 +835,21 @@ const compileRelationQueries = async (
   offset: number
 ) => {
   const query = options.relationQuery;
-  const schemaCatalog: SchemaCatalog = new Map(schemas.map(schema => [schema.id, schema]));
-  const relationSchemaCatalog = new Map(relationSchemas.map(schema => [schema.id, schema]));
+  const historicalSchemas = query.asOf
+    ? await resolveEntitySchemaCatalogAt(db, workspace, schemas, new Date(query.asOf))
+    : null;
+  const schemaCatalog: SchemaCatalog = historicalSchemas
+    ? availableSchemaCatalog(historicalSchemas)
+    : new Map(schemas.map(schema => [schema.id, schema]));
+  const historicalRelationSchemas = query.asOf
+    ? await resolveRelationSchemaCatalogAt(db, workspace, relationSchemas, new Date(query.asOf))
+    : null;
+  const relationSchemaCatalog = historicalRelationSchemas
+    ? availableRelationSchemaCatalog(historicalRelationSchemas)
+    : new Map(relationSchemas.map(schema => [schema.id, schema]));
+  const responseRelationSchemaCatalog = historicalRelationSchemas
+    ? historicalRelationSchemas
+    : new Map(relationSchemas.map(schema => [schema.id, schema]));
   const validation = validateEntityQueryIR(query, schemaCatalog, authCtx, relationSchemaCatalog);
   httpAssert.true(validation.ok, {
     status: 400,
@@ -837,10 +860,10 @@ const compileRelationQueries = async (
 
   const relationSchemasForPolicy =
     query.schemaId == null
-      ? relationSchemas
+      ? [...relationSchemaCatalog.values()]
       : relationSchemaCatalog.has(query.schemaId)
         ? [relationSchemaCatalog.get(query.schemaId)!]
-        : relationSchemas;
+        : [];
   const relationVisibility = buildTypedRelationVisibilityPolicy(
     authCtx,
     schemaCatalog.values(),
@@ -865,7 +888,7 @@ const compileRelationQueries = async (
       authCtx,
       relationSchemaCatalog
     );
-    return { rowQuery, countQuery, relationSchemaCatalog };
+    return { rowQuery, countQuery, relationSchemaCatalog, responseRelationSchemaCatalog };
   } catch (error) {
     if (error instanceof UnsupportedEntityQueryIRError) {
       httpAssert.true(false, { status: 400, message: error.message });
@@ -882,7 +905,7 @@ export const collectRelationsFromIR = async (
   schemas: SchemaDbResult[],
   relationSchemas: RelationSchemaDbResult[]
 ): Promise<RelationRecord[]> => {
-  const { rowQuery, relationSchemaCatalog } = await compileRelationQueries(
+  const { rowQuery, responseRelationSchemaCatalog } = await compileRelationQueries(
     db,
     workspace,
     authCtx,
@@ -893,7 +916,7 @@ export const collectRelationsFromIR = async (
     0
   );
   const rows = await db.relation.runCompiledRelationQuery(rowQuery.sql, rowQuery.params);
-  const schemaById = relationSchemaCatalog;
+  const schemaById = responseRelationSchemaCatalog;
   return rows.map(row => {
     const schema = schemaById.get(row.schema_id);
     const apiRelation = toRedactedApiRelation(row, authCtx, schema);
@@ -914,7 +937,7 @@ export const listRelationsWithCount = async (
       db.catalog.listSchemas(workspace),
       db.relation.listRelationSchemas(workspace)
     ]);
-    const { rowQuery, countQuery, relationSchemaCatalog } = await compileRelationQueries(
+    const { rowQuery, countQuery, responseRelationSchemaCatalog } = await compileRelationQueries(
       db,
       workspace,
       authCtx,
@@ -929,7 +952,7 @@ export const listRelationsWithCount = async (
       db.relation.runCompiledRelationCountQuery(countQuery.sql, countQuery.params)
     ]);
     const items = rows.map(row => {
-      const schema = relationSchemaCatalog.get(row.schema_id);
+      const schema = responseRelationSchemaCatalog.get(row.schema_id);
       const apiRelation = toRedactedApiRelation(row, authCtx, schema);
       return withRelationQueryProjections(apiRelation, row.projections);
     });
