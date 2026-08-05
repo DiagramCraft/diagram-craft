@@ -19,6 +19,11 @@ type DerivedPlan = {
 
 type EvaluationContext = { values: Record<string, unknown> };
 
+type GroupAccessBoundary =
+  | { kind: 'unrestricted' }
+  | { kind: 'restricted'; teamIds: Set<string> }
+  | { kind: 'unresolved'; groupId: string };
+
 const logger = createLogger('derived-fields');
 
 const engine = bonsai<EvaluationContext>({ timeout: 50, maxDepth: 50 }).addContextFunction(
@@ -118,28 +123,26 @@ export const buildDerivedPlan = (fields: Array<SchemaField | AssessmentField>): 
   return { fields: ordered, compiled, dependencies, references };
 };
 
-const groupTeamIds = (field: SchemaField, groups: SchemaGroup[]): Set<string> | null => {
-  if (!field.groupId) return null;
+const groupAccessBoundary = (
+  field: { groupId?: string },
+  groups: SchemaGroup[]
+): GroupAccessBoundary => {
+  if (field.groupId == null) return { kind: 'unrestricted' };
   const group = groups.find(candidate => candidate.id === field.groupId);
+  if (!group) return { kind: 'unresolved', groupId: field.groupId };
   const teamIds = group?.accessControl?.teamIds;
-  return teamIds && teamIds.length > 0 ? new Set(teamIds) : null;
+  return teamIds && teamIds.length > 0
+    ? { kind: 'restricted', teamIds: new Set(teamIds) }
+    : { kind: 'unrestricted' };
 };
 
-/**
- * Ensures a derived field cannot be visible to a broader audience than any value it reads.
- * A null team set represents an unrestricted field/group. This is intentionally based on the
- * persisted team-set boundary rather than the current caller because derived values are stored
- * once and subsequently returned to many callers.
- */
-export const validateDerivedFieldGroupAccess = (
-  fields: SchemaField[],
-  groups: SchemaGroup[] = []
+const collectTransitiveDependencies = (
+  plan: DerivedPlan,
+  fieldById: Map<string, SchemaField | AssessmentField>
 ) => {
-  const plan = buildDerivedPlan(fields);
-  const fieldById = new Map(fields.map(field => [field.id, field]));
   const dependenciesByDerivedId = new Map<string, Set<string>>();
 
-  const collectDependencies = (fieldId: string, visiting: Set<string>): Set<string> => {
+  const collect = (fieldId: string, visiting: Set<string>): Set<string> => {
     const cached = dependenciesByDerivedId.get(fieldId);
     if (cached) return cached;
     if (visiting.has(fieldId)) return new Set();
@@ -149,7 +152,7 @@ export const validateDerivedFieldGroupAccess = (
     for (const dependency of plan.references.get(fieldId) ?? []) {
       result.add(dependency);
       if (fieldById.get(dependency)?.type === 'derived') {
-        collectDependencies(dependency, visiting).forEach(id => result.add(id));
+        collect(dependency, visiting).forEach(id => result.add(id));
       }
     }
     visiting.delete(fieldId);
@@ -157,16 +160,82 @@ export const validateDerivedFieldGroupAccess = (
     return result;
   };
 
+  for (const field of plan.fields) collect(field.id, new Set());
+  return dependenciesByDerivedId;
+};
+
+/**
+ * Finds derived fields whose own group or any transitive dependency group cannot be resolved.
+ * These values must not be materialized or returned through an authenticated redaction path.
+ */
+export const getDerivedFieldIdsWithUnresolvedGroups = (
+  fields: Array<SchemaField | AssessmentField>,
+  groups: SchemaGroup[] = []
+): Set<string> => {
+  const plan = buildDerivedPlan(fields);
+  const fieldById = new Map(fields.map(field => [field.id, field]));
+  const dependenciesByDerivedId = collectTransitiveDependencies(plan, fieldById);
+  const unresolved = new Set<string>();
+
   for (const derived of plan.fields) {
-    const outputTeamIds = groupTeamIds(fieldById.get(derived.id)!, groups);
-    for (const dependencyId of collectDependencies(derived.id, new Set())) {
+    const outputBoundary = groupAccessBoundary(fieldById.get(derived.id)!, groups);
+    if (outputBoundary.kind === 'unresolved') {
+      unresolved.add(derived.id);
+      continue;
+    }
+
+    for (const dependencyId of dependenciesByDerivedId.get(derived.id) ?? []) {
       const dependency = fieldById.get(dependencyId);
       if (!dependency) continue;
-      const dependencyTeamIds = groupTeamIds(dependency, groups);
-      if (dependencyTeamIds === null) continue;
+      if (groupAccessBoundary(dependency, groups).kind === 'unresolved') {
+        unresolved.add(derived.id);
+        break;
+      }
+    }
+  }
+
+  return unresolved;
+};
+
+/**
+ * Ensures a derived field cannot be visible to a broader audience than any value it reads.
+ * This is intentionally based on the persisted team-set boundary rather than the current caller
+ * because derived values are stored once and subsequently returned to many callers. An unresolved
+ * group is rejected rather than treated as an unrestricted field/group.
+ */
+export const validateDerivedFieldGroupAccess = (
+  fields: SchemaField[],
+  groups: SchemaGroup[] = []
+) => {
+  const plan = buildDerivedPlan(fields);
+  const fieldById = new Map(fields.map(field => [field.id, field]));
+  const dependenciesByDerivedId = collectTransitiveDependencies(plan, fieldById);
+
+  for (const derived of plan.fields) {
+    const outputBoundary = groupAccessBoundary(fieldById.get(derived.id)!, groups);
+    if (outputBoundary.kind === 'unresolved') {
+      httpAssert.true(false, {
+        status: 400,
+        message: `Derived field '${derived.id}' references unresolved field group '${outputBoundary.groupId}'`
+      });
+    }
+
+    for (const dependencyId of dependenciesByDerivedId.get(derived.id) ?? []) {
+      const dependency = fieldById.get(dependencyId);
+      if (!dependency) continue;
+      const dependencyBoundary = groupAccessBoundary(dependency, groups);
+      if (dependencyBoundary.kind === 'unresolved') {
+        httpAssert.true(false, {
+          status: 400,
+          message: `Derived field '${derived.id}' references field '${dependency.id}' with unresolved field group '${dependencyBoundary.groupId}'`
+        });
+        continue;
+      }
+      if (dependencyBoundary.kind === 'unrestricted') continue;
 
       const outputIsNarrowEnough =
-        outputTeamIds !== null && [...outputTeamIds].every(teamId => dependencyTeamIds.has(teamId));
+        outputBoundary.kind === 'restricted' &&
+        [...outputBoundary.teamIds].every(teamId => dependencyBoundary.teamIds.has(teamId));
       httpAssert.true(outputIsNarrowEnough, {
         status: 400,
         message: `Derived field '${derived.id}' cannot reference restricted field '${dependency.id}' from a broader field group`
@@ -206,10 +275,15 @@ const coerceResult = (field: DerivedFieldDefinition, value: unknown): unknown =>
 export const evaluateDerivedFields = (
   plan: DerivedPlan,
   inputValues: Record<string, unknown>,
-  context: { objectType: 'entity' | 'assessment'; objectId: string }
+  context: { objectType: 'entity' | 'assessment'; objectId: string },
+  unsafeDerivedFieldIds: ReadonlySet<string> = new Set()
 ): Record<string, unknown> => {
   const values = { ...inputValues };
   for (const field of plan.fields) {
+    if (unsafeDerivedFieldIds.has(field.id)) {
+      delete values[field.id];
+      continue;
+    }
     const dependencies = plan.dependencies.get(field.id) ?? [];
     if (dependencies.some(dependency => isMissing(values[dependency]))) {
       delete values[field.id];
@@ -236,10 +310,14 @@ export const evaluateDerivedFields = (
 export const materializeDerivedFields = (
   fields: Array<SchemaField | AssessmentField>,
   values: Record<string, unknown>,
-  context: { objectType: 'entity' | 'assessment'; objectId: string }
+  context: { objectType: 'entity' | 'assessment'; objectId: string },
+  groups?: SchemaGroup[]
 ) => {
   const plan = buildDerivedPlan(fields);
-  return evaluateDerivedFields(plan, values, context);
+  const unsafeDerivedFieldIds = groups
+    ? getDerivedFieldIdsWithUnresolvedGroups(fields, groups)
+    : new Set<string>();
+  return evaluateDerivedFields(plan, values, context, unsafeDerivedFieldIds);
 };
 
 export const assertNoDerivedFieldWrites = (

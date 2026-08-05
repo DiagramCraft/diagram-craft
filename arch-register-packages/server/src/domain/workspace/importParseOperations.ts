@@ -19,6 +19,9 @@ import type {
   ImportDiagnostic,
   ExportDocumentData
 } from './exportTypes';
+import type { SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
+import { findUnresolvedFieldGroupReferences } from '../catalog/schemaHelpers';
+import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 
 const checker = new PermissionChecker();
 export const parseImport = async (
@@ -101,6 +104,7 @@ export const parseImport = async (
       };
       conflicts.push(...schemaResult.conflicts);
       warnings.push(...schemaResult.warnings);
+      errors.push(...schemaResult.errors);
     }
   }
 
@@ -436,9 +440,10 @@ const validateSchemas = async (
   db: DatabaseAdapter,
   workspace: string,
   schemas: ExportSchema[]
-): Promise<{ conflicts: ImportConflict[]; warnings: string[] }> => {
+): Promise<{ conflicts: ImportConflict[]; warnings: string[]; errors: string[] }> => {
   const conflicts: ImportConflict[] = [];
   const warnings: string[] = [];
+  const errors: string[] = [];
 
   const existingSchemas = await db.catalog.listSchemas(workspace);
 
@@ -455,9 +460,28 @@ const validateSchemas = async (
         suggested_resolution: 'merge'
       });
     }
+
+    const fields = schema.fields as SchemaField[];
+    const groups = (schema.groups ?? []) as SchemaGroup[];
+    const unresolved = findUnresolvedFieldGroupReferences(fields, groups);
+    errors.push(
+      ...unresolved.map(
+        reference =>
+          `Schema '${schema.name}' field '${reference.fieldName}' references missing field group '${reference.groupId}'`
+      )
+    );
+    if (unresolved.length === 0) {
+      try {
+        validateDerivedFieldGroupAccess(fields, groups);
+      } catch (error) {
+        errors.push(
+          error instanceof Error ? `Schema '${schema.name}': ${error.message}` : String(error)
+        );
+      }
+    }
   }
 
-  return { conflicts, warnings };
+  return { conflicts, warnings, errors };
 };
 
 const validateRelationSchemas = async (
@@ -538,6 +562,17 @@ const validateRelationSchemas = async (
         `Relation schema '${relationSchema.name}' references missing shared field group '${link.groupId}' and will be skipped`
       );
     }
+
+    const unresolved = findUnresolvedFieldGroupReferences(
+      relationSchema.fields as Array<{ id: string; name?: string; groupId?: string }>,
+      (relationSchema.groups ?? []) as SchemaGroup[]
+    );
+    errors.push(
+      ...unresolved.map(
+        reference =>
+          `Relation schema '${relationSchema.name}' field '${reference.fieldName}' references missing field group '${reference.groupId}'`
+      )
+    );
 
     if (relationSchema.relation_approval_policy === 'required') {
       errors.push(

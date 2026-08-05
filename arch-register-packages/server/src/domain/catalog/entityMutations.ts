@@ -66,10 +66,15 @@ export const createEntityWithAudit = async (
   const entity = schema
     ? {
         ...params.entity,
-        data: materializeDerivedFields(schema.fields, params.entity.data, {
-          objectType: 'entity',
-          objectId: params.entity.id
-        })
+        data: materializeDerivedFields(
+          schema.fields,
+          params.entity.data,
+          {
+            objectType: 'entity',
+            objectId: params.entity.id
+          },
+          schema.groups ?? []
+        )
       }
     : params.entity;
   const row = await db.catalog.createEntity(entity);
@@ -133,10 +138,15 @@ export const updateEntityWithAudit = async (
   const materializedNext = schema
     ? {
         ...params.next,
-        data: materializeDerivedFields(schema.fields, params.next.data, {
-          objectType: 'entity',
-          objectId: params.entityId
-        })
+        data: materializeDerivedFields(
+          schema.fields,
+          params.next.data,
+          {
+            objectType: 'entity',
+            objectId: params.entityId
+          },
+          schema.groups ?? []
+        )
       }
     : params.next;
   const next = withOutdatedMetadataIfChanged(params.previous, materializedNext);

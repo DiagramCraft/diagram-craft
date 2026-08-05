@@ -284,6 +284,34 @@ export const clearOrphanedGroupIds = <F extends { groupId?: string }>(
   );
 };
 
+export const findUnresolvedFieldGroupReferences = (
+  fields: Array<{ id: string; name?: string; groupId?: string }>,
+  groups: SchemaGroup[]
+) => {
+  const groupIds = new Set(groups.map(group => group.id));
+  return fields.flatMap(field =>
+    field.groupId != null && !groupIds.has(field.groupId)
+      ? [{ fieldId: field.id, fieldName: field.name ?? field.id, groupId: field.groupId }]
+      : []
+  );
+};
+
+export const assertResolvedFieldGroupReferences = (
+  fields: Array<{ id: string; name?: string; groupId?: string }>,
+  groups: SchemaGroup[]
+) => {
+  const unresolved = findUnresolvedFieldGroupReferences(fields, groups);
+  httpAssert.true(unresolved.length === 0, {
+    status: 400,
+    message: unresolved
+      .map(
+        reference =>
+          `Field '${reference.fieldName}' references missing field group '${reference.groupId}'`
+      )
+      .join('; ')
+  });
+};
+
 export const buildCreateSchemaInput = (
   workspace: string,
   body: Record<string, unknown>,
@@ -307,7 +335,8 @@ export const buildCreateSchemaInput = (
   } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
   const normalizedGroups = normalizeSchemaGroups(groups);
-  const normalizedFields = clearOrphanedGroupIds(normalizeSchemaFields(fields), normalizedGroups);
+  const normalizedFields = normalizeSchemaFields(fields);
+  assertResolvedFieldGroupReferences(normalizedFields, normalizedGroups);
 
   return {
     id: idFactory(),
@@ -360,7 +389,8 @@ export const buildUpdateSchemaInput = (
   const normalizedGroups =
     groups !== undefined ? normalizeSchemaGroups(groups) : (current.groups ?? []);
   const rawFields = fields !== undefined ? normalizeSchemaFields(fields) : current.fields;
-  const normalizedFields = clearOrphanedGroupIds(rawFields, normalizedGroups);
+  const normalizedFields = rawFields;
+  assertResolvedFieldGroupReferences(normalizedFields, normalizedGroups);
 
   return {
     name,

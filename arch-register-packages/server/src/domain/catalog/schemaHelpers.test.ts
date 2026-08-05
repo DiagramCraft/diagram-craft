@@ -172,18 +172,19 @@ describe('buildCreateSchemaInput', () => {
     expect(result.groups).toEqual([{ id: 'g1', name: 'Basics' }]);
   });
 
-  it('clears groupId on fields referencing a group not present in the submitted groups', () => {
-    const result = buildCreateSchemaInput(
-      'ws-1',
-      {
-        name: 'Application',
-        fields: [{ id: 'notes', name: 'Notes', type: 'text', groupId: 'missing' }],
-        groups: [{ id: 'g1', name: 'Basics' }]
-      },
-      new Set(),
-      now
-    );
-    expect(result.fields[0]!.groupId).toBeUndefined();
+  it('rejects fields referencing a group not present in the submitted groups', () => {
+    expect(() =>
+      buildCreateSchemaInput(
+        'ws-1',
+        {
+          name: 'Application',
+          fields: [{ id: 'notes', name: 'Notes', type: 'text', groupId: 'missing' }],
+          groups: [{ id: 'g1', name: 'Basics' }]
+        },
+        new Set(),
+        now
+      )
+    ).toThrow("Field 'Notes' references missing field group 'missing'");
   });
 });
 
@@ -212,7 +213,11 @@ describe('buildUpdateSchemaInput', () => {
 
   it('replaces groups when provided', () => {
     const result = buildUpdateSchemaInput(
-      { name: 'Application', groups: [{ id: 'g2', name: 'Advanced' }] },
+      {
+        name: 'Application',
+        fields: [{ id: 'notes', name: 'Notes', type: 'text', groupId: 'g2' }],
+        groups: [{ id: 'g2', name: 'Advanced' }]
+      },
       current,
       new Set(),
       now
@@ -220,14 +225,10 @@ describe('buildUpdateSchemaInput', () => {
     expect(result.groups).toEqual([{ id: 'g2', name: 'Advanced' }]);
   });
 
-  it('clears groupId on fields referencing a group removed from groups', () => {
-    const result = buildUpdateSchemaInput(
-      { name: 'Application', groups: [] },
-      current,
-      new Set(),
-      now
-    );
-    expect(result.fields[0]!.groupId).toBeUndefined();
+  it('rejects fields referencing a group removed from groups', () => {
+    expect(() =>
+      buildUpdateSchemaInput({ name: 'Application', groups: [] }, current, new Set(), now)
+    ).toThrow("Field 'Notes' references missing field group 'g1'");
   });
 });
 

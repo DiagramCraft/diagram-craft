@@ -61,6 +61,20 @@ const legacyDanglingSchema: FieldGroupSchemaShape = {
   fields: [{ id: 'dangling', name: 'Dangling', type: 'text', groupId: 'deleted-group' }]
 };
 
+const legacyDerivedSchema: FieldGroupSchemaShape = {
+  fields: [
+    { id: 'salary', name: 'Salary', type: 'text', groupId: 'deleted-group' },
+    {
+      id: 'salary_copy',
+      name: 'Salary copy',
+      type: 'derived',
+      expression: 'field("salary")',
+      resultType: 'text'
+    }
+  ],
+  groups: []
+};
+
 describe('filterRestrictedFieldGroups', () => {
   it('returns data unchanged when authCtx is null', () => {
     const data = { name: 'x', secret: 'y' };
@@ -135,6 +149,13 @@ describe('filterKnownRestrictedFieldGroups', () => {
     expect(
       filterKnownAllRestrictedFieldGroups(legacyDanglingSchema, { dangling: 'hidden' })
     ).toEqual({});
+  });
+
+  it('hides legacy derived values whose source group is dangling', () => {
+    const data = { salary: 'secret', salary_copy: 'secret' };
+    const authCtx = authCtxWithTeamRoles({});
+    expect(filterKnownRestrictedFieldGroups(authCtx, legacyDerivedSchema, data)).toEqual({});
+    expect(filterKnownAllRestrictedFieldGroups(legacyDerivedSchema, data)).toEqual({});
   });
 });
 

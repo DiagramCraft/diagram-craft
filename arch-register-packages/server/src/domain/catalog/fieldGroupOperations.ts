@@ -252,10 +252,15 @@ export const updateWorkspaceSharedFieldGroup = async (
             await tx.catalog.updateEntityDerivedFields(
               ws,
               entity.id,
-              materializeDerivedFields(row.fields, entity.data, {
-                objectType: 'entity',
-                objectId: entity.id
-              })
+              materializeDerivedFields(
+                row.fields,
+                entity.data,
+                {
+                  objectType: 'entity',
+                  objectId: entity.id
+                },
+                row.groups ?? []
+              )
             );
           }
         }
