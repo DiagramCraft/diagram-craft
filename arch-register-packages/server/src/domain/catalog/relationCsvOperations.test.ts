@@ -1,6 +1,7 @@
 import { buildAuthorizationContext } from '@arch-register/permissions';
 import { describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
+import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
 
@@ -11,7 +12,26 @@ vi.mock('./entityQueryOperations', async importActual => ({
   collectRelationsFromIR: collectRelationsFromIRMock
 }));
 
+vi.mock('../workspace/resolveWorkspace', () => ({
+  resolveWorkspace: vi.fn(async (_catalog: unknown, workspace: string) => workspace)
+}));
+
+vi.mock('../audit/db/auditLogging', async () => ({
+  ...(await vi.importActual<typeof import('../audit/db/auditLogging')>('../audit/db/auditLogging')),
+  logAudit: vi.fn(async () => {})
+}));
+
+const authorizationMocks = vi.hoisted(() => ({
+  buildApiAuthCtx: vi.fn()
+}));
+
+vi.mock('../auth/authorization', async () => ({
+  ...(await vi.importActual<typeof import('../auth/authorization')>('../auth/authorization')),
+  buildApiAuthCtx: authorizationMocks.buildApiAuthCtx
+}));
+
 import {
+  commitRelationsImport,
   downloadRelationImportTemplate,
   exportRelationsCsv,
   parseRelationsImport
@@ -116,6 +136,17 @@ const makeRelation = (
   updated_at: now
 });
 
+const event = {} as AuthenticatedEvent;
+const eventForAuthCtx = () => {
+  authorizationMocks.buildApiAuthCtx.mockResolvedValue(authCtx);
+  return event;
+};
+
+type MockDb = DatabaseAdapter & {
+  core: { transaction: ReturnType<typeof vi.fn> };
+  relation: { createRelation: ReturnType<typeof vi.fn>; updateRelation: ReturnType<typeof vi.fn> };
+};
+
 const makeDb = ({
   relationSchemas,
   entities,
@@ -124,12 +155,20 @@ const makeDb = ({
   relationSchemas: RelationSchemaDbResult[];
   entities: EntityDbResult[];
   existingRelations?: RelationDbResult[];
-}) =>
-  ({
+}) => {
+  const db = {
+    core: {
+      transaction: vi.fn(async (callback: (tx: DatabaseAdapter) => unknown) => callback(db))
+    },
     catalog: {
       listSchemas: vi.fn(async () => [entitySchema]),
       listEntities: vi.fn(async () => entities),
-      listEnums: vi.fn(async () => [])
+      listEnums: vi.fn(async () => []),
+      getEntity: vi.fn(
+        async (_workspace: string, id: string) => entities.find(entity => entity.id === id) ?? null
+      ),
+      createEntityVersion: vi.fn(async () => ({})),
+      pruneAutosaveVersions: vi.fn(async () => {})
     },
     relation: {
       listRelationSchemas: vi.fn(async () => relationSchemas),
@@ -140,9 +179,38 @@ const makeDb = ({
       listRelations: vi.fn(async () => ({
         items: existingRelations,
         total: existingRelations.length
-      }))
+      })),
+      getRelation: vi.fn(
+        async (_workspace: string, id: string) =>
+          existingRelations.find(relation => relation.id === id) ?? null
+      ),
+      createRelation: vi.fn(
+        async (input: {
+          id: string;
+          schema_id: string;
+          in_entity_id: string;
+          out_entity_id: string;
+        }) => makeRelation(input.schema_id, input.in_entity_id, input.out_entity_id)
+      ),
+      updateRelation: vi.fn(
+        async (
+          _ws: string,
+          id: string,
+          input: { version: number; data: Record<string, unknown> }
+        ) => {
+          const existing = existingRelations.find(relation => relation.id === id);
+          return {
+            ...(existing ?? makeRelation('relation-schema', 'in-1', 'out-1')),
+            version: input.version,
+            data: input.data,
+            updated_at: now
+          };
+        }
+      )
     }
-  }) as unknown as DatabaseAdapter;
+  } as unknown as MockDb;
+  return db;
+};
 
 describe('exportRelationsCsv', () => {
   it('exports relation fields when the result contains one relation type', async () => {
@@ -282,6 +350,113 @@ describe('parseRelationsImport', () => {
     expect(result.relations[0]?.errors).toEqual(
       expect.arrayContaining(['Out endpoint entity was not found', 'Weight must be at most 5'])
     );
+  });
+
+  it('flags an existing relation that requires an approved change proposal', async () => {
+    const relationSchema = makeRelationSchema('relation-schema', 'Depends On');
+    relationSchema.relation_approval_policy = 'required';
+    const entities = [makeEntity('in-1'), makeEntity('out-1')];
+    const existing = makeRelation('relation-schema', 'in-1', 'out-1');
+    const result = await parseRelationsImport(
+      makeDb({ relationSchemas: [relationSchema], entities, existingRelations: [existing] }),
+      'ws-1',
+      authCtx,
+      '_schemaId;_inEntityId;_outEntityId\nrelation-schema;in-1;out-1'
+    );
+
+    expect(result.validRows).toBe(0);
+    expect(result.relations[0]?.errors).toEqual(
+      expect.arrayContaining([
+        `Relation '${existing.id}' requires an approved change proposal before it can be edited`
+      ])
+    );
+  });
+});
+
+describe('commitRelationsImport', () => {
+  it('never gates creating a new relation, even under a required-approval schema', async () => {
+    const relationSchema = makeRelationSchema('relation-schema', 'Depends On');
+    relationSchema.relation_approval_policy = 'required';
+    const entities = [makeEntity('in-1'), makeEntity('out-1')];
+    const db = makeDb({ relationSchemas: [relationSchema], entities });
+
+    const result = await commitRelationsImport(
+      db,
+      'ws-1',
+      authCtx,
+      eventForAuthCtx(),
+      [{ _schemaId: 'relation-schema', _inEntityId: 'in-1', _outEntityId: 'out-1' }]
+    );
+
+    expect(result).toMatchObject({ created: 1, updated: 0 });
+  });
+
+  it('blocks updating an existing relation when the schema requires approval and there is no override', async () => {
+    const relationSchema = makeRelationSchema('relation-schema', 'Depends On', [
+      { id: 'note', name: 'Note', type: 'text', requirementLevel: 'optional' }
+    ]);
+    relationSchema.relation_approval_policy = 'required';
+    const entities = [makeEntity('in-1'), makeEntity('out-1')];
+    const existing = makeRelation('relation-schema', 'in-1', 'out-1');
+    const db = makeDb({ relationSchemas: [relationSchema], entities, existingRelations: [existing] });
+
+    await expect(
+      commitRelationsImport(db, 'ws-1', authCtx, eventForAuthCtx(), [
+        { _schemaId: 'relation-schema', _inEntityId: 'in-1', _outEntityId: 'out-1', note: 'after' }
+      ])
+    ).rejects.toMatchObject({
+      status: 400,
+      message: expect.stringContaining(
+        `Relation '${existing.id}' requires an approved change proposal before it can be edited`
+      )
+    });
+    expect((db as unknown as { core: { transaction: ReturnType<typeof vi.fn> } }).core.transaction).not.toHaveBeenCalled();
+  });
+
+  it('blocks updating an existing relation when an instance override requires approval despite a disabled schema policy', async () => {
+    const relationSchema = makeRelationSchema('relation-schema', 'Depends On');
+    const entities = [makeEntity('in-1'), makeEntity('out-1')];
+    const existing = makeRelation('relation-schema', 'in-1', 'out-1');
+    existing.approval_policy_override = 'required';
+    const db = makeDb({ relationSchemas: [relationSchema], entities, existingRelations: [existing] });
+
+    await expect(
+      commitRelationsImport(db, 'ws-1', authCtx, eventForAuthCtx(), [
+        { _schemaId: 'relation-schema', _inEntityId: 'in-1', _outEntityId: 'out-1' }
+      ])
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('allows updating an existing relation when an instance override disables approval despite a required schema policy', async () => {
+    const relationSchema = makeRelationSchema('relation-schema', 'Depends On', [
+      { id: 'note', name: 'Note', type: 'text', requirementLevel: 'optional' }
+    ]);
+    relationSchema.relation_approval_policy = 'required';
+    const entities = [makeEntity('in-1'), makeEntity('out-1')];
+    const existing = makeRelation('relation-schema', 'in-1', 'out-1');
+    existing.approval_policy_override = 'disabled';
+    const db = makeDb({ relationSchemas: [relationSchema], entities, existingRelations: [existing] });
+
+    const result = await commitRelationsImport(db, 'ws-1', authCtx, eventForAuthCtx(), [
+      { _schemaId: 'relation-schema', _inEntityId: 'in-1', _outEntityId: 'out-1', note: 'after' }
+    ]);
+
+    expect(result).toMatchObject({ created: 0, updated: 1 });
+  });
+
+  it('allows updating an existing relation under a disabled schema policy with no override', async () => {
+    const relationSchema = makeRelationSchema('relation-schema', 'Depends On', [
+      { id: 'note', name: 'Note', type: 'text', requirementLevel: 'optional' }
+    ]);
+    const entities = [makeEntity('in-1'), makeEntity('out-1')];
+    const existing = makeRelation('relation-schema', 'in-1', 'out-1');
+    const db = makeDb({ relationSchemas: [relationSchema], entities, existingRelations: [existing] });
+
+    const result = await commitRelationsImport(db, 'ws-1', authCtx, eventForAuthCtx(), [
+      { _schemaId: 'relation-schema', _inEntityId: 'in-1', _outEntityId: 'out-1', note: 'after' }
+    ]);
+
+    expect(result).toMatchObject({ created: 0, updated: 1 });
   });
 });
 

@@ -7,6 +7,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import { requireSchemaRead, requireWorkspaceCapability } from '../auth/authorization';
 import { isFieldEditRestricted, isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import { canEditTypedRelation } from './relationAccessControl';
+import { relationRequiresApproval } from './relationHelpers';
 import {
   createWorkspaceRelation,
   listAllRelations,
@@ -300,6 +301,9 @@ const validateCsvRelationRow = (
     errors.push('Multiple existing relations match this schema and endpoint pair');
   }
   const existing = matches[0];
+  if (existing && schema && relationRequiresApproval(schema, existing)) {
+    errors.push(`Relation '${existing.id}' requires an approved change proposal before it can be edited`);
+  }
   if (existing && schema) {
     const declaredFieldIds = new Set(schema.fields.map(field => field.id));
     const visibleData = Object.fromEntries(
@@ -432,6 +436,14 @@ export const commitRelationsImport = async (
     ...normalizeCommitRelation(input, authCtx, context)
   }));
   const existingById = new Map(context.existingRelations.map(relation => [relation.id, relation]));
+  const existingByKey = new Map<string, RelationDbResult[]>();
+  for (const relation of context.existingRelations) {
+    const key = relationKey(relation.schema_id, relation.in_entity_id, relation.out_entity_id);
+    const matches = existingByKey.get(key) ?? [];
+    matches.push(relation);
+    existingByKey.set(key, matches);
+  }
+
   const importKeys = new Set<string>();
   for (const row of normalized) {
     const key = relationKey(row.schemaId, row.inEntityId, row.outEntityId);
@@ -440,8 +452,9 @@ export const commitRelationsImport = async (
     importKeys.add(key);
     const requestedExistingId =
       typeof row.input._existingId === 'string' ? row.input._existingId : undefined;
+    let existing: RelationDbResult | undefined;
     if (requestedExistingId) {
-      const existing = existingById.get(requestedExistingId);
+      existing = existingById.get(requestedExistingId);
       if (!existing) {
         row.errors.push(`Existing relation '${requestedExistingId}' was not found`);
       } else if (
@@ -449,6 +462,19 @@ export const commitRelationsImport = async (
       ) {
         row.errors.push('Existing relation does not match the imported natural key');
       }
+    } else {
+      const matches = existingByKey.get(key) ?? [];
+      if (matches.length > 1) {
+        row.errors.push('Multiple existing relations match the imported natural key');
+      } else {
+        existing = matches[0];
+      }
+    }
+    const schema = context.relationSchemaById.get(row.schemaId);
+    if (existing && schema && relationRequiresApproval(schema, existing)) {
+      row.errors.push(
+        `Relation '${existing.id}' requires an approved change proposal before it can be edited`
+      );
     }
   }
   const invalid = normalized.filter(row => row.errors.length > 0);
@@ -459,14 +485,6 @@ export const commitRelationsImport = async (
       .filter(Boolean)
       .join(' | ')
   });
-
-  const existingByKey = new Map<string, RelationDbResult[]>();
-  for (const relation of context.existingRelations) {
-    const key = relationKey(relation.schema_id, relation.in_entity_id, relation.out_entity_id);
-    const matches = existingByKey.get(key) ?? [];
-    matches.push(relation);
-    existingByKey.set(key, matches);
-  }
 
   return db.core.transaction(async tx => {
     let created = 0;
