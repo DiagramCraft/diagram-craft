@@ -294,4 +294,40 @@ describe('diagram craft transforms', () => {
     expect(result.technology).toBe('React');
     expect(result.secret).toBeUndefined();
   });
+
+  it('fails closed for missing schemas and stale field keys', () => {
+    const row = {
+      id: 'entity-1',
+      workspace: 'default',
+      schema_id: 'schema-1',
+      name: 'Frontend App',
+      slug: 'frontend-app',
+      namespace: 'default',
+      description: 'React SPA',
+      owner: null,
+      lifecycle: null,
+      tags: [],
+      links: [],
+      project_id: null,
+      data: { technology: 'React', stale: 'secret' }
+    } as unknown as Entity;
+
+    expect(toDiagramCraftData(row, null, authCtxWithTeamRoles({}))).not.toHaveProperty(
+      'technology'
+    );
+    expect(
+      toDiagramCraftData(
+        row,
+        { fields: [{ id: 'technology', name: 'Technology', type: 'text' }], groups: [] },
+        authCtxWithTeamRoles({})
+      )
+    ).toMatchObject({ technology: 'React' });
+    expect(
+      toDiagramCraftData(
+        row,
+        { fields: [{ id: 'technology', name: 'Technology', type: 'text' }], groups: [] },
+        authCtxWithTeamRoles({})
+      )
+    ).not.toHaveProperty('stale');
+  });
 });

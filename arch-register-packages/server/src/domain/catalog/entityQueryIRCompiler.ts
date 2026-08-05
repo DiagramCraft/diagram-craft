@@ -125,10 +125,9 @@ const nextRelationAlias = (state: CompileState): string => `r${state.nextRelatio
 
 const relationEndpointSchemaClause = (
   alias: string,
-  schemaIds: 'all' | readonly string[],
+  schemaIds: readonly string[],
   state: CompileState
 ): string => {
-  if (schemaIds === 'all') return '1=1';
   if (schemaIds.length === 0) return '1=0';
   return `${alias}.schema_id IN (${schemaIds.map(schemaId => addParam(state, schemaId)).join(', ')})`;
 };

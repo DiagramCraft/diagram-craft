@@ -4,7 +4,7 @@ import type { StorageAdapter } from '../../storage/storage';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
-import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
+import { filterKnownRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
 import { filterRelationFieldData } from '../catalog/relationHelpers';
 import { canViewTypedRelation } from '../catalog/relationAccessControl';
 import { listAllRelations } from '../catalog/relationOperations';
@@ -448,7 +448,7 @@ const exportEntities = async (
     target_lifecycle_date: e.target_lifecycle_date,
     tags: e.tags,
     links: e.links,
-    data: filterRestrictedFieldGroups(authCtx, schemaById.get(e.schema_id) ?? null, e.data),
+    data: filterKnownRestrictedFieldGroups(authCtx, schemaById.get(e.schema_id) ?? null, e.data),
     project_id: e.project_id,
     ...(includeGrants && {
       grants: (grantsMap.get(e.id) ?? []).map(g => ({

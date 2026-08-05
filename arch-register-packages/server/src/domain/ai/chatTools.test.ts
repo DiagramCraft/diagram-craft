@@ -761,6 +761,39 @@ describe('createAiChatTools', () => {
       });
     });
 
+    it('fails closed for entity values and typed relation edges when schemas are missing', async () => {
+      const originalListSchemas = db.catalog.listSchemas;
+      db.catalog.listSchemas = async () => [];
+      try {
+        const tools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
+        const queryEntities = tools.find(tool => tool.name === 'query_entities');
+        const getEntityDetails = tools.find(tool => tool.name === 'get_entity_details');
+        const traverseRelations = tools.find(tool => tool.name === 'traverse_relations');
+        const listRelations = tools.find(tool => tool.name === 'list_relations');
+
+        const query = await queryEntities!.execute?.({ query: '1000000' });
+        expect(query).toMatchObject({ total: 0, entities: [] });
+
+        const details = await getEntityDetails!.execute?.({ entityId: 'entity-app-4' });
+        expect(details).toMatchObject({
+          found: true,
+          entity: { data: {}, outgoingTypedRelations: [], incomingTypedRelations: [] }
+        });
+
+        const graph = await traverseRelations!.execute?.({
+          entityId: 'entity-app-4',
+          depth: 1,
+          direction: 'outgoing'
+        });
+        expect(graph).toMatchObject({ nodes: [{ id: 'entity-app-4' }], edges: [] });
+
+        const relations = await listRelations!.execute?.({});
+        expect(relations).toMatchObject({ total: 0, items: [] });
+      } finally {
+        db.catalog.listSchemas = originalListSchemas;
+      }
+    });
+
     it('cannot match or preview a restricted field via query_entities for a caller without group access', async () => {
       const tools = createAiChatTools(db, 'ws-1', restrictedCallerAuthCtx, actor);
       const queryEntities = tools.find(tool => tool.name === 'query_entities');

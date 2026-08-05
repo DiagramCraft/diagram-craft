@@ -5,7 +5,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import { decodeRefs } from '../../types';
 import { requireCanCreateTopLevelEntity, requireEntityAction } from '../auth/authorization';
 import {
-  filterRestrictedFieldGroups,
+  filterLiveFieldGroups,
   isFieldViewRestricted,
   requireNoRestrictedFieldWrites
 } from '../auth/fieldGroupAccessControl';
@@ -554,7 +554,7 @@ export const createAiChatTools = (
         })
       )
       .map(entity => {
-        const visibleData = filterRestrictedFieldGroups(
+        const visibleData = filterLiveFieldGroups(
           authCtx,
           schemaMap.get(entity.schema_id),
           entity.data
@@ -979,7 +979,7 @@ export const createAiChatTools = (
         lifecycle: entity.lifecycle,
         tags: entity.tags,
         links: entity.links,
-        data: filterRestrictedFieldGroups(authCtx, schema, entity.data),
+        data: filterLiveFieldGroups(authCtx, schema, entity.data),
         schemaFields: schema?.fields ?? [],
         outgoingRelations,
         incomingRelations,

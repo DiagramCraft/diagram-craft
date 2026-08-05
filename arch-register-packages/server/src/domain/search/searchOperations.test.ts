@@ -399,6 +399,18 @@ describe('searchWorkspace entity field-group redaction', () => {
       expect.objectContaining({ entityId: 'entity-1', matchedFields: ['secret'] })
     ]);
   });
+
+  it('does not match stale entity values when the entity schema is missing', async () => {
+    const db = makeEntityDb();
+    vi.mocked(db.catalog.listSchemas).mockResolvedValue([]);
+    vi.mocked(buildApiEntityAuthCtx).mockResolvedValueOnce(noAccessCtx as never);
+
+    const result = await searchWorkspace(db, 'default', { q: 'salary-42', types: 'entities' }, {
+      context: { user: { id: 'user-1' } }
+    } as never);
+
+    expect(result.entities).toEqual([]);
+  });
 });
 
 describe('searchWorkspace relations', () => {

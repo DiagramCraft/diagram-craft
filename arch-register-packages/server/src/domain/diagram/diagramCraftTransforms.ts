@@ -7,10 +7,7 @@ import {
 } from '@arch-register/api-types/schemaContract';
 import type { RelationDbResult, RelationSchemaDbResult } from '../catalog/db/relationDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
-import {
-  filterRestrictedFieldGroups,
-  type FieldGroupSchemaShape
-} from '../auth/fieldGroupAccessControl';
+import { filterLiveFieldGroups, type FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
 import { canViewTypedRelationFromEndpoint } from '../catalog/relationAccessControl';
 
 export type DiagramCraftSchemaField =
@@ -184,7 +181,7 @@ export const toDiagramCraftData = (
   _projectId: row.project_id,
   name: row.name,
   description: row.description,
-  ...filterRestrictedFieldGroups(authCtx, schema, row.data),
+  ...filterLiveFieldGroups(authCtx, schema, row.data),
   ...Object.fromEntries(
     [...relationReferences].map(([fieldId, entityIds]) => [fieldId, entityIds.join(',')])
   )

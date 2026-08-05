@@ -5,7 +5,7 @@ import { EntityRecord, EntitySummary } from '@arch-register/api-types/entityCont
 import type { ExternalMetadata } from '@arch-register/api-types/common';
 import {
   filterKnownRestrictedFieldGroups,
-  filterRestrictedFieldGroups,
+  filterLiveFieldGroups,
   type FieldGroupSchemaShape
 } from '../auth/fieldGroupAccessControl';
 
@@ -14,7 +14,7 @@ const filterExternalMetadata = (
   schema: FieldGroupSchemaShape | null,
   generatedMetadata: ExternalMetadata | undefined
 ): ExternalMetadata =>
-  filterRestrictedFieldGroups(authCtx, schema, generatedMetadata ?? {}) as ExternalMetadata;
+  filterLiveFieldGroups(authCtx, schema, generatedMetadata ?? {}) as ExternalMetadata;
 
 const checker = new PermissionChecker();
 
@@ -71,7 +71,7 @@ export const toApiEntity = (
   _completeness: completeness,
   _externalMetadata: filterExternalMetadata(authCtx, schema, entity.generated_metadata),
   ...getEntityCapabilities(authCtx, entity),
-  ...filterRestrictedFieldGroups(authCtx, schema, entity.data)
+  ...filterLiveFieldGroups(authCtx, schema, entity.data)
 });
 
 export const toApiEntitySummary = (

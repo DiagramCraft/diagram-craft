@@ -180,6 +180,27 @@ describe('exportEntities field-group redaction', () => {
 
     expect(data.entities).toEqual([expect.objectContaining({ data: { name: 'x', secret: 'y' } })]);
   });
+
+  it('fails closed for an entity whose schema is missing', async () => {
+    const db = makeDb();
+    db.catalog.listSchemas.mockResolvedValue([]);
+
+    const authCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const { data } = await exportWorkspace(db, undefined, authCtx, 'workspace-1', {
+      include: ['entities']
+    });
+
+    expect(data.entities).toEqual([expect.objectContaining({ data: {} })]);
+  });
 });
 
 describe('exportSchemas field-group metadata', () => {

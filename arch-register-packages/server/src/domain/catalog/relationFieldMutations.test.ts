@@ -68,7 +68,7 @@ const makeDb = () => {
         description: '',
         in_schema_ids: ['schema-2'],
         out_schema_ids: ['schema-1'],
-        fields: [],
+        fields: [{ id: 'note', name: 'Note', type: 'text', requirementLevel: 'optional' }],
         groups: [],
         created_at: now,
         updated_at: now
