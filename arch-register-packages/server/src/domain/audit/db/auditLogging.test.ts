@@ -1,12 +1,23 @@
 import { describe, expect, it, vi } from 'vitest';
+import { buildAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../../db/database';
 import { computeChanges, flattenEntityAuditFields, logAudit } from './auditLogging';
 import { EntityDbCreate } from '../../catalog/db/catalogDatabase';
+import { buildUserAuthCtx } from '../../auth/authorization';
+import { canViewRelationNotification } from '../../catalog/relationNotificationAccess';
 
 const { loggerError } = vi.hoisted(() => ({ loggerError: vi.fn() }));
 
 vi.mock('../../../utils/logger', () => ({
   createLogger: () => ({ error: loggerError })
+}));
+
+vi.mock('../../auth/authorization', () => ({
+  buildUserAuthCtx: vi.fn()
+}));
+
+vi.mock('../../catalog/relationNotificationAccess', () => ({
+  canViewRelationNotification: vi.fn()
 }));
 
 const now = new Date('2026-06-08T10:00:00.000Z');
@@ -145,6 +156,81 @@ describe('entity audit delivery', () => {
     ).rejects.toThrow('queue unavailable');
     expect(events).toEqual(['begin', 'audit', 'job', 'rollback']);
     expect(loggerError).toHaveBeenCalledOnce();
+  });
+});
+
+describe('relation audit notification visibility', () => {
+  it('passes only recipients who can view the typed-relation owner field', async () => {
+    const auditLog = {
+      id: 'relation-audit-1',
+      workspace: 'ws-1',
+      timestamp: now,
+      user_id: 'actor-1',
+      user_display_name: 'Actor',
+      operation: 'create' as const,
+      entity_type: 'relation' as const,
+      entity_id: 'relation-1',
+      entity_name: 'Entity 1 → Entity 2',
+      entity_slug: null,
+      schema_id: 'relation-schema-1',
+      changes: { new: { _owner: null } },
+      metadata: {
+        relation: {
+          id: 'relation-1',
+          schema: { id: 'relation-schema-1', name: 'Depends on' },
+          in: { id: 'entity-1', name: 'Entity 1' },
+          out: { id: 'entity-2', name: 'Entity 2' }
+        }
+      }
+    };
+    const notifications = vi.fn(async () => undefined);
+    const tx = {
+      core: { driver: 'sqlite' as const, isTransaction: true },
+      audit: { createAuditLog: vi.fn(async () => auditLog) },
+      relation: { getRelation: vi.fn(async () => ({ owner: null })) },
+      watch: {
+        listWatcherUserIds: vi.fn(async () => ['allowed-user', 'blocked-user']),
+        createNotificationsFromAudit: notifications
+      },
+      notificationPreference: { listOverrides: vi.fn(async () => []) },
+      auth: { getUser: vi.fn(async userId => ({ id: userId, email: `${userId}@test.local` })) }
+    } as unknown as DatabaseAdapter;
+
+    vi.mocked(buildUserAuthCtx).mockImplementation(async (_db, _workspace, userId) =>
+      buildAuthorizationContext({
+        userId,
+        globalRoles: [],
+        workspaceRole: null,
+        teamAssignments: [],
+        schemas: [],
+        entities: [],
+        grants: []
+      })
+    );
+    vi.mocked(canViewRelationNotification).mockImplementation(
+      async (_db, _workspace, authCtx) => authCtx.userId === 'allowed-user'
+    );
+
+    await logAudit(tx, {
+      workspace: 'ws-1',
+      userId: 'actor-1',
+      userDisplayName: 'Actor',
+      operation: 'create',
+      entityType: 'relation',
+      entityId: 'relation-1',
+      entityName: 'Entity 1 → Entity 2',
+      schemaId: 'relation-schema-1',
+      changes: { new: { _owner: null } },
+      metadata: auditLog.metadata
+    });
+
+    expect(notifications).toHaveBeenCalledWith(
+      expect.objectContaining({
+        watcherRecipients: [
+          expect.objectContaining({ userId: 'allowed-user', relationVisible: true })
+        ]
+      })
+    );
   });
 });
 

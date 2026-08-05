@@ -21,6 +21,8 @@ export type CreateNotificationsFromAuditInput = {
     email: string | null;
     inAppEnabled: boolean;
     emailEnabled: boolean;
+    /** Required for relation events; adapters fail closed when it is not explicitly true. */
+    relationVisible?: boolean;
   }>;
 };
 

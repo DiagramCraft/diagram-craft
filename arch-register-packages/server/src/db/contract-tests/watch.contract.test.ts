@@ -65,6 +65,7 @@ runContractSuiteAgainstBothDrivers('WatchDatabase', getDb => {
       const outEntity = await createFixtureEntity(db, workspace, schema);
       const actor = await createFixtureUser(db);
       const sharedWatcher = await createFixtureUser(db);
+      const blockedWatcher = await createFixtureUser(db);
       const relationSchemaId = randomUUID();
       const now = new Date();
       await db.relation.createRelationSchema({
@@ -107,6 +108,12 @@ runContractSuiteAgainstBothDrivers('WatchDatabase', getDb => {
         entity_id: outEntity.id,
         created_at: now
       });
+      await db.watch.createWatch({
+        user_id: blockedWatcher.id,
+        workspace,
+        entity_id: inEntity.id,
+        created_at: now
+      });
 
       const auditLog = await db.audit.createAuditLog({
         workspace,
@@ -131,11 +138,43 @@ runContractSuiteAgainstBothDrivers('WatchDatabase', getDb => {
 
       await db.watch.createNotificationsFromAudit({
         auditLog,
-        changedByDisplayName: actor.display_name
+        changedByDisplayName: actor.display_name,
+        watcherRecipients: [
+          {
+            userId: sharedWatcher.id,
+            email: null,
+            inAppEnabled: true,
+            emailEnabled: false,
+            relationVisible: true
+          },
+          {
+            userId: blockedWatcher.id,
+            email: null,
+            inAppEnabled: true,
+            emailEnabled: false,
+            relationVisible: false
+          }
+        ]
       });
       await db.watch.createNotificationsFromAudit({
         auditLog,
-        changedByDisplayName: actor.display_name
+        changedByDisplayName: actor.display_name,
+        watcherRecipients: [
+          {
+            userId: sharedWatcher.id,
+            email: null,
+            inAppEnabled: true,
+            emailEnabled: false,
+            relationVisible: true
+          },
+          {
+            userId: blockedWatcher.id,
+            email: null,
+            inAppEnabled: true,
+            emailEnabled: false,
+            relationVisible: false
+          }
+        ]
       });
 
       const notifications = await db.notification.listNotifications(sharedWatcher.id, workspace);
@@ -145,6 +184,7 @@ runContractSuiteAgainstBothDrivers('WatchDatabase', getDb => {
         resource_type: 'relation',
         resource_id: relation.id
       });
+      expect(await db.notification.listNotifications(blockedWatcher.id, workspace)).toHaveLength(0);
     });
 
     it('fans out a notification to every watcher except the actor', async () => {

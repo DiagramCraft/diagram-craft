@@ -4,6 +4,8 @@ import { createLogger } from '../../../utils/logger';
 import { enqueueWebhookDeliveries } from '../../webhook/webhookDelivery';
 import { enqueueAutomationRuleRuns } from '../../automation/automationRuleEvaluation';
 import { isChannelEnabled } from '../../notification/notificationPreferences';
+import { buildUserAuthCtx } from '../../auth/authorization';
+import { canViewRelationNotification } from '../../catalog/relationNotificationAccess';
 
 // Keep the existing import path stable for the many callers that import
 // flattenEntityAuditFields from here.
@@ -168,6 +170,49 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
                     emailEnabled
                   }
                 : null;
+            })
+          )
+        ).filter((recipient): recipient is NonNullable<typeof recipient> => recipient != null);
+      }
+
+      if (entityType === 'relation') {
+        const relationContext = metadata['relation'];
+        const relationIds =
+          typeof relationContext === 'object' && relationContext != null
+            ? {
+                inEntityId: (relationContext as { in?: { id?: unknown } }).in?.id,
+                outEntityId: (relationContext as { out?: { id?: unknown } }).out?.id
+              }
+            : null;
+        const relation = await tx.relation.getRelation(workspace, entityId);
+        const ownerFromAudit = [auditLog.changes?.new, auditLog.changes?.old]
+          .map(changes => changes?.['_owner'])
+          .find((owner): owner is string | null => owner === null || typeof owner === 'string');
+        const owner = relation?.owner ?? ownerFromAudit ?? null;
+
+        watcherRecipients = (
+          await Promise.all(
+            watcherRecipients.map(async recipient => {
+              if (
+                typeof relationIds?.inEntityId !== 'string' ||
+                typeof relationIds.outEntityId !== 'string' ||
+                !auditLog.schema_id
+              ) {
+                return null;
+              }
+              try {
+                const authCtx = await buildUserAuthCtx(tx, workspace, recipient.userId);
+                const relationVisible = await canViewRelationNotification(tx, workspace, authCtx, {
+                  relationSchemaId: auditLog.schema_id,
+                  inEntityId: relationIds.inEntityId,
+                  outEntityId: relationIds.outEntityId,
+                  at: auditLog.timestamp,
+                  owner
+                });
+                return relationVisible ? { ...recipient, relationVisible: true } : null;
+              } catch {
+                return null;
+              }
             })
           )
         ).filter((recipient): recipient is NonNullable<typeof recipient> => recipient != null);

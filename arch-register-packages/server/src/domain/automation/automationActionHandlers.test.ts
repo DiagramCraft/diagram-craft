@@ -1,9 +1,10 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { AuthorizationContext } from '@arch-register/permissions';
+import { buildAuthorizationContext, type AuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AutomationRuleDbResult } from './db/automationRuleDatabase';
 import type { AutomationRuleEvent } from './automationRuleEvaluation';
 import { AUTOMATION_RULE_SYSTEM_ACTOR, runAutomationAction } from './automationActionHandlers';
+import { buildUserAuthCtx } from '../auth/authorization';
 
 const adminAuthCtx: AuthorizationContext = {
   userId: 'user-2',
@@ -134,6 +135,108 @@ describe('send_notification action', () => {
         delivery_key: `automation-rule:rule-1:audit-1:user:user-2`
       })
     );
+  });
+
+  it('suppresses a relation notification when the owner typedRelation field is inaccessible', async () => {
+    const restrictedAuthCtx = buildAuthorizationContext({
+      userId: 'user-2',
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    vi.mocked(buildUserAuthCtx).mockResolvedValueOnce(restrictedAuthCtx);
+
+    const relation = {
+      id: 'relation-1',
+      workspace: 'ws-1',
+      schema_id: 'relation-schema-1',
+      schema_name: 'Depends on',
+      in_entity_id: 'entity-1',
+      in_entity_name: 'Payments',
+      out_entity_id: 'entity-2',
+      out_entity_name: 'Ledger',
+      data: {},
+      owner: null,
+      version: 1,
+      created_at: new Date('2026-01-01T00:00:00.000Z'),
+      updated_at: new Date('2026-01-01T00:00:00.000Z')
+    };
+    const ownerSchema = {
+      id: 'owner-schema-1',
+      workspace: 'ws-1',
+      name: 'Owner schema',
+      description: '',
+      fields: (['in', 'out'] as const).map(direction => ({
+        id: `depends-on-${direction}`,
+        name: 'Depends on',
+        type: 'typedRelation',
+        relationSchemaId: 'relation-schema-1',
+        direction,
+        requirementLevel: null,
+        groupId: 'restricted'
+      })),
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-reviewers'] } }
+      ],
+      created_at: new Date('2026-01-01T00:00:00.000Z'),
+      updated_at: new Date('2026-01-01T00:00:00.000Z')
+    };
+    const createNotification = vi.fn();
+    const db = {
+      notification: { createNotification },
+      catalog: {
+        getEntity: vi.fn(async (_workspace: string, id: string) => ({
+          id,
+          public_id: id,
+          name: id,
+          owner: null,
+          workspace: 'ws-1',
+          visibility_mode: null,
+          schema_id: 'owner-schema-1',
+          data: {}
+        })),
+        getSchema: vi.fn(async () => ownerSchema),
+        listSchemaVersions: vi.fn(async () => [])
+      },
+      relation: {
+        getRelation: vi.fn(async () => relation),
+        getRelationSchema: vi.fn(async () => ({
+          ...ownerSchema,
+          id: 'relation-schema-1',
+          fields: []
+        })),
+        listRelationSchemaVersions: vi.fn(async () => [])
+      },
+      notificationPreference: { listOverrides: vi.fn(async () => []) }
+    } as unknown as DatabaseAdapter;
+
+    await runAutomationAction({
+      db,
+      rule: { ...rule, resource_type: 'relation' },
+      action: {
+        kind: 'send_notification',
+        recipient: { kind: 'user', userId: 'user-2' },
+        message: 'Relation needs review'
+      },
+      event: {
+        ...event,
+        resourceType: 'relation',
+        entityId: 'relation-1',
+        entityName: 'Payments → Ledger',
+        relation: {
+          id: 'relation-1',
+          schema: { id: 'relation-schema-1', name: 'Depends on' },
+          in: { id: 'entity-1', name: 'Payments' },
+          out: { id: 'entity-2', name: 'Ledger' }
+        }
+      },
+      chain: []
+    });
+
+    expect(createNotification).not.toHaveBeenCalled();
   });
 });
 
