@@ -364,6 +364,7 @@ DB_DRIVER=sqlite
 SQLITE_PATH=./data/arch-register.sqlite
 AUTH_MODE=local
 JWT_SECRET=your-secret-key-here-min-32-characters-required
+NODE_ENV=development
 EOF
 
 # ---------------------------------------------------------------------------
