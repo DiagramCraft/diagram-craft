@@ -1,5 +1,6 @@
 import type { RelationDbResult } from './db/relationDatabase';
 import type { RelationSchemaDbResult, RelationSchemaVersionDbResult } from './db/relationDatabase';
+import type { SchemaDbResult } from './db/catalogDatabase';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import { PermissionChecker, type WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
@@ -15,18 +16,23 @@ const checker = new PermissionChecker();
  * an *existing* relation instance without already having its owner schemas to hand (relationOperations.ts
  * has its own copy fetched inline where it already has other schema lookups in flight; this one is
  * for callers — changeCaseOperations.ts, relationChangeOperations.ts — that don't).
+ *
+ * A temporal caller can provide the endpoint schema catalog that was resolved for its
+ * point-in-time read. When omitted, the live catalog is used as before.
  */
 export const getRelationOwnerSchemas = async (
   db: DatabaseAdapter,
   workspace: string,
-  relation: { in_entity_id: string; out_entity_id: string }
+  relation: { in_entity_id: string; out_entity_id: string },
+  schemaCatalog?: ReadonlyMap<string, SchemaDbResult | null>
 ) => {
-  const [inEntity, outEntity, schemas] = await Promise.all([
+  const [inEntity, outEntity] = await Promise.all([
     db.catalog.getEntity(workspace, relation.in_entity_id),
-    db.catalog.getEntity(workspace, relation.out_entity_id),
-    db.catalog.listSchemas(workspace)
+    db.catalog.getEntity(workspace, relation.out_entity_id)
   ]);
-  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  const schemaById =
+    schemaCatalog ??
+    new Map((await db.catalog.listSchemas(workspace)).map(schema => [schema.id, schema]));
   return {
     inSchema: inEntity ? schemaById.get(inEntity.schema_id) : undefined,
     outSchema: outEntity ? schemaById.get(outEntity.schema_id) : undefined
