@@ -302,7 +302,9 @@ const validateCsvRelationRow = (
   }
   const existing = matches[0];
   if (existing && schema && relationRequiresApproval(schema, existing)) {
-    errors.push(`Relation '${existing.id}' requires an approved change proposal before it can be edited`);
+    errors.push(
+      `Relation '${existing.id}' requires an approved change proposal before it can be edited`
+    );
   }
   if (existing && schema) {
     const declaredFieldIds = new Set(schema.fields.map(field => field.id));

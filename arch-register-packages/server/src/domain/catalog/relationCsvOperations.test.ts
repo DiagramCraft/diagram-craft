@@ -380,13 +380,9 @@ describe('commitRelationsImport', () => {
     const entities = [makeEntity('in-1'), makeEntity('out-1')];
     const db = makeDb({ relationSchemas: [relationSchema], entities });
 
-    const result = await commitRelationsImport(
-      db,
-      'ws-1',
-      authCtx,
-      eventForAuthCtx(),
-      [{ _schemaId: 'relation-schema', _inEntityId: 'in-1', _outEntityId: 'out-1' }]
-    );
+    const result = await commitRelationsImport(db, 'ws-1', authCtx, eventForAuthCtx(), [
+      { _schemaId: 'relation-schema', _inEntityId: 'in-1', _outEntityId: 'out-1' }
+    ]);
 
     expect(result).toMatchObject({ created: 1, updated: 0 });
   });
@@ -398,7 +394,11 @@ describe('commitRelationsImport', () => {
     relationSchema.relation_approval_policy = 'required';
     const entities = [makeEntity('in-1'), makeEntity('out-1')];
     const existing = makeRelation('relation-schema', 'in-1', 'out-1');
-    const db = makeDb({ relationSchemas: [relationSchema], entities, existingRelations: [existing] });
+    const db = makeDb({
+      relationSchemas: [relationSchema],
+      entities,
+      existingRelations: [existing]
+    });
 
     await expect(
       commitRelationsImport(db, 'ws-1', authCtx, eventForAuthCtx(), [
@@ -410,7 +410,9 @@ describe('commitRelationsImport', () => {
         `Relation '${existing.id}' requires an approved change proposal before it can be edited`
       )
     });
-    expect((db as unknown as { core: { transaction: ReturnType<typeof vi.fn> } }).core.transaction).not.toHaveBeenCalled();
+    expect(
+      (db as unknown as { core: { transaction: ReturnType<typeof vi.fn> } }).core.transaction
+    ).not.toHaveBeenCalled();
   });
 
   it('blocks updating an existing relation when an instance override requires approval despite a disabled schema policy', async () => {
@@ -418,7 +420,11 @@ describe('commitRelationsImport', () => {
     const entities = [makeEntity('in-1'), makeEntity('out-1')];
     const existing = makeRelation('relation-schema', 'in-1', 'out-1');
     existing.approval_policy_override = 'required';
-    const db = makeDb({ relationSchemas: [relationSchema], entities, existingRelations: [existing] });
+    const db = makeDb({
+      relationSchemas: [relationSchema],
+      entities,
+      existingRelations: [existing]
+    });
 
     await expect(
       commitRelationsImport(db, 'ws-1', authCtx, eventForAuthCtx(), [
@@ -435,7 +441,11 @@ describe('commitRelationsImport', () => {
     const entities = [makeEntity('in-1'), makeEntity('out-1')];
     const existing = makeRelation('relation-schema', 'in-1', 'out-1');
     existing.approval_policy_override = 'disabled';
-    const db = makeDb({ relationSchemas: [relationSchema], entities, existingRelations: [existing] });
+    const db = makeDb({
+      relationSchemas: [relationSchema],
+      entities,
+      existingRelations: [existing]
+    });
 
     const result = await commitRelationsImport(db, 'ws-1', authCtx, eventForAuthCtx(), [
       { _schemaId: 'relation-schema', _inEntityId: 'in-1', _outEntityId: 'out-1', note: 'after' }
@@ -450,7 +460,11 @@ describe('commitRelationsImport', () => {
     ]);
     const entities = [makeEntity('in-1'), makeEntity('out-1')];
     const existing = makeRelation('relation-schema', 'in-1', 'out-1');
-    const db = makeDb({ relationSchemas: [relationSchema], entities, existingRelations: [existing] });
+    const db = makeDb({
+      relationSchemas: [relationSchema],
+      entities,
+      existingRelations: [existing]
+    });
 
     const result = await commitRelationsImport(db, 'ws-1', authCtx, eventForAuthCtx(), [
       { _schemaId: 'relation-schema', _inEntityId: 'in-1', _outEntityId: 'out-1', note: 'after' }
