@@ -6,6 +6,7 @@ import { orpcAssert } from '../../utils/orpcAssert';
 import { filterVisibleEntities, requireSchemaRead } from '../auth/authorization';
 import { restrictedFieldIds } from '../auth/fieldGroupAccessControl';
 import { relationFields } from './dataHelpers';
+import { canViewTypedRelation } from './relationAccessControl';
 import {
   isReferenceOrContainmentField,
   isTypedRelationField
@@ -13,6 +14,7 @@ import {
 import { listAllCatalogEntities } from './entityLoader';
 import { listEntities, type EntityQueryOptions } from './entityQueryOperations';
 import { ENTITY_DEFAULTS } from '../../constants';
+import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 
 /** Fetches every relation instance for a relation schema, following pagination to completion. */
 const listAllRelationsForSchema = async (
@@ -41,7 +43,11 @@ const listAllRelationsForSchema = async (
 const buildTypedRelationLookups = async (
   db: DatabaseAdapter,
   workspace: string,
-  typedRelationFields: Array<{ id: string; relationSchemaId: string; direction: 'in' | 'out' }>
+  typedRelationFields: Array<{ id: string; relationSchemaId: string; direction: 'in' | 'out' }>,
+  authCtx: AuthorizationContext,
+  entityById: ReadonlyMap<string, EntityDbResult>,
+  visibleEntityIds: ReadonlySet<string>,
+  schemaById: ReadonlyMap<string, SchemaDbResult>
 ) => {
   const lookups = new Map<string, Map<string, string[]>>();
   for (const field of typedRelationFields) {
@@ -50,6 +56,31 @@ const buildTypedRelationLookups = async (
     for (const relation of relations) {
       const ownerEntityId =
         field.direction === 'out' ? relation.out_entity_id : relation.in_entity_id;
+      const targetEntityId =
+        field.direction === 'out' ? relation.in_entity_id : relation.out_entity_id;
+      const ownerEntity = entityById.get(ownerEntityId);
+      const targetEntity = entityById.get(targetEntityId);
+      if (!ownerEntity || !targetEntity || !visibleEntityIds.has(targetEntityId)) continue;
+
+      const ownerSchema = schemaById.get(ownerEntity.schema_id);
+      const targetSchema = schemaById.get(targetEntity.schema_id);
+      if (
+        !canViewTypedRelation(
+          authCtx,
+          [
+            { schema: ownerSchema, direction: field.direction },
+            {
+              schema: targetSchema,
+              direction: field.direction === 'out' ? 'in' : 'out'
+            }
+          ],
+          field.relationSchemaId,
+          relation.owner
+        )
+      ) {
+        continue;
+      }
+
       const otherName =
         field.direction === 'out' ? relation.in_entity_name : relation.out_entity_name;
       const list = byOwner.get(ownerEntityId) ?? [];
@@ -122,7 +153,15 @@ export const exportEntitiesCsv = async (
   }
 
   const typedRelationLookups = schema
-    ? await buildTypedRelationLookups(db, workspace, visibleFields.filter(isTypedRelationField))
+    ? await buildTypedRelationLookups(
+        db,
+        workspace,
+        visibleFields.filter(isTypedRelationField),
+        authCtx,
+        new Map(allEntitiesRaw.map(entity => [entity.id, entity])),
+        new Set(allEntities.map(entity => entity.id)),
+        schemaMap
+      )
     : new Map<string, Map<string, string[]>>();
 
   const rows = entities.map(entity => {

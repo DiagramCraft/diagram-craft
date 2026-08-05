@@ -164,6 +164,24 @@ test.describe('data permission routes', () => {
     expect(rows).not.toContain('Auth API');
   });
 
+  test('non-disclosure: typed-relation targets outside the visible entity set do not leak', async ({
+    server,
+    personas,
+    restrictedSeed: _
+  }) => {
+    const res = await fetch(
+      `${server.baseUrl}/api/application/v1/default/data/export?_schemaId=00000000-0000-0000-0000-000000000002`,
+      {
+        headers: { Authorization: personas.userWithExplicitEntityGrant.auth }
+      }
+    );
+
+    expect(res.status).toBe(200);
+    const rows = csvRows(await res.text()).join('\n');
+    expect(rows).toContain('Customer Portal');
+    expect(rows).not.toContain('Identity Platform');
+  });
+
   test('authorization: bulk creation rejects the complete batch when create-child is denied', async ({
     personas,
     restrictedSeed: _,

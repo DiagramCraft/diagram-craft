@@ -235,11 +235,27 @@ describe('exportEntitiesCsv', () => {
         } as never
       ]
     };
-    const entities = [makeEntity(1, { name: 'Payments API' })];
+    const targetSchema: SchemaDbResult = {
+      ...schema,
+      id: 'schema-2',
+      name: 'Database',
+      fields: []
+    };
+    const entities = [
+      makeEntity(1, { name: 'Payments API' }),
+      makeEntity(2, {
+        name: 'Database',
+        schema_id: targetSchema.id,
+        schema_name: targetSchema.name
+      })
+    ];
     const base = makeDb(entities);
     const db = {
       ...base,
-      catalog: { ...base.catalog, listSchemas: vi.fn(async () => [typedRelationSchema]) },
+      catalog: {
+        ...base.catalog,
+        listSchemas: vi.fn(async () => [typedRelationSchema, targetSchema])
+      },
       relation: {
         listRelationSchemas: vi.fn(async () => []),
         listRelations: vi.fn(async () => ({
@@ -266,6 +282,119 @@ describe('exportEntitiesCsv', () => {
     const csv = await response.body.text();
     expect(csv.split('\n')[0]).toContain('Depends on');
     expect(csv).toContain('Database');
+  });
+
+  it('omits typed-relation values when an endpoint schema is missing', async () => {
+    const typedRelationSchema: SchemaDbResult = {
+      ...schema,
+      fields: [
+        {
+          id: 'deps',
+          name: 'Depends on',
+          type: 'typedRelation',
+          relationSchemaId: 'rel-1',
+          direction: 'out'
+        } as never
+      ]
+    };
+    const targetSchema: SchemaDbResult = {
+      ...schema,
+      id: 'schema-2',
+      name: 'Database',
+      fields: []
+    };
+    const entities = [
+      makeEntity(1, { name: 'Payments API' }),
+      makeEntity(2, {
+        name: 'Database',
+        schema_id: targetSchema.id,
+        schema_name: targetSchema.name
+      })
+    ];
+    const base = makeDb(entities);
+    const db = {
+      ...base,
+      catalog: {
+        ...base.catalog,
+        // Keep the target entity row available, but make its schema unavailable to mirror a
+        // dangling historical relation endpoint.
+        listSchemas: vi.fn(async () => [typedRelationSchema])
+      },
+      relation: {
+        listRelationSchemas: vi.fn(async () => []),
+        listRelations: vi.fn(async () => ({
+          items: [
+            {
+              id: 'rel-row-1',
+              out_entity_id: 'entity-1',
+              in_entity_id: 'entity-2',
+              in_entity_name: 'Database',
+              owner: null
+            }
+          ],
+          total: 1
+        }))
+      }
+    } as unknown as DatabaseAdapter;
+
+    const response = await exportEntitiesCsv(
+      db,
+      'ws-1',
+      adminContext,
+      { schemaId: 'schema-1' },
+      now
+    );
+    const csv = await response.body.text();
+
+    expect(csv.split('\n')[0]).toContain('Depends on');
+    expect(csv).not.toContain('Database');
+  });
+
+  it('omits a typed-relation column when its owner field is restricted', async () => {
+    const restrictedTypedRelationSchema: SchemaDbResult = {
+      ...schema,
+      fields: [
+        {
+          id: 'deps',
+          name: 'Depends on',
+          type: 'typedRelation',
+          relationSchemaId: 'rel-1',
+          direction: 'out',
+          groupId: 'restricted'
+        } as never
+      ],
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ]
+    } as never;
+    const base = makeDb([makeEntity(1, { name: 'Payments API' })]);
+    const db = {
+      ...base,
+      catalog: {
+        ...base.catalog,
+        listSchemas: vi.fn(async () => [restrictedTypedRelationSchema])
+      }
+    } as unknown as DatabaseAdapter;
+    const restrictedContext = buildAuthorizationContext({
+      userId: 'user-2',
+      globalRoles: [],
+      workspaceRole: 'viewer',
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const response = await exportEntitiesCsv(
+      db,
+      'ws-1',
+      restrictedContext,
+      { schemaId: 'schema-1' },
+      now
+    );
+    const csv = await response.body.text();
+
+    expect(csv.split('\n')[0]).not.toContain('Depends on');
   });
 });
 
