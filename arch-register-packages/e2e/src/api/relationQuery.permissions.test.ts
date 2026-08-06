@@ -425,3 +425,347 @@ test.describe('RelationQuery permission routes', () => {
     expect(projected?._projections?.['historical_out.secret_note']).toContain('historical secret');
   });
 });
+
+// #2670: entity-valued relation field ('entityRelation') traversal and redaction.
+type EntityRelationPermissionFixture = {
+  endpointSchemaId: string;
+  dataEntitySchemaId: string;
+  dataEntityId: string;
+  dataEntityName: string;
+  entityRelationSchemaId: string;
+  restrictedEntityRelationSchemaId: string;
+  inEntityId: string;
+  outEntityId: string;
+};
+
+const entityRelationTest = createPermissionApiTest().extend<{
+  entityRelationFixture: EntityRelationPermissionFixture;
+}>({
+  entityRelationFixture: [
+    async ({ server, resources }, use) => {
+      const now = new Date('2026-08-05T12:00:00.000Z');
+      const endpointSchemaId = randomUUID();
+      const dataEntitySchemaId = randomUUID();
+      const entityRelationSchemaId = randomUUID();
+      const restrictedEntityRelationSchemaId = randomUUID();
+      const restrictedFieldGroupId = randomUUID();
+      const dataEntityId = randomUUID();
+      const inEntityId = randomUUID();
+      const outEntityId = randomUUID();
+      const dataEntityName = `Data Entity ${randomUUID()}`;
+
+      await server.db.catalog.createSchema({
+        id: endpointSchemaId,
+        workspace: resources.workspaceId,
+        name: `Entity relation endpoint ${randomUUID()}`,
+        description: '',
+        fields: [],
+        templates: [],
+        groups: [],
+        shared_field_group_links: [],
+        color: null,
+        icon: null,
+        default_owner: null,
+        key_prefix: `ER${randomUUID().replaceAll('-', '').slice(0, 3).toUpperCase()}`,
+        created_at: now,
+        updated_at: now
+      });
+      await server.db.catalog.createSchema({
+        id: dataEntitySchemaId,
+        workspace: resources.workspaceId,
+        name: `Entity relation target ${randomUUID()}`,
+        description: '',
+        fields: [],
+        templates: [],
+        groups: [],
+        shared_field_group_links: [],
+        color: null,
+        icon: null,
+        default_owner: null,
+        key_prefix: `DT${randomUUID().replaceAll('-', '').slice(0, 3).toUpperCase()}`,
+        created_at: now,
+        updated_at: now
+      });
+
+      await server.db.relation.createRelationSchema({
+        id: entityRelationSchemaId,
+        workspace: resources.workspaceId,
+        name: 'Entity relation query',
+        description: '',
+        in_schema_ids: [endpointSchemaId],
+        out_schema_ids: [endpointSchemaId],
+        fields: [
+          {
+            id: 'data',
+            name: 'Data',
+            type: 'entityRelation',
+            requirementLevel: null,
+            schemaId: dataEntitySchemaId,
+            minCount: 0,
+            maxCount: -1
+          }
+        ],
+        groups: [],
+        shared_field_group_links: [],
+        color: null,
+        icon: null,
+        relation_approval_policy: 'disabled',
+        created_at: now,
+        updated_at: now
+      });
+      await server.db.relation.createRelationSchema({
+        id: restrictedEntityRelationSchemaId,
+        workspace: resources.workspaceId,
+        name: 'Restricted entity relation query',
+        description: '',
+        in_schema_ids: [endpointSchemaId],
+        out_schema_ids: [endpointSchemaId],
+        fields: [
+          {
+            id: 'data',
+            name: 'Data',
+            type: 'entityRelation',
+            requirementLevel: null,
+            schemaId: dataEntitySchemaId,
+            minCount: 0,
+            maxCount: -1,
+            groupId: restrictedFieldGroupId
+          }
+        ],
+        groups: [
+          {
+            id: restrictedFieldGroupId,
+            name: 'Restricted entity relation data',
+            accessControl: { teamIds: [resources.teamIds.security] }
+          }
+        ],
+        shared_field_group_links: [],
+        color: null,
+        icon: null,
+        relation_approval_policy: 'disabled',
+        created_at: now,
+        updated_at: now
+      });
+
+      await server.db.catalog.createEntity({
+        id: dataEntityId,
+        workspace: resources.workspaceId,
+        public_id: `DT-${randomUUID().slice(0, 8)}`,
+        slug: 'entity-relation-data',
+        namespace: 'default',
+        name: dataEntityName,
+        description: '',
+        owner: null,
+        lifecycle: null,
+        target_lifecycle: null,
+        target_lifecycle_date: null,
+        tags: [],
+        links: [],
+        schema_id: dataEntitySchemaId,
+        data: {},
+        project_id: null,
+        created_at: now,
+        updated_at: now,
+        completeness: 0
+      });
+      await server.db.catalog.createEntity({
+        id: inEntityId,
+        workspace: resources.workspaceId,
+        public_id: `ER-${randomUUID().slice(0, 8)}`,
+        slug: 'entity-relation-in',
+        namespace: 'default',
+        name: 'Entity Relation In',
+        description: '',
+        owner: null,
+        lifecycle: null,
+        target_lifecycle: null,
+        target_lifecycle_date: null,
+        tags: [],
+        links: [],
+        schema_id: endpointSchemaId,
+        data: {},
+        project_id: null,
+        created_at: now,
+        updated_at: now,
+        completeness: 0
+      });
+      await server.db.catalog.createEntity({
+        id: outEntityId,
+        workspace: resources.workspaceId,
+        public_id: `ER-${randomUUID().slice(0, 8)}`,
+        slug: 'entity-relation-out',
+        namespace: 'default',
+        name: 'Entity Relation Out',
+        description: '',
+        owner: null,
+        lifecycle: null,
+        target_lifecycle: null,
+        target_lifecycle_date: null,
+        tags: [],
+        links: [],
+        schema_id: endpointSchemaId,
+        data: {},
+        project_id: null,
+        created_at: now,
+        updated_at: now,
+        completeness: 0
+      });
+
+      await server.db.relation.createRelation({
+        id: randomUUID(),
+        workspace: resources.workspaceId,
+        schema_id: entityRelationSchemaId,
+        in_entity_id: inEntityId,
+        out_entity_id: outEntityId,
+        data: { data: [dataEntityId] },
+        created_at: now,
+        updated_at: now
+      });
+      await server.db.relation.createRelation({
+        id: randomUUID(),
+        workspace: resources.workspaceId,
+        schema_id: restrictedEntityRelationSchemaId,
+        in_entity_id: inEntityId,
+        out_entity_id: outEntityId,
+        data: { data: [dataEntityId] },
+        created_at: now,
+        updated_at: now
+      });
+
+      await use({
+        endpointSchemaId,
+        dataEntitySchemaId,
+        dataEntityId,
+        dataEntityName,
+        entityRelationSchemaId,
+        restrictedEntityRelationSchemaId,
+        inEntityId,
+        outEntityId
+      });
+    },
+    { scope: 'file' }
+  ]
+});
+
+entityRelationTest.describe(
+  'entity-valued relation field ("entityRelation") permissions (#2670)',
+  () => {
+    entityRelationTest(
+      'redacts a restricted entityRelation field entirely over HTTP',
+      async ({ server, personas, entityRelationFixture }) => {
+        const relationQuery: EntityQuery = {
+          schemaId: entityRelationFixture.restrictedEntityRelationSchemaId,
+          root: { kind: 'predicate', path: [], fieldId: '_id', op: 'not_empty', value: '' }
+        };
+
+        const viewerPage = await queryRelations(
+          server,
+          personas.workspaceViewer.auth,
+          relationQuery
+        );
+        expect(viewerPage.total).toBe(1);
+        expect(viewerPage.items[0]).not.toHaveProperty('data');
+
+        const securityPage = await queryRelations(
+          server,
+          personas.securityTeamAdmin.auth,
+          relationQuery
+        );
+        expect(securityPage.total).toBe(1);
+        expect(securityPage.items[0]).toMatchObject({ data: [entityRelationFixture.dataEntityId] });
+      }
+    );
+
+    entityRelationTest(
+      'fails closed (empty results) on a relationForward query when the entityRelation field is restricted',
+      async ({ server, personas, entityRelationFixture }) => {
+        // The 'data' field id collides with the unrestricted field of the same id on
+        // entityRelationSchemaId, so — mirroring 'forward'/'typedRelation' field resolution —
+        // validation doesn't hard-reject the query (the field is known and granted *somewhere*);
+        // the SQL compiler's schema scoping is what excludes restrictedEntityRelationSchemaId's
+        // rows for an unauthorized caller, yielding an empty result rather than a 400.
+        const relationQuery: EntityQuery = {
+          schemaId: entityRelationFixture.restrictedEntityRelationSchemaId,
+          root: {
+            kind: 'predicate',
+            path: [{ kind: 'relationForward', fieldId: 'data' }],
+            fieldId: '_id',
+            op: 'equals',
+            value: entityRelationFixture.dataEntityId
+          }
+        };
+
+        const viewerPage = await queryRelations(
+          server,
+          personas.workspaceViewer.auth,
+          relationQuery
+        );
+        expect(viewerPage.total).toBe(0);
+
+        const securityPage = await queryRelations(
+          server,
+          personas.securityTeamAdmin.auth,
+          relationQuery
+        );
+        expect(securityPage.total).toBe(1);
+      }
+    );
+
+    entityRelationTest(
+      'allows an unrestricted relationForward query to find relations by referenced entity field',
+      async ({ server, personas, entityRelationFixture }) => {
+        const relationQuery: EntityQuery = {
+          schemaId: entityRelationFixture.entityRelationSchemaId,
+          root: {
+            kind: 'predicate',
+            path: [{ kind: 'relationForward', fieldId: 'data' }],
+            fieldId: '_name',
+            op: 'equals',
+            value: entityRelationFixture.dataEntityName
+          }
+        };
+
+        const viewerPage = await queryRelations(
+          server,
+          personas.workspaceViewer.auth,
+          relationQuery
+        );
+        expect(viewerPage.total).toBe(1);
+      }
+    );
+
+    entityRelationTest(
+      'fails closed on a relationBackward entity query when the entityRelation field is restricted',
+      async ({ server, personas, entityRelationFixture }) => {
+        const query: EntityQuery = {
+          schemaId: entityRelationFixture.dataEntitySchemaId,
+          root: {
+            kind: 'relationExists',
+            path: [
+              {
+                kind: 'relationBackward',
+                fieldId: 'data',
+                relationSchemaId: entityRelationFixture.restrictedEntityRelationSchemaId
+              }
+            ]
+          }
+        };
+        const params = new URLSearchParams({ entityQuery: JSON.stringify(query) });
+
+        const viewerResponse = await fetch(
+          `${server.baseUrl}/api/application/v1/default/data?${params}`,
+          { headers: { Authorization: personas.workspaceViewer.auth } }
+        );
+        expect(viewerResponse.status).toBe(400);
+
+        const securityResponse = await fetch(
+          `${server.baseUrl}/api/application/v1/default/data?${params}`,
+          { headers: { Authorization: personas.securityTeamAdmin.auth } }
+        );
+        expect(securityResponse.status).toBe(200);
+        const securityPage = (await securityResponse.json()) as { items: unknown[] };
+        expect(securityPage.items).toHaveLength(1);
+      }
+    );
+  }
+);

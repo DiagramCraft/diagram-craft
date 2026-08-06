@@ -433,8 +433,7 @@ const validatePathSteps = (
       } else {
         const field = relationSchema.fields.find(f => f.id === step.fieldId);
         if (
-          !field ||
-          field.type !== 'entityRelation' ||
+          field?.type !== 'entityRelation' ||
           isFieldViewRestricted(authCtx, relationSchema, step.fieldId)
         ) {
           errors.push({

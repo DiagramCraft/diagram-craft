@@ -430,8 +430,7 @@ const resolveBackwardStep = (
       const relationSchema = relationSchemas.get(relationSchemaId)!;
       const field = relationSchema.fields.find(f => f.id === fieldId);
       if (
-        !field ||
-        field.type !== 'entityRelation' ||
+        field?.type !== 'entityRelation' ||
         isFieldViewRestricted(authCtx, relationSchema, fieldId)
       ) {
         throw new TextCompileError(
@@ -479,7 +478,7 @@ const resolveBackwardStep = (
   });
   const relationCandidates = [...relationSchemas.values()].filter(schema => {
     const field = schema.fields.find(f => f.id === fieldId);
-    if (!field || field.type !== 'entityRelation') return false;
+    if (field?.type !== 'entityRelation') return false;
     if (isFieldViewRestricted(authCtx, schema, fieldId)) return false;
     return currentSchemaId ? field.schemaId === currentSchemaId : true;
   });
@@ -770,7 +769,15 @@ const parseStep = (
       let filter: QueryNode | undefined;
       if (peek(state).kind === 'LBRACKET') {
         advance(state);
-        filter = parseOrExpr(state, undefined, relationSchemaId, schemas, relationSchemas, enums, false);
+        filter = parseOrExpr(
+          state,
+          undefined,
+          relationSchemaId,
+          schemas,
+          relationSchemas,
+          enums,
+          false
+        );
         expect(state, 'RBRACKET');
       }
       return {
@@ -1383,7 +1390,13 @@ const printPredicateOrRelationExists = (
   relationSchemaId?: string
 ): string => {
   if (node.kind === 'relationExists') {
-    const { text } = printPathSteps(node.path, schemaId, schemas, relationSchemas, relationSchemaId);
+    const { text } = printPathSteps(
+      node.path,
+      schemaId,
+      schemas,
+      relationSchemas,
+      relationSchemaId
+    );
     return text;
   }
   if (node.kind !== 'predicate') throw new Error('unreachable');
