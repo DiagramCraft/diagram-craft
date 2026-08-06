@@ -9,6 +9,7 @@ import { TypeBadge } from '../../../components/TypeBadge';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
+import { MultiSelect, type MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
@@ -20,6 +21,7 @@ import { RelationDetailPopover } from './RelationDetailPopover';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { type EntityGraphDirection, type EntityNodeData } from './entityGraphState';
 import { useEntityGraphController } from './useEntityGraphController';
+import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { LoadingState } from '../../../components/LoadingState';
 
 type Props = {
@@ -64,6 +66,10 @@ export const EntityGraphView = ({
     setMaxDepth,
     excludedIds,
     manuallyExpanded,
+    direction: currentDirection,
+    setDirection,
+    relationSchemaFilter,
+    setRelationSchemaFilter,
     contextMenu,
     setContextMenu,
     saveDiagramOpen,
@@ -78,6 +84,12 @@ export const EntityGraphView = ({
     expandEntity,
     createDiagram
   } = controller;
+
+  const { data: relationSchemas } = useRelationSchemas(workspaceId);
+  const relationSchemaItems: MultiSelectItem[] = useMemo(
+    () => (relationSchemas ?? []).map(schema => ({ value: schema.id, label: schema.name })),
+    [relationSchemas]
+  );
 
   const graphLayout = readOnly ? 'hierarchy' : layout;
   const graphLayoutOptions = layoutOptions;
@@ -158,6 +170,31 @@ export const EntityGraphView = ({
           max={5}
           step={1}
           style={{ width: '50px' }}
+        />
+
+        <div className={styles.eToolbarSeparator} />
+
+        <span className={styles.eToolbarLabel}>Direction</span>
+        <Select.Root
+          value={currentDirection}
+          onChange={v => {
+            if (v) setDirection(v as EntityGraphDirection);
+          }}
+        >
+          <Select.Item value="both">Both directions</Select.Item>
+          <Select.Item value="upstream">Upstream dependencies</Select.Item>
+          <Select.Item value="downstream">Downstream impact</Select.Item>
+        </Select.Root>
+
+        <div className={styles.eToolbarSeparator} />
+
+        <span className={styles.eToolbarLabel}>Relation type</span>
+        <MultiSelect
+          selectedValues={Array.from(relationSchemaFilter)}
+          availableItems={relationSchemaItems}
+          onSelectionChange={values => setRelationSchemaFilter(new Set(values))}
+          placeholder="All relation types"
+          style={{ width: '200px' }}
         />
 
         {(layout === 'hierarchy' || layout === 'layered' || layout === 'tree') && (

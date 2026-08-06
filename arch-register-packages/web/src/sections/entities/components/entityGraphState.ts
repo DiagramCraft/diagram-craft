@@ -24,23 +24,39 @@ type GraphTraversalOptions = {
   excludedIds: ReadonlySet<string>;
   manuallyExpanded: ReadonlySet<string>;
   direction?: EntityGraphDirection;
+  relationSchemaIds?: ReadonlySet<string>;
+};
+
+const matchesRelationSchemaFilter = (
+  relation: DirectedRelation['relation'],
+  relationSchemaIds?: ReadonlySet<string>
+): boolean => {
+  if (!relationSchemaIds || relationSchemaIds.size === 0) return true;
+  return (
+    relation.kind === 'typed' &&
+    !!relation.relationSchemaId &&
+    relationSchemaIds.has(relation.relationSchemaId)
+  );
 };
 
 const getDirectedRelations = (
   entityId: string,
   data: EntityRelationData,
-  direction: EntityGraphDirection = 'both'
+  direction: EntityGraphDirection = 'both',
+  relationSchemaIds?: ReadonlySet<string>
 ): DirectedRelation[] => {
   const relations: DirectedRelation[] = [];
 
   if (direction === 'upstream' || direction === 'both') {
     for (const relation of data.outgoing) {
+      if (!matchesRelationSchemaFilter(relation, relationSchemaIds)) continue;
       relations.push({ from: entityId, to: relation.entityId, relation });
     }
   }
 
   if (direction === 'downstream' || direction === 'both') {
     for (const relation of data.incoming) {
+      if (!matchesRelationSchemaFilter(relation, relationSchemaIds)) continue;
       relations.push({ from: relation.entityId, to: entityId, relation });
     }
   }
@@ -56,7 +72,8 @@ const collectVisibleNodes = ({
   maxDepth,
   excludedIds,
   manuallyExpanded,
-  direction = 'both'
+  direction = 'both',
+  relationSchemaIds
 }: GraphTraversalOptions & {
   rootEntityName: string;
   rootEntitySchemaId: string;
@@ -80,7 +97,7 @@ const collectVisibleNodes = ({
     const shouldExpand = depth < maxDepth || manuallyExpanded.has(id);
     if (!shouldExpand) continue;
 
-    for (const directedRelation of getDirectedRelations(id, data, direction)) {
+    for (const directedRelation of getDirectedRelations(id, data, direction, relationSchemaIds)) {
       const { relation } = directedRelation;
       if (excludedIds.has(relation.entityId) || visited.has(relation.entityId)) continue;
       visited.add(relation.entityId);
@@ -114,7 +131,8 @@ export const buildEntityGraphData = ({
   maxDepth,
   excludedIds,
   manuallyExpanded,
-  direction = 'both'
+  direction = 'both',
+  relationSchemaIds
 }: GraphTraversalOptions & {
   rootEntityName: string;
   rootEntitySchemaId: string;
@@ -131,7 +149,8 @@ export const buildEntityGraphData = ({
     maxDepth,
     excludedIds,
     manuallyExpanded,
-    direction
+    direction,
+    relationSchemaIds
   });
 
   const edgeSet = new Set<string>();
@@ -146,7 +165,12 @@ export const buildEntityGraphData = ({
     }
 
     let hiddenCount = 0;
-    for (const { from, to, relation } of getDirectedRelations(id, data, direction)) {
+    for (const { from, to, relation } of getDirectedRelations(
+      id,
+      data,
+      direction,
+      relationSchemaIds
+    )) {
       if (visibleNodes.has(relation.entityId)) {
         const edgeId =
           relation.kind === 'typed' && relation.relationId

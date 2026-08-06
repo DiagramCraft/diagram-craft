@@ -19,7 +19,11 @@ const relation = (entityId: string, fieldName = 'dependsOn') => ({
 const typedRelation = (
   entityId: string,
   relationId: string,
-  overrides: { fieldName?: string; relationSchemaColor?: string | null } = {}
+  overrides: {
+    fieldName?: string;
+    relationSchemaColor?: string | null;
+    relationSchemaId?: string;
+  } = {}
 ) => ({
   entityId,
   publicId: entityId.toUpperCase(),
@@ -29,7 +33,7 @@ const typedRelation = (
   fieldName: overrides.fieldName ?? 'dataFlow',
   kind: 'typed' as const,
   relationId,
-  relationSchemaId: 'flow-schema',
+  relationSchemaId: overrides.relationSchemaId ?? 'flow-schema',
   relationSchemaColor: overrides.relationSchemaColor ?? '#ff0000'
 });
 
@@ -102,6 +106,30 @@ describe('collectEntityGraphIds', () => {
     expect(
       collectEntityGraphIds(options(relations, { direction: direction as EntityGraphDirection }))
     ).toEqual(expected);
+  });
+
+  it('only traverses relations matching the relation schema filter', () => {
+    const relations = new Map([
+      [
+        'root',
+        data({
+          outgoing: [
+            typedRelation('flow-target', 'rel-1', { relationSchemaId: 'flow-schema' }),
+            typedRelation('other-target', 'rel-2', { relationSchemaId: 'other-schema' }),
+            relation('generic-target')
+          ]
+        })
+      ],
+      ['flow-target', data()],
+      ['other-target', data()],
+      ['generic-target', data()]
+    ]);
+
+    expect(
+      collectEntityGraphIds(
+        options(relations, { relationSchemaIds: new Set(['flow-schema']) })
+      )
+    ).toEqual(['root', 'flow-target']);
   });
 
   it('stops traversal at max depth while still exposing relations on the boundary node', () => {
@@ -215,6 +243,35 @@ describe('buildEntityGraphData', () => {
       'root::child::typed::rel-2'
     ]);
     expect(result.edges[0]).toMatchObject({ kind: 'typed', color: '#ff0000', relationId: 'rel-1' });
+  });
+
+  it('hides generic and non-matching typed relations when a relation schema filter is set', () => {
+    const relations = new Map([
+      [
+        'root',
+        data({
+          outgoing: [
+            typedRelation('flow-target', 'rel-1', { relationSchemaId: 'flow-schema' }),
+            typedRelation('other-target', 'rel-2', { relationSchemaId: 'other-schema' }),
+            relation('generic-target')
+          ]
+        })
+      ],
+      ['flow-target', data()],
+      ['other-target', data()],
+      ['generic-target', data()]
+    ]);
+
+    const result = buildEntityGraphData({
+      ...options(relations, { relationSchemaIds: new Set(['flow-schema']) }),
+      rootEntityName: 'Root',
+      rootEntitySchemaId: 'application'
+    });
+
+    expect(result.nodes.map(node => node.id)).toEqual(['root', 'flow-target']);
+    expect(result.edges).toEqual([
+      expect.objectContaining({ id: 'root::flow-target::typed::rel-1', kind: 'typed' })
+    ]);
   });
 
   it('does not collapse a typed relation with a generic relation between the same pair', () => {
