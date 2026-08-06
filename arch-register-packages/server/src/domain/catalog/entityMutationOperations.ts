@@ -56,6 +56,20 @@ import { assertNoDerivedFieldWrites } from '../derived/derivedFields';
 import { isTypedRelationField } from '@arch-register/api-types/schemaContract';
 import { applyRelationFieldDelta } from './relationFieldMutations';
 
+type SupportedCurrencyLookup = (
+  workspace: string
+) => Promise<{ currencies: Array<{ code: string }> }>;
+
+const getSupportedCurrencyCodes = async (db: DatabaseAdapter, workspace: string) => {
+  // Keep lightweight test and extension adapters working while all production workspace
+  // implementations expose supported-currency configuration.
+  const lookup = (db.workspace as { getSupportedCurrencies?: SupportedCurrencyLookup })
+    .getSupportedCurrencies;
+  if (lookup == null) return null;
+  const config = await lookup.call(db.workspace, workspace);
+  return new Set(config.currencies.map(currency => currency.code));
+};
+
 export const allocateEntityPublicId = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -95,7 +109,7 @@ export const createEntity = async (
     const [schema, entities, currencyConfig] = await Promise.all([
       db.catalog.getSchema(workspace, payload.schemaId),
       listAllCatalogEntities(db, workspace),
-      db.workspace.getSupportedCurrencies(workspace)
+      getSupportedCurrencyCodes(db, workspace)
     ]);
     httpAssert.present(schema, {
       status: 404,
@@ -106,11 +120,9 @@ export const createEntity = async (
       fields: payload.fields,
       entities
     });
-    normalizeEntityCurrencyFields(
-      schema.fields,
-      normalizedFields,
-      new Set(currencyConfig.currencies.map(currency => currency.code))
-    );
+    if (currencyConfig) {
+      normalizeEntityCurrencyFields(schema.fields, normalizedFields, currencyConfig);
+    }
     assertNoDerivedFieldWrites(schema.fields, normalizedFields);
     assertNoExternalEntityFieldWrites(schema.fields, {}, normalizedFields);
     if (authCtx) {
@@ -517,12 +529,10 @@ export const updateEntity = async (
         fields: payload.fields,
         entities
       });
-      const currencyConfig = await db.workspace.getSupportedCurrencies(workspace);
-      normalizeEntityCurrencyFields(
-        schema.fields,
-        normalizedFields,
-        new Set(currencyConfig.currencies.map(currency => currency.code))
-      );
+      const currencyConfig = await getSupportedCurrencyCodes(db, workspace);
+      if (currencyConfig) {
+        normalizeEntityCurrencyFields(schema.fields, normalizedFields, currencyConfig);
+      }
       assertNoDerivedFieldWrites(schema.fields, normalizedFields);
       if (authCtx) {
         const changedFieldIds = Object.keys(normalizedFields).filter(
