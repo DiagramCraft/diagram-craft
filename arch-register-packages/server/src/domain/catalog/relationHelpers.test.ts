@@ -1,7 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
-import { filterRelationFieldData, toApiRelation, toRedactedApiRelation } from './relationHelpers';
+import {
+  filterRelationFieldData,
+  normalizeRelationEntityFields,
+  toApiRelation,
+  toRedactedApiRelation
+} from './relationHelpers';
 import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
+import type { Entity } from './db/catalogDatabase';
 
 const authCtxWithTeamRoles = (roles: Record<string, TeamRole[]>) =>
   buildAuthorizationContext({
@@ -74,6 +80,172 @@ describe('relation response redaction', () => {
     });
     expect(toRedactedApiRelation(relation, null, null)).not.toHaveProperty('removed');
     expect(toRedactedApiRelation(relation, null, null)).not.toHaveProperty('note');
+  });
+
+  it('redacts a restricted entityRelation field entirely, not just its individual ids (#2670)', () => {
+    const restrictedSchema: RelationSchemaDbResult = {
+      ...schema,
+      fields: [
+        { id: 'note', name: 'Note', type: 'text', requirementLevel: 'optional' },
+        {
+          id: 'data',
+          name: 'Data',
+          type: 'entityRelation',
+          requirementLevel: 'optional',
+          schemaId: 'entity-schema-data',
+          minCount: 0,
+          maxCount: -1,
+          groupId: 'restricted'
+        }
+      ],
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ]
+    };
+    const relationWithData: RelationDbResult = {
+      ...relation,
+      data: { note: 'known', data: ['data-1', 'data-2'] }
+    };
+    const noAccess = authCtxWithTeamRoles({});
+    const viewer = authCtxWithTeamRoles({ 'team-restricted': ['team_reviewer'] });
+
+    expect(filterRelationFieldData(noAccess, restrictedSchema, relationWithData.data)).toEqual({
+      note: 'known'
+    });
+    expect(filterRelationFieldData(viewer, restrictedSchema, relationWithData.data)).toEqual({
+      note: 'known',
+      data: ['data-1', 'data-2']
+    });
+  });
+});
+
+const makeEntity = (overrides: Partial<Entity> & { id: string; schema_id: string }): Entity => ({
+  workspace: 'workspace-1',
+  public_id: `PID-${overrides.id}`,
+  slug: overrides.id,
+  namespace: 'default',
+  name: overrides.id,
+  description: '',
+  owner: null,
+  lifecycle: null,
+  target_lifecycle: null,
+  target_lifecycle_date: null,
+  tags: [],
+  links: [],
+  data: {},
+  project_id: null,
+  created_at: now,
+  updated_at: now,
+  completeness: 0,
+  ...overrides
+});
+
+describe('normalizeRelationEntityFields', () => {
+  const entityRelationSchema: RelationSchemaDbResult = {
+    ...schema,
+    fields: [
+      {
+        id: 'data_entity',
+        name: 'Data Entity',
+        type: 'entityRelation',
+        requirementLevel: 'optional',
+        schemaId: 'entity-schema-data',
+        minCount: 0,
+        maxCount: -1
+      }
+    ]
+  };
+
+  const target1 = makeEntity({ id: 'data-1', schema_id: 'entity-schema-data' });
+  const target2 = makeEntity({ id: 'data-2', schema_id: 'entity-schema-data' });
+  const wrongSchemaTarget = makeEntity({ id: 'data-3', schema_id: 'entity-schema-other' });
+  const otherWorkspaceTarget = makeEntity({
+    id: 'data-4',
+    schema_id: 'entity-schema-data',
+    workspace: 'workspace-2'
+  });
+
+  it('normalizes a valid array of target entity ids', () => {
+    const result = normalizeRelationEntityFields({
+      schema: entityRelationSchema,
+      workspace: 'workspace-1',
+      data: { data_entity: ['data-1', 'data-2'] },
+      entities: [target1, target2]
+    });
+    expect(result.data_entity).toEqual(['data-1', 'data-2']);
+  });
+
+  it('defaults a missing value to an empty array', () => {
+    const result = normalizeRelationEntityFields({
+      schema: entityRelationSchema,
+      workspace: 'workspace-1',
+      data: {},
+      entities: [target1]
+    });
+    expect(result.data_entity).toEqual([]);
+  });
+
+  it('rejects a value below minCount', () => {
+    const requiredSchema: RelationSchemaDbResult = {
+      ...entityRelationSchema,
+      fields: [{ ...entityRelationSchema.fields[0]!, minCount: 1 } as never]
+    };
+    expect(() =>
+      normalizeRelationEntityFields({
+        schema: requiredSchema,
+        workspace: 'workspace-1',
+        data: { data_entity: [] },
+        entities: [target1]
+      })
+    ).toThrow();
+  });
+
+  it('rejects a value above maxCount', () => {
+    const boundedSchema: RelationSchemaDbResult = {
+      ...entityRelationSchema,
+      fields: [{ ...entityRelationSchema.fields[0]!, maxCount: 1 } as never]
+    };
+    expect(() =>
+      normalizeRelationEntityFields({
+        schema: boundedSchema,
+        workspace: 'workspace-1',
+        data: { data_entity: ['data-1', 'data-2'] },
+        entities: [target1, target2]
+      })
+    ).toThrow();
+  });
+
+  it('rejects a reference to an unknown entity', () => {
+    expect(() =>
+      normalizeRelationEntityFields({
+        schema: entityRelationSchema,
+        workspace: 'workspace-1',
+        data: { data_entity: ['missing'] },
+        entities: [target1]
+      })
+    ).toThrow();
+  });
+
+  it('rejects a reference to an entity in a different workspace', () => {
+    expect(() =>
+      normalizeRelationEntityFields({
+        schema: entityRelationSchema,
+        workspace: 'workspace-1',
+        data: { data_entity: ['data-4'] },
+        entities: [otherWorkspaceTarget]
+      })
+    ).toThrow();
+  });
+
+  it('rejects a reference to an entity of the wrong schema', () => {
+    expect(() =>
+      normalizeRelationEntityFields({
+        schema: entityRelationSchema,
+        workspace: 'workspace-1',
+        data: { data_entity: ['data-3'] },
+        entities: [wrongSchemaTarget]
+      })
+    ).toThrow();
   });
 });
 

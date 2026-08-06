@@ -286,6 +286,54 @@ describe('exportRelationsCsv', () => {
   });
 });
 
+describe('exportRelationsCsv — entityRelation fields', () => {
+  it('resolves entity ids to names for entityRelation field values', async () => {
+    const relationSchema = makeRelationSchema('relation-schema', 'Data Flow', [
+      {
+        id: 'data',
+        name: 'Data',
+        type: 'entityRelation',
+        requirementLevel: 'optional',
+        schemaId: 'entity-schema',
+        minCount: 0,
+        maxCount: -1
+      }
+    ]);
+    const relation = {
+      _uid: 'relation-1',
+      _schema: { id: relationSchema.id, name: relationSchema.name },
+      _in: { id: 'in-1', name: 'In' },
+      _out: { id: 'out-1', name: 'Out' },
+      _version: 1,
+      _createdAt: now.toISOString(),
+      _updatedAt: now.toISOString(),
+      canView: true,
+      canEdit: true,
+      canDelete: true,
+      data: ['data-1', 'data-2']
+    };
+    collectRelationsFromIRMock.mockResolvedValueOnce([relation]);
+
+    const dataEntity1 = { ...makeEntity('data-1'), name: 'Address' };
+    const dataEntity2 = { ...makeEntity('data-2'), name: 'Order' };
+
+    const response = await exportRelationsCsv(
+      makeDb({
+        relationSchemas: [relationSchema],
+        entities: [makeEntity('in-1'), makeEntity('out-1'), dataEntity1, dataEntity2]
+      }),
+      'ws-1',
+      authCtx,
+      { root_kind: 'relation', root: { kind: 'and', children: [] } },
+      now
+    );
+
+    expect(await response.body.text()).toBe(
+      '_schemaId;_inEntityId;_outEntityId;Data\nrelation-schema;in-1;out-1;Address, Order'
+    );
+  });
+});
+
 describe('parseRelationsImport', () => {
   it('parses typed relation fields and matches an existing natural key', async () => {
     const relationSchema = makeRelationSchema('relation-schema', 'Depends On', [
@@ -369,6 +417,59 @@ describe('parseRelationsImport', () => {
       expect.arrayContaining([
         `Relation '${existing.id}' requires an approved change proposal before it can be edited`
       ])
+    );
+  });
+});
+
+describe('parseRelationsImport — entityRelation fields', () => {
+  it('resolves entity names to ids for an entityRelation field', async () => {
+    const relationSchema = makeRelationSchema('relation-schema', 'Data Flow', [
+      {
+        id: 'data',
+        name: 'Data',
+        type: 'entityRelation',
+        requirementLevel: 'optional',
+        schemaId: 'entity-schema',
+        minCount: 0,
+        maxCount: -1
+      }
+    ]);
+    const dataEntity = { ...makeEntity('data-1'), name: 'Address' };
+    const entities = [makeEntity('in-1'), makeEntity('out-1'), dataEntity];
+    const result = await parseRelationsImport(
+      makeDb({ relationSchemas: [relationSchema], entities }),
+      'ws-1',
+      authCtx,
+      '_schemaId;_inEntityId;_outEntityId;Data\nrelation-schema;in-1;out-1;Address'
+    );
+
+    expect(result.validRows).toBe(1);
+    expect(result.relations[0]?.relation).toMatchObject({ data: ['data-1'] });
+  });
+
+  it('reports an error when an entityRelation field references an unknown entity name', async () => {
+    const relationSchema = makeRelationSchema('relation-schema', 'Data Flow', [
+      {
+        id: 'data',
+        name: 'Data',
+        type: 'entityRelation',
+        requirementLevel: 'optional',
+        schemaId: 'entity-schema',
+        minCount: 0,
+        maxCount: -1
+      }
+    ]);
+    const entities = [makeEntity('in-1'), makeEntity('out-1')];
+    const result = await parseRelationsImport(
+      makeDb({ relationSchemas: [relationSchema], entities }),
+      'ws-1',
+      authCtx,
+      '_schemaId;_inEntityId;_outEntityId;Data\nrelation-schema;in-1;out-1;Unknown Entity'
+    );
+
+    expect(result.validRows).toBe(0);
+    expect(result.relations[0]?.errors).toEqual(
+      expect.arrayContaining(['Data references one or more unknown entities'])
     );
   });
 });
@@ -471,6 +572,37 @@ describe('commitRelationsImport', () => {
     ]);
 
     expect(result).toMatchObject({ created: 0, updated: 1 });
+  });
+});
+
+describe('commitRelationsImport — entityRelation fields', () => {
+  it('commits a resolved entityRelation array of ids from the parse-preview shape', async () => {
+    const relationSchema = makeRelationSchema('relation-schema', 'Data Flow', [
+      {
+        id: 'data',
+        name: 'Data',
+        type: 'entityRelation',
+        requirementLevel: 'optional',
+        schemaId: 'entity-schema',
+        minCount: 0,
+        maxCount: -1
+      }
+    ]);
+    const dataEntity = { ...makeEntity('data-1'), name: 'Address' };
+    const entities = [makeEntity('in-1'), makeEntity('out-1'), dataEntity];
+    const db = makeDb({ relationSchemas: [relationSchema], entities });
+
+    const result = await commitRelationsImport(db, 'ws-1', authCtx, eventForAuthCtx(), [
+      { _schemaId: 'relation-schema', _inEntityId: 'in-1', _outEntityId: 'out-1', data: ['data-1'] }
+    ]);
+
+    expect(result).toMatchObject({ created: 1, updated: 0 });
+    expect(
+      (db as unknown as { relation: { createRelation: ReturnType<typeof vi.fn> } }).relation
+        .createRelation
+    ).toHaveBeenCalledWith(
+      expect.objectContaining({ data: expect.objectContaining({ data: ['data-1'] }) })
+    );
   });
 });
 

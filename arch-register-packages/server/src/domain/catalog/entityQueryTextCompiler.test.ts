@@ -103,8 +103,15 @@ const RESOURCE = makeSchema('resource-id', 'Resource', [
   }
 ]);
 
+const DATA_ENTITY = makeSchema('data-entity-id', 'Data Entity', [
+  { id: 'alias_name', name: 'Alias', type: 'text' }
+]);
+
 const schemas: SchemaCatalog = new Map(
-  [DOMAIN, SYSTEM, TECHNOLOGY, TECHNOLOGY_RELEASE, COMPONENT, RESOURCE].map(s => [s.id, s])
+  [DOMAIN, SYSTEM, TECHNOLOGY, TECHNOLOGY_RELEASE, COMPONENT, RESOURCE, DATA_ENTITY].map(s => [
+    s.id,
+    s
+  ])
 );
 
 const enums: EnumCatalog = new Map([
@@ -124,7 +131,18 @@ const DATA_FLOW: RelationSchemaDbResult = {
   description: '',
   in_schema_ids: [SYSTEM.id],
   out_schema_ids: [SYSTEM.id],
-  fields: [{ id: 'status', name: 'Status', type: 'text' }],
+  fields: [
+    { id: 'status', name: 'Status', type: 'text' },
+    {
+      id: 'data',
+      name: 'Data',
+      type: 'entityRelation',
+      requirementLevel: 'optional',
+      schemaId: DATA_ENTITY.id,
+      minCount: 0,
+      maxCount: -1
+    }
+  ],
   groups: [],
   color: null,
   icon: null,
@@ -485,6 +503,198 @@ describe('parseEntityQueryText — typed scalar relation fields', () => {
         }
       }
     });
+  });
+});
+
+describe('parseEntityQueryText — entity-valued relation fields (#2670)', () => {
+  it('parses a compound typedRelation + relationForward path', () => {
+    const result = parseEntityQueryText(
+      'schema:"Typed System" data_flows_out[data.alias_name = "Address"]._id = "A"',
+      typedSchemas,
+      enums,
+      null,
+      relationSchemas
+    );
+    expect(result).toEqual({
+      ok: true,
+      query: {
+        root: {
+          kind: 'and',
+          children: [
+            {
+              kind: 'predicate',
+              path: [],
+              fieldId: '_schemaId',
+              op: 'equals',
+              value: TYPED_SYSTEM.id
+            },
+            {
+              kind: 'predicate',
+              path: [
+                {
+                  kind: 'typedRelation',
+                  fieldId: 'data_flows_out',
+                  relationSchemaId: DATA_FLOW.id,
+                  direction: 'out',
+                  ownerSchemaIds: [TYPED_SYSTEM.id],
+                  filter: {
+                    kind: 'predicate',
+                    path: [{ kind: 'relationForward', fieldId: 'data' }],
+                    fieldId: 'alias_name',
+                    op: 'equals',
+                    value: 'Address'
+                  }
+                }
+              ],
+              fieldId: '_id',
+              op: 'equals',
+              value: 'A'
+            }
+          ]
+        }
+      }
+    });
+    if (result.ok) {
+      expect(printEntityQueryText(result.query, typedSchemas, relationSchemas)).toBe(
+        'schema:"Typed System" AND data_flows_out[data.alias_name = "Address"]._id = "A"'
+      );
+    }
+  });
+
+  it('parses the reverse <-RelationSchema.field form with an endpoint-scoped bracket filter', () => {
+    const result = parseEntityQueryText(
+      'schema:"Data Entity" <-"Data Flow".data[_out._id = "A"]',
+      schemas,
+      enums,
+      null,
+      relationSchemas
+    );
+    expect(result).toEqual({
+      ok: true,
+      query: {
+        root: {
+          kind: 'and',
+          children: [
+            {
+              kind: 'predicate',
+              path: [],
+              fieldId: '_schemaId',
+              op: 'equals',
+              value: DATA_ENTITY.id
+            },
+            {
+              kind: 'relationExists',
+              path: [
+                {
+                  kind: 'relationBackward',
+                  fieldId: 'data',
+                  relationSchemaId: DATA_FLOW.id,
+                  filter: {
+                    kind: 'predicate',
+                    path: [{ kind: 'endpoint', direction: 'out' }],
+                    fieldId: '_id',
+                    op: 'equals',
+                    value: 'A'
+                  }
+                }
+              ]
+            }
+          ]
+        }
+      }
+    });
+    if (result.ok) {
+      expect(printEntityQueryText(result.query, schemas, relationSchemas)).toBe(
+        'schema:"Data Entity" AND <-"Data Flow".data[_out._id = "A"]'
+      );
+    }
+  });
+
+  it('parses the reverse form without brackets as a flat path', () => {
+    const result = parseEntityQueryText(
+      'schema:"Data Entity" <-"Data Flow".data._out._id = "A"',
+      schemas,
+      enums,
+      null,
+      relationSchemas
+    );
+    expect(result).toEqual({
+      ok: true,
+      query: {
+        root: {
+          kind: 'and',
+          children: [
+            {
+              kind: 'predicate',
+              path: [],
+              fieldId: '_schemaId',
+              op: 'equals',
+              value: DATA_ENTITY.id
+            },
+            {
+              kind: 'predicate',
+              path: [
+                { kind: 'relationBackward', fieldId: 'data', relationSchemaId: DATA_FLOW.id },
+                { kind: 'endpoint', direction: 'out' }
+              ],
+              fieldId: '_id',
+              op: 'equals',
+              value: 'A'
+            }
+          ]
+        }
+      }
+    });
+  });
+
+  it('uses a bare relationBackward hop as relationExists', () => {
+    const result = parseEntityQueryText(
+      'schema:"Data Entity" <-"Data Flow".data',
+      schemas,
+      enums,
+      null,
+      relationSchemas
+    );
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.query.root).toMatchObject({
+        kind: 'and',
+        children: [
+          { kind: 'predicate', path: [], fieldId: '_schemaId' },
+          {
+            kind: 'relationExists',
+            path: [{ kind: 'relationBackward', fieldId: 'data', relationSchemaId: DATA_FLOW.id }]
+          }
+        ]
+      });
+    }
+  });
+
+  it('rejects an unknown entityRelation field inside a typedRelation bracket', () => {
+    const errors = parseErr('schema:"Typed System" data_flows_out[missing.alias_name = "x"]');
+    expect(errors.length).toBeGreaterThan(0);
+  });
+
+  it('rejects an unknown relation schema in the <-Schema.field form', () => {
+    const result = parseEntityQueryText(
+      'schema:"Data Entity" <-"No Such Schema".data',
+      schemas,
+      enums,
+      null,
+      relationSchemas
+    );
+    expect(result.ok).toBe(false);
+  });
+
+  it('requires further traversal after a bare _out inside a relation bracket', () => {
+    const result = parseEntityQueryText(
+      'schema:"Data Entity" <-"Data Flow".data[_out]',
+      schemas,
+      enums,
+      null,
+      relationSchemas
+    );
+    expect(result.ok).toBe(false);
   });
 });
 

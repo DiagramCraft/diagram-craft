@@ -1,7 +1,11 @@
 import type { RelationDbResult } from './db/relationDatabase';
 import type { RelationSchemaDbResult, RelationSchemaVersionDbResult } from './db/relationDatabase';
-import type { SchemaDbResult } from './db/catalogDatabase';
+import type { Entity, SchemaDbResult } from './db/catalogDatabase';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
+import {
+  isEntityRelationField,
+  type EntityRelationField
+} from '@arch-register/api-types/relationSchemaContract';
 import { PermissionChecker, type WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
@@ -170,6 +174,82 @@ export const validateRelationEndpoints = (
     status: 400,
     message: 'A relation cannot connect an entity to itself'
   });
+};
+
+export const entityRelationFields = (schema: RelationSchemaDbResult) =>
+  schema.fields.filter(isEntityRelationField);
+
+const normalizeEntityRelationIds = (value: unknown, field: EntityRelationField): string[] => {
+  httpAssert.true(Array.isArray(value), {
+    message: `${field.name} must be provided as an array of entity ids`
+  });
+
+  const rawValues = Array.isArray(value) ? value : [];
+  const ids = rawValues
+    .map((item: unknown) => (typeof item === 'string' ? item.trim() : ''))
+    .filter(Boolean);
+
+  httpAssert.true(ids.length === rawValues.length, {
+    message: `${field.name} must contain only non-empty string ids`
+  });
+
+  return ids;
+};
+
+/**
+ * Validates and normalizes a relation instance's `entityRelation` field values, mirroring
+ * `normalizeEntityRelationFields` (dataHelpers.ts) for entity reference/containment fields: each
+ * value must be an array of target entity ids, respecting minCount/maxCount, and every target
+ * must exist, be in the same workspace, and match the field's declared schemaId.
+ *
+ * `data` should be the relation instance's full, final field-value set (not a partial patch) —
+ * callers merge a partial update onto the existing row before calling this, so minCount is
+ * enforced against the resulting state rather than only the fields present in a given request.
+ */
+export const normalizeRelationEntityFields = ({
+  schema,
+  workspace,
+  data,
+  entities
+}: {
+  schema: RelationSchemaDbResult;
+  workspace: string;
+  data: Record<string, unknown>;
+  entities: Entity[];
+}): Record<string, unknown> => {
+  const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
+  const normalized = { ...data };
+
+  for (const field of entityRelationFields(schema)) {
+    const rawValue = normalized[field.id];
+    const ids =
+      rawValue == null || rawValue === '' ? [] : normalizeEntityRelationIds(rawValue, field);
+
+    httpAssert.true(ids.length >= field.minCount, {
+      message: `${field.name} requires at least ${field.minCount} entity reference(s)`
+    });
+    httpAssert.true(field.maxCount === -1 || ids.length <= field.maxCount, {
+      message: `${field.name} allows at most ${field.maxCount} entity reference(s)`
+    });
+
+    for (const id of ids) {
+      const target = entityLookup.get(id);
+      httpAssert.present(target, {
+        status: 400,
+        message: `${field.name} references unknown entity '${id}'`
+      });
+      httpAssert.true(target.workspace === workspace, {
+        message: `${field.name} references an entity in a different workspace`
+      });
+      httpAssert.true(target.schema_id === field.schemaId, {
+        message: `${field.name} must reference entities of schema '${field.schemaId}'`
+      });
+    }
+
+    normalized[field.id] = ids;
+  }
+
+  return normalized;
 };
 
 /**

@@ -187,34 +187,96 @@ const relationFieldById = (
 ): RelationScalarField | undefined =>
   relationSchemas.get(relationSchemaId)?.fields.find(f => f.id === fieldId);
 
+const isKnownEntityRelationFieldId = (
+  fieldId: string,
+  relationSchemas: RelationSchemaCatalog,
+  authCtx: WorkspaceAuthorizationContext | null
+): boolean => {
+  for (const schema of relationSchemas.values()) {
+    const field = schema.fields.find(f => f.id === fieldId);
+    if (
+      field &&
+      field.type === 'entityRelation' &&
+      !isFieldViewRestricted(authCtx, schema, fieldId)
+    ) {
+      return true;
+    }
+  }
+  return false;
+};
+
+// What kind of row a path step leaves the traversal on, given the kind it started from. `forward`
+// is the only step whose landing kind depends on its starting kind (it operates however the
+// current position was already typed); every other step kind has a fixed landing kind. Exported
+// for the compiler, which needs the same "what kind does this path land on" resolution to pick
+// entity- vs relation-shaped SQL for a predicate/projection terminal (entityQueryIRCompiler.ts).
+export const kindAfterStep = (
+  step: PathStep,
+  currentKind: 'entity' | 'relation'
+): 'entity' | 'relation' => {
+  switch (step.kind) {
+    case 'forward':
+      return currentKind;
+    case 'backward':
+    case 'endpoint':
+    case 'typedRelation':
+    case 'relationForward':
+      return 'entity';
+    case 'relationBackward':
+      return 'relation';
+  }
+};
+
+export const kindAfterPath = (
+  steps: PathStep[],
+  startKind: 'entity' | 'relation'
+): 'entity' | 'relation' => steps.reduce((kind, step) => kindAfterStep(step, kind), startKind);
+
+/**
+ * Validates a query node scoped to a relation instance — either the root of a relation-rooted
+ * query, or the `filter` of a `typedRelation`/`relationBackward` path step. A bare `predicate`/
+ * `relationExists` addresses a scalar field on the relation itself; one whose path starts with
+ * `endpoint` or `relationForward` (#2670) traverses off the relation to an entity, in which case
+ * the rest of validation is delegated to `validatePathSteps`/`validateNode` starting from
+ * 'relation' context.
+ */
 const validateRelationNode = (
   node: QueryNode,
   relationSchemaId: string,
+  schemas: SchemaCatalog,
   relationSchemas: RelationSchemaCatalog,
   path: (string | number)[],
+  hopsUsedBefore: number,
   errors: ValidationError[],
   authCtx: WorkspaceAuthorizationContext | null
 ): number => {
   switch (node.kind) {
     case 'and':
-    case 'or':
-      node.children.forEach((child, index) =>
-        validateRelationNode(
+    case 'or': {
+      let maxHops = hopsUsedBefore;
+      node.children.forEach((child, index) => {
+        const childHops = validateRelationNode(
           child,
           relationSchemaId,
+          schemas,
           relationSchemas,
           [...path, 'children', index],
+          hopsUsedBefore,
           errors,
           authCtx
-        )
-      );
-      return 0;
+        );
+        maxHops = Math.max(maxHops, childHops);
+      });
+      return maxHops;
+    }
     case 'not':
       return validateRelationNode(
         node.child,
         relationSchemaId,
+        schemas,
         relationSchemas,
         [...path, 'child'],
+        hopsUsedBefore,
         errors,
         authCtx
       );
@@ -223,20 +285,65 @@ const validateRelationNode = (
         path,
         message: "'freeText' is only valid for the starting entity list"
       });
-      return 0;
-    case 'relationExists':
-      errors.push({
-        path,
-        message: 'Relation-instance filters may only contain scalar field predicates'
-      });
-      return 0;
-    case 'predicate': {
-      if (node.path.length > 0) {
+      return hopsUsedBefore;
+    case 'relationExists': {
+      if (node.path.length === 0) {
         errors.push({
           path: [...path, 'path'],
-          message: 'Relation-instance filters cannot traverse nested entity paths'
+          message: "'relationExists' requires a non-empty path"
         });
-        return 0;
+        return hopsUsedBefore;
+      }
+      const first = node.path[0]!;
+      if (first.kind !== 'endpoint' && first.kind !== 'relationForward') {
+        errors.push({
+          path,
+          message:
+            'Relation-instance filters may only contain scalar field predicates, or traverse an entityRelation field'
+        });
+        return hopsUsedBefore;
+      }
+      return validatePathSteps(
+        node.path,
+        schemas,
+        relationSchemas,
+        [...path, 'path'],
+        hopsUsedBefore,
+        errors,
+        authCtx,
+        'relation'
+      );
+    }
+    case 'predicate': {
+      if (node.path.length > 0) {
+        const first = node.path[0]!;
+        if (first.kind !== 'endpoint' && first.kind !== 'relationForward') {
+          errors.push({
+            path: [...path, 'path'],
+            message:
+              'Relation-instance filters may only contain scalar field predicates, or traverse an entityRelation field'
+          });
+          return hopsUsedBefore;
+        }
+        const hopsAfterPath = validatePathSteps(
+          node.path,
+          schemas,
+          relationSchemas,
+          [...path, 'path'],
+          hopsUsedBefore,
+          errors,
+          authCtx,
+          'relation'
+        );
+        const landingKind = kindAfterPath(node.path, 'relation');
+        if (landingKind === 'relation') {
+          if (!isKnownRelationFieldId(node.fieldId, relationSchemas, authCtx)) {
+            errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
+          }
+        } else if (!isKnownFieldId(node.fieldId, schemas, authCtx)) {
+          errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
+        }
+        return hopsAfterPath;
       }
       const field = relationFieldById(relationSchemaId, node.fieldId, relationSchemas);
       const relationSchema = relationSchemas.get(relationSchemaId);
@@ -251,7 +358,7 @@ const validateRelationNode = (
           message: `Relation schema '${relationSchema.name}' does not define a viewable scalar field '${node.fieldId}'`
         });
       }
-      return 0;
+      return hopsUsedBefore;
     }
   }
 };
@@ -264,12 +371,15 @@ const validatePathSteps = (
   hopsUsedBefore: number,
   errors: ValidationError[],
   authCtx: WorkspaceAuthorizationContext | null,
-  // Only true for the outermost path of a relation-rooted query (query.root/relationExists path,
-  // or a top-level projection path) — never for a path nested inside a PathStep.filter, where
-  // we're already scoped to a specific entity/relation instance, not the query root.
-  allowEndpointFirst: boolean = false
+  // Which kind of row the path starts on: 'relation' only for the outermost path of a
+  // relation-rooted query (query.root/relationExists path, or a top-level projection path) or a
+  // path nested inside a relation-scoped filter (typedRelation/relationBackward's `filter`,
+  // handled via validateRelationNode delegating back here); 'entity' otherwise, including for a
+  // path nested inside an ordinary entity-scoped PathStep.filter.
+  startKind: 'entity' | 'relation' = 'entity'
 ): number => {
   let hopsUsed = hopsUsedBefore;
+  let currentKind: 'entity' | 'relation' = startKind;
   steps.forEach((step, index) => {
     hopsUsed += 1;
     const stepPath = [...path, index];
@@ -281,12 +391,69 @@ const validatePathSteps = (
     }
 
     if (step.kind === 'endpoint') {
-      if (!allowEndpointFirst || index !== 0) {
+      if (currentKind !== 'relation') {
+        errors.push({
+          path: stepPath,
+          message: "'endpoint' path step is only valid when the current path position is a relation"
+        });
+      }
+    } else if (step.kind === 'relationForward') {
+      if (currentKind !== 'relation') {
         errors.push({
           path: stepPath,
           message:
-            "'endpoint' path step is only valid as the first step of a relation-rooted query path"
+            "'relationForward' path step is only valid when the current path position is a relation"
         });
+      } else {
+        const scope = resolveRelationFieldSchemaScope(step.fieldId, relationSchemas, authCtx);
+        if (
+          scope.grantedSchemaIds.size === 0 ||
+          !isKnownEntityRelationFieldId(step.fieldId, relationSchemas, authCtx)
+        ) {
+          errors.push({
+            path: [...stepPath, 'fieldId'],
+            message: `Unknown or restricted entityRelation field '${step.fieldId}'`
+          });
+        }
+      }
+    } else if (step.kind === 'relationBackward') {
+      if (currentKind !== 'entity') {
+        errors.push({
+          path: stepPath,
+          message:
+            "'relationBackward' path step is only valid when the current path position is an entity"
+        });
+      }
+      const relationSchema = relationSchemas.get(step.relationSchemaId);
+      if (!relationSchema) {
+        errors.push({
+          path: [...stepPath, 'relationSchemaId'],
+          message: `Unknown relation schema '${step.relationSchemaId}'`
+        });
+      } else {
+        const field = relationSchema.fields.find(f => f.id === step.fieldId);
+        if (
+          !field ||
+          field.type !== 'entityRelation' ||
+          isFieldViewRestricted(authCtx, relationSchema, step.fieldId)
+        ) {
+          errors.push({
+            path: [...stepPath, 'fieldId'],
+            message: `Relation schema '${step.relationSchemaId}' does not define a viewable entityRelation field '${step.fieldId}'`
+          });
+        }
+      }
+      if (step.filter && relationSchema) {
+        hopsUsed = validateRelationNode(
+          step.filter,
+          step.relationSchemaId,
+          schemas,
+          relationSchemas,
+          [...stepPath, 'filter'],
+          hopsUsed,
+          errors,
+          authCtx
+        );
       }
     } else if (step.kind === 'backward') {
       const ownerSchema = schemas.get(step.ownerSchemaId);
@@ -367,11 +534,13 @@ const validatePathSteps = (
         });
       }
       if (step.filter && relationSchema) {
-        validateRelationNode(
+        hopsUsed = validateRelationNode(
           step.filter,
           step.relationSchemaId,
+          schemas,
           relationSchemas,
           [...stepPath, 'filter'],
+          hopsUsed,
           errors,
           authCtx
         );
@@ -385,7 +554,12 @@ const validatePathSteps = (
       }
     }
 
-    if (step.kind !== 'endpoint' && step.kind !== 'typedRelation' && step.filter) {
+    if (
+      step.kind !== 'endpoint' &&
+      step.kind !== 'typedRelation' &&
+      step.kind !== 'relationBackward' &&
+      step.filter
+    ) {
       hopsUsed = validateNode(
         step.filter,
         schemas,
@@ -398,6 +572,8 @@ const validatePathSteps = (
         'entity'
       );
     }
+
+    currentKind = kindAfterStep(step, currentKind);
   });
   return hopsUsed;
 };
@@ -473,6 +649,7 @@ const validateNode = (
       }
       return hopsUsedBefore;
     case 'predicate': {
+      const pathStartKind: 'entity' | 'relation' = allowEndpointFirst ? 'relation' : 'entity';
       const hopsAfterPath = validatePathSteps(
         node.path,
         schemas,
@@ -481,9 +658,10 @@ const validateNode = (
         hopsUsedBefore,
         errors,
         authCtx,
-        allowEndpointFirst
+        pathStartKind
       );
-      if (node.path.length === 0 && rootKind === 'relation') {
+      const landingKind = kindAfterPath(node.path, pathStartKind);
+      if (landingKind === 'relation') {
         if (!isKnownRelationFieldId(node.fieldId, relationSchemas, authCtx)) {
           errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
         }
@@ -516,7 +694,7 @@ const validateNode = (
         hopsUsedBefore,
         errors,
         authCtx,
-        allowEndpointFirst
+        allowEndpointFirst ? 'relation' : 'entity'
       );
     }
   }
@@ -569,6 +747,10 @@ const projectionAlias = (projection: NonNullable<EntityQuery['projections']>[num
           return `${step.fieldId}[${step.relationSchemaId}]`;
         case 'endpoint':
           return `endpoint(${step.direction})`;
+        case 'relationForward':
+          return step.fieldId;
+        case 'relationBackward':
+          return `<-${step.relationSchemaId}.${step.fieldId}`;
       }
     })
     .join('.');
@@ -621,7 +803,7 @@ export const validateEntityQueryIR = (
       0,
       errors,
       authCtx,
-      rootKind === 'relation'
+      rootKind
     );
     if (rootKind === 'relation' && projection.path.length === 0) {
       if (!isKnownRelationFieldId(projection.fieldId, relationSchemas, authCtx)) {
@@ -648,6 +830,19 @@ export const validateEntityQueryIR = (
         });
       }
     });
+    // A path ending on relationBackward with no following endpoint/relationForward lands on a
+    // relation instance, not an entity — only a `source: 'relation'` projection (terminating at a
+    // typedRelation step, per the check below) can read a field off a relation row today.
+    if (
+      projection.source !== 'relation' &&
+      kindAfterPath(projection.path, rootKind) === 'relation'
+    ) {
+      errors.push({
+        path: [...projectionPath, 'path'],
+        message:
+          'Projection path lands on a relation instance; add an endpoint or relationForward step to reach an entity'
+      });
+    }
     const relationProjectionStep =
       projection.source === 'relation'
         ? [...projection.path].reverse().find(step => step.kind === 'typedRelation')

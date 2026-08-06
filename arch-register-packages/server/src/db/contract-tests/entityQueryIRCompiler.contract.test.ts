@@ -2794,4 +2794,161 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       })
     ).toBe(3);
   });
+
+  it('executes entity-valued relation field traversal end to end (#2670)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const systemSchema = await createSchema(db, workspace, { name: 'System' });
+    const dataEntitySchema = await createSchema(db, workspace, { name: 'Data Entity' });
+    const dataFlowSchema = await db.relation.createRelationSchema({
+      id: randomUUID(),
+      workspace,
+      name: 'Data Flow',
+      description: '',
+      in_schema_ids: [systemSchema.id],
+      out_schema_ids: [systemSchema.id],
+      fields: [
+        {
+          id: 'data',
+          name: 'Data',
+          type: 'entityRelation',
+          requirementLevel: 'optional',
+          schemaId: dataEntitySchema.id,
+          minCount: 0,
+          maxCount: -1
+        }
+      ],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    const systemA = await createFixtureCatalogEntity(db, workspace, systemSchema.id, {
+      name: 'System A'
+    });
+    const systemB = await createFixtureCatalogEntity(db, workspace, systemSchema.id, {
+      name: 'System B'
+    });
+    const address = await createFixtureCatalogEntity(db, workspace, dataEntitySchema.id, {
+      name: 'Address'
+    });
+    const order = await createFixtureCatalogEntity(db, workspace, dataEntitySchema.id, {
+      name: 'Order'
+    });
+    const dataFlow = await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: dataFlowSchema.id,
+      in_entity_id: systemA.id,
+      out_entity_id: systemB.id,
+      data: { data: [address.id] },
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: dataFlowSchema.id,
+      in_entity_id: systemA.id,
+      out_entity_id: systemB.id,
+      data: { data: [order.id] },
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    const schemas: SchemaCatalog = new Map([
+      [systemSchema.id, systemSchema],
+      [dataEntitySchema.id, dataEntitySchema]
+    ]);
+    const relationSchemas = new Map([[dataFlowSchema.id, dataFlowSchema]]);
+
+    // Forward: relation-rooted query filtering by a field on the referenced Data Entity.
+    const forwardQuery: EntityQuery = {
+      schemaId: dataFlowSchema.id,
+      root: {
+        kind: 'predicate',
+        path: [{ kind: 'relationForward', fieldId: 'data' }],
+        fieldId: '_name',
+        op: 'equals',
+        value: 'Address'
+      }
+    };
+    const forwardValidation = validateEntityQueryIR(forwardQuery, schemas, null, relationSchemas);
+    expect(forwardValidation.ok, JSON.stringify(forwardValidation)).toBe(true);
+    const forwardCompiled = compileEntityQueryIR(
+      forwardQuery,
+      schemas,
+      driver,
+      workspace,
+      {},
+      null,
+      relationSchemas
+    );
+    const forwardRows = await db.relation.runCompiledRelationQuery(
+      forwardCompiled.sql,
+      forwardCompiled.params
+    );
+    expect(forwardRows.map(row => row.id)).toEqual([dataFlow.id]);
+
+    // Backward: entity-rooted query starting from the Data Entity, traversing back through the
+    // Data Flow relation's `data` field, then out to the opposite (`out`) endpoint entity.
+    const backwardQuery: EntityQuery = {
+      schemaId: dataEntitySchema.id,
+      root: {
+        kind: 'predicate',
+        path: [
+          { kind: 'relationBackward', fieldId: 'data', relationSchemaId: dataFlowSchema.id },
+          { kind: 'endpoint', direction: 'out' }
+        ],
+        fieldId: '_id',
+        op: 'equals',
+        value: systemB.id
+      }
+    };
+    const backwardValidation = validateEntityQueryIR(backwardQuery, schemas, null, relationSchemas);
+    expect(backwardValidation.ok, JSON.stringify(backwardValidation)).toBe(true);
+    const backwardCompiled = compileEntityQueryIR(
+      backwardQuery,
+      schemas,
+      driver,
+      workspace,
+      {},
+      null,
+      relationSchemas
+    );
+    const backwardRows = await db.catalog.runCompiledEntityQuery(
+      backwardCompiled.sql,
+      backwardCompiled.params
+    );
+    expect(backwardRows.map(row => row.id).sort()).toEqual([address.id, order.id].sort());
+
+    // relationExists: does any Data Flow relation reference this Data Entity via `data`.
+    const existsQuery: EntityQuery = {
+      schemaId: dataEntitySchema.id,
+      root: {
+        kind: 'relationExists',
+        path: [{ kind: 'relationBackward', fieldId: 'data', relationSchemaId: dataFlowSchema.id }]
+      }
+    };
+    const existsValidation = validateEntityQueryIR(existsQuery, schemas, null, relationSchemas);
+    expect(existsValidation.ok, JSON.stringify(existsValidation)).toBe(true);
+    const existsCompiled = compileEntityQueryIR(
+      existsQuery,
+      schemas,
+      driver,
+      workspace,
+      {},
+      null,
+      relationSchemas
+    );
+    const existsRows = await db.catalog.runCompiledEntityQuery(
+      existsCompiled.sql,
+      existsCompiled.params
+    );
+    expect(existsRows.map(row => row.id).sort()).toEqual([address.id, order.id].sort());
+  });
 });

@@ -57,9 +57,27 @@ const selectRelationFieldInputSchema = baseRelationFieldSchema.extend({
   enumId: z.string().describe('Enumeration identifier for dropdown options')
 });
 
-// Note: unlike EntitySchema fields, relation fields intentionally exclude `reference`,
-// `containment`, and `derived` — a relation's only connections to entities are its structural
-// `in`/`out` endpoints below, not additional generic pointer fields.
+const entityRelationFieldSchema = baseRelationFieldSchema.extend({
+  type: z
+    .literal('entityRelation')
+    .describe('Reference from a relation instance to one or more entities'),
+  predicate: z
+    .string()
+    .max(100)
+    .regex(/^[a-zA-Z0-9\s-]+$/)
+    .optional()
+    .describe('Relationship predicate/label'),
+  schemaId: z.string().describe('Target entity schema identifier'),
+  minCount: z.number().int().min(0).describe('Minimum number of entity references required'),
+  maxCount: z
+    .union([z.literal(-1), z.number().int().min(0)])
+    .describe('Maximum number of entity references (-1 for unlimited)')
+});
+
+// Note: unlike EntitySchema fields, relation fields intentionally exclude `containment` and
+// `derived` — a relation's structural connections to entities are its `in`/`out` endpoints
+// below, plus any `entityRelation` fields it declares; there is no notion of a relation
+// "containing" an entity, and derived fields are not yet supported on relation schemas.
 export const relationFieldInputSchema = z
   .discriminatedUnion('type', [
     textRelationFieldSchema,
@@ -67,7 +85,8 @@ export const relationFieldInputSchema = z
     booleanRelationFieldSchema,
     dateRelationFieldSchema,
     numberRelationFieldSchema,
-    selectRelationFieldInputSchema
+    selectRelationFieldInputSchema,
+    entityRelationFieldSchema
   ])
   .superRefine((field, ctx) => {
     const issue = assertRefreshModeRequiresExternalKind(field);
@@ -91,7 +110,8 @@ export const relationFieldResponseSchema = z
     booleanRelationFieldSchema,
     dateRelationFieldSchema,
     numberRelationFieldSchema,
-    selectRelationFieldResponseSchema
+    selectRelationFieldResponseSchema,
+    entityRelationFieldSchema
   ])
   .superRefine((field, ctx) => {
     const issue = assertRefreshModeRequiresExternalKind(field);
@@ -326,6 +346,10 @@ export const workspaceRelationSchemaContract = oc.tag('RelationSchemas').router(
 
 export type RelationField = z.infer<typeof relationFieldInputSchema>;
 export type RelationFieldInput = z.infer<typeof relationFieldInputSchema>;
+export type EntityRelationField = Extract<RelationField, { type: 'entityRelation' }>;
+
+export const isEntityRelationField = (field: RelationField): field is EntityRelationField =>
+  field.type === 'entityRelation';
 
 // ── Relation Schema ────────────────────────────────────────────
 

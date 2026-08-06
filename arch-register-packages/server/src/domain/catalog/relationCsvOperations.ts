@@ -64,14 +64,24 @@ const relationFieldsForExport = (
 
 const relationRowToCsv = (
   relation: RelationRecord,
-  fields: RelationField[]
+  fields: RelationField[],
+  entityNameById: ReadonlyMap<string, string>
 ): Record<string, unknown> => {
   const row: Record<string, unknown> = {
     _schemaId: relation._schema.id,
     _inEntityId: relation._in.id,
     _outEntityId: relation._out.id
   };
-  for (const field of fields) row[field.name] = fieldValueForCsv(relation[field.id]);
+  for (const field of fields) {
+    if (field.type === 'entityRelation') {
+      const ids = Array.isArray(relation[field.id]) ? (relation[field.id] as unknown[]) : [];
+      row[field.name] = ids
+        .map(id => (typeof id === 'string' ? (entityNameById.get(id) ?? id) : id))
+        .join(', ');
+    } else {
+      row[field.name] = fieldValueForCsv(relation[field.id]);
+    }
+  }
   return row;
 };
 
@@ -83,10 +93,15 @@ export const exportRelationsCsv = async (
   now = new Date()
 ) => {
   requireSchemaRead(authCtx);
-  const [relationSchemas, schemas] = await Promise.all([
+  const [relationSchemas, schemas, entities] = await Promise.all([
     db.relation.listRelationSchemas(workspace),
-    db.catalog.listSchemas(workspace)
+    db.catalog.listSchemas(workspace),
+    db.catalog.listEntities(workspace)
   ]);
+  // Not further filtered by per-entity view permission (see Phase 9/#2670 redaction follow-up) —
+  // matches this export's existing scope, which only enforces field-level ACL via
+  // isFieldViewRestricted, not per-referenced-entity visibility.
+  const entityNameById = new Map(entities.map(entity => [entity.id, entity.name]));
   const relations = await collectRelationsFromIR(
     db,
     workspace,
@@ -118,7 +133,7 @@ export const exportRelationsCsv = async (
     ? relationFieldsForExport(authCtx, historicalSingleSchema)
     : [];
   const columns = [...BASE_COLUMNS, ...fields.map(field => field.name)];
-  const rows = relations.map(relation => relationRowToCsv(relation, fields));
+  const rows = relations.map(relation => relationRowToCsv(relation, fields, entityNameById));
   const filename = `${currentSingleSchema ? relationSchemaName(currentSingleSchema) : 'relations'}-${
     now.toISOString().split('T')[0]
   }.csv`;
@@ -184,11 +199,26 @@ const parseFieldValue = (
   field: RelationField,
   raw: string,
   enums: Awaited<ReturnType<DatabaseAdapter['catalog']['listEnums']>>,
-  errors: string[]
+  errors: string[],
+  entityNameToId?: ReadonlyMap<string, string>
 ): unknown => {
   const value = raw.trim();
   if (!value) return undefined;
   switch (field.type) {
+    case 'entityRelation': {
+      const names = value
+        .split(',')
+        .map(name => name.trim())
+        .filter(Boolean);
+      const ids = names
+        .map(name => entityNameToId?.get(name.toLowerCase()))
+        .filter((id): id is string => id !== undefined);
+      if (ids.length !== names.length) {
+        errors.push(`${field.name} references one or more unknown entities`);
+        return undefined;
+      }
+      return ids;
+    }
     case 'boolean':
       if (!['true', 'false', 'yes', 'no', '1', '0'].includes(value.toLowerCase())) {
         errors.push(`${field.name} must be a boolean (true/false)`);
@@ -243,6 +273,7 @@ const relationImportContext = async (db: DatabaseAdapter, workspace: string) => 
     relationSchemas,
     entities,
     entityById: new Map(entities.map(entity => [entity.id, entity])),
+    entityNameToId: new Map(entities.map(entity => [entity.name.toLowerCase(), entity.id])),
     entitySchemaById: new Map(entitySchemas.map(schema => [schema.id, schema])),
     relationSchemaById: new Map(relationSchemas.map(schema => [schema.id, schema])),
     enums,
@@ -302,7 +333,13 @@ const validateCsvRelationRow = (
         errors.push(`You do not have permission to set field '${field.name}'`);
         continue;
       }
-      const value = parseFieldValue(field, row[header] ?? '', context.enums, errors);
+      const value = parseFieldValue(
+        field,
+        row[header] ?? '',
+        context.enums,
+        errors,
+        context.entityNameToId
+      );
       if (value !== undefined) relation[field.id] = value;
     }
   }
@@ -431,8 +468,27 @@ const normalizeCommitRelation = (
         errors.push(`You do not have permission to set field '${field.name}'`);
         continue;
       }
+      // entityRelation values round-trip through parse/commit as an already-resolved array of
+      // entity ids (see validateCsvRelationRow), not the raw "name, name" CSV cell text that
+      // parseFieldValue's name-resolution branch expects — so array-shaped input is passed
+      // through directly instead of being re-parsed as names.
+      if (field.type === 'entityRelation' && Array.isArray(raw)) {
+        const ids = raw.filter((item): item is string => typeof item === 'string');
+        if (ids.length !== raw.length) {
+          errors.push(`${field.name} must be an array of entity ids`);
+        } else {
+          data[field.id] = ids;
+        }
+        continue;
+      }
       const serialized = raw == null ? '' : String(raw);
-      const value = parseFieldValue(field, serialized, context.enums, errors);
+      const value = parseFieldValue(
+        field,
+        serialized,
+        context.enums,
+        errors,
+        context.entityNameToId
+      );
       if (value !== undefined) data[field.id] = value;
     }
   }
