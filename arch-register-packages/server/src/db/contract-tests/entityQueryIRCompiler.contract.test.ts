@@ -11,6 +11,7 @@ import type { RelationSchemaDbResult } from '../../domain/catalog/db/relationDat
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import {
   compileEntityQueryIR,
+  compileEntityQueryCountIR,
   type CompiledEntityQueryOptions
 } from '../../domain/catalog/entityQueryIRCompiler';
 import {
@@ -1503,6 +1504,279 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const contractorRow = projRows.find(row => row.id === contractorEntity.id);
     expect(employeeRow?.projections['salary']).toBeNull();
     expect(contractorRow?.projections['salary']).toBe(200);
+  });
+
+  it('preserves restricted-field unknown semantics through negation and composition', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const user = await createFixtureUser(db);
+
+    const employee = await createSchema(db, workspace, {
+      name: 'Employee',
+      fields: [{ id: 'salary', name: 'Salary', type: 'number', groupId: 'hr' }],
+      groups: [{ id: 'hr', name: 'HR', accessControl: { teamIds: ['team-hr'] } }]
+    });
+    const contractor = await createSchema(db, workspace, {
+      name: 'Contractor',
+      fields: [{ id: 'salary', name: 'Salary', type: 'number' }]
+    });
+
+    const restrictedEmployee = await createFixtureCatalogEntity(db, workspace, employee.id, {
+      name: 'Restricted Employee',
+      data: { salary: 500 }
+    });
+    const highContractor = await createFixtureCatalogEntity(db, workspace, contractor.id, {
+      name: 'High Contractor',
+      data: { salary: 200 }
+    });
+    const lowContractor = await createFixtureCatalogEntity(db, workspace, contractor.id, {
+      name: 'Low Contractor',
+      data: { salary: 50 }
+    });
+
+    const schemas: SchemaCatalog = new Map([
+      [employee.id, employee],
+      [contractor.id, contractor]
+    ]);
+    const noAccess = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: 'editor',
+      schemas: [employee, contractor],
+      entities: [restrictedEmployee, highContractor, lowContractor],
+      grants: []
+    });
+    const hrAccess = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [{ teamId: 'team-hr', role: 'team_reviewer' }],
+      schemas: [employee, contractor],
+      entities: [restrictedEmployee, highContractor, lowContractor],
+      grants: []
+    });
+
+    const predicate = (fieldId: string, op: 'equals' | 'gt', value: unknown) => ({
+      kind: 'predicate' as const,
+      path: [],
+      fieldId,
+      op,
+      value
+    });
+    const queryFor = (root: EntityQuery['root'], projections?: EntityQuery['projections']) => ({
+      root,
+      ...(projections ? { projections } : {})
+    });
+    const run = async (
+      query: EntityQuery,
+      authCtx: ReturnType<typeof buildAuthorizationContext>
+    ) => {
+      const validation = validateEntityQueryIR(query, schemas, authCtx);
+      expect(validation.ok, JSON.stringify(validation)).toBe(true);
+      const compiled = compileEntityQueryIR(
+        query,
+        schemas,
+        driver,
+        workspace,
+        {},
+        authCtx
+      );
+      return db.catalog.runCompiledEntityQuery(compiled.sql, compiled.params);
+    };
+
+    const positive = queryFor(predicate('salary', 'gt', 100));
+    expect((await run(positive, noAccess)).map(entity => entity.id)).toEqual([highContractor.id]);
+    expect((await run(positive, hrAccess)).map(entity => entity.id)).toEqual(
+      expect.arrayContaining([restrictedEmployee.id, highContractor.id])
+    );
+
+    const negated = queryFor({ kind: 'not', child: predicate('salary', 'gt', 100) });
+    expect((await run(negated, noAccess)).map(entity => entity.id)).toEqual([lowContractor.id]);
+
+    const conjunction = queryFor({
+      kind: 'and',
+      children: [predicate('salary', 'gt', 100), predicate('_name', 'equals', 'High Contractor')]
+    });
+    expect((await run(conjunction, noAccess)).map(entity => entity.id)).toEqual([highContractor.id]);
+
+    const disjunction = queryFor({
+      kind: 'or',
+      children: [predicate('salary', 'gt', 100), predicate('_name', 'equals', 'No such entity')]
+    });
+    expect((await run(disjunction, noAccess)).map(entity => entity.id)).toEqual([highContractor.id]);
+
+    const disjunctionWithKnownMatch = queryFor({
+      kind: 'or',
+      children: [predicate('salary', 'gt', 100), predicate('_name', 'equals', 'Restricted Employee')]
+    });
+    expect((await run(disjunctionWithKnownMatch, noAccess)).map(entity => entity.id)).toEqual(
+      expect.arrayContaining([restrictedEmployee.id, highContractor.id])
+    );
+
+    const negatedPage = await listEntitiesWithCount(db, workspace, noAccess, {
+      entityQuery: negated,
+      view: 'full'
+    });
+    expect(negatedPage.total).toBe(1);
+    expect(negatedPage.items.map(entity => entity._uid)).toEqual([lowContractor.id]);
+    expect(await countEntities(db, workspace, noAccess, { entityQuery: negated })).toBe(1);
+
+    const projectionQuery = queryFor(
+      { kind: 'and', children: [] },
+      [{ path: [], fieldId: 'salary' }]
+    );
+    const projected = await run(projectionQuery, noAccess);
+    expect(projected.find(entity => entity.id === restrictedEmployee.id)?.projections['salary']).toBe(
+      null
+    );
+    expect(projected.find(entity => entity.id === highContractor.id)?.projections['salary']).toBe(200);
+    expect(projected.find(entity => entity.id === lowContractor.id)?.projections['salary']).toBe(50);
+  });
+
+  it('preserves restricted relation-field unknown semantics through negation, counts, and projections', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const user = await createFixtureUser(db);
+    const endpointSchema = await createSchema(db, workspace, { name: 'Endpoint' });
+    const restrictedRelation = await db.relation.createRelationSchema({
+      id: randomUUID(),
+      workspace,
+      name: 'Restricted Relation',
+      description: '',
+      in_schema_ids: [endpointSchema.id],
+      out_schema_ids: [endpointSchema.id],
+      fields: [{ id: 'note', name: 'Note', type: 'text', groupId: 'restricted' }],
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    const unrestrictedRelation = await db.relation.createRelationSchema({
+      id: randomUUID(),
+      workspace,
+      name: 'Unrestricted Relation',
+      description: '',
+      in_schema_ids: [endpointSchema.id],
+      out_schema_ids: [endpointSchema.id],
+      fields: [{ id: 'note', name: 'Note', type: 'text' }],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    const left = await createFixtureCatalogEntity(db, workspace, endpointSchema.id, {
+      name: 'Left'
+    });
+    const right = await createFixtureCatalogEntity(db, workspace, endpointSchema.id, {
+      name: 'Right'
+    });
+    const restricted = await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: restrictedRelation.id,
+      in_entity_id: left.id,
+      out_entity_id: right.id,
+      data: { note: 'secret' },
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    const visible = await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: unrestrictedRelation.id,
+      in_entity_id: left.id,
+      out_entity_id: right.id,
+      data: { note: 'visible' },
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    const low = await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: unrestrictedRelation.id,
+      in_entity_id: right.id,
+      out_entity_id: left.id,
+      data: { note: 'low' },
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    const schemas: SchemaCatalog = new Map([[endpointSchema.id, endpointSchema]]);
+    const relationSchemas = new Map([
+      [restrictedRelation.id, restrictedRelation],
+      [unrestrictedRelation.id, unrestrictedRelation]
+    ]);
+    const noAccess = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: 'editor',
+      schemas: [endpointSchema],
+      entities: [left, right],
+      grants: []
+    });
+    const queryFor = (root: EntityQuery['root'], projections?: EntityQuery['projections']) => ({
+      root_kind: 'relation' as const,
+      root,
+      ...(projections ? { projections } : {})
+    });
+    const run = async (query: EntityQuery) => {
+      const validation = validateEntityQueryIR(query, schemas, noAccess, relationSchemas);
+      expect(validation.ok, JSON.stringify(validation)).toBe(true);
+      const compiled = compileEntityQueryIR(
+        query,
+        schemas,
+        driver,
+        workspace,
+        {},
+        noAccess,
+        relationSchemas
+      );
+      return db.relation.runCompiledRelationQuery(compiled.sql, compiled.params);
+    };
+    const predicate = {
+      kind: 'predicate' as const,
+      path: [],
+      fieldId: 'note',
+      op: 'equals' as const,
+      value: 'visible'
+    };
+
+    expect((await run(queryFor(predicate))).map(relation => relation.id)).toEqual([visible.id]);
+    expect(
+      (await run(queryFor({ kind: 'not', child: predicate }))).map(relation => relation.id)
+    ).toEqual([low.id]);
+
+    const negated = queryFor({ kind: 'not', child: predicate });
+    const countQuery = compileEntityQueryCountIR(
+      negated,
+      schemas,
+      driver,
+      workspace,
+      {},
+      noAccess,
+      relationSchemas
+    );
+    const count = await db.relation.runCompiledRelationCountQuery(
+      countQuery.sql,
+      countQuery.params
+    );
+    expect(count).toBe(1);
+
+    const projectionQuery = queryFor(
+      { kind: 'and', children: [] },
+      [{ path: [], fieldId: 'note' }]
+    );
+    const projected = await run(projectionQuery);
+    expect(projected.find(relation => relation.id === restricted.id)?.projections['note']).toBeNull();
+    expect(projected.find(relation => relation.id === visible.id)?.projections['note']).toBe('visible');
   });
 
   it('scopes typed-relation hops and projection bindings to accessible owner schemas', async () => {
