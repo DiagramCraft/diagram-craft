@@ -1,6 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
-import { buildRelationGraphData, getRelationGraphEdgeLabel } from './relationGraphState';
+import {
+  buildRelationGraphData,
+  getRelationGraphEdgeColor,
+  getRelationGraphEdgeLabel
+} from './relationGraphState';
 
 const relation = (overrides: Partial<RelationRecord> = {}): RelationRecord => ({
   _uid: 'relation-1',
@@ -88,5 +92,18 @@ describe('buildRelationGraphData', () => {
         ])
       )
     ).toBe('Address, Order');
+  });
+
+  it('hashes selected field values to stable palette colors', () => {
+    const first = getRelationGraphEdgeColor(relation({ status: 'Active' }), undefined, 'status');
+    const second = getRelationGraphEdgeColor(
+      relation({ _uid: 'relation-2', status: 'Active' }),
+      undefined,
+      'status'
+    );
+    const other = getRelationGraphEdgeColor(relation({ status: 'Inactive' }), undefined, 'status');
+
+    expect(first).toBe(second);
+    expect(first).not.toBe(other);
   });
 });

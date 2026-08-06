@@ -65,6 +65,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
   const search = useSearch({ strict: false });
   const view: RelationBrowserView = search.viewMode === 'graph' ? 'graph' : 'table';
   const edgeLabelFieldId = search.edgeLabelFieldId ?? RELATION_GRAPH_TYPE_LABEL;
+  const edgeColorFieldId = search.edgeColorFieldId ?? RELATION_GRAPH_TYPE_LABEL;
   const {
     relationSchemas,
     entitySchemas,
@@ -138,6 +139,20 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     [navigate, workspaceId]
   );
 
+  const setEdgeColorFieldId = useCallback(
+    (next: string) => {
+      navigate({
+        to: '/$workspaceSlug/entities/relations',
+        params: { workspaceSlug: workspaceId },
+        search: (previous: Record<string, unknown>) => ({
+          ...previous,
+          edgeColorFieldId: next === RELATION_GRAPH_TYPE_LABEL ? undefined : next
+        })
+      });
+    },
+    [navigate, workspaceId]
+  );
+
   const handleExport = useCallback(async () => {
     try {
       const blob = await exportRelationsToCSV(
@@ -192,7 +207,8 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
           isAdminView,
           viewMode: view,
           conditions,
-          edgeLabelFieldId
+          edgeLabelFieldId,
+          edgeColorFieldId
         })
       );
     } catch {
@@ -208,7 +224,8 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
       isAdminView: activeSavedView.isAdminView,
       viewMode: view,
       conditions,
-      edgeLabelFieldId
+      edgeLabelFieldId,
+      edgeColorFieldId
     });
     try {
       await updateSavedViewMutation.mutateAsync({
@@ -470,6 +487,8 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
             isLoading={isLoading}
             edgeLabelFieldId={edgeLabelFieldId}
             onEdgeLabelFieldIdChange={setEdgeLabelFieldId}
+            edgeColorFieldId={edgeColorFieldId}
+            onEdgeColorFieldIdChange={setEdgeColorFieldId}
             onEntityClick={entityId =>
               navigate(entityDetailRoute(workspaceId, asEntityPublicId(entityId)))
             }

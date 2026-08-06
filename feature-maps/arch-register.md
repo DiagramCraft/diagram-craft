@@ -143,8 +143,9 @@
           entities, and asOf/historical reconstruction. Users can switch the filtered result set between a table
           and a flat Graph view whose nodes are the matching relation endpoints and whose edges are the matching
           relation instances; the Graph view does not perform further traversal. This remains separate from the
-          entity-embedded Relations tab above, which is unaffected. Saved views can persist the relation-rooted
-          query and selected display mode the same way entity views do.
+          entity-embedded Relations tab above, which is unaffected. Graph edges can be labelled and coloured from
+          relation field values, with deterministic palette colours; saved views can persist the relation-rooted
+          query, selected display mode, and graph field settings the same way entity views do.
 
         - @id:ar.entities.content Users can attach and manage structured or Markdown-based content associated with an
           entity.

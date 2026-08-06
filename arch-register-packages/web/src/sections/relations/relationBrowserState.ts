@@ -125,6 +125,10 @@ export const toSavedRelationViewSearch = (view: SavedView): RelationSearchParams
   edgeLabelFieldId:
     view.viewMode === 'graph' && view.config?.graph?.edgeLabelFieldId != null
       ? view.config.graph.edgeLabelFieldId
+      : undefined,
+  edgeColorFieldId:
+    view.viewMode === 'graph' && view.config?.graph?.edgeColorFieldId != null
+      ? view.config.graph.edgeColorFieldId
       : undefined
 });
 
@@ -134,7 +138,8 @@ export const buildRelationSavedViewPayload = ({
   isAdminView,
   viewMode,
   conditions,
-  edgeLabelFieldId
+  edgeLabelFieldId,
+  edgeColorFieldId
 }: {
   name: string;
   description: string;
@@ -142,6 +147,7 @@ export const buildRelationSavedViewPayload = ({
   viewMode: RelationBrowserView;
   conditions: FilterCondition[];
   edgeLabelFieldId: string;
+  edgeColorFieldId: string;
 }): CreateSavedViewRequest => ({
   scope: 'workspace',
   projectId: null,
@@ -155,8 +161,8 @@ export const buildRelationSavedViewPayload = ({
     viewMode === 'graph'
       ? {
           graph: {
-            edgeLabelFieldId:
-              edgeLabelFieldId === RELATION_GRAPH_TYPE_LABEL ? null : edgeLabelFieldId
+            ...(edgeLabelFieldId !== RELATION_GRAPH_TYPE_LABEL ? { edgeLabelFieldId } : {}),
+            ...(edgeColorFieldId !== RELATION_GRAPH_TYPE_LABEL ? { edgeColorFieldId } : {})
           }
         }
       : null

@@ -172,7 +172,12 @@ export const graphViewConfigSchema = z.object({
     .string()
     .nullable()
     .optional()
-    .describe('Relation field identifier used for graph edge labels')
+    .describe('Relation field identifier used for graph edge labels'),
+  edgeColorFieldId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Relation field identifier used for graph edge colors')
 });
 
 const viewConfigSchema = z

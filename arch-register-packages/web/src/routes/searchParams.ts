@@ -81,13 +81,15 @@ export type RelationSearchParams = {
   viewMode?: 'table' | 'graph';
   entityQuery?: string; // JSON string of structured EntityQuery IR (root_kind: 'relation')
   edgeLabelFieldId?: string;
+  edgeColorFieldId?: string;
 };
 
 export const validateRelationSearch = (raw: Record<string, unknown>): RelationSearchParams => ({
   viewId: typeof raw.viewId === 'string' ? raw.viewId : undefined,
   viewMode: raw.viewMode === 'graph' ? 'graph' : raw.viewMode === 'table' ? 'table' : undefined,
   entityQuery: typeof raw.entityQuery === 'string' ? raw.entityQuery : undefined,
-  edgeLabelFieldId: typeof raw.edgeLabelFieldId === 'string' ? raw.edgeLabelFieldId : undefined
+  edgeLabelFieldId: typeof raw.edgeLabelFieldId === 'string' ? raw.edgeLabelFieldId : undefined,
+  edgeColorFieldId: typeof raw.edgeColorFieldId === 'string' ? raw.edgeColorFieldId : undefined
 });
 
 // Entity detail params

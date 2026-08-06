@@ -150,9 +150,9 @@ describe('relation saved view display mode', () => {
         id: 'view-1',
         viewMode: 'graph',
         filters: buildRelationQueryFromFilters([]),
-        config: { graph: { edgeLabelFieldId: 'status' } }
+        config: { graph: { edgeLabelFieldId: 'status', edgeColorFieldId: 'priority' } }
       } as never)
-    ).toMatchObject({ viewId: 'view-1', edgeLabelFieldId: 'status' });
+    ).toMatchObject({ viewId: 'view-1', edgeLabelFieldId: 'status', edgeColorFieldId: 'priority' });
   });
 
   it('persists graph edge label configuration and exposes relation fields as options', () => {
@@ -163,9 +163,10 @@ describe('relation saved view display mode', () => {
         isAdminView: false,
         viewMode: 'graph',
         conditions: [],
-        edgeLabelFieldId: 'status'
+        edgeLabelFieldId: 'status',
+        edgeColorFieldId: 'priority'
       }).config
-    ).toEqual({ graph: { edgeLabelFieldId: 'status' } });
+    ).toEqual({ graph: { edgeLabelFieldId: 'status', edgeColorFieldId: 'priority' } });
 
     expect(
       getRelationGraphLabelOptions([

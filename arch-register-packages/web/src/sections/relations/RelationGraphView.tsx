@@ -40,6 +40,8 @@ type Props = {
   isLoading: boolean;
   edgeLabelFieldId: string;
   onEdgeLabelFieldIdChange: (fieldId: string) => void;
+  edgeColorFieldId: string;
+  onEdgeColorFieldIdChange: (fieldId: string) => void;
   onEntityClick: (id: string) => void;
 };
 
@@ -51,6 +53,8 @@ export const RelationGraphView = ({
   isLoading,
   edgeLabelFieldId,
   onEdgeLabelFieldIdChange,
+  edgeColorFieldId,
+  onEdgeColorFieldIdChange,
   onEntityClick
 }: Props) => {
   const [layout, setLayout] = useState<LayoutAlgorithm>('hierarchy');
@@ -68,6 +72,9 @@ export const RelationGraphView = ({
   const selectedEdgeLabelFieldId = labelOptions.some(option => option.value === edgeLabelFieldId)
     ? edgeLabelFieldId
     : RELATION_GRAPH_TYPE_LABEL;
+  const selectedEdgeColorFieldId = labelOptions.some(option => option.value === edgeColorFieldId)
+    ? edgeColorFieldId
+    : RELATION_GRAPH_TYPE_LABEL;
   const selectedFieldIsReference = relationSchemas.some(schema =>
     schema.fields.some(
       field => field.id === selectedEdgeLabelFieldId && field.type === 'entityRelation'
@@ -83,8 +90,20 @@ export const RelationGraphView = ({
   const referenceLookup = useEntitiesByIds(workspaceId, referenceIds);
   const { nodes, edges } = useMemo(
     () =>
-      buildRelationGraphData(relations, relationSchemas, selectedEdgeLabelFieldId, referenceLookup),
-    [relations, relationSchemas, selectedEdgeLabelFieldId, referenceLookup]
+      buildRelationGraphData(
+        relations,
+        relationSchemas,
+        selectedEdgeLabelFieldId,
+        selectedEdgeColorFieldId,
+        referenceLookup
+      ),
+    [
+      relations,
+      relationSchemas,
+      selectedEdgeLabelFieldId,
+      selectedEdgeColorFieldId,
+      referenceLookup
+    ]
   );
   const schemaMap = useMemo(
     () => new Map(entitySchemas.map((schema, index) => [schema.id, { schema, index }])),
@@ -134,6 +153,17 @@ export const RelationGraphView = ({
               <Select.Root
                 value={selectedEdgeLabelFieldId}
                 onChange={value => value && onEdgeLabelFieldIdChange(value)}
+              >
+                {labelOptions.map(option => (
+                  <Select.Item key={option.value} value={option.value}>
+                    {option.label}
+                  </Select.Item>
+                ))}
+              </Select.Root>
+              <span className={styles.eToolbarLabel}>Edge color</span>
+              <Select.Root
+                value={selectedEdgeColorFieldId}
+                onChange={value => value && onEdgeColorFieldIdChange(value)}
               >
                 {labelOptions.map(option => (
                   <Select.Item key={option.value} value={option.value}>

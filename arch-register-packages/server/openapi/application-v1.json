@@ -67433,6 +67433,17 @@
                                       }
                                     ],
                                     "description": "Relation field identifier used for graph edge labels"
+                                  },
+                                  "edgeColorFieldId": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Relation field identifier used for graph edge colors"
                                   }
                                 },
                                 "description": "Configuration for relation graph view"
@@ -69526,6 +69537,17 @@
                                   }
                                 ],
                                 "description": "Relation field identifier used for graph edge labels"
+                              },
+                              "edgeColorFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Relation field identifier used for graph edge colors"
                               }
                             },
                             "description": "Configuration for relation graph view"
@@ -71813,6 +71835,17 @@
                                     }
                                   ],
                                   "description": "Relation field identifier used for graph edge labels"
+                                },
+                                "edgeColorFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Relation field identifier used for graph edge colors"
                                 }
                               },
                               "description": "Configuration for relation graph view"
@@ -73897,6 +73930,17 @@
                                   }
                                 ],
                                 "description": "Relation field identifier used for graph edge labels"
+                              },
+                              "edgeColorFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Relation field identifier used for graph edge colors"
                               }
                             },
                             "description": "Configuration for relation graph view"
@@ -76179,6 +76223,17 @@
                                     }
                                   ],
                                   "description": "Relation field identifier used for graph edge labels"
+                                },
+                                "edgeColorFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Relation field identifier used for graph edge colors"
                                 }
                               },
                               "description": "Configuration for relation graph view"

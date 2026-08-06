@@ -3,6 +3,19 @@ import type { RelationSchema } from '@arch-register/api-types/relationSchemaCont
 import type { DependencyGraphEdge, DependencyGraphNode } from '../../components/DependencyGraph';
 import { RELATION_GRAPH_TYPE_LABEL } from './relationBrowserState';
 
+export const RELATION_GRAPH_COLOR_PALETTE = [
+  '#4f8cff',
+  '#7c5cff',
+  '#d65db1',
+  '#f05d5e',
+  '#f4a261',
+  '#e9c46a',
+  '#62b36f',
+  '#2a9d8f',
+  '#36a2eb',
+  '#8d99ae'
+] as const;
+
 export type RelationGraphNodeData = {
   entityId: string;
   entityName: string;
@@ -57,10 +70,38 @@ export const getRelationGraphEdgeLabel = (
   );
 };
 
+const hashRelationGraphValue = (value: string): number => {
+  let hash = 0;
+  for (let index = 0; index < value.length; index++) {
+    hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
+  }
+  return hash;
+};
+
+export const getRelationGraphFieldColor = (value: unknown): string | undefined => {
+  const formatted = formatRelationGraphValue(value);
+  if (!formatted) return undefined;
+  return RELATION_GRAPH_COLOR_PALETTE[
+    hashRelationGraphValue(formatted) % RELATION_GRAPH_COLOR_PALETTE.length
+  ];
+};
+
+export const getRelationGraphEdgeColor = (
+  relation: RelationRecord,
+  relationSchema: RelationSchema | undefined,
+  edgeColorFieldId: string = RELATION_GRAPH_TYPE_LABEL
+): string | undefined => {
+  if (edgeColorFieldId === RELATION_GRAPH_TYPE_LABEL) return relationSchema?.color ?? undefined;
+  return (
+    getRelationGraphFieldColor(relation[edgeColorFieldId]) ?? relationSchema?.color ?? undefined
+  );
+};
+
 export const buildRelationGraphData = (
   relations: RelationRecord[],
   relationSchemas: RelationSchema[] = [],
   edgeLabelFieldId: string = RELATION_GRAPH_TYPE_LABEL,
+  edgeColorFieldId: string = RELATION_GRAPH_TYPE_LABEL,
   referenceLookup: ReadonlyMap<string, RelationReference> = new Map()
 ): {
   nodes: DependencyGraphNode<RelationGraphNodeData>[];
@@ -94,7 +135,7 @@ export const buildRelationGraphData = (
       to: relation._out.id,
       label: getRelationGraphEdgeLabel(relation, edgeLabelFieldId, referenceLookup),
       kind: 'typed',
-      color: relationSchema?.color ?? undefined,
+      color: getRelationGraphEdgeColor(relation, relationSchema, edgeColorFieldId),
       relationId: relation._uid
     } satisfies DependencyGraphEdge;
   });
