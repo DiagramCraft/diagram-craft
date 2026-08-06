@@ -298,6 +298,12 @@ describe('csvRowToEntity', () => {
     expect(result.headcount).toBe(42);
   });
 
+  it('converts currency fields to amount and currency objects', () => {
+    const currencyField: SchemaField = { id: 'annual_cost', name: 'Annual Cost', type: 'currency' };
+    const result = csvRowToEntity({ Name: 'X', 'Annual Cost': '125000 EUR' }, [currencyField]);
+    expect(result.annual_cost).toEqual({ amount: 125000, currency: 'EUR' });
+  });
+
   it('drops a typedRelation column instead of writing it into entity data', () => {
     const typedRelationField: SchemaField = {
       id: 'deps',

@@ -21,6 +21,7 @@ import {
   toEntityTemplateValues
 } from '../lib/entityTemplates';
 import { EntityFieldInput } from './EntityFieldInput';
+import { useSupportedCurrencies } from '../hooks/useWorkspaceConfig';
 import styles from './AddEntityDialog.module.css';
 import { useFieldGroupAccess } from '../auth/useFieldGroupAccess';
 import { resolveGroupAccessControl } from '../lib/fieldGroupAccess';
@@ -47,6 +48,7 @@ export const EntityTemplateDialog = ({
   teams: WorkspaceTeam[];
   lifecycleStates: WorkspaceLifecycleState[];
 }) => {
+  const currencyConfig = useSupportedCurrencies(workspaceId, open);
   const [name, setName] = useState('');
   const [fields, setFields] = useState<Record<string, unknown>>({});
   const [meta, setMeta] = useState(createEntityFormDefaults().meta);
@@ -177,10 +179,14 @@ export const EntityTemplateDialog = ({
                         ? Array.isArray(fields[field.id])
                           ? (fields[field.id] as string[])
                           : []
-                        : String(fields[field.id] ?? '')
+                        : field.type === 'currency'
+                          ? fields[field.id]
+                          : String(fields[field.id] ?? '')
                     }
                     onChange={value => setFields(current => ({ ...current, [field.id]: value }))}
                     referenceOptions={referenceOptions}
+                    currencyOptions={currencyConfig.data?.currencies}
+                    defaultCurrency={currencyConfig.data?.default_currency}
                     disabled={fieldAccessById.get(field.id) === 'view'}
                   />
                 ))}

@@ -386,8 +386,15 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const { entityId: routeEntityId } = useParams({ strict: false });
   const entityId = routeEntityId!;
   const search = useSearch({ strict: false }) as EntityDetailSearchParams;
-  const { workspaceSlug, schemas, relationSchemas, lifecycleStates, teams, permissions } =
-    useWorkspaceContext();
+  const {
+    workspaceSlug,
+    schemas,
+    relationSchemas,
+    lifecycleStates,
+    teams,
+    currencies,
+    permissions
+  } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const { canOverrideEntityApproval } = useWorkspacePermissions(workspaceId);
   const canViewAudit = permissions.canViewAudit;
@@ -778,6 +785,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             referenceOptions,
             teams,
             lifecycleStates,
+            currencies: currencies.currencies,
+            defaultCurrency: currencies.default_currency,
             entityProjects,
             changeCases: entityChangeCases,
             entityDiagramFiles,

@@ -40,7 +40,10 @@ import type {
   SchemaDbResult
 } from './db/catalogDatabase';
 import { entityRequiresApproval } from './entityChangeOperations';
-import { assertNoExternalEntityFieldWrites } from './entityValidation';
+import {
+  assertNoExternalEntityFieldWrites,
+  normalizeEntityCurrencyFields
+} from './entityValidation';
 import { equalEntityValue } from './entityDiff';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import type { ExternalMetadata } from '@arch-register/api-types/common';
@@ -89,9 +92,10 @@ export const createEntity = async (
   const teamIds = await getTeamIds(db, workspace);
 
   try {
-    const [schema, entities] = await Promise.all([
+    const [schema, entities, currencyConfig] = await Promise.all([
       db.catalog.getSchema(workspace, payload.schemaId),
-      listAllCatalogEntities(db, workspace)
+      listAllCatalogEntities(db, workspace),
+      db.workspace.getSupportedCurrencies(workspace)
     ]);
     httpAssert.present(schema, {
       status: 404,
@@ -102,6 +106,11 @@ export const createEntity = async (
       fields: payload.fields,
       entities
     });
+    normalizeEntityCurrencyFields(
+      schema.fields,
+      normalizedFields,
+      new Set(currencyConfig.currencies.map(currency => currency.code))
+    );
     assertNoDerivedFieldWrites(schema.fields, normalizedFields);
     assertNoExternalEntityFieldWrites(schema.fields, {}, normalizedFields);
     if (authCtx) {
@@ -508,6 +517,12 @@ export const updateEntity = async (
         fields: payload.fields,
         entities
       });
+      const currencyConfig = await db.workspace.getSupportedCurrencies(workspace);
+      normalizeEntityCurrencyFields(
+        schema.fields,
+        normalizedFields,
+        new Set(currencyConfig.currencies.map(currency => currency.code))
+      );
       assertNoDerivedFieldWrites(schema.fields, normalizedFields);
       if (authCtx) {
         const changedFieldIds = Object.keys(normalizedFields).filter(

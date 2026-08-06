@@ -19,6 +19,7 @@ import type {
   MemberDbResult,
   ProjectEntityTypeDbResult
 } from './db/workspaceDatabase';
+import type { SupportedCurrencyConfigDbResult } from './db/workspaceDatabase';
 
 const VALID_TEAM_ROLES: TeamRole[] = ['team_admin', 'team_editor', 'team_reviewer'];
 const VALID_WORKSPACE_CAPABILITIES = WORKSPACE_CAPABILITY_GROUPS.flatMap(group =>
@@ -117,6 +118,61 @@ export const replaceProjectEntityTypes = async (
       created_at: now
     }))
   );
+};
+
+const normalizeCurrencyCode = (value: string) => value.trim().toUpperCase();
+
+export const listSupportedCurrencies = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent
+): Promise<SupportedCurrencyConfigDbResult> => {
+  const authCtx = await buildApiAuthCtx(db, workspace, event);
+  requireWorkspaceCapability(authCtx, 'ws.view');
+  return await db.workspace.getSupportedCurrencies(workspace);
+};
+
+export const replaceSupportedCurrencies = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  currencies: Array<{ code: string; label: string; sort_order?: number }>,
+  defaultCurrency: string,
+  event: AuthenticatedEvent
+): Promise<SupportedCurrencyConfigDbResult> => {
+  const authCtx = await buildApiAuthCtx(db, workspace, event);
+  requireWorkspaceCapability(authCtx, 'ws.settings');
+
+  const normalized = currencies.map((currency, index) => ({
+    workspace,
+    code: normalizeCurrencyCode(currency.code),
+    label: sanitize(currency.label),
+    sort_order: index
+  }));
+  httpAssert.true(normalized.length > 0, { message: 'At least one currency is required' });
+  httpAssert.true(
+    normalized.every(currency => /^[A-Z]{3}$/.test(currency.code)),
+    {
+      message: 'Currency codes must be three uppercase letters'
+    }
+  );
+  httpAssert.true(
+    normalized.every(currency => currency.label.length > 0),
+    {
+      message: 'Currency labels cannot be empty'
+    }
+  );
+  httpAssert.true(new Set(normalized.map(currency => currency.code)).size === normalized.length, {
+    message: 'Duplicate currency codes'
+  });
+  const normalizedDefault = normalizeCurrencyCode(defaultCurrency);
+  httpAssert.true(
+    normalized.some(currency => currency.code === normalizedDefault),
+    {
+      message: 'Default currency must be supported'
+    }
+  );
+
+  return await db.workspace.replaceSupportedCurrencies(workspace, normalized, normalizedDefault);
 };
 
 // ── Teams ─────────────────────────────────────────────────────

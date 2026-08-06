@@ -2,6 +2,7 @@
  * CSV import utility functions for parsing and validating CSV data
  */
 import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { parseCurrencyValue } from './currencyValue';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -200,6 +201,11 @@ export const validateCsvData = (rows: ParsedCsvRow[], fields: SchemaField[]): Pa
               errors.push(`${field.name} must be a whole number`);
             }
             break;
+          case 'currency':
+            if (!parseCurrencyValue(value)) {
+              errors.push(`${field.name} must use the format amount CODE, for example 1200.50 USD`);
+            }
+            break;
           case 'typedRelation':
             errors.push(`${field.name} is a typed relation field and cannot be set via CSV import`);
             break;
@@ -296,6 +302,11 @@ export const csvRowToEntity = (
       case 'number':
         entity[field.id] = Number(trimmedValue);
         break;
+      case 'currency': {
+        const currency = parseCurrencyValue(trimmedValue);
+        if (currency) entity[field.id] = currency;
+        break;
+      }
       case 'typedRelation':
         // Rejected in validateCsvData — relation instances aren't part of the entity's data blob.
         break;

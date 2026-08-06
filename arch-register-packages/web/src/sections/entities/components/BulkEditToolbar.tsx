@@ -8,7 +8,10 @@ import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
+import type {
+  SupportedCurrency,
+  WorkspaceTeam
+} from '@arch-register/api-types/workspaceConfigContract';
 import { BulkFieldInput } from './BulkFieldInput';
 import { canClearBulkField, type BulkEditableField } from './bulkEditFields';
 import type { BulkEditResult, BulkEditStep, BulkFieldRow } from './useEntityBrowserSelection';
@@ -27,6 +30,8 @@ export type BulkEditToolbarProps = {
   result: BulkEditResult | null;
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
+  currencyOptions: SupportedCurrency[];
+  defaultCurrency: string;
   addFieldRow: (fieldId: string) => void;
   updateFieldRow: (rowId: string, changes: Partial<BulkFieldRow>) => void;
   removeFieldRow: (rowId: string) => void;
@@ -46,6 +51,8 @@ export const BulkEditToolbar = ({
   result,
   lifecycleStates,
   teams,
+  currencyOptions,
+  defaultCurrency,
   addFieldRow,
   updateFieldRow,
   removeFieldRow,
@@ -94,6 +101,8 @@ export const BulkEditToolbar = ({
                     clearing={row.clearing}
                     teams={teams}
                     lifecycleStates={lifecycleStates}
+                    currencyOptions={currencyOptions}
+                    defaultCurrency={defaultCurrency}
                     onValue={value => updateFieldRow(row.rowId, { value, clearing: false })}
                     onClearing={clearing => updateFieldRow(row.rowId, { clearing, value: '' })}
                   />

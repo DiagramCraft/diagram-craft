@@ -11,6 +11,7 @@ import {
 } from '@arch-register/api-types/assessmentFilter';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import { formatDate } from '../../../utils/dateFormat';
+import { formatCurrencyValue } from '../../../utils/currencyFormat';
 
 export const DISPLAY_FIELD_VIEWS = new Set<BrowserView>([
   'table',
@@ -62,6 +63,7 @@ const SCALAR_TYPES = new Set([
   'boolean',
   'date',
   'number',
+  'currency',
   'select',
   'derived'
 ]);
@@ -221,5 +223,6 @@ export const formatEntityDisplayValue = (
     );
   }
   if (field.schemaField?.type === 'date') return formatDate(value, String(value));
+  if (field.schemaField?.type === 'currency') return formatCurrencyValue(value);
   return String(value);
 };

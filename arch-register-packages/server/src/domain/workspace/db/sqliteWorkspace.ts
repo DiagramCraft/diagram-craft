@@ -8,7 +8,10 @@ import {
   RoleDefinitionDbUpdate,
   WorkspaceDatabase,
   ProjectEntityTypeDbCreate,
-  TeamListOptions
+  TeamListOptions,
+  SupportedCurrencyDbResult,
+  SupportedCurrencyConfigDbResult,
+  DEFAULT_SUPPORTED_CURRENCIES
 } from './workspaceDatabase';
 import { workspaceMappers } from './workspaceDatabase';
 import type { ImportCacheEntry } from '../importCache';
@@ -37,6 +40,19 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
         input.updated_at.toISOString()
       ]
     );
+    for (const currency of DEFAULT_SUPPORTED_CURRENCIES) {
+      this.run(
+        `INSERT INTO workspace_currency (workspace, code, label, sort_order, is_default)
+         VALUES (?, ?, ?, ?, ?)`,
+        [
+          input.id,
+          currency.code,
+          currency.label,
+          currency.sort_order,
+          currency.code === 'USD' ? 1 : 0
+        ]
+      );
+    }
     return (await this.getWorkspace(input.id))!;
   }
 
@@ -82,6 +98,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       this.run('DELETE FROM workspace_role WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM team_membership WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspaceId]);
+      this.run('DELETE FROM workspace_currency WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_owner WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM audit_log WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace WHERE id = ?', [workspaceId]);
@@ -182,6 +199,47 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     });
     tx();
     return await this.listProjectEntityTypes(workspace);
+  }
+
+  async getSupportedCurrencies(workspace: string): Promise<SupportedCurrencyConfigDbResult> {
+    const currencies = this.all(
+      'SELECT workspace, code, label, sort_order FROM workspace_currency WHERE workspace = ? ORDER BY sort_order, code',
+      [workspace],
+      workspaceMappers.supportedCurrency
+    );
+    const defaultRow = this.get<{ code: string }>(
+      'SELECT code FROM workspace_currency WHERE workspace = ? AND is_default = 1',
+      [workspace]
+    );
+    return {
+      currencies,
+      default_currency: defaultRow?.code ?? currencies[0]?.code ?? 'USD'
+    };
+  }
+
+  async replaceSupportedCurrencies(
+    workspace: string,
+    currencies: SupportedCurrencyDbResult[],
+    defaultCurrency: string
+  ): Promise<SupportedCurrencyConfigDbResult> {
+    const tx = this.db.transaction(() => {
+      this.run('DELETE FROM workspace_currency WHERE workspace = ?', [workspace]);
+      for (const currency of currencies) {
+        this.run(
+          `INSERT INTO workspace_currency (workspace, code, label, sort_order, is_default)
+           VALUES (?, ?, ?, ?, ?)`,
+          [
+            workspace,
+            currency.code,
+            currency.label,
+            currency.sort_order,
+            currency.code === defaultCurrency ? 1 : 0
+          ]
+        );
+      }
+    });
+    tx();
+    return await this.getSupportedCurrencies(workspace);
   }
 
   async listTeams(workspace: string, options?: TeamListOptions) {

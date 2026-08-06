@@ -577,6 +577,7 @@ const resolveOpAndValue = (
   const isScalarLike = resolution.kind === 'scalar' || resolution.kind === 'relationScalar';
   const isSelectField = isScalarLike && resolution.field.type === 'select';
   const isDateField = isScalarLike && resolution.field.type === 'date';
+  const isCurrencyField = isScalarLike && resolution.field.type === 'currency';
 
   if ((parsed.kind === 'enumValue' || parsed.kind === 'enumLabel') && !isSelectField) {
     throw new TextCompileError(
@@ -609,6 +610,13 @@ const resolveOpAndValue = (
       `Comparator '${comparatorToken}' has no meaning against a select field`,
       offset
     );
+  }
+
+  if (
+    isCurrencyField &&
+    (parsed.kind === 'date' || parsed.kind === 'enumValue' || parsed.kind === 'enumLabel')
+  ) {
+    throw new TextCompileError(`Currency fields only support numeric amount comparisons`, offset);
   }
 
   let op: FilterOp;

@@ -46,6 +46,10 @@ const dateFieldSchema = baseFieldSchema.extend({
   type: z.literal('date').describe('Date field')
 });
 
+const currencyFieldSchema = baseFieldSchema.extend({
+  type: z.literal('currency').describe('Currency amount and currency code field')
+});
+
 const numberFieldSchema = baseFieldSchema.extend({
   type: z.literal('number').describe('Integer number field'),
   min: z.number().int().optional().describe('Minimum allowed value'),
@@ -133,6 +137,7 @@ export const schemaFieldInputSchema = z
     longtextFieldSchema,
     booleanFieldSchema,
     dateFieldSchema,
+    currencyFieldSchema,
     numberFieldSchema,
     selectFieldInputSchema,
     referenceFieldSchema,
@@ -175,6 +180,7 @@ export const schemaFieldResponseSchema = z
     longtextFieldSchema,
     booleanFieldSchema,
     dateFieldSchema,
+    currencyFieldSchema,
     numberFieldSchema,
     selectFieldResponseSchema,
     referenceFieldSchema,

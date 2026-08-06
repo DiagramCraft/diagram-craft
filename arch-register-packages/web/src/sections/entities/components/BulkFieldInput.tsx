@@ -4,7 +4,10 @@ import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
+import type {
+  SupportedCurrency,
+  WorkspaceTeam
+} from '@arch-register/api-types/workspaceConfigContract';
 import { useEntitiesBySchema } from '../../../hooks/useEntities';
 import type { BulkEditableField } from './bulkEditFields';
 import styles from './BulkEditToolbar.module.css';
@@ -16,6 +19,8 @@ export type BulkFieldInputProps = {
   clearing: boolean;
   teams: WorkspaceTeam[];
   lifecycleStates: WorkspaceLifecycleState[];
+  currencyOptions: SupportedCurrency[];
+  defaultCurrency: string;
   onValue: (value: string) => void;
   onClearing: (clearing: boolean) => void;
 };
@@ -27,6 +32,8 @@ export const BulkFieldInput = ({
   clearing,
   teams,
   lifecycleStates,
+  currencyOptions,
+  defaultCurrency,
   onValue,
   onClearing
 }: BulkFieldInputProps) => {
@@ -128,6 +135,33 @@ export const BulkFieldInput = ({
         onChange={e => onValue(e.target.value)}
         placeholder="New value…"
       />
+    );
+  }
+
+  if (schemaField.type === 'currency') {
+    const [amount = '', currency = defaultCurrency] = value.trim().split(/\s+/, 2);
+    return (
+      <span style={{ display: 'inline-flex', gap: 6 }}>
+        <input
+          type="number"
+          step="0.01"
+          value={amount}
+          onChange={e => onValue(e.target.value === '' ? '' : `${e.target.value} ${currency}`)}
+          placeholder="Amount"
+        />
+        <Select.Root
+          value={currency}
+          placeholder="Currency"
+          onChange={next => onValue(amount ? `${amount} ${(next ?? '').toUpperCase()}` : '')}
+          style={{ width: 130 }}
+        >
+          {currencyOptions.map(option => (
+            <Select.Item key={option.code} value={option.code}>
+              {option.code} — {option.label}
+            </Select.Item>
+          ))}
+        </Select.Root>
+      </span>
     );
   }
 

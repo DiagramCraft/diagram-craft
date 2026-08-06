@@ -7,6 +7,7 @@ import { TbPlus } from 'react-icons/tb';
 import { Title } from '../../components/Title';
 import { GeneralSubSection } from './sub-sections/GeneralSubSection';
 import { LifecycleSubSection } from './sub-sections/LifecycleSubSection';
+import { SupportedCurrenciesSubSection } from './sub-sections/SupportedCurrenciesSubSection';
 import { AuditLogSubSection } from './sub-sections/AuditLogSubSection';
 import { DangerZoneSubSection } from './sub-sections/DangerZoneSubSection';
 import { RolesPermissionsSubSection } from './sub-sections/RolesPermissionsSubSection';
@@ -33,6 +34,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'lifecycle-owners': {
     title: 'Lifecycle',
     sub: 'Configure valid lifecycle states for entities in this workspace.'
+  },
+  'currencies': {
+    title: 'Currencies',
+    sub: 'Configure the supported currencies and default currency for this workspace.'
   },
   'model-overview': {
     title: 'Model Overview',
@@ -205,6 +210,13 @@ export const WorkspaceSettingsScreen = () => {
       {section === 'general' && <GeneralSubSection workspace={workspace} />}
       {section === 'lifecycle-owners' && (
         <LifecycleSubSection workspace={workspace} lifecycleStates={lifecycleStates} />
+      )}
+      {section === 'currencies' && (
+        <SupportedCurrenciesSubSection
+          workspaceId={workspace.id}
+          currencies={ctx.currencies.currencies}
+          defaultCurrency={ctx.currencies.default_currency}
+        />
       )}
       {section === 'roles' && (
         <RolesPermissionsSubSection

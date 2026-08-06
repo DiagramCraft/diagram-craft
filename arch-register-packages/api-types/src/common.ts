@@ -29,6 +29,17 @@ export const foreignKeySchema = z.object({
   name: z.string()
 });
 
+export const currencyCodeSchema = z
+  .string()
+  .regex(/^[A-Z]{3}$/, 'Currency codes must be three uppercase letters');
+
+export const currencyValueSchema = z.object({
+  amount: z.number().finite(),
+  currency: currencyCodeSchema
+});
+
+export type CurrencyValue = z.infer<typeof currencyValueSchema>;
+
 export const namedGroupSchema = z.object({
   id: z.string().min(1).describe('Stable group identifier'),
   name: z.string().min(1).describe('Group display name'),

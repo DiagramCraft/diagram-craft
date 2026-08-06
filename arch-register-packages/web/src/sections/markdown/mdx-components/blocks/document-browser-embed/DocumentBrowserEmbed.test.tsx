@@ -54,6 +54,7 @@ const workspaceContext = {
     canManageAdminViews: false
   },
   availableSettingsSections: [],
+  currencies: { currencies: [], default_currency: 'USD' },
   defaultSettingsSection: null,
   openAddProjectDialog: vi.fn(),
   openAddEntityDialog: vi.fn()

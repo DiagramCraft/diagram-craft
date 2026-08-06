@@ -158,7 +158,8 @@ export const EntityBrowser = ({
   timelineMarkers
 }: EntityBrowserProps) => {
   const navigate = useNavigate();
-  const { workspaceSlug, schemas, enums, lifecycleStates, teams, projects } = useWorkspaceContext();
+  const { workspaceSlug, schemas, enums, lifecycleStates, teams, currencies, projects } =
+    useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const projectId = projectContext?.project.id;
   const {
@@ -458,6 +459,8 @@ export const EntityBrowser = ({
               result={result}
               lifecycleStates={lifecycleStates}
               teams={teams as WorkspaceTeam[]}
+              currencyOptions={currencies.currencies}
+              defaultCurrency={currencies.default_currency}
               addFieldRow={addFieldRow}
               updateFieldRow={updateFieldRow}
               removeFieldRow={removeFieldRow}

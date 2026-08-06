@@ -18,10 +18,12 @@ import type {
   DocumentTemplateDbCreate,
   DocumentTypeDbCreate
 } from '../document/db/documentDatabase';
+import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
+import type { RelationSchemaDbCreate } from './db/relationDatabase';
 import { normalizePublicIdPrefix } from '../../utils/publicIds';
 
 export type SymbolicField =
-  | { id: string; name: string; type: 'text' | 'longtext' | 'boolean' | 'date' }
+  | { id: string; name: string; type: 'text' | 'longtext' | 'boolean' | 'date' | 'currency' }
   | { id: string; name: string; type: 'select'; enumId: string }
   | {
       id: string;
@@ -40,6 +42,13 @@ export type SymbolicField =
       symSchemaId: string;
       minCount: 0 | 1;
       maxCount: 1;
+    }
+  | {
+      id: string;
+      name: string;
+      type: 'typedRelation';
+      symRelationSchemaId: string;
+      direction: 'in' | 'out';
     };
 
 export type TemplateSchema = {
@@ -75,6 +84,23 @@ export type SymbolicDocumentTemplate = {
   metadataDefaults: DocumentMetadata;
 };
 
+export type SymbolicRelationSchema = {
+  symId: string;
+  name: string;
+  description: string;
+  inSymSchemaIds: string[];
+  outSymSchemaIds: string[];
+  fields: Array<{
+    id: string;
+    name: string;
+    type: 'select';
+    enumId: string;
+    requirementLevel: 'required' | 'expected' | 'optional';
+  }>;
+  color: string;
+  icon: string;
+};
+
 export type SchemaTemplate = {
   id: string;
   name: string;
@@ -82,6 +108,7 @@ export type SchemaTemplate = {
   schemas: TemplateSchema[];
   enums: SymbolicEnum[];
   fieldGroups?: SymbolicFieldGroup[];
+  relationSchemas?: SymbolicRelationSchema[];
   documentTypes: SymbolicDocumentType[];
   documentTemplates: SymbolicDocumentTemplate[];
 };
@@ -105,6 +132,15 @@ const piiClassificationEnum = enumDefinition('pii-classification', 'PII Classifi
   { value: 'non-sensitive', label: 'Non-Sensitive' },
   { value: 'sensitive', label: 'Sensitive' },
   { value: 'highly-sensitive', label: 'Highly Sensitive' }
+]);
+
+const contractPurposeEnum = enumDefinition('contract-purpose', 'Contract Purpose', [
+  { value: 'license', label: 'License' },
+  { value: 'support', label: 'Support' },
+  { value: 'maintenance', label: 'Maintenance' },
+  { value: 'hosting', label: 'Hosting' },
+  { value: 'professional-services', label: 'Professional Services' },
+  { value: 'other', label: 'Other' }
 ]);
 
 const piiClassificationFieldGroup: SymbolicFieldGroup = {
@@ -473,6 +509,13 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             symSchemaId: 'domain',
             minCount: 1,
             maxCount: 1
+          },
+          {
+            id: 'contracts',
+            name: 'Contracts',
+            type: 'typedRelation',
+            symRelationSchemaId: 'system-contract',
+            direction: 'out'
           }
         ],
         sharedFieldGroupIds: ['pii-classification']
@@ -565,11 +608,53 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           }
         ]
       },
+      {
+        symId: 'contract',
+        name: 'Contract',
+        description: 'A commercial agreement with a vendor supporting a System.',
+        color: AR_COLOR_ORANGE,
+        icon: 'certificate',
+        fields: [
+          { id: 'vendor_name', name: 'Vendor Name', type: 'text' },
+          { id: 'contract_start', name: 'Contract Start', type: 'date' },
+          { id: 'contract_end', name: 'Contract End', type: 'date' },
+          { id: 'annual_cost', name: 'Annual Cost', type: 'currency' },
+          { id: 'setup_fee', name: 'Setup Fee', type: 'currency' },
+          {
+            id: 'system',
+            name: 'System',
+            type: 'typedRelation',
+            symRelationSchemaId: 'system-contract',
+            direction: 'in'
+          }
+        ]
+      },
       technologySchema,
       technologyReleaseSchema
     ],
-    enums: [backstageEnums[0]!, piiClassificationEnum, ...technologyEnums],
+    enums: [backstageEnums[0]!, piiClassificationEnum, contractPurposeEnum, ...technologyEnums],
     fieldGroups: [piiClassificationFieldGroup],
+    relationSchemas: [
+      {
+        symId: 'system-contract',
+        name: 'System Contract',
+        description:
+          'Associates a System with a vendor Contract and records the agreement purpose.',
+        inSymSchemaIds: ['system'],
+        outSymSchemaIds: ['contract'],
+        fields: [
+          {
+            id: 'purpose',
+            name: 'Purpose',
+            type: 'select',
+            enumId: 'contract-purpose',
+            requirementLevel: 'required'
+          }
+        ],
+        color: AR_COLOR_ORANGE,
+        icon: 'certificate'
+      }
+    ],
     documentTypes: commonDocumentTypes,
     documentTemplates: commonDocumentTemplates
   },
@@ -1343,6 +1428,7 @@ export type InstantiatedTemplate = {
   schemas: SchemaDbCreate[];
   enums: WorkspaceEnumDbCreate[];
   fieldGroups: SharedFieldGroupDbCreate[];
+  relationSchemas: RelationSchemaDbCreate[];
   documentTypes: DocumentTypeDbCreate[];
   documentTemplates: DocumentTemplateDbCreate[];
 };
@@ -1354,7 +1440,14 @@ export const instantiateTemplateDefinitions = (
 ): InstantiatedTemplate => {
   const template = SCHEMA_TEMPLATES.find(t => t.id === templateId);
   if (!template) {
-    return { schemas: [], enums: [], fieldGroups: [], documentTypes: [], documentTemplates: [] };
+    return {
+      schemas: [],
+      enums: [],
+      fieldGroups: [],
+      relationSchemas: [],
+      documentTypes: [],
+      documentTemplates: []
+    };
   }
 
   const idMap = new Map<string, string>();
@@ -1373,6 +1466,11 @@ export const instantiateTemplateDefinitions = (
   const fieldGroupIdMap = new Map<string, string>();
   for (const fieldGroup of template.fieldGroups ?? []) {
     fieldGroupIdMap.set(fieldGroup.id, randomUUID());
+  }
+
+  const relationSchemaIdMap = new Map<string, string>();
+  for (const relationSchema of template.relationSchemas ?? []) {
+    relationSchemaIdMap.set(relationSchema.symId, randomUUID());
   }
 
   const resolveField = (field: SymbolicField): SchemaField => {
@@ -1408,6 +1506,16 @@ export const instantiateTemplateDefinitions = (
         name: field.name,
         type: field.type,
         enumId: enumIdMap.get(field.enumId) ?? field.enumId
+      };
+    }
+    if (field.type === 'typedRelation') {
+      return {
+        id: field.id,
+        name: field.name,
+        type: field.type,
+        relationSchemaId:
+          relationSchemaIdMap.get(field.symRelationSchemaId) ?? field.symRelationSchemaId,
+        direction: field.direction
       };
     }
     return { id: field.id, name: field.name, type: field.type };
@@ -1449,6 +1557,34 @@ export const instantiateTemplateDefinitions = (
     };
   });
 
+  const relationSchemas: RelationSchemaDbCreate[] = (template.relationSchemas ?? []).map(
+    relationSchema => ({
+      id: relationSchemaIdMap.get(relationSchema.symId)!,
+      workspace: workspaceId,
+      name: relationSchema.name,
+      description: relationSchema.description,
+      in_schema_ids: relationSchema.inSymSchemaIds.map(symId => idMap.get(symId) ?? symId),
+      out_schema_ids: relationSchema.outSymSchemaIds.map(symId => idMap.get(symId) ?? symId),
+      fields: relationSchema.fields.map(
+        field =>
+          ({
+            id: field.id,
+            name: field.name,
+            type: field.type,
+            enumId: enumIdMap.get(field.enumId) ?? field.enumId,
+            requirementLevel: field.requirementLevel
+          }) as RelationField
+      ),
+      groups: [],
+      shared_field_group_links: [],
+      color: relationSchema.color,
+      icon: relationSchema.icon,
+      relation_approval_policy: 'disabled',
+      created_at: now,
+      updated_at: now
+    })
+  );
+
   const enums: WorkspaceEnumDbCreate[] = template.enums.map(enumeration => ({
     id: enumIdMap.get(enumeration.id)!,
     workspace: workspaceId,
@@ -1485,7 +1621,7 @@ export const instantiateTemplateDefinitions = (
     })
   );
 
-  return { schemas, enums, fieldGroups, documentTypes, documentTemplates };
+  return { schemas, enums, fieldGroups, relationSchemas, documentTypes, documentTemplates };
 };
 
 export const instantiateTemplateDocuments = (

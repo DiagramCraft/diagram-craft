@@ -744,6 +744,9 @@ export const createWorkspace = async (
                 );
               }
             }
+            for (const relationSchema of definitions.relationSchemas) {
+              await db.relation.createRelationSchema(relationSchema);
+            }
             for (const documentType of definitions.documentTypes) {
               await db.document.createDocumentType(documentType);
             }

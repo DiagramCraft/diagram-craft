@@ -47,6 +47,17 @@ describe('typedRelationFieldSchema', () => {
   });
 });
 
+describe('currency fields', () => {
+  it('parses a currency field definition', () => {
+    const result = schemaFieldInputSchema.safeParse({
+      ...baseField,
+      type: 'currency'
+    });
+
+    expect(result.success).toBe(true);
+  });
+});
+
 describe('relation-like field predicates', () => {
   const referenceField: SchemaField = {
     ...baseField,

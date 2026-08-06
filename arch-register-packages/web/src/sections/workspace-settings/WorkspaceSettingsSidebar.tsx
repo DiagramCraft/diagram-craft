@@ -39,6 +39,7 @@ type SettingsNavItem = {
 const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'general', label: 'General', icon: <TbSettings size={12} />, group: 'Workspace' },
   { id: 'lifecycle-owners', label: 'Lifecycle', icon: <TbTag size={12} />, group: 'Workspace' },
+  { id: 'currencies', label: 'Currencies', icon: <TbTag size={12} />, group: 'Workspace' },
   { id: 'model-overview', label: 'Model Overview', icon: <TbCode size={12} />, group: 'Model' },
   { id: 'schemas', label: 'Entity Types', icon: <TbCode size={12} />, group: 'Model' },
   {

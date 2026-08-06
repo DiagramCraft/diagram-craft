@@ -10,6 +10,7 @@ export const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: 'longtext', label: 'Long text' },
   { value: 'boolean', label: 'Boolean' },
   { value: 'date', label: 'Date' },
+  { value: 'currency', label: 'Currency' },
   { value: 'number', label: 'Number' },
   { value: 'select', label: 'Select' },
   { value: 'reference', label: 'Reference' },
