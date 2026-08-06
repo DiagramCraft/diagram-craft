@@ -2728,4 +2728,70 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(pastEnd.items).toHaveLength(0);
     expect(pastEnd.total).toBe(5);
   });
+
+  it('paginates entity-rooted queries in SQL and counts collection-scoped matches (#2713)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'System' });
+    const entities = await Promise.all(
+      Array.from({ length: 6 }, (_, i) =>
+        createFixtureCatalogEntity(db, workspace, schema.id, { name: `E${i}` })
+      )
+    );
+    const user = await createFixtureUser(db);
+    const collection = await db.view.createCollection({
+      id: randomUUID(),
+      workspace,
+      user_id: user.id,
+      name: 'Selected systems',
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    for (const index of [1, 3, 5]) {
+      await db.view.addCollectionEntity(
+        user.id,
+        workspace,
+        collection.id,
+        entities[index]!.id,
+        new Date()
+      );
+    }
+
+    const authCtx = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: 'admin',
+      schemas: [schema],
+      entities,
+      grants: []
+    });
+    const entityQuery: EntityQuery = {
+      schemaId: schema.id,
+      root: { kind: 'and', children: [] }
+    };
+    const options = { entityQuery, collectionId: collection.id, view: 'summary' as const };
+
+    const firstPage = await listEntitiesWithCount(db, workspace, authCtx, {
+      ...options,
+      limit: 2,
+      offset: 0
+    });
+    expect(firstPage.items.map(item => item._uid)).toEqual([entities[1]!.id, entities[3]!.id]);
+    expect(firstPage.total).toBe(3);
+
+    const secondPage = await listEntitiesWithCount(db, workspace, authCtx, {
+      ...options,
+      limit: 2,
+      offset: 2
+    });
+    expect(secondPage.items.map(item => item._uid)).toEqual([entities[5]!.id]);
+    expect(secondPage.total).toBe(3);
+
+    expect(
+      await countEntities(db, workspace, authCtx, {
+        entityQuery,
+        collectionId: collection.id
+      })
+    ).toBe(3);
+  });
 });

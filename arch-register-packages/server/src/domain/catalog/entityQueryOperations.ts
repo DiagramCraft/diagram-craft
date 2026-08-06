@@ -205,16 +205,23 @@ const withQueryProjections = (
 ): EntityRecord =>
   Object.keys(projections).length > 0 ? { ...entity, _projections: projections } : entity;
 
-export const collectEntitiesFromIR = async (
+type EntityQueryCompilation = {
+  rowQuery: ReturnType<typeof compileEntityQueryIR>;
+  countQuery: ReturnType<typeof compileEntityQueryCountIR>;
+  schemaCatalog: SchemaCatalog;
+  historicalSchemas: Awaited<ReturnType<typeof resolveEntitySchemaCatalogAt>> | null;
+};
+
+const compileEntityQueries = async (
   db: DatabaseAdapter,
   workspace: string,
   authCtx: AuthorizationContext | null,
   options: NormalizedEntityQueryOptions,
   schemas: SchemaDbResult[],
-  projectEntities: Awaited<ReturnType<DatabaseAdapter['project']['listProjectEntities']>>,
+  relationSchemas: RelationSchemaDbResult[],
   collectionEntityIds: string[] | null,
-  relationSchemas: RelationSchemaDbResult[] = []
-): Promise<CollectedEntity[]> => {
+  pagination: { limit?: number | null; offset?: number } = {}
+): Promise<EntityQueryCompilation> => {
   const query = options.entityQuery;
   httpAssert.present(query, { status: 400, message: 'EntityQuery is required' });
 
@@ -242,32 +249,53 @@ export const collectEntitiesFromIR = async (
     await resolveJoinedAssessment(db, workspace, authCtx, query.assessmentId, true);
   }
   const visibleEntityIds = await visibleEntityIdsForQuery(db, workspace, authCtx);
-  let compiledQuery: ReturnType<typeof compileEntityQueryIR>;
+  const scopeOptions = {
+    visibleEntityIds,
+    collectionEntityIds: collectionEntityIds ?? undefined
+  };
+
   try {
-    compiledQuery = compileEntityQueryIR(
+    const rowQuery = compileEntityQueryIR(
       query,
       schemaCatalog,
       db.core.driver,
       workspace,
-      { visibleEntityIds },
+      {
+        ...scopeOptions,
+        limit: pagination.limit ?? undefined,
+        offset: pagination.offset
+      },
       authCtx,
       relationSchemaCatalog
     );
+    const countQuery = compileEntityQueryCountIR(
+      query,
+      schemaCatalog,
+      db.core.driver,
+      workspace,
+      scopeOptions,
+      authCtx,
+      relationSchemaCatalog
+    );
+    return { rowQuery, countQuery, schemaCatalog, historicalSchemas };
   } catch (error) {
     if (error instanceof UnsupportedEntityQueryIRError) {
       httpAssert.true(false, { status: 400, message: error.message });
     }
     throw error;
   }
-  const rows = await db.catalog.runCompiledEntityQuery(compiledQuery.sql, compiledQuery.params);
-  const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
-  const collectionEntityIdSet = collectionEntityIds == null ? null : new Set(collectionEntityIds);
-  const filteredRows = rows.filter(row => {
-    if (collectionEntityIdSet && !collectionEntityIdSet.has(row.id)) return false;
-    return true;
-  });
+};
 
-  return filteredRows.map((row: EntityQueryDbResult) => {
+const mapEntityQueryRows = (
+  rows: EntityQueryDbResult[],
+  authCtx: AuthorizationContext | null,
+  options: NormalizedEntityQueryOptions,
+  schemaCatalog: SchemaCatalog,
+  historicalSchemas: EntityQueryCompilation['historicalSchemas'],
+  projectEntities: Awaited<ReturnType<DatabaseAdapter['project']['listProjectEntities']>>
+): CollectedEntity[] => {
+  const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
+  return rows.map((row: EntityQueryDbResult) => {
     const completeness = row.completeness;
     const schema =
       historicalSchemas?.get(row.schema_id) ?? schemaCatalog.get(row.schema_id) ?? null;
@@ -299,15 +327,90 @@ export const collectEntitiesFromIR = async (
   });
 };
 
+export const collectEntitiesFromIR = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  authCtx: AuthorizationContext | null,
+  options: NormalizedEntityQueryOptions,
+  schemas: SchemaDbResult[],
+  projectEntities: Awaited<ReturnType<DatabaseAdapter['project']['listProjectEntities']>>,
+  collectionEntityIds: string[] | null,
+  relationSchemas: RelationSchemaDbResult[] = []
+): Promise<CollectedEntity[]> => {
+  const { rowQuery, schemaCatalog, historicalSchemas } = await compileEntityQueries(
+    db,
+    workspace,
+    authCtx,
+    options,
+    schemas,
+    relationSchemas,
+    collectionEntityIds
+  );
+  const rows = await db.catalog.runCompiledEntityQuery(rowQuery.sql, rowQuery.params);
+  return mapEntityQueryRows(
+    rows,
+    authCtx,
+    options,
+    schemaCatalog,
+    historicalSchemas,
+    projectEntities
+  );
+};
+
 export const listEntitiesWithCount = async (
   db: DatabaseAdapter,
   workspace: string,
   authCtx: AuthorizationContext | null,
   options: EntityQueryOptions
 ): Promise<EntityListPage> => {
-  const { limit, offset, ...queryOptions } = normalizeEntityQueryOptions(options);
+  const normalized = normalizeEntityQueryOptions(options);
+  const { limit, offset } = normalized;
   const safeOffset = Math.max(Math.trunc(offset ?? 0), 0);
   const safeLimit = limit == null ? null : Math.max(Math.trunc(limit), 1);
+
+  if (normalized.entityQuery) {
+    try {
+      const [schemas, relationSchemas, projectEntities, collectionEntityIds] = await Promise.all([
+        db.catalog.listSchemas(workspace),
+        db.relation.listRelationSchemas(workspace),
+        normalized.projectId
+          ? db.project.listProjectEntities(workspace, normalized.projectId)
+          : Promise.resolve([]),
+        normalized.collectionId && authCtx
+          ? db.view.listCollectionEntityIds(authCtx.userId, workspace, normalized.collectionId)
+          : Promise.resolve(null)
+      ]);
+      const { rowQuery, countQuery, schemaCatalog, historicalSchemas } = await compileEntityQueries(
+        db,
+        workspace,
+        authCtx,
+        normalized,
+        schemas,
+        relationSchemas,
+        collectionEntityIds,
+        { limit: safeLimit, offset: safeOffset }
+      );
+      const [rows, total] = await Promise.all([
+        db.catalog.runCompiledEntityQuery(rowQuery.sql, rowQuery.params),
+        db.catalog.runCompiledEntityCountQuery(countQuery.sql, countQuery.params)
+      ]);
+      return {
+        items: mapEntityQueryRows(
+          rows,
+          authCtx,
+          normalized,
+          schemaCatalog,
+          historicalSchemas,
+          projectEntities
+        ).map(row => row.entity),
+        total
+      };
+    } catch (error) {
+      return handleError(error, 'Failed to retrieve data');
+    }
+  }
+
+  const queryOptions = normalized;
   try {
     const rows = await collectEntities(db, workspace, authCtx, queryOptions);
     const windowed =
@@ -337,6 +440,27 @@ export const countEntities = async (
   authCtx: AuthorizationContext | null,
   options: Omit<EntityQueryOptions, 'view' | 'limit' | 'offset'>
 ): Promise<number> => {
+  const normalized = normalizeEntityQueryOptions({ ...options, view: 'full' });
+  if (normalized.entityQuery) {
+    const [schemas, relationSchemas, collectionEntityIds] = await Promise.all([
+      db.catalog.listSchemas(workspace),
+      db.relation.listRelationSchemas(workspace),
+      normalized.collectionId && authCtx
+        ? db.view.listCollectionEntityIds(authCtx.userId, workspace, normalized.collectionId)
+        : Promise.resolve(null)
+    ]);
+    const { countQuery } = await compileEntityQueries(
+      db,
+      workspace,
+      authCtx,
+      normalized,
+      schemas,
+      relationSchemas,
+      collectionEntityIds
+    );
+    return db.catalog.runCompiledEntityCountQuery(countQuery.sql, countQuery.params);
+  }
+
   const rows = await collectEntities(db, workspace, authCtx, { ...options, view: 'full' });
   return rows.length;
 };

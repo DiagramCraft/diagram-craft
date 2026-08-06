@@ -301,6 +301,11 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     return this.all(sql, params, catalogMappers.entityQuery);
   }
 
+  async runCompiledEntityCountQuery(sql: string, params: unknown[]) {
+    const row = this.get<{ count: number }>(sql, params);
+    return Number(row?.count ?? 0);
+  }
+
   async listEntitiesPaginated(
     workspace: string,
     filters?: EntityListDbFilters,

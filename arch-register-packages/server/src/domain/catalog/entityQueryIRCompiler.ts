@@ -32,13 +32,14 @@ export type CompiledEntityQuery = { sql: string; params: unknown[] };
 
 export type CompiledEntityQueryOptions = {
   visibleEntityIds?: readonly string[];
+  // Additional entity-id scope, used for user collection membership. Keeping this in the scope
+  // CTE ensures SQL pagination and COUNT(*) see the same candidate set.
+  collectionEntityIds?: readonly string[];
   // Relation-root visibility policy. It is compiled to SQL against the relation's endpoint
   // schema ids and owner, avoiding a workspace-wide relation scan and large id-list parameter.
   relationVisibility?: TypedRelationVisibilityPolicy;
-  // SQL-level pagination for the relation-rooted path only (see compileEntityQueryIR). The
-  // entity-rooted path still collects-then-slices in JS because collectEntitiesFromIR applies a
-  // JS-only post-filter (collectionEntityIds) after the compiled query runs, which SQL LIMIT/OFFSET
-  // would silently under-fill against — see #2700.
+  // SQL-level pagination for both entity- and relation-rooted paths. The caller supplies the
+  // normalized page window; COUNT(*) queries omit these options.
   limit?: number;
   offset?: number;
 };
@@ -90,6 +91,7 @@ type CompileState = {
   relationSourceConstraints: readonly RelationSourceConstraint[];
   relationRootTemporalCandidate: RelationRootTemporalCandidate | null;
   visibleEntityIds?: readonly string[];
+  collectionEntityIds?: readonly string[];
   relationVisibility?: TypedRelationVisibilityPolicy;
   limit?: number;
   offset?: number;
@@ -1630,7 +1632,13 @@ const buildTemporalSource = (state: CompileState): string => {
       : state.visibleEntityIds.length === 0
         ? '1=0'
         : `final_state.record_id IN (${state.visibleEntityIds.map(id => addParam(state, id)).join(', ')})`;
-  const temporalScope = `${temporalScopeClause} AND ${visibleClause || '1=1'}`;
+  const collectionClause =
+    state.collectionEntityIds == null
+      ? ''
+      : state.collectionEntityIds.length === 0
+        ? '1=0'
+        : `final_state.record_id IN (${state.collectionEntityIds.map(id => addParam(state, id)).join(', ')})`;
+  const temporalScope = `${temporalScopeClause} AND ${visibleClause || '1=1'} AND ${collectionClause || '1=1'}`;
 
   return `
     latest_entity_version AS (
@@ -1745,7 +1753,13 @@ const buildScopeCte = (state: CompileState): string => {
       : state.visibleEntityIds.length === 0
         ? '1=0'
         : `e.id IN (${state.visibleEntityIds.map(id => addParam(state, id)).join(', ')})`;
-  const scopedWhere = `${scopeClause} AND ${visibleClause || '1=1'}`;
+  const collectionClause =
+    state.collectionEntityIds == null
+      ? ''
+      : state.collectionEntityIds.length === 0
+        ? '1=0'
+        : `e.id IN (${state.collectionEntityIds.map(id => addParam(state, id)).join(', ')})`;
+  const scopedWhere = `${scopeClause} AND ${visibleClause || '1=1'} AND ${collectionClause || '1=1'}`;
   return `${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn}\n      FROM catalog_record e\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.kind = 'entity'\n        AND e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopedWhere}\n    )`;
 };
 
@@ -2003,7 +2017,8 @@ const buildQueryFragments = (
   workspace: string,
   options: CompiledEntityQueryOptions,
   authCtx: WorkspaceAuthorizationContext | null,
-  relationSchemas: RelationSchemaCatalog
+  relationSchemas: RelationSchemaCatalog,
+  includeProjections = true
 ) => {
   // Resolves the same way entityQueryIRValidator.ts's resolveRootKind does: schemaId, when
   // present, is looked up against both registries and wins; callers must have already validated
@@ -2040,6 +2055,7 @@ const buildQueryFragments = (
       authCtx
     ),
     visibleEntityIds: options.visibleEntityIds,
+    collectionEntityIds: options.collectionEntityIds,
     relationVisibility: options.relationVisibility,
     limit: options.limit,
     offset: options.offset
@@ -2051,8 +2067,12 @@ const buildQueryFragments = (
 
   const cte = buildScopeCte(state);
   const relationCte = buildRelationScopeCte(state);
-  const projectionCtes = buildProjectionBindings(query, schemas, relationSchemas, state);
-  const projectionObject = compileProjectionObject(query.projections ?? [], schemas, state);
+  const projectionCtes = includeProjections
+    ? buildProjectionBindings(query, schemas, relationSchemas, state)
+    : [];
+  const projectionObject = includeProjections
+    ? compileProjectionObject(query.projections ?? [], schemas, state)
+    : '';
   const whereParts: string[] = [];
   if (query.schemaId) {
     whereParts.push(`${ROOT_ALIAS}.schema_id = ${addParam(state, query.schemaId)}`);
@@ -2088,14 +2108,12 @@ export const compileEntityQueryIR = (
     relationSchemas
   );
 
-  // Only the relation-rooted branch pushes LIMIT/OFFSET into SQL today (#2700) — the entity-rooted
-  // branch still relies on collect-then-slice in JS because collectEntitiesFromIR applies a
-  // JS-only post-filter (collectionEntityIds) after this query runs, which SQL LIMIT/OFFSET would
-  // silently under-fill against. See #2713 for lifting that restriction.
   const limitOffsetClause =
-    rootKind === 'relation' && state.limit != null
+    state.limit != null
       ? `\n    LIMIT ${addParam(state, state.limit)}${state.offset != null ? ` OFFSET ${addParam(state, state.offset)}` : ''}`
-      : '';
+      : state.offset != null
+        ? `\n    LIMIT ${dialect === 'postgres' ? 'ALL' : '-1'} OFFSET ${addParam(state, state.offset)}`
+        : '';
 
   const sql =
     rootKind === 'relation'
@@ -2129,16 +2147,15 @@ export const compileEntityQueryIR = (
     LEFT JOIN workspace_lifecycle_state tls ON tls.id = ${ROOT_ALIAS}.target_lifecycle
     JOIN entity_schema es ON es.id = ${ROOT_ALIAS}.schema_id
     WHERE ${whereParts.join(' AND ')}
-    ORDER BY ${ROOT_ALIAS}.name, ${ROOT_ALIAS}.id
+    ORDER BY ${ROOT_ALIAS}.name, ${ROOT_ALIAS}.id${limitOffsetClause}
   `;
 
   return { sql, params: state.params };
 };
 
-// Compiles the same relation-rooted query as compileEntityQueryIR but as a `SELECT COUNT(*)`
-// instead of row data, with no ORDER BY/LIMIT/OFFSET — used to compute an accurate `total` for
-// paginated relation queries (#2700) without collecting every row into memory. Entity-rooted
-// counting still goes through the JS collect-then-.length path (see #2713).
+// Compiles the same query as compileEntityQueryIR but as a `SELECT COUNT(*)` instead of row data,
+// with no ORDER BY/LIMIT/OFFSET. The shared fragments guarantee that row and count queries apply
+// identical scope, traversal, visibility, project, collection, and predicate constraints.
 export const compileEntityQueryCountIR = (
   query: EntityQuery,
   schemas: SchemaCatalog,
@@ -2155,22 +2172,26 @@ export const compileEntityQueryCountIR = (
     workspace,
     options,
     authCtx,
-    relationSchemas
+    relationSchemas,
+    false
   );
 
-  if (rootKind !== 'relation') {
-    throw new UnsupportedEntityQueryIRError(
-      'compileEntityQueryCountIR only supports relation-rooted queries'
-    );
-  }
-
-  const sql = `
+  const sql =
+    rootKind === 'relation'
+      ? `
     ${withClause}
     SELECT COUNT(*) AS count
     FROM ${RELATION_SCOPE_CTE} ${ROOT_ALIAS}
     JOIN relation_schema rs        ON rs.id = ${ROOT_ALIAS}.schema_id
     LEFT JOIN catalog_record in_e  ON in_e.id = ${ROOT_ALIAS}.in_record_id
     LEFT JOIN catalog_record out_e ON out_e.id = ${ROOT_ALIAS}.out_record_id
+    WHERE ${whereParts.join(' AND ')}
+  `
+      : `
+    ${withClause}
+    SELECT COUNT(*) AS count
+    FROM ${SCOPE_CTE} ${ROOT_ALIAS}
+    JOIN entity_schema es ON es.id = ${ROOT_ALIAS}.schema_id
     WHERE ${whereParts.join(' AND ')}
   `;
 
