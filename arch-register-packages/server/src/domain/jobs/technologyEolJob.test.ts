@@ -1,4 +1,5 @@
 import { afterEach, describe, expect, it, vi } from 'vitest';
+import type { TechnologyEolMapping } from '@arch-register/api-types/jobsContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import { createTechnologyEolJobHandler } from './technologyEolJob';
@@ -27,6 +28,18 @@ const schema: SchemaDbResult = {
   default_owner: null,
   created_at: new Date('2026-01-01T00:00:00.000Z'),
   updated_at: new Date('2026-01-01T00:00:00.000Z')
+};
+
+const mapping: TechnologyEolMapping = {
+  productFieldId: 'provider',
+  cycleFieldId: 'cycle',
+  latestVersionFieldId: 'latest',
+  releaseDateFieldId: 'released',
+  supportUntilFieldId: null,
+  securityUntilFieldId: null,
+  eolDateFieldId: 'eol',
+  sourceUrlFieldId: null,
+  synchronizedAtFieldId: null
 };
 
 const entity: EntityDbResult = {
@@ -104,17 +117,7 @@ describe('technology EOL job', () => {
       workspace: 'workspace-1',
       payload: {
         schemaId: schema.id,
-        mapping: {
-          productFieldId: 'provider',
-          cycleFieldId: 'cycle',
-          latestVersionFieldId: 'latest',
-          releaseDateFieldId: 'released',
-          supportUntilFieldId: null,
-          securityUntilFieldId: null,
-          eolDateFieldId: 'eol',
-          sourceUrlFieldId: null,
-          synchronizedAtFieldId: null
-        }
+        mapping
       },
       signal: new AbortController().signal
     });
@@ -133,5 +136,146 @@ describe('technology EOL job', () => {
       source: 'endoflife.date',
       requestId: 'run-1'
     });
+  });
+
+  it.each([
+    ['product', 'provider'],
+    ['cycle', 'cycle']
+  ])(
+    'does not load entities or call external services when the %s input becomes protected',
+    async (_label, fieldId) => {
+      const currentSchema: SchemaDbResult = {
+        ...schema,
+        fields: schema.fields.map(field =>
+          field.id === fieldId ? { ...field, groupId: 'restricted' } : field
+        ),
+        groups: [
+          {
+            id: 'restricted',
+            name: 'Restricted',
+            accessControl: { teamIds: ['security'] }
+          }
+        ]
+      };
+      const fetch = vi.fn();
+      const listEntitiesPaginated = vi.fn();
+      const updateEntity = vi.fn();
+      vi.stubGlobal('fetch', fetch);
+
+      const db = {
+        catalog: {
+          getSchema: vi.fn(async () => currentSchema),
+          listEntitiesPaginated,
+          updateEntity,
+          createEntityVersion: vi.fn(),
+          pruneAutosaveVersions: vi.fn()
+        },
+        audit: { createAuditLog: vi.fn() },
+        watch: { createNotificationsFromAudit: vi.fn() }
+      } as unknown as DatabaseAdapter;
+
+      await expect(
+        createTechnologyEolJobHandler(db)({
+          jobId: 'run-protected',
+          workspace: schema.workspace,
+          payload: { schemaId: schema.id, mapping },
+          signal: new AbortController().signal
+        })
+      ).rejects.toThrow(/access-controlled field group/);
+
+      expect(listEntitiesPaginated).not.toHaveBeenCalled();
+      expect(fetch).not.toHaveBeenCalled();
+      expect(updateEntity).not.toHaveBeenCalled();
+    }
+  );
+
+  it.each([
+    ['missing schema', null, mapping, /Target schema not found/],
+    [
+      'missing input field',
+      { ...schema, fields: schema.fields.filter(field => field.id !== 'provider') },
+      mapping,
+      /Input field 'provider' was not found/
+    ],
+    [
+      'stale input group',
+      {
+        ...schema,
+        fields: schema.fields.map(field =>
+          field.id === 'provider' ? { ...field, groupId: 'deleted-group' } : field
+        ),
+        groups: []
+      },
+      mapping,
+      /access-controlled field group/
+    ],
+    [
+      'missing destination field',
+      schema,
+      { ...mapping, eolDateFieldId: 'deleted' },
+      /Destination field/
+    ],
+    [
+      'duplicate destination fields',
+      schema,
+      { ...mapping, eolDateFieldId: 'latest' },
+      /destination field can only be mapped once/
+    ]
+  ])(
+    'fails closed for %s before loading entities',
+    async (_label, currentSchema, jobMapping, error) => {
+      const listEntitiesPaginated = vi.fn();
+      const db = {
+        catalog: {
+          getSchema: vi.fn(async () => currentSchema),
+          listEntitiesPaginated,
+          updateEntity: vi.fn(),
+          createEntityVersion: vi.fn(),
+          pruneAutosaveVersions: vi.fn()
+        },
+        audit: { createAuditLog: vi.fn() },
+        watch: { createNotificationsFromAudit: vi.fn() }
+      } as unknown as DatabaseAdapter;
+
+      await expect(
+        createTechnologyEolJobHandler(db)({
+          jobId: 'run-invalid',
+          workspace: schema.workspace,
+          payload: { schemaId: schema.id, mapping: jobMapping },
+          signal: new AbortController().signal
+        })
+      ).rejects.toThrow(error);
+
+      expect(listEntitiesPaginated).not.toHaveBeenCalled();
+    }
+  );
+
+  it('rejects an incomplete stored mapping before loading entities', async () => {
+    const listEntitiesPaginated = vi.fn();
+    const db = {
+      catalog: {
+        getSchema: vi.fn(async () => schema),
+        listEntitiesPaginated,
+        updateEntity: vi.fn(),
+        createEntityVersion: vi.fn(),
+        pruneAutosaveVersions: vi.fn()
+      },
+      audit: { createAuditLog: vi.fn() },
+      watch: { createNotificationsFromAudit: vi.fn() }
+    } as unknown as DatabaseAdapter;
+
+    await expect(
+      createTechnologyEolJobHandler(db)({
+        jobId: 'run-malformed',
+        workspace: schema.workspace,
+        payload: {
+          schemaId: schema.id,
+          mapping: { ...mapping, eolDateFieldId: undefined }
+        },
+        signal: new AbortController().signal
+      })
+    ).rejects.toThrow('invalid payload');
+
+    expect(listEntitiesPaginated).not.toHaveBeenCalled();
   });
 });
