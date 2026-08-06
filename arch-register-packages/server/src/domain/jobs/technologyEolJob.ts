@@ -12,6 +12,7 @@ import {
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import { getSystemUserId } from '../auth/systemUsers';
 import { computeEntityCompleteness } from '../../utils/completeness';
+import { assertTechnologyEolMapping, isTechnologyEolMapping } from './technologyEolMapping';
 
 export const TECHNOLOGY_EOL_JOB_TYPE = 'technology-eol';
 export const TECHNOLOGY_EOL_SYSTEM_IDENTITY = 'technology-eol';
@@ -34,14 +35,7 @@ type TechnologyEolPayload = {
 };
 
 const isTechnologyEolPayload = (value: Record<string, unknown>): value is TechnologyEolPayload => {
-  const mapping = value['mapping'];
-  return (
-    typeof value['schemaId'] === 'string' &&
-    typeof mapping === 'object' &&
-    mapping != null &&
-    typeof (mapping as Record<string, unknown>)['productFieldId'] === 'string' &&
-    typeof (mapping as Record<string, unknown>)['cycleFieldId'] === 'string'
-  );
+  return typeof value['schemaId'] === 'string' && isTechnologyEolMapping(value['mapping']);
 };
 
 const retryAfterMs = (value: string | null) => {
@@ -235,8 +229,7 @@ export const createTechnologyEolJobHandler =
       throw new Error('Technology EOL job has an invalid payload');
     }
     const schema = await db.catalog.getSchema(context.workspace, context.payload.schemaId);
-    if (!schema)
-      throw new Error(`Technology EOL schema '${context.payload.schemaId}' was not found`);
+    const validatedSchema = assertTechnologyEolMapping(schema, context.payload.mapping);
     const entities = await listAllCatalogEntities(db, context.workspace, {
       schemaId: context.payload.schemaId
     });
@@ -258,7 +251,7 @@ export const createTechnologyEolJobHandler =
           await applyRelease(
             db,
             entity,
-            schema,
+            validatedSchema,
             context.payload.mapping,
             release,
             product,
@@ -271,7 +264,7 @@ export const createTechnologyEolJobHandler =
           await applyRelease(
             db,
             entity,
-            schema,
+            validatedSchema,
             context.payload.mapping,
             release,
             product,

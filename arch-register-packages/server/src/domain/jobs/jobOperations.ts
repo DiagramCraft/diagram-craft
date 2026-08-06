@@ -1,16 +1,16 @@
 import { randomUUID } from 'node:crypto';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
-import type { CreateJobBody, TechnologyEolMapping } from '@arch-register/api-types/jobsContract';
+import type { CreateJobBody } from '@arch-register/api-types/jobsContract';
 import { httpAssert } from '../../utils/httpAssert';
 import {
   buildApiAuthCtx,
   requireWorkspaceAdmin,
   requireWorkspaceCapability
 } from '../auth/authorization';
-import { isFieldGroupAccessControlled } from '../auth/fieldGroupAccessControl';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { nextJobOccurrence, validateJobScheduleRecurrence } from './jobRecurrence';
+import { assertTechnologyEolMapping, destinationFieldIds } from './technologyEolMapping';
 import type {
   JobRunDbResult,
   JobRunListOptions,
@@ -313,74 +313,6 @@ export const listJobSchedules = async (
 const TECHNOLOGY_EOL_JOB_TYPE = 'technology-eol';
 const TECHNOLOGY_EOL_SYSTEM_IDENTITY = 'technology-eol';
 
-const destinationFieldIds = (mapping: TechnologyEolMapping) =>
-  [
-    mapping.latestVersionFieldId,
-    mapping.releaseDateFieldId,
-    mapping.supportUntilFieldId,
-    mapping.securityUntilFieldId,
-    mapping.eolDateFieldId,
-    mapping.sourceUrlFieldId,
-    mapping.synchronizedAtFieldId
-  ].filter((fieldId): fieldId is string => fieldId != null);
-
-const compatibleField = (field: { type: string }, role: 'text' | 'date') =>
-  role === 'text'
-    ? field.type === 'text' || field.type === 'longtext'
-    : field.type === 'date' || field.type === 'text' || field.type === 'longtext';
-
-const assertTechnologyEolMapping = (
-  schema: Awaited<ReturnType<DatabaseAdapter['catalog']['getSchema']>>,
-  mapping: TechnologyEolMapping
-) => {
-  if (!schema) {
-    httpAssert.present(schema, { status: 404, message: 'Target schema not found' });
-    throw new Error('Target schema not found');
-  }
-  const fields = new Map(schema.fields.map(field => [field.id, field]));
-  const inputFields = [mapping.productFieldId, mapping.cycleFieldId];
-  for (const fieldId of inputFields) {
-    const field = fields.get(fieldId);
-    httpAssert.present(field, { status: 400, message: `Input field '${fieldId}' was not found` });
-    httpAssert.true(compatibleField(field!, 'text'), {
-      status: 400,
-      message: `Input field '${fieldId}' must be a text field`
-    });
-  }
-  const accessControlledInput = inputFields.find(fieldId =>
-    isFieldGroupAccessControlled(schema, fieldId)
-  );
-  httpAssert.true(accessControlledInput == null, {
-    status: 400,
-    message: `Input field '${accessControlledInput}' cannot belong to an access-controlled field group`
-  });
-
-  const destinations = destinationFieldIds(mapping);
-  httpAssert.true(new Set(destinations).size === destinations.length, {
-    status: 400,
-    message: 'Each destination field can only be mapped once'
-  });
-  httpAssert.true(!destinations.some(fieldId => inputFields.includes(fieldId)), {
-    status: 400,
-    message: 'Input fields cannot also be destination fields'
-  });
-  for (const fieldId of destinations) {
-    const field = fields.get(fieldId);
-    httpAssert.present(field, {
-      status: 400,
-      message: `Destination field '${fieldId}' was not found`
-    });
-    httpAssert.true(
-      compatibleField(field!, fieldId === mapping.sourceUrlFieldId ? 'text' : 'date'),
-      {
-        status: 400,
-        message: `Destination field '${fieldId}' has an incompatible type`
-      }
-    );
-  }
-  return schema;
-};
-
 const createTechnologyEolJob = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -407,10 +339,6 @@ const createTechnologyEolJob = async (
     );
 
     const destinationIds = new Set(destinationFieldIds(body.mapping));
-    httpAssert.true(
-      !targetSchema.fields.some(field => destinationIds.has(field.id) && field.type === 'derived'),
-      { status: 400, message: 'Technology End of Life mappings cannot target derived fields' }
-    );
     const nextFields = targetSchema.fields.map(field => {
       if (field.type === 'derived') return field;
       return destinationIds.has(field.id)
