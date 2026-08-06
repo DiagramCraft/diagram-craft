@@ -7,6 +7,7 @@ import { useRelation, useUpdateRelation } from '../hooks/useRelations';
 import { useRelationSchemas } from '../hooks/useRelationSchemas';
 import { useTeams, useLifecycleStates } from '../hooks/useWorkspaceConfig';
 import { RelationFieldInput } from './RelationFieldInput';
+import { relationIds } from '../lib/entityEditState';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 
 type Props = {
@@ -19,7 +20,27 @@ type Props = {
 const activeFieldsOf = (schema: RelationSchema | undefined): RelationSchema['fields'] =>
   (schema?.fields ?? []).filter(f => !f.archived);
 
-const toFieldValue = (field: RelationSchema['fields'][number], raw: string): unknown => {
+const initialFieldValue = (
+  field: RelationSchema['fields'][number],
+  record: Record<string, unknown>
+): string | string[] =>
+  field.type === 'entityRelation' ? relationIds(record[field.id]) : String(record[field.id] ?? '');
+
+const fieldValueChanged = (
+  field: RelationSchema['fields'][number],
+  next: string | string[],
+  record: Record<string, unknown>
+): boolean => {
+  if (field.type === 'entityRelation') {
+    const nextIds = relationIds(next);
+    const prevIds = relationIds(record[field.id]);
+    return nextIds.length !== prevIds.length || nextIds.some((id, i) => id !== prevIds[i]);
+  }
+  return next !== String(record[field.id] ?? '');
+};
+
+const toFieldValue = (field: RelationSchema['fields'][number], raw: string | string[]): unknown => {
+  if (field.type === 'entityRelation') return relationIds(raw);
   if (raw === '') return null;
   if (field.type === 'boolean') return raw === 'true';
   if (field.type === 'number') return Number(raw);
@@ -39,15 +60,15 @@ export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: P
   const activeFields = activeFieldsOf(relationSchema);
   const updateMutation = useUpdateRelation(workspaceId);
 
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string | string[]>>({});
   const [owner, setOwner] = useState('');
   const [lifecycle, setLifecycle] = useState('');
 
   useEffect(() => {
     if (!open || !record) return;
     const fields = activeFieldsOf(relationSchemas?.find(schema => schema.id === record._schema.id));
-    const initial: Record<string, string> = {};
-    for (const field of fields) initial[field.id] = String(record[field.id] ?? '');
+    const initial: Record<string, string | string[]> = {};
+    for (const field of fields) initial[field.id] = initialFieldValue(field, record);
     setValues(initial);
     setOwner(record._owner?.id ?? '');
     setLifecycle(record._lifecycle?.id ?? '');
@@ -57,8 +78,8 @@ export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: P
     if (!record) return;
     const data: Record<string, unknown> = {};
     for (const field of activeFields) {
-      const raw = values[field.id] ?? '';
-      if (raw === String(record[field.id] ?? '')) continue;
+      const raw = values[field.id] ?? (field.type === 'entityRelation' ? [] : '');
+      if (!fieldValueChanged(field, raw, record)) continue;
       data[field.id] = toFieldValue(field, raw);
     }
     if (record.canAdmin && owner !== (record._owner?.id ?? '')) {
@@ -134,8 +155,9 @@ export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: P
             activeFields.map(field => (
               <RelationFieldInput
                 key={field.id}
+                workspaceId={workspaceId}
                 field={field}
-                value={values[field.id] ?? ''}
+                value={values[field.id] ?? (field.type === 'entityRelation' ? [] : '')}
                 onChange={value => setValues(v => ({ ...v, [field.id]: value }))}
               />
             ))

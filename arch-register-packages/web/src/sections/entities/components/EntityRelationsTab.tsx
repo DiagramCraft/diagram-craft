@@ -149,6 +149,7 @@ const TypedRelationRow = ({
         record={record}
         direction={direction}
         relationSchema={relationSchema}
+        workspaceId={workspaceId}
         expanded={expanded}
         onToggleExpand={() => setExpanded(v => !v)}
         onViewHistory={() => setShowHistory(true)}

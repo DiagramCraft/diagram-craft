@@ -22,6 +22,10 @@ vi.mock('../../../dialogs/RelationAuditLogDialog', () => ({
   RelationAuditLogDialog: () => null
 }));
 
+vi.mock('../../../hooks/useEntities', () => ({
+  useEntitiesByIds: () => new Map()
+}));
+
 const { RelationRecordList, formatRelationFieldValue } = await import('./RelationRecordList');
 
 const relationSchema: RelationSchema = {
