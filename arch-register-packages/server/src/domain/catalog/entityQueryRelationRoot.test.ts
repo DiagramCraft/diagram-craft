@@ -3,11 +3,7 @@ import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { RelationSchemaDbResult } from './db/relationDatabase';
 import type { SchemaDbResult } from './db/catalogDatabase';
 import { validateEntityQueryIR } from './entityQueryIRValidator';
-import {
-  compileEntityQueryIR,
-  compileEntityQueryCountIR,
-  UnsupportedEntityQueryIRError
-} from './entityQueryIRCompiler';
+import { compileEntityQueryIR, compileEntityQueryCountIR } from './entityQueryIRCompiler';
 import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 
 const now = new Date('2026-06-29T12:00:00.000Z');
@@ -508,14 +504,69 @@ describe('relation-rooted query pagination (#2700)', () => {
     expect(countQuery.params).toEqual(rowQuery.params.slice(0, countQuery.params.length));
   });
 
-  it('rejects compileEntityQueryCountIR for an entity-rooted query', () => {
+  it('compiles COUNT(*) queries for entity-rooted queries', () => {
     const entityQuery: EntityQuery = {
       schemaId: system.id,
       root: { kind: 'and', children: [] }
     };
-    expect(() =>
-      compileEntityQueryCountIR(entityQuery, schemas, 'sqlite', 'ws-1', {}, null, relationSchemas)
-    ).toThrow(UnsupportedEntityQueryIRError);
+    const compiled = compileEntityQueryCountIR(
+      entityQuery,
+      schemas,
+      'sqlite',
+      'ws-1',
+      {},
+      null,
+      relationSchemas
+    );
+    expect(compiled.sql).toContain('SELECT COUNT(*) AS count');
+    expect(compiled.sql).toContain('FROM scoped_entity e0');
+    expect(compiled.sql).not.toContain('ORDER BY');
+    expect(compiled.sql).not.toContain('LIMIT');
+    expect(compiled.sql).not.toContain('OFFSET');
+  });
+});
+
+describe('entity-rooted query pagination (#2713)', () => {
+  const query: EntityQuery = {
+    schemaId: system.id,
+    root: { kind: 'and', children: [] }
+  };
+
+  it('appends LIMIT/OFFSET after the stable entity ordering', () => {
+    const compiled = compileEntityQueryIR(
+      query,
+      schemas,
+      'sqlite',
+      'ws-1',
+      { limit: 25, offset: 50 },
+      null,
+      relationSchemas
+    );
+    expect(compiled.sql).toMatch(/ORDER BY e0\.name, e0\.id\s*LIMIT \?\s*OFFSET \?\s*$/);
+    expect(compiled.params.slice(-2)).toEqual([25, 50]);
+  });
+
+  it('uses an unbounded dialect-specific limit when only an offset is supplied', () => {
+    const sqlite = compileEntityQueryIR(
+      query,
+      schemas,
+      'sqlite',
+      'ws-1',
+      { offset: 10 },
+      null,
+      relationSchemas
+    );
+    const postgres = compileEntityQueryIR(
+      query,
+      schemas,
+      'postgres',
+      'ws-1',
+      { offset: 10 },
+      null,
+      relationSchemas
+    );
+    expect(sqlite.sql).toMatch(/LIMIT -1\s+OFFSET \?\s*$/);
+    expect(postgres.sql).toMatch(/LIMIT ALL\s+OFFSET \$\d+\s*$/);
   });
 });
 

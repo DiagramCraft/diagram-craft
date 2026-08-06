@@ -584,6 +584,8 @@ export type CatalogDatabase = {
   // matched entity plus any requested projection values. The method is also the cross-driver
   // execution seam used by compiler contract tests before endpoint wiring lands.
   runCompiledEntityQuery(sql: string, params: unknown[]): Promise<EntityQueryDbResult[]>;
+  // Runs a SELECT COUNT(*) compiled by entityQueryIRCompiler.ts for entity-query totals.
+  runCompiledEntityCountQuery(sql: string, params: unknown[]): Promise<number>;
   listEntities(ws: string): Promise<EntityDbResult[]>;
   getEntity(ws: string, identifier: string): Promise<EntityDbResult | null>;
   createEntity(input: EntityDbCreate): Promise<EntityDbResult>;
