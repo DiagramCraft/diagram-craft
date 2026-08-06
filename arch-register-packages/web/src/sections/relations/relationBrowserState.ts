@@ -4,7 +4,32 @@ import type {
   FilterCondition,
   SavedView
 } from '@arch-register/api-types/viewContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { RelationSearchParams } from '../../routes/searchParams';
+
+export type RelationBrowserView = 'table' | 'graph';
+export const RELATION_GRAPH_TYPE_LABEL = '__relation_type__';
+
+export type RelationGraphLabelOption = {
+  value: string;
+  label: string;
+};
+
+export const getRelationGraphLabelOptions = (
+  relationSchemas: RelationSchema[]
+): RelationGraphLabelOption[] => {
+  const fields = new Map<string, string>();
+  for (const schema of relationSchemas) {
+    for (const field of schema.fields) {
+      fields.set(field.id, field.name);
+    }
+  }
+
+  return [
+    { value: RELATION_GRAPH_TYPE_LABEL, label: 'Relation type' },
+    ...[...fields.entries()].map(([value, label]) => ({ value, label }))
+  ];
+};
 
 // Encodes which "side" of the relation a filter condition targets into a flat fieldId, the same
 // way ASSESSMENT_FIELD_PREFIX lets a flat FilterCondition[] address a joined assessment's fields
@@ -81,7 +106,9 @@ export const filterConditionsFromRelationQuery = (query: EntityQuery): FilterCon
     .map(nodeToCondition)
     .filter((c): c is FilterCondition => c != null);
 
-export const parseRelationQueryFromSearch = (search: RelationSearchParams): EntityQuery | null => {
+export const parseRelationQueryFromSearch = (
+  search: Pick<RelationSearchParams, 'entityQuery'>
+): EntityQuery | null => {
   if (!search.entityQuery) return null;
   try {
     const parsed: unknown = JSON.parse(search.entityQuery);
@@ -93,19 +120,28 @@ export const parseRelationQueryFromSearch = (search: RelationSearchParams): Enti
 
 export const toSavedRelationViewSearch = (view: SavedView): RelationSearchParams => ({
   viewId: view.id,
-  entityQuery: JSON.stringify(view.filters)
+  viewMode: view.viewMode === 'graph' ? 'graph' : undefined,
+  entityQuery: JSON.stringify(view.filters),
+  edgeLabelFieldId:
+    view.viewMode === 'graph' && view.config?.graph?.edgeLabelFieldId != null
+      ? view.config.graph.edgeLabelFieldId
+      : undefined
 });
 
 export const buildRelationSavedViewPayload = ({
   name,
   description,
   isAdminView,
-  conditions
+  viewMode,
+  conditions,
+  edgeLabelFieldId
 }: {
   name: string;
   description: string;
   isAdminView: boolean;
+  viewMode: RelationBrowserView;
   conditions: FilterCondition[];
+  edgeLabelFieldId: string;
 }): CreateSavedViewRequest => ({
   scope: 'workspace',
   projectId: null,
@@ -113,9 +149,17 @@ export const buildRelationSavedViewPayload = ({
   name,
   description: description || null,
   isAdminView,
-  viewMode: 'table',
+  viewMode,
   filters: buildRelationQueryFromFilters(conditions),
-  config: null
+  config:
+    viewMode === 'graph'
+      ? {
+          graph: {
+            edgeLabelFieldId:
+              edgeLabelFieldId === RELATION_GRAPH_TYPE_LABEL ? null : edgeLabelFieldId
+          }
+        }
+      : null
 });
 
 // The relation-rooted query IR's builtin field id for a relation's own schema (RELATION_BUILTIN_COLUMNS

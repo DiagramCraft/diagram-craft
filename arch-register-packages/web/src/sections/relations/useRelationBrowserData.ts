@@ -12,11 +12,13 @@ import {
   parseRelationQueryFromSearch,
   resolveSingleSchemaFilter
 } from './relationBrowserState';
+import type { RelationBrowserView } from './relationBrowserState';
 
 // Drives the relation-rooted browser (#2689/#2698/#2699): a flat filter-condition list (relation's own
 // fields, "in"/"out" endpoint entity fields, and a "Type" field for the relation's own schema — see
 // relationBrowserState.ts) and the resulting relation list, built on the schema-less `/relations/query`
-// endpoint. Table view only for v1 — see RelationBrowser.tsx. There's no separate schema picker:
+// endpoint. Table and flat Graph views are supported — see RelationBrowser.tsx. There's no separate
+// schema picker:
 // "type" is just another filter condition, so the browser can show relations across every schema at
 // once. Table columns and own/endpoint-field filtering both need one concrete schema to know which
 // fields exist, though, so both fall back to a generic view unless the filters narrow to exactly one
@@ -25,7 +27,7 @@ import {
 // Conditions live in the URL's `entityQuery` search param (not local state) so saved views (#2699)
 // are shareable and the sidebar's "active view" highlight survives a refresh — mirroring how
 // EntityBrowserScreen.tsx derives `conditions` from `search` via parseConditionsFromSearch.
-export const useRelationBrowserData = (workspaceId: string) => {
+export const useRelationBrowserData = (workspaceId: string, view: RelationBrowserView) => {
   const { data: relationSchemas = [] } = useRelationSchemas(workspaceId);
   const { data: entitySchemas = [] } = useSchemas(workspaceId);
   const { data: enums = [] } = useEnums(workspaceId);
@@ -55,15 +57,28 @@ export const useRelationBrowserData = (workspaceId: string) => {
   const { goToNextPage, goToPreviousPage, handlePageSizeChange, pageIndex, pageSize } =
     useRelationBrowserPagination(conditions);
 
-  const {
-    data: relations,
-    total,
-    isLoading
-  } = useRelationsQuery(workspaceId, relationQuery, {
-    view: 'full',
-    limit: pageSize,
-    offset: pageIndex * pageSize
-  });
+  const tableQuery = useRelationsQuery(
+    workspaceId,
+    relationQuery,
+    {
+      view: 'full',
+      limit: pageSize,
+      offset: pageIndex * pageSize
+    },
+    { enabled: view === 'table' }
+  );
+  const graphQuery = useRelationsQuery(
+    workspaceId,
+    relationQuery,
+    { view: 'full' },
+    {
+      enabled: view === 'graph'
+    }
+  );
+
+  const activeQuery = view === 'graph' ? graphQuery : tableQuery;
+
+  const { data: relations, total, isLoading } = activeQuery;
 
   const activeSchemaId = resolveSingleSchemaFilter(conditions);
   const activeSchema = relationSchemas.find(schema => schema.id === activeSchemaId) ?? null;

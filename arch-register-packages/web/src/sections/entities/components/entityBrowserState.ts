@@ -326,7 +326,7 @@ export const toSavedViewSearch = (view: SavedView): Partial<BrowserSearch> => ({
   owner: getFilterValue(filterConditionsFromEntityQuery(view.filters), '_owner') ?? undefined,
   q: freeTextFromEntityQuery(view.filters),
   viewId: view.id,
-  viewMode: view.viewMode,
+  viewMode: view.viewMode === 'graph' ? 'table' : view.viewMode,
   sort: view.config?.sort ?? undefined,
   projectScope: view.projectScope ?? undefined,
   viewConfigs: serializeViewConfigs(

@@ -1,10 +1,6 @@
 import { useCallback, useMemo, useState, type ReactNode } from 'react';
 import { DependencyGraph } from '../../../components/DependencyGraph';
-import type {
-  LayoutAlgorithm,
-  DependencyGraphNode,
-  DependencyGraphEdge
-} from '../../../components/DependencyGraph';
+import type { DependencyGraphNode, DependencyGraphEdge } from '../../../components/DependencyGraph';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -12,9 +8,8 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { MultiSelect, type MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { Popover } from '@diagram-craft/app-components/Popover';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
-import { TbEyeOff, TbFileExport, TbPlus, TbSettings, TbVectorTriangle } from 'react-icons/tb';
+import { TbEyeOff, TbFileExport, TbPlus, TbVectorTriangle } from 'react-icons/tb';
 import styles from './EntityGraphView.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { SaveDiagramFromGraphDialog } from './SaveDiagramFromGraphDialog';
@@ -24,6 +19,7 @@ import { type EntityGraphDirection, type EntityNodeData } from './entityGraphSta
 import { useEntityGraphController } from './useEntityGraphController';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { LoadingState } from '../../../components/LoadingState';
+import { GraphLayoutToolbar } from './GraphLayoutToolbar';
 
 type Props = {
   workspaceId: string;
@@ -135,8 +131,6 @@ export const EntityGraphView = ({
     y: number;
   } | null>(null);
 
-  const [advancedOpen, setAdvancedOpen] = useState(false);
-
   const handleEdgeClick = useCallback((edge: DependencyGraphEdge, e: React.MouseEvent) => {
     if (edge.kind === 'typed' && edge.relationId) {
       setRelationPopover({ relationId: edge.relationId, x: e.clientX, y: e.clientY });
@@ -148,18 +142,12 @@ export const EntityGraphView = ({
   return (
     <div className={`${styles.icEntityGraphView} ${readOnly ? styles.readOnly : ''}`}>
       <div className={styles.eToolbar}>
-        <span className={styles.eToolbarLabel}>Layout</span>
-        <Select.Root
-          value={layout}
-          onChange={v => {
-            if (v) setLayout(v as LayoutAlgorithm);
-          }}
-        >
-          <Select.Item value="hierarchy">Hierarchy</Select.Item>
-          <Select.Item value="layered">Layered</Select.Item>
-          <Select.Item value="force">Force-directed</Select.Item>
-          <Select.Item value="tree">Tree</Select.Item>
-        </Select.Root>
+        <GraphLayoutToolbar
+          layout={layout}
+          setLayout={value => setLayout(value)}
+          layoutOptions={layoutOptions}
+          setLayoutOptions={setLayoutOptions}
+        />
 
         <span className={styles.eToolbarLabel}>Depth</span>
         <NumberInput
@@ -194,110 +182,6 @@ export const EntityGraphView = ({
           placeholder="All relation types"
           style={{ width: '120px' }}
         />
-
-        <Popover.Root open={advancedOpen} onOpenChange={setAdvancedOpen}>
-          <Popover.Trigger
-            element={
-              <Button
-                size="sm"
-                variant="icon-only"
-                icon={<TbSettings size={13} />}
-                title="Advanced"
-              />
-            }
-          />
-          <Popover.Content side="bottom" align="start" className={styles.advancedPopover}>
-            <div className={styles.advancedHeader}>Layout settings</div>
-            <div className={styles.advancedGroups}>
-              {(layout === 'hierarchy' || layout === 'layered' || layout === 'tree') && (
-                <div className={styles.advancedGrid}>
-                  <label className={styles.advancedRow}>
-                    <span>H-Space</span>
-                    <NumberInput
-                      value={layoutOptions.horizontalSpacing ?? 200}
-                      onChange={v => setLayoutOptions(prev => ({ ...prev, horizontalSpacing: v }))}
-                      min={50}
-                      max={500}
-                      step={10}
-                    />
-                  </label>
-                  <label className={styles.advancedRow}>
-                    <span>V-Space</span>
-                    <NumberInput
-                      value={layoutOptions.verticalSpacing ?? 108}
-                      onChange={v => setLayoutOptions(prev => ({ ...prev, verticalSpacing: v }))}
-                      min={50}
-                      max={300}
-                      step={10}
-                    />
-                  </label>
-                </div>
-              )}
-
-              {(layout === 'hierarchy' || layout === 'layered') && (
-                <div className={styles.advancedGrid}>
-                  <label className={styles.advancedRow}>
-                    <span>Crossings</span>
-                    <NumberInput
-                      value={layoutOptions.crossingMinimizationIterations ?? 10}
-                      onChange={v =>
-                        setLayoutOptions(prev => ({ ...prev, crossingMinimizationIterations: v }))
-                      }
-                      min={1}
-                      max={50}
-                      step={1}
-                    />
-                  </label>
-                </div>
-              )}
-
-              {layout === 'force' && (
-                <div className={styles.advancedGrid}>
-                  <label className={styles.advancedRow}>
-                    <span>Iterations</span>
-                    <NumberInput
-                      value={layoutOptions.iterations ?? 300}
-                      onChange={v => setLayoutOptions(prev => ({ ...prev, iterations: v }))}
-                      min={50}
-                      max={1000}
-                      step={50}
-                    />
-                  </label>
-                  <label className={styles.advancedRow}>
-                    <span>Spring</span>
-                    <NumberInput
-                      value={layoutOptions.springStrength ?? 0.5}
-                      onChange={v => setLayoutOptions(prev => ({ ...prev, springStrength: v }))}
-                      min={0.1}
-                      max={2.0}
-                      step={0.1}
-                    />
-                  </label>
-                  <label className={styles.advancedRow}>
-                    <span>Repulsion</span>
-                    <NumberInput
-                      value={layoutOptions.repulsionStrength ?? 1.0}
-                      onChange={v => setLayoutOptions(prev => ({ ...prev, repulsionStrength: v }))}
-                      min={0.1}
-                      max={3.0}
-                      step={0.1}
-                    />
-                  </label>
-                  <label className={styles.advancedRow}>
-                    <span>Length</span>
-                    <NumberInput
-                      value={layoutOptions.idealEdgeLength ?? 160}
-                      onChange={v => setLayoutOptions(prev => ({ ...prev, idealEdgeLength: v }))}
-                      min={50}
-                      max={500}
-                      step={10}
-                    />
-                  </label>
-                </div>
-              )}
-            </div>
-          </Popover.Content>
-        </Popover.Root>
 
         {isAnyLoading && <span className={styles.eLoadingText}>Loading…</span>}
 

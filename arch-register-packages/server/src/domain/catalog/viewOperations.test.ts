@@ -173,4 +173,15 @@ describe('createSavedView relation-rooted viewMode restriction', () => {
       } as never)
     ).resolves.toBeDefined();
   });
+
+  it('allows the graph viewMode for a relation-rooted saved view', async () => {
+    const db = makeDb();
+    await expect(
+      createSavedView(db, 'ws-1', {
+        name: 'My relation graph',
+        viewMode: 'graph',
+        filters: { schemaId: relationSchema.id, root: { kind: 'and', children: [] } }
+      } as never)
+    ).resolves.toBeDefined();
+  });
 });

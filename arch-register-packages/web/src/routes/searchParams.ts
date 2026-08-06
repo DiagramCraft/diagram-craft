@@ -78,12 +78,16 @@ export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearch
 // Relation browser params
 export type RelationSearchParams = {
   viewId?: string;
+  viewMode?: 'table' | 'graph';
   entityQuery?: string; // JSON string of structured EntityQuery IR (root_kind: 'relation')
+  edgeLabelFieldId?: string;
 };
 
 export const validateRelationSearch = (raw: Record<string, unknown>): RelationSearchParams => ({
   viewId: typeof raw.viewId === 'string' ? raw.viewId : undefined,
-  entityQuery: typeof raw.entityQuery === 'string' ? raw.entityQuery : undefined
+  viewMode: raw.viewMode === 'graph' ? 'graph' : raw.viewMode === 'table' ? 'table' : undefined,
+  entityQuery: typeof raw.entityQuery === 'string' ? raw.entityQuery : undefined,
+  edgeLabelFieldId: typeof raw.edgeLabelFieldId === 'string' ? raw.edgeLabelFieldId : undefined
 });
 
 // Entity detail params

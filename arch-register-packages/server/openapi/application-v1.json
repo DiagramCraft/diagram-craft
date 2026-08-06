@@ -12574,6 +12574,10 @@
                               },
                               "name": {
                                 "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string",
+                                "description": "Entity schema identifier for the endpoint"
                               }
                             },
                             "required": [
@@ -12590,6 +12594,10 @@
                               },
                               "name": {
                                 "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string",
+                                "description": "Entity schema identifier for the endpoint"
                               }
                             },
                             "required": [
@@ -12971,6 +12979,10 @@
                         },
                         "name": {
                           "type": "string"
+                        },
+                        "schemaId": {
+                          "type": "string",
+                          "description": "Entity schema identifier for the endpoint"
                         }
                       },
                       "required": [
@@ -12987,6 +12999,10 @@
                         },
                         "name": {
                           "type": "string"
+                        },
+                        "schemaId": {
+                          "type": "string",
+                          "description": "Entity schema identifier for the endpoint"
                         }
                       },
                       "required": [
@@ -14859,6 +14875,10 @@
                               },
                               "name": {
                                 "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string",
+                                "description": "Entity schema identifier for the endpoint"
                               }
                             },
                             "required": [
@@ -14875,6 +14895,10 @@
                               },
                               "name": {
                                 "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string",
+                                "description": "Entity schema identifier for the endpoint"
                               }
                             },
                             "required": [
@@ -16987,6 +17011,10 @@
                         },
                         "name": {
                           "type": "string"
+                        },
+                        "schemaId": {
+                          "type": "string",
+                          "description": "Entity schema identifier for the endpoint"
                         }
                       },
                       "required": [
@@ -17003,6 +17031,10 @@
                         },
                         "name": {
                           "type": "string"
+                        },
+                        "schemaId": {
+                          "type": "string",
+                          "description": "Entity schema identifier for the endpoint"
                         }
                       },
                       "required": [
@@ -17361,6 +17393,10 @@
                         },
                         "name": {
                           "type": "string"
+                        },
+                        "schemaId": {
+                          "type": "string",
+                          "description": "Entity schema identifier for the endpoint"
                         }
                       },
                       "required": [
@@ -17377,6 +17413,10 @@
                         },
                         "name": {
                           "type": "string"
+                        },
+                        "schemaId": {
+                          "type": "string",
+                          "description": "Entity schema identifier for the endpoint"
                         }
                       },
                       "required": [
@@ -17727,6 +17767,10 @@
                               },
                               "name": {
                                 "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string",
+                                "description": "Entity schema identifier for the endpoint"
                               }
                             },
                             "required": [
@@ -17743,6 +17787,10 @@
                               },
                               "name": {
                                 "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string",
+                                "description": "Entity schema identifier for the endpoint"
                               }
                             },
                             "required": [
@@ -18001,6 +18049,10 @@
                               },
                               "name": {
                                 "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string",
+                                "description": "Entity schema identifier for the endpoint"
                               }
                             },
                             "required": [
@@ -18017,6 +18069,10 @@
                               },
                               "name": {
                                 "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string",
+                                "description": "Entity schema identifier for the endpoint"
                               }
                             },
                             "required": [
@@ -27970,6 +28026,10 @@
                                   },
                                   "name": {
                                     "type": "string"
+                                  },
+                                  "schemaId": {
+                                    "type": "string",
+                                    "description": "Entity schema identifier for the endpoint"
                                   }
                                 },
                                 "required": [
@@ -27986,6 +28046,10 @@
                                   },
                                   "name": {
                                     "type": "string"
+                                  },
+                                  "schemaId": {
+                                    "type": "string",
+                                    "description": "Entity schema identifier for the endpoint"
                                   }
                                 },
                                 "required": [
@@ -28244,6 +28308,10 @@
                                   },
                                   "name": {
                                     "type": "string"
+                                  },
+                                  "schemaId": {
+                                    "type": "string",
+                                    "description": "Entity schema identifier for the endpoint"
                                   }
                                 },
                                 "required": [
@@ -28260,6 +28328,10 @@
                                   },
                                   "name": {
                                     "type": "string"
+                                  },
+                                  "schemaId": {
+                                    "type": "string",
+                                    "description": "Entity schema identifier for the endpoint"
                                   }
                                 },
                                 "required": [
@@ -28521,6 +28593,10 @@
                                       },
                                       "name": {
                                         "type": "string"
+                                      },
+                                      "schemaId": {
+                                        "type": "string",
+                                        "description": "Entity schema identifier for the endpoint"
                                       }
                                     },
                                     "required": [
@@ -28537,6 +28613,10 @@
                                       },
                                       "name": {
                                         "type": "string"
+                                      },
+                                      "schemaId": {
+                                        "type": "string",
+                                        "description": "Entity schema identifier for the endpoint"
                                       }
                                     },
                                     "required": [
@@ -65168,7 +65248,8 @@
                           "explore",
                           "bubble",
                           "map",
-                          "diff"
+                          "diff",
+                          "graph"
                         ],
                         "type": "string",
                         "description": "View display mode"
@@ -67467,7 +67548,8 @@
                       "explore",
                       "bubble",
                       "map",
-                      "diff"
+                      "diff",
+                      "graph"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -69512,7 +69594,8 @@
                         "explore",
                         "bubble",
                         "map",
-                        "diff"
+                        "diff",
+                        "graph"
                       ],
                       "type": "string",
                       "description": "View display mode"
@@ -71802,7 +71885,8 @@
                       "explore",
                       "bubble",
                       "map",
-                      "diff"
+                      "diff",
+                      "graph"
                     ],
                     "type": "string",
                     "description": "View display mode"
@@ -73842,7 +73926,8 @@
                         "explore",
                         "bubble",
                         "map",
-                        "diff"
+                        "diff",
+                        "graph"
                       ],
                       "type": "string",
                       "description": "View display mode"

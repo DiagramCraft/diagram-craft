@@ -336,9 +336,9 @@ export const savedViewUsesRestrictedField = (
   }) ||
   configUsesRestrictedField(config, schemas, authCtx);
 
-// Relation-rooted saved views (#2689) only support the table view mode in this pass — tree/radar/
-// matrix/map/explore/graph/topology are entity-semantic and don't have a relation-rooted
-// equivalent yet. Structural constraint, not an ACL check, so it applies regardless of authCtx.
+// Relation-rooted saved views support the flat table and graph modes. Other views remain
+// entity-semantic and don't have a relation-rooted equivalent. Structural constraint, not an ACL
+// check, so it applies regardless of authCtx.
 const assertRelationRootViewModeAllowed = (
   filters: EntityQuery,
   viewMode: string,
@@ -347,9 +347,9 @@ const assertRelationRootViewModeAllowed = (
   const isRelationRoot =
     filters.root_kind === 'relation' ||
     (filters.schemaId != null && relationSchemas.some(schema => schema.id === filters.schemaId));
-  httpAssert.true(!isRelationRoot || viewMode === 'table', {
+  httpAssert.true(!isRelationRoot || viewMode === 'table' || viewMode === 'graph', {
     status: 400,
-    message: `Relation-rooted saved views only support the 'table' view mode, got '${viewMode}'`
+    message: `Relation-rooted saved views only support the 'table' or 'graph' view modes, got '${viewMode}'`
   });
 };
 

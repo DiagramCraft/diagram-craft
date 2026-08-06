@@ -337,8 +337,16 @@ export const toApiRelation = (
 ): RelationRecord => ({
   _uid: row.id,
   _schema: { id: row.schema_id, name: row.schema_name },
-  _in: { id: row.in_entity_id, name: row.in_entity_name },
-  _out: { id: row.out_entity_id, name: row.out_entity_name },
+  _in: {
+    id: row.in_entity_id,
+    name: row.in_entity_name,
+    ...(row.in_entity_schema_id ? { schemaId: row.in_entity_schema_id } : {})
+  },
+  _out: {
+    id: row.out_entity_id,
+    name: row.out_entity_name,
+    ...(row.out_entity_schema_id ? { schemaId: row.out_entity_schema_id } : {})
+  },
   _owner: row.owner ? { id: row.owner, name: row.owner_name ?? row.owner } : null,
   _lifecycle: row.lifecycle
     ? { id: row.lifecycle, name: row.lifecycle_label ?? row.lifecycle }
