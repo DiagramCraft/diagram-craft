@@ -67419,6 +67419,23 @@
                                   }
                                 },
                                 "description": "Configuration for map view"
+                              },
+                              "graph": {
+                                "type": "object",
+                                "properties": {
+                                  "edgeLabelFieldId": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Relation field identifier used for graph edge labels"
+                                  }
+                                },
+                                "description": "Configuration for relation graph view"
                               }
                             }
                           },
@@ -69495,6 +69512,23 @@
                               }
                             },
                             "description": "Configuration for map view"
+                          },
+                          "graph": {
+                            "type": "object",
+                            "properties": {
+                              "edgeLabelFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Relation field identifier used for graph edge labels"
+                              }
+                            },
+                            "description": "Configuration for relation graph view"
                           }
                         }
                       },
@@ -71765,6 +71799,23 @@
                                 }
                               },
                               "description": "Configuration for map view"
+                            },
+                            "graph": {
+                              "type": "object",
+                              "properties": {
+                                "edgeLabelFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Relation field identifier used for graph edge labels"
+                                }
+                              },
+                              "description": "Configuration for relation graph view"
                             }
                           }
                         },
@@ -73832,6 +73883,23 @@
                               }
                             },
                             "description": "Configuration for map view"
+                          },
+                          "graph": {
+                            "type": "object",
+                            "properties": {
+                              "edgeLabelFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Relation field identifier used for graph edge labels"
+                              }
+                            },
+                            "description": "Configuration for relation graph view"
                           }
                         }
                       },
@@ -76097,6 +76165,23 @@
                                 }
                               },
                               "description": "Configuration for map view"
+                            },
+                            "graph": {
+                              "type": "object",
+                              "properties": {
+                                "edgeLabelFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Relation field identifier used for graph edge labels"
+                                }
+                              },
+                              "description": "Configuration for relation graph view"
                             }
                           }
                         },
