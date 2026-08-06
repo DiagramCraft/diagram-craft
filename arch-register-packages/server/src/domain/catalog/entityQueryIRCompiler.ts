@@ -913,7 +913,12 @@ const compileRelationNode = (
         );
       }
       // Keep parameter allocation aligned with the CASE WHEN visibility expression below.
-      const scopeClause = relationSchemaScopeClause(alias, node.fieldId, state.relationSchemas, state);
+      const scopeClause = relationSchemaScopeClause(
+        alias,
+        node.fieldId,
+        state.relationSchemas,
+        state
+      );
       const clause = buildConditionClause(
         resolved.col,
         { fieldId: node.fieldId, op: node.op, value: node.value },

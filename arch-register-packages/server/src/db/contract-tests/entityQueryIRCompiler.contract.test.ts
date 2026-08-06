@@ -1573,14 +1573,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     ) => {
       const validation = validateEntityQueryIR(query, schemas, authCtx);
       expect(validation.ok, JSON.stringify(validation)).toBe(true);
-      const compiled = compileEntityQueryIR(
-        query,
-        schemas,
-        driver,
-        workspace,
-        {},
-        authCtx
-      );
+      const compiled = compileEntityQueryIR(query, schemas, driver, workspace, {}, authCtx);
       return db.catalog.runCompiledEntityQuery(compiled.sql, compiled.params);
     };
 
@@ -1597,17 +1590,24 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       kind: 'and',
       children: [predicate('salary', 'gt', 100), predicate('_name', 'equals', 'High Contractor')]
     });
-    expect((await run(conjunction, noAccess)).map(entity => entity.id)).toEqual([highContractor.id]);
+    expect((await run(conjunction, noAccess)).map(entity => entity.id)).toEqual([
+      highContractor.id
+    ]);
 
     const disjunction = queryFor({
       kind: 'or',
       children: [predicate('salary', 'gt', 100), predicate('_name', 'equals', 'No such entity')]
     });
-    expect((await run(disjunction, noAccess)).map(entity => entity.id)).toEqual([highContractor.id]);
+    expect((await run(disjunction, noAccess)).map(entity => entity.id)).toEqual([
+      highContractor.id
+    ]);
 
     const disjunctionWithKnownMatch = queryFor({
       kind: 'or',
-      children: [predicate('salary', 'gt', 100), predicate('_name', 'equals', 'Restricted Employee')]
+      children: [
+        predicate('salary', 'gt', 100),
+        predicate('_name', 'equals', 'Restricted Employee')
+      ]
     });
     expect((await run(disjunctionWithKnownMatch, noAccess)).map(entity => entity.id)).toEqual(
       expect.arrayContaining([restrictedEmployee.id, highContractor.id])
@@ -1621,16 +1621,19 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(negatedPage.items.map(entity => entity._uid)).toEqual([lowContractor.id]);
     expect(await countEntities(db, workspace, noAccess, { entityQuery: negated })).toBe(1);
 
-    const projectionQuery = queryFor(
-      { kind: 'and', children: [] },
-      [{ path: [], fieldId: 'salary' }]
-    );
+    const projectionQuery = queryFor({ kind: 'and', children: [] }, [
+      { path: [], fieldId: 'salary' }
+    ]);
     const projected = await run(projectionQuery, noAccess);
-    expect(projected.find(entity => entity.id === restrictedEmployee.id)?.projections['salary']).toBe(
-      null
+    expect(
+      projected.find(entity => entity.id === restrictedEmployee.id)?.projections['salary']
+    ).toBe(null);
+    expect(projected.find(entity => entity.id === highContractor.id)?.projections['salary']).toBe(
+      200
     );
-    expect(projected.find(entity => entity.id === highContractor.id)?.projections['salary']).toBe(200);
-    expect(projected.find(entity => entity.id === lowContractor.id)?.projections['salary']).toBe(50);
+    expect(projected.find(entity => entity.id === lowContractor.id)?.projections['salary']).toBe(
+      50
+    );
   });
 
   it('preserves restricted relation-field unknown semantics through negation, counts, and projections', async () => {
@@ -1770,13 +1773,16 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     );
     expect(count).toBe(1);
 
-    const projectionQuery = queryFor(
-      { kind: 'and', children: [] },
-      [{ path: [], fieldId: 'note' }]
-    );
+    const projectionQuery = queryFor({ kind: 'and', children: [] }, [
+      { path: [], fieldId: 'note' }
+    ]);
     const projected = await run(projectionQuery);
-    expect(projected.find(relation => relation.id === restricted.id)?.projections['note']).toBeNull();
-    expect(projected.find(relation => relation.id === visible.id)?.projections['note']).toBe('visible');
+    expect(
+      projected.find(relation => relation.id === restricted.id)?.projections['note']
+    ).toBeNull();
+    expect(projected.find(relation => relation.id === visible.id)?.projections['note']).toBe(
+      'visible'
+    );
   });
 
   it('scopes typed-relation hops and projection bindings to accessible owner schemas', async () => {
