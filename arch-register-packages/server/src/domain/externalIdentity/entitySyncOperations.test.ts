@@ -92,7 +92,7 @@ describe('syncEntityByExternalKey', () => {
     expect(result.entity['_name']).toBe('Foo Service');
 
     const identity = await db.externalIdentity.find(workspace, SOURCE, EXTERNAL_KEY);
-    expect(identity?.entity_id).toBe(result.entity['_uid']);
+    expect(identity?.record_id).toBe(result.entity['_uid']);
   });
 
   it('returns unchanged for an identical repeat sync, without creating a new version', async () => {

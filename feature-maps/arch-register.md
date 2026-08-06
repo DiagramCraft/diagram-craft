@@ -72,9 +72,11 @@
             Administrators can similarly define relation types (name, description, "in"/"out" endpoint constraints
             naming the allowed entity schemas at each end, fields, groups, and field-group access control) from a
             dedicated relation-types admin screen alongside entity types, enums, and shared fieldgroups; relation
-            types support the same field-group access control, shared-fieldgroup inclusion, field migrations, and
-            version history as entity schemas, but only text, long text, boolean, date, number, and select field
-            types (no reference, containment, or derived fields, and no templates or approval/deprecation policy).
+            types support the same field-group access control, shared-fieldgroup inclusion, field migrations,
+            version history, and externally managed fields (by AI, an integration, or an internal automation) with a
+            refresh mode of on-change or scheduled, as entity schemas, but only text, long text, boolean, date,
+            number, and select field types (no reference, containment, or derived fields, and no templates or
+            approval/deprecation policy).
             The model overview visualizes both generic schema references and typed relation-schema edges, with typed
             edges showing the relation type and linking to its definition.
 
@@ -514,6 +516,12 @@
           idempotently create or update an entity by a durable (source, external key) identity, distinct from the
           entity's internal id, so repeated submissions from a catalog importer converge on the same entity instead
           of creating duplicates.
+
+        - @id:ar.integrations.relation-sync External integrations holding the external-update capability can
+          idempotently create or update a typed relation instance by a durable (source, external key) identity, the
+          same pattern as entity sync, so repeated submissions from an integration converge on the same relation
+          instead of creating duplicates. The "in"/"out" endpoints and schema are fixed at creation and cannot be
+          changed by a later sync call.
 
         - @id:ar.integrations.mcp External AI or automation clients can use the MCP server’s supported entity and
           typed-relation discovery, bounded traversal, and mutation tools. Typed relation mutations require the MCP

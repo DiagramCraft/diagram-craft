@@ -3,11 +3,22 @@ import type {
   ExternalKind,
   ExternalUpdateEnvelope
 } from '@arch-register/api-types/common';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
+import { filterLiveFieldGroups, type FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
 
 // Shared across entity schema fields and document fields — both extend `externalFieldSchema`,
 // so all we need from a field to reason about externality is its id and `external_kind`.
 export type ExternalCapableField = { id: string; external_kind?: ExternalKind };
+
+/** Applies field-group ACL redaction to a record's generated/external metadata, shared by
+ *  entities, relations, and any other record kind that carries a `generated_metadata` field. */
+export const filterExternalMetadata = (
+  authCtx: WorkspaceAuthorizationContext | null,
+  schema: FieldGroupSchemaShape | null | undefined,
+  generatedMetadata: ExternalMetadata | undefined
+): ExternalMetadata =>
+  filterLiveFieldGroups(authCtx, schema, generatedMetadata ?? {}) as ExternalMetadata;
 
 export const isExternalField = (field: ExternalCapableField): boolean =>
   field.external_kind !== undefined;

@@ -6,6 +6,7 @@ import { PermissionChecker, type WorkspaceAuthorizationContext } from '@arch-reg
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { filterRestrictedFieldGroups } from '../auth/fieldGroupAccessControl';
+import { filterExternalMetadata } from '../externalMetadata/externalMetadataHelpers';
 import { requireTypedRelationEdit } from './relationAccessControl';
 
 const checker = new PermissionChecker();
@@ -251,7 +252,8 @@ export const relationAuditContext = (row: RelationDbResult): RelationAuditContex
 
 export const toApiRelation = (
   row: RelationDbResult,
-  authCtx: WorkspaceAuthorizationContext | null = null
+  authCtx: WorkspaceAuthorizationContext | null = null,
+  schema: RelationSchemaDbResult | null | undefined = null
 ): RelationRecord => ({
   _uid: row.id,
   _schema: { id: row.schema_id, name: row.schema_name },
@@ -264,6 +266,7 @@ export const toApiRelation = (
   _version: row.version,
   _createdAt: row.created_at.toISOString(),
   _updatedAt: row.updated_at.toISOString(),
+  _externalMetadata: filterExternalMetadata(authCtx, schema, row.generated_metadata),
   // canView/canEdit/canDelete stay permissive placeholders (fine-grained per-relation-instance
   // ACL mirroring entity_grant is not in scope for #2569) — access is actually governed by the
   // workspace-level 'ent.edit'/'ws.view' capabilities checked in relationOperations.ts, plus
@@ -309,5 +312,6 @@ export const toRedactedApiRelation = (
       ...row,
       data: filterRelationFieldData(authCtx, schema, row.data)
     },
-    authCtx
+    authCtx,
+    schema
   );

@@ -1,5 +1,6 @@
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import type { SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
+import type { ExternalMetadata } from '@arch-register/api-types/common';
 import { databaseDate, parseDatabaseJson, type DatabaseRow } from '../../../db/rowMappers';
 
 // -- Relation Schema
@@ -95,6 +96,7 @@ export type RelationDbResult = {
   lifecycle_label: string | null;
   version: number;
   approval_policy_override: 'required' | 'disabled' | null;
+  generated_metadata?: ExternalMetadata;
   created_at: Date;
   updated_at: Date;
 };
@@ -216,6 +218,11 @@ export const relationMappers = {
       row['approval_policy_override'] == null
         ? null
         : (String(row['approval_policy_override']) as RelationDbResult['approval_policy_override']),
+    generated_metadata: parseDatabaseJson<ExternalMetadata>(
+      row['generated_metadata'],
+      {},
+      'relation.generated_metadata'
+    ),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),

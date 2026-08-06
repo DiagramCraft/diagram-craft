@@ -2,19 +2,12 @@ import type { EntityDbResult } from './db/catalogDatabase';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 import { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
-import type { ExternalMetadata } from '@arch-register/api-types/common';
 import {
   filterKnownRestrictedFieldGroups,
   filterLiveFieldGroups,
   type FieldGroupSchemaShape
 } from '../auth/fieldGroupAccessControl';
-
-const filterExternalMetadata = (
-  authCtx: AuthorizationContext | null,
-  schema: FieldGroupSchemaShape | null,
-  generatedMetadata: ExternalMetadata | undefined
-): ExternalMetadata =>
-  filterLiveFieldGroups(authCtx, schema, generatedMetadata ?? {}) as ExternalMetadata;
+import { filterExternalMetadata } from '../externalMetadata/externalMetadataHelpers';
 
 const checker = new PermissionChecker();
 

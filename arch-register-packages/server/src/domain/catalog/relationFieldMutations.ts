@@ -14,7 +14,7 @@ import {
   relationToBaseState
 } from './relationHelpers';
 import { requireTypedRelationFieldEdit } from './relationAccessControl';
-import { RELATION_AUTOSAVE_KEEP_COUNT } from './relationOperations';
+import { RELATION_AUTOSAVE_KEEP_COUNT } from './relationMutations';
 import type { TypedRelationField } from '@arch-register/api-types/schemaContract';
 import type { RelationFieldDelta } from '@arch-register/api-types/entityContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';

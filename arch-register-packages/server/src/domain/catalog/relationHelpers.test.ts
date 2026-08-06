@@ -1,6 +1,20 @@
 import { describe, expect, it } from 'vitest';
-import { filterRelationFieldData, toRedactedApiRelation } from './relationHelpers';
+import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
+import { filterRelationFieldData, toApiRelation, toRedactedApiRelation } from './relationHelpers';
 import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
+
+const authCtxWithTeamRoles = (roles: Record<string, TeamRole[]>) =>
+  buildAuthorizationContext({
+    userId: 'user-1',
+    globalRoles: [],
+    workspaceRole: null,
+    teamAssignments: Object.entries(roles).flatMap(([teamId, teamRoles]) =>
+      teamRoles.map(role => ({ teamId, role }))
+    ),
+    schemas: [],
+    entities: [],
+    grants: []
+  });
 
 const now = new Date('2026-06-01T12:00:00.000Z');
 
@@ -60,5 +74,68 @@ describe('relation response redaction', () => {
     });
     expect(toRedactedApiRelation(relation, null, null)).not.toHaveProperty('removed');
     expect(toRedactedApiRelation(relation, null, null)).not.toHaveProperty('note');
+  });
+});
+
+describe('toApiRelation — _externalMetadata', () => {
+  it('surfaces external metadata when no schema/ACL restricts it', () => {
+    const relationWithMetadata: RelationDbResult = {
+      ...relation,
+      generated_metadata: {
+        note: {
+          fieldId: 'note',
+          external_kind: 'integration',
+          status: 'success',
+          source: 'backstage',
+          timestamp: now.toISOString()
+        } as never
+      }
+    };
+
+    const result = toApiRelation(relationWithMetadata, null, schema);
+    expect(result._externalMetadata?.note).toBeDefined();
+  });
+
+  it('omits external metadata for fields in a restricted group the caller cannot view', () => {
+    const restrictedSchema: RelationSchemaDbResult = {
+      ...schema,
+      fields: [
+        { id: 'note', name: 'Note', requirementLevel: null, type: 'text' } as never,
+        {
+          id: 'secret',
+          name: 'Secret',
+          requirementLevel: null,
+          type: 'text',
+          groupId: 'restricted'
+        } as never
+      ],
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ]
+    };
+    const relationWithMetadata: RelationDbResult = {
+      ...relation,
+      generated_metadata: {
+        note: {
+          fieldId: 'note',
+          external_kind: 'integration',
+          status: 'success',
+          source: 'backstage',
+          timestamp: now.toISOString()
+        } as never,
+        secret: {
+          fieldId: 'secret',
+          external_kind: 'integration',
+          status: 'success',
+          source: 'backstage',
+          timestamp: now.toISOString()
+        } as never
+      }
+    };
+    const authCtx = authCtxWithTeamRoles({});
+
+    const result = toApiRelation(relationWithMetadata, authCtx, restrictedSchema);
+    expect(result._externalMetadata?.note).toBeDefined();
+    expect(result._externalMetadata?.secret).toBeUndefined();
   });
 });
