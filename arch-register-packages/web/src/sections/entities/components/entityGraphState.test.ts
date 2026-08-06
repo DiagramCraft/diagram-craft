@@ -126,9 +126,7 @@ describe('collectEntityGraphIds', () => {
     ]);
 
     expect(
-      collectEntityGraphIds(
-        options(relations, { relationSchemaIds: new Set(['flow-schema']) })
-      )
+      collectEntityGraphIds(options(relations, { relationSchemaIds: new Set(['flow-schema']) }))
     ).toEqual(['root', 'flow-target']);
   });
 

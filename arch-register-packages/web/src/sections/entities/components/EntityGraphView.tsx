@@ -198,7 +198,12 @@ export const EntityGraphView = ({
         <Popover.Root open={advancedOpen} onOpenChange={setAdvancedOpen}>
           <Popover.Trigger
             element={
-              <Button size="sm" variant="icon-only" icon={<TbSettings size={13} />} title="Advanced" />
+              <Button
+                size="sm"
+                variant="icon-only"
+                icon={<TbSettings size={13} />}
+                title="Advanced"
+              />
             }
           />
           <Popover.Content side="bottom" align="start" className={styles.advancedPopover}>
