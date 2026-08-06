@@ -127,7 +127,7 @@ const runSync = async (
 
   if (existingIdentity) {
     const [oldRow, schema, entities] = await Promise.all([
-      db.catalog.getEntity(workspace, existingIdentity.entity_id),
+      db.catalog.getEntity(workspace, existingIdentity.record_id),
       db.catalog.getSchema(workspace, payload.schemaId),
       listAllCatalogEntities(db, workspace)
     ]);
@@ -308,7 +308,7 @@ const runSync = async (
       workspace,
       source,
       external_key: externalKey,
-      entity_id: row.id
+      record_id: row.id
     });
   } catch (error) {
     if (error instanceof DatabaseError && error.code === 'unique') {
@@ -356,7 +356,7 @@ export const getEntityByExternalKey = async (
       message: `Entity with external identity '${source}/${externalKey}' not found`
     });
 
-    const entity = await db.catalog.getEntity(workspace, existingIdentity.entity_id);
+    const entity = await db.catalog.getEntity(workspace, existingIdentity.record_id);
     httpAssert.present(entity, {
       status: 404,
       message: `Entity for external identity '${source}/${externalKey}' no longer exists`

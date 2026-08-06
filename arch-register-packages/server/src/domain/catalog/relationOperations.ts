@@ -25,13 +25,16 @@ import {
   createRelationVersionSchemaResolver
 } from './relationHelpers';
 import {
+  createRelationWithAudit,
+  updateRelationWithAudit,
+  RELATION_AUTOSAVE_KEEP_COUNT
+} from './relationMutations';
+import {
   assertVersionCanBeRestored,
   assertVersionDataCanBeRestored,
   redactVersionState,
   serializeEntityVersion
 } from './entityVersionOperations';
-
-export const RELATION_AUTOSAVE_KEEP_COUNT = 50;
 import {
   canViewTypedRelation,
   canViewTypedRelationFromEndpoint,
@@ -77,7 +80,7 @@ export const listAllRelations = async (
   return rows;
 };
 
-const getOwnerSchemas = async (
+export const getOwnerSchemas = async (
   db: DatabaseAdapter,
   workspace: string,
   row: { in_entity_id: string; out_entity_id: string }
@@ -274,44 +277,22 @@ export const createWorkspaceRelation = async (
       }
 
       const timestamp = new Date();
-      const row = await db.relation.createRelation({
-        id: randomUUID(),
+      const row = await createRelationWithAudit(db, {
         workspace: ws,
-        schema_id: schemaId,
-        in_entity_id: inEntity!.id,
-        out_entity_id: outEntity!.id,
-        data,
-        owner,
-        lifecycle,
-        created_at: timestamp,
-        updated_at: timestamp
+        relation: {
+          id: randomUUID(),
+          workspace: ws,
+          schema_id: schemaId,
+          in_entity_id: inEntity!.id,
+          out_entity_id: outEntity!.id,
+          data,
+          owner,
+          lifecycle,
+          created_at: timestamp,
+          updated_at: timestamp
+        },
+        actor: { id: authCtx.userId }
       });
-
-      await logAudit(db, {
-        userId: authCtx.userId,
-        workspace: ws,
-        operation: 'create',
-        entityType: 'relation',
-        entityId: row.id,
-        entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
-        schemaId: row.schema_id,
-        changes: { new: flattenRelationAuditFields(row) },
-        metadata: { relation: relationAuditContext(row) }
-      });
-
-      await db.catalog.createEntityVersion({
-        id: randomUUID(),
-        workspace: ws,
-        record_id: row.id,
-        version_number: row.version,
-        kind: 'autosave',
-        commit_message: null,
-        created_at: timestamp,
-        created_by: authCtx.userId,
-        state: relationToBaseState(row),
-        applied_case_revision_id: null
-      });
-      await db.catalog.pruneAutosaveVersions(ws, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
 
       return toRedactedApiRelation(row, authCtx, schema);
     }
@@ -371,46 +352,20 @@ export const updateWorkspaceRelation = async (
       }
 
       const nextData = { ...oldRow.data, ...data };
-      const timestamp = new Date();
-      const row = await db.relation.updateRelation(ws, id, {
-        data: nextData,
-        owner: nextOwner,
-        lifecycle: nextLifecycle,
-        version: oldRow.version + 1,
-        updated_at: timestamp
+      const row = await updateRelationWithAudit(db, {
+        workspace: ws,
+        relationId: id,
+        previous: oldRow,
+        next: {
+          data: nextData,
+          owner: nextOwner,
+          lifecycle: nextLifecycle,
+          version: oldRow.version + 1,
+          updated_at: new Date()
+        },
+        actor: { id: authCtx.userId }
       });
       httpAssert.present(row, { status: 404, message: `Relation '${id}' not found` });
-
-      const changes = computeChanges(
-        flattenRelationAuditFields(oldRow),
-        flattenRelationAuditFields(row),
-        { alwaysInclude: ['_inEntityId', '_outEntityId'] }
-      );
-      await logAudit(db, {
-        userId: authCtx.userId,
-        workspace: ws,
-        operation: 'update',
-        entityType: 'relation',
-        entityId: id,
-        entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
-        schemaId: row.schema_id,
-        changes,
-        metadata: { relation: relationAuditContext(row) }
-      });
-
-      await db.catalog.createEntityVersion({
-        id: randomUUID(),
-        workspace: ws,
-        record_id: row.id,
-        version_number: row.version,
-        kind: 'autosave',
-        commit_message: null,
-        created_at: timestamp,
-        created_by: authCtx.userId,
-        state: relationToBaseState(row),
-        applied_case_revision_id: null
-      });
-      await db.catalog.pruneAutosaveVersions(ws, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
 
       return toRedactedApiRelation(row, authCtx, schema);
     }

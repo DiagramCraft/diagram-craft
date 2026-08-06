@@ -9,6 +9,7 @@ import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { workspaceFieldGroupContract } from '@arch-register/api-types/fieldGroupContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
 import { entitySyncContract } from '@arch-register/api-types/entitySyncContract';
+import { relationSyncContract } from '@arch-register/api-types/relationSyncContract';
 import { projectContract } from '@arch-register/api-types/projectContract';
 import { workspaceViewContract } from '@arch-register/api-types/viewContract';
 import {
@@ -56,6 +57,7 @@ export const allContracts = {
   ...workspaceRelationContract,
   ...workspaceEntityContract,
   ...entitySyncContract,
+  ...relationSyncContract,
   ...workspaceViewContract,
   ...workspaceDashboardContract,
   ...projectDashboardContract,
@@ -191,7 +193,8 @@ export const getIntegrationOpenAPISpec = () => {
       {
         ...integrationSchemaContract,
         ...integrationRelationContract,
-        ...entitySyncContract
+        ...entitySyncContract,
+        ...relationSyncContract
       },
       {
         info: {

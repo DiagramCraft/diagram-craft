@@ -23,7 +23,7 @@ import type { NotificationDeliveryDatabase } from '../domain/notification/db/not
 import type { EntityChangeDatabase } from '../domain/catalog/db/entityChangeDatabase';
 import type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDeprecationDatabase';
 import type { ChangeCaseDatabase } from '../domain/catalog/db/changeCaseDatabase';
-import type { EntityExternalIdentityDatabase } from '../domain/externalIdentity/db/externalIdentityDatabase';
+import type { CatalogRecordExternalIdentityDatabase } from '../domain/externalIdentity/db/externalIdentityDatabase';
 import type { RelationDatabase } from '../domain/catalog/db/relationDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
@@ -66,7 +66,7 @@ export type DatabaseAdapter = {
   entityChange: EntityChangeDatabase;
   entityDeprecation: EntityDeprecationDatabase;
   changeCase: ChangeCaseDatabase;
-  externalIdentity: EntityExternalIdentityDatabase;
+  externalIdentity: CatalogRecordExternalIdentityDatabase;
   relation: RelationDatabase;
 };
 
@@ -182,9 +182,9 @@ export type {
   NotificationPreferenceOverride
 } from '../domain/notification/db/notificationPreferenceDatabase';
 export type {
-  EntityExternalIdentityDatabase,
-  EntityExternalIdentityRow,
-  EntityExternalIdentityDbCreate
+  CatalogRecordExternalIdentityDatabase,
+  CatalogRecordExternalIdentityRow,
+  CatalogRecordExternalIdentityDbCreate
 } from '../domain/externalIdentity/db/externalIdentityDatabase';
 export type {
   NotificationDeliveryDatabase,

@@ -7453,6 +7453,23 @@
                                   "type": "string",
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
                                 "type": {
                                   "const": "text",
                                   "description": "Single-line text field"
@@ -7498,6 +7515,23 @@
                                 "groupId": {
                                   "type": "string",
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
                                 },
                                 "type": {
                                   "const": "longtext",
@@ -7545,6 +7579,23 @@
                                   "type": "string",
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
                                 "type": {
                                   "const": "boolean",
                                   "description": "Boolean (true/false) field"
@@ -7591,6 +7642,23 @@
                                   "type": "string",
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
                                 "type": {
                                   "const": "date",
                                   "description": "Date field"
@@ -7636,6 +7704,23 @@
                                 "groupId": {
                                   "type": "string",
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
                                 },
                                 "type": {
                                   "const": "number",
@@ -7694,6 +7779,23 @@
                                 "groupId": {
                                   "type": "string",
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
                                 },
                                 "type": {
                                   "const": "select",
@@ -7985,6 +8087,23 @@
                               "type": "string",
                               "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                             },
+                            "external_kind": {
+                              "enum": [
+                                "ai",
+                                "integration",
+                                "automation"
+                              ],
+                              "type": "string",
+                              "description": "Producer that manages this field"
+                            },
+                            "refresh_mode": {
+                              "enum": [
+                                "on_change",
+                                "scheduled"
+                              ],
+                              "type": "string",
+                              "description": "How the external value is expected to be refreshed"
+                            },
                             "type": {
                               "const": "text",
                               "description": "Single-line text field"
@@ -8030,6 +8149,23 @@
                             "groupId": {
                               "type": "string",
                               "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
+                            "external_kind": {
+                              "enum": [
+                                "ai",
+                                "integration",
+                                "automation"
+                              ],
+                              "type": "string",
+                              "description": "Producer that manages this field"
+                            },
+                            "refresh_mode": {
+                              "enum": [
+                                "on_change",
+                                "scheduled"
+                              ],
+                              "type": "string",
+                              "description": "How the external value is expected to be refreshed"
                             },
                             "type": {
                               "const": "longtext",
@@ -8077,6 +8213,23 @@
                               "type": "string",
                               "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                             },
+                            "external_kind": {
+                              "enum": [
+                                "ai",
+                                "integration",
+                                "automation"
+                              ],
+                              "type": "string",
+                              "description": "Producer that manages this field"
+                            },
+                            "refresh_mode": {
+                              "enum": [
+                                "on_change",
+                                "scheduled"
+                              ],
+                              "type": "string",
+                              "description": "How the external value is expected to be refreshed"
+                            },
                             "type": {
                               "const": "boolean",
                               "description": "Boolean (true/false) field"
@@ -8123,6 +8276,23 @@
                               "type": "string",
                               "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                             },
+                            "external_kind": {
+                              "enum": [
+                                "ai",
+                                "integration",
+                                "automation"
+                              ],
+                              "type": "string",
+                              "description": "Producer that manages this field"
+                            },
+                            "refresh_mode": {
+                              "enum": [
+                                "on_change",
+                                "scheduled"
+                              ],
+                              "type": "string",
+                              "description": "How the external value is expected to be refreshed"
+                            },
                             "type": {
                               "const": "date",
                               "description": "Date field"
@@ -8168,6 +8338,23 @@
                             "groupId": {
                               "type": "string",
                               "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
+                            "external_kind": {
+                              "enum": [
+                                "ai",
+                                "integration",
+                                "automation"
+                              ],
+                              "type": "string",
+                              "description": "Producer that manages this field"
+                            },
+                            "refresh_mode": {
+                              "enum": [
+                                "on_change",
+                                "scheduled"
+                              ],
+                              "type": "string",
+                              "description": "How the external value is expected to be refreshed"
                             },
                             "type": {
                               "const": "number",
@@ -8226,6 +8413,23 @@
                             "groupId": {
                               "type": "string",
                               "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
+                            "external_kind": {
+                              "enum": [
+                                "ai",
+                                "integration",
+                                "automation"
+                              ],
+                              "type": "string",
+                              "description": "Producer that manages this field"
+                            },
+                            "refresh_mode": {
+                              "enum": [
+                                "on_change",
+                                "scheduled"
+                              ],
+                              "type": "string",
+                              "description": "How the external value is expected to be refreshed"
                             },
                             "type": {
                               "const": "select",
@@ -8452,6 +8656,23 @@
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
+                              },
                               "type": {
                                 "const": "text",
                                 "description": "Single-line text field"
@@ -8497,6 +8718,23 @@
                               "groupId": {
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
                               },
                               "type": {
                                 "const": "longtext",
@@ -8544,6 +8782,23 @@
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
+                              },
                               "type": {
                                 "const": "boolean",
                                 "description": "Boolean (true/false) field"
@@ -8590,6 +8845,23 @@
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
+                              },
                               "type": {
                                 "const": "date",
                                 "description": "Date field"
@@ -8635,6 +8907,23 @@
                               "groupId": {
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
                               },
                               "type": {
                                 "const": "number",
@@ -8693,6 +8982,23 @@
                               "groupId": {
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
                               },
                               "type": {
                                 "const": "select",
@@ -9003,6 +9309,23 @@
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
+                              },
                               "type": {
                                 "const": "text",
                                 "description": "Single-line text field"
@@ -9048,6 +9371,23 @@
                               "groupId": {
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
                               },
                               "type": {
                                 "const": "longtext",
@@ -9095,6 +9435,23 @@
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
+                              },
                               "type": {
                                 "const": "boolean",
                                 "description": "Boolean (true/false) field"
@@ -9141,6 +9498,23 @@
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
+                              },
                               "type": {
                                 "const": "date",
                                 "description": "Date field"
@@ -9186,6 +9560,23 @@
                               "groupId": {
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
                               },
                               "type": {
                                 "const": "number",
@@ -9244,6 +9635,23 @@
                               "groupId": {
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
                               },
                               "type": {
                                 "const": "select",
@@ -9543,6 +9951,23 @@
                               "type": "string",
                               "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                             },
+                            "external_kind": {
+                              "enum": [
+                                "ai",
+                                "integration",
+                                "automation"
+                              ],
+                              "type": "string",
+                              "description": "Producer that manages this field"
+                            },
+                            "refresh_mode": {
+                              "enum": [
+                                "on_change",
+                                "scheduled"
+                              ],
+                              "type": "string",
+                              "description": "How the external value is expected to be refreshed"
+                            },
                             "type": {
                               "const": "text",
                               "description": "Single-line text field"
@@ -9588,6 +10013,23 @@
                             "groupId": {
                               "type": "string",
                               "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
+                            "external_kind": {
+                              "enum": [
+                                "ai",
+                                "integration",
+                                "automation"
+                              ],
+                              "type": "string",
+                              "description": "Producer that manages this field"
+                            },
+                            "refresh_mode": {
+                              "enum": [
+                                "on_change",
+                                "scheduled"
+                              ],
+                              "type": "string",
+                              "description": "How the external value is expected to be refreshed"
                             },
                             "type": {
                               "const": "longtext",
@@ -9635,6 +10077,23 @@
                               "type": "string",
                               "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                             },
+                            "external_kind": {
+                              "enum": [
+                                "ai",
+                                "integration",
+                                "automation"
+                              ],
+                              "type": "string",
+                              "description": "Producer that manages this field"
+                            },
+                            "refresh_mode": {
+                              "enum": [
+                                "on_change",
+                                "scheduled"
+                              ],
+                              "type": "string",
+                              "description": "How the external value is expected to be refreshed"
+                            },
                             "type": {
                               "const": "boolean",
                               "description": "Boolean (true/false) field"
@@ -9681,6 +10140,23 @@
                               "type": "string",
                               "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                             },
+                            "external_kind": {
+                              "enum": [
+                                "ai",
+                                "integration",
+                                "automation"
+                              ],
+                              "type": "string",
+                              "description": "Producer that manages this field"
+                            },
+                            "refresh_mode": {
+                              "enum": [
+                                "on_change",
+                                "scheduled"
+                              ],
+                              "type": "string",
+                              "description": "How the external value is expected to be refreshed"
+                            },
                             "type": {
                               "const": "date",
                               "description": "Date field"
@@ -9726,6 +10202,23 @@
                             "groupId": {
                               "type": "string",
                               "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
+                            "external_kind": {
+                              "enum": [
+                                "ai",
+                                "integration",
+                                "automation"
+                              ],
+                              "type": "string",
+                              "description": "Producer that manages this field"
+                            },
+                            "refresh_mode": {
+                              "enum": [
+                                "on_change",
+                                "scheduled"
+                              ],
+                              "type": "string",
+                              "description": "How the external value is expected to be refreshed"
                             },
                             "type": {
                               "const": "number",
@@ -9784,6 +10277,23 @@
                             "groupId": {
                               "type": "string",
                               "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                            },
+                            "external_kind": {
+                              "enum": [
+                                "ai",
+                                "integration",
+                                "automation"
+                              ],
+                              "type": "string",
+                              "description": "Producer that manages this field"
+                            },
+                            "refresh_mode": {
+                              "enum": [
+                                "on_change",
+                                "scheduled"
+                              ],
+                              "type": "string",
+                              "description": "How the external value is expected to be refreshed"
                             },
                             "type": {
                               "const": "select",
@@ -10039,6 +10549,23 @@
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
+                              },
                               "type": {
                                 "const": "text",
                                 "description": "Single-line text field"
@@ -10084,6 +10611,23 @@
                               "groupId": {
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
                               },
                               "type": {
                                 "const": "longtext",
@@ -10131,6 +10675,23 @@
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
+                              },
                               "type": {
                                 "const": "boolean",
                                 "description": "Boolean (true/false) field"
@@ -10177,6 +10738,23 @@
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                               },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
+                              },
                               "type": {
                                 "const": "date",
                                 "description": "Date field"
@@ -10222,6 +10800,23 @@
                               "groupId": {
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
                               },
                               "type": {
                                 "const": "number",
@@ -10280,6 +10875,23 @@
                               "groupId": {
                                 "type": "string",
                                 "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string",
+                                "description": "Producer that manages this field"
+                              },
+                              "refresh_mode": {
+                                "enum": [
+                                  "on_change",
+                                  "scheduled"
+                                ],
+                                "type": "string",
+                                "description": "How the external value is expected to be refreshed"
                               },
                               "type": {
                                 "const": "select",
@@ -10644,6 +11256,23 @@
                                   "type": "string",
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
                                 "type": {
                                   "const": "text",
                                   "description": "Single-line text field"
@@ -10689,6 +11318,23 @@
                                 "groupId": {
                                   "type": "string",
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
                                 },
                                 "type": {
                                   "const": "longtext",
@@ -10736,6 +11382,23 @@
                                   "type": "string",
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
                                 "type": {
                                   "const": "boolean",
                                   "description": "Boolean (true/false) field"
@@ -10782,6 +11445,23 @@
                                   "type": "string",
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
                                 },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
                                 "type": {
                                   "const": "date",
                                   "description": "Date field"
@@ -10827,6 +11507,23 @@
                                 "groupId": {
                                   "type": "string",
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
                                 },
                                 "type": {
                                   "const": "number",
@@ -10885,6 +11582,23 @@
                                 "groupId": {
                                   "type": "string",
                                   "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
                                 },
                                 "type": {
                                   "const": "select",
@@ -11278,6 +11992,126 @@
                           "_updatedAt": {
                             "type": "string",
                             "description": "ISO 8601 last update timestamp"
+                          },
+                          "_externalMetadata": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "additionalProperties": {
+                              "type": "object",
+                              "properties": {
+                                "fieldId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "enum": [
+                                    "success",
+                                    "failed",
+                                    "outdated"
+                                  ],
+                                  "type": "string"
+                                },
+                                "source": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "description": "Free-form source label supplied by the updater"
+                                },
+                                "timestamp": {
+                                  "type": "string",
+                                  "description": "ISO 8601 timestamp, inferred by the server"
+                                },
+                                "explanation": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "findings": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "sourceVersion": {
+                                  "anyOf": [
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "number"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Updater version, if applicable"
+                                },
+                                "requestId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                                },
+                                "failureNotice": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "actionId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "sourceRevision": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "exclusiveMinimum": 0
+                                },
+                                "generatorVersion": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "exclusiveMinimum": 0
+                                }
+                              },
+                              "required": [
+                                "fieldId",
+                                "external_kind",
+                                "status",
+                                "source",
+                                "timestamp"
+                              ]
+                            },
+                            "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                           }
                         },
                         "required": [
@@ -11555,6 +12389,126 @@
                     "_updatedAt": {
                       "type": "string",
                       "description": "ISO 8601 last update timestamp"
+                    },
+                    "_externalMetadata": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "fieldId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "external_kind": {
+                            "enum": [
+                              "ai",
+                              "integration",
+                              "automation"
+                            ],
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "success",
+                              "failed",
+                              "outdated"
+                            ],
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Free-form source label supplied by the updater"
+                          },
+                          "timestamp": {
+                            "type": "string",
+                            "description": "ISO 8601 timestamp, inferred by the server"
+                          },
+                          "explanation": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "findings": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "sourceVersion": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Updater version, if applicable"
+                          },
+                          "requestId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                          },
+                          "failureNotice": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "actionId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sourceRevision": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          },
+                          "generatorVersion": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "required": [
+                          "fieldId",
+                          "external_kind",
+                          "status",
+                          "source",
+                          "timestamp"
+                        ]
+                      },
+                      "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                     }
                   },
                   "required": [
@@ -12977,6 +13931,126 @@
                           "_updatedAt": {
                             "type": "string",
                             "description": "ISO 8601 last update timestamp"
+                          },
+                          "_externalMetadata": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "additionalProperties": {
+                              "type": "object",
+                              "properties": {
+                                "fieldId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "enum": [
+                                    "success",
+                                    "failed",
+                                    "outdated"
+                                  ],
+                                  "type": "string"
+                                },
+                                "source": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "description": "Free-form source label supplied by the updater"
+                                },
+                                "timestamp": {
+                                  "type": "string",
+                                  "description": "ISO 8601 timestamp, inferred by the server"
+                                },
+                                "explanation": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "findings": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "sourceVersion": {
+                                  "anyOf": [
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "number"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Updater version, if applicable"
+                                },
+                                "requestId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                                },
+                                "failureNotice": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "actionId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "sourceRevision": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "exclusiveMinimum": 0
+                                },
+                                "generatorVersion": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "exclusiveMinimum": 0
+                                }
+                              },
+                              "required": [
+                                "fieldId",
+                                "external_kind",
+                                "status",
+                                "source",
+                                "timestamp"
+                              ]
+                            },
+                            "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                           }
                         },
                         "required": [
@@ -14639,6 +15713,126 @@
                     "_updatedAt": {
                       "type": "string",
                       "description": "ISO 8601 last update timestamp"
+                    },
+                    "_externalMetadata": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "fieldId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "external_kind": {
+                            "enum": [
+                              "ai",
+                              "integration",
+                              "automation"
+                            ],
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "success",
+                              "failed",
+                              "outdated"
+                            ],
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Free-form source label supplied by the updater"
+                          },
+                          "timestamp": {
+                            "type": "string",
+                            "description": "ISO 8601 timestamp, inferred by the server"
+                          },
+                          "explanation": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "findings": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "sourceVersion": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Updater version, if applicable"
+                          },
+                          "requestId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                          },
+                          "failureNotice": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "actionId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sourceRevision": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          },
+                          "generatorVersion": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "required": [
+                          "fieldId",
+                          "external_kind",
+                          "status",
+                          "source",
+                          "timestamp"
+                        ]
+                      },
+                      "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                     }
                   },
                   "required": [
@@ -14893,6 +16087,126 @@
                     "_updatedAt": {
                       "type": "string",
                       "description": "ISO 8601 last update timestamp"
+                    },
+                    "_externalMetadata": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "fieldId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "external_kind": {
+                            "enum": [
+                              "ai",
+                              "integration",
+                              "automation"
+                            ],
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "success",
+                              "failed",
+                              "outdated"
+                            ],
+                            "type": "string"
+                          },
+                          "source": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Free-form source label supplied by the updater"
+                          },
+                          "timestamp": {
+                            "type": "string",
+                            "description": "ISO 8601 timestamp, inferred by the server"
+                          },
+                          "explanation": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "findings": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "sourceVersion": {
+                            "anyOf": [
+                              {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "number"
+                                  }
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Updater version, if applicable"
+                          },
+                          "requestId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                          },
+                          "failureNotice": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "actionId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "sourceRevision": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          },
+                          "generatorVersion": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          }
+                        },
+                        "required": [
+                          "fieldId",
+                          "external_kind",
+                          "status",
+                          "source",
+                          "timestamp"
+                        ]
+                      },
+                      "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                     }
                   },
                   "required": [
@@ -15139,6 +16453,126 @@
                           "_updatedAt": {
                             "type": "string",
                             "description": "ISO 8601 last update timestamp"
+                          },
+                          "_externalMetadata": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "additionalProperties": {
+                              "type": "object",
+                              "properties": {
+                                "fieldId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "enum": [
+                                    "success",
+                                    "failed",
+                                    "outdated"
+                                  ],
+                                  "type": "string"
+                                },
+                                "source": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "description": "Free-form source label supplied by the updater"
+                                },
+                                "timestamp": {
+                                  "type": "string",
+                                  "description": "ISO 8601 timestamp, inferred by the server"
+                                },
+                                "explanation": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "findings": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "sourceVersion": {
+                                  "anyOf": [
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "number"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Updater version, if applicable"
+                                },
+                                "requestId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                                },
+                                "failureNotice": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "actionId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "sourceRevision": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "exclusiveMinimum": 0
+                                },
+                                "generatorVersion": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "exclusiveMinimum": 0
+                                }
+                              },
+                              "required": [
+                                "fieldId",
+                                "external_kind",
+                                "status",
+                                "source",
+                                "timestamp"
+                              ]
+                            },
+                            "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                           }
                         },
                         "required": [
@@ -15293,6 +16727,126 @@
                           "_updatedAt": {
                             "type": "string",
                             "description": "ISO 8601 last update timestamp"
+                          },
+                          "_externalMetadata": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "additionalProperties": {
+                              "type": "object",
+                              "properties": {
+                                "fieldId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string"
+                                },
+                                "status": {
+                                  "enum": [
+                                    "success",
+                                    "failed",
+                                    "outdated"
+                                  ],
+                                  "type": "string"
+                                },
+                                "source": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "description": "Free-form source label supplied by the updater"
+                                },
+                                "timestamp": {
+                                  "type": "string",
+                                  "description": "ISO 8601 timestamp, inferred by the server"
+                                },
+                                "explanation": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "findings": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  }
+                                },
+                                "sourceVersion": {
+                                  "anyOf": [
+                                    {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "number"
+                                        }
+                                      ]
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Updater version, if applicable"
+                                },
+                                "requestId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                                },
+                                "failureNotice": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "actionId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "sourceRevision": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "exclusiveMinimum": 0
+                                },
+                                "generatorVersion": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "exclusiveMinimum": 0
+                                }
+                              },
+                              "required": [
+                                "fieldId",
+                                "external_kind",
+                                "status",
+                                "source",
+                                "timestamp"
+                              ]
+                            },
+                            "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                           }
                         },
                         "required": [
@@ -23702,6 +25256,126 @@
                               "_updatedAt": {
                                 "type": "string",
                                 "description": "ISO 8601 last update timestamp"
+                              },
+                              "_externalMetadata": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "additionalProperties": {
+                                  "type": "object",
+                                  "properties": {
+                                    "fieldId": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "external_kind": {
+                                      "enum": [
+                                        "ai",
+                                        "integration",
+                                        "automation"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "status": {
+                                      "enum": [
+                                        "success",
+                                        "failed",
+                                        "outdated"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "source": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "description": "Free-form source label supplied by the updater"
+                                    },
+                                    "timestamp": {
+                                      "type": "string",
+                                      "description": "ISO 8601 timestamp, inferred by the server"
+                                    },
+                                    "explanation": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    "findings": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "sourceVersion": {
+                                      "anyOf": [
+                                        {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "number"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Updater version, if applicable"
+                                    },
+                                    "requestId": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                                    },
+                                    "failureNotice": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    "actionId": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "sourceRevision": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991,
+                                      "exclusiveMinimum": 0
+                                    },
+                                    "generatorVersion": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991,
+                                      "exclusiveMinimum": 0
+                                    }
+                                  },
+                                  "required": [
+                                    "fieldId",
+                                    "external_kind",
+                                    "status",
+                                    "source",
+                                    "timestamp"
+                                  ]
+                                },
+                                "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                               }
                             },
                             "required": [
@@ -23856,6 +25530,126 @@
                               "_updatedAt": {
                                 "type": "string",
                                 "description": "ISO 8601 last update timestamp"
+                              },
+                              "_externalMetadata": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "additionalProperties": {
+                                  "type": "object",
+                                  "properties": {
+                                    "fieldId": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "external_kind": {
+                                      "enum": [
+                                        "ai",
+                                        "integration",
+                                        "automation"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "status": {
+                                      "enum": [
+                                        "success",
+                                        "failed",
+                                        "outdated"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "source": {
+                                      "type": "string",
+                                      "minLength": 1,
+                                      "description": "Free-form source label supplied by the updater"
+                                    },
+                                    "timestamp": {
+                                      "type": "string",
+                                      "description": "ISO 8601 timestamp, inferred by the server"
+                                    },
+                                    "explanation": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    "findings": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "sourceVersion": {
+                                      "anyOf": [
+                                        {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "number"
+                                            }
+                                          ]
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Updater version, if applicable"
+                                    },
+                                    "requestId": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                                    },
+                                    "failureNotice": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    "actionId": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "sourceRevision": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991,
+                                      "exclusiveMinimum": 0
+                                    },
+                                    "generatorVersion": {
+                                      "type": "integer",
+                                      "minimum": -9007199254740991,
+                                      "maximum": 9007199254740991,
+                                      "exclusiveMinimum": 0
+                                    }
+                                  },
+                                  "required": [
+                                    "fieldId",
+                                    "external_kind",
+                                    "status",
+                                    "source",
+                                    "timestamp"
+                                  ]
+                                },
+                                "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                               }
                             },
                             "required": [
@@ -24013,6 +25807,126 @@
                                   "_updatedAt": {
                                     "type": "string",
                                     "description": "ISO 8601 last update timestamp"
+                                  },
+                                  "_externalMetadata": {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "additionalProperties": {
+                                      "type": "object",
+                                      "properties": {
+                                        "fieldId": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "external_kind": {
+                                          "enum": [
+                                            "ai",
+                                            "integration",
+                                            "automation"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "status": {
+                                          "enum": [
+                                            "success",
+                                            "failed",
+                                            "outdated"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "source": {
+                                          "type": "string",
+                                          "minLength": 1,
+                                          "description": "Free-form source label supplied by the updater"
+                                        },
+                                        "timestamp": {
+                                          "type": "string",
+                                          "description": "ISO 8601 timestamp, inferred by the server"
+                                        },
+                                        "explanation": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
+                                        },
+                                        "findings": {
+                                          "type": "array",
+                                          "items": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "sourceVersion": {
+                                          "anyOf": [
+                                            {
+                                              "anyOf": [
+                                                {
+                                                  "type": "string"
+                                                },
+                                                {
+                                                  "type": "number"
+                                                }
+                                              ]
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ],
+                                          "description": "Updater version, if applicable"
+                                        },
+                                        "requestId": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ],
+                                          "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                                        },
+                                        "failureNotice": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ]
+                                        },
+                                        "actionId": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "sourceRevision": {
+                                          "type": "integer",
+                                          "minimum": -9007199254740991,
+                                          "maximum": 9007199254740991,
+                                          "exclusiveMinimum": 0
+                                        },
+                                        "generatorVersion": {
+                                          "type": "integer",
+                                          "minimum": -9007199254740991,
+                                          "maximum": 9007199254740991,
+                                          "exclusiveMinimum": 0
+                                        }
+                                      },
+                                      "required": [
+                                        "fieldId",
+                                        "external_kind",
+                                        "status",
+                                        "source",
+                                        "timestamp"
+                                      ]
+                                    },
+                                    "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                                   }
                                 },
                                 "required": [

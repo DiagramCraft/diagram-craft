@@ -245,7 +245,7 @@ test.describe('integration entity surface', () => {
       workspace,
       source,
       external_key: externalKey,
-      entity_id: entityId
+      record_id: entityId
     });
 
     const token = await orpc.authProtected.apiTokens.create({

@@ -1,6 +1,11 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndId, foreignKeySchema } from '@arch-register/api-types/common';
+import {
+  ws,
+  wsAndId,
+  foreignKeySchema,
+  externalMetadataSchema
+} from '@arch-register/api-types/common';
 import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
 // ── Relation instance ────────────────────────────────────────
@@ -21,7 +26,10 @@ const relationSummarySchema = relationCapabilitiesSchema.extend({
   _lifecycle: foreignKeySchema.nullable().describe('Current lifecycle state'),
   _version: z.number().int().min(1).describe('Optimistic concurrency version'),
   _createdAt: z.string().describe('ISO 8601 creation timestamp'),
-  _updatedAt: z.string().describe('ISO 8601 last update timestamp')
+  _updatedAt: z.string().describe('ISO 8601 last update timestamp'),
+  _externalMetadata: externalMetadataSchema
+    .optional()
+    .describe('Latest external-update metadata, keyed by field id, for external_kind fields')
 });
 
 // RelationRecord = RelationSummary + dynamic schema fields

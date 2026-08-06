@@ -1,6 +1,12 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndUUID, namedGroupSchema } from '@arch-register/api-types/common';
+import {
+  ws,
+  wsAndUUID,
+  namedGroupSchema,
+  externalFieldSchema,
+  assertRefreshModeRequiresExternalKind
+} from '@arch-register/api-types/common';
 
 const requirementLevelSchema = z
   .enum(['required', 'expected', 'optional'])
@@ -20,7 +26,8 @@ const baseRelationFieldSchema = z.object({
   groupId: z
     .string()
     .optional()
-    .describe('Id of the presentation-only group this field belongs to; omitted means ungrouped')
+    .describe('Id of the presentation-only group this field belongs to; omitted means ungrouped'),
+  ...externalFieldSchema.shape
 });
 
 const textRelationFieldSchema = baseRelationFieldSchema.extend({
@@ -62,6 +69,10 @@ export const relationFieldInputSchema = z
     numberRelationFieldSchema,
     selectRelationFieldInputSchema
   ])
+  .superRefine((field, ctx) => {
+    const issue = assertRefreshModeRequiresExternalKind(field);
+    if (issue) ctx.addIssue({ code: z.ZodIssueCode.custom, ...issue });
+  })
   .describe('Relation field definition');
 
 const fieldOptionSchema = z.object({
@@ -82,6 +93,10 @@ export const relationFieldResponseSchema = z
     numberRelationFieldSchema,
     selectRelationFieldResponseSchema
   ])
+  .superRefine((field, ctx) => {
+    const issue = assertRefreshModeRequiresExternalKind(field);
+    if (issue) ctx.addIssue({ code: z.ZodIssueCode.custom, ...issue });
+  })
   .describe('Relation field with resolved options');
 
 const fieldGroupAccessControlSchema = z
