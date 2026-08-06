@@ -34,10 +34,13 @@ import type {
 import {
   createGovernanceCaseInTransaction,
   recordGovernanceEvent,
-  resolveAssignmentNotifications,
-  resolveCaseNotifications,
   resolveScopeAwareEscalationTarget
 } from '../governance/governanceOperations';
+import {
+  finalizeApprovalBypass,
+  findApprovalCaseForRevision,
+  withdrawApproval
+} from './approvalLifecycleOperations';
 import type { GovernanceCaseDbResult } from '../governance/db/governanceDatabase';
 import type {
   AuthorizationContext,
@@ -314,19 +317,6 @@ export const toApiApprovalRevision = (
   };
 };
 
-const findCaseForRevision = async (
-  db: DatabaseAdapter,
-  workspace: string,
-  entityId: string,
-  revisionId: string
-): Promise<GovernanceCaseDbResult | null> => {
-  const cases = await db.governance.listCases(workspace, {
-    caseKind: ENTITY_CHANGE_CASE_KIND,
-    subjectId: entityId
-  });
-  return cases.find(candidate => candidate.subject_version === revisionId) ?? null;
-};
-
 const schemaByIdForStates = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -358,11 +348,12 @@ const toApiApproval = async (
         [revision.base_state, revision.proposed_state],
         revision.created_at
       );
-      const caseRow = await findCaseForRevision(
+      const caseRow = await findApprovalCaseForRevision(
         db,
         proposal.workspace,
         proposal.entity_id,
-        revision.id
+        revision.id,
+        ENTITY_CHANGE_CASE_KIND
       );
       const creator = revision.created_by ? await db.auth.getUser(revision.created_by) : null;
       return toApiApprovalRevision(
@@ -892,44 +883,19 @@ export const withdrawEntityChangeApproval = async (
 ) => {
   const workspace = await resolveWorkspace(db.catalog, workspaceName);
   const { authCtx, entity } = await assertCanPropose(db, workspace, entityId, event);
-  const proposal = await db.entityChange.getOpenApproval(workspace, entity.id);
-  httpAssert.true(proposal?.id === proposalId, {
-    status: 404,
-    message: 'Entity proposal not found'
-  });
-  httpAssert.present(proposal, { status: 404, message: 'Entity proposal not found' });
-  httpAssert.true(proposal.initiator_user_id === event.context.user.id, {
-    status: 403,
-    message: 'Only the proposal initiator can withdraw this proposal'
-  });
-  const revision = await db.entityChange.getLatestApprovalRevision(workspace, proposal.id);
-  httpAssert.present(revision, { status: 409, message: 'The entity proposal has no revision' });
-  const caseRow = await findCaseForRevision(db, workspace, entity.id, revision.id);
-  httpAssert.present(caseRow, { status: 409, message: 'The entity proposal case is missing' });
-  const now = new Date();
-  await db.core.transaction(async tx => {
-    await tx.entityChange.updateApprovalRevisionStatus(workspace, revision.id, 'withdrawn', now);
-    await tx.entityChange.updateApprovalStatus(workspace, proposal.id, 'withdrawn', now, now);
-    const cancelled = await tx.governance.cancelCaseIfOpen(caseRow.id, now);
-    if (cancelled) {
-      const supersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(caseRow.id, now);
-      await resolveAssignmentNotifications(tx, supersededIds, now);
-      await resolveCaseNotifications(tx, cancelled.id, now);
-      await recordGovernanceEvent(tx, cancelled, {
-        eventType: 'cancelled',
-        actorUserId: event.context.user.id,
-        previousStatus: 'open',
-        resultingStatus: 'cancelled',
-        reason: reason ?? null,
-        metadata: { proposalId: proposal.id, revisionId: revision.id }
-      });
+  return withdrawApproval(db, {
+    workspace,
+    subjectId: entity.id,
+    proposalId,
+    event,
+    authCtx,
+    reason,
+    adapter: {
+      caseKind: ENTITY_CHANGE_CASE_KIND,
+      subjectName: 'Entity',
+      toApiApproval
     }
   });
-  return await toApiApproval(
-    db,
-    (await db.entityChange.getApproval(workspace, proposal.id))!,
-    authCtx
-  );
 };
 
 export const bypassEntityApproval = async (
@@ -957,34 +923,14 @@ export const bypassEntityApproval = async (
     });
     if (row == null) return null;
 
-    const proposal = await tx.entityChange.getOpenApproval(workspace, canonicalEntityId);
-    if (proposal) {
-      const revision = await tx.entityChange.getLatestApprovalRevision(workspace, proposal.id);
-      if (revision) {
-        await tx.entityChange.updateApprovalRevisionStatus(workspace, revision.id, 'approved', now);
-        await tx.entityChange.updateApprovalStatus(workspace, proposal.id, 'approved', now, now);
-        const caseRow = await findCaseForRevision(tx, workspace, canonicalEntityId, revision.id);
-        if (caseRow) {
-          const cancelled = await tx.governance.cancelCaseIfOpen(caseRow.id, now);
-          if (cancelled) {
-            const supersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(
-              caseRow.id,
-              now
-            );
-            await resolveAssignmentNotifications(tx, supersededIds, now);
-            await resolveCaseNotifications(tx, cancelled.id, now);
-            await recordGovernanceEvent(tx, cancelled, {
-              eventType: 'admin_override',
-              actorUserId: event.context.user.id,
-              previousStatus: 'open',
-              resultingStatus: 'cancelled',
-              reason: body.reason,
-              metadata: { proposalId: proposal.id, revisionId: revision.id }
-            });
-          }
-        }
-      }
-    }
+    await finalizeApprovalBypass(tx, {
+      workspace,
+      subjectId: canonicalEntityId,
+      actorUserId: event.context.user.id,
+      reason: body.reason,
+      now,
+      adapter: { caseKind: ENTITY_CHANGE_CASE_KIND }
+    });
     return row;
   });
   httpAssert.present(updated, {
