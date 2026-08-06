@@ -197,6 +197,71 @@ test.describe('workspace job monitoring', () => {
     );
   });
 
+  test('rejects Technology End of Life jobs with access-controlled input fields', async ({
+    server,
+    orpc
+  }) => {
+    const schema = await server.db.catalog.getSchema(
+      seedIds.workspace.default,
+      '00000000-0000-0000-0000-000000000006'
+    );
+    expect(schema).not.toBeNull();
+
+    const restrictedGroupId = 'technology-eol-inputs';
+    const restrictedFields = schema!.fields.map(field =>
+      field.id === 'provider_product' ? { ...field, groupId: restrictedGroupId } : field
+    );
+    const { id: _id, workspace: _workspace, created_at: _createdAt, ...schemaUpdate } = schema!;
+    await server.db.catalog.updateSchema(seedIds.workspace.default, schema!.id, {
+      ...schemaUpdate,
+      fields: restrictedFields,
+      groups: [
+        ...(schema!.groups ?? []),
+        {
+          id: restrictedGroupId,
+          name: 'Technology EOL Inputs',
+          accessControl: { teamIds: [seedIds.teams.security] }
+        }
+      ],
+      updated_at: new Date()
+    });
+    const schedulesBefore = await server.db.jobs.listSchedules(seedIds.workspace.default);
+    const fieldsBefore = (await server.db.catalog.getSchema(seedIds.workspace.default, schema!.id))!
+      .fields;
+
+    await expect(
+      orpc.jobs.schedules.create({
+        params: { workspace: 'default' },
+        body: {
+          jobType: 'technology-eol',
+          schemaId: schema!.id,
+          mapping: {
+            productFieldId: 'provider_product',
+            cycleFieldId: 'release_cycle',
+            latestVersionFieldId: 'latest_version',
+            releaseDateFieldId: 'release_date',
+            supportUntilFieldId: null,
+            securityUntilFieldId: null,
+            eolDateFieldId: 'eol_date',
+            sourceUrlFieldId: null,
+            synchronizedAtFieldId: null
+          },
+          frequency: { unit: 'hours', value: 24 }
+        }
+      })
+    ).rejects.toMatchObject({
+      code: 'BAD_REQUEST',
+      message: expect.stringContaining('provider_product')
+    });
+
+    expect(await server.db.jobs.listSchedules(seedIds.workspace.default)).toEqual(schedulesBefore);
+    const unchangedSchema = await server.db.catalog.getSchema(
+      seedIds.workspace.default,
+      schema!.id
+    );
+    expect(unchangedSchema?.fields).toEqual(fieldsBefore);
+  });
+
   test('run now returns the already-queued run instead of duplicating it', async ({
     server,
     orpc

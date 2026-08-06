@@ -72,6 +72,21 @@ export const isFieldEditRestricted = (
 };
 
 /**
+ * True when a field is protected by a team-scoped field group. Missing groups fail closed because
+ * unattended integrations must not treat malformed access metadata as unrestricted.
+ */
+export const isFieldGroupAccessControlled = (
+  schema: FieldGroupSchemaShape | null | undefined,
+  fieldId: string
+): boolean => {
+  if (!schema) return true;
+  const field = schema.fields.find(candidate => candidate.id === fieldId);
+  if (!field || field.groupId == null) return false;
+  const group = (schema.groups ?? []).find(candidate => candidate.id === field.groupId);
+  return group == null || (group.accessControl?.teamIds.length ?? 0) > 0;
+};
+
+/**
  * Ids of fields whose group the caller cannot view. Empty when authCtx or schema is absent
  * (internal/system callers bypass field-group restriction, same as filterRestrictedFieldGroups
  * and isFieldViewRestricted). Used to keep derived values — e.g. entity completeness (#2581) —

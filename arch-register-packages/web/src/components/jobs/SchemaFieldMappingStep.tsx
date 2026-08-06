@@ -30,6 +30,16 @@ export const SchemaFieldMappingStep = ({
     return <div className={styles.notice}>Choose a target schema before mapping fields.</div>;
   }
 
+  const accessControlledGroupIds = new Set(
+    schema.groups
+      .filter(group => (group.accessControl?.teamIds.length ?? 0) > 0)
+      .map(group => group.id)
+  );
+  const isAccessControlled = (field: SchemaField) =>
+    field.groupId != null &&
+    (!schema.groups.some(group => group.id === field.groupId) ||
+      accessControlledGroupIds.has(field.groupId));
+
   return (
     <div className={styles.stepStack}>
       <div>
@@ -51,7 +61,7 @@ export const SchemaFieldMappingStep = ({
                 </div>
                 <div className={styles.mappingColumnDescription}>
                   {direction === 'input'
-                    ? 'Read from each target entity.'
+                    ? 'Read from each target entity. Access-controlled fields cannot be used as job inputs.'
                     : 'Updated from endoflife.date and marked external.'}
                 </div>
               </div>
@@ -67,6 +77,7 @@ export const SchemaFieldMappingStep = ({
                     field =>
                       !field.archived &&
                       definition.allowedTypes.includes(field.type) &&
+                      (direction !== 'input' || !isAccessControlled(field)) &&
                       (!usedByOtherDefinition.has(field.id) || field.id === definition.value)
                   );
                   const selected = schema.fields.find(field => field.id === definition.value);

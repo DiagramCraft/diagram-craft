@@ -8,6 +8,7 @@ import {
   requireWorkspaceAdmin,
   requireWorkspaceCapability
 } from '../auth/authorization';
+import { isFieldGroupAccessControlled } from '../auth/fieldGroupAccessControl';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { nextJobOccurrence, validateJobScheduleRecurrence } from './jobRecurrence';
 import type {
@@ -346,6 +347,13 @@ const assertTechnologyEolMapping = (
       message: `Input field '${fieldId}' must be a text field`
     });
   }
+  const accessControlledInput = inputFields.find(fieldId =>
+    isFieldGroupAccessControlled(schema, fieldId)
+  );
+  httpAssert.true(accessControlledInput == null, {
+    status: 400,
+    message: `Input field '${accessControlledInput}' cannot belong to an access-controlled field group`
+  });
 
   const destinations = destinationFieldIds(mapping);
   httpAssert.true(new Set(destinations).size === destinations.length, {

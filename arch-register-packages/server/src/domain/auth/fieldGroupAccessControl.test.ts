@@ -5,6 +5,7 @@ import {
   filterKnownAllRestrictedFieldGroups,
   filterLiveFieldGroups,
   filterRestrictedFieldGroups,
+  isFieldGroupAccessControlled,
   isFieldEditRestricted,
   isFieldViewRestricted,
   requireNoRestrictedFieldWrites,
@@ -205,6 +206,29 @@ describe('isFieldViewRestricted', () => {
     expect(isFieldViewRestricted(viewOnly, schema, 'secret')).toBe(false);
     const editor = authCtxWithTeamRoles({ 'team-restricted': ['team_editor'] });
     expect(isFieldViewRestricted(editor, schema, 'secret')).toBe(false);
+  });
+});
+
+describe('isFieldGroupAccessControlled', () => {
+  it('identifies team-scoped groups independently of caller access', () => {
+    expect(isFieldGroupAccessControlled(schema, 'secret')).toBe(true);
+    expect(isFieldGroupAccessControlled(schema, 'name')).toBe(false);
+  });
+
+  it('treats dangling group references as access-controlled', () => {
+    expect(isFieldGroupAccessControlled(danglingSchema, 'dangling')).toBe(true);
+  });
+
+  it('treats empty access-control bindings as unrestricted', () => {
+    expect(
+      isFieldGroupAccessControlled(
+        {
+          fields: [{ id: 'field', name: 'Field', type: 'text', groupId: 'empty' }],
+          groups: [{ id: 'empty', name: 'Empty', accessControl: { teamIds: [] } }]
+        },
+        'field'
+      )
+    ).toBe(false);
   });
 });
 
