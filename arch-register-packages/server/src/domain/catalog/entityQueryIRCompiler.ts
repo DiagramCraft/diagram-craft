@@ -603,6 +603,14 @@ const schemaScopeClause = (
     .join(', ')})`;
 };
 
+// A field that is restricted for the current row is unknown to the caller, not false. Keeping the
+// visibility check outside the predicate's boolean expression is important: `(predicate AND
+// scope)` becomes false for an inaccessible row, and `NOT(false)` then incorrectly matches it.
+// Returning SQL NULL preserves three-valued logic through NOT/AND/OR and therefore keeps the row
+// out of a WHERE clause without allowing negation to turn restricted data into a match.
+const applyFieldVisibilityAsUnknown = (clause: string, scopeClause: string | null): string =>
+  scopeClause ? `(CASE WHEN ${scopeClause} THEN (${clause}) ELSE NULL END)` : clause;
+
 const projectionTargetSchemaClause = (
   alias: string,
   schemaIds: readonly string[],
@@ -745,6 +753,9 @@ const compilePredicateTerminal =
     if (!resolved) {
       throw new UnsupportedEntityQueryIRError(`Field '${fieldId}' has no SQL translation`);
     }
+    // The visibility expression is rendered before the predicate in the CASE wrapper, so its
+    // parameters must be allocated first as well.
+    const scopeClause = schemaScopeClause(alias, fieldId, schemas, state);
     const clause = buildConditionClause(
       resolved.col,
       { fieldId, op, value },
@@ -757,8 +768,7 @@ const compilePredicateTerminal =
         `Operator '${op}' has no SQL translation for field '${fieldId}'`
       );
     }
-    const scopeClause = schemaScopeClause(alias, fieldId, schemas, state);
-    return scopeClause ? `(${clause} AND ${scopeClause})` : clause;
+    return applyFieldVisibilityAsUnknown(clause, scopeClause);
   };
 
 const compileFreeTextTerminal = (
@@ -811,6 +821,9 @@ const compileRelationRootPredicateTerminal =
     if (!resolved) {
       throw new UnsupportedEntityQueryIRError(`Field '${fieldId}' has no SQL translation`);
     }
+    // The visibility expression is rendered before the predicate in the CASE wrapper, so its
+    // parameters must be allocated first as well.
+    const scopeClause = relationSchemaScopeClause(alias, fieldId, state.relationSchemas, state);
     const clause = buildConditionClause(
       resolved.col,
       { fieldId, op, value },
@@ -823,8 +836,7 @@ const compileRelationRootPredicateTerminal =
         `Operator '${op}' has no SQL translation for field '${fieldId}'`
       );
     }
-    const scopeClause = relationSchemaScopeClause(alias, fieldId, state.relationSchemas, state);
-    return scopeClause ? `(${clause} AND ${scopeClause})` : clause;
+    return applyFieldVisibilityAsUnknown(clause, scopeClause);
   };
 
 const projectionRawValueRelation = (
@@ -900,6 +912,13 @@ const compileRelationNode = (
           `Relation schema '${relationSchemaId}' has no scalar field '${node.fieldId}'`
         );
       }
+      // Keep parameter allocation aligned with the CASE WHEN visibility expression below.
+      const scopeClause = relationSchemaScopeClause(
+        alias,
+        node.fieldId,
+        state.relationSchemas,
+        state
+      );
       const clause = buildConditionClause(
         resolved.col,
         { fieldId: node.fieldId, op: node.op, value: node.value },
@@ -912,7 +931,7 @@ const compileRelationNode = (
           `Operator '${node.op}' has no SQL translation for relation field '${node.fieldId}'`
         );
       }
-      return clause;
+      return applyFieldVisibilityAsUnknown(clause, scopeClause);
     }
     case 'freeText':
     case 'relationExists':
