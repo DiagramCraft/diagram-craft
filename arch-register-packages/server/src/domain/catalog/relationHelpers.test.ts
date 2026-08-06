@@ -63,6 +63,23 @@ const relation: RelationDbResult = {
 };
 
 describe('relation response redaction', () => {
+  it('includes endpoint schema metadata when available', () => {
+    expect(
+      toApiRelation(
+        {
+          ...relation,
+          in_entity_schema_id: 'entity-schema-1',
+          out_entity_schema_id: 'entity-schema-2'
+        },
+        null,
+        null
+      )
+    ).toMatchObject({
+      _in: { id: 'entity-1', schemaId: 'entity-schema-1' },
+      _out: { id: 'entity-2', schemaId: 'entity-schema-2' }
+    });
+  });
+
   it('keeps declared fields and drops unknown fields', () => {
     expect(filterRelationFieldData(null, schema, relation.data)).toEqual({ note: 'known' });
   });

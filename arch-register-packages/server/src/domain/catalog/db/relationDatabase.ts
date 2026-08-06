@@ -68,6 +68,8 @@ export const RELATION_SELECT_SQL = `
     r.out_record_id AS out_entity_id,
     ein.name  AS in_entity_name,
     eout.name AS out_entity_name,
+    ein.schema_id AS in_entity_schema_id,
+    eout.schema_id AS out_entity_schema_id,
     rs.name   AS schema_name,
     wo.name   AS owner_name,
     ls.label  AS lifecycle_label
@@ -87,8 +89,10 @@ export type RelationDbResult = {
   schema_name: string;
   in_entity_id: string;
   in_entity_name: string;
+  in_entity_schema_id?: string;
   out_entity_id: string;
   out_entity_name: string;
+  out_entity_schema_id?: string;
   data: Record<string, unknown>;
   owner: string | null;
   owner_name: string | null;
@@ -206,8 +210,12 @@ export const relationMappers = {
     schema_name: String(row['schema_name']),
     in_entity_id: String(row['in_entity_id']),
     in_entity_name: String(row['in_entity_name']),
+    in_entity_schema_id:
+      row['in_entity_schema_id'] == null ? undefined : String(row['in_entity_schema_id']),
     out_entity_id: String(row['out_entity_id']),
     out_entity_name: String(row['out_entity_name']),
+    out_entity_schema_id:
+      row['out_entity_schema_id'] == null ? undefined : String(row['out_entity_schema_id']),
     data: parseDatabaseJson(row['data'], {}, 'relation.data'),
     owner: row['owner'] == null ? null : String(row['owner']),
     owner_name: row['owner_name'] == null ? null : String(row['owner_name']),

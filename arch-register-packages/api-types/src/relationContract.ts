@@ -17,11 +17,15 @@ const relationCapabilitiesSchema = z.object({
   canAdmin: z.boolean().describe('Whether the user can manage relation ownership')
 });
 
+const relationEndpointSchema = foreignKeySchema.extend({
+  schemaId: z.string().optional().describe('Entity schema identifier for the endpoint')
+});
+
 const relationSummarySchema = relationCapabilitiesSchema.extend({
   _uid: z.string().describe('Unique relation instance identifier'),
   _schema: foreignKeySchema.describe('Relation schema reference'),
-  _in: foreignKeySchema.describe('The "in" endpoint entity'),
-  _out: foreignKeySchema.describe('The "out" endpoint entity'),
+  _in: relationEndpointSchema.describe('The "in" endpoint entity'),
+  _out: relationEndpointSchema.describe('The "out" endpoint entity'),
   _owner: foreignKeySchema.nullable().describe('Relation owner'),
   _lifecycle: foreignKeySchema.nullable().describe('Current lifecycle state'),
   _version: z.number().int().min(1).describe('Optimistic concurrency version'),

@@ -140,9 +140,12 @@
           first-class records in their own right: a standalone Relations browser (a relation schema picker plus a
           table of matching relation instances) lists relation instances via the same structured query engine
           entities use, supporting scalar-field filters on the relation itself, filters on its "in"/"out" endpoint
-          entities, and asOf/historical reconstruction — table view only for now, and separate from the
-          entity-embedded Relations tab above, which is unaffected. Saved views can persist a relation-rooted query
-          the same way they persist an entity-rooted one.
+          entities, and asOf/historical reconstruction. Users can switch the filtered result set between a table
+          and a flat Graph view whose nodes are the matching relation endpoints and whose edges are the matching
+          relation instances; the Graph view does not perform further traversal. This remains separate from the
+          entity-embedded Relations tab above, which is unaffected. Graph edges can be labelled and coloured from
+          relation field values, with deterministic palette colours; saved views can persist the relation-rooted
+          query, selected display mode, and graph field settings the same way entity views do.
 
         - @id:ar.entities.content Users can attach and manage structured or Markdown-based content associated with an
           entity.

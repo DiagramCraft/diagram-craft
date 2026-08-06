@@ -17,7 +17,8 @@ export const browserViewSchema = z
     'explore',
     'bubble',
     'map',
-    'diff'
+    'diff',
+    'graph'
   ])
   .describe('Available view modes for displaying entities');
 
@@ -166,6 +167,19 @@ export const exploreViewConfigSchema = z.object({
     .describe('Relationship field names to include')
 });
 
+export const graphViewConfigSchema = z.object({
+  edgeLabelFieldId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Relation field identifier used for graph edge labels'),
+  edgeColorFieldId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Relation field identifier used for graph edge colors')
+});
+
 const viewConfigSchema = z
   .object({
     sort: z.string().optional().describe('Entity sort mode, defaulting to name'),
@@ -177,7 +191,8 @@ const viewConfigSchema = z
     matrix: matrixViewConfigSchema.optional().describe('Configuration for matrix view'),
     explore: exploreViewConfigSchema.optional().describe('Configuration for explore view'),
     bubble: bubbleViewConfigSchema.optional().describe('Configuration for bubble view'),
-    map: mapViewConfigSchema.optional().describe('Configuration for map view')
+    map: mapViewConfigSchema.optional().describe('Configuration for map view'),
+    graph: graphViewConfigSchema.optional().describe('Configuration for relation graph view')
   })
   .nullable()
   .describe('View-specific configuration (only one view type should be configured)');

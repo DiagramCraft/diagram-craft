@@ -10,6 +10,18 @@
   margin-bottom: 16px;
 }
 
+.graphMode {
+  overflow: hidden;
+}
+
+.graphContainer {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: 4px;
+}
+
 .count {
   color: var(--base-fg-more-dim);
   font-family: var(--font-mono);

@@ -1,9 +1,13 @@
 import { describe, expect, it } from 'vitest';
 import {
   buildRelationQueryFromFilters,
+  buildRelationSavedViewPayload,
   endpointFieldId,
+  getRelationGraphLabelOptions,
   parseEndpointFieldId,
-  resolveSingleSchemaFilter
+  RELATION_GRAPH_TYPE_LABEL,
+  resolveSingleSchemaFilter,
+  toSavedRelationViewSearch
 } from './relationBrowserState';
 
 describe('buildRelationQueryFromFilters', () => {
@@ -126,5 +130,51 @@ describe('resolveSingleSchemaFilter', () => {
       { fieldId: '_schemaId', op: 'equals' as const, value: 'rel-schema-1' }
     ];
     expect(resolveSingleSchemaFilter(conditions)).toBe('rel-schema-1');
+  });
+});
+
+describe('relation saved view display mode', () => {
+  it('restores Graph mode from a saved relation view', () => {
+    expect(
+      toSavedRelationViewSearch({
+        id: 'view-1',
+        viewMode: 'graph',
+        filters: buildRelationQueryFromFilters([])
+      } as never)
+    ).toMatchObject({ viewId: 'view-1', viewMode: 'graph' });
+  });
+
+  it('restores the selected graph edge label from a saved relation view', () => {
+    expect(
+      toSavedRelationViewSearch({
+        id: 'view-1',
+        viewMode: 'graph',
+        filters: buildRelationQueryFromFilters([]),
+        config: { graph: { edgeLabelFieldId: 'status', edgeColorFieldId: 'priority' } }
+      } as never)
+    ).toMatchObject({ viewId: 'view-1', edgeLabelFieldId: 'status', edgeColorFieldId: 'priority' });
+  });
+
+  it('persists graph edge label configuration and exposes relation fields as options', () => {
+    expect(
+      buildRelationSavedViewPayload({
+        name: 'Graph',
+        description: '',
+        isAdminView: false,
+        viewMode: 'graph',
+        conditions: [],
+        edgeLabelFieldId: 'status',
+        edgeColorFieldId: 'priority'
+      }).config
+    ).toEqual({ graph: { edgeLabelFieldId: 'status', edgeColorFieldId: 'priority' } });
+
+    expect(
+      getRelationGraphLabelOptions([
+        { id: 'flow', name: 'Flow', fields: [{ id: 'status', name: 'Status' }] }
+      ] as never)
+    ).toEqual([
+      { value: RELATION_GRAPH_TYPE_LABEL, label: 'Relation type' },
+      { value: 'status', label: 'Status' }
+    ]);
   });
 });
