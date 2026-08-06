@@ -1,7 +1,6 @@
 /**
  * EntityGraphView - .icEntityGraphView
  * | Toolbar - .eToolbar
- *   | Separator - .eToolbarSeparator
  *   | Label - .eToolbarLabel
  *   | Loading text - .eLoadingText
  * | Canvas - .eCanvas
@@ -9,6 +8,9 @@
  * | Hidden Badge - .eHiddenBadge
  * | Empty State - .eEmpty
  *   | Title - .eEmptyTitle
+ *
+ * Advanced settings popover (rendered via Popover's portal, top-level, not nested):
+ * .advancedPopover, .advancedHeader, .advancedGroups, .advancedGrid, .advancedRow
  */
 
 .icEntityGraphView {
@@ -20,7 +22,7 @@
   .eToolbar {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 6px;
     padding: 4px 14px;
     height: 35.5px;
     border-bottom: 1px solid var(--panel-border);
@@ -33,19 +35,13 @@
     }
   }
 
-  .eToolbarSeparator {
-    width: 1px;
-    height: 20px;
-    background-color: var(--panel-border);
-    margin: 0 8px;
-  }
-
   .eToolbarLabel {
     font-size: 12px;
     color: var(--base-fg-more-dim);
     letter-spacing: 0.5px;
     white-space: nowrap;
-    margin-right: -4px;
+    margin-right: -1px;
+    margin-left: 6px;
 
     &:first-child {
       margin-left: 0;
@@ -148,5 +144,43 @@
     &:hover {
       text-decoration: underline;
     }
+  }
+}
+
+/* Rendered via Popover's portal, so it isn't a DOM descendant of .icEntityGraphView. */
+.advancedPopover {
+  width: 220px;
+  padding: 12px;
+  font-family: var(--font-sans);
+}
+
+.advancedHeader {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--base-fg);
+  margin-bottom: 10px;
+}
+
+.advancedGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.advancedGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+
+.advancedRow {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: 10px;
+  color: var(--base-fg-more-dim);
+
+  & input {
+    width: 100%;
   }
 }

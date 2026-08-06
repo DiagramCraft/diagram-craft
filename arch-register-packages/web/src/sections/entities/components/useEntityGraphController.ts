@@ -39,7 +39,8 @@ export const useEntityGraphController = ({
   const [layout, setLayout] = useState<LayoutAlgorithm>('hierarchy');
   const [layoutOptions, setLayoutOptions] = useState<LayoutOptions>(defaultLayoutOptions);
   const [maxDepth, setMaxDepth] = useState(configuredMaxDepth ?? 2);
-  const direction = configuredDirection ?? 'both';
+  const [direction, setDirection] = useState<EntityGraphDirection>(configuredDirection ?? 'both');
+  const [relationSchemaFilter, setRelationSchemaFilter] = useState<Set<string>>(new Set());
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
   const [manuallyExpanded, setManuallyExpanded] = useState<Set<string>>(new Set());
   const [contextMenu, setContextMenu] = useState<{
@@ -62,6 +63,10 @@ export const useEntityGraphController = ({
     if (configuredMaxDepth !== undefined) setMaxDepth(configuredMaxDepth);
   }, [configuredMaxDepth]);
 
+  useEffect(() => {
+    if (configuredDirection !== undefined) setDirection(configuredDirection);
+  }, [configuredDirection]);
+
   const relationsData = useMultipleEntityRelations(workspaceId, fetchIds);
 
   useEffect(() => {
@@ -71,13 +76,22 @@ export const useEntityGraphController = ({
       maxDepth,
       excludedIds,
       manuallyExpanded,
-      direction
+      direction,
+      relationSchemaIds: relationSchemaFilter
     });
     setFetchIds(previous => {
       const previousIds = new Set(previous);
       return next.some(id => !previousIds.has(id)) ? next : previous;
     });
-  }, [rootEntityId, relationsData, maxDepth, excludedIds, manuallyExpanded, direction]);
+  }, [
+    rootEntityId,
+    relationsData,
+    maxDepth,
+    excludedIds,
+    manuallyExpanded,
+    direction,
+    relationSchemaFilter
+  ]);
 
   const { nodes, edges, hiddenCountMap } = useMemo(
     () =>
@@ -89,7 +103,8 @@ export const useEntityGraphController = ({
         maxDepth,
         excludedIds,
         manuallyExpanded,
-        direction
+        direction,
+        relationSchemaIds: relationSchemaFilter
       }),
     [
       rootEntityId,
@@ -99,7 +114,8 @@ export const useEntityGraphController = ({
       maxDepth,
       excludedIds,
       manuallyExpanded,
-      direction
+      direction,
+      relationSchemaFilter
     ]
   );
 
@@ -170,6 +186,9 @@ export const useEntityGraphController = ({
     excludedIds,
     manuallyExpanded,
     direction,
+    setDirection,
+    relationSchemaFilter,
+    setRelationSchemaFilter,
     contextMenu,
     setContextMenu,
     saveDiagramOpen,
