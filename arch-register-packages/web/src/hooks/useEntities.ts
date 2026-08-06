@@ -248,6 +248,32 @@ export const useMultipleEntityRelations = (
   }, [data, isLoading, entityIds]);
 };
 
+// Hook for resolving a set of entity ids to their name/publicId (e.g. to render entityRelation
+// field values as links instead of raw ids). Shares its cache with useEntity via entityKeys.detail.
+export const useEntitiesByIds = (
+  workspaceId: string,
+  ids: string[]
+): Map<string, { name: string; publicId: string }> => {
+  const sortedIds = useMemo(() => [...new Set(ids)].sort(), [ids]);
+
+  const results = useQueries({
+    queries: sortedIds.map(id => ({
+      queryKey: entityKeys.detail(workspaceId, id),
+      queryFn: () => orpcClient.entities.get({ params: { workspace: workspaceId, id } }),
+      enabled: !!workspaceId && !!id
+    }))
+  });
+
+  return useMemo(() => {
+    const map = new Map<string, { name: string; publicId: string }>();
+    sortedIds.forEach((id, index) => {
+      const entity = results[index]?.data;
+      if (entity) map.set(id, { name: entity._name, publicId: entity._publicId });
+    });
+    return map;
+  }, [results, sortedIds]);
+};
+
 // Hook for fetching entities by multiple schema IDs
 export const useEntitiesBySchema = (
   workspaceId: string,

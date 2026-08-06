@@ -11,7 +11,7 @@ import type {
   WorkspaceLifecycleState,
   WorkspaceOwnerOption
 } from '@arch-register/api-types/workspaceContract';
-import type { TypedRelationFieldEditState } from '../../../lib/entityEditState';
+import { relationIds, type TypedRelationFieldEditState } from '../../../lib/entityEditState';
 import { useEntitiesBySchema } from '../../../hooks/useEntities';
 import { useTeams, useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
 import { RelationFieldInput } from '../../../dialogs/RelationFieldInput';
@@ -180,8 +180,13 @@ export const TypedRelationFieldEditor = ({
                 {activeFields.map((f, index) => (
                   <div key={f.id} style={{ marginBottom: index < activeFields.length - 1 ? 8 : 0 }}>
                     <RelationFieldInput
+                      workspaceId={workspaceId}
                       field={f}
-                      value={String(pendingUpdate?.[f.id] ?? record[f.id] ?? '')}
+                      value={
+                        f.type === 'entityRelation'
+                          ? relationIds(pendingUpdate?.[f.id] ?? record[f.id])
+                          : String(pendingUpdate?.[f.id] ?? record[f.id] ?? '')
+                      }
                       onChange={value => onUpdateField(record._uid, f.id, value)}
                     />
                   </div>
@@ -212,6 +217,7 @@ export const TypedRelationFieldEditor = ({
       {!disabled &&
         (adding ? (
           <NewRelationDraftForm
+            workspaceId={workspaceId}
             fields={activeFields}
             candidates={otherEntityCandidates}
             teams={teams}
@@ -232,6 +238,7 @@ export const TypedRelationFieldEditor = ({
 };
 
 const NewRelationDraftForm = ({
+  workspaceId,
   fields,
   candidates,
   teams,
@@ -239,6 +246,7 @@ const NewRelationDraftForm = ({
   onCancel,
   onConfirm
 }: {
+  workspaceId: string;
   fields: RelationSchema['fields'];
   candidates: { _uid: string; _name?: string | null; _slug: string }[];
   teams: WorkspaceOwnerOption[];
@@ -247,17 +255,23 @@ const NewRelationDraftForm = ({
   onConfirm: (draft: RelationRecordDraft) => void;
 }) => {
   const [otherEntityId, setOtherEntityId] = useState('');
-  const [values, setValues] = useState<Record<string, string>>({});
+  const [values, setValues] = useState<Record<string, string | string[]>>({});
   const [owner, setOwner] = useState('');
   const [lifecycle, setLifecycle] = useState('');
 
-  const setField = (id: string, value: string) => setValues(v => ({ ...v, [id]: value }));
+  const setField = (id: string, value: string | string[]) =>
+    setValues(v => ({ ...v, [id]: value }));
 
   const confirm = () => {
     if (!otherEntityId) return;
     const data: Record<string, unknown> = {};
     for (const f of fields) {
       const val = values[f.id];
+      if (f.type === 'entityRelation') {
+        const ids = relationIds(val);
+        if (ids.length > 0) data[f.id] = ids;
+        continue;
+      }
       if (val === undefined || val === '') continue;
       if (f.type === 'boolean') data[f.id] = val === 'true';
       else if (f.type === 'number') data[f.id] = Number(val);
@@ -326,8 +340,9 @@ const NewRelationDraftForm = ({
       {fields.map(f => (
         <div key={f.id} style={{ marginBottom: 8 }}>
           <RelationFieldInput
+            workspaceId={workspaceId}
             field={f}
-            value={values[f.id] ?? ''}
+            value={values[f.id] ?? (f.type === 'entityRelation' ? [] : '')}
             onChange={value => setField(f.id, value)}
           />
         </div>

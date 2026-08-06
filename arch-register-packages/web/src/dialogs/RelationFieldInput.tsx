@@ -2,24 +2,55 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { MultiSelect, type MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
+import { useEntitiesBySchema } from '../hooks/useEntities';
+import { relationIds } from '../lib/entityEditState';
 
 export const RelationFieldInput = ({
+  workspaceId,
   field,
   value,
   onChange,
   disabled
 }: {
+  workspaceId: string;
   field: RelationSchema['fields'][number];
-  value: string;
-  onChange: (value: string) => void;
+  value: string | string[];
+  onChange: (value: string | string[]) => void;
   disabled?: boolean;
 }) => {
+  const candidateQuery = useEntitiesBySchema(
+    workspaceId,
+    field.type === 'entityRelation' ? [field.schemaId] : []
+  )[0];
+
+  if (field.type === 'entityRelation') {
+    const availableItems: MultiSelectItem[] = (candidateQuery?.data ?? []).map(entity => ({
+      value: entity._uid,
+      label: entity._name ?? entity._slug
+    }));
+    return (
+      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+        <MultiSelect
+          selectedValues={relationIds(value)}
+          availableItems={availableItems}
+          onSelectionChange={onChange}
+          disabled={disabled}
+          placeholder={`Search ${field.name.toLowerCase()}...`}
+          style={{ width: '100%' }}
+        />
+      </FormElement>
+    );
+  }
+
+  const stringValue = typeof value === 'string' ? value : '';
+
   if (field.type === 'select') {
     return (
       <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <Select.Root
-          value={value ?? undefined}
+          value={stringValue ?? undefined}
           disabled={disabled}
           onChange={next => onChange(next ?? '')}
           placeholder="—"
@@ -39,7 +70,7 @@ export const RelationFieldInput = ({
     return (
       <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <TextArea
-          value={value}
+          value={stringValue}
           disabled={disabled}
           onChange={next => onChange(next ?? '')}
           rows={3}
@@ -53,7 +84,7 @@ export const RelationFieldInput = ({
     return (
       <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
         <Select.Root
-          value={value ?? undefined}
+          value={stringValue ?? undefined}
           disabled={disabled}
           onChange={next => onChange(next ?? '')}
           placeholder="Not set"
@@ -72,7 +103,7 @@ export const RelationFieldInput = ({
         <input
           type="date"
           disabled={disabled}
-          value={value}
+          value={stringValue}
           onChange={event => onChange(event.target.value)}
           style={{ width: '100%' }}
         />
@@ -89,7 +120,7 @@ export const RelationFieldInput = ({
           min={field.min}
           max={field.max}
           disabled={disabled}
-          value={value}
+          value={stringValue}
           onChange={event => onChange(event.target.value)}
           style={{ width: '100%' }}
         />
@@ -100,7 +131,7 @@ export const RelationFieldInput = ({
   return (
     <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
       <TextInput
-        value={value}
+        value={stringValue}
         disabled={disabled}
         onChange={next => onChange(next ?? '')}
         style={{ width: '100%' }}

@@ -18,7 +18,19 @@ import {
   RelationSchema,
   RelationSchemaVersion
 } from '@arch-register/api-types/relationSchemaContract';
-import { FieldMigrations, SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
+import {
+  FieldMigrations,
+  SchemaField,
+  SharedFieldGroupLink
+} from '@arch-register/api-types/schemaContract';
+
+// resolveSelectFieldOptions/classifyFieldChanges (schemaHelpers.ts) are typed against entity
+// SchemaField[] but are fully generic at runtime — they only inspect id/name/type/enumId/
+// resultType/archived/groupId, none of which differ in shape between the two field unions except
+// for the relation-only `entityRelation` variant they never branch on. Safe to reuse via this cast
+// rather than duplicating either helper for relation schemas.
+export const asSchemaFields = (fields: RelationField[]): SchemaField[] =>
+  fields as unknown as SchemaField[];
 
 const normalizeRelationEndpoint = (
   value: unknown,
@@ -248,7 +260,10 @@ export const toApiRelationSchema = (
   relationCount: number,
   enums: InternalWorkspaceEnum[]
 ): RelationSchema => {
-  const fields = resolveSelectFieldOptions(schema.fields, enums) as RelationSchema['fields'];
+  const fields = resolveSelectFieldOptions(
+    asSchemaFields(schema.fields),
+    enums
+  ) as RelationSchema['fields'];
   return {
     id: schema.id,
     workspace: schema.workspace,
@@ -320,7 +335,10 @@ export const toApiRelationSchemaVersion = (
   description: row.description,
   in: { schemaIds: row.in_schema_ids },
   out: { schemaIds: row.out_schema_ids },
-  fields: resolveSelectFieldOptions(row.fields, enums) as RelationSchemaVersion['fields'],
+  fields: resolveSelectFieldOptions(
+    asSchemaFields(row.fields),
+    enums
+  ) as RelationSchemaVersion['fields'],
   groups: row.groups as RelationSchemaVersion['groups'],
   shared_field_group_links: (
     row as unknown as { shared_field_group_links?: SharedFieldGroupLink[] }

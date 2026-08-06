@@ -16,6 +16,7 @@ import {
   buildConditionClause
 } from './db/filterBuilder';
 import {
+  kindAfterPath,
   resolveFieldSchemaScope,
   resolveRelationFieldSchemaScope,
   type RelationSchemaCatalog,
@@ -418,13 +419,28 @@ const collectRelationRootTemporalCandidate = (
 const relationIsMultiValued = (
   path: PathStep[],
   schemas: SchemaCatalog,
-  _relationSchemas: RelationSchemaCatalog
+  relationSchemas: RelationSchemaCatalog
 ): boolean =>
   path.some(step => {
     if (step.kind === 'typedRelation') return true;
     // 'endpoint' (relation -> its in/out entity) is exactly one entity per direction, never
     // multi-valued.
     if (step.kind === 'endpoint') return false;
+    if (step.kind === 'relationBackward') {
+      // Reverse traversal: many relation instances can reference the same entity through an
+      // entityRelation field regardless of that field's own maxCount (which only bounds how many
+      // entities a single relation instance can reference), so this is always potentially
+      // multi-valued — mirroring how 'typedRelation' above is unconditionally multi-valued.
+      return true;
+    }
+    if (step.kind === 'relationForward') {
+      const fields = [...relationSchemas.values()].map(schema =>
+        schema.fields.find(field => field.id === step.fieldId)
+      );
+      return fields.some(
+        field => field !== undefined && field.type === 'entityRelation' && field.maxCount !== 1
+      );
+    }
     const fields =
       step.kind === 'backward'
         ? [schemas.get(step.ownerSchemaId)?.fields.find(field => field.id === step.fieldId)]
@@ -503,6 +519,28 @@ const resolveProjectionPathSchemaInfo = (
       continue;
     }
 
+    if (step.kind === 'relationForward') {
+      const targetSchemaIds = currentRelationSchemaIds.flatMap(schemaId => {
+        const schema = relationSchemas.get(schemaId);
+        const field = schema?.fields.find(candidate => candidate.id === step.fieldId);
+        return field && field.type === 'entityRelation' ? [field.schemaId] : [];
+      });
+      currentEntitySchemaIds = availableSchemaIds(targetSchemaIds, schemas);
+      currentRelationSchemaIds = [];
+      currentKind = 'entity';
+      entitySchemaIdsByStep.push(currentEntitySchemaIds);
+      continue;
+    }
+
+    if (step.kind === 'relationBackward') {
+      currentRelationSchemaIds = availableSchemaIds([step.relationSchemaId], relationSchemas);
+      currentEntitySchemaIds = [];
+      currentKind = 'relation';
+      // No entity target is reached at this step — the landing row is the relation itself.
+      entitySchemaIdsByStep.push([]);
+      continue;
+    }
+
     const targetSchemaIds = currentEntitySchemaIds.flatMap(schemaId => {
       const schema = schemas.get(schemaId);
       const field = schema?.fields.find(candidate => candidate.id === step.fieldId);
@@ -533,6 +571,10 @@ const effectiveProjectionAlias = (projection: ProjectionField): string => {
           return `endpoint(${step.direction})`;
         case 'typedRelation':
           return step.fieldId;
+        case 'relationForward':
+          return step.fieldId;
+        case 'relationBackward':
+          return `<-${step.relationSchemaId}.${step.fieldId}`;
       }
     })
     .join('.');
@@ -871,6 +913,7 @@ const compileRelationNode = (
   node: QueryNode,
   alias: string,
   relationSchemaId: string,
+  schemas: SchemaCatalog,
   relationSchemas: RelationSchemaCatalog,
   state: CompileState
 ): string => {
@@ -880,7 +923,7 @@ const compileRelationNode = (
         ? '1=1'
         : `(${node.children
             .map(child =>
-              compileRelationNode(child, alias, relationSchemaId, relationSchemas, state)
+              compileRelationNode(child, alias, relationSchemaId, schemas, relationSchemas, state)
             )
             .join(' AND ')})`;
     case 'or':
@@ -888,15 +931,27 @@ const compileRelationNode = (
         ? '1=0'
         : `(${node.children
             .map(child =>
-              compileRelationNode(child, alias, relationSchemaId, relationSchemas, state)
+              compileRelationNode(child, alias, relationSchemaId, schemas, relationSchemas, state)
             )
             .join(' OR ')})`;
     case 'not':
-      return `NOT (${compileRelationNode(node.child, alias, relationSchemaId, relationSchemas, state)})`;
+      return `NOT (${compileRelationNode(node.child, alias, relationSchemaId, schemas, relationSchemas, state)})`;
     case 'predicate': {
       if (node.path.length > 0) {
-        throw new UnsupportedEntityQueryIRError(
-          'Relation-instance filters cannot traverse nested entity paths'
+        const first = node.path[0]!;
+        if (first.kind !== 'endpoint' && first.kind !== 'relationForward') {
+          throw new UnsupportedEntityQueryIRError(
+            'Relation-instance filters may only contain scalar field predicates, or traverse an entityRelation field'
+          );
+        }
+        return compilePathSteps(
+          node.path,
+          0,
+          alias,
+          schemas,
+          relationSchemas,
+          state,
+          compilePredicateTerminal(node.fieldId, node.op, node.value, schemas, state.dialect, state)
         );
       }
       const resolved = resolveRelationColumn(alias, node.fieldId, state.dialect);
@@ -935,8 +990,19 @@ const compileRelationNode = (
       }
       return applyFieldVisibilityAsUnknown(clause, scopeClause);
     }
+    case 'relationExists': {
+      if (node.path.length === 0) {
+        throw new UnsupportedEntityQueryIRError("'relationExists' requires a non-empty path");
+      }
+      const first = node.path[0]!;
+      if (first.kind !== 'endpoint' && first.kind !== 'relationForward') {
+        throw new UnsupportedEntityQueryIRError(
+          'Relation-instance filters may only contain scalar field predicates, or traverse an entityRelation field'
+        );
+      }
+      return compilePathSteps(node.path, 0, alias, schemas, relationSchemas, state, () => '1=1');
+    }
     case 'freeText':
-    case 'relationExists':
       throw new UnsupportedEntityQueryIRError(
         'Relation-instance filters may only contain scalar field predicates'
       );
@@ -979,6 +1045,62 @@ const compilePathSteps = (
     );
     return `EXISTS (SELECT 1 FROM ${SCOPE_CTE} ${alias} WHERE ${alias}.id = ${targetId} AND ${rest})`;
   }
+  if (step.kind === 'relationForward') {
+    // Relation -> entity via one of the relation's own entityRelation fields (#2670). curAlias is
+    // a relation-scope alias; the target is an ordinary entity, so this mirrors the generic
+    // forward-step branch below but reads the JSON array field off a relation row.
+    const alias = nextAlias(state);
+    const joinClause = relationJoinClause(curAlias, step.fieldId, alias, state.dialect);
+    const fieldScope = (() => {
+      const scope = relationSchemaScopeClause(curAlias, step.fieldId, relationSchemas, state);
+      return scope ? ` AND ${scope}` : '';
+    })();
+    const filterClause = step.filter
+      ? ` AND ${compileNode(step.filter, alias, schemas, relationSchemas, state, false)}`
+      : '';
+    const rest = compilePathSteps(
+      steps,
+      index + 1,
+      alias,
+      schemas,
+      relationSchemas,
+      state,
+      terminal
+    );
+    return `EXISTS (SELECT 1 FROM ${SCOPE_CTE} ${alias} WHERE ${joinClause}${fieldScope}${filterClause} AND ${rest})`;
+  }
+  if (step.kind === 'relationBackward') {
+    // Entity -> relation via another relation schema's entityRelation field pointing back at the
+    // current entity (#2670). curAlias is an entity-scope alias; the target is a relation row, so
+    // this mirrors the typedRelation branch below but joins via relationJoinClause (the field's
+    // JSON id array) instead of the fixed in/out endpoint columns.
+    const relationAlias = nextRelationAlias(state);
+    const joinClause = relationJoinClause(relationAlias, step.fieldId, curAlias, state.dialect);
+    const relationSchemaParam = addParam(state, step.relationSchemaId);
+    const filterClause = step.filter
+      ? ` AND ${compileRelationNode(
+          step.filter,
+          relationAlias,
+          step.relationSchemaId,
+          schemas,
+          relationSchemas,
+          state
+        )}`
+      : '';
+    const rest = compilePathSteps(
+      steps,
+      index + 1,
+      relationAlias,
+      schemas,
+      relationSchemas,
+      state,
+      terminal
+    );
+    return (
+      `EXISTS (SELECT 1 FROM ${RELATION_SCOPE_CTE} ${relationAlias} ` +
+      `WHERE ${relationAlias}.schema_id = ${relationSchemaParam} AND ${joinClause}${filterClause} AND ${rest})`
+    );
+  }
   if (step.kind === 'typedRelation') {
     const relationAlias = nextRelationAlias(state);
     const targetAlias = nextAlias(state);
@@ -993,6 +1115,7 @@ const compilePathSteps = (
           step.filter,
           relationAlias,
           step.relationSchemaId,
+          schemas,
           relationSchemas,
           state
         )}`
@@ -1062,6 +1185,22 @@ const compileBoundNode = (
   }
 
   const targetAlias = `pt_${binding.name}`;
+  const landingKind = kindAfterPath(binding.path, state.rootKind);
+  if (landingKind === 'relation') {
+    const targetId = `${bindingAlias}.relation_${node.path.length}_id`;
+    const terminal = compileRelationRootPredicateTerminal(
+      node.fieldId,
+      node.op,
+      node.value,
+      state
+    )(targetAlias);
+    return (
+      `EXISTS (SELECT 1 FROM ${binding.name} ${bindingAlias} ` +
+      `JOIN ${RELATION_SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId} ` +
+      `WHERE ${rootClause} AND ${terminal})`
+    );
+  }
+
   const targetId = `${bindingAlias}.hop_${node.path.length}_id`;
   const terminal = compilePredicateTerminal(
     node.fieldId,
@@ -1121,15 +1260,29 @@ const compileNode = (
           state
         )(alias);
       }
-      return compilePathSteps(
-        node.path,
-        0,
-        alias,
-        schemas,
-        relationSchemas,
-        state,
-        compilePredicateTerminal(node.fieldId, node.op, node.value, schemas, state.dialect, state)
-      );
+      {
+        const pathStartKind: 'entity' | 'relation' =
+          alias === ROOT_ALIAS ? state.rootKind : 'entity';
+        const landingKind = kindAfterPath(node.path, pathStartKind);
+        return compilePathSteps(
+          node.path,
+          0,
+          alias,
+          schemas,
+          relationSchemas,
+          state,
+          landingKind === 'relation'
+            ? compileRelationRootPredicateTerminal(node.fieldId, node.op, node.value, state)
+            : compilePredicateTerminal(
+                node.fieldId,
+                node.op,
+                node.value,
+                schemas,
+                state.dialect,
+                state
+              )
+        );
+      }
     case 'relationExists':
       if (alias === ROOT_ALIAS && !state.compilingBinding) {
         const binding = state.bindingByPath.get(pathKey(node.path));
@@ -1243,6 +1396,7 @@ const buildProjectionBindings = (
               step.filter,
               relationAlias,
               step.relationSchemaId,
+              schemas,
               relationSchemas,
               state
             )}`
@@ -1265,6 +1419,60 @@ const buildProjectionBindings = (
           `${targetAlias}.id AS hop_${stepIndex + 1}_id`
         );
         currentAlias = targetAlias;
+        return;
+      }
+      if (step.kind === 'relationForward') {
+        const targetAlias = `pb_${binding.name}_${stepIndex + 1}`;
+        const relation = relationJoinClause(currentAlias, step.fieldId, targetAlias, state.dialect);
+        const fieldScope = (() => {
+          const scope = relationSchemaScopeClause(
+            currentAlias,
+            step.fieldId,
+            relationSchemas,
+            state
+          );
+          return scope ? ` AND ${scope}` : '';
+        })();
+        const filter = step.filter
+          ? ` AND ${compileNode(step.filter, targetAlias, schemas, relationSchemas, state, false)}`
+          : '';
+        const targetSchemaClause = projectionTargetSchemaClause(
+          targetAlias,
+          pathSchemaInfo.entitySchemaIdsByStep[stepIndex] ?? [],
+          state
+        );
+        from +=
+          `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${relation}${fieldScope}` +
+          `${targetSchemaClause ? ` AND ${targetSchemaClause}` : ''}${filter}`;
+        selectParts.push(`${targetAlias}.id AS hop_${stepIndex + 1}_id`);
+        currentAlias = targetAlias;
+        return;
+      }
+      if (step.kind === 'relationBackward') {
+        const relationAlias = `pb_rel_${binding.name}_${stepIndex + 1}`;
+        const relation = relationJoinClause(
+          relationAlias,
+          step.fieldId,
+          currentAlias,
+          state.dialect
+        );
+        const relationSchemaParam = addParam(state, step.relationSchemaId);
+        const filter = step.filter
+          ? ` AND ${compileRelationNode(
+              step.filter,
+              relationAlias,
+              step.relationSchemaId,
+              schemas,
+              relationSchemas,
+              state
+            )}`
+          : '';
+        from += `\n      JOIN ${RELATION_SCOPE_CTE} ${relationAlias} ON ${relationAlias}.schema_id = ${relationSchemaParam} AND ${relation}${filter}`;
+        selectParts.push(
+          `${relationAlias}.id AS relation_${stepIndex + 1}_id`,
+          `${relationAlias}.data AS relation_${stepIndex + 1}_data`
+        );
+        currentAlias = relationAlias;
         return;
       }
       const targetAlias = `pb_${binding.name}_${stepIndex + 1}`;

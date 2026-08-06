@@ -24,13 +24,34 @@ export type PathStep =
       filter?: QueryNode;
     }
   | {
-      // Relation -> its `in`/`out` entity endpoint. Only legal as `path[0]`, and only under a
-      // relation-rooted query (`EntityQuery.schemaId` resolving to a relation schema, or an
-      // explicit `root_kind: 'relation'`). Every subsequent step is an ordinary
+      // Relation -> its `in`/`out` entity endpoint. Only legal at a position in the path that is
+      // currently on a relation row: `path[0]` of a relation-rooted query/`relationExists` path,
+      // `path[0]` inside a `typedRelation`/`relationBackward` step's `filter`, or immediately
+      // after a `relationBackward` step. Every subsequent step is an ordinary
       // forward/backward/typedRelation step over the resulting entity. Unlike `typedRelation`
       // there's exactly one entity per direction, so no owner-schema/fan-out bookkeeping is needed.
       kind: 'endpoint';
       direction: 'in' | 'out';
+    }
+  | {
+      // Relation -> entity via one of the relation schema's own `entityRelation` fields (#2670).
+      // Legal wherever `endpoint` is legal (see above) — the current path position must be a
+      // relation row. Unlike `endpoint`'s fixed in/out slot, this names an arbitrary declared
+      // field, and its target may be multi-valued (see relationIsMultiValued in the compiler).
+      kind: 'relationForward';
+      fieldId: string;
+      filter?: QueryNode;
+    }
+  | {
+      // Entity -> relation via another relation schema's `entityRelation` field that points back
+      // at the current entity's schema (#2670). Mirrors `backward`, but resolves `fieldId` against
+      // the relation-schema registry (via `relationSchemaId`) rather than the entity-schema
+      // registry, and lands on relation context rather than entity context — so a following step
+      // may be `endpoint`, `relationForward`, or another `relationBackward`.
+      kind: 'relationBackward';
+      fieldId: string;
+      relationSchemaId: string;
+      filter?: QueryNode;
     };
 
 export type QueryNode =
@@ -70,6 +91,17 @@ export const pathStepSchema: z.ZodType<PathStep> = z.lazy(() =>
     z.object({
       kind: z.literal('endpoint'),
       direction: z.enum(['in', 'out'])
+    }),
+    z.object({
+      kind: z.literal('relationForward'),
+      fieldId: z.string(),
+      filter: queryNodeSchema.optional()
+    }),
+    z.object({
+      kind: z.literal('relationBackward'),
+      fieldId: z.string(),
+      relationSchemaId: z.string(),
+      filter: queryNodeSchema.optional()
     })
   ])
 );

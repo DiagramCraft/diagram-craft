@@ -3,9 +3,11 @@ import { Popover } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useRelation } from '../../../hooks/useRelations';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
+import { useEntitiesByIds } from '../../../hooks/useEntities';
+import { relationIds } from '../../../lib/entityEditState';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { RelationAuditLogDialog } from '../../../dialogs/RelationAuditLogDialog';
-import { formatRelationFieldValue } from './RelationRecordList';
+import { formatRelationFieldValue, renderEntityRelationFieldValue } from './RelationRecordList';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import overviewStyles from './EntityOverviewTab.module.css';
 import styles from './RelationDetailPopover.module.css';
@@ -28,6 +30,12 @@ export const RelationDetailPopover = ({ workspaceId, relationId, x, y, onClose }
   const { data: relationSchemas } = useRelationSchemas(workspaceId, !!relationId);
   const relationSchema = relationSchemas?.find(schema => schema.id === record?._schema.id);
   const activeFields = (relationSchema?.fields ?? []).filter(field => !field.archived);
+  const entityRelationIds = record
+    ? activeFields
+        .filter(field => field.type === 'entityRelation')
+        .flatMap(field => relationIds(record[field.id]))
+    : [];
+  const refLookup = useEntitiesByIds(workspaceId, entityRelationIds);
 
   return (
     <>
@@ -57,9 +65,13 @@ export const RelationDetailPopover = ({ workspaceId, relationId, x, y, onClose }
                   <div key={field.id} className={overviewStyles.propRow}>
                     <div className={overviewStyles.propLabel}>{field.name}</div>
                     <div className={overviewStyles.propValue}>
-                      {formatRelationFieldValue(field, record[field.id]) ?? (
-                        <span className={sharedStyles.dim}>—</span>
-                      )}
+                      {field.type === 'entityRelation'
+                        ? (renderEntityRelationFieldValue(record[field.id], refLookup) ?? (
+                            <span className={sharedStyles.dim}>—</span>
+                          ))
+                        : (formatRelationFieldValue(field, record[field.id]) ?? (
+                            <span className={sharedStyles.dim}>—</span>
+                          ))}
                     </div>
                   </div>
                 ))}

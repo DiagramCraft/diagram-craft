@@ -906,6 +906,29 @@ export const seedSchemas: SchemaDbResult[] = (
       updated_at: now
     },
     {
+      id: '00000000-0000-0000-0000-000000000008',
+      workspace: WORKSPACE_ID,
+      name: 'Data Entity',
+      description:
+        'A named category of data (e.g. a business object or record type) that can be carried ' +
+        'by a Data Flow relation between Systems (see seedRelationSchemas below, #2670).',
+      fields: [
+        {
+          id: 'classification',
+          name: 'Classification',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e00000000005',
+          requirementLevel: 'optional'
+        }
+      ],
+      color: AR_COLOR_CYAN,
+      icon: 'tag',
+      default_owner: null,
+      key_prefix: 'DE',
+      created_at: now,
+      updated_at: now
+    },
+    {
       id: '00000000-0000-0000-0000-000000000007',
       workspace: WORKSPACE_ID,
       name: 'Technology',
@@ -1716,6 +1739,66 @@ const seedEntitiesRaw: SeedEntityInput[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000002',
     data: { domain: ['00000000-0000-0000-0001-000000000001'] },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0008-000000000001',
+    workspace: WORKSPACE_ID,
+    public_id: 'DE-1',
+    slug: 'customer-credentials',
+    namespace: 'default',
+    name: 'Customer Credentials',
+    description: 'Username/password or session token used to authenticate a customer.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: [],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000008',
+    data: { classification: 'sensitive' },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0008-000000000002',
+    workspace: WORKSPACE_ID,
+    public_id: 'DE-2',
+    slug: 'transaction-events',
+    namespace: 'default',
+    name: 'Transaction Events',
+    description: 'Payment transaction events used for financial reporting.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: [],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000008',
+    data: { classification: 'non-sensitive' },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0008-000000000003',
+    workspace: WORKSPACE_ID,
+    public_id: 'DE-3',
+    slug: 'clickstream-events',
+    namespace: 'default',
+    name: 'Clickstream Events',
+    description: 'User behaviour and clickstream events captured for product analytics.',
+    owner: TEAM_IDS.design,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: [],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000008',
+    data: { classification: 'sensitive' },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -4762,6 +4845,18 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
         type: 'select',
         enumId: '00000000-0000-0000-0000-e00000000007',
         requirementLevel: 'optional'
+      },
+      // Entity-valued relation field (#2670): the Data Entity/Entities carried by this Data
+      // Flow, distinct from the relation's fixed in/out System endpoints.
+      {
+        id: 'data_entities',
+        name: 'Data',
+        type: 'entityRelation',
+        requirementLevel: 'optional',
+        predicate: 'carries',
+        schemaId: '00000000-0000-0000-0000-000000000008',
+        minCount: 0,
+        maxCount: -1
       }
     ],
     groups: [],
@@ -4787,7 +4882,8 @@ export const seedRelations: RelationDbCreate[] = [
     data: {
       direction: 'one-way',
       data_classification: 'sensitive',
-      protocol: 'https-rest'
+      protocol: 'https-rest',
+      data_entities: ['00000000-0000-0000-0008-000000000001']
     },
     created_at: now,
     updated_at: now
@@ -4802,7 +4898,8 @@ export const seedRelations: RelationDbCreate[] = [
     data: {
       direction: 'one-way',
       data_classification: 'non-sensitive',
-      protocol: 'kafka'
+      protocol: 'kafka',
+      data_entities: ['00000000-0000-0000-0008-000000000002']
     },
     created_at: now,
     updated_at: now
@@ -4817,7 +4914,8 @@ export const seedRelations: RelationDbCreate[] = [
     data: {
       direction: 'one-way',
       data_classification: 'sensitive',
-      protocol: 'kafka'
+      protocol: 'kafka',
+      data_entities: ['00000000-0000-0000-0008-000000000003']
     },
     created_at: now,
     updated_at: now

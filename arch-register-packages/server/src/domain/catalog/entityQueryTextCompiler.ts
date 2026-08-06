@@ -6,7 +6,10 @@ import {
   type QueryNode
 } from '@arch-register/api-types/entityQueryIR';
 import type { SchemaField, TypedRelationField } from '@arch-register/api-types/schemaContract';
-import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
+import type {
+  EntityRelationField,
+  RelationField
+} from '@arch-register/api-types/relationSchemaContract';
 import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
 import {
   isReferenceOrContainmentField,
@@ -243,12 +246,25 @@ type FieldResolution =
       relationSchemaId: string;
       ownerSchemaIds: string[];
     }
-  | { kind: 'relationScalar'; field: RelationField; relationSchemaId: string };
+  | { kind: 'relationScalar'; field: RelationField; relationSchemaId: string }
+  // Relation -> entity via an entityRelation field (#2670) — used both for a bracket-scoped
+  // forward hop off a relation's own field namespace (`flows_in[data._name = ...]`) and for the
+  // top-level `<-RelationSchema.field` reverse form.
+  | { kind: 'relationEntityRelation'; field: EntityRelationField; relationSchemaId: string }
+  // `_in`/`_out` inside a relation-scoped bracket (#2670) — selects the relation instance's
+  // fixed endpoint, mirroring the IR's `endpoint` PathStep.
+  | { kind: 'endpointPseudo'; direction: 'in' | 'out' };
 
 const relationSchemaNameById = (
   relationSchemas: RelationSchemaCatalog,
   relationSchemaId: string
 ): string => relationSchemas.get(relationSchemaId)?.name ?? relationSchemaId;
+
+const relationSchemaNameMap = (relationSchemas: RelationSchemaCatalog): Map<string, string> => {
+  const byName = new Map<string, string>();
+  for (const schema of relationSchemas.values()) byName.set(schema.name, schema.id);
+  return byName;
+};
 
 // Resolves a plain (non-`<-`) field id against the known current schema, or — when the current
 // schema isn't statically known (no leading `schema:`/prior hop yet, specs/QUERY_LANGUAGE.md §4.4)
@@ -370,26 +386,70 @@ const resolveRelationField = (
   }
   if (!field || isFieldViewRestricted(authCtx, relationSchema, fieldId)) {
     throw new TextCompileError(
-      `Relation schema '${relationSchemaNameById(relationSchemas, relationSchemaId)}' does not define a viewable scalar field '${fieldId}'`,
+      `Relation schema '${relationSchemaNameById(relationSchemas, relationSchemaId)}' does not define a viewable field '${fieldId}'`,
       offset
     );
+  }
+  if (field.type === 'entityRelation') {
+    return { kind: 'relationEntityRelation', field, relationSchemaId };
   }
   return { kind: 'relationScalar', field, relationSchemaId };
 };
 
-// Resolves a `<-field_id` (bare) or `<-Schema.field_id` (explicit) backward step, returning the
-// owner schema id and the resolved relation field. Mirrors specs/QUERY_LANGUAGE.md §4.2.
+type BackwardResolution =
+  | { kind: 'backward'; ownerSchemaId: string }
+  // Entity -> relation via another relation schema's entityRelation field (#2670) — the reverse
+  // form of a `relationEntityRelation` field resolution.
+  | { kind: 'relationBackward'; relationSchemaId: string; field: EntityRelationField };
+
+// Resolves a `<-field_id` (bare) or `<-Schema.field_id` (explicit) backward step, returning
+// either an entity-schema owner (reference/containment field) or a relation-schema owner
+// (entityRelation field, #2670) and the resolved field. `Schema` in the explicit form is looked
+// up against both registries — they occupy disjoint id/name spaces in practice, so a name
+// collision between an entity schema and a relation schema is treated as an error asking the
+// query to rename one, rather than silently picking one. Mirrors specs/QUERY_LANGUAGE.md §4.2.
 const resolveBackwardStep = (
   fieldId: string,
   explicitSchemaRef: string | undefined,
   currentSchemaId: string | undefined,
   schemas: SchemaCatalog,
+  relationSchemas: RelationSchemaCatalog,
   offset: number,
   authCtx: WorkspaceAuthorizationContext | null
-): { ownerSchemaId: string } => {
+): BackwardResolution => {
   if (explicitSchemaRef) {
-    const ownerSchemaId = resolveSchemaRef(schemas, explicitSchemaRef, offset);
-    const owner = schemas.get(ownerSchemaId)!;
+    const entitySchemaId = schemaNameMap(schemas).get(explicitSchemaRef);
+    const relationSchemaId = relationSchemaNameMap(relationSchemas).get(explicitSchemaRef);
+    if (entitySchemaId && relationSchemaId) {
+      throw new TextCompileError(
+        `'${explicitSchemaRef}' names both an entity schema and a relation schema — rename one to disambiguate`,
+        offset
+      );
+    }
+    if (relationSchemaId) {
+      const relationSchema = relationSchemas.get(relationSchemaId)!;
+      const field = relationSchema.fields.find(f => f.id === fieldId);
+      if (
+        field?.type !== 'entityRelation' ||
+        isFieldViewRestricted(authCtx, relationSchema, fieldId)
+      ) {
+        throw new TextCompileError(
+          `Relation schema '${explicitSchemaRef}' does not define a viewable entityRelation field '${fieldId}'`,
+          offset
+        );
+      }
+      if (currentSchemaId && field.schemaId !== currentSchemaId) {
+        throw new TextCompileError(
+          `'<-${explicitSchemaRef}.${fieldId}' does not point at '${schemaNameById(schemas, currentSchemaId)}'`,
+          offset
+        );
+      }
+      return { kind: 'relationBackward', relationSchemaId, field };
+    }
+    if (!entitySchemaId) {
+      throw new TextCompileError(`Unknown schema '${explicitSchemaRef}'`, offset);
+    }
+    const owner = schemas.get(entitySchemaId)!;
     const field = owner.fields.find(f => f.id === fieldId);
     if (
       !field ||
@@ -407,30 +467,41 @@ const resolveBackwardStep = (
         offset
       );
     }
-    return { ownerSchemaId };
+    return { kind: 'backward', ownerSchemaId: entitySchemaId };
   }
 
-  const candidates = [...schemas.values()].filter(schema => {
+  const entityCandidates = [...schemas.values()].filter(schema => {
     const field = schema.fields.find(f => f.id === fieldId);
     if (!field || !isReferenceOrContainmentField(field)) return false;
     if (isFieldViewRestricted(authCtx, schema, fieldId)) return false;
     return currentSchemaId ? field.schemaId === currentSchemaId : true;
   });
+  const relationCandidates = [...relationSchemas.values()].filter(schema => {
+    const field = schema.fields.find(f => f.id === fieldId);
+    if (field?.type !== 'entityRelation') return false;
+    if (isFieldViewRestricted(authCtx, schema, fieldId)) return false;
+    return currentSchemaId ? field.schemaId === currentSchemaId : true;
+  });
 
-  if (candidates.length === 0) {
+  if (entityCandidates.length + relationCandidates.length === 0) {
     throw new TextCompileError(
-      `No schema defines a reference/containment field '${fieldId}'`,
+      `No schema defines a reference/containment or entityRelation field '${fieldId}'`,
       offset
     );
   }
-  if (candidates.length > 1) {
-    const names = candidates.map(s => s.name).join(', ');
+  if (entityCandidates.length + relationCandidates.length > 1) {
+    const names = [...entityCandidates, ...relationCandidates].map(s => s.name).join(', ');
     throw new TextCompileError(
       `'<-${fieldId}' is ambiguous between: ${names} — disambiguate with '<-Schema.${fieldId}'`,
       offset
     );
   }
-  return { ownerSchemaId: candidates[0]!.id };
+  if (entityCandidates.length === 1) {
+    return { kind: 'backward', ownerSchemaId: entityCandidates[0]!.id };
+  }
+  const relationSchema = relationCandidates[0]!;
+  const field = relationSchema.fields.find(f => f.id === fieldId) as EntityRelationField;
+  return { kind: 'relationBackward', relationSchemaId: relationSchema.id, field };
 };
 
 // ── Value parsing ────────────────────────────────────────────────────────
@@ -583,6 +654,10 @@ type ParsedStep = {
   fieldId: string;
   resolution: FieldResolution;
   nextSchemaId: string | undefined;
+  // Set only when this step lands on a relation instance (relationBackward, or `_in`/`_out`
+  // inside a relation-scoped bracket resolves back to entity so this stays undefined there) —
+  // the counterpart to nextSchemaId for the entity side (#2670).
+  nextRelationSchemaId: string | undefined;
 };
 
 const parseStep = (
@@ -595,6 +670,22 @@ const parseStep = (
 ): ParsedStep => {
   const token = peek(state);
   if (currentRelationSchemaId) {
+    // `_in`/`_out` select the relation instance's fixed endpoint (#2670) — a traversal token, not
+    // a real relation field, so it's recognized before falling back to resolveRelationField.
+    if (token.kind === 'IDENT' && (token.text === '_in' || token.text === '_out')) {
+      advance(state);
+      const direction = token.text === '_in' ? 'in' : 'out';
+      const relationSchema = relationSchemas.get(currentRelationSchemaId);
+      const targetSchemaIds =
+        direction === 'in' ? relationSchema?.in_schema_ids : relationSchema?.out_schema_ids;
+      return {
+        step: { kind: 'endpoint', direction },
+        fieldId: token.text,
+        resolution: { kind: 'endpointPseudo', direction },
+        nextSchemaId: targetSchemaIds?.length === 1 ? targetSchemaIds[0] : undefined,
+        nextRelationSchemaId: undefined
+      };
+    }
     const fieldId = expect(state, 'IDENT').text;
     const resolution = resolveRelationField(
       fieldId,
@@ -603,11 +694,21 @@ const parseStep = (
       token.offset,
       state.authCtx
     );
+    if (resolution.kind === 'relationEntityRelation') {
+      return {
+        step: { kind: 'relationForward', fieldId },
+        fieldId,
+        resolution,
+        nextSchemaId: resolution.field.schemaId,
+        nextRelationSchemaId: undefined
+      };
+    }
     return {
       step: { kind: 'forward', fieldId },
       fieldId,
       resolution,
-      nextSchemaId: undefined
+      nextSchemaId: undefined,
+      nextRelationSchemaId: undefined
     };
   }
   let fieldId: string;
@@ -617,22 +718,32 @@ const parseStep = (
   if (token.kind === 'ARROW') {
     advance(state);
     backward = true;
-    const first = expect(state, 'IDENT');
-    if (peek(state).kind === 'DOT') {
-      // Lookahead: `<-Schema.field_id` — only treat the first identifier as a schema_ref if a
-      // second identifier follows the dot (otherwise this dot belongs to the outer path, e.g.
-      // `<-domain.<-Component...`, and this identifier IS the field_id).
-      const save = state.pos;
-      advance(state); // DOT
-      if (peek(state).kind === 'IDENT') {
-        explicitSchemaRef = first.text;
-        fieldId = advance(state).text;
+    if (peek(state).kind === 'STRING') {
+      // `<-"Schema Name".field_id` — a quoted schema_ref is unambiguous (field ids are never
+      // quoted), so it always requires an explicit '.field_id' to follow. Needed for relation
+      // schema names, which commonly contain spaces (e.g. "Data Flow", #2670).
+      const schemaRefToken = advance(state);
+      explicitSchemaRef = schemaRefToken.value as string;
+      expect(state, 'DOT');
+      fieldId = expect(state, 'IDENT').text;
+    } else {
+      const first = expect(state, 'IDENT');
+      if (peek(state).kind === 'DOT') {
+        // Lookahead: `<-Schema.field_id` — only treat the first identifier as a schema_ref if a
+        // second identifier follows the dot (otherwise this dot belongs to the outer path, e.g.
+        // `<-domain.<-Component...`, and this identifier IS the field_id).
+        const save = state.pos;
+        advance(state); // DOT
+        if (peek(state).kind === 'IDENT') {
+          explicitSchemaRef = first.text;
+          fieldId = advance(state).text;
+        } else {
+          state.pos = save;
+          fieldId = first.text;
+        }
       } else {
-        state.pos = save;
         fieldId = first.text;
       }
-    } else {
-      fieldId = first.text;
     }
   } else {
     fieldId = expect(state, 'IDENT').text;
@@ -644,14 +755,49 @@ const parseStep = (
   }
 
   if (backward) {
-    const { ownerSchemaId } = resolveBackwardStep(
+    const backwardResolution = resolveBackwardStep(
       fieldId,
       explicitSchemaRef,
       currentSchemaId,
       schemas,
+      relationSchemas,
       token.offset,
       state.authCtx
     );
+    if (backwardResolution.kind === 'relationBackward') {
+      const { relationSchemaId } = backwardResolution;
+      let filter: QueryNode | undefined;
+      if (peek(state).kind === 'LBRACKET') {
+        advance(state);
+        filter = parseOrExpr(
+          state,
+          undefined,
+          relationSchemaId,
+          schemas,
+          relationSchemas,
+          enums,
+          false
+        );
+        expect(state, 'RBRACKET');
+      }
+      return {
+        step: {
+          kind: 'relationBackward',
+          fieldId,
+          relationSchemaId,
+          ...(filter ? { filter } : {})
+        },
+        fieldId,
+        resolution: {
+          kind: 'relationEntityRelation',
+          field: backwardResolution.field,
+          relationSchemaId
+        },
+        nextSchemaId: undefined,
+        nextRelationSchemaId: relationSchemaId
+      };
+    }
+    const { ownerSchemaId } = backwardResolution;
     let filter: QueryNode | undefined;
     if (peek(state).kind === 'LBRACKET') {
       advance(state);
@@ -668,7 +814,8 @@ const parseStep = (
           { type: 'reference' | 'containment' }
         >
       },
-      nextSchemaId: ownerSchemaId
+      nextSchemaId: ownerSchemaId,
+      nextRelationSchemaId: undefined
     };
   }
 
@@ -733,7 +880,8 @@ const parseStep = (
         : { kind: 'forward', fieldId, ...(filter ? { filter } : {}) },
     fieldId,
     resolution,
-    nextSchemaId
+    nextSchemaId,
+    nextRelationSchemaId: undefined
   };
 };
 
@@ -817,17 +965,19 @@ const parsePredicate = (
 
   const steps: ParsedStep[] = [];
   let schemaIdCursor = currentSchemaId;
+  let relationSchemaIdCursor = currentRelationSchemaId;
   for (;;) {
     const parsed = parseStep(
       state,
       schemaIdCursor,
-      currentRelationSchemaId,
+      relationSchemaIdCursor,
       schemas,
       relationSchemas,
       enums
     );
     steps.push(parsed);
     schemaIdCursor = parsed.nextSchemaId;
+    relationSchemaIdCursor = parsed.nextRelationSchemaId;
     if (peek(state).kind === 'DOT') {
       advance(state);
       continue;
@@ -837,6 +987,11 @@ const parsePredicate = (
 
   const last = steps[steps.length - 1]!;
   const comparatorToken = peek(state);
+  const isRelationLikeTerminal =
+    last.resolution.kind === 'relation' ||
+    last.resolution.kind === 'typedRelation' ||
+    last.resolution.kind === 'relationEntityRelation' ||
+    last.resolution.kind === 'endpointPseudo';
 
   if (comparatorToken.kind === 'COMPARATOR') {
     if (last.step.kind !== 'endpoint' && last.step.filter) {
@@ -845,7 +1000,7 @@ const parsePredicate = (
         comparatorToken.offset
       );
     }
-    if (last.resolution.kind === 'relation' || last.resolution.kind === 'typedRelation') {
+    if (isRelationLikeTerminal) {
       throw new TextCompileError(
         `'${last.fieldId}' is a relation field — compare a scalar field reached through it, or use '[...]' to scope a relationExists`,
         comparatorToken.offset
@@ -864,9 +1019,15 @@ const parsePredicate = (
     return { kind: 'predicate', path, fieldId: last.fieldId, op, value };
   }
 
+  if (last.resolution.kind === 'endpointPseudo') {
+    throw new TextCompileError(
+      `'${last.fieldId}' must be followed by a field, e.g. '${last.fieldId}._id'`,
+      peek(state).offset
+    );
+  }
   // Bare path: shorthand for not_empty on a scalar terminal, or `relationExists` on a relation
   // terminal (specs/QUERY_LANGUAGE.md §4.1 line 81, §5).
-  if (last.resolution.kind === 'relation' || last.resolution.kind === 'typedRelation') {
+  if (isRelationLikeTerminal) {
     return { kind: 'relationExists', path: steps.map(s => s.step) };
   }
   const path = steps.slice(0, -1).map(s => s.step);
@@ -1102,7 +1263,10 @@ const relationFieldTypeAt = (
   return relationSchemas.get(relationSchemaId)?.fields.find(f => f.id === fieldId)?.type;
 };
 
-const printValueLiteral = (value: unknown, fieldType: SchemaField['type'] | undefined): string => {
+const printValueLiteral = (
+  value: unknown,
+  fieldType: SchemaField['type'] | RelationField['type'] | undefined
+): string => {
   if (fieldType === 'date') return `date(${quoteString(String(value))})`;
   if (typeof value === 'number') return String(value);
   return quoteString(String(value));
@@ -1111,7 +1275,7 @@ const printValueLiteral = (value: unknown, fieldType: SchemaField['type'] | unde
 const printComparatorAndValue = (
   op: FilterOp,
   value: unknown,
-  fieldType: SchemaField['type'] | undefined
+  fieldType: SchemaField['type'] | RelationField['type'] | undefined
 ): string => {
   switch (op) {
     case 'equals':
@@ -1146,13 +1310,20 @@ const printPathSteps = (
   steps: PathStep[],
   startSchemaId: string | undefined,
   schemas: SchemaCatalog,
-  relationSchemas: RelationSchemaCatalog
-): { text: string; endSchemaId: string | undefined } => {
+  relationSchemas: RelationSchemaCatalog,
+  startRelationSchemaId?: string
+): {
+  text: string;
+  endSchemaId: string | undefined;
+  endRelationSchemaId: string | undefined;
+} => {
   let schemaId = startSchemaId;
+  let relationSchemaId = startRelationSchemaId;
   const parts = steps.map(step => {
     if (step.kind === 'forward') {
       const field = schemas.get(schemaId ?? '')?.fields.find(f => f.id === step.fieldId);
       if (field && isReferenceOrContainmentField(field)) schemaId = field.schemaId;
+      relationSchemaId = undefined;
       const filterText = step.filter
         ? `[${printNode(step.filter, schemaId, schemas, relationSchemas)}]`
         : '';
@@ -1161,26 +1332,54 @@ const printPathSteps = (
     if (step.kind === 'backward') {
       const ownerName = printSchemaRef(schemaNameById(schemas, step.ownerSchemaId));
       schemaId = step.ownerSchemaId;
+      relationSchemaId = undefined;
       const filterText = step.filter
         ? `[${printNode(step.filter, schemaId, schemas, relationSchemas)}]`
         : '';
       return `<-${ownerName}.${step.fieldId}${filterText}`;
     }
     if (step.kind === 'endpoint') {
-      // The text DSL is entity-only for now; relation-rooted IRs (the only place an 'endpoint'
-      // step can appear) are built programmatically, never printed as query text.
-      throw new Error("'endpoint' path steps are not supported by the query text compiler");
+      // Only legal when the current position is a relation (relationSchemaId cursor set) — the
+      // validator already guarantees this for any IR built through validateEntityQueryIR.
+      const relationSchema = relationSchemaId ? relationSchemas.get(relationSchemaId) : undefined;
+      const targetSchemaIds =
+        step.direction === 'in' ? relationSchema?.in_schema_ids : relationSchema?.out_schema_ids;
+      schemaId = targetSchemaIds?.length === 1 ? targetSchemaIds[0] : undefined;
+      relationSchemaId = undefined;
+      return step.direction === 'in' ? '_in' : '_out';
+    }
+    if (step.kind === 'relationForward') {
+      const relationSchema = relationSchemaId ? relationSchemas.get(relationSchemaId) : undefined;
+      const field = relationSchema?.fields.find(f => f.id === step.fieldId);
+      schemaId = field && field.type === 'entityRelation' ? field.schemaId : undefined;
+      relationSchemaId = undefined;
+      const filterText = step.filter
+        ? `[${printNode(step.filter, schemaId, schemas, relationSchemas)}]`
+        : '';
+      return `${step.fieldId}${filterText}`;
+    }
+    if (step.kind === 'relationBackward') {
+      const relationName = printSchemaRef(
+        relationSchemaNameById(relationSchemas, step.relationSchemaId)
+      );
+      relationSchemaId = step.relationSchemaId;
+      schemaId = undefined;
+      const filterText = step.filter
+        ? `[${printNode(step.filter, undefined, schemas, relationSchemas, step.relationSchemaId)}]`
+        : '';
+      return `<-${relationName}.${step.fieldId}${filterText}`;
     }
     const relationSchema = relationSchemas.get(step.relationSchemaId);
     const targetSchemaIds =
       step.direction === 'in' ? relationSchema?.out_schema_ids : relationSchema?.in_schema_ids;
     schemaId = targetSchemaIds?.length === 1 ? targetSchemaIds[0] : undefined;
+    relationSchemaId = undefined;
     const filterText = step.filter
       ? `[${printNode(step.filter, undefined, schemas, relationSchemas, step.relationSchemaId)}]`
       : '';
     return `${step.fieldId}${filterText}`;
   });
-  return { text: parts.join('.'), endSchemaId: schemaId };
+  return { text: parts.join('.'), endSchemaId: schemaId, endRelationSchemaId: relationSchemaId };
 };
 
 const printPredicateOrRelationExists = (
@@ -1191,7 +1390,13 @@ const printPredicateOrRelationExists = (
   relationSchemaId?: string
 ): string => {
   if (node.kind === 'relationExists') {
-    const { text } = printPathSteps(node.path, schemaId, schemas, relationSchemas);
+    const { text } = printPathSteps(
+      node.path,
+      schemaId,
+      schemas,
+      relationSchemas,
+      relationSchemaId
+    );
     return text;
   }
   if (node.kind !== 'predicate') throw new Error('unreachable');
@@ -1200,14 +1405,13 @@ const printPredicateOrRelationExists = (
     return `schema:${printSchemaRef(schemaNameById(schemas, node.value as string))}`;
   }
 
-  const { text: pathText, endSchemaId } = printPathSteps(
-    node.path,
-    schemaId,
-    schemas,
-    relationSchemas
-  );
-  const fieldType = relationSchemaId
-    ? relationFieldTypeAt(node.fieldId, relationSchemaId, relationSchemas)
+  const {
+    text: pathText,
+    endSchemaId,
+    endRelationSchemaId
+  } = printPathSteps(node.path, schemaId, schemas, relationSchemas, relationSchemaId);
+  const fieldType = endRelationSchemaId
+    ? relationFieldTypeAt(node.fieldId, endRelationSchemaId, relationSchemas)
     : fieldTypeAt(node.fieldId, endSchemaId, schemas);
   const fullPath = pathText ? `${pathText}.${node.fieldId}` : node.fieldId;
   if (node.op === 'not_empty') return fullPath;

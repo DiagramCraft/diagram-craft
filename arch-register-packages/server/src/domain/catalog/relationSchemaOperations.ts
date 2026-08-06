@@ -13,6 +13,7 @@ import {
   migratableFieldChanges
 } from './schemaHelpers';
 import {
+  asSchemaFields,
   buildCreateRelationSchemaInput,
   buildUpdateRelationSchemaInput,
   buildRelationSchemaChangeSummary,
@@ -175,7 +176,10 @@ export const updateWorkspaceRelationSchema = async (
       }> = [];
 
       if (relationCount > 0) {
-        const fieldChanges = classifyFieldChanges(oldRow.fields, compiledNext.fields);
+        const fieldChanges = classifyFieldChanges(
+          asSchemaFields(oldRow.fields),
+          asSchemaFields(compiledNext.fields)
+        );
 
         const blocked = hardBlockedFieldChanges(fieldChanges);
         httpAssert.true(blocked.length === 0, {

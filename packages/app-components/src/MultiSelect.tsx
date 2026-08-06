@@ -148,7 +148,12 @@ export const MultiSelect = (props: Props) => {
         {/* Suggestions dropdown - only show when there are items */}
         {filteredItems.length > 0 && (
           <BaseUICombobox.Portal container={portal}>
-            <BaseUICombobox.Positioner side="bottom" align="start" sideOffset={2}>
+            <BaseUICombobox.Positioner
+              className={styles.cMultiSelectPositioner}
+              side="bottom"
+              align="start"
+              sideOffset={2}
+            >
               <BaseUICombobox.Popup className={styles.cMultiSelectSuggestions}>
                 <BaseUICombobox.List>
                   {filteredItems.map(item => (

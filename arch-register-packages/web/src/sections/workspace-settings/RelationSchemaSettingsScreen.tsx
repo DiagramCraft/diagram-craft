@@ -38,6 +38,7 @@ import {
   RelationSchemaGroup
 } from '@arch-register/api-types/relationSchemaContract';
 import type {
+  EntitySchema,
   FieldMigrations,
   PendingFieldChange,
   SharedFieldGroupLink
@@ -317,6 +318,15 @@ export const RelationSchemaSettingsScreen = () => {
             return { ...base, type: 'boolean' };
           case 'select':
             return { ...base, type: 'select', enumId: enums[0]?.id ?? '' };
+          case 'entityRelation':
+            return {
+              ...base,
+              type: 'entityRelation',
+              predicate: '',
+              schemaId: '',
+              minCount: 0,
+              maxCount: -1
+            };
         }
       })
     );
@@ -361,6 +371,7 @@ export const RelationSchemaSettingsScreen = () => {
       <RelationFieldRow
         key={fieldKeysRef.current.get(f.id) ?? f.id}
         field={f}
+        schemas={schemas}
         enums={enums}
         groups={groups}
         onUpdate={patch => updateField(f.id, patch)}
@@ -728,6 +739,7 @@ const NO_GROUP = '__no_group__';
 
 export const RelationFieldRow = ({
   field,
+  schemas,
   enums,
   groups,
   onUpdate,
@@ -736,6 +748,7 @@ export const RelationFieldRow = ({
   canEdit
 }: {
   field: RelationField;
+  schemas: EntitySchema[];
   enums: { id: string; name: string }[];
   groups: RelationSchemaGroup[];
   onUpdate: (patch: Partial<RelationField>) => void;
@@ -799,6 +812,68 @@ export const RelationFieldRow = ({
                 if (!Number.isNaN(next)) {
                   onUpdate({ max: Math.trunc(next) } as Partial<RelationField>);
                 }
+              }}
+              placeholder="Unbounded"
+            />
+          </FormElement>
+        </>
+      );
+    }
+    if (field.type === 'entityRelation') {
+      return (
+        <>
+          <FormElement label="Target schema">
+            <Select.Root
+              value={field.schemaId ?? undefined}
+              disabled={!canEdit}
+              onChange={value => onUpdate({ schemaId: value ?? '' } as Partial<RelationField>)}
+              placeholder="Select type..."
+            >
+              {schemas.map(s => (
+                <Select.Item key={s.id} value={s.id}>
+                  {s.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </FormElement>
+          <FormElement label="Predicate">
+            <TextInput
+              value={field.predicate ?? ''}
+              disabled={!canEdit}
+              onChange={value =>
+                onUpdate({
+                  predicate: value?.trim() == null || value.trim() === '' ? undefined : value.trim()
+                } as Partial<RelationField>)
+              }
+              placeholder="e.g., carries, references"
+            />
+          </FormElement>
+          <FormElement label="Min">
+            <TextInput
+              value={String(field.minCount)}
+              disabled={!canEdit}
+              onChange={value => {
+                const next = Number(value ?? 0);
+                onUpdate({
+                  minCount: Number.isNaN(next) ? 0 : Math.max(0, next)
+                } as Partial<RelationField>);
+              }}
+            />
+          </FormElement>
+          <FormElement label="Max">
+            <TextInput
+              value={field.maxCount === -1 ? '' : String(field.maxCount)}
+              disabled={!canEdit}
+              onChange={value => {
+                const raw = value ?? '';
+                if (raw.trim() === '') {
+                  onUpdate({ maxCount: -1 } as Partial<RelationField>);
+                  return;
+                }
+                const next = Number(raw);
+                onUpdate({
+                  maxCount: Number.isNaN(next) ? -1 : Math.max(0, next)
+                } as Partial<RelationField>);
               }}
               placeholder="Unbounded"
             />

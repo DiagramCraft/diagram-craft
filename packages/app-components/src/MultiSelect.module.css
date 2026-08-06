@@ -130,13 +130,16 @@
   }
 }
 
+.cMultiSelectPositioner {
+  z-index: 1100;
+}
+
 .cMultiSelectSuggestions {
   width: 150px;
   background-color: var(--cmp-bg);
   font-family: var(--font-sans, -apple-system, BlinkMacSystemFont, system-ui, sans-serif);
   border-radius: 6px;
   box-shadow: var(--popover-shadow);
-  z-index: 1000;
   max-height: 200px;
   overflow: hidden;
   padding: 5px;

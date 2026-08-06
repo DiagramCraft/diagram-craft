@@ -20,16 +20,18 @@ export const FIELD_TYPES: { value: FieldType; label: string }[] = [
 
 export type RelationFieldType = RelationField['type'];
 
-// Relation fields intentionally exclude reference/containment/typedRelation/derived — see
-// relationSchemaContract.ts
-export const RELATION_FIELD_TYPES: { value: RelationFieldType; label: string }[] =
-  FIELD_TYPES.filter(
-    (t): t is { value: RelationFieldType; label: string } =>
-      t.value !== 'reference' &&
-      t.value !== 'containment' &&
-      t.value !== 'typedRelation' &&
-      t.value !== 'derived'
-  );
+// Relation fields intentionally exclude containment/derived — see relationSchemaContract.ts.
+// `entityRelation` is relation-only (mirrors entity schemas' `reference`), so it's appended here
+// rather than filtered out of the entity FIELD_TYPES list above.
+export const RELATION_FIELD_TYPES: { value: RelationFieldType; label: string }[] = [
+  { value: 'text', label: 'Text' },
+  { value: 'longtext', label: 'Long text' },
+  { value: 'boolean', label: 'Boolean' },
+  { value: 'date', label: 'Date' },
+  { value: 'number', label: 'Number' },
+  { value: 'select', label: 'Select' },
+  { value: 'entityRelation', label: 'Entity relation' }
+];
 
 export const schemaColor = (index: number): string => SCHEMA_COLORS[index % SCHEMA_COLORS.length]!;
 

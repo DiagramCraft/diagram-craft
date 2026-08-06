@@ -8,16 +8,47 @@ import type {
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { RelationAuditLogDialog } from '../../../dialogs/RelationAuditLogDialog';
+import { useEntitiesByIds } from '../../../hooks/useEntities';
+import { relationIds } from '../../../lib/entityEditState';
 import styles from './EntityRelationsTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import overviewStyles from './EntityOverviewTab.module.css';
 
 export const KEY_FIELD_COUNT = 3;
 
+// Ids referenced by an `entityRelation` field can't be resolved to names by this helper alone
+// (it has no access to the entity lookup) — callers should render those fields separately, e.g.
+// via renderEntityRelationFieldValue below.
 export const formatRelationFieldValue = (field: RelationField, value: unknown): string | null => {
   if (value === undefined || value === null || value === '') return null;
   if (field.type === 'boolean') return value ? 'Yes' : 'No';
+  if (field.type === 'entityRelation') return relationIds(value).join(', ') || null;
   return String(value);
+};
+
+// Resolves an `entityRelation` field's target ids to navigable entity name links, falling back to
+// the raw id while the lookup is still loading or if an id can't be resolved.
+export const renderEntityRelationFieldValue = (
+  value: unknown,
+  refLookup: Map<string, { name: string; publicId: string }>
+) => {
+  const ids = relationIds(value);
+  if (ids.length === 0) return null;
+  return (
+    <>
+      {ids.map((id, index) => {
+        const ref = refLookup.get(id);
+        return (
+          <span key={id}>
+            {index > 0 && ', '}
+            <EntityNavigationLink publicId={ref?.publicId ?? id}>
+              {ref?.name ?? id}
+            </EntityNavigationLink>
+          </span>
+        );
+      })}
+    </>
+  );
 };
 
 export type RelationDirection = 'outgoing' | 'incoming';
@@ -26,6 +57,7 @@ export const RelationRecordCard = ({
   record,
   direction,
   relationSchema,
+  workspaceId,
   expanded,
   onToggleExpand,
   onViewHistory
@@ -33,16 +65,26 @@ export const RelationRecordCard = ({
   record: RelationRecord;
   direction: RelationDirection;
   relationSchema: RelationSchema | undefined;
+  workspaceId: string;
   expanded: boolean;
   onToggleExpand: () => void;
   onViewHistory: () => void;
 }) => {
   const otherEndpoint = direction === 'outgoing' ? record._out : record._in;
   const activeFields = (relationSchema?.fields ?? []).filter(f => !f.archived);
+  const entityRelationIds = activeFields
+    .filter(f => f.type === 'entityRelation')
+    .flatMap(f => relationIds(record[f.id]));
+  const refLookup = useEntitiesByIds(workspaceId, entityRelationIds);
   const fieldSummaries = activeFields
     .slice(0, KEY_FIELD_COUNT)
     .map(f => {
-      const formatted = formatRelationFieldValue(f, record[f.id]);
+      const formatted =
+        f.type === 'entityRelation'
+          ? relationIds(record[f.id])
+              .map(id => refLookup.get(id)?.name ?? id)
+              .join(', ') || null
+          : formatRelationFieldValue(f, record[f.id]);
       return formatted !== null ? `${f.name}: ${formatted}` : null;
     })
     .filter((v): v is string => v !== null);
@@ -102,9 +144,13 @@ export const RelationRecordCard = ({
             <div key={f.id} className={overviewStyles.propRow} style={{ alignItems: 'center' }}>
               <div className={overviewStyles.propLabel}>{f.name}</div>
               <div className={overviewStyles.propValue}>
-                {formatRelationFieldValue(f, record[f.id]) ?? (
-                  <span className={sharedStyles.dim}>—</span>
-                )}
+                {f.type === 'entityRelation'
+                  ? (renderEntityRelationFieldValue(record[f.id], refLookup) ?? (
+                      <span className={sharedStyles.dim}>—</span>
+                    ))
+                  : (formatRelationFieldValue(f, record[f.id]) ?? (
+                      <span className={sharedStyles.dim}>—</span>
+                    ))}
               </div>
             </div>
           ))}
@@ -143,6 +189,7 @@ export const RelationRecordList = ({
           record={record}
           direction={direction}
           relationSchema={relationSchema}
+          workspaceId={workspaceId}
           expanded={expandedUid === record._uid}
           onToggleExpand={() => setExpandedUid(expandedUid === record._uid ? null : record._uid)}
           onViewHistory={() => setHistoryRecord(record)}

@@ -600,3 +600,256 @@ describe('resolveRelationFieldSchemaScope', () => {
     expect(scope.needsScoping).toBe(false);
   });
 });
+
+describe('entityRelation field traversal (#2670)', () => {
+  const SYSTEM_ENTITY = makeSchema('system-entity-schema');
+  const DATA_ENTITY = makeSchema('data-entity-schema', [
+    { id: '_name', name: 'Name', type: 'text' }
+  ]);
+  const entitySchemas: SchemaCatalog = new Map([
+    [SYSTEM_ENTITY.id, SYSTEM_ENTITY],
+    [DATA_ENTITY.id, DATA_ENTITY]
+  ]);
+
+  const DATA_FLOW: RelationSchemaDbResult = {
+    id: 'data-flow-schema',
+    workspace: 'ws-1',
+    name: 'Data Flow',
+    description: '',
+    in_schema_ids: [SYSTEM_ENTITY.id],
+    out_schema_ids: [SYSTEM_ENTITY.id],
+    fields: [
+      {
+        id: 'data',
+        name: 'Data',
+        type: 'entityRelation',
+        requirementLevel: 'optional',
+        schemaId: DATA_ENTITY.id,
+        minCount: 0,
+        maxCount: -1
+      },
+      { id: 'note', name: 'Note', type: 'text', groupId: 'restricted' }
+    ],
+    groups: [
+      { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+    ],
+    color: null,
+    icon: null,
+    created_at: now,
+    updated_at: now
+  };
+  const dataFlowRelationSchemas: RelationSchemaCatalog = new Map([[DATA_FLOW.id, DATA_FLOW]]);
+
+  it('accepts a relation-rooted query traversing relationForward to a nested entity field', () => {
+    const query: EntityQuery = {
+      schemaId: DATA_FLOW.id,
+      root: {
+        kind: 'predicate',
+        path: [{ kind: 'relationForward', fieldId: 'data' }],
+        fieldId: '_name',
+        op: 'equals',
+        value: 'Address'
+      }
+    };
+    expect(validateEntityQueryIR(query, entitySchemas, null, dataFlowRelationSchemas)).toEqual({
+      ok: true
+    });
+  });
+
+  it('accepts an entity-rooted query traversing relationBackward then endpoint', () => {
+    const query: EntityQuery = {
+      schemaId: DATA_ENTITY.id,
+      root: {
+        kind: 'predicate',
+        path: [
+          { kind: 'relationBackward', fieldId: 'data', relationSchemaId: DATA_FLOW.id },
+          { kind: 'endpoint', direction: 'out' }
+        ],
+        fieldId: '_id',
+        op: 'equals',
+        value: 'A'
+      }
+    };
+    expect(validateEntityQueryIR(query, entitySchemas, null, dataFlowRelationSchemas)).toEqual({
+      ok: true
+    });
+  });
+
+  it('rejects relationForward when the current position is not a relation', () => {
+    const query: EntityQuery = {
+      root: {
+        kind: 'predicate',
+        path: [{ kind: 'relationBackward', fieldId: 'data', relationSchemaId: DATA_FLOW.id }],
+        fieldId: '_id',
+        op: 'equals',
+        value: 'A'
+      }
+    };
+    // relationBackward starting from entity-rooted 'and' context is fine positionally, but a
+    // second relationForward immediately after another relationBackward (still on relation, so
+    // legal) vs. attempting relationForward from the query root (entity context) is not.
+    const invalidQuery: EntityQuery = {
+      root: {
+        kind: 'predicate',
+        path: [{ kind: 'relationForward', fieldId: 'data' }],
+        fieldId: '_name',
+        op: 'equals',
+        value: 'Address'
+      }
+    };
+    expect(validateEntityQueryIR(query, entitySchemas, null, dataFlowRelationSchemas).ok).toBe(
+      true
+    );
+    const result = validateEntityQueryIR(
+      invalidQuery,
+      entitySchemas,
+      null,
+      dataFlowRelationSchemas
+    );
+    expect(result.ok).toBe(false);
+    if (!result.ok) {
+      expect(result.errors.some(e => e.message.includes("'relationForward'"))).toBe(true);
+    }
+  });
+
+  it('rejects an unknown entityRelation fieldId', () => {
+    const query: EntityQuery = {
+      schemaId: DATA_FLOW.id,
+      root: {
+        kind: 'predicate',
+        path: [{ kind: 'relationForward', fieldId: 'missing' }],
+        fieldId: '_name',
+        op: 'equals',
+        value: 'Address'
+      }
+    };
+    const result = validateEntityQueryIR(query, entitySchemas, null, dataFlowRelationSchemas);
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects a relationBackward referencing an unknown relation schema', () => {
+    const query: EntityQuery = {
+      schemaId: DATA_ENTITY.id,
+      root: {
+        kind: 'predicate',
+        path: [{ kind: 'relationBackward', fieldId: 'data', relationSchemaId: 'missing-schema' }],
+        fieldId: '_id',
+        op: 'equals',
+        value: 'A'
+      }
+    };
+    const result = validateEntityQueryIR(query, entitySchemas, null, dataFlowRelationSchemas);
+    expect(result.ok).toBe(false);
+  });
+
+  it('permits a scalar predicate inside a relationBackward filter scoped to the relation', () => {
+    const query: EntityQuery = {
+      schemaId: DATA_ENTITY.id,
+      root: {
+        kind: 'relationExists',
+        path: [
+          {
+            kind: 'relationBackward',
+            fieldId: 'data',
+            relationSchemaId: DATA_FLOW.id,
+            filter: { kind: 'predicate', path: [], fieldId: 'note', op: 'equals', value: 'x' }
+          }
+        ]
+      }
+    };
+    const noAccessCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    const noAccess = validateEntityQueryIR(
+      query,
+      entitySchemas,
+      noAccessCtx,
+      dataFlowRelationSchemas
+    );
+    expect(noAccess.ok).toBe(false);
+
+    const viewer = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [{ teamId: 'team-restricted', role: 'team_reviewer' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    expect(validateEntityQueryIR(query, entitySchemas, viewer, dataFlowRelationSchemas)).toEqual({
+      ok: true
+    });
+  });
+
+  it('fails closed when the entityRelation field granting the hop is itself group-restricted', () => {
+    const RESTRICTED_DATA_FLOW: RelationSchemaDbResult = {
+      ...DATA_FLOW,
+      id: 'restricted-data-flow-schema',
+      fields: [{ ...DATA_FLOW.fields[0]!, groupId: 'restricted' } as never],
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ]
+    };
+    const restrictedRelationSchemas: RelationSchemaCatalog = new Map([
+      [RESTRICTED_DATA_FLOW.id, RESTRICTED_DATA_FLOW]
+    ]);
+    const noAccessCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+    const viewerCtx = buildAuthorizationContext({
+      userId: 'user-1',
+      globalRoles: [],
+      workspaceRole: null,
+      teamAssignments: [{ teamId: 'team-restricted', role: 'team_reviewer' }],
+      schemas: [],
+      entities: [],
+      grants: []
+    });
+
+    const forwardQuery: EntityQuery = {
+      schemaId: RESTRICTED_DATA_FLOW.id,
+      root: {
+        kind: 'predicate',
+        path: [{ kind: 'relationForward', fieldId: 'data' }],
+        fieldId: '_name',
+        op: 'equals',
+        value: 'Address'
+      }
+    };
+    expect(
+      validateEntityQueryIR(forwardQuery, entitySchemas, noAccessCtx, restrictedRelationSchemas).ok
+    ).toBe(false);
+    expect(
+      validateEntityQueryIR(forwardQuery, entitySchemas, viewerCtx, restrictedRelationSchemas)
+    ).toEqual({ ok: true });
+
+    const backwardQuery: EntityQuery = {
+      schemaId: DATA_ENTITY.id,
+      root: {
+        kind: 'relationExists',
+        path: [
+          { kind: 'relationBackward', fieldId: 'data', relationSchemaId: RESTRICTED_DATA_FLOW.id }
+        ]
+      }
+    };
+    expect(
+      validateEntityQueryIR(backwardQuery, entitySchemas, noAccessCtx, restrictedRelationSchemas).ok
+    ).toBe(false);
+    expect(
+      validateEntityQueryIR(backwardQuery, entitySchemas, viewerCtx, restrictedRelationSchemas)
+    ).toEqual({ ok: true });
+  });
+});

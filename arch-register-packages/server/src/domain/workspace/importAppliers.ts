@@ -414,11 +414,14 @@ export const importRelationSchemas = async (
     }
 
     const fields = source.fields.map(field => {
-      if (field == null || typeof field !== 'object' || !('groupId' in field)) return field;
+      if (field == null || typeof field !== 'object') return field;
       const groupId = (field as { groupId?: string }).groupId;
-      return groupId
+      const withGroup = groupId
         ? { ...field, groupId: idMapping.shared_field_groups.get(groupId) ?? groupId }
         : field;
+      if ((withGroup as { type?: string }).type !== 'entityRelation') return withGroup;
+      const typedField = withGroup as { schemaId?: string };
+      return { ...withGroup, schemaId: resolveMappedId(idMapping.schemas, typedField.schemaId) };
     });
     const input = {
       id: nextId,

@@ -18,6 +18,7 @@ import {
   extractRelationOwnerOrLifecycleId,
   flattenRelationAuditFields,
   assertRelationMutationsSupported,
+  normalizeRelationEntityFields,
   toRedactedApiRelation,
   validateRelationEndpoints,
   relationAuditContext,
@@ -258,6 +259,14 @@ export const createWorkspaceRelation = async (
       const data = extractRelationFieldData(body);
       requireNoRestrictedFieldWrites(authCtx, schema, Object.keys(data));
 
+      const entities = await db.catalog.listEntities(ws);
+      const normalizedData = normalizeRelationEntityFields({
+        schema,
+        workspace: ws,
+        data,
+        entities
+      });
+
       // Default-copy owner/lifecycle from the "in" entity at creation time, unless the caller
       // explicitly overrides one or both — after this, ownership/lifecycle are fully independent
       // of the source entity (see #2708). Overriding to a specific owner team requires the same
@@ -285,7 +294,7 @@ export const createWorkspaceRelation = async (
           schema_id: schemaId,
           in_entity_id: inEntity!.id,
           out_entity_id: outEntity!.id,
-          data,
+          data: normalizedData,
           owner,
           lifecycle,
           created_at: timestamp,
@@ -351,7 +360,13 @@ export const updateWorkspaceRelation = async (
         });
       }
 
-      const nextData = { ...oldRow.data, ...data };
+      const entities = await db.catalog.listEntities(ws);
+      const nextData = normalizeRelationEntityFields({
+        schema,
+        workspace: ws,
+        data: { ...oldRow.data, ...data },
+        entities
+      });
       const row = await updateRelationWithAudit(db, {
         workspace: ws,
         relationId: id,
