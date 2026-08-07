@@ -26,7 +26,7 @@ export const createAssessmentGovernanceRegistry = (): GovernanceRegistry =>
           return assessment != null;
         },
         independentAssignmentActions: new Set(['acknowledge' as const]),
-        reminderWindows: { approachingDays: [3], overdueDays: [1, 3] },
+        reminders: { approachingDays: [3], overdueDays: [1, 3] },
         escalation: {
           overdueDays: 5,
           target: (db, caseRow) =>

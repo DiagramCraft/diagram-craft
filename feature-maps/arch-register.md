@@ -431,7 +431,8 @@
               assignees on demand, rate-limited to prevent spamming them.
 
             - @id:ar.collaboration.governance-inbox.scheduled-reminders For governance case kinds with a due date
-              (entity change proposals, entity deprecations, assessment responses), still-open assignees automatically
+              (entity change proposals, entity deprecations, relation change proposals, document status approvals,
+              assessment responses), still-open assignees automatically
               receive reminders as the deadline approaches and again once it has passed, on a per-case-kind cadence.
               Reminders respect each user's notification delivery preferences and are not re-sent once a given
               reminder has already fired for a case. The inbox highlights an overdue deadline.

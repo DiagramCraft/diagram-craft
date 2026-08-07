@@ -1144,7 +1144,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
             metadata: { entityId, proposalId, revisionId, entityVersion: updated.version ?? 1 }
           });
         },
-        reminderWindows: { approachingDays: [2], overdueDays: [1, 5] },
+        reminders: { approachingDays: [2], overdueDays: [1, 5] },
         escalation: { overdueDays: 5, target: resolveEntityChangeEscalationTarget }
       }
     ],
@@ -1359,7 +1359,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
             }
           });
         },
-        reminderWindows: { approachingDays: [2], overdueDays: [1, 5] },
+        reminders: { approachingDays: [2], overdueDays: [1, 5] },
         escalation: { overdueDays: 5, target: resolveEntityChangeEscalationTarget }
       }
     ]

@@ -61,9 +61,9 @@ export const createGovernanceWorkflowOverviewORPCRouter = (registry: GovernanceR
             description: CASE_KIND_DESCRIPTIONS[caseKind] ?? '',
             capabilities: {
               // Mirrors governanceReminderConfigOrpc.ts's list handler, which only surfaces case
-              // kinds with a static `reminderWindows` default — `resolveReminderWindows` kinds are
+              // kinds with a static `reminders` default — `resolveReminderWindows` kinds are
               // runtime-driven per subject and have no workspace-configurable cadence to show here.
-              reminders: config.reminderWindows != null,
+              reminders: config.reminders != null,
               escalation: config.escalation != null,
               approvalQuorum: caseKind === DOCUMENT_STATUS_CASE_KIND
             },

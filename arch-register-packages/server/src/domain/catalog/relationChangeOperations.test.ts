@@ -424,6 +424,10 @@ describe('createRelationGovernanceRegistry', () => {
     return entry;
   };
 
+  it('registers the standard scheduled reminder cadence', () => {
+    expect(config().reminders).toEqual({ approachingDays: [2], overdueDays: [1, 5] });
+  });
+
   const makeRevision = (
     overrides: Partial<EntityChangeApprovalRevisionDbResult> = {}
   ): EntityChangeApprovalRevisionDbResult => ({

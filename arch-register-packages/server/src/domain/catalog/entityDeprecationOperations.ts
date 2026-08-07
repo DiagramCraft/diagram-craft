@@ -580,7 +580,7 @@ export const createDeprecationGovernanceRegistry = (
             }
           });
         },
-        reminderWindows: { approachingDays: [3], overdueDays: [2] },
+        reminders: { approachingDays: [3], overdueDays: [2] },
         escalation: {
           overdueDays: 5,
           target: (db, caseRow) =>
