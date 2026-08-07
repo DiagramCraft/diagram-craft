@@ -1051,14 +1051,15 @@ export const importDocuments = async (
     }
   }
   for (const config of documents.workflow_configs ?? []) {
-    const documentTypeId = typeMapping.get(config.document_type_id);
-    if (!documentTypeId) continue;
+    const [sourceDocumentTypeId, fieldId] = config.case_subkind.split(':');
+    const documentTypeId = typeMapping.get(sourceDocumentTypeId ?? '');
+    if (!documentTypeId || !fieldId) continue;
     await db.governanceCaseConfig.upsertCaseConfig({
       workspace,
-      case_kind: DOCUMENT_STATUS_CASE_KIND,
-      case_subkind: encodeCaseSubkind(documentTypeId, config.field_id),
+      case_kind: config.case_kind ?? DOCUMENT_STATUS_CASE_KIND,
+      case_subkind: encodeCaseSubkind(documentTypeId, fieldId),
       enabled: config.enabled,
-      config: { statuses: config.statuses },
+      config: config.config,
       updated_at: new Date(),
       updated_by: null
     });

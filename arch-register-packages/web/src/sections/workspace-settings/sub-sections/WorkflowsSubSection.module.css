@@ -5,10 +5,84 @@
   padding: 16px 24px 32px;
 }
 
-.intro {
-  font-size: 12px;
+.toolbar {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.summary,
+.hint {
   color: var(--cmp-fg-disabled);
-  max-width: 640px;
+  font-size: 12px;
+}
+
+.configChips {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.actions {
+  display: flex;
+  gap: 4px;
+  justify-content: flex-start;
+}
+
+.formGrid,
+.subkindFields {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  column-gap: 12px;
+  row-gap: 16px;
+  padding: 16px 0;
+}
+
+.scopeEditor {
+  margin-top: 16px;
+}
+
+.errorNote {
+  margin-top: 12px;
+  color: var(--error-fg);
+  font-size: 12px;
+}
+
+.fallbackPicker {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.selectedValues {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.removeValue {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+}
+
+.check {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 12px 0;
+}
+
+.statusValues {
+  display: grid;
+  gap: 4px;
+  padding: 16px 0;
 }
 
 .card {

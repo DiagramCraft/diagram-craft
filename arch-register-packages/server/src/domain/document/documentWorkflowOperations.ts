@@ -9,7 +9,8 @@ import type {
   DocumentWorkflowStatus
 } from '@arch-register/api-types/documentContract';
 import {
-  documentStatusApprovalConfigSchema,
+  documentStatusExtensionSchema,
+  type GovernanceWorkflowConfig,
   type DocumentStatusApproval
 } from '@arch-register/api-types/governanceCaseConfigSchemas';
 import { requireMarkdownNodeAccess } from '../project/markdownOperationHelpers';
@@ -23,6 +24,7 @@ import type { GovernanceRegistry } from '../governance/governanceRegistry';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
+import { parseGovernanceWorkflowConfig } from '../governance/governanceWorkflowConfig';
 
 export const DOCUMENT_STATUS_CASE_KIND = 'document.status';
 
@@ -56,19 +58,33 @@ const statusOption = (field: DocumentType['fields'][number], value: string | nul
   field.enumOptions?.find(option => option.value === value) ?? null;
 
 type DocumentStatusConfigRow = {
-  enabled: boolean;
   updated_at: Date;
-  config: { statuses: Record<string, DocumentStatusApproval> };
+  config: GovernanceWorkflowConfig;
 };
 
 const approvalFor = (
   field: DocumentType['fields'][number],
   value: string | null,
   config: DocumentStatusConfigRow | undefined
-): DocumentStatusApproval | null => {
-  if (!field.isStatus || field.type !== 'enum' || !config?.enabled || value == null) return null;
-  const approval = config.config.statuses[value];
-  return approval?.required ? approval : null;
+): {
+  required: true;
+  requiredApprovals: number;
+  approverFieldId?: string;
+  fallbackUserIds: string[];
+  fallbackTeamIds: string[];
+} | null => {
+  if (field.type !== 'enum' || value == null || !config?.config.approvals) return null;
+  const extension = documentStatusExtensionSchema.safeParse(
+    config.config.extensions['document.status']
+  );
+  if (!extension.success || !extension.data.statusesRequiringApprovals.includes(value)) return null;
+  return {
+    required: true,
+    requiredApprovals: config.config.approvals.requiredApprovals,
+    approverFieldId: config.config.approvals.approverSource,
+    fallbackUserIds: config.config.approvals.fallbackUserIds,
+    fallbackTeamIds: config.config.approvals.fallbackTeamIds
+  };
 };
 
 const loadDocumentStatusConfigs = async (
@@ -84,9 +100,8 @@ const loadDocumentStatusConfigs = async (
   return new Map(
     rows.flatMap(row => {
       if (!row.case_subkind?.startsWith(prefix)) return [];
-      const config = documentStatusApprovalConfigSchema.safeParse(row.config);
-      if (!config.success) return [];
-      return [[row.case_subkind.slice(prefix.length), { ...row, config: config.data }] as const];
+      const config = parseGovernanceWorkflowConfig(row.config, row.enabled);
+      return [[row.case_subkind.slice(prefix.length), { ...row, config }] as const];
     })
   );
 };
@@ -108,15 +123,17 @@ export const summarizeDocumentStatusApprovals = (
     const prefix = `${documentType.id}:`;
     const configuredFields = documentType.fields.filter(
       field =>
-        field.isStatus &&
         field.type === 'enum' &&
         configRows.some(row => {
-          const config = documentStatusApprovalConfigSchema.safeParse(row.config);
+          if (row.case_subkind !== `${prefix}${field.id}`) return false;
+          const config = parseGovernanceWorkflowConfig(row.config, row.enabled);
+          const extension = documentStatusExtensionSchema.safeParse(
+            config.extensions['document.status']
+          );
           return (
-            row.enabled &&
-            row.case_subkind === `${prefix}${field.id}` &&
-            config.success &&
-            Object.values(config.data.statuses).some(approval => approval.required)
+            config.approvals != null &&
+            extension.success &&
+            extension.data.statusesRequiringApprovals.length > 0
           );
         })
     );
@@ -169,6 +186,15 @@ const resolveApproverSlots = async (
         .map(item => item.user_id)
     );
     if (eligibleUserIds.length > 0) slots.push({ type: 'team', id, eligibleUserIds });
+  }
+  if (slots.length === 0) {
+    const workspaceAdmins = await db.workspace.listWorkspaceMembers(workspace);
+    const activeUserIds = new Set(users.filter(user => user.is_active).map(user => user.id));
+    for (const member of workspaceAdmins.filter(item => item.role === 'admin')) {
+      if (activeUserIds.has(member.user_id)) {
+        slots.push({ type: 'user', id: member.user_id, eligibleUserIds: [member.user_id] });
+      }
+    }
   }
   return slots;
 };
@@ -302,7 +328,9 @@ export const applyDocumentWorkflowSave = async (
   );
   const configs = await loadDocumentStatusConfigs(tx, input.workspace, input.documentType.id);
 
-  for (const field of input.documentType.fields.filter(field => field.isStatus && !field.retired)) {
+  for (const field of input.documentType.fields.filter(
+    field => field.type === 'enum' && !field.retired
+  )) {
     const targetValue = scalarValue(input.nextMetadata[field.id]);
     const previousValue = scalarValue(input.currentMetadata[field.id]);
     const config = configs.get(field.id);
@@ -370,16 +398,14 @@ export const getDocumentWorkflowStatuses = async (
   const requests = await db.document.getCurrentWorkflowRequests(workspace, nodeId);
   const configs = await loadDocumentStatusConfigs(db, workspace, documentType.id);
   return documentType.fields
-    .filter(field => field.isStatus && field.type === 'enum' && !field.retired)
+    .filter(field => field.type === 'enum' && !field.retired && configs.has(field.id))
     .map(async field => {
       const request = requests.find(item => item.field_id === field.id);
       const effectiveValue = scalarValue(metadata[field.id]);
       const config = configs.get(field.id);
       const option = statusOption(field, request?.target_value ?? effectiveValue);
-      const approvalsRequired =
-        request?.required_approvals ??
-        (config?.enabled ? config.config.statuses[option?.value ?? '']?.requiredApprovals : null) ??
-        1;
+      const approval = approvalFor(field, option?.value ?? null, config);
+      const approvalsRequired = request?.required_approvals ?? approval?.requiredApprovals ?? 1;
       if (!request) {
         return {
           fieldId: field.id,
@@ -488,9 +514,12 @@ export const overrideDocumentWorkflow = async (
     : null;
   const field = documentType?.fields.find(candidate => candidate.id === fieldId);
   httpAssert.present(field, { status: 400, message: `Workflow field '${fieldId}' not found` });
-  httpAssert.true(field.type === 'enum' && field.isStatus === true, {
+  const statusConfig = field
+    ? (await loadDocumentStatusConfigs(db, ws, document.document_type_id ?? '')).get(fieldId)
+    : undefined;
+  httpAssert.true(field.type === 'enum' && statusConfig != null, {
     status: 400,
-    message: 'Only status fields can be overridden'
+    message: 'Only configured workflow fields can be overridden'
   });
   httpAssert.true(statusOption(field, targetValue) != null, {
     status: 400,
@@ -562,6 +591,31 @@ export const createDocumentGovernanceRegistry = (): GovernanceRegistry =>
     [
       DOCUMENT_STATUS_CASE_KIND,
       {
+        workflowConfig: {
+          supportsSubkind: true,
+          validateSubkind: async (db, workspace, subkind) => {
+            if (!subkind) return 'Document status workflows require a document type and field';
+            const [documentTypeId, fieldId] = subkind.split(':');
+            if (!documentTypeId || !fieldId || subkind !== `${documentTypeId}:${fieldId}`) {
+              return 'Document status workflow subkind must be documentTypeId:fieldId';
+            }
+            const documentType = await db.document.getDocumentType(workspace, documentTypeId);
+            if (!documentType) return `Document type '${documentTypeId}' not found`;
+            const field = documentType.fields.find(item => item.id === fieldId);
+            if (!field) return `Document field '${fieldId}' not found`;
+            if (field.type !== 'enum') return 'Document status workflows require an enum field';
+            return null;
+          },
+          labelSubkind: async (db, workspace, subkind) => {
+            if (!subkind) return null;
+            const [documentTypeId, fieldId] = subkind.split(':');
+            const documentType = documentTypeId
+              ? await db.document.getDocumentType(workspace, documentTypeId)
+              : null;
+            const field = documentType?.fields.find(item => item.id === fieldId);
+            return documentType && field ? `${documentType.name} · ${field.name}` : subkind;
+          }
+        },
         subjectVisible: async (db, authCtx, workspace, subjectId) => {
           const node = await db.project.getAnyContentNodeById(workspace, subjectId);
           if (!node) return false;

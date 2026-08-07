@@ -6,6 +6,7 @@ import type {
 import { PostgresGovernanceCaseConfigDatabase } from './postgresGovernanceCaseConfig';
 import type { GovernanceCaseConfigDbResult } from './governanceCaseConfigDatabase';
 import type { PostgresSqlClient } from '../../../db/postgresBase';
+import { parseGovernanceWorkflowConfig } from '../governanceWorkflowConfig';
 
 /**
  * Reminder config is stored as workspace-wide (`case_subkind: null`) rows in the generalized
@@ -43,9 +44,18 @@ export class PostgresGovernanceReminderConfigDatabase implements GovernanceRemin
       case_subkind: null,
       enabled: input.enabled,
       config: {
-        approaching_days: input.approaching_days,
-        overdue_days: input.overdue_days,
-        escalation_enabled: input.escalation_enabled
+        reminders: {
+          enabled: input.enabled,
+          approachingDays: input.approaching_days,
+          overdueDays: input.overdue_days
+        },
+        escalation: {
+          enabled: input.escalation_enabled,
+          overdueDays: 1,
+          fallbackUserIds: [],
+          fallbackTeamIds: []
+        },
+        extensions: {}
       },
       updated_at: input.updated_at,
       updated_by: input.updated_by
@@ -57,14 +67,20 @@ export class PostgresGovernanceReminderConfigDatabase implements GovernanceRemin
 const toReminderConfig = (row: GovernanceCaseConfigDbResult): GovernanceReminderConfigDbResult => ({
   workspace: row.workspace,
   case_kind: row.case_kind,
-  enabled: row.enabled,
-  approaching_days: Array.isArray(row.config['approaching_days'])
-    ? (row.config['approaching_days'] as number[])
-    : [],
-  overdue_days: Array.isArray(row.config['overdue_days'])
-    ? (row.config['overdue_days'] as number[])
-    : [],
-  escalation_enabled: row.config['escalation_enabled'] !== false,
+  enabled: parseGovernanceWorkflowConfig(row.config, row.enabled).reminders?.enabled ?? row.enabled,
+  approaching_days:
+    parseGovernanceWorkflowConfig(row.config, row.enabled).reminders?.approachingDays ?? [],
+  overdue_days: parseGovernanceWorkflowConfig(row.config, row.enabled).reminders?.overdueDays ?? [],
+  escalation_enabled:
+    parseGovernanceWorkflowConfig(row.config, row.enabled).escalation?.enabled ?? true,
+  escalation_overdue_days: parseGovernanceWorkflowConfig(row.config, row.enabled).escalation
+    ?.overdueDays,
+  escalation_source: parseGovernanceWorkflowConfig(row.config, row.enabled).escalation
+    ?.escalationSource,
+  escalation_fallback_user_ids: parseGovernanceWorkflowConfig(row.config, row.enabled).escalation
+    ?.fallbackUserIds,
+  escalation_fallback_team_ids: parseGovernanceWorkflowConfig(row.config, row.enabled).escalation
+    ?.fallbackTeamIds,
   updated_at: row.updated_at,
   updated_by: row.updated_by
 });

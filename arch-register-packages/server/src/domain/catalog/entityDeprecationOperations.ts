@@ -47,6 +47,7 @@ import {
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import {
   ENTITY_DEPRECATION_POLICY_CASE_KIND,
+  schemaWorkflowConfig,
   getSchemaPolicy
 } from '../governance/schemaGovernancePolicy';
 
@@ -467,6 +468,7 @@ export const createDeprecationGovernanceRegistry = (
     [
       ENTITY_DEPRECATION_CASE_KIND,
       {
+        workflowConfig: schemaWorkflowConfig,
         subjectVisible: async (db, authCtx, workspace, subjectId) => {
           const entity = await db.catalog.getEntity(workspace, subjectId);
           return (

@@ -44,10 +44,7 @@ import { documentContract } from '@arch-register/api-types/documentContract';
 import { entityChangeContract } from '@arch-register/api-types/entityChangeContract';
 import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
 import { governanceContract } from '@arch-register/api-types/governanceContract';
-import { governanceReminderConfigContract } from '@arch-register/api-types/governanceReminderConfigContract';
-import { governanceFieldDateReminderConfigContract } from '@arch-register/api-types/governanceFieldDateReminderConfigContract';
-import { governanceWorkflowOverviewContract } from '@arch-register/api-types/governanceWorkflowOverviewContract';
-import { governanceDocumentStatusConfigContract } from '@arch-register/api-types/governanceDocumentStatusConfigContract';
+import { governanceWorkflowConfigContract } from '@arch-register/api-types/governanceWorkflowConfigContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { normalizeApiError } from './http';
 
@@ -88,10 +85,7 @@ const applicationContracts = {
   ...entityChangeContract,
   ...entityDeprecationContract,
   ...governanceContract,
-  ...governanceReminderConfigContract,
-  ...governanceFieldDateReminderConfigContract,
-  ...governanceWorkflowOverviewContract,
-  ...governanceDocumentStatusConfigContract,
+  ...governanceWorkflowConfigContract,
   ...workspaceEnumContract,
   ...workspaceSchemaContract,
   ...workspaceRelationSchemaContract,
@@ -167,10 +161,7 @@ export const orpcClient = {
   entityChanges: applicationClient.entityChanges,
   entityDeprecations: applicationClient.entityDeprecations,
   governance: applicationClient.governance,
-  governanceReminderConfig: applicationClient.governanceReminderConfig,
-  governanceFieldDateReminderConfig: applicationClient.governanceFieldDateReminderConfig,
-  governanceWorkflowOverview: applicationClient.governanceWorkflowOverview,
-  governanceDocumentStatusConfig: applicationClient.governanceDocumentStatusConfig,
+  governanceWorkflowConfig: applicationClient.governanceWorkflowConfig,
   enums: applicationClient.enums,
   fieldGroups: applicationClient.fieldGroups,
   schemas: applicationClient.schemas,

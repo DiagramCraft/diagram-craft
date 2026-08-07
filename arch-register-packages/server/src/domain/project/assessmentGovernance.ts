@@ -16,6 +16,10 @@ export const createAssessmentGovernanceRegistry = (): GovernanceRegistry =>
     [
       ASSESSMENT_RESPONSE_CASE_KIND,
       {
+        workflowConfig: {
+          supportsApprovals: false,
+          supportsEscalation: false
+        },
         subjectVisible: async (
           db: DatabaseAdapter,
           _authCtx,

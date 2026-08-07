@@ -6,6 +6,7 @@ import type {
   GovernanceEventDbResult
 } from './db/governanceDatabase';
 import type { GovernanceAssignmentTarget } from './governanceOperations';
+import type { GovernanceWorkflowConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
 
 /**
  * Per-case-kind hooks, registered by the domain that owns the case kind (e.g. entity-change
@@ -14,6 +15,25 @@ import type { GovernanceAssignmentTarget } from './governanceOperations';
  * real domain effect to call into.
  */
 export type GovernanceCaseKindConfig = {
+  /** Metadata and validation used by the centralized workflow configuration API. */
+  workflowConfig?: {
+    supportsSubkind?: boolean;
+    supportsApprovals?: boolean;
+    supportsReminders?: boolean;
+    supportsEscalation?: boolean;
+    defaultConfig?: GovernanceWorkflowConfig;
+    validateSubkind?: (
+      db: DatabaseAdapter,
+      workspace: string,
+      subkind: string | null
+    ) => Promise<string | null>;
+    labelSubkind?: (
+      db: DatabaseAdapter,
+      workspace: string,
+      subkind: string | null
+    ) => Promise<string | null>;
+    validateConfig?: (config: GovernanceWorkflowConfig) => void;
+  };
   /**
    * Whether `subjectId` is visible to the given actor. Defaults to false (fail closed) when a
    * case kind has no checker registered, so listing/getting a case never leaks subject existence

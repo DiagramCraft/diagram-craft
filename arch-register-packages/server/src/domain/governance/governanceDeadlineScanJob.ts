@@ -148,11 +148,18 @@ export const createGovernanceDeadlineScanJobHandler =
         const daysUntilDue = Math.floor(
           (caseRow.due_at.getTime() - scanNow.getTime()) / MS_PER_DAY
         );
-        if (-daysUntilDue >= escalation.overdueDays) {
+        const escalationOverdueDays = override?.escalation_overdue_days ?? escalation.overdueDays;
+        if (-daysUntilDue >= escalationOverdueDays) {
           await db.core.transaction(async tx => {
             const fresh = await tx.governance.getCase(context.workspace, caseRow.id);
             if (fresh?.status !== 'open' || fresh.escalated_at) return;
-            const target = await escalation.target(tx, fresh);
+            const configuredUserId = override?.escalation_fallback_user_ids?.[0];
+            const configuredTeamId = override?.escalation_fallback_team_ids?.[0];
+            const target = configuredUserId
+              ? { type: 'user' as const, userId: configuredUserId }
+              : configuredTeamId
+                ? { type: 'team' as const, teamId: configuredTeamId }
+                : await escalation.target(tx, fresh);
             if (!target) return;
             await recordGovernanceEvent(tx, fresh, {
               eventType: 'escalated',

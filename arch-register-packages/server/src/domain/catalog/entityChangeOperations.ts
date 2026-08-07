@@ -63,7 +63,8 @@ import {
 import { getEntitySchemaAt } from './schemaHistory';
 import {
   ENTITY_CHANGE_POLICY_CASE_KIND,
-  getSchemaPolicy
+  getSchemaPolicy,
+  schemaWorkflowConfig
 } from '../governance/schemaGovernancePolicy';
 
 export const ENTITY_CHANGE_CASE_KIND = 'entity.change-case';
@@ -969,6 +970,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
     [
       ENTITY_CHANGE_CASE_KIND,
       {
+        workflowConfig: schemaWorkflowConfig,
         subjectVisible: async (
           db,
           _authCtx: AuthorizationContext,
@@ -1151,6 +1153,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
     [
       ENTITY_CHANGE_CASE_BULK_KIND,
       {
+        workflowConfig: schemaWorkflowConfig,
         subjectVisible: async (
           db,
           authCtx: AuthorizationContext,

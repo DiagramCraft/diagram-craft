@@ -47,10 +47,7 @@ import { createWatchORPCHandler } from './domain/watch/watchOrpc';
 import { createNotificationPreferencesORPCHandler } from './domain/notification/notificationPreferenceOrpc';
 import { createDiscussionORPCHandler } from './domain/discussion/discussionOrpc';
 import { createGovernanceORPCHandler } from './domain/governance/governanceOrpc';
-import { createGovernanceReminderConfigORPCHandler } from './domain/governance/governanceReminderConfigOrpc';
-import { createGovernanceFieldDateReminderConfigORPCHandler } from './domain/governance/governanceFieldDateReminderConfigOrpc';
-import { createGovernanceWorkflowOverviewORPCHandler } from './domain/governance/governanceWorkflowOverviewOrpc';
-import { createGovernanceDocumentStatusConfigORPCHandler } from './domain/governance/governanceDocumentStatusConfigOrpc';
+import { createGovernanceWorkflowConfigORPCHandler } from './domain/governance/governanceWorkflowConfigOrpc';
 import { createWikiCommentORPCHandler } from './domain/wikiComments/wikiCommentOrpc';
 import { createSearchORPCHandler } from './domain/search/searchOrpc';
 import {
@@ -215,10 +212,7 @@ export const createApp = (
     ...createFieldDateReminderGovernanceRegistry()
   ]);
   app.use(createGovernanceORPCHandler(db, governanceRegistry));
-  app.use(createGovernanceReminderConfigORPCHandler(db, governanceRegistry));
-  app.use(createGovernanceFieldDateReminderConfigORPCHandler(db));
-  app.use(createGovernanceWorkflowOverviewORPCHandler(db, governanceRegistry));
-  app.use(createGovernanceDocumentStatusConfigORPCHandler(db));
+  app.use(createGovernanceWorkflowConfigORPCHandler(db, governanceRegistry));
   app.use(createWikiCommentORPCHandler(db));
   app.use(createSearchORPCHandler(db));
   app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));

@@ -12,6 +12,10 @@ export type GovernanceReminderConfigDbResult = {
   approaching_days: number[];
   overdue_days: number[];
   escalation_enabled: boolean;
+  escalation_overdue_days?: number;
+  escalation_source?: string;
+  escalation_fallback_user_ids?: string[];
+  escalation_fallback_team_ids?: string[];
   updated_at: Date;
   updated_by: string | null;
 };

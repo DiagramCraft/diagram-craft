@@ -85390,11 +85390,10 @@
         }
       }
     },
-    "/{workspace}/governance/reminder-config": {
+    "/{workspace}/governance/workflow-config": {
       "get": {
-        "operationId": "governanceReminderConfig.list",
-        "summary": "List governance reminder configuration",
-        "description": "Lists the scheduled deadline reminder configuration for each governance case kind that supports it, merging any workspace override with the case kind’s code default.",
+        "operationId": "governanceWorkflowConfig.list",
+        "summary": "List centralized governance workflow configuration",
         "tags": [
           "Governance",
           "Governance"
@@ -85409,144 +85408,6 @@
             }
           }
         ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "case_kind": {
-                        "type": "string",
-                        "description": "Governance case kind this config applies to"
-                      },
-                      "case_kind_label": {
-                        "type": "string",
-                        "description": "Human-readable label for the case kind"
-                      },
-                      "enabled": {
-                        "type": "boolean",
-                        "description": "Whether scheduled reminders are enabled for this case kind"
-                      },
-                      "approaching_days": {
-                        "type": "array",
-                        "items": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
-                        },
-                        "description": "Days before due_at at which an approaching-deadline reminder is sent"
-                      },
-                      "overdue_days": {
-                        "type": "array",
-                        "items": {
-                          "type": "integer",
-                          "minimum": 0,
-                          "maximum": 9007199254740991
-                        },
-                        "description": "Days past due_at at which an overdue reminder is sent"
-                      },
-                      "escalation_supported": {
-                        "type": "boolean",
-                        "description": "Whether this case kind has a built-in escalation threshold at all"
-                      },
-                      "escalation_enabled": {
-                        "type": "boolean",
-                        "description": "Whether overdue cases of this kind escalate to the code-defined escalation target. Only meaningful when escalation_supported is true."
-                      },
-                      "is_default": {
-                        "type": "boolean",
-                        "description": "True if this reflects the case kind’s code default rather than a workspace override"
-                      }
-                    },
-                    "required": [
-                      "case_kind",
-                      "case_kind_label",
-                      "enabled",
-                      "approaching_days",
-                      "overdue_days",
-                      "escalation_supported",
-                      "escalation_enabled",
-                      "is_default"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/{workspace}/governance/reminder-config/{caseKind}": {
-      "put": {
-        "operationId": "governanceReminderConfig.update",
-        "summary": "Update governance reminder configuration",
-        "description": "Sets a workspace-specific override of the reminder day thresholds for a governance case kind.",
-        "tags": [
-          "Governance",
-          "Governance"
-        ],
-        "parameters": [
-          {
-            "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "caseKind",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "approaching_days": {
-                    "type": "array",
-                    "items": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    }
-                  },
-                  "overdue_days": {
-                    "type": "array",
-                    "items": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    }
-                  },
-                  "escalation_enabled": {
-                    "type": "boolean"
-                  }
-                },
-                "required": [
-                  "enabled",
-                  "approaching_days",
-                  "overdue_days",
-                  "escalation_enabled"
-                ]
-              }
-            }
-          }
-        },
         "responses": {
           "200": {
             "description": "OK",
@@ -85555,615 +85416,400 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "case_kind": {
-                      "type": "string",
-                      "description": "Governance case kind this config applies to"
-                    },
-                    "case_kind_label": {
-                      "type": "string",
-                      "description": "Human-readable label for the case kind"
-                    },
-                    "enabled": {
-                      "type": "boolean",
-                      "description": "Whether scheduled reminders are enabled for this case kind"
-                    },
-                    "approaching_days": {
+                    "case_kinds": {
                       "type": "array",
                       "items": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      },
-                      "description": "Days before due_at at which an approaching-deadline reminder is sent"
-                    },
-                    "overdue_days": {
-                      "type": "array",
-                      "items": {
-                        "type": "integer",
-                        "minimum": 0,
-                        "maximum": 9007199254740991
-                      },
-                      "description": "Days past due_at at which an overdue reminder is sent"
-                    },
-                    "escalation_supported": {
-                      "type": "boolean",
-                      "description": "Whether this case kind has a built-in escalation threshold at all"
-                    },
-                    "escalation_enabled": {
-                      "type": "boolean",
-                      "description": "Whether overdue cases of this kind escalate to the code-defined escalation target. Only meaningful when escalation_supported is true."
-                    },
-                    "is_default": {
-                      "type": "boolean",
-                      "description": "True if this reflects the case kind’s code default rather than a workspace override"
-                    }
-                  },
-                  "required": [
-                    "case_kind",
-                    "case_kind_label",
-                    "enabled",
-                    "approaching_days",
-                    "overdue_days",
-                    "escalation_supported",
-                    "escalation_enabled",
-                    "is_default"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/{workspace}/governance/field-date-reminder-config/{id}": {
-      "get": {
-        "operationId": "governanceFieldDateReminderConfig.list",
-        "summary": "List field-date reminder configuration",
-        "tags": [
-          "Governance",
-          "Governance"
-        ],
-        "parameters": [
-          {
-            "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "schema_id": {
-                        "type": "string"
-                      },
-                      "field_id": {
-                        "type": "string"
-                      },
-                      "case_subkind": {
-                        "type": "string"
-                      },
-                      "enabled": {
-                        "type": "boolean"
-                      },
-                      "config": {
                         "type": "object",
                         "properties": {
-                          "approaching_days": {
-                            "type": "array",
-                            "items": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
-                            "description": "Days before the field date at which an approaching reminder is sent"
+                          "case_kind": {
+                            "type": "string",
+                            "minLength": 1
                           },
-                          "overdue_days": {
-                            "type": "array",
-                            "items": {
-                              "type": "integer",
-                              "minimum": 0,
-                              "maximum": 9007199254740991
-                            },
-                            "description": "Days after the field date at which an overdue reminder is sent"
+                          "label": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "supportsSubkind": {
+                            "type": "boolean"
+                          },
+                          "supportsApprovals": {
+                            "type": "boolean"
+                          },
+                          "supportsReminders": {
+                            "type": "boolean"
+                          },
+                          "supportsEscalation": {
+                            "type": "boolean"
                           }
                         },
                         "required": [
-                          "approaching_days",
-                          "overdue_days"
+                          "case_kind",
+                          "label",
+                          "description",
+                          "supportsSubkind",
+                          "supportsApprovals",
+                          "supportsReminders",
+                          "supportsEscalation"
                         ]
                       }
                     },
-                    "required": [
-                      "schema_id",
-                      "field_id",
-                      "case_subkind",
-                      "enabled",
-                      "config"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/{workspace}/governance/field-date-reminder-config/{id}/{fieldId}": {
-      "put": {
-        "operationId": "governanceFieldDateReminderConfig.update",
-        "summary": "Update field-date reminder configuration",
-        "tags": [
-          "Governance",
-          "Governance"
-        ],
-        "parameters": [
-          {
-            "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "fieldId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "approaching_days": {
-                    "type": "array",
-                    "items": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    }
-                  },
-                  "overdue_days": {
-                    "type": "array",
-                    "items": {
-                      "type": "integer",
-                      "minimum": 0,
-                      "maximum": 9007199254740991
-                    }
-                  }
-                },
-                "required": [
-                  "enabled",
-                  "approaching_days",
-                  "overdue_days"
-                ]
-              }
-            }
-          }
-        },
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "object",
-                  "properties": {
-                    "schema_id": {
-                      "type": "string"
-                    },
-                    "field_id": {
-                      "type": "string"
-                    },
-                    "case_subkind": {
-                      "type": "string"
-                    },
-                    "enabled": {
-                      "type": "boolean"
-                    },
-                    "config": {
-                      "type": "object",
-                      "properties": {
-                        "approaching_days": {
-                          "type": "array",
-                          "items": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 9007199254740991
-                          },
-                          "description": "Days before the field date at which an approaching reminder is sent"
-                        },
-                        "overdue_days": {
-                          "type": "array",
-                          "items": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 9007199254740991
-                          },
-                          "description": "Days after the field date at which an overdue reminder is sent"
-                        }
-                      },
-                      "required": [
-                        "approaching_days",
-                        "overdue_days"
-                      ]
-                    }
-                  },
-                  "required": [
-                    "schema_id",
-                    "field_id",
-                    "case_subkind",
-                    "enabled",
-                    "config"
-                  ]
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/{workspace}/governance/workflows": {
-      "get": {
-        "operationId": "governanceWorkflowOverview.list",
-        "summary": "List governance workflow overview",
-        "description": "Lists every governance case kind with a summary of which workflow settings it supports, for the unified workflow admin screen.",
-        "tags": [
-          "Governance",
-          "Governance"
-        ],
-        "parameters": [
-          {
-            "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "case_kind": {
-                        "type": "string",
-                        "description": "Governance case kind"
-                      },
-                      "label": {
-                        "type": "string",
-                        "description": "Human-readable label for the case kind"
-                      },
-                      "description": {
-                        "type": "string",
-                        "description": "Short human-readable description of the workflow"
-                      },
-                      "capabilities": {
+                    "configs": {
+                      "type": "array",
+                      "items": {
                         "type": "object",
                         "properties": {
-                          "reminders": {
-                            "type": "boolean",
-                            "description": "Whether this case kind supports scheduled deadline reminders"
+                          "id": {
+                            "type": "string"
                           },
-                          "escalation": {
-                            "type": "boolean",
-                            "description": "Whether this case kind supports overdue escalation"
-                          },
-                          "approvalQuorum": {
-                            "type": "boolean",
-                            "description": "Whether this case kind has configurable approver/quorum rules"
-                          }
-                        },
-                        "required": [
-                          "reminders",
-                          "escalation",
-                          "approvalQuorum"
-                        ]
-                      },
-                      "approval_summary": {
-                        "type": "object",
-                        "properties": {
-                          "documentTypesConfigured": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 9007199254740991,
-                            "description": "Number of document types with at least one workflow-enabled status field"
-                          },
-                          "fieldsConfigured": {
-                            "type": "integer",
-                            "minimum": 0,
-                            "maximum": 9007199254740991,
-                            "description": "Number of status fields, across all document types, with approval required"
-                          }
-                        },
-                        "required": [
-                          "documentTypesConfigured",
-                          "fieldsConfigured"
-                        ],
-                        "description": "Present only when capabilities.approvalQuorum is true"
-                      },
-                      "configured_elsewhere": {
-                        "type": "object",
-                        "properties": {
-                          "settings_section_id": {
+                          "case_kind": {
                             "type": "string",
-                            "description": "Workspace settings section id to link to"
+                            "minLength": 1
                           },
-                          "settings_section_label": {
-                            "type": "string",
-                            "description": "Human-readable label of that settings section"
-                          }
-                        },
-                        "required": [
-                          "settings_section_id",
-                          "settings_section_label"
-                        ],
-                        "description": "Present when this case kind has configuration that is not surfaced on this screen at all (e.g. per-schema-field settings), so the card can link out instead of implying nothing is configurable"
-                      }
-                    },
-                    "required": [
-                      "case_kind",
-                      "label",
-                      "description",
-                      "capabilities"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/{workspace}/governance/document-status-config/{id}": {
-      "get": {
-        "operationId": "governanceDocumentStatusConfig.list",
-        "summary": "List document status approval configuration",
-        "tags": [
-          "Governance",
-          "Governance"
-        ],
-        "parameters": [
-          {
-            "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          }
-        ],
-        "responses": {
-          "200": {
-            "description": "OK",
-            "content": {
-              "application/json": {
-                "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "document_type_id": {
-                        "type": "string"
-                      },
-                      "field_id": {
-                        "type": "string"
-                      },
-                      "case_subkind": {
-                        "type": "string"
-                      },
-                      "enabled": {
-                        "type": "boolean"
-                      },
-                      "config": {
-                        "type": "object",
-                        "properties": {
-                          "statuses": {
-                            "type": "object",
-                            "propertyNames": {
-                              "type": "string"
-                            },
-                            "additionalProperties": {
-                              "type": "object",
-                              "properties": {
-                                "required": {
-                                  "type": "boolean"
-                                },
-                                "requiredApprovals": {
-                                  "type": "integer",
-                                  "minimum": -9007199254740991,
-                                  "maximum": 9007199254740991,
-                                  "exclusiveMinimum": 0
-                                },
-                                "approverFieldId": {
-                                  "type": "string",
-                                  "minLength": 1
-                                },
-                                "fallbackUserIds": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "default": []
-                                },
-                                "fallbackTeamIds": {
-                                  "type": "array",
-                                  "items": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "default": []
-                                }
+                          "case_kind_label": {
+                            "type": "string"
+                          },
+                          "case_kind_description": {
+                            "type": "string"
+                          },
+                          "case_subkind": {
+                            "anyOf": [
+                              {
+                                "type": "string"
                               },
-                              "required": [
-                                "required"
-                              ]
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "case_subkind_label": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "config": {
+                            "type": "object",
+                            "properties": {
+                              "approvals": {
+                                "type": "object",
+                                "properties": {
+                                  "requiredApprovals": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "exclusiveMinimum": 0
+                                  },
+                                  "approverSource": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "fallbackTeamIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "default": []
+                                  },
+                                  "fallbackUserIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "default": []
+                                  }
+                                },
+                                "required": [
+                                  "requiredApprovals"
+                                ]
+                              },
+                              "reminders": {
+                                "type": "object",
+                                "properties": {
+                                  "enabled": {
+                                    "type": "boolean"
+                                  },
+                                  "approachingDays": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  },
+                                  "overdueDays": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "enabled",
+                                  "approachingDays",
+                                  "overdueDays"
+                                ]
+                              },
+                              "escalation": {
+                                "type": "object",
+                                "properties": {
+                                  "enabled": {
+                                    "type": "boolean"
+                                  },
+                                  "overdueDays": {
+                                    "type": "integer",
+                                    "minimum": -9007199254740991,
+                                    "maximum": 9007199254740991,
+                                    "exclusiveMinimum": 0
+                                  },
+                                  "escalationSource": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "fallbackTeamIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "default": []
+                                  },
+                                  "fallbackUserIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string",
+                                      "minLength": 1
+                                    },
+                                    "default": []
+                                  }
+                                },
+                                "required": [
+                                  "enabled",
+                                  "overdueDays"
+                                ]
+                              },
+                              "extensions": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {},
+                                "default": {}
+                              }
+                            }
+                          },
+                          "updated_at": {
+                            "type": "string"
+                          },
+                          "updated_by": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "case_kind",
+                          "case_kind_label",
+                          "case_kind_description",
+                          "case_subkind",
+                          "case_subkind_label",
+                          "enabled",
+                          "config",
+                          "updated_at",
+                          "updated_by"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "case_kinds",
+                    "configs"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "governanceWorkflowConfig.upsert",
+        "summary": "Save centralized governance workflow configuration",
+        "tags": [
+          "Governance",
+          "Governance"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "case_kind": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "case_subkind": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "config": {
+                    "type": "object",
+                    "properties": {
+                      "approvals": {
+                        "type": "object",
+                        "properties": {
+                          "requiredApprovals": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          },
+                          "approverSource": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "fallbackTeamIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "default": []
+                          },
+                          "fallbackUserIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "default": []
+                          }
+                        },
+                        "required": [
+                          "requiredApprovals"
+                        ]
+                      },
+                      "reminders": {
+                        "type": "object",
+                        "properties": {
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "approachingDays": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
+                            }
+                          },
+                          "overdueDays": {
+                            "type": "array",
+                            "items": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991
                             }
                           }
                         },
                         "required": [
-                          "statuses"
+                          "enabled",
+                          "approachingDays",
+                          "overdueDays"
                         ]
-                      }
-                    },
-                    "required": [
-                      "document_type_id",
-                      "field_id",
-                      "case_subkind",
-                      "enabled",
-                      "config"
-                    ]
-                  }
-                }
-              }
-            }
-          }
-        }
-      }
-    },
-    "/{workspace}/governance/document-status-config/{id}/{fieldId}": {
-      "put": {
-        "operationId": "governanceDocumentStatusConfig.update",
-        "summary": "Update document status approval configuration",
-        "tags": [
-          "Governance",
-          "Governance"
-        ],
-        "parameters": [
-          {
-            "name": "workspace",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "id",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string"
-            }
-          },
-          {
-            "name": "fieldId",
-            "in": "path",
-            "required": true,
-            "schema": {
-              "type": "string",
-              "minLength": 1
-            }
-          }
-        ],
-        "requestBody": {
-          "required": true,
-          "content": {
-            "application/json": {
-              "schema": {
-                "type": "object",
-                "properties": {
-                  "enabled": {
-                    "type": "boolean"
-                  },
-                  "statuses": {
-                    "type": "object",
-                    "propertyNames": {
-                      "type": "string"
-                    },
-                    "additionalProperties": {
-                      "type": "object",
-                      "properties": {
-                        "required": {
-                          "type": "boolean"
-                        },
-                        "requiredApprovals": {
-                          "type": "integer",
-                          "minimum": -9007199254740991,
-                          "maximum": 9007199254740991,
-                          "exclusiveMinimum": 0
-                        },
-                        "approverFieldId": {
-                          "type": "string",
-                          "minLength": 1
-                        },
-                        "fallbackUserIds": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "default": []
-                        },
-                        "fallbackTeamIds": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "default": []
-                        }
                       },
-                      "required": [
-                        "required"
-                      ]
+                      "escalation": {
+                        "type": "object",
+                        "properties": {
+                          "enabled": {
+                            "type": "boolean"
+                          },
+                          "overdueDays": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "exclusiveMinimum": 0
+                          },
+                          "escalationSource": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "fallbackTeamIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "default": []
+                          },
+                          "fallbackUserIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "default": []
+                          }
+                        },
+                        "required": [
+                          "enabled",
+                          "overdueDays"
+                        ]
+                      },
+                      "extensions": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {},
+                        "default": {}
+                      }
                     }
                   }
                 },
                 "required": [
-                  "enabled",
-                  "statuses"
+                  "case_kind",
+                  "case_subkind",
+                  "config"
                 ]
               }
             }
@@ -86177,14 +85823,38 @@
                 "schema": {
                   "type": "object",
                   "properties": {
-                    "document_type_id": {
+                    "id": {
                       "type": "string"
                     },
-                    "field_id": {
+                    "case_kind": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "case_kind_label": {
+                      "type": "string"
+                    },
+                    "case_kind_description": {
                       "type": "string"
                     },
                     "case_subkind": {
-                      "type": "string"
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "case_subkind_label": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
                     },
                     "enabled": {
                       "type": "boolean"
@@ -86192,61 +85862,211 @@
                     "config": {
                       "type": "object",
                       "properties": {
-                        "statuses": {
+                        "approvals": {
+                          "type": "object",
+                          "properties": {
+                            "requiredApprovals": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "exclusiveMinimum": 0
+                            },
+                            "approverSource": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "fallbackTeamIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "default": []
+                            },
+                            "fallbackUserIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "default": []
+                            }
+                          },
+                          "required": [
+                            "requiredApprovals"
+                          ]
+                        },
+                        "reminders": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "approachingDays": {
+                              "type": "array",
+                              "items": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              }
+                            },
+                            "overdueDays": {
+                              "type": "array",
+                              "items": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991
+                              }
+                            }
+                          },
+                          "required": [
+                            "enabled",
+                            "approachingDays",
+                            "overdueDays"
+                          ]
+                        },
+                        "escalation": {
+                          "type": "object",
+                          "properties": {
+                            "enabled": {
+                              "type": "boolean"
+                            },
+                            "overdueDays": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "exclusiveMinimum": 0
+                            },
+                            "escalationSource": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "fallbackTeamIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "default": []
+                            },
+                            "fallbackUserIds": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "default": []
+                            }
+                          },
+                          "required": [
+                            "enabled",
+                            "overdueDays"
+                          ]
+                        },
+                        "extensions": {
                           "type": "object",
                           "propertyNames": {
                             "type": "string"
                           },
-                          "additionalProperties": {
-                            "type": "object",
-                            "properties": {
-                              "required": {
-                                "type": "boolean"
-                              },
-                              "requiredApprovals": {
-                                "type": "integer",
-                                "minimum": -9007199254740991,
-                                "maximum": 9007199254740991,
-                                "exclusiveMinimum": 0
-                              },
-                              "approverFieldId": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "fallbackUserIds": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string",
-                                  "minLength": 1
-                                },
-                                "default": []
-                              },
-                              "fallbackTeamIds": {
-                                "type": "array",
-                                "items": {
-                                  "type": "string",
-                                  "minLength": 1
-                                },
-                                "default": []
-                              }
-                            },
-                            "required": [
-                              "required"
-                            ]
-                          }
+                          "additionalProperties": {},
+                          "default": {}
                         }
-                      },
-                      "required": [
-                        "statuses"
+                      }
+                    },
+                    "updated_at": {
+                      "type": "string"
+                    },
+                    "updated_by": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
                       ]
                     }
                   },
                   "required": [
-                    "document_type_id",
-                    "field_id",
+                    "id",
+                    "case_kind",
+                    "case_kind_label",
+                    "case_kind_description",
                     "case_subkind",
+                    "case_subkind_label",
                     "enabled",
-                    "config"
+                    "config",
+                    "updated_at",
+                    "updated_by"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "governanceWorkflowConfig.reset",
+        "summary": "Reset centralized governance workflow configuration",
+        "tags": [
+          "Governance",
+          "Governance"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "case_kind": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "case_subkind": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "case_kind",
+                  "case_subkind"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "reset": {
+                      "type": "boolean"
+                    }
+                  },
+                  "required": [
+                    "reset"
                   ]
                 }
               }

@@ -1,5 +1,4 @@
--- Move document status approval rules out of document JSON and into the generalized
--- workspace_governance_case_config store. Keep isStatus in the document field definition.
+-- Seed harmonized document status workflow configuration in the generalized store.
 INSERT INTO workspace_governance_case_config (
   id, workspace, case_kind, case_subkind, enabled, config, updated_at, updated_by
 )
@@ -12,17 +11,22 @@ SELECT
   document_type.id || ':' || json_extract(status_field.value, '$.id'),
   1,
   json_object(
-    'statuses',
-    COALESCE(
-      (
-        SELECT json_group_object(
-          json_extract(option.value, '$.value'),
-          json_extract(option.value, '$.approval')
-        )
-        FROM json_each(json_extract(status_field.value, '$.enumOptions')) option
-        WHERE json_type(option.value, '$.approval') IS NOT NULL
-      ),
-      '{}'
+    'approvals', json_object(
+      'requiredApprovals', 1,
+      'fallbackUserIds', json('[]'),
+      'fallbackTeamIds', json('[]')
+    ),
+    'extensions', json_object(
+      'document.status', json_object(
+        'statusesRequiringApprovals', json(COALESCE(
+          (
+            SELECT json_group_array(json_extract(option.value, '$.value'))
+            FROM json_each(json_extract(status_field.value, '$.enumOptions')) option
+            WHERE json_type(option.value, '$.approval') IS NOT NULL
+          ),
+          '[]'
+        ))
+      )
     )
   ),
   document_type.updated_at,

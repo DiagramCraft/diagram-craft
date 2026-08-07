@@ -1,126 +1,860 @@
-import { useNavigate } from '@tanstack/react-router';
+import { useEffect, useMemo, useState } from 'react';
+import { TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import styles from './WorkflowsSubSection.module.css';
-import { useGovernanceWorkflowOverview } from '../../../hooks/useGovernanceWorkflowOverview';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import { Dialog } from '@diagram-craft/app-components/Dialog';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { Select } from '@diagram-craft/app-components/Select';
+import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Table } from '../../../components/table/Table';
+import { Chip } from '../../../components/Chip';
+import { UserGroupPicker } from '../../../components/UserGroupPicker';
+import type {
+  GovernanceWorkflowConfigRow,
+  GovernanceWorkflowConfigUpsert
+} from '@arch-register/api-types/governanceWorkflowConfigContract';
+import type { GovernanceWorkflowCaseKind } from '@arch-register/api-types/governanceWorkflowConfigContract';
+import type { GovernanceWorkflowConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
+import { useDocumentTypes } from '../../../hooks/useDocuments';
+import { useSchemas } from '../../../hooks/useSchemas';
+import { useWorkspaceMembers } from '../../../hooks/useWorkspaceMembers';
+import { useTeams } from '../../../hooks/useWorkspaceConfig';
 import {
-  useGovernanceReminderConfig,
-  useUpdateGovernanceReminderConfig
-} from '../../../hooks/useGovernanceReminderConfig';
-import { ReminderConfigRow } from './ReminderConfigRow';
-import { settingsSectionTarget } from '../../../routes/settingsNavigation';
-import type { GovernanceWorkflowOverview } from '@arch-register/api-types/governanceWorkflowOverviewContract';
-import type { GovernanceReminderConfig } from '@arch-register/api-types/governanceReminderConfigContract';
+  useGovernanceWorkflowConfig,
+  useResetGovernanceWorkflowConfig,
+  useUpsertGovernanceWorkflowConfig
+} from '../../../hooks/useGovernanceWorkflowConfig';
+import styles from './WorkflowsSubSection.module.css';
 
-type ReminderConfigSave = {
-  enabled: boolean;
-  approaching_days: number[];
-  overdue_days: number[];
-  escalation_enabled: boolean;
+const documentStatusExtension = (config: GovernanceWorkflowConfig) => {
+  const extension = config.extensions['document.status'];
+  if (!extension || typeof extension !== 'object') return { statusesRequiringApprovals: [] };
+  const values = (extension as { statusesRequiringApprovals?: unknown }).statusesRequiringApprovals;
+  return {
+    statusesRequiringApprovals: Array.isArray(values)
+      ? values.filter((value): value is string => typeof value === 'string')
+      : []
+  };
 };
 
-const WorkflowCard = ({
-  workflow,
+const defaultConfig = (caseKind: GovernanceWorkflowCaseKind): GovernanceWorkflowConfig => ({
+  ...(caseKind.case_kind === 'document.status'
+    ? {
+        approvals: {
+          requiredApprovals: 1,
+          fallbackUserIds: [],
+          fallbackTeamIds: []
+        },
+        reminders: {
+          enabled: true,
+          approachingDays: [2],
+          overdueDays: [1, 5]
+        }
+      }
+    : caseKind.case_kind === 'field-date-reminder'
+      ? {
+          reminders: {
+            enabled: true,
+            approachingDays: [3],
+            overdueDays: [1, 3]
+          }
+        }
+      : {}),
+  extensions: {}
+});
+
+const parseDays = (value: string) =>
+  value
+    .split(',')
+    .map(item => item.trim())
+    .map(item => Number(item))
+    .filter(item => Number.isInteger(item) && item >= 0);
+
+const trimmedOrUndefined = (value: string | undefined) => {
+  const trimmed = value?.trim();
+  return trimmed === undefined || trimmed === '' ? undefined : trimmed;
+};
+
+const FallbackTargetPicker = ({
   workspaceSlug,
-  reminderConfigByCaseKind,
-  savingReminderConfig,
-  onSaveReminderConfig
+  kind,
+  values,
+  onChange
 }: {
-  workflow: GovernanceWorkflowOverview;
   workspaceSlug: string;
-  reminderConfigByCaseKind: Map<string, GovernanceReminderConfig>;
-  savingReminderConfig: boolean;
-  onSaveReminderConfig: (caseKind: string, data: ReminderConfigSave) => void;
+  kind: 'user' | 'team';
+  values: string[];
+  onChange: (values: string[]) => void;
 }) => {
-  const navigate = useNavigate();
-  const reminderConfig = reminderConfigByCaseKind.get(workflow.case_kind);
-  const configuredElsewhere = workflow.configured_elsewhere;
+  const { data: members = [] } = useWorkspaceMembers(workspaceSlug);
+  const { data: teams = [] } = useTeams(workspaceSlug);
+  const labels = useMemo(
+    () =>
+      new Map(
+        kind === 'user'
+          ? members.map(member => [member.user_id, member.display_name])
+          : teams.map(team => [team.id, team.name])
+      ),
+    [kind, members, teams]
+  );
 
   return (
-    <div className={styles.card}>
-      <div className={styles.cardHead}>
-        <div>
-          <div className={styles.cardTitle}>{workflow.label}</div>
-          <div className={styles.cardSub}>{workflow.description}</div>
-        </div>
-        <div className={styles.badges}>
-          {workflow.capabilities.reminders && (
-            <span className={`${styles.badge} ${styles.badgeActive}`}>Reminders</span>
-          )}
-          {workflow.capabilities.escalation && (
-            <span className={`${styles.badge} ${styles.badgeActive}`}>Escalation</span>
-          )}
-          {workflow.capabilities.approvalQuorum && (
-            <span className={`${styles.badge} ${styles.badgeActive}`}>Approval & quorum</span>
-          )}
-        </div>
-      </div>
-      <div className={styles.cardBody}>
-        {workflow.capabilities.reminders && reminderConfig && (
-          <ReminderConfigRow
-            config={reminderConfig}
-            saving={savingReminderConfig}
-            onSave={data => onSaveReminderConfig(workflow.case_kind, data)}
-          />
-        )}
-        {workflow.capabilities.approvalQuorum && (
-          <div className={styles.approvalSummary}>
-            <span>
-              {workflow.approval_summary?.documentTypesConfigured ?? 0} document type(s) with{' '}
-              {workflow.approval_summary?.fieldsConfigured ?? 0} workflow-enabled field(s)
-            </span>
-            <Button onClick={() => navigate(settingsSectionTarget(workspaceSlug, 'documents'))}>
-              Configure in Document Schema
-            </Button>
-          </div>
-        )}
-        {!workflow.capabilities.reminders &&
-          !workflow.capabilities.approvalQuorum &&
-          (configuredElsewhere ? (
-            <div className={styles.approvalSummary}>
-              <span>Configured per {configuredElsewhere.settings_section_label} field.</span>
-              <Button
-                onClick={() =>
-                  navigate(
-                    settingsSectionTarget(workspaceSlug, configuredElsewhere.settings_section_id)
-                  )
-                }
+    <div className={styles.fallbackPicker}>
+      <UserGroupPicker
+        kind={kind}
+        activeOnly={kind === 'user'}
+        excludeIds={values}
+        onSelect={item => onChange([...values, item.id])}
+        placeholder={kind === 'user' ? 'Search users to add…' : 'Search teams to add…'}
+      />
+      {values.length > 0 && (
+        <div className={styles.selectedValues}>
+          {values.map(id => (
+            <Chip key={id}>
+              <span>{labels.get(id) ?? id}</span>
+              <button
+                type="button"
+                className={styles.removeValue}
+                aria-label={`Remove ${labels.get(id) ?? id}`}
+                onClick={() => onChange(values.filter(value => value !== id))}
               >
-                Configure in {configuredElsewhere.settings_section_label}
-              </Button>
-            </div>
-          ) : (
-            <div className={styles.emptyNote}>No configurable workflow settings yet.</div>
+                <TbX size={10} />
+              </button>
+            </Chip>
           ))}
-      </div>
+        </div>
+      )}
     </div>
   );
 };
 
-export const WorkflowsSubSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
-  const { data: workflows } = useGovernanceWorkflowOverview(workspaceSlug);
-  const { data: reminderConfigs } = useGovernanceReminderConfig(workspaceSlug);
-  const updateReminderConfig = useUpdateGovernanceReminderConfig(workspaceSlug);
+const DocumentStatusSubkindEditor = ({
+  workspaceSlug,
+  value,
+  onChange
+}: {
+  workspaceSlug: string;
+  value: string | null;
+  onChange: (value: string | null) => void;
+}) => {
+  const { data: documentTypes = [] } = useDocumentTypes(workspaceSlug);
+  const [documentTypeId, fieldId] = value?.split(':') ?? [];
+  const documentType = documentTypes.find(type => type.id === documentTypeId);
+  const enumFields =
+    documentType?.fields.filter(field => field.type === 'enum' && !field.retired) ?? [];
 
-  const reminderConfigByCaseKind = new Map(
-    (reminderConfigs ?? []).map(config => [config.case_kind, config])
+  return (
+    <div className={styles.subkindFields}>
+      <FormElement label="Document type">
+        <Select.Root
+          value={documentTypeId ?? undefined}
+          onChange={next => onChange(next ? `${next}:` : null)}
+          placeholder="Select document type"
+        >
+          {documentTypes.map(type => (
+            <Select.Item key={type.id} value={type.id}>
+              {type.name}
+            </Select.Item>
+          ))}
+        </Select.Root>
+      </FormElement>
+      <FormElement label="Status field">
+        <Select.Root
+          value={fieldId && enumFields.some(field => field.id === fieldId) ? fieldId : undefined}
+          onChange={next => onChange(documentTypeId && next ? `${documentTypeId}:${next}` : value)}
+          placeholder="Select enum field"
+          disabled={!documentTypeId}
+        >
+          {enumFields.map(field => (
+            <Select.Item key={field.id} value={field.id}>
+              {field.name}
+            </Select.Item>
+          ))}
+        </Select.Root>
+      </FormElement>
+    </div>
   );
+};
+
+const EntitySchemaSubkindEditor = ({
+  workspaceSlug,
+  value,
+  onChange
+}: {
+  workspaceSlug: string;
+  value: string | null;
+  onChange: (value: string | null) => void;
+}) => {
+  const { data: schemas = [] } = useSchemas(workspaceSlug);
+
+  return (
+    <FormElement label="Entity schema">
+      <Select.Root
+        value={value ?? undefined}
+        onChange={next => onChange(next ?? null)}
+        placeholder="Select entity schema"
+      >
+        {schemas.map(schema => (
+          <Select.Item key={schema.id} value={schema.id}>
+            {schema.name}
+          </Select.Item>
+        ))}
+      </Select.Root>
+    </FormElement>
+  );
+};
+
+const FieldDateReminderSubkindEditor = ({
+  workspaceSlug,
+  value,
+  onChange
+}: {
+  workspaceSlug: string;
+  value: string | null;
+  onChange: (value: string | null) => void;
+}) => {
+  const { data: schemas = [] } = useSchemas(workspaceSlug);
+  const [schemaId, fieldId] = value?.split(':') ?? [];
+  const schema = schemas.find(item => item.id === schemaId);
+  const dateFields = schema?.fields.filter(field => field.type === 'date' && !field.archived) ?? [];
+
+  return (
+    <div className={styles.subkindFields}>
+      <FormElement label="Entity schema">
+        <Select.Root
+          value={schemaId ?? undefined}
+          onChange={next => onChange(next ? `${next}:` : null)}
+          placeholder="Select entity schema"
+        >
+          {schemas.map(item => (
+            <Select.Item key={item.id} value={item.id}>
+              {item.name}
+            </Select.Item>
+          ))}
+        </Select.Root>
+      </FormElement>
+      <FormElement label="Date field">
+        <Select.Root
+          value={fieldId && dateFields.some(field => field.id === fieldId) ? fieldId : undefined}
+          onChange={next => onChange(schemaId && next ? `${schemaId}:${next}` : value)}
+          placeholder="Select date field"
+          disabled={!schemaId}
+        >
+          {dateFields.map(field => (
+            <Select.Item key={field.id} value={field.id}>
+              {field.name}
+            </Select.Item>
+          ))}
+        </Select.Root>
+      </FormElement>
+    </div>
+  );
+};
+
+const SubkindEditor = ({
+  workspaceSlug,
+  caseKind,
+  value,
+  onChange
+}: {
+  workspaceSlug: string;
+  caseKind: GovernanceWorkflowCaseKind;
+  value: string | null;
+  onChange: (value: string | null) => void;
+}) => {
+  if (caseKind.case_kind === 'document.status') {
+    return (
+      <DocumentStatusSubkindEditor
+        workspaceSlug={workspaceSlug}
+        value={value}
+        onChange={onChange}
+      />
+    );
+  }
+  if (
+    caseKind.case_kind === 'entity.change-case' ||
+    caseKind.case_kind === 'entity.change-case.bulk' ||
+    caseKind.case_kind === 'entity.deprecation'
+  ) {
+    return (
+      <EntitySchemaSubkindEditor workspaceSlug={workspaceSlug} value={value} onChange={onChange} />
+    );
+  }
+  if (caseKind.case_kind === 'field-date-reminder') {
+    return (
+      <FieldDateReminderSubkindEditor
+        workspaceSlug={workspaceSlug}
+        value={value}
+        onChange={onChange}
+      />
+    );
+  }
+  return <div className={styles.emptyNote}>This workflow does not define a scope selector.</div>;
+};
+
+const ConfigEditor = ({
+  row,
+  caseKind,
+  workspaceSlug,
+  onClose,
+  onSave
+}: {
+  row: GovernanceWorkflowConfigRow | null;
+  caseKind: GovernanceWorkflowCaseKind;
+  workspaceSlug: string;
+  onClose: () => void;
+  onSave: (body: GovernanceWorkflowConfigUpsert) => void;
+}) => {
+  const [config, setConfig] = useState<GovernanceWorkflowConfig>(
+    () => row?.config ?? defaultConfig(caseKind)
+  );
+  const [enabled, setEnabled] = useState(row?.enabled ?? true);
+  const [tab, setTab] = useState(
+    caseKind.supportsApprovals !== false
+      ? 'approvals'
+      : caseKind.supportsReminders !== false
+        ? 'reminders'
+        : 'escalation'
+  );
+  const statusValues = useMemo(
+    () => documentStatusExtension(config).statusesRequiringApprovals,
+    [config]
+  );
+  const { data: documentTypes = [] } = useDocumentTypes(
+    workspaceSlug,
+    caseKind.case_kind === 'document.status'
+  );
+  const [documentTypeId, fieldId] = row?.case_subkind?.split(':') ?? [];
+  const enumField = documentTypes
+    .find(type => type.id === documentTypeId)
+    ?.fields.find(field => field.id === fieldId && field.type === 'enum');
+  const approverSourceFields =
+    documentTypes
+      .find(type => type.id === documentTypeId)
+      ?.fields.filter(
+        field => (field.type === 'user_link' || field.type === 'team_link') && !field.retired
+      ) ?? [];
+
+  useEffect(() => {
+    setConfig(row?.config ?? defaultConfig(caseKind));
+    setEnabled(row?.enabled ?? true);
+    setTab(
+      caseKind.supportsApprovals !== false
+        ? 'approvals'
+        : caseKind.supportsReminders !== false
+          ? 'reminders'
+          : 'escalation'
+    );
+  }, [caseKind, row]);
+
+  const update = (patch: Partial<GovernanceWorkflowConfig>) =>
+    setConfig(current => ({
+      ...current,
+      ...patch,
+      extensions: patch.extensions ?? current.extensions
+    }));
+
+  const approvals = config.approvals;
+  const reminders = config.reminders;
+  const escalation = config.escalation;
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title={`Configure workflow · ${caseKind.label}`}
+      width={760}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        {
+          label: 'Save workflow',
+          type: 'default',
+          onClick: () =>
+            onSave({
+              case_kind: caseKind.case_kind,
+              case_subkind: row?.case_subkind ?? null,
+              enabled,
+              config
+            })
+        }
+      ]}
+    >
+      <Tabs.Root value={tab} onValueChange={setTab}>
+        <Tabs.List aria-label="Workflow configuration sections">
+          {caseKind.supportsApprovals !== false && (
+            <Tabs.Trigger value="approvals">Approvals</Tabs.Trigger>
+          )}
+          {caseKind.supportsReminders !== false && (
+            <Tabs.Trigger value="reminders">Reminders</Tabs.Trigger>
+          )}
+          {caseKind.supportsEscalation !== false && (
+            <Tabs.Trigger value="escalation">Escalation</Tabs.Trigger>
+          )}
+          {caseKind.case_kind === 'document.status' && (
+            <Tabs.Trigger value="values">Status values</Tabs.Trigger>
+          )}
+        </Tabs.List>
+        {caseKind.supportsApprovals !== false && (
+          <Tabs.Content value="approvals" style={{ height: 'auto' }}>
+            <label className={styles.check}>
+              <Checkbox
+                value={approvals != null}
+                onChange={checked =>
+                  update({
+                    approvals: checked
+                      ? (approvals ?? {
+                          requiredApprovals: 1,
+                          fallbackUserIds: [],
+                          fallbackTeamIds: []
+                        })
+                      : undefined
+                  })
+                }
+              />
+              Enable approval policy
+            </label>
+            {approvals && (
+              <div className={styles.formGrid}>
+                <FormElement label="Required approvals">
+                  <TextInput
+                    type="number"
+                    value={String(approvals.requiredApprovals)}
+                    onChange={value =>
+                      update({
+                        approvals: {
+                          ...approvals,
+                          requiredApprovals: Math.max(1, Number(value ?? 1))
+                        }
+                      })
+                    }
+                  />
+                </FormElement>
+                <FormElement label="Approver source">
+                  {caseKind.case_kind === 'document.status' ? (
+                    <Select.Root
+                      value={approvals.approverSource ?? '__fallback__'}
+                      onChange={value =>
+                        update({
+                          approvals: {
+                            ...approvals,
+                            approverSource: value === '__fallback__' ? undefined : value
+                          }
+                        })
+                      }
+                      placeholder="Use fallback targets"
+                    >
+                      <Select.Item value="__fallback__">Use fallback targets</Select.Item>
+                      {approverSourceFields.map(field => (
+                        <Select.Item key={field.id} value={field.id}>
+                          {field.name}
+                        </Select.Item>
+                      ))}
+                    </Select.Root>
+                  ) : (
+                    <TextInput
+                      value={approvals.approverSource ?? ''}
+                      placeholder="Not used for this workflow"
+                      disabled
+                      onChange={value =>
+                        update({
+                          approvals: {
+                            ...approvals,
+                            approverSource: trimmedOrUndefined(value)
+                          }
+                        })
+                      }
+                    />
+                  )}
+                </FormElement>
+                <FormElement label="Fallback users">
+                  <FallbackTargetPicker
+                    workspaceSlug={workspaceSlug}
+                    kind="user"
+                    values={approvals.fallbackUserIds}
+                    onChange={fallbackUserIds =>
+                      update({ approvals: { ...approvals, fallbackUserIds } })
+                    }
+                  />
+                </FormElement>
+                <FormElement label="Fallback teams">
+                  <FallbackTargetPicker
+                    workspaceSlug={workspaceSlug}
+                    kind="team"
+                    values={approvals.fallbackTeamIds}
+                    onChange={fallbackTeamIds =>
+                      update({ approvals: { ...approvals, fallbackTeamIds } })
+                    }
+                  />
+                </FormElement>
+              </div>
+            )}
+          </Tabs.Content>
+        )}
+        {caseKind.supportsReminders !== false && (
+          <Tabs.Content value="reminders" style={{ height: 'auto' }}>
+            <label className={styles.check}>
+              <Checkbox
+                value={reminders?.enabled ?? false}
+                onChange={checked =>
+                  update({
+                    reminders: {
+                      enabled: checked ?? false,
+                      approachingDays: reminders?.approachingDays ?? [],
+                      overdueDays: reminders?.overdueDays ?? []
+                    }
+                  })
+                }
+              />
+              Enable scheduled reminders
+            </label>
+            {reminders && (
+              <div className={styles.formGrid}>
+                <FormElement label="Approaching days">
+                  <TextInput
+                    value={reminders.approachingDays.join(', ')}
+                    onChange={value =>
+                      update({
+                        reminders: { ...reminders, approachingDays: parseDays(value ?? '') }
+                      })
+                    }
+                  />
+                </FormElement>
+                <FormElement label="Overdue days">
+                  <TextInput
+                    value={reminders.overdueDays.join(', ')}
+                    onChange={value =>
+                      update({ reminders: { ...reminders, overdueDays: parseDays(value ?? '') } })
+                    }
+                  />
+                </FormElement>
+              </div>
+            )}
+          </Tabs.Content>
+        )}
+        {caseKind.supportsEscalation !== false && (
+          <Tabs.Content value="escalation" style={{ height: 'auto' }}>
+            <label className={styles.check}>
+              <Checkbox
+                value={escalation?.enabled ?? false}
+                onChange={checked =>
+                  update({
+                    escalation: {
+                      enabled: checked ?? false,
+                      overdueDays: escalation?.overdueDays ?? 5,
+                      escalationSource: escalation?.escalationSource,
+                      fallbackUserIds: escalation?.fallbackUserIds ?? [],
+                      fallbackTeamIds: escalation?.fallbackTeamIds ?? []
+                    }
+                  })
+                }
+              />
+              Enable escalation
+            </label>
+            {escalation && (
+              <div className={styles.formGrid}>
+                <FormElement label="Escalate after overdue days">
+                  <TextInput
+                    type="number"
+                    value={String(escalation.overdueDays)}
+                    onChange={value =>
+                      update({
+                        escalation: { ...escalation, overdueDays: Math.max(1, Number(value ?? 1)) }
+                      })
+                    }
+                  />
+                </FormElement>
+                <FormElement label="Escalation source">
+                  <TextInput
+                    value={escalation.escalationSource ?? ''}
+                    onChange={value =>
+                      update({
+                        escalation: {
+                          ...escalation,
+                          escalationSource: trimmedOrUndefined(value)
+                        }
+                      })
+                    }
+                  />
+                </FormElement>
+                <FormElement label="Fallback users">
+                  <FallbackTargetPicker
+                    workspaceSlug={workspaceSlug}
+                    kind="user"
+                    values={escalation.fallbackUserIds}
+                    onChange={fallbackUserIds =>
+                      update({ escalation: { ...escalation, fallbackUserIds } })
+                    }
+                  />
+                </FormElement>
+                <FormElement label="Fallback teams">
+                  <FallbackTargetPicker
+                    workspaceSlug={workspaceSlug}
+                    kind="team"
+                    values={escalation.fallbackTeamIds}
+                    onChange={fallbackTeamIds =>
+                      update({ escalation: { ...escalation, fallbackTeamIds } })
+                    }
+                  />
+                </FormElement>
+              </div>
+            )}
+          </Tabs.Content>
+        )}
+        {caseKind.case_kind === 'document.status' && (
+          <Tabs.Content value="values" style={{ height: 'auto' }}>
+            <div className={styles.statusValues}>
+              <div className={styles.hint}>
+                Select the enum values that require the shared approval policy.
+              </div>
+              {(enumField?.enumOptions ?? []).map(option => (
+                <label className={styles.check} key={option.value}>
+                  <Checkbox
+                    value={statusValues.includes(option.value)}
+                    onChange={checked => {
+                      const next = checked
+                        ? [...statusValues, option.value]
+                        : statusValues.filter(value => value !== option.value);
+                      update({
+                        extensions: {
+                          ...config.extensions,
+                          'document.status': { statusesRequiringApprovals: next }
+                        }
+                      });
+                    }}
+                  />
+                  {option.label}
+                </label>
+              ))}
+            </div>
+          </Tabs.Content>
+        )}
+      </Tabs.Root>
+    </Dialog>
+  );
+};
+
+export const WorkflowsSubSection = ({
+  workspaceSlug,
+  addDialogOpen,
+  onCloseAddDialog
+}: {
+  workspaceSlug: string;
+  addDialogOpen: boolean;
+  onCloseAddDialog: () => void;
+}) => {
+  const { data, isLoading, isError } = useGovernanceWorkflowConfig(workspaceSlug);
+  const upsert = useUpsertGovernanceWorkflowConfig(workspaceSlug);
+  const reset = useResetGovernanceWorkflowConfig(workspaceSlug);
+  const [editing, setEditing] = useState<GovernanceWorkflowConfigRow | null>(null);
+  const [addingKind, setAddingKind] = useState<GovernanceWorkflowCaseKind | null>(null);
+  const [newSubkind, setNewSubkind] = useState<string | null>(null);
+
+  const kindById = useMemo(
+    () => new Map((data?.case_kinds ?? []).map(kind => [kind.case_kind, kind])),
+    [data?.case_kinds]
+  );
+  const configs = useMemo(
+    () =>
+      [...(data?.configs ?? [])].sort((left, right) => {
+        const workflowOrder = left.case_kind_label.localeCompare(right.case_kind_label);
+        if (workflowOrder !== 0) return workflowOrder;
+        return (left.case_subkind_label ?? '').localeCompare(right.case_subkind_label ?? '');
+      }),
+    [data?.configs]
+  );
+
+  const closeAdd = () => {
+    setAddingKind(null);
+    setNewSubkind(null);
+    onCloseAddDialog();
+  };
+
+  const subkindReady =
+    addingKind?.supportsSubkind !== true ||
+    (newSubkind != null &&
+      (addingKind.case_kind === 'document.status' || addingKind.case_kind === 'field-date-reminder'
+        ? newSubkind.split(':').every(Boolean)
+        : true));
+  const duplicateConfig =
+    addingKind != null &&
+    subkindReady &&
+    (data?.configs ?? []).some(
+      row =>
+        row.case_kind === addingKind.case_kind &&
+        row.case_subkind === (addingKind.supportsSubkind ? newSubkind : null)
+    );
+
+  useEffect(() => {
+    if (!addDialogOpen) {
+      setAddingKind(null);
+      setNewSubkind(null);
+      return;
+    }
+    setAddingKind(data?.case_kinds[0] ?? null);
+  }, [addDialogOpen, data?.case_kinds]);
 
   return (
     <div className={styles.blockList}>
-      <div className={styles.intro}>
-        Overview of every governance workflow in this workspace. Some settings shown here can also
-        be edited from their own settings screen (e.g. Document Schema).
-      </div>
-      {(workflows ?? []).map(workflow => (
-        <WorkflowCard
-          key={workflow.case_kind}
-          workflow={workflow}
+      {isLoading && <div className={styles.emptyNote}>Loading workflow configuration…</div>}
+      {isError && <div className={styles.emptyNote}>Unable to load workflow configuration.</div>}
+      {!isLoading && !isError && configs.length === 0 && (
+        <div className={styles.emptyNote}>No workspace workflow overrides are configured.</div>
+      )}
+      {!isLoading && !isError && configs.length > 0 && (
+        <Table.Root layout="fixed">
+          <Table.Head>
+            <Table.Row>
+              <Table.HeaderCell width={260}>Workflow</Table.HeaderCell>
+              <Table.HeaderCell width={220}>Scope</Table.HeaderCell>
+              <Table.HeaderCell>Configuration</Table.HeaderCell>
+              <Table.HeaderCell width={150}>Actions</Table.HeaderCell>
+            </Table.Row>
+          </Table.Head>
+          <Table.Body>
+            {configs.map(row => (
+              <Table.Row key={row.id}>
+                <Table.Cell>
+                  <div className={styles.cardTitle}>{row.case_kind_label}</div>
+                  <div className={styles.cardSub}>{row.case_kind_description}</div>
+                </Table.Cell>
+                <Table.Cell>{row.case_subkind_label ?? 'Workspace-wide'}</Table.Cell>
+                <Table.Cell>
+                  <div className={styles.configChips}>
+                    {row.config.approvals && <Chip dot="var(--accent-fg)">Approvals</Chip>}
+                    {row.config.reminders && (
+                      <Chip
+                        tone={row.config.reminders.enabled ? 'default' : 'ghost'}
+                        dot={
+                          row.config.reminders.enabled
+                            ? 'var(--success-fg, #4caf78)'
+                            : 'var(--cmp-fg-disabled)'
+                        }
+                      >
+                        Reminders
+                      </Chip>
+                    )}
+                    {row.config.escalation && (
+                      <Chip
+                        tone={row.config.escalation.enabled ? 'default' : 'ghost'}
+                        dot={
+                          row.config.escalation.enabled
+                            ? 'var(--warning-fg, #d69e45)'
+                            : 'var(--cmp-fg-disabled)'
+                        }
+                      >
+                        Escalation
+                      </Chip>
+                    )}
+                    {!row.config.approvals && !row.config.reminders && !row.config.escalation && (
+                      <span className={styles.summary}>None</span>
+                    )}
+                  </div>
+                </Table.Cell>
+                <Table.Cell>
+                  <div className={styles.actions}>
+                    <Button variant="ghost" onClick={() => setEditing(row)}>
+                      Edit
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      onClick={() =>
+                        reset.mutate({ case_kind: row.case_kind, case_subkind: row.case_subkind })
+                      }
+                    >
+                      Remove
+                    </Button>
+                  </div>
+                </Table.Cell>
+              </Table.Row>
+            ))}
+          </Table.Body>
+        </Table.Root>
+      )}
+
+      <Dialog
+        open={addDialogOpen && addingKind != null}
+        onClose={closeAdd}
+        title="Add workflow configuration"
+        buttons={[
+          { label: 'Cancel', type: 'cancel', onClick: closeAdd },
+          {
+            label: 'Continue',
+            type: 'default',
+            disabled: addingKind == null || !subkindReady || duplicateConfig,
+            onClick: () => {
+              if (!addingKind) return;
+              setEditing({
+                id: '',
+                case_kind: addingKind.case_kind,
+                case_kind_label: addingKind.label,
+                case_kind_description: addingKind.description,
+                case_subkind: addingKind.supportsSubkind ? newSubkind : null,
+                case_subkind_label: null,
+                enabled: true,
+                config: defaultConfig(addingKind),
+                updated_at: new Date().toISOString(),
+                updated_by: null
+              });
+              closeAdd();
+            }
+          }
+        ]}
+      >
+        <FormElement label="Workflow kind">
+          <Select.Root
+            value={addingKind?.case_kind}
+            onChange={value => {
+              const next = data?.case_kinds.find(kind => kind.case_kind === value) ?? null;
+              setAddingKind(next);
+              setNewSubkind(null);
+            }}
+          >
+            {(data?.case_kinds ?? []).map(kind => (
+              <Select.Item key={kind.case_kind} value={kind.case_kind}>
+                {kind.label}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </FormElement>
+        {addingKind?.supportsSubkind && (
+          <div className={styles.scopeEditor}>
+            <SubkindEditor
+              workspaceSlug={workspaceSlug}
+              caseKind={addingKind}
+              value={newSubkind}
+              onChange={setNewSubkind}
+            />
+          </div>
+        )}
+        {duplicateConfig && (
+          <div className={styles.errorNote}>
+            A configuration already exists for this workflow and scope.
+          </div>
+        )}
+      </Dialog>
+
+      {editing && (
+        <ConfigEditor
+          row={editing}
+          caseKind={
+            kindById.get(editing.case_kind) ?? {
+              case_kind: editing.case_kind,
+              label: editing.case_kind_label,
+              description: editing.case_kind_description,
+              supportsSubkind: editing.case_subkind != null,
+              supportsApprovals: true,
+              supportsReminders: true,
+              supportsEscalation: true
+            }
+          }
           workspaceSlug={workspaceSlug}
-          reminderConfigByCaseKind={reminderConfigByCaseKind}
-          savingReminderConfig={updateReminderConfig.isPending}
-          onSaveReminderConfig={(caseKind, data) => updateReminderConfig.mutate({ caseKind, data })}
+          onClose={() => setEditing(null)}
+          onSave={body => {
+            upsert.mutate(body, { onSuccess: () => setEditing(null) });
+          }}
         />
-      ))}
+      )}
     </div>
   );
 };

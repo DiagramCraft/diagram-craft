@@ -9,6 +9,20 @@ export type SchemaGovernancePolicies = {
   deprecation_policy: 'required' | 'disabled';
 };
 
+export const schemaWorkflowConfig = {
+  supportsSubkind: true,
+  validateSubkind: async (db: DatabaseAdapter, workspace: string, subkind: string | null) => {
+    if (!subkind) return 'Schema-scoped workflows require a schema id';
+    return (await db.catalog.getSchema(workspace, subkind))
+      ? null
+      : `Schema '${subkind}' not found`;
+  },
+  labelSubkind: async (db: DatabaseAdapter, workspace: string, subkind: string | null) => {
+    if (!subkind) return null;
+    return (await db.catalog.getSchema(workspace, subkind))?.name ?? subkind;
+  }
+};
+
 const policyFromRow = (row: { enabled: boolean } | null | undefined) =>
   row?.enabled ? ('required' as const) : ('disabled' as const);
 
