@@ -51,7 +51,16 @@ import { SchemaVersionHistorySubSection } from './sub-sections/SchemaVersionHist
 import { FieldGroupEditorScreen } from './FieldGroupEditorScreen';
 import { RelationSchemaSettingsScreen } from './RelationSchemaSettingsScreen';
 import { resolveGroupAccessControl } from '../../lib/fieldGroupAccess';
-import { DateReminderEditor } from '../../components/DateReminderEditor';
+import {
+  DateReminderEditor,
+  DEFAULT_APPROACHING_DAYS,
+  DEFAULT_OVERDUE_DAYS,
+  type DateFieldReminder
+} from '../../components/DateReminderEditor';
+import {
+  useGovernanceFieldDateReminderConfig,
+  useUpdateGovernanceFieldDateReminderConfig
+} from '../../hooks/useGovernanceFieldDateReminderConfig';
 
 const deriveKeyPrefix = (value: string) =>
   value
@@ -89,6 +98,9 @@ export const SchemaSettingsScreen = () => {
   const [accessDialogGroupId, setAccessDialogGroupId] = useState<string | null>(null);
   const [color, setColor] = useState<string | null>(null);
   const [icon, setIcon] = useState<string | null>(null);
+  const [reminderDrafts, setReminderDrafts] = useState<
+    Record<string, DateFieldReminder | undefined>
+  >({});
   const [entityApprovalPolicy, setEntityApprovalPolicy] = useState<'required' | 'disabled'>(
     'disabled'
   );
@@ -110,6 +122,11 @@ export const SchemaSettingsScreen = () => {
   const createSchemaMutation = useCreateSchema(workspaceSlug);
   const updateSchemaMutation = useUpdateSchema(workspaceSlug);
   const deleteSchemaMutation = useDeleteSchema(workspaceSlug);
+  const { data: reminderConfigs } = useGovernanceFieldDateReminderConfig(
+    workspaceSlug,
+    selectedSchemaId
+  );
+  const updateReminderMutation = useUpdateGovernanceFieldDateReminderConfig(workspaceSlug);
   const { data: schemaVersions, isLoading: schemaVersionsLoading } = useSchemaVersions(
     workspaceSlug,
     showHistory ? (selectedSchemaId ?? null) : null
@@ -140,6 +157,7 @@ export const SchemaSettingsScreen = () => {
       setSharedFieldGroupLinks(selected.shared_field_group_links ?? []);
       setColor(selected.color);
       setIcon(selected.icon);
+      setReminderDrafts({});
       setEntityApprovalPolicy(selected.entity_approval_policy ?? 'disabled');
       setDeprecationPolicy(selected.deprecation_policy ?? 'disabled');
       setDirty(false);
@@ -174,7 +192,26 @@ export const SchemaSettingsScreen = () => {
             fieldMigrations
           }
         });
+        await Promise.all(
+          Object.entries(reminderDrafts).map(([fieldId, reminder]) => {
+            const existing = reminderConfigs?.find(config => config.field_id === fieldId);
+            return updateReminderMutation.mutateAsync({
+              schemaId: selected.id,
+              fieldId,
+              data: {
+                enabled: reminder?.enabled ?? false,
+                approaching_days:
+                  reminder?.approachingDays ??
+                  existing?.config.approaching_days ??
+                  DEFAULT_APPROACHING_DAYS,
+                overdue_days:
+                  reminder?.overdueDays ?? existing?.config.overdue_days ?? DEFAULT_OVERDUE_DAYS
+              }
+            });
+          })
+        );
         setDirty(false);
+        setReminderDrafts({});
         setPendingFieldChanges(null);
       } catch (e: unknown) {
         const migrationRequired = getSchemaMigrationRequired(e);
@@ -198,6 +235,9 @@ export const SchemaSettingsScreen = () => {
       icon,
       dirty,
       updateSchemaMutation,
+      reminderDrafts,
+      reminderConfigs,
+      updateReminderMutation,
       entityApprovalPolicy,
       deprecationPolicy
     ]
@@ -264,6 +304,22 @@ export const SchemaSettingsScreen = () => {
       );
     }
     setFields(prev => prev.map(f => (f.id === fieldId ? ({ ...f, ...patch } as SchemaField) : f)));
+    setDirty(true);
+  };
+
+  const reminderForField = (fieldId: string): DateFieldReminder | undefined => {
+    if (Object.hasOwn(reminderDrafts, fieldId)) return reminderDrafts[fieldId];
+    const config = reminderConfigs?.find(item => item.field_id === fieldId);
+    if (!config) return undefined;
+    return {
+      enabled: config.enabled,
+      approachingDays: config.config.approaching_days,
+      overdueDays: config.config.overdue_days
+    };
+  };
+
+  const updateReminder = (fieldId: string, reminder: DateFieldReminder | undefined) => {
+    setReminderDrafts(current => ({ ...current, [fieldId]: reminder }));
     setDirty(true);
   };
 
@@ -475,6 +531,9 @@ export const SchemaSettingsScreen = () => {
         groups={groups}
         onUpdate={patch => updateField(f.id, patch)}
         onChangeType={t => changeFieldType(f.id, t)}
+        reminder={reminderForField(f.id)}
+        onReminderChange={reminder => updateReminder(f.id, reminder)}
+        canEditReminder={canEdit}
         onRemove={canEdit && !inherited ? () => removeField(f.id) : undefined}
         containmentDisabled={hasOtherContainment}
         canEdit={canEdit && !inherited}
@@ -964,6 +1023,9 @@ export const FieldRow = ({
   groups,
   onUpdate,
   onChangeType,
+  reminder,
+  onReminderChange,
+  canEditReminder,
   onRemove,
   containmentDisabled,
   canEdit
@@ -976,6 +1038,9 @@ export const FieldRow = ({
   groups: SchemaGroup[];
   onUpdate: (patch: Partial<SchemaField>) => void;
   onChangeType: (type: FieldType) => void;
+  reminder?: DateFieldReminder;
+  onReminderChange: (reminder: DateFieldReminder | undefined) => void;
+  canEditReminder: boolean;
   onRemove?: () => void;
   containmentDisabled: boolean;
   canEdit: boolean;
@@ -1149,9 +1214,9 @@ export const FieldRow = ({
     if (field.type === 'date') {
       return (
         <DateReminderEditor
-          value={field.reminder}
-          disabled={!canEdit}
-          onChange={reminder => onUpdate({ reminder } as Partial<SchemaField>)}
+          value={reminder}
+          disabled={!canEditReminder}
+          onChange={onReminderChange}
         />
       );
     }

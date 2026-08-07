@@ -48,6 +48,7 @@ import { createNotificationPreferencesORPCHandler } from './domain/notification/
 import { createDiscussionORPCHandler } from './domain/discussion/discussionOrpc';
 import { createGovernanceORPCHandler } from './domain/governance/governanceOrpc';
 import { createGovernanceReminderConfigORPCHandler } from './domain/governance/governanceReminderConfigOrpc';
+import { createGovernanceFieldDateReminderConfigORPCHandler } from './domain/governance/governanceFieldDateReminderConfigOrpc';
 import { createGovernanceWorkflowOverviewORPCHandler } from './domain/governance/governanceWorkflowOverviewOrpc';
 import { createGovernanceDocumentStatusConfigORPCHandler } from './domain/governance/governanceDocumentStatusConfigOrpc';
 import { createWikiCommentORPCHandler } from './domain/wikiComments/wikiCommentOrpc';
@@ -215,6 +216,7 @@ export const createApp = (
   ]);
   app.use(createGovernanceORPCHandler(db, governanceRegistry));
   app.use(createGovernanceReminderConfigORPCHandler(db, governanceRegistry));
+  app.use(createGovernanceFieldDateReminderConfigORPCHandler(db));
   app.use(createGovernanceWorkflowOverviewORPCHandler(db, governanceRegistry));
   app.use(createGovernanceDocumentStatusConfigORPCHandler(db));
   app.use(createWikiCommentORPCHandler(db));

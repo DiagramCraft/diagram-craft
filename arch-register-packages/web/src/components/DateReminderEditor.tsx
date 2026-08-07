@@ -1,9 +1,13 @@
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
-import type { DateFieldReminder } from '@arch-register/api-types/schemaContract';
+export type DateFieldReminder = {
+  enabled: boolean;
+  approachingDays: number[];
+  overdueDays: number[];
+};
 
-const DEFAULT_APPROACHING_DAYS = [3];
-const DEFAULT_OVERDUE_DAYS = [1];
+export const DEFAULT_APPROACHING_DAYS = [3];
+export const DEFAULT_OVERDUE_DAYS = [1];
 
 const parseDays = (value: string): number[] =>
   value

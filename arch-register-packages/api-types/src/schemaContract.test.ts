@@ -58,31 +58,22 @@ describe('currency fields', () => {
   });
 });
 
-describe('date reminder configuration', () => {
-  it('parses an enabled date reminder configuration', () => {
-    const result = schemaFieldInputSchema.safeParse({
-      ...baseField,
-      type: 'date',
-      reminder: { enabled: true, approachingDays: [3, 7], overdueDays: [1] }
-    });
-
-    expect(result.success).toBe(true);
-  });
-
-  it('allows date fields without reminder configuration', () => {
+describe('date fields', () => {
+  it('parses date fields without embedded reminder configuration', () => {
     const result = schemaFieldInputSchema.safeParse({ ...baseField, type: 'date' });
 
     expect(result.success).toBe(true);
   });
 
-  it('rejects negative or fractional reminder windows', () => {
+  it('does not retain the removed embedded reminder configuration', () => {
     const result = schemaFieldInputSchema.safeParse({
       ...baseField,
       type: 'date',
-      reminder: { enabled: true, approachingDays: [-1], overdueDays: [1.5] }
+      reminder: { enabled: true, approachingDays: [3], overdueDays: [1] }
     });
 
-    expect(result.success).toBe(false);
+    expect(result.success).toBe(true);
+    expect(result.data).not.toHaveProperty('reminder');
   });
 });
 

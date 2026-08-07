@@ -128,6 +128,12 @@ test.describe('versioned API surface aliases', () => {
     expect(applicationSpec.paths['/{workspace}/discussions']).toBeDefined();
     expect(applicationSpec.paths['/{workspace}/governance/cases']).toBeDefined();
     expect(applicationSpec.paths['/{workspace}/governance/reminder-config']).toBeDefined();
+    expect(
+      applicationSpec.paths['/{workspace}/governance/field-date-reminder-config/{id}']
+    ).toBeDefined();
+    expect(
+      applicationSpec.paths['/{workspace}/governance/field-date-reminder-config/{id}/{fieldId}']
+    ).toBeDefined();
     expect(applicationSpec.paths['/{workspace}/data/{id}/versions']).toBeDefined();
     expect(applicationSpec.paths['/{workspace}/data/{id}/change-approvals']).toBeDefined();
     expect(applicationSpec.paths['/{workspace}/data/{id}/deprecation']).toBeDefined();

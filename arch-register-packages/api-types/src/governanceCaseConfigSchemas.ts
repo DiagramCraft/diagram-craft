@@ -20,6 +20,17 @@ export const reminderCaseConfigSchema = z.object({
 
 export type ReminderCaseConfig = z.infer<typeof reminderCaseConfigSchema>;
 
+export const fieldDateReminderCaseConfigSchema = z.object({
+  approaching_days: z
+    .array(z.number().int().min(0))
+    .describe('Days before the field date at which an approaching reminder is sent'),
+  overdue_days: z
+    .array(z.number().int().min(0))
+    .describe('Days after the field date at which an overdue reminder is sent')
+});
+
+export type FieldDateReminderCaseConfig = z.infer<typeof fieldDateReminderCaseConfigSchema>;
+
 export const documentStatusApprovalSchema = z.object({
   required: z.boolean(),
   requiredApprovals: z.number().int().positive().optional(),
