@@ -113,8 +113,30 @@ export const tableViewConfigSchema = z.object(fieldDisplayConfigShape);
 export const cardsViewConfigSchema = z.object(fieldDisplayConfigShape);
 export const treeViewConfigSchema = z.object(fieldDisplayConfigShape);
 
+const mapLevelConfigSchema = z.object({
+  schemaId: z.string().nullable().describe('Schema identifier for this map level'),
+  columns: z
+    .number()
+    .int()
+    .min(1)
+    .max(4)
+    .default(3)
+    .describe('Number of columns for this map level (1-4)'),
+  hidden: z
+    .boolean()
+    .optional()
+    .describe('Whether this level is traversed but omitted from the rendered map')
+});
+
 export const mapViewConfigSchema = z.object({
   ...fieldDisplayConfigShape,
+  levelConfigs: z
+    .array(mapLevelConfigSchema)
+    .min(1)
+    .optional()
+    .describe('Ordered map levels; later levels may be hidden from the rendered map'),
+  // Legacy fixed-depth fields are retained so existing saved views remain valid. The web view
+  // migrates them to levelConfigs when it loads the configuration.
   levels: z.number().int().min(1).max(3).default(2).describe('Number of map levels (1-3)'),
   level1SchemaId: z.string().nullable().default(null).describe('Schema identifier for level 1'),
   level1Columns: z

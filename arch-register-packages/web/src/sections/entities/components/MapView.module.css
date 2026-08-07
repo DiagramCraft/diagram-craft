@@ -113,6 +113,37 @@
   margin-top: 8px;
 }
 
+.levelControl {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.levelAction {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  background: var(--panel-bg);
+  color: var(--base-fg);
+  cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  min-height: 24px;
+  min-width: 24px;
+  padding: 2px 6px;
+}
+
+.levelHidden {
+  color: var(--accent-fg);
+}
+
+.levelAction:disabled {
+  cursor: default;
+  opacity: 0.5;
+}
+
 /* ── Level boxes ─────────────────────────────────────────────── */
 
 .level1Box {

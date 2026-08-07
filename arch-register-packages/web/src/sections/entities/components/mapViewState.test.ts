@@ -4,6 +4,7 @@ import type { RelationSchema } from '@arch-register/api-types/relationSchemaCont
 import type { TreeEdge, TreeNode } from '@arch-register/api-types/entityContract';
 import {
   buildContainmentTreeIndex,
+  getChildLevelOptions,
   getChildSchemas,
   getChildRelationSchemas,
   getContainmentChildren,
@@ -131,6 +132,41 @@ describe('map view state', () => {
     ]);
   });
 
+  it('keeps the typed relation hop when an endpoint is shown after the relation level', () => {
+    const system = {
+      ...schema('system'),
+      fields: [
+        {
+          id: 'contracts',
+          name: 'Contracts',
+          type: 'typedRelation',
+          relationSchemaId: 'system-contract',
+          direction: 'out'
+        }
+      ]
+    } as unknown as EntitySchema;
+    const contract = schema('contract');
+    const relationSchema = {
+      id: 'system-contract',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['contract'] }
+    } as unknown as RelationSchema;
+    expect(
+      getMapTraversalPath(
+        ['system', 'system-contract', 'contract'],
+        [system, contract],
+        [relationSchema]
+      )
+    ).toEqual([
+      {
+        kind: 'typedRelation',
+        fieldId: 'contracts',
+        relationSchemaId: 'system-contract',
+        direction: 'out'
+      }
+    ]);
+  });
+
   it('indexes edges and sorts only matching children', () => {
     const nodes = [
       node('b', 'app', 'Beta'),
@@ -158,6 +194,32 @@ describe('map view state', () => {
         level3SchemaId: 'component'
       })
     ).toEqual(['domain', 'system', 'component']);
+  });
+
+  it('collects schema ids from an arbitrary ordered level list', () => {
+    expect(
+      getMapSchemaIds({
+        levelConfigs: [
+          { schemaId: 'domain', columns: 3 },
+          { schemaId: 'system', columns: 2, hidden: true },
+          { schemaId: 'component', columns: 2 },
+          { schemaId: 'resource', columns: 1 }
+        ]
+      })
+    ).toEqual(['domain', 'system', 'component', 'resource']);
+  });
+
+  it('offers relation endpoints after a typed relation level', () => {
+    const contract = schema('contract');
+    const relationSchema = {
+      id: 'system-contract',
+      name: 'System Contract',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['contract'] }
+    } as unknown as RelationSchema;
+    expect(getChildLevelOptions([contract], 'system-contract', [relationSchema])).toEqual([
+      contract
+    ]);
   });
 
   it('truncates to the number of active levels', () => {

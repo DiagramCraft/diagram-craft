@@ -8,18 +8,24 @@ export type ContainmentTreeIndex = {
   childrenOf: Map<string, string[]>;
 };
 
+export type MapLevelConfig = {
+  schemaId: string | null;
+  columns: number;
+  hidden?: boolean;
+};
+
 export const getMapSchemaIds = (cfg: {
-  levels: number;
-  level1SchemaId: string | null;
+  levelConfigs?: MapLevelConfig[];
+  levels?: number;
+  level1SchemaId?: string | null;
   level2SchemaId?: string | null;
   level3SchemaId?: string | null;
-}): string[] => [
-  ...new Set(
-    [cfg.level1SchemaId, cfg.level2SchemaId, cfg.level3SchemaId]
-      .slice(0, cfg.levels)
-      .filter((id): id is string => !!id)
-  )
-];
+}): string[] => {
+  const ids = cfg.levelConfigs
+    ? cfg.levelConfigs.map(level => level.schemaId)
+    : [cfg.level1SchemaId, cfg.level2SchemaId, cfg.level3SchemaId].slice(0, cfg.levels ?? 3);
+  return [...new Set(ids.filter((id): id is string => !!id))];
+};
 
 export const getChildSchemas = (
   schemas: EntitySchema[],
@@ -65,6 +71,23 @@ export const getChildRelationSchemas = (
     )
   );
   return relationSchemas.filter(schema => relationSchemaIds.has(schema.id));
+};
+
+export const getChildLevelOptions = (
+  schemas: EntitySchema[],
+  parentSchemaId: string | null,
+  relationSchemas: RelationSchema[] = []
+): Array<{ id: string; name: string }> => {
+  if (!parentSchemaId) return [];
+  const relationSchema = relationSchemas.find(schema => schema.id === parentSchemaId);
+  if (relationSchema) {
+    const endpointIds = new Set([...relationSchema.in.schemaIds, ...relationSchema.out.schemaIds]);
+    return schemas.filter(schema => endpointIds.has(schema.id));
+  }
+  return [
+    ...getChildSchemas(schemas, parentSchemaId, relationSchemas),
+    ...getChildRelationSchemas(schemas, parentSchemaId, relationSchemas)
+  ];
 };
 
 const findTraversalStep = (
@@ -132,8 +155,10 @@ export const getMapTraversalPath = (
     const parentSchemaId = schemaIds[index - 1]!;
     const childSchema = schemaById.get(childSchemaId);
     const parentSchema = schemaById.get(parentSchemaId);
-    if (!parentSchema) return [];
+    const parentRelationSchema = relationSchemaById.get(parentSchemaId);
+    if (!parentSchema && !parentRelationSchema) return [];
     if (!childSchema && relationSchemaById.has(childSchemaId)) {
+      if (!parentSchema) return [];
       const field = parentSchema.fields.find(
         candidate =>
           candidate.type === 'typedRelation' && candidate.relationSchemaId === childSchemaId
@@ -148,6 +173,14 @@ export const getMapTraversalPath = (
       continue;
     }
     if (!childSchema) return [];
+    if (parentRelationSchema) {
+      const endpointIds = new Set([
+        ...parentRelationSchema.in.schemaIds,
+        ...parentRelationSchema.out.schemaIds
+      ]);
+      if (endpointIds.has(childSchemaId)) continue;
+      return [];
+    }
     const step = findTraversalStep(parentSchema, childSchema, relationSchemas);
     if (!step) return [];
     path.push(step);
