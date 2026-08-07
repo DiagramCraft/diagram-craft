@@ -13,7 +13,7 @@ import {
 } from '../../utils/orpcErrors';
 import { requireWorkspaceCapability } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
-import type { GovernanceRegistry } from './governanceRegistry';
+import { defaultWorkflowConfigForCaseKind, type GovernanceRegistry } from './governanceRegistry';
 import { CASE_KIND_DESCRIPTIONS, CASE_KIND_LABELS } from './governanceCaseKindLabels';
 import {
   parseGovernanceWorkflowConfig,
@@ -32,9 +32,12 @@ const toCaseKind = (caseKind: string, config: ReturnType<GovernanceRegistry['get
   label: CASE_KIND_LABELS[caseKind] ?? caseKind,
   description: CASE_KIND_DESCRIPTIONS[caseKind] ?? '',
   supportsSubkind: config?.workflowConfig?.supportsSubkind ?? false,
-  supportsApprovals: config?.workflowConfig?.supportsApprovals ?? true,
-  supportsReminders: config?.workflowConfig?.supportsReminders ?? true,
-  supportsEscalation: config?.workflowConfig?.supportsEscalation ?? true
+  supportsApprovals: config?.workflowConfig?.supportsApprovals ?? false,
+  supportsReminders: config?.workflowConfig?.supportsReminders ?? false,
+  supportsEscalation: config?.workflowConfig?.supportsEscalation ?? false,
+  defaultConfig: config
+    ? defaultWorkflowConfigForCaseKind(config)
+    : governanceWorkflowConfigSchema.parse({ extensions: {} })
 });
 
 const toApiRow = async (
@@ -87,6 +90,13 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
             status: 404,
             message: `Unknown governance case kind '${input.body.case_kind}'`
           });
+          httpAssert.true(
+            input.body.case_subkind == null || kindConfig.workflowConfig?.supportsSubkind === true,
+            {
+              status: 400,
+              message: `Case kind '${input.body.case_kind}' does not support subkind-scoped configuration`
+            }
+          );
           if (input.body.case_subkind != null && kindConfig.workflowConfig?.validateSubkind) {
             const error = await kindConfig.workflowConfig.validateSubkind(
               context.db,
@@ -99,6 +109,18 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
             });
           }
           const config = governanceWorkflowConfigSchema.parse(input.body.config);
+          httpAssert.true(
+            kindConfig.workflowConfig?.supportsApprovals !== false || config.approvals == null,
+            { status: 400, message: 'This workflow does not support approval configuration' }
+          );
+          httpAssert.true(
+            kindConfig.workflowConfig?.supportsReminders !== false || config.reminders == null,
+            { status: 400, message: 'This workflow does not support reminder configuration' }
+          );
+          httpAssert.true(
+            kindConfig.workflowConfig?.supportsEscalation !== false || config.escalation == null,
+            { status: 400, message: 'This workflow does not support escalation configuration' }
+          );
           if (kindConfig.workflowConfig?.validateConfig)
             kindConfig.workflowConfig.validateConfig(config);
           if (input.body.case_kind === 'document.status')

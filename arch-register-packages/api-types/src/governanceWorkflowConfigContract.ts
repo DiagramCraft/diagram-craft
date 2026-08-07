@@ -10,7 +10,8 @@ const governanceWorkflowCaseKindSchema = z.object({
   supportsSubkind: z.boolean(),
   supportsApprovals: z.boolean(),
   supportsReminders: z.boolean(),
-  supportsEscalation: z.boolean()
+  supportsEscalation: z.boolean(),
+  defaultConfig: governanceWorkflowConfigSchema
 });
 
 const governanceWorkflowConfigRowSchema = z.object({

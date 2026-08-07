@@ -442,8 +442,9 @@
                 saved configuration can enable or disable reminders and define the approaching/overdue cadence for a
                 workspace-wide or supported case-subkind scope.
 
-            - @id:ar.collaboration.governance-inbox.escalation For the same governance case kinds as scheduled
-              reminders, a case left open past a case-kind-defined number of days overdue is automatically escalated
+            - @id:ar.collaboration.governance-inbox.escalation For governance case kinds that support escalation
+              (entity changes, entity deprecations, and assessment responses), a case left open past a
+              case-kind-defined number of days overdue is automatically escalated
               once: notifying, in addition to the original assignees, the admins of the project team that owns the
               case's subject (or, for a workspace-scoped case, workspace admins) so someone beyond the original
               assignees can intervene. Escalation fires at most once per case and is recorded in the case's activity

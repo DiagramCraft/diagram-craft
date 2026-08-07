@@ -38,31 +38,8 @@ const documentStatusExtension = (config: GovernanceWorkflowConfig) => {
   };
 };
 
-const defaultConfig = (caseKind: GovernanceWorkflowCaseKind): GovernanceWorkflowConfig => ({
-  ...(caseKind.case_kind === 'document.status'
-    ? {
-        approvals: {
-          requiredApprovals: 1,
-          fallbackUserIds: [],
-          fallbackTeamIds: []
-        },
-        reminders: {
-          enabled: true,
-          approachingDays: [2],
-          overdueDays: [1, 5]
-        }
-      }
-    : caseKind.case_kind === 'field-date-reminder'
-      ? {
-          reminders: {
-            enabled: true,
-            approachingDays: [3],
-            overdueDays: [1, 3]
-          }
-        }
-      : {}),
-  extensions: {}
-});
+const defaultConfig = (caseKind: GovernanceWorkflowCaseKind): GovernanceWorkflowConfig =>
+  caseKind.defaultConfig;
 
 const parseDays = (value: string) =>
   value
@@ -380,6 +357,10 @@ const ConfigEditor = ({
         }
       ]}
     >
+      <label className={styles.check}>
+        <Checkbox value={enabled} onChange={checked => setEnabled(checked ?? false)} />
+        Enable workflow
+      </label>
       <Tabs.Root value={tab} onValueChange={setTab}>
         <Tabs.List aria-label="Workflow configuration sections">
           {caseKind.supportsApprovals !== false && (
@@ -845,7 +826,8 @@ export const WorkflowsSubSection = ({
               supportsSubkind: editing.case_subkind != null,
               supportsApprovals: true,
               supportsReminders: true,
-              supportsEscalation: true
+              supportsEscalation: true,
+              defaultConfig: { extensions: {} }
             }
           }
           workspaceSlug={workspaceSlug}

@@ -66,6 +66,7 @@ import {
   getSchemaPolicy,
   schemaWorkflowConfig
 } from '../governance/schemaGovernancePolicy';
+import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 
 export const ENTITY_CHANGE_CASE_KIND = 'entity.change-case';
 export const ENTITY_CHANGE_CASE_BULK_KIND = 'entity.change-case.bulk';
@@ -849,6 +850,7 @@ const submitProposal = async (
       userId,
       {
         caseKind: ENTITY_CHANGE_CASE_KIND,
+        caseSubkind: encodeCaseSubkind(schema.id),
         subjectType: 'entity',
         subjectId: canonicalEntityId,
         subjectVersion: revision.id,
@@ -1153,7 +1155,11 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
     [
       ENTITY_CHANGE_CASE_BULK_KIND,
       {
-        workflowConfig: schemaWorkflowConfig,
+        workflowConfig: {
+          ...schemaWorkflowConfig,
+          supportsSubkind: false,
+          supportsApprovals: false
+        },
         subjectVisible: async (
           db,
           authCtx: AuthorizationContext,

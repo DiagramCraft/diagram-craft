@@ -50,6 +50,7 @@ import {
   schemaWorkflowConfig,
   getSchemaPolicy
 } from '../governance/schemaGovernancePolicy';
+import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 
 export const ENTITY_DEPRECATION_CASE_KIND = 'entity.deprecation';
 const DEPRECATION_POLICY_VERSION = 'entity.deprecation:v1';
@@ -427,6 +428,7 @@ export const proposeEntityDeprecation = async (
       userId,
       {
         caseKind: ENTITY_DEPRECATION_CASE_KIND,
+        caseSubkind: encodeCaseSubkind(schema.id),
         subjectType: 'entity',
         subjectId: canonicalEntityId,
         subjectVersion: null,

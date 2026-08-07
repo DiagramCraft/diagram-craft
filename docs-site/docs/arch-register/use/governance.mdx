@@ -1,7 +1,7 @@
 # Governance And Approvals
 
 Workspaces can require review before certain changes take effect. Administrators configure governance centrally in
-**Workspace Settings → Workflows**, where each case kind can expose shared approval, reminder, escalation, and
+**Workspace Settings → Workflows**, where each case kind can expose supported approval, reminder, escalation, and
 case-specific settings. This page covers the governance inbox and the governed workflows users interact with.
 
 ## My Work
@@ -50,9 +50,9 @@ Finalizing moves the entity to the workspace's designated deprecated lifecycle s
 ## Document Status Approval
 
 Document status approval is configured for a document type's enum field in **Workspace Settings → Workflows**. The
-workflow configuration uses the shared approval, reminder, and escalation settings, while its document-status
-extension identifies the status values that require approval. Status values that are not selected continue without an
-approval case.
+workflow configuration uses the shared approval and reminder settings, while its document-status extension identifies
+the status values that require approval. Status values that are not selected continue without an approval case.
+Escalation is available only for case kinds that register escalation support.
 
 ## Related Pages
 

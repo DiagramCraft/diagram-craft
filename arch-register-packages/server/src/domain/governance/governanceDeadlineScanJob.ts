@@ -7,6 +7,8 @@ import {
   FIELD_DATE_REMINDER_CASE_KIND,
   syncFieldDateReminderCases
 } from '../catalog/fieldDateReminderJob';
+import { defaultWorkflowConfigForCaseKind } from './governanceRegistry';
+import { resolveGovernanceWorkflowConfig } from './governanceWorkflowConfig';
 
 // #2418: a recurring per-workspace scan that reminds assignees as a governance case's due_at
 // approaches or passes, and records a `reminder_sent` event (which createGovernanceInAppNotifications
@@ -87,6 +89,7 @@ export const createGovernanceDeadlineScanJobHandler =
       ? await syncFieldDateReminderCases(db, context.workspace, clock())
       : { created: 0, refreshed: 0, cancelled: 0 };
     const cases = await db.governance.listCases(context.workspace, { status: 'open' });
+    const configRows = await db.governanceCaseConfig.listCaseConfig(context.workspace);
     const scanNow = clock();
     let remindersSent = 0;
     let escalationsSent = 0;
@@ -96,22 +99,28 @@ export const createGovernanceDeadlineScanJobHandler =
       if (!caseRow.due_at) continue;
 
       const kindConfig = registry.get(caseRow.case_kind);
+      const effectiveConfig = resolveGovernanceWorkflowConfig(
+        configRows.filter(row => row.case_kind === caseRow.case_kind),
+        caseRow.case_subkind,
+        kindConfig ? defaultWorkflowConfigForCaseKind(kindConfig) : { extensions: {} }
+      );
+      if (!effectiveConfig.enabled) continue;
       const runtimeWindows = kindConfig?.resolveReminderWindows
         ? await kindConfig.resolveReminderWindows(db, caseRow)
         : undefined;
-      const codeDefault = kindConfig?.resolveReminderWindows
-        ? runtimeWindows
-        : kindConfig?.reminders;
+      const codeDefault = kindConfig?.reminders
+        ? { enabled: true, ...kindConfig.reminders }
+        : undefined;
       const useWorkspaceOverride =
         kindConfig?.workspaceReminderOverrides ?? kindConfig?.resolveReminderWindows == null;
-      const override = useWorkspaceOverride
-        ? await db.governanceReminderConfig.getReminderConfig(context.workspace, caseRow.case_kind)
-        : null;
-
-      if (codeDefault && !(override && !override.enabled)) {
-        const windows = override
-          ? { approachingDays: override.approaching_days, overdueDays: override.overdue_days }
+      const reminderConfig = runtimeWindows
+        ? { enabled: true, ...runtimeWindows }
+        : useWorkspaceOverride
+          ? effectiveConfig.config.reminders
           : codeDefault;
+
+      if (reminderConfig?.enabled) {
+        const windows = reminderConfig;
 
         const candidateWindows = computeCandidateReminderWindows(
           caseRow.due_at,
@@ -141,20 +150,21 @@ export const createGovernanceDeadlineScanJobHandler =
       }
 
       const escalation = kindConfig?.escalation;
-      if (escalation && !caseRow.escalated_at && !(override && !override.escalation_enabled)) {
+      const escalationConfig = effectiveConfig.config.escalation;
+      if (escalation && escalationConfig?.enabled && !caseRow.escalated_at) {
         // Matches computeCandidateReminderWindows's overdue convention exactly (`-daysUntilDue`,
         // not a separately-floored "days overdue"), so a case escalates at the same moment its
         // corresponding overdue reminder window of the same day count would fire.
         const daysUntilDue = Math.floor(
           (caseRow.due_at.getTime() - scanNow.getTime()) / MS_PER_DAY
         );
-        const escalationOverdueDays = override?.escalation_overdue_days ?? escalation.overdueDays;
+        const escalationOverdueDays = escalationConfig.overdueDays;
         if (-daysUntilDue >= escalationOverdueDays) {
           await db.core.transaction(async tx => {
             const fresh = await tx.governance.getCase(context.workspace, caseRow.id);
             if (fresh?.status !== 'open' || fresh.escalated_at) return;
-            const configuredUserId = override?.escalation_fallback_user_ids?.[0];
-            const configuredTeamId = override?.escalation_fallback_team_ids?.[0];
+            const configuredUserId = escalationConfig.fallbackUserIds[0];
+            const configuredTeamId = escalationConfig.fallbackTeamIds[0];
             const target = configuredUserId
               ? { type: 'user' as const, userId: configuredUserId }
               : configuredTeamId

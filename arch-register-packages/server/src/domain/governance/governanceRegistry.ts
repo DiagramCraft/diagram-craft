@@ -95,8 +95,8 @@ export type GovernanceCaseKindConfig = {
   /**
    * Default day thresholds for #2418's scheduled reminder scan. Presence of this field is what
    * makes a case kind eligible for scheduled reminders at all; its values are a fallback used
-   * when a workspace has no override row in `workspace_governance_reminder_config` for this kind
-   * (see governanceDeadlineScanJob.ts and governanceReminderConfigDatabase.ts).
+   * when a workspace or case-subkind has no override row in
+   * `workspace_governance_case_config` for this kind (see governanceDeadlineScanJob.ts).
    */
   reminders?: {
     /** Fire once due_at is within N days (going forward), for each N. */
@@ -113,9 +113,8 @@ export type GovernanceCaseKindConfig = {
   workspaceReminderOverrides?: boolean;
   /**
    * #2420: escalation for cases that remain open past their deadline. Presence of this field is
-   * what makes a case kind eligible for escalation at all — a workspace can still turn it off via
-   * `workspace_governance_reminder_config.escalation_enabled` (see governanceReminderConfigOrpc.ts)
-   * but cannot configure a different target or threshold in v1. Fires once per case, guarded by
+   * what makes a case kind eligible for escalation at all. Workspace or case-subkind configuration
+   * can turn it off or change its threshold and fallback targets. Fires once per case, guarded by
    * `governance_case.escalated_at`.
    */
   escalation?: {
@@ -132,3 +131,31 @@ export type GovernanceCaseKindConfig = {
 export type GovernanceRegistry = Map<string, GovernanceCaseKindConfig>;
 
 export const createGovernanceRegistry = (): GovernanceRegistry => new Map();
+
+/**
+ * Returns the canonical defaults exposed to the workflow settings surface and used when a
+ * workspace has no override. Domain registrations keep the runtime hooks in their existing
+ * fields, while this helper presents those defaults in the shared config shape.
+ */
+export const defaultWorkflowConfigForCaseKind = (
+  config: GovernanceCaseKindConfig
+): GovernanceWorkflowConfig => {
+  const declared = config.workflowConfig?.defaultConfig;
+  return {
+    approvals: declared?.approvals,
+    reminders:
+      declared?.reminders ??
+      (config.reminders ? { enabled: true, ...config.reminders } : undefined),
+    escalation:
+      declared?.escalation ??
+      (config.escalation
+        ? {
+            enabled: true,
+            overdueDays: config.escalation.overdueDays,
+            fallbackUserIds: [],
+            fallbackTeamIds: []
+          }
+        : undefined),
+    extensions: declared?.extensions ?? {}
+  };
+};

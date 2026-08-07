@@ -65,12 +65,13 @@ const assessment = (id: string, projectId: string): AssessmentDbResult => ({
 const event = { context: { user: { id: 'user-1' } } } as unknown as AuthenticatedEvent;
 
 describe('createAssessmentGovernanceRegistry', () => {
-  it('marks approvals and escalation as unsupported workflow settings', () => {
+  it('marks approval as unsupported while exposing reminder and escalation settings', () => {
     expect(
       createAssessmentGovernanceRegistry().get(ASSESSMENT_RESPONSE_CASE_KIND)?.workflowConfig
     ).toEqual({
       supportsApprovals: false,
-      supportsEscalation: false
+      supportsReminders: true,
+      supportsEscalation: true
     });
   });
 });

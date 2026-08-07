@@ -5,6 +5,18 @@ import {
   type GovernanceWorkflowConfig
 } from '@arch-register/api-types/governanceCaseConfigSchemas';
 
+export type GovernanceWorkflowConfigRowLike = {
+  case_subkind: string | null;
+  enabled: boolean;
+  config: Record<string, unknown>;
+};
+
+export type ResolvedGovernanceWorkflowConfig = {
+  enabled: boolean;
+  config: GovernanceWorkflowConfig;
+  source: 'default' | 'workspace' | 'subkind';
+};
+
 const firstLegacyApproval = (statuses: Record<string, unknown>) => {
   const approval = Object.values(statuses).find(
     value =>
@@ -87,6 +99,49 @@ export const parseGovernanceWorkflowConfig = (
         : undefined,
     extensions: extension ? { 'document.status': extension } : {}
   });
+};
+
+const mergeGovernanceWorkflowConfig = (
+  base: GovernanceWorkflowConfig,
+  override: GovernanceWorkflowConfig
+): GovernanceWorkflowConfig => ({
+  approvals: override.approvals ?? base.approvals,
+  reminders: override.reminders ?? base.reminders,
+  escalation: override.escalation ?? base.escalation,
+  extensions: { ...base.extensions, ...override.extensions }
+});
+
+/**
+ * Resolves a case's configuration from the canonical store. A subkind row overrides the
+ * workspace-wide row, while unspecified components inherit from the wider scope and then the
+ * registered code defaults. This keeps an approval-only row from accidentally erasing reminder
+ * defaults and gives every case kind the same precedence rules.
+ */
+export const resolveGovernanceWorkflowConfig = (
+  rows: GovernanceWorkflowConfigRowLike[],
+  caseSubkind: string | null,
+  defaultConfig: GovernanceWorkflowConfig
+): ResolvedGovernanceWorkflowConfig => {
+  const workspaceRow = rows.find(row => row.case_subkind == null);
+  const subkindRow =
+    caseSubkind == null ? undefined : rows.find(row => row.case_subkind === caseSubkind);
+  const sources = [workspaceRow, subkindRow].filter(
+    (row): row is GovernanceWorkflowConfigRowLike => row != null
+  );
+
+  let config = governanceWorkflowConfigSchema.parse(defaultConfig);
+  for (const row of sources) {
+    config = mergeGovernanceWorkflowConfig(
+      config,
+      parseGovernanceWorkflowConfig(row.config, row.enabled)
+    );
+  }
+
+  return {
+    enabled: subkindRow?.enabled ?? workspaceRow?.enabled ?? true,
+    config,
+    source: subkindRow ? 'subkind' : workspaceRow ? 'workspace' : 'default'
+  };
 };
 
 export const validateDocumentStatusWorkflowConfig = (config: GovernanceWorkflowConfig) => {

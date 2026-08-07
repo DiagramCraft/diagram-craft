@@ -58,6 +58,7 @@ const statusOption = (field: DocumentType['fields'][number], value: string | nul
   field.enumOptions?.find(option => option.value === value) ?? null;
 
 type DocumentStatusConfigRow = {
+  enabled: boolean;
   updated_at: Date;
   config: GovernanceWorkflowConfig;
 };
@@ -73,7 +74,8 @@ const approvalFor = (
   fallbackUserIds: string[];
   fallbackTeamIds: string[];
 } | null => {
-  if (field.type !== 'enum' || value == null || !config?.config.approvals) return null;
+  if (field.type !== 'enum' || value == null || !config?.enabled || !config.config.approvals)
+    return null;
   const extension = documentStatusExtensionSchema.safeParse(
     config.config.extensions['document.status']
   );
@@ -593,6 +595,9 @@ export const createDocumentGovernanceRegistry = (): GovernanceRegistry =>
       {
         workflowConfig: {
           supportsSubkind: true,
+          supportsApprovals: true,
+          supportsReminders: true,
+          supportsEscalation: false,
           validateSubkind: async (db, workspace, subkind) => {
             if (!subkind) return 'Document status workflows require a document type and field';
             const [documentTypeId, fieldId] = subkind.split(':');

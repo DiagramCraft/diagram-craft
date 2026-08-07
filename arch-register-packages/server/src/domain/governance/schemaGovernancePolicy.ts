@@ -11,6 +11,9 @@ export type SchemaGovernancePolicies = {
 
 export const schemaWorkflowConfig = {
   supportsSubkind: true,
+  supportsApprovals: true,
+  supportsReminders: true,
+  supportsEscalation: true,
   validateSubkind: async (db: DatabaseAdapter, workspace: string, subkind: string | null) => {
     if (!subkind) return 'Schema-scoped workflows require a schema id';
     return (await db.catalog.getSchema(workspace, subkind))

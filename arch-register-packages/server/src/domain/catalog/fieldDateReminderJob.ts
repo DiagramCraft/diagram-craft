@@ -338,6 +338,17 @@ export const createFieldDateReminderGovernanceRegistry = (): GovernanceRegistry 
       {
         workflowConfig: {
           supportsSubkind: true,
+          supportsApprovals: false,
+          supportsReminders: true,
+          supportsEscalation: false,
+          defaultConfig: {
+            reminders: {
+              enabled: true,
+              approachingDays: [3],
+              overdueDays: [1, 3]
+            },
+            extensions: {}
+          },
           validateSubkind: async (db, workspace, subkind) => {
             if (!subkind) return 'Field reminders require a schema and field';
             const [schemaId, fieldId] = subkind.split(':');
