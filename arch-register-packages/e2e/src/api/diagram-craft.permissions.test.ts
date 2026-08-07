@@ -7,7 +7,9 @@ const SYSTEM_SCHEMA_ID = '00000000-0000-0000-0000-000000000002';
 const DATA_FLOW_SCHEMA_ID = '00000000-0000-0000-0000-000000000030';
 const RESTRICTED_RELATION_FIELD_ID = 'data_flows_in_restricted';
 const RESTRICTED_GROUP_ID = 'diagram-craft-restricted-relation';
-const dataFlowRelation = seedRelations.find(relation => relation.schema_id === DATA_FLOW_SCHEMA_ID)!;
+const dataFlowRelation = seedRelations.find(
+  relation => relation.schema_id === DATA_FLOW_SCHEMA_ID
+)!;
 
 test.describe('diagram craft permission routes', () => {
   test('authentication: public diagram craft routes still require auth', async ({ server }) => {
