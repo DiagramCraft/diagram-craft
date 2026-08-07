@@ -30,6 +30,7 @@ import { SqliteEntityDeprecationDatabase } from '../domain/catalog/db/sqliteEnti
 import { SqliteChangeCaseDatabase } from '../domain/catalog/db/sqliteChangeCase';
 import { SqliteExternalIdentityDatabase } from '../domain/externalIdentity/db/sqliteExternalIdentity';
 import { SqliteRelationDatabase } from '../domain/catalog/db/sqliteRelation';
+import { SqliteCurrencyRatesDatabase } from '../domain/currencyRates/db/sqliteCurrencyRates';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -63,6 +64,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly changeCase;
   readonly externalIdentity;
   readonly relation;
+  readonly currencyRates;
   private transactionTail: Promise<void> = Promise.resolve();
 
   constructor(filePath: string) {
@@ -98,6 +100,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.changeCase = new SqliteChangeCaseDatabase(() => this.db);
     this.externalIdentity = new SqliteExternalIdentityDatabase(() => this.db);
     this.relation = new SqliteRelationDatabase(() => this.db);
+    this.currencyRates = new SqliteCurrencyRatesDatabase(() => this.db);
 
     runSqliteMigrations(this.db);
 
@@ -167,7 +170,8 @@ export class SqliteDatabase implements DatabaseAdapter {
       entityDeprecation: this.entityDeprecation,
       changeCase: this.changeCase,
       externalIdentity: this.externalIdentity,
-      relation: this.relation
+      relation: this.relation,
+      currencyRates: this.currencyRates
     };
   }
 

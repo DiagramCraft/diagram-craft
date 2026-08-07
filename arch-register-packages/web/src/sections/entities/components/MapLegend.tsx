@@ -3,7 +3,7 @@ import type { MetricLegend, MetricSource } from '@arch-register/api-types/metric
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { categoricalColor, NEUTRAL_MISSING_COLOR } from './mapColorScales';
 import { isEnumSource } from './mapMetricConfig';
-import { formatMetricLegendValue } from './mapMetricFormatting';
+import { formatMetricLegendValue, formatMetricRateDate } from './mapMetricFormatting';
 
 type MapLegendProps = {
   metricLabel: string;
@@ -63,6 +63,8 @@ export const MapLegend = ({ metricLabel, source, legend, lifecycleStates }: MapL
       <span className={styles.title}>
         {metricLabel}
         {legend.currencyMixed ? ' (Unconverted)' : ''}
+        {legend.currencyCode ? ` · ${legend.currencyCode}` : ''}
+        {formatMetricRateDate(legend) ? ` · ${formatMetricRateDate(legend)}` : ''}
       </span>
       <div className={styles.row}>
         <span className={styles.rangeLabel}>{formatMetricLegendValue(legend.min, legend)}</span>

@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws } from '@arch-register/api-types/common';
+import { currencyCodeSchema, ws } from '@arch-register/api-types/common';
 import { filterConditionSchema } from '@arch-register/api-types/viewContract';
 import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
@@ -52,7 +52,10 @@ export const metricConfigSchema = z.object({
     .optional()
     .describe(
       'Direction used for "worst" aggregation. For numeric/lifecycle sources, "low" means lower values are worse and "high" means higher values are worse. For enum sources, "low" means the first option in the enum\'s configured order is worse and "high" means the last option is worse. Required when aggregation is "worst".'
-    )
+    ),
+  targetCurrency: currencyCodeSchema
+    .optional()
+    .describe('Target currency for currency-field rollups; defaults to the workspace currency')
 });
 
 // ── Request / response ───────────────────────────────────────────────────────
@@ -125,7 +128,12 @@ export const metricResultSchema = z.object({
   currencyMixed: z
     .boolean()
     .optional()
-    .describe('Whether populated currency values used more than one currency without conversion')
+    .describe('Whether populated currency values used more than one currency without conversion'),
+  currencyRateDate: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Provider rate date used for currency conversion')
 });
 
 export const metricLegendSchema = z.object({
@@ -142,6 +150,11 @@ export const metricLegendSchema = z.object({
     .describe(
       'Whether returned currency results contain more than one currency without conversion'
     ),
+  currencyRateDate: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Provider rate date used for currency conversion'),
   categories: z
     .array(z.object({ value: z.string(), label: z.string() }))
     .optional()

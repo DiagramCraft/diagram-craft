@@ -28,11 +28,15 @@ export const parseMetricConfig = (raw: unknown): MetricConfig | null => {
   }
   if (source.kind !== 'lifecycle' && typeof source.fieldId !== 'string') return null;
   const worstDirection = candidate.worstDirection;
+  const targetCurrency = candidate.targetCurrency;
   return {
     sourceSchemaId,
     source: source as MetricSource,
     aggregation: aggregation as MetricAggregation,
-    ...(worstDirection === 'low' || worstDirection === 'high' ? { worstDirection } : {})
+    ...(worstDirection === 'low' || worstDirection === 'high' ? { worstDirection } : {}),
+    ...(typeof targetCurrency === 'string' && /^[A-Z]{3}$/.test(targetCurrency)
+      ? { targetCurrency }
+      : {})
   };
 };
 
@@ -90,6 +94,15 @@ export const sourceKey = (source: MetricSource): string =>
 
 export const isEnumSource = (source: MetricSource): boolean =>
   source.kind === 'enum' || source.kind === 'assessmentEnum';
+
+export const isCurrencyMetric = (
+  metric: MetricConfig,
+  schema: EntitySchema | undefined
+): boolean => {
+  if (metric.source.kind !== 'field' || metric.aggregation === 'count') return false;
+  const fieldId = metric.source.fieldId;
+  return schema?.fields.some(field => field.id === fieldId && field.type === 'currency') === true;
+};
 
 export const AGGREGATION_OPTIONS: { value: MetricAggregation; label: string }[] = [
   { value: 'count', label: 'Count' },

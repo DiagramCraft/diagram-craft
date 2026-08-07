@@ -22,8 +22,14 @@ import {
 import { parseEntityQuery, buildEntityQueryForExecution } from '../catalog/entityQuery';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { buildContainmentChildrenIndex, collectDescendantIds } from './metricDescendants';
+import type { CurrencyRateSnapshotDbResult } from '../currencyRates/db/currencyRatesDatabase';
 
 type MetricValue = { value: number; lifecycleId: string | null; currencyCode: string | null };
+type CurrencyConversion = {
+  targetCurrency: string;
+  rateDate: string;
+  rates: Record<string, number>;
+};
 type EnumOption = { value: string; label: string };
 
 const isEnumSourceKind = (kind: MetricConfig['source']['kind']) =>
@@ -284,7 +290,8 @@ export const computeBoxMetrics = (
   isFilterMatch: (entity: EntityDbResult) => boolean,
   enumOptions: EnumOption[] | null = null,
   authCtx: AuthorizationContext | null = null,
-  sourceAvailableOverride?: boolean
+  sourceAvailableOverride?: boolean,
+  currencyConversion: CurrencyConversion | null = null
 ): MetricRollupResponse => {
   const entityById = new Map(entities.map(e => [e.id, e]));
   const lifecycleSortOrder = new Map(lifecycleStates.map(s => [s.id, s.sort_order]));
@@ -358,9 +365,40 @@ export const computeBoxMetrics = (
         )
       )
       .filter((v): v is MetricValue => v != null);
-    const { value, lifecycleId } = aggregate(populated, metric.aggregation, worstDirection);
-    const currencyMetadata = isCurrencyFieldSource(metric, sourceSchema)
-      ? getCurrencyMetadata(populated)
+    const isCurrency = isCurrencyFieldSource(metric, sourceSchema);
+    const normalized =
+      isCurrency && currencyConversion
+        ? populated.map(value => {
+            const sourceCurrency = value.currencyCode?.toUpperCase();
+            const sourceRate =
+              sourceCurrency == null ? undefined : currencyConversion.rates[sourceCurrency];
+            const targetRate = currencyConversion.rates[currencyConversion.targetCurrency];
+            httpAssert.true(sourceRate != null && sourceRate > 0, {
+              status: 422,
+              message: `No exchange rate is available for '${sourceCurrency ?? 'unknown'}'`
+            });
+            httpAssert.true(targetRate != null && targetRate > 0, {
+              status: 422,
+              message: `No exchange rate is available for '${currencyConversion.targetCurrency}'`
+            });
+            const resolvedSourceRate = sourceRate as number;
+            const resolvedTargetRate = targetRate as number;
+            return {
+              ...value,
+              value: (value.value * resolvedTargetRate) / resolvedSourceRate,
+              currencyCode: currencyConversion.targetCurrency
+            };
+          })
+        : populated;
+    const { value, lifecycleId } = aggregate(normalized, metric.aggregation, worstDirection);
+    const currencyMetadata = isCurrency
+      ? currencyConversion
+        ? {
+            currencyCode: currencyConversion.targetCurrency,
+            currencyMixed: false,
+            currencyRateDate: currencyConversion.rateDate
+          }
+        : getCurrencyMetadata(populated)
       : null;
 
     return {
@@ -393,7 +431,10 @@ export const computeBoxMetrics = (
               ? null
               : [...currencyCodes][0]!,
           currencyMixed:
-            currencyResults.some(result => result.currencyMixed) || currencyCodes.size > 1
+            currencyResults.some(result => result.currencyMixed) || currencyCodes.size > 1,
+          currencyRateDate:
+            currencyResults.find(result => result.currencyRateDate != null)?.currencyRateDate ??
+            null
         }
       : null;
   return {
@@ -540,12 +581,41 @@ export const getBoxMetrics = async (
     schemas,
     joinedAssessment?.assessment.fields
   );
+  const sourceSchema = schemas.find(schema => schema.id === metric.sourceSchemaId);
+  const currencySource = isCurrencyFieldSource(metric, sourceSchema);
+  httpAssert.true(
+    metric.targetCurrency == null || (currencySource && metric.aggregation !== 'count'),
+    {
+      status: 400,
+      message: 'targetCurrency is only valid for non-count currency field metrics'
+    }
+  );
   const enumOptions = sourceAvailable
     ? await resolveEnumOptions(db, workspace, metric, schemas, joinedAssessment)
     : null;
 
   const visibleEntities = filterVisibleEntities(authCtx, allEntities);
   const scopedEntities = visibleEntities;
+  let currencyConversion: CurrencyConversion | null = null;
+  if (currencySource && metric.aggregation !== 'count') {
+    const currencyConfig = await db.workspace.getSupportedCurrencies(workspace);
+    const targetCurrency = metric.targetCurrency ?? currencyConfig.default_currency;
+    httpAssert.true(
+      currencyConfig.currencies.some(currency => currency.code === targetCurrency),
+      { status: 400, message: `Currency '${targetCurrency}' is not supported by this workspace` }
+    );
+    const snapshot: CurrencyRateSnapshotDbResult | null =
+      await db.currencyRates.getLatestSnapshot();
+    httpAssert.present(snapshot, {
+      status: 503,
+      message: 'Currency rates are not available yet; please try again after the daily refresh'
+    });
+    currencyConversion = {
+      targetCurrency,
+      rateDate: snapshot.rate_date,
+      rates: snapshot.rates
+    };
+  }
 
   const matchIds = new Set(
     (
@@ -578,6 +648,7 @@ export const getBoxMetrics = async (
     isFilterMatch,
     enumOptions,
     authCtx,
-    sourceAvailable
+    sourceAvailable,
+    currencyConversion
   );
 };

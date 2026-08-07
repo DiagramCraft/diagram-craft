@@ -58,7 +58,7 @@ export const useMapMetricRollup = ({
     ]
   );
 
-  const { data, isLoading } = useQuery({
+  const { data, isLoading, error } = useQuery({
     queryKey: metricKeys.rollup(workspaceId, request),
     queryFn: () =>
       orpcClient.metrics.rollup({
@@ -77,6 +77,7 @@ export const useMapMetricRollup = ({
   return {
     resultsByBoxId,
     legend: data?.legend ?? emptyResult.legend,
-    isLoading: isLoading && !!metric
+    isLoading: isLoading && !!metric,
+    error: error instanceof Error ? error : error ? new Error(String(error)) : null
   };
 };

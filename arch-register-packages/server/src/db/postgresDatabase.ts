@@ -31,6 +31,7 @@ import { PostgresEntityDeprecationDatabase } from '../domain/catalog/db/postgres
 import { PostgresChangeCaseDatabase } from '../domain/catalog/db/postgresChangeCase';
 import { PostgresExternalIdentityDatabase } from '../domain/externalIdentity/db/postgresExternalIdentity';
 import { PostgresRelationDatabase } from '../domain/catalog/db/postgresRelation';
+import { PostgresCurrencyRatesDatabase } from '../domain/currencyRates/db/postgresCurrencyRates';
 import { createLogger } from '../utils/logger';
 
 const PGCRYPTO_EXISTS_NOTICE = 'extension "pgcrypto" already exists, skipping';
@@ -75,6 +76,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly changeCase: PostgresChangeCaseDatabase;
   readonly externalIdentity: PostgresExternalIdentityDatabase;
   readonly relation: PostgresRelationDatabase;
+  readonly currencyRates: PostgresCurrencyRatesDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -106,7 +108,8 @@ export class PostgresDatabase implements DatabaseAdapter {
       entityDeprecation: new PostgresEntityDeprecationDatabase(sql),
       changeCase: new PostgresChangeCaseDatabase(sql),
       externalIdentity: new PostgresExternalIdentityDatabase(sql),
-      relation: new PostgresRelationDatabase(sql)
+      relation: new PostgresRelationDatabase(sql),
+      currencyRates: new PostgresCurrencyRatesDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -170,6 +173,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.changeCase = new PostgresChangeCaseDatabase(this.sql);
     this.externalIdentity = new PostgresExternalIdentityDatabase(this.sql);
     this.relation = new PostgresRelationDatabase(this.sql);
+    this.currencyRates = new PostgresCurrencyRatesDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,

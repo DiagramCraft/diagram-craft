@@ -46,6 +46,7 @@ import type { JoinedAssessmentContext } from './entityFieldSources';
 import {
   AGGREGATION_OPTIONS,
   getMetricSourceOptions,
+  isCurrencyMetric,
   isEnumSource,
   parseMetricConfig,
   sourceKey
@@ -368,7 +369,7 @@ export const MapView = ({
   joinedAssessment,
   onCountChange
 }: MapViewProps) => {
-  const { schemas } = useWorkspaceContext();
+  const { schemas, currencies } = useWorkspaceContext();
   const cfg = useMemo(
     () => normalizeViewConfig(mapViewConfigSchema, config, DEFAULT_CONFIG),
     [config]
@@ -499,7 +500,11 @@ export const MapView = ({
     return ids;
   }, [level1Items, cfg.levels, getLevel2Children, getLevel3Children]);
 
-  const { resultsByBoxId, legend } = useMapMetricRollup({
+  const {
+    resultsByBoxId,
+    legend,
+    error: metricError
+  } = useMapMetricRollup({
     workspaceId,
     boxEntityIds: visibleBoxIds,
     metric: metricConfig,
@@ -686,7 +691,8 @@ export const MapView = ({
                       ...metricConfig,
                       source: option.source,
                       aggregation: nextIsEnum ? 'count' : metricConfig.aggregation,
-                      worstDirection: nextIsEnum ? undefined : metricConfig.worstDirection
+                      worstDirection: nextIsEnum ? undefined : metricConfig.worstDirection,
+                      targetCurrency: undefined
                     });
                   }}
                 >
@@ -711,7 +717,9 @@ export const MapView = ({
                       worstDirection:
                         aggregation === 'worst'
                           ? (metricConfig.worstDirection ?? 'high')
-                          : undefined
+                          : undefined,
+                      targetCurrency:
+                        aggregation === 'count' ? undefined : metricConfig.targetCurrency
                     });
                   }}
                 >
@@ -750,6 +758,28 @@ export const MapView = ({
                         <option value="low">Low is worse</option>
                       </>
                     )}
+                  </select>
+                  <TbChevronDown size={11} />
+                </div>
+              )}
+
+              {isCurrencyMetric(metricConfig, metricSourceSchema) && (
+                <div className={styles.selectWrap}>
+                  <select
+                    className={styles.select}
+                    value={metricConfig.targetCurrency ?? currencies.default_currency}
+                    onChange={e =>
+                      setMetricConfig({
+                        ...metricConfig,
+                        targetCurrency: e.target.value
+                      })
+                    }
+                  >
+                    {currencies.currencies.map(currency => (
+                      <option key={currency.code} value={currency.code}>
+                        {currency.code} — {currency.label}
+                      </option>
+                    ))}
                   </select>
                   <TbChevronDown size={11} />
                 </div>
@@ -953,14 +983,17 @@ export const MapView = ({
         </div>
       )}
 
-      {metricConfig && (
-        <MapLegend
-          metricLabel={metricLabel}
-          source={metricConfig.source}
-          legend={legend}
-          lifecycleStates={lifecycleStates}
-        />
-      )}
+      {metricConfig &&
+        (metricError ? (
+          <div className={styles.metricError}>{metricError.message}</div>
+        ) : (
+          <MapLegend
+            metricLabel={metricLabel}
+            source={metricConfig.source}
+            legend={legend}
+            lifecycleStates={lifecycleStates}
+          />
+        ))}
     </div>
   );
 };

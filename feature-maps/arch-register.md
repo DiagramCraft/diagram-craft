@@ -213,8 +213,8 @@
         - @id:ar.entity-views.map Users can inspect containment hierarchies, including the built-in Vendor-to-Contract
           path, as a nested capability map, colouring boxes by a configurable metric rolled up from descendant entities
           (numeric or currency fields, lifecycle state, or assessment fields), using dominant-option or worst
-          aggregation. Currency sum and average rollups use the stored amounts, format homogeneous results with their
-          currency code, and label mixed-currency results as unconverted without performing currency conversion. For
+          aggregation. Currency rollups convert amounts to the selected currency or workspace default using the latest
+          daily exchange-rate snapshot, and show the conversion currency and rate date. For
           enum-sourced metrics, "worst" ranks options by the admin-configured top-to-bottom order of the enum's
           options. A metric source in an access-restricted field group evaluates as unavailable (no value, distribution,
           or dominant option) for viewers without view access to that group, rather than exposing the underlying data;
@@ -546,6 +546,9 @@
             - @id:ar.integrations.jobs.standard_jobs Administrators can configure a Technology End of Life job to
               hydrate mapped schema fields from endoflife.date while recording those fields as scheduled integration
               data.
+
+            - @id:ar.integrations.jobs.currency-rates The system refreshes a shared daily currency-rate snapshot for
+              currency rollups and retains the last successful snapshot when the provider is unavailable.
 
         - @id:ar.integrations.automation-rules Workspace administrators can define, edit, and delete workspace-scoped
           automation rules that match entity or typed-relation triggers (creation, deletion, or a field change; entity
