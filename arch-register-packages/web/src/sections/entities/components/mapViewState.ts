@@ -51,6 +51,22 @@ export const getChildSchemas = (
   });
 };
 
+export const getChildRelationSchemas = (
+  schemas: EntitySchema[],
+  parentSchemaId: string | null,
+  relationSchemas: RelationSchema[]
+): RelationSchema[] => {
+  if (!parentSchemaId) return [];
+  const parentSchema = schemas.find(schema => schema.id === parentSchemaId);
+  if (!parentSchema) return [];
+  const relationSchemaIds = new Set(
+    parentSchema.fields.flatMap(field =>
+      field.type === 'typedRelation' ? [field.relationSchemaId] : []
+    )
+  );
+  return relationSchemas.filter(schema => relationSchemaIds.has(schema.id));
+};
+
 const findTraversalStep = (
   parentSchema: EntitySchema | undefined,
   childSchema: EntitySchema,
@@ -109,13 +125,30 @@ export const getMapTraversalPath = (
   relationSchemas: RelationSchema[]
 ): MetricTraversalStep[] => {
   const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  const relationSchemaById = new Map(relationSchemas.map(schema => [schema.id, schema]));
   const path: MetricTraversalStep[] = [];
   for (let index = 1; index < schemaIds.length; index += 1) {
     const childSchemaId = schemaIds[index]!;
     const parentSchemaId = schemaIds[index - 1]!;
     const childSchema = schemaById.get(childSchemaId);
+    const parentSchema = schemaById.get(parentSchemaId);
+    if (!parentSchema) return [];
+    if (!childSchema && relationSchemaById.has(childSchemaId)) {
+      const field = parentSchema.fields.find(
+        candidate =>
+          candidate.type === 'typedRelation' && candidate.relationSchemaId === childSchemaId
+      );
+      if (field?.type !== 'typedRelation') return [];
+      path.push({
+        kind: 'typedRelation',
+        fieldId: field.id,
+        relationSchemaId: field.relationSchemaId,
+        direction: field.direction
+      });
+      continue;
+    }
     if (!childSchema) return [];
-    const step = findTraversalStep(schemaById.get(parentSchemaId), childSchema, relationSchemas);
+    const step = findTraversalStep(parentSchema, childSchema, relationSchemas);
     if (!step) return [];
     path.push(step);
   }

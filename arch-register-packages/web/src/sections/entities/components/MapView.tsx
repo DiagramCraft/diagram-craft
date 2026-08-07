@@ -10,7 +10,11 @@ import styles from './MapView.module.css';
 import { TbChevronDown } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
-import type { EntityRecord, TreeNode } from '@arch-register/api-types/entityContract';
+import type {
+  EntityRecord,
+  EntityRelation,
+  TreeNode
+} from '@arch-register/api-types/entityContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -39,6 +43,7 @@ import {
 import {
   buildContainmentTreeIndex,
   getChildSchemas,
+  getChildRelationSchemas,
   getContainmentChildren,
   getMapTraversalPath,
   getMapSchemaIds,
@@ -121,6 +126,33 @@ const DEFAULT_CONFIG: MapConfig = {
 
 const nodeName = (n: TreeNode) => n._name ?? n._slug;
 
+type RelationMapNode = TreeNode & { _mapRelation: EntityRelation };
+
+const isRelationMapNode = (node: TreeNode): node is RelationMapNode => '_mapRelation' in node;
+
+const makeRelationMapNode = (
+  relation: EntityRelation,
+  relationSchema: RelationSchema
+): RelationMapNode =>
+  ({
+    ...relation.relationFields,
+    _uid: `relation:${relation.relationId}`,
+    _publicId: relation.relationId,
+    _schema: { id: relationSchema.id, name: relationSchema.name },
+    _name: `${relation.fieldName}: ${relation.entityName}`,
+    _slug: relation.relationId,
+    _namespace: '',
+    _description: '',
+    _owner: null,
+    _lifecycle: null,
+    _targetLifecycle: null,
+    _targetLifecycleDate: null,
+    _tags: [],
+    _links: [],
+    _isMatch: true,
+    _mapRelation: relation
+  }) as unknown as RelationMapNode;
+
 const aggregationLabel = (aggregation: MetricAggregation) =>
   AGGREGATION_OPTIONS.find(o => o.value === aggregation)?.label ?? aggregation;
 
@@ -132,14 +164,20 @@ const metricValueLabel = (
   result: MetricResult | undefined,
   lifecycleStates: WorkspaceLifecycleState[]
 ): string | null => {
-  if (!metric || !result) return null;
-  if (isLeaf && metric.source.kind === 'field' && node._schema.id === metric.sourceSchemaId) {
+  if (!metric) return null;
+  if (
+    isLeaf &&
+    metric.source.kind === 'field' &&
+    node._schema.id === metric.sourceSchemaId &&
+    (node as Record<string, unknown>)[metric.source.fieldId] != null
+  ) {
     return formatMetricSourceValue(
       metric,
       sourceSchema,
       (node as Record<string, unknown>)[metric.source.fieldId]
     );
   }
+  if (!result) return null;
   if (isEnumSource(metric.source)) return result.dominantLabel ?? '—';
   if (metric.source.kind === 'lifecycle') {
     return result.lifecycleId == null
@@ -187,7 +225,22 @@ const buildMetricRows = (
 ): EntityHoverCardRow[] => {
   if (!metric) return [];
   const result = resultsByBoxId.get(node._uid);
-  if (!result) return [];
+  if (!result) {
+    if (isRelationMapNode(node) && metric.source.kind === 'field') {
+      return [
+        {
+          label: metricLabel,
+          value:
+            formatMetricSourceValue(
+              metric,
+              sourceSchema,
+              (node as Record<string, unknown>)[metric.source.fieldId]
+            ) ?? '—'
+        }
+      ];
+    }
+    return [];
+  }
 
   const rows: EntityHoverCardRow[] = [];
   if (isEnumSource(metric.source)) {
@@ -323,7 +376,7 @@ const SchemaSelect = ({
 }: {
   label: string;
   value: string | null;
-  options: EntitySchema[];
+  options: Array<{ id: string; name: string }>;
   onChange: (id: string | null) => void;
 }) => (
   <div className={styles.axisPill}>
@@ -392,7 +445,17 @@ export const MapView = ({
     () => normalizeViewConfig(mapViewConfigSchema, config, DEFAULT_CONFIG),
     [config]
   );
-  const schemaIds = useMemo(() => getMapSchemaIds(cfg), [cfg]);
+  const schemaIds = useMemo(
+    () =>
+      getMapSchemaIds(cfg).flatMap(id => {
+        if (schemas.some(schema => schema.id === id)) return [id];
+        const relationSchema = relationSchemas.find(schema => schema.id === id);
+        return relationSchema
+          ? [...relationSchema.in.schemaIds, ...relationSchema.out.schemaIds]
+          : [];
+      }),
+    [cfg, relationSchemas, schemas]
+  );
   const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
     workspaceId,
     projectId,
@@ -444,11 +507,33 @@ export const MapView = ({
   );
 
   const level3SchemaOptions = useMemo(
-    () => getChildSchemas(schemas, cfg.level2SchemaId ?? null, relationSchemas),
+    () => [
+      ...getChildSchemas(schemas, cfg.level2SchemaId ?? null, relationSchemas),
+      ...getChildRelationSchemas(schemas, cfg.level2SchemaId ?? null, relationSchemas)
+    ],
     [schemas, cfg.level2SchemaId, relationSchemas]
   );
 
   const treeIndex = useMemo(() => buildContainmentTreeIndex(nodes, edges), [nodes, edges]);
+
+  const getRelationMapChildren = useCallback(
+    (parentUid: string, relationSchemaId: string): RelationMapNode[] => {
+      const relationSchema = relationSchemas.find(schema => schema.id === relationSchemaId);
+      if (!relationSchema) return [];
+      const relationData = entityRelations.get(parentUid);
+      const unique = new Map<string, RelationMapNode>();
+      for (const relation of [
+        ...(relationData?.outgoing ?? []),
+        ...(relationData?.incoming ?? [])
+      ]) {
+        if (relation.kind !== 'typed' || relation.relationSchemaId !== relationSchemaId) continue;
+        if (!relation.relationId || !treeIndex.nodeMap.get(relation.entityId)?._isMatch) continue;
+        unique.set(relation.relationId, makeRelationMapNode(relation, relationSchema));
+      }
+      return [...unique.values()].sort((a, b) => nodeName(a).localeCompare(nodeName(b)));
+    },
+    [entityRelations, relationSchemas, treeIndex]
+  );
 
   const getMapChildren = useCallback(
     (parentUid: string, schemaId: string | null): TreeNode[] => {
@@ -460,7 +545,7 @@ export const MapView = ({
         .map(relation => relation.entityId);
       const relatedChildren = relatedIds
         .map(id => treeIndex.nodeMap.get(id))
-        .filter((node): node is TreeNode => node != null && node._isMatch);
+        .filter((node): node is TreeNode => node?._isMatch === true);
       const unique = new Map<string, TreeNode>();
       for (const node of [...containmentChildren, ...relatedChildren]) unique.set(node._uid, node);
       return [...unique.values()].sort((a, b) => nodeName(a).localeCompare(nodeName(b)));
@@ -488,9 +573,12 @@ export const MapView = ({
   const getLevel3Children = useCallback(
     (parentUid: string): TreeNode[] => {
       if (!cfg.level3SchemaId) return [];
+      if (relationSchemas.some(schema => schema.id === cfg.level3SchemaId)) {
+        return getRelationMapChildren(parentUid, cfg.level3SchemaId);
+      }
       return getMapChildren(parentUid, cfg.level3SchemaId);
     },
-    [cfg.level3SchemaId, getMapChildren]
+    [cfg.level3SchemaId, getMapChildren, getRelationMapChildren, relationSchemas]
   );
 
   const schemaMap = useMemo(() => {
@@ -513,23 +601,36 @@ export const MapView = ({
     [mapLevelSchemaIds, schemas, relationSchemas]
   );
   const metricTerminalSchemaId = mapLevelSchemaIds[mapLevelSchemaIds.length - 1] ?? null;
-  const metricTerminalSchema = metricTerminalSchemaId
+  const metricTerminalEntitySchema = metricTerminalSchemaId
     ? schemaMap.get(metricTerminalSchemaId)?.schema
     : undefined;
+  const metricTerminalRelationSchema = relationSchemas.find(
+    schema => schema.id === metricTerminalSchemaId
+  );
+  const metricTerminalSchema = metricTerminalEntitySchema ?? metricTerminalRelationSchema;
+  const metricTerminalContext: 'entity' | 'relation' = metricTerminalRelationSchema
+    ? 'relation'
+    : 'entity';
   const storedMetricConfig = useMemo(() => parseMetricConfig(cfg.metricConfig), [cfg.metricConfig]);
   const metricConfig = storedMetricConfig
     ? {
         ...storedMetricConfig,
         sourceSchemaId: metricTerminalSchemaId ?? storedMetricConfig.sourceSchemaId,
-        sourceContext: 'entity' as const,
+        sourceContext: metricTerminalContext,
         path: mapTraversalPath.length > 0 ? mapTraversalPath : undefined
       }
     : null;
   const metricSourceSchema = metricTerminalSchema;
   const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
   const metricSourceOptions = useMemo(
-    () => getMetricSourceOptions(metricSourceSchema, joinedAssessment, getFieldGroupAccess),
-    [metricSourceSchema, joinedAssessment, getFieldGroupAccess]
+    () =>
+      getMetricSourceOptions(
+        metricSourceSchema,
+        joinedAssessment,
+        getFieldGroupAccess,
+        metricTerminalContext
+      ),
+    [metricSourceSchema, joinedAssessment, getFieldGroupAccess, metricTerminalContext]
   );
   const activeSourceOption = metricConfig
     ? metricSourceOptions.find(o => sourceKey(o.source) === sourceKey(metricConfig.source))
@@ -553,7 +654,9 @@ export const MapView = ({
       for (const l2 of getLevel2Children(l1._uid)) {
         ids.push(l2._uid);
         if (cfg.levels < 3) continue;
-        for (const l3 of getLevel3Children(l2._uid)) ids.push(l3._uid);
+        for (const l3 of getLevel3Children(l2._uid)) {
+          if (!isRelationMapNode(l3)) ids.push(l3._uid);
+        }
       }
     }
     return ids;
@@ -728,7 +831,7 @@ export const MapView = ({
                       aggregation: 'count'
                     }),
                     sourceSchemaId: metricTerminalSchemaId,
-                    sourceContext: 'entity',
+                    sourceContext: metricTerminalContext,
                     path: mapTraversalPath.length > 0 ? mapTraversalPath : undefined,
                     source: option.source,
                     aggregation: nextIsEnum ? 'count' : (metricConfig?.aggregation ?? 'count'),
@@ -957,11 +1060,17 @@ export const MapView = ({
                               >
                                 {l3Children.map(l3 => {
                                   const l3SchemaEntry = schemaMap.get(l3._schema.id);
+                                  const l3RelationSchema = relationSchemas.find(
+                                    schema => schema.id === l3._schema.id
+                                  );
                                   const l3Color = l3SchemaEntry
                                     ? resolveSchemaColor(l3SchemaEntry.schema, l3SchemaEntry.index)
-                                    : 'var(--accent-fg)';
+                                    : (l3RelationSchema?.color ?? 'var(--accent-fg)');
+                                  const l3LinkId = isRelationMapNode(l3)
+                                    ? l3._mapRelation.entityId
+                                    : l3._uid;
                                   const l3Dimmed =
-                                    linkedEntityIds != null && !linkedEntityIdSet.has(l3._uid);
+                                    linkedEntityIds != null && !linkedEntityIdSet.has(l3LinkId);
 
                                   return (
                                     <div
@@ -977,9 +1086,13 @@ export const MapView = ({
                                       <EntityTooltip
                                         node={l3}
                                         color={l3Color}
-                                        schemaName={l3SchemaEntry?.schema.name ?? l3._schema.name}
+                                        schemaName={
+                                          l3SchemaEntry?.schema.name ??
+                                          l3RelationSchema?.name ??
+                                          l3._schema.name
+                                        }
                                         isLinked={
-                                          linkedEntityIds == null || linkedEntityIdSet.has(l3._uid)
+                                          linkedEntityIds == null || linkedEntityIdSet.has(l3LinkId)
                                         }
                                         displayFields={selectedDisplayFields}
                                         schemaMap={schemaMap}
@@ -988,7 +1101,11 @@ export const MapView = ({
                                         <button
                                           type="button"
                                           className={styles.entityLink}
-                                          onClick={detailClick(l3._publicId)}
+                                          onClick={detailClick(
+                                            isRelationMapNode(l3)
+                                              ? l3._mapRelation.entityId
+                                              : l3._publicId
+                                          )}
                                           style={nameStyle(l3, l3Dimmed)}
                                         >
                                           {nodeName(l3)}

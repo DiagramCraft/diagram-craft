@@ -219,10 +219,12 @@
           options. A metric source in an access-restricted field group evaluates as unavailable (no value, distribution,
           or dominant option) for viewers without view access to that group, rather than exposing the underlying data;
           the field picker also excludes such fields when configuring the metric. Map levels can combine
-          reference/containment and typed-relation children, including Domain → System → Contract paths; the metric
-          picker automatically uses the final selected level (so Contract exposes Annual Cost and other Contract
-          fields). Traversal applies the current visibility, permission, project, and filter scope, deduplicates
-          repeated terminal sources, and marks collapsed duplicates in the map with a count and hover detail.
+          reference/containment and typed-relation children, including Domain → System → Contract paths; typed
+          relation instances such as System Contract can also be selected as a map level. The metric picker
+          automatically uses the final selected level (so Contract exposes Annual Cost and System Contract exposes its
+          relation fields). Traversal applies the current visibility, permission, project, and filter scope,
+          deduplicates repeated terminal sources, and marks collapsed duplicates in the map with a count and hover
+          detail.
 
         - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view,
           toggling which relation fields draw connections; typed relation instances are included by default

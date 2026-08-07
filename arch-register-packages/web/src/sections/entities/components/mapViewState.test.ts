@@ -5,6 +5,7 @@ import type { TreeEdge, TreeNode } from '@arch-register/api-types/entityContract
 import {
   buildContainmentTreeIndex,
   getChildSchemas,
+  getChildRelationSchemas,
   getContainmentChildren,
   getMapTraversalPath,
   getMapSchemaIds,
@@ -91,6 +92,36 @@ describe('map view state', () => {
       )
     ).toEqual([
       { kind: 'relation', fieldId: 'domain', direction: 'backward', ownerSchemaId: 'system' },
+      {
+        kind: 'typedRelation',
+        fieldId: 'contracts',
+        relationSchemaId: 'system-contract',
+        direction: 'out'
+      }
+    ]);
+  });
+
+  it('offers System Contract as a selectable relation level', () => {
+    const system = {
+      ...schema('system'),
+      fields: [
+        {
+          id: 'contracts',
+          name: 'Contracts',
+          type: 'typedRelation',
+          relationSchemaId: 'system-contract',
+          direction: 'out'
+        }
+      ]
+    } as unknown as EntitySchema;
+    const relationSchema = {
+      id: 'system-contract',
+      name: 'System Contract',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['contract'] }
+    } as unknown as RelationSchema;
+    expect(getChildRelationSchemas([system], 'system', [relationSchema])).toEqual([relationSchema]);
+    expect(getMapTraversalPath(['system', 'system-contract'], [system], [relationSchema])).toEqual([
       {
         kind: 'typedRelation',
         fieldId: 'contracts',
