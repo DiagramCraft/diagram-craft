@@ -1,10 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { TreeEdge, TreeNode } from '@arch-register/api-types/entityContract';
 import {
   buildContainmentTreeIndex,
   getChildSchemas,
   getContainmentChildren,
+  getMapTraversalPath,
   getMapSchemaIds,
   sortContainmentNodes
 } from './mapViewState';
@@ -36,6 +38,66 @@ describe('map view state', () => {
       ).map(item => item.id)
     ).toEqual(['app']);
     expect(getChildSchemas([schema('service')], null).map(item => item.id)).toEqual(['service']);
+  });
+
+  it('includes typed-relation target schemas as map children', () => {
+    const system = {
+      ...schema('system'),
+      fields: [
+        {
+          id: 'contracts',
+          name: 'Contracts',
+          type: 'typedRelation',
+          relationSchemaId: 'system-contract',
+          direction: 'out'
+        }
+      ]
+    } as unknown as EntitySchema;
+    const contract = schema('contract');
+    const relationSchema = {
+      id: 'system-contract',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['contract'] }
+    } as unknown as RelationSchema;
+    expect(getChildSchemas([system, contract], 'system', [relationSchema])).toEqual([contract]);
+  });
+
+  it('builds the Domain → System → Contract traversal automatically', () => {
+    const domain = schema('domain');
+    const system = {
+      ...schema('system', 'domain'),
+      fields: [
+        { id: 'domain', name: 'Domain', type: 'containment', schemaId: 'domain' },
+        {
+          id: 'contracts',
+          name: 'Contracts',
+          type: 'typedRelation',
+          relationSchemaId: 'system-contract',
+          direction: 'out'
+        }
+      ]
+    } as unknown as EntitySchema;
+    const contract = schema('contract');
+    const relationSchema = {
+      id: 'system-contract',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['contract'] }
+    } as unknown as RelationSchema;
+    expect(
+      getMapTraversalPath(
+        ['domain', 'system', 'contract'],
+        [domain, system, contract],
+        [relationSchema]
+      )
+    ).toEqual([
+      { kind: 'relation', fieldId: 'domain', direction: 'backward', ownerSchemaId: 'system' },
+      {
+        kind: 'typedRelation',
+        fieldId: 'contracts',
+        relationSchemaId: 'system-contract',
+        direction: 'out'
+      }
+    ]);
   });
 
   it('indexes edges and sorts only matching children', () => {

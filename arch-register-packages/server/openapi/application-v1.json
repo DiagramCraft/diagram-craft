@@ -104667,7 +104667,7 @@
       "post": {
         "operationId": "metrics.rollup",
         "summary": "Compute a metric roll-up over box descendants",
-        "description": "Computes an aggregated metric value for each given box entity, over its containment descendants, permission- and filter-scoped consistently with the entity browser.",
+        "description": "Computes an aggregated metric value for each given box entity, over its containment descendants or configured relation traversal path, permission- and filter-scoped consistently with the entity browser.",
         "tags": [
           "Metrics",
           "Metrics"
@@ -104701,7 +104701,85 @@
                     "properties": {
                       "sourceSchemaId": {
                         "type": "string",
-                        "description": "Schema identifier that descendant source entities must match"
+                        "description": "Entity or relation schema identifier for the terminal metric source"
+                      },
+                      "sourceContext": {
+                        "enum": [
+                          "entity",
+                          "relation"
+                        ],
+                        "type": "string",
+                        "description": "Whether the terminal metric source is an entity or a typed relation instance"
+                      },
+                      "path": {
+                        "type": "array",
+                        "maxItems": 6,
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "relation",
+                                  "description": "A reference or containment field hop between entities"
+                                },
+                                "fieldId": {
+                                  "type": "string",
+                                  "description": "Reference or containment field identifier"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "forward",
+                                    "backward"
+                                  ],
+                                  "type": "string",
+                                  "description": "Follow the field value forward or find entities pointing backward"
+                                },
+                                "ownerSchemaId": {
+                                  "type": "string",
+                                  "description": "Schema owning the field; required for backward hops when ambiguous"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "fieldId",
+                                "direction"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "typedRelation",
+                                  "description": "A hop through a typed relation to its other endpoint"
+                                },
+                                "fieldId": {
+                                  "type": "string",
+                                  "description": "Typed-relation field identifier on the current entity schema"
+                                },
+                                "relationSchemaId": {
+                                  "type": "string",
+                                  "description": "Typed relation schema identifier"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "in",
+                                    "out"
+                                  ],
+                                  "type": "string",
+                                  "description": "Direction of the typed-relation field on the current entity schema"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "fieldId",
+                                "relationSchemaId",
+                                "direction"
+                              ]
+                            }
+                          ]
+                        },
+                        "description": "Ordered traversal path from each map box to terminal metric sources"
                       },
                       "source": {
                         "anyOf": [
@@ -106570,6 +106648,12 @@
                             "maximum": 9007199254740991,
                             "description": "Number of matching descendants that had a non-missing value"
                           },
+                          "duplicateCount": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Number of additional terminal traversal hits collapsed as duplicates"
+                          },
                           "currencyCode": {
                             "anyOf": [
                               {
@@ -106605,7 +106689,8 @@
                           "dominantLabel",
                           "distribution",
                           "sourceCount",
-                          "populatedCount"
+                          "populatedCount",
+                          "duplicateCount"
                         ]
                       },
                       "description": "Per-box metric results"

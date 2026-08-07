@@ -1,4 +1,5 @@
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type {
   MetricConfig,
   MetricLegend,
@@ -8,7 +9,7 @@ import { formatCurrencyValue } from '../../../utils/currencyFormat';
 
 const isCurrencyMetric = (
   metric: MetricConfig,
-  sourceSchema: EntitySchema | undefined
+  sourceSchema: EntitySchema | RelationSchema | undefined
 ): boolean => {
   if (metric.source.kind !== 'field' || metric.aggregation === 'count') return false;
   const fieldId = metric.source.fieldId;
@@ -21,7 +22,7 @@ const roundedMetricValue = (value: number): number => Math.round(value * 100) / 
 
 export const formatMetricResultValue = (
   metric: MetricConfig,
-  sourceSchema: EntitySchema | undefined,
+  sourceSchema: EntitySchema | RelationSchema | undefined,
   result: MetricResult
 ): string => {
   if (result.value == null) return '—';
@@ -36,7 +37,7 @@ export const formatMetricResultValue = (
 
 export const formatMetricSourceValue = (
   metric: MetricConfig,
-  sourceSchema: EntitySchema | undefined,
+  sourceSchema: EntitySchema | RelationSchema | undefined,
   raw: unknown
 ): string | null => {
   if (metric.source.kind !== 'field') return null;

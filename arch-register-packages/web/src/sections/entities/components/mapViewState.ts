@@ -1,4 +1,6 @@
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
+import type { MetricTraversalStep } from '@arch-register/api-types/metricContract';
 import type { TreeEdge, TreeNode } from '@arch-register/api-types/entityContract';
 
 export type ContainmentTreeIndex = {
@@ -21,12 +23,103 @@ export const getMapSchemaIds = (cfg: {
 
 export const getChildSchemas = (
   schemas: EntitySchema[],
-  parentSchemaId: string | null
+  parentSchemaId: string | null,
+  relationSchemas: RelationSchema[] = []
 ): EntitySchema[] => {
   if (!parentSchemaId) return schemas;
-  return schemas.filter(schema =>
-    schema.fields.some(field => field.type === 'containment' && field.schemaId === parentSchemaId)
+  const relationSchemaById = new Map(relationSchemas.map(schema => [schema.id, schema]));
+  const parentSchema = schemas.find(schema => schema.id === parentSchemaId);
+  const typedRelationTargets = (schema: EntitySchema) =>
+    schema.fields.flatMap(field => {
+      if (field.type !== 'typedRelation') return [];
+      const relationSchema = relationSchemaById.get(field.relationSchemaId);
+      return field.direction === 'out'
+        ? (relationSchema?.out.schemaIds ?? [])
+        : (relationSchema?.in.schemaIds ?? []);
+    });
+  const parentTypedRelationTargets = parentSchema ? typedRelationTargets(parentSchema) : [];
+  return schemas.filter(schema => {
+    const hasContainment = schema.fields.some(
+      field =>
+        (field.type === 'containment' || field.type === 'reference') &&
+        field.schemaId === parentSchemaId
+    );
+    const hasTypedRelation =
+      parentTypedRelationTargets.includes(schema.id) ||
+      typedRelationTargets(schema).includes(parentSchemaId);
+    return hasContainment || hasTypedRelation;
+  });
+};
+
+const findTraversalStep = (
+  parentSchema: EntitySchema | undefined,
+  childSchema: EntitySchema,
+  relationSchemas: RelationSchema[]
+): MetricTraversalStep | null => {
+  if (!parentSchema) return null;
+
+  const forwardField = parentSchema.fields.find(
+    field =>
+      (field.type === 'containment' || field.type === 'reference') &&
+      field.schemaId === childSchema.id
   );
+  if (forwardField) {
+    return { kind: 'relation', fieldId: forwardField.id, direction: 'forward' };
+  }
+
+  const backwardField = childSchema.fields.find(
+    field =>
+      (field.type === 'containment' || field.type === 'reference') &&
+      field.schemaId === parentSchema.id
+  );
+  if (backwardField) {
+    return {
+      kind: 'relation',
+      fieldId: backwardField.id,
+      direction: 'backward',
+      ownerSchemaId: childSchema.id
+    };
+  }
+
+  const relationSchemaById = new Map(relationSchemas.map(schema => [schema.id, schema]));
+  const typedField = parentSchema.fields.find(field => {
+    if (field.type !== 'typedRelation') return false;
+    const relationSchema = relationSchemaById.get(field.relationSchemaId);
+    const targetSchemaIds =
+      field.direction === 'out'
+        ? (relationSchema?.out.schemaIds ?? [])
+        : (relationSchema?.in.schemaIds ?? []);
+    return targetSchemaIds.includes(childSchema.id);
+  });
+  if (typedField?.type === 'typedRelation') {
+    return {
+      kind: 'typedRelation',
+      fieldId: typedField.id,
+      relationSchemaId: typedField.relationSchemaId,
+      direction: typedField.direction
+    };
+  }
+
+  return null;
+};
+
+export const getMapTraversalPath = (
+  schemaIds: string[],
+  schemas: EntitySchema[],
+  relationSchemas: RelationSchema[]
+): MetricTraversalStep[] => {
+  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
+  const path: MetricTraversalStep[] = [];
+  for (let index = 1; index < schemaIds.length; index += 1) {
+    const childSchemaId = schemaIds[index]!;
+    const parentSchemaId = schemaIds[index - 1]!;
+    const childSchema = schemaById.get(childSchemaId);
+    if (!childSchema) return [];
+    const step = findTraversalStep(schemaById.get(parentSchemaId), childSchema, relationSchemas);
+    if (!step) return [];
+    path.push(step);
+  }
+  return path;
 };
 
 export const buildContainmentTreeIndex = (

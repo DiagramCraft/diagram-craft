@@ -35,6 +35,7 @@ const result = (overrides: Partial<MetricResult> = {}): MetricResult => ({
   distribution: [],
   sourceCount: 1,
   populatedCount: 1,
+  duplicateCount: 0,
   ...overrides
 });
 

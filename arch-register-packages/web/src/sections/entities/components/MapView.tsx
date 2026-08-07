@@ -11,6 +11,7 @@ import { TbChevronDown } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { EntityRecord, TreeNode } from '@arch-register/api-types/entityContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type {
@@ -39,6 +40,7 @@ import {
   buildContainmentTreeIndex,
   getChildSchemas,
   getContainmentChildren,
+  getMapTraversalPath,
   getMapSchemaIds,
   sortContainmentNodes
 } from './mapViewState';
@@ -59,6 +61,8 @@ import {
 } from './mapColorScales';
 import { useMapMetricRollup } from './useMapMetricRollup';
 import { useFieldGroupAccess } from '../../../auth/useFieldGroupAccess';
+import { useMultipleEntityRelations } from '../../../hooks/useEntities';
+import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { MapLegend } from './MapLegend';
 import { MapBreadcrumb, type MapFocusEntry } from './MapBreadcrumb';
 import { formatMetricResultValue, formatMetricSourceValue } from './mapMetricFormatting';
@@ -124,7 +128,7 @@ const metricValueLabel = (
   node: TreeNode,
   isLeaf: boolean,
   metric: MetricConfig | null,
-  sourceSchema: EntitySchema | undefined,
+  sourceSchema: EntitySchema | RelationSchema | undefined,
   result: MetricResult | undefined,
   lifecycleStates: WorkspaceLifecycleState[]
 ): string | null => {
@@ -179,7 +183,7 @@ const buildMetricRows = (
   metricLabel: string,
   resultsByBoxId: Map<string, MetricResult>,
   lifecycleStates: WorkspaceLifecycleState[],
-  sourceSchema: EntitySchema | undefined
+  sourceSchema: EntitySchema | RelationSchema | undefined
 ): EntityHoverCardRow[] => {
   if (!metric) return [];
   const result = resultsByBoxId.get(node._uid);
@@ -208,6 +212,12 @@ const buildMetricRows = (
     label: 'Coverage',
     value: `${result.populatedCount} of ${result.sourceCount} had data`
   });
+  if (result.duplicateCount > 0) {
+    rows.push({
+      label: 'Duplicates',
+      value: `${result.duplicateCount} duplicate path${result.duplicateCount === 1 ? '' : 's'} collapsed`
+    });
+  }
   return rows;
 };
 
@@ -275,7 +285,7 @@ const MetricValueLabel = ({
   node: TreeNode;
   isLeaf: boolean;
   metric: MetricConfig | null;
-  sourceSchema: EntitySchema | undefined;
+  sourceSchema: EntitySchema | RelationSchema | undefined;
   resultsByBoxId: Map<string, MetricResult>;
   lifecycleStates: WorkspaceLifecycleState[];
   style?: React.CSSProperties;
@@ -295,6 +305,13 @@ const MetricValueLabel = ({
     </span>
   );
 };
+
+const DuplicateBadge = ({ count }: { count: number | undefined }) =>
+  count && count > 0 ? (
+    <span className={styles.duplicateBadge} title={`${count} duplicate paths collapsed`}>
+      Duplicate ×{count}
+    </span>
+  ) : null;
 
 // ── Config sub-components ─────────────────────────────────────────────────────
 
@@ -370,6 +387,7 @@ export const MapView = ({
   onCountChange
 }: MapViewProps) => {
   const { schemas, currencies } = useWorkspaceContext();
+  const { data: relationSchemas = [] } = useRelationSchemas(workspaceId);
   const cfg = useMemo(
     () => normalizeViewConfig(mapViewConfigSchema, config, DEFAULT_CONFIG),
     [config]
@@ -385,6 +403,8 @@ export const MapView = ({
     statusFilter,
     schemaIds
   });
+  const nodeIds = useMemo(() => nodes.map(node => node._uid), [nodes]);
+  const entityRelations = useMultipleEntityRelations(workspaceId, nodeIds);
   useEffect(() => {
     onCountChange?.(nodes.filter(node => node._isMatch).length);
   }, [nodes, onCountChange]);
@@ -419,16 +439,34 @@ export const MapView = ({
   }, []);
 
   const level2SchemaOptions = useMemo(
-    () => getChildSchemas(schemas, cfg.level1SchemaId),
-    [schemas, cfg.level1SchemaId]
+    () => getChildSchemas(schemas, cfg.level1SchemaId, relationSchemas),
+    [schemas, cfg.level1SchemaId, relationSchemas]
   );
 
   const level3SchemaOptions = useMemo(
-    () => getChildSchemas(schemas, cfg.level2SchemaId ?? null),
-    [schemas, cfg.level2SchemaId]
+    () => getChildSchemas(schemas, cfg.level2SchemaId ?? null, relationSchemas),
+    [schemas, cfg.level2SchemaId, relationSchemas]
   );
 
   const treeIndex = useMemo(() => buildContainmentTreeIndex(nodes, edges), [nodes, edges]);
+
+  const getMapChildren = useCallback(
+    (parentUid: string, schemaId: string | null): TreeNode[] => {
+      if (!schemaId) return [];
+      const containmentChildren = getContainmentChildren(parentUid, schemaId, treeIndex);
+      const relationData = entityRelations.get(parentUid);
+      const relatedIds = [...(relationData?.outgoing ?? []), ...(relationData?.incoming ?? [])]
+        .filter(relation => relation.kind === 'typed' && relation.entitySchemaId === schemaId)
+        .map(relation => relation.entityId);
+      const relatedChildren = relatedIds
+        .map(id => treeIndex.nodeMap.get(id))
+        .filter((node): node is TreeNode => node != null && node._isMatch);
+      const unique = new Map<string, TreeNode>();
+      for (const node of [...containmentChildren, ...relatedChildren]) unique.set(node._uid, node);
+      return [...unique.values()].sort((a, b) => nodeName(a).localeCompare(nodeName(b)));
+    },
+    [entityRelations, treeIndex]
+  );
 
   const level1Items = useMemo(() => {
     if (currentFocus) {
@@ -442,17 +480,17 @@ export const MapView = ({
   const getLevel2Children = useCallback(
     (parentUid: string): TreeNode[] => {
       if (!cfg.level2SchemaId) return [];
-      return getContainmentChildren(parentUid, cfg.level2SchemaId, treeIndex);
+      return getMapChildren(parentUid, cfg.level2SchemaId);
     },
-    [treeIndex, cfg.level2SchemaId]
+    [cfg.level2SchemaId, getMapChildren]
   );
 
   const getLevel3Children = useCallback(
     (parentUid: string): TreeNode[] => {
       if (!cfg.level3SchemaId) return [];
-      return getContainmentChildren(parentUid, cfg.level3SchemaId, treeIndex);
+      return getMapChildren(parentUid, cfg.level3SchemaId);
     },
-    [treeIndex, cfg.level3SchemaId]
+    [cfg.level3SchemaId, getMapChildren]
   );
 
   const schemaMap = useMemo(() => {
@@ -463,10 +501,31 @@ export const MapView = ({
 
   // ── Metric configuration ─────────────────────────────────────────────────
 
-  const metricConfig = useMemo(() => parseMetricConfig(cfg.metricConfig), [cfg.metricConfig]);
-  const metricSourceSchema = metricConfig
-    ? schemaMap.get(metricConfig.sourceSchemaId)?.schema
+  const mapLevelSchemaIds = useMemo(
+    () =>
+      [cfg.level1SchemaId, cfg.level2SchemaId, cfg.level3SchemaId]
+        .slice(0, cfg.levels)
+        .filter((id): id is string => id != null),
+    [cfg.level1SchemaId, cfg.level2SchemaId, cfg.level3SchemaId, cfg.levels]
+  );
+  const mapTraversalPath = useMemo(
+    () => getMapTraversalPath(mapLevelSchemaIds, schemas, relationSchemas),
+    [mapLevelSchemaIds, schemas, relationSchemas]
+  );
+  const metricTerminalSchemaId = mapLevelSchemaIds[mapLevelSchemaIds.length - 1] ?? null;
+  const metricTerminalSchema = metricTerminalSchemaId
+    ? schemaMap.get(metricTerminalSchemaId)?.schema
     : undefined;
+  const storedMetricConfig = useMemo(() => parseMetricConfig(cfg.metricConfig), [cfg.metricConfig]);
+  const metricConfig = storedMetricConfig
+    ? {
+        ...storedMetricConfig,
+        sourceSchemaId: metricTerminalSchemaId ?? storedMetricConfig.sourceSchemaId,
+        sourceContext: 'entity' as const,
+        path: mapTraversalPath.length > 0 ? mapTraversalPath : undefined
+      }
+    : null;
+  const metricSourceSchema = metricTerminalSchema;
   const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
   const metricSourceOptions = useMemo(
     () => getMetricSourceOptions(metricSourceSchema, joinedAssessment, getFieldGroupAccess),
@@ -646,27 +705,42 @@ export const MapView = ({
         <div className={styles.config}>
           <div className={styles.axisPill}>
             <span className={styles.axisKicker}>Metric</span>
+            <span className={styles.pathSummary}>
+              {metricTerminalSchema?.name ?? 'Select the final map level'}
+            </span>
             <div className={styles.selectWrap}>
               <select
                 className={styles.select}
-                value={metricConfig?.sourceSchemaId ?? ''}
+                value={metricConfig ? sourceKey(metricConfig.source) : ''}
                 onChange={e => {
-                  const schemaId = e.target.value ?? null;
-                  setMetricConfig(
-                    schemaId
-                      ? {
-                          sourceSchemaId: schemaId,
-                          source: { kind: 'lifecycle' },
-                          aggregation: 'count'
-                        }
-                      : null
+                  const option = metricSourceOptions.find(
+                    candidate => sourceKey(candidate.source) === e.target.value
                   );
+                  if (!option || !metricTerminalSchemaId) {
+                    setMetricConfig(null);
+                    return;
+                  }
+                  const nextIsEnum = isEnumSource(option.source);
+                  setMetricConfig({
+                    ...(metricConfig ?? {
+                      sourceSchemaId: metricTerminalSchemaId,
+                      source: option.source,
+                      aggregation: 'count'
+                    }),
+                    sourceSchemaId: metricTerminalSchemaId,
+                    sourceContext: 'entity',
+                    path: mapTraversalPath.length > 0 ? mapTraversalPath : undefined,
+                    source: option.source,
+                    aggregation: nextIsEnum ? 'count' : (metricConfig?.aggregation ?? 'count'),
+                    worstDirection: nextIsEnum ? undefined : metricConfig?.worstDirection,
+                    targetCurrency: undefined
+                  });
                 }}
               >
                 <option value="">None</option>
-                {schemas.map(s => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
+                {metricSourceOptions.map(option => (
+                  <option key={sourceKey(option.source)} value={sourceKey(option.source)}>
+                    {option.label}
                   </option>
                 ))}
               </select>
@@ -677,34 +751,6 @@ export const MapView = ({
           {metricConfig && (
             <>
               <span className={styles.cross}>›</span>
-              <div className={styles.selectWrap}>
-                <select
-                  className={styles.select}
-                  value={sourceKey(metricConfig.source)}
-                  onChange={e => {
-                    const option = metricSourceOptions.find(
-                      o => sourceKey(o.source) === e.target.value
-                    );
-                    if (!option) return;
-                    const nextIsEnum = isEnumSource(option.source);
-                    setMetricConfig({
-                      ...metricConfig,
-                      source: option.source,
-                      aggregation: nextIsEnum ? 'count' : metricConfig.aggregation,
-                      worstDirection: nextIsEnum ? undefined : metricConfig.worstDirection,
-                      targetCurrency: undefined
-                    });
-                  }}
-                >
-                  {metricSourceOptions.map(o => (
-                    <option key={sourceKey(o.source)} value={sourceKey(o.source)}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-                <TbChevronDown size={11} />
-              </div>
-
               <div className={styles.selectWrap}>
                 <select
                   className={styles.select}
@@ -847,6 +893,7 @@ export const MapView = ({
                       lifecycleStates={lifecycleStates}
                       style={nameStyle(l1, l1Dimmed)}
                     />
+                    <DuplicateBadge count={resultsByBoxId.get(l1._uid)?.duplicateCount} />
                   </div>
 
                   {cfg.levels >= 2 && l2Children.length > 0 && (
@@ -898,6 +945,7 @@ export const MapView = ({
                                 lifecycleStates={lifecycleStates}
                                 style={nameStyle(l2, l2Dimmed)}
                               />
+                              <DuplicateBadge count={resultsByBoxId.get(l2._uid)?.duplicateCount} />
                             </div>
 
                             {cfg.levels >= 3 && l3Children.length > 0 && (
@@ -954,6 +1002,9 @@ export const MapView = ({
                                         resultsByBoxId={resultsByBoxId}
                                         lifecycleStates={lifecycleStates}
                                         style={nameStyle(l3, l3Dimmed)}
+                                      />
+                                      <DuplicateBadge
+                                        count={resultsByBoxId.get(l3._uid)?.duplicateCount}
                                       />
                                     </div>
                                   );

@@ -28,6 +28,26 @@ const contractCostMetric = {
   aggregation: 'sum' as const
 };
 
+const domainId = '00000000-0000-0000-0001-000000000001';
+const systemContractRelationSchemaId = '00000000-0000-0000-0000-000000000031';
+const domainToContractMetric = {
+  ...contractCostMetric,
+  path: [
+    {
+      kind: 'relation' as const,
+      fieldId: 'domain',
+      direction: 'backward' as const,
+      ownerSchemaId: seededSchemas.default.system.id
+    },
+    {
+      kind: 'typedRelation' as const,
+      fieldId: 'contracts',
+      relationSchemaId: systemContractRelationSchemaId,
+      direction: 'out' as const
+    }
+  ]
+};
+
 test.describe('metric rollups', () => {
   test('rolls up seeded Vendor to Contract currency costs through containment', async ({
     orpc
@@ -85,6 +105,30 @@ test.describe('metric rollups', () => {
     expect(response.legend).toMatchObject({
       currencyCode: 'USD',
       currencyMixed: false
+    });
+  });
+
+  test('rolls up Domain to System to Contract through the typed relation', async ({ orpc }) => {
+    const response = await orpc.metrics.rollup({
+      params: { workspace: 'default' },
+      body: {
+        boxEntityIds: [domainId, seededEntities.default.customerPortal.id],
+        metric: domainToContractMetric
+      }
+    });
+
+    const results = new Map(response.results.map(result => [result.boxEntityId, result]));
+    expect(results.get(domainId)).toMatchObject({
+      value: 197000,
+      sourceCount: 3,
+      populatedCount: 3,
+      duplicateCount: 0
+    });
+    expect(results.get(seededEntities.default.customerPortal.id)).toMatchObject({
+      value: 155000,
+      sourceCount: 2,
+      populatedCount: 2,
+      duplicateCount: 0
     });
   });
 });

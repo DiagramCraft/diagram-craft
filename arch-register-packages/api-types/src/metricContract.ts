@@ -6,6 +6,30 @@ import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
 // ── Metric source & aggregation ──────────────────────────────────────────────
 
+export const metricTraversalStepSchema = z.discriminatedUnion('kind', [
+  z.object({
+    kind: z.literal('relation').describe('A reference or containment field hop between entities'),
+    fieldId: z.string().describe('Reference or containment field identifier'),
+    direction: z
+      .enum(['forward', 'backward'])
+      .describe('Follow the field value forward or find entities pointing backward'),
+    ownerSchemaId: z
+      .string()
+      .optional()
+      .describe('Schema owning the field; required for backward hops when ambiguous')
+  }),
+  z.object({
+    kind: z
+      .literal('typedRelation')
+      .describe('A hop through a typed relation to its other endpoint'),
+    fieldId: z.string().describe('Typed-relation field identifier on the current entity schema'),
+    relationSchemaId: z.string().describe('Typed relation schema identifier'),
+    direction: z
+      .enum(['in', 'out'])
+      .describe('Direction of the typed-relation field on the current entity schema')
+  })
+]);
+
 export const metricSourceSchema = z.discriminatedUnion('kind', [
   z.object({
     kind: z.literal('field').describe('A numeric or currency field on the source schema'),
@@ -44,7 +68,16 @@ export const metricAggregationSchema = z
 export const metricConfigSchema = z.object({
   sourceSchemaId: z
     .string()
-    .describe('Schema identifier that descendant source entities must match'),
+    .describe('Entity or relation schema identifier for the terminal metric source'),
+  sourceContext: z
+    .enum(['entity', 'relation'])
+    .optional()
+    .describe('Whether the terminal metric source is an entity or a typed relation instance'),
+  path: z
+    .array(metricTraversalStepSchema)
+    .max(6)
+    .optional()
+    .describe('Ordered traversal path from each map box to terminal metric sources'),
   source: metricSourceSchema.describe('Value source for the metric'),
   aggregation: metricAggregationSchema,
   worstDirection: z
@@ -120,6 +153,10 @@ export const metricResultSchema = z.object({
     .number()
     .int()
     .describe('Number of matching descendants that had a non-missing value'),
+  duplicateCount: z
+    .number()
+    .int()
+    .describe('Number of additional terminal traversal hits collapsed as duplicates'),
   currencyCode: z
     .string()
     .nullable()
@@ -179,7 +216,7 @@ export const workspaceMetricContract = oc.tag('Metrics').router({
         inputStructure: 'detailed',
         summary: 'Compute a metric roll-up over box descendants',
         description:
-          'Computes an aggregated metric value for each given box entity, over its containment descendants, permission- and filter-scoped consistently with the entity browser.',
+          'Computes an aggregated metric value for each given box entity, over its containment descendants or configured relation traversal path, permission- and filter-scoped consistently with the entity browser.',
         tags: ['Metrics']
       })
       .input(
@@ -193,6 +230,7 @@ export const workspaceMetricContract = oc.tag('Metrics').router({
 });
 
 export type MetricSource = z.infer<typeof metricSourceSchema>;
+export type MetricTraversalStep = z.infer<typeof metricTraversalStepSchema>;
 export type MetricAggregation = z.infer<typeof metricAggregationSchema>;
 export type MetricConfig = z.infer<typeof metricConfigSchema>;
 export type MetricRollupRequest = z.infer<typeof metricRollupRequestSchema>;

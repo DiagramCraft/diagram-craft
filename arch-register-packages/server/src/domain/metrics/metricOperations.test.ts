@@ -192,7 +192,8 @@ describe('computeBoxMetrics', () => {
         dominantLabel: null,
         distribution: [],
         sourceCount: 0,
-        populatedCount: 0
+        populatedCount: 0,
+        duplicateCount: 0
       }
     ]);
     expect(result.legend).toEqual({ min: null, max: null });
