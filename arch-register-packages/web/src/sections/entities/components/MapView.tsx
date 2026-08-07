@@ -2,7 +2,6 @@ import {
   useMemo,
   useCallback,
   useEffect,
-  useState,
   type KeyboardEvent,
   type MouseEvent
 } from 'react';
@@ -69,7 +68,6 @@ import { useFieldGroupAccess } from '../../../auth/useFieldGroupAccess';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { MapLegend } from './MapLegend';
-import { MapBreadcrumb, type MapFocusEntry } from './MapBreadcrumb';
 import { formatMetricResultValue, formatMetricSourceValue } from './mapMetricFormatting';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
@@ -226,14 +224,34 @@ const resolveBoxColor = (
   metric: MetricConfig | null,
   resultsByBoxId: Map<string, MetricResult>,
   legend: MetricLegendData,
-  lifecycleStates: WorkspaceLifecycleState[]
+  lifecycleStates: WorkspaceLifecycleState[],
+  sourceSchema: EntitySchema | RelationSchema | undefined,
+  isLeaf: boolean,
+  directMetricRange: { min: number | null; max: number | null }
 ): string | null => {
   if (!metric) return null;
   const result = resultsByBoxId.get(node._uid);
-  if (!result) return NEUTRAL_MISSING_COLOR;
+  const directValue = getDirectMetricValue(node, metric, sourceSchema, isLeaf);
+  const colorMin = legend.min ?? directMetricRange.min;
+  const colorMax = legend.max ?? directMetricRange.max;
+
+  if (!result || result.value == null || (isEnumSource(metric.source) && result.dominantValue == null)) {
+    if (directValue?.kind === 'number' && colorMin != null && colorMax != null) {
+      return numericColor(directValue.value, colorMin, colorMax);
+    }
+    if (directValue?.kind === 'enum') {
+      const index = (legend.categories ?? []).findIndex(
+        category => category.value === directValue.value
+      );
+      return categoricalColor(index === -1 ? Number.MAX_SAFE_INTEGER : index);
+    }
+    if (directValue?.kind === 'lifecycle') {
+      return lifecycleStates.find(state => state.id === directValue.value)?.color ?? NEUTRAL_MISSING_COLOR;
+    }
+    return NEUTRAL_MISSING_COLOR;
+  }
 
   if (isEnumSource(metric.source)) {
-    if (result.dominantValue == null) return NEUTRAL_MISSING_COLOR;
     const categories = legend.categories ?? [];
     const index = categories.findIndex(c => c.value === result.dominantValue);
     return categoricalColor(index === -1 ? Number.MAX_SAFE_INTEGER : index);
@@ -244,6 +262,44 @@ const resolveBoxColor = (
   if (result.value == null || legend.min == null || legend.max == null)
     return NEUTRAL_MISSING_COLOR;
   return numericColor(result.value, legend.min, legend.max);
+};
+
+type DirectMetricValue =
+  | { kind: 'number'; value: number }
+  | { kind: 'enum'; value: string }
+  | { kind: 'lifecycle'; value: string };
+
+const getDirectMetricValue = (
+  node: TreeNode,
+  metric: MetricConfig,
+  sourceSchema: EntitySchema | RelationSchema | undefined,
+  isLeaf: boolean
+): DirectMetricValue | null => {
+  if (!isLeaf || node._schema.id !== metric.sourceSchemaId) return null;
+  const record = node as Record<string, unknown>;
+  if (metric.source.kind === 'enum') {
+    const raw = record[metric.source.fieldId];
+    if (raw == null || raw === '') return null;
+    return { kind: 'enum', value: String(raw) };
+  }
+  if (metric.source.kind === 'field') {
+    const fieldId = metric.source.fieldId;
+    const raw = record[fieldId];
+    if (raw == null || raw === '') return null;
+    const field = sourceSchema?.fields.find(candidate => candidate.id === fieldId);
+    if (field?.type === 'currency' && typeof raw === 'object' && raw !== null) {
+      const amount = (raw as { amount?: unknown }).amount;
+      return typeof amount === 'number' ? { kind: 'number', value: amount } : null;
+    }
+    const value = Number(raw);
+    return Number.isFinite(value) ? { kind: 'number', value } : null;
+  }
+  if (metric.source.kind === 'lifecycle') {
+    const lifecycle = node._lifecycle;
+    const value = typeof lifecycle === 'string' ? lifecycle : lifecycle?.id;
+    return value ? { kind: 'lifecycle', value } : null;
+  }
+  return null;
 };
 
 const hasMissingMetricData = (
@@ -258,14 +314,39 @@ const hasMissingMetricData = (
 /** Extra hover-card rows describing the metric result: value, enum distribution, coverage. */
 const buildMetricRows = (
   node: TreeNode,
+  isLeaf: boolean,
   metric: MetricConfig | null,
   metricLabel: string,
+  metricSourceLabel: string,
   resultsByBoxId: Map<string, MetricResult>,
   lifecycleStates: WorkspaceLifecycleState[],
   sourceSchema: EntitySchema | RelationSchema | undefined
 ): EntityHoverCardRow[] => {
   if (!metric) return [];
   const result = resultsByBoxId.get(node._uid);
+  const directSourceNode = isLeaf || isRelationMapNode(node);
+  if (
+    directSourceNode &&
+    hasMissingMetricData(metric, result) &&
+    getDirectMetricValue(node, metric, sourceSchema, true) != null
+  ) {
+    let value: string | null = null;
+    if (metric.source.kind === 'field' || metric.source.kind === 'enum') {
+      const raw = (node as Record<string, unknown>)[metric.source.fieldId];
+      value =
+        metric.source.kind === 'field'
+          ? formatMetricSourceValue(metric, sourceSchema, raw)
+          : String(raw);
+    } else if (metric.source.kind === 'lifecycle') {
+      const lifecycle = node._lifecycle;
+      const lifecycleId = typeof lifecycle === 'string' ? lifecycle : lifecycle?.id;
+      value =
+        lifecycleId == null
+          ? null
+          : (lifecycleStates.find(state => state.id === lifecycleId)?.label ?? lifecycleId);
+    }
+    return [{ label: `${metricSourceLabel} (source)`, value: value ?? '—' }];
+  }
   if (!result) {
     if (isRelationMapNode(node) && metric.source.kind === 'field') {
       return [
@@ -522,23 +603,7 @@ export const MapView = ({
     [cfg, onConfigChange]
   );
 
-  // ── Focus / breadcrumb navigation ────────────────────────────────────────
-  // Activating a box re-roots the map on that entity, rendering its descendants (still capped
-  // according to the configured levels); the breadcrumb stack lets the user navigate back
-  // up. This is session-local state, not persisted in the URL/saved view - matching the
-  // established pattern for in-view navigation elsewhere in the browser (ExploreView's
-  // center-node re-focusing is likewise local `useState`, not URL-backed).
-  const [focusStack, setFocusStack] = useState<MapFocusEntry[]>([]);
-  const currentFocus = focusStack[focusStack.length - 1] ?? null;
   const rootSchemaId = cfg.levelConfigs[0]?.schemaId ?? null;
-
-  const focusOn = useCallback((node: TreeNode) => {
-    setFocusStack(prev => [...prev, { uid: node._uid, name: nodeName(node) }]);
-  }, []);
-
-  const navigateBreadcrumb = useCallback((index: number) => {
-    setFocusStack(prev => (index < 0 ? [] : prev.slice(0, index + 1)));
-  }, []);
 
   const levelSchemaOptions = useMemo(
     () =>
@@ -594,13 +659,8 @@ export const MapView = ({
   );
 
   const level1Items = useMemo(() => {
-    if (currentFocus) {
-      return rootSchemaId
-        ? getContainmentChildren(currentFocus.uid, rootSchemaId, treeIndex)
-        : [];
-    }
     return sortContainmentNodes(nodes, rootSchemaId);
-  }, [nodes, rootSchemaId, currentFocus, treeIndex]);
+  }, [nodes, rootSchemaId]);
 
   const getMapChildrenForNode = useCallback(
     (parent: TreeNode, schemaId: string | null): TreeNode[] => {
@@ -699,6 +759,26 @@ export const MapView = ({
     return level1Items.map(node => build(node, 0));
   }, [cfg.levelConfigs, getMapChildrenForNode, level1Items]);
 
+  const directMetricRange = useMemo(() => {
+    if (!metricConfig || !metricSourceSchema) return { min: null, max: null };
+    const values: number[] = [];
+    const collect = (entry: RenderTreeNode) => {
+      const directValue = getDirectMetricValue(
+        entry.node,
+        metricConfig,
+        metricSourceSchema,
+        entry.children.length === 0
+      );
+      if (directValue?.kind === 'number') values.push(directValue.value);
+      entry.children.forEach(collect);
+    };
+    renderTree.forEach(collect);
+    return {
+      min: values.length > 0 ? Math.min(...values) : null,
+      max: values.length > 0 ? Math.max(...values) : null
+    };
+  }, [metricConfig, metricSourceSchema, renderTree]);
+
   const visibleBoxIds = useMemo(() => {
     const ids: string[] = [];
     const collect = (entry: RenderTreeNode) => {
@@ -749,49 +829,77 @@ export const MapView = ({
   }, [cfg.hideMissingMetricData, metricConfig, renderTree, resultsByBoxId]);
 
   const boxStyle = useCallback(
-    (node: TreeNode): React.CSSProperties | undefined => {
-      const color = resolveBoxColor(node, metricConfig, resultsByBoxId, legend, lifecycleStates);
+    (node: TreeNode, isLeaf: boolean): React.CSSProperties | undefined => {
+      const color = resolveBoxColor(
+        node,
+        metricConfig,
+        resultsByBoxId,
+        legend,
+        lifecycleStates,
+        metricSourceSchema,
+        isLeaf,
+        directMetricRange
+      );
       if (!color) return undefined;
       return { background: color };
     },
-    [metricConfig, resultsByBoxId, legend, lifecycleStates]
+    [metricConfig, resultsByBoxId, legend, lifecycleStates, metricSourceSchema, directMetricRange]
   );
 
   const nameStyle = useCallback(
-    (node: TreeNode, dimmed: boolean): React.CSSProperties | undefined => {
+    (node: TreeNode, dimmed: boolean, isLeaf: boolean): React.CSSProperties | undefined => {
       if (dimmed) return { color: 'var(--base-fg-more-dim)' };
-      const color = resolveBoxColor(node, metricConfig, resultsByBoxId, legend, lifecycleStates);
+      const color = resolveBoxColor(
+        node,
+        metricConfig,
+        resultsByBoxId,
+        legend,
+        lifecycleStates,
+        metricSourceSchema,
+        isLeaf,
+        directMetricRange
+      );
       return color ? { color: textColorForFill(color) } : undefined;
     },
-    [metricConfig, resultsByBoxId, legend, lifecycleStates]
+    [metricConfig, resultsByBoxId, legend, lifecycleStates, metricSourceSchema, directMetricRange]
   );
 
   const metricRowsFor = useCallback(
-    (node: TreeNode): EntityHoverCardRow[] =>
+    (node: TreeNode, isLeaf: boolean): EntityHoverCardRow[] =>
       buildMetricRows(
         node,
+        isLeaf,
         metricConfig,
         metricLabel,
+        activeSourceOption?.label ?? metricConfig?.source.kind ?? '',
         resultsByBoxId,
         lifecycleStates,
         metricSourceSchema
       ),
-    [metricConfig, metricLabel, resultsByBoxId, lifecycleStates, metricSourceSchema]
+    [
+      metricConfig,
+      metricLabel,
+      activeSourceOption?.label,
+      resultsByBoxId,
+      lifecycleStates,
+      metricSourceSchema
+    ]
   );
 
-  const focusHandlers = useCallback(
+  const boxHandlers = useCallback(
     (node: TreeNode) => ({
       role: 'button' as const,
       tabIndex: 0,
-      onClick: () => focusOn(node),
+      onClick: () =>
+        onEntityClick(isRelationMapNode(node) ? node._mapRelation.entityId : node._publicId),
       onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          focusOn(node);
+          onEntityClick(isRelationMapNode(node) ? node._mapRelation.entityId : node._publicId);
         }
       }
     }),
-    [focusOn]
+    [onEntityClick]
   );
 
   const detailClick = useCallback(
@@ -801,8 +909,6 @@ export const MapView = ({
     },
     [onEntityClick]
   );
-
-  const rootLabel = (rootSchemaId && schemaMap.get(rootSchemaId)?.schema.name) ?? 'Map';
 
   const isUnconfigured = !rootSchemaId;
 
@@ -825,7 +931,6 @@ export const MapView = ({
                       candidateIndex === index ? { ...candidate, schemaId: id } : candidate
                     );
                   notify({ levelConfigs: nextLevels });
-                  if (index === 0) setFocusStack([]);
                 }}
               />
               <ColsSelect
@@ -1038,8 +1143,6 @@ export const MapView = ({
         </div>
       )}
 
-      <MapBreadcrumb rootLabel={rootLabel} stack={focusStack} onNavigate={navigateBreadcrumb} />
-
       {/* Content */}
       {isUnconfigured ? (
         <EmptyState
@@ -1087,8 +1190,8 @@ export const MapView = ({
                   <div
                     key={node._uid}
                     className={`${className} ${styles.focusable}`}
-                    style={boxStyle(node)}
-                    {...focusHandlers(node)}
+                    style={boxStyle(node, children.length === 0)}
+                    {...boxHandlers(node)}
                   >
                     <div className={styles.levelHeader}>
                       <span className={styles.colorDot} style={{ background: color }} />
@@ -1099,7 +1202,7 @@ export const MapView = ({
                         isLinked={linkedEntityIds == null || linkedEntityIdSet.has(linkedId)}
                         displayFields={selectedDisplayFields}
                         schemaMap={schemaMap}
-                        metricRows={metricRowsFor(node)}
+                        metricRows={metricRowsFor(node, children.length === 0)}
                       >
                         <button
                           type="button"
@@ -1107,7 +1210,7 @@ export const MapView = ({
                           onClick={detailClick(
                             isRelationMapNode(node) ? node._mapRelation.entityId : node._publicId
                           )}
-                          style={nameStyle(node, dimmed)}
+                          style={nameStyle(node, dimmed, children.length === 0)}
                         >
                           {nodeName(node)}
                         </button>
@@ -1119,7 +1222,7 @@ export const MapView = ({
                         sourceSchema={metricSourceSchema}
                         resultsByBoxId={resultsByBoxId}
                         lifecycleStates={lifecycleStates}
-                        style={nameStyle(node, dimmed)}
+                        style={nameStyle(node, dimmed, children.length === 0)}
                       />
                       <DuplicateBadge count={resultsByBoxId.get(node._uid)?.duplicateCount} />
                     </div>
@@ -1134,11 +1237,7 @@ export const MapView = ({
           {filteredRenderTree.length === 0 && (
             <EmptyState
               title={level1Items.length === 0 ? 'No entities found' : 'No boxes match the metric filters'}
-              subtitle={
-                currentFocus
-                  ? `${currentFocus.name} has no matching descendants at this level.`
-                  : 'Try adjusting your search or filters.'
-              }
+              subtitle="Try adjusting your search or filters."
             />
           )}
         </div>
