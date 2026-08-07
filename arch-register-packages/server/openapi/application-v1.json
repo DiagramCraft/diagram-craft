@@ -86155,6 +86155,124 @@
         }
       }
     },
+    "/{workspace}/governance/workflows": {
+      "get": {
+        "operationId": "governanceWorkflowOverview.list",
+        "summary": "List governance workflow overview",
+        "description": "Lists every governance case kind with a summary of which workflow settings it supports, for the unified workflow admin screen.",
+        "tags": [
+          "Governance",
+          "Governance"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "case_kind": {
+                        "type": "string",
+                        "description": "Governance case kind"
+                      },
+                      "label": {
+                        "type": "string",
+                        "description": "Human-readable label for the case kind"
+                      },
+                      "description": {
+                        "type": "string",
+                        "description": "Short human-readable description of the workflow"
+                      },
+                      "capabilities": {
+                        "type": "object",
+                        "properties": {
+                          "reminders": {
+                            "type": "boolean",
+                            "description": "Whether this case kind supports scheduled deadline reminders"
+                          },
+                          "escalation": {
+                            "type": "boolean",
+                            "description": "Whether this case kind supports overdue escalation"
+                          },
+                          "approvalQuorum": {
+                            "type": "boolean",
+                            "description": "Whether this case kind has configurable approver/quorum rules"
+                          }
+                        },
+                        "required": [
+                          "reminders",
+                          "escalation",
+                          "approvalQuorum"
+                        ]
+                      },
+                      "approval_summary": {
+                        "type": "object",
+                        "properties": {
+                          "documentTypesConfigured": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                            "description": "Number of document types with at least one workflow-enabled status field"
+                          },
+                          "fieldsConfigured": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                            "description": "Number of status fields, across all document types, with approval required"
+                          }
+                        },
+                        "required": [
+                          "documentTypesConfigured",
+                          "fieldsConfigured"
+                        ],
+                        "description": "Present only when capabilities.approvalQuorum is true"
+                      },
+                      "configured_elsewhere": {
+                        "type": "object",
+                        "properties": {
+                          "settings_section_id": {
+                            "type": "string",
+                            "description": "Workspace settings section id to link to"
+                          },
+                          "settings_section_label": {
+                            "type": "string",
+                            "description": "Human-readable label of that settings section"
+                          }
+                        },
+                        "required": [
+                          "settings_section_id",
+                          "settings_section_label"
+                        ],
+                        "description": "Present when this case kind has configuration that is not surfaced on this screen at all (e.g. per-schema-field settings), so the card can link out instead of implying nothing is configurable"
+                      }
+                    },
+                    "required": [
+                      "case_kind",
+                      "label",
+                      "description",
+                      "capabilities"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/data/{id}/versions": {
       "get": {
         "operationId": "entityVersions.list",
