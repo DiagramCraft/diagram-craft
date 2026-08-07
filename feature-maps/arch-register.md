@@ -60,7 +60,8 @@
           and other workspace settings.
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
-            reusable shared fieldgroups, relationships, and schema-specific behavior, including currency fields,
+            reusable shared fieldgroups, relationships, and schema-specific behavior, including currency fields and
+            the built-in Vendor/Contract model where Contract records contain exactly one Vendor,
             read-only derived fields
             calculated from sibling
             fields using a sandboxed expression and a declared text, number, select, boolean, or rating result type,
@@ -209,8 +210,9 @@
           colour in a bubble view, with optional equally split axes and named quadrant labels persisted in saved views
           and wiki embeds.
 
-        - @id:ar.entity-views.map Users can inspect containment hierarchies as a nested capability map, colouring boxes
-          by a configurable metric rolled up from descendant entities (numeric fields, lifecycle state, or assessment
+        - @id:ar.entity-views.map Users can inspect containment hierarchies, including the built-in Vendor-to-Contract
+          path, as a nested capability map, colouring boxes by a configurable metric rolled up from descendant entities
+          (numeric fields, lifecycle state, or assessment
           fields), using dominant-option or worst aggregation. For enum-sourced metrics, "worst" ranks options by the
           admin-configured top-to-bottom order of the enum's options. A metric source in an access-restricted field
           group evaluates as unavailable (no value, distribution, or dominant option) for viewers without view access

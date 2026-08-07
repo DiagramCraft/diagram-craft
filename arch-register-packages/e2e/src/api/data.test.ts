@@ -1,4 +1,5 @@
 import { seedEntities } from '@arch-register/server/db/seedData';
+import { seededEntities } from '@arch-register/server/db/seedFixtures';
 import { expect, test as baseTest, createTestORPCClient } from '../helpers/fixtures';
 import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 import type { TestORPCClient } from '../helpers/orpcTestClient';
@@ -19,6 +20,7 @@ const apiId = '00000000-0000-0000-0004-000000000001';
 const componentId = '00000000-0000-0000-0003-000000000002';
 const componentSchemaId = '00000000-0000-0000-0000-000000000003';
 const apiSchemaId = '00000000-0000-0000-0000-000000000004';
+const contractSchemaId = '00000000-0000-0000-0000-000000000009';
 const defaultWorkspaceEntityCount = seedEntities.filter(
   entity => entity.workspace === seedIds.workspace.default && entity.project_id == null
 ).length;
@@ -117,6 +119,41 @@ test.describe('data routes', () => {
     // apiId is a sibling under the same system, not a component and not an ancestor of one —
     // it must not be pulled in just because the tree is otherwise unscoped.
     expect(body.nodes.map(node => node._uid)).not.toContain(apiId);
+  });
+
+  test('GET /api/:workspace/data/tree traverses seeded Vendor to Contract containment', async ({
+    orpc,
+    seeded: _
+  }) => {
+    const body = await orpc.entities.tree({
+      params: { workspace: 'default' },
+      query: { _schemaIds: [contractSchemaId] }
+    });
+
+    expect(body.nodes).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          _uid: seededEntities.default.acmeContract.id,
+          _isMatch: true
+        }),
+        expect.objectContaining({
+          _uid: seededEntities.default.acmeSupportContract.id,
+          _isMatch: true
+        }),
+        expect.objectContaining({
+          _uid: seededEntities.default.acmeCloud.id,
+          _isMatch: false
+        })
+      ])
+    );
+    expect(body.edges).toContainEqual({
+      childId: seededEntities.default.acmeContract.id,
+      parentId: seededEntities.default.acmeCloud.id
+    });
+    expect(body.edges).toContainEqual({
+      childId: seededEntities.default.acmeSupportContract.id,
+      parentId: seededEntities.default.acmeCloud.id
+    });
   });
 
   test('GET /api/:workspace/data/export returns schema-specific CSV output', async ({

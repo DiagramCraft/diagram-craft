@@ -13,6 +13,9 @@ type MockAIState = {
 const componentSchemaId = '00000000-0000-0000-0000-000000000003';
 const systemSchemaId = '00000000-0000-0000-0000-000000000002';
 const frontendAppId = '00000000-0000-0000-0003-000000000002';
+const dataFlowSchemaId = '00000000-0000-0000-0000-000000000030';
+const dataFlowSchema = seedRelationSchemas.find(schema => schema.id === dataFlowSchemaId)!;
+const dataFlowRelation = seedRelations.find(relation => relation.schema_id === dataFlowSchemaId)!;
 
 const startMockAIProvider = async (): Promise<MockAIState> => {
   const requests: Array<Record<string, unknown>> = [];
@@ -86,8 +89,8 @@ const test = createApiTest().extend<{ mockAI: MockAIState }>({
   mockAI: [
     async ({ server }, use) => {
       await seedCatalogEntities(server.db);
-      await server.db.relation.createRelationSchema(seedRelationSchemas[0]!);
-      await server.db.relation.createRelation(seedRelations[0]!);
+      await server.db.relation.createRelationSchema(dataFlowSchema);
+      await server.db.relation.createRelation(dataFlowRelation);
 
       const mockAI = await startMockAIProvider();
       await server.db.ai.upsertAiConfig(seedIds.workspace.default, {
@@ -191,10 +194,10 @@ test.describe('diagram craft routes', () => {
       ])
     );
 
-    const source = body.find(item => item._uid === seedRelations[0]!.in_entity_id);
-    const target = body.find(item => item._uid === seedRelations[0]!.out_entity_id);
-    expect(source).toMatchObject({ data_flows_in: seedRelations[0]!.out_entity_id });
-    expect(target).toMatchObject({ data_flows_out: seedRelations[0]!.in_entity_id });
+    const source = body.find(item => item._uid === dataFlowRelation.in_entity_id);
+    const target = body.find(item => item._uid === dataFlowRelation.out_entity_id);
+    expect(source).toMatchObject({ data_flows_in: dataFlowRelation.out_entity_id });
+    expect(target).toMatchObject({ data_flows_out: dataFlowRelation.in_entity_id });
     expect(source).not.toHaveProperty('data_classification');
   });
 
