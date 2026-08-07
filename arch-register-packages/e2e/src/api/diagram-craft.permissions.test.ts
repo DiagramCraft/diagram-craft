@@ -4,8 +4,10 @@ import { seedIds } from '../helpers/seedHelper';
 
 const test = createPermissionApiTest();
 const SYSTEM_SCHEMA_ID = '00000000-0000-0000-0000-000000000002';
+const DATA_FLOW_SCHEMA_ID = '00000000-0000-0000-0000-000000000030';
 const RESTRICTED_RELATION_FIELD_ID = 'data_flows_in_restricted';
 const RESTRICTED_GROUP_ID = 'diagram-craft-restricted-relation';
+const dataFlowRelation = seedRelations.find(relation => relation.schema_id === DATA_FLOW_SCHEMA_ID)!;
 
 test.describe('diagram craft permission routes', () => {
   test('authentication: public diagram craft routes still require auth', async ({ server }) => {
@@ -56,7 +58,7 @@ test.describe('diagram craft permission routes', () => {
           name: 'Restricted Data Flows In',
           type: 'typedRelation',
           requirementLevel: null,
-          relationSchemaId: seedRelations[0]!.schema_id,
+          relationSchemaId: DATA_FLOW_SCHEMA_ID,
           direction: 'in',
           groupId: RESTRICTED_GROUP_ID
         }
@@ -87,10 +89,10 @@ test.describe('diagram craft permission routes', () => {
 
     expect(dataRes.status).toBe(200);
     const body = (await dataRes.json()) as Array<Record<string, unknown>>;
-    const source = body.find(item => item['_uid'] === seedRelations[0]!.in_entity_id);
+    const source = body.find(item => item['_uid'] === dataFlowRelation.in_entity_id);
 
     expect(source).toMatchObject({
-      data_flows_in: expect.stringContaining(seedRelations[0]!.out_entity_id)
+      data_flows_in: expect.stringContaining(dataFlowRelation.out_entity_id)
     });
     expect(source).not.toHaveProperty(RESTRICTED_RELATION_FIELD_ID);
   });
