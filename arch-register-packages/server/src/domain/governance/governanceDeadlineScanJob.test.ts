@@ -171,7 +171,7 @@ const makeDb = (
 const registryWithDefault = (): GovernanceRegistry => {
   const registry = createGovernanceRegistry();
   registry.set('entity.change-case', {
-    reminderWindows: { approachingDays: [2], overdueDays: [1] }
+    reminders: { approachingDays: [2], overdueDays: [1] }
   });
   return registry;
 };
@@ -181,7 +181,7 @@ const registryWithEscalation = (
 ): GovernanceRegistry => {
   const registry = createGovernanceRegistry();
   registry.set('entity.change-case', {
-    reminderWindows: { approachingDays: [2], overdueDays: [1] },
+    reminders: { approachingDays: [2], overdueDays: [1] },
     escalation: { overdueDays: 5, target: async () => target }
   });
   return registry;
@@ -220,7 +220,7 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
     expect(appendEvent).not.toHaveBeenCalled();
   });
 
-  it('skips a case whose kind has no reminderWindows configured', async () => {
+  it('skips a case whose kind has no reminders configured', async () => {
     const caseRow = makeCase({ case_kind: 'document.status-case' });
     const { db, appendEvent } = makeDb([caseRow], null);
     const handler = createHandler(db, registryWithDefault());

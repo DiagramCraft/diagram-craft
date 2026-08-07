@@ -37,7 +37,7 @@ export const createGovernanceReminderConfigORPCRouter = (registry: GovernanceReg
 
         const results: GovernanceReminderConfig[] = [];
         for (const [caseKind, config] of registry) {
-          const codeDefault = config.reminderWindows;
+          const codeDefault = config.reminders;
           if (!codeDefault) continue;
           const override = overrideByKind.get(caseKind);
           results.push({
@@ -60,7 +60,7 @@ export const createGovernanceReminderConfigORPCRouter = (registry: GovernanceReg
           requireWorkspaceCapability(authCtx, 'ws.settings');
           const { caseKind } = input.params;
 
-          const codeDefault = registry.get(caseKind)?.reminderWindows;
+          const codeDefault = registry.get(caseKind)?.reminders;
           httpAssert.present(codeDefault, {
             status: 404,
             message: `Case kind '${caseKind}' does not support scheduled reminders`

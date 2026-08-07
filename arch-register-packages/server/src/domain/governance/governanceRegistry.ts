@@ -78,7 +78,7 @@ export type GovernanceCaseKindConfig = {
    * when a workspace has no override row in `workspace_governance_reminder_config` for this kind
    * (see governanceDeadlineScanJob.ts and governanceReminderConfigDatabase.ts).
    */
-  reminderWindows?: {
+  reminders?: {
     /** Fire once due_at is within N days (going forward), for each N. */
     approachingDays: number[];
     /** Fire once N days past due_at, for each N. */

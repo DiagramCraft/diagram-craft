@@ -42,7 +42,7 @@ export const governanceReminderConfigMappers = {
 
 /**
  * Per-workspace, per-case-kind override of the reminder day thresholds a governance case kind
- * declares as its code default (`GovernanceCaseKindConfig.reminderWindows`). A missing row for a
+ * declares as its code default (`GovernanceCaseKindConfig.reminders`). A missing row for a
  * given (workspace, case_kind) means the code default applies as-is — see
  * governanceDeadlineScanJob.ts for how the two are merged.
  */

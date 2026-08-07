@@ -703,7 +703,8 @@ export const createRelationGovernanceRegistry = (): GovernanceRegistry =>
             reason: null,
             metadata: { relationId, proposalId, revisionId, relationVersion: nextRelation.version }
           });
-        }
+        },
+        reminders: { approachingDays: [2], overdueDays: [1, 5] }
       }
     ]
   ]);

@@ -1,5 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import { summarizeDocumentStatusApprovals } from './documentWorkflowOperations';
+import {
+  createDocumentGovernanceRegistry,
+  summarizeDocumentStatusApprovals
+} from './documentWorkflowOperations';
 
 describe('document status approval summaries', () => {
   it('counts configured fields from scoped config rows', () => {
@@ -43,5 +46,14 @@ describe('document status approval summaries', () => {
         }
       ])
     ).toEqual({ documentTypesConfigured: 1, fieldsConfigured: 1 });
+  });
+});
+
+describe('createDocumentGovernanceRegistry', () => {
+  it('registers the standard scheduled reminder cadence', () => {
+    expect(createDocumentGovernanceRegistry().get('document.status')?.reminders).toEqual({
+      approachingDays: [2],
+      overdueDays: [1, 5]
+    });
   });
 });

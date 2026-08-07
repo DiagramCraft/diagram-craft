@@ -101,7 +101,7 @@ export const createGovernanceDeadlineScanJobHandler =
         : undefined;
       const codeDefault = kindConfig?.resolveReminderWindows
         ? runtimeWindows
-        : kindConfig?.reminderWindows;
+        : kindConfig?.reminders;
       const useWorkspaceOverride =
         kindConfig?.workspaceReminderOverrides ?? kindConfig?.resolveReminderWindows == null;
       const override = useWorkspaceOverride

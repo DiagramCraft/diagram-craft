@@ -667,7 +667,8 @@ export const createDocumentGovernanceRegistry = (): GovernanceRegistry =>
             reason: null,
             metadata: { requestId: request.id, nodeId: request.node_id, fieldId: request.field_id }
           });
-        }
+        },
+        reminders: { approachingDays: [2], overdueDays: [1, 5] }
       }
     ]
   ]);
