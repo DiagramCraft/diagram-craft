@@ -23,6 +23,7 @@ import { PostgresAutomationRuleDatabase } from '../domain/automation/db/postgres
 import { PostgresDocumentDatabase } from '../domain/document/db/postgresDocument';
 import { PostgresGovernanceDatabase } from '../domain/governance/db/postgresGovernance';
 import { PostgresGovernanceReminderConfigDatabase } from '../domain/governance/db/postgresGovernanceReminderConfig';
+import { PostgresGovernanceCaseConfigDatabase } from '../domain/governance/db/postgresGovernanceCaseConfig';
 import { PostgresNotificationDatabase } from '../domain/notification/db/postgresNotification';
 import { PostgresNotificationPreferenceDatabase } from '../domain/notification/db/postgresNotificationPreference';
 import { PostgresNotificationDeliveryDatabase } from '../domain/notification/db/postgresNotificationDelivery';
@@ -68,6 +69,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly document: PostgresDocumentDatabase;
   readonly governance: PostgresGovernanceDatabase;
   readonly governanceReminderConfig: PostgresGovernanceReminderConfigDatabase;
+  readonly governanceCaseConfig: PostgresGovernanceCaseConfigDatabase;
   readonly notification: PostgresNotificationDatabase;
   readonly notificationPreference: PostgresNotificationPreferenceDatabase;
   readonly notificationDelivery: PostgresNotificationDeliveryDatabase;
@@ -101,6 +103,7 @@ export class PostgresDatabase implements DatabaseAdapter {
       document: new PostgresDocumentDatabase(sql),
       governance: new PostgresGovernanceDatabase(sql),
       governanceReminderConfig: new PostgresGovernanceReminderConfigDatabase(sql),
+      governanceCaseConfig: new PostgresGovernanceCaseConfigDatabase(sql),
       notification: new PostgresNotificationDatabase(sql),
       notificationPreference: new PostgresNotificationPreferenceDatabase(sql),
       notificationDelivery: new PostgresNotificationDeliveryDatabase(sql),
@@ -165,6 +168,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.document = new PostgresDocumentDatabase(this.sql);
     this.governance = new PostgresGovernanceDatabase(this.sql);
     this.governanceReminderConfig = new PostgresGovernanceReminderConfigDatabase(this.sql);
+    this.governanceCaseConfig = new PostgresGovernanceCaseConfigDatabase(this.sql);
     this.notification = new PostgresNotificationDatabase(this.sql);
     this.notificationPreference = new PostgresNotificationPreferenceDatabase(this.sql);
     this.notificationDelivery = new PostgresNotificationDeliveryDatabase(this.sql);
