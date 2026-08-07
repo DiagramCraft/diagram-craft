@@ -22,8 +22,8 @@ export class PostgresGovernanceDatabase extends PostgresDatabaseBase implements 
         ) VALUES (
           ${input.id}, ${input.workspace}, ${input.case_kind}, ${input.subject_type},
           ${input.subject_id}, ${input.subject_version}, 'open', ${input.policy_version},
-          ${input.initiator_user_id}, ${input.parent_case_id}, ${input.self_approval_allowed},
-          ${input.dedupe_key ?? null}, ${this.json(input.payload)}, ${input.created_at}, ${input.due_at}
+          ${input.initiator_user_id}, ${input.parent_case_id}, ${input.dedupe_key ?? null},
+          ${input.self_approval_allowed}, ${this.json(input.payload)}, ${input.created_at}, ${input.due_at}
         )
         RETURNING *
       `;
