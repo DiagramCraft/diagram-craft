@@ -104710,11 +104710,11 @@
                             "properties": {
                               "kind": {
                                 "const": "field",
-                                "description": "A numeric field on the source schema"
+                                "description": "A numeric or currency field on the source schema"
                               },
                               "fieldId": {
                                 "type": "string",
-                                "description": "Numeric entity field identifier"
+                                "description": "Numeric or currency entity field identifier"
                               }
                             },
                             "required": [
@@ -106564,6 +106564,21 @@
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991,
                             "description": "Number of matching descendants that had a non-missing value"
+                          },
+                          "currencyCode": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Currency code when all populated currency values use the same currency"
+                          },
+                          "currencyMixed": {
+                            "type": "boolean",
+                            "description": "Whether populated currency values used more than one currency without conversion"
                           }
                         },
                         "required": [
@@ -106603,6 +106618,21 @@
                             }
                           ],
                           "description": "Highest aggregated value across all requested boxes"
+                        },
+                        "currencyCode": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Currency code when all returned currency results use the same currency"
+                        },
+                        "currencyMixed": {
+                          "type": "boolean",
+                          "description": "Whether returned currency results contain more than one currency without conversion"
                         },
                         "categories": {
                           "type": "array",

@@ -180,6 +180,18 @@
   color: var(--accent-fg);
 }
 
+.metricValue {
+  flex: 0 0 auto;
+  max-width: 48%;
+  margin-left: auto;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--base-fg-more-dim);
+}
+
 /* ── Entity tooltip ──────────────────────────────────────────── */
 
 .tooltipAnchor {

@@ -4,6 +4,7 @@ import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDataba
 import type { LifecycleStateDbResult } from '../workspace/db/workspaceDatabase';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
+import { currencyValueSchema } from '@arch-register/api-types/common';
 import type {
   MetricConfig,
   MetricDistributionEntry,
@@ -22,7 +23,7 @@ import { parseEntityQuery, buildEntityQueryForExecution } from '../catalog/entit
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { buildContainmentChildrenIndex, collectDescendantIds } from './metricDescendants';
 
-type MetricValue = { value: number; lifecycleId: string | null };
+type MetricValue = { value: number; lifecycleId: string | null; currencyCode: string | null };
 type EnumOption = { value: string; label: string };
 
 const isEnumSourceKind = (kind: MetricConfig['source']['kind']) =>
@@ -39,7 +40,7 @@ const isMetricSourceAvailable = (
 
   if (source.kind === 'field') {
     return sourceSchema.fields.some(
-      field => field.id === source.fieldId && field.type === 'number'
+      field => field.id === source.fieldId && (field.type === 'number' || field.type === 'currency')
     );
   }
 
@@ -77,7 +78,9 @@ const extractValue = (
   if (source.kind === 'lifecycle') {
     if (entity.lifecycle == null) return null;
     const sortOrder = lifecycleSortOrder.get(entity.lifecycle);
-    return sortOrder == null ? null : { value: sortOrder, lifecycleId: entity.lifecycle };
+    return sortOrder == null
+      ? null
+      : { value: sortOrder, lifecycleId: entity.lifecycle, currencyCode: null };
   }
 
   if (
@@ -92,8 +95,43 @@ const extractValue = (
       ? (responsesByEntity?.get(entity.id)?.[source.fieldId] ?? null)
       : (entity.data[source.fieldId] ?? null);
   if (raw == null || raw === '') return null;
+  const field =
+    source.kind === 'field'
+      ? sourceSchema?.fields.find(candidate => candidate.id === source.fieldId)
+      : undefined;
+  if (field?.type === 'currency') {
+    const parsed = currencyValueSchema.safeParse(raw);
+    return parsed.success
+      ? { value: parsed.data.amount, lifecycleId: null, currencyCode: parsed.data.currency }
+      : null;
+  }
   const num = Number(raw);
-  return Number.isNaN(num) ? null : { value: num, lifecycleId: null };
+  return Number.isNaN(num) ? null : { value: num, lifecycleId: null, currencyCode: null };
+};
+
+const isCurrencyFieldSource = (
+  metric: MetricConfig,
+  sourceSchema: SchemaDbResult | undefined
+): boolean => {
+  if (metric.source.kind !== 'field') return false;
+  const fieldId = metric.source.fieldId;
+  return (
+    sourceSchema?.fields.some(field => field.id === fieldId && field.type === 'currency') === true
+  );
+};
+
+const getCurrencyMetadata = (
+  values: MetricValue[]
+): { currencyCode: string | null; currencyMixed: boolean } => {
+  const currencies = new Set(
+    values
+      .map(value => value.currencyCode)
+      .filter((currency): currency is string => currency != null)
+  );
+  return {
+    currencyCode: currencies.size === 1 ? [...currencies][0]! : null,
+    currencyMixed: currencies.size > 1
+  };
 };
 
 const extractEnumValue = (
@@ -258,7 +296,7 @@ export const computeBoxMetrics = (
     ? buildContainmentChildrenIndex(schemas, entities, authCtx)
     : new Map<string, string[]>();
 
-  const results = boxEntityIds.map(boxEntityId => {
+  const results: MetricRollupResponse['results'] = boxEntityIds.map(boxEntityId => {
     const sourceEntities = (sourceAvailable ? collectDescendantIds(boxEntityId, childrenOf) : [])
       .map(id => entityById.get(id))
       .filter(
@@ -321,6 +359,9 @@ export const computeBoxMetrics = (
       )
       .filter((v): v is MetricValue => v != null);
     const { value, lifecycleId } = aggregate(populated, metric.aggregation, worstDirection);
+    const currencyMetadata = isCurrencyFieldSource(metric, sourceSchema)
+      ? getCurrencyMetadata(populated)
+      : null;
 
     return {
       boxEntityId,
@@ -330,16 +371,37 @@ export const computeBoxMetrics = (
       dominantLabel: null,
       distribution: [],
       sourceCount: sourceEntities.length,
-      populatedCount: populated.length
+      populatedCount: populated.length,
+      ...(currencyMetadata ?? {})
     };
   });
 
   const numericValues = results.map(r => r.value).filter((v): v is number => v != null);
+  const currencyResults = results.filter(
+    result => result.currencyCode !== undefined || result.currencyMixed !== undefined
+  );
+  const currencyCodes = new Set(
+    currencyResults
+      .map(result => result.currencyCode)
+      .filter((currency): currency is string => currency != null)
+  );
+  const currencyMetadata =
+    currencyResults.length > 0
+      ? {
+          currencyCode:
+            currencyResults.some(result => result.currencyMixed) || currencyCodes.size !== 1
+              ? null
+              : [...currencyCodes][0]!,
+          currencyMixed:
+            currencyResults.some(result => result.currencyMixed) || currencyCodes.size > 1
+        }
+      : null;
   return {
     results,
     legend: {
       min: numericValues.length > 0 ? Math.min(...numericValues) : null,
       max: numericValues.length > 0 ? Math.max(...numericValues) : null,
+      ...(currencyMetadata ?? {}),
       ...(enumOptions ? { categories: enumOptions } : {})
     }
   };

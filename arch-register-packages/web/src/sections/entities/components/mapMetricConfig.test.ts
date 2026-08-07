@@ -88,6 +88,7 @@ describe('getMetricSourceOptions', () => {
     icon: null,
     fields: [
       { id: 'score', name: 'Score', type: 'number', requirementLevel: 'optional' },
+      { id: 'annual_cost', name: 'Annual Cost', type: 'currency', requirementLevel: 'optional' },
       { id: 'tier', name: 'Tier', type: 'select', enumId: 'e1', requirementLevel: 'optional' },
       { id: 'notes', name: 'Notes', type: 'text', requirementLevel: 'optional' }
     ]
@@ -97,11 +98,12 @@ describe('getMetricSourceOptions', () => {
     expect(getMetricSourceOptions(undefined)).toEqual([]);
   });
 
-  it('offers lifecycle plus the schema numeric and select fields, excluding other field types', () => {
+  it('offers lifecycle plus the schema numeric, currency, and select fields, excluding other field types', () => {
     const options = getMetricSourceOptions(schema);
     expect(options.map(o => sourceKey(o.source))).toEqual([
       'lifecycle',
       'field:score',
+      'field:annual_cost',
       'enum:tier'
     ]);
   });
@@ -114,7 +116,11 @@ describe('getMetricSourceOptions', () => {
     } as unknown as EntitySchema;
 
     const options = getMetricSourceOptions(restrictedSchema, undefined, () => 'none');
-    expect(options.map(o => sourceKey(o.source))).toEqual(['lifecycle', 'enum:tier']);
+    expect(options.map(o => sourceKey(o.source))).toEqual([
+      'lifecycle',
+      'field:annual_cost',
+      'enum:tier'
+    ]);
   });
 
   it('keeps a restricted field when the caller has view or edit access', () => {
@@ -128,6 +134,7 @@ describe('getMetricSourceOptions', () => {
     expect(options.map(o => sourceKey(o.source))).toEqual([
       'lifecycle',
       'field:score',
+      'field:annual_cost',
       'enum:tier'
     ]);
   });
@@ -154,6 +161,7 @@ describe('getMetricSourceOptions', () => {
     expect(options.map(o => sourceKey(o.source))).toEqual([
       'lifecycle',
       'field:score',
+      'field:annual_cost',
       'enum:tier',
       'assessmentRating:rating1',
       'assessmentEnum:enum1'
