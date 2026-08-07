@@ -1,54 +1,69 @@
 import type {
   GovernanceReminderConfigDatabase,
+  GovernanceReminderConfigDbResult,
   GovernanceReminderConfigDbUpsert
 } from './governanceReminderConfigDatabase';
-import { governanceReminderConfigMappers } from './governanceReminderConfigDatabase';
-import { SqliteDatabaseBase } from '../../../db/sqliteBase';
+import { SqliteGovernanceCaseConfigDatabase } from './sqliteGovernanceCaseConfig';
+import type { GovernanceCaseConfigDbResult } from './governanceCaseConfigDatabase';
 
-export class SqliteGovernanceReminderConfigDatabase
-  extends SqliteDatabaseBase
-  implements GovernanceReminderConfigDatabase
-{
+/**
+ * Reminder config is stored as workspace-wide (`case_subkind: null`) rows in the generalized
+ * `workspace_governance_case_config` table, with `config` holding
+ * `{ approaching_days, overdue_days, escalation_enabled }`. This class preserves the pre-#2818
+ * `GovernanceReminderConfigDatabase` interface so `governanceReminderConfigOrpc.ts` and
+ * `governanceDeadlineScanJob.ts` don't need to change.
+ */
+export class SqliteGovernanceReminderConfigDatabase implements GovernanceReminderConfigDatabase {
+  private readonly caseConfig: SqliteGovernanceCaseConfigDatabase;
+
+  constructor(getDb: ConstructorParameters<typeof SqliteGovernanceCaseConfigDatabase>[0]) {
+    this.caseConfig = new SqliteGovernanceCaseConfigDatabase(getDb);
+  }
+
   async getReminderConfig(workspace: string, caseKind: string) {
-    return this.get(
-      'SELECT * FROM workspace_governance_reminder_config WHERE workspace = ? AND case_kind = ?',
-      [workspace, caseKind],
-      governanceReminderConfigMappers.config
-    );
+    const row = await this.caseConfig.getCaseConfig(workspace, caseKind, null);
+    return row ? toReminderConfig(row) : null;
   }
 
   async listReminderConfig(workspace: string) {
-    return this.all(
-      'SELECT * FROM workspace_governance_reminder_config WHERE workspace = ? ORDER BY case_kind',
-      [workspace],
-      governanceReminderConfigMappers.config
-    );
+    const rows = await this.caseConfig.listCaseConfig(workspace);
+    return rows
+      .filter(row => row.case_subkind == null)
+      .map(toReminderConfig)
+      .sort((a, b) => a.case_kind.localeCompare(b.case_kind));
   }
 
-  async upsertReminderConfig(input: GovernanceReminderConfigDbUpsert) {
-    this.run(
-      `INSERT INTO workspace_governance_reminder_config (
-        workspace, case_kind, enabled, approaching_days, overdue_days, escalation_enabled,
-        updated_at, updated_by
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-      ON CONFLICT(workspace, case_kind) DO UPDATE SET
-        enabled = excluded.enabled,
-        approaching_days = excluded.approaching_days,
-        overdue_days = excluded.overdue_days,
-        escalation_enabled = excluded.escalation_enabled,
-        updated_at = excluded.updated_at,
-        updated_by = excluded.updated_by`,
-      [
-        input.workspace,
-        input.case_kind,
-        input.enabled ? 1 : 0,
-        JSON.stringify(input.approaching_days),
-        JSON.stringify(input.overdue_days),
-        input.escalation_enabled ? 1 : 0,
-        input.updated_at.toISOString(),
-        input.updated_by
-      ]
-    );
-    return (await this.getReminderConfig(input.workspace, input.case_kind))!;
+  async upsertReminderConfig(
+    input: GovernanceReminderConfigDbUpsert
+  ): Promise<GovernanceReminderConfigDbResult> {
+    const row = await this.caseConfig.upsertCaseConfig({
+      workspace: input.workspace,
+      case_kind: input.case_kind,
+      case_subkind: null,
+      enabled: input.enabled,
+      config: {
+        approaching_days: input.approaching_days,
+        overdue_days: input.overdue_days,
+        escalation_enabled: input.escalation_enabled
+      },
+      updated_at: input.updated_at,
+      updated_by: input.updated_by
+    });
+    return toReminderConfig(row);
   }
 }
+
+const toReminderConfig = (row: GovernanceCaseConfigDbResult): GovernanceReminderConfigDbResult => ({
+  workspace: row.workspace,
+  case_kind: row.case_kind,
+  enabled: row.enabled,
+  approaching_days: Array.isArray(row.config['approaching_days'])
+    ? (row.config['approaching_days'] as number[])
+    : [],
+  overdue_days: Array.isArray(row.config['overdue_days'])
+    ? (row.config['overdue_days'] as number[])
+    : [],
+  escalation_enabled: row.config['escalation_enabled'] !== false,
+  updated_at: row.updated_at,
+  updated_by: row.updated_by
+});
