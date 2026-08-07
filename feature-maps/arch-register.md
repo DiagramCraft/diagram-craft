@@ -223,7 +223,8 @@
           relation instances such as System Contract can also be selected as a map level. Users can add an arbitrary
           number of ordered levels and hide any level after the first while retaining its descendants. The metric picker
           automatically uses the final selected level (so Contract exposes Annual Cost and System Contract exposes its
-          relation fields). Traversal applies the current visibility, permission, project, and filter scope,
+          relation fields). Users can optionally hide boxes with missing metric data.
+          Traversal applies the current visibility, permission, project, and filter scope,
           deduplicates repeated terminal sources, and marks collapsed duplicates in the map with a count and hover
           detail.
 

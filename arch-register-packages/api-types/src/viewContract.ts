@@ -162,6 +162,10 @@ export const mapViewConfigSchema = z.object({
     .max(4)
     .optional()
     .describe('Number of columns for level 3 (1-4)'),
+  hideMissingMetricData: z
+    .boolean()
+    .optional()
+    .describe('Whether to hide boxes with no usable aggregate or metric source data'),
   metricConfig: z
     .unknown()
     .nullable()

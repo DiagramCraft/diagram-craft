@@ -139,6 +139,15 @@
   color: var(--accent-fg);
 }
 
+.metricToggle {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  color: var(--base-fg-more-dim);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 .levelAction:disabled {
   cursor: default;
   opacity: 0.5;

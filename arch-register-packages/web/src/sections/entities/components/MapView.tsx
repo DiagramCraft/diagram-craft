@@ -76,6 +76,7 @@ import { formatMetricResultValue, formatMetricSourceValue } from './mapMetricFor
 
 export type MapConfig = {
   levelConfigs: MapLevelConfig[];
+  hideMissingMetricData?: boolean;
   fieldIds?: string[];
   metricConfig?: unknown;
 };
@@ -112,7 +113,8 @@ const DEFAULT_CONFIG: MapConfig = {
     { schemaId: null, columns: 3 }
   ],
   fieldIds: undefined,
-  metricConfig: undefined
+  metricConfig: undefined,
+  hideMissingMetricData: undefined
 };
 
 const legacyMapConfigDefaults = {
@@ -137,7 +139,8 @@ const normalizeMapConfig = (raw: unknown): MapConfig => {
         ...(level.hidden ? { hidden: true } : {})
       })),
       fieldIds: parsed.fieldIds,
-      metricConfig: parsed.metricConfig
+      metricConfig: parsed.metricConfig,
+      hideMissingMetricData: parsed.hideMissingMetricData
     };
   }
   const legacyIds = [parsed.level1SchemaId, parsed.level2SchemaId, parsed.level3SchemaId];
@@ -148,7 +151,8 @@ const normalizeMapConfig = (raw: unknown): MapConfig => {
       columns: legacyColumns[index] ?? 3
     })),
     fieldIds: parsed.fieldIds,
-    metricConfig: parsed.metricConfig
+    metricConfig: parsed.metricConfig,
+    hideMissingMetricData: parsed.hideMissingMetricData
   };
 };
 
@@ -240,6 +244,15 @@ const resolveBoxColor = (
   if (result.value == null || legend.min == null || legend.max == null)
     return NEUTRAL_MISSING_COLOR;
   return numericColor(result.value, legend.min, legend.max);
+};
+
+const hasMissingMetricData = (
+  metric: MetricConfig,
+  result: MetricResult | undefined
+): boolean => {
+  if (!result) return true;
+  if (result.sourceCount === 0) return true;
+  return isEnumSource(metric.source) ? result.dominantValue == null : result.value == null;
 };
 
 /** Extra hover-card rows describing the metric result: value, enum distribution, coverage. */
@@ -718,6 +731,23 @@ export const MapView = ({
     projectScope
   });
 
+  const filteredRenderTree = useMemo(() => {
+    if (!metricConfig || !cfg.hideMissingMetricData) {
+      return renderTree;
+    }
+    const filter = (entry: RenderTreeNode): RenderTreeNode | null => {
+      if (!isRelationMapNode(entry.node)) {
+        const result = resultsByBoxId.get(entry.node._uid);
+        if (hasMissingMetricData(metricConfig, result)) return null;
+      }
+      return {
+        ...entry,
+        children: entry.children.map(filter).filter((child): child is RenderTreeNode => child !== null)
+      };
+    };
+    return renderTree.map(filter).filter((entry): entry is RenderTreeNode => entry !== null);
+  }, [cfg.hideMissingMetricData, metricConfig, renderTree, resultsByBoxId]);
+
   const boxStyle = useCallback(
     (node: TreeNode): React.CSSProperties | undefined => {
       const color = resolveBoxColor(node, metricConfig, resultsByBoxId, legend, lifecycleStates);
@@ -994,6 +1024,15 @@ export const MapView = ({
                   <TbChevronDown size={11} />
                 </div>
               )}
+
+              <label className={styles.metricToggle}>
+                <input
+                  type="checkbox"
+                  checked={cfg.hideMissingMetricData === true}
+                  onChange={e => notify({ hideMissingMetricData: e.target.checked })}
+                />
+                Hide missing
+              </label>
             </>
           )}
         </div>
@@ -1015,7 +1054,7 @@ export const MapView = ({
               gridTemplateColumns: `repeat(${cfg.levelConfigs[0]?.columns ?? 3}, 1fr)`
             }}
           >
-            {renderTree.map(entry => {
+            {filteredRenderTree.map(entry => {
               const renderEntry = (treeEntry: RenderTreeNode): React.ReactNode => {
                 const { node, levelIndex, children } = treeEntry;
                 const level = cfg.levelConfigs[levelIndex] ?? { schemaId: null, columns: 3 };
@@ -1092,9 +1131,9 @@ export const MapView = ({
             })}
           </div>
 
-          {level1Items.length === 0 && (
+          {filteredRenderTree.length === 0 && (
             <EmptyState
-              title="No entities found"
+              title={level1Items.length === 0 ? 'No entities found' : 'No boxes match the metric filters'}
               subtitle={
                 currentFocus
                   ? `${currentFocus.name} has no matching descendants at this level.`
