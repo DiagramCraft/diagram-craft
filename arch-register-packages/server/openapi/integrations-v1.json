@@ -307,6 +307,39 @@
                                 "type": {
                                   "const": "date",
                                   "description": "Date field"
+                                },
+                                "reminder": {
+                                  "type": "object",
+                                  "properties": {
+                                    "enabled": {
+                                      "type": "boolean",
+                                      "description": "Whether automatic reminders are enabled"
+                                    },
+                                    "approachingDays": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "description": "Days before the date at which an approaching reminder is sent"
+                                    },
+                                    "overdueDays": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "integer",
+                                        "minimum": 0,
+                                        "maximum": 9007199254740991
+                                      },
+                                      "description": "Days after the date at which an overdue reminder is sent"
+                                    }
+                                  },
+                                  "required": [
+                                    "enabled",
+                                    "approachingDays",
+                                    "overdueDays"
+                                  ],
+                                  "description": "Automatic reminder configuration for a date field"
                                 }
                               },
                               "required": [

@@ -18,6 +18,7 @@ import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import { FIELD_TYPES, type FieldType } from '../../lib/schemaPresentation';
 import { toFieldId } from '../../utils/fieldId';
 import styles from './SchemaSettingsScreen.module.css';
+import { DateReminderEditor } from '../../components/DateReminderEditor';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
@@ -113,6 +114,15 @@ const SharedFieldRow = ({
             </Select.Root>
           </FormElement>
         </>
+      );
+    }
+    if (field.type === 'date') {
+      return (
+        <DateReminderEditor
+          value={field.reminder}
+          disabled={!canEdit}
+          onChange={reminder => onUpdate({ reminder } as Partial<SchemaField>)}
+        />
       );
     }
     if (field.type === 'derived') {

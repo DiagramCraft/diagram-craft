@@ -3,6 +3,10 @@ import { createJobSchedule } from '../jobs/jobOperations';
 import { getSystemUserId } from '../auth/systemUsers';
 import { recordGovernanceEvent } from './governanceOperations';
 import type { GovernanceRegistry } from './governanceRegistry';
+import {
+  FIELD_DATE_REMINDER_CASE_KIND,
+  syncFieldDateReminderCases
+} from '../catalog/fieldDateReminderJob';
 
 // #2418: a recurring per-workspace scan that reminds assignees as a governance case's due_at
 // approaches or passes, and records a `reminder_sent` event (which createGovernanceInAppNotifications
@@ -79,6 +83,9 @@ export const createGovernanceDeadlineScanJobHandler =
     payload: Record<string, unknown>;
     signal?: AbortSignal;
   }) => {
+    const automaticCases = registry.has(FIELD_DATE_REMINDER_CASE_KIND)
+      ? await syncFieldDateReminderCases(db, context.workspace, clock())
+      : { created: 0, refreshed: 0, cancelled: 0 };
     const cases = await db.governance.listCases(context.workspace, { status: 'open' });
     const scanNow = clock();
     let remindersSent = 0;
@@ -89,11 +96,17 @@ export const createGovernanceDeadlineScanJobHandler =
       if (!caseRow.due_at) continue;
 
       const kindConfig = registry.get(caseRow.case_kind);
-      const codeDefault = kindConfig?.reminderWindows;
-      const override = await db.governanceReminderConfig.getReminderConfig(
-        context.workspace,
-        caseRow.case_kind
-      );
+      const runtimeWindows = kindConfig?.resolveReminderWindows
+        ? await kindConfig.resolveReminderWindows(db, caseRow)
+        : undefined;
+      const codeDefault = kindConfig?.resolveReminderWindows
+        ? runtimeWindows
+        : kindConfig?.reminderWindows;
+      const useWorkspaceOverride =
+        kindConfig?.workspaceReminderOverrides ?? kindConfig?.resolveReminderWindows == null;
+      const override = useWorkspaceOverride
+        ? await db.governanceReminderConfig.getReminderConfig(context.workspace, caseRow.case_kind)
+        : null;
 
       if (codeDefault && !(override && !override.enabled)) {
         const windows = override
@@ -156,5 +169,6 @@ export const createGovernanceDeadlineScanJobHandler =
       }
     }
 
-    return { scanned: cases.length, remindersSent, escalationsSent };
+    const result = { scanned: cases.length, remindersSent, escalationsSent };
+    return registry.has(FIELD_DATE_REMINDER_CASE_KIND) ? { ...result, automaticCases } : result;
   };

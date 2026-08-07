@@ -89,6 +89,7 @@ export type GovernanceAssignmentSpec = {
 
 export type CreateGovernanceCaseInput = {
   caseKind: string;
+  dedupeKey?: string | null;
   subjectType: string;
   subjectId: string;
   subjectVersion?: string | null;
@@ -304,6 +305,7 @@ export const createGovernanceCaseInTransaction = async (
     subject_type: input.subjectType,
     subject_id: input.subjectId,
     subject_version: input.subjectVersion ?? null,
+    dedupe_key: input.dedupeKey ?? null,
     policy_version: input.policyVersion ?? null,
     initiator_user_id: initiatorUserId,
     parent_case_id: null,

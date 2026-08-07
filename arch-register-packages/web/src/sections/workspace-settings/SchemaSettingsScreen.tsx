@@ -51,6 +51,7 @@ import { SchemaVersionHistorySubSection } from './sub-sections/SchemaVersionHist
 import { FieldGroupEditorScreen } from './FieldGroupEditorScreen';
 import { RelationSchemaSettingsScreen } from './RelationSchemaSettingsScreen';
 import { resolveGroupAccessControl } from '../../lib/fieldGroupAccess';
+import { DateReminderEditor } from '../../components/DateReminderEditor';
 
 const deriveKeyPrefix = (value: string) =>
   value
@@ -1143,6 +1144,15 @@ export const FieldRow = ({
             />
           </FormElement>
         </>
+      );
+    }
+    if (field.type === 'date') {
+      return (
+        <DateReminderEditor
+          value={field.reminder}
+          disabled={!canEdit}
+          onChange={reminder => onUpdate({ reminder } as Partial<SchemaField>)}
+        />
       );
     }
     if (field.type === 'derived') {

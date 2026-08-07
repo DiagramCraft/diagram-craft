@@ -46,6 +46,7 @@ export type GovernanceCaseDbResult = {
   policy_version: string | null;
   initiator_user_id: string | null;
   parent_case_id: string | null;
+  dedupe_key?: string | null;
   self_approval_allowed: boolean;
   payload: Record<string, unknown>;
   created_at: Date;
@@ -66,6 +67,7 @@ export type GovernanceCaseDbCreate = {
   policy_version: string | null;
   initiator_user_id: string | null;
   parent_case_id: string | null;
+  dedupe_key?: string | null;
   self_approval_allowed: boolean;
   payload: Record<string, unknown>;
   created_at: Date;
@@ -154,6 +156,7 @@ export const governanceMappers = {
     policy_version: row['policy_version'] == null ? null : String(row['policy_version']),
     initiator_user_id: row['initiator_user_id'] == null ? null : String(row['initiator_user_id']),
     parent_case_id: row['parent_case_id'] == null ? null : String(row['parent_case_id']),
+    dedupe_key: row['dedupe_key'] == null ? null : String(row['dedupe_key']),
     self_approval_allowed: databaseBoolean(row['self_approval_allowed']),
     payload: parseDatabaseJson(row['payload'], {}, 'payload'),
     created_at: databaseDate(row['created_at']),
@@ -205,11 +208,21 @@ export const governanceMappers = {
 export type GovernanceDatabase = {
   createCase(input: GovernanceCaseDbCreate): Promise<GovernanceCaseDbResult>;
   getCase(workspace: string, id: string): Promise<GovernanceCaseDbResult | null>;
+  getCaseByDedupeKey(
+    workspace: string,
+    caseKind: string,
+    dedupeKey: string
+  ): Promise<GovernanceCaseDbResult | null>;
   listCases(
     workspace: string,
     filter?: GovernanceCaseListFilter
   ): Promise<GovernanceCaseDbResult[]>;
   updateCase(id: string, patch: GovernanceCaseDbUpdate): Promise<GovernanceCaseDbResult>;
+  refreshAutomaticCase(
+    id: string,
+    dueAt: Date,
+    payload: Record<string, unknown>
+  ): Promise<GovernanceCaseDbResult>;
   /** Conditional transition case status to 'completed'; returns null if the case was not open. */
   completeCaseIfOpen(
     id: string,

@@ -61,6 +61,7 @@
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
             reusable shared fieldgroups, relationships, and schema-specific behavior, including currency fields and
+            date fields that can generate configurable approaching and overdue governance reminders,
             the built-in Vendor/Contract model where Contract records contain exactly one Vendor,
             read-only derived fields
             calculated from sibling

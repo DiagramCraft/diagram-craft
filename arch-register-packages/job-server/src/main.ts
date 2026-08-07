@@ -19,6 +19,7 @@ import { createEntityGovernanceRegistry } from '@arch-register/server/domain/cat
 import { createDeprecationGovernanceRegistry } from '@arch-register/server/domain/catalog/entityDeprecationOperations';
 import { createDocumentGovernanceRegistry } from '@arch-register/server/domain/document/documentWorkflowOperations';
 import { createAssessmentGovernanceRegistry } from '@arch-register/server/domain/project/assessmentOperations';
+import { createFieldDateReminderGovernanceRegistry } from '@arch-register/server/domain/catalog/fieldDateReminderJob';
 import { createDocumentMetadataGenerationScanJobHandler } from '@arch-register/server/domain/document/documentMetadataGenerationJob';
 import { createTechnologyEolJobHandler } from '@arch-register/server/domain/jobs/technologyEolJob';
 import {
@@ -83,7 +84,8 @@ const main = async () => {
     ...createEntityGovernanceRegistry(),
     ...createDeprecationGovernanceRegistry(),
     ...createDocumentGovernanceRegistry(),
-    ...createAssessmentGovernanceRegistry()
+    ...createAssessmentGovernanceRegistry(),
+    ...createFieldDateReminderGovernanceRegistry()
   ]);
   handlers.set('external-content.refresh', createExternalContentJobHandler(db, storage));
   handlers.set('webhook.delivery', createWebhookDeliveryHandler(db));

@@ -84,6 +84,13 @@ export type GovernanceCaseKindConfig = {
     /** Fire once N days past due_at, for each N. */
     overdueDays: number[];
   };
+  /** Resolves reminder windows from the current domain state for runtime-driven case kinds. */
+  resolveReminderWindows?: (
+    db: DatabaseAdapter,
+    caseRow: GovernanceCaseDbResult
+  ) => Promise<{ approachingDays: number[]; overdueDays: number[] } | null>;
+  /** Runtime-driven reminder windows are owned by the case subject, not workspace overrides. */
+  workspaceReminderOverrides?: boolean;
   /**
    * #2420: escalation for cases that remain open past their deadline. Presence of this field is
    * what makes a case kind eligible for escalation at all — a workspace can still turn it off via

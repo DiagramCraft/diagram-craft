@@ -70,6 +70,7 @@ import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDepre
 import { createDeprecationGovernanceRegistry } from './domain/catalog/entityDeprecationOperations';
 import { createDocumentGovernanceRegistry } from './domain/document/documentWorkflowOperations';
 import { createAssessmentGovernanceRegistry } from './domain/project/assessmentOperations';
+import { createFieldDateReminderGovernanceRegistry } from './domain/catalog/fieldDateReminderJob';
 import { getHttpErrorLogLevel } from './utils/errorLogging';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
@@ -207,7 +208,8 @@ export const createApp = (
     ...createRelationGovernanceRegistry(),
     ...createDeprecationGovernanceRegistry(),
     ...createDocumentGovernanceRegistry(),
-    ...createAssessmentGovernanceRegistry()
+    ...createAssessmentGovernanceRegistry(),
+    ...createFieldDateReminderGovernanceRegistry()
   ]);
   app.use(createGovernanceORPCHandler(db, governanceRegistry));
   app.use(createGovernanceReminderConfigORPCHandler(db, governanceRegistry));
