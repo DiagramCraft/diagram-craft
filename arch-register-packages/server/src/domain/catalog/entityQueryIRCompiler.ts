@@ -607,7 +607,8 @@ const relationJoinClause = (
 const resolveColumn = (
   alias: string,
   fieldId: string,
-  dialect: EntityQueryDialect
+  dialect: EntityQueryDialect,
+  currencyAmount = false
 ): { col: string; kind: 'scalar' | 'array' } | null => {
   if (fieldId === '_id') return { col: `${alias}.id`, kind: 'scalar' };
   if (Object.hasOwn(ENTITY_BUILTIN_COLUMNS, fieldId)) {
@@ -620,6 +621,15 @@ const resolveColumn = (
     return { col: `${alias}.${ENTITY_ARRAY_COLUMNS[fieldId]!.slice('e.'.length)}`, kind: 'array' };
   }
   if (!isValidFieldId(fieldId)) return null;
+  if (currencyAmount) {
+    return {
+      col:
+        dialect === 'postgres'
+          ? `(${alias}.data->'${fieldId}'->>'amount')`
+          : `json_extract(${alias}.data, '$.${fieldId}.amount')`,
+      kind: 'scalar'
+    };
+  }
   return {
     col:
       dialect === 'postgres'
@@ -793,7 +803,14 @@ const compilePredicateTerminal =
           ),
           kind: 'scalar' as const
         }
-      : resolveColumn(alias, fieldId, dialect);
+      : resolveColumn(
+          alias,
+          fieldId,
+          dialect,
+          [...schemas.values()].some(schema =>
+            schema.fields.some(field => field.id === fieldId && field.type === 'currency')
+          )
+        );
     if (!resolved) {
       throw new UnsupportedEntityQueryIRError(`Field '${fieldId}' has no SQL translation`);
     }

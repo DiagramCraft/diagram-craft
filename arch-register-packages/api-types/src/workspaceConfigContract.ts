@@ -24,6 +24,24 @@ export const projectEntityTypeSchema = z.object({
   sort_order: z.number().int().describe('Display order (0-based)')
 });
 
+const supportedCurrencySchema = z.object({
+  code: z
+    .string()
+    .regex(/^[A-Z]{3}$/)
+    .describe('Three-letter currency code'),
+  label: z.string().min(1).describe('Currency display name'),
+  sort_order: z.number().int().min(0).describe('Display order (0-based)')
+});
+
+const supportedCurrencyInputSchema = z.object({
+  code: z
+    .string()
+    .regex(/^[A-Z]{3}$/)
+    .describe('Three-letter currency code'),
+  label: z.string().min(1).describe('Currency display name'),
+  sort_order: z.number().int().min(0).optional()
+});
+
 const lifecycleStateSchema = z.object({
   id: z.string().describe('Unique lifecycle state identifier'),
   workspace: z.string().describe('Parent workspace identifier'),
@@ -445,6 +463,49 @@ export const workspaceConfigContract = oc.tag('Workspace Config').router({
           })
         )
         .output(z.array(projectEntityTypeSchema))
+    },
+    currencies: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/currencies',
+          inputStructure: 'detailed',
+          summary: 'List supported currencies',
+          description:
+            'Retrieves the currencies and default currency configured for the workspace.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws }))
+        .output(
+          z.object({
+            currencies: z.array(supportedCurrencySchema),
+            default_currency: z.string().regex(/^[A-Z]{3}$/)
+          })
+        ),
+      replace: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/currencies',
+          inputStructure: 'detailed',
+          summary: 'Replace supported currencies',
+          description: 'Replaces the supported currencies and default currency for the workspace.',
+          tags: ['Workspace Config']
+        })
+        .input(
+          z.object({
+            params: ws,
+            body: z.object({
+              currencies: z.array(supportedCurrencyInputSchema),
+              default_currency: z.string().regex(/^[A-Z]{3}$/)
+            })
+          })
+        )
+        .output(
+          z.object({
+            currencies: z.array(supportedCurrencySchema),
+            default_currency: z.string().regex(/^[A-Z]{3}$/)
+          })
+        )
     }
   }
 });
@@ -453,6 +514,7 @@ export type WorkspaceMemberInfo = z.infer<typeof memberInfoSchema>;
 export type WorkspaceRoleCapability = z.infer<typeof workspaceCapabilitySchema>;
 export type WorkspaceTeam = z.infer<typeof teamSchema>;
 export type WorkspaceTeamInput = z.infer<typeof teamInputSchema>;
+export type SupportedCurrency = z.infer<typeof supportedCurrencySchema>;
 export type TeamAssignmentInfo = z.infer<typeof teamAssignmentSchema>;
 export type {
   WorkspaceApiToken,

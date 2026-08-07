@@ -24,6 +24,7 @@ import { EntityFieldInput } from './EntityFieldInput';
 import { applyEntityTemplate, createEntityFormDefaults } from '../lib/entityTemplates';
 import { useAutoFocus } from '../hooks/useAutoFocus';
 import { useFieldGroupAccess } from '../auth/useFieldGroupAccess';
+import { useSupportedCurrencies } from '../hooks/useWorkspaceConfig';
 import { resolveGroupAccessControl } from '../lib/fieldGroupAccess';
 
 type EntityApiResponse = {
@@ -76,6 +77,7 @@ export const AddEntityDialog = ({
     tags: ''
   });
   const [error, setError] = useState('');
+  const currencyConfig = useSupportedCurrencies(workspaceId, open);
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   useAutoFocus(nameRef, { enabled: open });
@@ -422,10 +424,14 @@ export const AddEntityDialog = ({
                       value={
                         f.type === 'reference' || f.type === 'containment'
                           ? getRelationFieldValue(fields[f.id])
-                          : ((fields[f.id] ?? '') as string)
+                          : f.type === 'currency'
+                            ? fields[f.id]
+                            : ((fields[f.id] ?? '') as string)
                       }
                       onChange={v => setField(f.id, v)}
                       referenceOptions={derivedReferenceOptions}
+                      currencyOptions={currencyConfig.data?.currencies}
+                      defaultCurrency={currencyConfig.data?.default_currency}
                       disabled={fieldAccessById.get(f.id) === 'view'}
                     />
                   ))}

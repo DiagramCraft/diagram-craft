@@ -22,6 +22,7 @@ import {
   seedRelationSchemas,
   seedRelations,
   seedSchemas,
+  seedSupportedCurrencies,
   seedSharedFieldGroups,
   seedTeamAssignments,
   seedUserWatches,
@@ -270,6 +271,12 @@ export const seedBootstrapData = async (
       workspace.id,
       workspace.created_at
     );
+  }
+  for (const workspace of seedWorkspaces) {
+    const currencies = seedSupportedCurrencies.filter(
+      currency => currency.workspace === workspace.id
+    );
+    await db.workspace.replaceSupportedCurrencies(workspace.id, currencies, currencies[0]!.code);
   }
   for (const workspace of seedWorkspaces) {
     await db.workspace.replaceLifecycleStates(

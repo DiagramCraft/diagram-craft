@@ -45,6 +45,27 @@ export type ProjectEntityTypeDbResult = {
 
 export type ProjectEntityTypeDbCreate = ProjectEntityTypeDbResult;
 
+export type SupportedCurrencyDbResult = {
+  workspace: string;
+  code: string;
+  label: string;
+  sort_order: number;
+};
+
+export type SupportedCurrencyConfigDbResult = {
+  currencies: SupportedCurrencyDbResult[];
+  default_currency: string;
+};
+
+export const DEFAULT_SUPPORTED_CURRENCIES = [
+  { code: 'USD', label: 'US Dollar', sort_order: 0 },
+  { code: 'EUR', label: 'Euro', sort_order: 1 },
+  { code: 'GBP', label: 'British Pound', sort_order: 2 },
+  { code: 'SEK', label: 'Swedish Krona', sort_order: 3 },
+  { code: 'NOK', label: 'Norwegian Krone', sort_order: 4 },
+  { code: 'DKK', label: 'Danish Krone', sort_order: 5 }
+] as const;
+
 export type OwnerDbResult = {
   id: string;
   workspace: string;
@@ -125,6 +146,12 @@ export const workspaceMappers = {
     sort_order: Number(row['sort_order']),
     created_at: databaseDate(row['created_at'])
   }),
+  supportedCurrency: (row: DatabaseRow): SupportedCurrencyDbResult => ({
+    workspace: String(row['workspace']),
+    code: String(row['code']),
+    label: String(row['label']),
+    sort_order: Number(row['sort_order'])
+  }),
   owner: (row: DatabaseRow): OwnerDbResult => ({
     id: String(row['id']),
     workspace: String(row['workspace']),
@@ -184,6 +211,13 @@ export type WorkspaceDatabase = {
     ws: string,
     types: ProjectEntityTypeDbCreate[]
   ): Promise<ProjectEntityTypeDbResult[]>;
+
+  getSupportedCurrencies(ws: string): Promise<SupportedCurrencyConfigDbResult>;
+  replaceSupportedCurrencies(
+    ws: string,
+    currencies: SupportedCurrencyDbResult[],
+    defaultCurrency: string
+  ): Promise<SupportedCurrencyConfigDbResult>;
 
   listTeams(ws: string, options?: TeamListOptions): Promise<OwnerDbResult[]>;
   replaceTeams(ws: string, teams: OwnerDbCreate[]): Promise<OwnerDbResult[]>;

@@ -148,7 +148,7 @@ export const FilterBuilder = ({
               const en = enums.find(e => e.id === f.enumId);
               options = en?.options ?? [];
             } else if (f.type === 'boolean') type = 'boolean';
-            else if (f.type === 'number') type = 'number';
+            else if (f.type === 'number' || f.type === 'currency') type = 'number';
             else if (f.type === 'derived') {
               type =
                 f.resultType === 'select'

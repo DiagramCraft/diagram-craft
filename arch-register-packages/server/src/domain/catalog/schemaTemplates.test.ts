@@ -113,6 +113,37 @@ describe('instantiateTemplate', () => {
     ]);
   });
 
+  it('materializes the default Contract relation with remapped endpoints and enum', () => {
+    const definitions = instantiateTemplateDefinitions('ws-1', 'default');
+    const system = definitions.schemas.find(schema => schema.name === 'System');
+    const contract = definitions.schemas.find(schema => schema.name === 'Contract');
+    const relation = definitions.relationSchemas.find(schema => schema.name === 'System Contract');
+    const purpose = relation?.fields.find(field => field.id === 'purpose');
+
+    expect(relation?.in_schema_ids).toEqual([system?.id]);
+    expect(relation?.out_schema_ids).toEqual([contract?.id]);
+    expect(purpose).toMatchObject({
+      type: 'select',
+      enumId: definitions.enums.find(e => e.name === 'Contract Purpose')?.id
+    });
+    expect(system?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'contracts',
+        type: 'typedRelation',
+        relationSchemaId: relation?.id,
+        direction: 'out'
+      })
+    );
+    expect(contract?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'system',
+        type: 'typedRelation',
+        relationSchemaId: relation?.id,
+        direction: 'in'
+      })
+    );
+  });
+
   it('seeds the reusable PII classification fieldgroup for the default catalog', () => {
     const definitions = instantiateTemplateDefinitions('ws-1', 'default');
     const fieldGroup = definitions.fieldGroups.find(group => group.name === 'PII Classification');

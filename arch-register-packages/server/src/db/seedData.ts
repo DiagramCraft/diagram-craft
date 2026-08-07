@@ -14,7 +14,8 @@ import {
   WorkspaceDbResult,
   OwnerDbResult,
   LifecycleStateDbResult,
-  ProjectEntityTypeDbResult
+  ProjectEntityTypeDbResult,
+  SupportedCurrencyDbResult
 } from '../domain/workspace/db/workspaceDatabase';
 import {
   Entity,
@@ -683,6 +684,22 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
     created_at: now,
     updated_at: now
   },
+  {
+    id: '00000000-0000-0000-0000-e00000000008',
+    workspace: WORKSPACE_ID,
+    name: 'Contract Purpose',
+    options: [
+      { value: 'license', label: 'License' },
+      { value: 'support', label: 'Support' },
+      { value: 'maintenance', label: 'Maintenance' },
+      { value: 'hosting', label: 'Hosting' },
+      { value: 'professional-services', label: 'Professional Services' },
+      { value: 'other', label: 'Other' }
+    ],
+    sort_order: 6,
+    created_at: now,
+    updated_at: now
+  },
   // Second workspace enums
   {
     id: '00000000-0000-0000-0000-e00000000002',
@@ -697,6 +714,17 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
     created_at: now,
     updated_at: now
   }
+];
+
+export const seedSupportedCurrencies: SupportedCurrencyDbResult[] = [
+  { workspace: WORKSPACE_ID, code: 'USD', label: 'US Dollar', sort_order: 0 },
+  { workspace: WORKSPACE_ID, code: 'EUR', label: 'Euro', sort_order: 1 },
+  { workspace: WORKSPACE_ID, code: 'GBP', label: 'British Pound', sort_order: 2 },
+  { workspace: WORKSPACE_ID, code: 'SEK', label: 'Swedish Krona', sort_order: 3 },
+  { workspace: WORKSPACE_ID, code: 'NOK', label: 'Norwegian Krone', sort_order: 4 },
+  { workspace: WORKSPACE_ID, code: 'DKK', label: 'Danish Krone', sort_order: 5 },
+  { workspace: WORKSPACE2_ID, code: 'USD', label: 'US Dollar', sort_order: 0 },
+  { workspace: WORKSPACE2_ID, code: 'EUR', label: 'Euro', sort_order: 1 }
 ];
 
 const PII_FIELD_GROUP_ID = '00000000-0000-0000-0000-f00000000001';
@@ -774,6 +802,14 @@ export const seedSchemas: SchemaDbResult[] = (
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000030',
           direction: 'in'
+        },
+        {
+          id: 'contracts',
+          name: 'Contracts',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: '00000000-0000-0000-0000-000000000031',
+          direction: 'out'
         }
       ],
       color: AR_COLOR_PURPLE,
@@ -839,6 +875,33 @@ export const seedSchemas: SchemaDbResult[] = (
       icon: 'box',
       default_owner: null,
       key_prefix: 'CMP',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000009',
+      workspace: WORKSPACE_ID,
+      name: 'Contract',
+      description: 'A commercial agreement with a vendor supporting a System.',
+      fields: [
+        { id: 'vendor_name', name: 'Vendor Name', type: 'text' },
+        { id: 'contract_start', name: 'Contract Start', type: 'date' },
+        { id: 'contract_end', name: 'Contract End', type: 'date' },
+        { id: 'annual_cost', name: 'Annual Cost', type: 'currency' },
+        { id: 'setup_fee', name: 'Setup Fee', type: 'currency' },
+        {
+          id: 'system',
+          name: 'System',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: '00000000-0000-0000-0000-000000000031',
+          direction: 'in'
+        }
+      ],
+      color: AR_COLOR_ORANGE,
+      icon: 'certificate',
+      default_owner: null,
+      key_prefix: 'CON',
       created_at: now,
       updated_at: now
     },
@@ -1739,6 +1802,58 @@ const seedEntitiesRaw: SeedEntityInput[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000002',
     data: { domain: ['00000000-0000-0000-0001-000000000001'] },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-000a-000000000001',
+    workspace: WORKSPACE_ID,
+    public_id: 'CON-1',
+    slug: 'acme-cloud-customer-portal-license',
+    namespace: 'default',
+    name: 'Acme Cloud Customer Portal License',
+    description: 'Annual software license for the Customer Portal platform.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['vendor', 'license'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000009',
+    data: {
+      vendor_name: 'Acme Cloud',
+      contract_start: '2026-01-01',
+      contract_end: '2026-12-31',
+      annual_cost: { amount: 125000, currency: 'USD' },
+      setup_fee: { amount: 15000, currency: 'USD' }
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-000a-000000000002',
+    workspace: WORKSPACE_ID,
+    public_id: 'CON-2',
+    slug: 'nordic-support-identity-platform',
+    namespace: 'default',
+    name: 'Nordic Support Identity Platform',
+    description: 'Managed support agreement for the Identity Platform.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['vendor', 'support'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000009',
+    data: {
+      vendor_name: 'Nordic Systems',
+      contract_start: '2026-02-01',
+      contract_end: '2027-01-31',
+      annual_cost: { amount: 84000, currency: 'EUR' },
+      setup_fee: { amount: 0, currency: 'EUR' }
+    },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -4816,6 +4931,31 @@ export const seedAiConfig: AiConfigInputDbUpsert = {
 // reference field (see #2532).
 export const seedRelationSchemas: RelationSchemaDbResult[] = [
   {
+    id: '00000000-0000-0000-0000-000000000031',
+    workspace: WORKSPACE_ID,
+    name: 'System Contract',
+    description:
+      'Associates a System with a vendor Contract and records the purpose of the agreement.',
+    in_schema_ids: ['00000000-0000-0000-0000-000000000002'],
+    out_schema_ids: ['00000000-0000-0000-0000-000000000009'],
+    fields: [
+      {
+        id: 'purpose',
+        name: 'Purpose',
+        type: 'select',
+        enumId: '00000000-0000-0000-0000-e00000000008',
+        requirementLevel: 'required'
+      }
+    ],
+    groups: [],
+    shared_field_group_links: [],
+    color: AR_COLOR_ORANGE,
+    icon: 'certificate',
+    relation_approval_policy: 'disabled',
+    created_at: now,
+    updated_at: now
+  },
+  {
     id: '00000000-0000-0000-0000-000000000030',
     workspace: WORKSPACE_ID,
     name: 'Data Flow',
@@ -4872,6 +5012,28 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
 const DATA_FLOW_SCHEMA_ID = '00000000-0000-0000-0000-000000000030';
 
 export const seedRelations: RelationDbCreate[] = [
+  {
+    id: '00000000-0000-0000-0009-000000000004',
+    workspace: WORKSPACE_ID,
+    schema_id: '00000000-0000-0000-0000-000000000031',
+    // Customer Portal -> Acme Cloud contract: annual software license.
+    in_entity_id: '00000000-0000-0000-0002-000000000001',
+    out_entity_id: '00000000-0000-0000-000a-000000000001',
+    data: { purpose: 'license' },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0009-000000000005',
+    workspace: WORKSPACE_ID,
+    schema_id: '00000000-0000-0000-0000-000000000031',
+    // Identity Platform -> Nordic Systems contract: managed support.
+    in_entity_id: '00000000-0000-0000-0002-000000000002',
+    out_entity_id: '00000000-0000-0000-000a-000000000002',
+    data: { purpose: 'support' },
+    created_at: now,
+    updated_at: now
+  },
   {
     id: '00000000-0000-0000-0009-000000000001',
     workspace: WORKSPACE_ID,

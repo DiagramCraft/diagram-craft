@@ -40,7 +40,10 @@ import type {
   SchemaDbResult
 } from './db/catalogDatabase';
 import { entityRequiresApproval } from './entityChangeOperations';
-import { assertNoExternalEntityFieldWrites } from './entityValidation';
+import {
+  assertNoExternalEntityFieldWrites,
+  normalizeEntityCurrencyFields
+} from './entityValidation';
 import { equalEntityValue } from './entityDiff';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import type { ExternalMetadata } from '@arch-register/api-types/common';
@@ -52,6 +55,20 @@ import {
 import { assertNoDerivedFieldWrites } from '../derived/derivedFields';
 import { isTypedRelationField } from '@arch-register/api-types/schemaContract';
 import { applyRelationFieldDelta } from './relationFieldMutations';
+
+type SupportedCurrencyLookup = (
+  workspace: string
+) => Promise<{ currencies: Array<{ code: string }> }>;
+
+const getSupportedCurrencyCodes = async (db: DatabaseAdapter, workspace: string) => {
+  // Keep lightweight test and extension adapters working while all production workspace
+  // implementations expose supported-currency configuration.
+  const lookup = (db.workspace as { getSupportedCurrencies?: SupportedCurrencyLookup })
+    .getSupportedCurrencies;
+  if (lookup == null) return null;
+  const config = await lookup.call(db.workspace, workspace);
+  return new Set(config.currencies.map(currency => currency.code));
+};
 
 export const allocateEntityPublicId = async (
   db: DatabaseAdapter,
@@ -89,9 +106,10 @@ export const createEntity = async (
   const teamIds = await getTeamIds(db, workspace);
 
   try {
-    const [schema, entities] = await Promise.all([
+    const [schema, entities, currencyConfig] = await Promise.all([
       db.catalog.getSchema(workspace, payload.schemaId),
-      listAllCatalogEntities(db, workspace)
+      listAllCatalogEntities(db, workspace),
+      getSupportedCurrencyCodes(db, workspace)
     ]);
     httpAssert.present(schema, {
       status: 404,
@@ -102,6 +120,9 @@ export const createEntity = async (
       fields: payload.fields,
       entities
     });
+    if (currencyConfig) {
+      normalizeEntityCurrencyFields(schema.fields, normalizedFields, currencyConfig);
+    }
     assertNoDerivedFieldWrites(schema.fields, normalizedFields);
     assertNoExternalEntityFieldWrites(schema.fields, {}, normalizedFields);
     if (authCtx) {
@@ -508,6 +529,10 @@ export const updateEntity = async (
         fields: payload.fields,
         entities
       });
+      const currencyConfig = await getSupportedCurrencyCodes(db, workspace);
+      if (currencyConfig) {
+        normalizeEntityCurrencyFields(schema.fields, normalizedFields, currencyConfig);
+      }
       assertNoDerivedFieldWrites(schema.fields, normalizedFields);
       if (authCtx) {
         const changedFieldIds = Object.keys(normalizedFields).filter(

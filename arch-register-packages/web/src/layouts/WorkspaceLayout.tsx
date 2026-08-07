@@ -88,7 +88,7 @@ export const WorkspaceLayout = () => {
     !!workspaceSlug
   );
   const { data: projects = [], error: projectsError } = useProjects(workspaceSlug);
-  const { lifecycleStates, teams, projectEntityTypes } = useWorkspaceConfig(
+  const { lifecycleStates, teams, projectEntityTypes, currencies } = useWorkspaceConfig(
     workspaceSlug,
     !!workspaceSlug
   );
@@ -117,7 +117,9 @@ export const WorkspaceLayout = () => {
 
   const availableSettingsSections = useMemo(
     () => [
-      ...(canManageWorkspaces ? ['general', 'danger', 'export-import', 'documents'] : []),
+      ...(canManageWorkspaces
+        ? ['general', 'currencies', 'danger', 'export-import', 'documents']
+        : []),
       ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
       ...(canViewSchemas ? ['model-overview', 'schemas'] : []),
       ...(canManageMembers ? ['roles', 'members'] : []),
@@ -212,6 +214,7 @@ export const WorkspaceLayout = () => {
       lifecycleStates,
       teams,
       projectEntityTypes,
+      currencies,
       permissions: {
         canManageWorkspaces,
         canAdministerWorkspace,
@@ -243,6 +246,7 @@ export const WorkspaceLayout = () => {
       lifecycleStates,
       teams,
       projectEntityTypes,
+      currencies,
       canManageWorkspaces,
       canAdministerWorkspace,
       canViewSchemas,

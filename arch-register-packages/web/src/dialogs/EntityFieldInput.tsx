@@ -10,12 +10,16 @@ export const EntityFieldInput = ({
   value,
   onChange,
   referenceOptions,
+  currencyOptions,
+  defaultCurrency,
   disabled
 }: {
   field: EntitySchema['fields'][number];
-  value: string | string[];
-  onChange: (value: string | string[]) => void;
+  value: unknown;
+  onChange: (value: unknown) => void;
   referenceOptions?: Record<string, EntitySummary[]>;
+  currencyOptions?: Array<{ code: string; label: string }>;
+  defaultCurrency?: string;
   disabled?: boolean;
 }) => {
   if (field.type === 'reference') {
@@ -124,6 +128,50 @@ export const EntityFieldInput = ({
           onChange={event => onChange(event.target.value)}
           style={{ width: '100%' }}
         />
+      </FormElement>
+    );
+  }
+
+  if (field.type === 'currency') {
+    const currencyValue =
+      typeof value === 'object' && value !== null && !Array.isArray(value)
+        ? (value as { amount?: number; currency?: string })
+        : {};
+    return (
+      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+        <div style={{ display: 'flex', gap: 6 }}>
+          <input
+            type="number"
+            step="0.01"
+            disabled={disabled}
+            value={currencyValue.amount ?? ''}
+            onChange={event =>
+              onChange({
+                amount: event.target.value === '' ? undefined : Number(event.target.value),
+                currency: currencyValue.currency ?? defaultCurrency ?? 'USD'
+              })
+            }
+            style={{ width: '100%' }}
+          />
+          <Select.Root
+            value={currencyValue.currency ?? ''}
+            disabled={disabled}
+            onChange={next =>
+              onChange({
+                amount: currencyValue.amount,
+                currency: (next ?? '').toUpperCase()
+              })
+            }
+            placeholder="Currency"
+            style={{ width: 110 }}
+          >
+            {(currencyOptions ?? []).map(currency => (
+              <Select.Item key={currency.code} value={currency.code}>
+                {currency.code} — {currency.label}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </div>
       </FormElement>
     );
   }

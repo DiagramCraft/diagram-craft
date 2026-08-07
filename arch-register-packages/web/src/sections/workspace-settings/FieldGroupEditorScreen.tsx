@@ -288,6 +288,7 @@ export const FieldGroupEditorScreen = () => {
           case 'text':
           case 'longtext':
           case 'date':
+          case 'currency':
           case 'boolean':
           case 'number':
             return { ...base, type } as SchemaField;

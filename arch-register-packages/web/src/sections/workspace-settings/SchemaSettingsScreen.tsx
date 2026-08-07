@@ -350,6 +350,7 @@ export const SchemaSettingsScreen = () => {
           case 'text':
           case 'longtext':
           case 'date':
+          case 'currency':
             return { ...base, type: newType };
           case 'number':
             return { ...base, type: 'number' };

@@ -2,10 +2,12 @@ import type { Dispatch, SetStateAction } from 'react';
 import { TbExternalLink, TbPlus, TbX } from 'react-icons/tb';
 import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
+import { Select } from '@diagram-craft/app-components/Select';
 import { Chip } from '../../../components/Chip';
 import { DiagramMetadataPopover } from '../../../components/DiagramMetadataPopover';
 import { asProjectPublicId, projectDiagramHref } from '../../../routes/publicObjectRoutes';
 import { formatDate } from '../../../utils/dateFormat';
+import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import {
   slugifyEntityName,
   relationIds,
@@ -17,7 +19,10 @@ import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entit
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { ExternalMetadataResult } from '@arch-register/api-types/common';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
+import type {
+  SupportedCurrency,
+  WorkspaceTeam
+} from '@arch-register/api-types/workspaceConfigContract';
 import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 import type {
   Project,
@@ -63,6 +68,8 @@ type Props = {
   referenceOptions: Record<string, EntitySummary[]>;
   teams: WorkspaceTeam[];
   lifecycleStates: WorkspaceLifecycleState[];
+  currencies: SupportedCurrency[];
+  defaultCurrency: string;
   entityProjects: EntityProjectAssoc[];
   changeCases: ChangeCase[];
   entityDiagramFiles: DiagramEntityFile[];
@@ -88,6 +95,8 @@ export const EntityOverviewTab = ({
   referenceOptions,
   teams,
   lifecycleStates,
+  currencies,
+  defaultCurrency,
   entityProjects,
   changeCases,
   entityDiagramFiles,
@@ -144,6 +153,8 @@ export const EntityOverviewTab = ({
       typedRelationsOutgoing={typedRelationsOutgoing}
       typedRelationsIncoming={typedRelationsIncoming}
       relationSchemas={relationSchemas}
+      currencyOptions={currencies}
+      defaultCurrency={defaultCurrency}
       workspaceSlug={workspaceSlug}
       typedRelationFieldState={getTypedRelationFieldState(f.id)}
       onTypedRelationCreate={draft =>
@@ -628,6 +639,8 @@ const PropertyRow = ({
   typedRelationsOutgoing,
   typedRelationsIncoming,
   relationSchemas,
+  currencyOptions,
+  defaultCurrency,
   workspaceSlug,
   typedRelationFieldState,
   onTypedRelationCreate,
@@ -647,6 +660,8 @@ const PropertyRow = ({
   typedRelationsOutgoing: RelationRecord[];
   typedRelationsIncoming: RelationRecord[];
   relationSchemas: RelationSchema[];
+  currencyOptions: SupportedCurrency[];
+  defaultCurrency: string;
   workspaceSlug: string;
   typedRelationFieldState: TypedRelationFieldEditState;
   onTypedRelationCreate: (draft: RelationRecordDraft) => void;
@@ -732,6 +747,42 @@ const PropertyRow = ({
         />
       );
     }
+    if (field.type === 'currency') {
+      const currencyValue =
+        typeof editValue === 'object' && editValue !== null && !Array.isArray(editValue)
+          ? (editValue as { amount?: number; currency?: string })
+          : {};
+      return (
+        <div style={{ display: 'flex', gap: 6 }}>
+          <input
+            className={styles.inputInline}
+            type="number"
+            step="0.01"
+            value={currencyValue.amount ?? ''}
+            onChange={e =>
+              onChange({
+                amount: e.target.value === '' ? undefined : Number(e.target.value),
+                currency: currencyValue.currency ?? defaultCurrency
+              })
+            }
+          />
+          <Select.Root
+            value={currencyValue.currency ?? defaultCurrency}
+            onChange={next =>
+              onChange({ amount: currencyValue.amount, currency: (next ?? '').toUpperCase() })
+            }
+            placeholder="Currency"
+            style={{ width: 130 }}
+          >
+            {currencyOptions.map(currency => (
+              <Select.Item key={currency.code} value={currency.code}>
+                {currency.code} — {currency.label}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </div>
+      );
+    }
     if (field.type === 'number') {
       return (
         <input
@@ -806,6 +857,7 @@ const PropertyRow = ({
       );
     }
     if (field.type === 'date') return <span>{formatDate(value)}</span>;
+    if (field.type === 'currency') return <span>{formatCurrencyValue(value)}</span>;
     return <span>{String(value)}</span>;
   };
 

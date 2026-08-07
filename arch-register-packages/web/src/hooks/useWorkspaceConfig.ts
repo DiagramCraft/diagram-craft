@@ -1,7 +1,8 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   TeamAssignmentInfo,
-  WorkspaceTeamInput
+  WorkspaceTeamInput,
+  SupportedCurrency
 } from '@arch-register/api-types/workspaceConfigContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { orpcClient } from '../lib/orpcClient';
@@ -17,7 +18,9 @@ export const workspaceConfigKeys = {
   teamAssignments: (workspaceId: string) =>
     [...workspaceConfigKeys.all, 'team-assignments', workspaceId] as const,
   projectEntityTypes: (workspaceId: string) =>
-    [...workspaceConfigKeys.all, 'project-entity-types', workspaceId] as const
+    [...workspaceConfigKeys.all, 'project-entity-types', workspaceId] as const,
+  currencies: (workspaceId: string) =>
+    [...workspaceConfigKeys.all, 'currencies', workspaceId] as const
 };
 
 // Hook for fetching lifecycle states
@@ -122,27 +125,53 @@ export const useProjectEntityTypes = (workspaceSlug: string, enabled = true) => 
   });
 };
 
+export const useSupportedCurrencies = (workspaceSlug: string, enabled = true) =>
+  useQuery({
+    queryKey: workspaceConfigKeys.currencies(workspaceSlug),
+    queryFn: () => orpcClient.config.currencies.list({ params: { workspace: workspaceSlug } }),
+    enabled: enabled && !!workspaceSlug,
+    staleTime: 5 * 60 * 1000
+  });
+
+export const useUpdateSupportedCurrencies = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { currencies: SupportedCurrency[]; default_currency: string }) =>
+      orpcClient.config.currencies.replace({
+        params: { workspace: workspaceId },
+        body: input
+      }),
+    onSuccess: value => {
+      queryClient.setQueryData(workspaceConfigKeys.currencies(workspaceId), value);
+    }
+  });
+};
+
 // Combined hook for workspace config
 export const useWorkspaceConfig = (workspaceSlug: string, enabled = true) => {
   const lifecycleStates = useLifecycleStates(workspaceSlug, enabled);
   const teams = useTeams(workspaceSlug, enabled);
   const teamAssignments = useTeamAssignments(workspaceSlug, enabled);
   const projectEntityTypes = useProjectEntityTypes(workspaceSlug, enabled);
+  const currencies = useSupportedCurrencies(workspaceSlug, enabled);
 
   return {
     lifecycleStates: lifecycleStates.data ?? [],
     teams: teams.data ?? [],
     teamAssignments: teamAssignments.data ?? [],
     projectEntityTypes: projectEntityTypes.data ?? [],
+    currencies: currencies.data ?? { currencies: [], default_currency: 'USD' },
     isLoading:
       lifecycleStates.isLoading ||
       teams.isLoading ||
       teamAssignments.isLoading ||
-      projectEntityTypes.isLoading,
+      projectEntityTypes.isLoading ||
+      currencies.isLoading,
     isError:
       lifecycleStates.isError ||
       teams.isError ||
       teamAssignments.isError ||
-      projectEntityTypes.isError
+      projectEntityTypes.isError ||
+      currencies.isError
   };
 };

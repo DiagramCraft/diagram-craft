@@ -24,7 +24,9 @@ import {
   removeMember,
   listUsers,
   listProjectEntityTypes,
-  replaceProjectEntityTypes
+  replaceProjectEntityTypes,
+  listSupportedCurrencies,
+  replaceSupportedCurrencies
 } from './workspaceConfigOperations';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 import { createApiToken, listApiTokens, revokeApiToken } from '../auth/apiTokenOperations';
@@ -155,6 +157,22 @@ export const workspaceConfigORPCRouter = configRouter.router({
           );
         }
       )
+    },
+    currencies: {
+      list: configRouter.config.currencies.list.handler(async ({ context }) => {
+        const { workspace } = context;
+        return await listSupportedCurrencies(context.db, workspace, context.event);
+      }),
+      replace: configRouter.config.currencies.replace.handler(async ({ input, context }) => {
+        const { workspace } = context;
+        return await replaceSupportedCurrencies(
+          context.db,
+          workspace,
+          input.body.currencies,
+          input.body.default_currency,
+          context.event
+        );
+      })
     }
   }
 });

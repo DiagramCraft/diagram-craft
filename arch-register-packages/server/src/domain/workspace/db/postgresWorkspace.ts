@@ -8,7 +8,10 @@ import {
   RoleDefinitionDbCreate,
   RoleDefinitionDbUpdate,
   ProjectEntityTypeDbCreate,
-  TeamListOptions
+  TeamListOptions,
+  SupportedCurrencyDbResult,
+  SupportedCurrencyConfigDbResult,
+  DEFAULT_SUPPORTED_CURRENCIES
 } from './workspaceDatabase';
 import { workspaceMappers } from './workspaceDatabase';
 import type { ImportCacheEntry } from '../importCache';
@@ -47,6 +50,12 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         VALUES (${input.id}, ${input.name}, ${input.url_slug}, ${input.short_code}, ${input.color}, ${input.description}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
+      for (const currency of DEFAULT_SUPPORTED_CURRENCIES) {
+        await this.sql`
+          INSERT INTO workspace_currency (workspace, code, label, sort_order, is_default)
+          VALUES (${input.id}, ${currency.code}, ${currency.label}, ${currency.sort_order}, ${currency.code === 'USD'})
+        `;
+      }
       return workspaceMappers.workspace(row!);
     } catch (error) {
       return normalizePostgresError(error);
@@ -95,6 +104,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         await tx`DELETE FROM workspace_role WHERE workspace = ${id}`;
         await tx`DELETE FROM team_membership WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_lifecycle_state WHERE workspace = ${id}`;
+        await tx`DELETE FROM workspace_currency WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_owner WHERE workspace = ${id}`;
         await tx`DELETE FROM audit_log WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace WHERE id = ${id}`;
@@ -198,6 +208,40 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
     } catch (error) {
       return normalizePostgresError(error);
     }
+  }
+
+  async getSupportedCurrencies(workspace: string): Promise<SupportedCurrencyConfigDbResult> {
+    const currencies = await this.sql<DatabaseRow[]>`
+      SELECT workspace, code, label, sort_order
+      FROM workspace_currency
+      WHERE workspace = ${workspace}
+      ORDER BY sort_order, code
+    `;
+    const [defaultRow] = await this.sql<{ code: string }[]>`
+      SELECT code FROM workspace_currency
+      WHERE workspace = ${workspace} AND is_default = TRUE
+    `;
+    return {
+      currencies: mapDatabaseRows(currencies, workspaceMappers.supportedCurrency),
+      default_currency: defaultRow?.code ?? String(currencies[0]?.['code'] ?? 'USD')
+    };
+  }
+
+  async replaceSupportedCurrencies(
+    workspace: string,
+    currencies: SupportedCurrencyDbResult[],
+    defaultCurrency: string
+  ): Promise<SupportedCurrencyConfigDbResult> {
+    await withTransaction(this.sql, async tx => {
+      await tx`DELETE FROM workspace_currency WHERE workspace = ${workspace}`;
+      for (const currency of currencies) {
+        await tx`
+          INSERT INTO workspace_currency (workspace, code, label, sort_order, is_default)
+          VALUES (${workspace}, ${currency.code}, ${currency.label}, ${currency.sort_order}, ${currency.code === defaultCurrency})
+        `;
+      }
+    });
+    return await this.getSupportedCurrencies(workspace);
   }
 
   async listTeams(workspace: string, options?: TeamListOptions) {

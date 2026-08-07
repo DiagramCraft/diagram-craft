@@ -56,10 +56,12 @@
           including its entity schemas, select-option enums, and document types and associated templates.
 
         - @id:ar.workspace.configuration Administrators can configure workspace lifecycle states, teams, roles, members,
-          document types, templates, AI, analytics, audit, and other workspace settings.
+          supported currencies and the workspace's default currency, document types, templates, AI, analytics, audit,
+          and other workspace settings.
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
-            reusable shared fieldgroups, relationships, and schema-specific behavior, including read-only derived fields
+            reusable shared fieldgroups, relationships, and schema-specific behavior, including currency fields,
+            read-only derived fields
             calculated from sibling
             fields using a sandboxed expression and a declared text, number, select, boolean, or rating result type,
             and externally managed fields (by AI, an integration, or an internal automation) with a refresh mode of
@@ -75,7 +77,7 @@
             types support the same field-group access control, shared-fieldgroup inclusion, field migrations,
             version history, and externally managed fields (by AI, an integration, or an internal automation) with a
             refresh mode of on-change or scheduled, as entity schemas, but only text, long text, boolean, date,
-            number, and select field types (no reference, containment, or derived fields, and no templates or
+            number, currency, and select field types (no reference, containment, or derived fields, and no templates or
             approval/deprecation policy).
             The model overview visualizes both generic schema references and typed relation-schema edges, with typed
             edges showing the relation type and linking to its definition.
@@ -101,7 +103,7 @@
           descendants and related records.
 
         - @id:ar.entities.fields Users can view and edit standard and schema-defined fields, including owners,
-          lifecycle, links, references, typed relations, and custom values. A schema field marked as externally
+          lifecycle, links, references, typed relations, currency values, and custom values. A schema field marked as externally
           managed (by AI, an integration, or an internal automation) is read-only to users; its current value stays
           visible alongside the latest update's source, timestamp, status, and any explanation or findings. A user
           edit to any other field on the entity marks that entity's external field results outdated. Fields belonging
