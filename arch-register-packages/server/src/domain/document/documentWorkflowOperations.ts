@@ -4,11 +4,14 @@ import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import type {
   DocumentMetadata,
-  DocumentStatusApproval,
   DocumentType,
   DocumentWorkflowHistoryEvent,
   DocumentWorkflowStatus
 } from '@arch-register/api-types/documentContract';
+import {
+  documentStatusApprovalConfigSchema,
+  type DocumentStatusApproval
+} from '@arch-register/api-types/governanceCaseConfigSchemas';
 import { requireMarkdownNodeAccess } from '../project/markdownOperationHelpers';
 import {
   createGovernanceCaseInTransaction,
@@ -19,6 +22,7 @@ import {
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 
 export const DOCUMENT_STATUS_CASE_KIND = 'document.status';
 
@@ -51,29 +55,70 @@ const valuesOf = (value: unknown): string[] => {
 const statusOption = (field: DocumentType['fields'][number], value: string | null) =>
   field.enumOptions?.find(option => option.value === value) ?? null;
 
+type DocumentStatusConfigRow = {
+  enabled: boolean;
+  updated_at: Date;
+  config: { statuses: Record<string, DocumentStatusApproval> };
+};
+
 const approvalFor = (
   field: DocumentType['fields'][number],
-  value: string | null
+  value: string | null,
+  config: DocumentStatusConfigRow | undefined
 ): DocumentStatusApproval | null => {
-  if (!field.isStatus || field.type !== 'enum') return null;
-  const approval = statusOption(field, value)?.approval;
+  if (!field.isStatus || field.type !== 'enum' || !config?.enabled || value == null) return null;
+  const approval = config.config.statuses[value];
   return approval?.required ? approval : null;
+};
+
+const loadDocumentStatusConfigs = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  documentTypeId: string
+): Promise<Map<string, DocumentStatusConfigRow>> => {
+  const rows = await db.governanceCaseConfig.listCaseConfigForKind(
+    workspace,
+    DOCUMENT_STATUS_CASE_KIND
+  );
+  const prefix = `${documentTypeId}:`;
+  return new Map(
+    rows.flatMap(row => {
+      if (!row.case_subkind?.startsWith(prefix)) return [];
+      const config = documentStatusApprovalConfigSchema.safeParse(row.config);
+      if (!config.success) return [];
+      return [[row.case_subkind.slice(prefix.length), { ...row, config: config.data }] as const];
+    })
+  );
 };
 
 const unique = <T>(values: T[]) => [...new Set(values)];
 
 /** Counts document types/fields with a workflow-enabled (approval-required) status option. */
 export const summarizeDocumentStatusApprovals = (
-  documentTypes: Pick<DocumentType, 'fields'>[]
+  documentTypes: Pick<DocumentType, 'id' | 'fields'>[],
+  configRows: Array<{
+    enabled: boolean;
+    case_subkind: string | null;
+    config: Record<string, unknown>;
+  }>
 ): { documentTypesConfigured: number; fieldsConfigured: number } => {
   let documentTypesConfigured = 0;
   let fieldsConfigured = 0;
   for (const documentType of documentTypes) {
+    const prefix = `${documentType.id}:`;
     const configuredFields = documentType.fields.filter(
       field =>
         field.isStatus &&
         field.type === 'enum' &&
-        (field.enumOptions ?? []).some(option => option.approval?.required)
+        configRows.some(row => {
+          const config = documentStatusApprovalConfigSchema.safeParse(row.config);
+          return (
+            row.enabled &&
+            row.case_subkind === `${prefix}${field.id}` &&
+            config.success &&
+            Object.values(config.data.statuses).some(approval => approval.required)
+          );
+        })
     );
     if (configuredFields.length > 0) documentTypesConfigured += 1;
     fieldsConfigured += configuredFields.length;
@@ -168,7 +213,8 @@ const createStatusRequest = async (
   field: DocumentType['fields'][number],
   previousValue: string | null,
   targetValue: string,
-  approval: DocumentStatusApproval
+  approval: DocumentStatusApproval,
+  configUpdatedAt: Date
 ) => {
   const slots = await resolveApproverSlots(
     tx,
@@ -182,7 +228,7 @@ const createStatusRequest = async (
 
   const requestId = randomUUID();
   const caseId = randomUUID();
-  const policyVersion = `${input.documentType!.id}:${input.documentType!.version}:${field.id}:${targetValue}`;
+  const policyVersion = `${input.documentType!.id}:${input.documentType!.version}:${field.id}:${targetValue}:${configUpdatedAt.toISOString()}`;
   const selfApprovalAllowed =
     requiredApprovals === 1 &&
     slots.length === 1 &&
@@ -200,6 +246,7 @@ const createStatusRequest = async (
     input.initiatorUserId,
     {
       caseKind: DOCUMENT_STATUS_CASE_KIND,
+      caseSubkind: encodeCaseSubkind(input.documentType!.id, field.id),
       subjectType: 'document',
       subjectId: input.nodeId,
       subjectVersion: String(input.sourceRevision ?? ''),
@@ -253,11 +300,13 @@ export const applyDocumentWorkflowSave = async (
     input.workspace,
     input.nodeId
   );
+  const configs = await loadDocumentStatusConfigs(tx, input.workspace, input.documentType.id);
 
   for (const field of input.documentType.fields.filter(field => field.isStatus && !field.retired)) {
     const targetValue = scalarValue(input.nextMetadata[field.id]);
     const previousValue = scalarValue(input.currentMetadata[field.id]);
-    const approval = approvalFor(field, targetValue);
+    const config = configs.get(field.id);
+    const approval = approvalFor(field, targetValue, config);
     const currentRequest = currentRequests.find(request => request.field_id === field.id);
     const statusChanged = targetValue !== previousValue;
     if (currentRequest && !input.isNew && input.changeKind === 'minor') {
@@ -284,7 +333,15 @@ export const applyDocumentWorkflowSave = async (
     }
 
     if (approval && targetValue != null) {
-      await createStatusRequest(tx, input, field, previousValue, targetValue, approval);
+      await createStatusRequest(
+        tx,
+        input,
+        field,
+        previousValue,
+        targetValue,
+        approval,
+        config!.updated_at
+      );
       if (previousValue == null) delete effectiveMetadata[field.id];
       else effectiveMetadata[field.id] = previousValue;
     }
@@ -311,14 +368,18 @@ export const getDocumentWorkflowStatuses = async (
 ): Promise<DocumentWorkflowStatus[]> => {
   if (!documentType) return [];
   const requests = await db.document.getCurrentWorkflowRequests(workspace, nodeId);
+  const configs = await loadDocumentStatusConfigs(db, workspace, documentType.id);
   return documentType.fields
     .filter(field => field.isStatus && field.type === 'enum' && !field.retired)
     .map(async field => {
       const request = requests.find(item => item.field_id === field.id);
       const effectiveValue = scalarValue(metadata[field.id]);
+      const config = configs.get(field.id);
       const option = statusOption(field, request?.target_value ?? effectiveValue);
       const approvalsRequired =
-        request?.required_approvals ?? option?.approval?.requiredApprovals ?? 1;
+        request?.required_approvals ??
+        (config?.enabled ? config.config.statuses[option?.value ?? '']?.requiredApprovals : null) ??
+        1;
       if (!request) {
         return {
           fieldId: field.id,

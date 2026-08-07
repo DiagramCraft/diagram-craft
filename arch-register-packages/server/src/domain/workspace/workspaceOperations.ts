@@ -18,6 +18,8 @@ import { ensureNotificationDeliverySchedule } from '../notification/emailDeliver
 import { ensureGovernanceDeadlineScanSchedule } from '../governance/governanceDeadlineScanJob';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
+import { DOCUMENT_STATUS_CASE_KIND } from '../document/documentWorkflowOperations';
+import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 
 const shortCodeFrom = (name: string): string =>
   name
@@ -665,6 +667,27 @@ export const createWorkspace = async (
                     true,
                     timestamp
                   );
+              }
+              for (const config of await db.governanceCaseConfig.listCaseConfigForKind(
+                replicate_from,
+                DOCUMENT_STATUS_CASE_KIND
+              )) {
+                const separator = config.case_subkind?.indexOf(':') ?? -1;
+                if (separator <= 0) continue;
+                const targetTypeId = typeMap.get(config.case_subkind!.slice(0, separator));
+                if (!targetTypeId) continue;
+                await db.governanceCaseConfig.upsertCaseConfig({
+                  workspace: row.id,
+                  case_kind: config.case_kind,
+                  case_subkind: encodeCaseSubkind(
+                    targetTypeId,
+                    config.case_subkind!.slice(separator + 1)
+                  ),
+                  enabled: config.enabled,
+                  config: config.config,
+                  updated_at: timestamp,
+                  updated_by: null
+                });
               }
               const { nodeMap, sourceEntityIdByIdentifier } = await copyTypedWorkspaceDocuments(
                 db,

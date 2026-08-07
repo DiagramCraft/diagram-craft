@@ -13,6 +13,7 @@ import type {
   DocumentTypeWrite,
   FieldMigrations
 } from '@arch-register/api-types/documentContract';
+import type { GovernanceDocumentStatusConfigUpdate } from '@arch-register/api-types/governanceDocumentStatusConfigContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { orpcClient } from '../lib/orpcClient';
 import { normalizeApiError } from '../lib/http';
@@ -68,6 +69,8 @@ export const documentKeys = {
     ['document-types', workspaceId, includeArchived] as const,
   versions: (workspaceId: string, documentTypeId: string) =>
     ['document-types', workspaceId, documentTypeId, 'versions'] as const,
+  workflowConfigs: (workspaceId: string, documentTypeId: string) =>
+    ['document-status-config', workspaceId, documentTypeId] as const,
   templatesRoot: (workspaceId: string) => ['document-templates', workspaceId] as const,
   templates: (workspaceId: string, projectId?: string | null, includeArchived = false) =>
     ['document-templates', workspaceId, projectId ?? 'workspace', includeArchived] as const,
@@ -117,6 +120,39 @@ export const useDocumentTypeVersions = (workspaceId: string, documentTypeId: str
       }),
     enabled: !!workspaceId && !!documentTypeId
   });
+
+export const useDocumentStatusConfigs = (workspaceId: string, documentTypeId: string | null) =>
+  useQuery({
+    queryKey: documentKeys.workflowConfigs(workspaceId, documentTypeId ?? ''),
+    queryFn: () =>
+      orpcClient.governanceDocumentStatusConfig.list({
+        params: { workspace: workspaceId, id: documentTypeId! }
+      }),
+    enabled: !!workspaceId && !!documentTypeId
+  });
+
+export const useUpdateDocumentStatusConfig = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: ({
+      documentTypeId,
+      fieldId,
+      body
+    }: {
+      documentTypeId: string;
+      fieldId: string;
+      body: GovernanceDocumentStatusConfigUpdate;
+    }) =>
+      orpcClient.governanceDocumentStatusConfig.update({
+        params: { workspace: workspaceId, id: documentTypeId, fieldId },
+        body
+      }),
+    onSuccess: (_data, variables) =>
+      queryClient.invalidateQueries({
+        queryKey: documentKeys.workflowConfigs(workspaceId, variables.documentTypeId)
+      })
+  });
+};
 
 export const useDocumentTemplates = (
   workspaceId: string,

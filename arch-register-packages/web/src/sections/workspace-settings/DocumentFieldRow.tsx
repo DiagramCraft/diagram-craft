@@ -14,6 +14,7 @@ import type {
   DocumentFieldType,
   DocumentRequirement
 } from '@arch-register/api-types/documentContract';
+import type { DocumentStatusApproval } from '@arch-register/api-types/governanceCaseConfigSchemas';
 
 import { Chip } from '../../components/Chip';
 import { FieldConfig } from '../../components/FieldConfig';
@@ -31,13 +32,20 @@ export const DocumentFieldRow = ({
   field,
   workspaceSlug,
   allFields,
+  approvals,
   onUpdate,
+  onWorkflowConfig,
   onRemove
 }: {
   field: DocumentField;
   workspaceSlug: string;
   allFields: DocumentField[];
+  approvals: Record<string, DocumentStatusApproval>;
   onUpdate: (patch: Partial<DocumentField>) => void;
+  onWorkflowConfig: (patch: {
+    enabled: boolean;
+    statuses: Record<string, DocumentStatusApproval>;
+  }) => void;
   onRemove: () => void;
 }) => {
   const [idUserEdited, setIdUserEdited] = useState(() => field.id !== toFieldId(field.name));
@@ -80,24 +88,29 @@ export const DocumentFieldRow = ({
                 .join(', ')}
               placeholder="proposed:Proposed, accepted:Accepted"
               onChange={value => {
-                const existing = new Map(
-                  (field.enumOptions ?? []).map(option => [option.value, option])
-                );
+                const nextOptions = (value ?? '')
+                  .split(',')
+                  .map(option => option.trim())
+                  .filter(Boolean)
+                  .map(option => {
+                    const [enumValue, ...label] = option.split(':');
+                    const parsedValue = enumValue!.trim();
+                    return {
+                      value: parsedValue,
+                      label: label.join(':').trim() === '' ? parsedValue : label.join(':').trim()
+                    };
+                  });
                 onUpdate({
-                  enumOptions: (value ?? '')
-                    .split(',')
-                    .map(option => option.trim())
-                    .filter(Boolean)
-                    .map(option => {
-                      const [enumValue, ...label] = option.split(':');
-                      const parsedValue = enumValue!.trim();
-                      const prior = existing.get(parsedValue);
-                      return {
-                        value: parsedValue,
-                        label: label.join(':').trim() === '' ? parsedValue : label.join(':').trim(),
-                        ...(prior?.approval ? { approval: prior.approval } : {})
-                      };
+                  enumOptions: nextOptions
+                });
+                onWorkflowConfig({
+                  enabled: field.isStatus === true,
+                  statuses: Object.fromEntries(
+                    nextOptions.flatMap(option => {
+                      const approval = approvals[option.value];
+                      return approval ? [[option.value, approval]] : [];
                     })
+                  )
                 });
               }}
             />
@@ -121,9 +134,11 @@ export const DocumentFieldRow = ({
             workspaceSlug={workspaceSlug}
             field={field}
             allFields={allFields}
+            approvals={approvals}
             onClose={() => setWorkflowDialogOpen(false)}
             onSave={patch => {
-              onUpdate(patch);
+              onUpdate({ isStatus: patch.isStatus });
+              onWorkflowConfig({ enabled: patch.isStatus, statuses: patch.statuses });
               setWorkflowDialogOpen(false);
             }}
           />

@@ -44,7 +44,13 @@ export const createGovernanceWorkflowOverviewORPCRouter = (registry: GovernanceR
         requireWorkspaceCapability(authCtx, 'ws.settings');
 
         const documentTypes = await context.db.document.listDocumentTypes(workspace);
-        const approvalSummary = summarizeDocumentStatusApprovals(documentTypes);
+        const approvalSummary = summarizeDocumentStatusApprovals(
+          documentTypes,
+          await context.db.governanceCaseConfig.listCaseConfigForKind(
+            workspace,
+            DOCUMENT_STATUS_CASE_KIND
+          )
+        );
 
         const results: GovernanceWorkflowOverview[] = [];
         for (const [caseKind, config] of registry) {

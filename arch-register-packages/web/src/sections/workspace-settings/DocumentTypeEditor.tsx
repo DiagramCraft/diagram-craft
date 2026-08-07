@@ -19,8 +19,11 @@ import {
   useArchiveDocumentType,
   useCreateDocumentType,
   useDeleteDocumentType,
+  useDocumentStatusConfigs,
+  useUpdateDocumentStatusConfig,
   useUpdateDocumentType
 } from '../../hooks/useDocuments';
+import type { DocumentStatusApproval } from '@arch-register/api-types/governanceCaseConfigSchemas';
 import { useAiStatus } from '../../hooks/useAiConfig';
 
 import { TypeBadge } from '../../components/TypeBadge';
@@ -75,9 +78,14 @@ export const DocumentTypeEditor = ({
 
   const createType = useCreateDocumentType(workspaceSlug);
   const updateType = useUpdateDocumentType(workspaceSlug);
+  const updateWorkflowConfig = useUpdateDocumentStatusConfig(workspaceSlug);
   const archiveType = useArchiveDocumentType(workspaceSlug);
   const deleteType = useDeleteDocumentType(workspaceSlug);
   const { data: aiStatus, isLoading: aiStatusLoading } = useAiStatus(workspaceSlug);
+  const { data: workflowConfigs = [] } = useDocumentStatusConfigs(
+    workspaceSlug,
+    selected?.id ?? null
+  );
 
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -92,6 +100,9 @@ export const DocumentTypeEditor = ({
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
   const [showHistory, setShowHistory] = useState(false);
   const [pendingFieldChanges, setPendingFieldChanges] = useState<PendingFieldChange[] | null>(null);
+  const [workflowConfigDrafts, setWorkflowConfigDrafts] = useState<
+    Record<string, { enabled: boolean; statuses: Record<string, DocumentStatusApproval> }>
+  >({});
   const fieldKeysRef = useRef<Map<string, string>>(new Map());
 
   useEffect(() => {
@@ -109,6 +120,7 @@ export const DocumentTypeEditor = ({
       setPendingFieldChanges(null);
       setAiActionDialogOpen(false);
       setEditingAiAction(null);
+      setWorkflowConfigDrafts({});
     } else if (isNew) {
       setName('');
       setDescription('');
@@ -119,8 +131,21 @@ export const DocumentTypeEditor = ({
       setDirty(true);
       setAiActionDialogOpen(false);
       setEditingAiAction(null);
+      setWorkflowConfigDrafts({});
     }
   }, [isNew, selected]);
+
+  useEffect(() => {
+    if (!selected) return;
+    setWorkflowConfigDrafts(
+      Object.fromEntries(
+        workflowConfigs.map(config => [
+          config.field_id,
+          { enabled: config.enabled, statuses: config.config.statuses }
+        ])
+      )
+    );
+  }, [selected, workflowConfigs]);
 
   const updateField = (fieldId: string, patch: Partial<DocumentField>) => {
     if (patch.id !== undefined && patch.id !== fieldId) {
@@ -149,6 +174,31 @@ export const DocumentTypeEditor = ({
     fieldKeysRef.current.set(field.id, crypto.randomUUID());
     setFields(current => [...current, field]);
     setDirty(true);
+  };
+
+  const updateWorkflowDraft = (
+    fieldId: string,
+    patch: { enabled: boolean; statuses: Record<string, DocumentStatusApproval> }
+  ) => {
+    setWorkflowConfigDrafts(current => ({ ...current, [fieldId]: patch }));
+    setDirty(true);
+  };
+
+  const saveWorkflowConfigs = async (documentTypeId: string, fieldMigrations?: FieldMigrations) => {
+    const drafts = { ...workflowConfigDrafts };
+    for (const [oldFieldId, migration] of Object.entries(fieldMigrations ?? {})) {
+      const draft = drafts[oldFieldId];
+      if (migration.action === 'rename' && migration.renameTo && draft) {
+        drafts[migration.renameTo] = draft;
+      }
+      if (migration.action !== 'rename') delete drafts[oldFieldId];
+      if (migration.action === 'rename') delete drafts[oldFieldId];
+    }
+    await Promise.all(
+      Object.entries(drafts).map(([fieldId, body]) =>
+        updateWorkflowConfig.mutateAsync({ documentTypeId, fieldId, body })
+      )
+    );
   };
 
   const removeAiAction = (actionId: string) => {
@@ -184,9 +234,11 @@ export const DocumentTypeEditor = ({
       const body = { name, description, fields, aiActions, color, icon, fieldMigrations };
       if (isNew) {
         const created = await createType.mutateAsync(body);
+        await saveWorkflowConfigs(created.id, fieldMigrations);
         onSelect(created.id);
       } else if (selected) {
         await updateType.mutateAsync({ id: selected.id, body });
+        await saveWorkflowConfigs(selected.id, fieldMigrations);
         setDirty(false);
         setPendingFieldChanges(null);
       } else {
@@ -363,7 +415,9 @@ export const DocumentTypeEditor = ({
                       field={field}
                       workspaceSlug={workspaceSlug}
                       allFields={fields}
+                      approvals={workflowConfigDrafts[field.id]?.statuses ?? {}}
                       onUpdate={patch => updateField(field.id, patch)}
+                      onWorkflowConfig={patch => updateWorkflowDraft(field.id, patch)}
                       onRemove={() => removeField(field)}
                     />
                   ))}

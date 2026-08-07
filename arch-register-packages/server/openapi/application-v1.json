@@ -51512,43 +51512,6 @@
                                         "label": {
                                           "type": "string",
                                           "minLength": 1
-                                        },
-                                        "approval": {
-                                          "type": "object",
-                                          "properties": {
-                                            "required": {
-                                              "type": "boolean"
-                                            },
-                                            "requiredApprovals": {
-                                              "type": "integer",
-                                              "minimum": -9007199254740991,
-                                              "maximum": 9007199254740991,
-                                              "exclusiveMinimum": 0
-                                            },
-                                            "approverFieldId": {
-                                              "type": "string",
-                                              "minLength": 1
-                                            },
-                                            "fallbackUserIds": {
-                                              "type": "array",
-                                              "items": {
-                                                "type": "string",
-                                                "minLength": 1
-                                              },
-                                              "default": []
-                                            },
-                                            "fallbackTeamIds": {
-                                              "type": "array",
-                                              "items": {
-                                                "type": "string",
-                                                "minLength": 1
-                                              },
-                                              "default": []
-                                            }
-                                          },
-                                          "required": [
-                                            "required"
-                                          ]
                                         }
                                       },
                                       "required": [
@@ -51969,43 +51932,6 @@
                                 "label": {
                                   "type": "string",
                                   "minLength": 1
-                                },
-                                "approval": {
-                                  "type": "object",
-                                  "properties": {
-                                    "required": {
-                                      "type": "boolean"
-                                    },
-                                    "requiredApprovals": {
-                                      "type": "integer",
-                                      "minimum": -9007199254740991,
-                                      "maximum": 9007199254740991,
-                                      "exclusiveMinimum": 0
-                                    },
-                                    "approverFieldId": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    },
-                                    "fallbackUserIds": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "default": []
-                                    },
-                                    "fallbackTeamIds": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "default": []
-                                    }
-                                  },
-                                  "required": [
-                                    "required"
-                                  ]
                                 }
                               },
                               "required": [
@@ -52110,43 +52036,6 @@
                                 "label": {
                                   "type": "string",
                                   "minLength": 1
-                                },
-                                "approval": {
-                                  "type": "object",
-                                  "properties": {
-                                    "required": {
-                                      "type": "boolean"
-                                    },
-                                    "requiredApprovals": {
-                                      "type": "integer",
-                                      "minimum": -9007199254740991,
-                                      "maximum": 9007199254740991,
-                                      "exclusiveMinimum": 0
-                                    },
-                                    "approverFieldId": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    },
-                                    "fallbackUserIds": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "default": []
-                                    },
-                                    "fallbackTeamIds": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "default": []
-                                    }
-                                  },
-                                  "required": [
-                                    "required"
-                                  ]
                                 }
                               },
                               "required": [
@@ -86273,6 +86162,304 @@
         }
       }
     },
+    "/{workspace}/governance/document-status-config/{id}": {
+      "get": {
+        "operationId": "governanceDocumentStatusConfig.list",
+        "summary": "List document status approval configuration",
+        "tags": [
+          "Governance",
+          "Governance"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "document_type_id": {
+                        "type": "string"
+                      },
+                      "field_id": {
+                        "type": "string"
+                      },
+                      "case_subkind": {
+                        "type": "string"
+                      },
+                      "enabled": {
+                        "type": "boolean"
+                      },
+                      "config": {
+                        "type": "object",
+                        "properties": {
+                          "statuses": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {
+                              "type": "object",
+                              "properties": {
+                                "required": {
+                                  "type": "boolean"
+                                },
+                                "requiredApprovals": {
+                                  "type": "integer",
+                                  "minimum": -9007199254740991,
+                                  "maximum": 9007199254740991,
+                                  "exclusiveMinimum": 0
+                                },
+                                "approverFieldId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "fallbackUserIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "default": []
+                                },
+                                "fallbackTeamIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "default": []
+                                }
+                              },
+                              "required": [
+                                "required"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "statuses"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "document_type_id",
+                      "field_id",
+                      "case_subkind",
+                      "enabled",
+                      "config"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/governance/document-status-config/{id}/{fieldId}": {
+      "put": {
+        "operationId": "governanceDocumentStatusConfig.update",
+        "summary": "Update document status approval configuration",
+        "tags": [
+          "Governance",
+          "Governance"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "fieldId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean"
+                  },
+                  "statuses": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "required": {
+                          "type": "boolean"
+                        },
+                        "requiredApprovals": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "exclusiveMinimum": 0
+                        },
+                        "approverFieldId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "fallbackUserIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "default": []
+                        },
+                        "fallbackTeamIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "default": []
+                        }
+                      },
+                      "required": [
+                        "required"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "enabled",
+                  "statuses"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "document_type_id": {
+                      "type": "string"
+                    },
+                    "field_id": {
+                      "type": "string"
+                    },
+                    "case_subkind": {
+                      "type": "string"
+                    },
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "config": {
+                      "type": "object",
+                      "properties": {
+                        "statuses": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "required": {
+                                "type": "boolean"
+                              },
+                              "requiredApprovals": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "exclusiveMinimum": 0
+                              },
+                              "approverFieldId": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "fallbackUserIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "default": []
+                              },
+                              "fallbackTeamIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "default": []
+                              }
+                            },
+                            "required": [
+                              "required"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "statuses"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "document_type_id",
+                    "field_id",
+                    "case_subkind",
+                    "enabled",
+                    "config"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/data/{id}/versions": {
       "get": {
         "operationId": "entityVersions.list",
@@ -109796,43 +109983,6 @@
                                   "label": {
                                     "type": "string",
                                     "minLength": 1
-                                  },
-                                  "approval": {
-                                    "type": "object",
-                                    "properties": {
-                                      "required": {
-                                        "type": "boolean"
-                                      },
-                                      "requiredApprovals": {
-                                        "type": "integer",
-                                        "minimum": -9007199254740991,
-                                        "maximum": 9007199254740991,
-                                        "exclusiveMinimum": 0
-                                      },
-                                      "approverFieldId": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "fallbackUserIds": {
-                                        "type": "array",
-                                        "items": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        },
-                                        "default": []
-                                      },
-                                      "fallbackTeamIds": {
-                                        "type": "array",
-                                        "items": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        },
-                                        "default": []
-                                      }
-                                    },
-                                    "required": [
-                                      "required"
-                                    ]
                                   }
                                 },
                                 "required": [
@@ -110125,43 +110275,6 @@
                               "label": {
                                 "type": "string",
                                 "minLength": 1
-                              },
-                              "approval": {
-                                "type": "object",
-                                "properties": {
-                                  "required": {
-                                    "type": "boolean"
-                                  },
-                                  "requiredApprovals": {
-                                    "type": "integer",
-                                    "minimum": -9007199254740991,
-                                    "maximum": 9007199254740991,
-                                    "exclusiveMinimum": 0
-                                  },
-                                  "approverFieldId": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "fallbackUserIds": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    },
-                                    "default": []
-                                  },
-                                  "fallbackTeamIds": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    },
-                                    "default": []
-                                  }
-                                },
-                                "required": [
-                                  "required"
-                                ]
                               }
                             },
                             "required": [
@@ -110443,43 +110556,6 @@
                                 "label": {
                                   "type": "string",
                                   "minLength": 1
-                                },
-                                "approval": {
-                                  "type": "object",
-                                  "properties": {
-                                    "required": {
-                                      "type": "boolean"
-                                    },
-                                    "requiredApprovals": {
-                                      "type": "integer",
-                                      "minimum": -9007199254740991,
-                                      "maximum": 9007199254740991,
-                                      "exclusiveMinimum": 0
-                                    },
-                                    "approverFieldId": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    },
-                                    "fallbackUserIds": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "default": []
-                                    },
-                                    "fallbackTeamIds": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "default": []
-                                    }
-                                  },
-                                  "required": [
-                                    "required"
-                                  ]
                                 }
                               },
                               "required": [
@@ -110786,43 +110862,6 @@
                                 "label": {
                                   "type": "string",
                                   "minLength": 1
-                                },
-                                "approval": {
-                                  "type": "object",
-                                  "properties": {
-                                    "required": {
-                                      "type": "boolean"
-                                    },
-                                    "requiredApprovals": {
-                                      "type": "integer",
-                                      "minimum": -9007199254740991,
-                                      "maximum": 9007199254740991,
-                                      "exclusiveMinimum": 0
-                                    },
-                                    "approverFieldId": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    },
-                                    "fallbackUserIds": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "default": []
-                                    },
-                                    "fallbackTeamIds": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "default": []
-                                    }
-                                  },
-                                  "required": [
-                                    "required"
-                                  ]
                                 }
                               },
                               "required": [
@@ -111122,43 +111161,6 @@
                               "label": {
                                 "type": "string",
                                 "minLength": 1
-                              },
-                              "approval": {
-                                "type": "object",
-                                "properties": {
-                                  "required": {
-                                    "type": "boolean"
-                                  },
-                                  "requiredApprovals": {
-                                    "type": "integer",
-                                    "minimum": -9007199254740991,
-                                    "maximum": 9007199254740991,
-                                    "exclusiveMinimum": 0
-                                  },
-                                  "approverFieldId": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
-                                  "fallbackUserIds": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    },
-                                    "default": []
-                                  },
-                                  "fallbackTeamIds": {
-                                    "type": "array",
-                                    "items": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    },
-                                    "default": []
-                                  }
-                                },
-                                "required": [
-                                  "required"
-                                ]
                               }
                             },
                             "required": [
@@ -111440,43 +111442,6 @@
                                 "label": {
                                   "type": "string",
                                   "minLength": 1
-                                },
-                                "approval": {
-                                  "type": "object",
-                                  "properties": {
-                                    "required": {
-                                      "type": "boolean"
-                                    },
-                                    "requiredApprovals": {
-                                      "type": "integer",
-                                      "minimum": -9007199254740991,
-                                      "maximum": 9007199254740991,
-                                      "exclusiveMinimum": 0
-                                    },
-                                    "approverFieldId": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    },
-                                    "fallbackUserIds": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "default": []
-                                    },
-                                    "fallbackTeamIds": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "default": []
-                                    }
-                                  },
-                                  "required": [
-                                    "required"
-                                  ]
                                 }
                               },
                               "required": [
@@ -111847,43 +111812,6 @@
                                 "label": {
                                   "type": "string",
                                   "minLength": 1
-                                },
-                                "approval": {
-                                  "type": "object",
-                                  "properties": {
-                                    "required": {
-                                      "type": "boolean"
-                                    },
-                                    "requiredApprovals": {
-                                      "type": "integer",
-                                      "minimum": -9007199254740991,
-                                      "maximum": 9007199254740991,
-                                      "exclusiveMinimum": 0
-                                    },
-                                    "approverFieldId": {
-                                      "type": "string",
-                                      "minLength": 1
-                                    },
-                                    "fallbackUserIds": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "default": []
-                                    },
-                                    "fallbackTeamIds": {
-                                      "type": "array",
-                                      "items": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "default": []
-                                    }
-                                  },
-                                  "required": [
-                                    "required"
-                                  ]
                                 }
                               },
                               "required": [
@@ -112195,43 +112123,6 @@
                                   "label": {
                                     "type": "string",
                                     "minLength": 1
-                                  },
-                                  "approval": {
-                                    "type": "object",
-                                    "properties": {
-                                      "required": {
-                                        "type": "boolean"
-                                      },
-                                      "requiredApprovals": {
-                                        "type": "integer",
-                                        "minimum": -9007199254740991,
-                                        "maximum": 9007199254740991,
-                                        "exclusiveMinimum": 0
-                                      },
-                                      "approverFieldId": {
-                                        "type": "string",
-                                        "minLength": 1
-                                      },
-                                      "fallbackUserIds": {
-                                        "type": "array",
-                                        "items": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        },
-                                        "default": []
-                                      },
-                                      "fallbackTeamIds": {
-                                        "type": "array",
-                                        "items": {
-                                          "type": "string",
-                                          "minLength": 1
-                                        },
-                                        "default": []
-                                      }
-                                    },
-                                    "required": [
-                                      "required"
-                                    ]
                                   }
                                 },
                                 "required": [

@@ -6,6 +6,7 @@ import type {
   DocumentGeneratedMetadata,
   DocumentMetadata
 } from '@arch-register/api-types/documentContract';
+import type { DocumentStatusApproval } from '@arch-register/api-types/governanceCaseConfigSchemas';
 
 export type ExportDataType =
   | 'config'
@@ -231,6 +232,12 @@ export type ExportDocumentData = {
     restored_from_revision_id: string | null;
     document_type_id: string | null;
     metadata: DocumentMetadata;
+  }>;
+  workflow_configs?: Array<{
+    document_type_id: string;
+    field_id: string;
+    enabled: boolean;
+    statuses: Record<string, DocumentStatusApproval>;
   }>;
 };
 
