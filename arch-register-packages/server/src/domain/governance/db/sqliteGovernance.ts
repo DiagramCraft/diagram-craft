@@ -15,9 +15,9 @@ export class SqliteGovernanceDatabase extends SqliteDatabaseBase implements Gove
     this.run(
       `INSERT INTO governance_case (
         id, workspace, case_kind, subject_type, subject_id, subject_version, status,
-        policy_version, initiator_user_id, parent_case_id, self_approval_allowed, payload,
-        created_at, due_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?, ?)`,
+        policy_version, initiator_user_id, parent_case_id, dedupe_key, self_approval_allowed,
+        payload, created_at, due_at
+      ) VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         input.workspace,
@@ -28,6 +28,7 @@ export class SqliteGovernanceDatabase extends SqliteDatabaseBase implements Gove
         input.policy_version,
         input.initiator_user_id,
         input.parent_case_id,
+        input.dedupe_key ?? null,
         input.self_approval_allowed ? 1 : 0,
         JSON.stringify(input.payload),
         input.created_at.toISOString(),
@@ -41,6 +42,16 @@ export class SqliteGovernanceDatabase extends SqliteDatabaseBase implements Gove
     return await this.get(
       'SELECT * FROM governance_case WHERE workspace = ? AND id = ?',
       [workspace, id],
+      governanceMappers.case
+    );
+  }
+
+  async getCaseByDedupeKey(workspace: string, caseKind: string, dedupeKey: string) {
+    return await this.get(
+      `SELECT * FROM governance_case
+       WHERE workspace = ? AND case_kind = ? AND dedupe_key = ?
+       ORDER BY created_at DESC LIMIT 1`,
+      [workspace, caseKind, dedupeKey],
       governanceMappers.case
     );
   }
@@ -94,6 +105,20 @@ export class SqliteGovernanceDatabase extends SqliteDatabaseBase implements Gove
       governanceMappers.case
     );
     return row!;
+  }
+
+  async refreshAutomaticCase(id: string, dueAt: Date, payload: Record<string, unknown>) {
+    this.run(
+      `UPDATE governance_case
+       SET due_at = ?, payload = ?, reminder_windows_sent = '[]', escalated_at = NULL
+       WHERE id = ? AND status = 'open'`,
+      [dueAt.toISOString(), JSON.stringify(payload), id]
+    );
+    return (await this.get(
+      'SELECT * FROM governance_case WHERE id = ?',
+      [id],
+      governanceMappers.case
+    ))!;
   }
 
   async completeCaseIfOpen(id: string, outcome: string | null, completedAt: Date) {

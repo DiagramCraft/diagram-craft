@@ -42,8 +42,23 @@ const booleanFieldSchema = baseFieldSchema.extend({
   type: z.literal('boolean').describe('Boolean (true/false) field')
 });
 
+const dateFieldReminderSchema = z
+  .object({
+    enabled: z.boolean().describe('Whether automatic reminders are enabled'),
+    approachingDays: z
+      .array(z.number().int().min(0))
+      .describe('Days before the date at which an approaching reminder is sent'),
+    overdueDays: z
+      .array(z.number().int().min(0))
+      .describe('Days after the date at which an overdue reminder is sent')
+  })
+  .describe('Automatic reminder configuration for a date field');
+
+export type DateFieldReminder = z.infer<typeof dateFieldReminderSchema>;
+
 const dateFieldSchema = baseFieldSchema.extend({
-  type: z.literal('date').describe('Date field')
+  type: z.literal('date').describe('Date field'),
+  reminder: dateFieldReminderSchema.optional()
 });
 
 const currencyFieldSchema = baseFieldSchema.extend({

@@ -17,13 +17,13 @@ export class PostgresGovernanceDatabase extends PostgresDatabaseBase implements 
       const [row] = await this.sql<DatabaseRow[]>`
         INSERT INTO governance_case (
           id, workspace, case_kind, subject_type, subject_id, subject_version, status,
-          policy_version, initiator_user_id, parent_case_id, self_approval_allowed, payload,
-          created_at, due_at
+          policy_version, initiator_user_id, parent_case_id, dedupe_key, self_approval_allowed,
+          payload, created_at, due_at
         ) VALUES (
           ${input.id}, ${input.workspace}, ${input.case_kind}, ${input.subject_type},
           ${input.subject_id}, ${input.subject_version}, 'open', ${input.policy_version},
           ${input.initiator_user_id}, ${input.parent_case_id}, ${input.self_approval_allowed},
-          ${this.json(input.payload)}, ${input.created_at}, ${input.due_at}
+          ${input.dedupe_key ?? null}, ${this.json(input.payload)}, ${input.created_at}, ${input.due_at}
         )
         RETURNING *
       `;
@@ -36,6 +36,16 @@ export class PostgresGovernanceDatabase extends PostgresDatabaseBase implements 
   async getCase(workspace: string, id: string) {
     const [row] = await this.sql<DatabaseRow[]>`
       SELECT * FROM governance_case WHERE workspace = ${workspace} AND id = ${id}
+    `;
+    return row ? governanceMappers.case(row) : null;
+  }
+
+  async getCaseByDedupeKey(workspace: string, caseKind: string, dedupeKey: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT * FROM governance_case
+      WHERE workspace = ${workspace} AND case_kind = ${caseKind} AND dedupe_key = ${dedupeKey}
+      ORDER BY created_at DESC
+      LIMIT 1
     `;
     return row ? governanceMappers.case(row) : null;
   }
@@ -67,6 +77,17 @@ export class PostgresGovernanceDatabase extends PostgresDatabaseBase implements 
     } catch (error) {
       return normalizePostgresError(error);
     }
+  }
+
+  async refreshAutomaticCase(id: string, dueAt: Date, payload: Record<string, unknown>) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      UPDATE governance_case
+      SET due_at = ${dueAt}, payload = ${this.json(payload)},
+          reminder_windows_sent = '[]'::jsonb, escalated_at = NULL
+      WHERE id = ${id} AND status = 'open'
+      RETURNING *
+    `;
+    return governanceMappers.case(row!);
   }
 
   async completeCaseIfOpen(id: string, outcome: string | null, completedAt: Date) {

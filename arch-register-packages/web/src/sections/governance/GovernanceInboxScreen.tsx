@@ -37,6 +37,14 @@ import {
 const humanize = (value: string) =>
   value.replace(/[._-]+/g, ' ').replace(/\b\w/g, character => character.toUpperCase());
 
+const caseKindLabel = (caseKind: string, payload: Record<string, unknown>) => {
+  if (caseKind === 'field-date-reminder') {
+    const fieldName = payload['fieldName'];
+    return typeof fieldName === 'string' ? `Date reminder · ${fieldName}` : 'Date reminder';
+  }
+  return humanize(caseKind);
+};
+
 const previewNote = (note: string) => (note.length > 180 ? `${note.slice(0, 177)}…` : note);
 
 const describeWaitingOn = (assignment: GovernanceAssignment) => {
@@ -474,8 +482,8 @@ export const GovernanceInboxScreen = () => {
                   <div className={styles.taskMain}>
                     <div className={styles.taskTitle}>
                       {isBulk
-                        ? `${subjectLabel} · ${humanize(submission.case.caseKind)}`
-                        : humanize(submission.case.caseKind)}
+                        ? `${subjectLabel} · ${caseKindLabel(submission.case.caseKind, submission.case.payload)}`
+                        : caseKindLabel(submission.case.caseKind, submission.case.payload)}
                     </div>
                     <div className={styles.taskMeta}>
                       <span>{isBulk ? 'Entities' : humanize(submission.case.subjectType)}</span>
@@ -664,8 +672,8 @@ export const GovernanceInboxScreen = () => {
                 <div className={styles.taskMain}>
                   <div className={styles.taskTitle}>
                     {isBulk
-                      ? `${subjectLabel} · ${humanize(task.case.caseKind)}`
-                      : humanize(task.case.caseKind)}{' '}
+                      ? `${subjectLabel} · ${caseKindLabel(task.case.caseKind, task.case.payload)}`
+                      : caseKindLabel(task.case.caseKind, task.case.payload)}{' '}
                     · {actionLabel}
                   </div>
                   {isBulk && bulkMemberEntities.length > 0 && (

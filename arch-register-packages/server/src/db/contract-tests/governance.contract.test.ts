@@ -73,6 +73,38 @@ runContractSuiteAgainstBothDrivers('GovernanceDatabase', getDb => {
       expect(secondAttempt).toBeNull();
     });
 
+    it('looks up automatic cases by dedupe key and refreshes their deadline state', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const user = await createFixtureUser(db);
+      const created = await createFixtureCase(db, workspace, user.id, {
+        case_kind: 'field-date-reminder',
+        dedupe_key: 'entity-1:field-1',
+        due_at: new Date('2026-01-01T00:00:00.000Z'),
+        payload: { dateValue: '2026-01-01' }
+      });
+
+      expect(
+        (
+          await db.governance.getCaseByDedupeKey(
+            workspace,
+            'field-date-reminder',
+            'entity-1:field-1'
+          )
+        )?.id
+      ).toBe(created.id);
+
+      await db.governance.addReminderWindowSent(created.id, 'approaching:3');
+      const refreshed = await db.governance.refreshAutomaticCase(
+        created.id,
+        new Date('2026-02-01T00:00:00.000Z'),
+        { dateValue: '2026-02-01' }
+      );
+      expect(refreshed.due_at?.toISOString()).toBe('2026-02-01T00:00:00.000Z');
+      expect(refreshed.reminder_windows_sent).toEqual([]);
+      expect(refreshed.payload).toEqual({ dateValue: '2026-02-01' });
+    });
+
     it('cancelCaseIfOpen only transitions an open case', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
