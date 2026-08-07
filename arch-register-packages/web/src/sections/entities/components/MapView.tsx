@@ -1,16 +1,14 @@
-import {
-  useMemo,
-  useCallback,
-  useEffect,
-  useState,
-  type KeyboardEvent,
-  type MouseEvent
-} from 'react';
+import { useMemo, useCallback, useEffect, type KeyboardEvent, type MouseEvent } from 'react';
 import styles from './MapView.module.css';
-import { TbChevronDown } from 'react-icons/tb';
+import { TbChevronDown, TbEyeOff, TbTrash } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
-import type { EntityRecord, TreeNode } from '@arch-register/api-types/entityContract';
+import type {
+  EntityRecord,
+  EntityRelation,
+  TreeNode
+} from '@arch-register/api-types/entityContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type {
@@ -37,9 +35,11 @@ import {
 } from '../../../components/EntityHoverCardBody';
 import {
   buildContainmentTreeIndex,
-  getChildSchemas,
+  getChildLevelOptions,
   getContainmentChildren,
+  getMapTraversalPath,
   getMapSchemaIds,
+  type MapLevelConfig,
   sortContainmentNodes
 } from './mapViewState';
 import type { JoinedAssessmentContext } from './entityFieldSources';
@@ -59,20 +59,16 @@ import {
 } from './mapColorScales';
 import { useMapMetricRollup } from './useMapMetricRollup';
 import { useFieldGroupAccess } from '../../../auth/useFieldGroupAccess';
+import { useMultipleEntityRelations } from '../../../hooks/useEntities';
+import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { MapLegend } from './MapLegend';
-import { MapBreadcrumb, type MapFocusEntry } from './MapBreadcrumb';
 import { formatMetricResultValue, formatMetricSourceValue } from './mapMetricFormatting';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 export type MapConfig = {
-  levels: number;
-  level1SchemaId: string | null;
-  level1Columns: number;
-  level2SchemaId: string | null;
-  level2Columns: number;
-  level3SchemaId: string | null;
-  level3Columns: number;
+  levelConfigs: MapLevelConfig[];
+  hideMissingMetricData?: boolean;
   fieldIds?: string[];
   metricConfig?: unknown;
 };
@@ -104,18 +100,82 @@ type MapViewProps = {
 // `fieldIds`/`metricConfig` are explicitly included (as undefined) so normalizeViewConfig's
 // field-merge loop picks them up from a parsed config when present.
 const DEFAULT_CONFIG: MapConfig = {
-  levels: 2,
-  level1SchemaId: null,
-  level1Columns: 3,
-  level2SchemaId: null,
-  level2Columns: 3,
-  level3SchemaId: null,
-  level3Columns: 3,
+  levelConfigs: [
+    { schemaId: null, columns: 3 },
+    { schemaId: null, columns: 3 }
+  ],
   fieldIds: undefined,
-  metricConfig: undefined
+  metricConfig: undefined,
+  hideMissingMetricData: undefined
+};
+
+const legacyMapConfigDefaults = {
+  ...DEFAULT_CONFIG,
+  levels: 2,
+  level1SchemaId: null as string | null,
+  level1Columns: 3,
+  level2SchemaId: null as string | null,
+  level2Columns: 3,
+  level3SchemaId: null as string | null,
+  level3Columns: 3,
+  levelConfigs: undefined as MapLevelConfig[] | undefined
+};
+
+const normalizeMapConfig = (raw: unknown): MapConfig => {
+  const parsed = normalizeViewConfig(mapViewConfigSchema, raw, legacyMapConfigDefaults);
+  if (parsed.levelConfigs?.length) {
+    return {
+      levelConfigs: parsed.levelConfigs.map(level => ({
+        schemaId: level.schemaId,
+        columns: level.columns ?? 3,
+        ...(level.hidden ? { hidden: true } : {})
+      })),
+      fieldIds: parsed.fieldIds,
+      metricConfig: parsed.metricConfig,
+      hideMissingMetricData: parsed.hideMissingMetricData
+    };
+  }
+  const legacyIds = [parsed.level1SchemaId, parsed.level2SchemaId, parsed.level3SchemaId];
+  const legacyColumns = [parsed.level1Columns, parsed.level2Columns, parsed.level3Columns];
+  return {
+    levelConfigs: legacyIds.slice(0, parsed.levels).map((schemaId, index) => ({
+      schemaId,
+      columns: legacyColumns[index] ?? 3
+    })),
+    fieldIds: parsed.fieldIds,
+    metricConfig: parsed.metricConfig,
+    hideMissingMetricData: parsed.hideMissingMetricData
+  };
 };
 
 const nodeName = (n: TreeNode) => n._name ?? n._slug;
+
+type RelationMapNode = TreeNode & { _mapRelation: EntityRelation };
+
+const isRelationMapNode = (node: TreeNode): node is RelationMapNode => '_mapRelation' in node;
+
+const makeRelationMapNode = (
+  relation: EntityRelation,
+  relationSchema: RelationSchema
+): RelationMapNode =>
+  ({
+    ...relation.relationFields,
+    _uid: `relation:${relation.relationId}`,
+    _publicId: relation.relationId,
+    _schema: { id: relationSchema.id, name: relationSchema.name },
+    _name: `${relation.fieldName}: ${relation.entityName}`,
+    _slug: relation.relationId,
+    _namespace: '',
+    _description: '',
+    _owner: null,
+    _lifecycle: null,
+    _targetLifecycle: null,
+    _targetLifecycleDate: null,
+    _tags: [],
+    _links: [],
+    _isMatch: true,
+    _mapRelation: relation
+  }) as unknown as RelationMapNode;
 
 const aggregationLabel = (aggregation: MetricAggregation) =>
   AGGREGATION_OPTIONS.find(o => o.value === aggregation)?.label ?? aggregation;
@@ -124,18 +184,24 @@ const metricValueLabel = (
   node: TreeNode,
   isLeaf: boolean,
   metric: MetricConfig | null,
-  sourceSchema: EntitySchema | undefined,
+  sourceSchema: EntitySchema | RelationSchema | undefined,
   result: MetricResult | undefined,
   lifecycleStates: WorkspaceLifecycleState[]
 ): string | null => {
-  if (!metric || !result) return null;
-  if (isLeaf && metric.source.kind === 'field' && node._schema.id === metric.sourceSchemaId) {
+  if (!metric) return null;
+  if (
+    isLeaf &&
+    metric.source.kind === 'field' &&
+    node._schema.id === metric.sourceSchemaId &&
+    (node as Record<string, unknown>)[metric.source.fieldId] != null
+  ) {
     return formatMetricSourceValue(
       metric,
       sourceSchema,
       (node as Record<string, unknown>)[metric.source.fieldId]
     );
   }
+  if (!result) return null;
   if (isEnumSource(metric.source)) return result.dominantLabel ?? '—';
   if (metric.source.kind === 'lifecycle') {
     return result.lifecycleId == null
@@ -152,14 +218,41 @@ const resolveBoxColor = (
   metric: MetricConfig | null,
   resultsByBoxId: Map<string, MetricResult>,
   legend: MetricLegendData,
-  lifecycleStates: WorkspaceLifecycleState[]
+  lifecycleStates: WorkspaceLifecycleState[],
+  sourceSchema: EntitySchema | RelationSchema | undefined,
+  isLeaf: boolean,
+  directMetricRange: { min: number | null; max: number | null }
 ): string | null => {
   if (!metric) return null;
   const result = resultsByBoxId.get(node._uid);
-  if (!result) return NEUTRAL_MISSING_COLOR;
+  const directValue = getDirectMetricValue(node, metric, sourceSchema, isLeaf);
+  const colorMin = legend.min ?? directMetricRange.min;
+  const colorMax = legend.max ?? directMetricRange.max;
+
+  if (
+    !result ||
+    result.value == null ||
+    (isEnumSource(metric.source) && result.dominantValue == null)
+  ) {
+    if (directValue?.kind === 'number' && colorMin != null && colorMax != null) {
+      return numericColor(directValue.value, colorMin, colorMax);
+    }
+    if (directValue?.kind === 'enum') {
+      const index = (legend.categories ?? []).findIndex(
+        category => category.value === directValue.value
+      );
+      return categoricalColor(index === -1 ? Number.MAX_SAFE_INTEGER : index);
+    }
+    if (directValue?.kind === 'lifecycle') {
+      return (
+        lifecycleStates.find(state => state.id === directValue.value)?.color ??
+        NEUTRAL_MISSING_COLOR
+      );
+    }
+    return NEUTRAL_MISSING_COLOR;
+  }
 
   if (isEnumSource(metric.source)) {
-    if (result.dominantValue == null) return NEUTRAL_MISSING_COLOR;
     const categories = legend.categories ?? [];
     const index = categories.findIndex(c => c.value === result.dominantValue);
     return categoricalColor(index === -1 ? Number.MAX_SAFE_INTEGER : index);
@@ -172,18 +265,102 @@ const resolveBoxColor = (
   return numericColor(result.value, legend.min, legend.max);
 };
 
+type DirectMetricValue =
+  | { kind: 'number'; value: number }
+  | { kind: 'enum'; value: string }
+  | { kind: 'lifecycle'; value: string };
+
+const getDirectMetricValue = (
+  node: TreeNode,
+  metric: MetricConfig,
+  sourceSchema: EntitySchema | RelationSchema | undefined,
+  isLeaf: boolean
+): DirectMetricValue | null => {
+  if (!isLeaf || node._schema.id !== metric.sourceSchemaId) return null;
+  const record = node as Record<string, unknown>;
+  if (metric.source.kind === 'enum') {
+    const raw = record[metric.source.fieldId];
+    if (raw == null || raw === '') return null;
+    return { kind: 'enum', value: String(raw) };
+  }
+  if (metric.source.kind === 'field') {
+    const fieldId = metric.source.fieldId;
+    const raw = record[fieldId];
+    if (raw == null || raw === '') return null;
+    const field = sourceSchema?.fields.find(candidate => candidate.id === fieldId);
+    if (field?.type === 'currency' && typeof raw === 'object' && raw !== null) {
+      const amount = (raw as { amount?: unknown }).amount;
+      return typeof amount === 'number' ? { kind: 'number', value: amount } : null;
+    }
+    const value = Number(raw);
+    return Number.isFinite(value) ? { kind: 'number', value } : null;
+  }
+  if (metric.source.kind === 'lifecycle') {
+    const lifecycle = node._lifecycle;
+    const value = typeof lifecycle === 'string' ? lifecycle : lifecycle?.id;
+    return value ? { kind: 'lifecycle', value } : null;
+  }
+  return null;
+};
+
+const hasMissingMetricData = (metric: MetricConfig, result: MetricResult | undefined): boolean => {
+  if (!result) return true;
+  if (result.sourceCount === 0) return true;
+  return isEnumSource(metric.source) ? result.dominantValue == null : result.value == null;
+};
+
 /** Extra hover-card rows describing the metric result: value, enum distribution, coverage. */
 const buildMetricRows = (
   node: TreeNode,
+  isLeaf: boolean,
   metric: MetricConfig | null,
   metricLabel: string,
+  metricSourceLabel: string,
   resultsByBoxId: Map<string, MetricResult>,
   lifecycleStates: WorkspaceLifecycleState[],
-  sourceSchema: EntitySchema | undefined
+  sourceSchema: EntitySchema | RelationSchema | undefined
 ): EntityHoverCardRow[] => {
   if (!metric) return [];
   const result = resultsByBoxId.get(node._uid);
-  if (!result) return [];
+  const directSourceNode = isLeaf || isRelationMapNode(node);
+  if (
+    directSourceNode &&
+    hasMissingMetricData(metric, result) &&
+    getDirectMetricValue(node, metric, sourceSchema, true) != null
+  ) {
+    let value: string | null = null;
+    if (metric.source.kind === 'field' || metric.source.kind === 'enum') {
+      const raw = (node as Record<string, unknown>)[metric.source.fieldId];
+      value =
+        metric.source.kind === 'field'
+          ? formatMetricSourceValue(metric, sourceSchema, raw)
+          : String(raw);
+    } else if (metric.source.kind === 'lifecycle') {
+      const lifecycle = node._lifecycle;
+      const lifecycleId = typeof lifecycle === 'string' ? lifecycle : lifecycle?.id;
+      value =
+        lifecycleId == null
+          ? null
+          : (lifecycleStates.find(state => state.id === lifecycleId)?.label ?? lifecycleId);
+    }
+    return [{ label: `${metricSourceLabel} (source)`, value: value ?? '—' }];
+  }
+  if (!result) {
+    if (isRelationMapNode(node) && metric.source.kind === 'field') {
+      return [
+        {
+          label: metricLabel,
+          value:
+            formatMetricSourceValue(
+              metric,
+              sourceSchema,
+              (node as Record<string, unknown>)[metric.source.fieldId]
+            ) ?? '—'
+        }
+      ];
+    }
+    return [];
+  }
 
   const rows: EntityHoverCardRow[] = [];
   if (isEnumSource(metric.source)) {
@@ -208,6 +385,12 @@ const buildMetricRows = (
     label: 'Coverage',
     value: `${result.populatedCount} of ${result.sourceCount} had data`
   });
+  if (result.duplicateCount > 0) {
+    rows.push({
+      label: 'Duplicates',
+      value: `${result.duplicateCount} duplicate path${result.duplicateCount === 1 ? '' : 's'} collapsed`
+    });
+  }
   return rows;
 };
 
@@ -275,7 +458,7 @@ const MetricValueLabel = ({
   node: TreeNode;
   isLeaf: boolean;
   metric: MetricConfig | null;
-  sourceSchema: EntitySchema | undefined;
+  sourceSchema: EntitySchema | RelationSchema | undefined;
   resultsByBoxId: Map<string, MetricResult>;
   lifecycleStates: WorkspaceLifecycleState[];
   style?: React.CSSProperties;
@@ -296,6 +479,13 @@ const MetricValueLabel = ({
   );
 };
 
+const DuplicateBadge = ({ count }: { count: number | undefined }) =>
+  count && count > 0 ? (
+    <span className={styles.duplicateBadge} title={`${count} duplicate paths collapsed`}>
+      Duplicate ×{count}
+    </span>
+  ) : null;
+
 // ── Config sub-components ─────────────────────────────────────────────────────
 
 const SchemaSelect = ({
@@ -306,7 +496,7 @@ const SchemaSelect = ({
 }: {
   label: string;
   value: string | null;
-  options: EntitySchema[];
+  options: Array<{ id: string; name: string }>;
   onChange: (id: string | null) => void;
 }) => (
   <div className={styles.axisPill}>
@@ -370,11 +560,19 @@ export const MapView = ({
   onCountChange
 }: MapViewProps) => {
   const { schemas, currencies } = useWorkspaceContext();
-  const cfg = useMemo(
-    () => normalizeViewConfig(mapViewConfigSchema, config, DEFAULT_CONFIG),
-    [config]
+  const { data: relationSchemas = [] } = useRelationSchemas(workspaceId);
+  const cfg = useMemo(() => normalizeMapConfig(config), [config]);
+  const schemaIds = useMemo(
+    () =>
+      getMapSchemaIds(cfg).flatMap(id => {
+        if (schemas.some(schema => schema.id === id)) return [id];
+        const relationSchema = relationSchemas.find(schema => schema.id === id);
+        return relationSchema
+          ? [...relationSchema.in.schemaIds, ...relationSchema.out.schemaIds]
+          : [];
+      }),
+    [cfg, relationSchemas, schemas]
   );
-  const schemaIds = useMemo(() => getMapSchemaIds(cfg), [cfg]);
   const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
     workspaceId,
     projectId,
@@ -385,6 +583,8 @@ export const MapView = ({
     statusFilter,
     schemaIds
   });
+  const nodeIds = useMemo(() => nodes.map(node => node._uid), [nodes]);
+  const entityRelations = useMultipleEntityRelations(workspaceId, nodeIds);
   useEffect(() => {
     onCountChange?.(nodes.filter(node => node._isMatch).length);
   }, [nodes, onCountChange]);
@@ -401,58 +601,79 @@ export const MapView = ({
     [cfg, onConfigChange]
   );
 
-  // ── Focus / breadcrumb navigation ────────────────────────────────────────
-  // Activating a box re-roots the map on that entity, rendering its descendants (still capped
-  // at 3 rendered levels below the new root); the breadcrumb stack lets the user navigate back
-  // up. This is session-local state, not persisted in the URL/saved view - matching the
-  // established pattern for in-view navigation elsewhere in the browser (ExploreView's
-  // center-node re-focusing is likewise local `useState`, not URL-backed).
-  const [focusStack, setFocusStack] = useState<MapFocusEntry[]>([]);
-  const currentFocus = focusStack[focusStack.length - 1] ?? null;
+  const rootSchemaId = cfg.levelConfigs[0]?.schemaId ?? null;
 
-  const focusOn = useCallback((node: TreeNode) => {
-    setFocusStack(prev => [...prev, { uid: node._uid, name: nodeName(node) }]);
-  }, []);
-
-  const navigateBreadcrumb = useCallback((index: number) => {
-    setFocusStack(prev => (index < 0 ? [] : prev.slice(0, index + 1)));
-  }, []);
-
-  const level2SchemaOptions = useMemo(
-    () => getChildSchemas(schemas, cfg.level1SchemaId),
-    [schemas, cfg.level1SchemaId]
-  );
-
-  const level3SchemaOptions = useMemo(
-    () => getChildSchemas(schemas, cfg.level2SchemaId ?? null),
-    [schemas, cfg.level2SchemaId]
+  const levelSchemaOptions = useMemo(
+    () =>
+      cfg.levelConfigs.map((_, index) =>
+        index === 0
+          ? schemas
+          : getChildLevelOptions(
+              schemas,
+              cfg.levelConfigs[index - 1]?.schemaId ?? null,
+              relationSchemas
+            )
+      ),
+    [cfg.levelConfigs, relationSchemas, schemas]
   );
 
   const treeIndex = useMemo(() => buildContainmentTreeIndex(nodes, edges), [nodes, edges]);
 
-  const level1Items = useMemo(() => {
-    if (currentFocus) {
-      return cfg.level1SchemaId
-        ? getContainmentChildren(currentFocus.uid, cfg.level1SchemaId, treeIndex)
-        : [];
-    }
-    return sortContainmentNodes(nodes, cfg.level1SchemaId);
-  }, [nodes, cfg.level1SchemaId, currentFocus, treeIndex]);
-
-  const getLevel2Children = useCallback(
-    (parentUid: string): TreeNode[] => {
-      if (!cfg.level2SchemaId) return [];
-      return getContainmentChildren(parentUid, cfg.level2SchemaId, treeIndex);
+  const getRelationMapChildren = useCallback(
+    (parentUid: string, relationSchemaId: string): RelationMapNode[] => {
+      const relationSchema = relationSchemas.find(schema => schema.id === relationSchemaId);
+      if (!relationSchema) return [];
+      const relationData = entityRelations.get(parentUid);
+      const unique = new Map<string, RelationMapNode>();
+      for (const relation of [
+        ...(relationData?.outgoing ?? []),
+        ...(relationData?.incoming ?? [])
+      ]) {
+        if (relation.kind !== 'typed' || relation.relationSchemaId !== relationSchemaId) continue;
+        if (!relation.relationId || !treeIndex.nodeMap.get(relation.entityId)?._isMatch) continue;
+        unique.set(relation.relationId, makeRelationMapNode(relation, relationSchema));
+      }
+      return [...unique.values()].sort((a, b) => nodeName(a).localeCompare(nodeName(b)));
     },
-    [treeIndex, cfg.level2SchemaId]
+    [entityRelations, relationSchemas, treeIndex]
   );
 
-  const getLevel3Children = useCallback(
-    (parentUid: string): TreeNode[] => {
-      if (!cfg.level3SchemaId) return [];
-      return getContainmentChildren(parentUid, cfg.level3SchemaId, treeIndex);
+  const getMapChildren = useCallback(
+    (parentUid: string, schemaId: string | null): TreeNode[] => {
+      if (!schemaId) return [];
+      const containmentChildren = getContainmentChildren(parentUid, schemaId, treeIndex);
+      const relationData = entityRelations.get(parentUid);
+      const relatedIds = [...(relationData?.outgoing ?? []), ...(relationData?.incoming ?? [])]
+        .filter(relation => relation.kind === 'typed' && relation.entitySchemaId === schemaId)
+        .map(relation => relation.entityId);
+      const relatedChildren = relatedIds
+        .map(id => treeIndex.nodeMap.get(id))
+        .filter((node): node is TreeNode => node?._isMatch === true);
+      const unique = new Map<string, TreeNode>();
+      for (const node of [...containmentChildren, ...relatedChildren]) unique.set(node._uid, node);
+      return [...unique.values()].sort((a, b) => nodeName(a).localeCompare(nodeName(b)));
     },
-    [treeIndex, cfg.level3SchemaId]
+    [entityRelations, treeIndex]
+  );
+
+  const level1Items = useMemo(() => {
+    return sortContainmentNodes(nodes, rootSchemaId);
+  }, [nodes, rootSchemaId]);
+
+  const getMapChildrenForNode = useCallback(
+    (parent: TreeNode, schemaId: string | null): TreeNode[] => {
+      if (!schemaId) return [];
+      if (isRelationMapNode(parent)) {
+        const endpoint = treeIndex.nodeMap.get(parent._mapRelation.entityId);
+        if (endpoint?._schema.id === schemaId) return [endpoint];
+      }
+      const parentUid = isRelationMapNode(parent) ? parent._mapRelation.entityId : parent._uid;
+      if (relationSchemas.some(schema => schema.id === schemaId)) {
+        return getRelationMapChildren(parentUid, schemaId);
+      }
+      return getMapChildren(parentUid, schemaId);
+    },
+    [getMapChildren, getRelationMapChildren, relationSchemas, treeIndex]
   );
 
   const schemaMap = useMemo(() => {
@@ -463,14 +684,45 @@ export const MapView = ({
 
   // ── Metric configuration ─────────────────────────────────────────────────
 
-  const metricConfig = useMemo(() => parseMetricConfig(cfg.metricConfig), [cfg.metricConfig]);
-  const metricSourceSchema = metricConfig
-    ? schemaMap.get(metricConfig.sourceSchemaId)?.schema
+  const mapLevelSchemaIds = useMemo(
+    () => cfg.levelConfigs.map(level => level.schemaId).filter((id): id is string => id != null),
+    [cfg.levelConfigs]
+  );
+  const mapTraversalPath = useMemo(
+    () => getMapTraversalPath(mapLevelSchemaIds, schemas, relationSchemas),
+    [mapLevelSchemaIds, schemas, relationSchemas]
+  );
+  const metricTerminalSchemaId = mapLevelSchemaIds[mapLevelSchemaIds.length - 1] ?? null;
+  const metricTerminalEntitySchema = metricTerminalSchemaId
+    ? schemaMap.get(metricTerminalSchemaId)?.schema
     : undefined;
+  const metricTerminalRelationSchema = relationSchemas.find(
+    schema => schema.id === metricTerminalSchemaId
+  );
+  const metricTerminalSchema = metricTerminalEntitySchema ?? metricTerminalRelationSchema;
+  const metricTerminalContext: 'entity' | 'relation' = metricTerminalRelationSchema
+    ? 'relation'
+    : 'entity';
+  const storedMetricConfig = useMemo(() => parseMetricConfig(cfg.metricConfig), [cfg.metricConfig]);
+  const metricConfig = storedMetricConfig
+    ? {
+        ...storedMetricConfig,
+        sourceSchemaId: metricTerminalSchemaId ?? storedMetricConfig.sourceSchemaId,
+        sourceContext: metricTerminalContext,
+        path: mapTraversalPath.length > 0 ? mapTraversalPath : undefined
+      }
+    : null;
+  const metricSourceSchema = metricTerminalSchema;
   const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
   const metricSourceOptions = useMemo(
-    () => getMetricSourceOptions(metricSourceSchema, joinedAssessment, getFieldGroupAccess),
-    [metricSourceSchema, joinedAssessment, getFieldGroupAccess]
+    () =>
+      getMetricSourceOptions(
+        metricSourceSchema,
+        joinedAssessment,
+        getFieldGroupAccess,
+        metricTerminalContext
+      ),
+    [metricSourceSchema, joinedAssessment, getFieldGroupAccess, metricTerminalContext]
   );
   const activeSourceOption = metricConfig
     ? metricSourceOptions.find(o => sourceKey(o.source) === sourceKey(metricConfig.source))
@@ -486,19 +738,53 @@ export const MapView = ({
     [notify]
   );
 
+  type RenderTreeNode = { node: TreeNode; levelIndex: number; children: RenderTreeNode[] };
+  const renderTree = useMemo(() => {
+    const build = (node: TreeNode, levelIndex: number): RenderTreeNode => ({
+      node,
+      levelIndex,
+      children:
+        levelIndex + 1 < cfg.levelConfigs.length
+          ? getMapChildrenForNode(node, cfg.levelConfigs[levelIndex + 1]?.schemaId ?? null).map(
+              child => build(child, levelIndex + 1)
+            )
+          : []
+    });
+    return level1Items.map(node => build(node, 0));
+  }, [cfg.levelConfigs, getMapChildrenForNode, level1Items]);
+
+  const directMetricRange = useMemo(() => {
+    if (!metricConfig || !metricSourceSchema) return { min: null, max: null };
+    const values: number[] = [];
+    const collect = (entry: RenderTreeNode) => {
+      const directValue = getDirectMetricValue(
+        entry.node,
+        metricConfig,
+        metricSourceSchema,
+        entry.children.length === 0
+      );
+      if (directValue?.kind === 'number') values.push(directValue.value);
+      entry.children.forEach(collect);
+    };
+    renderTree.forEach(collect);
+    return {
+      min: values.length > 0 ? Math.min(...values) : null,
+      max: values.length > 0 ? Math.max(...values) : null
+    };
+  }, [metricConfig, metricSourceSchema, renderTree]);
+
   const visibleBoxIds = useMemo(() => {
     const ids: string[] = [];
-    for (const l1 of level1Items) {
-      ids.push(l1._uid);
-      if (cfg.levels < 2) continue;
-      for (const l2 of getLevel2Children(l1._uid)) {
-        ids.push(l2._uid);
-        if (cfg.levels < 3) continue;
-        for (const l3 of getLevel3Children(l2._uid)) ids.push(l3._uid);
+    const collect = (entry: RenderTreeNode) => {
+      const level = cfg.levelConfigs[entry.levelIndex];
+      if (!isRelationMapNode(entry.node) && (entry.levelIndex === 0 || !level?.hidden)) {
+        ids.push(entry.node._uid);
       }
-    }
+      entry.children.forEach(collect);
+    };
+    renderTree.forEach(collect);
     return ids;
-  }, [level1Items, cfg.levels, getLevel2Children, getLevel3Children]);
+  }, [cfg.levelConfigs, renderTree]);
 
   const {
     resultsByBoxId,
@@ -519,50 +805,97 @@ export const MapView = ({
     projectScope
   });
 
+  const filteredRenderTree = useMemo(() => {
+    if (!metricConfig || !cfg.hideMissingMetricData) {
+      return renderTree;
+    }
+    const filter = (entry: RenderTreeNode): RenderTreeNode | null => {
+      if (!isRelationMapNode(entry.node)) {
+        const result = resultsByBoxId.get(entry.node._uid);
+        if (hasMissingMetricData(metricConfig, result)) return null;
+      }
+      return {
+        ...entry,
+        children: entry.children
+          .map(filter)
+          .filter((child): child is RenderTreeNode => child !== null)
+      };
+    };
+    return renderTree.map(filter).filter((entry): entry is RenderTreeNode => entry !== null);
+  }, [cfg.hideMissingMetricData, metricConfig, renderTree, resultsByBoxId]);
+
   const boxStyle = useCallback(
-    (node: TreeNode): React.CSSProperties | undefined => {
-      const color = resolveBoxColor(node, metricConfig, resultsByBoxId, legend, lifecycleStates);
+    (node: TreeNode, isLeaf: boolean): React.CSSProperties | undefined => {
+      const color = resolveBoxColor(
+        node,
+        metricConfig,
+        resultsByBoxId,
+        legend,
+        lifecycleStates,
+        metricSourceSchema,
+        isLeaf,
+        directMetricRange
+      );
       if (!color) return undefined;
       return { background: color };
     },
-    [metricConfig, resultsByBoxId, legend, lifecycleStates]
+    [metricConfig, resultsByBoxId, legend, lifecycleStates, metricSourceSchema, directMetricRange]
   );
 
   const nameStyle = useCallback(
-    (node: TreeNode, dimmed: boolean): React.CSSProperties | undefined => {
+    (node: TreeNode, dimmed: boolean, isLeaf: boolean): React.CSSProperties | undefined => {
       if (dimmed) return { color: 'var(--base-fg-more-dim)' };
-      const color = resolveBoxColor(node, metricConfig, resultsByBoxId, legend, lifecycleStates);
+      const color = resolveBoxColor(
+        node,
+        metricConfig,
+        resultsByBoxId,
+        legend,
+        lifecycleStates,
+        metricSourceSchema,
+        isLeaf,
+        directMetricRange
+      );
       return color ? { color: textColorForFill(color) } : undefined;
     },
-    [metricConfig, resultsByBoxId, legend, lifecycleStates]
+    [metricConfig, resultsByBoxId, legend, lifecycleStates, metricSourceSchema, directMetricRange]
   );
 
   const metricRowsFor = useCallback(
-    (node: TreeNode): EntityHoverCardRow[] =>
+    (node: TreeNode, isLeaf: boolean): EntityHoverCardRow[] =>
       buildMetricRows(
         node,
+        isLeaf,
         metricConfig,
         metricLabel,
+        activeSourceOption?.label ?? metricConfig?.source.kind ?? '',
         resultsByBoxId,
         lifecycleStates,
         metricSourceSchema
       ),
-    [metricConfig, metricLabel, resultsByBoxId, lifecycleStates, metricSourceSchema]
+    [
+      metricConfig,
+      metricLabel,
+      activeSourceOption?.label,
+      resultsByBoxId,
+      lifecycleStates,
+      metricSourceSchema
+    ]
   );
 
-  const focusHandlers = useCallback(
+  const boxHandlers = useCallback(
     (node: TreeNode) => ({
       role: 'button' as const,
       tabIndex: 0,
-      onClick: () => focusOn(node),
+      onClick: () =>
+        onEntityClick(isRelationMapNode(node) ? node._mapRelation.entityId : node._publicId),
       onKeyDown: (e: KeyboardEvent<HTMLDivElement>) => {
         if (e.key === 'Enter' || e.key === ' ') {
           e.preventDefault();
-          focusOn(node);
+          onEntityClick(isRelationMapNode(node) ? node._mapRelation.entityId : node._publicId);
         }
       }
     }),
-    [focusOn]
+    [onEntityClick]
   );
 
   const detailClick = useCallback(
@@ -573,72 +906,90 @@ export const MapView = ({
     [onEntityClick]
   );
 
-  const rootLabel = (cfg.level1SchemaId && schemaMap.get(cfg.level1SchemaId)?.schema.name) ?? 'Map';
-
-  const isUnconfigured = !cfg.level1SchemaId;
+  const isUnconfigured = !rootSchemaId;
 
   return (
     <div className={styles.wrap}>
       {/* Config bar */}
       {!hideToolbar && (
         <div className={styles.config}>
-          <div className={styles.axisPill}>
-            <span className={styles.axisKicker}>Levels</span>
-            <div className={styles.selectWrap}>
-              <select
-                className={styles.select}
-                value={cfg.levels}
-                onChange={e => {
-                  const n = Number(e.target.value);
-                  notify({ levels: n, level3SchemaId: n < 3 ? null : cfg.level3SchemaId });
+          {cfg.levelConfigs.map((level, index) => (
+            <div key={index} className={styles.levelControl}>
+              {index > 0 && <span className={styles.cross}>›</span>}
+              <SchemaSelect
+                label={`L${index + 1}`}
+                value={level.schemaId}
+                options={levelSchemaOptions[index] ?? []}
+                onChange={id => {
+                  const nextLevels = cfg.levelConfigs
+                    .slice(0, index + 1)
+                    .map((candidate, candidateIndex) =>
+                      candidateIndex === index ? { ...candidate, schemaId: id } : candidate
+                    );
+                  notify({ levelConfigs: nextLevels });
                 }}
-              >
-                <option value={1}>1</option>
-                <option value={2}>2</option>
-                <option value={3}>3</option>
-              </select>
-              <TbChevronDown size={11} />
+              />
+              <ColsSelect
+                value={level.columns}
+                onChange={columns => {
+                  const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
+                    candidateIndex === index ? { ...candidate, columns } : candidate
+                  );
+                  notify({ levelConfigs: nextLevels });
+                }}
+              />
+              {index > 0 && (
+                <>
+                  <button
+                    type="button"
+                    className={`${styles.levelAction} ${level.hidden ? styles.levelHidden : ''}`}
+                    aria-label={`${level.hidden ? 'Show' : 'Hide'} level ${index + 1}`}
+                    aria-pressed={level.hidden === true}
+                    title={`${level.hidden ? 'Show' : 'Hide'} level ${index + 1}`}
+                    onClick={() => {
+                      const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
+                        candidateIndex === index
+                          ? { ...candidate, hidden: candidate.hidden !== true }
+                          : candidate
+                      );
+                      notify({ levelConfigs: nextLevels });
+                    }}
+                  >
+                    <TbEyeOff size={13} />
+                  </button>
+                  {index === cfg.levelConfigs.length - 1 && (
+                    <button
+                      type="button"
+                      className={styles.levelAction}
+                      aria-label={`Remove level ${index + 1}`}
+                      onClick={() =>
+                        notify({
+                          levelConfigs: cfg.levelConfigs.filter(
+                            (_, candidateIndex) => candidateIndex !== index
+                          )
+                        })
+                      }
+                    >
+                      <TbTrash size={13} />
+                    </button>
+                  )}
+                </>
+              )}
             </div>
-          </div>
-
-          <span className={styles.cross}>|</span>
-
-          <SchemaSelect
-            label="L1"
-            value={cfg.level1SchemaId}
-            options={schemas}
-            onChange={id => {
-              notify({ level1SchemaId: id, level2SchemaId: null, level3SchemaId: null });
-              setFocusStack([]);
-            }}
-          />
-          <ColsSelect value={cfg.level1Columns} onChange={n => notify({ level1Columns: n })} />
-
-          {cfg.levels >= 2 && (
-            <>
-              <span className={styles.cross}>›</span>
-              <SchemaSelect
-                label="L2"
-                value={cfg.level2SchemaId ?? null}
-                options={level2SchemaOptions}
-                onChange={id => notify({ level2SchemaId: id, level3SchemaId: null })}
-              />
-              <ColsSelect value={cfg.level2Columns} onChange={n => notify({ level2Columns: n })} />
-            </>
-          )}
-
-          {cfg.levels >= 3 && (
-            <>
-              <span className={styles.cross}>›</span>
-              <SchemaSelect
-                label="L3"
-                value={cfg.level3SchemaId ?? null}
-                options={level3SchemaOptions}
-                onChange={id => notify({ level3SchemaId: id })}
-              />
-              <ColsSelect value={cfg.level3Columns} onChange={n => notify({ level3Columns: n })} />
-            </>
-          )}
+          ))}
+          {cfg.levelConfigs.at(-1)?.schemaId && <span className={styles.cross}>›</span>}
+          <button
+            type="button"
+            className={styles.levelAction}
+            disabled={!cfg.levelConfigs.at(-1)?.schemaId}
+            onClick={() =>
+              notify({
+                levelConfigs: [...cfg.levelConfigs, { schemaId: null, columns: 3, hidden: false }]
+              })
+            }
+          >
+            + Add level
+          </button>
         </div>
       )}
 
@@ -646,27 +997,42 @@ export const MapView = ({
         <div className={styles.config}>
           <div className={styles.axisPill}>
             <span className={styles.axisKicker}>Metric</span>
+            <span className={styles.pathSummary}>
+              {metricTerminalSchema?.name ?? 'Select the final map level'}
+            </span>
             <div className={styles.selectWrap}>
               <select
                 className={styles.select}
-                value={metricConfig?.sourceSchemaId ?? ''}
+                value={metricConfig ? sourceKey(metricConfig.source) : ''}
                 onChange={e => {
-                  const schemaId = e.target.value ?? null;
-                  setMetricConfig(
-                    schemaId
-                      ? {
-                          sourceSchemaId: schemaId,
-                          source: { kind: 'lifecycle' },
-                          aggregation: 'count'
-                        }
-                      : null
+                  const option = metricSourceOptions.find(
+                    candidate => sourceKey(candidate.source) === e.target.value
                   );
+                  if (!option || !metricTerminalSchemaId) {
+                    setMetricConfig(null);
+                    return;
+                  }
+                  const nextIsEnum = isEnumSource(option.source);
+                  setMetricConfig({
+                    ...(metricConfig ?? {
+                      sourceSchemaId: metricTerminalSchemaId,
+                      source: option.source,
+                      aggregation: 'count'
+                    }),
+                    sourceSchemaId: metricTerminalSchemaId,
+                    sourceContext: metricTerminalContext,
+                    path: mapTraversalPath.length > 0 ? mapTraversalPath : undefined,
+                    source: option.source,
+                    aggregation: nextIsEnum ? 'count' : (metricConfig?.aggregation ?? 'count'),
+                    worstDirection: nextIsEnum ? undefined : metricConfig?.worstDirection,
+                    targetCurrency: undefined
+                  });
                 }}
               >
                 <option value="">None</option>
-                {schemas.map(s => (
-                  <option key={s.id} value={s.id}>
-                    {s.name}
+                {metricSourceOptions.map(option => (
+                  <option key={sourceKey(option.source)} value={sourceKey(option.source)}>
+                    {option.label}
                   </option>
                 ))}
               </select>
@@ -677,34 +1043,6 @@ export const MapView = ({
           {metricConfig && (
             <>
               <span className={styles.cross}>›</span>
-              <div className={styles.selectWrap}>
-                <select
-                  className={styles.select}
-                  value={sourceKey(metricConfig.source)}
-                  onChange={e => {
-                    const option = metricSourceOptions.find(
-                      o => sourceKey(o.source) === e.target.value
-                    );
-                    if (!option) return;
-                    const nextIsEnum = isEnumSource(option.source);
-                    setMetricConfig({
-                      ...metricConfig,
-                      source: option.source,
-                      aggregation: nextIsEnum ? 'count' : metricConfig.aggregation,
-                      worstDirection: nextIsEnum ? undefined : metricConfig.worstDirection,
-                      targetCurrency: undefined
-                    });
-                  }}
-                >
-                  {metricSourceOptions.map(o => (
-                    <option key={sourceKey(o.source)} value={sourceKey(o.source)}>
-                      {o.label}
-                    </option>
-                  ))}
-                </select>
-                <TbChevronDown size={11} />
-              </div>
-
               <div className={styles.selectWrap}>
                 <select
                   className={styles.select}
@@ -784,12 +1122,19 @@ export const MapView = ({
                   <TbChevronDown size={11} />
                 </div>
               )}
+
+              <label className={styles.metricToggle}>
+                <input
+                  type="checkbox"
+                  checked={cfg.hideMissingMetricData === true}
+                  onChange={e => notify({ hideMissingMetricData: e.target.checked })}
+                />
+                Hide missing
+              </label>
             </>
           )}
         </div>
       )}
-
-      <MapBreadcrumb rootLabel={rootLabel} stack={focusStack} onNavigate={navigateBreadcrumb} />
 
       {/* Content */}
       {isUnconfigured ? (
@@ -801,183 +1146,99 @@ export const MapView = ({
         <div className={styles.scroll}>
           <div
             className={styles.level1Grid}
-            style={{ gridTemplateColumns: `repeat(${cfg.level1Columns}, 1fr)` }}
+            style={{
+              gridTemplateColumns: `repeat(${cfg.levelConfigs[0]?.columns ?? 3}, 1fr)`
+            }}
           >
-            {level1Items.map(l1 => {
-              const l2Children = cfg.levels >= 2 ? getLevel2Children(l1._uid) : [];
-              const schemaEntry = schemaMap.get(l1._schema.id);
-              const color = schemaEntry
-                ? resolveSchemaColor(schemaEntry.schema, schemaEntry.index)
-                : 'var(--accent-fg)';
-              const l1Dimmed = linkedEntityIds != null && !linkedEntityIdSet.has(l1._uid);
-
-              return (
-                <div
-                  key={l1._uid}
-                  className={`${styles.level1Box} ${styles.focusable}`}
-                  style={boxStyle(l1)}
-                  {...focusHandlers(l1)}
-                >
-                  <div className={styles.levelHeader}>
-                    <span className={styles.colorDot} style={{ background: color }} />
-                    <EntityTooltip
-                      node={l1}
-                      color={color}
-                      schemaName={schemaEntry?.schema.name ?? l1._schema.name}
-                      isLinked={linkedEntityIds == null || linkedEntityIdSet.has(l1._uid)}
-                      displayFields={selectedDisplayFields}
-                      schemaMap={schemaMap}
-                      metricRows={metricRowsFor(l1)}
-                    >
-                      <button
-                        type="button"
-                        className={styles.entityLink}
-                        onClick={detailClick(l1._publicId)}
-                        style={nameStyle(l1, l1Dimmed)}
-                      >
-                        {nodeName(l1)}
-                      </button>
-                    </EntityTooltip>
-                    <MetricValueLabel
-                      node={l1}
-                      isLeaf={cfg.levels < 2 || l2Children.length === 0}
-                      metric={metricConfig}
-                      sourceSchema={metricSourceSchema}
-                      resultsByBoxId={resultsByBoxId}
-                      lifecycleStates={lifecycleStates}
-                      style={nameStyle(l1, l1Dimmed)}
-                    />
-                  </div>
-
-                  {cfg.levels >= 2 && l2Children.length > 0 && (
+            {filteredRenderTree.map(entry => {
+              const renderEntry = (treeEntry: RenderTreeNode): React.ReactNode => {
+                const { node, levelIndex, children } = treeEntry;
+                const level = cfg.levelConfigs[levelIndex] ?? { schemaId: null, columns: 3 };
+                const entitySchema = schemaMap.get(node._schema.id);
+                const relationSchema = relationSchemas.find(
+                  candidate => candidate.id === node._schema.id
+                );
+                const color = entitySchema
+                  ? resolveSchemaColor(entitySchema.schema, entitySchema.index)
+                  : (relationSchema?.color ?? 'var(--accent-fg)');
+                const linkedId = isRelationMapNode(node) ? node._mapRelation.entityId : node._uid;
+                const dimmed = linkedEntityIds != null && !linkedEntityIdSet.has(linkedId);
+                const childContent =
+                  children.length > 0 ? (
                     <div
                       className={styles.childGrid}
-                      style={{ gridTemplateColumns: `repeat(${cfg.level2Columns}, 1fr)` }}
+                      style={{
+                        gridTemplateColumns: `repeat(${cfg.levelConfigs[levelIndex + 1]?.columns ?? 3}, 1fr)`
+                      }}
                     >
-                      {l2Children.map(l2 => {
-                        const l3Children = cfg.levels >= 3 ? getLevel3Children(l2._uid) : [];
-                        const l2SchemaEntry = schemaMap.get(l2._schema.id);
-                        const l2Color = l2SchemaEntry
-                          ? resolveSchemaColor(l2SchemaEntry.schema, l2SchemaEntry.index)
-                          : 'var(--accent-fg)';
-                        const l2Dimmed = linkedEntityIds != null && !linkedEntityIdSet.has(l2._uid);
-
-                        return (
-                          <div
-                            key={l2._uid}
-                            className={`${styles.level2Box} ${styles.focusable}`}
-                            style={boxStyle(l2)}
-                            {...focusHandlers(l2)}
-                          >
-                            <div className={styles.levelHeader}>
-                              <span className={styles.colorDot} style={{ background: l2Color }} />
-                              <EntityTooltip
-                                node={l2}
-                                color={l2Color}
-                                schemaName={l2SchemaEntry?.schema.name ?? l2._schema.name}
-                                isLinked={linkedEntityIds == null || linkedEntityIdSet.has(l2._uid)}
-                                displayFields={selectedDisplayFields}
-                                schemaMap={schemaMap}
-                                metricRows={metricRowsFor(l2)}
-                              >
-                                <button
-                                  type="button"
-                                  className={styles.entityLink}
-                                  onClick={detailClick(l2._publicId)}
-                                  style={nameStyle(l2, l2Dimmed)}
-                                >
-                                  {nodeName(l2)}
-                                </button>
-                              </EntityTooltip>
-                              <MetricValueLabel
-                                node={l2}
-                                isLeaf={cfg.levels < 3 || l3Children.length === 0}
-                                metric={metricConfig}
-                                sourceSchema={metricSourceSchema}
-                                resultsByBoxId={resultsByBoxId}
-                                lifecycleStates={lifecycleStates}
-                                style={nameStyle(l2, l2Dimmed)}
-                              />
-                            </div>
-
-                            {cfg.levels >= 3 && l3Children.length > 0 && (
-                              <div
-                                className={styles.childGrid}
-                                style={{
-                                  gridTemplateColumns: `repeat(${cfg.level3Columns}, 1fr)`
-                                }}
-                              >
-                                {l3Children.map(l3 => {
-                                  const l3SchemaEntry = schemaMap.get(l3._schema.id);
-                                  const l3Color = l3SchemaEntry
-                                    ? resolveSchemaColor(l3SchemaEntry.schema, l3SchemaEntry.index)
-                                    : 'var(--accent-fg)';
-                                  const l3Dimmed =
-                                    linkedEntityIds != null && !linkedEntityIdSet.has(l3._uid);
-
-                                  return (
-                                    <div
-                                      key={l3._uid}
-                                      className={`${styles.level3Box} ${styles.focusable}`}
-                                      style={boxStyle(l3)}
-                                      {...focusHandlers(l3)}
-                                    >
-                                      <span
-                                        className={styles.colorDot}
-                                        style={{ background: l3Color }}
-                                      />
-                                      <EntityTooltip
-                                        node={l3}
-                                        color={l3Color}
-                                        schemaName={l3SchemaEntry?.schema.name ?? l3._schema.name}
-                                        isLinked={
-                                          linkedEntityIds == null || linkedEntityIdSet.has(l3._uid)
-                                        }
-                                        displayFields={selectedDisplayFields}
-                                        schemaMap={schemaMap}
-                                        metricRows={metricRowsFor(l3)}
-                                      >
-                                        <button
-                                          type="button"
-                                          className={styles.entityLink}
-                                          onClick={detailClick(l3._publicId)}
-                                          style={nameStyle(l3, l3Dimmed)}
-                                        >
-                                          {nodeName(l3)}
-                                        </button>
-                                      </EntityTooltip>
-                                      <MetricValueLabel
-                                        node={l3}
-                                        isLeaf
-                                        metric={metricConfig}
-                                        sourceSchema={metricSourceSchema}
-                                        resultsByBoxId={resultsByBoxId}
-                                        lifecycleStates={lifecycleStates}
-                                        style={nameStyle(l3, l3Dimmed)}
-                                      />
-                                    </div>
-                                  );
-                                })}
-                              </div>
-                            )}
-                          </div>
-                        );
-                      })}
+                      {children.map(renderEntry)}
                     </div>
-                  )}
-                </div>
-              );
+                  ) : null;
+
+                if (levelIndex > 0 && level.hidden) return childContent;
+
+                const className =
+                  levelIndex === 0
+                    ? styles.level1Box
+                    : levelIndex === 1
+                      ? styles.level2Box
+                      : styles.level3Box;
+                return (
+                  <div
+                    key={node._uid}
+                    className={`${className} ${styles.focusable}`}
+                    style={boxStyle(node, children.length === 0)}
+                    {...boxHandlers(node)}
+                  >
+                    <div className={styles.levelHeader}>
+                      <span className={styles.colorDot} style={{ background: color }} />
+                      <EntityTooltip
+                        node={node}
+                        color={color}
+                        schemaName={
+                          entitySchema?.schema.name ?? relationSchema?.name ?? node._schema.name
+                        }
+                        isLinked={linkedEntityIds == null || linkedEntityIdSet.has(linkedId)}
+                        displayFields={selectedDisplayFields}
+                        schemaMap={schemaMap}
+                        metricRows={metricRowsFor(node, children.length === 0)}
+                      >
+                        <button
+                          type="button"
+                          className={styles.entityLink}
+                          onClick={detailClick(
+                            isRelationMapNode(node) ? node._mapRelation.entityId : node._publicId
+                          )}
+                          style={nameStyle(node, dimmed, children.length === 0)}
+                        >
+                          {nodeName(node)}
+                        </button>
+                      </EntityTooltip>
+                      <MetricValueLabel
+                        node={node}
+                        isLeaf={children.length === 0}
+                        metric={metricConfig}
+                        sourceSchema={metricSourceSchema}
+                        resultsByBoxId={resultsByBoxId}
+                        lifecycleStates={lifecycleStates}
+                        style={nameStyle(node, dimmed, children.length === 0)}
+                      />
+                      <DuplicateBadge count={resultsByBoxId.get(node._uid)?.duplicateCount} />
+                    </div>
+                    {childContent}
+                  </div>
+                );
+              };
+              return renderEntry(entry);
             })}
           </div>
 
-          {level1Items.length === 0 && (
+          {filteredRenderTree.length === 0 && (
             <EmptyState
-              title="No entities found"
-              subtitle={
-                currentFocus
-                  ? `${currentFocus.name} has no matching descendants at this level.`
-                  : 'Try adjusting your search or filters.'
+              title={
+                level1Items.length === 0 ? 'No entities found' : 'No boxes match the metric filters'
               }
+              subtitle="Try adjusting your search or filters."
             />
           )}
         </div>

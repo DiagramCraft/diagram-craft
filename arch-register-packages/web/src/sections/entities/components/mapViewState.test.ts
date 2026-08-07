@@ -1,10 +1,14 @@
 import { describe, expect, it } from 'vitest';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { TreeEdge, TreeNode } from '@arch-register/api-types/entityContract';
 import {
   buildContainmentTreeIndex,
+  getChildLevelOptions,
   getChildSchemas,
+  getChildRelationSchemas,
   getContainmentChildren,
+  getMapTraversalPath,
   getMapSchemaIds,
   sortContainmentNodes
 } from './mapViewState';
@@ -38,6 +42,131 @@ describe('map view state', () => {
     expect(getChildSchemas([schema('service')], null).map(item => item.id)).toEqual(['service']);
   });
 
+  it('includes typed-relation target schemas as map children', () => {
+    const system = {
+      ...schema('system'),
+      fields: [
+        {
+          id: 'contracts',
+          name: 'Contracts',
+          type: 'typedRelation',
+          relationSchemaId: 'system-contract',
+          direction: 'out'
+        }
+      ]
+    } as unknown as EntitySchema;
+    const contract = schema('contract');
+    const relationSchema = {
+      id: 'system-contract',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['contract'] }
+    } as unknown as RelationSchema;
+    expect(getChildSchemas([system, contract], 'system', [relationSchema])).toEqual([contract]);
+  });
+
+  it('builds the Domain → System → Contract traversal automatically', () => {
+    const domain = schema('domain');
+    const system = {
+      ...schema('system', 'domain'),
+      fields: [
+        { id: 'domain', name: 'Domain', type: 'containment', schemaId: 'domain' },
+        {
+          id: 'contracts',
+          name: 'Contracts',
+          type: 'typedRelation',
+          relationSchemaId: 'system-contract',
+          direction: 'out'
+        }
+      ]
+    } as unknown as EntitySchema;
+    const contract = schema('contract');
+    const relationSchema = {
+      id: 'system-contract',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['contract'] }
+    } as unknown as RelationSchema;
+    expect(
+      getMapTraversalPath(
+        ['domain', 'system', 'contract'],
+        [domain, system, contract],
+        [relationSchema]
+      )
+    ).toEqual([
+      { kind: 'relation', fieldId: 'domain', direction: 'backward', ownerSchemaId: 'system' },
+      {
+        kind: 'typedRelation',
+        fieldId: 'contracts',
+        relationSchemaId: 'system-contract',
+        direction: 'out'
+      }
+    ]);
+  });
+
+  it('offers System Contract as a selectable relation level', () => {
+    const system = {
+      ...schema('system'),
+      fields: [
+        {
+          id: 'contracts',
+          name: 'Contracts',
+          type: 'typedRelation',
+          relationSchemaId: 'system-contract',
+          direction: 'out'
+        }
+      ]
+    } as unknown as EntitySchema;
+    const relationSchema = {
+      id: 'system-contract',
+      name: 'System Contract',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['contract'] }
+    } as unknown as RelationSchema;
+    expect(getChildRelationSchemas([system], 'system', [relationSchema])).toEqual([relationSchema]);
+    expect(getMapTraversalPath(['system', 'system-contract'], [system], [relationSchema])).toEqual([
+      {
+        kind: 'typedRelation',
+        fieldId: 'contracts',
+        relationSchemaId: 'system-contract',
+        direction: 'out'
+      }
+    ]);
+  });
+
+  it('keeps the typed relation hop when an endpoint is shown after the relation level', () => {
+    const system = {
+      ...schema('system'),
+      fields: [
+        {
+          id: 'contracts',
+          name: 'Contracts',
+          type: 'typedRelation',
+          relationSchemaId: 'system-contract',
+          direction: 'out'
+        }
+      ]
+    } as unknown as EntitySchema;
+    const contract = schema('contract');
+    const relationSchema = {
+      id: 'system-contract',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['contract'] }
+    } as unknown as RelationSchema;
+    expect(
+      getMapTraversalPath(
+        ['system', 'system-contract', 'contract'],
+        [system, contract],
+        [relationSchema]
+      )
+    ).toEqual([
+      {
+        kind: 'typedRelation',
+        fieldId: 'contracts',
+        relationSchemaId: 'system-contract',
+        direction: 'out'
+      }
+    ]);
+  });
+
   it('indexes edges and sorts only matching children', () => {
     const nodes = [
       node('b', 'app', 'Beta'),
@@ -65,6 +194,32 @@ describe('map view state', () => {
         level3SchemaId: 'component'
       })
     ).toEqual(['domain', 'system', 'component']);
+  });
+
+  it('collects schema ids from an arbitrary ordered level list', () => {
+    expect(
+      getMapSchemaIds({
+        levelConfigs: [
+          { schemaId: 'domain', columns: 3 },
+          { schemaId: 'system', columns: 2, hidden: true },
+          { schemaId: 'component', columns: 2 },
+          { schemaId: 'resource', columns: 1 }
+        ]
+      })
+    ).toEqual(['domain', 'system', 'component', 'resource']);
+  });
+
+  it('offers relation endpoints after a typed relation level', () => {
+    const contract = schema('contract');
+    const relationSchema = {
+      id: 'system-contract',
+      name: 'System Contract',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['contract'] }
+    } as unknown as RelationSchema;
+    expect(getChildLevelOptions([contract], 'system-contract', [relationSchema])).toEqual([
+      contract
+    ]);
   });
 
   it('truncates to the number of active levels', () => {

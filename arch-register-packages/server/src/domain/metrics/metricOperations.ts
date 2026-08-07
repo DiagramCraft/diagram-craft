@@ -1,6 +1,7 @@
 import type { AuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
+import type { RelationDbResult, RelationSchemaDbResult } from '../catalog/db/relationDatabase';
 import type { LifecycleStateDbResult } from '../workspace/db/workspaceDatabase';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
@@ -22,6 +23,11 @@ import {
 import { parseEntityQuery, buildEntityQueryForExecution } from '../catalog/entityQuery';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { buildContainmentChildrenIndex, collectDescendantIds } from './metricDescendants';
+import {
+  collectMetricTerminals,
+  type MetricTerminal,
+  type MetricTraversalResult
+} from './metricTraversal';
 import type { CurrencyRateSnapshotDbResult } from '../currencyRates/db/currencyRatesDatabase';
 
 type MetricValue = { value: number; lifecycleId: string | null; currencyCode: string | null };
@@ -31,6 +37,7 @@ type CurrencyConversion = {
   rates: Record<string, number>;
 };
 type EnumOption = { value: string; label: string };
+type MetricSourceSchema = SchemaDbResult | RelationSchemaDbResult;
 
 const isEnumSourceKind = (kind: MetricConfig['source']['kind']) =>
   kind === 'enum' || kind === 'assessmentEnum';
@@ -38,9 +45,13 @@ const isEnumSourceKind = (kind: MetricConfig['source']['kind']) =>
 const isMetricSourceAvailable = (
   metric: MetricConfig,
   schemas: SchemaDbResult[],
-  assessmentFields?: readonly { id: string; type: string }[]
+  assessmentFields?: readonly { id: string; type: string }[],
+  relationSchemas: RelationSchemaDbResult[] = []
 ): boolean => {
-  const sourceSchema = schemas.find(schema => schema.id === metric.sourceSchemaId);
+  const sourceSchema =
+    metric.sourceContext === 'relation'
+      ? relationSchemas.find(schema => schema.id === metric.sourceSchemaId)
+      : schemas.find(schema => schema.id === metric.sourceSchemaId);
   if (!sourceSchema) return false;
   const source = metric.source;
 
@@ -57,6 +68,7 @@ const isMetricSourceAvailable = (
   }
 
   if (source.kind === 'assessmentRating') {
+    if (metric.sourceContext === 'relation') return false;
     return (
       assessmentFields == null ||
       assessmentFields.some(field => field.id === source.fieldId && field.type === 'rating')
@@ -64,6 +76,7 @@ const isMetricSourceAvailable = (
   }
 
   if (source.kind === 'assessmentEnum') {
+    if (metric.sourceContext === 'relation') return false;
     return (
       assessmentFields == null ||
       assessmentFields.some(field => field.id === source.fieldId && field.type === 'enum')
@@ -74,11 +87,11 @@ const isMetricSourceAvailable = (
 };
 
 const extractValue = (
-  entity: EntityDbResult,
+  entity: EntityDbResult | RelationDbResult,
   source: MetricConfig['source'],
   lifecycleSortOrder: Map<string, number>,
   responsesByEntity: Map<string, Record<string, string | number | boolean>> | null,
-  sourceSchema: SchemaDbResult | undefined,
+  sourceSchema: MetricSourceSchema | undefined,
   authCtx: AuthorizationContext | null
 ): MetricValue | null => {
   if (source.kind === 'lifecycle') {
@@ -117,7 +130,7 @@ const extractValue = (
 
 const isCurrencyFieldSource = (
   metric: MetricConfig,
-  sourceSchema: SchemaDbResult | undefined
+  sourceSchema: MetricSourceSchema | undefined
 ): boolean => {
   if (metric.source.kind !== 'field') return false;
   const fieldId = metric.source.fieldId;
@@ -141,10 +154,10 @@ const getCurrencyMetadata = (
 };
 
 const extractEnumValue = (
-  entity: EntityDbResult,
+  entity: EntityDbResult | RelationDbResult,
   source: Extract<MetricConfig['source'], { kind: 'enum' | 'assessmentEnum' }>,
   responsesByEntity: Map<string, Record<string, string | number | boolean>> | null,
-  sourceSchema: SchemaDbResult | undefined,
+  sourceSchema: MetricSourceSchema | undefined,
   authCtx: AuthorizationContext | null
 ): string | null => {
   if (source.kind === 'enum' && isFieldViewRestricted(authCtx, sourceSchema, source.fieldId)) {
@@ -291,33 +304,58 @@ export const computeBoxMetrics = (
   enumOptions: EnumOption[] | null = null,
   authCtx: AuthorizationContext | null = null,
   sourceAvailableOverride?: boolean,
-  currencyConversion: CurrencyConversion | null = null
+  currencyConversion: CurrencyConversion | null = null,
+  traversalResults?: Map<string, MetricTraversalResult>
 ): MetricRollupResponse => {
   const entityById = new Map(entities.map(e => [e.id, e]));
   const lifecycleSortOrder = new Map(lifecycleStates.map(s => [s.id, s.sort_order]));
   const worstDirection = metric.worstDirection ?? 'high';
-  const sourceSchema = schemas.find(s => s.id === metric.sourceSchemaId);
+  const sourceSchema =
+    metric.sourceContext === 'relation'
+      ? undefined
+      : schemas.find(s => s.id === metric.sourceSchemaId);
   const sourceAvailable =
-    isMetricSourceAvailable(metric, schemas) && sourceAvailableOverride !== false;
-  const childrenOf = sourceAvailable
-    ? buildContainmentChildrenIndex(schemas, entities, authCtx)
-    : new Map<string, string[]>();
+    (metric.sourceContext === 'relation' || isMetricSourceAvailable(metric, schemas)) &&
+    sourceAvailableOverride !== false;
+  const childrenOf =
+    sourceAvailable && metric.sourceContext !== 'relation'
+      ? buildContainmentChildrenIndex(schemas, entities, authCtx)
+      : new Map<string, string[]>();
 
   const results: MetricRollupResponse['results'] = boxEntityIds.map(boxEntityId => {
-    const sourceEntities = (sourceAvailable ? collectDescendantIds(boxEntityId, childrenOf) : [])
-      .map(id => entityById.get(id))
-      .filter(
-        (entity): entity is EntityDbResult =>
-          entity != null && entity.schema_id === metric.sourceSchemaId && isFilterMatch(entity)
-      );
+    const traversal = traversalResults?.get(boxEntityId);
+    const sourceTerminals: MetricTerminal[] = traversal
+      ? traversal.terminals
+      : metric.sourceContext !== 'relation'
+        ? (sourceAvailable ? collectDescendantIds(boxEntityId, childrenOf) : [])
+            .map(id => entityById.get(id))
+            .filter(
+              (entity): entity is EntityDbResult =>
+                entity != null && entity.schema_id === metric.sourceSchemaId
+            )
+            .map(entity => ({ kind: 'entity' as const, entity }))
+        : [];
+    const sourceTerminalsFiltered = sourceTerminals.filter(terminal =>
+      terminal.kind === 'entity' ? isFilterMatch(terminal.entity) : true
+    );
+    const sourceCount = sourceTerminalsFiltered.length;
+    const duplicateCount = traversal?.duplicateCount ?? 0;
 
     if (isEnumSourceKind(metric.source.kind)) {
       const source = metric.source as Extract<
         MetricConfig['source'],
         { kind: 'enum' | 'assessmentEnum' }
       >;
-      const values = sourceEntities
-        .map(entity => extractEnumValue(entity, source, responsesByEntity, sourceSchema, authCtx))
+      const values = sourceTerminalsFiltered
+        .map(terminal =>
+          extractEnumValue(
+            terminal.kind === 'entity' ? terminal.entity : terminal.relation,
+            source,
+            responsesByEntity,
+            terminal.kind === 'entity' ? sourceSchema : terminal.schema,
+            authCtx
+          )
+        )
         .filter((v): v is string => v != null);
       const {
         dominantValue: modeValue,
@@ -330,37 +368,39 @@ export const computeBoxMetrics = (
           : { dominantValue: modeValue, dominantLabel: modeLabel };
       return {
         boxEntityId,
-        value: sourceEntities.length,
+        value: sourceCount,
         lifecycleId: null,
         dominantValue,
         dominantLabel,
         distribution,
-        sourceCount: sourceEntities.length,
-        populatedCount: values.length
+        sourceCount,
+        populatedCount: values.length,
+        duplicateCount
       };
     }
 
     if (metric.aggregation === 'count') {
       return {
         boxEntityId,
-        value: sourceEntities.length,
+        value: sourceCount,
         lifecycleId: null,
         dominantValue: null,
         dominantLabel: null,
         distribution: [],
-        sourceCount: sourceEntities.length,
-        populatedCount: sourceEntities.length
+        sourceCount,
+        populatedCount: sourceCount,
+        duplicateCount
       };
     }
 
-    const populated = sourceEntities
-      .map(entity =>
+    const populated = sourceTerminalsFiltered
+      .map(terminal =>
         extractValue(
-          entity,
+          terminal.kind === 'entity' ? terminal.entity : terminal.relation,
           metric.source,
           lifecycleSortOrder,
           responsesByEntity,
-          sourceSchema,
+          terminal.kind === 'entity' ? sourceSchema : terminal.schema,
           authCtx
         )
       )
@@ -408,8 +448,9 @@ export const computeBoxMetrics = (
       dominantValue: null,
       dominantLabel: null,
       distribution: [],
-      sourceCount: sourceEntities.length,
+      sourceCount,
       populatedCount: populated.length,
+      duplicateCount,
       ...(currencyMetadata ?? {})
     };
   });
@@ -453,6 +494,7 @@ const resolveEnumOptions = async (
   workspace: string,
   metric: MetricConfig,
   schemas: SchemaDbResult[],
+  relationSchemas: RelationSchemaDbResult[],
   joinedAssessment: Awaited<ReturnType<typeof resolveJoinedAssessment>>
 ): Promise<EnumOption[] | null> => {
   const source = metric.source;
@@ -462,7 +504,10 @@ const resolveEnumOptions = async (
   let inlineOptions: EnumOption[] | undefined;
   if (source.kind === 'enum') {
     const fieldId = source.fieldId;
-    const schema = schemas.find(s => s.id === metric.sourceSchemaId);
+    const schema =
+      metric.sourceContext === 'relation'
+        ? relationSchemas.find(s => s.id === metric.sourceSchemaId)
+        : schemas.find(s => s.id === metric.sourceSchemaId);
     const field = schema?.fields.find(f => f.id === fieldId);
     if (field?.type !== 'select') return null;
     enumId = field.enumId;
@@ -553,14 +598,24 @@ export const getBoxMetrics = async (
   const needsAssessment =
     metric.source.kind === 'assessmentRating' || metric.source.kind === 'assessmentEnum';
 
-  const [schemas, allEntities, lifecycleStates, joinedAssessment, projectEntities] =
-    await Promise.all([
-      db.catalog.listSchemas(workspace),
-      listAllCatalogEntities(db, workspace, projectId ? { projectId, projectScope } : undefined),
-      db.workspace.listLifecycleStates(workspace),
-      resolveJoinedAssessment(db, workspace, authCtx, parsed.assessmentId, needsAssessment),
-      projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
-    ]);
+  const relationSchemasPromise = db.relation?.listRelationSchemas
+    ? db.relation.listRelationSchemas(workspace)
+    : Promise.resolve<RelationSchemaDbResult[]>([]);
+  const [
+    schemas,
+    relationSchemas,
+    allEntities,
+    lifecycleStates,
+    joinedAssessment,
+    projectEntities
+  ] = await Promise.all([
+    db.catalog.listSchemas(workspace),
+    relationSchemasPromise,
+    listAllCatalogEntities(db, workspace, projectId ? { projectId, projectScope } : undefined),
+    db.workspace.listLifecycleStates(workspace),
+    resolveJoinedAssessment(db, workspace, authCtx, parsed.assessmentId, needsAssessment),
+    projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
+  ]);
 
   if (metric.source.kind === 'assessmentRating') {
     httpAssert.present(joinedAssessment, {
@@ -579,9 +634,13 @@ export const getBoxMetrics = async (
   const sourceAvailable = isMetricSourceAvailable(
     metric,
     schemas,
-    joinedAssessment?.assessment.fields
+    joinedAssessment?.assessment.fields,
+    relationSchemas
   );
-  const sourceSchema = schemas.find(schema => schema.id === metric.sourceSchemaId);
+  const sourceSchema =
+    metric.sourceContext === 'relation'
+      ? relationSchemas.find(schema => schema.id === metric.sourceSchemaId)
+      : schemas.find(schema => schema.id === metric.sourceSchemaId);
   const currencySource = isCurrencyFieldSource(metric, sourceSchema);
   httpAssert.true(
     metric.targetCurrency == null || (currencySource && metric.aggregation !== 'count'),
@@ -591,7 +650,7 @@ export const getBoxMetrics = async (
     }
   );
   const enumOptions = sourceAvailable
-    ? await resolveEnumOptions(db, workspace, metric, schemas, joinedAssessment)
+    ? await resolveEnumOptions(db, workspace, metric, schemas, relationSchemas, joinedAssessment)
     : null;
 
   const visibleEntities = filterVisibleEntities(authCtx, allEntities);
@@ -638,6 +697,19 @@ export const getBoxMetrics = async (
 
   const isFilterMatch = (entity: EntityDbResult): boolean => matchIds.has(entity.id);
 
+  const traversalResults = sourceAvailable
+    ? await collectMetricTerminals({
+        db,
+        workspace,
+        boxEntityIds,
+        metric,
+        entities: scopedEntities,
+        schemas,
+        relationSchemas,
+        authCtx
+      })
+    : new Map<string, MetricTraversalResult>();
+
   return computeBoxMetrics(
     boxEntityIds,
     metric,
@@ -649,6 +721,7 @@ export const getBoxMetrics = async (
     enumOptions,
     authCtx,
     sourceAvailable,
-    currencyConversion
+    currencyConversion,
+    traversalResults
   );
 };

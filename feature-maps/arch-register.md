@@ -218,8 +218,17 @@
           enum-sourced metrics, "worst" ranks options by the admin-configured top-to-bottom order of the enum's
           options. A metric source in an access-restricted field group evaluates as unavailable (no value, distribution,
           or dominant option) for viewers without view access to that group, rather than exposing the underlying data;
-          the field picker also excludes such fields when configuring the metric. Rollups traverse containment only;
-          typed-relation cost traversal is deferred to a follow-up capability.
+          the field picker also excludes such fields when configuring the metric. Map levels can combine
+          reference/containment and typed-relation children, including Domain → System → Contract paths; typed
+          relation instances such as System Contract can also be selected as a map level. Users can add an arbitrary
+          number of ordered levels and hide any level after the first while retaining its descendants. The metric picker
+          automatically uses the final selected level (so Contract exposes Annual Cost and System Contract exposes its
+          relation fields). Users can optionally hide boxes with missing metric data; a box with a direct source value
+          but no aggregate is colored and annotated from that source value. Clicking any rendered entity box opens
+          its entity detail card rather than re-rooting the map.
+          Traversal applies the current visibility, permission, project, and filter scope,
+          deduplicates repeated terminal sources, and marks collapsed duplicates in the map with a count and hover
+          detail.
 
         - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view,
           toggling which relation fields draw connections; typed relation instances are included by default

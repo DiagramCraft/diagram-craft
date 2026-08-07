@@ -86,6 +86,23 @@ describe('normalizeViewConfig', () => {
     });
   });
 
+  it('accepts arbitrary map levels with hidden intermediate levels', () => {
+    const parsed = mapViewConfigSchema.safeParse({
+      levelConfigs: [
+        { schemaId: 'domain', columns: 3 },
+        { schemaId: 'system', columns: 2, hidden: true },
+        { schemaId: 'contract', columns: 2 },
+        { schemaId: 'resource', columns: 1 }
+      ],
+      hideMissingMetricData: true
+    });
+    expect(parsed.success).toBe(true);
+    if (parsed.success) {
+      expect(parsed.data.levelConfigs).toHaveLength(4);
+      expect(parsed.data.hideMissingMetricData).toBe(true);
+    }
+  });
+
   it('supports an empty-sentinel default for views with no natural default value (e.g. Radar)', () => {
     const emptyRadarConfig = {
       schemaId: '',
