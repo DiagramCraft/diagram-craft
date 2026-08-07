@@ -615,7 +615,15 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         color: AR_COLOR_ORANGE,
         icon: 'certificate',
         fields: [
-          { id: 'vendor_name', name: 'Vendor Name', type: 'text' },
+          {
+            id: 'vendor',
+            name: 'Vendor',
+            predicate: 'provided by',
+            type: 'containment',
+            symSchemaId: 'vendor',
+            minCount: 1,
+            maxCount: 1
+          },
           { id: 'contract_start', name: 'Contract Start', type: 'date' },
           { id: 'contract_end', name: 'Contract End', type: 'date' },
           { id: 'annual_cost', name: 'Annual Cost', type: 'currency' },
@@ -628,6 +636,14 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             direction: 'in'
           }
         ]
+      },
+      {
+        symId: 'vendor',
+        name: 'Vendor',
+        description: 'A company that provides products or services under one or more Contracts.',
+        color: AR_COLOR_BLUE,
+        icon: 'building',
+        fields: []
       },
       technologySchema,
       technologyReleaseSchema

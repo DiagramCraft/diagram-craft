@@ -884,7 +884,15 @@ export const seedSchemas: SchemaDbResult[] = (
       name: 'Contract',
       description: 'A commercial agreement with a vendor supporting a System.',
       fields: [
-        { id: 'vendor_name', name: 'Vendor Name', type: 'text' },
+        {
+          id: 'vendor',
+          name: 'Vendor',
+          type: 'containment',
+          predicate: 'provided by',
+          schemaId: '00000000-0000-0000-0000-000000000010',
+          minCount: 1,
+          maxCount: 1
+        },
         { id: 'contract_start', name: 'Contract Start', type: 'date' },
         { id: 'contract_end', name: 'Contract End', type: 'date' },
         { id: 'annual_cost', name: 'Annual Cost', type: 'currency' },
@@ -902,6 +910,19 @@ export const seedSchemas: SchemaDbResult[] = (
       icon: 'certificate',
       default_owner: null,
       key_prefix: 'CON',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000010',
+      workspace: WORKSPACE_ID,
+      name: 'Vendor',
+      description: 'A company that provides products or services under one or more Contracts.',
+      fields: [],
+      color: AR_COLOR_BLUE,
+      icon: 'building',
+      default_owner: null,
+      key_prefix: 'VND',
       created_at: now,
       updated_at: now
     },
@@ -1807,6 +1828,46 @@ const seedEntitiesRaw: SeedEntityInput[] = [
     updated_at: now
   },
   {
+    id: '00000000-0000-0000-000b-000000000001',
+    workspace: WORKSPACE_ID,
+    public_id: 'VND-1',
+    slug: 'acme-cloud',
+    namespace: 'default',
+    name: 'Acme Cloud',
+    description: 'Cloud services vendor providing the Customer Portal license.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['vendor'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000010',
+    data: {},
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-000b-000000000002',
+    workspace: WORKSPACE_ID,
+    public_id: 'VND-2',
+    slug: 'nordic-systems',
+    namespace: 'default',
+    name: 'Nordic Systems',
+    description: 'Systems vendor providing managed support for the Identity Platform.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['vendor'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000010',
+    data: {},
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
     id: '00000000-0000-0000-000a-000000000001',
     workspace: WORKSPACE_ID,
     public_id: 'CON-1',
@@ -1822,7 +1883,7 @@ const seedEntitiesRaw: SeedEntityInput[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000009',
     data: {
-      vendor_name: 'Acme Cloud',
+      vendor: ['00000000-0000-0000-000b-000000000001'],
       contract_start: '2026-01-01',
       contract_end: '2026-12-31',
       annual_cost: { amount: 125000, currency: 'USD' },
@@ -1848,11 +1909,37 @@ const seedEntitiesRaw: SeedEntityInput[] = [
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000009',
     data: {
-      vendor_name: 'Nordic Systems',
+      vendor: ['00000000-0000-0000-000b-000000000002'],
       contract_start: '2026-02-01',
       contract_end: '2027-01-31',
       annual_cost: { amount: 84000, currency: 'EUR' },
       setup_fee: { amount: 0, currency: 'EUR' }
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-000a-000000000003',
+    workspace: WORKSPACE_ID,
+    public_id: 'CON-3',
+    slug: 'acme-cloud-customer-portal-support',
+    namespace: 'default',
+    name: 'Acme Cloud Customer Portal Support',
+    description: 'Support agreement for the Customer Portal platform.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['vendor', 'support'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000009',
+    data: {
+      vendor: ['00000000-0000-0000-000b-000000000001'],
+      contract_start: '2026-03-01',
+      contract_end: '2027-02-28',
+      annual_cost: { amount: 30000, currency: 'USD' },
+      setup_fee: { amount: 0, currency: 'USD' }
     },
     project_id: null,
     created_at: now,
@@ -5030,6 +5117,17 @@ export const seedRelations: RelationDbCreate[] = [
     // Identity Platform -> Nordic Systems contract: managed support.
     in_entity_id: '00000000-0000-0000-0002-000000000002',
     out_entity_id: '00000000-0000-0000-000a-000000000002',
+    data: { purpose: 'support' },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0009-000000000006',
+    workspace: WORKSPACE_ID,
+    schema_id: '00000000-0000-0000-0000-000000000031',
+    // Customer Portal -> Acme Cloud support contract.
+    in_entity_id: '00000000-0000-0000-0002-000000000001',
+    out_entity_id: '00000000-0000-0000-000a-000000000003',
     data: { purpose: 'support' },
     created_at: now,
     updated_at: now

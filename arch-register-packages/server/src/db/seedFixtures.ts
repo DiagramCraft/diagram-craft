@@ -171,6 +171,16 @@ export const seededSchemas = {
       id: '00000000-0000-0000-0000-000000000005',
       workspaceId: seededWorkspaces.default.id,
       name: 'Resource'
+    },
+    contract: {
+      id: '00000000-0000-0000-0000-000000000009',
+      workspaceId: seededWorkspaces.default.id,
+      name: 'Contract'
+    },
+    vendor: {
+      id: '00000000-0000-0000-0000-000000000010',
+      workspaceId: seededWorkspaces.default.id,
+      name: 'Vendor'
     }
   },
   second: {
@@ -230,6 +240,41 @@ export const seededEntities = {
       workspaceId: seededWorkspaces.default.id,
       schemaId: seededSchemas.default.component.id,
       name: 'Auth Migration Adapter'
+    },
+    acmeCloud: {
+      id: '00000000-0000-0000-000b-000000000001',
+      publicId: 'VND-1',
+      workspaceId: seededWorkspaces.default.id,
+      schemaId: seededSchemas.default.vendor.id,
+      name: 'Acme Cloud'
+    },
+    nordicSystems: {
+      id: '00000000-0000-0000-000b-000000000002',
+      publicId: 'VND-2',
+      workspaceId: seededWorkspaces.default.id,
+      schemaId: seededSchemas.default.vendor.id,
+      name: 'Nordic Systems'
+    },
+    acmeContract: {
+      id: '00000000-0000-0000-000a-000000000001',
+      publicId: 'CON-1',
+      workspaceId: seededWorkspaces.default.id,
+      schemaId: seededSchemas.default.contract.id,
+      name: 'Acme Cloud Customer Portal License'
+    },
+    nordicContract: {
+      id: '00000000-0000-0000-000a-000000000002',
+      publicId: 'CON-2',
+      workspaceId: seededWorkspaces.default.id,
+      schemaId: seededSchemas.default.contract.id,
+      name: 'Nordic Support Identity Platform'
+    },
+    acmeSupportContract: {
+      id: '00000000-0000-0000-000a-000000000003',
+      publicId: 'CON-3',
+      workspaceId: seededWorkspaces.default.id,
+      schemaId: seededSchemas.default.contract.id,
+      name: 'Acme Cloud Customer Portal Support'
     }
   },
   second: {

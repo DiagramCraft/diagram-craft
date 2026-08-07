@@ -117,9 +117,23 @@ describe('instantiateTemplate', () => {
     const definitions = instantiateTemplateDefinitions('ws-1', 'default');
     const system = definitions.schemas.find(schema => schema.name === 'System');
     const contract = definitions.schemas.find(schema => schema.name === 'Contract');
+    const vendor = definitions.schemas.find(schema => schema.name === 'Vendor');
     const relation = definitions.relationSchemas.find(schema => schema.name === 'System Contract');
     const purpose = relation?.fields.find(field => field.id === 'purpose');
 
+    expect(vendor).toBeDefined();
+    expect(vendor?.fields).toEqual([]);
+    expect(contract?.fields).toContainEqual({
+      id: 'vendor',
+      name: 'Vendor',
+      predicate: 'provided by',
+      type: 'containment',
+      schemaId: vendor?.id,
+      minCount: 1,
+      maxCount: 1,
+      requirementLevel: 'required'
+    });
+    expect(contract?.fields).not.toContainEqual(expect.objectContaining({ id: 'vendor_name' }));
     expect(relation?.in_schema_ids).toEqual([system?.id]);
     expect(relation?.out_schema_ids).toEqual([contract?.id]);
     expect(purpose).toMatchObject({
