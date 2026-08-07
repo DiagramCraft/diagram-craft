@@ -25,6 +25,7 @@ import type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDepre
 import type { ChangeCaseDatabase } from '../domain/catalog/db/changeCaseDatabase';
 import type { CatalogRecordExternalIdentityDatabase } from '../domain/externalIdentity/db/externalIdentityDatabase';
 import type { RelationDatabase } from '../domain/catalog/db/relationDatabase';
+import type { CurrencyRatesDatabase } from '../domain/currencyRates/db/currencyRatesDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -68,6 +69,7 @@ export type DatabaseAdapter = {
   changeCase: ChangeCaseDatabase;
   externalIdentity: CatalogRecordExternalIdentityDatabase;
   relation: RelationDatabase;
+  currencyRates: CurrencyRatesDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -197,6 +199,11 @@ export type {
 export type { EntityChangeDatabase } from '../domain/catalog/db/entityChangeDatabase';
 export type { EntityDeprecationDatabase } from '../domain/catalog/db/entityDeprecationDatabase';
 export type { ChangeCaseDatabase } from '../domain/catalog/db/changeCaseDatabase';
+export type {
+  CurrencyRateSnapshotDbCreate,
+  CurrencyRateSnapshotDbResult,
+  CurrencyRatesDatabase
+} from '../domain/currencyRates/db/currencyRatesDatabase';
 
 // Legacy names for backward compatibility during transition if needed,
 // but we plan to update all usages.

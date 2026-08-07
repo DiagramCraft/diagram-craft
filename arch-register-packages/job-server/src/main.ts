@@ -22,6 +22,11 @@ import { createAssessmentGovernanceRegistry } from '@arch-register/server/domain
 import { createDocumentMetadataGenerationScanJobHandler } from '@arch-register/server/domain/document/documentMetadataGenerationJob';
 import { createTechnologyEolJobHandler } from '@arch-register/server/domain/jobs/technologyEolJob';
 import {
+  CURRENCY_RATES_JOB_TYPE,
+  createCurrencyRatesJobHandler,
+  ensureAllCurrencyRatesSchedules
+} from '@arch-register/server/domain/jobs/currencyRateJob';
+import {
   createAssessmentRecurrenceJobHandler,
   ASSESSMENT_RECURRENCE_JOB_TYPE
 } from '@arch-register/server/domain/project/assessmentRecurrenceJob';
@@ -73,6 +78,7 @@ const main = async () => {
   const storage = createStorage();
   await ensureAllNotificationDeliverySchedules(db);
   await ensureAllGovernanceDeadlineScanSchedules(db);
+  await ensureAllCurrencyRatesSchedules(db);
   const governanceRegistry = new Map([
     ...createEntityGovernanceRegistry(),
     ...createDeprecationGovernanceRegistry(),
@@ -92,6 +98,7 @@ const main = async () => {
     createDocumentMetadataGenerationScanJobHandler(db, storage)
   );
   handlers.set('technology-eol', createTechnologyEolJobHandler(db));
+  handlers.set(CURRENCY_RATES_JOB_TYPE, createCurrencyRatesJobHandler(db));
   handlers.set(ASSESSMENT_RECURRENCE_JOB_TYPE, createAssessmentRecurrenceJobHandler(db));
   const entityCompletenessJobHandler = createEntityCompletenessJobHandler(db);
   handlers.set(ENTITY_COMPLETENESS_JOB_TYPE, entityCompletenessJobHandler);

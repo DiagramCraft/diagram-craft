@@ -2,7 +2,18 @@ import { seededEntities, seededSchemas, seededUsers } from '@arch-register/serve
 import { createApiTest, expect } from '../helpers/fixtures';
 import { makeAuthHeader } from '../helpers/seedHelper';
 
-const test = createApiTest({ seed: 'bootstrap' }).extend<{ auth: string }>({
+const test = createApiTest({
+  seed: 'bootstrap',
+  afterSeed: async server => {
+    await server.db.currencyRates.upsertSnapshot({
+      fetch_day: '2026-08-07',
+      rate_date: '2026-08-07',
+      base_currency: 'USD',
+      rates: { USD: 1, EUR: 2, GBP: 0.8, SEK: 10, NOK: 11, DKK: 7 },
+      fetched_at: new Date('2026-08-07T02:00:00.000Z')
+    });
+  }
+}).extend<{ auth: string }>({
   auth: [
     async ({ server }, use) => {
       await use(await makeAuthHeader(server.db, seededUsers.globalAdmin.id));
@@ -41,17 +52,18 @@ test.describe('metric rollups', () => {
       populatedCount: 2
     });
     expect(results.get(seededEntities.default.nordicSystems.id)).toMatchObject({
-      value: 84000,
-      currencyCode: 'EUR',
+      value: 42000,
+      currencyCode: 'USD',
       currencyMixed: false,
       sourceCount: 1,
       populatedCount: 1
     });
     expect(response.legend).toMatchObject({
-      currencyCode: null,
-      currencyMixed: true,
-      min: 84000,
-      max: 155000
+      currencyCode: 'USD',
+      currencyMixed: false,
+      min: 42000,
+      max: 155000,
+      currencyRateDate: '2026-08-07'
     });
   });
 
@@ -67,7 +79,8 @@ test.describe('metric rollups', () => {
     expect(response.results[0]).toMatchObject({
       value: 77500,
       currencyCode: 'USD',
-      currencyMixed: false
+      currencyMixed: false,
+      currencyRateDate: '2026-08-07'
     });
     expect(response.legend).toMatchObject({
       currencyCode: 'USD',

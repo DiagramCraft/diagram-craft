@@ -192,6 +192,13 @@
   color: var(--base-fg-more-dim);
 }
 
+.metricError {
+  padding: 8px 10px;
+  border-top: 1px solid var(--panel-border);
+  color: var(--red-fg, var(--base-fg-more-dim));
+  font-size: 11px;
+}
+
 /* ── Entity tooltip ──────────────────────────────────────────── */
 
 .tooltipAnchor {

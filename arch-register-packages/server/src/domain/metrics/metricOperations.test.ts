@@ -371,6 +371,44 @@ describe('computeBoxMetrics', () => {
     });
   });
 
+  it('converts currency values before aggregating and reports the target and rate date', () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', {
+        data: { parent: 'd1', cost: { amount: 100, currency: 'USD' } }
+      }),
+      makeService('s2', 'd1', {
+        data: { parent: 'd1', cost: { amount: 80, currency: 'EUR' } }
+      })
+    ];
+    const result = computeBoxMetrics(
+      ['d1'],
+      { ...currencyMetric, targetCurrency: 'USD' },
+      entities,
+      schemas,
+      lifecycleStates,
+      null,
+      alwaysMatch,
+      null,
+      null,
+      true,
+      { targetCurrency: 'USD', rateDate: '2026-01-01', rates: { USD: 1, EUR: 0.8 } }
+    );
+
+    expect(result.results[0]).toMatchObject({
+      value: 200,
+      currencyCode: 'USD',
+      currencyMixed: false,
+      currencyRateDate: '2026-01-01'
+    });
+    expect(result.legend).toMatchObject({
+      min: 200,
+      max: 200,
+      currencyCode: 'USD',
+      currencyRateDate: '2026-01-01'
+    });
+  });
+
   it('worst picks the lowest value when direction is "low"', () => {
     const entities = [
       makeDomain('d1'),

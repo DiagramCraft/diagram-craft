@@ -71,3 +71,6 @@ export const formatMetricLegendValue = (value: number | null, legend: MetricLege
   }
   return String(value);
 };
+
+export const formatMetricRateDate = (legend: MetricLegend): string | null =>
+  legend.currencyRateDate == null ? null : `Rates as of ${legend.currencyRateDate}`;
