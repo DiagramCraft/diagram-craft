@@ -29,6 +29,7 @@ import {
   findUnresolvedFieldMigrations
 } from './schemaHelpers';
 import { compileSchemaWithSharedGroups } from './fieldGroupHelpers';
+import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import {
   materializeDerivedFields,
   validateDerivedFieldGroupAccess
@@ -299,6 +300,10 @@ export const updateWorkspaceSchema = async (
             );
           } else {
             await tx.catalog.removeEntityDataField(ws, id, migration.oldFieldId);
+            await tx.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(
+              ws,
+              encodeCaseSubkind(id, migration.oldFieldId)
+            );
           }
         }
 
@@ -462,6 +467,7 @@ export const deleteWorkspaceSchema = async (
       });
 
       await db.catalog.deleteSchema(ws, id);
+      await db.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(ws, id);
       if (schema.key_prefix) {
         await db.workspace.deletePublicIdPrefix(schema.key_prefix);
       }

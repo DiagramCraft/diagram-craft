@@ -14,14 +14,15 @@ export class SqliteGovernanceDatabase extends SqliteDatabaseBase implements Gove
   async createCase(input: GovernanceCaseDbCreate) {
     this.run(
       `INSERT INTO governance_case (
-        id, workspace, case_kind, subject_type, subject_id, subject_version, status,
+        id, workspace, case_kind, case_subkind, subject_type, subject_id, subject_version, status,
         policy_version, initiator_user_id, parent_case_id, dedupe_key, self_approval_allowed,
         payload, created_at, due_at
-      ) VALUES (?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?, ?, ?)`,
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         input.workspace,
         input.case_kind,
+        input.case_subkind ?? null,
         input.subject_type,
         input.subject_id,
         input.subject_version,

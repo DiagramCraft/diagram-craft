@@ -27,6 +27,7 @@ import {
   hardBlockedFieldChanges,
   migratableFieldChanges
 } from './documentSchemaHelpers';
+import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 
 const dbErrorMessages = {
   unique: 'A document type or template with that name already exists',
@@ -311,6 +312,10 @@ export const updateDocumentType = async (
             );
           } else {
             await tx.document.removeDocumentMetadataField(ws, id, migration.oldFieldId);
+            await tx.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(
+              ws,
+              encodeCaseSubkind(id, migration.oldFieldId)
+            );
           }
           for (const template of templatesForType) {
             if (template.metadata_defaults[migration.oldFieldId] === undefined) continue;
@@ -451,6 +456,7 @@ export const deleteDocumentType = async (
         });
       }
       await db.document.deleteDocumentType(ws, id);
+      await db.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(ws, id);
       return { deleted: true };
     }
   );

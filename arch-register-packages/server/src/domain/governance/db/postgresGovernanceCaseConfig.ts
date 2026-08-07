@@ -59,4 +59,14 @@ export class PostgresGovernanceCaseConfigDatabase
       return normalizePostgresError(error);
     }
   }
+
+  async deleteCaseConfigForSubkindOrDescendants(workspace: string, subkindPrefix: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      DELETE FROM workspace_governance_case_config
+      WHERE workspace = ${workspace}
+        AND (case_subkind = ${subkindPrefix} OR case_subkind LIKE ${`${subkindPrefix}:%`})
+      RETURNING id
+    `;
+    return rows.length;
+  }
 }

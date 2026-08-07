@@ -38,6 +38,7 @@ export type GovernanceCaseDbResult = {
   id: string;
   workspace: string;
   case_kind: string;
+  case_subkind: string | null;
   subject_type: string;
   subject_id: string;
   subject_version: string | null;
@@ -61,6 +62,7 @@ export type GovernanceCaseDbCreate = {
   id: string;
   workspace: string;
   case_kind: string;
+  case_subkind?: string | null;
   subject_type: string;
   subject_id: string;
   subject_version: string | null;
@@ -148,6 +150,7 @@ export const governanceMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     case_kind: String(row['case_kind']),
+    case_subkind: row['case_subkind'] == null ? null : String(row['case_subkind']),
     subject_type: String(row['subject_type']),
     subject_id: String(row['subject_id']),
     subject_version: row['subject_version'] == null ? null : String(row['subject_version']),
