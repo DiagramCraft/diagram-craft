@@ -26,6 +26,7 @@ import type { SharedFieldGroupLink } from '@arch-register/api-types/schemaContra
 import type { SharedFieldGroupDbResult } from '../catalog/db/catalogDatabase';
 import { DOCUMENT_STATUS_CASE_KIND } from '../document/documentWorkflowOperations';
 import { documentStatusApprovalConfigSchema } from '@arch-register/api-types/governanceCaseConfigSchemas';
+import { getSchemaGovernancePoliciesBySchema } from '../governance/schemaGovernancePolicy';
 
 const checker = new PermissionChecker();
 
@@ -263,7 +264,10 @@ const exportConfig = async (db: DatabaseAdapter, workspace: string): Promise<Exp
 };
 
 const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<ExportSchema[]> => {
-  const schemas = await db.catalog.listSchemas(workspace);
+  const [schemas, policiesBySchema] = await Promise.all([
+    db.catalog.listSchemas(workspace),
+    getSchemaGovernancePoliciesBySchema(db, workspace)
+  ]);
   const sharedGroups = await db.catalog.listSharedFieldGroups(workspace);
   const sharedGroupsById = new Map(sharedGroups.map(group => [group.id, group]));
 
@@ -281,7 +285,9 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
     color: schema.color,
     icon: schema.icon,
     default_owner: schema.default_owner,
-    key_prefix: schema.key_prefix
+    key_prefix: schema.key_prefix,
+    entity_approval_policy: policiesBySchema.get(schema.id)?.entity_approval_policy ?? 'disabled',
+    deprecation_policy: policiesBySchema.get(schema.id)?.deprecation_policy ?? 'disabled'
   }));
 };
 

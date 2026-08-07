@@ -140,7 +140,7 @@ const runSync = async (
       status: 400,
       message: "Cannot change an entity's schema via sync"
     });
-    httpAssert.true(!entityRequiresApproval(schema, oldRow), {
+    httpAssert.true(!(await entityRequiresApproval(db, workspace, schema, oldRow)), {
       status: 409,
       statusText: 'Conflict',
       message: 'This entity requires an approved change proposal before it can be edited'

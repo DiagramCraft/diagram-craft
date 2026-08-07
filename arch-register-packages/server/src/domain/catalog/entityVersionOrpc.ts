@@ -211,7 +211,7 @@ const entityVersionHandlers = {
     }
     const schema = await context.db.catalog.getSchema(workspace, entity.schema_id);
     httpAssert.present(schema, { status: 404, message: 'Entity schema not found' });
-    httpAssert.true(!entityRequiresApproval(schema, entity), {
+    httpAssert.true(!(await entityRequiresApproval(context.db, workspace, schema, entity)), {
       status: 409,
       statusText: 'Conflict',
       message: 'This entity requires an approved change proposal before it can be restored'

@@ -238,7 +238,7 @@ export const importCommit = async (
   for (const entityData of entityList) {
     const existingId = entityData._existingId as string | undefined;
     const existingEntity = existingId ? entitiesById.get(existingId) : undefined;
-    if (existingEntity && entityRequiresApproval(schema, existingEntity)) {
+    if (existingEntity && (await entityRequiresApproval(db, workspace, schema, existingEntity))) {
       throw new Error(
         `Entity ${existingEntity.id} requires an approved change proposal before it can be imported`
       );

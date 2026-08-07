@@ -3,6 +3,11 @@ import { expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
 import { createFixtureCatalogEntity } from './catalogFixtures';
 import { createFixtureSchema, createFixtureWorkspace } from './projectFixtures';
+import {
+  ENTITY_CHANGE_POLICY_CASE_KIND,
+  upsertSchemaGovernancePolicies
+} from '../../domain/governance/schemaGovernancePolicy';
+import { encodeCaseSubkind } from '../../domain/governance/governanceCaseSubkind';
 
 runContractSuiteAgainstBothDrivers('Entity change approval database', getDb => {
   it('stores immutable revisions and advances entity versions conditionally', async () => {
@@ -10,7 +15,7 @@ runContractSuiteAgainstBothDrivers('Entity change approval database', getDb => {
     const workspace = await createFixtureWorkspace(db);
     const schemaId = await createFixtureSchema(db, workspace);
     const schema = (await db.catalog.getSchema(workspace, schemaId))!;
-    const governedSchema = await db.catalog.updateSchema(workspace, schemaId, {
+    await db.catalog.updateSchema(workspace, schemaId, {
       name: schema.name,
       description: schema.description,
       fields: schema.fields,
@@ -19,10 +24,25 @@ runContractSuiteAgainstBothDrivers('Entity change approval database', getDb => {
       icon: schema.icon,
       default_owner: schema.default_owner,
       key_prefix: schema.key_prefix,
-      entity_approval_policy: 'required',
       updated_at: new Date()
     });
-    expect(governedSchema!.entity_approval_policy).toBe('required');
+    await upsertSchemaGovernancePolicies(
+      db,
+      workspace,
+      schemaId,
+      { entity_approval_policy: 'required', deprecation_policy: 'disabled' },
+      new Date(),
+      null
+    );
+    expect(
+      (
+        await db.governanceCaseConfig.getCaseConfig(
+          workspace,
+          ENTITY_CHANGE_POLICY_CASE_KIND,
+          encodeCaseSubkind(schemaId)
+        )
+      )?.enabled
+    ).toBe(true);
 
     const entity = await createFixtureCatalogEntity(db, workspace, schemaId);
     expect(entity.version).toBe(1);

@@ -1,7 +1,6 @@
 ALTER TABLE entity ADD COLUMN version INTEGER NOT NULL DEFAULT 1;
 ALTER TABLE entity ADD COLUMN approval_policy_override TEXT CHECK (approval_policy_override IN ('required', 'disabled'));
-ALTER TABLE entity_schema ADD COLUMN entity_approval_policy TEXT NOT NULL DEFAULT 'disabled'
-  CHECK (entity_approval_policy IN ('required', 'disabled'));
+-- Entity approval policy is stored in workspace_governance_case_config.
 
 -- @creates entity_change_proposal
 CREATE TABLE entity_change_proposal (

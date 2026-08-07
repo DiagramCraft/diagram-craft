@@ -96,6 +96,8 @@ export type ExportSchema = {
   icon: string | null;
   default_owner: string | null;
   key_prefix: string | null;
+  entity_approval_policy?: 'required' | 'disabled';
+  deprecation_policy?: 'required' | 'disabled';
 };
 
 export type ExportRelationSchema = {

@@ -45,6 +45,10 @@ import {
   type WorkspaceAuthorizationContext
 } from '@arch-register/permissions';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
+import {
+  ENTITY_DEPRECATION_POLICY_CASE_KIND,
+  getSchemaPolicy
+} from '../governance/schemaGovernancePolicy';
 
 export const ENTITY_DEPRECATION_CASE_KIND = 'entity.deprecation';
 const DEPRECATION_POLICY_VERSION = 'entity.deprecation:v1';
@@ -343,11 +347,14 @@ export const proposeEntityDeprecation = async (
   const canonicalEntityId = entity.id;
   const schema = await db.catalog.getSchema(workspace, entity.schema_id);
   httpAssert.present(schema, { status: 404, message: 'Entity schema not found' });
-  httpAssert.true((schema.deprecation_policy ?? 'disabled') === 'required', {
-    status: 409,
-    statusText: 'Conflict',
-    message: "The deprecation workflow is not enabled for this entity's schema"
-  });
+  httpAssert.true(
+    await getSchemaPolicy(db, workspace, schema.id, ENTITY_DEPRECATION_POLICY_CASE_KIND),
+    {
+      status: 409,
+      statusText: 'Conflict',
+      message: "The deprecation workflow is not enabled for this entity's schema"
+    }
+  );
   const deprecatedStateId = await getDeprecatedLifecycleStateId(db, workspace);
   httpAssert.true(entity.lifecycle !== deprecatedStateId, {
     status: 409,

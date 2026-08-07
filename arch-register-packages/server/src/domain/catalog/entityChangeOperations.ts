@@ -61,6 +61,10 @@ import {
   type FieldGroupSchemaShape
 } from '../auth/fieldGroupAccessControl';
 import { getEntitySchemaAt } from './schemaHistory';
+import {
+  ENTITY_CHANGE_POLICY_CASE_KIND,
+  getSchemaPolicy
+} from '../governance/schemaGovernancePolicy';
 
 export const ENTITY_CHANGE_CASE_KIND = 'entity.change-case';
 export const ENTITY_CHANGE_CASE_BULK_KIND = 'entity.change-case.bulk';
@@ -94,17 +98,19 @@ const entityState = (entity: Entity): Record<string, unknown> => ({
   updated_at: entity.updated_at.toISOString()
 });
 
-const policyFor = (
-  schema: { id: string; version?: number; entity_approval_policy?: 'required' | 'disabled' },
+const policyFor = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  schema: { id: string; version?: number },
   entity: Entity
-): ResolvedEntityApprovalPolicy => {
+): Promise<ResolvedEntityApprovalPolicy> => {
   const override = entity.approval_policy_override ?? 'inherit';
   const required =
     entity.approval_policy_override === 'required'
       ? true
       : entity.approval_policy_override === 'disabled'
         ? false
-        : (schema.entity_approval_policy ?? 'disabled') === 'required';
+        : await getSchemaPolicy(db, workspace, schema.id, ENTITY_CHANGE_POLICY_CASE_KIND);
   return {
     required,
     selfApprovalAllowed: false,
@@ -154,13 +160,15 @@ export const listEligibleApproverIds = async (
 export const isSoleApprover = (eligibleApproverIds: ReadonlySet<string>, userId: string) =>
   eligibleApproverIds.size === 1 && eligibleApproverIds.has(userId);
 
-export const entityRequiresApproval = (
-  schema: { entity_approval_policy?: 'required' | 'disabled' },
+export const entityRequiresApproval = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  schema: { id: string },
   entity: Entity
 ) =>
   entity.approval_policy_override === 'required' ||
   (entity.approval_policy_override !== 'disabled' &&
-    (schema.entity_approval_policy ?? 'disabled') === 'required');
+    (await getSchemaPolicy(db, workspace, schema.id, ENTITY_CHANGE_POLICY_CASE_KIND)));
 
 const stateToMutationBody = (state: Record<string, unknown>, fallback: Entity) => ({
   _schemaId: state['schema_id'] ?? fallback.schema_id,
@@ -586,7 +594,7 @@ export const submitBulkEntityChangeApproval = async (
     requireWorkspaceCapability(authCtx, 'ent.propose');
     const schema = await db.catalog.getSchema(workspace, entity.schema_id);
     httpAssert.present(schema, { status: 404, message: 'Entity schema not found' });
-    const policy = policyFor(schema, entity);
+    const policy = await policyFor(db, workspace, schema, entity);
     httpAssert.true(policy.required, {
       status: 409,
       statusText: 'Conflict',
@@ -724,7 +732,7 @@ const submitProposal = async (
   const canonicalEntityId = entity.id;
   const schema = await db.catalog.getSchema(workspace, entity.schema_id);
   httpAssert.present(schema, { status: 404, message: 'Entity schema not found' });
-  const policy = policyFor(schema, entity);
+  const policy = await policyFor(db, workspace, schema, entity);
   httpAssert.true(policy.required, {
     status: 409,
     statusText: 'Conflict',
