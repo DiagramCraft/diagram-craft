@@ -39,6 +39,7 @@ const serviceSchema: SchemaDbResult = {
       requirementLevel: 'optional'
     },
     { id: 'score', name: 'Score', type: 'number', requirementLevel: 'optional' },
+    { id: 'cost', name: 'Cost', type: 'currency', requirementLevel: 'optional' },
     { id: 'tier', name: 'Tier', type: 'select', enumId: 'enum-tier', requirementLevel: 'optional' }
   ],
   color: null,
@@ -162,6 +163,12 @@ const numericMetric: MetricConfig = {
   aggregation: 'sum'
 };
 
+const currencyMetric: MetricConfig = {
+  sourceSchemaId: 'service',
+  source: { kind: 'field', fieldId: 'cost' },
+  aggregation: 'sum'
+};
+
 const alwaysMatch = () => true;
 
 describe('computeBoxMetrics', () => {
@@ -282,6 +289,86 @@ describe('computeBoxMetrics', () => {
       alwaysMatch
     );
     expect(result.results[0]?.value).toBe(15);
+  });
+
+  it('aggregates homogeneous currency amounts and reports their currency code', () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', {
+        data: { parent: 'd1', cost: { amount: 125000, currency: 'USD' } }
+      }),
+      makeService('s2', 'd1', { data: { parent: 'd1', cost: { amount: 30000, currency: 'USD' } } })
+    ];
+
+    const sum = computeBoxMetrics(
+      ['d1'],
+      currencyMetric,
+      entities,
+      schemas,
+      lifecycleStates,
+      null,
+      alwaysMatch
+    );
+    expect(sum.results[0]).toMatchObject({
+      value: 155000,
+      currencyCode: 'USD',
+      currencyMixed: false,
+      sourceCount: 2,
+      populatedCount: 2
+    });
+    expect(sum.legend).toMatchObject({
+      min: 155000,
+      max: 155000,
+      currencyCode: 'USD',
+      currencyMixed: false
+    });
+
+    const average = computeBoxMetrics(
+      ['d1'],
+      { ...currencyMetric, aggregation: 'average' },
+      entities,
+      schemas,
+      lifecycleStates,
+      null,
+      alwaysMatch
+    );
+    expect(average.results[0]).toMatchObject({ value: 77500, currencyCode: 'USD' });
+  });
+
+  it('aggregates mixed currencies without conversion and marks them unconverted', () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', {
+        data: { parent: 'd1', cost: { amount: 125000, currency: 'USD' } }
+      }),
+      makeService('s2', 'd1', { data: { parent: 'd1', cost: { amount: 84000, currency: 'EUR' } } }),
+      makeService('s3', 'd1', {
+        data: { parent: 'd1', cost: { amount: 'invalid', currency: 'EUR' } }
+      })
+    ];
+
+    const result = computeBoxMetrics(
+      ['d1'],
+      currencyMetric,
+      entities,
+      schemas,
+      lifecycleStates,
+      null,
+      alwaysMatch
+    );
+    expect(result.results[0]).toMatchObject({
+      value: 209000,
+      currencyCode: null,
+      currencyMixed: true,
+      sourceCount: 3,
+      populatedCount: 2
+    });
+    expect(result.legend).toMatchObject({
+      min: 209000,
+      max: 209000,
+      currencyCode: null,
+      currencyMixed: true
+    });
   });
 
   it('worst picks the lowest value when direction is "low"', () => {

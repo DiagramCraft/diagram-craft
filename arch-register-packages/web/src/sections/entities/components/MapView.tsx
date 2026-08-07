@@ -60,6 +60,7 @@ import { useMapMetricRollup } from './useMapMetricRollup';
 import { useFieldGroupAccess } from '../../../auth/useFieldGroupAccess';
 import { MapLegend } from './MapLegend';
 import { MapBreadcrumb, type MapFocusEntry } from './MapBreadcrumb';
+import { formatMetricResultValue, formatMetricSourceValue } from './mapMetricFormatting';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
@@ -118,6 +119,32 @@ const nodeName = (n: TreeNode) => n._name ?? n._slug;
 const aggregationLabel = (aggregation: MetricAggregation) =>
   AGGREGATION_OPTIONS.find(o => o.value === aggregation)?.label ?? aggregation;
 
+const metricValueLabel = (
+  node: TreeNode,
+  isLeaf: boolean,
+  metric: MetricConfig | null,
+  sourceSchema: EntitySchema | undefined,
+  result: MetricResult | undefined,
+  lifecycleStates: WorkspaceLifecycleState[]
+): string | null => {
+  if (!metric || !result) return null;
+  if (isLeaf && metric.source.kind === 'field' && node._schema.id === metric.sourceSchemaId) {
+    return formatMetricSourceValue(
+      metric,
+      sourceSchema,
+      (node as Record<string, unknown>)[metric.source.fieldId]
+    );
+  }
+  if (isEnumSource(metric.source)) return result.dominantLabel ?? '—';
+  if (metric.source.kind === 'lifecycle') {
+    return result.lifecycleId == null
+      ? '—'
+      : (lifecycleStates.find(state => state.id === result.lifecycleId)?.label ??
+          result.lifecycleId);
+  }
+  return formatMetricResultValue(metric, sourceSchema, result);
+};
+
 /** Box fill color for `node`'s metric result, or null when no metric is configured. */
 const resolveBoxColor = (
   node: TreeNode,
@@ -150,7 +177,8 @@ const buildMetricRows = (
   metric: MetricConfig | null,
   metricLabel: string,
   resultsByBoxId: Map<string, MetricResult>,
-  lifecycleStates: WorkspaceLifecycleState[]
+  lifecycleStates: WorkspaceLifecycleState[],
+  sourceSchema: EntitySchema | undefined
 ): EntityHoverCardRow[] => {
   if (!metric) return [];
   const result = resultsByBoxId.get(node._uid);
@@ -172,7 +200,7 @@ const buildMetricRows = (
   } else {
     rows.push({
       label: metricLabel,
-      value: result.value == null ? '—' : String(Math.round(result.value * 100) / 100)
+      value: formatMetricResultValue(metric, sourceSchema, result)
     });
   }
   rows.push({
@@ -231,6 +259,39 @@ const EntityTooltip = ({
     >
       {children}
     </HoverCard>
+  );
+};
+
+const MetricValueLabel = ({
+  node,
+  isLeaf,
+  metric,
+  sourceSchema,
+  resultsByBoxId,
+  lifecycleStates,
+  style
+}: {
+  node: TreeNode;
+  isLeaf: boolean;
+  metric: MetricConfig | null;
+  sourceSchema: EntitySchema | undefined;
+  resultsByBoxId: Map<string, MetricResult>;
+  lifecycleStates: WorkspaceLifecycleState[];
+  style?: React.CSSProperties;
+}) => {
+  const value = metricValueLabel(
+    node,
+    isLeaf,
+    metric,
+    sourceSchema,
+    resultsByBoxId.get(node._uid),
+    lifecycleStates
+  );
+  if (value == null) return null;
+  return (
+    <span className={styles.metricValue} style={style}>
+      {value}
+    </span>
   );
 };
 
@@ -473,8 +534,15 @@ export const MapView = ({
 
   const metricRowsFor = useCallback(
     (node: TreeNode): EntityHoverCardRow[] =>
-      buildMetricRows(node, metricConfig, metricLabel, resultsByBoxId, lifecycleStates),
-    [metricConfig, metricLabel, resultsByBoxId, lifecycleStates]
+      buildMetricRows(
+        node,
+        metricConfig,
+        metricLabel,
+        resultsByBoxId,
+        lifecycleStates,
+        metricSourceSchema
+      ),
+    [metricConfig, metricLabel, resultsByBoxId, lifecycleStates, metricSourceSchema]
   );
 
   const focusHandlers = useCallback(
@@ -740,6 +808,15 @@ export const MapView = ({
                         {nodeName(l1)}
                       </button>
                     </EntityTooltip>
+                    <MetricValueLabel
+                      node={l1}
+                      isLeaf={cfg.levels < 2 || l2Children.length === 0}
+                      metric={metricConfig}
+                      sourceSchema={metricSourceSchema}
+                      resultsByBoxId={resultsByBoxId}
+                      lifecycleStates={lifecycleStates}
+                      style={nameStyle(l1, l1Dimmed)}
+                    />
                   </div>
 
                   {cfg.levels >= 2 && l2Children.length > 0 && (
@@ -782,6 +859,15 @@ export const MapView = ({
                                   {nodeName(l2)}
                                 </button>
                               </EntityTooltip>
+                              <MetricValueLabel
+                                node={l2}
+                                isLeaf={cfg.levels < 3 || l3Children.length === 0}
+                                metric={metricConfig}
+                                sourceSchema={metricSourceSchema}
+                                resultsByBoxId={resultsByBoxId}
+                                lifecycleStates={lifecycleStates}
+                                style={nameStyle(l2, l2Dimmed)}
+                              />
                             </div>
 
                             {cfg.levels >= 3 && l3Children.length > 0 && (
@@ -830,6 +916,15 @@ export const MapView = ({
                                           {nodeName(l3)}
                                         </button>
                                       </EntityTooltip>
+                                      <MetricValueLabel
+                                        node={l3}
+                                        isLeaf
+                                        metric={metricConfig}
+                                        sourceSchema={metricSourceSchema}
+                                        resultsByBoxId={resultsByBoxId}
+                                        lifecycleStates={lifecycleStates}
+                                        style={nameStyle(l3, l3Dimmed)}
+                                      />
                                     </div>
                                   );
                                 })}

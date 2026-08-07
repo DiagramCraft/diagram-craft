@@ -8,8 +8,8 @@ import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 
 export const metricSourceSchema = z.discriminatedUnion('kind', [
   z.object({
-    kind: z.literal('field').describe('A numeric field on the source schema'),
-    fieldId: z.string().describe('Numeric entity field identifier')
+    kind: z.literal('field').describe('A numeric or currency field on the source schema'),
+    fieldId: z.string().describe('Numeric or currency entity field identifier')
   }),
   z.object({
     kind: z
@@ -116,12 +116,32 @@ export const metricResultSchema = z.object({
   populatedCount: z
     .number()
     .int()
-    .describe('Number of matching descendants that had a non-missing value')
+    .describe('Number of matching descendants that had a non-missing value'),
+  currencyCode: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Currency code when all populated currency values use the same currency'),
+  currencyMixed: z
+    .boolean()
+    .optional()
+    .describe('Whether populated currency values used more than one currency without conversion')
 });
 
 export const metricLegendSchema = z.object({
   min: z.number().nullable().describe('Lowest aggregated value across all requested boxes'),
   max: z.number().nullable().describe('Highest aggregated value across all requested boxes'),
+  currencyCode: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Currency code when all returned currency results use the same currency'),
+  currencyMixed: z
+    .boolean()
+    .optional()
+    .describe(
+      'Whether returned currency results contain more than one currency without conversion'
+    ),
   categories: z
     .array(z.object({ value: z.string(), label: z.string() }))
     .optional()

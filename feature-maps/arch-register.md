@@ -212,12 +212,14 @@
 
         - @id:ar.entity-views.map Users can inspect containment hierarchies, including the built-in Vendor-to-Contract
           path, as a nested capability map, colouring boxes by a configurable metric rolled up from descendant entities
-          (numeric fields, lifecycle state, or assessment
-          fields), using dominant-option or worst aggregation. For enum-sourced metrics, "worst" ranks options by the
-          admin-configured top-to-bottom order of the enum's options. A metric source in an access-restricted field
-          group evaluates as unavailable (no value, distribution, or dominant option) for viewers without view access
-          to that group, rather than exposing the underlying data; the field picker also excludes such fields when
-          configuring the metric.
+          (numeric or currency fields, lifecycle state, or assessment fields), using dominant-option or worst
+          aggregation. Currency sum and average rollups use the stored amounts, format homogeneous results with their
+          currency code, and label mixed-currency results as unconverted without performing currency conversion. For
+          enum-sourced metrics, "worst" ranks options by the admin-configured top-to-bottom order of the enum's
+          options. A metric source in an access-restricted field group evaluates as unavailable (no value, distribution,
+          or dominant option) for viewers without view access to that group, rather than exposing the underlying data;
+          the field picker also excludes such fields when configuring the metric. Rollups traverse containment only;
+          typed-relation cost traversal is deferred to a follow-up capability.
 
         - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view,
           toggling which relation fields draw connections; typed relation instances are included by default

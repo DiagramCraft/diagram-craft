@@ -42,9 +42,10 @@ export type MetricSourceOption = {
 };
 
 /**
- * Selectable metric sources for `schema`'s descendants: numeric/select fields, lifecycle, and (if
- * joined) assessment rating/enum fields. Fields in a group the caller cannot view are omitted -
- * pass `useFieldGroupAccess(workspaceId)` for `getFieldGroupAccess`, matching `FilterBuilder`.
+ * Selectable metric sources for `schema`'s descendants: numeric/currency/select fields, lifecycle,
+ * and (if joined) assessment rating/enum fields. Fields in a group the caller cannot view are
+ * omitted - pass `useFieldGroupAccess(workspaceId)` for `getFieldGroupAccess`, matching
+ * `FilterBuilder`.
  */
 export const getMetricSourceOptions = (
   schema: EntitySchema | undefined,
@@ -60,7 +61,7 @@ export const getMetricSourceOptions = (
       const group = schema.groups?.find(g => g.id === field.groupId);
       if (getFieldGroupAccess(group?.accessControl) === 'none') continue;
     }
-    if (field.type === 'number') {
+    if (field.type === 'number' || field.type === 'currency') {
       options.push({ source: { kind: 'field', fieldId: field.id }, label: field.name });
     } else if (field.type === 'select') {
       options.push({ source: { kind: 'enum', fieldId: field.id }, label: field.name });
