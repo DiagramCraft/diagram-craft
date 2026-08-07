@@ -22,6 +22,7 @@ import { notificationPreferencesContract } from '@arch-register/api-types/notifi
 import { discussionContract } from '@arch-register/api-types/discussionContract';
 import { governanceContract } from '@arch-register/api-types/governanceContract';
 import { governanceReminderConfigContract } from '@arch-register/api-types/governanceReminderConfigContract';
+import { governanceWorkflowOverviewContract } from '@arch-register/api-types/governanceWorkflowOverviewContract';
 import { entityVersionContract } from '@arch-register/api-types/entityVersionContract';
 import { entityChangeContract } from '@arch-register/api-types/entityChangeContract';
 import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
@@ -98,6 +99,9 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
   const applicationGovernanceReminderConfig = makeApplication(
     governanceReminderConfigContract
   ).governanceReminderConfig;
+  const applicationGovernanceWorkflowOverview = makeApplication(
+    governanceWorkflowOverviewContract
+  ).governanceWorkflowOverview;
   const applicationEntityVersions = makeApplication(entityVersionContract).entityVersions;
   const applicationEntityChanges = makeApplication(entityChangeContract).entityChanges;
   const applicationEntityDeprecations =
@@ -150,6 +154,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     discussions: applicationDiscussions,
     governance: applicationGovernance,
     governanceReminderConfig: applicationGovernanceReminderConfig,
+    governanceWorkflowOverview: applicationGovernanceWorkflowOverview,
     ai: applicationAi,
     diagramCraft: make(diagramCraftContract).diagramCraft,
     jobs: applicationJobs,

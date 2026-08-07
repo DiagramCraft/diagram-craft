@@ -15,7 +15,7 @@ test.describe('dashboard section', () => {
     await homePage.enterEditMode();
     await homePage.addWidgetButton().click();
     await page.getByRole('button', { name: 'Lifecycle chart' }).click();
-    await expect(page.getByText('Lifecycle Breakdown').first()).toBeVisible();
+    await expect(page.getByText('Lifecycle').first()).toBeVisible();
 
     await homePage.saveDashboard();
     await expect(homePage.editDashboardButton()).toBeVisible();

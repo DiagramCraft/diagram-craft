@@ -38,17 +38,17 @@ type SettingsNavItem = {
 
 const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'general', label: 'General', icon: <TbSettings size={12} />, group: 'Workspace' },
-  { id: 'lifecycle-owners', label: 'Lifecycle', icon: <TbTag size={12} />, group: 'Workspace' },
   { id: 'currencies', label: 'Currencies', icon: <TbTag size={12} />, group: 'Workspace' },
-  { id: 'model-overview', label: 'Model Overview', icon: <TbCode size={12} />, group: 'Model' },
-  { id: 'schemas', label: 'Entity Types', icon: <TbCode size={12} />, group: 'Model' },
+  { id: 'model-overview', label: 'Overview', icon: <TbCode size={12} />, group: 'Model' },
+  { id: 'schemas', label: 'Entity Schema', icon: <TbCode size={12} />, group: 'Model' },
   {
     id: 'documents',
-    label: 'Document Types & Templates',
+    label: 'Document Schema',
     icon: <TbFileDescription size={12} />,
     group: 'Model'
   },
   { id: 'members', label: 'Members', icon: <TbUsers size={12} />, group: 'People' },
+  { id: 'lifecycle-owners', label: 'Lifecycle', icon: <TbTag size={12} />, group: 'Model' },
   { id: 'teams', label: 'Teams', icon: <TbUsers size={12} />, group: 'People' },
   { id: 'roles', label: 'Roles & permissions', icon: <TbShieldLock size={12} />, group: 'People' },
   {
@@ -59,8 +59,8 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   },
   { id: 'ai', label: 'AI', icon: <TbSparkles size={12} />, group: 'Workspace' },
   {
-    id: 'governance',
-    label: 'Governance reminders',
+    id: 'workflows',
+    label: 'Workflows',
     icon: <TbBolt size={12} />,
     group: 'Workspace'
   },
@@ -68,7 +68,7 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
     id: 'export-import',
     label: 'Export & Import',
     icon: <TbFileExport size={12} />,
-    group: 'Workspace'
+    group: 'Administration'
   },
   { id: 'analytics', label: 'Analytics', icon: <TbChartBar size={12} />, group: 'Workspace' },
   { id: 'audit', label: 'Audit log', icon: <TbHistory size={12} />, group: 'Workspace' },

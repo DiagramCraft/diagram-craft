@@ -1,11 +1,7 @@
 import { useCallback, useEffect, useState } from 'react';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Button } from '@diagram-craft/app-components/Button';
-import styles from './GovernanceSettingsSubSection.module.css';
-import {
-  useGovernanceReminderConfig,
-  useUpdateGovernanceReminderConfig
-} from '../../../hooks/useGovernanceReminderConfig';
+import styles from './ReminderConfigRow.module.css';
 import type { GovernanceReminderConfig } from '@arch-register/api-types/governanceReminderConfigContract';
 
 const parseDayList = (value: string): number[] =>
@@ -18,7 +14,7 @@ const parseDayList = (value: string): number[] =>
 
 const formatDayList = (days: number[]): string => days.join(', ');
 
-const ReminderConfigRow = ({
+export const ReminderConfigRow = ({
   config,
   onSave,
   saving
@@ -119,40 +115,6 @@ const ReminderConfigRow = ({
             </Button>
           </div>
         )}
-      </div>
-    </div>
-  );
-};
-
-export const GovernanceSettingsSubSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
-  const { data: configs } = useGovernanceReminderConfig(workspaceSlug);
-  const updateConfig = useUpdateGovernanceReminderConfig(workspaceSlug);
-
-  return (
-    <div className={styles.blockList}>
-      <div className={styles.section}>
-        <div className={styles.sectionHead}>
-          <div className={styles.sectionTitle}>Deadline reminders</div>
-          <div className={styles.sectionSub}>
-            Configure when scheduled reminders are sent for governance cases with a deadline, per
-            case kind.
-          </div>
-        </div>
-        <div className={styles.sectionBody}>
-          {(configs ?? []).map(config => (
-            <ReminderConfigRow
-              key={config.case_kind}
-              config={config}
-              saving={updateConfig.isPending}
-              onSave={data => updateConfig.mutate({ caseKind: config.case_kind, data })}
-            />
-          ))}
-          {configs != null && configs.length === 0 && (
-            <div style={{ fontSize: 12, color: 'var(--cmp-fg-disabled)', padding: '8px 0' }}>
-              No governance case kinds support scheduled reminders yet.
-            </div>
-          )}
-        </div>
       </div>
     </div>
   );

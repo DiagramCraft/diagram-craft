@@ -13,16 +13,7 @@ import {
 import { requireWorkspaceCapability } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import type { GovernanceRegistry } from './governanceRegistry';
-
-// Human-readable labels for the case kinds that support scheduled reminders — kept local to this
-// settings surface rather than in governanceRegistry.ts, since the registry itself only carries
-// domain-effect hooks, not presentation concerns.
-const CASE_KIND_LABELS: Record<string, string> = {
-  'entity.change-case': 'Entity change proposals',
-  'entity.change-case.bulk': 'Bulk entity change proposals',
-  'entity.deprecation': 'Entity deprecations',
-  'assessment.response': 'Assessment responses'
-};
+import { CASE_KIND_LABELS } from './governanceCaseKindLabels';
 
 type ORPCContext = {
   db: DatabaseAdapter;

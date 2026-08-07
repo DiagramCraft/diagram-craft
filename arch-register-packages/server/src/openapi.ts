@@ -45,6 +45,7 @@ import { relationVersionContract } from '@arch-register/api-types/relationVersio
 import { relationChangeContract } from '@arch-register/api-types/relationChangeContract';
 import { governanceContract } from '@arch-register/api-types/governanceContract';
 import { governanceReminderConfigContract } from '@arch-register/api-types/governanceReminderConfigContract';
+import { governanceWorkflowOverviewContract } from '@arch-register/api-types/governanceWorkflowOverviewContract';
 import { milestoneContract } from '@arch-register/api-types/milestoneContract';
 import { wikiCommentContract } from '@arch-register/api-types/wikiCommentContract';
 import { devContract } from '@arch-register/api-types/devContract';
@@ -92,6 +93,7 @@ export const allContracts = {
   ...relationChangeContract,
   ...governanceContract,
   ...governanceReminderConfigContract,
+  ...governanceWorkflowOverviewContract,
   ...milestoneContract,
   ...wikiCommentContract,
   ...devContract
@@ -149,6 +151,7 @@ export const getApplicationOpenAPISpec = () => {
       ...discussionContract,
       ...governanceContract,
       ...governanceReminderConfigContract,
+      ...governanceWorkflowOverviewContract,
       ...entityVersionContract,
       ...entityChangeContract,
       ...relationVersionContract,

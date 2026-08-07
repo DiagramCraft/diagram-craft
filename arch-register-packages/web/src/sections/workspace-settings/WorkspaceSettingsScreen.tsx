@@ -14,7 +14,7 @@ import { RolesPermissionsSubSection } from './sub-sections/RolesPermissionsSubSe
 import { MembersSubSection } from './sub-sections/MembersSubSection';
 import { TeamsSubSection } from './sub-sections/TeamsSubSection';
 import { AiSettingsSubSection } from './sub-sections/AiSettingsSubSection';
-import { GovernanceSettingsSubSection } from './sub-sections/GovernanceSettingsSubSection';
+import { WorkflowsSubSection } from './sub-sections/WorkflowsSubSection';
 import { ExportImportSubSection } from './sub-sections/ExportImportSubSection';
 import { RoutePendingComponent } from '../../routes/RoutePendingComponent';
 import { JobMonitoringSubSection } from './sub-sections/JobMonitoringSubSection';
@@ -247,7 +247,7 @@ export const WorkspaceSettingsScreen = () => {
         />
       )}
       {section === 'ai' && <AiSettingsSubSection workspaceSlug={workspaceSlug} />}
-      {section === 'governance' && <GovernanceSettingsSubSection workspaceSlug={workspaceSlug} />}
+      {section === 'workflows' && <WorkflowsSubSection workspaceSlug={workspaceSlug} />}
       {section === 'export-import' && <ExportImportSubSection />}
       {section === 'analytics' && (
         <Suspense fallback={<RoutePendingComponent />}>
