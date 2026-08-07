@@ -33,6 +33,10 @@ import {
   assertResolvedFieldGroupReferences
 } from '../catalog/schemaHelpers';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
+import {
+  getSchemaGovernancePoliciesBySchema,
+  upsertSchemaGovernancePolicies
+} from '../governance/schemaGovernancePolicy';
 import { writeAudit } from '../audit/db/auditLogging';
 
 type ImportableSchema = {
@@ -195,13 +199,15 @@ const sourceFromWorkspace = async (
 ): Promise<DefinitionSource> => {
   const workspaceRow = await db.workspace.getWorkspace(workspace);
   httpAssert.present(workspaceRow, { status: 404, message: `Workspace '${workspace}' not found` });
-  const [schemas, enums, documentTypes, teams, sharedFieldGroups] = await Promise.all([
-    db.catalog.listSchemas(workspace),
-    db.catalog.listEnums(workspace),
-    db.document.listDocumentTypes(workspace, true),
-    db.workspace.listTeams(workspace),
-    db.catalog.listSharedFieldGroups(workspace)
-  ]);
+  const [schemas, enums, documentTypes, teams, sharedFieldGroups, policiesBySchema] =
+    await Promise.all([
+      db.catalog.listSchemas(workspace),
+      db.catalog.listEnums(workspace),
+      db.document.listDocumentTypes(workspace, true),
+      db.workspace.listTeams(workspace),
+      db.catalog.listSharedFieldGroups(workspace),
+      getSchemaGovernancePoliciesBySchema(db, workspace)
+    ]);
   const teamNames = new Map(teams.map(team => [team.id, team.name]));
 
   return {
@@ -226,8 +232,8 @@ const sourceFromWorkspace = async (
       default_owner_name: schema.default_owner
         ? (teamNames.get(schema.default_owner) ?? null)
         : null,
-      entity_approval_policy: schema.entity_approval_policy ?? 'disabled',
-      deprecation_policy: schema.deprecation_policy ?? 'disabled'
+      entity_approval_policy: policiesBySchema.get(schema.id)?.entity_approval_policy ?? 'disabled',
+      deprecation_policy: policiesBySchema.get(schema.id)?.deprecation_policy ?? 'disabled'
     })),
     enums: enums.map(enumeration => ({
       id: enumeration.id,
@@ -716,12 +722,21 @@ export const executeDefinitionImport = async (
                   team => lower(team.name) === lower(schema.default_owner_name!)
                 )?.id ?? null)
               : null,
-            entity_approval_policy: schema.entity_approval_policy,
-            deprecation_policy: schema.deprecation_policy,
             created_at: now,
             updated_at: now
           };
           await tx.catalog.createSchema(row);
+          await upsertSchemaGovernancePolicies(
+            tx,
+            ws,
+            row.id,
+            {
+              entity_approval_policy: schema.entity_approval_policy,
+              deprecation_policy: schema.deprecation_policy
+            },
+            now,
+            authCtx.userId
+          );
           await tx.workspace.registerPublicIdPrefix(row.key_prefix, 'schema', row.id, now);
           await tx.catalog.createSchemaVersion({
             id: randomUUID(),

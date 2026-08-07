@@ -16,6 +16,7 @@ import {
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { normalizePublicIdPrefix, validatePublicIdPrefix } from '../../utils/publicIds';
 import { buildDerivedPlan } from '../derived/derivedFields';
+import type { SchemaGovernancePolicies } from '../governance/schemaGovernancePolicy';
 
 type SchemaMutationPayload = {
   name: string;
@@ -367,7 +368,7 @@ export const buildCreateSchemaInput = (
 
 export const buildUpdateSchemaInput = (
   body: Record<string, unknown>,
-  current: InternalEntitySchema,
+  current: InternalEntitySchema & Partial<SchemaGovernancePolicies>,
   teamIds: Set<string>,
   timestamp: Date
 ): SchemaMutationPayload & { updated_at: Date } => {
@@ -598,7 +599,11 @@ export const toApiSharedFieldGroup = (
 export const toApiSchema = (
   schema: InternalEntitySchema,
   entityCount: number,
-  enums: InternalWorkspaceEnum[]
+  enums: InternalWorkspaceEnum[],
+  policies: SchemaGovernancePolicies = {
+    entity_approval_policy: 'disabled',
+    deprecation_policy: 'disabled'
+  }
 ): EntitySchema => {
   const fields = resolveSelectFieldOptions(schema.fields, enums);
   return {
@@ -615,8 +620,8 @@ export const toApiSchema = (
     icon: schema.icon,
     entity_count: entityCount,
     version: schema.version ?? 1,
-    entity_approval_policy: schema.entity_approval_policy ?? 'disabled',
-    deprecation_policy: schema.deprecation_policy ?? 'disabled',
+    entity_approval_policy: policies.entity_approval_policy,
+    deprecation_policy: policies.deprecation_policy,
     created_at: schema.created_at.toISOString(),
     updated_at: schema.updated_at.toISOString()
   };

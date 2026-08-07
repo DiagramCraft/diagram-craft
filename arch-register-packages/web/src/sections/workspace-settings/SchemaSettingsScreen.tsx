@@ -175,23 +175,39 @@ export const SchemaSettingsScreen = () => {
     async (fieldMigrations?: FieldMigrations) => {
       if (!selected || !dirty) return;
       try {
-        await updateSchemaMutation.mutateAsync({
-          schemaId: selected.id,
-          data: {
-            name,
-            key_prefix: keyPrefix,
-            description,
-            fields,
-            templates,
-            groups,
-            shared_field_group_links: sharedFieldGroupLinks,
-            color,
-            icon,
-            entity_approval_policy: entityApprovalPolicy,
-            deprecation_policy: deprecationPolicy,
-            fieldMigrations
-          }
-        });
+        const schemaChanged =
+          fieldMigrations !== undefined ||
+          name !== selected.name ||
+          keyPrefix !== selected.key_prefix ||
+          description !== selected.description ||
+          JSON.stringify(fields) !== JSON.stringify(selected.fields) ||
+          JSON.stringify(templates) !== JSON.stringify(selected.templates) ||
+          JSON.stringify(groups) !== JSON.stringify(selected.groups) ||
+          JSON.stringify(sharedFieldGroupLinks) !==
+            JSON.stringify(selected.shared_field_group_links ?? []) ||
+          color !== selected.color ||
+          icon !== selected.icon ||
+          entityApprovalPolicy !== (selected.entity_approval_policy ?? 'disabled') ||
+          deprecationPolicy !== (selected.deprecation_policy ?? 'disabled');
+        if (schemaChanged) {
+          await updateSchemaMutation.mutateAsync({
+            schemaId: selected.id,
+            data: {
+              name,
+              key_prefix: keyPrefix,
+              description,
+              fields,
+              templates,
+              groups,
+              shared_field_group_links: sharedFieldGroupLinks,
+              color,
+              icon,
+              entity_approval_policy: entityApprovalPolicy,
+              deprecation_policy: deprecationPolicy,
+              fieldMigrations
+            }
+          });
+        }
         await Promise.all(
           Object.entries(reminderDrafts).map(([fieldId, reminder]) => {
             const existing = reminderConfigs?.find(config => config.field_id === fieldId);

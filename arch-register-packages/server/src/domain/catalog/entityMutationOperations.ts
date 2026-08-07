@@ -480,7 +480,7 @@ export const updateEntity = async (
         status: 404,
         message: `Schema '${payload.schemaId}' not found`
       });
-      httpAssert.true(!entityRequiresApproval(schema, oldRow), {
+      httpAssert.true(!(await entityRequiresApproval(tx, workspace, schema, oldRow)), {
         status: 409,
         statusText: 'Conflict',
         message: 'This entity requires an approved change proposal before it can be edited'

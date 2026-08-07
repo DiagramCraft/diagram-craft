@@ -1,4 +1,6 @@
 import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
+import { encodeCaseSubkind } from '@arch-register/server/domain/governance/governanceCaseSubkind';
+import { ENTITY_DEPRECATION_POLICY_CASE_KIND } from '@arch-register/server/domain/governance/schemaGovernancePolicy';
 
 const COMPONENT_SCHEMA_ID = '00000000-0000-0000-0000-000000000003';
 const RESTRICTED_RELATION_GROUP_ID = 'deprecation-restricted-relations';
@@ -33,6 +35,15 @@ const test = createPermissionApiTest().extend<{ deprecationSeed: true }>({
         updated_at: new Date('2026-08-05T00:00:00.000Z')
       });
       if (!updatedSchema) throw new Error('Expected component schema update to succeed');
+      await server.db.governanceCaseConfig.upsertCaseConfig({
+        workspace: resources.workspaceId,
+        case_kind: ENTITY_DEPRECATION_POLICY_CASE_KIND,
+        case_subkind: encodeCaseSubkind(schema.id),
+        enabled: true,
+        config: {},
+        updated_at: new Date('2026-08-05T00:00:00.000Z'),
+        updated_by: null
+      });
 
       await use(true);
     },

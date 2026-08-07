@@ -63,7 +63,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSchema(input: SchemaDbCreate) {
     this.run(
-      'INSERT INTO entity_schema (id, workspace, name, description, fields, templates, groups, shared_field_group_links, color, icon, default_owner, key_prefix, entity_approval_policy, deprecation_policy, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity_schema (id, workspace, name, description, fields, templates, groups, shared_field_group_links, color, icon, default_owner, key_prefix, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -77,8 +77,6 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.icon,
         input.default_owner,
         input.key_prefix,
-        input.entity_approval_policy ?? 'disabled',
-        input.deprecation_policy ?? 'disabled',
         input.created_at.toISOString(),
         input.updated_at.toISOString()
       ]
@@ -88,7 +86,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateSchema(workspace: string, id: string, input: SchemaDbUpdate) {
     this.run(
-      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, templates = ?, groups = ?, shared_field_group_links = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, entity_approval_policy = COALESCE(?, entity_approval_policy), deprecation_policy = COALESCE(?, deprecation_policy), version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE entity_schema SET name = ?, description = ?, fields = ?, templates = ?, groups = ?, shared_field_group_links = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.description,
@@ -100,8 +98,6 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         input.icon,
         input.default_owner,
         input.key_prefix,
-        input.entity_approval_policy ?? 'disabled',
-        input.deprecation_policy ?? 'disabled',
         input.version ?? null,
         input.updated_at.toISOString(),
         workspace,

@@ -355,8 +355,6 @@ const createTechnologyEolJob = async (
       color: targetSchema.color,
       icon: targetSchema.icon,
       default_owner: targetSchema.default_owner,
-      entity_approval_policy: targetSchema.entity_approval_policy,
-      deprecation_policy: targetSchema.deprecation_policy,
       version: (targetSchema.version ?? 1) + 1,
       updated_at: now
     });

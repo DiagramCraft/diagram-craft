@@ -1098,7 +1098,7 @@ export const createAiChatTools = (
     const current = await db.catalog.getEntity(workspaceId, args.entityId);
     if (!current) throw new Error(`Entity '${args.entityId}' not found`);
     const schema = await db.catalog.getSchema(workspaceId, current.schema_id);
-    if (schema && entityRequiresApproval(schema, current)) {
+    if (schema && (await entityRequiresApproval(db, workspaceId, schema, current))) {
       throw new Error('This entity requires an approved change proposal before it can be edited');
     }
     if (schema) assertNoTypedRelationFieldWrites(schema, args.fields);

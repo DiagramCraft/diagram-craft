@@ -40,6 +40,7 @@ import { requireTypedRelationEdit } from '../catalog/relationAccessControl';
 import { listAllRelations } from '../catalog/relationOperations';
 import { assertResolvedFieldGroupReferences } from '../catalog/schemaHelpers';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
+import { upsertSchemaGovernancePolicies } from '../governance/schemaGovernancePolicy';
 
 type ImportResolution = { action: string; new_name?: string };
 
@@ -374,6 +375,17 @@ export const importSchemas = async (
       }
       created++;
     }
+    await upsertSchemaGovernancePolicies(
+      db,
+      workspace,
+      nextId,
+      {
+        entity_approval_policy: schema.entity_approval_policy ?? 'disabled',
+        deprecation_policy: schema.deprecation_policy ?? 'disabled'
+      },
+      now,
+      null
+    );
   }
 
   return { created, updated };
@@ -533,7 +545,7 @@ export const importEntities = async (
       'You do not have permission to import one or more restricted fields on this entity'
     );
     if (!existing) continue;
-    if (schema && entityRequiresApproval(schema, existing)) {
+    if (schema && (await entityRequiresApproval(db, workspace, schema, existing))) {
       throw new Error(
         `Entity ${existing.id} requires an approved change proposal before it can be imported`
       );

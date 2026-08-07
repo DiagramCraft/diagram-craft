@@ -89,7 +89,9 @@ export type SchemaDbResult = {
   key_prefix: string;
   /** Defaults to 1 on create; omit on update to leave the current version unchanged. */
   version?: number;
+  /** @deprecated Compatibility-only API shape; policy is stored in governanceCaseConfig. */
   entity_approval_policy?: 'required' | 'disabled';
+  /** @deprecated Compatibility-only API shape; policy is stored in governanceCaseConfig. */
   deprecation_policy?: 'required' | 'disabled';
   created_at: Date;
   updated_at: Date;
@@ -431,12 +433,8 @@ export const catalogMappers = {
     default_owner: row['default_owner'] == null ? null : String(row['default_owner']),
     key_prefix: String(row['key_prefix']),
     version: Number(row['version'] ?? 1),
-    entity_approval_policy: String(
-      row['entity_approval_policy'] ?? 'disabled'
-    ) as SchemaDbResult['entity_approval_policy'],
-    deprecation_policy: String(
-      row['deprecation_policy'] ?? 'disabled'
-    ) as SchemaDbResult['deprecation_policy'],
+    entity_approval_policy: 'disabled',
+    deprecation_policy: 'disabled',
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),
