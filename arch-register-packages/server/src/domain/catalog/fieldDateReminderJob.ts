@@ -1,5 +1,5 @@
 import { randomUUID } from 'node:crypto';
-import type { DateFieldReminder } from '@arch-register/api-types/schemaContract';
+import { fieldDateReminderCaseConfigSchema } from '@arch-register/api-types/governanceCaseConfigSchemas';
 import type { DatabaseAdapter } from '../../db/database';
 import { DatabaseError } from '../../db/databaseError';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
@@ -13,6 +13,7 @@ import {
 } from '../governance/governanceOperations';
 import type { GovernanceCaseDbResult } from '../governance/db/governanceDatabase';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
+import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 
 export const FIELD_DATE_REMINDER_CASE_KIND = 'field-date-reminder';
 export const FIELD_DATE_REMINDER_SYSTEM_IDENTITY = 'field-date-reminder';
@@ -27,10 +28,24 @@ const parseDateValue = (value: unknown): { value: string; dueAt: Date } | null =
     : { value, dueAt };
 };
 
-const reminderFor = (schema: SchemaDbResult, fieldId: string): DateFieldReminder | null => {
-  const field = schema.fields.find(candidate => candidate.id === fieldId);
-  if (field?.type !== 'date' || !field.reminder?.enabled) return null;
-  return field.reminder;
+type FieldDateReminderWindows = {
+  approachingDays: number[];
+  overdueDays: number[];
+};
+
+const reminderFor = (
+  configs: Map<string, { enabled: boolean; config: Record<string, unknown> }>,
+  schemaId: string,
+  fieldId: string
+): FieldDateReminderWindows | null => {
+  const row = configs.get(encodeCaseSubkind(schemaId, fieldId));
+  if (!row?.enabled) return null;
+  const config = fieldDateReminderCaseConfigSchema.safeParse(row.config);
+  if (!config.success) return null;
+  return {
+    approachingDays: config.data.approaching_days,
+    overdueDays: config.data.overdue_days
+  };
 };
 
 const payloadFor = (
@@ -196,6 +211,7 @@ const createAutomaticCase = async (
         FIELD_DATE_REMINDER_SYSTEM_USER_ID,
         {
           caseKind: FIELD_DATE_REMINDER_CASE_KIND,
+          caseSubkind: encodeCaseSubkind(schema.id, fieldId),
           dedupeKey: dedupeKeyFor(entity.id, fieldId),
           subjectType: 'entity',
           subjectId: entity.id,
@@ -219,16 +235,22 @@ export const syncFieldDateReminderCases = async (
   workspace: string,
   now = new Date()
 ) => {
-  const [schemas, entities, teams, existingOpenCases] = await Promise.all([
+  const [schemas, entities, teams, existingOpenCases, configRows] = await Promise.all([
     db.catalog.listSchemas(workspace),
     listAllCatalogEntities(db, workspace),
     db.workspace.listTeams(workspace),
     db.governance.listCases(workspace, {
       caseKind: FIELD_DATE_REMINDER_CASE_KIND,
       status: 'open'
-    })
+    }),
+    db.governanceCaseConfig.listCaseConfigForKind(workspace, FIELD_DATE_REMINDER_CASE_KIND)
   ]);
   const schemasById = new Map(schemas.map(schema => [schema.id, schema]));
+  const configsBySubkind = new Map(
+    configRows
+      .filter(row => row.case_subkind != null)
+      .map(row => [row.case_subkind!, { enabled: row.enabled, config: row.config }])
+  );
   const teamIds = new Set(teams.map(team => team.id));
   const seenKeys = new Set<string>();
   let created = 0;
@@ -239,7 +261,12 @@ export const syncFieldDateReminderCases = async (
     const schema = schemasById.get(entity.schema_id);
     if (!schema) continue;
     for (const field of schema.fields) {
-      if (field.type !== 'date' || !field.reminder?.enabled) continue;
+      if (
+        field.type !== 'date' ||
+        field.archived ||
+        !reminderFor(configsBySubkind, schema.id, field.id)
+      )
+        continue;
       const key = dedupeKeyFor(entity.id, field.id);
       const date = parseDateValue(entity.data[field.id]);
       if (!date) continue;
@@ -315,8 +342,16 @@ export const createFieldDateReminderGovernanceRegistry = (): GovernanceRegistry 
           const schemaId = caseRow.payload['schemaId'];
           const fieldId = caseRow.payload['fieldId'];
           if (typeof schemaId !== 'string' || typeof fieldId !== 'string') return null;
-          const schema = await db.catalog.getSchema(caseRow.workspace, schemaId);
-          return schema ? reminderFor(schema, fieldId) : null;
+          const row = await db.governanceCaseConfig.getCaseConfig(
+            caseRow.workspace,
+            FIELD_DATE_REMINDER_CASE_KIND,
+            encodeCaseSubkind(schemaId, fieldId)
+          );
+          return reminderFor(
+            row ? new Map([[row.case_subkind ?? '', row]]) : new Map(),
+            schemaId,
+            fieldId
+          );
         },
         workspaceReminderOverrides: false
       }

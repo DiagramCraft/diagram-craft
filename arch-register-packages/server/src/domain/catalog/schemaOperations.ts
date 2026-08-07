@@ -221,6 +221,7 @@ export const updateWorkspaceSchema = async (
       const entityCount = await countEntitiesForSchema(db, ws, id);
 
       const finalFields = [...compiledNext.fields];
+      const fieldChanges = classifyFieldChanges(oldRow.fields, compiledNext.fields);
       const dataMigrations: Array<{
         action: 'rename' | 'remove';
         oldFieldId: string;
@@ -228,8 +229,6 @@ export const updateWorkspaceSchema = async (
       }> = [];
 
       if (entityCount > 0) {
-        const fieldChanges = classifyFieldChanges(oldRow.fields, compiledNext.fields);
-
         const blocked = hardBlockedFieldChanges(fieldChanges);
         httpAssert.true(blocked.length === 0, {
           status: 409,
@@ -289,6 +288,28 @@ export const updateWorkspaceSchema = async (
 
       const changeSummary = buildSchemaChangeSummary(oldRow.fields, finalFields, fieldMigrations);
 
+      const configMigrations: Array<{
+        action: 'rename' | 'remove';
+        oldFieldId: string;
+        newFieldId?: string;
+      }> = [];
+      for (const oldField of oldRow.fields) {
+        if (oldField.type !== 'date') continue;
+        const change = fieldChanges.find(candidate => candidate.fieldId === oldField.id);
+        if (change?.kind === 'renamed' && change.renamedToId) {
+          configMigrations.push({
+            action: 'rename',
+            oldFieldId: oldField.id,
+            newFieldId: change.renamedToId
+          });
+          continue;
+        }
+        const nextField = finalFields.find(field => field.id === oldField.id);
+        if (nextField?.type !== 'date' || nextField.archived) {
+          configMigrations.push({ action: 'remove', oldFieldId: oldField.id });
+        }
+      }
+
       const row = await db.core.transaction(async tx => {
         for (const migration of dataMigrations) {
           if (migration.action === 'rename') {
@@ -305,6 +326,29 @@ export const updateWorkspaceSchema = async (
               encodeCaseSubkind(id, migration.oldFieldId)
             );
           }
+        }
+
+        for (const migration of configMigrations) {
+          const oldSubkind = encodeCaseSubkind(id, migration.oldFieldId);
+          if (migration.action === 'rename') {
+            const config = await tx.governanceCaseConfig.getCaseConfig(
+              ws,
+              'field-date-reminder',
+              oldSubkind
+            );
+            if (config) {
+              await tx.governanceCaseConfig.upsertCaseConfig({
+                workspace: ws,
+                case_kind: config.case_kind,
+                case_subkind: encodeCaseSubkind(id, migration.newFieldId!),
+                enabled: config.enabled,
+                config: config.config,
+                updated_at: next.updated_at,
+                updated_by: authCtx.userId
+              });
+            }
+          }
+          await tx.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(ws, oldSubkind);
         }
 
         const updated = await tx.catalog.updateSchema(ws, id, {

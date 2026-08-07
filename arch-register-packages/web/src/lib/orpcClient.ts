@@ -45,6 +45,7 @@ import { entityChangeContract } from '@arch-register/api-types/entityChangeContr
 import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
 import { governanceContract } from '@arch-register/api-types/governanceContract';
 import { governanceReminderConfigContract } from '@arch-register/api-types/governanceReminderConfigContract';
+import { governanceFieldDateReminderConfigContract } from '@arch-register/api-types/governanceFieldDateReminderConfigContract';
 import { governanceWorkflowOverviewContract } from '@arch-register/api-types/governanceWorkflowOverviewContract';
 import { governanceDocumentStatusConfigContract } from '@arch-register/api-types/governanceDocumentStatusConfigContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
@@ -88,6 +89,7 @@ const applicationContracts = {
   ...entityDeprecationContract,
   ...governanceContract,
   ...governanceReminderConfigContract,
+  ...governanceFieldDateReminderConfigContract,
   ...governanceWorkflowOverviewContract,
   ...governanceDocumentStatusConfigContract,
   ...workspaceEnumContract,
@@ -166,6 +168,7 @@ export const orpcClient = {
   entityDeprecations: applicationClient.entityDeprecations,
   governance: applicationClient.governance,
   governanceReminderConfig: applicationClient.governanceReminderConfig,
+  governanceFieldDateReminderConfig: applicationClient.governanceFieldDateReminderConfig,
   governanceWorkflowOverview: applicationClient.governanceWorkflowOverview,
   governanceDocumentStatusConfig: applicationClient.governanceDocumentStatusConfig,
   enums: applicationClient.enums,

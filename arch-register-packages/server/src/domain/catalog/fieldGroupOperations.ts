@@ -31,6 +31,7 @@ import {
   validateDerivedFieldGroupAccess
 } from '../derived/derivedFields';
 import { computeChanges, extractEntityFields, logAudit } from '../audit/db/auditLogging';
+import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 
 const dbErrorMessages = {
   unique: 'A shared fieldgroup with that name already exists in this workspace',
@@ -140,6 +141,11 @@ export const updateWorkspaceSharedFieldGroup = async (
             oldFieldId: string;
             newFieldId?: string;
           }>;
+          configMigrations: Array<{
+            action: 'rename' | 'remove';
+            oldFieldId: string;
+            newFieldId?: string;
+          }>;
         }
       >();
 
@@ -198,7 +204,33 @@ export const updateWorkspaceSharedFieldGroup = async (
           }
         }
         validateDerivedFieldGroupAccess(nextEffective.fields, nextEffective.groups ?? []);
-        changesBySchema.set(schema.id, { old: oldEffective, next: nextEffective, migrations });
+        const configMigrations: Array<{
+          action: 'rename' | 'remove';
+          oldFieldId: string;
+          newFieldId?: string;
+        }> = [];
+        for (const oldField of oldEffective.fields) {
+          if (oldField.type !== 'date') continue;
+          const change = fieldChanges.find(candidate => candidate.fieldId === oldField.id);
+          if (change?.kind === 'renamed' && change.renamedToId) {
+            configMigrations.push({
+              action: 'rename',
+              oldFieldId: oldField.id,
+              newFieldId: change.renamedToId
+            });
+            continue;
+          }
+          const nextField = nextEffective.fields.find(field => field.id === oldField.id);
+          if (nextField?.type !== 'date' || nextField.archived) {
+            configMigrations.push({ action: 'remove', oldFieldId: oldField.id });
+          }
+        }
+        changesBySchema.set(schema.id, {
+          old: oldEffective,
+          next: nextEffective,
+          migrations,
+          configMigrations
+        });
       }
 
       const now = new Date();
@@ -215,6 +247,28 @@ export const updateWorkspaceSharedFieldGroup = async (
                 migration.newFieldId!
               );
             else await tx.catalog.removeEntityDataField(ws, schemaId, migration.oldFieldId);
+          }
+          for (const migration of change.configMigrations) {
+            const oldSubkind = encodeCaseSubkind(schemaId, migration.oldFieldId);
+            if (migration.action === 'rename') {
+              const config = await tx.governanceCaseConfig.getCaseConfig(
+                ws,
+                'field-date-reminder',
+                oldSubkind
+              );
+              if (config) {
+                await tx.governanceCaseConfig.upsertCaseConfig({
+                  workspace: ws,
+                  case_kind: config.case_kind,
+                  case_subkind: encodeCaseSubkind(schemaId, migration.newFieldId!),
+                  enabled: config.enabled,
+                  config: config.config,
+                  updated_at: now,
+                  updated_by: authCtx.userId
+                });
+              }
+            }
+            await tx.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(ws, oldSubkind);
           }
           const current = schemas.find(schema => schema.id === schemaId)!;
           const row = await tx.catalog.updateSchema(ws, schemaId, {

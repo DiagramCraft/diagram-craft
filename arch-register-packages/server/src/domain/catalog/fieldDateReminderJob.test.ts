@@ -3,6 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 import type { GovernanceCaseDbResult } from '../governance/db/governanceDatabase';
 import { FIELD_DATE_REMINDER_CASE_KIND, syncFieldDateReminderCases } from './fieldDateReminderJob';
+import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 
 vi.mock('../governance/governanceNotifications', () => ({
   createGovernanceInAppNotifications: vi.fn(async () => ({ recipients: 0 }))
@@ -19,8 +20,7 @@ const schema: SchemaDbResult = {
     {
       id: 'eol_date',
       name: 'EOL date',
-      type: 'date',
-      reminder: { enabled: true, approachingDays: [3], overdueDays: [1] }
+      type: 'date'
     }
   ],
   templates: [],
@@ -78,6 +78,30 @@ const makeDb = () => {
       getSchema: vi.fn(async () => schema)
     },
     workspace: { listTeams: vi.fn(async () => [{ id: 'team-1' }]) },
+    governanceCaseConfig: {
+      listCaseConfigForKind: vi.fn(async () => [
+        {
+          id: 'config-1',
+          workspace: 'ws-1',
+          case_kind: FIELD_DATE_REMINDER_CASE_KIND,
+          case_subkind: encodeCaseSubkind(schema.id, 'eol_date'),
+          enabled: true,
+          config: { approaching_days: [3], overdue_days: [1] },
+          updated_at: now,
+          updated_by: null
+        }
+      ]),
+      getCaseConfig: vi.fn(async () => ({
+        id: 'config-1',
+        workspace: 'ws-1',
+        case_kind: FIELD_DATE_REMINDER_CASE_KIND,
+        case_subkind: encodeCaseSubkind(schema.id, 'eol_date'),
+        enabled: true,
+        config: { approaching_days: [3], overdue_days: [1] },
+        updated_at: now,
+        updated_by: null
+      }))
+    },
     governance: {
       listCases: vi.fn(async () => [...cases.values()]),
       getCaseByDedupeKey: vi.fn(
