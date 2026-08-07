@@ -68356,6 +68356,41 @@
                                     },
                                     "description": "Ordered fields displayed for each entity"
                                   },
+                                  "levelConfigs": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "schemaId": {
+                                          "anyOf": [
+                                            {
+                                              "type": "string"
+                                            },
+                                            {
+                                              "type": "null"
+                                            }
+                                          ],
+                                          "description": "Schema identifier for this map level"
+                                        },
+                                        "columns": {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 4,
+                                          "default": 3,
+                                          "description": "Number of columns for this map level (1-4)"
+                                        },
+                                        "hidden": {
+                                          "type": "boolean",
+                                          "description": "Whether this level is traversed but omitted from the rendered map"
+                                        }
+                                      },
+                                      "required": [
+                                        "schemaId"
+                                      ]
+                                    },
+                                    "description": "Ordered map levels; later levels may be hidden from the rendered map"
+                                  },
                                   "levels": {
                                     "type": "integer",
                                     "minimum": 1,
@@ -68415,6 +68450,10 @@
                                     "minimum": 1,
                                     "maximum": 4,
                                     "description": "Number of columns for level 3 (1-4)"
+                                  },
+                                  "hideMissingMetricData": {
+                                    "type": "boolean",
+                                    "description": "Whether to hide boxes with no usable aggregate or metric source data"
                                   },
                                   "metricConfig": {
                                     "anyOf": [
@@ -70460,6 +70499,41 @@
                                 },
                                 "description": "Ordered fields displayed for each entity"
                               },
+                              "levelConfigs": {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "schemaId": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Schema identifier for this map level"
+                                    },
+                                    "columns": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 4,
+                                      "default": 3,
+                                      "description": "Number of columns for this map level (1-4)"
+                                    },
+                                    "hidden": {
+                                      "type": "boolean",
+                                      "description": "Whether this level is traversed but omitted from the rendered map"
+                                    }
+                                  },
+                                  "required": [
+                                    "schemaId"
+                                  ]
+                                },
+                                "description": "Ordered map levels; later levels may be hidden from the rendered map"
+                              },
                               "levels": {
                                 "type": "integer",
                                 "minimum": 1,
@@ -70519,6 +70593,10 @@
                                 "minimum": 1,
                                 "maximum": 4,
                                 "description": "Number of columns for level 3 (1-4)"
+                              },
+                              "hideMissingMetricData": {
+                                "type": "boolean",
+                                "description": "Whether to hide boxes with no usable aggregate or metric source data"
                               },
                               "metricConfig": {
                                 "anyOf": [
@@ -72758,6 +72836,41 @@
                                   },
                                   "description": "Ordered fields displayed for each entity"
                                 },
+                                "levelConfigs": {
+                                  "type": "array",
+                                  "minItems": 1,
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "schemaId": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "Schema identifier for this map level"
+                                      },
+                                      "columns": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 4,
+                                        "default": 3,
+                                        "description": "Number of columns for this map level (1-4)"
+                                      },
+                                      "hidden": {
+                                        "type": "boolean",
+                                        "description": "Whether this level is traversed but omitted from the rendered map"
+                                      }
+                                    },
+                                    "required": [
+                                      "schemaId"
+                                    ]
+                                  },
+                                  "description": "Ordered map levels; later levels may be hidden from the rendered map"
+                                },
                                 "levels": {
                                   "type": "integer",
                                   "minimum": 1,
@@ -72817,6 +72930,10 @@
                                   "minimum": 1,
                                   "maximum": 4,
                                   "description": "Number of columns for level 3 (1-4)"
+                                },
+                                "hideMissingMetricData": {
+                                  "type": "boolean",
+                                  "description": "Whether to hide boxes with no usable aggregate or metric source data"
                                 },
                                 "metricConfig": {
                                   "anyOf": [
@@ -74853,6 +74970,41 @@
                                 },
                                 "description": "Ordered fields displayed for each entity"
                               },
+                              "levelConfigs": {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "schemaId": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Schema identifier for this map level"
+                                    },
+                                    "columns": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 4,
+                                      "default": 3,
+                                      "description": "Number of columns for this map level (1-4)"
+                                    },
+                                    "hidden": {
+                                      "type": "boolean",
+                                      "description": "Whether this level is traversed but omitted from the rendered map"
+                                    }
+                                  },
+                                  "required": [
+                                    "schemaId"
+                                  ]
+                                },
+                                "description": "Ordered map levels; later levels may be hidden from the rendered map"
+                              },
                               "levels": {
                                 "type": "integer",
                                 "minimum": 1,
@@ -74912,6 +75064,10 @@
                                 "minimum": 1,
                                 "maximum": 4,
                                 "description": "Number of columns for level 3 (1-4)"
+                              },
+                              "hideMissingMetricData": {
+                                "type": "boolean",
+                                "description": "Whether to hide boxes with no usable aggregate or metric source data"
                               },
                               "metricConfig": {
                                 "anyOf": [
@@ -77146,6 +77302,41 @@
                                   },
                                   "description": "Ordered fields displayed for each entity"
                                 },
+                                "levelConfigs": {
+                                  "type": "array",
+                                  "minItems": 1,
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "schemaId": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "Schema identifier for this map level"
+                                      },
+                                      "columns": {
+                                        "type": "integer",
+                                        "minimum": 1,
+                                        "maximum": 4,
+                                        "default": 3,
+                                        "description": "Number of columns for this map level (1-4)"
+                                      },
+                                      "hidden": {
+                                        "type": "boolean",
+                                        "description": "Whether this level is traversed but omitted from the rendered map"
+                                      }
+                                    },
+                                    "required": [
+                                      "schemaId"
+                                    ]
+                                  },
+                                  "description": "Ordered map levels; later levels may be hidden from the rendered map"
+                                },
                                 "levels": {
                                   "type": "integer",
                                   "minimum": 1,
@@ -77205,6 +77396,10 @@
                                   "minimum": 1,
                                   "maximum": 4,
                                   "description": "Number of columns for level 3 (1-4)"
+                                },
+                                "hideMissingMetricData": {
+                                  "type": "boolean",
+                                  "description": "Whether to hide boxes with no usable aggregate or metric source data"
                                 },
                                 "metricConfig": {
                                   "anyOf": [
