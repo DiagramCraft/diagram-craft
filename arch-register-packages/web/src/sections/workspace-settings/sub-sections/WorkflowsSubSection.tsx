@@ -523,7 +523,6 @@ const ConfigEditor = ({
                     escalation: {
                       enabled: checked ?? false,
                       overdueDays: escalation?.overdueDays ?? 5,
-                      escalationSource: escalation?.escalationSource,
                       fallbackUserIds: escalation?.fallbackUserIds ?? [],
                       fallbackTeamIds: escalation?.fallbackTeamIds ?? []
                     }
@@ -541,19 +540,6 @@ const ConfigEditor = ({
                     onChange={value =>
                       update({
                         escalation: { ...escalation, overdueDays: Math.max(1, Number(value ?? 1)) }
-                      })
-                    }
-                  />
-                </FormElement>
-                <FormElement label="Escalation source">
-                  <TextInput
-                    value={escalation.escalationSource ?? ''}
-                    onChange={value =>
-                      update({
-                        escalation: {
-                          ...escalation,
-                          escalationSource: trimmedOrUndefined(value)
-                        }
                       })
                     }
                   />

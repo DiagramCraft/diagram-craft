@@ -11,7 +11,7 @@ export type SchemaGovernancePolicies = {
 
 export const schemaWorkflowConfig = {
   supportsSubkind: true,
-  supportsApprovals: true,
+  supportsApprovals: false,
   supportsReminders: true,
   supportsEscalation: true,
   validateSubkind: async (db: DatabaseAdapter, workspace: string, subkind: string | null) => {

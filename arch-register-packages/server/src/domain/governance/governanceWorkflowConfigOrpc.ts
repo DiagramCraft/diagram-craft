@@ -141,6 +141,18 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
         async ({ input, context }) => {
           const { workspace, authCtx } = context;
           requireWorkspaceCapability(authCtx, 'ws.settings');
+          const kindConfig = registry.get(input.body.case_kind);
+          httpAssert.present(kindConfig, {
+            status: 404,
+            message: `Unknown governance case kind '${input.body.case_kind}'`
+          });
+          httpAssert.true(
+            input.body.case_subkind == null || kindConfig.workflowConfig?.supportsSubkind === true,
+            {
+              status: 400,
+              message: `Case kind '${input.body.case_kind}' does not support subkind-scoped configuration`
+            }
+          );
           const deleted = await context.db.governanceCaseConfig.deleteCaseConfig(
             workspace,
             input.body.case_kind,
