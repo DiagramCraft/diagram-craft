@@ -452,6 +452,7 @@ describe('createRelationGovernanceRegistry', () => {
     id: 'governance-case-1',
     workspace: 'ws-1',
     case_kind: RELATION_CHANGE_CASE_KIND,
+    case_subkind: null,
     subject_type: 'relation',
     subject_id: 'relation-1',
     subject_version: 'revision-1',

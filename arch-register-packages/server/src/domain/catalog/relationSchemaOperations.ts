@@ -21,6 +21,7 @@ import {
   toApiRelationSchema,
   toApiRelationSchemaVersion
 } from './relationSchemaHelpers';
+import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import type { FieldMigrations, PendingFieldChange } from '@arch-register/api-types/schemaContract';
 import type {
   RelationSchema,
@@ -248,6 +249,10 @@ export const updateWorkspaceRelationSchema = async (
             );
           } else {
             await tx.relation.removeRelationDataField(ws, id, migration.oldFieldId);
+            await tx.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(
+              ws,
+              encodeCaseSubkind(id, migration.oldFieldId)
+            );
           }
         }
 
@@ -354,6 +359,7 @@ export const deleteWorkspaceRelationSchema = async (
       });
 
       await db.relation.deleteRelationSchema(ws, id);
+      await db.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(ws, id);
 
       await logAudit(db, {
         userId: authCtx.userId,

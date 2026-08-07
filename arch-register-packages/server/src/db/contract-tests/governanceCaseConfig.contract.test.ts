@@ -195,4 +195,129 @@ runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
       ).toBeNull();
     });
   });
+
+  describe('deleteCaseConfigForSubkindOrDescendants', () => {
+    it('deleting a root removes the root row and every field-scoped row nested under it', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schemaId = 'schema-1';
+
+      await db.governanceCaseConfig.upsertCaseConfig({
+        workspace,
+        case_kind: 'entity.deprecation',
+        case_subkind: schemaId,
+        enabled: true,
+        config: {},
+        updated_at: new Date(),
+        updated_by: null
+      });
+      await db.governanceCaseConfig.upsertCaseConfig({
+        workspace,
+        case_kind: 'field-date-reminder',
+        case_subkind: `${schemaId}:field-a`,
+        enabled: true,
+        config: {},
+        updated_at: new Date(),
+        updated_by: null
+      });
+      await db.governanceCaseConfig.upsertCaseConfig({
+        workspace,
+        case_kind: 'field-date-reminder',
+        case_subkind: `${schemaId}:field-b`,
+        enabled: true,
+        config: {},
+        updated_at: new Date(),
+        updated_by: null
+      });
+
+      const deleted = await db.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(
+        workspace,
+        schemaId
+      );
+      expect(deleted).toBe(3);
+      expect(await db.governanceCaseConfig.listCaseConfig(workspace)).toEqual([]);
+    });
+
+    it('deleting an exact field subkind only removes that row', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schemaId = 'schema-1';
+
+      await db.governanceCaseConfig.upsertCaseConfig({
+        workspace,
+        case_kind: 'field-date-reminder',
+        case_subkind: schemaId,
+        enabled: true,
+        config: {},
+        updated_at: new Date(),
+        updated_by: null
+      });
+      await db.governanceCaseConfig.upsertCaseConfig({
+        workspace,
+        case_kind: 'field-date-reminder',
+        case_subkind: `${schemaId}:field-a`,
+        enabled: true,
+        config: {},
+        updated_at: new Date(),
+        updated_by: null
+      });
+
+      const deleted = await db.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(
+        workspace,
+        `${schemaId}:field-a`
+      );
+      expect(deleted).toBe(1);
+
+      const remaining = await db.governanceCaseConfig.listCaseConfig(workspace);
+      expect(remaining).toHaveLength(1);
+      expect(remaining[0]?.case_subkind).toBe(schemaId);
+    });
+
+    it('leaves other roots and other workspaces untouched', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const otherWorkspace = await createFixtureWorkspace(db);
+
+      await db.governanceCaseConfig.upsertCaseConfig({
+        workspace,
+        case_kind: 'entity.deprecation',
+        case_subkind: 'schema-1',
+        enabled: true,
+        config: {},
+        updated_at: new Date(),
+        updated_by: null
+      });
+      await db.governanceCaseConfig.upsertCaseConfig({
+        workspace,
+        case_kind: 'entity.deprecation',
+        case_subkind: 'schema-2',
+        enabled: true,
+        config: {},
+        updated_at: new Date(),
+        updated_by: null
+      });
+      await db.governanceCaseConfig.upsertCaseConfig({
+        workspace: otherWorkspace,
+        case_kind: 'entity.deprecation',
+        case_subkind: 'schema-1',
+        enabled: true,
+        config: {},
+        updated_at: new Date(),
+        updated_by: null
+      });
+
+      const deleted = await db.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(
+        workspace,
+        'schema-1'
+      );
+      expect(deleted).toBe(1);
+
+      expect(
+        (await db.governanceCaseConfig.listCaseConfig(workspace)).map(r => r.case_subkind)
+      ).toEqual(['schema-2']);
+      expect(
+        (await db.governanceCaseConfig.listCaseConfig(otherWorkspace)).map(r => r.case_subkind)
+      ).toEqual(['schema-1']);
+    });
+  });
 });

@@ -68,4 +68,13 @@ export class SqliteGovernanceCaseConfigDatabase
     );
     return (await this.getCaseConfig(input.workspace, input.case_kind, input.case_subkind))!;
   }
+
+  async deleteCaseConfigForSubkindOrDescendants(workspace: string, subkindPrefix: string) {
+    const result = this.run(
+      `DELETE FROM workspace_governance_case_config
+       WHERE workspace = ? AND (case_subkind = ? OR case_subkind LIKE ?)`,
+      [workspace, subkindPrefix, `${subkindPrefix}:%`]
+    );
+    return result.changes;
+  }
 }

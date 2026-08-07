@@ -16,14 +16,15 @@ export class PostgresGovernanceDatabase extends PostgresDatabaseBase implements 
     try {
       const [row] = await this.sql<DatabaseRow[]>`
         INSERT INTO governance_case (
-          id, workspace, case_kind, subject_type, subject_id, subject_version, status,
-          policy_version, initiator_user_id, parent_case_id, dedupe_key, self_approval_allowed,
-          payload, created_at, due_at
+          id, workspace, case_kind, case_subkind, subject_type, subject_id, subject_version,
+          status, policy_version, initiator_user_id, parent_case_id, dedupe_key,
+          self_approval_allowed, payload, created_at, due_at
         ) VALUES (
-          ${input.id}, ${input.workspace}, ${input.case_kind}, ${input.subject_type},
-          ${input.subject_id}, ${input.subject_version}, 'open', ${input.policy_version},
-          ${input.initiator_user_id}, ${input.parent_case_id}, ${input.dedupe_key ?? null},
-          ${input.self_approval_allowed}, ${this.json(input.payload)}, ${input.created_at}, ${input.due_at}
+          ${input.id}, ${input.workspace}, ${input.case_kind}, ${input.case_subkind ?? null},
+          ${input.subject_type}, ${input.subject_id}, ${input.subject_version}, 'open',
+          ${input.policy_version}, ${input.initiator_user_id}, ${input.parent_case_id},
+          ${input.dedupe_key ?? null}, ${input.self_approval_allowed}, ${this.json(input.payload)},
+          ${input.created_at}, ${input.due_at}
         )
         RETURNING *
       `;

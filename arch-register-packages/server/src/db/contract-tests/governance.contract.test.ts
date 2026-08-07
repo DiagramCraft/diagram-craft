@@ -56,6 +56,29 @@ runContractSuiteAgainstBothDrivers('GovernanceDatabase', getDb => {
       expect(updated.outcome).toBe('approve');
     });
 
+    it('round-trips a non-null case_subkind', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const user = await createFixtureUser(db);
+
+      const created = await createFixtureCase(db, workspace, user.id, {
+        case_subkind: 'schema-1:field-a'
+      });
+      expect(created.case_subkind).toBe('schema-1:field-a');
+
+      const fetched = await db.governance.getCase(workspace, created.id);
+      expect(fetched?.case_subkind).toBe('schema-1:field-a');
+    });
+
+    it('defaults case_subkind to null when omitted', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const user = await createFixtureUser(db);
+
+      const created = await createFixtureCase(db, workspace, user.id);
+      expect(created.case_subkind).toBeNull();
+    });
+
     it('completeCaseIfOpen only transitions an open case, and is a no-op afterwards', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);

@@ -77,6 +77,7 @@ const makeCase = (overrides: Partial<GovernanceCaseDbResult> = {}): GovernanceCa
   id: 'case-1',
   workspace: 'ws-1',
   case_kind: 'entity.change-case',
+  case_subkind: null,
   subject_type: 'entity',
   subject_id: 'entity-1',
   subject_version: null,
