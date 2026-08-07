@@ -65,31 +65,29 @@ export const DocumentFieldRow = ({
   const options = (() => {
     if (field.type === 'enum') {
       return (
-        <>
-          <FormElement label="Values">
-            <TextInput
-              value={(field.enumOptions ?? [])
-                .map(option => `${option.value}:${option.label}`)
-                .join(', ')}
-              placeholder="proposed:Proposed, accepted:Accepted"
-              onChange={value => {
-                const nextOptions = (value ?? '')
-                  .split(',')
-                  .map(option => option.trim())
-                  .filter(Boolean)
-                  .map(option => {
-                    const [enumValue, ...label] = option.split(':');
-                    const parsedValue = enumValue!.trim();
-                    return {
-                      value: parsedValue,
-                      label: label.join(':').trim() === '' ? parsedValue : label.join(':').trim()
-                    };
-                  });
-                onUpdate({ enumOptions: nextOptions });
-              }}
-            />
-          </FormElement>
-        </>
+        <FormElement label="Values">
+          <TextInput
+            value={(field.enumOptions ?? [])
+              .map(option => `${option.value}:${option.label}`)
+              .join(', ')}
+            placeholder="proposed:Proposed, accepted:Accepted"
+            onChange={value => {
+              const nextOptions = (value ?? '')
+                .split(',')
+                .map(option => option.trim())
+                .filter(Boolean)
+                .map(option => {
+                  const [enumValue, ...label] = option.split(':');
+                  const parsedValue = enumValue!.trim();
+                  return {
+                    value: parsedValue,
+                    label: label.join(':').trim() === '' ? parsedValue : label.join(':').trim()
+                  };
+                });
+              onUpdate({ enumOptions: nextOptions });
+            }}
+          />
+        </FormElement>
       );
     }
     if (isLinkType(field.type)) {
