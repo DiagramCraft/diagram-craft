@@ -46,6 +46,7 @@ import { entityDeprecationContract } from '@arch-register/api-types/entityDeprec
 import { governanceContract } from '@arch-register/api-types/governanceContract';
 import { governanceReminderConfigContract } from '@arch-register/api-types/governanceReminderConfigContract';
 import { governanceWorkflowOverviewContract } from '@arch-register/api-types/governanceWorkflowOverviewContract';
+import { governanceDocumentStatusConfigContract } from '@arch-register/api-types/governanceDocumentStatusConfigContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { normalizeApiError } from './http';
 
@@ -88,6 +89,7 @@ const applicationContracts = {
   ...governanceContract,
   ...governanceReminderConfigContract,
   ...governanceWorkflowOverviewContract,
+  ...governanceDocumentStatusConfigContract,
   ...workspaceEnumContract,
   ...workspaceSchemaContract,
   ...workspaceRelationSchemaContract,
@@ -165,6 +167,7 @@ export const orpcClient = {
   governance: applicationClient.governance,
   governanceReminderConfig: applicationClient.governanceReminderConfig,
   governanceWorkflowOverview: applicationClient.governanceWorkflowOverview,
+  governanceDocumentStatusConfig: applicationClient.governanceDocumentStatusConfig,
   enums: applicationClient.enums,
   fieldGroups: applicationClient.fieldGroups,
   schemas: applicationClient.schemas,

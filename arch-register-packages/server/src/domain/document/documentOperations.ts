@@ -310,6 +310,24 @@ export const updateDocumentType = async (
               migration.oldFieldId,
               migration.newFieldId!
             );
+            const oldSubkind = encodeCaseSubkind(id, migration.oldFieldId);
+            const config = await tx.governanceCaseConfig.getCaseConfig(
+              ws,
+              'document.status',
+              oldSubkind
+            );
+            if (config) {
+              await tx.governanceCaseConfig.upsertCaseConfig({
+                workspace: ws,
+                case_kind: config.case_kind,
+                case_subkind: encodeCaseSubkind(id, migration.newFieldId!),
+                enabled: config.enabled,
+                config: config.config,
+                updated_at: now,
+                updated_by: authCtx.userId
+              });
+              await tx.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(ws, oldSubkind);
+            }
           } else {
             await tx.document.removeDocumentMetadataField(ws, id, migration.oldFieldId);
             await tx.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(

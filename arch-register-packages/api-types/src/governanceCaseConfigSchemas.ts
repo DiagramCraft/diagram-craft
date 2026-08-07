@@ -19,3 +19,18 @@ export const reminderCaseConfigSchema = z.object({
 });
 
 export type ReminderCaseConfig = z.infer<typeof reminderCaseConfigSchema>;
+
+export const documentStatusApprovalSchema = z.object({
+  required: z.boolean(),
+  requiredApprovals: z.number().int().positive().optional(),
+  approverFieldId: z.string().min(1).optional(),
+  fallbackUserIds: z.array(z.string().min(1)).default([]),
+  fallbackTeamIds: z.array(z.string().min(1)).default([])
+});
+
+export const documentStatusApprovalConfigSchema = z.object({
+  statuses: z.record(z.string(), documentStatusApprovalSchema)
+});
+
+export type DocumentStatusApproval = z.infer<typeof documentStatusApprovalSchema>;
+export type DocumentStatusApprovalConfig = z.infer<typeof documentStatusApprovalConfigSchema>;

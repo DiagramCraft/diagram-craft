@@ -64,18 +64,9 @@ export const documentWorkflowHistoryEventSchema = z.object({
   caseId: z.string()
 });
 
-export const documentStatusApprovalSchema = z.object({
-  required: z.boolean(),
-  requiredApprovals: z.number().int().positive().optional(),
-  approverFieldId: z.string().min(1).optional(),
-  fallbackUserIds: z.array(z.string().min(1)).default([]),
-  fallbackTeamIds: z.array(z.string().min(1)).default([])
-});
-
 export const documentEnumOptionSchema = z.object({
   value: z.string().min(1),
-  label: z.string().min(1),
-  approval: documentStatusApprovalSchema.optional()
+  label: z.string().min(1)
 });
 
 export const documentFieldSchema = z
@@ -395,7 +386,6 @@ export const documentContract = oc.tag('Typed Documents').router({
 export type DocumentFieldType = z.infer<typeof documentFieldTypeSchema>;
 export type DocumentRequirement = z.infer<typeof documentRequirementSchema>;
 export type DocumentField = z.infer<typeof documentFieldSchema>;
-export type DocumentStatusApproval = z.infer<typeof documentStatusApprovalSchema>;
 export type DocumentAiAction = z.infer<typeof documentAiActionSchema>;
 export type DocumentGeneratedMetadataResult = z.infer<typeof documentGeneratedMetadataResultSchema>;
 export type DocumentGeneratedMetadata = z.infer<typeof documentGeneratedMetadataSchema>;

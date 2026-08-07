@@ -49,6 +49,7 @@ import { createDiscussionORPCHandler } from './domain/discussion/discussionOrpc'
 import { createGovernanceORPCHandler } from './domain/governance/governanceOrpc';
 import { createGovernanceReminderConfigORPCHandler } from './domain/governance/governanceReminderConfigOrpc';
 import { createGovernanceWorkflowOverviewORPCHandler } from './domain/governance/governanceWorkflowOverviewOrpc';
+import { createGovernanceDocumentStatusConfigORPCHandler } from './domain/governance/governanceDocumentStatusConfigOrpc';
 import { createWikiCommentORPCHandler } from './domain/wikiComments/wikiCommentOrpc';
 import { createSearchORPCHandler } from './domain/search/searchOrpc';
 import {
@@ -215,6 +216,7 @@ export const createApp = (
   app.use(createGovernanceORPCHandler(db, governanceRegistry));
   app.use(createGovernanceReminderConfigORPCHandler(db, governanceRegistry));
   app.use(createGovernanceWorkflowOverviewORPCHandler(db, governanceRegistry));
+  app.use(createGovernanceDocumentStatusConfigORPCHandler(db));
   app.use(createWikiCommentORPCHandler(db));
   app.use(createSearchORPCHandler(db));
   app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));

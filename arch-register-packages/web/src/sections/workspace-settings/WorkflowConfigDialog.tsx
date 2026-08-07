@@ -7,10 +7,8 @@ import { MemberAvatar, stableHue } from '../../components/MemberAvatar';
 import { UserGroupPicker } from '../../components/UserGroupPicker';
 import { useWorkspaceUsers } from '../../hooks/useWorkspaceMembers';
 import { useTeams } from '../../hooks/useWorkspaceConfig';
-import type {
-  DocumentField,
-  DocumentStatusApproval
-} from '@arch-register/api-types/documentContract';
+import type { DocumentField } from '@arch-register/api-types/documentContract';
+import type { DocumentStatusApproval } from '@arch-register/api-types/governanceCaseConfigSchemas';
 import styles from './WorkflowConfigDialog.module.css';
 
 type EnumOption = NonNullable<DocumentField['enumOptions']>[number];
@@ -20,8 +18,9 @@ type WorkflowConfigDialogProps = {
   workspaceSlug: string;
   field: DocumentField;
   allFields: DocumentField[];
+  approvals: Record<string, DocumentStatusApproval>;
   onClose: () => void;
-  onSave: (patch: Pick<DocumentField, 'isStatus' | 'enumOptions'>) => void;
+  onSave: (patch: { isStatus: boolean; statuses: Record<string, DocumentStatusApproval> }) => void;
 };
 
 const FALLBACK = '__fallback__';
@@ -33,21 +32,19 @@ const defaultApproval = (): DocumentStatusApproval => ({
   fallbackTeamIds: []
 });
 
-const copyOptions = (options: DocumentField['enumOptions']): EnumOption[] =>
-  (options ?? []).map(option => ({
-    ...option,
-    ...(option.approval
-      ? {
-          approval: {
-            required: option.approval.required,
-            requiredApprovals: option.approval.requiredApprovals ?? 1,
-            approverFieldId: option.approval.approverFieldId,
-            fallbackUserIds: [...(option.approval.fallbackUserIds ?? [])],
-            fallbackTeamIds: [...(option.approval.fallbackTeamIds ?? [])]
-          }
-        }
-      : {})
-  }));
+const copyApprovals = (approvals: Record<string, DocumentStatusApproval>) =>
+  Object.fromEntries(
+    Object.entries(approvals).map(([value, approval]) => [
+      value,
+      {
+        required: approval.required,
+        requiredApprovals: approval.requiredApprovals ?? 1,
+        approverFieldId: approval.approverFieldId,
+        fallbackUserIds: [...(approval.fallbackUserIds ?? [])],
+        fallbackTeamIds: [...(approval.fallbackTeamIds ?? [])]
+      }
+    ])
+  );
 
 const PickedUsers = ({
   ids,
@@ -128,6 +125,7 @@ export const WorkflowConfigDialog = ({
   workspaceSlug,
   field,
   allFields,
+  approvals: initialApprovals,
   onClose,
   onSave
 }: WorkflowConfigDialogProps) => {
@@ -135,6 +133,7 @@ export const WorkflowConfigDialog = ({
   const { data: teams = [] } = useTeams(workspaceSlug, open);
   const [enabled, setEnabled] = useState(false);
   const [options, setOptions] = useState<EnumOption[]>([]);
+  const [approvals, setApprovals] = useState<Record<string, DocumentStatusApproval>>({});
 
   const sourceFields = useMemo(
     () =>
@@ -151,62 +150,76 @@ export const WorkflowConfigDialog = ({
   useEffect(() => {
     if (!open) return;
     setEnabled(field.isStatus === true);
-    setOptions(copyOptions(field.enumOptions));
-  }, [field, open]);
+    setOptions((field.enumOptions ?? []).map(option => ({ ...option })));
+    setApprovals(copyApprovals(initialApprovals));
+  }, [field, initialApprovals, open]);
 
-  const updateOption = (value: string, update: (option: EnumOption) => EnumOption) => {
-    setOptions(current =>
-      current.map(option => (option.value === value ? update(option) : option))
-    );
+  const updateApproval = (value: string, update: Partial<DocumentStatusApproval>) => {
+    setApprovals(current => ({
+      ...current,
+      [value]: { ...defaultApproval(), ...(current[value] ?? {}), ...update }
+    }));
   };
 
-  const updateApproval = (
-    option: EnumOption,
-    update: Partial<DocumentStatusApproval>
-  ): EnumOption => ({
-    ...option,
-    approval: { ...defaultApproval(), ...(option.approval ?? {}), ...update }
-  });
-
   const toggleApproval = (option: EnumOption, required: boolean) => {
-    updateOption(option.value, current =>
-      required ? updateApproval(current, { required: true }) : { ...current, approval: undefined }
-    );
+    setApprovals(current => {
+      if (!required) {
+        const next = { ...current };
+        delete next[option.value];
+        return next;
+      }
+      return {
+        ...current,
+        [option.value]: { ...defaultApproval(), ...(current[option.value] ?? {}), required: true }
+      };
+    });
   };
 
   const addApprover = (option: EnumOption, kind: 'user' | 'team', id: string) => {
-    updateOption(option.value, current => {
-      const approval = { ...defaultApproval(), ...(current.approval ?? {}) };
+    setApprovals(current => {
+      const approval = { ...defaultApproval(), ...(current[option.value] ?? {}) };
       const key = kind === 'user' ? 'fallbackUserIds' : 'fallbackTeamIds';
       const values = approval[key];
-      return updateApproval(current, { [key]: values.includes(id) ? values : [...values, id] });
+      return {
+        ...current,
+        [option.value]: { ...approval, [key]: values.includes(id) ? values : [...values, id] }
+      };
     });
   };
 
   const removeApprover = (option: EnumOption, kind: 'user' | 'team', id: string) => {
-    updateOption(option.value, current => {
-      const approval = { ...defaultApproval(), ...(current.approval ?? {}) };
+    setApprovals(current => {
+      const approval = { ...defaultApproval(), ...(current[option.value] ?? {}) };
       const key = kind === 'user' ? 'fallbackUserIds' : 'fallbackTeamIds';
-      return updateApproval(current, { [key]: approval[key].filter(value => value !== id) });
+      return {
+        ...current,
+        [option.value]: { ...approval, [key]: approval[key].filter(value => value !== id) }
+      };
     });
   };
 
   const save = () => {
-    const enumOptions = options.map(option => {
-      if (!enabled || !option.approval?.required) return { ...option, approval: undefined };
-      const approval = { ...defaultApproval(), ...option.approval };
-      return {
-        ...option,
-        approval: {
-          required: true,
-          requiredApprovals: Math.max(1, approval.requiredApprovals ?? 1),
-          approverFieldId: approval.approverFieldId,
-          fallbackUserIds: approval.fallbackUserIds,
-          fallbackTeamIds: approval.fallbackTeamIds
-        }
-      };
-    });
-    onSave({ isStatus: enabled, enumOptions });
+    const statuses = enabled
+      ? Object.fromEntries(
+          options.flatMap(option => {
+            const approval = approvals[option.value];
+            if (!approval?.required) return [];
+            return [
+              [
+                option.value,
+                {
+                  required: true,
+                  requiredApprovals: Math.max(1, approval.requiredApprovals ?? 1),
+                  approverFieldId: approval.approverFieldId,
+                  fallbackUserIds: approval.fallbackUserIds,
+                  fallbackTeamIds: approval.fallbackTeamIds
+                }
+              ]
+            ];
+          })
+        )
+      : {};
+    onSave({ isStatus: enabled, statuses });
   };
 
   return (
@@ -234,7 +247,7 @@ export const WorkflowConfigDialog = ({
 
         <div className={styles.optionList}>
           {options.map(option => {
-            const approval = option.approval;
+            const approval = approvals[option.value];
             const source = sourceFields.find(item => item.id === approval?.approverFieldId);
             return (
               <div key={option.value} className={styles.optionCard}>
@@ -267,11 +280,9 @@ export const WorkflowConfigDialog = ({
                           type="number"
                           value={String(approval.requiredApprovals ?? 1)}
                           onChange={value =>
-                            updateOption(option.value, current =>
-                              updateApproval(current, {
-                                requiredApprovals: Math.max(1, Number(value ?? 1) || 1)
-                              })
-                            )
+                            updateApproval(option.value, {
+                              requiredApprovals: Math.max(1, Number(value ?? 1) || 1)
+                            })
                           }
                         />
                       </div>
@@ -288,12 +299,9 @@ export const WorkflowConfigDialog = ({
                         <Select.Root
                           value={approval.approverFieldId ?? FALLBACK}
                           onChange={value =>
-                            updateOption(option.value, current =>
-                              updateApproval(current, {
-                                approverFieldId:
-                                  value === FALLBACK ? undefined : (value ?? undefined)
-                              })
-                            )
+                            updateApproval(option.value, {
+                              approverFieldId: value === FALLBACK ? undefined : (value ?? undefined)
+                            })
                           }
                         >
                           <Select.Item value={FALLBACK}>Fallback users and teams only</Select.Item>

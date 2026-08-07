@@ -33,6 +33,8 @@ import type {
   ExportSharedFieldGroup
 } from './exportTypes';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
+import { DOCUMENT_STATUS_CASE_KIND } from '../document/documentWorkflowOperations';
+import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import { validateRelationEndpoints } from '../catalog/relationHelpers';
 import { requireTypedRelationEdit } from '../catalog/relationAccessControl';
 import { listAllRelations } from '../catalog/relationOperations';
@@ -1035,6 +1037,19 @@ export const importDocuments = async (
       if (type.archived) await db.document.archiveDocumentType(workspace, nextId, true, now);
       created++;
     }
+  }
+  for (const config of documents.workflow_configs ?? []) {
+    const documentTypeId = typeMapping.get(config.document_type_id);
+    if (!documentTypeId) continue;
+    await db.governanceCaseConfig.upsertCaseConfig({
+      workspace,
+      case_kind: DOCUMENT_STATUS_CASE_KIND,
+      case_subkind: encodeCaseSubkind(documentTypeId, config.field_id),
+      enabled: config.enabled,
+      config: { statuses: config.statuses },
+      updated_at: new Date(),
+      updated_by: null
+    });
   }
   const existingTemplates = await db.document.listDocumentTemplates(workspace, undefined, true);
   let templates = 0;
