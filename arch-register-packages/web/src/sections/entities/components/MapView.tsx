@@ -1,10 +1,4 @@
-import {
-  useMemo,
-  useCallback,
-  useEffect,
-  type KeyboardEvent,
-  type MouseEvent
-} from 'react';
+import { useMemo, useCallback, useEffect, type KeyboardEvent, type MouseEvent } from 'react';
 import styles from './MapView.module.css';
 import { TbChevronDown, TbEyeOff, TbTrash } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -235,7 +229,11 @@ const resolveBoxColor = (
   const colorMin = legend.min ?? directMetricRange.min;
   const colorMax = legend.max ?? directMetricRange.max;
 
-  if (!result || result.value == null || (isEnumSource(metric.source) && result.dominantValue == null)) {
+  if (
+    !result ||
+    result.value == null ||
+    (isEnumSource(metric.source) && result.dominantValue == null)
+  ) {
     if (directValue?.kind === 'number' && colorMin != null && colorMax != null) {
       return numericColor(directValue.value, colorMin, colorMax);
     }
@@ -246,7 +244,10 @@ const resolveBoxColor = (
       return categoricalColor(index === -1 ? Number.MAX_SAFE_INTEGER : index);
     }
     if (directValue?.kind === 'lifecycle') {
-      return lifecycleStates.find(state => state.id === directValue.value)?.color ?? NEUTRAL_MISSING_COLOR;
+      return (
+        lifecycleStates.find(state => state.id === directValue.value)?.color ??
+        NEUTRAL_MISSING_COLOR
+      );
     }
     return NEUTRAL_MISSING_COLOR;
   }
@@ -302,10 +303,7 @@ const getDirectMetricValue = (
   return null;
 };
 
-const hasMissingMetricData = (
-  metric: MetricConfig,
-  result: MetricResult | undefined
-): boolean => {
+const hasMissingMetricData = (metric: MetricConfig, result: MetricResult | undefined): boolean => {
   if (!result) return true;
   if (result.sourceCount === 0) return true;
   return isEnumSource(metric.source) ? result.dominantValue == null : result.value == null;
@@ -687,10 +685,7 @@ export const MapView = ({
   // ── Metric configuration ─────────────────────────────────────────────────
 
   const mapLevelSchemaIds = useMemo(
-    () =>
-      cfg.levelConfigs
-        .map(level => level.schemaId)
-        .filter((id): id is string => id != null),
+    () => cfg.levelConfigs.map(level => level.schemaId).filter((id): id is string => id != null),
     [cfg.levelConfigs]
   );
   const mapTraversalPath = useMemo(
@@ -750,10 +745,9 @@ export const MapView = ({
       levelIndex,
       children:
         levelIndex + 1 < cfg.levelConfigs.length
-          ? getMapChildrenForNode(
-              node,
-              cfg.levelConfigs[levelIndex + 1]?.schemaId ?? null
-            ).map(child => build(child, levelIndex + 1))
+          ? getMapChildrenForNode(node, cfg.levelConfigs[levelIndex + 1]?.schemaId ?? null).map(
+              child => build(child, levelIndex + 1)
+            )
           : []
     });
     return level1Items.map(node => build(node, 0));
@@ -822,7 +816,9 @@ export const MapView = ({
       }
       return {
         ...entry,
-        children: entry.children.map(filter).filter((child): child is RenderTreeNode => child !== null)
+        children: entry.children
+          .map(filter)
+          .filter((child): child is RenderTreeNode => child !== null)
       };
     };
     return renderTree.map(filter).filter((entry): entry is RenderTreeNode => entry !== null);
@@ -988,10 +984,7 @@ export const MapView = ({
             disabled={!cfg.levelConfigs.at(-1)?.schemaId}
             onClick={() =>
               notify({
-                levelConfigs: [
-                  ...cfg.levelConfigs,
-                  { schemaId: null, columns: 3, hidden: false }
-                ]
+                levelConfigs: [...cfg.levelConfigs, { schemaId: null, columns: 3, hidden: false }]
               })
             }
           >
@@ -1185,7 +1178,11 @@ export const MapView = ({
                 if (levelIndex > 0 && level.hidden) return childContent;
 
                 const className =
-                  levelIndex === 0 ? styles.level1Box : levelIndex === 1 ? styles.level2Box : styles.level3Box;
+                  levelIndex === 0
+                    ? styles.level1Box
+                    : levelIndex === 1
+                      ? styles.level2Box
+                      : styles.level3Box;
                 return (
                   <div
                     key={node._uid}
@@ -1198,7 +1195,9 @@ export const MapView = ({
                       <EntityTooltip
                         node={node}
                         color={color}
-                        schemaName={entitySchema?.schema.name ?? relationSchema?.name ?? node._schema.name}
+                        schemaName={
+                          entitySchema?.schema.name ?? relationSchema?.name ?? node._schema.name
+                        }
                         isLinked={linkedEntityIds == null || linkedEntityIdSet.has(linkedId)}
                         displayFields={selectedDisplayFields}
                         schemaMap={schemaMap}
@@ -1236,7 +1235,9 @@ export const MapView = ({
 
           {filteredRenderTree.length === 0 && (
             <EmptyState
-              title={level1Items.length === 0 ? 'No entities found' : 'No boxes match the metric filters'}
+              title={
+                level1Items.length === 0 ? 'No entities found' : 'No boxes match the metric filters'
+              }
               subtitle="Try adjusting your search or filters."
             />
           )}
