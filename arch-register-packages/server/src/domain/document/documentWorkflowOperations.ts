@@ -62,6 +62,25 @@ const approvalFor = (
 
 const unique = <T>(values: T[]) => [...new Set(values)];
 
+/** Counts document types/fields with a workflow-enabled (approval-required) status option. */
+export const summarizeDocumentStatusApprovals = (
+  documentTypes: Pick<DocumentType, 'fields'>[]
+): { documentTypesConfigured: number; fieldsConfigured: number } => {
+  let documentTypesConfigured = 0;
+  let fieldsConfigured = 0;
+  for (const documentType of documentTypes) {
+    const configuredFields = documentType.fields.filter(
+      field =>
+        field.isStatus &&
+        field.type === 'enum' &&
+        (field.enumOptions ?? []).some(option => option.approval?.required)
+    );
+    if (configuredFields.length > 0) documentTypesConfigured += 1;
+    fieldsConfigured += configuredFields.length;
+  }
+  return { documentTypesConfigured, fieldsConfigured };
+};
+
 const resolveApproverSlots = async (
   db: DatabaseAdapter,
   workspace: string,

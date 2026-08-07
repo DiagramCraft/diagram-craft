@@ -1,0 +1,80 @@
+.blockList {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+  padding: 16px 24px 32px;
+}
+
+.intro {
+  font-size: 12px;
+  color: var(--cmp-fg-disabled);
+  max-width: 640px;
+}
+
+.card {
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  overflow: hidden;
+}
+
+.cardHead {
+  padding: 14px 16px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 12px;
+}
+
+.cardTitle {
+  color: var(--base-fg);
+  font-size: 13.5px;
+  font-weight: 500;
+}
+
+.cardSub {
+  font-size: 11.5px;
+  margin-top: 2px;
+  color: var(--cmp-fg-disabled);
+}
+
+.badges {
+  display: flex;
+  gap: 6px;
+  flex-shrink: 0;
+}
+
+.badge {
+  font-size: 10.5px;
+  padding: 2px 8px;
+  border-radius: 999px;
+  border: 1px solid var(--panel-border);
+  color: var(--cmp-fg-disabled);
+  white-space: nowrap;
+}
+
+.badgeActive {
+  color: var(--base-fg);
+  border-color: var(--primary-border, var(--panel-border));
+}
+
+.cardBody {
+  padding: 8px 16px 14px;
+}
+
+.approvalSummary {
+  font-size: 12px;
+  color: var(--base-fg-dim);
+  padding: 8px 0;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.emptyNote {
+  font-size: 12px;
+  color: var(--cmp-fg-disabled);
+  padding: 8px 0;
+}
