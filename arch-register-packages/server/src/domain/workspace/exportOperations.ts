@@ -271,7 +271,7 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
   const [schemas, policiesBySchema, governanceRows] = await Promise.all([
     db.catalog.listSchemas(workspace),
     getSchemaGovernancePoliciesBySchema(db, workspace),
-    db.governanceCaseConfig.listCaseConfig(workspace)
+    db.governanceCaseConfig?.listCaseConfig(workspace) ?? Promise.resolve([])
   ]);
   const sharedGroups = await db.catalog.listSharedFieldGroups(workspace);
   const sharedGroupsById = new Map(sharedGroups.map(group => [group.id, group]));
