@@ -7793,12 +7793,19 @@
                         "type": "object",
                         "properties": {
                           "schemaIds": {
-                            "type": "array",
-                            "minItems": 1,
-                            "items": {
-                              "type": "string"
-                            },
-                            "description": "Entity schema identifiers allowed at this endpoint"
+                            "anyOf": [
+                              {
+                                "const": "any"
+                              },
+                              {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            ],
+                            "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
                           }
                         },
                         "required": [
@@ -7810,12 +7817,19 @@
                         "type": "object",
                         "properties": {
                           "schemaIds": {
-                            "type": "array",
-                            "minItems": 1,
-                            "items": {
-                              "type": "string"
-                            },
-                            "description": "Entity schema identifiers allowed at this endpoint"
+                            "anyOf": [
+                              {
+                                "const": "any"
+                              },
+                              {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            ],
+                            "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
                           }
                         },
                         "required": [
@@ -8522,12 +8536,19 @@
                     "type": "object",
                     "properties": {
                       "schemaIds": {
-                        "type": "array",
-                        "minItems": 1,
-                        "items": {
-                          "type": "string"
-                        },
-                        "description": "Entity schema identifiers allowed at this endpoint"
+                        "anyOf": [
+                          {
+                            "const": "any"
+                          },
+                          {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        ],
+                        "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
                       }
                     },
                     "required": [
@@ -8539,12 +8560,19 @@
                     "type": "object",
                     "properties": {
                       "schemaIds": {
-                        "type": "array",
-                        "minItems": 1,
-                        "items": {
-                          "type": "string"
-                        },
-                        "description": "Entity schema identifiers allowed at this endpoint"
+                        "anyOf": [
+                          {
+                            "const": "any"
+                          },
+                          {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        ],
+                        "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
                       }
                     },
                     "required": [
@@ -9186,12 +9214,19 @@
                       "type": "object",
                       "properties": {
                         "schemaIds": {
-                          "type": "array",
-                          "minItems": 1,
-                          "items": {
-                            "type": "string"
-                          },
-                          "description": "Entity schema identifiers allowed at this endpoint"
+                          "anyOf": [
+                            {
+                              "const": "any"
+                            },
+                            {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          ],
+                          "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
                         }
                       },
                       "required": [
@@ -9203,12 +9238,19 @@
                       "type": "object",
                       "properties": {
                         "schemaIds": {
-                          "type": "array",
-                          "minItems": 1,
-                          "items": {
-                            "type": "string"
-                          },
-                          "description": "Entity schema identifiers allowed at this endpoint"
+                          "anyOf": [
+                            {
+                              "const": "any"
+                            },
+                            {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          ],
+                          "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
                         }
                       },
                       "required": [
@@ -9934,12 +9976,19 @@
                       "type": "object",
                       "properties": {
                         "schemaIds": {
-                          "type": "array",
-                          "minItems": 1,
-                          "items": {
-                            "type": "string"
-                          },
-                          "description": "Entity schema identifiers allowed at this endpoint"
+                          "anyOf": [
+                            {
+                              "const": "any"
+                            },
+                            {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          ],
+                          "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
                         }
                       },
                       "required": [
@@ -9951,12 +10000,19 @@
                       "type": "object",
                       "properties": {
                         "schemaIds": {
-                          "type": "array",
-                          "minItems": 1,
-                          "items": {
-                            "type": "string"
-                          },
-                          "description": "Entity schema identifiers allowed at this endpoint"
+                          "anyOf": [
+                            {
+                              "const": "any"
+                            },
+                            {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          ],
+                          "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
                         }
                       },
                       "required": [
@@ -10671,12 +10727,19 @@
                     "type": "object",
                     "properties": {
                       "schemaIds": {
-                        "type": "array",
-                        "minItems": 1,
-                        "items": {
-                          "type": "string"
-                        },
-                        "description": "Entity schema identifiers allowed at this endpoint"
+                        "anyOf": [
+                          {
+                            "const": "any"
+                          },
+                          {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        ],
+                        "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
                       }
                     },
                     "required": [
@@ -10688,12 +10751,19 @@
                     "type": "object",
                     "properties": {
                       "schemaIds": {
-                        "type": "array",
-                        "minItems": 1,
-                        "items": {
-                          "type": "string"
-                        },
-                        "description": "Entity schema identifiers allowed at this endpoint"
+                        "anyOf": [
+                          {
+                            "const": "any"
+                          },
+                          {
+                            "type": "array",
+                            "minItems": 1,
+                            "items": {
+                              "type": "string"
+                            }
+                          }
+                        ],
+                        "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
                       }
                     },
                     "required": [
@@ -11364,12 +11434,19 @@
                       "type": "object",
                       "properties": {
                         "schemaIds": {
-                          "type": "array",
-                          "minItems": 1,
-                          "items": {
-                            "type": "string"
-                          },
-                          "description": "Entity schema identifiers allowed at this endpoint"
+                          "anyOf": [
+                            {
+                              "const": "any"
+                            },
+                            {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          ],
+                          "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
                         }
                       },
                       "required": [
@@ -11381,12 +11458,19 @@
                       "type": "object",
                       "properties": {
                         "schemaIds": {
-                          "type": "array",
-                          "minItems": 1,
-                          "items": {
-                            "type": "string"
-                          },
-                          "description": "Entity schema identifiers allowed at this endpoint"
+                          "anyOf": [
+                            {
+                              "const": "any"
+                            },
+                            {
+                              "type": "array",
+                              "minItems": 1,
+                              "items": {
+                                "type": "string"
+                              }
+                            }
+                          ],
+                          "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
                         }
                       },
                       "required": [
@@ -12166,12 +12250,19 @@
                         "type": "object",
                         "properties": {
                           "schemaIds": {
-                            "type": "array",
-                            "minItems": 1,
-                            "items": {
-                              "type": "string"
-                            },
-                            "description": "Entity schema identifiers allowed at this endpoint"
+                            "anyOf": [
+                              {
+                                "const": "any"
+                              },
+                              {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            ],
+                            "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
                           }
                         },
                         "required": [
@@ -12183,12 +12274,19 @@
                         "type": "object",
                         "properties": {
                           "schemaIds": {
-                            "type": "array",
-                            "minItems": 1,
-                            "items": {
-                              "type": "string"
-                            },
-                            "description": "Entity schema identifiers allowed at this endpoint"
+                            "anyOf": [
+                              {
+                                "const": "any"
+                              },
+                              {
+                                "type": "array",
+                                "minItems": 1,
+                                "items": {
+                                  "type": "string"
+                                }
+                              }
+                            ],
+                            "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
                           }
                         },
                         "required": [
