@@ -532,6 +532,11 @@ export const createRelationGovernanceRegistry = (): GovernanceRegistry =>
     [
       RELATION_CHANGE_CASE_KIND,
       {
+        workflowConfig: {
+          supportsApprovals: false,
+          supportsReminders: true,
+          supportsEscalation: false
+        },
         subjectVisible: async (
           db: DatabaseAdapter,
           authCtx: AuthorizationContext,

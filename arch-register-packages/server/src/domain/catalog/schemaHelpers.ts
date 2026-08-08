@@ -17,7 +17,6 @@ import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { normalizePublicIdPrefix, validatePublicIdPrefix } from '../../utils/publicIds';
 import { buildDerivedPlan } from '../derived/derivedFields';
 import type { SchemaGovernancePolicies } from '../governance/schemaGovernancePolicy';
-
 type SchemaMutationPayload = {
   name: string;
   key_prefix: string;
@@ -29,8 +28,6 @@ type SchemaMutationPayload = {
   color: string | null;
   icon: string | null;
   defaultOwner: string | null;
-  entityApprovalPolicy: 'required' | 'disabled';
-  deprecationPolicy: 'required' | 'disabled';
 };
 
 export const resolveSchemaDefaultOwner = (
@@ -330,9 +327,7 @@ export const buildCreateSchemaInput = (
     shared_field_group_links = [],
     color,
     icon,
-    default_owner,
-    entity_approval_policy,
-    deprecation_policy
+    default_owner
   } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
   const normalizedGroups = normalizeSchemaGroups(groups);
@@ -355,12 +350,6 @@ export const buildCreateSchemaInput = (
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
     default_owner: resolveSchemaDefaultOwner(default_owner, teamIds, null),
-    entity_approval_policy: (entity_approval_policy === 'required' ? 'required' : 'disabled') as
-      | 'required'
-      | 'disabled',
-    deprecation_policy: (deprecation_policy === 'required' ? 'required' : 'disabled') as
-      | 'required'
-      | 'disabled',
     created_at: timestamp,
     updated_at: timestamp
   };
@@ -382,9 +371,7 @@ export const buildUpdateSchemaInput = (
     shared_field_group_links,
     color,
     icon,
-    default_owner,
-    entity_approval_policy,
-    deprecation_policy
+    default_owner
   } = body;
   httpAssert.string(name, { message: 'name is required and must be a string' });
   const normalizedGroups =
@@ -418,18 +405,6 @@ export const buildUpdateSchemaInput = (
       default_owner !== undefined
         ? resolveSchemaDefaultOwner(default_owner, teamIds, null)
         : current.default_owner,
-    entityApprovalPolicy:
-      entity_approval_policy === undefined
-        ? (current.entity_approval_policy ?? 'disabled')
-        : entity_approval_policy === 'required'
-          ? 'required'
-          : 'disabled',
-    deprecationPolicy:
-      deprecation_policy === undefined
-        ? (current.deprecation_policy ?? 'disabled')
-        : deprecation_policy === 'required'
-          ? 'required'
-          : 'disabled',
     updated_at: timestamp
   };
 };

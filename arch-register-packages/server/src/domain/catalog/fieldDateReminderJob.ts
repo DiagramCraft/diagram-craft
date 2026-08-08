@@ -1,5 +1,4 @@
 import { randomUUID } from 'node:crypto';
-import { fieldDateReminderCaseConfigSchema } from '@arch-register/api-types/governanceCaseConfigSchemas';
 import type { DatabaseAdapter } from '../../db/database';
 import { DatabaseError } from '../../db/databaseError';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
@@ -14,6 +13,7 @@ import {
 import type { GovernanceCaseDbResult } from '../governance/db/governanceDatabase';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
+import { parseGovernanceWorkflowConfig } from '../governance/governanceWorkflowConfig';
 
 export const FIELD_DATE_REMINDER_CASE_KIND = 'field-date-reminder';
 export const FIELD_DATE_REMINDER_SYSTEM_IDENTITY = 'field-date-reminder';
@@ -40,11 +40,11 @@ const reminderFor = (
 ): FieldDateReminderWindows | null => {
   const row = configs.get(encodeCaseSubkind(schemaId, fieldId));
   if (!row?.enabled) return null;
-  const config = fieldDateReminderCaseConfigSchema.safeParse(row.config);
-  if (!config.success) return null;
+  const config = parseGovernanceWorkflowConfig(row.config, row.enabled).reminders;
+  if (!config?.enabled) return null;
   return {
-    approachingDays: config.data.approaching_days,
-    overdueDays: config.data.overdue_days
+    approachingDays: config.approachingDays,
+    overdueDays: config.overdueDays
   };
 };
 
@@ -336,6 +336,39 @@ export const createFieldDateReminderGovernanceRegistry = (): GovernanceRegistry 
     [
       FIELD_DATE_REMINDER_CASE_KIND,
       {
+        workflowConfig: {
+          supportsSubkind: true,
+          supportsWorkspaceScope: false,
+          supportsApprovals: false,
+          supportsReminders: true,
+          supportsEscalation: false,
+          defaultConfig: {
+            reminders: {
+              enabled: true,
+              approachingDays: [3],
+              overdueDays: [1, 3]
+            },
+            extensions: {}
+          },
+          validateSubkind: async (db, workspace, subkind) => {
+            if (!subkind) return 'Field reminders require a schema and field';
+            const [schemaId, fieldId] = subkind.split(':');
+            if (!schemaId || !fieldId || subkind !== `${schemaId}:${fieldId}`) {
+              return 'Field reminder subkind must be schemaId:fieldId';
+            }
+            const schema = await db.catalog.getSchema(workspace, schemaId);
+            if (!schema) return `Schema '${schemaId}' not found`;
+            const field = schema.fields.find(item => item.id === fieldId);
+            return field?.type === 'date' ? null : `Date field '${fieldId}' not found`;
+          },
+          labelSubkind: async (db, workspace, subkind) => {
+            if (!subkind) return null;
+            const [schemaId, fieldId] = subkind.split(':');
+            const schema = schemaId ? await db.catalog.getSchema(workspace, schemaId) : null;
+            const field = schema?.fields.find(item => item.id === fieldId);
+            return schema && field ? `${schema.name} · ${field.name}` : subkind;
+          }
+        },
         subjectVisible: async (db, _authCtx, workspace, subjectId) =>
           (await db.catalog.getEntity(workspace, subjectId)) != null,
         resolveReminderWindows: async (db, caseRow) => {

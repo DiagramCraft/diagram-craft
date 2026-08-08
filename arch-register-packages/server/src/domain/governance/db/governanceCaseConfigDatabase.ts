@@ -58,6 +58,11 @@ export type GovernanceCaseConfigDatabase = {
     caseKind: string
   ): Promise<GovernanceCaseConfigDbResult[]>;
   upsertCaseConfig(input: GovernanceCaseConfigDbUpsert): Promise<GovernanceCaseConfigDbResult>;
+  deleteCaseConfig(
+    workspace: string,
+    caseKind: string,
+    caseSubkind: string | null
+  ): Promise<boolean>;
   /**
    * Deletes every config row whose `case_subkind` is `subkindPrefix` itself, or scoped to a field
    * under it (`subkindPrefix:anyFieldId`) — used to cascade-clean config when the schema,

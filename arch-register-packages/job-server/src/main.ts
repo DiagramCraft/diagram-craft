@@ -15,11 +15,7 @@ import {
   ensureAllGovernanceDeadlineScanSchedules,
   GOVERNANCE_DEADLINE_SCAN_JOB_TYPE
 } from '@arch-register/server/domain/governance/governanceDeadlineScanJob';
-import { createEntityGovernanceRegistry } from '@arch-register/server/domain/catalog/entityChangeOperations';
-import { createDeprecationGovernanceRegistry } from '@arch-register/server/domain/catalog/entityDeprecationOperations';
-import { createDocumentGovernanceRegistry } from '@arch-register/server/domain/document/documentWorkflowOperations';
-import { createAssessmentGovernanceRegistry } from '@arch-register/server/domain/project/assessmentOperations';
-import { createFieldDateReminderGovernanceRegistry } from '@arch-register/server/domain/catalog/fieldDateReminderJob';
+import { createApplicationGovernanceRegistry } from '@arch-register/server/domain/governance/governanceRegistryFactory';
 import { createDocumentMetadataGenerationScanJobHandler } from '@arch-register/server/domain/document/documentMetadataGenerationJob';
 import { createTechnologyEolJobHandler } from '@arch-register/server/domain/jobs/technologyEolJob';
 import {
@@ -80,13 +76,7 @@ const main = async () => {
   await ensureAllNotificationDeliverySchedules(db);
   await ensureAllGovernanceDeadlineScanSchedules(db);
   await ensureAllCurrencyRatesSchedules(db);
-  const governanceRegistry = new Map([
-    ...createEntityGovernanceRegistry(),
-    ...createDeprecationGovernanceRegistry(),
-    ...createDocumentGovernanceRegistry(),
-    ...createAssessmentGovernanceRegistry(),
-    ...createFieldDateReminderGovernanceRegistry()
-  ]);
+  const governanceRegistry = createApplicationGovernanceRegistry();
   handlers.set('external-content.refresh', createExternalContentJobHandler(db, storage));
   handlers.set('webhook.delivery', createWebhookDeliveryHandler(db));
   handlers.set(AUTOMATION_RULE_JOB_TYPE, createAutomationRuleExecutionHandler(db));

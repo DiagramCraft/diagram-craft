@@ -26,6 +26,7 @@ The implemented settings area includes:
 - teams
 - members
 - AI
+- workflows
 - export and import
 - analytics
 - audit log
@@ -48,11 +49,19 @@ One state can be designated as the workspace's deprecated state. Finalizing an
 
 ## Governance Policies
 
-Approval and deprecation requirements are configured per entity type, not workspace-wide. On each entity type in
-**Entity Types**, administrators can set:
+Use **Workflows** to configure governance behavior centrally. Each saved workflow configuration can define the
+supported approval policy, reminder schedule, escalation behavior, and case-kind-specific extensions. Configurations
+may be workspace-wide or scoped to a supported case subkind, such as a document type and status field.
+
+Entity change approval and entity deprecation are configured in **Workflows** rather than on the entity schema editor.
+Administrators can set:
 
 - **Entity approval policy** — require approval before entity changes take effect
 - **Entity deprecation** — require a deprecation proposal to retire entities of this type
+
+Document status approval is also configured in **Workflows**. Select the document type and enum field, then choose the
+status values that require approval. The document schema editor continues to define fields and values but does not
+contain workflow configuration.
 
 See [Governance and Approvals](../use/governance) for how these workflows behave for users.
 

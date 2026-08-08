@@ -25,8 +25,12 @@ import type {
 import type { SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
 import type { SharedFieldGroupDbResult } from '../catalog/db/catalogDatabase';
 import { DOCUMENT_STATUS_CASE_KIND } from '../document/documentWorkflowOperations';
-import { documentStatusApprovalConfigSchema } from '@arch-register/api-types/governanceCaseConfigSchemas';
-import { getSchemaGovernancePoliciesBySchema } from '../governance/schemaGovernancePolicy';
+import { parseGovernanceWorkflowConfig } from '../governance/governanceWorkflowConfig';
+import {
+  ENTITY_CHANGE_POLICY_CASE_KIND,
+  ENTITY_DEPRECATION_POLICY_CASE_KIND,
+  getSchemaGovernancePoliciesBySchema
+} from '../governance/schemaGovernancePolicy';
 
 const checker = new PermissionChecker();
 
@@ -264,12 +268,30 @@ const exportConfig = async (db: DatabaseAdapter, workspace: string): Promise<Exp
 };
 
 const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<ExportSchema[]> => {
-  const [schemas, policiesBySchema] = await Promise.all([
+  const [schemas, policiesBySchema, governanceRows] = await Promise.all([
     db.catalog.listSchemas(workspace),
-    getSchemaGovernancePoliciesBySchema(db, workspace)
+    getSchemaGovernancePoliciesBySchema(db, workspace),
+    db.governanceCaseConfig?.listCaseConfig(workspace) ?? Promise.resolve([])
   ]);
   const sharedGroups = await db.catalog.listSharedFieldGroups(workspace);
   const sharedGroupsById = new Map(sharedGroups.map(group => [group.id, group]));
+  const governanceRowsBySchema = new Map<string, ExportSchema['governance_configs']>();
+  for (const row of governanceRows) {
+    if (
+      row.case_subkind == null ||
+      (row.case_kind !== ENTITY_CHANGE_POLICY_CASE_KIND &&
+        row.case_kind !== ENTITY_DEPRECATION_POLICY_CASE_KIND)
+    ) {
+      continue;
+    }
+    const rows = governanceRowsBySchema.get(row.case_subkind) ?? [];
+    rows.push({
+      case_kind: row.case_kind,
+      enabled: row.enabled,
+      config: parseGovernanceWorkflowConfig(row.config, row.enabled)
+    });
+    governanceRowsBySchema.set(row.case_subkind, rows);
+  }
 
   return schemas.map(schema => ({
     id: schema.id,
@@ -287,7 +309,8 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
     default_owner: schema.default_owner,
     key_prefix: schema.key_prefix,
     entity_approval_policy: policiesBySchema.get(schema.id)?.entity_approval_policy ?? 'disabled',
-    deprecation_policy: policiesBySchema.get(schema.id)?.deprecation_policy ?? 'disabled'
+    deprecation_policy: policiesBySchema.get(schema.id)?.deprecation_policy ?? 'disabled',
+    governance_configs: governanceRowsBySchema.get(schema.id) ?? []
   }));
 };
 
@@ -598,19 +621,18 @@ const exportDocuments = async (
   }
   const workflowConfigs = (
     await db.governanceCaseConfig.listCaseConfigForKind(workspace, DOCUMENT_STATUS_CASE_KIND)
-  ).flatMap(row => {
-    const separator = row.case_subkind?.indexOf(':') ?? -1;
-    const config = documentStatusApprovalConfigSchema.safeParse(row.config);
-    if (separator <= 0 || !config.success) return [];
-    return [
-      {
-        document_type_id: row.case_subkind!.slice(0, separator),
-        field_id: row.case_subkind!.slice(separator + 1),
-        enabled: row.enabled,
-        statuses: config.data.statuses
-      }
-    ];
-  });
+  ).flatMap(row =>
+    row.case_subkind
+      ? [
+          {
+            case_kind: row.case_kind,
+            case_subkind: row.case_subkind,
+            enabled: row.enabled,
+            config: parseGovernanceWorkflowConfig(row.config, row.enabled)
+          }
+        ]
+      : []
+  );
   return {
     types: (await db.document.listDocumentTypes(workspace, true)).map(type => ({
       ...type,

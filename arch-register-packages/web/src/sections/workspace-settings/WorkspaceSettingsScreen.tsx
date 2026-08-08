@@ -67,6 +67,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
     title: 'AI',
     sub: 'Configure the AI provider, model, and system prompt for the Assistant and Extract features.'
   },
+  'workflows': {
+    title: 'Workflows',
+    sub: 'Configure approvals, reminders, escalation, and case-specific governance workflows.'
+  },
   'export-import': {
     title: 'Export & Import',
     sub: 'Export workspace data to ZIP archive or import data from another workspace.'
@@ -113,6 +117,7 @@ export const WorkspaceSettingsScreen = () => {
   const [membersAddDialogOpen, setMembersAddDialogOpen] = useState(false);
   const [teamsAddDialogOpen, setTeamsAddDialogOpen] = useState(false);
   const [rolesAddDialogOpen, setRolesAddDialogOpen] = useState(false);
+  const [workflowAddDialogOpen, setWorkflowAddDialogOpen] = useState(false);
   const [jobAddDialogOpen, setJobAddDialogOpen] = useState(false);
   const [apiTokenAddDialogOpen, setApiTokenAddDialogOpen] = useState(false);
 
@@ -194,6 +199,14 @@ export const WorkspaceSettingsScreen = () => {
       >
         Create token
       </Button>
+    ) : section === 'workflows' ? (
+      <Button
+        variant="primary"
+        icon={<TbPlus size={12} />}
+        onClick={() => setWorkflowAddDialogOpen(true)}
+      >
+        Add configuration
+      </Button>
     ) : undefined;
 
   return (
@@ -247,7 +260,13 @@ export const WorkspaceSettingsScreen = () => {
         />
       )}
       {section === 'ai' && <AiSettingsSubSection workspaceSlug={workspaceSlug} />}
-      {section === 'workflows' && <WorkflowsSubSection workspaceSlug={workspaceSlug} />}
+      {section === 'workflows' && (
+        <WorkflowsSubSection
+          workspaceSlug={workspaceSlug}
+          addDialogOpen={workflowAddDialogOpen}
+          onCloseAddDialog={() => setWorkflowAddDialogOpen(false)}
+        />
+      )}
       {section === 'export-import' && <ExportImportSubSection />}
       {section === 'analytics' && (
         <Suspense fallback={<RoutePendingComponent />}>

@@ -1,7 +1,8 @@
 # Governance And Approvals
 
-Workspaces can require review before certain entity changes take effect. This page covers the governance inbox and
-the two governed workflows: entity change approval and entity deprecation.
+Workspaces can require review before certain changes take effect. Administrators configure governance centrally in
+**Workspace Settings → Workflows**, where each case kind can expose supported approval, reminder, escalation, and
+case-specific settings. This page covers the governance inbox and the governed workflows users interact with.
 
 ## My Work
 
@@ -20,8 +21,8 @@ notifications clear automatically when the underlying task is resolved, supersed
 
 ## Entity Change Approval
 
-Administrators can require approval for entity changes per schema, using the **Entity approval policy** setting on
-the entity type. When approval is required:
+Administrators can require approval for entity changes by adding an entity-change workflow configuration in
+**Workspace Settings → Workflows**. The configuration can be scoped to a schema. When approval is required:
 
 1. Saving a change submits an immutable revision instead of updating the entity directly.
 2. Approvers review a before/after diff of the proposed change.
@@ -35,8 +36,8 @@ Two special cases are supported:
 
 ## Entity Deprecation
 
-Schemas can also opt in to a deprecation workflow via a per-schema **Entity deprecation** policy. When enabled,
-retiring an entity goes through a deprecation proposal rather than a direct lifecycle edit:
+Administrators can configure a schema-scoped entity deprecation workflow in **Workspace Settings → Workflows**. When
+enabled, retiring an entity goes through a deprecation proposal rather than a direct lifecycle edit:
 
 - propose a deprecation with a target date, a reason, an optional successor entity, and an optional related project
 - the proposal routes through approval like other governed changes
@@ -45,6 +46,13 @@ retiring an entity goes through a deprecation proposal rather than a direct life
 
 Finalizing moves the entity to the workspace's designated deprecated lifecycle state, configured in
 **Workspace Settings → Lifecycle**.
+
+## Document Status Approval
+
+Document status approval is configured for a document type's enum field in **Workspace Settings → Workflows**. The
+workflow configuration uses the shared approval and reminder settings, while its document-status extension identifies
+the status values that require approval. Status values that are not selected continue without an approval case.
+Escalation is available only for case kinds that register escalation support.
 
 ## Related Pages
 

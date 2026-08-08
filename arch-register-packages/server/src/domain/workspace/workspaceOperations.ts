@@ -13,12 +13,18 @@ import { instantiateTemplateDefinitions } from '../catalog/schemaTemplates';
 import type { WorkspaceDbResult } from './db/workspaceDatabase';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
+import type { GovernanceWorkflowConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
 import { formatPublicId, validatePublicIdPrefix } from '../../utils/publicIds';
 import { ensureNotificationDeliverySchedule } from '../notification/emailDelivery';
 import { ensureGovernanceDeadlineScanSchedule } from '../governance/governanceDeadlineScanJob';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { DOCUMENT_STATUS_CASE_KIND } from '../document/documentWorkflowOperations';
+import { FIELD_DATE_REMINDER_CASE_KIND } from '../catalog/fieldDateReminderJob';
+import {
+  ENTITY_CHANGE_POLICY_CASE_KIND,
+  ENTITY_DEPRECATION_POLICY_CASE_KIND
+} from '../governance/schemaGovernancePolicy';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 
 const shortCodeFrom = (name: string): string =>
@@ -36,6 +42,62 @@ const generateCopiedSchemaKeyPrefix = (seed: string) => {
     if (prefix.length === 5) break;
   }
   return prefix;
+};
+
+const remapGovernanceConfigTeams = (
+  config: Record<string, unknown>,
+  teamMap: Map<string, string>
+): GovernanceWorkflowConfig => {
+  const remapTargets = (value: unknown) => {
+    if (value == null || typeof value !== 'object' || Array.isArray(value)) return value;
+    const targets = value as Record<string, unknown>;
+    return {
+      ...targets,
+      ...(Array.isArray(targets['fallbackTeamIds']) && {
+        fallbackTeamIds: (targets['fallbackTeamIds'] as unknown[]).map(id =>
+          typeof id === 'string' ? (teamMap.get(id) ?? id) : id
+        )
+      })
+    };
+  };
+
+  return {
+    ...config,
+    ...(config['approvals'] !== undefined && { approvals: remapTargets(config['approvals']) }),
+    ...(config['escalation'] !== undefined && {
+      escalation: remapTargets(config['escalation'])
+    }),
+    extensions:
+      config['extensions'] != null && typeof config['extensions'] === 'object'
+        ? (config['extensions'] as Record<string, unknown>)
+        : {}
+  } as GovernanceWorkflowConfig;
+};
+
+const remappedCloneGovernanceSubkind = (
+  caseKind: string,
+  caseSubkind: string | null,
+  schemaMap: Map<string, string>
+): string | null | undefined => {
+  if (caseSubkind == null) {
+    return caseKind === ENTITY_CHANGE_POLICY_CASE_KIND ||
+      caseKind === ENTITY_DEPRECATION_POLICY_CASE_KIND
+      ? null
+      : undefined;
+  }
+  if (
+    caseKind === ENTITY_CHANGE_POLICY_CASE_KIND ||
+    caseKind === ENTITY_DEPRECATION_POLICY_CASE_KIND
+  ) {
+    return schemaMap.get(caseSubkind);
+  }
+  if (caseKind === FIELD_DATE_REMINDER_CASE_KIND) {
+    const separator = caseSubkind.indexOf(':');
+    if (separator <= 0) return undefined;
+    const schemaId = schemaMap.get(caseSubkind.slice(0, separator));
+    return schemaId ? `${schemaId}:${caseSubkind.slice(separator + 1)}` : undefined;
+  }
+  return undefined;
 };
 
 const buildCreateInput = (
@@ -410,14 +472,21 @@ export const createWorkspace = async (
         if (typeof replicate_from === 'string' && replicate_from) {
           const includeSet = normalizeInclude(include);
 
-          const [srcLifecycle, srcTeams, srcRoles, srcSchemas, srcSharedFieldGroups] =
-            await Promise.all([
-              db.workspace.listLifecycleStates(replicate_from),
-              db.workspace.listTeams(replicate_from),
-              db.workspace.listCustomWorkspaceRoles(replicate_from),
-              db.catalog.listSchemas(replicate_from),
-              db.catalog.listSharedFieldGroups(replicate_from)
-            ]);
+          const [
+            srcLifecycle,
+            srcTeams,
+            srcRoles,
+            srcSchemas,
+            srcSharedFieldGroups,
+            srcGovernanceConfigs
+          ] = await Promise.all([
+            db.workspace.listLifecycleStates(replicate_from),
+            db.workspace.listTeams(replicate_from),
+            db.workspace.listCustomWorkspaceRoles(replicate_from),
+            db.catalog.listSchemas(replicate_from),
+            db.catalog.listSharedFieldGroups(replicate_from),
+            db.governanceCaseConfig.listCaseConfig(replicate_from)
+          ]);
 
           const lifecycleMap = new Map<string, string>();
           const teamMap = new Map<string, string>();
@@ -554,6 +623,31 @@ export const createWorkspace = async (
                   timestamp
                 );
               }
+            }
+
+            for (const config of srcGovernanceConfigs) {
+              if (
+                config.case_kind !== ENTITY_CHANGE_POLICY_CASE_KIND &&
+                config.case_kind !== ENTITY_DEPRECATION_POLICY_CASE_KIND &&
+                config.case_kind !== FIELD_DATE_REMINDER_CASE_KIND
+              ) {
+                continue;
+              }
+              const caseSubkind = remappedCloneGovernanceSubkind(
+                config.case_kind,
+                config.case_subkind,
+                schemaMap
+              );
+              if (caseSubkind === undefined) continue;
+              await db.governanceCaseConfig.upsertCaseConfig({
+                workspace: row.id,
+                case_kind: config.case_kind,
+                case_subkind: caseSubkind,
+                enabled: config.enabled,
+                config: remapGovernanceConfigTeams(config.config, teamMap),
+                updated_at: timestamp,
+                updated_by: null
+              });
             }
           }
           if (

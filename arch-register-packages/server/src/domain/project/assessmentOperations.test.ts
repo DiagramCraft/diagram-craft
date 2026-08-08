@@ -4,6 +4,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { AssessmentDbResult } from './db/projectDatabase';
 import {
   ASSESSMENT_RESPONSE_CASE_KIND,
+  createAssessmentGovernanceRegistry,
   getAssessment,
   listAssessments,
   updateAssessmentStatus
@@ -62,6 +63,18 @@ const assessment = (id: string, projectId: string): AssessmentDbResult => ({
 });
 
 const event = { context: { user: { id: 'user-1' } } } as unknown as AuthenticatedEvent;
+
+describe('createAssessmentGovernanceRegistry', () => {
+  it('marks approval as unsupported while exposing reminder and escalation settings', () => {
+    expect(
+      createAssessmentGovernanceRegistry().get(ASSESSMENT_RESPONSE_CASE_KIND)?.workflowConfig
+    ).toEqual({
+      supportsApprovals: false,
+      supportsReminders: true,
+      supportsEscalation: true
+    });
+  });
+});
 
 describe('listAssessments', () => {
   it('only returns assessments owned by projects the caller can access', async () => {

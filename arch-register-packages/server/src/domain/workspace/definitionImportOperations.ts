@@ -33,10 +33,7 @@ import {
   assertResolvedFieldGroupReferences
 } from '../catalog/schemaHelpers';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
-import {
-  getSchemaGovernancePoliciesBySchema,
-  upsertSchemaGovernancePolicies
-} from '../governance/schemaGovernancePolicy';
+import { getSchemaGovernancePoliciesBySchema } from '../governance/schemaGovernancePolicy';
 import { writeAudit } from '../audit/db/auditLogging';
 
 type ImportableSchema = {
@@ -726,17 +723,6 @@ export const executeDefinitionImport = async (
             updated_at: now
           };
           await tx.catalog.createSchema(row);
-          await upsertSchemaGovernancePolicies(
-            tx,
-            ws,
-            row.id,
-            {
-              entity_approval_policy: schema.entity_approval_policy,
-              deprecation_policy: schema.deprecation_policy
-            },
-            now,
-            authCtx.userId
-          );
           await tx.workspace.registerPublicIdPrefix(row.key_prefix, 'schema', row.id, now);
           await tx.catalog.createSchemaVersion({
             id: randomUUID(),

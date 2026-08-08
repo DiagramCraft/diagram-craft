@@ -1,7 +1,7 @@
 import { describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
 import type { GovernanceCaseDbResult } from './db/governanceDatabase';
-import type { GovernanceReminderConfigDbResult } from './db/governanceReminderConfigDatabase';
+import type { GovernanceCaseConfigDbResult } from './db/governanceCaseConfigDatabase';
 import { createGovernanceRegistry, type GovernanceRegistry } from './governanceRegistry';
 import type { GovernanceAssignmentTarget } from './governanceOperations';
 import {
@@ -97,15 +97,24 @@ const makeCase = (overrides: Partial<GovernanceCaseDbResult> = {}): GovernanceCa
   ...overrides
 });
 
-const makeReminderConfigRow = (
-  overrides: Partial<GovernanceReminderConfigDbResult> = {}
-): GovernanceReminderConfigDbResult => ({
+const makeCaseConfigRow = (
+  overrides: Partial<GovernanceCaseConfigDbResult> = {}
+): GovernanceCaseConfigDbResult => ({
+  id: 'config-1',
   workspace: 'ws-1',
   case_kind: 'entity.change-case',
+  case_subkind: null,
   enabled: true,
-  approaching_days: [2],
-  overdue_days: [1],
-  escalation_enabled: true,
+  config: {
+    reminders: { enabled: true, approachingDays: [2], overdueDays: [1] },
+    escalation: {
+      enabled: true,
+      overdueDays: 1,
+      fallbackUserIds: [],
+      fallbackTeamIds: []
+    },
+    extensions: {}
+  },
   updated_at: now,
   updated_by: null,
   ...overrides
@@ -113,7 +122,7 @@ const makeReminderConfigRow = (
 
 const makeDb = (
   cases: GovernanceCaseDbResult[],
-  reminderConfig: GovernanceReminderConfigDbResult | null
+  caseConfig: GovernanceCaseConfigDbResult | null
 ) => {
   const store = new Map(cases.map(c => [c.id, c]));
   const addReminderWindowSent = vi.fn(async (id: string, window: string) => {
@@ -147,13 +156,13 @@ const makeDb = (
     markEscalated
   };
 
-  const governanceReminderConfig = {
-    getReminderConfig: vi.fn(async () => reminderConfig)
+  const governanceCaseConfig = {
+    listCaseConfig: vi.fn(async () => (caseConfig ? [caseConfig] : []))
   };
 
   const db = {
     governance,
-    governanceReminderConfig,
+    governanceCaseConfig,
     core: {
       transaction: vi.fn(async (callback: (tx: DatabaseAdapter) => Promise<void>) => callback(db))
     }
@@ -246,7 +255,10 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
 
   it('uses a workspace override that disables reminders for a kind', async () => {
     const caseRow = makeCase();
-    const override = makeReminderConfigRow({ enabled: false });
+    const override = makeCaseConfigRow({
+      enabled: false,
+      config: { reminders: { enabled: false, approachingDays: [], overdueDays: [] } }
+    });
     const { db, appendEvent } = makeDb([caseRow], override);
     const handler = createHandler(db, registryWithDefault());
 
@@ -260,10 +272,8 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
     // Code default overdueDays is [1]; override changes it to [5], and the case is only 1 day
     // overdue, so nothing should fire yet under the override.
     const caseRow = makeCase();
-    const override = makeReminderConfigRow({
-      enabled: true,
-      approaching_days: [],
-      overdue_days: [5]
+    const override = makeCaseConfigRow({
+      config: { reminders: { enabled: true, approachingDays: [], overdueDays: [5] } }
     });
     const { db, appendEvent } = makeDb([caseRow], override);
     const handler = createHandler(db, registryWithDefault());
@@ -272,6 +282,35 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
 
     expect(result.remindersSent).toBe(0);
     expect(appendEvent).not.toHaveBeenCalled();
+  });
+
+  it('uses a subkind override for a scoped case', async () => {
+    const caseRow = makeCase({ case_subkind: 'schema-1' });
+    const override = makeCaseConfigRow({
+      case_subkind: 'schema-1',
+      config: { reminders: { enabled: true, approachingDays: [], overdueDays: [5] } }
+    });
+    const { db, appendEvent } = makeDb([caseRow], override);
+    const handler = createHandler(db, registryWithDefault());
+
+    const result = await handler({ workspace: 'ws-1', payload: {} });
+
+    expect(result.remindersSent).toBe(0);
+    expect(appendEvent).not.toHaveBeenCalled();
+  });
+
+  it('keeps code reminder defaults when a config row has no reminder component', async () => {
+    const caseRow = makeCase();
+    const approvalOnly = makeCaseConfigRow({ config: { approvals: { requiredApprovals: 1 } } });
+    const { db, appendEvent } = makeDb([caseRow], approvalOnly);
+    const handler = createHandler(db, registryWithDefault());
+
+    const result = await handler({ workspace: 'ws-1', payload: {} });
+
+    expect(result.remindersSent).toBe(1);
+    expect(appendEvent).toHaveBeenCalledWith(
+      expect.objectContaining({ metadata: { trigger: 'scheduled', window: 'overdue:1' } })
+    );
   });
 
   it('escalates an overdue case once the escalation threshold is crossed', async () => {
@@ -332,7 +371,16 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
 
   it('respects a workspace override that disables escalation for a kind', async () => {
     const caseRow = makeCase({ due_at: new Date(now.getTime() - 5 * dayMs) });
-    const override = makeReminderConfigRow({ escalation_enabled: false });
+    const override = makeCaseConfigRow({
+      config: {
+        escalation: {
+          enabled: false,
+          overdueDays: 5,
+          fallbackUserIds: [],
+          fallbackTeamIds: []
+        }
+      }
+    });
     const { db } = makeDb([caseRow], override);
     const handler = createHandler(db, registryWithEscalation());
 

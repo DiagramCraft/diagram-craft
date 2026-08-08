@@ -1,36 +1,65 @@
 import { z } from 'zod';
 
-/**
- * Shape of the generalized `workspace_governance_case_config.config` JSONB blob for governance
- * case kinds whose only configurable behavior is scheduled deadline reminders and escalation —
- * the same fields `governanceReminderConfigContract.ts` exposes today. Validated at the API
- * boundary only; the DB column itself is an opaque JSONB blob (see #2818).
- */
-export const reminderCaseConfigSchema = z.object({
-  approaching_days: z
-    .array(z.number().int().min(0))
-    .describe('Days before due_at at which an approaching-deadline reminder is sent'),
-  overdue_days: z
-    .array(z.number().int().min(0))
-    .describe('Days past due_at at which an overdue reminder is sent'),
-  escalation_enabled: z
-    .boolean()
-    .describe('Whether overdue cases of this kind escalate to the code-defined escalation target')
+const idListSchema = z.array(z.string().min(1)).default([]);
+
+export const governanceApprovalConfigSchema = z.object({
+  requiredApprovals: z.number().int().positive(),
+  approverSource: z.string().min(1).optional(),
+  fallbackTeamIds: idListSchema,
+  fallbackUserIds: idListSchema
 });
 
+export const governanceReminderConfigSchema = z.object({
+  enabled: z.boolean(),
+  approachingDays: z.array(z.number().int().min(0)),
+  overdueDays: z.array(z.number().int().min(0))
+});
+
+export const governanceEscalationConfigSchema = z.object({
+  enabled: z.boolean(),
+  overdueDays: z.number().int().positive(),
+  fallbackTeamIds: idListSchema,
+  fallbackUserIds: idListSchema
+});
+
+export const governanceWorkflowConfigSchema = z.object({
+  approvals: governanceApprovalConfigSchema.optional(),
+  reminders: governanceReminderConfigSchema.optional(),
+  escalation: governanceEscalationConfigSchema.optional(),
+  extensions: z.record(z.string(), z.unknown()).default({})
+});
+
+export type GovernanceApprovalConfig = z.infer<typeof governanceApprovalConfigSchema>;
+export type GovernanceReminderConfig = z.infer<typeof governanceReminderConfigSchema>;
+export type GovernanceEscalationConfig = z.infer<typeof governanceEscalationConfigSchema>;
+export type GovernanceWorkflowConfig = z.infer<typeof governanceWorkflowConfigSchema>;
+
+export const documentStatusExtensionSchema = z.object({
+  statusesRequiringApprovals: z.array(z.string().min(1))
+});
+
+export type DocumentStatusExtension = z.infer<typeof documentStatusExtensionSchema>;
+
+/** @deprecated Use the canonical camelCase workflow configuration. */
+export const reminderCaseConfigSchema = z.object({
+  approaching_days: z.array(z.number().int().min(0)),
+  overdue_days: z.array(z.number().int().min(0)),
+  escalation_enabled: z.boolean()
+});
+
+/** @deprecated Use the canonical camelCase workflow configuration. */
 export type ReminderCaseConfig = z.infer<typeof reminderCaseConfigSchema>;
 
+/** @deprecated Use the canonical camelCase workflow configuration. */
 export const fieldDateReminderCaseConfigSchema = z.object({
-  approaching_days: z
-    .array(z.number().int().min(0))
-    .describe('Days before the field date at which an approaching reminder is sent'),
-  overdue_days: z
-    .array(z.number().int().min(0))
-    .describe('Days after the field date at which an overdue reminder is sent')
+  approaching_days: z.array(z.number().int().min(0)),
+  overdue_days: z.array(z.number().int().min(0))
 });
 
+/** @deprecated Use the canonical camelCase workflow configuration. */
 export type FieldDateReminderCaseConfig = z.infer<typeof fieldDateReminderCaseConfigSchema>;
 
+/** @deprecated Per-value approval settings are no longer supported. */
 export const documentStatusApprovalSchema = z.object({
   required: z.boolean(),
   requiredApprovals: z.number().int().positive().optional(),
@@ -39,9 +68,12 @@ export const documentStatusApprovalSchema = z.object({
   fallbackTeamIds: z.array(z.string().min(1)).default([])
 });
 
+/** @deprecated Per-value approval settings are no longer supported. */
 export const documentStatusApprovalConfigSchema = z.object({
   statuses: z.record(z.string(), documentStatusApprovalSchema)
 });
 
+/** @deprecated Per-value approval settings are no longer supported. */
 export type DocumentStatusApproval = z.infer<typeof documentStatusApprovalSchema>;
+/** @deprecated Per-value approval settings are no longer supported. */
 export type DocumentStatusApprovalConfig = z.infer<typeof documentStatusApprovalConfigSchema>;

@@ -16,7 +16,6 @@ import type { WebhookDatabase } from '../domain/webhook/db/webhookDatabase';
 import type { AutomationRuleDatabase } from '../domain/automation/db/automationRuleDatabase';
 import type { DocumentDatabase } from '../domain/document/db/documentDatabase';
 import type { GovernanceDatabase } from '../domain/governance/db/governanceDatabase';
-import type { GovernanceReminderConfigDatabase } from '../domain/governance/db/governanceReminderConfigDatabase';
 import type { GovernanceCaseConfigDatabase } from '../domain/governance/db/governanceCaseConfigDatabase';
 import type { NotificationDatabase } from '../domain/notification/db/notificationDatabase';
 import type { NotificationPreferenceDatabase } from '../domain/notification/db/notificationPreferenceDatabase';
@@ -61,7 +60,6 @@ export type DatabaseAdapter = {
   automationRule: AutomationRuleDatabase;
   document: DocumentDatabase;
   governance: GovernanceDatabase;
-  governanceReminderConfig: GovernanceReminderConfigDatabase;
   governanceCaseConfig: GovernanceCaseConfigDatabase;
   notification: NotificationDatabase;
   notificationPreference: NotificationPreferenceDatabase;
@@ -172,11 +170,6 @@ export type {
   GovernanceCaseDbCreate,
   GovernanceEventDbCreate
 } from '../domain/governance/db/governanceDatabase';
-export type {
-  GovernanceReminderConfigDatabase,
-  GovernanceReminderConfigDbResult,
-  GovernanceReminderConfigDbUpsert
-} from '../domain/governance/db/governanceReminderConfigDatabase';
 export type {
   GovernanceCaseConfigDatabase,
   GovernanceCaseConfigDbResult,

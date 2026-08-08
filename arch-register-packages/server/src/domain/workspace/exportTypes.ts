@@ -6,7 +6,7 @@ import type {
   DocumentGeneratedMetadata,
   DocumentMetadata
 } from '@arch-register/api-types/documentContract';
-import type { DocumentStatusApproval } from '@arch-register/api-types/governanceCaseConfigSchemas';
+import type { GovernanceWorkflowConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
 
 export type ExportDataType =
   | 'config'
@@ -98,6 +98,11 @@ export type ExportSchema = {
   key_prefix: string | null;
   entity_approval_policy?: 'required' | 'disabled';
   deprecation_policy?: 'required' | 'disabled';
+  governance_configs?: Array<{
+    case_kind: string;
+    enabled: boolean;
+    config: GovernanceWorkflowConfig;
+  }>;
 };
 
 export type ExportRelationSchema = {
@@ -236,10 +241,10 @@ export type ExportDocumentData = {
     metadata: DocumentMetadata;
   }>;
   workflow_configs?: Array<{
-    document_type_id: string;
-    field_id: string;
+    case_kind: string;
+    case_subkind: string;
     enabled: boolean;
-    statuses: Record<string, DocumentStatusApproval>;
+    config: GovernanceWorkflowConfig;
   }>;
 };
 

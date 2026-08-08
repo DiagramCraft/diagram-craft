@@ -60,6 +60,16 @@ export class PostgresGovernanceCaseConfigDatabase
     }
   }
 
+  async deleteCaseConfig(workspace: string, caseKind: string, caseSubkind: string | null) {
+    const rows = await this.sql<DatabaseRow[]>`
+      DELETE FROM workspace_governance_case_config
+      WHERE workspace = ${workspace} AND case_kind = ${caseKind}
+        AND case_subkind IS NOT DISTINCT FROM ${caseSubkind}
+      RETURNING id
+    `;
+    return rows.length > 0;
+  }
+
   async deleteCaseConfigForSubkindOrDescendants(workspace: string, subkindPrefix: string) {
     const rows = await this.sql<DatabaseRow[]>`
       DELETE FROM workspace_governance_case_config

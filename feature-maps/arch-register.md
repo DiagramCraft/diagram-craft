@@ -438,18 +438,20 @@
               reminder has already fired for a case. The inbox highlights an overdue deadline.
 
               - @id:ar.collaboration.governance-inbox.scheduled-reminders.workspace-config Workspace administrators
-                can configure, per governance case kind, whether scheduled reminders are enabled and how many days
-                before/after the deadline each reminder fires, overriding the case kind's built-in default.
+                can configure all supported governance workflows from the central Workflows settings screen. Each
+                saved configuration can enable or disable reminders and define the approaching/overdue cadence for a
+                workspace-wide or supported case-subkind scope.
 
-            - @id:ar.collaboration.governance-inbox.escalation For the same governance case kinds as scheduled
-              reminders, a case left open past a case-kind-defined number of days overdue is automatically escalated
+            - @id:ar.collaboration.governance-inbox.escalation For governance case kinds that support escalation
+              (entity changes, entity deprecations, and assessment responses), a case left open past a
+              case-kind-defined number of days overdue is automatically escalated
               once: notifying, in addition to the original assignees, the admins of the project team that owns the
               case's subject (or, for a workspace-scoped case, workspace admins) so someone beyond the original
               assignees can intervene. Escalation fires at most once per case and is recorded in the case's activity
               history with the resolved escalation target. The inbox marks an escalated case with a distinct badge.
-              Workspace administrators can turn escalation on or off per case kind alongside the reminder
-              configuration in @id:ar.collaboration.governance-inbox.scheduled-reminders.workspace-config, but cannot
-              change the escalation target or threshold in this version.
+              Workspace administrators can turn escalation on or off and configure its overdue threshold and fallback
+              targets alongside reminder configuration in
+              @id:ar.collaboration.governance-inbox.scheduled-reminders.workspace-config.
 
         - @id:ar.collaboration.entity-change-approval Workspace administrators can require approval for entity change
           cases, while authorized users can submit immutable coordinated revisions with an optional due date, review

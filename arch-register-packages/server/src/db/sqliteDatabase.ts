@@ -21,7 +21,6 @@ import { SqliteWebhookDatabase } from '../domain/webhook/db/sqliteWebhook';
 import { SqliteAutomationRuleDatabase } from '../domain/automation/db/sqliteAutomationRule';
 import { SqliteDocumentDatabase } from '../domain/document/db/sqliteDocument';
 import { SqliteGovernanceDatabase } from '../domain/governance/db/sqliteGovernance';
-import { SqliteGovernanceReminderConfigDatabase } from '../domain/governance/db/sqliteGovernanceReminderConfig';
 import { SqliteGovernanceCaseConfigDatabase } from '../domain/governance/db/sqliteGovernanceCaseConfig';
 import { SqliteNotificationDatabase } from '../domain/notification/db/sqliteNotification';
 import { SqliteNotificationPreferenceDatabase } from '../domain/notification/db/sqliteNotificationPreference';
@@ -56,7 +55,6 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly automationRule;
   readonly document;
   readonly governance;
-  readonly governanceReminderConfig;
   readonly governanceCaseConfig;
   readonly notification;
   readonly notificationPreference;
@@ -93,7 +91,6 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.automationRule = new SqliteAutomationRuleDatabase(() => this.db);
     this.document = new SqliteDocumentDatabase(() => this.db);
     this.governance = new SqliteGovernanceDatabase(() => this.db);
-    this.governanceReminderConfig = new SqliteGovernanceReminderConfigDatabase(() => this.db);
     this.governanceCaseConfig = new SqliteGovernanceCaseConfigDatabase(() => this.db);
     this.notification = new SqliteNotificationDatabase(() => this.db);
     this.notificationPreference = new SqliteNotificationPreferenceDatabase(() => this.db);
@@ -165,7 +162,6 @@ export class SqliteDatabase implements DatabaseAdapter {
       automationRule: this.automationRule,
       document: this.document,
       governance: this.governance,
-      governanceReminderConfig: this.governanceReminderConfig,
       governanceCaseConfig: this.governanceCaseConfig,
       notification: this.notification,
       notificationPreference: this.notificationPreference,

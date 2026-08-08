@@ -21,8 +21,7 @@ import { watchContract } from '@arch-register/api-types/watchContract';
 import { notificationPreferencesContract } from '@arch-register/api-types/notificationPreferencesContract';
 import { discussionContract } from '@arch-register/api-types/discussionContract';
 import { governanceContract } from '@arch-register/api-types/governanceContract';
-import { governanceReminderConfigContract } from '@arch-register/api-types/governanceReminderConfigContract';
-import { governanceWorkflowOverviewContract } from '@arch-register/api-types/governanceWorkflowOverviewContract';
+import { governanceWorkflowConfigContract } from '@arch-register/api-types/governanceWorkflowConfigContract';
 import { entityVersionContract } from '@arch-register/api-types/entityVersionContract';
 import { entityChangeContract } from '@arch-register/api-types/entityChangeContract';
 import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
@@ -96,12 +95,9 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
   ).notificationPreferences;
   const applicationDiscussions = makeApplication(discussionContract).discussions;
   const applicationGovernance = makeApplication(governanceContract).governance;
-  const applicationGovernanceReminderConfig = makeApplication(
-    governanceReminderConfigContract
-  ).governanceReminderConfig;
-  const applicationGovernanceWorkflowOverview = makeApplication(
-    governanceWorkflowOverviewContract
-  ).governanceWorkflowOverview;
+  const applicationGovernanceWorkflowConfig = makeApplication(
+    governanceWorkflowConfigContract
+  ).governanceWorkflowConfig;
   const applicationEntityVersions = makeApplication(entityVersionContract).entityVersions;
   const applicationEntityChanges = makeApplication(entityChangeContract).entityChanges;
   const applicationEntityDeprecations =
@@ -153,8 +149,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     notificationPreferences: applicationNotificationPreferences,
     discussions: applicationDiscussions,
     governance: applicationGovernance,
-    governanceReminderConfig: applicationGovernanceReminderConfig,
-    governanceWorkflowOverview: applicationGovernanceWorkflowOverview,
+    governanceWorkflowConfig: applicationGovernanceWorkflowConfig,
     ai: applicationAi,
     diagramCraft: make(diagramCraftContract).diagramCraft,
     jobs: applicationJobs,

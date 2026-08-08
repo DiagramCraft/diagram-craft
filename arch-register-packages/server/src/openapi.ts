@@ -44,10 +44,7 @@ import { entityVersionContract } from '@arch-register/api-types/entityVersionCon
 import { relationVersionContract } from '@arch-register/api-types/relationVersionContract';
 import { relationChangeContract } from '@arch-register/api-types/relationChangeContract';
 import { governanceContract } from '@arch-register/api-types/governanceContract';
-import { governanceReminderConfigContract } from '@arch-register/api-types/governanceReminderConfigContract';
-import { governanceFieldDateReminderConfigContract } from '@arch-register/api-types/governanceFieldDateReminderConfigContract';
-import { governanceWorkflowOverviewContract } from '@arch-register/api-types/governanceWorkflowOverviewContract';
-import { governanceDocumentStatusConfigContract } from '@arch-register/api-types/governanceDocumentStatusConfigContract';
+import { governanceWorkflowConfigContract } from '@arch-register/api-types/governanceWorkflowConfigContract';
 import { milestoneContract } from '@arch-register/api-types/milestoneContract';
 import { wikiCommentContract } from '@arch-register/api-types/wikiCommentContract';
 import { devContract } from '@arch-register/api-types/devContract';
@@ -94,10 +91,7 @@ export const allContracts = {
   ...relationVersionContract,
   ...relationChangeContract,
   ...governanceContract,
-  ...governanceReminderConfigContract,
-  ...governanceFieldDateReminderConfigContract,
-  ...governanceWorkflowOverviewContract,
-  ...governanceDocumentStatusConfigContract,
+  ...governanceWorkflowConfigContract,
   ...milestoneContract,
   ...wikiCommentContract,
   ...devContract
@@ -154,10 +148,7 @@ export const getApplicationOpenAPISpec = () => {
       ...notificationPreferencesContract,
       ...discussionContract,
       ...governanceContract,
-      ...governanceReminderConfigContract,
-      ...governanceFieldDateReminderConfigContract,
-      ...governanceWorkflowOverviewContract,
-      ...governanceDocumentStatusConfigContract,
+      ...governanceWorkflowConfigContract,
       ...entityVersionContract,
       ...entityChangeContract,
       ...relationVersionContract,

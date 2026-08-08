@@ -47,10 +47,7 @@ import { createWatchORPCHandler } from './domain/watch/watchOrpc';
 import { createNotificationPreferencesORPCHandler } from './domain/notification/notificationPreferenceOrpc';
 import { createDiscussionORPCHandler } from './domain/discussion/discussionOrpc';
 import { createGovernanceORPCHandler } from './domain/governance/governanceOrpc';
-import { createGovernanceReminderConfigORPCHandler } from './domain/governance/governanceReminderConfigOrpc';
-import { createGovernanceFieldDateReminderConfigORPCHandler } from './domain/governance/governanceFieldDateReminderConfigOrpc';
-import { createGovernanceWorkflowOverviewORPCHandler } from './domain/governance/governanceWorkflowOverviewOrpc';
-import { createGovernanceDocumentStatusConfigORPCHandler } from './domain/governance/governanceDocumentStatusConfigOrpc';
+import { createGovernanceWorkflowConfigORPCHandler } from './domain/governance/governanceWorkflowConfigOrpc';
 import { createWikiCommentORPCHandler } from './domain/wikiComments/wikiCommentOrpc';
 import { createSearchORPCHandler } from './domain/search/searchOrpc';
 import {
@@ -67,13 +64,8 @@ import { createExternalContentORPCHandler } from './domain/external-content/exte
 import { createWebhookORPCHandler } from './domain/webhook/webhookOrpc';
 import { createAutomationRuleORPCHandler } from './domain/automation/automationRuleOrpc';
 import { createDocumentORPCHandler } from './domain/document/documentOrpc';
-import { createEntityGovernanceRegistry } from './domain/catalog/entityChangeOperations';
-import { createRelationGovernanceRegistry } from './domain/catalog/relationChangeOperations';
 import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
-import { createDeprecationGovernanceRegistry } from './domain/catalog/entityDeprecationOperations';
-import { createDocumentGovernanceRegistry } from './domain/document/documentWorkflowOperations';
-import { createAssessmentGovernanceRegistry } from './domain/project/assessmentOperations';
-import { createFieldDateReminderGovernanceRegistry } from './domain/catalog/fieldDateReminderJob';
+import { createApplicationGovernanceRegistry } from './domain/governance/governanceRegistryFactory';
 import { getHttpErrorLogLevel } from './utils/errorLogging';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
@@ -206,19 +198,9 @@ export const createApp = (
   app.use(createWatchORPCHandler(db));
   app.use(createNotificationPreferencesORPCHandler(db));
   app.use(createDiscussionORPCHandler(db));
-  const governanceRegistry = new Map([
-    ...createEntityGovernanceRegistry(),
-    ...createRelationGovernanceRegistry(),
-    ...createDeprecationGovernanceRegistry(),
-    ...createDocumentGovernanceRegistry(),
-    ...createAssessmentGovernanceRegistry(),
-    ...createFieldDateReminderGovernanceRegistry()
-  ]);
+  const governanceRegistry = createApplicationGovernanceRegistry();
   app.use(createGovernanceORPCHandler(db, governanceRegistry));
-  app.use(createGovernanceReminderConfigORPCHandler(db, governanceRegistry));
-  app.use(createGovernanceFieldDateReminderConfigORPCHandler(db));
-  app.use(createGovernanceWorkflowOverviewORPCHandler(db, governanceRegistry));
-  app.use(createGovernanceDocumentStatusConfigORPCHandler(db));
+  app.use(createGovernanceWorkflowConfigORPCHandler(db, governanceRegistry));
   app.use(createWikiCommentORPCHandler(db));
   app.use(createSearchORPCHandler(db));
   app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));
