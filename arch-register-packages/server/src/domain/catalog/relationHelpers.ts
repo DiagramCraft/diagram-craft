@@ -162,14 +162,20 @@ export const validateRelationEndpoints = (
 ) => {
   httpAssert.present(inEntity, { status: 400, message: `"in" endpoint entity not found` });
   httpAssert.present(outEntity, { status: 400, message: `"out" endpoint entity not found` });
-  httpAssert.true(schema.in_schema_ids.includes(inEntity.schema_id), {
-    status: 400,
-    message: `"in" endpoint entity's schema is not allowed by relation schema '${schema.name}' (allowed: ${schema.in_schema_ids.join(', ')})`
-  });
-  httpAssert.true(schema.out_schema_ids.includes(outEntity.schema_id), {
-    status: 400,
-    message: `"out" endpoint entity's schema is not allowed by relation schema '${schema.name}' (allowed: ${schema.out_schema_ids.join(', ')})`
-  });
+  httpAssert.true(
+    schema.in_schema_ids === 'any' || schema.in_schema_ids.includes(inEntity.schema_id),
+    {
+      status: 400,
+      message: `"in" endpoint entity's schema is not allowed by relation schema '${schema.name}' (allowed: ${schema.in_schema_ids === 'any' ? 'any' : schema.in_schema_ids.join(', ')})`
+    }
+  );
+  httpAssert.true(
+    schema.out_schema_ids === 'any' || schema.out_schema_ids.includes(outEntity.schema_id),
+    {
+      status: 400,
+      message: `"out" endpoint entity's schema is not allowed by relation schema '${schema.name}' (allowed: ${schema.out_schema_ids === 'any' ? 'any' : schema.out_schema_ids.join(', ')})`
+    }
+  );
   httpAssert.true(inEntity.id !== outEntity.id, {
     status: 400,
     message: 'A relation cannot connect an entity to itself'

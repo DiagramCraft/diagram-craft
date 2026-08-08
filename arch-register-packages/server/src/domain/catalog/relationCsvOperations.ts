@@ -168,10 +168,18 @@ const addEndpointErrors = (
 ) => {
   if (!inEntity) errors.push('In endpoint entity was not found');
   if (!outEntity) errors.push('Out endpoint entity was not found');
-  if (inEntity && !schema.in_schema_ids.includes(inEntity.schema_id)) {
+  if (
+    inEntity &&
+    schema.in_schema_ids !== 'any' &&
+    !schema.in_schema_ids.includes(inEntity.schema_id)
+  ) {
     errors.push(`In endpoint entity schema is not allowed by relation schema '${schema.name}'`);
   }
-  if (outEntity && !schema.out_schema_ids.includes(outEntity.schema_id)) {
+  if (
+    outEntity &&
+    schema.out_schema_ids !== 'any' &&
+    !schema.out_schema_ids.includes(outEntity.schema_id)
+  ) {
     errors.push(`Out endpoint entity schema is not allowed by relation schema '${schema.name}'`);
   }
   if (inEntity && outEntity && inEntity.id === outEntity.id) {

@@ -67,6 +67,7 @@ export const toDiagramCraftField = (
 
       const schemaIds =
         field.direction === 'in' ? relationSchema.out_schema_ids : relationSchema.in_schema_ids;
+      if (schemaIds === 'any') return undefined;
       const schemaId = schemaIds[0];
       if (!schemaId) return undefined;
 

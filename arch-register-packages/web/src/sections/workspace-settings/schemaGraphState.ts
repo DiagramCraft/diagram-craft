@@ -41,7 +41,9 @@ export const buildSchemaGraphEdges = (
       if (!relationSchema) continue;
 
       const otherEndpoint = field.direction === 'out' ? relationSchema.in : relationSchema.out;
-      for (const targetSchemaId of new Set(otherEndpoint.schemaIds)) {
+      const targetIds =
+        otherEndpoint.schemaIds === 'any' ? Array.from(schemaIds) : otherEndpoint.schemaIds;
+      for (const targetSchemaId of new Set(targetIds)) {
         if (!schemaIds.has(targetSchemaId)) continue;
 
         const from = field.direction === 'out' ? schema.id : targetSchemaId;

@@ -14,6 +14,7 @@ import type {
 import { relationIds, type TypedRelationFieldEditState } from '../../../lib/entityEditState';
 import { useEntitiesBySchema } from '../../../hooks/useEntities';
 import { useTeams, useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { RelationFieldInput } from '../../../dialogs/RelationFieldInput';
 import { KEY_FIELD_COUNT, formatRelationFieldValue } from './RelationRecordList';
 import sharedStyles from '../EntityDetailScreen.module.css';
@@ -46,9 +47,14 @@ export const TypedRelationFieldEditor = ({
 }: Props) => {
   const [adding, setAdding] = useState(false);
   const [expandedUid, setExpandedUid] = useState<string | null>(null);
+  const { schemas } = useWorkspaceContext();
   const direction = field.direction === 'out' ? 'outgoing' : 'incoming';
   const otherEndpoint = field.direction === 'out' ? 'in' : 'out';
-  const otherSchemaIds = relationSchema?.[otherEndpoint].schemaIds ?? [];
+  const otherEndpointSchemaIds = relationSchema?.[otherEndpoint].schemaIds;
+  const otherSchemaIds =
+    otherEndpointSchemaIds === 'any'
+      ? schemas.map(schema => schema.id)
+      : (otherEndpointSchemaIds ?? []);
   const otherEntityQueries = useEntitiesBySchema(workspaceId, adding ? otherSchemaIds : []);
   const otherEntityCandidates = otherEntityQueries.flatMap(query => query.data ?? []);
   const { data: teams = [] } = useTeams(workspaceId, expandedUid != null || adding);

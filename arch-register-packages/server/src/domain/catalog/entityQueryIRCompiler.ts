@@ -457,6 +457,12 @@ const availableSchemaIds = <T>(
   schemas: ReadonlyMap<string, T>
 ): string[] => [...new Set(schemaIds)].filter(schemaId => schemas.has(schemaId));
 
+/** A wildcard ('any') endpoint resolves to every known entity schema id. */
+const resolveEndpointSchemaIds = <T>(
+  schemaIds: string[] | 'any' | undefined,
+  schemas: ReadonlyMap<string, T>
+): Iterable<string> => (schemaIds === 'any' ? schemas.keys() : (schemaIds ?? []));
+
 const resolveProjectionPathSchemaInfo = (
   path: PathStep[],
   query: EntityQuery,
@@ -487,9 +493,9 @@ const resolveProjectionPathSchemaInfo = (
     if (step.kind === 'endpoint') {
       const targetSchemaIds = currentRelationSchemaIds.flatMap(schemaId => {
         const schema = relationSchemas.get(schemaId);
-        return step.direction === 'in'
-          ? (schema?.in_schema_ids ?? [])
-          : (schema?.out_schema_ids ?? []);
+        const endpointSchemaIds =
+          step.direction === 'in' ? schema?.in_schema_ids : schema?.out_schema_ids;
+        return [...resolveEndpointSchemaIds(endpointSchemaIds, schemas)];
       });
       currentEntitySchemaIds = availableSchemaIds(targetSchemaIds, schemas);
       currentRelationSchemaIds = [];
@@ -500,10 +506,9 @@ const resolveProjectionPathSchemaInfo = (
 
     if (step.kind === 'typedRelation') {
       const relationSchema = relationSchemas.get(step.relationSchemaId);
-      const targetSchemaIds =
-        step.direction === 'out'
-          ? (relationSchema?.in_schema_ids ?? [])
-          : (relationSchema?.out_schema_ids ?? []);
+      const endpointSchemaIds =
+        step.direction === 'out' ? relationSchema?.in_schema_ids : relationSchema?.out_schema_ids;
+      const targetSchemaIds = [...resolveEndpointSchemaIds(endpointSchemaIds, schemas)];
       currentEntitySchemaIds = availableSchemaIds(targetSchemaIds, schemas);
       currentRelationSchemaIds = [];
       currentKind = 'entity';

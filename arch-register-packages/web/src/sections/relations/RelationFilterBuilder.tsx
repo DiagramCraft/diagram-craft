@@ -134,7 +134,12 @@ export const RelationFilterBuilder = ({
     // endpoint of any relation schema — same union-and-dedupe approach as own fields above.
     const endpointFields = (direction: 'in' | 'out'): FieldDef[] => {
       const schemaIds = new Set(
-        relationSchemas.flatMap(schema => (direction === 'in' ? schema.in : schema.out).schemaIds)
+        relationSchemas.flatMap(schema => {
+          const endpointSchemaIds = (direction === 'in' ? schema.in : schema.out).schemaIds;
+          return endpointSchemaIds === 'any'
+            ? entitySchemas.map(candidate => candidate.id)
+            : endpointSchemaIds;
+        })
       );
       const seen = new Set<string>();
       const result: FieldDef[] = [];

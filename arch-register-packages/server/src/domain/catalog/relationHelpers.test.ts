@@ -4,7 +4,8 @@ import {
   filterRelationFieldData,
   normalizeRelationEntityFields,
   toApiRelation,
-  toRedactedApiRelation
+  toRedactedApiRelation,
+  validateRelationEndpoints
 } from './relationHelpers';
 import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
 import type { Entity } from './db/catalogDatabase';
@@ -326,5 +327,59 @@ describe('toApiRelation — _externalMetadata', () => {
     const result = toApiRelation(relationWithMetadata, authCtx, restrictedSchema);
     expect(result._externalMetadata?.note).toBeDefined();
     expect(result._externalMetadata?.secret).toBeUndefined();
+  });
+});
+
+describe('validateRelationEndpoints', () => {
+  const inEntity = { id: 'entity-1', schema_id: 'entity-schema-1' };
+  const outEntity = { id: 'entity-2', schema_id: 'entity-schema-2' };
+
+  it('allows entities matching the explicit endpoint schema ids', () => {
+    expect(() => validateRelationEndpoints(schema, inEntity, outEntity)).not.toThrow();
+  });
+
+  it('rejects an entity whose schema is not in the explicit list', () => {
+    expect(() =>
+      validateRelationEndpoints(schema, { id: 'entity-3', schema_id: 'other-schema' }, outEntity)
+    ).toThrow();
+  });
+
+  it('allows any entity schema when the "in" endpoint is wildcard', () => {
+    const wildcardInSchema: RelationSchemaDbResult = { ...schema, in_schema_ids: 'any' };
+
+    expect(() =>
+      validateRelationEndpoints(
+        wildcardInSchema,
+        { id: 'entity-3', schema_id: 'some-other-schema' },
+        outEntity
+      )
+    ).not.toThrow();
+  });
+
+  it('allows any entity schema on both endpoints when both are wildcard', () => {
+    const wildcardSchema: RelationSchemaDbResult = {
+      ...schema,
+      in_schema_ids: 'any',
+      out_schema_ids: 'any'
+    };
+
+    expect(() =>
+      validateRelationEndpoints(
+        wildcardSchema,
+        { id: 'entity-3', schema_id: 'some-schema' },
+        { id: 'entity-4', schema_id: 'some-other-schema' }
+      )
+    ).not.toThrow();
+  });
+
+  it('still rejects a mismatched explicit endpoint when only the other side is wildcard', () => {
+    const mixedSchema: RelationSchemaDbResult = { ...schema, in_schema_ids: 'any' };
+
+    expect(() =>
+      validateRelationEndpoints(mixedSchema, inEntity, {
+        id: 'entity-3',
+        schema_id: 'wrong-schema'
+      })
+    ).toThrow();
   });
 });

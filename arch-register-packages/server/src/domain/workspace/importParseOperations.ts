@@ -521,8 +521,8 @@ const validateRelationSchemas = async (
     }
 
     for (const entitySchemaId of [
-      ...relationSchema.in_schema_ids,
-      ...relationSchema.out_schema_ids
+      ...(relationSchema.in_schema_ids === 'any' ? [] : relationSchema.in_schema_ids),
+      ...(relationSchema.out_schema_ids === 'any' ? [] : relationSchema.out_schema_ids)
     ]) {
       if (
         sourceEntitySchemaIds.has(entitySchemaId) ||
@@ -744,8 +744,8 @@ const validateRelations = async (
       schema &&
       inEntity &&
       outEntity &&
-      (!schema.in_schema_ids.includes(inEntity.schema_id) ||
-        !schema.out_schema_ids.includes(outEntity.schema_id))
+      ((schema.in_schema_ids !== 'any' && !schema.in_schema_ids.includes(inEntity.schema_id)) ||
+        (schema.out_schema_ids !== 'any' && !schema.out_schema_ids.includes(outEntity.schema_id)))
     ) {
       conflicts.push({
         type: 'relations',

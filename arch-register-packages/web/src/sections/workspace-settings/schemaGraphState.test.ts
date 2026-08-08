@@ -93,4 +93,20 @@ describe('buildSchemaGraphEdges', () => {
     expect(edges).toHaveLength(1);
     expect(edges[0]).toEqual(expect.objectContaining({ to: 'service' }));
   });
+
+  it('fans out a wildcard ("any") endpoint to every entity schema in the workspace', () => {
+    const edges = buildSchemaGraphEdges(
+      [
+        schema('application', [typedRelation('uses', 'rel-1', 'out')]),
+        schema('service'),
+        schema('team')
+      ],
+      [relationSchema({ in: { schemaIds: 'any' } })]
+    );
+
+    expect(edges).toHaveLength(3);
+    expect(new Set(edges.map(edge => edge.to))).toEqual(
+      new Set(['service', 'team', 'application'])
+    );
+  });
 });

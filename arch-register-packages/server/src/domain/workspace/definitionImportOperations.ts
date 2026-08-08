@@ -90,8 +90,8 @@ type ImportableRelationSchema = {
   id: string;
   name: string;
   description: string;
-  in_schema_ids: string[];
-  out_schema_ids: string[];
+  in_schema_ids: string[] | 'any';
+  out_schema_ids: string[] | 'any';
   fields: RelationField[];
   groups: RelationSchemaGroupDbShape[];
   shared_field_group_links: SharedFieldGroupLink[];
@@ -502,7 +502,10 @@ const buildPlan = async (
         continue;
       }
       resolvedRelationSchemaIds.add(relationSchemaId);
-      for (const schemaId of [...relationSchema.in_schema_ids, ...relationSchema.out_schema_ids]) {
+      for (const schemaId of [
+        ...(relationSchema.in_schema_ids === 'any' ? [] : relationSchema.in_schema_ids),
+        ...(relationSchema.out_schema_ids === 'any' ? [] : relationSchema.out_schema_ids)
+      ]) {
         if (!schemaById.has(schemaId)) {
           errors.push(
             `Relation schema '${relationSchema.name}' references missing schema '${schemaId}'`
@@ -1047,8 +1050,14 @@ export const executeDefinitionImport = async (
             workspace: ws,
             name: relationSchema.name,
             description: relationSchema.description,
-            in_schema_ids: relationSchema.in_schema_ids.map(id => schemaIdMap.get(id) ?? id),
-            out_schema_ids: relationSchema.out_schema_ids.map(id => schemaIdMap.get(id) ?? id),
+            in_schema_ids:
+              relationSchema.in_schema_ids === 'any'
+                ? ('any' as const)
+                : relationSchema.in_schema_ids.map(id => schemaIdMap.get(id) ?? id),
+            out_schema_ids:
+              relationSchema.out_schema_ids === 'any'
+                ? ('any' as const)
+                : relationSchema.out_schema_ids.map(id => schemaIdMap.get(id) ?? id),
             fields,
             groups,
             shared_field_group_links: relationSchema.shared_field_group_links.map(link => ({

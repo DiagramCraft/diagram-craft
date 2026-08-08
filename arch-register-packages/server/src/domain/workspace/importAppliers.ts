@@ -465,8 +465,14 @@ export const importRelationSchemas = async (
       workspace,
       name: source.name,
       description: source.description,
-      in_schema_ids: source.in_schema_ids.map(id => resolveMappedId(idMapping.schemas, id)!),
-      out_schema_ids: source.out_schema_ids.map(id => resolveMappedId(idMapping.schemas, id)!),
+      in_schema_ids:
+        source.in_schema_ids === 'any'
+          ? ('any' as const)
+          : source.in_schema_ids.map(id => resolveMappedId(idMapping.schemas, id)!),
+      out_schema_ids:
+        source.out_schema_ids === 'any'
+          ? ('any' as const)
+          : source.out_schema_ids.map(id => resolveMappedId(idMapping.schemas, id)!),
       fields: fields as RelationSchemaDbCreate['fields'],
       groups: (source.groups ?? []).map(group => ({
         ...group,
