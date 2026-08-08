@@ -25,6 +25,15 @@ import { normalizePublicIdPrefix } from '../../utils/publicIds';
 export type SymbolicField =
   | { id: string; name: string; type: 'text' | 'longtext' | 'boolean' | 'date' | 'currency' }
   | { id: string; name: string; type: 'select'; enumId: string }
+  | { id: string; name: string; type: 'number'; min?: number; max?: number }
+  | {
+      id: string;
+      name: string;
+      type: 'derived';
+      expression: string;
+      resultType: 'text' | 'number' | 'select' | 'boolean' | 'rating';
+      enumId?: string;
+    }
   | {
       id: string;
       name: string;
@@ -475,6 +484,45 @@ const securityEnums = [
     { value: 'low', label: 'Low' },
     { value: 'medium', label: 'Medium' },
     { value: 'high', label: 'High' }
+  ])
+];
+
+const riskComplianceEnums = [
+  enumDefinition('risk-status', 'Risk Status', [
+    { value: 'open', label: 'Open' },
+    { value: 'mitigating', label: 'Mitigating' },
+    { value: 'accepted', label: 'Accepted' },
+    { value: 'closed', label: 'Closed' }
+  ]),
+  enumDefinition('risk-mitigation-effectiveness', 'Mitigation Effectiveness', [
+    { value: 'none', label: 'None' },
+    { value: 'partial', label: 'Partial' },
+    { value: 'substantial', label: 'Substantial' },
+    { value: 'full', label: 'Full' }
+  ]),
+  enumDefinition('rc-control-type', 'Control Type', [
+    { value: 'preventive', label: 'Preventive' },
+    { value: 'detective', label: 'Detective' },
+    { value: 'corrective', label: 'Corrective' },
+    { value: 'compensating', label: 'Compensating' }
+  ]),
+  enumDefinition('control-effectiveness', 'Control Effectiveness', [
+    { value: 'effective', label: 'Effective' },
+    { value: 'partially-effective', label: 'Partially Effective' },
+    { value: 'ineffective', label: 'Ineffective' },
+    { value: 'not-tested', label: 'Not Tested' }
+  ]),
+  enumDefinition('framework-kind', 'Framework Kind', [
+    { value: 'soc2', label: 'SOC 2' },
+    { value: 'iso27001', label: 'ISO 27001' },
+    { value: 'nist', label: 'NIST' },
+    { value: 'custom', label: 'Custom' }
+  ]),
+  enumDefinition('requirement-status', 'Requirement Status', [
+    { value: 'not-started', label: 'Not Started' },
+    { value: 'in-progress', label: 'In Progress' },
+    { value: 'met', label: 'Met' },
+    { value: 'not-applicable', label: 'Not Applicable' }
   ])
 ];
 
@@ -1437,6 +1485,157 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     enums: securityEnums,
     documentTypes: commonDocumentTypes,
     documentTemplates: commonDocumentTemplates
+  },
+  {
+    id: 'risk-compliance',
+    name: 'Risk & Compliance',
+    description: 'Risk register with control mitigation and compliance-framework traceability.',
+    schemas: [
+      {
+        symId: 'risk',
+        name: 'Risk',
+        description: 'A potential adverse event rated by likelihood and impact.',
+        color: AR_COLOR_RED,
+        icon: 'alert-octagon',
+        fields: [
+          { id: 'likelihood', name: 'Likelihood', type: 'number', min: 1, max: 5 },
+          { id: 'impact', name: 'Impact', type: 'number', min: 1, max: 5 },
+          {
+            id: 'inherent_risk_score',
+            name: 'Inherent Risk Score',
+            type: 'derived',
+            expression: "field('likelihood') * field('impact')",
+            resultType: 'number'
+          },
+          {
+            id: 'mitigation_effectiveness',
+            name: 'Mitigation Effectiveness',
+            type: 'select',
+            enumId: 'risk-mitigation-effectiveness'
+          },
+          {
+            id: 'residual_risk_score',
+            name: 'Residual Risk Score',
+            type: 'derived',
+            expression:
+              "field('likelihood') * (field('mitigation_effectiveness') == 'full' ? 0 : field('mitigation_effectiveness') == 'substantial' ? (field('impact') - 2 < 1 ? 1 : field('impact') - 2) : field('mitigation_effectiveness') == 'partial' ? (field('impact') - 1 < 1 ? 1 : field('impact') - 1) : field('impact'))",
+            resultType: 'number'
+          },
+          { id: 'risk_owner', name: 'Risk Owner', type: 'text' },
+          { id: 'status', name: 'Status', type: 'select', enumId: 'risk-status' },
+          { id: 'treatment_target_date', name: 'Treatment Target Date', type: 'date' },
+          {
+            id: 'mitigating_controls',
+            name: 'Mitigating Controls',
+            type: 'typedRelation',
+            symRelationSchemaId: 'risk-control',
+            direction: 'out'
+          }
+        ]
+      },
+      {
+        symId: 'control',
+        name: 'Control',
+        description: 'A safeguard that mitigates one or more Risks.',
+        color: AR_COLOR_GREEN,
+        icon: 'check-circle',
+        fields: [
+          { id: 'control_type', name: 'Type', type: 'select', enumId: 'rc-control-type' },
+          {
+            id: 'design_effectiveness',
+            name: 'Design Effectiveness',
+            type: 'select',
+            enumId: 'control-effectiveness'
+          },
+          {
+            id: 'operating_effectiveness',
+            name: 'Operating Effectiveness',
+            type: 'select',
+            enumId: 'control-effectiveness'
+          },
+          { id: 'last_verified', name: 'Last Verified', type: 'date' },
+          {
+            id: 'mitigated_risks',
+            name: 'Mitigated Risks',
+            type: 'typedRelation',
+            symRelationSchemaId: 'risk-control',
+            direction: 'in'
+          },
+          {
+            id: 'satisfied_requirements',
+            name: 'Satisfied Requirements',
+            type: 'typedRelation',
+            symRelationSchemaId: 'control-requirement',
+            direction: 'out'
+          }
+        ]
+      },
+      {
+        symId: 'framework',
+        name: 'Framework',
+        description:
+          'A compliance framework (e.g. SOC 2, ISO 27001, NIST) with a requirement catalog.',
+        color: AR_COLOR_BLUE,
+        icon: 'book',
+        fields: [
+          { id: 'framework_kind', name: 'Kind', type: 'select', enumId: 'framework-kind' },
+          { id: 'description', name: 'Description', type: 'longtext' }
+        ]
+      },
+      {
+        symId: 'compliance_requirement',
+        name: 'Compliance Requirement',
+        description: 'A single requirement from a Framework requirement catalog.',
+        color: AR_COLOR_PURPLE,
+        icon: 'file-check',
+        fields: [
+          { id: 'requirement_code', name: 'Requirement Code', type: 'text' },
+          { id: 'description', name: 'Description', type: 'longtext' },
+          { id: 'status', name: 'Status', type: 'select', enumId: 'requirement-status' },
+          {
+            id: 'framework',
+            name: 'Framework',
+            predicate: 'belongs to',
+            type: 'containment',
+            symSchemaId: 'framework',
+            minCount: 1,
+            maxCount: 1
+          },
+          {
+            id: 'satisfying_controls',
+            name: 'Satisfying Controls',
+            type: 'typedRelation',
+            symRelationSchemaId: 'control-requirement',
+            direction: 'in'
+          }
+        ]
+      }
+    ],
+    enums: riskComplianceEnums,
+    relationSchemas: [
+      {
+        symId: 'risk-control',
+        name: 'Risk Mitigation',
+        description: 'Associates a Risk with the Controls that mitigate it.',
+        inSymSchemaIds: ['risk'],
+        outSymSchemaIds: ['control'],
+        fields: [],
+        color: AR_COLOR_RED,
+        icon: 'shield-check'
+      },
+      {
+        symId: 'control-requirement',
+        name: 'Control Compliance',
+        description: 'Records that a Control satisfies a ComplianceRequirement.',
+        inSymSchemaIds: ['control'],
+        outSymSchemaIds: ['compliance_requirement'],
+        fields: [],
+        color: AR_COLOR_GREEN,
+        icon: 'check-circle'
+      }
+    ],
+    documentTypes: commonDocumentTypes,
+    documentTemplates: commonDocumentTemplates
   }
 ];
 
@@ -1532,6 +1731,21 @@ export const instantiateTemplateDefinitions = (
         relationSchemaId:
           relationSchemaIdMap.get(field.symRelationSchemaId) ?? field.symRelationSchemaId,
         direction: field.direction
+      };
+    }
+    if (field.type === 'number') {
+      return { id: field.id, name: field.name, type: 'number', min: field.min, max: field.max };
+    }
+    if (field.type === 'derived') {
+      return {
+        id: field.id,
+        name: field.name,
+        type: 'derived',
+        requirementLevel: 'optional',
+        expression: field.expression,
+        resultType: field.resultType,
+        enumId:
+          field.resultType === 'select' ? (enumIdMap.get(field.enumId!) ?? field.enumId) : undefined
       };
     }
     return { id: field.id, name: field.name, type: field.type };

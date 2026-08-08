@@ -700,6 +700,90 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
     created_at: now,
     updated_at: now
   },
+  {
+    id: '00000000-0000-0000-0000-e00000000009',
+    workspace: WORKSPACE_ID,
+    name: 'Risk Status',
+    options: [
+      { value: 'open', label: 'Open' },
+      { value: 'mitigating', label: 'Mitigating' },
+      { value: 'accepted', label: 'Accepted' },
+      { value: 'closed', label: 'Closed' }
+    ],
+    sort_order: 7,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0000-e0000000000a',
+    workspace: WORKSPACE_ID,
+    name: 'Mitigation Effectiveness',
+    options: [
+      { value: 'none', label: 'None' },
+      { value: 'partial', label: 'Partial' },
+      { value: 'substantial', label: 'Substantial' },
+      { value: 'full', label: 'Full' }
+    ],
+    sort_order: 8,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0000-e0000000000b',
+    workspace: WORKSPACE_ID,
+    name: 'Control Type',
+    options: [
+      { value: 'preventive', label: 'Preventive' },
+      { value: 'detective', label: 'Detective' },
+      { value: 'corrective', label: 'Corrective' },
+      { value: 'compensating', label: 'Compensating' }
+    ],
+    sort_order: 9,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0000-e0000000000c',
+    workspace: WORKSPACE_ID,
+    name: 'Control Effectiveness',
+    options: [
+      { value: 'effective', label: 'Effective' },
+      { value: 'partially-effective', label: 'Partially Effective' },
+      { value: 'ineffective', label: 'Ineffective' },
+      { value: 'not-tested', label: 'Not Tested' }
+    ],
+    sort_order: 10,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0000-e0000000000d',
+    workspace: WORKSPACE_ID,
+    name: 'Framework Kind',
+    options: [
+      { value: 'soc2', label: 'SOC 2' },
+      { value: 'iso27001', label: 'ISO 27001' },
+      { value: 'nist', label: 'NIST' },
+      { value: 'custom', label: 'Custom' }
+    ],
+    sort_order: 11,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0000-e0000000000e',
+    workspace: WORKSPACE_ID,
+    name: 'Requirement Status',
+    options: [
+      { value: 'not-started', label: 'Not Started' },
+      { value: 'in-progress', label: 'In Progress' },
+      { value: 'met', label: 'Met' },
+      { value: 'not-applicable', label: 'Not Applicable' }
+    ],
+    sort_order: 12,
+    created_at: now,
+    updated_at: now
+  },
   // Second workspace enums
   {
     id: '00000000-0000-0000-0000-e00000000002',
@@ -1110,6 +1194,171 @@ export const seedSchemas: SchemaDbResult[] = (
       icon: 'cpu',
       default_owner: null,
       key_prefix: 'TEC',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000013',
+      workspace: WORKSPACE_ID,
+      name: 'Risk',
+      description: 'A potential adverse event rated by likelihood and impact.',
+      fields: [
+        { id: 'likelihood', name: 'Likelihood', type: 'number', min: 1, max: 5 },
+        { id: 'impact', name: 'Impact', type: 'number', min: 1, max: 5 },
+        {
+          id: 'inherent_risk_score',
+          name: 'Inherent Risk Score',
+          type: 'derived',
+          requirementLevel: 'optional',
+          expression: "field('likelihood') * field('impact')",
+          resultType: 'number'
+        },
+        {
+          id: 'mitigation_effectiveness',
+          name: 'Mitigation Effectiveness',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e0000000000a'
+        },
+        {
+          id: 'residual_risk_score',
+          name: 'Residual Risk Score',
+          type: 'derived',
+          requirementLevel: 'optional',
+          expression:
+            "field('likelihood') * (field('mitigation_effectiveness') == 'full' ? 0 : field('mitigation_effectiveness') == 'substantial' ? (field('impact') - 2 < 1 ? 1 : field('impact') - 2) : field('mitigation_effectiveness') == 'partial' ? (field('impact') - 1 < 1 ? 1 : field('impact') - 1) : field('impact'))",
+          resultType: 'number'
+        },
+        { id: 'risk_owner', name: 'Risk Owner', type: 'text' },
+        {
+          id: 'status',
+          name: 'Status',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e00000000009'
+        },
+        { id: 'treatment_target_date', name: 'Treatment Target Date', type: 'date' },
+        {
+          id: 'mitigating_controls',
+          name: 'Mitigating Controls',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: '00000000-0000-0000-0000-000000000032',
+          direction: 'out'
+        }
+      ],
+      color: AR_COLOR_RED,
+      icon: 'alert-octagon',
+      default_owner: null,
+      key_prefix: 'RISK',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000014',
+      workspace: WORKSPACE_ID,
+      name: 'Control',
+      description: 'A safeguard that mitigates one or more Risks.',
+      fields: [
+        {
+          id: 'control_type',
+          name: 'Type',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e0000000000b'
+        },
+        {
+          id: 'design_effectiveness',
+          name: 'Design Effectiveness',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e0000000000c'
+        },
+        {
+          id: 'operating_effectiveness',
+          name: 'Operating Effectiveness',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e0000000000c'
+        },
+        { id: 'last_verified', name: 'Last Verified', type: 'date' },
+        {
+          id: 'mitigated_risks',
+          name: 'Mitigated Risks',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: '00000000-0000-0000-0000-000000000032',
+          direction: 'in'
+        },
+        {
+          id: 'satisfied_requirements',
+          name: 'Satisfied Requirements',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: '00000000-0000-0000-0000-000000000033',
+          direction: 'out'
+        }
+      ],
+      color: AR_COLOR_GREEN,
+      icon: 'check-circle',
+      default_owner: null,
+      key_prefix: 'CTRL',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000015',
+      workspace: WORKSPACE_ID,
+      name: 'Framework',
+      description:
+        'A compliance framework (e.g. SOC 2, ISO 27001, NIST) with a requirement catalog.',
+      fields: [
+        {
+          id: 'framework_kind',
+          name: 'Kind',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e0000000000d'
+        },
+        { id: 'description', name: 'Description', type: 'text' }
+      ],
+      color: AR_COLOR_BLUE,
+      icon: 'book',
+      default_owner: null,
+      key_prefix: 'FRWK',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: '00000000-0000-0000-0000-000000000016',
+      workspace: WORKSPACE_ID,
+      name: 'Compliance Requirement',
+      description: 'A single requirement from a Framework requirement catalog.',
+      fields: [
+        { id: 'requirement_code', name: 'Requirement Code', type: 'text' },
+        { id: 'description', name: 'Description', type: 'text' },
+        {
+          id: 'status',
+          name: 'Status',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e0000000000e'
+        },
+        {
+          id: 'framework',
+          name: 'Framework',
+          type: 'containment',
+          predicate: 'belongs to',
+          schemaId: '00000000-0000-0000-0000-000000000015',
+          minCount: 1,
+          maxCount: 1
+        },
+        {
+          id: 'satisfying_controls',
+          name: 'Satisfying Controls',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: '00000000-0000-0000-0000-000000000033',
+          direction: 'in'
+        }
+      ],
+      color: AR_COLOR_PURPLE,
+      icon: 'file-check',
+      default_owner: null,
+      key_prefix: 'CREQ',
       created_at: now,
       updated_at: now
     },
@@ -1763,9 +2012,284 @@ const seedTechnologyReleases: SeedEntityInput[] = [
   }
 ];
 
+const seedRiskComplianceEntities: SeedEntityInput[] = [
+  {
+    id: '00000000-0000-0000-0017-000000000001',
+    workspace: WORKSPACE_ID,
+    public_id: 'FRWK-1',
+    slug: 'soc-2-type-ii',
+    namespace: 'default',
+    name: 'SOC 2 Type II',
+    description: 'Trust Services Criteria for security, availability, and confidentiality.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['compliance', 'audit'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000015',
+    data: { framework_kind: 'soc2', description: 'Annual SOC 2 Type II audit cycle.' },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0017-000000000002',
+    workspace: WORKSPACE_ID,
+    public_id: 'FRWK-2',
+    slug: 'iso-27001',
+    namespace: 'default',
+    name: 'ISO 27001',
+    description: 'International standard for information security management systems.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['compliance', 'audit'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000015',
+    data: { framework_kind: 'iso27001', description: 'ISMS certification, renewed annually.' },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-000f-000000000001',
+    workspace: WORKSPACE_ID,
+    public_id: 'CREQ-1',
+    slug: 'soc2-cc6-1-logical-access',
+    namespace: 'default',
+    name: 'CC6.1 Logical Access Controls',
+    description: 'Restricts logical access to authorized users and processes.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['access-control'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000016',
+    data: {
+      requirement_code: 'CC6.1',
+      description: 'The entity implements logical access security measures.',
+      status: 'met',
+      framework: ['00000000-0000-0000-0017-000000000001']
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-000f-000000000002',
+    workspace: WORKSPACE_ID,
+    public_id: 'CREQ-2',
+    slug: 'soc2-cc7-2-monitoring',
+    namespace: 'default',
+    name: 'CC7.2 System Monitoring',
+    description: 'Monitors system components for anomalies indicative of security events.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['monitoring'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000016',
+    data: {
+      requirement_code: 'CC7.2',
+      description: 'The entity monitors system components for anomalous behavior.',
+      status: 'in-progress',
+      framework: ['00000000-0000-0000-0017-000000000001']
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-000f-000000000003',
+    workspace: WORKSPACE_ID,
+    public_id: 'CREQ-3',
+    slug: 'iso27001-a-8-24-cryptography',
+    namespace: 'default',
+    name: 'A.8.24 Use of Cryptography',
+    description: 'Rules for effective use of cryptography, including key management.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['cryptography'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000016',
+    data: {
+      requirement_code: 'A.8.24',
+      description: 'The entity defines and implements rules for cryptography.',
+      status: 'not-started',
+      framework: ['00000000-0000-0000-0017-000000000002']
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-000d-000000000001',
+    workspace: WORKSPACE_ID,
+    public_id: 'CTRL-1',
+    slug: 'mfa-enforcement',
+    namespace: 'default',
+    name: 'MFA Enforcement',
+    description: 'Multi-factor authentication is required for all production system access.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['access-control', 'preventive'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000014',
+    data: {
+      control_type: 'preventive',
+      design_effectiveness: 'effective',
+      operating_effectiveness: 'effective',
+      last_verified: '2026-01-01'
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-000d-000000000002',
+    workspace: WORKSPACE_ID,
+    public_id: 'CTRL-2',
+    slug: 'siem-alerting',
+    namespace: 'default',
+    name: 'SIEM Alerting',
+    description: 'Centralized log aggregation and alerting on anomalous system behavior.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['monitoring', 'detective'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000014',
+    data: {
+      control_type: 'detective',
+      design_effectiveness: 'effective',
+      operating_effectiveness: 'partially-effective',
+      last_verified: '2025-11-15'
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-000d-000000000003',
+    workspace: WORKSPACE_ID,
+    public_id: 'CTRL-3',
+    slug: 'encryption-at-rest',
+    namespace: 'default',
+    name: 'Encryption at Rest',
+    description: 'All production data stores use volume- and field-level encryption at rest.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['cryptography', 'preventive'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000014',
+    data: {
+      control_type: 'preventive',
+      design_effectiveness: 'effective',
+      operating_effectiveness: 'not-tested',
+      last_verified: '2025-09-01'
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-000c-000000000001',
+    workspace: WORKSPACE_ID,
+    public_id: 'RISK-1',
+    slug: 'unauthorized-production-access',
+    namespace: 'default',
+    name: 'Unauthorized Production Access',
+    description: 'A compromised credential could be used to access production systems directly.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['access-control'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000013',
+    data: {
+      likelihood: 3,
+      impact: 5,
+      mitigation_effectiveness: 'substantial',
+      risk_owner: 'Head of Security',
+      status: 'mitigating',
+      treatment_target_date: '2026-06-30'
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-000c-000000000002',
+    workspace: WORKSPACE_ID,
+    public_id: 'RISK-2',
+    slug: 'undetected-data-exfiltration',
+    namespace: 'default',
+    name: 'Undetected Data Exfiltration',
+    description: 'Anomalous outbound data transfer could go unnoticed without active monitoring.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['monitoring'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000013',
+    data: {
+      likelihood: 2,
+      impact: 4,
+      mitigation_effectiveness: 'partial',
+      risk_owner: 'Head of Security',
+      status: 'open',
+      treatment_target_date: '2026-09-30'
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-000c-000000000003',
+    workspace: WORKSPACE_ID,
+    public_id: 'RISK-3',
+    slug: 'plaintext-data-at-rest',
+    namespace: 'default',
+    name: 'Plaintext Data at Rest',
+    description: 'A misconfigured data store could expose sensitive data if not encrypted.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['cryptography'],
+    links: [],
+    schema_id: '00000000-0000-0000-0000-000000000013',
+    data: {
+      likelihood: 1,
+      impact: 5,
+      mitigation_effectiveness: 'full',
+      risk_owner: 'Head of Security',
+      status: 'accepted',
+      treatment_target_date: '2026-03-31'
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  }
+];
+
 const seedEntitiesRaw: SeedEntityInput[] = [
   ...seedTechnologies,
   ...seedTechnologyReleases,
+  ...seedRiskComplianceEntities,
   {
     id: '00000000-0000-0000-0001-000000000001',
     workspace: WORKSPACE_ID,
@@ -5093,10 +5617,44 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     relation_approval_policy: 'disabled',
     created_at: now,
     updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000032',
+    workspace: WORKSPACE_ID,
+    name: 'Risk Mitigation',
+    description: 'Associates a Risk with the Controls that mitigate it.',
+    in_schema_ids: ['00000000-0000-0000-0000-000000000013'],
+    out_schema_ids: ['00000000-0000-0000-0000-000000000014'],
+    fields: [],
+    groups: [],
+    shared_field_group_links: [],
+    color: AR_COLOR_RED,
+    icon: 'shield-check',
+    relation_approval_policy: 'disabled',
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000033',
+    workspace: WORKSPACE_ID,
+    name: 'Control Compliance',
+    description: 'Records that a Control satisfies a ComplianceRequirement.',
+    in_schema_ids: ['00000000-0000-0000-0000-000000000014'],
+    out_schema_ids: ['00000000-0000-0000-0000-000000000016'],
+    fields: [],
+    groups: [],
+    shared_field_group_links: [],
+    color: AR_COLOR_GREEN,
+    icon: 'check-circle',
+    relation_approval_policy: 'disabled',
+    created_at: now,
+    updated_at: now
   }
 ];
 
 const DATA_FLOW_SCHEMA_ID = '00000000-0000-0000-0000-000000000030';
+const RISK_CONTROL_SCHEMA_ID = '00000000-0000-0000-0000-000000000032';
+const CONTROL_REQUIREMENT_SCHEMA_ID = '00000000-0000-0000-0000-000000000033';
 
 export const seedRelations: RelationDbCreate[] = [
   {
@@ -5177,6 +5735,72 @@ export const seedRelations: RelationDbCreate[] = [
       protocol: 'kafka',
       data_entities: ['00000000-0000-0000-0008-000000000003']
     },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0013-000000000001',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_CONTROL_SCHEMA_ID,
+    // Unauthorized Production Access <- MFA Enforcement.
+    in_entity_id: '00000000-0000-0000-000c-000000000001',
+    out_entity_id: '00000000-0000-0000-000d-000000000001',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0013-000000000002',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_CONTROL_SCHEMA_ID,
+    // Undetected Data Exfiltration <- SIEM Alerting.
+    in_entity_id: '00000000-0000-0000-000c-000000000002',
+    out_entity_id: '00000000-0000-0000-000d-000000000002',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0013-000000000003',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_CONTROL_SCHEMA_ID,
+    // Plaintext Data at Rest <- Encryption at Rest.
+    in_entity_id: '00000000-0000-0000-000c-000000000003',
+    out_entity_id: '00000000-0000-0000-000d-000000000003',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0013-000000000004',
+    workspace: WORKSPACE_ID,
+    schema_id: CONTROL_REQUIREMENT_SCHEMA_ID,
+    // MFA Enforcement -> CC6.1 Logical Access Controls.
+    in_entity_id: '00000000-0000-0000-000d-000000000001',
+    out_entity_id: '00000000-0000-0000-000f-000000000001',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0013-000000000005',
+    workspace: WORKSPACE_ID,
+    schema_id: CONTROL_REQUIREMENT_SCHEMA_ID,
+    // SIEM Alerting -> CC7.2 System Monitoring.
+    in_entity_id: '00000000-0000-0000-000d-000000000002',
+    out_entity_id: '00000000-0000-0000-000f-000000000002',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0013-000000000006',
+    workspace: WORKSPACE_ID,
+    schema_id: CONTROL_REQUIREMENT_SCHEMA_ID,
+    // Encryption at Rest -> A.8.24 Use of Cryptography.
+    in_entity_id: '00000000-0000-0000-000d-000000000003',
+    out_entity_id: '00000000-0000-0000-000f-000000000003',
+    data: {},
     created_at: now,
     updated_at: now
   }
