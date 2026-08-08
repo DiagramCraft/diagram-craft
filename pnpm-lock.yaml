@@ -571,6 +571,18 @@ importers:
         specifier: 7.0.2
         version: 7.0.2
 
+  examples/arch-register-external-governance:
+    devDependencies:
+      '@types/node':
+        specifier: ^26.1.2
+        version: 26.1.2
+      tsx:
+        specifier: ^4.23.1
+        version: 4.23.1
+      typescript:
+        specifier: 7.0.2
+        version: 7.0.2
+
   examples/backstage-catalog-sync:
     dependencies:
       dotenv:
