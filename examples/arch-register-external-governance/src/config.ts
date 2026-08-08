@@ -61,7 +61,6 @@ export const readConfig = (env: NodeJS.ProcessEnv = process.env): Config => {
       'approve'
     ),
     autoDecision,
-    decisionReason:
-      env['DECISION_REASON']?.trim() ?? 'Reviewed by the external governance engine'
+    decisionReason: env['DECISION_REASON']?.trim() ?? 'Reviewed by the external governance engine'
   };
 };

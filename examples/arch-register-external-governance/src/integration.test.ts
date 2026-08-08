@@ -103,7 +103,10 @@ test('ignores cases that are not configured as external', async () => {
   } as never;
 
   await processWebhookEvent(
-    { ...event, governance: { ...event.governance, case: { ...event.governance.case, external: false } } },
+    {
+      ...event,
+      governance: { ...event.governance, case: { ...event.governance.case, external: false } }
+    },
     config('none'),
     client
   );
