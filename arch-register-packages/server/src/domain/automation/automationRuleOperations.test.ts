@@ -239,6 +239,33 @@ describe('createAutomationRule', () => {
     expect(rule.name).toBe('Flag high earners');
   });
 
+  it('rejects a numeric comparison operator on a non-numeric field', async () => {
+    const db = makeDb();
+    const input: AutomationRuleInput = {
+      ...baseInput,
+      conditions: [{ field: 'title', operator: 'greater_than', value: 15 }]
+    };
+
+    await expect(
+      createAutomationRule(db, 'ws-1', input, eventFor(peopleManagerRole))
+    ).rejects.toThrow('requires a number, currency, or rating field');
+    expect(db.automationRule.createRule).not.toHaveBeenCalled();
+  });
+
+  it('allows a numeric comparison operator on a number field the author can view', async () => {
+    const db = makeDb();
+    const input: AutomationRuleInput = {
+      ...baseInput,
+      conditions: [{ field: 'salary', operator: 'greater_than_or_equal', value: 100000 }]
+    };
+    const event = eventFor(peopleManagerRole, [
+      { teamId: 'team-restricted', role: 'team_reviewer' }
+    ]);
+
+    const rule = await createAutomationRule(db, 'ws-1', input, event);
+    expect(rule.name).toBe('Flag high earners');
+  });
+
   it('rejects a condition referencing a removed field', async () => {
     const db = makeDb();
     const input: AutomationRuleInput = {

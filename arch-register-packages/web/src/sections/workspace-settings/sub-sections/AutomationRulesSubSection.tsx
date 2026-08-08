@@ -40,9 +40,17 @@ type AutomationSchema = Pick<EntitySchema, 'id' | 'name'> & {
     id: string;
     name: string;
     type?: string;
+    resultType?: string;
     options?: { value: string; label: string }[];
   }>;
 };
+
+const NUMERIC_OPERATORS: AutomationConditionOperator[] = [
+  'greater_than',
+  'greater_than_or_equal',
+  'less_than',
+  'less_than_or_equal'
+];
 
 const TRIGGER_LABELS: Record<TriggerKind, string> = {
   entity_created: 'Entity created',
@@ -64,7 +72,11 @@ const OPERATOR_LABELS: Record<AutomationConditionOperator, string> = {
   equals: 'Equals',
   not_equals: 'Not equals',
   is_empty: 'Is empty',
-  is_not_empty: 'Is not empty'
+  is_not_empty: 'Is not empty',
+  greater_than: 'Greater than',
+  greater_than_or_equal: 'Greater than or equal',
+  less_than: 'Less than',
+  less_than_or_equal: 'Less than or equal'
 };
 
 const describeTrigger = (trigger: AutomationRuleTrigger) => {
@@ -90,8 +102,16 @@ const defaultTriggerFor = (kind: TriggerKind): AutomationRuleTrigger => {
 type FieldOption = {
   id: string;
   name: string;
+  type?: string;
+  resultType?: string;
   valueOptions?: { value: string; label: string }[];
 };
+
+const isNumericComparableField = (field: FieldOption | undefined) =>
+  field != null &&
+  (field.type === 'number' ||
+    field.type === 'currency' ||
+    (field.type === 'derived' && (field.resultType === 'number' || field.resultType === 'rating')));
 
 const STATIC_METADATA_FIELDS: FieldOption[] = [
   { id: '_name', name: 'Name' },
@@ -132,6 +152,8 @@ const fieldOptionsFor = (
     ...customFields.map(f => ({
       id: f.id,
       name: f.name,
+      type: f.type,
+      resultType: f.resultType,
       valueOptions: f.type === 'select' ? f.options : undefined
     }))
   ];
@@ -160,13 +182,25 @@ const FieldValueInput = ({
   fields,
   fieldId,
   value,
-  onChange
+  onChange,
+  numeric
 }: {
   fields: FieldOption[];
   fieldId: string;
   value: string;
   onChange: (value: string) => void;
+  numeric?: boolean;
 }) => {
+  if (numeric) {
+    return (
+      <TextInput
+        type="number"
+        value={value}
+        onChange={value => onChange(value ?? '')}
+        placeholder="Value"
+      />
+    );
+  }
   const valueOptions = fields.find(f => f.id === fieldId)?.valueOptions;
   if (valueOptions) {
     return (
@@ -205,39 +239,59 @@ const ConditionRow = ({
   fields: FieldOption[];
   onChange: (next: AutomationCondition) => void;
   onRemove: () => void;
-}) => (
-  <div className={styles.row}>
-    <FieldSelect
-      fields={fields}
-      value={condition.field}
-      onChange={value => onChange({ ...condition, field: value })}
-    />
-    <Select.Root
-      value={condition.operator}
-      onChange={value =>
-        onChange({ ...condition, operator: (value as AutomationConditionOperator) ?? 'equals' })
-      }
-      style={{ width: 160 }}
-    >
-      {Object.entries(OPERATOR_LABELS).map(([value, label]) => (
-        <Select.Item key={value} value={value}>
-          {label}
-        </Select.Item>
-      ))}
-    </Select.Root>
-    {(condition.operator === 'equals' || condition.operator === 'not_equals') && (
-      <FieldValueInput
+}) => {
+  const numeric = isNumericComparableField(fields.find(f => f.id === condition.field));
+  const availableOperators = numeric
+    ? Object.keys(OPERATOR_LABELS)
+    : Object.keys(OPERATOR_LABELS).filter(
+        op => !NUMERIC_OPERATORS.includes(op as AutomationConditionOperator)
+      );
+  return (
+    <div className={styles.row}>
+      <FieldSelect
         fields={fields}
-        fieldId={condition.field}
-        value={
-          typeof condition.value === 'string' ? condition.value : String(condition.value ?? '')
-        }
-        onChange={value => onChange({ ...condition, value })}
+        value={condition.field}
+        onChange={value => {
+          const stillNumeric = isNumericComparableField(fields.find(f => f.id === value));
+          const operatorStillValid =
+            stillNumeric || !NUMERIC_OPERATORS.includes(condition.operator);
+          onChange({
+            ...condition,
+            field: value,
+            operator: operatorStillValid ? condition.operator : 'equals'
+          });
+        }}
       />
-    )}
-    <Button variant="ghost" size="xs" icon={<TbTrash size={13} />} onClick={onRemove} />
-  </div>
-);
+      <Select.Root
+        value={condition.operator}
+        onChange={value =>
+          onChange({ ...condition, operator: (value as AutomationConditionOperator) ?? 'equals' })
+        }
+        style={{ width: 160 }}
+      >
+        {availableOperators.map(value => (
+          <Select.Item key={value} value={value}>
+            {OPERATOR_LABELS[value as AutomationConditionOperator]}
+          </Select.Item>
+        ))}
+      </Select.Root>
+      {(condition.operator === 'equals' ||
+        condition.operator === 'not_equals' ||
+        NUMERIC_OPERATORS.includes(condition.operator)) && (
+        <FieldValueInput
+          fields={fields}
+          fieldId={condition.field}
+          value={
+            typeof condition.value === 'string' ? condition.value : String(condition.value ?? '')
+          }
+          onChange={value => onChange({ ...condition, value })}
+          numeric={NUMERIC_OPERATORS.includes(condition.operator)}
+        />
+      )}
+      <Button variant="ghost" size="xs" icon={<TbTrash size={13} />} onClick={onRemove} />
+    </div>
+  );
+};
 
 const ActionRow = ({
   action,

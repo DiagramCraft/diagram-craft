@@ -579,7 +579,9 @@
           automation rules that match entity or typed-relation triggers (creation, deletion, or a field change; entity
           rules also support lifecycle transitions) and an optional set of field conditions, then run one or more
           configured actions — recording an audit note, sending an in-app notification, or setting a field value on the
-          triggering subject. Field conditions and
+          triggering subject. Conditions support equality, emptiness, and (for number, currency, and rating/derived-number
+          fields) numeric comparison operators (greater than, greater than or equal, less than, less than or equal). Field
+          conditions and
           field-targeting actions respect the rule author's current field-group access, and field references must remain
           available in the applicable entity or relation schema. Rules are matched synchronously on every entity mutation
           and rechecked before asynchronous actions execute, so access revocation, field reassignment, or removed fields

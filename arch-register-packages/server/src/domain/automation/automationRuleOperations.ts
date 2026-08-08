@@ -16,11 +16,19 @@ import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { RelationSchemaDbResult } from '../catalog/db/relationDatabase';
 import {
+  isAutomationNumericComparableField,
   isAutomationReadFieldKnown,
   isAutomationReadFieldKnownAcrossSchemas,
   isAutomationWriteFieldKnown,
   isAutomationWriteFieldKnownAcrossSchemas
 } from './automationRuleFieldAccess';
+
+const NUMERIC_COMPARISON_OPERATORS = new Set([
+  'greater_than',
+  'greater_than_or_equal',
+  'less_than',
+  'less_than_or_equal'
+]);
 
 export const AUTOMATION_RULE_REDACTED_LITERAL = '[redacted]';
 
@@ -237,6 +245,12 @@ const validateInput = async (
       statusText: 'Forbidden',
       message: `Automation rule condition references a restricted field: ${condition.field}`
     });
+    if (NUMERIC_COMPARISON_OPERATORS.has(condition.operator)) {
+      httpAssert.true(isAutomationNumericComparableField(schemas, condition.field), {
+        status: 400,
+        message: `Automation rule condition operator ${condition.operator} requires a number, currency, or rating field: ${condition.field}`
+      });
+    }
   }
 
   for (const action of input.actions) {

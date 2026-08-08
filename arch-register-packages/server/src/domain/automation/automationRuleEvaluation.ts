@@ -78,6 +78,17 @@ const matchesTrigger = (trigger: AutomationRuleTrigger, auditLog: AuditLogDbResu
 const isEmptyValue = (value: unknown) =>
   value == null || value === '' || (Array.isArray(value) && value.length === 0);
 
+/** Currency fields are stored as `{ amount, currency }` (see `parseCurrencyValue`); every other
+ *  numeric-comparable field (number, derived number/rating) is a plain number. Returns `null` if
+ *  the value can't be read as a number, so numeric comparisons fail closed on missing/bad data. */
+const toComparableNumber = (value: unknown): number | null => {
+  if (typeof value === 'object' && value !== null && 'amount' in value) {
+    value = (value as { amount: unknown }).amount;
+  }
+  const num = typeof value === 'number' ? value : Number(value);
+  return Number.isFinite(num) ? num : null;
+};
+
 const evaluateCondition = (
   condition: AutomationCondition,
   fieldValues: Record<string, unknown>
@@ -92,6 +103,24 @@ const evaluateCondition = (
       return isEmptyValue(value);
     case 'is_not_empty':
       return !isEmptyValue(value);
+    case 'greater_than':
+    case 'greater_than_or_equal':
+    case 'less_than':
+    case 'less_than_or_equal': {
+      const actual = toComparableNumber(value);
+      const expected = toComparableNumber(condition.value);
+      if (actual === null || expected === null) return false;
+      switch (condition.operator) {
+        case 'greater_than':
+          return actual > expected;
+        case 'greater_than_or_equal':
+          return actual >= expected;
+        case 'less_than':
+          return actual < expected;
+        case 'less_than_or_equal':
+          return actual <= expected;
+      }
+    }
   }
 };
 
