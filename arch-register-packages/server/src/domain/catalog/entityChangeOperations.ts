@@ -34,7 +34,7 @@ import type {
 import {
   createGovernanceCaseInTransaction,
   recordGovernanceEvent,
-  resolveScopeAwareEscalationTarget
+  type GovernanceAssignmentTarget
 } from '../governance/governanceOperations';
 import {
   finalizeApprovalBypass,
@@ -63,10 +63,18 @@ import {
 import { getEntitySchemaAt } from './schemaHistory';
 import {
   ENTITY_CHANGE_POLICY_CASE_KIND,
+  ENTITY_OWNER_ADMIN_STRATEGY,
   getSchemaPolicy,
   schemaWorkflowConfig
 } from '../governance/schemaGovernancePolicy';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
+import { defaultWorkflowConfigForCaseKind } from '../governance/governanceRegistry';
+import { resolveGovernanceWorkflowConfig } from '../governance/governanceWorkflowConfig';
+import {
+  eligibleUserIdsForGovernanceTargets,
+  resolveApprovalTargets,
+  filterValidGovernanceTargets
+} from '../governance/governanceTargetResolution';
 
 export const ENTITY_CHANGE_CASE_KIND = 'entity.change-case';
 export const ENTITY_CHANGE_CASE_BULK_KIND = 'entity.change-case.bulk';
@@ -161,6 +169,82 @@ export const listEligibleApproverIds = async (
 
 export const isSoleApprover = (eligibleApproverIds: ReadonlySet<string>, userId: string) =>
   eligibleApproverIds.size === 1 && eligibleApproverIds.has(userId);
+
+const entityWorkflowDefaultConfig = defaultWorkflowConfigForCaseKind({
+  workflowConfig: schemaWorkflowConfig
+});
+
+export const resolveEntityWorkflowConfig = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  caseKind: string,
+  caseSubkind: string | null
+) => {
+  const rows = await db.governanceCaseConfig.listCaseConfigForKind(workspace, caseKind);
+  return resolveGovernanceWorkflowConfig(rows, caseSubkind, entityWorkflowDefaultConfig, true);
+};
+
+export const resolveEntityOwnerAdminTargets = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entities: Pick<Entity, 'owner'>[]
+): Promise<GovernanceAssignmentTarget[]> => {
+  const ownerTeamIds = [
+    ...new Set(entities.map(entity => entity.owner).filter((id): id is string => id != null))
+  ];
+  if (ownerTeamIds.length !== 1) return [];
+  return filterValidGovernanceTargets(db, workspace, [
+    { type: 'team_role', teamId: ownerTeamIds[0]!, teamRole: 'team_admin' }
+  ]);
+};
+
+export const resolveEntityApprovalTargets = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  caseKind: string,
+  caseSubkind: string | null,
+  entities: Pick<Entity, 'owner'>[]
+) => {
+  const resolved = await resolveEntityWorkflowConfig(db, workspace, caseKind, caseSubkind);
+  const config = resolved.config.approvals ?? entityWorkflowDefaultConfig.approvals!;
+  const strategyTargets =
+    config.strategy == null || config.strategy === ENTITY_OWNER_ADMIN_STRATEGY
+      ? await resolveEntityOwnerAdminTargets(db, workspace, entities)
+      : [];
+  const targets = await resolveApprovalTargets(
+    db,
+    workspace,
+    strategyTargets,
+    config,
+    config.requiredApprovals
+  );
+  return { config, targets };
+};
+
+export const approvalCaseShouldComplete = async ({
+  tx,
+  case: caseRow,
+  assignmentId,
+  actorUserId,
+  decision,
+  requiredApprovals
+}: {
+  tx: DatabaseAdapter;
+  case: GovernanceCaseDbResult;
+  assignmentId: string;
+  actorUserId: string;
+  decision: 'approve' | 'reject' | 'request_changes' | 'acknowledge';
+  requiredApprovals: number;
+}) => {
+  if (decision !== 'approve') return true;
+  const events = await tx.governance.listEvents(caseRow.id);
+  const approved = events.filter(event => event.event_type === 'approved');
+  const actorIds = new Set(approved.map(event => event.actor_user_id).filter(Boolean));
+  actorIds.add(actorUserId);
+  const assignmentIds = new Set(approved.map(event => String(event.metadata['assignmentId'])));
+  assignmentIds.add(assignmentId);
+  return assignmentIds.size >= requiredApprovals && actorIds.size >= requiredApprovals;
+};
 
 export const entityRequiresApproval = async (
   db: DatabaseAdapter,
@@ -628,34 +712,17 @@ export const submitBulkEntityChangeApproval = async (
     message: 'A bulk entity change proposal requires at least two entities with actual changes'
   });
 
-  const ownerTeamIds = await getTeamIds(db, workspace);
-  const distinctOwnerTeams = [
-    ...new Set(
-      prepared
-        .map(member => member.entity.owner)
-        .filter((owner): owner is string => owner != null && ownerTeamIds.has(owner))
-    )
-  ];
-  const assignments = [
-    ...distinctOwnerTeams.map(teamId => ({
-      action: 'approve' as const,
-      target: { type: 'team_role' as const, teamId, teamRole: 'team_admin' as const }
-    })),
-    {
-      action: 'approve' as const,
-      target: { type: 'capability' as const, capability: 'ent.approve' as const }
-    }
-  ];
-
-  const eligibleApproverIdSets = await Promise.all([
-    listEligibleApproverIds(db, workspace, null),
-    ...distinctOwnerTeams.map(teamId => listEligibleApproverIds(db, workspace, teamId))
-  ]);
-  const eligibleApproverIds = new Set<string>();
-  for (const set of eligibleApproverIdSets) {
-    for (const id of set) eligibleApproverIds.add(id);
-  }
-  const selfApprovalAllowed = isSoleApprover(eligibleApproverIds, userId);
+  const { config: bulkApprovalConfig, targets } = await resolveEntityApprovalTargets(
+    db,
+    workspace,
+    ENTITY_CHANGE_CASE_BULK_KIND,
+    null,
+    prepared.map(member => member.entity)
+  );
+  const assignments = targets.map(target => ({ action: 'approve' as const, target }));
+  const eligibleApproverIds = await eligibleUserIdsForGovernanceTargets(db, workspace, targets);
+  const selfApprovalAllowed =
+    bulkApprovalConfig.requiredApprovals === 1 && isSoleApprover(eligibleApproverIds, userId);
   const policyVersion = prepared
     .map(member => member.policy.policyVersion)
     .sort()
@@ -680,7 +747,12 @@ export const submitBulkEntityChangeApproval = async (
       workspace,
       revision_number: 1,
       policy_version: policyVersion,
-      resolved_policy: { selfApprovalAllowed },
+      resolved_policy: {
+        selfApprovalAllowed,
+        requiredApprovals: bulkApprovalConfig.requiredApprovals,
+        strategy: bulkApprovalConfig.strategy ?? ENTITY_OWNER_ADMIN_STRATEGY,
+        targets
+      },
       message: body.message ?? null,
       created_by: userId,
       status: 'submitted',
@@ -710,7 +782,8 @@ export const submitBulkEntityChangeApproval = async (
         payload: {
           proposalId: root.id,
           revisionId,
-          entityIds: prepared.map(member => member.entity.id)
+          entityIds: prepared.map(member => member.entity.id),
+          requiredApprovals: bulkApprovalConfig.requiredApprovals
         },
         assignments
       },
@@ -796,35 +869,24 @@ const submitProposal = async (
     }
 
     const previous = await tx.entityChange.getLatestApprovalRevision(workspace, root.id);
-    const ownerTeamIds = await getTeamIds(tx, workspace);
-    const assignments = ownerTeamIds.has(entity.owner ?? '')
-      ? [
-          {
-            action: 'approve' as const,
-            target: {
-              type: 'team_role' as const,
-              teamId: entity.owner!,
-              teamRole: 'team_admin' as const
-            }
-          },
-          {
-            action: 'approve' as const,
-            target: { type: 'capability' as const, capability: 'ent.approve' as const }
-          }
-        ]
-      : [
-          {
-            action: 'approve' as const,
-            target: { type: 'capability' as const, capability: 'ent.approve' as const }
-          }
-        ];
-    const eligibleApproverIds = await listEligibleApproverIds(
+    const { config: approvalConfig, targets } = await resolveEntityApprovalTargets(
       tx,
       workspace,
-      ownerTeamIds.has(entity.owner ?? '') ? entity.owner : null
+      ENTITY_CHANGE_CASE_KIND,
+      encodeCaseSubkind(schema.id),
+      [entity]
     );
-    const selfApprovalAllowed = isSoleApprover(eligibleApproverIds, userId);
-    const resolvedPolicy = { ...policy, selfApprovalAllowed };
+    const assignments = targets.map(target => ({ action: 'approve' as const, target }));
+    const eligibleApproverIds = await eligibleUserIdsForGovernanceTargets(tx, workspace, targets);
+    const selfApprovalAllowed =
+      approvalConfig.requiredApprovals === 1 && isSoleApprover(eligibleApproverIds, userId);
+    const resolvedPolicy = {
+      ...policy,
+      selfApprovalAllowed,
+      requiredApprovals: approvalConfig.requiredApprovals,
+      strategy: approvalConfig.strategy ?? ENTITY_OWNER_ADMIN_STRATEGY,
+      targets
+    };
     const revision = await tx.entityChange.createApprovalRevision({
       id: randomUUID(),
       proposal_id: root.id,
@@ -857,7 +919,12 @@ const submitProposal = async (
         policyVersion: policy.policyVersion,
         selfApprovalAllowed,
         dueAt: body.dueAt ? new Date(body.dueAt) : null,
-        payload: { proposalId: root.id, revisionId: revision.id, entityId: canonicalEntityId },
+        payload: {
+          proposalId: root.id,
+          revisionId: revision.id,
+          entityId: canonicalEntityId,
+          requiredApprovals: approvalConfig.requiredApprovals
+        },
         assignments
       },
       now
@@ -952,19 +1019,25 @@ export const bypassEntityApproval = async (
   return { entityId: canonicalEntityId, version: updated.version ?? 1, bypassed: true as const };
 };
 
-// Neither entity-change case kind's payload carries a projectId directly (only entity/proposal
-// ids) — resolve escalation scope from the subject entity's project instead. For the bulk kind,
-// a proposal can span entities from different projects; the first member's project is used as a
-// reasonable default rather than adding per-entity escalation.
-const resolveEntityChangeEscalationTarget = async (
+// Entity escalation follows the same owner-admin strategy as approval. Bulk cases deliberately
+// fall back when their members have zero or multiple distinct owner teams.
+const resolveEntityOwnerAdminEscalationTargets = async (
   db: DatabaseAdapter,
   caseRow: GovernanceCaseDbResult
-) => {
-  const entityId =
-    (caseRow.payload['entityId'] as string | undefined) ??
-    (caseRow.payload['entityIds'] as string[] | undefined)?.[0];
-  const entity = entityId ? await db.catalog.getEntity(caseRow.workspace, entityId) : null;
-  return resolveScopeAwareEscalationTarget(db, caseRow.workspace, entity?.project_id ?? null);
+): Promise<GovernanceAssignmentTarget[]> => {
+  const entityIds =
+    (caseRow.payload['entityIds'] as string[] | undefined) ??
+    ((caseRow.payload['entityId'] as string | undefined)
+      ? [caseRow.payload['entityId'] as string]
+      : []);
+  const entities = await Promise.all(
+    entityIds.map(entityId => db.catalog.getEntity(caseRow.workspace, entityId))
+  );
+  return resolveEntityOwnerAdminTargets(
+    db,
+    caseRow.workspace,
+    entities.filter(entity => entity != null).map(entity => ({ owner: entity.owner }))
+  );
 };
 
 export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
@@ -1010,6 +1083,11 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
           );
           return 'stale';
         },
+        shouldCompleteCase: context =>
+          approvalCaseShouldComplete({
+            ...context,
+            requiredApprovals: Number(context.case.payload['requiredApprovals']) || 1
+          }),
         handleDecision: async (tx, { case: caseRow, decision }) => {
           const payload = caseRow.payload;
           const revisionId = String(payload['revisionId']);
@@ -1149,7 +1227,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
           });
         },
         reminders: { approachingDays: [2], overdueDays: [1, 5] },
-        escalation: { overdueDays: 5, target: resolveEntityChangeEscalationTarget }
+        escalation: { overdueDays: 5, target: resolveEntityOwnerAdminEscalationTargets }
       }
     ],
     [
@@ -1158,7 +1236,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
         workflowConfig: {
           ...schemaWorkflowConfig,
           supportsSubkind: false,
-          supportsApprovals: false
+          supportsApprovals: true
         },
         subjectVisible: async (
           db,
@@ -1210,6 +1288,11 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
           );
           return 'stale';
         },
+        shouldCompleteCase: context =>
+          approvalCaseShouldComplete({
+            ...context,
+            requiredApprovals: Number(context.case.payload['requiredApprovals']) || 1
+          }),
         handleDecision: async (tx, { case: caseRow, decision }) => {
           const payload = caseRow.payload;
           const revisionId = String(payload['revisionId']);
@@ -1369,7 +1452,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
           });
         },
         reminders: { approachingDays: [2], overdueDays: [1, 5] },
-        escalation: { overdueDays: 5, target: resolveEntityChangeEscalationTarget }
+        escalation: { overdueDays: 5, target: resolveEntityOwnerAdminEscalationTargets }
       }
     ]
   ]);

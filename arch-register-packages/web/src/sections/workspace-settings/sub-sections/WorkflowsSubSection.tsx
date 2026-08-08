@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from 'react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
 import { TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
@@ -47,11 +47,6 @@ const parseDays = (value: string) =>
     .map(item => item.trim())
     .map(item => Number(item))
     .filter(item => Number.isInteger(item) && item >= 0);
-
-const trimmedOrUndefined = (value: string | undefined) => {
-  const trimmed = value?.trim();
-  return trimmed === undefined || trimmed === '' ? undefined : trimmed;
-};
 
 const FallbackTargetPicker = ({
   workspaceSlug,
@@ -276,6 +271,68 @@ const SubkindEditor = ({
   return <div className={styles.emptyNote}>This workflow does not define a scope selector.</div>;
 };
 
+type StrategySection =
+  | NonNullable<GovernanceWorkflowConfig['approvals']>
+  | NonNullable<GovernanceWorkflowConfig['escalation']>;
+
+const StrategyEditor = ({
+  label,
+  strategies,
+  section,
+  fields,
+  onChange
+}: {
+  label: string;
+  strategies: GovernanceWorkflowCaseKind['approvalStrategies'];
+  section: StrategySection;
+  fields: Array<{ id: string; name: string; type: string }>;
+  onChange: (patch: Partial<StrategySection>) => void;
+}) => {
+  const selectedId = section.strategy ?? strategies[0]?.id;
+  const selected = strategies.find(strategy => strategy.id === selectedId);
+  const fieldId = section.strategyConfig['fieldId'];
+
+  return (
+    <>
+      <FormElement label={label}>
+        <Select.Root
+          value={selectedId}
+          onChange={value => onChange({ strategy: value, strategyConfig: {} })}
+          disabled={strategies.length === 1}
+        >
+          {strategies.map(strategy => (
+            <Select.Item key={strategy.id} value={strategy.id}>
+              {strategy.label}
+            </Select.Item>
+          ))}
+        </Select.Root>
+      </FormElement>
+      {selected?.configType === 'document-field' && (
+        <FormElement label="Source field">
+          <Select.Root
+            value={typeof fieldId === 'string' ? fieldId : undefined}
+            onChange={value => onChange({ strategyConfig: { fieldId: value } })}
+            placeholder="Select a user or team field"
+          >
+            {fields.map(field => (
+              <Select.Item key={field.id} value={field.id}>
+                {field.name}
+              </Select.Item>
+            ))}
+          </Select.Root>
+        </FormElement>
+      )}
+    </>
+  );
+};
+
+const WorkflowBlock = ({ title, children }: { title: string; children: ReactNode }) => (
+  <section className={styles.workflowBlock}>
+    <div className={styles.workflowBlockTitle}>{title}</div>
+    <div className={styles.workflowBlockFields}>{children}</div>
+  </section>
+);
+
 const ConfigEditor = ({
   row,
   caseKind,
@@ -312,7 +369,7 @@ const ConfigEditor = ({
   const enumField = documentTypes
     .find(type => type.id === documentTypeId)
     ?.fields.find(field => field.id === fieldId && field.type === 'enum');
-  const approverSourceFields =
+  const documentTargetFields =
     documentTypes
       .find(type => type.id === documentTypeId)
       ?.fields.filter(
@@ -392,6 +449,8 @@ const ConfigEditor = ({
                     approvals: checked
                       ? (approvals ?? {
                           requiredApprovals: 1,
+                          strategy: caseKind.approvalStrategies[0]?.id,
+                          strategyConfig: {},
                           fallbackUserIds: [],
                           fallbackTeamIds: []
                         })
@@ -402,78 +461,54 @@ const ConfigEditor = ({
               Enable approval policy
             </label>
             {approvals && (
-              <div className={styles.formGrid}>
-                <FormElement label="Required approvals">
-                  <TextInput
-                    type="number"
-                    value={String(approvals.requiredApprovals)}
-                    onChange={value =>
-                      update({
-                        approvals: {
-                          ...approvals,
-                          requiredApprovals: Math.max(1, Number(value ?? 1))
-                        }
-                      })
-                    }
-                  />
-                </FormElement>
-                <FormElement label="Approver source">
-                  {caseKind.case_kind === 'document.status' ? (
-                    <Select.Root
-                      value={approvals.approverSource ?? '__fallback__'}
-                      onChange={value =>
-                        update({
-                          approvals: {
-                            ...approvals,
-                            approverSource: value === '__fallback__' ? undefined : value
-                          }
-                        })
-                      }
-                      placeholder="Use fallback targets"
-                    >
-                      <Select.Item value="__fallback__">Use fallback targets</Select.Item>
-                      {approverSourceFields.map(field => (
-                        <Select.Item key={field.id} value={field.id}>
-                          {field.name}
-                        </Select.Item>
-                      ))}
-                    </Select.Root>
-                  ) : (
+              <div className={styles.workflowBlocks}>
+                <WorkflowBlock title="Approval requirement">
+                  <FormElement label="Number of approvals required">
                     <TextInput
-                      value={approvals.approverSource ?? ''}
-                      placeholder="Not used for this workflow"
-                      disabled
+                      type="number"
+                      value={String(approvals.requiredApprovals)}
                       onChange={value =>
                         update({
                           approvals: {
                             ...approvals,
-                            approverSource: trimmedOrUndefined(value)
+                            requiredApprovals: Math.max(1, Number(value ?? 1))
                           }
                         })
                       }
                     />
-                  )}
-                </FormElement>
-                <FormElement label="Fallback users">
-                  <FallbackTargetPicker
-                    workspaceSlug={workspaceSlug}
-                    kind="user"
-                    values={approvals.fallbackUserIds}
-                    onChange={fallbackUserIds =>
-                      update({ approvals: { ...approvals, fallbackUserIds } })
-                    }
+                  </FormElement>
+                </WorkflowBlock>
+                <WorkflowBlock title="Approval strategy">
+                  <StrategyEditor
+                    label="Strategy"
+                    strategies={caseKind.approvalStrategies}
+                    section={approvals}
+                    fields={documentTargetFields}
+                    onChange={patch => update({ approvals: { ...approvals, ...patch } })}
                   />
-                </FormElement>
-                <FormElement label="Fallback teams">
-                  <FallbackTargetPicker
-                    workspaceSlug={workspaceSlug}
-                    kind="team"
-                    values={approvals.fallbackTeamIds}
-                    onChange={fallbackTeamIds =>
-                      update({ approvals: { ...approvals, fallbackTeamIds } })
-                    }
-                  />
-                </FormElement>
+                </WorkflowBlock>
+                <WorkflowBlock title="Fallback approvers">
+                  <FormElement label="Fallback users">
+                    <FallbackTargetPicker
+                      workspaceSlug={workspaceSlug}
+                      kind="user"
+                      values={approvals.fallbackUserIds}
+                      onChange={fallbackUserIds =>
+                        update({ approvals: { ...approvals, fallbackUserIds } })
+                      }
+                    />
+                  </FormElement>
+                  <FormElement label="Fallback teams">
+                    <FallbackTargetPicker
+                      workspaceSlug={workspaceSlug}
+                      kind="team"
+                      values={approvals.fallbackTeamIds}
+                      onChange={fallbackTeamIds =>
+                        update({ approvals: { ...approvals, fallbackTeamIds } })
+                      }
+                    />
+                  </FormElement>
+                </WorkflowBlock>
               </div>
             )}
           </Tabs.Content>
@@ -529,6 +564,8 @@ const ConfigEditor = ({
                     escalation: {
                       enabled: checked ?? false,
                       overdueDays: escalation?.overdueDays ?? 5,
+                      strategy: escalation?.strategy ?? caseKind.escalationStrategies[0]?.id,
+                      strategyConfig: escalation?.strategyConfig ?? {},
                       fallbackUserIds: escalation?.fallbackUserIds ?? [],
                       fallbackTeamIds: escalation?.fallbackTeamIds ?? []
                     }
@@ -538,54 +575,57 @@ const ConfigEditor = ({
               Enable escalation
             </label>
             {escalation && (
-              <div className={styles.formGrid}>
-                <FormElement label="Escalate after overdue days">
-                  <TextInput
-                    type="number"
-                    value={String(escalation.overdueDays)}
-                    onChange={value =>
-                      update({
-                        escalation: { ...escalation, overdueDays: Math.max(1, Number(value ?? 1)) }
-                      })
-                    }
+              <div className={styles.workflowBlocks}>
+                <WorkflowBlock title="Escalation timing">
+                  <FormElement label="Escalate after overdue days">
+                    <TextInput
+                      type="number"
+                      value={String(escalation.overdueDays)}
+                      onChange={value =>
+                        update({
+                          escalation: {
+                            ...escalation,
+                            overdueDays: Math.max(1, Number(value ?? 1))
+                          }
+                        })
+                      }
+                    />
+                  </FormElement>
+                </WorkflowBlock>
+                <WorkflowBlock title="Escalation strategy">
+                  <StrategyEditor
+                    label="Strategy"
+                    strategies={caseKind.escalationStrategies}
+                    section={escalation}
+                    fields={documentTargetFields}
+                    onChange={patch => update({ escalation: { ...escalation, ...patch } })}
                   />
-                </FormElement>
-                <FormElement label="Fallback users">
-                  <FallbackTargetPicker
-                    workspaceSlug={workspaceSlug}
-                    kind="user"
-                    values={escalation.fallbackUserIds}
-                    maxValues={1}
-                    onChange={fallbackUserIds =>
-                      update({
-                        escalation: {
-                          ...escalation,
-                          fallbackUserIds,
-                          fallbackTeamIds:
-                            fallbackUserIds.length > 0 ? [] : escalation.fallbackTeamIds
-                        }
-                      })
-                    }
-                  />
-                </FormElement>
-                <FormElement label="Fallback teams">
-                  <FallbackTargetPicker
-                    workspaceSlug={workspaceSlug}
-                    kind="team"
-                    values={escalation.fallbackTeamIds}
-                    maxValues={1}
-                    onChange={fallbackTeamIds =>
-                      update({
-                        escalation: {
-                          ...escalation,
-                          fallbackTeamIds,
-                          fallbackUserIds:
-                            fallbackTeamIds.length > 0 ? [] : escalation.fallbackUserIds
-                        }
-                      })
-                    }
-                  />
-                </FormElement>
+                </WorkflowBlock>
+                <WorkflowBlock title="Fallback escalation targets">
+                  <FormElement label="Fallback users">
+                    <FallbackTargetPicker
+                      workspaceSlug={workspaceSlug}
+                      kind="user"
+                      values={escalation.fallbackUserIds}
+                      onChange={fallbackUserIds =>
+                        update({ escalation: { ...escalation, fallbackUserIds } })
+                      }
+                    />
+                  </FormElement>
+                  <FormElement label="Fallback teams">
+                    <FallbackTargetPicker
+                      workspaceSlug={workspaceSlug}
+                      kind="team"
+                      values={escalation.fallbackTeamIds}
+                      onChange={fallbackTeamIds =>
+                        update({ escalation: { ...escalation, fallbackTeamIds } })
+                      }
+                    />
+                  </FormElement>
+                  <div className={styles.hint}>
+                    Workspace admins are used if no target resolves.
+                  </div>
+                </WorkflowBlock>
               </div>
             )}
           </Tabs.Content>
@@ -836,6 +876,8 @@ export const WorkflowsSubSection = ({
               supportsApprovals: true,
               supportsReminders: true,
               supportsEscalation: true,
+              approvalStrategies: [],
+              escalationStrategies: [],
               defaultConfig: { extensions: {} }
             }
           }

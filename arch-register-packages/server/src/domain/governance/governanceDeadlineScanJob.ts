@@ -9,6 +9,7 @@ import {
 } from '../catalog/fieldDateReminderJob';
 import { defaultWorkflowConfigForCaseKind } from './governanceRegistry';
 import { resolveGovernanceWorkflowConfig } from './governanceWorkflowConfig';
+import { resolveEscalationTargets } from './governanceTargetResolution';
 
 // #2418: a recurring per-workspace scan that reminds assignees as a governance case's due_at
 // approaches or passes, and records a `reminder_sent` event (which createGovernanceInAppNotifications
@@ -164,21 +165,23 @@ export const createGovernanceDeadlineScanJobHandler =
           await db.core.transaction(async tx => {
             const fresh = await tx.governance.getCase(context.workspace, caseRow.id);
             if (fresh?.status !== 'open' || fresh.escalated_at) return;
-            const configuredUserId = escalationConfig.fallbackUserIds[0];
-            const configuredTeamId = escalationConfig.fallbackTeamIds[0];
-            const target = configuredUserId
-              ? { type: 'user' as const, userId: configuredUserId }
-              : configuredTeamId
-                ? { type: 'team' as const, teamId: configuredTeamId }
-                : await escalation.target(tx, fresh);
-            if (!target) return;
+            const resolved = await escalation.target(tx, fresh, escalationConfig);
+            const strategyTargets =
+              resolved == null ? [] : Array.isArray(resolved) ? resolved : [resolved];
+            const targets = await resolveEscalationTargets(
+              tx,
+              context.workspace,
+              strategyTargets,
+              escalationConfig
+            );
+            if (targets.length === 0) return;
             await recordGovernanceEvent(tx, fresh, {
               eventType: 'escalated',
               actorUserId: GOVERNANCE_DEADLINE_SCAN_SYSTEM_USER_ID,
               previousStatus: fresh.status,
               resultingStatus: fresh.status,
               reason: null,
-              metadata: { trigger: 'scheduled', target }
+              metadata: { trigger: 'scheduled', targets }
             });
             await tx.governance.markEscalated(fresh.id, scanNow);
           });

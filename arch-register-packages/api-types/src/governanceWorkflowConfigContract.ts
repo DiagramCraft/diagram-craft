@@ -12,6 +12,20 @@ const governanceWorkflowCaseKindSchema = z.object({
   supportsApprovals: z.boolean(),
   supportsReminders: z.boolean(),
   supportsEscalation: z.boolean(),
+  approvalStrategies: z.array(
+    z.object({
+      id: z.string().min(1),
+      label: z.string(),
+      configType: z.enum(['none', 'document-field'])
+    })
+  ),
+  escalationStrategies: z.array(
+    z.object({
+      id: z.string().min(1),
+      label: z.string(),
+      configType: z.enum(['none', 'document-field'])
+    })
+  ),
   defaultConfig: governanceWorkflowConfigSchema
 });
 

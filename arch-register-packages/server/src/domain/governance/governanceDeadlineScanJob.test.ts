@@ -325,7 +325,7 @@ describe('createGovernanceDeadlineScanJobHandler', () => {
     expect(appendEvent).toHaveBeenCalledWith(
       expect.objectContaining({
         event_type: 'escalated',
-        metadata: { trigger: 'scheduled', target }
+        metadata: { trigger: 'scheduled', targets: [target] }
       })
     );
     expect(markEscalated).toHaveBeenCalledWith('case-1', expect.any(Date));

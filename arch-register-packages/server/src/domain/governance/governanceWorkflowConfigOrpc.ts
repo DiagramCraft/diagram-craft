@@ -13,7 +13,11 @@ import {
 } from '../../utils/orpcErrors';
 import { requireWorkspaceCapability } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
-import { defaultWorkflowConfigForCaseKind, type GovernanceRegistry } from './governanceRegistry';
+import {
+  defaultWorkflowConfigForCaseKind,
+  type GovernanceRegistry,
+  type GovernanceWorkflowStrategy
+} from './governanceRegistry';
 import { CASE_KIND_DESCRIPTIONS, CASE_KIND_LABELS } from './governanceCaseKindLabels';
 import {
   parseGovernanceWorkflowConfig,
@@ -36,10 +40,51 @@ const toCaseKind = (caseKind: string, config: ReturnType<GovernanceRegistry['get
   supportsApprovals: config?.workflowConfig?.supportsApprovals ?? false,
   supportsReminders: config?.workflowConfig?.supportsReminders ?? false,
   supportsEscalation: config?.workflowConfig?.supportsEscalation ?? false,
+  approvalStrategies: [...(config?.workflowConfig?.approvalStrategies ?? [])],
+  escalationStrategies: [...(config?.workflowConfig?.escalationStrategies ?? [])],
   defaultConfig: config
     ? defaultWorkflowConfigForCaseKind(config)
     : governanceWorkflowConfigSchema.parse({ extensions: {} })
 });
+
+const normalizeStrategy = <
+  T extends { strategy?: string; strategyConfig: Record<string, unknown> }
+>(
+  section: T | undefined,
+  strategies: readonly GovernanceWorkflowStrategy[] | undefined
+): T | undefined => {
+  if (!section) return section;
+  const strategy = section.strategy ?? strategies?.[0]?.id;
+  return strategy ? { ...section, strategy } : section;
+};
+
+const validateFallbackTargets = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  section: { fallbackUserIds: string[]; fallbackTeamIds: string[] } | undefined
+) => {
+  if (!section) return;
+  const [users, teams] = await Promise.all([
+    db.auth.listUsers(),
+    db.workspace.listTeams(workspace)
+  ]);
+  const activeUserIds = new Set(users.filter(user => user.is_active).map(user => user.id));
+  const teamIds = new Set(teams.map(team => team.id));
+  httpAssert.true(
+    section.fallbackUserIds.every(userId => activeUserIds.has(userId)),
+    {
+      status: 400,
+      message: 'Fallback users must be active workspace users'
+    }
+  );
+  httpAssert.true(
+    section.fallbackTeamIds.every(teamId => teamIds.has(teamId)),
+    {
+      status: 400,
+      message: 'Fallback teams must belong to the workspace'
+    }
+  );
+};
 
 const toApiRow = async (
   db: DatabaseAdapter,
@@ -48,7 +93,18 @@ const toApiRow = async (
   registry: GovernanceRegistry
 ): Promise<GovernanceWorkflowConfigRow> => {
   const kindConfig = registry.get(row.case_kind);
-  const config = parseGovernanceWorkflowConfig(row.config, row.enabled);
+  const parsedConfig = parseGovernanceWorkflowConfig(row.config, row.enabled);
+  const config = {
+    ...parsedConfig,
+    approvals: normalizeStrategy(
+      parsedConfig.approvals,
+      kindConfig?.workflowConfig?.approvalStrategies
+    ),
+    escalation: normalizeStrategy(
+      parsedConfig.escalation,
+      kindConfig?.workflowConfig?.escalationStrategies
+    )
+  };
   const subkindLabel = kindConfig?.workflowConfig?.labelSubkind
     ? await kindConfig.workflowConfig.labelSubkind(db, workspace, row.case_subkind)
     : row.case_subkind;
@@ -111,7 +167,18 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
               message: error ?? 'Invalid case subkind'
             });
           }
-          const config = governanceWorkflowConfigSchema.parse(input.body.config);
+          const parsedConfig = governanceWorkflowConfigSchema.parse(input.body.config);
+          const config = {
+            ...parsedConfig,
+            approvals: normalizeStrategy(
+              parsedConfig.approvals,
+              kindConfig.workflowConfig?.approvalStrategies
+            ),
+            escalation: normalizeStrategy(
+              parsedConfig.escalation,
+              kindConfig.workflowConfig?.escalationStrategies
+            )
+          };
           httpAssert.true(
             kindConfig.workflowConfig?.supportsApprovals !== false || config.approvals == null,
             { status: 400, message: 'This workflow does not support approval configuration' }
@@ -124,19 +191,58 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
             kindConfig.workflowConfig?.supportsEscalation !== false || config.escalation == null,
             { status: 400, message: 'This workflow does not support escalation configuration' }
           );
+          const approvalStrategy = config.approvals?.strategy;
+          if (approvalStrategy) {
+            const descriptor = kindConfig.workflowConfig?.approvalStrategies?.find(
+              strategy => strategy.id === approvalStrategy
+            );
+            httpAssert.present(descriptor, {
+              status: 400,
+              message: `Unsupported approval strategy '${approvalStrategy}'`
+            });
+            const error = kindConfig.workflowConfig?.validateApprovalStrategy
+              ? await kindConfig.workflowConfig.validateApprovalStrategy(
+                  context.db,
+                  workspace,
+                  input.body.case_subkind,
+                  approvalStrategy,
+                  config.approvals?.strategyConfig ?? {}
+                )
+              : null;
+            httpAssert.true(error == null, {
+              status: 400,
+              message: error ?? 'Invalid approval strategy'
+            });
+          }
+          const escalationStrategy = config.escalation?.strategy;
+          if (escalationStrategy) {
+            const descriptor = kindConfig.workflowConfig?.escalationStrategies?.find(
+              strategy => strategy.id === escalationStrategy
+            );
+            httpAssert.present(descriptor, {
+              status: 400,
+              message: `Unsupported escalation strategy '${escalationStrategy}'`
+            });
+            const error = kindConfig.workflowConfig?.validateEscalationStrategy
+              ? await kindConfig.workflowConfig.validateEscalationStrategy(
+                  context.db,
+                  workspace,
+                  input.body.case_subkind,
+                  escalationStrategy,
+                  config.escalation?.strategyConfig ?? {}
+                )
+              : null;
+            httpAssert.true(error == null, {
+              status: 400,
+              message: error ?? 'Invalid escalation strategy'
+            });
+          }
           if (kindConfig.workflowConfig?.validateConfig)
             kindConfig.workflowConfig.validateConfig(config);
           if (input.body.case_kind === 'document.status')
             validateDocumentStatusWorkflowConfig(config);
-          httpAssert.true(
-            (config.escalation?.fallbackUserIds.length ?? 0) +
-              (config.escalation?.fallbackTeamIds.length ?? 0) <=
-              1,
-            {
-              status: 400,
-              message: 'Escalation configuration supports at most one fallback target'
-            }
-          );
+          await validateFallbackTargets(context.db, workspace, config.approvals);
+          await validateFallbackTargets(context.db, workspace, config.escalation);
           const row = await context.db.governanceCaseConfig.upsertCaseConfig({
             workspace,
             case_kind: input.body.case_kind,

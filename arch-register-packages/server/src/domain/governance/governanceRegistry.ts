@@ -7,6 +7,13 @@ import type {
 } from './db/governanceDatabase';
 import type { GovernanceAssignmentTarget } from './governanceOperations';
 import type { GovernanceWorkflowConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
+import type { GovernanceEscalationConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
+
+export type GovernanceWorkflowStrategy = {
+  id: string;
+  label: string;
+  configType: 'none' | 'document-field';
+};
 
 /**
  * Per-case-kind hooks, registered by the domain that owns the case kind (e.g. entity-change
@@ -22,6 +29,22 @@ export type GovernanceCaseKindConfig = {
     supportsApprovals?: boolean;
     supportsReminders?: boolean;
     supportsEscalation?: boolean;
+    approvalStrategies?: readonly GovernanceWorkflowStrategy[];
+    escalationStrategies?: readonly GovernanceWorkflowStrategy[];
+    validateApprovalStrategy?: (
+      db: DatabaseAdapter,
+      workspace: string,
+      subkind: string | null,
+      strategy: string,
+      strategyConfig: Record<string, unknown>
+    ) => Promise<string | null>;
+    validateEscalationStrategy?: (
+      db: DatabaseAdapter,
+      workspace: string,
+      subkind: string | null,
+      strategy: string,
+      strategyConfig: Record<string, unknown>
+    ) => Promise<string | null>;
     defaultConfig?: GovernanceWorkflowConfig;
     validateSubkind?: (
       db: DatabaseAdapter,
@@ -124,8 +147,9 @@ export type GovernanceCaseKindConfig = {
     /** Resolves the escalation target for a given (fresh) case row; null skips escalation. */
     target: (
       db: DatabaseAdapter,
-      caseRow: GovernanceCaseDbResult
-    ) => Promise<GovernanceAssignmentTarget | null>;
+      caseRow: GovernanceCaseDbResult,
+      config?: GovernanceEscalationConfig
+    ) => Promise<GovernanceAssignmentTarget[] | GovernanceAssignmentTarget | null>;
   };
 };
 
@@ -153,6 +177,8 @@ export const defaultWorkflowConfigForCaseKind = (
         ? {
             enabled: true,
             overdueDays: config.escalation.overdueDays,
+            strategy: config.workflowConfig?.escalationStrategies?.[0]?.id,
+            strategyConfig: {},
             fallbackUserIds: [],
             fallbackTeamIds: []
           }

@@ -3,6 +3,7 @@ import { encodeCaseSubkind } from './governanceCaseSubkind';
 
 export const ENTITY_CHANGE_POLICY_CASE_KIND = 'entity.change-case';
 export const ENTITY_DEPRECATION_POLICY_CASE_KIND = 'entity.deprecation';
+export const ENTITY_OWNER_ADMIN_STRATEGY = 'entity-owner-admin';
 
 export type SchemaGovernancePolicies = {
   entity_approval_policy: 'required' | 'disabled';
@@ -11,9 +12,33 @@ export type SchemaGovernancePolicies = {
 
 export const schemaWorkflowConfig = {
   supportsSubkind: true,
-  supportsApprovals: false,
+  supportsApprovals: true,
   supportsReminders: true,
   supportsEscalation: true,
+  approvalStrategies: [
+    { id: ENTITY_OWNER_ADMIN_STRATEGY, label: 'Entity owner admins', configType: 'none' as const }
+  ],
+  escalationStrategies: [
+    { id: ENTITY_OWNER_ADMIN_STRATEGY, label: 'Entity owner admins', configType: 'none' as const }
+  ],
+  defaultConfig: {
+    approvals: {
+      requiredApprovals: 1,
+      strategy: ENTITY_OWNER_ADMIN_STRATEGY,
+      strategyConfig: {},
+      fallbackUserIds: [],
+      fallbackTeamIds: []
+    },
+    escalation: {
+      enabled: true,
+      overdueDays: 5,
+      strategy: ENTITY_OWNER_ADMIN_STRATEGY,
+      strategyConfig: {},
+      fallbackUserIds: [],
+      fallbackTeamIds: []
+    },
+    extensions: {}
+  },
   validateSubkind: async (db: DatabaseAdapter, workspace: string, subkind: string | null) => {
     if (!subkind) return 'Schema-scoped workflows require a schema id';
     return (await db.catalog.getSchema(workspace, subkind))

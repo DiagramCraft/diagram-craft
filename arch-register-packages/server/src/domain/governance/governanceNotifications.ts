@@ -254,21 +254,31 @@ const createGovernanceNotification = async (
   }
 };
 
-// The metadata stored on an 'escalated' event carries the resolved target in
+// The metadata stored on an 'escalated' event carries resolved targets in
 // `GovernanceAssignmentTarget`'s `{type, ...}` shape (see governanceOperations.ts), not the
 // `target_type`/`target_*` db-row shape `resolveTargetRecipients` expects — map between the two.
-const parseEscalationTarget = (metadata: Record<string, unknown>): AssignmentTargetLike | null => {
-  const target = metadata['target'] as
-    | { type?: string; userId?: string; teamId?: string; teamRole?: string; capability?: string }
-    | undefined;
-  if (!target?.type) return null;
-  return {
-    target_type: target.type as GovernanceAssignmentTargetType,
-    target_user_id: target.userId ?? null,
-    target_team_id: target.teamId ?? null,
-    target_team_role: target.teamRole ?? null,
-    target_capability: target.capability ?? null
-  };
+const parseEscalationTargets = (metadata: Record<string, unknown>): AssignmentTargetLike[] => {
+  const rawTargets = Array.isArray(metadata['targets'])
+    ? metadata['targets']
+    : metadata['target']
+      ? [metadata['target']]
+      : [];
+  return rawTargets.flatMap(rawTarget => {
+    const target = rawTarget as
+      | { type?: string; userId?: string; teamId?: string; teamRole?: string; capability?: string }
+      | undefined;
+    return target?.type
+      ? [
+          {
+            target_type: target.type as GovernanceAssignmentTargetType,
+            target_user_id: target.userId ?? null,
+            target_team_id: target.teamId ?? null,
+            target_team_role: target.teamRole ?? null,
+            target_capability: target.capability ?? null
+          }
+        ]
+      : [];
+  });
 };
 
 const resolveGovernanceNotificationRecipients = async (
@@ -299,9 +309,10 @@ const resolveGovernanceNotificationRecipients = async (
   } else if (event.event_type === 'escalated') {
     // Escalation notifies only the resolved escalation target, not the case's own assignees or
     // initiator — they already got their own overdue reminders separately.
-    const target = parseEscalationTarget(event.metadata);
-    for (const recipient of await resolveTargetRecipients(db, workspace, target, signal)) {
-      recipients.set(`${recipient.id}:none`, null);
+    for (const target of parseEscalationTargets(event.metadata)) {
+      for (const recipient of await resolveTargetRecipients(db, workspace, target, signal)) {
+        recipients.set(`${recipient.id}:none`, null);
+      }
     }
   } else {
     for (const assignment of assignments) {
