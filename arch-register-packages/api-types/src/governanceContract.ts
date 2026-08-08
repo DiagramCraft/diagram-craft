@@ -1,6 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndId } from '@arch-register/api-types/common';
+import { governanceInitiationFieldValueSchema } from './governanceInitiationFields';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -81,6 +82,9 @@ export const governanceCaseSchema = z.object({
   payload: z
     .record(z.string(), z.unknown())
     .describe('Opaque domain payload reference, e.g. a proposal revision id'),
+  initiationFields: z
+    .array(governanceInitiationFieldValueSchema)
+    .describe('Configured fields captured when the case was initiated'),
   createdAt: z.string().describe('ISO 8601 creation timestamp'),
   dueAt: z.string().nullable().describe('ISO 8601 due timestamp'),
   completedAt: z.string().nullable().describe('ISO 8601 completion timestamp'),

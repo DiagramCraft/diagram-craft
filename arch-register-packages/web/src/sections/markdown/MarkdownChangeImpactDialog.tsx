@@ -1,5 +1,7 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import styles from './MarkdownChangeImpactDialog.module.css';
+import type { GovernanceInitiationField } from '@arch-register/api-types/governanceInitiationFields';
+import { GovernanceInitiationFields } from '../governance/GovernanceInitiationFields';
 
 export type MarkdownSaveIntent = 'save' | 'save-and-close';
 
@@ -9,7 +11,10 @@ export const MarkdownChangeImpactDialog = ({
   changeKind,
   onChangeKind,
   onCancel,
-  onConfirm
+  onConfirm,
+  initiationFields = [],
+  initiationFieldValues = {},
+  onInitiationFieldValuesChange = () => undefined
 }: {
   open: boolean;
   intent: MarkdownSaveIntent | null;
@@ -17,6 +22,9 @@ export const MarkdownChangeImpactDialog = ({
   onChangeKind: (changeKind: 'minor' | 'major') => void;
   onCancel: () => void;
   onConfirm: () => void;
+  initiationFields?: GovernanceInitiationField[];
+  initiationFieldValues?: Record<string, unknown>;
+  onInitiationFieldValuesChange?: (values: Record<string, unknown>) => void;
 }) => (
   <Dialog
     open={open}
@@ -46,6 +54,11 @@ export const MarkdownChangeImpactDialog = ({
           <option value="major">Major — request target approval</option>
         </select>
       </label>
+      <GovernanceInitiationFields
+        fields={initiationFields}
+        values={initiationFieldValues}
+        onChange={onInitiationFieldValuesChange}
+      />
     </div>
   </Dialog>
 );

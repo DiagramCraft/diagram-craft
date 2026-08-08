@@ -12,6 +12,7 @@ const governanceWorkflowCaseKindSchema = z.object({
   supportsApprovals: z.boolean(),
   supportsReminders: z.boolean(),
   supportsEscalation: z.boolean(),
+  supportsInitiationFields: z.boolean(),
   approvalStrategies: z.array(
     z.object({
       id: z.string().min(1),

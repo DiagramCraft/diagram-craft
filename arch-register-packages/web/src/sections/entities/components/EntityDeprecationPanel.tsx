@@ -22,6 +22,8 @@ import {
   useRefreshEntityDeprecationScope
 } from '../../../hooks/useEntityDeprecation';
 import styles from './EntityDeprecationPanel.module.css';
+import { GovernanceInitiationFields } from '../../governance/GovernanceInitiationFields';
+import { useGovernanceInitiationFields } from '../../../hooks/useGovernanceInitiationFields';
 
 const teamName = (teams: WorkspaceTeam[], teamId: string) =>
   teams.find(t => t.id === teamId)?.name ?? teamId;
@@ -47,8 +49,15 @@ export const ProposeEntityDeprecationDialog = ({
   const [successorEntityId, setSuccessorEntityId] = useState('');
   const [projectId, setProjectId] = useState('');
   const [notes, setNotes] = useState('');
+  const [initiationFieldValues, setInitiationFieldValues] = useState<Record<string, unknown>>({});
 
   const { data: successorEntity } = useEntity(workspaceId, successorEntityId);
+  const { data: entity } = useEntity(workspaceId, entityId);
+  const { fields: initiationFields } = useGovernanceInitiationFields(
+    workspaceId,
+    'entity.deprecation',
+    entity?._schema.id ?? null
+  );
   const { data: projects = [] } = useProjects(workspaceId);
 
   const canSubmit = reason.trim() !== '' && targetDate.trim() !== '';
@@ -62,7 +71,8 @@ export const ProposeEntityDeprecationDialog = ({
         targetDate,
         successorEntityId: successorEntityId ?? undefined,
         projectId: projectId ?? undefined,
-        notes: notes.trim() === '' ? undefined : notes.trim()
+        notes: notes.trim() === '' ? undefined : notes.trim(),
+        initiationFields: initiationFieldValues
       },
       {
         onSuccess: () => {
@@ -71,6 +81,7 @@ export const ProposeEntityDeprecationDialog = ({
           setSuccessorEntityId('');
           setProjectId('');
           setNotes('');
+          setInitiationFieldValues({});
           onClose();
         }
       }
@@ -125,6 +136,11 @@ export const ProposeEntityDeprecationDialog = ({
         <FormElement label="Notes for dependent owners" required={false}>
           <TextInput value={notes} onChange={v => setNotes(v ?? '')} style={{ width: '100%' }} />
         </FormElement>
+        <GovernanceInitiationFields
+          fields={initiationFields}
+          values={initiationFieldValues}
+          onChange={setInitiationFieldValues}
+        />
       </div>
     </Dialog>
   );

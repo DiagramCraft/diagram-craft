@@ -1102,6 +1102,7 @@ export const projectContract = oc.tag('Projects').router({
             document_type_id: z.string().nullable().optional().describe('Document type identifier'),
             metadata: documentMetadataSchema.optional().describe('Structured metadata values'),
             change_kind: z.enum(['minor', 'major']).default('minor'),
+            initiation_fields: z.record(z.string(), z.unknown()).optional(),
             external: externalUpdateEnvelopeSchema
               .optional()
               .describe(
@@ -1133,7 +1134,8 @@ export const projectContract = oc.tag('Projects').router({
               .nullable()
               .describe('New document type identifier, or null to remove the type'),
             metadata: documentMetadataSchema.describe('Reviewed structured metadata values'),
-            change_kind: z.enum(['minor', 'major']).default('major')
+            change_kind: z.enum(['minor', 'major']).default('major'),
+            initiation_fields: z.record(z.string(), z.unknown()).optional()
           })
         })
       )
@@ -1241,7 +1243,12 @@ export const projectContract = oc.tag('Projects').router({
             nodeId: z.string().describe('Markdown node identifier'),
             revisionId: z.string().describe('Revision identifier to restore')
           }),
-          body: z.object({ change_kind: z.enum(['minor', 'major']).default('major') }).optional()
+          body: z
+            .object({
+              change_kind: z.enum(['minor', 'major']).default('major'),
+              initiation_fields: z.record(z.string(), z.unknown()).optional()
+            })
+            .optional()
         })
       )
       .output(projectFileSchema),

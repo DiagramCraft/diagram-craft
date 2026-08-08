@@ -53,17 +53,19 @@ export const useSaveMarkdownContent = (scope: ContentScope, nodeId: string) => {
       name,
       document_type_id,
       metadata,
-      change_kind
+      change_kind,
+      initiation_fields
     }: {
       body: string;
       name?: string;
       document_type_id?: string | null;
       metadata?: DocumentMetadata;
       change_kind?: 'minor' | 'major';
+      initiation_fields?: Record<string, unknown>;
     }) =>
       orpcClient.projects.saveMarkdownContent({
         params: { workspace: workspaceId, nodeId },
-        body: { body, name, document_type_id, metadata, change_kind }
+        body: { body, name, document_type_id, metadata, change_kind, initiation_fields }
       }),
     onSuccess: () => invalidateMarkdownNode(queryClient, scope, nodeId)
   });
@@ -79,6 +81,7 @@ export const useMigrateMarkdownContent = (scope: ContentScope, nodeId: string) =
       document_type_id: string | null;
       metadata: DocumentMetadata;
       change_kind?: 'minor' | 'major';
+      initiation_fields?: Record<string, unknown>;
     }) =>
       orpcClient.projects.migrateMarkdownContent({
         params: { workspace: workspaceId, nodeId },
@@ -140,10 +143,17 @@ export const useRestoreMarkdownRevision = (scope: ContentScope, nodeId: string) 
   const queryClient = useQueryClient();
   const { workspaceId } = scope;
   return useMutation({
-    mutationFn: (input: { revisionId: string; change_kind?: 'minor' | 'major' }) =>
+    mutationFn: (input: {
+      revisionId: string;
+      change_kind?: 'minor' | 'major';
+      initiation_fields?: Record<string, unknown>;
+    }) =>
       orpcClient.projects.restoreMarkdownRevision({
         params: { workspace: workspaceId, nodeId, revisionId: input.revisionId },
-        body: { change_kind: input.change_kind ?? 'major' }
+        body: {
+          change_kind: input.change_kind ?? 'major',
+          initiation_fields: input.initiation_fields
+        }
       }),
     onSuccess: () => invalidateMarkdownNode(queryClient, scope, nodeId)
   });

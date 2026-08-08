@@ -5,6 +5,7 @@ import type {
   GovernanceCaseDbResult,
   GovernanceEventDbResult
 } from '../governance/db/governanceDatabase';
+import type { GovernanceInitiationFieldValue } from '@arch-register/api-types/governanceInitiationFields';
 import type { WebhookOperation } from '@arch-register/api-types/webhookContract';
 import { enqueueOneOffJobRun } from '../jobs/jobOperations';
 import { RetryableJobError } from '../jobs/jobRetry';
@@ -61,6 +62,7 @@ export type WebhookEvent =
           status: string;
           outcome: string | null;
           external: boolean;
+          initiation_fields: GovernanceInitiationFieldValue[];
         };
         event: {
           id: string;
@@ -264,7 +266,8 @@ export const enqueueGovernanceWebhookDeliveries = async (
         subject_id: caseRow.subject_id,
         status: caseRow.status,
         outcome: caseRow.outcome,
-        external
+        external,
+        initiation_fields: caseRow.initiation_fields ?? []
       },
       event: {
         id: event.id,

@@ -48,7 +48,8 @@ const changeApprovalRequestBodySchema = z.object({
   baseVersion: z.number().int().min(1),
   proposedState: z.record(z.string(), z.unknown()),
   message: z.string().optional(),
-  dueAt: z.string().optional()
+  dueAt: z.string().optional(),
+  initiationFields: z.record(z.string(), z.unknown()).optional()
 });
 
 const entityChangeBulkApprovalMemberSchema = z.object({
@@ -60,7 +61,8 @@ const entityChangeBulkApprovalMemberSchema = z.object({
 const bulkChangeApprovalRequestBodySchema = z.object({
   members: z.array(entityChangeBulkApprovalMemberSchema).min(2),
   message: z.string().optional(),
-  dueAt: z.string().optional()
+  dueAt: z.string().optional(),
+  initiationFields: z.record(z.string(), z.unknown()).optional()
 });
 
 const entityChangeBulkApprovalRevisionMemberSchema = z.object({

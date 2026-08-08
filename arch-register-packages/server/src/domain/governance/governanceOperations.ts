@@ -27,6 +27,7 @@ import { createGovernanceRegistry, type GovernanceRegistry } from './governanceR
 import { createGovernanceInAppNotifications } from './governanceNotifications';
 import { enqueueGovernanceWebhookDeliveries } from '../webhook/webhookDelivery';
 import { resolveGovernanceWorkflowConfig } from './governanceWorkflowConfig';
+import { resolveGovernanceInitiationFields } from './governanceInitiationFields';
 import type {
   GovernanceAssignment,
   GovernanceCase,
@@ -103,6 +104,8 @@ export type CreateGovernanceCaseInput = {
   assignments: GovernanceAssignmentSpec[];
   allowEmptyAssignments?: boolean;
   createAssignmentsInExternalMode?: boolean;
+  initiationFieldValues?: Record<string, unknown>;
+  skipInitiationFields?: boolean;
 };
 
 export type DecideGovernanceAssignmentInput = {
@@ -133,7 +136,8 @@ export const toApiCase = (row: GovernanceCaseDbResult): GovernanceCase => ({
   dueAt: row.due_at?.toISOString() ?? null,
   completedAt: row.completed_at?.toISOString() ?? null,
   cancelledAt: row.cancelled_at?.toISOString() ?? null,
-  escalatedAt: row.escalated_at?.toISOString() ?? null
+  escalatedAt: row.escalated_at?.toISOString() ?? null,
+  initiationFields: row.initiation_fields ?? []
 });
 
 export const toApiAssignment = (row: GovernanceAssignmentDbResult): GovernanceAssignment => ({
@@ -338,6 +342,19 @@ export const createGovernanceCaseInTransaction = async (
       .config.external === true;
   const assignments =
     external && input.createAssignmentsInExternalMode !== true ? [] : input.assignments;
+  const initiationFields = input.skipInitiationFields
+    ? []
+    : await resolveGovernanceInitiationFields(
+        tx,
+        workspace,
+        resolveGovernanceWorkflowConfig(
+          configRows,
+          input.caseSubkind ?? null,
+          { extensions: {} },
+          true
+        ).config,
+        input.initiationFieldValues
+      );
 
   const createdCase = await tx.governance.createCase({
     id: caseId,
@@ -353,6 +370,7 @@ export const createGovernanceCaseInTransaction = async (
     parent_case_id: null,
     self_approval_allowed: input.selfApprovalAllowed ?? false,
     payload: input.payload ?? {},
+    initiation_fields: initiationFields,
     created_at: now,
     due_at: input.dueAt ?? null
   });

@@ -60,7 +60,8 @@ const proposeDeprecationBodySchema = z.object({
   targetDate: z.string(),
   successorEntityId: z.string().optional(),
   projectId: z.string().optional(),
-  notes: z.string().optional()
+  notes: z.string().optional(),
+  initiationFields: z.record(z.string(), z.unknown()).optional()
 });
 
 const acknowledgeBodySchema = z.object({

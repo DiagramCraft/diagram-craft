@@ -218,6 +218,7 @@ const createAutomaticCase = async (
           selfApprovalAllowed: true,
           dueAt,
           payload: payloadFor(schema, fieldId, dateValue, entity),
+          skipInitiationFields: true,
           assignments: assignmentsFor(entity, teamIds)
         },
         now
@@ -342,6 +343,7 @@ export const createFieldDateReminderGovernanceRegistry = (): GovernanceRegistry 
           supportsApprovals: false,
           supportsReminders: true,
           supportsEscalation: false,
+          supportsInitiationFields: false,
           defaultConfig: {
             reminders: {
               enabled: true,

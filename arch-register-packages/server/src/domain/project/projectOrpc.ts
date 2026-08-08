@@ -659,7 +659,8 @@ const markdownHandlers = {
         context.event,
         input.body.external,
         false,
-        input.body.change_kind
+        input.body.change_kind,
+        input.body.initiation_fields
       );
     }
   ),
@@ -676,7 +677,8 @@ const markdownHandlers = {
         input.body.document_type_id,
         input.body.metadata,
         context.event,
-        input.body.change_kind
+        input.body.change_kind,
+        input.body.initiation_fields
       );
     }
   ),
@@ -744,7 +746,8 @@ const markdownHandlers = {
         input.params.nodeId,
         input.params.revisionId,
         context.event,
-        input.body?.change_kind ?? 'major'
+        input.body?.change_kind ?? 'major',
+        input.body?.initiation_fields
       );
     }
   ),

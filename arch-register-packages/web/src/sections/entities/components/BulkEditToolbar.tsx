@@ -18,6 +18,8 @@ import type { BulkEditResult, BulkEditStep, BulkFieldRow } from './useEntityBrow
 import { entityName } from './entityBrowserViewShared';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import styles from './BulkEditToolbar.module.css';
+import { GovernanceInitiationFields } from '../../governance/GovernanceInitiationFields';
+import { useGovernanceInitiationFields } from '../../../hooks/useGovernanceInitiationFields';
 
 export type BulkEditToolbarProps = {
   workspaceId: string;
@@ -37,7 +39,11 @@ export type BulkEditToolbarProps = {
   removeFieldRow: (rowId: string) => void;
   setStep: (step: BulkEditStep) => void;
   onClear: () => void;
-  onConfirm: (proposalMessage?: string, dueAt?: string) => void;
+  onConfirm: (
+    proposalMessage?: string,
+    dueAt?: string,
+    initiationFields?: Record<string, unknown>
+  ) => void;
 };
 
 export const BulkEditToolbar = ({
@@ -63,6 +69,12 @@ export const BulkEditToolbar = ({
   const [approvalNoteOpen, setApprovalNoteOpen] = useState(false);
   const [approvalNote, setApprovalNote] = useState('');
   const [approvalDueDate, setApprovalDueDate] = useState('');
+  const [initiationFieldValues, setInitiationFieldValues] = useState<Record<string, unknown>>({});
+  const { fields: initiationFields } = useGovernanceInitiationFields(
+    workspaceId,
+    'entity.change-case.bulk',
+    null
+  );
   const usedFieldIds = new Set(fieldRows.map(row => row.fieldId));
   const remainingFields = availableFields.filter(field => !usedFieldIds.has(field.id));
   const activeRows = fieldRows.filter(row => row.clearing || row.value !== '');
@@ -263,7 +275,7 @@ export const BulkEditToolbar = ({
             type: 'default',
             onClick: () => {
               setApprovalNoteOpen(false);
-              onConfirm(approvalNote, approvalDueDate || undefined);
+              onConfirm(approvalNote, approvalDueDate || undefined, initiationFieldValues);
             }
           }
         ]}
@@ -284,6 +296,11 @@ export const BulkEditToolbar = ({
         <FormElement label="Due date (optional)">
           <DateInput value={approvalDueDate} onChange={v => setApprovalDueDate(v ?? '')} />
         </FormElement>
+        <GovernanceInitiationFields
+          fields={initiationFields}
+          values={initiationFieldValues}
+          onChange={setInitiationFieldValues}
+        />
       </Dialog>
     </div>
   );

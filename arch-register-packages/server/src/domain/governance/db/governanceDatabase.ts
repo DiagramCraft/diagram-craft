@@ -4,6 +4,7 @@ import {
   parseDatabaseJson,
   type DatabaseRow
 } from '../../../db/rowMappers';
+import type { GovernanceInitiationFieldValue } from '@arch-register/api-types/governanceInitiationFields';
 
 export type GovernanceCaseStatus = 'open' | 'completed' | 'cancelled';
 
@@ -50,6 +51,7 @@ export type GovernanceCaseDbResult = {
   dedupe_key?: string | null;
   self_approval_allowed: boolean;
   payload: Record<string, unknown>;
+  initiation_fields?: GovernanceInitiationFieldValue[];
   created_at: Date;
   due_at: Date | null;
   completed_at: Date | null;
@@ -72,6 +74,7 @@ export type GovernanceCaseDbCreate = {
   dedupe_key?: string | null;
   self_approval_allowed: boolean;
   payload: Record<string, unknown>;
+  initiation_fields?: GovernanceInitiationFieldValue[];
   created_at: Date;
   due_at: Date | null;
 };
@@ -162,6 +165,7 @@ export const governanceMappers = {
     dedupe_key: row['dedupe_key'] == null ? null : String(row['dedupe_key']),
     self_approval_allowed: databaseBoolean(row['self_approval_allowed']),
     payload: parseDatabaseJson(row['payload'], {}, 'payload'),
+    initiation_fields: parseDatabaseJson(row['initiation_fields'], [], 'initiation_fields'),
     created_at: databaseDate(row['created_at']),
     due_at: row['due_at'] == null ? null : databaseDate(row['due_at']),
     completed_at: row['completed_at'] == null ? null : databaseDate(row['completed_at']),

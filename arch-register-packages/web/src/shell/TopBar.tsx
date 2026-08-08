@@ -644,6 +644,16 @@ const NotificationList = ({
   return (
     <div className={styles.notificationList}>
       {notifications.map(item => {
+        const initiationFields = Array.isArray(item.presentation_metadata?.['initiationFields'])
+          ? (
+              item.presentation_metadata['initiationFields'] as Array<{
+                label?: string;
+                value?: unknown;
+              }>
+            )
+              .filter(field => field.value != null && field.value !== '')
+              .slice(0, 3)
+          : [];
         const notificationLabel = item.entity_name ?? item.title ?? 'Notification';
         const openNotification = () => {
           if (item.resource_type === 'comment' && item.action_route) {
@@ -679,6 +689,14 @@ const NotificationList = ({
               <div className={styles.notificationEntity}>{item.title ?? item.entity_name}</div>
               <div className={styles.notificationMeta}>
                 <span>{item.message ?? item.changed_by_display_name}</span>
+                {initiationFields.length > 0 && (
+                  <span>
+                    {' · '}
+                    {initiationFields
+                      .map(field => `${field.label ?? 'Field'}: ${String(field.value)}`)
+                      .join(' · ')}
+                  </span>
+                )}
                 <span className={styles.notificationSep}>·</span>
                 <span className={styles.notificationOp}>{item.event_type ?? item.operation}</span>
               </div>

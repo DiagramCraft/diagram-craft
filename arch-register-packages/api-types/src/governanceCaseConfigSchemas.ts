@@ -1,4 +1,5 @@
 import { z } from 'zod';
+import { governanceInitiationFieldSchema } from './governanceInitiationFields';
 
 const idListSchema = z.array(z.string().min(1)).default([]);
 
@@ -30,6 +31,7 @@ export const governanceWorkflowConfigSchema = z.object({
   approvals: governanceApprovalConfigSchema.optional(),
   reminders: governanceReminderConfigSchema.optional(),
   escalation: governanceEscalationConfigSchema.optional(),
+  initiationFields: z.array(governanceInitiationFieldSchema).optional(),
   extensions: z.record(z.string(), z.unknown()).default({})
 });
 

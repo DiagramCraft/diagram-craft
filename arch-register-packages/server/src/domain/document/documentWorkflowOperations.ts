@@ -49,6 +49,7 @@ type WorkflowSaveInput = {
   isNew: boolean;
   initiatorUserId: string;
   sourceRevision: number | null;
+  initiationFieldValues?: Record<string, unknown>;
 };
 
 const scalarValue = (value: unknown): string | null =>
@@ -303,6 +304,7 @@ const createStatusRequest = async (
         requiredApprovals,
         resolvedSlots
       },
+      initiationFieldValues: input.initiationFieldValues,
       assignments: slots.map(slot =>
         slot.type === 'user'
           ? { action: 'approve' as const, target: { type: 'user' as const, userId: slot.id } }

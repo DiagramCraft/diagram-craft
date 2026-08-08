@@ -208,6 +208,7 @@ const createGovernanceNotification = async (
     actorDisplayName: string | null;
     occurredAt: Date;
     metadata: Record<string, unknown>;
+    caseInitiationFields: GovernanceCaseDbResult['initiation_fields'];
     signal?: AbortSignal;
   }
 ) => {
@@ -243,7 +244,10 @@ const createGovernanceNotification = async (
     title: presentation.title,
     message: presentation.message,
     action_route: `/governance?caseId=${encodeURIComponent(input.caseId)}`,
-    presentation_metadata: { caseKind: input.caseKind },
+    presentation_metadata: {
+      caseKind: input.caseKind,
+      initiationFields: input.caseInitiationFields
+    },
     occurred_at: input.occurredAt,
     delivery_key: `governance:${input.eventId}:user:${input.recipientUserId}:assignment:${input.assignmentId ?? 'none'}`,
     in_app_enabled: inAppEnabled
@@ -364,6 +368,7 @@ export const createGovernanceInAppNotifications = async (
       actorDisplayName: actor?.display_name ?? null,
       occurredAt: event.occurred_at,
       metadata: event.metadata,
+      caseInitiationFields: caseRow.initiation_fields ?? [],
       signal
     });
   }

@@ -332,10 +332,25 @@ const buildEmail = (
   const escapedUrl = escapeHtml(url);
   const action = notification.category === 'action' ? 'Review in My Work' : 'View in Arch Register';
   const subject = `${workspaceName}: ${notification.title}`;
+  const initiationFields = Array.isArray(notification.presentation_metadata['initiationFields'])
+    ? (
+        notification.presentation_metadata['initiationFields'] as Array<{
+          label?: string;
+          value?: unknown;
+        }>
+      )
+        .filter(field => field.value != null && field.value !== '')
+        .map(field => `${field.label ?? 'Field'}: ${String(field.value)}`)
+    : [];
+  const fieldText = initiationFields.length > 0 ? `\n\n${initiationFields.join('\n')}` : '';
+  const fieldHtml =
+    initiationFields.length > 0
+      ? `<p>${initiationFields.map(field => escapeHtml(field)).join('<br />')}</p>`
+      : '';
   return {
     subject,
-    html: `<main><h1>${title}</h1><p>${message}</p><p><a href="${escapedUrl}">${action}</a></p></main>`,
-    text: `${notification.title}\n\n${notification.message}\n\n${action}: ${url}`
+    html: `<main><h1>${title}</h1><p>${message}</p>${fieldHtml}<p><a href="${escapedUrl}">${action}</a></p></main>`,
+    text: `${notification.title}\n\n${notification.message}${fieldText}\n\n${action}: ${url}`
   };
 };
 

@@ -29,6 +29,7 @@ export type GovernanceCaseKindConfig = {
     supportsApprovals?: boolean;
     supportsReminders?: boolean;
     supportsEscalation?: boolean;
+    supportsInitiationFields?: boolean;
     approvalStrategies?: readonly GovernanceWorkflowStrategy[];
     escalationStrategies?: readonly GovernanceWorkflowStrategy[];
     validateApprovalStrategy?: (
@@ -184,6 +185,7 @@ export const defaultWorkflowConfigForCaseKind = (
             fallbackTeamIds: []
           }
         : undefined),
-    extensions: declared?.extensions ?? {}
+    extensions: declared?.extensions ?? {},
+    initiationFields: declared?.initiationFields ?? []
   };
 };
