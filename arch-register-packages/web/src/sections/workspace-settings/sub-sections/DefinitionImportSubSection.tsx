@@ -13,6 +13,8 @@ import type {
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { orpcClient } from '../../../lib/orpcClient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { relationSchemaKeys } from '../../../queries/relationSchemas';
+import { fieldGroupKeys } from '../../../queries/fieldGroups';
 import styles from './ExportImportSubSection.module.css';
 
 const sourceKey = (source: DefinitionImportSource) => `${source.kind}:${source.id}`;
@@ -20,8 +22,51 @@ const sourceKey = (source: DefinitionImportSource) => `${source.kind}:${source.i
 const emptySelection: DefinitionImportSelection = {
   schemas: [],
   enums: [],
-  documentTypes: []
+  documentTypes: [],
+  relationSchemas: [],
+  fieldGroups: []
 };
+
+const selectionKinds = [
+  'schemas',
+  'enums',
+  'documentTypes',
+  'relationSchemas',
+  'fieldGroups'
+] as const;
+
+const kindLabels: Record<(typeof selectionKinds)[number], string> = {
+  schemas: 'Schemas',
+  enums: 'Enums',
+  documentTypes: 'Active document types',
+  relationSchemas: 'Relation schemas',
+  fieldGroups: 'Field groups'
+};
+
+const summaryLabels: Record<(typeof selectionKinds)[number], string> = {
+  schemas: 'schemas',
+  enums: 'enums',
+  documentTypes: 'document types',
+  relationSchemas: 'relation schemas',
+  fieldGroups: 'field groups'
+};
+
+const typeLabels: Record<(typeof selectionKinds)[number], string> = {
+  schemas: 'Schema',
+  enums: 'Enum',
+  documentTypes: 'Document type',
+  relationSchemas: 'Relation schema',
+  fieldGroups: 'Field group'
+};
+
+const conflictKindByKind: Record<(typeof selectionKinds)[number], DefinitionImportRename['kind']> =
+  {
+    schemas: 'schema',
+    enums: 'enum',
+    documentTypes: 'documentType',
+    relationSchemas: 'relationSchema',
+    fieldGroups: 'fieldGroup'
+  };
 
 export const DefinitionImportSubSection = () => {
   const { workspaceSlug, permissions } = useWorkspaceContext();
@@ -73,6 +118,8 @@ export const DefinitionImportSubSection = () => {
           schemas: preview!.schemas,
           enums: preview!.enums,
           documentTypes: preview!.documentTypes,
+          relationSchemas: preview!.relationSchemas,
+          fieldGroups: preview!.fieldGroups,
           keyPrefixRemaps: preview!.keyPrefixRemaps,
           fingerprint: preview!.fingerprint,
           confirmed: true
@@ -83,6 +130,8 @@ export const DefinitionImportSubSection = () => {
         queryClient.invalidateQueries({ queryKey: ['schemas', 'list', workspaceSlug] }),
         queryClient.invalidateQueries({ queryKey: ['enums', 'list', workspaceSlug] }),
         queryClient.invalidateQueries({ queryKey: ['document-types', workspaceSlug] }),
+        queryClient.invalidateQueries({ queryKey: relationSchemaKeys.list(workspaceSlug) }),
+        queryClient.invalidateQueries({ queryKey: fieldGroupKeys.list(workspaceSlug) }),
         queryClient.invalidateQueries({ queryKey: ['audit', workspaceSlug] })
       ]);
       setPreview(null);
@@ -163,11 +212,8 @@ export const DefinitionImportSubSection = () => {
         </div>
 
         {source &&
-          (['schemas', 'enums', 'documentTypes'] as const).map(kind => {
-            const label =
-              kind === 'documentTypes'
-                ? 'Active document types'
-                : kind[0]!.toUpperCase() + kind.slice(1);
+          selectionKinds.map(kind => {
+            const label = kindLabels[kind];
             const items = source[kind];
             return (
               <div className={styles.field} key={kind}>
@@ -202,12 +248,10 @@ export const DefinitionImportSubSection = () => {
             </div>
             <div className={styles.fieldRight}>
               <div className={styles.summaryGrid}>
-                {(['schemas', 'enums', 'documentTypes'] as const).map(kind => (
+                {selectionKinds.map(kind => (
                   <div className={styles.summaryItem} key={kind}>
                     <span className={styles.summaryCount}>{preview[kind].length}</span>
-                    <span className={styles.summaryLabel}>
-                      {kind === 'documentTypes' ? 'document types' : kind}
-                    </span>
+                    <span className={styles.summaryLabel}>{summaryLabels[kind]}</span>
                   </div>
                 ))}
               </div>
@@ -225,10 +269,9 @@ export const DefinitionImportSubSection = () => {
                   <span>Status</span>
                   <span>Rename</span>
                 </div>
-                {(['schemas', 'enums', 'documentTypes'] as const).flatMap(kind =>
+                {selectionKinds.flatMap(kind =>
                   preview[kind].map(item => {
-                    const conflictKind =
-                      kind === 'schemas' ? 'schema' : kind === 'enums' ? 'enum' : 'documentType';
+                    const conflictKind = conflictKindByKind[kind];
                     const conflict = preview.conflicts.find(
                       candidate => candidate.kind === conflictKind && candidate.id === item.id
                     );
@@ -239,12 +282,7 @@ export const DefinitionImportSubSection = () => {
                       kind === 'schemas'
                         ? preview.keyPrefixRemaps.find(candidate => candidate.sourceId === item.id)
                         : undefined;
-                    const typeLabel =
-                      kind === 'documentTypes'
-                        ? 'Document type'
-                        : kind === 'schemas'
-                          ? 'Schema'
-                          : 'Enum';
+                    const typeLabel = typeLabels[kind];
 
                     return (
                       <div className={styles.previewTableRow} key={`${kind}:${item.id}`}>

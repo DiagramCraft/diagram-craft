@@ -36,11 +36,13 @@ const definitionImportSourceSchema = z.discriminatedUnion('kind', [
 const definitionImportSelectionSchema = z.object({
   schemas: z.array(z.string()),
   enums: z.array(z.string()),
-  documentTypes: z.array(z.string())
+  documentTypes: z.array(z.string()),
+  relationSchemas: z.array(z.string()),
+  fieldGroups: z.array(z.string())
 });
 
 const definitionImportRenameSchema = z.object({
-  kind: z.enum(['schema', 'enum', 'documentType']),
+  kind: z.enum(['schema', 'enum', 'documentType', 'relationSchema', 'fieldGroup']),
   id: z.string().min(1),
   name: z.string().trim().min(1)
 });
@@ -59,11 +61,13 @@ const definitionImportSourceOptionSchema = z.object({
   description: z.string(),
   schemas: z.array(z.object({ id: z.string(), name: z.string() })),
   enums: z.array(z.object({ id: z.string(), name: z.string() })),
-  documentTypes: z.array(z.object({ id: z.string(), name: z.string() }))
+  documentTypes: z.array(z.object({ id: z.string(), name: z.string() })),
+  relationSchemas: z.array(z.object({ id: z.string(), name: z.string() })),
+  fieldGroups: z.array(z.object({ id: z.string(), name: z.string() }))
 });
 
 const definitionImportConflictSchema = z.object({
-  kind: z.enum(['schema', 'enum', 'documentType']),
+  kind: z.enum(['schema', 'enum', 'documentType', 'relationSchema', 'fieldGroup']),
   id: z.string(),
   name: z.string(),
   existingName: z.string()
@@ -76,6 +80,8 @@ const definitionImportPreviewSchema = z.object({
   schemas: z.array(definitionImportDefinitionSchema),
   enums: z.array(definitionImportDefinitionSchema),
   documentTypes: z.array(definitionImportDefinitionSchema),
+  relationSchemas: z.array(definitionImportDefinitionSchema),
+  fieldGroups: z.array(definitionImportDefinitionSchema),
   conflicts: z.array(definitionImportConflictSchema),
   keyPrefixRemaps: z.array(
     z.object({ sourceId: z.string(), name: z.string(), from: z.string(), to: z.string() })
@@ -97,6 +103,8 @@ const definitionImportExecuteRequestSchema = z.object({
   schemas: z.array(definitionImportDefinitionSchema),
   enums: z.array(definitionImportDefinitionSchema),
   documentTypes: z.array(definitionImportDefinitionSchema),
+  relationSchemas: z.array(definitionImportDefinitionSchema),
+  fieldGroups: z.array(definitionImportDefinitionSchema),
   keyPrefixRemaps: z.array(
     z.object({ sourceId: z.string(), name: z.string(), from: z.string(), to: z.string() })
   ),
@@ -107,7 +115,9 @@ const definitionImportExecuteRequestSchema = z.object({
 const definitionImportExecuteResponseSchema = z.object({
   schemas: z.number().int(),
   enums: z.number().int(),
-  documentTypes: z.number().int()
+  documentTypes: z.number().int(),
+  relationSchemas: z.number().int(),
+  fieldGroups: z.number().int()
 });
 
 // ── Export/Import schemas ─────────────────────────────────────
@@ -487,7 +497,7 @@ export const workspaceManagementContract = oc.tag('Workspaces').router({
         inputStructure: 'detailed',
         summary: 'Preview definition import',
         description:
-          'Resolves selected schema, enum, and document-type dependencies and conflicts.',
+          'Resolves selected schema, enum, document-type, relation-schema, and field-group dependencies and conflicts.',
         tags: ['Workspaces']
       })
       .input(z.object({ params: ws, body: definitionImportPreviewRequestSchema }))
