@@ -60,6 +60,9 @@ export type RelationSchemaVersionDbResult = {
 
 export type RelationSchemaVersionDbCreate = RelationSchemaVersionDbResult;
 
+const parseRelationSchemaIds = (value: unknown, field: string): string[] | 'any' =>
+  value === 'any' ? 'any' : parseDatabaseJson<string[] | 'any'>(value, [], field);
+
 // -- Relation instance
 
 export const RELATION_SELECT_SQL = `
@@ -156,16 +159,8 @@ export const relationMappers = {
     workspace: String(row['workspace']),
     name: String(row['name']),
     description: String(row['description'] ?? ''),
-    in_schema_ids: parseDatabaseJson<string[] | 'any'>(
-      row['in_schema_ids'],
-      [],
-      'relation_schema.in_schema_ids'
-    ),
-    out_schema_ids: parseDatabaseJson<string[] | 'any'>(
-      row['out_schema_ids'],
-      [],
-      'relation_schema.out_schema_ids'
-    ),
+    in_schema_ids: parseRelationSchemaIds(row['in_schema_ids'], 'relation_schema.in_schema_ids'),
+    out_schema_ids: parseRelationSchemaIds(row['out_schema_ids'], 'relation_schema.out_schema_ids'),
     fields: parseDatabaseJson(row['fields'], [], 'relation_schema.fields'),
     groups: parseDatabaseJson(row['groups'], [], 'relation_schema.groups'),
     shared_field_group_links: parseDatabaseJson(
@@ -189,14 +184,12 @@ export const relationMappers = {
     version: Number(row['version']),
     name: String(row['name']),
     description: String(row['description'] ?? ''),
-    in_schema_ids: parseDatabaseJson<string[] | 'any'>(
+    in_schema_ids: parseRelationSchemaIds(
       row['in_schema_ids'],
-      [],
       'relation_schema_version.in_schema_ids'
     ),
-    out_schema_ids: parseDatabaseJson<string[] | 'any'>(
+    out_schema_ids: parseRelationSchemaIds(
       row['out_schema_ids'],
-      [],
       'relation_schema_version.out_schema_ids'
     ),
     fields: parseDatabaseJson(row['fields'], [], 'relation_schema_version.fields'),
