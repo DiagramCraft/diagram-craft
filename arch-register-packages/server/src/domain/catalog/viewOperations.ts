@@ -269,6 +269,14 @@ const configUsesRestrictedField = (
     addField(value.colorFieldId);
   }
 
+  const heatmap = root.heatmap;
+  if (heatmap && typeof heatmap === 'object') {
+    const value = heatmap as Record<string, unknown>;
+    addField(value.likelihoodFieldId);
+    addField(value.impactFieldId);
+    addField(value.colorFieldId);
+  }
+
   const map = root.map;
   if (map && typeof map === 'object') {
     const value = map as Record<string, unknown>;
