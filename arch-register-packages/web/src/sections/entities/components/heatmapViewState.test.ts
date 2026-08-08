@@ -47,9 +47,9 @@ describe('heatmap view state', () => {
   });
 
   it('maps numeric values to clamped band indices', () => {
-    expect(bucketIndexForEntity(entity('a', 5, 5), 'likelihood', null, { min: 0, max: 10 }, 5)).toBe(
-      2
-    );
+    expect(
+      bucketIndexForEntity(entity('a', 5, 5), 'likelihood', null, { min: 0, max: 10 }, 5)
+    ).toBe(2);
     expect(
       bucketIndexForEntity(entity('b', 20, 5), 'likelihood', null, { min: 0, max: 10 }, 5)
     ).toBe(4);
@@ -57,7 +57,13 @@ describe('heatmap view state', () => {
       bucketIndexForEntity(entity('c', 0, 5), 'likelihood', null, { min: 0, max: 10 }, 5)
     ).toBe(0);
     expect(
-      bucketIndexForEntity(entity('missing', undefined, 5), 'likelihood', null, { min: 0, max: 10 }, 5)
+      bucketIndexForEntity(
+        entity('missing', undefined, 5),
+        'likelihood',
+        null,
+        { min: 0, max: 10 },
+        5
+      )
     ).toBeNull();
   });
 

@@ -68,9 +68,12 @@ export const HeatmapView = ({
     onChange: onConfigChange
   });
 
-  const [activeCell, setActiveCell] = useState<{ row: number; col: number; x: number; y: number } | null>(
-    null
-  );
+  const [activeCell, setActiveCell] = useState<{
+    row: number;
+    col: number;
+    x: number;
+    y: number;
+  } | null>(null);
 
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
 
@@ -142,7 +145,12 @@ export const HeatmapView = ({
 
   const likelihoodRange = useMemo(() => {
     if (!config || !isNumericField(config.likelihoodFieldId)) return null;
-    return getNumericFieldRange(schemasInScope, config.likelihoodFieldId, joinedAssessment, entities);
+    return getNumericFieldRange(
+      schemasInScope,
+      config.likelihoodFieldId,
+      joinedAssessment,
+      entities
+    );
   }, [config, schemasInScope, entities, joinedAssessment, isNumericField]);
 
   const impactRange = useMemo(() => {
@@ -191,7 +199,8 @@ export const HeatmapView = ({
 
   const entityById = useMemo(() => new Map(entities.map(e => [e._uid, e])), [entities]);
 
-  const likelihoodLabel = axisFieldOptions.find(f => f.id === config?.likelihoodFieldId)?.label ?? '';
+  const likelihoodLabel =
+    axisFieldOptions.find(f => f.id === config?.likelihoodFieldId)?.label ?? '';
   const impactLabel = axisFieldOptions.find(f => f.id === config?.impactFieldId)?.label ?? '';
   const colorLabel = numericFields.find(f => f.id === config?.colorFieldId)?.label ?? '';
 

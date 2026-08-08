@@ -169,7 +169,12 @@ const interpolateSeverity = (t: number): string => {
 };
 
 /** Default cell colour: severity by grid position (low likelihood+impact = good, both high = critical). */
-export const severityColorForCell = (row: number, col: number, rowCount: number, colCount: number): string => {
+export const severityColorForCell = (
+  row: number,
+  col: number,
+  rowCount: number,
+  colCount: number
+): string => {
   const maxPosition = rowCount - 1 + (colCount - 1);
   if (maxPosition <= 0) return interpolateSeverity(0.5);
   return interpolateSeverity((row + col) / maxPosition);
