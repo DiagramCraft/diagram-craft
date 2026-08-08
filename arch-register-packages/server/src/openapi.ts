@@ -5,6 +5,7 @@ import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract
 import { workspaceRelationSchemaContract } from '@arch-register/api-types/relationSchemaContract';
 import { workspaceRelationContract } from '@arch-register/api-types/relationContract';
 import { integrationRelationContract } from '@arch-register/api-types/integrationRelationContract';
+import { integrationGovernanceContract } from '@arch-register/api-types/integrationGovernanceContract';
 import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
 import { workspaceFieldGroupContract } from '@arch-register/api-types/fieldGroupContract';
 import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
@@ -194,7 +195,8 @@ export const getIntegrationOpenAPISpec = () => {
         ...integrationSchemaContract,
         ...integrationRelationContract,
         ...entitySyncContract,
-        ...relationSyncContract
+        ...relationSyncContract,
+        ...integrationGovernanceContract
       },
       {
         info: {

@@ -26,6 +26,7 @@ export const governanceEscalationConfigSchema = z.object({
 });
 
 export const governanceWorkflowConfigSchema = z.object({
+  external: z.boolean().optional(),
   approvals: governanceApprovalConfigSchema.optional(),
   reminders: governanceReminderConfigSchema.optional(),
   escalation: governanceEscalationConfigSchema.optional(),

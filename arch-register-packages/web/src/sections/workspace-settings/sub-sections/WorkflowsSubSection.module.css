@@ -109,6 +109,12 @@
   padding: 12px 0;
 }
 
+.workflowToggles {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
 .statusValues {
   display: grid;
   gap: 4px;

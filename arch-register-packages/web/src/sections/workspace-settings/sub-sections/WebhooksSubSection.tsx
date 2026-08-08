@@ -20,7 +20,16 @@ import styles from './WebhooksSubSection.module.css';
 const OPERATIONS: Array<{ value: WebhookOperation; label: string }> = [
   { value: 'create', label: 'Entity created' },
   { value: 'update', label: 'Entity updated' },
-  { value: 'delete', label: 'Entity deleted' }
+  { value: 'delete', label: 'Entity deleted' },
+  { value: 'governance.workflow.started', label: 'Governance workflow started' },
+  { value: 'governance.inbox_item.approved', label: 'Governance inbox item approved' },
+  { value: 'governance.inbox_item.rejected', label: 'Governance inbox item rejected' },
+  {
+    value: 'governance.inbox_item.changes_requested',
+    label: 'Governance changes requested'
+  },
+  { value: 'governance.workflow.escalated', label: 'Governance workflow escalated' },
+  { value: 'governance.workflow.finalized', label: 'Governance workflow finalized' }
 ];
 
 const EditorDialog = ({
@@ -50,7 +59,19 @@ const EditorDialog = ({
     if (!webhook) return;
     setUrl(webhook === 'new' ? '' : webhook.url);
     setOperations(
-      webhook === 'new' ? ['create', 'update', 'delete'] : webhook.event_filter.operations
+      webhook === 'new'
+        ? [
+            'create',
+            'update',
+            'delete',
+            'governance.workflow.started',
+            'governance.inbox_item.approved',
+            'governance.inbox_item.rejected',
+            'governance.inbox_item.changes_requested',
+            'governance.workflow.escalated',
+            'governance.workflow.finalized'
+          ]
+        : webhook.event_filter.operations
     );
     setSchemaIds(webhook === 'new' ? [] : webhook.event_filter.schema_ids);
     setRelationSchemaIds(webhook === 'new' ? [] : webhook.event_filter.relation_schema_ids);

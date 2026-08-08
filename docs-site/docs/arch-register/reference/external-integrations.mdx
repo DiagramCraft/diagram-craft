@@ -42,3 +42,10 @@ shared consistently by most Arch Register deployments.
 
 See the [API and Integrations](api-integrations) page for the API contract sources and the [API Reference](pathname:///arch-register/api.html)
 for endpoint details.
+
+## External governance workflows
+
+Supported governance workflows can be marked **External** in Workspace settings. Arch Register keeps
+the governance case and emits signed workflow webhooks, while an external engine creates inbox items
+and submits decisions through the integration API. Use an API token with `ws.view` and
+`governance.external`.

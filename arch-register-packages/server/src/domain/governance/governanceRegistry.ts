@@ -167,6 +167,7 @@ export const defaultWorkflowConfigForCaseKind = (
 ): GovernanceWorkflowConfig => {
   const declared = config.workflowConfig?.defaultConfig;
   return {
+    external: declared?.external ?? false,
     approvals: declared?.approvals,
     reminders:
       declared?.reminders ??

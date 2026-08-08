@@ -25,6 +25,8 @@ import type {
 import { isEligibleForAssignment, resolveAssignmentEligibility } from './governanceEligibility';
 import { createGovernanceRegistry, type GovernanceRegistry } from './governanceRegistry';
 import { createGovernanceInAppNotifications } from './governanceNotifications';
+import { enqueueGovernanceWebhookDeliveries } from '../webhook/webhookDelivery';
+import { resolveGovernanceWorkflowConfig } from './governanceWorkflowConfig';
 import type {
   GovernanceAssignment,
   GovernanceCase,
@@ -99,6 +101,8 @@ export type CreateGovernanceCaseInput = {
   dueAt?: Date | null;
   payload?: Record<string, unknown>;
   assignments: GovernanceAssignmentSpec[];
+  allowEmptyAssignments?: boolean;
+  createAssignmentsInExternalMode?: boolean;
 };
 
 export type DecideGovernanceAssignmentInput = {
@@ -107,7 +111,11 @@ export type DecideGovernanceAssignmentInput = {
   idempotencyKey: string;
 };
 
-const toApiCase = (row: GovernanceCaseDbResult): GovernanceCase => ({
+export type GovernanceDecisionOptions = {
+  externalIntegration?: boolean;
+};
+
+export const toApiCase = (row: GovernanceCaseDbResult): GovernanceCase => ({
   id: row.id,
   workspace: row.workspace,
   caseKind: row.case_kind,
@@ -128,7 +136,7 @@ const toApiCase = (row: GovernanceCaseDbResult): GovernanceCase => ({
   escalatedAt: row.escalated_at?.toISOString() ?? null
 });
 
-const toApiAssignment = (row: GovernanceAssignmentDbResult): GovernanceAssignment => ({
+export const toApiAssignment = (row: GovernanceAssignmentDbResult): GovernanceAssignment => ({
   id: row.id,
   caseId: row.case_id,
   action: row.action,
@@ -142,7 +150,7 @@ const toApiAssignment = (row: GovernanceAssignmentDbResult): GovernanceAssignmen
   resolvedAt: row.resolved_at?.toISOString() ?? null
 });
 
-const toApiEvent = (row: GovernanceEventDbResult): GovernanceEvent => ({
+export const toApiEvent = (row: GovernanceEventDbResult): GovernanceEvent => ({
   id: row.id,
   caseId: row.case_id,
   eventType: row.event_type,
@@ -202,7 +210,24 @@ export const recordGovernanceEvent = async (
     metadata: input.metadata
   });
 
-  await createGovernanceInAppNotifications(tx, caseRow, event);
+  const configAdapter = (
+    tx as unknown as {
+      governanceCaseConfig?: { listCaseConfigForKind?: unknown };
+    }
+  ).governanceCaseConfig;
+  const configRows =
+    typeof configAdapter?.listCaseConfigForKind === 'function'
+      ? await tx.governanceCaseConfig.listCaseConfigForKind(caseRow.workspace, caseRow.case_kind)
+      : [];
+  const external =
+    resolveGovernanceWorkflowConfig(configRows, caseRow.case_subkind, { extensions: {} }, true)
+      .config.external === true;
+  if (!external) await createGovernanceInAppNotifications(tx, caseRow, event);
+
+  const webhookAdapter = (tx as unknown as { webhook?: { listWebhooks?: unknown } }).webhook;
+  if (typeof webhookAdapter?.listWebhooks === 'function') {
+    await enqueueGovernanceWebhookDeliveries(tx, caseRow, event, external);
+  }
 
   return event;
 };
@@ -268,7 +293,7 @@ export const createGovernanceCase = async (
   const ws = await resolveWorkspace(db.catalog, workspace);
   const authCtx = await buildApiAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
-  httpAssert.true(input.assignments.length > 0, {
+  httpAssert.true(input.assignments.length > 0 || input.allowEmptyAssignments === true, {
     status: 400,
     statusText: 'Bad Request',
     message: 'A governance case requires at least one assignment'
@@ -293,11 +318,26 @@ export const createGovernanceCaseInTransaction = async (
   now = new Date(),
   caseId = randomUUID()
 ): Promise<GovernanceCaseDbResult> => {
-  httpAssert.true(input.assignments.length > 0, {
+  httpAssert.true(input.assignments.length > 0 || input.allowEmptyAssignments === true, {
     status: 400,
     statusText: 'Bad Request',
     message: 'A governance case requires at least one assignment'
   });
+
+  const configAdapter = (
+    tx as unknown as {
+      governanceCaseConfig?: { listCaseConfigForKind?: unknown };
+    }
+  ).governanceCaseConfig;
+  const configRows =
+    typeof configAdapter?.listCaseConfigForKind === 'function'
+      ? await tx.governanceCaseConfig.listCaseConfigForKind(workspace, input.caseKind)
+      : [];
+  const external =
+    resolveGovernanceWorkflowConfig(configRows, input.caseSubkind ?? null, { extensions: {} }, true)
+      .config.external === true;
+  const assignments =
+    external && input.createAssignmentsInExternalMode !== true ? [] : input.assignments;
 
   const createdCase = await tx.governance.createCase({
     id: caseId,
@@ -317,7 +357,7 @@ export const createGovernanceCaseInTransaction = async (
     due_at: input.dueAt ?? null
   });
 
-  for (const spec of input.assignments) {
+  for (const spec of assignments) {
     await tx.governance.createAssignment(toAssignmentCreate(caseId, workspace, now, spec));
   }
 
@@ -706,7 +746,8 @@ export const decideGovernanceAssignment = async (
   assignmentId: string,
   event: AuthenticatedEvent,
   input: DecideGovernanceAssignmentInput,
-  registry: GovernanceRegistry = createGovernanceRegistry()
+  registry: GovernanceRegistry = createGovernanceRegistry(),
+  options: GovernanceDecisionOptions = {}
 ): Promise<{ case: GovernanceCase; event: GovernanceEvent }> => {
   const ws = await resolveWorkspace(db.catalog, workspace);
   const authCtx = await buildApiAuthCtx(db, ws, event);
@@ -726,7 +767,9 @@ export const decideGovernanceAssignment = async (
   httpAssert.present(caseRow, notFound);
 
   const userId = event.context.user.id;
-  const eligibility = resolveAssignmentEligibility(authCtx, userId, assignment);
+  const eligibility = options.externalIntegration
+    ? { eligible: true as const, authorizationPath: 'external_integration' }
+    : resolveAssignmentEligibility(authCtx, userId, assignment);
   httpAssert.true(eligibility.eligible, {
     status: 403,
     statusText: 'Forbidden',
@@ -735,11 +778,16 @@ export const decideGovernanceAssignment = async (
 
   // Self-approval is denied by default; only the policy captured on the case at submission time
   // (not the actor's role) can allow it.
-  httpAssert.true(caseRow.initiator_user_id !== userId || caseRow.self_approval_allowed, {
-    status: 403,
-    statusText: 'Forbidden',
-    message: 'Self-approval is not allowed for this case'
-  });
+  httpAssert.true(
+    options.externalIntegration ||
+      caseRow.initiator_user_id !== userId ||
+      caseRow.self_approval_allowed,
+    {
+      status: 403,
+      statusText: 'Forbidden',
+      message: 'Self-approval is not allowed for this case'
+    }
+  );
 
   httpAssert.true(input.decision !== 'request_changes' || !!input.reason?.trim(), {
     status: 400,

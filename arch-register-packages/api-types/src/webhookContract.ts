@@ -2,7 +2,17 @@ import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws } from '@arch-register/api-types/common';
 
-export const webhookOperationSchema = z.enum(['create', 'update', 'delete']);
+export const webhookOperationSchema = z.enum([
+  'create',
+  'update',
+  'delete',
+  'governance.workflow.started',
+  'governance.inbox_item.approved',
+  'governance.inbox_item.rejected',
+  'governance.inbox_item.changes_requested',
+  'governance.workflow.escalated',
+  'governance.workflow.finalized'
+]);
 
 export const webhookEventFilterSchema = z.object({
   operations: z.array(webhookOperationSchema).min(1),

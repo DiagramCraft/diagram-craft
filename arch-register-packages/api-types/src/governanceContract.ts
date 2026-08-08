@@ -4,13 +4,23 @@ import { ws, wsAndId } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
-const governanceCaseStatusSchema = z.enum(['open', 'completed', 'cancelled']);
+export const governanceCaseStatusSchema = z.enum(['open', 'completed', 'cancelled']);
 
-const governanceAssignmentActionSchema = z.enum(['approve', 'acknowledge', 'review', 'remediate']);
+export const governanceAssignmentActionSchema = z.enum([
+  'approve',
+  'acknowledge',
+  'review',
+  'remediate'
+]);
 
-const governanceAssignmentTargetTypeSchema = z.enum(['user', 'team', 'team_role', 'capability']);
+export const governanceAssignmentTargetTypeSchema = z.enum([
+  'user',
+  'team',
+  'team_role',
+  'capability'
+]);
 
-const governanceEventTypeSchema = z.enum([
+export const governanceEventTypeSchema = z.enum([
   'submitted',
   'assigned',
   'reassigned',
@@ -32,14 +42,14 @@ const governanceEventTypeSchema = z.enum([
   'escalated'
 ]);
 
-const governanceDecisionActionSchema = z.enum([
+export const governanceDecisionActionSchema = z.enum([
   'approve',
   'reject',
   'request_changes',
   'acknowledge'
 ]);
 
-const governanceCaseSchema = z.object({
+export const governanceCaseSchema = z.object({
   id: z.string().describe('Unique case identifier'),
   workspace: z.string().describe('Parent workspace identifier'),
   caseKind: z
@@ -81,7 +91,7 @@ const governanceCaseSchema = z.object({
     .describe('ISO 8601 timestamp the case was escalated, or null if not escalated')
 });
 
-const governanceAssignmentSchema = z.object({
+export const governanceAssignmentSchema = z.object({
   id: z.string().describe('Unique assignment identifier'),
   caseId: z.string().describe('Case this assignment belongs to'),
   action: governanceAssignmentActionSchema.describe(
@@ -106,7 +116,7 @@ const governanceAssignmentSchema = z.object({
     .describe('ISO 8601 timestamp the assignment was completed or superseded')
 });
 
-const governanceEventSchema = z.object({
+export const governanceEventSchema = z.object({
   id: z.string().describe('Unique event identifier'),
   caseId: z.string().describe('Case this event belongs to'),
   eventType: governanceEventTypeSchema.describe('Kind of event'),

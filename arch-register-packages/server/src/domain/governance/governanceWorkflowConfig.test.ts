@@ -72,4 +72,26 @@ describe('resolveGovernanceWorkflowConfig', () => {
     expect(result.source).toBe('default');
     expect(result.config.reminders?.approachingDays).toEqual([2]);
   });
+
+  it('inherits external mode and allows a subkind to turn it off explicitly', () => {
+    const inherited = resolveGovernanceWorkflowConfig(
+      [
+        { case_subkind: null, enabled: true, config: { external: true } },
+        { case_subkind: 'schema-1', enabled: true, config: {} }
+      ],
+      'schema-1',
+      { ...defaults, external: false }
+    );
+    expect(inherited.config.external).toBe(true);
+
+    const overridden = resolveGovernanceWorkflowConfig(
+      [
+        { case_subkind: null, enabled: true, config: { external: true } },
+        { case_subkind: 'schema-1', enabled: true, config: { external: false } }
+      ],
+      'schema-1',
+      { ...defaults, external: false }
+    );
+    expect(overridden.config.external).toBe(false);
+  });
 });

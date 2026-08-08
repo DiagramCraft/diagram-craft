@@ -96,6 +96,7 @@ const toApiRow = async (
   const parsedConfig = parseGovernanceWorkflowConfig(row.config, row.enabled);
   const config = {
     ...parsedConfig,
+    external: parsedConfig.external ?? false,
     approvals: normalizeStrategy(
       parsedConfig.approvals,
       kindConfig?.workflowConfig?.approvalStrategies
