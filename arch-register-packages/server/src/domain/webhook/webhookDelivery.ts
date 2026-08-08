@@ -1,6 +1,11 @@
 import { createHmac, randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuditLogDbResult } from '../audit/db/auditDatabase';
+import type {
+  GovernanceCaseDbResult,
+  GovernanceEventDbResult
+} from '../governance/db/governanceDatabase';
+import type { WebhookOperation } from '@arch-register/api-types/webhookContract';
 import { enqueueOneOffJobRun } from '../jobs/jobOperations';
 import { RetryableJobError } from '../jobs/jobRetry';
 import {
@@ -19,14 +24,8 @@ const NEVER_ABORTED_SIGNAL = new AbortController().signal;
 type WebhookEventBase = {
   version: '1';
   id: string;
-  type:
-    | 'entity.created'
-    | 'entity.updated'
-    | 'entity.deleted'
-    | 'relation.created'
-    | 'relation.updated'
-    | 'relation.deleted';
-  operation: AuditLogDbResult['operation'];
+  type: string;
+  operation: WebhookOperation;
   occurred_at: string;
   workspace_id: string;
   actor: { id: string | null; display_name: string | null };
@@ -49,6 +48,32 @@ export type WebhookEvent =
       type: `relation.${'created' | 'updated' | 'deleted'}`;
       entity?: never;
       relation?: RelationAuditContext;
+    })
+  | (WebhookEventBase & {
+      type: `governance.${string}`;
+      operation: Extract<WebhookOperation, `governance.${string}`>;
+      governance: {
+        case: {
+          id: string;
+          kind: string;
+          subject_type: string;
+          subject_id: string;
+          status: string;
+          outcome: string | null;
+          external: boolean;
+        };
+        event: {
+          id: string;
+          event_type: string;
+          previous_status: string | null;
+          resulting_status: string | null;
+          reason: string | null;
+          metadata: Record<string, unknown>;
+        };
+        assignment_id: string | null;
+      };
+      entity?: never;
+      relation?: never;
     });
 
 const isWebhookVisibleRelationEndpoint = (
@@ -154,7 +179,7 @@ export const auditLogToWebhookEvent = (
     version: '1' as const,
     id: auditLog.id,
     type: `${auditLog.entity_type}.${auditLog.operation}d` as WebhookEventBase['type'],
-    operation: auditLog.operation,
+    operation: auditLog.operation as WebhookOperation,
     occurred_at: auditLog.timestamp.toISOString(),
     workspace_id: auditLog.workspace,
     actor: { id: auditLog.user_id, display_name: auditLog.user_display_name },
@@ -184,6 +209,88 @@ export const auditLogToWebhookEvent = (
       schema_id: auditLog.schema_id
     }
   };
+};
+
+const governanceWebhookOperation = (eventType: GovernanceEventDbResult['event_type']) => {
+  switch (eventType) {
+    case 'submitted':
+      return 'governance.workflow.started' as const;
+    case 'approved':
+      return 'governance.inbox_item.approved' as const;
+    case 'rejected':
+      return 'governance.inbox_item.rejected' as const;
+    case 'changes_requested':
+      return 'governance.inbox_item.changes_requested' as const;
+    case 'escalated':
+      return 'governance.workflow.escalated' as const;
+    case 'finalized':
+      return 'governance.workflow.finalized' as const;
+    default:
+      return null;
+  }
+};
+
+export const enqueueGovernanceWebhookDeliveries = async (
+  db: DatabaseAdapter,
+  caseRow: GovernanceCaseDbResult,
+  event: GovernanceEventDbResult,
+  external: boolean
+) => {
+  const operation = governanceWebhookOperation(event.event_type);
+  if (!operation) return 0;
+  const webhooks = await db.webhook.listWebhooks(caseRow.workspace);
+  const matching = webhooks.filter(
+    webhook => webhook.enabled && webhook.event_filter.operations.includes(operation)
+  );
+  if (matching.length === 0) return 0;
+
+  const assignmentId =
+    typeof event.metadata['assignmentId'] === 'string'
+      ? event.metadata['assignmentId']
+      : null;
+  const webhookEvent: WebhookEvent = {
+    version: '1',
+    id: event.id,
+    type: operation,
+    operation,
+    occurred_at: event.occurred_at.toISOString(),
+    workspace_id: caseRow.workspace,
+    actor: { id: event.actor_user_id, display_name: null },
+    changes: {},
+    metadata: {},
+    governance: {
+      case: {
+        id: caseRow.id,
+        kind: caseRow.case_kind,
+        subject_type: caseRow.subject_type,
+        subject_id: caseRow.subject_id,
+        status: caseRow.status,
+        outcome: caseRow.outcome,
+        external
+      },
+      event: {
+        id: event.id,
+        event_type: event.event_type,
+        previous_status: event.previous_status,
+        resulting_status: event.resulting_status,
+        reason: event.reason,
+        metadata: event.metadata
+      },
+      assignment_id: assignmentId
+    }
+  };
+
+  for (const webhook of matching) {
+    await enqueueOneOffJobRun(db, {
+      id: randomUUID(),
+      workspace: caseRow.workspace,
+      jobType: JOB_TYPE,
+      systemIdentity: SYSTEM_IDENTITY,
+      payload: { webhookId: webhook.id, event: webhookEvent },
+      maxAttempts: 5
+    });
+  }
+  return matching.length;
 };
 
 export const enqueueWebhookDeliveries = async (db: DatabaseAdapter, auditLog: AuditLogDbResult) => {

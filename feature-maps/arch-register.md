@@ -551,7 +551,14 @@
           audited.
 
         - @id:ar.integrations.webhooks Administrators can configure webhooks and inspect supported delivery behavior for
-          workspace events, including typed-relation create, update, and delete events filtered by relation schema.
+          workspace events, including typed-relation create, update, and delete events filtered by relation schema,
+          plus governance workflow start, approval, rejection, change-request, escalation, and finalization events.
+
+        - @id:ar.integrations.external-governance @status:experimental External workflow engines can use a dedicated
+          integration API to create governance cases and inbox items, and to approve, reject, or request changes on
+          external workflows. Workspace administrators can mark supported workflows as external so Arch Register
+          retains the case and emits events while assignment routing, reminders, escalation, and internal approval
+          requests are controlled by the external engine.
 
         - @id:ar.integrations.jobs Administrators can create and configure supported recurring jobs, inspect scheduled
           jobs, job servers, run history, and supported cancellation operations.

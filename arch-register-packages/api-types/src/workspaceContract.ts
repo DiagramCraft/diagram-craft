@@ -614,6 +614,7 @@ export type WorkspaceRoleCapability =
   | 'ent.approve'
   | 'ent.override'
   | 'ent.external_update'
+  | 'governance.external'
   | 'comments'
   | 'schema.edit'
   | 'schema.publish';

@@ -25,7 +25,11 @@ import { useWorkspaces } from '../../hooks/useWorkspaces';
 import { formatDate } from '../../utils/dateFormat';
 import styles from './ApiTokensSubSection.module.css';
 
-const EDITOR_CAPABILITIES = [...WORKSPACE_ROLE_CAPABILITIES.editor, 'ent.external_update' as const];
+const EDITOR_CAPABILITIES = [
+  ...WORKSPACE_ROLE_CAPABILITIES.editor,
+  'ent.external_update' as const,
+  'governance.external' as const
+];
 
 const CAPABILITY_LABELS: Record<string, string> = {
   'ws.view': 'View workspace',
@@ -36,6 +40,7 @@ const CAPABILITY_LABELS: Record<string, string> = {
   'content.edit': 'Edit content',
   'ent.edit': 'Edit entities',
   'ent.external_update': 'Update externally managed fields',
+  'governance.external': 'Manage external governance workflows',
   'ent.propose': 'Propose entity changes',
   comments: 'Comment and discuss',
   export: 'Export data'

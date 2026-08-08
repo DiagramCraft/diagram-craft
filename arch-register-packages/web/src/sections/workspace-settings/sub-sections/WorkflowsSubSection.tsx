@@ -420,10 +420,19 @@ const ConfigEditor = ({
         }
       ]}
     >
-      <label className={styles.check}>
-        <Checkbox value={enabled} onChange={checked => setEnabled(checked ?? false)} />
-        Enable workflow
-      </label>
+      <div className={styles.workflowToggles}>
+        <label className={styles.check}>
+          <Checkbox value={enabled} onChange={checked => setEnabled(checked ?? false)} />
+          Enable workflow
+        </label>
+        <label className={styles.check}>
+          <Checkbox
+            value={config.external ?? false}
+            onChange={checked => update({ external: checked ?? false })}
+          />
+          External
+        </label>
+      </div>
       <Tabs.Root value={tab} onValueChange={setTab}>
         <Tabs.List aria-label="Workflow configuration sections">
           {caseKind.supportsApprovals !== false && (
@@ -775,7 +784,11 @@ export const WorkflowsSubSection = ({
                         Escalation
                       </Chip>
                     )}
-                    {!row.config.approvals && !row.config.reminders && !row.config.escalation && (
+                    {row.config.external && <Chip dot="var(--warning-fg, #d69e45)">External</Chip>}
+                    {!row.config.approvals &&
+                      !row.config.reminders &&
+                      !row.config.escalation &&
+                      !row.config.external && (
                       <span className={styles.summary}>None</span>
                     )}
                   </div>

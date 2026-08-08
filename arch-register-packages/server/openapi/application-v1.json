@@ -56975,6 +56975,7 @@
                             "ent.approve",
                             "ent.override",
                             "ent.external_update",
+                            "governance.external",
                             "comments",
                             "schema.edit",
                             "schema.publish"
@@ -57066,6 +57067,7 @@
                         "ent.approve",
                         "ent.override",
                         "ent.external_update",
+                        "governance.external",
                         "comments",
                         "schema.edit",
                         "schema.publish"
@@ -57139,6 +57141,7 @@
                           "ent.approve",
                           "ent.override",
                           "ent.external_update",
+                          "governance.external",
                           "comments",
                           "schema.edit",
                           "schema.publish"
@@ -57241,6 +57244,7 @@
                         "ent.approve",
                         "ent.override",
                         "ent.external_update",
+                        "governance.external",
                         "comments",
                         "schema.edit",
                         "schema.publish"
@@ -57314,6 +57318,7 @@
                           "ent.approve",
                           "ent.override",
                           "ent.external_update",
+                          "governance.external",
                           "comments",
                           "schema.edit",
                           "schema.publish"
@@ -57427,6 +57432,7 @@
                           "ent.approve",
                           "ent.override",
                           "ent.external_update",
+                          "governance.external",
                           "comments",
                           "schema.edit",
                           "schema.publish"
@@ -57855,6 +57861,7 @@
                             "ent.approve",
                             "ent.override",
                             "ent.external_update",
+                            "governance.external",
                             "comments",
                             "schema.edit",
                             "schema.publish"
@@ -57956,6 +57963,7 @@
                         "ent.approve",
                         "ent.override",
                         "ent.external_update",
+                        "governance.external",
                         "comments",
                         "schema.edit",
                         "schema.publish"
@@ -58029,6 +58037,7 @@
                           "ent.approve",
                           "ent.override",
                           "ent.external_update",
+                          "governance.external",
                           "comments",
                           "schema.edit",
                           "schema.publish"
@@ -58154,6 +58163,7 @@
                           "ent.approve",
                           "ent.override",
                           "ent.external_update",
+                          "governance.external",
                           "comments",
                           "schema.edit",
                           "schema.publish"
@@ -85471,6 +85481,9 @@
                           "defaultConfig": {
                             "type": "object",
                             "properties": {
+                              "external": {
+                                "type": "boolean"
+                              },
                               "approvals": {
                                 "type": "object",
                                 "properties": {
@@ -85658,6 +85671,9 @@
                           "config": {
                             "type": "object",
                             "properties": {
+                              "external": {
+                                "type": "boolean"
+                              },
                               "approvals": {
                                 "type": "object",
                                 "properties": {
@@ -85869,6 +85885,9 @@
                   "config": {
                     "type": "object",
                     "properties": {
+                      "external": {
+                        "type": "boolean"
+                      },
                       "approvals": {
                         "type": "object",
                         "properties": {
@@ -86053,6 +86072,9 @@
                     "config": {
                       "type": "object",
                       "properties": {
+                        "external": {
+                          "type": "boolean"
+                        },
                         "approvals": {
                           "type": "object",
                           "properties": {
@@ -109169,7 +109191,13 @@
                               "enum": [
                                 "create",
                                 "update",
-                                "delete"
+                                "delete",
+                                "governance.workflow.started",
+                                "governance.inbox_item.approved",
+                                "governance.inbox_item.rejected",
+                                "governance.inbox_item.changes_requested",
+                                "governance.workflow.escalated",
+                                "governance.workflow.finalized"
                               ],
                               "type": "string"
                             }
@@ -109255,7 +109283,13 @@
                           "enum": [
                             "create",
                             "update",
-                            "delete"
+                            "delete",
+                            "governance.workflow.started",
+                            "governance.inbox_item.approved",
+                            "governance.inbox_item.rejected",
+                            "governance.inbox_item.changes_requested",
+                            "governance.workflow.escalated",
+                            "governance.workflow.finalized"
                           ],
                           "type": "string"
                         }
@@ -109322,7 +109356,13 @@
                                 "enum": [
                                   "create",
                                   "update",
-                                  "delete"
+                                  "delete",
+                                  "governance.workflow.started",
+                                  "governance.inbox_item.approved",
+                                  "governance.inbox_item.rejected",
+                                  "governance.inbox_item.changes_requested",
+                                  "governance.workflow.escalated",
+                                  "governance.workflow.finalized"
                                 ],
                                 "type": "string"
                               }
@@ -109426,7 +109466,13 @@
                           "enum": [
                             "create",
                             "update",
-                            "delete"
+                            "delete",
+                            "governance.workflow.started",
+                            "governance.inbox_item.approved",
+                            "governance.inbox_item.rejected",
+                            "governance.inbox_item.changes_requested",
+                            "governance.workflow.escalated",
+                            "governance.workflow.finalized"
                           ],
                           "type": "string"
                         }
@@ -109490,7 +109536,13 @@
                             "enum": [
                               "create",
                               "update",
-                              "delete"
+                              "delete",
+                              "governance.workflow.started",
+                              "governance.inbox_item.approved",
+                              "governance.inbox_item.rejected",
+                              "governance.inbox_item.changes_requested",
+                              "governance.workflow.escalated",
+                              "governance.workflow.finalized"
                             ],
                             "type": "string"
                           }
@@ -109640,7 +109692,13 @@
                                 "enum": [
                                   "create",
                                   "update",
-                                  "delete"
+                                  "delete",
+                                  "governance.workflow.started",
+                                  "governance.inbox_item.approved",
+                                  "governance.inbox_item.rejected",
+                                  "governance.inbox_item.changes_requested",
+                                  "governance.workflow.escalated",
+                                  "governance.workflow.finalized"
                                 ],
                                 "type": "string"
                               }

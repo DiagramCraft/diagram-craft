@@ -107,6 +107,7 @@ export const createGovernanceDeadlineScanJobHandler =
         kindConfig?.workflowConfig?.supportsWorkspaceScope !== false
       );
       if (!effectiveConfig.enabled) continue;
+      if (effectiveConfig.config.external === true) continue;
       const runtimeWindows = kindConfig?.resolveReminderWindows
         ? await kindConfig.resolveReminderWindows(db, caseRow)
         : undefined;

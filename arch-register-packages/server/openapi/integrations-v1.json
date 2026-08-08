@@ -8003,6 +8003,2291 @@
           }
         }
       }
+    },
+    "/integrations/v1/{workspace}/governance/cases": {
+      "get": {
+        "operationId": "integrationGovernance.cases.list",
+        "summary": "List governance cases for integrations",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "caseKind",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "status",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "open",
+                "completed",
+                "cancelled"
+              ],
+              "type": "string"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "subjectType",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "subjectId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique case identifier"
+                      },
+                      "workspace": {
+                        "type": "string",
+                        "description": "Parent workspace identifier"
+                      },
+                      "caseKind": {
+                        "type": "string",
+                        "description": "Domain-specific kind of governed process, e.g. entity change approval"
+                      },
+                      "subjectType": {
+                        "type": "string",
+                        "description": "Kind of resource this case governs, e.g. \"entity\""
+                      },
+                      "subjectId": {
+                        "type": "string",
+                        "description": "Identifier of the resource this case governs"
+                      },
+                      "subjectVersion": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Immutable subject version or proposal revision being reviewed"
+                      },
+                      "status": {
+                        "enum": [
+                          "open",
+                          "completed",
+                          "cancelled"
+                        ],
+                        "type": "string",
+                        "description": "Generic lifecycle status"
+                      },
+                      "outcome": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Domain-specific outcome, e.g. \"approve\" or \"reject\""
+                      },
+                      "policyVersion": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Applicable policy version captured when the case started"
+                      },
+                      "initiatorUserId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "User who opened the case, or null if the user was deleted"
+                      },
+                      "parentCaseId": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Parent case identifier, for future compound operations"
+                      },
+                      "selfApprovalAllowed": {
+                        "type": "boolean",
+                        "description": "Whether the captured policy allows the initiator to decide their own case"
+                      },
+                      "payload": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {},
+                        "description": "Opaque domain payload reference, e.g. a proposal revision id"
+                      },
+                      "createdAt": {
+                        "type": "string",
+                        "description": "ISO 8601 creation timestamp"
+                      },
+                      "dueAt": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ISO 8601 due timestamp"
+                      },
+                      "completedAt": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ISO 8601 completion timestamp"
+                      },
+                      "cancelledAt": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ISO 8601 cancellation timestamp"
+                      },
+                      "escalatedAt": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ISO 8601 timestamp the case was escalated, or null if not escalated"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "workspace",
+                      "caseKind",
+                      "subjectType",
+                      "subjectId",
+                      "subjectVersion",
+                      "status",
+                      "outcome",
+                      "policyVersion",
+                      "initiatorUserId",
+                      "parentCaseId",
+                      "selfApprovalAllowed",
+                      "payload",
+                      "createdAt",
+                      "dueAt",
+                      "completedAt",
+                      "cancelledAt",
+                      "escalatedAt"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "integrationGovernance.cases.create",
+        "summary": "Create a governance case for an external workflow",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "caseKind": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "caseSubkind": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "dedupeKey": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "subjectType": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "subjectId": {
+                    "type": "string",
+                    "minLength": 1
+                  },
+                  "subjectVersion": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "policyVersion": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "selfApprovalAllowed": {
+                    "type": "boolean"
+                  },
+                  "dueAt": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "format": "date-time"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "payload": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  },
+                  "inboxItems": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "action": {
+                          "enum": [
+                            "approve",
+                            "acknowledge",
+                            "review",
+                            "remediate"
+                          ],
+                          "type": "string"
+                        },
+                        "target": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "const": "user"
+                                },
+                                "userId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "userId"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "const": "team"
+                                },
+                                "teamId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "teamId"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "const": "team_role"
+                                },
+                                "teamId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "teamRole": {
+                                  "enum": [
+                                    "team_admin",
+                                    "team_editor",
+                                    "team_reviewer"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "teamId",
+                                "teamRole"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "type": {
+                                  "const": "capability"
+                                },
+                                "capability": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "required": [
+                                "type",
+                                "capability"
+                              ]
+                            }
+                          ]
+                        }
+                      },
+                      "required": [
+                        "action",
+                        "target"
+                      ]
+                    },
+                    "default": []
+                  },
+                  "idempotencyKey": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "caseKind",
+                  "subjectType",
+                  "subjectId",
+                  "idempotencyKey"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique case identifier"
+                    },
+                    "workspace": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "caseKind": {
+                      "type": "string",
+                      "description": "Domain-specific kind of governed process, e.g. entity change approval"
+                    },
+                    "subjectType": {
+                      "type": "string",
+                      "description": "Kind of resource this case governs, e.g. \"entity\""
+                    },
+                    "subjectId": {
+                      "type": "string",
+                      "description": "Identifier of the resource this case governs"
+                    },
+                    "subjectVersion": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Immutable subject version or proposal revision being reviewed"
+                    },
+                    "status": {
+                      "enum": [
+                        "open",
+                        "completed",
+                        "cancelled"
+                      ],
+                      "type": "string",
+                      "description": "Generic lifecycle status"
+                    },
+                    "outcome": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Domain-specific outcome, e.g. \"approve\" or \"reject\""
+                    },
+                    "policyVersion": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Applicable policy version captured when the case started"
+                    },
+                    "initiatorUserId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User who opened the case, or null if the user was deleted"
+                    },
+                    "parentCaseId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent case identifier, for future compound operations"
+                    },
+                    "selfApprovalAllowed": {
+                      "type": "boolean",
+                      "description": "Whether the captured policy allows the initiator to decide their own case"
+                    },
+                    "payload": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {},
+                      "description": "Opaque domain payload reference, e.g. a proposal revision id"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "dueAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 due timestamp"
+                    },
+                    "completedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 completion timestamp"
+                    },
+                    "cancelledAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 cancellation timestamp"
+                    },
+                    "escalatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 timestamp the case was escalated, or null if not escalated"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "caseKind",
+                    "subjectType",
+                    "subjectId",
+                    "subjectVersion",
+                    "status",
+                    "outcome",
+                    "policyVersion",
+                    "initiatorUserId",
+                    "parentCaseId",
+                    "selfApprovalAllowed",
+                    "payload",
+                    "createdAt",
+                    "dueAt",
+                    "completedAt",
+                    "cancelledAt",
+                    "escalatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/v1/{workspace}/governance/cases/{id}": {
+      "get": {
+        "operationId": "integrationGovernance.cases.get",
+        "summary": "Get a governance case for integrations",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique case identifier"
+                    },
+                    "workspace": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "caseKind": {
+                      "type": "string",
+                      "description": "Domain-specific kind of governed process, e.g. entity change approval"
+                    },
+                    "subjectType": {
+                      "type": "string",
+                      "description": "Kind of resource this case governs, e.g. \"entity\""
+                    },
+                    "subjectId": {
+                      "type": "string",
+                      "description": "Identifier of the resource this case governs"
+                    },
+                    "subjectVersion": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Immutable subject version or proposal revision being reviewed"
+                    },
+                    "status": {
+                      "enum": [
+                        "open",
+                        "completed",
+                        "cancelled"
+                      ],
+                      "type": "string",
+                      "description": "Generic lifecycle status"
+                    },
+                    "outcome": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Domain-specific outcome, e.g. \"approve\" or \"reject\""
+                    },
+                    "policyVersion": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Applicable policy version captured when the case started"
+                    },
+                    "initiatorUserId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User who opened the case, or null if the user was deleted"
+                    },
+                    "parentCaseId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Parent case identifier, for future compound operations"
+                    },
+                    "selfApprovalAllowed": {
+                      "type": "boolean",
+                      "description": "Whether the captured policy allows the initiator to decide their own case"
+                    },
+                    "payload": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {},
+                      "description": "Opaque domain payload reference, e.g. a proposal revision id"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "dueAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 due timestamp"
+                    },
+                    "completedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 completion timestamp"
+                    },
+                    "cancelledAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 cancellation timestamp"
+                    },
+                    "escalatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 timestamp the case was escalated, or null if not escalated"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "caseKind",
+                    "subjectType",
+                    "subjectId",
+                    "subjectVersion",
+                    "status",
+                    "outcome",
+                    "policyVersion",
+                    "initiatorUserId",
+                    "parentCaseId",
+                    "selfApprovalAllowed",
+                    "payload",
+                    "createdAt",
+                    "dueAt",
+                    "completedAt",
+                    "cancelledAt",
+                    "escalatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/v1/{workspace}/governance/cases/{id}/inbox-items": {
+      "get": {
+        "operationId": "integrationGovernance.cases.listInboxItems",
+        "summary": "List governance inbox items for integrations",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "assignment": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Unique assignment identifier"
+                          },
+                          "caseId": {
+                            "type": "string",
+                            "description": "Case this assignment belongs to"
+                          },
+                          "action": {
+                            "enum": [
+                              "approve",
+                              "acknowledge",
+                              "review",
+                              "remediate"
+                            ],
+                            "type": "string",
+                            "description": "Action expected from whoever completes this assignment"
+                          },
+                          "targetType": {
+                            "enum": [
+                              "user",
+                              "team",
+                              "team_role",
+                              "capability"
+                            ],
+                            "type": "string",
+                            "description": "Kind of eligibility target"
+                          },
+                          "targetUserId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Specific eligible user, when targetType is \"user\""
+                          },
+                          "targetTeamId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Owner team, when targetType is \"team_role\""
+                          },
+                          "targetTeamRole": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Required team role, when targetType is \"team_role\""
+                          },
+                          "targetCapability": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Required workspace capability, when targetType is \"capability\""
+                          },
+                          "status": {
+                            "enum": [
+                              "open",
+                              "completed",
+                              "superseded"
+                            ],
+                            "type": "string",
+                            "description": "Assignment status"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "description": "ISO 8601 creation timestamp"
+                          },
+                          "resolvedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "ISO 8601 timestamp the assignment was completed or superseded"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "caseId",
+                          "action",
+                          "targetType",
+                          "targetUserId",
+                          "targetTeamId",
+                          "targetTeamRole",
+                          "targetCapability",
+                          "status",
+                          "createdAt",
+                          "resolvedAt"
+                        ]
+                      },
+                      "case": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Unique case identifier"
+                          },
+                          "workspace": {
+                            "type": "string",
+                            "description": "Parent workspace identifier"
+                          },
+                          "caseKind": {
+                            "type": "string",
+                            "description": "Domain-specific kind of governed process, e.g. entity change approval"
+                          },
+                          "subjectType": {
+                            "type": "string",
+                            "description": "Kind of resource this case governs, e.g. \"entity\""
+                          },
+                          "subjectId": {
+                            "type": "string",
+                            "description": "Identifier of the resource this case governs"
+                          },
+                          "subjectVersion": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Immutable subject version or proposal revision being reviewed"
+                          },
+                          "status": {
+                            "enum": [
+                              "open",
+                              "completed",
+                              "cancelled"
+                            ],
+                            "type": "string",
+                            "description": "Generic lifecycle status"
+                          },
+                          "outcome": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Domain-specific outcome, e.g. \"approve\" or \"reject\""
+                          },
+                          "policyVersion": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Applicable policy version captured when the case started"
+                          },
+                          "initiatorUserId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "User who opened the case, or null if the user was deleted"
+                          },
+                          "parentCaseId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Parent case identifier, for future compound operations"
+                          },
+                          "selfApprovalAllowed": {
+                            "type": "boolean",
+                            "description": "Whether the captured policy allows the initiator to decide their own case"
+                          },
+                          "payload": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {},
+                            "description": "Opaque domain payload reference, e.g. a proposal revision id"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "description": "ISO 8601 creation timestamp"
+                          },
+                          "dueAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "ISO 8601 due timestamp"
+                          },
+                          "completedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "ISO 8601 completion timestamp"
+                          },
+                          "cancelledAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "ISO 8601 cancellation timestamp"
+                          },
+                          "escalatedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "ISO 8601 timestamp the case was escalated, or null if not escalated"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "workspace",
+                          "caseKind",
+                          "subjectType",
+                          "subjectId",
+                          "subjectVersion",
+                          "status",
+                          "outcome",
+                          "policyVersion",
+                          "initiatorUserId",
+                          "parentCaseId",
+                          "selfApprovalAllowed",
+                          "payload",
+                          "createdAt",
+                          "dueAt",
+                          "completedAt",
+                          "cancelledAt",
+                          "escalatedAt"
+                        ]
+                      }
+                    },
+                    "required": [
+                      "assignment",
+                      "case"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "integrationGovernance.cases.createInboxItem",
+        "summary": "Create a governance inbox item for integrations",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "action": {
+                    "enum": [
+                      "approve",
+                      "acknowledge",
+                      "review",
+                      "remediate"
+                    ],
+                    "type": "string"
+                  },
+                  "target": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "user"
+                          },
+                          "userId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "userId"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "team"
+                          },
+                          "teamId": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "teamId"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "team_role"
+                          },
+                          "teamId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "teamRole": {
+                            "enum": [
+                              "team_admin",
+                              "team_editor",
+                              "team_reviewer"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "teamId",
+                          "teamRole"
+                        ]
+                      },
+                      {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "const": "capability"
+                          },
+                          "capability": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        },
+                        "required": [
+                          "type",
+                          "capability"
+                        ]
+                      }
+                    ]
+                  },
+                  "idempotencyKey": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "action",
+                  "target",
+                  "idempotencyKey"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "assignment": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Unique assignment identifier"
+                        },
+                        "caseId": {
+                          "type": "string",
+                          "description": "Case this assignment belongs to"
+                        },
+                        "action": {
+                          "enum": [
+                            "approve",
+                            "acknowledge",
+                            "review",
+                            "remediate"
+                          ],
+                          "type": "string",
+                          "description": "Action expected from whoever completes this assignment"
+                        },
+                        "targetType": {
+                          "enum": [
+                            "user",
+                            "team",
+                            "team_role",
+                            "capability"
+                          ],
+                          "type": "string",
+                          "description": "Kind of eligibility target"
+                        },
+                        "targetUserId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Specific eligible user, when targetType is \"user\""
+                        },
+                        "targetTeamId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Owner team, when targetType is \"team_role\""
+                        },
+                        "targetTeamRole": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Required team role, when targetType is \"team_role\""
+                        },
+                        "targetCapability": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Required workspace capability, when targetType is \"capability\""
+                        },
+                        "status": {
+                          "enum": [
+                            "open",
+                            "completed",
+                            "superseded"
+                          ],
+                          "type": "string",
+                          "description": "Assignment status"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "description": "ISO 8601 creation timestamp"
+                        },
+                        "resolvedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 timestamp the assignment was completed or superseded"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "caseId",
+                        "action",
+                        "targetType",
+                        "targetUserId",
+                        "targetTeamId",
+                        "targetTeamRole",
+                        "targetCapability",
+                        "status",
+                        "createdAt",
+                        "resolvedAt"
+                      ]
+                    },
+                    "case": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Unique case identifier"
+                        },
+                        "workspace": {
+                          "type": "string",
+                          "description": "Parent workspace identifier"
+                        },
+                        "caseKind": {
+                          "type": "string",
+                          "description": "Domain-specific kind of governed process, e.g. entity change approval"
+                        },
+                        "subjectType": {
+                          "type": "string",
+                          "description": "Kind of resource this case governs, e.g. \"entity\""
+                        },
+                        "subjectId": {
+                          "type": "string",
+                          "description": "Identifier of the resource this case governs"
+                        },
+                        "subjectVersion": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Immutable subject version or proposal revision being reviewed"
+                        },
+                        "status": {
+                          "enum": [
+                            "open",
+                            "completed",
+                            "cancelled"
+                          ],
+                          "type": "string",
+                          "description": "Generic lifecycle status"
+                        },
+                        "outcome": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Domain-specific outcome, e.g. \"approve\" or \"reject\""
+                        },
+                        "policyVersion": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Applicable policy version captured when the case started"
+                        },
+                        "initiatorUserId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "User who opened the case, or null if the user was deleted"
+                        },
+                        "parentCaseId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Parent case identifier, for future compound operations"
+                        },
+                        "selfApprovalAllowed": {
+                          "type": "boolean",
+                          "description": "Whether the captured policy allows the initiator to decide their own case"
+                        },
+                        "payload": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {},
+                          "description": "Opaque domain payload reference, e.g. a proposal revision id"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "description": "ISO 8601 creation timestamp"
+                        },
+                        "dueAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 due timestamp"
+                        },
+                        "completedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 completion timestamp"
+                        },
+                        "cancelledAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 cancellation timestamp"
+                        },
+                        "escalatedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 timestamp the case was escalated, or null if not escalated"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "workspace",
+                        "caseKind",
+                        "subjectType",
+                        "subjectId",
+                        "subjectVersion",
+                        "status",
+                        "outcome",
+                        "policyVersion",
+                        "initiatorUserId",
+                        "parentCaseId",
+                        "selfApprovalAllowed",
+                        "payload",
+                        "createdAt",
+                        "dueAt",
+                        "completedAt",
+                        "cancelledAt",
+                        "escalatedAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "assignment",
+                    "case"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/v1/{workspace}/governance/inbox-items/{id}": {
+      "get": {
+        "operationId": "integrationGovernance.inboxItems.get",
+        "summary": "Get a governance inbox item for integrations",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "assignment": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Unique assignment identifier"
+                        },
+                        "caseId": {
+                          "type": "string",
+                          "description": "Case this assignment belongs to"
+                        },
+                        "action": {
+                          "enum": [
+                            "approve",
+                            "acknowledge",
+                            "review",
+                            "remediate"
+                          ],
+                          "type": "string",
+                          "description": "Action expected from whoever completes this assignment"
+                        },
+                        "targetType": {
+                          "enum": [
+                            "user",
+                            "team",
+                            "team_role",
+                            "capability"
+                          ],
+                          "type": "string",
+                          "description": "Kind of eligibility target"
+                        },
+                        "targetUserId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Specific eligible user, when targetType is \"user\""
+                        },
+                        "targetTeamId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Owner team, when targetType is \"team_role\""
+                        },
+                        "targetTeamRole": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Required team role, when targetType is \"team_role\""
+                        },
+                        "targetCapability": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Required workspace capability, when targetType is \"capability\""
+                        },
+                        "status": {
+                          "enum": [
+                            "open",
+                            "completed",
+                            "superseded"
+                          ],
+                          "type": "string",
+                          "description": "Assignment status"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "description": "ISO 8601 creation timestamp"
+                        },
+                        "resolvedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 timestamp the assignment was completed or superseded"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "caseId",
+                        "action",
+                        "targetType",
+                        "targetUserId",
+                        "targetTeamId",
+                        "targetTeamRole",
+                        "targetCapability",
+                        "status",
+                        "createdAt",
+                        "resolvedAt"
+                      ]
+                    },
+                    "case": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Unique case identifier"
+                        },
+                        "workspace": {
+                          "type": "string",
+                          "description": "Parent workspace identifier"
+                        },
+                        "caseKind": {
+                          "type": "string",
+                          "description": "Domain-specific kind of governed process, e.g. entity change approval"
+                        },
+                        "subjectType": {
+                          "type": "string",
+                          "description": "Kind of resource this case governs, e.g. \"entity\""
+                        },
+                        "subjectId": {
+                          "type": "string",
+                          "description": "Identifier of the resource this case governs"
+                        },
+                        "subjectVersion": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Immutable subject version or proposal revision being reviewed"
+                        },
+                        "status": {
+                          "enum": [
+                            "open",
+                            "completed",
+                            "cancelled"
+                          ],
+                          "type": "string",
+                          "description": "Generic lifecycle status"
+                        },
+                        "outcome": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Domain-specific outcome, e.g. \"approve\" or \"reject\""
+                        },
+                        "policyVersion": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Applicable policy version captured when the case started"
+                        },
+                        "initiatorUserId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "User who opened the case, or null if the user was deleted"
+                        },
+                        "parentCaseId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Parent case identifier, for future compound operations"
+                        },
+                        "selfApprovalAllowed": {
+                          "type": "boolean",
+                          "description": "Whether the captured policy allows the initiator to decide their own case"
+                        },
+                        "payload": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {},
+                          "description": "Opaque domain payload reference, e.g. a proposal revision id"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "description": "ISO 8601 creation timestamp"
+                        },
+                        "dueAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 due timestamp"
+                        },
+                        "completedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 completion timestamp"
+                        },
+                        "cancelledAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 cancellation timestamp"
+                        },
+                        "escalatedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 timestamp the case was escalated, or null if not escalated"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "workspace",
+                        "caseKind",
+                        "subjectType",
+                        "subjectId",
+                        "subjectVersion",
+                        "status",
+                        "outcome",
+                        "policyVersion",
+                        "initiatorUserId",
+                        "parentCaseId",
+                        "selfApprovalAllowed",
+                        "payload",
+                        "createdAt",
+                        "dueAt",
+                        "completedAt",
+                        "cancelledAt",
+                        "escalatedAt"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "assignment",
+                    "case"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/integrations/v1/{workspace}/governance/inbox-items/{id}/decisions": {
+      "post": {
+        "operationId": "integrationGovernance.inboxItems.decide",
+        "summary": "Decide a governance inbox item for integrations",
+        "tags": [
+          "Integrations",
+          "Integrations"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "decision": {
+                    "enum": [
+                      "approve",
+                      "reject",
+                      "request_changes",
+                      "acknowledge"
+                    ],
+                    "type": "string"
+                  },
+                  "reason": {
+                    "type": "string"
+                  },
+                  "idempotencyKey": {
+                    "type": "string",
+                    "minLength": 1
+                  }
+                },
+                "required": [
+                  "decision",
+                  "idempotencyKey"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "case": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Unique case identifier"
+                        },
+                        "workspace": {
+                          "type": "string",
+                          "description": "Parent workspace identifier"
+                        },
+                        "caseKind": {
+                          "type": "string",
+                          "description": "Domain-specific kind of governed process, e.g. entity change approval"
+                        },
+                        "subjectType": {
+                          "type": "string",
+                          "description": "Kind of resource this case governs, e.g. \"entity\""
+                        },
+                        "subjectId": {
+                          "type": "string",
+                          "description": "Identifier of the resource this case governs"
+                        },
+                        "subjectVersion": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Immutable subject version or proposal revision being reviewed"
+                        },
+                        "status": {
+                          "enum": [
+                            "open",
+                            "completed",
+                            "cancelled"
+                          ],
+                          "type": "string",
+                          "description": "Generic lifecycle status"
+                        },
+                        "outcome": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Domain-specific outcome, e.g. \"approve\" or \"reject\""
+                        },
+                        "policyVersion": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Applicable policy version captured when the case started"
+                        },
+                        "initiatorUserId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "User who opened the case, or null if the user was deleted"
+                        },
+                        "parentCaseId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Parent case identifier, for future compound operations"
+                        },
+                        "selfApprovalAllowed": {
+                          "type": "boolean",
+                          "description": "Whether the captured policy allows the initiator to decide their own case"
+                        },
+                        "payload": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {},
+                          "description": "Opaque domain payload reference, e.g. a proposal revision id"
+                        },
+                        "createdAt": {
+                          "type": "string",
+                          "description": "ISO 8601 creation timestamp"
+                        },
+                        "dueAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 due timestamp"
+                        },
+                        "completedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 completion timestamp"
+                        },
+                        "cancelledAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 cancellation timestamp"
+                        },
+                        "escalatedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "ISO 8601 timestamp the case was escalated, or null if not escalated"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "workspace",
+                        "caseKind",
+                        "subjectType",
+                        "subjectId",
+                        "subjectVersion",
+                        "status",
+                        "outcome",
+                        "policyVersion",
+                        "initiatorUserId",
+                        "parentCaseId",
+                        "selfApprovalAllowed",
+                        "payload",
+                        "createdAt",
+                        "dueAt",
+                        "completedAt",
+                        "cancelledAt",
+                        "escalatedAt"
+                      ]
+                    },
+                    "event": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Unique event identifier"
+                        },
+                        "caseId": {
+                          "type": "string",
+                          "description": "Case this event belongs to"
+                        },
+                        "eventType": {
+                          "enum": [
+                            "submitted",
+                            "assigned",
+                            "reassigned",
+                            "changes_requested",
+                            "resubmitted",
+                            "approved",
+                            "rejected",
+                            "acknowledged",
+                            "cancelled",
+                            "admin_override",
+                            "proposal_stale",
+                            "domain_effect_applied",
+                            "domain_effect_failed",
+                            "scope_refreshed",
+                            "postponed",
+                            "finalized",
+                            "finalization_override",
+                            "reminder_sent",
+                            "escalated"
+                          ],
+                          "type": "string",
+                          "description": "Kind of event"
+                        },
+                        "actorUserId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "User who performed the action, or null for system events / deleted users"
+                        },
+                        "occurredAt": {
+                          "type": "string",
+                          "description": "ISO 8601 timestamp the event occurred"
+                        },
+                        "previousStatus": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Case status before this event"
+                        },
+                        "resultingStatus": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Case status after this event"
+                        },
+                        "reason": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Optional reason or comment supplied by the actor"
+                        },
+                        "metadata": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {},
+                          "description": "Structured, non-executable metadata"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "caseId",
+                        "eventType",
+                        "actorUserId",
+                        "occurredAt",
+                        "previousStatus",
+                        "resultingStatus",
+                        "reason",
+                        "metadata"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "case",
+                    "event"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
     }
   }
 }

@@ -47,6 +47,7 @@ import { createWatchORPCHandler } from './domain/watch/watchOrpc';
 import { createNotificationPreferencesORPCHandler } from './domain/notification/notificationPreferenceOrpc';
 import { createDiscussionORPCHandler } from './domain/discussion/discussionOrpc';
 import { createGovernanceORPCHandler } from './domain/governance/governanceOrpc';
+import { createIntegrationGovernanceORPCHandler } from './domain/governance/integrationGovernanceOrpc';
 import { createGovernanceWorkflowConfigORPCHandler } from './domain/governance/governanceWorkflowConfigOrpc';
 import { createWikiCommentORPCHandler } from './domain/wikiComments/wikiCommentOrpc';
 import { createSearchORPCHandler } from './domain/search/searchOrpc';
@@ -166,6 +167,7 @@ export const createApp = (
   app.use(createWorkspaceRelationSchemaORPCHandler(db));
   app.use(createWorkspaceRelationORPCHandler(db));
   app.use(createIntegrationRelationORPCHandler(db));
+  app.use(createIntegrationGovernanceORPCHandler(db));
   app.use(createWorkspaceEntityORPCHandler(db));
   app.use(createEntitySyncORPCHandler(db));
   app.use(createRelationSyncORPCHandler(db));

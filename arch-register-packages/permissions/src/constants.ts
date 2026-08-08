@@ -128,6 +128,7 @@ export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, Workspace
     'ent.approve',
     'ent.override',
     'ent.external_update',
+    'governance.external',
     'comments',
     'schema.edit',
     'schema.publish'
@@ -152,6 +153,7 @@ export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, Workspace
     'ent.approve',
     'ent.override',
     'ent.external_update',
+    'governance.external',
     'comments',
     'schema.edit',
     'schema.publish'
@@ -262,6 +264,7 @@ export const WORKSPACE_CAPABILITY_GROUPS: Array<{
       { id: 'ent.propose', name: 'Propose entity changes' },
       { id: 'ent.approve', name: 'Approve entity changes' },
       { id: 'ent.override', name: 'Bypass entity approval' },
+      { id: 'governance.external', name: 'Manage external governance workflows' },
       { id: 'comments', name: 'Comment & discuss' }
     ]
   },

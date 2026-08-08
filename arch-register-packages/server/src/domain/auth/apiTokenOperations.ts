@@ -11,7 +11,8 @@ import { recordApiTokenAudit } from './apiTokenAudit';
 
 const EDITOR_CAPABILITIES = new Set<WorkspaceCapability>([
   ...WORKSPACE_ROLE_CAPABILITIES.editor,
-  'ent.external_update'
+  'ent.external_update',
+  'governance.external'
 ]);
 export const MAX_API_TOKENS_PER_WORKSPACE = 10;
 

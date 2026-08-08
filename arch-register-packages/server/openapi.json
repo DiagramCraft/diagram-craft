@@ -439,6 +439,7 @@
                                   "ent.approve",
                                   "ent.override",
                                   "ent.external_update",
+                                  "governance.external",
                                   "comments",
                                   "schema.edit",
                                   "schema.publish"
@@ -956,6 +957,7 @@
                             "ent.approve",
                             "ent.override",
                             "ent.external_update",
+                            "governance.external",
                             "comments",
                             "schema.edit",
                             "schema.publish"
@@ -1047,6 +1049,7 @@
                         "ent.approve",
                         "ent.override",
                         "ent.external_update",
+                        "governance.external",
                         "comments",
                         "schema.edit",
                         "schema.publish"
@@ -1125,6 +1128,7 @@
                           "ent.approve",
                           "ent.override",
                           "ent.external_update",
+                          "governance.external",
                           "comments",
                           "schema.edit",
                           "schema.publish"
@@ -1242,6 +1246,7 @@
                           "ent.approve",
                           "ent.override",
                           "ent.external_update",
+                          "governance.external",
                           "comments",
                           "schema.edit",
                           "schema.publish"

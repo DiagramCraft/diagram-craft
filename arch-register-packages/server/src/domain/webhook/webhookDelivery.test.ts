@@ -6,6 +6,7 @@ import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
 import {
   auditLogToWebhookEvent,
   createWebhookDeliveryHandler,
+  enqueueGovernanceWebhookDeliveries,
   enqueueWebhookDeliveries
 } from './webhookDelivery';
 import { sendWebhookRequest } from './webhookRequest';
@@ -55,6 +56,73 @@ afterEach(() => {
 });
 
 describe('webhook delivery', () => {
+  it('queues matching governance events without applying catalog filters', async () => {
+    const enqueueOneOffRun = vi.fn(async input => ({ ...input }));
+    const governanceWebhook = {
+      ...webhook,
+      event_filter: {
+        operations: ['governance.inbox_item.changes_requested' as const],
+        schema_ids: ['schema-that-does-not-matter']
+      }
+    };
+    const caseRow = {
+      id: 'case-1',
+      workspace: 'ws-1',
+      case_kind: 'entity.change-case',
+      subject_type: 'entity',
+      subject_id: 'entity-1',
+      status: 'completed' as const,
+      outcome: 'request_changes',
+      case_subkind: null,
+      subject_version: null,
+      policy_version: null,
+      initiator_user_id: 'user-1',
+      parent_case_id: null,
+      self_approval_allowed: false,
+      payload: {},
+      created_at: new Date(),
+      due_at: null,
+      completed_at: new Date(),
+      cancelled_at: null,
+      reminder_windows_sent: [],
+      escalated_at: null
+    };
+    const governanceEvent = {
+      id: 'event-1',
+      case_id: 'case-1',
+      workspace: 'ws-1',
+      event_type: 'changes_requested' as const,
+      actor_user_id: 'user-2',
+      occurred_at: new Date('2026-07-15T10:00:00.000Z'),
+      previous_status: 'open',
+      resulting_status: 'completed',
+      reason: 'Please update the proposal',
+      metadata: { assignmentId: 'assignment-1' }
+    };
+    const db = {
+      webhook: { listWebhooks: vi.fn(async () => [governanceWebhook]) },
+      jobs: { enqueueOneOffRun }
+    } as unknown as DatabaseAdapter;
+
+    expect(
+      await enqueueGovernanceWebhookDeliveries(db, caseRow, governanceEvent, true)
+    ).toBe(1);
+    expect(enqueueOneOffRun).toHaveBeenCalledWith(
+      expect.objectContaining({
+        job_type: 'webhook.delivery',
+        payload: expect.objectContaining({
+          event: expect.objectContaining({
+            type: 'governance.inbox_item.changes_requested',
+            governance: expect.objectContaining({
+              case: expect.objectContaining({ external: true }),
+              assignment_id: 'assignment-1'
+            })
+          })
+        })
+      })
+    );
+  });
+
   it('queues relation events only for explicitly enabled relation filters and redacts relation fields', async () => {
     const enqueueOneOffRun = vi.fn(async input => ({ ...input }));
     const relationSchema: FieldGroupSchemaShape = {

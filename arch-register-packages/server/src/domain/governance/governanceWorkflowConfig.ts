@@ -1,9 +1,11 @@
 import { httpAssert } from '../../utils/httpAssert';
+import type { DatabaseAdapter } from '../../db/database';
 import {
   documentStatusExtensionSchema,
   governanceWorkflowConfigSchema,
   type GovernanceWorkflowConfig
 } from '@arch-register/api-types/governanceCaseConfigSchemas';
+import { defaultWorkflowConfigForCaseKind, type GovernanceRegistry } from './governanceRegistry';
 
 export type GovernanceWorkflowConfigRowLike = {
   case_subkind: string | null;
@@ -15,6 +17,23 @@ export type ResolvedGovernanceWorkflowConfig = {
   enabled: boolean;
   config: GovernanceWorkflowConfig;
   source: 'default' | 'workspace' | 'subkind';
+};
+
+export const resolveGovernanceWorkflowMode = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  caseKind: string,
+  caseSubkind: string | null,
+  registry: GovernanceRegistry
+) => {
+  const kindConfig = registry.get(caseKind);
+  const rows = await db.governanceCaseConfig.listCaseConfigForKind(workspace, caseKind);
+  return resolveGovernanceWorkflowConfig(
+    rows,
+    caseSubkind,
+    kindConfig ? defaultWorkflowConfigForCaseKind(kindConfig) : { extensions: {} },
+    kindConfig?.workflowConfig?.supportsWorkspaceScope !== false
+  );
 };
 
 const firstLegacyApproval = (statuses: Record<string, unknown>) => {
@@ -148,6 +167,7 @@ const mergeGovernanceWorkflowConfig = (
   base: GovernanceWorkflowConfig,
   override: GovernanceWorkflowConfig
 ): GovernanceWorkflowConfig => ({
+  external: override.external ?? base.external,
   approvals: override.approvals
     ? {
         ...base.approvals,
