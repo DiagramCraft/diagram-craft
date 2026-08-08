@@ -13,6 +13,8 @@ import type {
   SharedFieldGroupLink
 } from '@arch-register/api-types/schemaContract';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
+import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
+import { isEntityRelationField } from '@arch-register/api-types/relationSchemaContract';
 import type { DocumentAiAction, DocumentField } from '@arch-register/api-types/documentContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -26,12 +28,21 @@ import {
   type SchemaTemplate,
   type SymbolicField
 } from '../catalog/schemaTemplates';
-import type { SchemaDbCreate, WorkspaceEnumDbCreate } from '../catalog/db/catalogDatabase';
+import type {
+  SchemaDbCreate,
+  SharedFieldGroupDbCreate,
+  WorkspaceEnumDbCreate
+} from '../catalog/db/catalogDatabase';
+import type {
+  RelationSchemaDbCreate,
+  RelationSchemaGroupDbShape
+} from '../catalog/db/relationDatabase';
 import {
   buildSchemaChangeSummary,
   findUnresolvedFieldGroupReferences,
   assertResolvedFieldGroupReferences
 } from '../catalog/schemaHelpers';
+import { buildRelationSchemaChangeSummary } from '../catalog/relationSchemaHelpers';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 import { getSchemaGovernancePoliciesBySchema } from '../governance/schemaGovernancePolicy';
 import { writeAudit } from '../audit/db/auditLogging';
@@ -75,6 +86,35 @@ type ImportableDocumentType = {
   icon: string | null;
 };
 
+type ImportableRelationSchema = {
+  id: string;
+  name: string;
+  description: string;
+  in_schema_ids: string[];
+  out_schema_ids: string[];
+  fields: RelationField[];
+  groups: RelationSchemaGroupDbShape[];
+  shared_field_group_links: SharedFieldGroupLink[];
+  shared_field_groups: Array<{
+    id: string;
+    name: string;
+    description: string | null;
+    fields: SchemaField[];
+    sort_order: number;
+  }>;
+  color: string | null;
+  icon: string | null;
+  relation_approval_policy: 'required' | 'disabled';
+};
+
+type ImportableFieldGroup = {
+  id: string;
+  name: string;
+  description: string | null;
+  fields: SchemaField[];
+  sort_order: number;
+};
+
 type DefinitionSource = {
   kind: DefinitionImportSource['kind'];
   id: string;
@@ -83,6 +123,8 @@ type DefinitionSource = {
   schemas: ImportableSchema[];
   enums: ImportableEnum[];
   documentTypes: ImportableDocumentType[];
+  relationSchemas: ImportableRelationSchema[];
+  fieldGroups: ImportableFieldGroup[];
   teamNames: Record<string, string>;
 };
 
@@ -93,8 +135,10 @@ type DefinitionImportPlan = {
   schemas: ImportableSchema[];
   enums: ImportableEnum[];
   documentTypes: ImportableDocumentType[];
+  relationSchemas: ImportableRelationSchema[];
+  fieldGroups: ImportableFieldGroup[];
   conflicts: Array<{
-    kind: 'schema' | 'enum' | 'documentType';
+    kind: 'schema' | 'enum' | 'documentType' | 'relationSchema' | 'fieldGroup';
     id: string;
     name: string;
     existingName: string;
@@ -187,6 +231,36 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
     color: documentType.color,
     icon: documentType.icon
   })),
+  relationSchemas: (template.relationSchemas ?? []).map(relationSchema => ({
+    id: relationSchema.symId,
+    name: relationSchema.name,
+    description: relationSchema.description,
+    in_schema_ids: relationSchema.inSymSchemaIds,
+    out_schema_ids: relationSchema.outSymSchemaIds,
+    fields: relationSchema.fields.map(
+      field =>
+        ({
+          id: field.id,
+          name: field.name,
+          type: field.type,
+          enumId: field.enumId,
+          requirementLevel: field.requirementLevel
+        }) as RelationField
+    ),
+    groups: [],
+    shared_field_group_links: [],
+    shared_field_groups: [],
+    color: relationSchema.color,
+    icon: relationSchema.icon,
+    relation_approval_policy: 'disabled' as const
+  })),
+  fieldGroups: (template.fieldGroups ?? []).map((fieldGroup, index) => ({
+    id: fieldGroup.id,
+    name: fieldGroup.name,
+    description: fieldGroup.description ?? null,
+    fields: fieldGroup.fields.map(toCanonicalField),
+    sort_order: index
+  })),
   teamNames: {}
 });
 
@@ -196,15 +270,23 @@ const sourceFromWorkspace = async (
 ): Promise<DefinitionSource> => {
   const workspaceRow = await db.workspace.getWorkspace(workspace);
   httpAssert.present(workspaceRow, { status: 404, message: `Workspace '${workspace}' not found` });
-  const [schemas, enums, documentTypes, teams, sharedFieldGroups, policiesBySchema] =
-    await Promise.all([
-      db.catalog.listSchemas(workspace),
-      db.catalog.listEnums(workspace),
-      db.document.listDocumentTypes(workspace, true),
-      db.workspace.listTeams(workspace),
-      db.catalog.listSharedFieldGroups(workspace),
-      getSchemaGovernancePoliciesBySchema(db, workspace)
-    ]);
+  const [
+    schemas,
+    enums,
+    documentTypes,
+    teams,
+    sharedFieldGroups,
+    policiesBySchema,
+    relationSchemas
+  ] = await Promise.all([
+    db.catalog.listSchemas(workspace),
+    db.catalog.listEnums(workspace),
+    db.document.listDocumentTypes(workspace, true),
+    db.workspace.listTeams(workspace),
+    db.catalog.listSharedFieldGroups(workspace),
+    getSchemaGovernancePoliciesBySchema(db, workspace),
+    db.relation.listRelationSchemas(workspace)
+  ]);
   const teamNames = new Map(teams.map(team => [team.id, team.name]));
 
   return {
@@ -249,6 +331,30 @@ const sourceFromWorkspace = async (
         color: documentType.color,
         icon: documentType.icon
       })),
+    relationSchemas: relationSchemas.map(schema => ({
+      id: schema.id,
+      name: schema.name,
+      description: schema.description,
+      in_schema_ids: schema.in_schema_ids,
+      out_schema_ids: schema.out_schema_ids,
+      fields: schema.fields,
+      groups: schema.groups ?? [],
+      shared_field_group_links: schema.shared_field_group_links ?? [],
+      shared_field_groups: (schema.shared_field_group_links ?? []).flatMap(link => {
+        const group = sharedFieldGroups.find(item => item.id === link.groupId);
+        return group ? [{ ...group, fields: group.fields }] : [];
+      }),
+      color: schema.color,
+      icon: schema.icon,
+      relation_approval_policy: schema.relation_approval_policy ?? 'disabled'
+    })),
+    fieldGroups: sharedFieldGroups.map(group => ({
+      id: group.id,
+      name: group.name,
+      description: group.description,
+      fields: group.fields,
+      sort_order: group.sort_order
+    })),
     teamNames: Object.fromEntries(teamNames)
   };
 };
@@ -297,8 +403,19 @@ const buildPlan = async (
   const selectedSchemaIds = new Set(selection.schemas);
   const selectedEnumIds = new Set(selection.enums);
   const selectedDocumentTypeIds = new Set(selection.documentTypes);
-  if (selectedSchemaIds.size + selectedEnumIds.size + selectedDocumentTypeIds.size === 0) {
-    errors.push('Select at least one schema, enum, or active document type');
+  const selectedRelationSchemaIds = new Set(selection.relationSchemas);
+  const selectedFieldGroupIds = new Set(selection.fieldGroups);
+  if (
+    selectedSchemaIds.size +
+      selectedEnumIds.size +
+      selectedDocumentTypeIds.size +
+      selectedRelationSchemaIds.size +
+      selectedFieldGroupIds.size ===
+    0
+  ) {
+    errors.push(
+      'Select at least one schema, enum, active document type, relation schema, or field group'
+    );
   }
 
   const schemaById = new Map(
@@ -322,42 +439,99 @@ const buildPlan = async (
       { ...type, name: renameByKey.get(renameKey('documentType', type.id)) ?? type.name }
     ])
   );
+  const relationSchemaById = new Map(
+    sourceData.relationSchemas.map(schema => [
+      schema.id,
+      { ...schema, name: renameByKey.get(renameKey('relationSchema', schema.id)) ?? schema.name }
+    ])
+  );
+  const fieldGroupById = new Map(
+    sourceData.fieldGroups.map(group => [
+      group.id,
+      { ...group, name: renameByKey.get(renameKey('fieldGroup', group.id)) ?? group.name }
+    ])
+  );
   for (const rename of renames) {
     const known =
       (rename.kind === 'schema' && schemaById.has(rename.id)) ||
       (rename.kind === 'enum' && enumById.has(rename.id)) ||
-      (rename.kind === 'documentType' && documentTypeById.has(rename.id));
+      (rename.kind === 'documentType' && documentTypeById.has(rename.id)) ||
+      (rename.kind === 'relationSchema' && relationSchemaById.has(rename.id)) ||
+      (rename.kind === 'fieldGroup' && fieldGroupById.has(rename.id));
     if (!known) errors.push(`Cannot rename unknown ${rename.kind} '${rename.id}'`);
   }
   const resolvedSchemaIds = new Set<string>();
+  const resolvedRelationSchemaIds = new Set<string>();
   const resolvedEnumIds = new Set(selectedEnumIds);
   const schemaQueue = [...selectedSchemaIds];
+  const relationSchemaQueue = [...selectedRelationSchemaIds];
 
-  while (schemaQueue.length > 0) {
-    const schemaId = schemaQueue.shift()!;
-    if (resolvedSchemaIds.has(schemaId)) continue;
-    const schema = schemaById.get(schemaId);
-    if (!schema) {
-      errors.push(`Schema '${schemaId}' was not found in the source`);
-      continue;
-    }
-    resolvedSchemaIds.add(schemaId);
-    for (const field of schema.fields) {
-      if (isReferenceOrContainmentField(field)) {
-        if (!schemaById.has(field.schemaId)) {
-          errors.push(`Schema '${schema.name}' references missing schema '${field.schemaId}'`);
-        } else {
-          schemaQueue.push(field.schemaId);
-        }
-      } else if (field.type === 'select') {
-        if (!enumById.has(field.enumId)) {
-          errors.push(`Schema '${schema.name}' references missing enum '${field.enumId}'`);
-        } else {
-          resolvedEnumIds.add(field.enumId);
+  do {
+    while (schemaQueue.length > 0) {
+      const schemaId = schemaQueue.shift()!;
+      if (resolvedSchemaIds.has(schemaId)) continue;
+      const schema = schemaById.get(schemaId);
+      if (!schema) {
+        errors.push(`Schema '${schemaId}' was not found in the source`);
+        continue;
+      }
+      resolvedSchemaIds.add(schemaId);
+      for (const field of schema.fields) {
+        if (isReferenceOrContainmentField(field)) {
+          if (!schemaById.has(field.schemaId)) {
+            errors.push(`Schema '${schema.name}' references missing schema '${field.schemaId}'`);
+          } else {
+            schemaQueue.push(field.schemaId);
+          }
+        } else if (field.type === 'select') {
+          if (!enumById.has(field.enumId)) {
+            errors.push(`Schema '${schema.name}' references missing enum '${field.enumId}'`);
+          } else {
+            resolvedEnumIds.add(field.enumId);
+          }
         }
       }
     }
-  }
+
+    while (relationSchemaQueue.length > 0) {
+      const relationSchemaId = relationSchemaQueue.shift()!;
+      if (resolvedRelationSchemaIds.has(relationSchemaId)) continue;
+      const relationSchema = relationSchemaById.get(relationSchemaId);
+      if (!relationSchema) {
+        errors.push(`Relation schema '${relationSchemaId}' was not found in the source`);
+        continue;
+      }
+      resolvedRelationSchemaIds.add(relationSchemaId);
+      for (const schemaId of [...relationSchema.in_schema_ids, ...relationSchema.out_schema_ids]) {
+        if (!schemaById.has(schemaId)) {
+          errors.push(
+            `Relation schema '${relationSchema.name}' references missing schema '${schemaId}'`
+          );
+        } else {
+          schemaQueue.push(schemaId);
+        }
+      }
+      for (const field of relationSchema.fields) {
+        if (isEntityRelationField(field)) {
+          if (!schemaById.has(field.schemaId)) {
+            errors.push(
+              `Relation schema '${relationSchema.name}' references missing schema '${field.schemaId}'`
+            );
+          } else {
+            schemaQueue.push(field.schemaId);
+          }
+        } else if (field.type === 'select') {
+          if (!enumById.has(field.enumId)) {
+            errors.push(
+              `Relation schema '${relationSchema.name}' references missing enum '${field.enumId}'`
+            );
+          } else {
+            resolvedEnumIds.add(field.enumId);
+          }
+        }
+      }
+    }
+  } while (schemaQueue.length > 0 || relationSchemaQueue.length > 0);
 
   for (const enumId of resolvedEnumIds) {
     if (!enumById.has(enumId)) errors.push(`Enum '${enumId}' was not found in the source`);
@@ -366,11 +540,21 @@ const buildPlan = async (
     if (!documentTypeById.has(documentTypeId))
       errors.push(`Active document type '${documentTypeId}' was not found in the source`);
   }
+  for (const fieldGroupId of selectedFieldGroupIds) {
+    if (!fieldGroupById.has(fieldGroupId))
+      errors.push(`Field group '${fieldGroupId}' was not found in the source`);
+  }
 
   const schemas = [...schemaById.values()].filter(schema => resolvedSchemaIds.has(schema.id));
   const enums = [...enumById.values()].filter(enumeration => resolvedEnumIds.has(enumeration.id));
   const documentTypes = [...documentTypeById.values()].filter(type =>
     selectedDocumentTypeIds.has(type.id)
+  );
+  const relationSchemas = [...relationSchemaById.values()].filter(schema =>
+    resolvedRelationSchemaIds.has(schema.id)
+  );
+  const fieldGroups = [...fieldGroupById.values()].filter(group =>
+    selectedFieldGroupIds.has(group.id)
   );
 
   for (const schema of schemas) {
@@ -393,10 +577,35 @@ const buildPlan = async (
     }
   }
 
-  const [existingSchemas, existingEnums, existingDocumentTypes] = await Promise.all([
+  // Relation fields have no 'derived' type by design (relationSchemaContract.ts), so
+  // validateDerivedFieldGroupAccess is structurally inapplicable here and intentionally skipped.
+  for (const relationSchema of relationSchemas) {
+    const unresolved = findUnresolvedFieldGroupReferences(
+      relationSchema.fields,
+      relationSchema.groups
+    );
+    if (unresolved.length > 0) {
+      errors.push(
+        ...unresolved.map(
+          reference =>
+            `Relation schema '${relationSchema.name}' field '${reference.fieldName}' references missing field group '${reference.groupId}'`
+        )
+      );
+    }
+  }
+
+  const [
+    existingSchemas,
+    existingEnums,
+    existingDocumentTypes,
+    existingRelationSchemas,
+    existingFieldGroups
+  ] = await Promise.all([
     db.catalog.listSchemas(targetWorkspace),
     db.catalog.listEnums(targetWorkspace),
-    db.document.listDocumentTypes(targetWorkspace, true)
+    db.document.listDocumentTypes(targetWorkspace, true),
+    db.relation.listRelationSchemas(targetWorkspace),
+    db.catalog.listSharedFieldGroups(targetWorkspace)
   ]);
   const conflicts: DefinitionImportPlan['conflicts'] = [];
   const checkNames = (
@@ -418,6 +627,8 @@ const buildPlan = async (
   checkNames('schema', schemas, existingSchemas);
   checkNames('enum', enums, existingEnums);
   checkNames('documentType', documentTypes, existingDocumentTypes);
+  checkNames('relationSchema', relationSchemas, existingRelationSchemas);
+  checkNames('fieldGroup', fieldGroups, existingFieldGroups);
 
   const usedPrefixes = new Set(existingSchemas.map(schema => lower(schema.key_prefix)));
   const keyPrefixRemaps: DefinitionImportPlan['keyPrefixRemaps'] = [];
@@ -464,6 +675,18 @@ const buildPlan = async (
       dependency: false,
       definition: documentType
     })),
+    relationSchemas: relationSchemas.map(schema => ({
+      id: schema.id,
+      name: schema.name,
+      dependency: !selectedRelationSchemaIds.has(schema.id),
+      definition: schema
+    })),
+    fieldGroups: fieldGroups.map(group => ({
+      id: group.id,
+      name: group.name,
+      dependency: false,
+      definition: group
+    })),
     keyPrefixRemaps,
     errors,
     conflicts
@@ -475,6 +698,8 @@ const buildPlan = async (
     schemas: resolvedSchemas,
     enums,
     documentTypes,
+    relationSchemas,
+    fieldGroups,
     conflicts,
     keyPrefixRemaps,
     errors,
@@ -504,6 +729,18 @@ const toPreview = (plan: DefinitionImportPlan): DefinitionImportPreview => ({
     dependency: false,
     definition: documentType
   })),
+  relationSchemas: plan.relationSchemas.map(schema => ({
+    id: schema.id,
+    name: schema.name,
+    dependency: !plan.selection.relationSchemas.includes(schema.id),
+    definition: schema
+  })),
+  fieldGroups: plan.fieldGroups.map(group => ({
+    id: group.id,
+    name: group.name,
+    dependency: false,
+    definition: group
+  })),
   conflicts: plan.conflicts,
   keyPrefixRemaps: plan.keyPrefixRemaps,
   errors: plan.errors,
@@ -517,7 +754,9 @@ const sourceOption = (source: DefinitionSource) => ({
   description: source.description,
   schemas: source.schemas.map(schema => ({ id: schema.id, name: schema.name })),
   enums: source.enums.map(enumeration => ({ id: enumeration.id, name: enumeration.name })),
-  documentTypes: source.documentTypes.map(type => ({ id: type.id, name: type.name }))
+  documentTypes: source.documentTypes.map(type => ({ id: type.id, name: type.name })),
+  relationSchemas: source.relationSchemas.map(schema => ({ id: schema.id, name: schema.name })),
+  fieldGroups: source.fieldGroups.map(group => ({ id: group.id, name: group.name }))
 });
 
 const canAdminister = async (db: DatabaseAdapter, workspace: string, event: AuthenticatedEvent) => {
@@ -608,6 +847,8 @@ export const executeDefinitionImport = async (
           schemas: input.schemas,
           enums: input.enums,
           documentTypes: input.documentTypes,
+          relationSchemas: input.relationSchemas,
+          fieldGroups: input.fieldGroups,
           renames: input.renames,
           keyPrefixRemaps: input.keyPrefixRemaps
         }) ===
@@ -615,6 +856,8 @@ export const executeDefinitionImport = async (
             schemas: expected.schemas,
             enums: expected.enums,
             documentTypes: expected.documentTypes,
+            relationSchemas: expected.relationSchemas,
+            fieldGroups: expected.fieldGroups,
             renames: expected.renames,
             keyPrefixRemaps: expected.keyPrefixRemaps
           }),
@@ -623,11 +866,22 @@ export const executeDefinitionImport = async (
 
       const schemaIdMap = new Map(plan.schemas.map(schema => [schema.id, randomUUID()]));
       const enumIdMap = new Map(plan.enums.map(enumeration => [enumeration.id, randomUUID()]));
-      const sharedFieldGroupMap = new Map(
-        plan.schemas
-          .flatMap(schema => schema.shared_field_groups)
-          .map(group => [group.id, randomUUID()])
+      const relationSchemaIdMap = new Map(
+        plan.relationSchemas.map(schema => [schema.id, randomUUID()])
       );
+      const sharedGroupSources = new Map<string, ImportableFieldGroup>();
+      for (const schema of plan.schemas) {
+        for (const group of schema.shared_field_groups) sharedGroupSources.set(group.id, group);
+      }
+      for (const relationSchema of plan.relationSchemas) {
+        for (const group of relationSchema.shared_field_groups)
+          sharedGroupSources.set(group.id, group);
+      }
+      for (const group of plan.fieldGroups) sharedGroupSources.set(group.id, group);
+      const sharedFieldGroupMap = new Map(
+        [...sharedGroupSources.keys()].map(id => [id, randomUUID()])
+      );
+      const selectedFieldGroupIdsForAudit = new Set(input.selection.fieldGroups);
       const targetTeams = await db.workspace.listTeams(ws);
       const targetTeamByName = new Map(targetTeams.map(team => [lower(team.name), team.id]));
       const teamIdMap = new Map(
@@ -653,16 +907,9 @@ export const executeDefinitionImport = async (
           await tx.catalog.createEnum(row);
         }
 
-        const sharedGroups = new Map<
-          string,
-          (typeof plan.schemas)[number]['shared_field_groups'][number]
-        >();
-        for (const schema of plan.schemas) {
-          for (const group of schema.shared_field_groups) sharedGroups.set(group.id, group);
-        }
-        for (const group of sharedGroups.values()) {
-          await tx.catalog.createSharedFieldGroup({
-            id: sharedFieldGroupMap.get(group.id)!,
+        for (const [sourceId, group] of sharedGroupSources) {
+          const row: SharedFieldGroupDbCreate = {
+            id: sharedFieldGroupMap.get(sourceId)!,
             workspace: ws,
             name: group.name,
             description: group.description,
@@ -670,7 +917,22 @@ export const executeDefinitionImport = async (
             sort_order: group.sort_order,
             created_at: now,
             updated_at: now
-          });
+          };
+          await tx.catalog.createSharedFieldGroup(row);
+          if (selectedFieldGroupIdsForAudit.has(sourceId)) {
+            await writeAudit(tx, {
+              userId: authCtx.userId,
+              workspace: ws,
+              operation: 'create',
+              entityType: 'workspace_field_group',
+              entityId: row.id,
+              entityName: row.name,
+              changes: {
+                new: { ...row, created_at: now.toISOString(), updated_at: now.toISOString() }
+              },
+              metadata: { importedFrom: input.source }
+            });
+          }
         }
 
         for (const schema of plan.schemas) {
@@ -754,6 +1016,84 @@ export const executeDefinitionImport = async (
           });
         }
 
+        for (const relationSchema of plan.relationSchemas) {
+          const fields = relationSchema.fields.map(field => {
+            if (field.groupId && sharedFieldGroupMap.has(field.groupId)) {
+              return { ...field, groupId: sharedFieldGroupMap.get(field.groupId)! };
+            }
+            if (isEntityRelationField(field)) {
+              return { ...field, schemaId: schemaIdMap.get(field.schemaId) ?? field.schemaId };
+            }
+            if (field.type === 'select') {
+              return { ...field, enumId: enumIdMap.get(field.enumId) ?? field.enumId };
+            }
+            return field;
+          }) as RelationField[];
+          const groups = relationSchema.groups.map(group => ({
+            ...group,
+            id: sharedFieldGroupMap.get(group.id) ?? group.id,
+            accessControl: group.accessControl
+              ? {
+                  teamIds: group.accessControl.teamIds.map(id => teamIdMap.get(id) ?? id)
+                }
+              : undefined
+          }));
+          // Relation fields have no 'derived' type by design, so validateDerivedFieldGroupAccess
+          // (which only matters for derived fields) is intentionally not called here.
+          assertResolvedFieldGroupReferences(fields, groups);
+
+          const row: RelationSchemaDbCreate = {
+            id: relationSchemaIdMap.get(relationSchema.id)!,
+            workspace: ws,
+            name: relationSchema.name,
+            description: relationSchema.description,
+            in_schema_ids: relationSchema.in_schema_ids.map(id => schemaIdMap.get(id) ?? id),
+            out_schema_ids: relationSchema.out_schema_ids.map(id => schemaIdMap.get(id) ?? id),
+            fields,
+            groups,
+            shared_field_group_links: relationSchema.shared_field_group_links.map(link => ({
+              ...link,
+              groupId: sharedFieldGroupMap.get(link.groupId) ?? link.groupId,
+              teamIds: link.teamIds?.map(id => teamIdMap.get(id) ?? id)
+            })),
+            color: relationSchema.color,
+            icon: relationSchema.icon,
+            relation_approval_policy: relationSchema.relation_approval_policy,
+            created_at: now,
+            updated_at: now
+          };
+          await tx.relation.createRelationSchema(row);
+          await tx.relation.createRelationSchemaVersion({
+            id: randomUUID(),
+            workspace: ws,
+            schema_id: row.id,
+            version: 1,
+            name: row.name,
+            description: row.description,
+            in_schema_ids: row.in_schema_ids,
+            out_schema_ids: row.out_schema_ids,
+            fields,
+            groups,
+            color: row.color,
+            icon: row.icon,
+            change_summary: buildRelationSchemaChangeSummary(null, fields),
+            created_by: authCtx.userId,
+            created_at: now
+          });
+          await writeAudit(tx, {
+            userId: authCtx.userId,
+            workspace: ws,
+            operation: 'create',
+            entityType: 'relation_schema',
+            entityId: row.id,
+            entityName: row.name,
+            changes: {
+              new: { ...row, created_at: now.toISOString(), updated_at: now.toISOString() }
+            },
+            metadata: { importedFrom: input.source }
+          });
+        }
+
         for (const documentType of plan.documentTypes) {
           const id = randomUUID();
           await tx.document.createDocumentType({
@@ -789,7 +1129,9 @@ export const executeDefinitionImport = async (
       return {
         schemas: plan.schemas.length,
         enums: plan.enums.length,
-        documentTypes: plan.documentTypes.length
+        documentTypes: plan.documentTypes.length,
+        relationSchemas: plan.relationSchemas.length,
+        fieldGroups: plan.fieldGroups.length
       };
     }
   );

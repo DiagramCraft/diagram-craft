@@ -38184,6 +38184,42 @@
                             "name"
                           ]
                         }
+                      },
+                      "relationSchemas": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        }
+                      },
+                      "fieldGroups": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ]
+                        }
                       }
                     },
                     "required": [
@@ -38193,7 +38229,9 @@
                       "description",
                       "schemas",
                       "enums",
-                      "documentTypes"
+                      "documentTypes",
+                      "relationSchemas",
+                      "fieldGroups"
                     ]
                   }
                 }
@@ -38207,7 +38245,7 @@
       "post": {
         "operationId": "workspaces.definitionImportPreview",
         "summary": "Preview definition import",
-        "description": "Resolves selected schema, enum, and document-type dependencies and conflicts.",
+        "description": "Resolves selected schema, enum, document-type, relation-schema, and field-group dependencies and conflicts.",
         "tags": [
           "Workspaces",
           "Workspaces"
@@ -38285,12 +38323,26 @@
                         "items": {
                           "type": "string"
                         }
+                      },
+                      "relationSchemas": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "fieldGroups": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
                       }
                     },
                     "required": [
                       "schemas",
                       "enums",
-                      "documentTypes"
+                      "documentTypes",
+                      "relationSchemas",
+                      "fieldGroups"
                     ]
                   },
                   "renames": {
@@ -38302,7 +38354,9 @@
                           "enum": [
                             "schema",
                             "enum",
-                            "documentType"
+                            "documentType",
+                            "relationSchema",
+                            "fieldGroup"
                           ],
                           "type": "string"
                         },
@@ -38396,12 +38450,26 @@
                           "items": {
                             "type": "string"
                           }
+                        },
+                        "relationSchemas": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
+                        },
+                        "fieldGroups": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          }
                         }
                       },
                       "required": [
                         "schemas",
                         "enums",
-                        "documentTypes"
+                        "documentTypes",
+                        "relationSchemas",
+                        "fieldGroups"
                       ]
                     },
                     "renames": {
@@ -38413,7 +38481,9 @@
                             "enum": [
                               "schema",
                               "enum",
-                              "documentType"
+                              "documentType",
+                              "relationSchema",
+                              "fieldGroup"
                             ],
                             "type": "string"
                           },
@@ -38523,6 +38593,66 @@
                         ]
                       }
                     },
+                    "relationSchemas": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "dependency": {
+                            "type": "boolean"
+                          },
+                          "definition": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {}
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "dependency",
+                          "definition"
+                        ]
+                      }
+                    },
+                    "fieldGroups": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "dependency": {
+                            "type": "boolean"
+                          },
+                          "definition": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {}
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "dependency",
+                          "definition"
+                        ]
+                      }
+                    },
                     "conflicts": {
                       "type": "array",
                       "items": {
@@ -38532,7 +38662,9 @@
                             "enum": [
                               "schema",
                               "enum",
-                              "documentType"
+                              "documentType",
+                              "relationSchema",
+                              "fieldGroup"
                             ],
                             "type": "string"
                           },
@@ -38597,6 +38729,8 @@
                     "schemas",
                     "enums",
                     "documentTypes",
+                    "relationSchemas",
+                    "fieldGroups",
                     "conflicts",
                     "keyPrefixRemaps",
                     "errors",
@@ -38691,12 +38825,26 @@
                         "items": {
                           "type": "string"
                         }
+                      },
+                      "relationSchemas": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
+                      },
+                      "fieldGroups": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        }
                       }
                     },
                     "required": [
                       "schemas",
                       "enums",
-                      "documentTypes"
+                      "documentTypes",
+                      "relationSchemas",
+                      "fieldGroups"
                     ]
                   },
                   "renames": {
@@ -38708,7 +38856,9 @@
                           "enum": [
                             "schema",
                             "enum",
-                            "documentType"
+                            "documentType",
+                            "relationSchema",
+                            "fieldGroup"
                           ],
                           "type": "string"
                         },
@@ -38819,6 +38969,66 @@
                       ]
                     }
                   },
+                  "relationSchemas": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "dependency": {
+                          "type": "boolean"
+                        },
+                        "definition": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "dependency",
+                        "definition"
+                      ]
+                    }
+                  },
+                  "fieldGroups": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "dependency": {
+                          "type": "boolean"
+                        },
+                        "definition": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {}
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "dependency",
+                        "definition"
+                      ]
+                    }
+                  },
                   "keyPrefixRemaps": {
                     "type": "array",
                     "items": {
@@ -38858,6 +39068,8 @@
                   "schemas",
                   "enums",
                   "documentTypes",
+                  "relationSchemas",
+                  "fieldGroups",
                   "keyPrefixRemaps",
                   "fingerprint",
                   "confirmed"
@@ -38888,12 +39100,24 @@
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
+                    },
+                    "relationSchemas": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
+                    },
+                    "fieldGroups": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
                     "schemas",
                     "enums",
-                    "documentTypes"
+                    "documentTypes",
+                    "relationSchemas",
+                    "fieldGroups"
                   ]
                 }
               }
