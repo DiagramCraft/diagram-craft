@@ -66465,6 +66465,7 @@
                           "matrix",
                           "explore",
                           "bubble",
+                          "heatmap",
                           "map",
                           "diff",
                           "graph"
@@ -68556,6 +68557,43 @@
                                 ],
                                 "description": "Configuration for bubble view"
                               },
+                              "heatmap": {
+                                "type": "object",
+                                "properties": {
+                                  "likelihoodFieldId": {
+                                    "type": "string",
+                                    "description": "Field identifier mapped to the likelihood axis"
+                                  },
+                                  "impactFieldId": {
+                                    "type": "string",
+                                    "description": "Field identifier mapped to the impact axis"
+                                  },
+                                  "buckets": {
+                                    "type": "integer",
+                                    "minimum": 2,
+                                    "maximum": 10,
+                                    "default": 5,
+                                    "description": "Number of equal-width bands used for a numeric axis (ignored for select fields)"
+                                  },
+                                  "colorFieldId": {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "null"
+                                      }
+                                    ],
+                                    "description": "Optional numeric field averaged per cell to drive cell colour instead of grid position"
+                                  }
+                                },
+                                "required": [
+                                  "likelihoodFieldId",
+                                  "impactFieldId",
+                                  "colorFieldId"
+                                ],
+                                "description": "Configuration for heat-map view"
+                              },
                               "map": {
                                 "type": "object",
                                 "properties": {
@@ -68832,6 +68870,7 @@
                       "matrix",
                       "explore",
                       "bubble",
+                      "heatmap",
                       "map",
                       "diff",
                       "graph"
@@ -70699,6 +70738,43 @@
                             ],
                             "description": "Configuration for bubble view"
                           },
+                          "heatmap": {
+                            "type": "object",
+                            "properties": {
+                              "likelihoodFieldId": {
+                                "type": "string",
+                                "description": "Field identifier mapped to the likelihood axis"
+                              },
+                              "impactFieldId": {
+                                "type": "string",
+                                "description": "Field identifier mapped to the impact axis"
+                              },
+                              "buckets": {
+                                "type": "integer",
+                                "minimum": 2,
+                                "maximum": 10,
+                                "default": 5,
+                                "description": "Number of equal-width bands used for a numeric axis (ignored for select fields)"
+                              },
+                              "colorFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Optional numeric field averaged per cell to drive cell colour instead of grid position"
+                              }
+                            },
+                            "required": [
+                              "likelihoodFieldId",
+                              "impactFieldId",
+                              "colorFieldId"
+                            ],
+                            "description": "Configuration for heat-map view"
+                          },
                           "map": {
                             "type": "object",
                             "properties": {
@@ -70945,6 +71021,7 @@
                         "matrix",
                         "explore",
                         "bubble",
+                        "heatmap",
                         "map",
                         "diff",
                         "graph"
@@ -73035,6 +73112,43 @@
                                 "colorFieldId"
                               ],
                               "description": "Configuration for bubble view"
+                            },
+                            "heatmap": {
+                              "type": "object",
+                              "properties": {
+                                "likelihoodFieldId": {
+                                  "type": "string",
+                                  "description": "Field identifier mapped to the likelihood axis"
+                                },
+                                "impactFieldId": {
+                                  "type": "string",
+                                  "description": "Field identifier mapped to the impact axis"
+                                },
+                                "buckets": {
+                                  "type": "integer",
+                                  "minimum": 2,
+                                  "maximum": 10,
+                                  "default": 5,
+                                  "description": "Number of equal-width bands used for a numeric axis (ignored for select fields)"
+                                },
+                                "colorFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Optional numeric field averaged per cell to drive cell colour instead of grid position"
+                                }
+                              },
+                              "required": [
+                                "likelihoodFieldId",
+                                "impactFieldId",
+                                "colorFieldId"
+                              ],
+                              "description": "Configuration for heat-map view"
                             },
                             "map": {
                               "type": "object",
@@ -73303,6 +73417,7 @@
                       "matrix",
                       "explore",
                       "bubble",
+                      "heatmap",
                       "map",
                       "diff",
                       "graph"
@@ -75170,6 +75285,43 @@
                             ],
                             "description": "Configuration for bubble view"
                           },
+                          "heatmap": {
+                            "type": "object",
+                            "properties": {
+                              "likelihoodFieldId": {
+                                "type": "string",
+                                "description": "Field identifier mapped to the likelihood axis"
+                              },
+                              "impactFieldId": {
+                                "type": "string",
+                                "description": "Field identifier mapped to the impact axis"
+                              },
+                              "buckets": {
+                                "type": "integer",
+                                "minimum": 2,
+                                "maximum": 10,
+                                "default": 5,
+                                "description": "Number of equal-width bands used for a numeric axis (ignored for select fields)"
+                              },
+                              "colorFieldId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Optional numeric field averaged per cell to drive cell colour instead of grid position"
+                              }
+                            },
+                            "required": [
+                              "likelihoodFieldId",
+                              "impactFieldId",
+                              "colorFieldId"
+                            ],
+                            "description": "Configuration for heat-map view"
+                          },
                           "map": {
                             "type": "object",
                             "properties": {
@@ -75411,6 +75563,7 @@
                         "matrix",
                         "explore",
                         "bubble",
+                        "heatmap",
                         "map",
                         "diff",
                         "graph"
@@ -77501,6 +77654,43 @@
                                 "colorFieldId"
                               ],
                               "description": "Configuration for bubble view"
+                            },
+                            "heatmap": {
+                              "type": "object",
+                              "properties": {
+                                "likelihoodFieldId": {
+                                  "type": "string",
+                                  "description": "Field identifier mapped to the likelihood axis"
+                                },
+                                "impactFieldId": {
+                                  "type": "string",
+                                  "description": "Field identifier mapped to the impact axis"
+                                },
+                                "buckets": {
+                                  "type": "integer",
+                                  "minimum": 2,
+                                  "maximum": 10,
+                                  "default": 5,
+                                  "description": "Number of equal-width bands used for a numeric axis (ignored for select fields)"
+                                },
+                                "colorFieldId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Optional numeric field averaged per cell to drive cell colour instead of grid position"
+                                }
+                              },
+                              "required": [
+                                "likelihoodFieldId",
+                                "impactFieldId",
+                                "colorFieldId"
+                              ],
+                              "description": "Configuration for heat-map view"
                             },
                             "map": {
                               "type": "object",

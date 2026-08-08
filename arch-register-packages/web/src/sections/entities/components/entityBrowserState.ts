@@ -296,6 +296,8 @@ export const pruneAssessmentReferences = (
     if (isAssessmentFieldId(next.yFieldId)) next.yFieldId = '';
     if (isAssessmentFieldId(next.sizeFieldId)) next.sizeFieldId = null;
     if (isAssessmentFieldId(next.colorFieldId)) next.colorFieldId = null;
+    if (isAssessmentFieldId(next.likelihoodFieldId)) next.likelihoodFieldId = '';
+    if (isAssessmentFieldId(next.impactFieldId)) next.impactFieldId = '';
     if (isAssessmentSourcedMetricConfig(next.metricConfig)) next.metricConfig = null;
     prunedViewConfigs[view as BrowserView] = next;
   }
@@ -313,6 +315,7 @@ export const getSavedViewConfig = (view: SavedView): unknown | null => {
   if (view.viewMode === 'matrix') return view.config.matrix ?? null;
   if (view.viewMode === 'explore') return view.config.explore ?? null;
   if (view.viewMode === 'bubble') return view.config.bubble ?? null;
+  if (view.viewMode === 'heatmap') return view.config.heatmap ?? null;
   if (view.viewMode === 'map') return view.config.map ?? null;
   if (view.viewMode === 'table') return view.config.table ?? null;
   if (view.viewMode === 'cards') return view.config.cards ?? null;
@@ -383,6 +386,7 @@ export const toSavedViewConfig = (
     if (view === 'matrix') result.matrix = config;
     if (view === 'explore') result.explore = config;
     if (view === 'bubble') result.bubble = config;
+    if (view === 'heatmap') result.heatmap = config;
     if (view === 'map') result.map = config;
     if (view === 'table') result.table = config;
     if (view === 'cards') result.cards = config;

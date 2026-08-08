@@ -16,6 +16,7 @@ export const browserViewSchema = z
     'matrix',
     'explore',
     'bubble',
+    'heatmap',
     'map',
     'diff',
     'graph'
@@ -104,6 +105,24 @@ export const bubbleViewConfigSchema = z.object({
     })
     .optional()
     .describe('Optional equal x/y quadrant divider and label configuration')
+});
+
+export const heatmapViewConfigSchema = z.object({
+  likelihoodFieldId: z.string().describe('Field identifier mapped to the likelihood axis'),
+  impactFieldId: z.string().describe('Field identifier mapped to the impact axis'),
+  buckets: z
+    .number()
+    .int()
+    .min(2)
+    .max(10)
+    .default(5)
+    .describe('Number of equal-width bands used for a numeric axis (ignored for select fields)'),
+  colorFieldId: z
+    .string()
+    .nullable()
+    .describe(
+      'Optional numeric field averaged per cell to drive cell colour instead of grid position'
+    )
 });
 
 const fieldDisplayConfigShape = {
@@ -217,6 +236,7 @@ const viewConfigSchema = z
     matrix: matrixViewConfigSchema.optional().describe('Configuration for matrix view'),
     explore: exploreViewConfigSchema.optional().describe('Configuration for explore view'),
     bubble: bubbleViewConfigSchema.optional().describe('Configuration for bubble view'),
+    heatmap: heatmapViewConfigSchema.optional().describe('Configuration for heat-map view'),
     map: mapViewConfigSchema.optional().describe('Configuration for map view'),
     graph: graphViewConfigSchema.optional().describe('Configuration for relation graph view')
   })
@@ -461,6 +481,8 @@ export type TreeViewConfig = z.infer<typeof treeViewConfigSchema>;
 export type ExploreViewConfig = z.infer<typeof exploreViewConfigSchema>;
 
 export type BubbleViewConfig = z.infer<typeof bubbleViewConfigSchema>;
+
+export type HeatmapViewConfig = z.infer<typeof heatmapViewConfigSchema>;
 
 export type MapViewConfig = z.infer<typeof mapViewConfigSchema>;
 

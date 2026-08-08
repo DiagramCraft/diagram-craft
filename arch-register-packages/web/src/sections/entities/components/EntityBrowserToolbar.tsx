@@ -146,6 +146,7 @@ export const EntityBrowserToolbar = ({
             { value: 'tree', label: 'Tree' },
             { value: 'radar', label: 'Radar' },
             { value: 'bubble', label: 'Bubble' },
+            { value: 'heatmap', label: 'Heat map' },
             { value: 'timeline', label: 'Timeline' },
             { value: 'matrix', label: 'Matrix' },
             { value: 'explore', label: 'Explore' },

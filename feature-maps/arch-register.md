@@ -211,6 +211,13 @@
           colour in a bubble view, with optional equally split axes and named quadrant labels persisted in saved views
           and wiki embeds.
 
+        - @id:ar.entity-views.heatmap Users can inspect entities in a generic NxN heat-map grid, mapping likelihood
+          and impact to any numeric or select field on the selected schema (not tied to a specific template's field
+          ids); numeric axes split into a configurable number of equal-width bands while select axes use their
+          declared options as bands. Each cell shows the count of matching entities, coloured by grid-position
+          severity by default or by an optional averaged numeric field, and clicking a populated cell opens a list of
+          its entities to navigate to.
+
         - @id:ar.entity-views.map Users can inspect containment hierarchies, including the built-in Vendor-to-Contract
           path, as a nested capability map, colouring boxes by a configurable metric rolled up from descendant entities
           (numeric or currency fields, lifecycle state, or assessment fields), using dominant-option, worst, or

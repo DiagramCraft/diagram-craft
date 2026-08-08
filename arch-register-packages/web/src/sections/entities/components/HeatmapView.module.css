@@ -1,0 +1,243 @@
+/* Screen */
+.screen {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  overflow: hidden;
+  min-height: 0;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}
+
+/* Content */
+.content {
+  padding: 20px 24px;
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+}
+
+/* Config bar */
+.config {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+  flex-wrap: wrap;
+  min-height: 42px;
+}
+
+.axisPill {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: 28px;
+}
+
+.axisKicker {
+  font-size: 9.5px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+  color: var(--base-fg-more-dim);
+  flex-shrink: 0;
+}
+
+.selectWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  padding: 0 6px 0 8px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.select {
+  appearance: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 11.5px;
+  color: var(--base-fg);
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+}
+
+.noFields {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+}
+
+/* Body */
+.body {
+  display: flex;
+  flex-direction: column;
+  flex: 1;
+  min-height: 0;
+  gap: 8px;
+}
+
+.gridWrap {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+}
+
+.grid {
+  display: grid;
+  gap: 2px;
+  padding-top: 4px;
+}
+
+.corner {
+  background: transparent;
+}
+
+.rowGroup {
+  display: contents;
+}
+
+.colHeader,
+.rowHeader {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 10.5px;
+  font-weight: 600;
+  color: var(--base-fg-more-dim);
+  padding: 4px;
+  text-align: center;
+}
+
+.rowHeader {
+  justify-content: flex-end;
+  padding-right: 8px;
+  white-space: nowrap;
+}
+
+.cell {
+  min-width: 56px;
+  min-height: 56px;
+  border: none;
+  border-radius: var(--r);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 14px;
+  font-weight: 700;
+  font-family: var(--font-mono);
+  cursor: pointer;
+}
+
+.cell:disabled {
+  cursor: default;
+  opacity: 0.4;
+}
+
+.cell:not(:disabled):hover {
+  outline: 2px solid var(--base-fg);
+  outline-offset: -2px;
+}
+
+.titleCorner {
+  background: transparent;
+}
+
+.xAxisTitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--base-fg-dim);
+  padding-bottom: 6px;
+  text-align: center;
+}
+
+.yAxisTitle {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding-right: 6px;
+}
+
+.yAxisTitle span {
+  font-size: 11px;
+  font-weight: 700;
+  color: var(--base-fg-dim);
+  white-space: nowrap;
+  writing-mode: vertical-rl;
+  transform: rotate(180deg);
+}
+
+.unmapped {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  flex-shrink: 0;
+}
+
+.legendNote {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  flex-shrink: 0;
+}
+
+/* Cell click popover */
+.cellPopover {
+  width: 260px;
+  max-height: 320px;
+  display: flex;
+  flex-direction: column;
+  padding: 10px 12px;
+  font-family: var(--font-sans);
+}
+
+.cellPopoverHeader {
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+  margin-bottom: 8px;
+  flex-shrink: 0;
+}
+
+.cellPopoverList {
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.cellPopoverItem {
+  display: flex;
+  align-items: center;
+  background: transparent;
+  border: none;
+  text-align: left;
+  padding: 4px 6px;
+  border-radius: var(--r);
+  cursor: pointer;
+}
+
+.cellPopoverItem:hover {
+  background: var(--panel-bg);
+}
+
+.cellPopoverName {
+  font-size: 11.5px;
+  color: var(--base-fg);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}

@@ -10,6 +10,7 @@ import { BubbleView } from './BubbleView';
 import { CardsView } from './CardsView';
 import { EntityDiffView } from './EntityDiffView';
 import { ExploreView } from './ExploreView';
+import { HeatmapView } from './HeatmapView';
 import { MapView } from './MapView';
 import { MatrixView } from './MatrixView';
 import { RadarView } from './RadarView';
@@ -234,6 +235,18 @@ export const EntityBrowserView = ({
     case 'bubble':
       return (
         <BubbleView
+          rows={rows}
+          linkedEntityIds={linkedEntityIds}
+          onEntityClick={onEntityClick}
+          config={activeViewConfig}
+          onConfigChange={onConfigChange}
+          hideToolbar={hideToolbar}
+          joinedAssessment={joinedAssessment}
+        />
+      );
+    case 'heatmap':
+      return (
+        <HeatmapView
           rows={rows}
           linkedEntityIds={linkedEntityIds}
           onEntityClick={onEntityClick}

@@ -13,6 +13,7 @@ export type SharedEntityBrowserSearchParams = {
     | 'matrix'
     | 'explore'
     | 'bubble'
+    | 'heatmap'
     | 'map'
     | 'diff';
   sort?: string;
@@ -44,6 +45,7 @@ const validateSharedEntityBrowserSearch = (
     raw.viewMode === 'matrix' ||
     raw.viewMode === 'explore' ||
     raw.viewMode === 'bubble' ||
+    raw.viewMode === 'heatmap' ||
     raw.viewMode === 'map' ||
     raw.viewMode === 'diff'
       ? raw.viewMode
