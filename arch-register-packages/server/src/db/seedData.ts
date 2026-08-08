@@ -1305,7 +1305,8 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000015',
       workspace: WORKSPACE_ID,
       name: 'Framework',
-      description: 'A compliance framework (e.g. SOC 2, ISO 27001, NIST) with a requirement catalog.',
+      description:
+        'A compliance framework (e.g. SOC 2, ISO 27001, NIST) with a requirement catalog.',
       fields: [
         {
           id: 'framework_kind',

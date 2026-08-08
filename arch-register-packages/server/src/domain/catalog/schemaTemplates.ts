@@ -1573,7 +1573,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       {
         symId: 'framework',
         name: 'Framework',
-        description: 'A compliance framework (e.g. SOC 2, ISO 27001, NIST) with a requirement catalog.',
+        description:
+          'A compliance framework (e.g. SOC 2, ISO 27001, NIST) with a requirement catalog.',
         color: AR_COLOR_BLUE,
         icon: 'book',
         fields: [

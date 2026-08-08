@@ -271,7 +271,9 @@ test.describe('definition import', () => {
     orpc,
     server
   }) => {
-    const target = await orpc.workspaces.create({ body: { name: 'Risk Compliance Import Target' } });
+    const target = await orpc.workspaces.create({
+      body: { name: 'Risk Compliance Import Target' }
+    });
     const sources = await orpc.workspaces.definitionImportSources({
       params: { workspace: target.url_slug }
     });
@@ -280,7 +282,9 @@ test.describe('definition import', () => {
     )!;
     expect(builtin).toBeDefined();
 
-    const relationSchema = builtin.relationSchemas.find(schema => schema.name === 'Risk Mitigation')!;
+    const relationSchema = builtin.relationSchemas.find(
+      schema => schema.name === 'Risk Mitigation'
+    )!;
     expect(relationSchema).toBeDefined();
 
     const preview = await orpc.workspaces.definitionImportPreview({
