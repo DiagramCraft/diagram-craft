@@ -4,6 +4,7 @@ import {
   instantiateTemplateDefinitions,
   SCHEMA_TEMPLATES
 } from './schemaTemplates';
+import { buildDerivedPlan, evaluateDerivedFields } from '../derived/derivedFields';
 
 describe('instantiateTemplate', () => {
   it('preserves date fields in enriched templates', () => {
@@ -181,6 +182,127 @@ describe('instantiateTemplate', () => {
     for (const schemaName of ['API', 'Component', 'System']) {
       const schema = definitions.schemas.find(item => item.name === schemaName);
       expect(schema?.shared_field_group_links).toEqual([{ groupId: fieldGroup?.id }]);
+    }
+  });
+
+  it('materializes the risk-compliance schemas with numeric and derived fields', () => {
+    const definitions = instantiateTemplateDefinitions('ws-1', 'risk-compliance');
+    const risk = definitions.schemas.find(schema => schema.name === 'Risk');
+    const control = definitions.schemas.find(schema => schema.name === 'Control');
+    const framework = definitions.schemas.find(schema => schema.name === 'Framework');
+    const complianceRequirement = definitions.schemas.find(
+      schema => schema.name === 'Compliance Requirement'
+    );
+
+    expect(risk).toBeDefined();
+    expect(control).toBeDefined();
+    expect(framework).toBeDefined();
+    expect(complianceRequirement).toBeDefined();
+
+    expect(risk?.fields).toContainEqual({
+      id: 'likelihood',
+      name: 'Likelihood',
+      type: 'number',
+      min: 1,
+      max: 5
+    });
+    expect(risk?.fields).toContainEqual({
+      id: 'impact',
+      name: 'Impact',
+      type: 'number',
+      min: 1,
+      max: 5
+    });
+    expect(risk?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'inherent_risk_score',
+        type: 'derived',
+        requirementLevel: 'optional',
+        expression: "field('likelihood') * field('impact')",
+        resultType: 'number'
+      })
+    );
+    expect(risk?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'residual_risk_score',
+        type: 'derived',
+        requirementLevel: 'optional',
+        resultType: 'number'
+      })
+    );
+
+    expect(complianceRequirement?.fields).toContainEqual({
+      id: 'framework',
+      name: 'Framework',
+      predicate: 'belongs to',
+      type: 'containment',
+      schemaId: framework?.id,
+      minCount: 1,
+      maxCount: 1,
+      requirementLevel: 'required'
+    });
+  });
+
+  it('materializes the risk-compliance typed relations with correctly remapped endpoints', () => {
+    const definitions = instantiateTemplateDefinitions('ws-1', 'risk-compliance');
+    const risk = definitions.schemas.find(schema => schema.name === 'Risk');
+    const control = definitions.schemas.find(schema => schema.name === 'Control');
+    const complianceRequirement = definitions.schemas.find(
+      schema => schema.name === 'Compliance Requirement'
+    );
+    const riskControl = definitions.relationSchemas.find(
+      schema => schema.name === 'Risk Mitigation'
+    );
+    const controlRequirement = definitions.relationSchemas.find(
+      schema => schema.name === 'Control Compliance'
+    );
+
+    expect(riskControl?.in_schema_ids).toEqual([risk?.id]);
+    expect(riskControl?.out_schema_ids).toEqual([control?.id]);
+    expect(controlRequirement?.in_schema_ids).toEqual([control?.id]);
+    expect(controlRequirement?.out_schema_ids).toEqual([complianceRequirement?.id]);
+
+    expect(risk?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'mitigating_controls',
+        type: 'typedRelation',
+        relationSchemaId: riskControl?.id,
+        direction: 'out'
+      })
+    );
+    expect(control?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'mitigated_risks',
+        type: 'typedRelation',
+        relationSchemaId: riskControl?.id,
+        direction: 'in'
+      })
+    );
+  });
+
+  it('always evaluates the residual risk score to a non-negative integer', () => {
+    const definitions = instantiateTemplateDefinitions('ws-1', 'risk-compliance');
+    const risk = definitions.schemas.find(schema => schema.name === 'Risk')!;
+    const plan = buildDerivedPlan(risk.fields);
+
+    for (let likelihood = 1; likelihood <= 5; likelihood++) {
+      for (let impact = 1; impact <= 5; impact++) {
+        for (const mitigation_effectiveness of ['none', 'partial', 'substantial', 'full']) {
+          const values = evaluateDerivedFields(
+            plan,
+            { likelihood, impact, mitigation_effectiveness },
+            { objectType: 'entity', objectId: 'e-1' }
+          );
+
+          expect(values.inherent_risk_score).toBe(likelihood * impact);
+          expect(typeof values.residual_risk_score).toBe('number');
+          expect(Number.isInteger(values.residual_risk_score)).toBe(true);
+          expect(values.residual_risk_score as number).toBeGreaterThanOrEqual(0);
+          expect(values.residual_risk_score as number).toBeLessThanOrEqual(
+            values.inherent_risk_score as number
+          );
+        }
+      }
     }
   });
 });

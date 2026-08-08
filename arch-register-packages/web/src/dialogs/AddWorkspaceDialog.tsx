@@ -84,6 +84,12 @@ const TEMPLATES = [
     name: 'Security / Threat Model',
     desc: 'STRIDE-adjacent model.',
     types: ['Asset', 'Control', 'Threat', 'Risk']
+  },
+  {
+    id: 'risk-compliance',
+    name: 'Risk & Compliance',
+    desc: 'Risk register with compliance traceability.',
+    types: ['Risk', 'Control', 'Framework', 'Compliance Requirement']
   }
 ];
 

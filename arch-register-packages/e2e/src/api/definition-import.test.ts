@@ -267,6 +267,77 @@ test.describe('definition import', () => {
     }
   });
 
+  test('imports the risk-compliance relation schema with numeric and derived fields', async ({
+    orpc,
+    server
+  }) => {
+    const target = await orpc.workspaces.create({ body: { name: 'Risk Compliance Import Target' } });
+    const sources = await orpc.workspaces.definitionImportSources({
+      params: { workspace: target.url_slug }
+    });
+    const builtin = sources.find(
+      source => source.kind === 'builtin' && source.id === 'risk-compliance'
+    )!;
+    expect(builtin).toBeDefined();
+
+    const relationSchema = builtin.relationSchemas.find(schema => schema.name === 'Risk Mitigation')!;
+    expect(relationSchema).toBeDefined();
+
+    const preview = await orpc.workspaces.definitionImportPreview({
+      params: { workspace: target.url_slug },
+      body: {
+        source: { kind: 'builtin', id: builtin.id },
+        selection: {
+          schemas: [],
+          enums: [],
+          documentTypes: [],
+          relationSchemas: [relationSchema.id],
+          fieldGroups: []
+        }
+      }
+    });
+
+    expect(preview.errors).toEqual([]);
+    expect(preview.conflicts).toEqual([]);
+    const dependencySchemaNames = preview.schemas
+      .filter(schema => schema.dependency)
+      .map(schema => schema.name);
+    expect(dependencySchemaNames).toEqual(expect.arrayContaining(['Risk', 'Control']));
+
+    const result = await orpc.workspaces.definitionImportExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        source: preview.source,
+        selection: preview.selection,
+        schemas: preview.schemas,
+        enums: preview.enums,
+        documentTypes: preview.documentTypes,
+        relationSchemas: preview.relationSchemas,
+        fieldGroups: preview.fieldGroups,
+        keyPrefixRemaps: preview.keyPrefixRemaps,
+        fingerprint: preview.fingerprint,
+        confirmed: true
+      }
+    });
+
+    expect(result.relationSchemas).toBe(1);
+
+    const createdSchemas = await server.db.catalog.listSchemas(target.id);
+    const riskSchema = createdSchemas.find(schema => schema.name === 'Risk');
+    expect(riskSchema).toBeDefined();
+    expect(riskSchema?.fields).toContainEqual(
+      expect.objectContaining({ id: 'likelihood', type: 'number', min: 1, max: 5 })
+    );
+    expect(riskSchema?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'inherent_risk_score',
+        type: 'derived',
+        expression: "field('likelihood') * field('impact')",
+        resultType: 'number'
+      })
+    );
+  });
+
   test('blocks a case-insensitive name collision for a relation schema and field group', async ({
     orpc,
     server
