@@ -8169,6 +8169,76 @@
                         "additionalProperties": {},
                         "description": "Opaque domain payload reference, e.g. a proposal revision id"
                       },
+                      "initiationFields": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "type": {
+                              "enum": [
+                                "text",
+                                "rating",
+                                "enum"
+                              ],
+                              "type": "string"
+                            },
+                            "requirementLevel": {
+                              "enum": [
+                                "required",
+                                "optional"
+                              ],
+                              "type": "string"
+                            },
+                            "max": {
+                              "type": "integer",
+                              "minimum": 2,
+                              "maximum": 10
+                            },
+                            "enumId": {
+                              "type": "string"
+                            },
+                            "options": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "type": "string"
+                                  },
+                                  "label": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "value",
+                                  "label"
+                                ]
+                              }
+                            },
+                            "value": {
+                              "anyOf": [
+                                {},
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "label",
+                            "type",
+                            "requirementLevel"
+                          ]
+                        },
+                        "description": "Configured fields captured when the case was initiated"
+                      },
                       "createdAt": {
                         "type": "string",
                         "description": "ISO 8601 creation timestamp"
@@ -8232,6 +8302,7 @@
                       "parentCaseId",
                       "selfApprovalAllowed",
                       "payload",
+                      "initiationFields",
                       "createdAt",
                       "dueAt",
                       "completedAt",
@@ -8341,6 +8412,14 @@
                       "type": "string"
                     },
                     "additionalProperties": {}
+                  },
+                  "initiationFields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {},
+                    "description": "Optional configured initiation-field values"
                   },
                   "inboxItems": {
                     "type": "array",
@@ -8560,6 +8639,76 @@
                       "additionalProperties": {},
                       "description": "Opaque domain payload reference, e.g. a proposal revision id"
                     },
+                    "initiationFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "enum": [
+                              "text",
+                              "rating",
+                              "enum"
+                            ],
+                            "type": "string"
+                          },
+                          "requirementLevel": {
+                            "enum": [
+                              "required",
+                              "optional"
+                            ],
+                            "type": "string"
+                          },
+                          "max": {
+                            "type": "integer",
+                            "minimum": 2,
+                            "maximum": 10
+                          },
+                          "enumId": {
+                            "type": "string"
+                          },
+                          "options": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "value",
+                                "label"
+                              ]
+                            }
+                          },
+                          "value": {
+                            "anyOf": [
+                              {},
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "label",
+                          "type",
+                          "requirementLevel"
+                        ]
+                      },
+                      "description": "Configured fields captured when the case was initiated"
+                    },
                     "createdAt": {
                       "type": "string",
                       "description": "ISO 8601 creation timestamp"
@@ -8623,6 +8772,7 @@
                     "parentCaseId",
                     "selfApprovalAllowed",
                     "payload",
+                    "initiationFields",
                     "createdAt",
                     "dueAt",
                     "completedAt",
@@ -8766,6 +8916,76 @@
                       "additionalProperties": {},
                       "description": "Opaque domain payload reference, e.g. a proposal revision id"
                     },
+                    "initiationFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "enum": [
+                              "text",
+                              "rating",
+                              "enum"
+                            ],
+                            "type": "string"
+                          },
+                          "requirementLevel": {
+                            "enum": [
+                              "required",
+                              "optional"
+                            ],
+                            "type": "string"
+                          },
+                          "max": {
+                            "type": "integer",
+                            "minimum": 2,
+                            "maximum": 10
+                          },
+                          "enumId": {
+                            "type": "string"
+                          },
+                          "options": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "value",
+                                "label"
+                              ]
+                            }
+                          },
+                          "value": {
+                            "anyOf": [
+                              {},
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "label",
+                          "type",
+                          "requirementLevel"
+                        ]
+                      },
+                      "description": "Configured fields captured when the case was initiated"
+                    },
                     "createdAt": {
                       "type": "string",
                       "description": "ISO 8601 creation timestamp"
@@ -8829,6 +9049,7 @@
                     "parentCaseId",
                     "selfApprovalAllowed",
                     "payload",
+                    "initiationFields",
                     "createdAt",
                     "dueAt",
                     "completedAt",
@@ -9091,6 +9312,76 @@
                             "additionalProperties": {},
                             "description": "Opaque domain payload reference, e.g. a proposal revision id"
                           },
+                          "initiationFields": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "enum": [
+                                    "text",
+                                    "rating",
+                                    "enum"
+                                  ],
+                                  "type": "string"
+                                },
+                                "requirementLevel": {
+                                  "enum": [
+                                    "required",
+                                    "optional"
+                                  ],
+                                  "type": "string"
+                                },
+                                "max": {
+                                  "type": "integer",
+                                  "minimum": 2,
+                                  "maximum": 10
+                                },
+                                "enumId": {
+                                  "type": "string"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string"
+                                      },
+                                      "label": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
+                                  }
+                                },
+                                "value": {
+                                  "anyOf": [
+                                    {},
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "label",
+                                "type",
+                                "requirementLevel"
+                              ]
+                            },
+                            "description": "Configured fields captured when the case was initiated"
+                          },
                           "createdAt": {
                             "type": "string",
                             "description": "ISO 8601 creation timestamp"
@@ -9154,6 +9445,7 @@
                           "parentCaseId",
                           "selfApprovalAllowed",
                           "payload",
+                          "initiationFields",
                           "createdAt",
                           "dueAt",
                           "completedAt",
@@ -9526,6 +9818,76 @@
                           "additionalProperties": {},
                           "description": "Opaque domain payload reference, e.g. a proposal revision id"
                         },
+                        "initiationFields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "enum": [
+                                  "text",
+                                  "rating",
+                                  "enum"
+                                ],
+                                "type": "string"
+                              },
+                              "requirementLevel": {
+                                "enum": [
+                                  "required",
+                                  "optional"
+                                ],
+                                "type": "string"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": 2,
+                                "maximum": 10
+                              },
+                              "enumId": {
+                                "type": "string"
+                              },
+                              "options": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string"
+                                    },
+                                    "label": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                }
+                              },
+                              "value": {
+                                "anyOf": [
+                                  {},
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "label",
+                              "type",
+                              "requirementLevel"
+                            ]
+                          },
+                          "description": "Configured fields captured when the case was initiated"
+                        },
                         "createdAt": {
                           "type": "string",
                           "description": "ISO 8601 creation timestamp"
@@ -9589,6 +9951,7 @@
                         "parentCaseId",
                         "selfApprovalAllowed",
                         "payload",
+                        "initiationFields",
                         "createdAt",
                         "dueAt",
                         "completedAt",
@@ -9855,6 +10218,76 @@
                           "additionalProperties": {},
                           "description": "Opaque domain payload reference, e.g. a proposal revision id"
                         },
+                        "initiationFields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "enum": [
+                                  "text",
+                                  "rating",
+                                  "enum"
+                                ],
+                                "type": "string"
+                              },
+                              "requirementLevel": {
+                                "enum": [
+                                  "required",
+                                  "optional"
+                                ],
+                                "type": "string"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": 2,
+                                "maximum": 10
+                              },
+                              "enumId": {
+                                "type": "string"
+                              },
+                              "options": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string"
+                                    },
+                                    "label": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                }
+                              },
+                              "value": {
+                                "anyOf": [
+                                  {},
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "label",
+                              "type",
+                              "requirementLevel"
+                            ]
+                          },
+                          "description": "Configured fields captured when the case was initiated"
+                        },
                         "createdAt": {
                           "type": "string",
                           "description": "ISO 8601 creation timestamp"
@@ -9918,6 +10351,7 @@
                         "parentCaseId",
                         "selfApprovalAllowed",
                         "payload",
+                        "initiationFields",
                         "createdAt",
                         "dueAt",
                         "completedAt",
@@ -10102,6 +10536,76 @@
                           "additionalProperties": {},
                           "description": "Opaque domain payload reference, e.g. a proposal revision id"
                         },
+                        "initiationFields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "enum": [
+                                  "text",
+                                  "rating",
+                                  "enum"
+                                ],
+                                "type": "string"
+                              },
+                              "requirementLevel": {
+                                "enum": [
+                                  "required",
+                                  "optional"
+                                ],
+                                "type": "string"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": 2,
+                                "maximum": 10
+                              },
+                              "enumId": {
+                                "type": "string"
+                              },
+                              "options": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string"
+                                    },
+                                    "label": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                }
+                              },
+                              "value": {
+                                "anyOf": [
+                                  {},
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "label",
+                              "type",
+                              "requirementLevel"
+                            ]
+                          },
+                          "description": "Configured fields captured when the case was initiated"
+                        },
                         "createdAt": {
                           "type": "string",
                           "description": "ISO 8601 creation timestamp"
@@ -10165,6 +10669,7 @@
                         "parentCaseId",
                         "selfApprovalAllowed",
                         "payload",
+                        "initiationFields",
                         "createdAt",
                         "dueAt",
                         "completedAt",

@@ -48,7 +48,8 @@ const relationChangeApprovalRequestBodySchema = z.object({
   baseVersion: z.number().int().min(1),
   proposedState: z.record(z.string(), z.unknown()),
   message: z.string().optional(),
-  dueAt: z.string().optional()
+  dueAt: z.string().optional(),
+  initiationFields: z.record(z.string(), z.unknown()).optional()
 });
 
 const withdrawRelationChangeApprovalBodySchema = z.object({

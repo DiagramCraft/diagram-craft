@@ -41,6 +41,10 @@ const integrationCaseCreateSchema = z.object({
   selfApprovalAllowed: z.boolean().optional(),
   dueAt: z.string().datetime().nullable().optional(),
   payload: z.record(z.string(), z.unknown()).optional(),
+  initiationFields: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe('Optional configured initiation-field values'),
   inboxItems: z.array(inboxItemCreateSchema.omit({ idempotencyKey: true })).default([]),
   idempotencyKey: z.string().min(1)
 });

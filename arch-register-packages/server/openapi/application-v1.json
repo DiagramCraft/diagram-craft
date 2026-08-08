@@ -52007,6 +52007,13 @@
                     "type": "string",
                     "default": "minor"
                   },
+                  "initiation_fields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  },
                   "external": {
                     "type": "object",
                     "properties": {
@@ -52441,6 +52448,13 @@
                     ],
                     "type": "string",
                     "default": "major"
+                  },
+                  "initiation_fields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
                   }
                 },
                 "required": [
@@ -53735,6 +53749,13 @@
                     ],
                     "type": "string",
                     "default": "major"
+                  },
+                  "initiation_fields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
                   }
                 }
               }
@@ -81697,6 +81718,14 @@
                         "type": "string",
                         "description": "Presentation message"
                       },
+                      "presentation_metadata": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {},
+                        "description": "Structured presentation data, including governance initiation fields"
+                      },
                       "action_route": {
                         "anyOf": [
                           {
@@ -83257,6 +83286,76 @@
                         "additionalProperties": {},
                         "description": "Opaque domain payload reference, e.g. a proposal revision id"
                       },
+                      "initiationFields": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "label": {
+                              "type": "string"
+                            },
+                            "type": {
+                              "enum": [
+                                "text",
+                                "rating",
+                                "enum"
+                              ],
+                              "type": "string"
+                            },
+                            "requirementLevel": {
+                              "enum": [
+                                "required",
+                                "optional"
+                              ],
+                              "type": "string"
+                            },
+                            "max": {
+                              "type": "integer",
+                              "minimum": 2,
+                              "maximum": 10
+                            },
+                            "enumId": {
+                              "type": "string"
+                            },
+                            "options": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "value": {
+                                    "type": "string"
+                                  },
+                                  "label": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "value",
+                                  "label"
+                                ]
+                              }
+                            },
+                            "value": {
+                              "anyOf": [
+                                {},
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "label",
+                            "type",
+                            "requirementLevel"
+                          ]
+                        },
+                        "description": "Configured fields captured when the case was initiated"
+                      },
                       "createdAt": {
                         "type": "string",
                         "description": "ISO 8601 creation timestamp"
@@ -83320,6 +83419,7 @@
                       "parentCaseId",
                       "selfApprovalAllowed",
                       "payload",
+                      "initiationFields",
                       "createdAt",
                       "dueAt",
                       "completedAt",
@@ -83465,6 +83565,76 @@
                       "additionalProperties": {},
                       "description": "Opaque domain payload reference, e.g. a proposal revision id"
                     },
+                    "initiationFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "enum": [
+                              "text",
+                              "rating",
+                              "enum"
+                            ],
+                            "type": "string"
+                          },
+                          "requirementLevel": {
+                            "enum": [
+                              "required",
+                              "optional"
+                            ],
+                            "type": "string"
+                          },
+                          "max": {
+                            "type": "integer",
+                            "minimum": 2,
+                            "maximum": 10
+                          },
+                          "enumId": {
+                            "type": "string"
+                          },
+                          "options": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "value",
+                                "label"
+                              ]
+                            }
+                          },
+                          "value": {
+                            "anyOf": [
+                              {},
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "label",
+                          "type",
+                          "requirementLevel"
+                        ]
+                      },
+                      "description": "Configured fields captured when the case was initiated"
+                    },
                     "createdAt": {
                       "type": "string",
                       "description": "ISO 8601 creation timestamp"
@@ -83528,6 +83698,7 @@
                     "parentCaseId",
                     "selfApprovalAllowed",
                     "payload",
+                    "initiationFields",
                     "createdAt",
                     "dueAt",
                     "completedAt",
@@ -83834,6 +84005,76 @@
                       "additionalProperties": {},
                       "description": "Opaque domain payload reference, e.g. a proposal revision id"
                     },
+                    "initiationFields": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "type": {
+                            "enum": [
+                              "text",
+                              "rating",
+                              "enum"
+                            ],
+                            "type": "string"
+                          },
+                          "requirementLevel": {
+                            "enum": [
+                              "required",
+                              "optional"
+                            ],
+                            "type": "string"
+                          },
+                          "max": {
+                            "type": "integer",
+                            "minimum": 2,
+                            "maximum": 10
+                          },
+                          "enumId": {
+                            "type": "string"
+                          },
+                          "options": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "value": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "value",
+                                "label"
+                              ]
+                            }
+                          },
+                          "value": {
+                            "anyOf": [
+                              {},
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "label",
+                          "type",
+                          "requirementLevel"
+                        ]
+                      },
+                      "description": "Configured fields captured when the case was initiated"
+                    },
                     "createdAt": {
                       "type": "string",
                       "description": "ISO 8601 creation timestamp"
@@ -83897,6 +84138,7 @@
                     "parentCaseId",
                     "selfApprovalAllowed",
                     "payload",
+                    "initiationFields",
                     "createdAt",
                     "dueAt",
                     "completedAt",
@@ -84044,6 +84286,76 @@
                           "additionalProperties": {},
                           "description": "Opaque domain payload reference, e.g. a proposal revision id"
                         },
+                        "initiationFields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "enum": [
+                                  "text",
+                                  "rating",
+                                  "enum"
+                                ],
+                                "type": "string"
+                              },
+                              "requirementLevel": {
+                                "enum": [
+                                  "required",
+                                  "optional"
+                                ],
+                                "type": "string"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": 2,
+                                "maximum": 10
+                              },
+                              "enumId": {
+                                "type": "string"
+                              },
+                              "options": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string"
+                                    },
+                                    "label": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                }
+                              },
+                              "value": {
+                                "anyOf": [
+                                  {},
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "label",
+                              "type",
+                              "requirementLevel"
+                            ]
+                          },
+                          "description": "Configured fields captured when the case was initiated"
+                        },
                         "createdAt": {
                           "type": "string",
                           "description": "ISO 8601 creation timestamp"
@@ -84107,6 +84419,7 @@
                         "parentCaseId",
                         "selfApprovalAllowed",
                         "payload",
+                        "initiationFields",
                         "createdAt",
                         "dueAt",
                         "completedAt",
@@ -84530,6 +84843,76 @@
                             "additionalProperties": {},
                             "description": "Opaque domain payload reference, e.g. a proposal revision id"
                           },
+                          "initiationFields": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "enum": [
+                                    "text",
+                                    "rating",
+                                    "enum"
+                                  ],
+                                  "type": "string"
+                                },
+                                "requirementLevel": {
+                                  "enum": [
+                                    "required",
+                                    "optional"
+                                  ],
+                                  "type": "string"
+                                },
+                                "max": {
+                                  "type": "integer",
+                                  "minimum": 2,
+                                  "maximum": 10
+                                },
+                                "enumId": {
+                                  "type": "string"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string"
+                                      },
+                                      "label": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
+                                  }
+                                },
+                                "value": {
+                                  "anyOf": [
+                                    {},
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "label",
+                                "type",
+                                "requirementLevel"
+                              ]
+                            },
+                            "description": "Configured fields captured when the case was initiated"
+                          },
                           "createdAt": {
                             "type": "string",
                             "description": "ISO 8601 creation timestamp"
@@ -84593,6 +84976,7 @@
                           "parentCaseId",
                           "selfApprovalAllowed",
                           "payload",
+                          "initiationFields",
                           "createdAt",
                           "dueAt",
                           "completedAt",
@@ -84827,6 +85211,76 @@
                           "additionalProperties": {},
                           "description": "Opaque domain payload reference, e.g. a proposal revision id"
                         },
+                        "initiationFields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "enum": [
+                                  "text",
+                                  "rating",
+                                  "enum"
+                                ],
+                                "type": "string"
+                              },
+                              "requirementLevel": {
+                                "enum": [
+                                  "required",
+                                  "optional"
+                                ],
+                                "type": "string"
+                              },
+                              "max": {
+                                "type": "integer",
+                                "minimum": 2,
+                                "maximum": 10
+                              },
+                              "enumId": {
+                                "type": "string"
+                              },
+                              "options": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string"
+                                    },
+                                    "label": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                }
+                              },
+                              "value": {
+                                "anyOf": [
+                                  {},
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "label",
+                              "type",
+                              "requirementLevel"
+                            ]
+                          },
+                          "description": "Configured fields captured when the case was initiated"
+                        },
                         "createdAt": {
                           "type": "string",
                           "description": "ISO 8601 creation timestamp"
@@ -84890,6 +85344,7 @@
                         "parentCaseId",
                         "selfApprovalAllowed",
                         "payload",
+                        "initiationFields",
                         "createdAt",
                         "dueAt",
                         "completedAt",
@@ -85167,6 +85622,76 @@
                             "additionalProperties": {},
                             "description": "Opaque domain payload reference, e.g. a proposal revision id"
                           },
+                          "initiationFields": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "enum": [
+                                    "text",
+                                    "rating",
+                                    "enum"
+                                  ],
+                                  "type": "string"
+                                },
+                                "requirementLevel": {
+                                  "enum": [
+                                    "required",
+                                    "optional"
+                                  ],
+                                  "type": "string"
+                                },
+                                "max": {
+                                  "type": "integer",
+                                  "minimum": 2,
+                                  "maximum": 10
+                                },
+                                "enumId": {
+                                  "type": "string"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string"
+                                      },
+                                      "label": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
+                                  }
+                                },
+                                "value": {
+                                  "anyOf": [
+                                    {},
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "label",
+                                "type",
+                                "requirementLevel"
+                              ]
+                            },
+                            "description": "Configured fields captured when the case was initiated"
+                          },
                           "createdAt": {
                             "type": "string",
                             "description": "ISO 8601 creation timestamp"
@@ -85230,6 +85755,7 @@
                           "parentCaseId",
                           "selfApprovalAllowed",
                           "payload",
+                          "initiationFields",
                           "createdAt",
                           "dueAt",
                           "completedAt",
@@ -85424,6 +85950,9 @@
                           "supportsEscalation": {
                             "type": "boolean"
                           },
+                          "supportsInitiationFields": {
+                            "type": "boolean"
+                          },
                           "approvalStrategies": {
                             "type": "array",
                             "items": {
@@ -85601,6 +86130,129 @@
                                   "overdueDays"
                                 ]
                               },
+                              "initiationFields": {
+                                "type": "array",
+                                "items": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "requirementLevel": {
+                                          "enum": [
+                                            "required",
+                                            "optional"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "const": "text"
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "label",
+                                        "requirementLevel",
+                                        "type"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "requirementLevel": {
+                                          "enum": [
+                                            "required",
+                                            "optional"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "const": "rating"
+                                        },
+                                        "max": {
+                                          "type": "integer",
+                                          "minimum": 2,
+                                          "maximum": 10
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "label",
+                                        "requirementLevel",
+                                        "type"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "requirementLevel": {
+                                          "enum": [
+                                            "required",
+                                            "optional"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "const": "enum"
+                                        },
+                                        "enumId": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "options": {
+                                          "type": "array",
+                                          "minItems": 1,
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "value": {
+                                                "type": "string"
+                                              },
+                                              "label": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "value",
+                                              "label"
+                                            ]
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "label",
+                                        "requirementLevel",
+                                        "type"
+                                      ]
+                                    }
+                                  ],
+                                  "description": "Assessment-compatible governance initiation field definition"
+                                }
+                              },
                               "extensions": {
                                 "type": "object",
                                 "propertyNames": {
@@ -85621,6 +86273,7 @@
                           "supportsApprovals",
                           "supportsReminders",
                           "supportsEscalation",
+                          "supportsInitiationFields",
                           "approvalStrategies",
                           "escalationStrategies",
                           "defaultConfig"
@@ -85790,6 +86443,129 @@
                                   "enabled",
                                   "overdueDays"
                                 ]
+                              },
+                              "initiationFields": {
+                                "type": "array",
+                                "items": {
+                                  "anyOf": [
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "requirementLevel": {
+                                          "enum": [
+                                            "required",
+                                            "optional"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "const": "text"
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "label",
+                                        "requirementLevel",
+                                        "type"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "requirementLevel": {
+                                          "enum": [
+                                            "required",
+                                            "optional"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "const": "rating"
+                                        },
+                                        "max": {
+                                          "type": "integer",
+                                          "minimum": 2,
+                                          "maximum": 10
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "label",
+                                        "requirementLevel",
+                                        "type"
+                                      ]
+                                    },
+                                    {
+                                      "type": "object",
+                                      "properties": {
+                                        "id": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "label": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "requirementLevel": {
+                                          "enum": [
+                                            "required",
+                                            "optional"
+                                          ],
+                                          "type": "string"
+                                        },
+                                        "type": {
+                                          "const": "enum"
+                                        },
+                                        "enumId": {
+                                          "type": "string",
+                                          "minLength": 1
+                                        },
+                                        "options": {
+                                          "type": "array",
+                                          "minItems": 1,
+                                          "items": {
+                                            "type": "object",
+                                            "properties": {
+                                              "value": {
+                                                "type": "string"
+                                              },
+                                              "label": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "value",
+                                              "label"
+                                            ]
+                                          }
+                                        }
+                                      },
+                                      "required": [
+                                        "id",
+                                        "label",
+                                        "requirementLevel",
+                                        "type"
+                                      ]
+                                    }
+                                  ],
+                                  "description": "Assessment-compatible governance initiation field definition"
+                                }
                               },
                               "extensions": {
                                 "type": "object",
@@ -86005,6 +86781,129 @@
                           "overdueDays"
                         ]
                       },
+                      "initiationFields": {
+                        "type": "array",
+                        "items": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "requirementLevel": {
+                                  "enum": [
+                                    "required",
+                                    "optional"
+                                  ],
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "const": "text"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "label",
+                                "requirementLevel",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "requirementLevel": {
+                                  "enum": [
+                                    "required",
+                                    "optional"
+                                  ],
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "const": "rating"
+                                },
+                                "max": {
+                                  "type": "integer",
+                                  "minimum": 2,
+                                  "maximum": 10
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "label",
+                                "requirementLevel",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "label": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "requirementLevel": {
+                                  "enum": [
+                                    "required",
+                                    "optional"
+                                  ],
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "const": "enum"
+                                },
+                                "enumId": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "minItems": 1,
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string"
+                                      },
+                                      "label": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
+                                  }
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "label",
+                                "requirementLevel",
+                                "type"
+                              ]
+                            }
+                          ],
+                          "description": "Assessment-compatible governance initiation field definition"
+                        }
+                      },
                       "extensions": {
                         "type": "object",
                         "propertyNames": {
@@ -86191,6 +87090,129 @@
                             "enabled",
                             "overdueDays"
                           ]
+                        },
+                        "initiationFields": {
+                          "type": "array",
+                          "items": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "requirementLevel": {
+                                    "enum": [
+                                      "required",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "type": {
+                                    "const": "text"
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "label",
+                                  "requirementLevel",
+                                  "type"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "requirementLevel": {
+                                    "enum": [
+                                      "required",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "type": {
+                                    "const": "rating"
+                                  },
+                                  "max": {
+                                    "type": "integer",
+                                    "minimum": 2,
+                                    "maximum": 10
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "label",
+                                  "requirementLevel",
+                                  "type"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "id": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "label": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "requirementLevel": {
+                                    "enum": [
+                                      "required",
+                                      "optional"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "type": {
+                                    "const": "enum"
+                                  },
+                                  "enumId": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "options": {
+                                    "type": "array",
+                                    "minItems": 1,
+                                    "items": {
+                                      "type": "object",
+                                      "properties": {
+                                        "value": {
+                                          "type": "string"
+                                        },
+                                        "label": {
+                                          "type": "string"
+                                        }
+                                      },
+                                      "required": [
+                                        "value",
+                                        "label"
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "id",
+                                  "label",
+                                  "requirementLevel",
+                                  "type"
+                                ]
+                              }
+                            ],
+                            "description": "Assessment-compatible governance initiation field definition"
+                          }
                         },
                         "extensions": {
                           "type": "object",
@@ -87177,6 +88199,13 @@
                   },
                   "dueAt": {
                     "type": "string"
+                  },
+                  "initiationFields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
                   }
                 },
                 "required": [
@@ -87457,6 +88486,13 @@
                   },
                   "dueAt": {
                     "type": "string"
+                  },
+                  "initiationFields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
                   }
                 },
                 "required": [
@@ -87991,6 +89027,13 @@
                   "dueAt": {
                     "type": "string"
                   },
+                  "initiationFields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  },
                   "reason": {
                     "type": "string",
                     "minLength": 1
@@ -88096,6 +89139,13 @@
                   },
                   "dueAt": {
                     "type": "string"
+                  },
+                  "initiationFields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
                   }
                 },
                 "required": [
@@ -89311,6 +90361,13 @@
                   },
                   "dueAt": {
                     "type": "string"
+                  },
+                  "initiationFields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
                   }
                 },
                 "required": [
@@ -89593,6 +90650,13 @@
                   },
                   "dueAt": {
                     "type": "string"
+                  },
+                  "initiationFields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
                   }
                 },
                 "required": [
@@ -90130,6 +91194,13 @@
                   "dueAt": {
                     "type": "string"
                   },
+                  "initiationFields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
+                  },
                   "reason": {
                     "type": "string",
                     "minLength": 1
@@ -90618,6 +91689,13 @@
                   },
                   "notes": {
                     "type": "string"
+                  },
+                  "initiationFields": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string"
+                    },
+                    "additionalProperties": {}
                   }
                 },
                 "required": [

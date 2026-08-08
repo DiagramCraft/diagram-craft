@@ -432,6 +432,7 @@ export const proposeEntityDeprecation = async (
           baselineImpact,
           requiredApprovals: approvalConfig.requiredApprovals
         },
+        initiationFieldValues: body.initiationFields,
         assignments
       },
       now

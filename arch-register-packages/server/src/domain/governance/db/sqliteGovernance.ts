@@ -16,8 +16,8 @@ export class SqliteGovernanceDatabase extends SqliteDatabaseBase implements Gove
       `INSERT INTO governance_case (
         id, workspace, case_kind, case_subkind, subject_type, subject_id, subject_version, status,
         policy_version, initiator_user_id, parent_case_id, dedupe_key, self_approval_allowed,
-        payload, created_at, due_at
-      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?, ?, ?)`,
+        payload, initiation_fields, created_at, due_at
+      ) VALUES (?, ?, ?, ?, ?, ?, ?, 'open', ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         input.workspace,
@@ -32,6 +32,7 @@ export class SqliteGovernanceDatabase extends SqliteDatabaseBase implements Gove
         input.dedupe_key ?? null,
         input.self_approval_allowed ? 1 : 0,
         JSON.stringify(input.payload),
+        JSON.stringify(input.initiation_fields ?? []),
         input.created_at.toISOString(),
         input.due_at?.toISOString() ?? null
       ]

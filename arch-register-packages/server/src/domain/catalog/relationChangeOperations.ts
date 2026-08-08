@@ -367,6 +367,7 @@ const submitProposal = async (
         selfApprovalAllowed,
         dueAt: body.dueAt ? new Date(body.dueAt) : null,
         payload: { proposalId: root.id, revisionId: revision.id, relationId: canonicalRelationId },
+        initiationFieldValues: body.initiationFields,
         assignments
       },
       now

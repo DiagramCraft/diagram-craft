@@ -22,6 +22,8 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { GovernanceInitiationFields } from '../governance/GovernanceInitiationFields';
+import { useGovernanceInitiationFields } from '../../hooks/useGovernanceInitiationFields';
 import {
   useEntity,
   useEntityRelations,
@@ -470,8 +472,14 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const isPinned = pinnedEntities.some(item => item.entity_public_id === entityId);
   const [collectionPickerOpen, setCollectionPickerOpen] = useState(false);
   const [proposeDeprecationOpen, setProposeDeprecationOpen] = useState(false);
+  const [initiationFieldValues, setInitiationFieldValues] = useState<Record<string, unknown>>({});
 
   const schema = schemaEntry?.schema ?? null;
+  const { fields: entityInitiationFields } = useGovernanceInitiationFields(
+    workspaceId,
+    'entity.change-case',
+    schema?.id ?? null
+  );
   const approvalRequired =
     entity?._approvalPolicyOverride === 'required' ||
     (entity?._approvalPolicyOverride !== 'disabled' &&
@@ -549,6 +557,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     entity,
     schema,
     approvalRequired,
+    initiationFieldValues,
     canBypassApproval:
       approvalRequired &&
       canOverrideEntityApproval &&
@@ -908,6 +917,11 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             <DateInput value={saveConfirmDueDate} onChange={v => setSaveConfirmDueDate(v ?? '')} />
           </FormElement>
         )}
+        <GovernanceInitiationFields
+          fields={entityInitiationFields}
+          values={initiationFieldValues}
+          onChange={setInitiationFieldValues}
+        />
         <FormElement label="" required>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
             <input

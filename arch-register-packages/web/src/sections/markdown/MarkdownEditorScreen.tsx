@@ -58,6 +58,8 @@ import type { ContentScope } from '../../hooks/useContentScope';
 import { downloadUrl } from '../../lib/browserDownload';
 import { applicationWorkspacePath } from '../../lib/applicationApi';
 import { useDocumentTemplates, useDocumentTypes } from '../../hooks/useDocuments';
+import { useGovernanceWorkflowConfig } from '../../hooks/useGovernanceWorkflowConfig';
+import { useEnums } from '../../hooks/useEnums';
 import { MarkdownPropertiesPanel, validateDocMetadata } from './MarkdownPropertiesPanel';
 import { ApiError } from '../../lib/http';
 import { runDocumentAiAction } from '../../hooks/useDocumentAiActions';
@@ -132,6 +134,8 @@ export const MarkdownEditorScreen = () => {
     nodeId
   );
   const saveMutation = useSaveMarkdownContent(contentScope, nodeId);
+  const { data: governanceWorkflowConfig } = useGovernanceWorkflowConfig(workspaceSlug);
+  const { data: workspaceEnums = [] } = useEnums(workspaceSlug);
   const migrateMutation = useMigrateMarkdownContent(contentScope, nodeId);
   const saveNewMutation = useSaveNewMarkdownContent(contentScope);
   const restoreMutation = useRestoreMarkdownRevision(contentScope, nodeId);
@@ -173,6 +177,7 @@ export const MarkdownEditorScreen = () => {
   const [dirty, setDirty] = useState(isDraft);
   const [changeKind, setChangeKind] = useState<'minor' | 'major'>('minor');
   const [pendingSaveIntent, setPendingSaveIntent] = useState<MarkdownSaveIntent | null>(null);
+  const [initiationFieldValues, setInitiationFieldValues] = useState<Record<string, unknown>>({});
   const [attemptedSave, setAttemptedSave] = useState(false);
   const [draftSaveError, setDraftSaveError] = useState<string | null>(null);
   const [renameOpen, setRenameOpen] = useState(false);
@@ -208,6 +213,29 @@ export const MarkdownEditorScreen = () => {
   const documentFields =
     documentTypeId == null ? [] : (selectedDocumentType?.fields ?? data?.available_fields ?? []);
   const workflowEnabled = hasWorkflowFields(documentFields);
+  const documentInitiationFields = useMemo(() => {
+    if (!documentTypeId) return [];
+    const seen = new Set<string>();
+    return (governanceWorkflowConfig?.configs ?? [])
+      .filter(
+        row =>
+          row.case_kind === 'document.status' && row.case_subkind?.startsWith(`${documentTypeId}:`)
+      )
+      .flatMap(row => row.config.initiationFields ?? [])
+      .map(field =>
+        field.type === 'enum' && !field.options && field.enumId
+          ? {
+              ...field,
+              options: workspaceEnums.find(item => item.id === field.enumId)?.options ?? []
+            }
+          : field
+      )
+      .filter(field => {
+        if (seen.has(field.id)) return false;
+        seen.add(field.id);
+        return true;
+      });
+  }, [documentTypeId, governanceWorkflowConfig?.configs, workspaceEnums]);
   const titleView = useMemo(
     () =>
       deriveMarkdownEditorTitleView(screenState, {
@@ -444,7 +472,8 @@ export const MarkdownEditorScreen = () => {
         name: headingTitle ?? undefined,
         document_type_id: documentTypeId,
         metadata,
-        change_kind: kind
+        change_kind: kind,
+        initiation_fields: initiationFieldValues
       };
       if (documentTypeId !== currentDocumentTypeId) {
         await migrateMutation.mutateAsync(input);
@@ -459,7 +488,8 @@ export const MarkdownEditorScreen = () => {
       headingTitle,
       metadata,
       migrateMutation,
-      saveMutation
+      saveMutation,
+      initiationFieldValues
     ]
   );
 
@@ -1052,6 +1082,9 @@ export const MarkdownEditorScreen = () => {
             open={pendingSaveIntent !== null}
             intent={pendingSaveIntent}
             changeKind={changeKind}
+            initiationFields={documentInitiationFields}
+            initiationFieldValues={initiationFieldValues}
+            onInitiationFieldValuesChange={setInitiationFieldValues}
             onChangeKind={setChangeKind}
             onCancel={handleChangeImpactCancel}
             onConfirm={() => void handleChangeImpactConfirm()}

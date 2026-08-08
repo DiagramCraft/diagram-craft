@@ -18,7 +18,8 @@ export const createAssessmentGovernanceRegistry = (): GovernanceRegistry =>
         workflowConfig: {
           supportsApprovals: false,
           supportsReminders: true,
-          supportsEscalation: false
+          supportsEscalation: false,
+          supportsInitiationFields: false
         },
         subjectVisible: async (
           db: DatabaseAdapter,

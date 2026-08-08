@@ -452,6 +452,11 @@
               configuration in
               @id:ar.collaboration.governance-inbox.scheduled-reminders.workspace-config.
 
+            - @id:ar.collaboration.governance-inbox.initiation-fields Workspace administrators can configure ordered,
+              typed initiation fields for supported non-assessment workflows. Initiators provide required values when
+              a workflow starts, and the captured field definitions and values remain visible in the governance APIs,
+              webhooks, inbox, notifications, and escalation messages.
+
         - @id:ar.collaboration.entity-change-approval Workspace administrators can require approval for entity change
           cases, while authorized users can submit immutable coordinated revisions with an optional due date, review
           before/after diffs across all affected entities, resubmit after requested changes, and record an audited

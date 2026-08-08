@@ -429,7 +429,8 @@ export const saveMarkdownContent = async (
   event: AuthenticatedEvent,
   external?: ExternalUpdateEnvelope,
   allowTypeMigration = false,
-  changeKind: 'minor' | 'major' = 'minor'
+  changeKind: 'minor' | 'major' = 'minor',
+  initiationFieldValues?: Record<string, unknown>
 ): Promise<ProjectFile> => {
   return defineOperation(
     db,
@@ -585,7 +586,8 @@ export const saveMarkdownContent = async (
             changeKind,
             isNew: false,
             initiatorUserId: authCtx.userId,
-            sourceRevision: revision.revision_number
+            sourceRevision: revision.revision_number,
+            initiationFieldValues
           });
           if (nextDocumentTypeId !== null || Object.keys(effectiveMetadata).length > 0) {
             await tx.document.upsertDocumentMetadata({
@@ -659,7 +661,8 @@ export const migrateMarkdownContent = async (
   documentTypeId: string | null,
   metadata: DocumentMetadata,
   event: AuthenticatedEvent,
-  changeKind: 'minor' | 'major' = 'major'
+  changeKind: 'minor' | 'major' = 'major',
+  initiationFieldValues?: Record<string, unknown>
 ): Promise<ProjectFile> =>
   saveMarkdownContent(
     db,
@@ -673,7 +676,8 @@ export const migrateMarkdownContent = async (
     event,
     undefined,
     true,
-    changeKind
+    changeKind,
+    initiationFieldValues
   );
 
 export const listMarkdownRevisions = async (
@@ -769,7 +773,8 @@ export const restoreMarkdownRevision = async (
   nodeId: string,
   revisionId: string,
   event: AuthenticatedEvent,
-  changeKind: 'minor' | 'major' = 'major'
+  changeKind: 'minor' | 'major' = 'major',
+  initiationFieldValues?: Record<string, unknown>
 ): Promise<ProjectFile> => {
   return defineOperation(
     db,
@@ -871,7 +876,8 @@ export const restoreMarkdownRevision = async (
             changeKind,
             isNew: false,
             initiatorUserId: authCtx.userId,
-            sourceRevision: restoredRevision.revision_number
+            sourceRevision: restoredRevision.revision_number,
+            initiationFieldValues
           });
           if (revision.document_type_id || Object.keys(effectiveMetadata).length > 0) {
             await tx.document.upsertDocumentMetadata({

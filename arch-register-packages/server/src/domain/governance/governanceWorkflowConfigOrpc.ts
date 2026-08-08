@@ -23,6 +23,7 @@ import {
   parseGovernanceWorkflowConfig,
   validateDocumentStatusWorkflowConfig
 } from './governanceWorkflowConfig';
+import { validateGovernanceInitiationFieldDefinitions } from './governanceInitiationFields';
 
 type ORPCContext = { db: DatabaseAdapter; event: AuthenticatedEvent };
 
@@ -40,6 +41,7 @@ const toCaseKind = (caseKind: string, config: ReturnType<GovernanceRegistry['get
   supportsApprovals: config?.workflowConfig?.supportsApprovals ?? false,
   supportsReminders: config?.workflowConfig?.supportsReminders ?? false,
   supportsEscalation: config?.workflowConfig?.supportsEscalation ?? false,
+  supportsInitiationFields: config?.workflowConfig?.supportsInitiationFields ?? true,
   approvalStrategies: [...(config?.workflowConfig?.approvalStrategies ?? [])],
   escalationStrategies: [...(config?.workflowConfig?.escalationStrategies ?? [])],
   defaultConfig: config
@@ -191,6 +193,17 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
           httpAssert.true(
             kindConfig.workflowConfig?.supportsEscalation !== false || config.escalation == null,
             { status: 400, message: 'This workflow does not support escalation configuration' }
+          );
+          httpAssert.true(
+            kindConfig.workflowConfig?.supportsInitiationFields !== false ||
+              config.initiationFields == null ||
+              config.initiationFields.length === 0,
+            { status: 400, message: 'This workflow does not support initiation fields' }
+          );
+          await validateGovernanceInitiationFieldDefinitions(
+            context.db,
+            workspace,
+            config.initiationFields ?? []
           );
           const approvalStrategy = config.approvals?.strategy;
           if (approvalStrategy) {

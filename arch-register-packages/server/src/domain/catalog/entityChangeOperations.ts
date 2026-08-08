@@ -785,6 +785,7 @@ export const submitBulkEntityChangeApproval = async (
           entityIds: prepared.map(member => member.entity.id),
           requiredApprovals: bulkApprovalConfig.requiredApprovals
         },
+        initiationFieldValues: body.initiationFields,
         assignments
       },
       now
@@ -925,6 +926,7 @@ const submitProposal = async (
           entityId: canonicalEntityId,
           requiredApprovals: approvalConfig.requiredApprovals
         },
+        initiationFieldValues: body.initiationFields,
         assignments
       },
       now

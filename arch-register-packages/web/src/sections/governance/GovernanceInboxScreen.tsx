@@ -37,6 +37,25 @@ import {
 const humanize = (value: string) =>
   value.replace(/[._-]+/g, ' ').replace(/\b\w/g, character => character.toUpperCase());
 
+const InitiationFieldSummary = ({
+  fields
+}: {
+  fields: Array<{ id: string; label: string; value: unknown }>;
+}) => {
+  const populated = fields.filter(field => field.value != null && field.value !== '');
+  if (populated.length === 0) return null;
+  return (
+    <div className={styles.taskNote}>
+      {populated.map(field => (
+        <div key={field.id}>
+          <span className={styles.taskNoteLabel}>{field.label}</span>{' '}
+          {Array.isArray(field.value) ? field.value.join(', ') : String(field.value)}
+        </div>
+      ))}
+    </div>
+  );
+};
+
 const caseKindLabel = (caseKind: string, payload: Record<string, unknown>) => {
   if (caseKind === 'field-date-reminder') {
     const fieldName = payload['fieldName'];
@@ -538,6 +557,7 @@ export const GovernanceInboxScreen = () => {
                         <span>{previewNote(proposalNote)}</span>
                       </div>
                     )}
+                    <InitiationFieldSummary fields={submission.case.initiationFields} />
                     {requestChangesReason && (
                       <div className={styles.taskNote} title={requestChangesReason}>
                         <span className={styles.taskNoteLabel}>Reviewer requested changes</span>
@@ -742,6 +762,7 @@ export const GovernanceInboxScreen = () => {
                       <span>{previewNote(proposalNote)}</span>
                     </div>
                   )}
+                  <InitiationFieldSummary fields={task.case.initiationFields} />
                 </div>
                 <div className={styles.taskAction}>
                   {task.requiresAction && decision && (

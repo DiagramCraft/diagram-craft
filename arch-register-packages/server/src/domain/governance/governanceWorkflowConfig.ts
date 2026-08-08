@@ -191,7 +191,8 @@ const mergeGovernanceWorkflowConfig = (
         }
       }
     : base.escalation,
-  extensions: { ...base.extensions, ...override.extensions }
+  extensions: { ...base.extensions, ...override.extensions },
+  initiationFields: override.initiationFields ?? base.initiationFields ?? []
 });
 
 /**

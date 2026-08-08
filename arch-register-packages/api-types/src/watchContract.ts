@@ -27,6 +27,10 @@ const notificationItemSchema = z.object({
   assignment_id: z.string().nullable().optional().describe('Related governance assignment'),
   title: z.string().optional().describe('Presentation title'),
   message: z.string().optional().describe('Presentation message'),
+  presentation_metadata: z
+    .record(z.string(), z.unknown())
+    .optional()
+    .describe('Structured presentation data, including governance initiation fields'),
   action_route: z.string().nullable().optional().describe('Optional in-app action route'),
   read_at: z.string().nullable().optional().describe('ISO 8601 timestamp when read'),
   entity_id: z

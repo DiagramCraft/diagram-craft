@@ -166,6 +166,8 @@ export const createIntegrationGovernanceCase = async (
     selfApprovalAllowed: input.selfApprovalAllowed,
     dueAt: input.dueAt ? new Date(input.dueAt) : null,
     payload: input.payload,
+    initiationFieldValues: input.initiationFields,
+    skipInitiationFields: input.initiationFields === undefined,
     assignments,
     allowEmptyAssignments: true,
     createAssignmentsInExternalMode: true

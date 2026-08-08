@@ -181,7 +181,11 @@ export const useEntityBrowserSelection = ({
   }, []);
 
   const handleConfirm = useCallback(
-    async (proposalMessage?: string, dueAt?: string) => {
+    async (
+      proposalMessage?: string,
+      dueAt?: string,
+      initiationFields?: Record<string, unknown>
+    ) => {
       cancel();
 
       const permSkipped: BulkEditSkip[] = selectedEntities
@@ -251,7 +255,8 @@ export const useEntityBrowserSelection = ({
           const result = await submitBulkProposalMutation.mutateAsync({
             members,
             message: proposalMessage?.trim() || undefined,
-            dueAt
+            dueAt,
+            initiationFields
           });
           proposed = { entities: needsApproval, caseId: result.id };
         } catch (error) {

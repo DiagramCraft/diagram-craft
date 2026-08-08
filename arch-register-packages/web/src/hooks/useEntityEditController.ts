@@ -19,6 +19,7 @@ type Params = {
   schema: EntitySchema | null;
   approvalRequired: boolean;
   canBypassApproval: boolean;
+  initiationFieldValues: Record<string, unknown>;
   onDeleted: () => void;
 };
 
@@ -29,6 +30,7 @@ export const useEntityEditController = ({
   schema,
   approvalRequired,
   canBypassApproval,
+  initiationFieldValues,
   onDeleted
 }: Params) => {
   const updateEntity = useUpdateEntity(workspaceId);
@@ -99,7 +101,8 @@ export const useEntityEditController = ({
           baseVersion: entity?._version ?? 1,
           proposedState: pendingSaveBody,
           message: saveConfirmMessage ?? undefined,
-          dueAt: saveConfirmDueDate || undefined
+          dueAt: saveConfirmDueDate || undefined,
+          initiationFields: initiationFieldValues
         },
         {
           onSuccess: () => {
