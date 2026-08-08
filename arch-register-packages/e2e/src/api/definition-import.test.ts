@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { test, expect } from '../helpers/fixtures';
 
 test.describe('definition import', () => {
@@ -294,13 +295,22 @@ test.describe('definition import', () => {
         body: { name: 'Collision Out', key_prefix: 'COUT', fields: [] }
       })
     ]);
-    await orpc.relationSchemas.create({
-      params: { workspace: target.url_slug },
-      body: {
-        name: relationSchema.name.toUpperCase(),
-        in: { schemaIds: [inSchema.id] },
-        out: { schemaIds: [outSchema.id] }
-      }
+    const now = new Date();
+    await server.db.relation.createRelationSchema({
+      id: randomUUID(),
+      workspace: target.id,
+      name: relationSchema.name.toUpperCase(),
+      description: '',
+      in_schema_ids: [inSchema.id],
+      out_schema_ids: [outSchema.id],
+      fields: [],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: now,
+      updated_at: now
     });
     await orpc.fieldGroups.create({
       params: { workspace: target.url_slug },
