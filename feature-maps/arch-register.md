@@ -213,8 +213,10 @@
 
         - @id:ar.entity-views.map Users can inspect containment hierarchies, including the built-in Vendor-to-Contract
           path, as a nested capability map, colouring boxes by a configurable metric rolled up from descendant entities
-          (numeric or currency fields, lifecycle state, or assessment fields), using dominant-option or worst
-          aggregation. Currency rollups convert amounts to the selected currency or workspace default using the latest
+          (numeric or currency fields, lifecycle state, or assessment fields), using dominant-option, worst, or
+          percentage aggregation. Percentage aggregation shows the share of descendants matching a configurable
+          numerator condition against the same field set as the entity browser's filters. Currency rollups convert
+          amounts to the selected currency or workspace default using the latest
           daily exchange-rate snapshot, and show the conversion currency and rate date. For
           enum-sourced metrics, "worst" ranks options by the admin-configured top-to-bottom order of the enum's
           options. A metric source in an access-restricted field group evaluates as unavailable (no value, distribution,

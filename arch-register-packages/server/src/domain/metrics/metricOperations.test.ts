@@ -273,6 +273,79 @@ describe('computeBoxMetrics', () => {
     expect(result.results[0]).toMatchObject({ value: 2, sourceCount: 2, populatedCount: 2 });
   });
 
+  it('percentage aggregation is the share of descendants matching the numerator condition', () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', tier: 'gold' } }),
+      makeService('s2', 'd1', { data: { parent: 'd1', tier: 'gold' } }),
+      makeService('s3', 'd1', { data: { parent: 'd1', tier: 'bronze' } }),
+      makeService('s4', 'd1', { data: { parent: 'd1', tier: 'bronze' } })
+    ];
+    const result = computeBoxMetrics(
+      ['d1'],
+      {
+        ...numericMetric,
+        aggregation: 'percentage',
+        numeratorCondition: { fieldId: 'tier', op: 'equals', value: 'gold' }
+      },
+      entities,
+      schemas,
+      lifecycleStates,
+      null,
+      alwaysMatch
+    );
+    expect(result.results[0]).toMatchObject({
+      value: 50,
+      sourceCount: 4,
+      populatedCount: 2,
+      lifecycleId: null,
+      dominantValue: null,
+      dominantLabel: null,
+      distribution: []
+    });
+    expect(result.legend).toEqual({ min: 50, max: 50 });
+  });
+
+  it('percentage aggregation is null when the denominator is empty', () => {
+    const entities = [makeDomain('d1')];
+    const result = computeBoxMetrics(
+      ['d1'],
+      {
+        ...numericMetric,
+        aggregation: 'percentage',
+        numeratorCondition: { fieldId: 'tier', op: 'equals', value: 'gold' }
+      },
+      entities,
+      schemas,
+      lifecycleStates,
+      null,
+      alwaysMatch
+    );
+    expect(result.results[0]).toMatchObject({ value: null, sourceCount: 0, populatedCount: 0 });
+  });
+
+  it('percentage aggregation numerator can match on system fields like lifecycle', () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1' }, lifecycle: 'production' }),
+      makeService('s2', 'd1', { data: { parent: 'd1' }, lifecycle: 'proposed' })
+    ];
+    const result = computeBoxMetrics(
+      ['d1'],
+      {
+        ...numericMetric,
+        aggregation: 'percentage',
+        numeratorCondition: { fieldId: '_lifecycle', op: 'equals', value: 'production' }
+      },
+      entities,
+      schemas,
+      lifecycleStates,
+      null,
+      alwaysMatch
+    );
+    expect(result.results[0]).toMatchObject({ value: 50, sourceCount: 2 });
+  });
+
   it('average divides only over populated values', () => {
     const entities = [
       makeDomain('d1'),
@@ -1185,6 +1258,51 @@ describe('getBoxMetrics', () => {
         metric: { ...numericMetric, aggregation: 'worst' }
       })
     ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('rejects percentage aggregation without a numeratorCondition', async () => {
+    const db = makeDb([makeDomain('d1')]);
+    await expect(
+      getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
+        boxEntityIds: ['d1'],
+        metric: { ...numericMetric, aggregation: 'percentage' }
+      })
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('rejects percentage aggregation for relation-sourced metrics', async () => {
+    const db = makeDb([makeDomain('d1')]);
+    await expect(
+      getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
+        boxEntityIds: ['d1'],
+        metric: {
+          ...numericMetric,
+          sourceContext: 'relation',
+          aggregation: 'percentage',
+          numeratorCondition: { fieldId: 'tier', op: 'equals', value: 'gold' }
+        }
+      })
+    ).rejects.toMatchObject({ status: 400 });
+  });
+
+  it('computes a percentage aggregation end-to-end through getBoxMetrics', async () => {
+    const entities = [
+      makeDomain('d1'),
+      makeService('s1', 'd1', { data: { parent: 'd1', tier: 'gold' } }),
+      makeService('s2', 'd1', { data: { parent: 'd1', tier: 'bronze' } })
+    ];
+    const db = makeDb(entities);
+
+    const result = await getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
+      boxEntityIds: ['d1'],
+      metric: {
+        ...numericMetric,
+        aggregation: 'percentage',
+        numeratorCondition: { fieldId: 'tier', op: 'equals', value: 'gold' }
+      }
+    });
+
+    expect(result.results[0]).toMatchObject({ value: 50, sourceCount: 2, populatedCount: 1 });
   });
 
   it('rejects an assessment-rating metric when no assessment is joined', async () => {

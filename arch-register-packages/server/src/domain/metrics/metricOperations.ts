@@ -22,6 +22,7 @@ import {
 } from '../catalog/entityQueryOperations';
 import { parseEntityQuery, buildEntityQueryForExecution } from '../catalog/entityQuery';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
+import { matchesFilterCondition } from '../catalog/dataHelpers';
 import { buildContainmentChildrenIndex, collectDescendantIds } from './metricDescendants';
 import {
   collectMetricTerminals,
@@ -203,6 +204,8 @@ const aggregate = (
     }
     case 'count':
       return { value: values.length, lifecycleId: null };
+    case 'percentage':
+      throw new Error('"percentage" aggregation is computed in computeBoxMetrics, not aggregate()');
   }
 };
 
@@ -393,6 +396,25 @@ export const computeBoxMetrics = (
       };
     }
 
+    if (metric.aggregation === 'percentage') {
+      const numeratorCount = sourceTerminalsFiltered.filter(
+        terminal =>
+          terminal.kind === 'entity' &&
+          matchesFilterCondition(terminal.entity, metric.numeratorCondition!, null)
+      ).length;
+      return {
+        boxEntityId,
+        value: sourceCount > 0 ? (numeratorCount / sourceCount) * 100 : null,
+        lifecycleId: null,
+        dominantValue: null,
+        dominantLabel: null,
+        distribution: [],
+        sourceCount,
+        populatedCount: numeratorCount,
+        duplicateCount
+      };
+    }
+
     const populated = sourceTerminalsFiltered
       .map(terminal =>
         extractValue(
@@ -579,6 +601,16 @@ export const getBoxMetrics = async (
       message: 'Enum-sourced metrics only support "count" or "worst" aggregation'
     });
   }
+  if (metric.aggregation === 'percentage') {
+    httpAssert.present(metric.numeratorCondition, {
+      status: 400,
+      message: '"percentage" aggregation requires numeratorCondition'
+    });
+    httpAssert.true(metric.sourceContext !== 'relation', {
+      status: 400,
+      message: '"percentage" aggregation does not support relation-sourced metrics'
+    });
+  }
 
   const requestParams = {
     entityQuery: entityQuery ?? undefined,
@@ -643,7 +675,8 @@ export const getBoxMetrics = async (
       : schemas.find(schema => schema.id === metric.sourceSchemaId);
   const currencySource = isCurrencyFieldSource(metric, sourceSchema);
   httpAssert.true(
-    metric.targetCurrency == null || (currencySource && metric.aggregation !== 'count'),
+    metric.targetCurrency == null ||
+      (currencySource && metric.aggregation !== 'count' && metric.aggregation !== 'percentage'),
     {
       status: 400,
       message: 'targetCurrency is only valid for non-count currency field metrics'
@@ -656,7 +689,7 @@ export const getBoxMetrics = async (
   const visibleEntities = filterVisibleEntities(authCtx, allEntities);
   const scopedEntities = visibleEntities;
   let currencyConversion: CurrencyConversion | null = null;
-  if (currencySource && metric.aggregation !== 'count') {
+  if (currencySource && metric.aggregation !== 'count' && metric.aggregation !== 'percentage') {
     const currencyConfig = await db.workspace.getSupportedCurrencies(workspace);
     const targetCurrency = metric.targetCurrency ?? currencyConfig.default_currency;
     httpAssert.true(

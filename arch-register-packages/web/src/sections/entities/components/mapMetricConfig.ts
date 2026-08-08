@@ -6,8 +6,38 @@ import type {
   MetricSource,
   MetricTraversalStep
 } from '@arch-register/api-types/metricContract';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 import type { JoinedAssessmentContext } from './entityFieldSources';
+
+const FILTER_OPS = [
+  'equals',
+  'not_equals',
+  'contains',
+  'starts_with',
+  'ends_with',
+  'empty',
+  'not_empty',
+  'before',
+  'after',
+  'on',
+  'gt',
+  'lt',
+  'gte',
+  'lte'
+];
+
+const parseFilterCondition = (raw: unknown): FilterCondition | undefined => {
+  if (raw == null || typeof raw !== 'object') return undefined;
+  const candidate = raw as Record<string, unknown>;
+  if (typeof candidate.fieldId !== 'string' || typeof candidate.op !== 'string') return undefined;
+  if (!FILTER_OPS.includes(candidate.op)) return undefined;
+  return {
+    fieldId: candidate.fieldId,
+    op: candidate.op,
+    value: candidate.value
+  } as FilterCondition;
+};
 
 // `MapConfig.metricConfig` is stored as `unknown` in the saved-view config schema (the web app
 // doesn't depend on zod directly - see entityViewConfig.ts), so it's parsed structurally here
@@ -24,7 +54,9 @@ export const parseMetricConfig = (raw: unknown): MetricConfig | null => {
     return null;
   }
   if (
-    !['count', 'sum', 'average', 'minimum', 'maximum', 'worst'].includes(aggregation) ||
+    !['count', 'sum', 'average', 'minimum', 'maximum', 'worst', 'percentage'].includes(
+      aggregation
+    ) ||
     typeof source.kind !== 'string' ||
     !['field', 'assessmentRating', 'lifecycle', 'enum', 'assessmentEnum'].includes(source.kind)
   ) {
@@ -33,6 +65,7 @@ export const parseMetricConfig = (raw: unknown): MetricConfig | null => {
   if (source.kind !== 'lifecycle' && typeof source.fieldId !== 'string') return null;
   const worstDirection = candidate.worstDirection;
   const targetCurrency = candidate.targetCurrency;
+  const numeratorCondition = parseFilterCondition(candidate.numeratorCondition);
   const parsedPath = Array.isArray(path)
     ? (path.filter(step => {
         if (step == null || typeof step !== 'object') return false;
@@ -60,7 +93,8 @@ export const parseMetricConfig = (raw: unknown): MetricConfig | null => {
     ...(worstDirection === 'low' || worstDirection === 'high' ? { worstDirection } : {}),
     ...(typeof targetCurrency === 'string' && /^[A-Z]{3}$/.test(targetCurrency)
       ? { targetCurrency }
-      : {})
+      : {}),
+    ...(numeratorCondition ? { numeratorCondition } : {})
   };
 };
 
@@ -221,5 +255,6 @@ export const AGGREGATION_OPTIONS: { value: MetricAggregation; label: string }[] 
   { value: 'average', label: 'Average' },
   { value: 'minimum', label: 'Minimum' },
   { value: 'maximum', label: 'Maximum' },
-  { value: 'worst', label: 'Worst' }
+  { value: 'worst', label: 'Worst' },
+  { value: 'percentage', label: 'Percentage' }
 ];

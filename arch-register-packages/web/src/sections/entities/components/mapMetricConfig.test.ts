@@ -80,6 +80,39 @@ describe('parseMetricConfig', () => {
     expect(config?.worstDirection).toBeUndefined();
   });
 
+  it('parses a percentage aggregation with a numeratorCondition', () => {
+    const config = parseMetricConfig({
+      sourceSchemaId: 's1',
+      source: { kind: 'lifecycle' },
+      aggregation: 'percentage',
+      numeratorCondition: { fieldId: 'status', op: 'equals', value: 'satisfied' }
+    });
+    expect(config?.aggregation).toBe('percentage');
+    expect(config?.numeratorCondition).toEqual({
+      fieldId: 'status',
+      op: 'equals',
+      value: 'satisfied'
+    });
+  });
+
+  it('drops a malformed numeratorCondition rather than propagating it', () => {
+    const config = parseMetricConfig({
+      sourceSchemaId: 's1',
+      source: { kind: 'lifecycle' },
+      aggregation: 'percentage',
+      numeratorCondition: { fieldId: 'status', op: 'bogus_op', value: 'satisfied' }
+    });
+    expect(config?.numeratorCondition).toBeUndefined();
+
+    const missingField = parseMetricConfig({
+      sourceSchemaId: 's1',
+      source: { kind: 'lifecycle' },
+      aggregation: 'percentage',
+      numeratorCondition: { op: 'equals', value: 'satisfied' }
+    });
+    expect(missingField?.numeratorCondition).toBeUndefined();
+  });
+
   it('keeps relation-aware path and source context settings', () => {
     expect(
       parseMetricConfig({

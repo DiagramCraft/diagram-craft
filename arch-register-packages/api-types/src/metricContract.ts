@@ -62,7 +62,7 @@ export const metricSourceSchema = z.discriminatedUnion('kind', [
 export const enumSourceKinds = ['enum', 'assessmentEnum'] as const;
 
 export const metricAggregationSchema = z
-  .enum(['count', 'sum', 'average', 'minimum', 'maximum', 'worst'])
+  .enum(['count', 'sum', 'average', 'minimum', 'maximum', 'worst', 'percentage'])
   .describe('Aggregation function applied across matching descendant entities');
 
 export const metricConfigSchema = z.object({
@@ -78,8 +78,15 @@ export const metricConfigSchema = z.object({
     .max(6)
     .optional()
     .describe('Ordered traversal path from each map box to terminal metric sources'),
-  source: metricSourceSchema.describe('Value source for the metric'),
+  source: metricSourceSchema.describe(
+    'Value source for the metric; unused when aggregation is "percentage"'
+  ),
   aggregation: metricAggregationSchema,
+  numeratorCondition: filterConditionSchema
+    .optional()
+    .describe(
+      'Condition matching the terminal entities counted in the numerator of a "percentage" aggregation; required when aggregation is "percentage"'
+    ),
   worstDirection: z
     .enum(['low', 'high'])
     .optional()
