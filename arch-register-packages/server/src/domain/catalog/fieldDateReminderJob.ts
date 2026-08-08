@@ -338,6 +338,7 @@ export const createFieldDateReminderGovernanceRegistry = (): GovernanceRegistry 
       {
         workflowConfig: {
           supportsSubkind: true,
+          supportsWorkspaceScope: false,
           supportsApprovals: false,
           supportsReminders: true,
           supportsEscalation: false,

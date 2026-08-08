@@ -32,6 +32,7 @@ const toCaseKind = (caseKind: string, config: ReturnType<GovernanceRegistry['get
   label: CASE_KIND_LABELS[caseKind] ?? caseKind,
   description: CASE_KIND_DESCRIPTIONS[caseKind] ?? '',
   supportsSubkind: config?.workflowConfig?.supportsSubkind ?? false,
+  supportsWorkspaceScope: config?.workflowConfig?.supportsWorkspaceScope ?? true,
   supportsApprovals: config?.workflowConfig?.supportsApprovals ?? false,
   supportsReminders: config?.workflowConfig?.supportsReminders ?? false,
   supportsEscalation: config?.workflowConfig?.supportsEscalation ?? false,
@@ -91,7 +92,9 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
             message: `Unknown governance case kind '${input.body.case_kind}'`
           });
           httpAssert.true(
-            input.body.case_subkind == null || kindConfig.workflowConfig?.supportsSubkind === true,
+            input.body.case_subkind != null
+              ? kindConfig.workflowConfig?.supportsSubkind === true
+              : kindConfig.workflowConfig?.supportsWorkspaceScope !== false,
             {
               status: 400,
               message: `Case kind '${input.body.case_kind}' does not support subkind-scoped configuration`
@@ -125,6 +128,15 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
             kindConfig.workflowConfig.validateConfig(config);
           if (input.body.case_kind === 'document.status')
             validateDocumentStatusWorkflowConfig(config);
+          httpAssert.true(
+            (config.escalation?.fallbackUserIds.length ?? 0) +
+              (config.escalation?.fallbackTeamIds.length ?? 0) <=
+              1,
+            {
+              status: 400,
+              message: 'Escalation configuration supports at most one fallback target'
+            }
+          );
           const row = await context.db.governanceCaseConfig.upsertCaseConfig({
             workspace,
             case_kind: input.body.case_kind,
@@ -147,7 +159,9 @@ export const createGovernanceWorkflowConfigORPCRouter = (registry: GovernanceReg
             message: `Unknown governance case kind '${input.body.case_kind}'`
           });
           httpAssert.true(
-            input.body.case_subkind == null || kindConfig.workflowConfig?.supportsSubkind === true,
+            input.body.case_subkind != null
+              ? kindConfig.workflowConfig?.supportsSubkind === true
+              : kindConfig.workflowConfig?.supportsWorkspaceScope !== false,
             {
               status: 400,
               message: `Case kind '${input.body.case_kind}' does not support subkind-scoped configuration`

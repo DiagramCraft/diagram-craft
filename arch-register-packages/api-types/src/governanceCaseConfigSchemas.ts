@@ -18,7 +18,6 @@ export const governanceReminderConfigSchema = z.object({
 export const governanceEscalationConfigSchema = z.object({
   enabled: z.boolean(),
   overdueDays: z.number().int().positive(),
-  escalationSource: z.string().min(1).optional(),
   fallbackTeamIds: idListSchema,
   fallbackUserIds: idListSchema
 });

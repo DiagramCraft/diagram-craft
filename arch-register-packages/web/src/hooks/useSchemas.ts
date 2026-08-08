@@ -37,13 +37,8 @@ export const useCreateSchema = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: {
-      name: string;
-      key_prefix: string;
-      fields: SchemaField[];
-      entity_approval_policy?: 'required' | 'disabled';
-      deprecation_policy?: 'required' | 'disabled';
-    }) => orpcClient.schemas.create({ params: { workspace: workspaceId }, body }),
+    mutationFn: (body: { name: string; key_prefix: string; fields: SchemaField[] }) =>
+      orpcClient.schemas.create({ params: { workspace: workspaceId }, body }),
     onSuccess: async () => {
       // Invalidate schema list to show the new schema
       await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
@@ -75,8 +70,6 @@ export const useUpdateSchema = (workspaceId: string) => {
         shared_field_group_links?: SharedFieldGroupLink[];
         color?: string | null;
         icon?: string | null;
-        entity_approval_policy?: 'required' | 'disabled';
-        deprecation_policy?: 'required' | 'disabled';
         fieldMigrations?: FieldMigrations;
       };
     }) =>
@@ -100,10 +93,7 @@ export const useUpdateSchema = (workspaceId: string) => {
                   shared_field_group_links:
                     variables.data.shared_field_group_links ?? schema.shared_field_group_links,
                   color: variables.data.color ?? schema.color,
-                  icon: variables.data.icon ?? schema.icon,
-                  entity_approval_policy:
-                    variables.data.entity_approval_policy ?? schema.entity_approval_policy,
-                  deprecation_policy: variables.data.deprecation_policy ?? schema.deprecation_policy
+                  icon: variables.data.icon ?? schema.icon
                 }
               : schema
           ) ?? current

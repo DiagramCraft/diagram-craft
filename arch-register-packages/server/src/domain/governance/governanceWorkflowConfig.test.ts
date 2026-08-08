@@ -52,4 +52,23 @@ describe('resolveGovernanceWorkflowConfig', () => {
     expect(result.config.reminders?.overdueDays).toEqual([1]);
     expect(result.config.escalation?.overdueDays).toBe(5);
   });
+
+  it('does not apply workspace rows to kinds that are subkind-only', () => {
+    const result = resolveGovernanceWorkflowConfig(
+      [
+        {
+          case_subkind: null,
+          enabled: false,
+          config: { reminders: { enabled: false, approachingDays: [], overdueDays: [] } }
+        }
+      ],
+      'document-type:status',
+      defaults,
+      false
+    );
+
+    expect(result.enabled).toBe(true);
+    expect(result.source).toBe('default');
+    expect(result.config.reminders?.approachingDays).toEqual([2]);
+  });
 });

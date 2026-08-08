@@ -2157,22 +2157,6 @@
                       }
                     ],
                     "description": "Default owner for new entities"
-                  },
-                  "entity_approval_policy": {
-                    "enum": [
-                      "required",
-                      "disabled"
-                    ],
-                    "type": "string",
-                    "description": "Default approval policy for existing entity changes"
-                  },
-                  "deprecation_policy": {
-                    "enum": [
-                      "required",
-                      "disabled"
-                    ],
-                    "type": "string",
-                    "description": "Whether entities of this schema can go through the deprecation workflow"
                   }
                 },
                 "required": [
@@ -5449,22 +5433,6 @@
                       }
                     ],
                     "description": "Default owner for new entities"
-                  },
-                  "entity_approval_policy": {
-                    "enum": [
-                      "required",
-                      "disabled"
-                    ],
-                    "type": "string",
-                    "description": "Default approval policy for existing entity changes"
-                  },
-                  "deprecation_policy": {
-                    "enum": [
-                      "required",
-                      "disabled"
-                    ],
-                    "type": "string",
-                    "description": "Whether entities of this schema can go through the deprecation workflow"
                   },
                   "fieldMigrations": {
                     "type": "object",
@@ -85434,6 +85402,9 @@
                           "supportsSubkind": {
                             "type": "boolean"
                           },
+                          "supportsWorkspaceScope": {
+                            "type": "boolean"
+                          },
                           "supportsApprovals": {
                             "type": "boolean"
                           },
@@ -85521,10 +85492,6 @@
                                     "maximum": 9007199254740991,
                                     "exclusiveMinimum": 0
                                   },
-                                  "escalationSource": {
-                                    "type": "string",
-                                    "minLength": 1
-                                  },
                                   "fallbackTeamIds": {
                                     "type": "array",
                                     "items": {
@@ -85563,6 +85530,7 @@
                           "label",
                           "description",
                           "supportsSubkind",
+                          "supportsWorkspaceScope",
                           "supportsApprovals",
                           "supportsReminders",
                           "supportsEscalation",
@@ -85688,10 +85656,6 @@
                                     "minimum": -9007199254740991,
                                     "maximum": 9007199254740991,
                                     "exclusiveMinimum": 0
-                                  },
-                                  "escalationSource": {
-                                    "type": "string",
-                                    "minLength": 1
                                   },
                                   "fallbackTeamIds": {
                                     "type": "array",
@@ -85884,10 +85848,6 @@
                             "maximum": 9007199254740991,
                             "exclusiveMinimum": 0
                           },
-                          "escalationSource": {
-                            "type": "string",
-                            "minLength": 1
-                          },
                           "fallbackTeamIds": {
                             "type": "array",
                             "items": {
@@ -86051,10 +86011,6 @@
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991,
                               "exclusiveMinimum": 0
-                            },
-                            "escalationSource": {
-                              "type": "string",
-                              "minLength": 1
                             },
                             "fallbackTeamIds": {
                               "type": "array",

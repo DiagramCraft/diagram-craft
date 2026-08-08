@@ -120,9 +120,12 @@ const mergeGovernanceWorkflowConfig = (
 export const resolveGovernanceWorkflowConfig = (
   rows: GovernanceWorkflowConfigRowLike[],
   caseSubkind: string | null,
-  defaultConfig: GovernanceWorkflowConfig
+  defaultConfig: GovernanceWorkflowConfig,
+  supportsWorkspaceScope = true
 ): ResolvedGovernanceWorkflowConfig => {
-  const workspaceRow = rows.find(row => row.case_subkind == null);
+  const workspaceRow = supportsWorkspaceScope
+    ? rows.find(row => row.case_subkind == null)
+    : undefined;
   const subkindRow =
     caseSubkind == null ? undefined : rows.find(row => row.case_subkind === caseSubkind);
   const sources = [workspaceRow, subkindRow].filter(

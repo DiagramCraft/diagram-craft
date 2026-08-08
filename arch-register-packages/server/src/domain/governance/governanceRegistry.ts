@@ -18,6 +18,7 @@ export type GovernanceCaseKindConfig = {
   /** Metadata and validation used by the centralized workflow configuration API. */
   workflowConfig?: {
     supportsSubkind?: boolean;
+    supportsWorkspaceScope?: boolean;
     supportsApprovals?: boolean;
     supportsReminders?: boolean;
     supportsEscalation?: boolean;

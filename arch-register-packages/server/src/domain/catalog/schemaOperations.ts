@@ -36,8 +36,7 @@ import {
 } from '../derived/derivedFields';
 import {
   getSchemaGovernancePolicies,
-  getSchemaGovernancePoliciesBySchema,
-  upsertSchemaGovernancePolicies
+  getSchemaGovernancePoliciesBySchema
 } from '../governance/schemaGovernancePolicy';
 import {
   EntitySchema,
@@ -159,18 +158,9 @@ export const createWorkspaceSchema = async (
       const timestamp = new Date();
       const sharedGroups = await db.catalog.listSharedFieldGroups(ws);
       const requested = buildCreateSchemaInput(ws, body, teamIds, timestamp);
-      const { entity_approval_policy, deprecation_policy, ...schemaInput } = requested;
-      const compiled = compileSchemaWithSharedGroups(schemaInput, sharedGroups);
+      const compiled = compileSchemaWithSharedGroups(requested, sharedGroups);
       validateDerivedFieldGroupAccess(compiled.fields, compiled.groups ?? []);
       const row = await db.catalog.createSchema(compiled);
-      await upsertSchemaGovernancePolicies(
-        db,
-        ws,
-        row.id,
-        { entity_approval_policy, deprecation_policy },
-        timestamp,
-        authCtx.userId
-      );
       httpAssert.present(row.key_prefix, {
         status: 409,
         message: `Schema '${row.id}' is missing a key prefix`
@@ -206,7 +196,7 @@ export const createWorkspaceSchema = async (
       });
 
       const enums = await db.catalog.listEnums(ws);
-      return toApiSchema(row, 0, enums, { entity_approval_policy, deprecation_policy });
+      return toApiSchema(row, 0, enums, await getSchemaGovernancePolicies(db, ws, row.id));
     }
   );
 };
@@ -232,8 +222,7 @@ export const updateWorkspaceSchema = async (
       httpAssert.present(oldRow, { status: 404, message: `Schema '${id}' not found` });
 
       const teamIds = new Set((await db.workspace.listTeams(ws)).map(owner => owner.id));
-      const oldPolicies = await getSchemaGovernancePolicies(db, ws, id);
-      const next = buildUpdateSchemaInput(body, { ...oldRow, ...oldPolicies }, teamIds, new Date());
+      const next = buildUpdateSchemaInput(body, oldRow, teamIds, new Date());
       const sharedGroups = await db.catalog.listSharedFieldGroups(ws);
       const compiledNext = compileSchemaWithSharedGroups(
         { ...oldRow, ...next, shared_field_group_links: next.shared_field_group_links },
@@ -389,17 +378,6 @@ export const updateWorkspaceSchema = async (
           updated_at: next.updated_at
         });
         httpAssert.present(updated, { status: 404, message: `Schema '${id}' not found` });
-        await upsertSchemaGovernancePolicies(
-          tx,
-          ws,
-          id,
-          {
-            entity_approval_policy: next.entityApprovalPolicy,
-            deprecation_policy: next.deprecationPolicy
-          },
-          next.updated_at,
-          authCtx.userId
-        );
 
         if (oldRow.key_prefix !== updated.key_prefix) {
           try {

@@ -8,6 +8,7 @@ const governanceWorkflowCaseKindSchema = z.object({
   label: z.string(),
   description: z.string(),
   supportsSubkind: z.boolean(),
+  supportsWorkspaceScope: z.boolean(),
   supportsApprovals: z.boolean(),
   supportsReminders: z.boolean(),
   supportsEscalation: z.boolean(),

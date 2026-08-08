@@ -57,12 +57,14 @@ const FallbackTargetPicker = ({
   workspaceSlug,
   kind,
   values,
-  onChange
+  onChange,
+  maxValues
 }: {
   workspaceSlug: string;
   kind: 'user' | 'team';
   values: string[];
   onChange: (values: string[]) => void;
+  maxValues?: number;
 }) => {
   const { data: members = [] } = useWorkspaceMembers(workspaceSlug);
   const { data: teams = [] } = useTeams(workspaceSlug);
@@ -82,7 +84,11 @@ const FallbackTargetPicker = ({
         kind={kind}
         activeOnly={kind === 'user'}
         excludeIds={values}
-        onSelect={item => onChange([...values, item.id])}
+        onSelect={item =>
+          maxValues !== undefined && values.length >= maxValues
+            ? undefined
+            : onChange([...values, item.id])
+        }
         placeholder={kind === 'user' ? 'Search users to add…' : 'Search teams to add…'}
       />
       {values.length > 0 && (
@@ -549,8 +555,16 @@ const ConfigEditor = ({
                     workspaceSlug={workspaceSlug}
                     kind="user"
                     values={escalation.fallbackUserIds}
+                    maxValues={1}
                     onChange={fallbackUserIds =>
-                      update({ escalation: { ...escalation, fallbackUserIds } })
+                      update({
+                        escalation: {
+                          ...escalation,
+                          fallbackUserIds,
+                          fallbackTeamIds:
+                            fallbackUserIds.length > 0 ? [] : escalation.fallbackTeamIds
+                        }
+                      })
                     }
                   />
                 </FormElement>
@@ -559,8 +573,16 @@ const ConfigEditor = ({
                     workspaceSlug={workspaceSlug}
                     kind="team"
                     values={escalation.fallbackTeamIds}
+                    maxValues={1}
                     onChange={fallbackTeamIds =>
-                      update({ escalation: { ...escalation, fallbackTeamIds } })
+                      update({
+                        escalation: {
+                          ...escalation,
+                          fallbackTeamIds,
+                          fallbackUserIds:
+                            fallbackTeamIds.length > 0 ? [] : escalation.fallbackUserIds
+                        }
+                      })
                     }
                   />
                 </FormElement>
@@ -810,6 +832,7 @@ export const WorkflowsSubSection = ({
               label: editing.case_kind_label,
               description: editing.case_kind_description,
               supportsSubkind: editing.case_subkind != null,
+              supportsWorkspaceScope: true,
               supportsApprovals: true,
               supportsReminders: true,
               supportsEscalation: true,

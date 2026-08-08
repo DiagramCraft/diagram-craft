@@ -98,6 +98,11 @@ export type ExportSchema = {
   key_prefix: string | null;
   entity_approval_policy?: 'required' | 'disabled';
   deprecation_policy?: 'required' | 'disabled';
+  governance_configs?: Array<{
+    case_kind: string;
+    enabled: boolean;
+    config: GovernanceWorkflowConfig;
+  }>;
 };
 
 export type ExportRelationSchema = {

@@ -102,7 +102,8 @@ export const createGovernanceDeadlineScanJobHandler =
       const effectiveConfig = resolveGovernanceWorkflowConfig(
         configRows.filter(row => row.case_kind === caseRow.case_kind),
         caseRow.case_subkind,
-        kindConfig ? defaultWorkflowConfigForCaseKind(kindConfig) : { extensions: {} }
+        kindConfig ? defaultWorkflowConfigForCaseKind(kindConfig) : { extensions: {} },
+        kindConfig?.workflowConfig?.supportsWorkspaceScope !== false
       );
       if (!effectiveConfig.enabled) continue;
       const runtimeWindows = kindConfig?.resolveReminderWindows

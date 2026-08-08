@@ -595,6 +595,7 @@ export const createDocumentGovernanceRegistry = (): GovernanceRegistry =>
       {
         workflowConfig: {
           supportsSubkind: true,
+          supportsWorkspaceScope: false,
           supportsApprovals: true,
           supportsReminders: true,
           supportsEscalation: false,

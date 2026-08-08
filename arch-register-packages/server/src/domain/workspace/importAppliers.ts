@@ -18,6 +18,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import { entityRequiresApproval } from '../catalog/entityChangeOperations';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
+import type { GovernanceWorkflowConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import type { SchemaGroup, SchemaField } from '@arch-register/api-types/schemaContract';
 import type {
@@ -40,7 +41,6 @@ import { requireTypedRelationEdit } from '../catalog/relationAccessControl';
 import { listAllRelations } from '../catalog/relationOperations';
 import { assertResolvedFieldGroupReferences } from '../catalog/schemaHelpers';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
-import { upsertSchemaGovernancePolicies } from '../governance/schemaGovernancePolicy';
 
 type ImportResolution = { action: string; new_name?: string };
 
@@ -51,6 +51,29 @@ const resolveMappedId = (mapping: Map<string, string>, id: string | null | undef
 
 const hasSkipResolution = (resolutions: Record<string, ImportResolution>, id: string) =>
   resolutions[id]?.action === 'skip';
+
+const remapGovernanceConfigTeams = (
+  config: GovernanceWorkflowConfig,
+  teamMapping: Map<string, string>
+): GovernanceWorkflowConfig => {
+  const remapTargets = (value: GovernanceWorkflowConfig['approvals']) => {
+    if (!value) return value;
+    return {
+      ...value,
+      fallbackTeamIds: value.fallbackTeamIds.map(id => teamMapping.get(id) ?? id)
+    };
+  };
+  return {
+    ...config,
+    ...(config.approvals && { approvals: remapTargets(config.approvals) }),
+    ...(config.escalation && {
+      escalation: {
+        ...config.escalation,
+        fallbackTeamIds: config.escalation.fallbackTeamIds.map(id => teamMapping.get(id) ?? id)
+      }
+    })
+  };
+};
 
 const generateSchemaKeyPrefix = (seed: string) => {
   const bytes = createHash('sha1').update(seed).digest();
@@ -375,17 +398,17 @@ export const importSchemas = async (
       }
       created++;
     }
-    await upsertSchemaGovernancePolicies(
-      db,
-      workspace,
-      nextId,
-      {
-        entity_approval_policy: schema.entity_approval_policy ?? 'disabled',
-        deprecation_policy: schema.deprecation_policy ?? 'disabled'
-      },
-      now,
-      null
-    );
+    for (const config of schema.governance_configs ?? []) {
+      await db.governanceCaseConfig.upsertCaseConfig({
+        workspace,
+        case_kind: config.case_kind,
+        case_subkind: encodeCaseSubkind(nextId),
+        enabled: config.enabled,
+        config: remapGovernanceConfigTeams(config.config, idMapping.teams),
+        updated_at: now,
+        updated_by: null
+      });
+    }
   }
 
   return { created, updated };

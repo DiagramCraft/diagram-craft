@@ -336,15 +336,7 @@ const createSchemaBodySchema = z.object({
     v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
     z.string().nullable().optional().describe('Schema icon identifier')
   ),
-  default_owner: z.string().nullable().optional().describe('Default owner for new entities'),
-  entity_approval_policy: z
-    .enum(['required', 'disabled'])
-    .optional()
-    .describe('Default approval policy for existing entity changes'),
-  deprecation_policy: z
-    .enum(['required', 'disabled'])
-    .optional()
-    .describe('Whether entities of this schema can go through the deprecation workflow')
+  default_owner: z.string().nullable().optional().describe('Default owner for new entities')
 });
 
 const updateSchemaBodySchema = createSchemaBodySchema.extend({
