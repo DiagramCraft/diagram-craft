@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import styles from './SchemaSettingsScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -449,30 +450,54 @@ export const RelationSchemaSettingsScreen = () => {
 
               <div className={styles.formRow}>
                 <div>
-                  <SchemaMultiSelect
-                    label="In endpoint"
-                    hint="Entity types allowed at the 'in' end of this relation."
-                    schemas={schemas}
-                    selectedIds={inEndpoint.schemaIds}
+                  <div className={styles.formLabel}>In endpoint</div>
+                  <Checkbox
+                    label="Allow any entity type"
+                    value={inEndpoint.schemaIds === 'any'}
                     disabled={!canEdit}
-                    onChange={schemaIds => {
-                      setInEndpoint({ schemaIds });
+                    onChange={value => {
+                      setInEndpoint({ schemaIds: value ? 'any' : [] });
                       setDirty(true);
                     }}
                   />
+                  {inEndpoint.schemaIds !== 'any' && (
+                    <SchemaMultiSelect
+                      label=""
+                      hint="Entity types allowed at the 'in' end of this relation."
+                      schemas={schemas}
+                      selectedIds={inEndpoint.schemaIds}
+                      disabled={!canEdit}
+                      onChange={schemaIds => {
+                        setInEndpoint({ schemaIds });
+                        setDirty(true);
+                      }}
+                    />
+                  )}
                 </div>
                 <div>
-                  <SchemaMultiSelect
-                    label="Out endpoint"
-                    hint="Entity types allowed at the 'out' end of this relation."
-                    schemas={schemas}
-                    selectedIds={outEndpoint.schemaIds}
+                  <div className={styles.formLabel}>Out endpoint</div>
+                  <Checkbox
+                    label="Allow any entity type"
+                    value={outEndpoint.schemaIds === 'any'}
                     disabled={!canEdit}
-                    onChange={schemaIds => {
-                      setOutEndpoint({ schemaIds });
+                    onChange={value => {
+                      setOutEndpoint({ schemaIds: value ? 'any' : [] });
                       setDirty(true);
                     }}
                   />
+                  {outEndpoint.schemaIds !== 'any' && (
+                    <SchemaMultiSelect
+                      label=""
+                      hint="Entity types allowed at the 'out' end of this relation."
+                      schemas={schemas}
+                      selectedIds={outEndpoint.schemaIds}
+                      disabled={!canEdit}
+                      onChange={schemaIds => {
+                        setOutEndpoint({ schemaIds });
+                        setDirty(true);
+                      }}
+                    />
+                  )}
                 </div>
               </div>
 

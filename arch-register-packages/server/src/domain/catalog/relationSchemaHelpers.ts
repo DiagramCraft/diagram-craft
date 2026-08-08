@@ -36,9 +36,12 @@ const normalizeRelationEndpoint = (
   value: unknown,
   label: 'in' | 'out',
   knownEntitySchemaIds: Set<string>
-): { schemaIds: string[] } => {
+): { schemaIds: string[] | 'any' } => {
   httpAssert.json(value, { message: `"${label}" endpoint is required and must be an object` });
   const schemaIds = (value as Record<string, unknown>).schemaIds;
+  if (schemaIds === 'any') {
+    return { schemaIds: 'any' };
+  }
   httpAssert.true(Array.isArray(schemaIds) && schemaIds.length > 0, {
     message: `"${label}.schemaIds" must be a non-empty array`
   });

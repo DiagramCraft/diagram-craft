@@ -161,10 +161,12 @@ export const getMetricPathOptions = (
       addGenericRelationOption(field, 'forward');
     } else if (field.type === 'typedRelation') {
       const relationSchema = relationSchemaById.get(field.relationSchemaId);
+      const endpointSchemaIds =
+        field.direction === 'out' ? relationSchema?.out.schemaIds : relationSchema?.in.schemaIds;
       const targetSchemaIds =
-        field.direction === 'out'
-          ? (relationSchema?.out.schemaIds ?? [])
-          : (relationSchema?.in.schemaIds ?? []);
+        endpointSchemaIds === 'any'
+          ? entitySchemas.map(candidate => candidate.id)
+          : (endpointSchemaIds ?? []);
       options.push({
         step: {
           kind: 'typedRelation',

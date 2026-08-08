@@ -141,12 +141,11 @@ const sharedFieldGroupLinkSchema = z
   })
   .describe('A schema-local inclusion of a workspace shared fieldgroup');
 
-const relationEndpointSchema = z
+export const relationEndpointSchema = z
   .object({
     schemaIds: z
-      .array(z.string())
-      .min(1)
-      .describe('Entity schema identifiers allowed at this endpoint')
+      .union([z.literal('any'), z.array(z.string()).min(1)])
+      .describe('Entity schema identifiers allowed at this endpoint, or "any" for no restriction')
   })
   .describe('Typed endpoint constraint for a relation schema');
 

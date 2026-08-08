@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   isEntityRelationField,
+  relationEndpointSchema,
   relationFieldInputSchema,
   type RelationField
 } from './relationSchemaContract';
@@ -69,6 +70,32 @@ describe('entityRelationFieldSchema', () => {
       minCount: 0,
       maxCount: -1
     });
+
+    expect(result.success).toBe(false);
+  });
+});
+
+describe('relationEndpointSchema', () => {
+  it('accepts an explicit, non-empty schemaIds array', () => {
+    const result = relationEndpointSchema.safeParse({ schemaIds: ['entity-schema-1'] });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('accepts the "any" wildcard', () => {
+    const result = relationEndpointSchema.safeParse({ schemaIds: 'any' });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects an empty schemaIds array', () => {
+    const result = relationEndpointSchema.safeParse({ schemaIds: [] });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a wildcard-like string other than "any"', () => {
+    const result = relationEndpointSchema.safeParse({ schemaIds: 'all' });
 
     expect(result.success).toBe(false);
   });

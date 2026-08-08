@@ -1,7 +1,14 @@
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
+import type {
+  RelationEndpoint,
+  RelationSchema
+} from '@arch-register/api-types/relationSchemaContract';
 import type { MetricTraversalStep } from '@arch-register/api-types/metricContract';
 import type { TreeEdge, TreeNode } from '@arch-register/api-types/entityContract';
+
+/** A wildcard ('any') endpoint resolves to every known entity schema id. */
+const resolveEndpointSchemaIds = (endpoint: RelationEndpoint, schemas: EntitySchema[]): string[] =>
+  endpoint.schemaIds === 'any' ? schemas.map(schema => schema.id) : endpoint.schemaIds;
 
 export type ContainmentTreeIndex = {
   nodeMap: Map<string, TreeNode>;
@@ -39,9 +46,8 @@ export const getChildSchemas = (
     schema.fields.flatMap(field => {
       if (field.type !== 'typedRelation') return [];
       const relationSchema = relationSchemaById.get(field.relationSchemaId);
-      return field.direction === 'out'
-        ? (relationSchema?.out.schemaIds ?? [])
-        : (relationSchema?.in.schemaIds ?? []);
+      const endpoint = field.direction === 'out' ? relationSchema?.out : relationSchema?.in;
+      return endpoint ? resolveEndpointSchemaIds(endpoint, schemas) : [];
     });
   const parentTypedRelationTargets = parentSchema ? typedRelationTargets(parentSchema) : [];
   return schemas.filter(schema => {
@@ -81,7 +87,10 @@ export const getChildLevelOptions = (
   if (!parentSchemaId) return [];
   const relationSchema = relationSchemas.find(schema => schema.id === parentSchemaId);
   if (relationSchema) {
-    const endpointIds = new Set([...relationSchema.in.schemaIds, ...relationSchema.out.schemaIds]);
+    const endpointIds = new Set([
+      ...resolveEndpointSchemaIds(relationSchema.in, schemas),
+      ...resolveEndpointSchemaIds(relationSchema.out, schemas)
+    ]);
     return schemas.filter(schema => endpointIds.has(schema.id));
   }
   return [
@@ -125,10 +134,8 @@ const findTraversalStep = (
     if (field.type !== 'typedRelation') return false;
     const relationSchema = relationSchemaById.get(field.relationSchemaId);
     const targetSchemaIds =
-      field.direction === 'out'
-        ? (relationSchema?.out.schemaIds ?? [])
-        : (relationSchema?.in.schemaIds ?? []);
-    return targetSchemaIds.includes(childSchema.id);
+      field.direction === 'out' ? relationSchema?.out.schemaIds : relationSchema?.in.schemaIds;
+    return targetSchemaIds === 'any' || (targetSchemaIds?.includes(childSchema.id) ?? false);
   });
   if (typedField?.type === 'typedRelation') {
     return {
@@ -175,8 +182,8 @@ export const getMapTraversalPath = (
     if (!childSchema) return [];
     if (parentRelationSchema) {
       const endpointIds = new Set([
-        ...parentRelationSchema.in.schemaIds,
-        ...parentRelationSchema.out.schemaIds
+        ...resolveEndpointSchemaIds(parentRelationSchema.in, schemas),
+        ...resolveEndpointSchemaIds(parentRelationSchema.out, schemas)
       ]);
       if (endpointIds.has(childSchemaId)) continue;
       return [];

@@ -567,9 +567,15 @@ export const MapView = ({
       getMapSchemaIds(cfg).flatMap(id => {
         if (schemas.some(schema => schema.id === id)) return [id];
         const relationSchema = relationSchemas.find(schema => schema.id === id);
-        return relationSchema
-          ? [...relationSchema.in.schemaIds, ...relationSchema.out.schemaIds]
-          : [];
+        if (!relationSchema) return [];
+        return [
+          ...(relationSchema.in.schemaIds === 'any'
+            ? schemas.map(schema => schema.id)
+            : relationSchema.in.schemaIds),
+          ...(relationSchema.out.schemaIds === 'any'
+            ? schemas.map(schema => schema.id)
+            : relationSchema.out.schemaIds)
+        ];
       }),
     [cfg, relationSchemas, schemas]
   );

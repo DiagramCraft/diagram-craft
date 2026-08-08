@@ -129,6 +129,75 @@ test.describe('workspace export/import', () => {
     );
   });
 
+  test('exports and imports a relation schema with a wildcard ("any") endpoint', async ({
+    orpc,
+    server
+  }) => {
+    const suffix = randomUUID();
+    const badgeSuffix = Array.from(suffix.replaceAll('-', '').slice(0, 4), character =>
+      String.fromCharCode(65 + Number.parseInt(character, 16))
+    ).join('');
+    const source = await orpc.workspaces.create({
+      body: { name: `Wildcard relation source ${suffix}`, badge: `R${badgeSuffix}` }
+    });
+    const schema = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: { name: `Wildcard entity schema ${suffix}` }
+    });
+    const relationSchemaId = randomUUID();
+    const now = new Date();
+    await server.db.relation.createRelationSchema({
+      id: relationSchemaId,
+      workspace: source.id,
+      name: `Wildcard relation schema ${suffix}`,
+      description: 'Relation schema with an "any entity" endpoint',
+      in_schema_ids: [schema.id],
+      out_schema_ids: 'any',
+      fields: [],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      version: 1,
+      created_at: now,
+      updated_at: now
+    });
+
+    const archive = await orpc.workspaces.export({
+      params: { workspace: source.url_slug },
+      body: { include: ['schemas', 'relation_schemas'], options: { include_content: false } }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Wildcard relation target ${suffix}`, badge: `T${badgeSuffix}` }
+    });
+    const parsed = await orpc.workspaces.importParse({
+      params: { workspace: target.url_slug },
+      body: {
+        file: new File([archive.body as Blob], 'wildcard-relation-export.zip', {
+          type: 'application/zip'
+        })
+      }
+    });
+    expect(parsed.valid).toBe(true);
+    expect(parsed.summary.relation_schemas).toEqual({ count: 1, conflicts: 0 });
+
+    const execute = await orpc.workspaces.importExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        import_id: (parsed as any).import_id,
+        include: ['schemas', 'relation_schemas'],
+        conflict_resolutions: suggestedResolutions(parsed as any),
+        options: { preserve_ids: false, update_references: true }
+      }
+    });
+    expect(execute.success).toBe(true);
+
+    const targetRelationSchemas = await server.db.relation.listRelationSchemas(target.id);
+    expect(targetRelationSchemas).toHaveLength(1);
+    expect(targetRelationSchemas[0]?.out_schema_ids).toBe('any');
+  });
+
   test('exports and imports typed relation CSV rows', async ({ orpc, server }) => {
     const suffix = randomUUID();
     const schemaKeyPrefix = Array.from(suffix.replaceAll('-', '').slice(0, 4), character =>

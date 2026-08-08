@@ -109,8 +109,8 @@ export type ExportRelationSchema = {
   id: string;
   name: string;
   description: string;
-  in_schema_ids: string[];
-  out_schema_ids: string[];
+  in_schema_ids: string[] | 'any';
+  out_schema_ids: string[] | 'any';
   fields: unknown[];
   groups?: import('@arch-register/api-types/relationSchemaContract').RelationSchemaGroup[];
   shared_field_group_links?: import('@arch-register/api-types/schemaContract').SharedFieldGroupLink[];

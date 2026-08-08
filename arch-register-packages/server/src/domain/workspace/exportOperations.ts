@@ -134,8 +134,8 @@ export const exportWorkspace = async (
     const entitySchemaIds = new Set(data.schemas?.map(schema => schema.id) ?? []);
     for (const relationSchema of data.relation_schemas) {
       const referencedEntitySchemaIds = new Set([
-        ...relationSchema.in_schema_ids,
-        ...relationSchema.out_schema_ids
+        ...(relationSchema.in_schema_ids === 'any' ? [] : relationSchema.in_schema_ids),
+        ...(relationSchema.out_schema_ids === 'any' ? [] : relationSchema.out_schema_ids)
       ]);
       for (const entitySchemaId of referencedEntitySchemaIds) {
         if (entitySchemaIds.has(entitySchemaId)) continue;
