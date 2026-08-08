@@ -50,8 +50,9 @@ One state can be designated as the workspace's deprecated state. Finalizing an
 ## Governance Policies
 
 Use **Workflows** to configure governance behavior centrally. Each saved workflow configuration can define the
-supported approval policy, reminder schedule, escalation behavior, and case-kind-specific extensions. Configurations
-may be workspace-wide or scoped to a supported case subkind, such as a document type and status field.
+approval strategy and quorum, reminder schedule, escalation strategy, fallback users and teams, and case-kind-specific
+extensions. Configurations may be workspace-wide or scoped to a supported case subkind, such as a document type and
+status field. Workspace admins are the final fallback when no configured target resolves.
 
 Entity change approval and entity deprecation are configured in **Workflows** rather than on the entity schema editor.
 Administrators can set:
@@ -60,8 +61,9 @@ Administrators can set:
 - **Entity deprecation** — require a deprecation proposal to retire entities of this type
 
 Document status approval is also configured in **Workflows**. Select the document type and enum field, then choose the
-status values that require approval. The document schema editor continues to define fields and values but does not
-contain workflow configuration.
+status values that require approval. Approval and escalation can independently use a user or team field from the
+document type, with configured users or teams as fallbacks. The document schema editor continues to define fields and
+values but does not contain workflow configuration.
 
 See [Governance and Approvals](../use/governance) for how these workflows behave for users.
 

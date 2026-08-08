@@ -4,7 +4,8 @@ const idListSchema = z.array(z.string().min(1)).default([]);
 
 export const governanceApprovalConfigSchema = z.object({
   requiredApprovals: z.number().int().positive(),
-  approverSource: z.string().min(1).optional(),
+  strategy: z.string().min(1).optional(),
+  strategyConfig: z.record(z.string(), z.unknown()).default({}),
   fallbackTeamIds: idListSchema,
   fallbackUserIds: idListSchema
 });
@@ -18,6 +19,8 @@ export const governanceReminderConfigSchema = z.object({
 export const governanceEscalationConfigSchema = z.object({
   enabled: z.boolean(),
   overdueDays: z.number().int().positive(),
+  strategy: z.string().min(1).optional(),
+  strategyConfig: z.record(z.string(), z.unknown()).default({}),
   fallbackTeamIds: idListSchema,
   fallbackUserIds: idListSchema
 });

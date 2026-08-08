@@ -6,6 +6,7 @@ const defaults = {
   escalation: {
     enabled: true,
     overdueDays: 5,
+    strategyConfig: {},
     fallbackUserIds: [],
     fallbackTeamIds: []
   },

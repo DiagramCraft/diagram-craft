@@ -32,10 +32,53 @@ const firstLegacyApproval = (statuses: Record<string, unknown>) => {
   if (!approval) return undefined;
   return {
     requiredApprovals: approval.requiredApprovals ?? 1,
-    approverSource: approval.approverFieldId,
+    strategy: approval.approverFieldId ? 'document-field' : undefined,
+    strategyConfig: approval.approverFieldId ? { fieldId: approval.approverFieldId } : {},
     fallbackUserIds: approval.fallbackUserIds ?? [],
     fallbackTeamIds: approval.fallbackTeamIds ?? []
   };
+};
+
+const normalizeCanonicalStrategies = (
+  config: GovernanceWorkflowConfig,
+  raw: Record<string, unknown>
+): GovernanceWorkflowConfig => {
+  const rawApprovals = raw['approvals'];
+  const rawEscalation = raw['escalation'];
+  const approvals = config.approvals
+    ? {
+        ...config.approvals,
+        strategy:
+          config.approvals.strategy ??
+          (rawApprovals &&
+          typeof rawApprovals === 'object' &&
+          typeof (rawApprovals as { approverSource?: unknown }).approverSource === 'string'
+            ? 'document-field'
+            : undefined),
+        strategyConfig:
+          Object.keys(config.approvals.strategyConfig).length > 0
+            ? config.approvals.strategyConfig
+            : rawApprovals &&
+                typeof rawApprovals === 'object' &&
+                typeof (rawApprovals as { approverSource?: unknown }).approverSource === 'string'
+              ? { fieldId: (rawApprovals as { approverSource: string }).approverSource }
+              : {}
+      }
+    : undefined;
+  const escalation = config.escalation
+    ? {
+        ...config.escalation,
+        strategy:
+          config.escalation.strategy ??
+          (rawEscalation &&
+          typeof rawEscalation === 'object' &&
+          typeof (rawEscalation as { strategy?: unknown }).strategy === 'string'
+            ? (rawEscalation as { strategy: string }).strategy
+            : undefined),
+        strategyConfig: config.escalation.strategyConfig
+      }
+    : undefined;
+  return { ...config, approvals, escalation };
 };
 
 /** Reads canonical rows and the pre-harmonization rows still present in seeded fixtures. */
@@ -50,7 +93,7 @@ export const parseGovernanceWorkflowConfig = (
     raw['escalation_enabled'] !== undefined;
   if (!hasLegacyShape) {
     const canonical = governanceWorkflowConfigSchema.safeParse(raw);
-    if (canonical.success) return canonical.data;
+    if (canonical.success) return normalizeCanonicalStrategies(canonical.data, raw);
   }
 
   const reminders =
@@ -105,9 +148,29 @@ const mergeGovernanceWorkflowConfig = (
   base: GovernanceWorkflowConfig,
   override: GovernanceWorkflowConfig
 ): GovernanceWorkflowConfig => ({
-  approvals: override.approvals ?? base.approvals,
+  approvals: override.approvals
+    ? {
+        ...base.approvals,
+        ...override.approvals,
+        strategy: override.approvals.strategy ?? base.approvals?.strategy,
+        strategyConfig: {
+          ...(base.approvals?.strategyConfig ?? {}),
+          ...override.approvals.strategyConfig
+        }
+      }
+    : base.approvals,
   reminders: override.reminders ?? base.reminders,
-  escalation: override.escalation ?? base.escalation,
+  escalation: override.escalation
+    ? {
+        ...base.escalation,
+        ...override.escalation,
+        strategy: override.escalation.strategy ?? base.escalation?.strategy,
+        strategyConfig: {
+          ...(base.escalation?.strategyConfig ?? {}),
+          ...override.escalation.strategyConfig
+        }
+      }
+    : base.escalation,
   extensions: { ...base.extensions, ...override.extensions }
 });
 

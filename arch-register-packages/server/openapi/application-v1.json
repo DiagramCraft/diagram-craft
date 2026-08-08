@@ -85414,6 +85414,60 @@
                           "supportsEscalation": {
                             "type": "boolean"
                           },
+                          "approvalStrategies": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "configType": {
+                                  "enum": [
+                                    "none",
+                                    "document-field"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "label",
+                                "configType"
+                              ]
+                            }
+                          },
+                          "escalationStrategies": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1
+                                },
+                                "label": {
+                                  "type": "string"
+                                },
+                                "configType": {
+                                  "enum": [
+                                    "none",
+                                    "document-field"
+                                  ],
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "label",
+                                "configType"
+                              ]
+                            }
+                          },
                           "defaultConfig": {
                             "type": "object",
                             "properties": {
@@ -85426,9 +85480,17 @@
                                     "maximum": 9007199254740991,
                                     "exclusiveMinimum": 0
                                   },
-                                  "approverSource": {
+                                  "strategy": {
                                     "type": "string",
                                     "minLength": 1
+                                  },
+                                  "strategyConfig": {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {},
+                                    "default": {}
                                   },
                                   "fallbackTeamIds": {
                                     "type": "array",
@@ -85492,6 +85554,18 @@
                                     "maximum": 9007199254740991,
                                     "exclusiveMinimum": 0
                                   },
+                                  "strategy": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "strategyConfig": {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {},
+                                    "default": {}
+                                  },
                                   "fallbackTeamIds": {
                                     "type": "array",
                                     "items": {
@@ -85534,6 +85608,8 @@
                           "supportsApprovals",
                           "supportsReminders",
                           "supportsEscalation",
+                          "approvalStrategies",
+                          "escalationStrategies",
                           "defaultConfig"
                         ]
                       }
@@ -85591,9 +85667,17 @@
                                     "maximum": 9007199254740991,
                                     "exclusiveMinimum": 0
                                   },
-                                  "approverSource": {
+                                  "strategy": {
                                     "type": "string",
                                     "minLength": 1
+                                  },
+                                  "strategyConfig": {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {},
+                                    "default": {}
                                   },
                                   "fallbackTeamIds": {
                                     "type": "array",
@@ -85656,6 +85740,18 @@
                                     "minimum": -9007199254740991,
                                     "maximum": 9007199254740991,
                                     "exclusiveMinimum": 0
+                                  },
+                                  "strategy": {
+                                    "type": "string",
+                                    "minLength": 1
+                                  },
+                                  "strategyConfig": {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {},
+                                    "default": {}
                                   },
                                   "fallbackTeamIds": {
                                     "type": "array",
@@ -85782,9 +85878,17 @@
                             "maximum": 9007199254740991,
                             "exclusiveMinimum": 0
                           },
-                          "approverSource": {
+                          "strategy": {
                             "type": "string",
                             "minLength": 1
+                          },
+                          "strategyConfig": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {},
+                            "default": {}
                           },
                           "fallbackTeamIds": {
                             "type": "array",
@@ -85847,6 +85951,18 @@
                             "minimum": -9007199254740991,
                             "maximum": 9007199254740991,
                             "exclusiveMinimum": 0
+                          },
+                          "strategy": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "strategyConfig": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {},
+                            "default": {}
                           },
                           "fallbackTeamIds": {
                             "type": "array",
@@ -85946,9 +86062,17 @@
                               "maximum": 9007199254740991,
                               "exclusiveMinimum": 0
                             },
-                            "approverSource": {
+                            "strategy": {
                               "type": "string",
                               "minLength": 1
+                            },
+                            "strategyConfig": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {},
+                              "default": {}
                             },
                             "fallbackTeamIds": {
                               "type": "array",
@@ -86011,6 +86135,18 @@
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991,
                               "exclusiveMinimum": 0
+                            },
+                            "strategy": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "strategyConfig": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {},
+                              "default": {}
                             },
                             "fallbackTeamIds": {
                               "type": "array",

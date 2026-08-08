@@ -10,6 +10,8 @@ import type {
 } from '@arch-register/api-types/documentContract';
 import {
   documentStatusExtensionSchema,
+  type GovernanceApprovalConfig,
+  type GovernanceEscalationConfig,
   type GovernanceWorkflowConfig,
   type DocumentStatusApproval
 } from '@arch-register/api-types/governanceCaseConfigSchemas';
@@ -21,12 +23,15 @@ import {
   resolveCaseNotifications
 } from '../governance/governanceOperations';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
+import type { GovernanceAssignmentTarget } from '../governance/governanceOperations';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import { parseGovernanceWorkflowConfig } from '../governance/governanceWorkflowConfig';
+import { resolveApprovalTargets } from '../governance/governanceTargetResolution';
 
 export const DOCUMENT_STATUS_CASE_KIND = 'document.status';
+export const DOCUMENT_FIELD_STRATEGY = 'document-field';
 
 type ApproverSlot = {
   type: 'user' | 'team';
@@ -83,7 +88,11 @@ const approvalFor = (
   return {
     required: true,
     requiredApprovals: config.config.approvals.requiredApprovals,
-    approverFieldId: config.config.approvals.approverSource,
+    approverFieldId:
+      config.config.approvals.strategy === DOCUMENT_FIELD_STRATEGY &&
+      typeof config.config.approvals.strategyConfig.fieldId === 'string'
+        ? config.config.approvals.strategyConfig.fieldId
+        : undefined,
     fallbackUserIds: config.config.approvals.fallbackUserIds,
     fallbackTeamIds: config.config.approvals.fallbackTeamIds
   };
@@ -156,17 +165,26 @@ const resolveApproverSlots = async (
     ? fields.find(field => field.id === approval.approverFieldId)
     : undefined;
   const sourceValues = sourceField ? valuesOf(metadata[sourceField.id]) : [];
-  const fallback = sourceValues.length === 0;
-  const userIds = fallback
-    ? approval.fallbackUserIds
-    : sourceField?.type === 'user_link'
-      ? sourceValues
-      : [];
-  const teamIds = fallback
-    ? approval.fallbackTeamIds
-    : sourceField?.type === 'team_link'
-      ? sourceValues
-      : [];
+  const strategyTargets =
+    sourceField?.type === 'user_link'
+      ? sourceValues.map(userId => ({ type: 'user' as const, userId }))
+      : sourceField?.type === 'team_link'
+        ? sourceValues.map(teamId => ({ type: 'team' as const, teamId }))
+        : [];
+  const config: GovernanceApprovalConfig = {
+    requiredApprovals: approval.requiredApprovals ?? 1,
+    strategy: DOCUMENT_FIELD_STRATEGY,
+    strategyConfig: approval.approverFieldId ? { fieldId: approval.approverFieldId } : {},
+    fallbackUserIds: approval.fallbackUserIds,
+    fallbackTeamIds: approval.fallbackTeamIds
+  };
+  const targets = await resolveApprovalTargets(
+    db,
+    workspace,
+    strategyTargets,
+    config,
+    approval.requiredApprovals ?? 1
+  );
 
   const [users, teams, memberships] = await Promise.all([
     db.auth.listUsers(),
@@ -177,25 +195,21 @@ const resolveApproverSlots = async (
   const teamIdsInWorkspace = new Set(teams.map(team => team.id));
   const slots: ApproverSlot[] = [];
 
-  for (const id of unique(userIds)) {
-    if (activeUsers.has(id)) slots.push({ type: 'user', id, eligibleUserIds: [id] });
-  }
-  for (const id of unique(teamIds)) {
-    if (!teamIdsInWorkspace.has(id)) continue;
+  for (const target of targets) {
+    if (target.type === 'user') {
+      if (activeUsers.has(target.userId)) {
+        slots.push({ type: 'user', id: target.userId, eligibleUserIds: [target.userId] });
+      }
+      continue;
+    }
+    if (target.type !== 'team' || !teamIdsInWorkspace.has(target.teamId)) continue;
     const eligibleUserIds = unique(
       memberships
-        .filter(item => item.team_id === id && activeUsers.has(item.user_id))
+        .filter(item => item.team_id === target.teamId && activeUsers.has(item.user_id))
         .map(item => item.user_id)
     );
-    if (eligibleUserIds.length > 0) slots.push({ type: 'team', id, eligibleUserIds });
-  }
-  if (slots.length === 0) {
-    const workspaceAdmins = await db.workspace.listWorkspaceMembers(workspace);
-    const activeUserIds = new Set(users.filter(user => user.is_active).map(user => user.id));
-    for (const member of workspaceAdmins.filter(item => item.role === 'admin')) {
-      if (activeUserIds.has(member.user_id)) {
-        slots.push({ type: 'user', id: member.user_id, eligibleUserIds: [member.user_id] });
-      }
+    if (eligibleUserIds.length > 0) {
+      slots.push({ type: 'team', id: target.teamId, eligibleUserIds });
     }
   }
   return slots;
@@ -378,6 +392,28 @@ export const applyDocumentWorkflowSave = async (
   }
 
   return effectiveMetadata;
+};
+
+const validateDocumentFieldStrategy = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  subkind: string | null,
+  strategy: string,
+  strategyConfig: Record<string, unknown>
+) => {
+  if (strategy !== DOCUMENT_FIELD_STRATEGY) return `Unsupported document strategy '${strategy}'`;
+  const fieldId = strategyConfig['fieldId'];
+  if (typeof fieldId !== 'string' || fieldId.length === 0) {
+    return 'Document field strategies require a user or team field';
+  }
+  const documentTypeId = subkind?.split(':')[0];
+  if (!documentTypeId) return 'Document field strategies require a document type';
+  const documentType = await db.document.getDocumentType(workspace, documentTypeId);
+  const field = documentType?.fields.find(item => item.id === fieldId);
+  if (!field || field.retired || (field.type !== 'user_link' && field.type !== 'team_link')) {
+    return `Document field '${fieldId}' must be an active user or team field`;
+  }
+  return null;
 };
 
 const approvedAssignmentIds = (
@@ -598,7 +634,43 @@ export const createDocumentGovernanceRegistry = (): GovernanceRegistry =>
           supportsWorkspaceScope: false,
           supportsApprovals: true,
           supportsReminders: true,
-          supportsEscalation: false,
+          supportsEscalation: true,
+          approvalStrategies: [
+            {
+              id: DOCUMENT_FIELD_STRATEGY,
+              label: 'Document user/team field',
+              configType: 'document-field' as const
+            }
+          ],
+          escalationStrategies: [
+            {
+              id: DOCUMENT_FIELD_STRATEGY,
+              label: 'Document user/team field',
+              configType: 'document-field' as const
+            }
+          ],
+          defaultConfig: {
+            approvals: {
+              requiredApprovals: 1,
+              strategy: DOCUMENT_FIELD_STRATEGY,
+              strategyConfig: {},
+              fallbackUserIds: [],
+              fallbackTeamIds: []
+            },
+            escalation: {
+              enabled: false,
+              overdueDays: 5,
+              strategy: DOCUMENT_FIELD_STRATEGY,
+              strategyConfig: {},
+              fallbackUserIds: [],
+              fallbackTeamIds: []
+            },
+            extensions: {}
+          },
+          validateApprovalStrategy: async (db, workspace, subkind, strategy, strategyConfig) =>
+            validateDocumentFieldStrategy(db, workspace, subkind, strategy, strategyConfig),
+          validateEscalationStrategy: async (db, workspace, subkind, strategy, strategyConfig) =>
+            validateDocumentFieldStrategy(db, workspace, subkind, strategy, strategyConfig),
           validateSubkind: async (db, workspace, subkind) => {
             if (!subkind) return 'Document status workflows require a document type and field';
             const [documentTypeId, fieldId] = subkind.split(':');
@@ -630,6 +702,33 @@ export const createDocumentGovernanceRegistry = (): GovernanceRegistry =>
             return true;
           } catch {
             return false;
+          }
+        },
+        escalation: {
+          overdueDays: 5,
+          target: async (
+            db,
+            caseRow,
+            config?: GovernanceEscalationConfig
+          ): Promise<GovernanceAssignmentTarget[]> => {
+            if (config?.strategy !== DOCUMENT_FIELD_STRATEGY) return [];
+            const fieldId = config.strategyConfig['fieldId'];
+            if (typeof fieldId !== 'string') return [];
+            const nodeId = caseRow.payload['nodeId'];
+            const documentTypeId = caseRow.case_subkind?.split(':')[0];
+            if (typeof nodeId !== 'string' || !documentTypeId) return [];
+            const [metadata, documentType] = await Promise.all([
+              db.document.getDocumentMetadata(caseRow.workspace, nodeId),
+              db.document.getDocumentType(caseRow.workspace, documentTypeId)
+            ]);
+            const field = documentType?.fields.find(item => item.id === fieldId);
+            if (!metadata || !field || field.retired) return [];
+            const values = valuesOf(metadata.values[fieldId]);
+            return field.type === 'user_link'
+              ? values.map(userId => ({ type: 'user' as const, userId }))
+              : field.type === 'team_link'
+                ? values.map(teamId => ({ type: 'team' as const, teamId }))
+                : [];
           }
         },
         beforeDecision: async (tx, { case: caseRow, actorUserId }) => {

@@ -240,12 +240,18 @@ describe('governance notification delivery', () => {
     expect(createNotification).toHaveBeenCalledTimes(1);
   });
 
-  it('notifies only the resolved escalation target for an escalated event, not assignees or initiator', async () => {
+  it('notifies all resolved escalation targets, not assignees or initiator', async () => {
     const escalatedEvent = {
       ...makeEvent(),
       event_type: 'escalated' as const,
       actor_user_id: null,
-      metadata: { trigger: 'scheduled', target: { type: 'user', userId: 'admin-1' } }
+      metadata: {
+        trigger: 'scheduled',
+        targets: [
+          { type: 'user', userId: 'admin-1' },
+          { type: 'user', userId: 'admin-2' }
+        ]
+      }
     };
     const createNotification = vi.fn(async input => input);
     const db = {
@@ -270,6 +276,14 @@ describe('governance notification delivery', () => {
             channel: 'in_app',
             enabled: true,
             updated_at: now
+          },
+          {
+            user_id: 'admin-2',
+            workspace: 'workspace-1',
+            notification_type: 'governance-deadline-escalated',
+            channel: 'in_app',
+            enabled: true,
+            updated_at: now
           }
         ])
       }
@@ -277,9 +291,12 @@ describe('governance notification delivery', () => {
 
     await createGovernanceInAppNotifications(db, makeCase(), escalatedEvent);
 
-    expect(createNotification).toHaveBeenCalledTimes(1);
+    expect(createNotification).toHaveBeenCalledTimes(2);
     expect(createNotification).toHaveBeenCalledWith(
       expect.objectContaining({ user_id: 'admin-1', title: expect.stringContaining('escalated') })
+    );
+    expect(createNotification).toHaveBeenCalledWith(
+      expect.objectContaining({ user_id: 'admin-2', title: expect.stringContaining('escalated') })
     );
   });
 });

@@ -13,7 +13,13 @@ import { httpAssert } from '../../utils/httpAssert';
 import { buildEntityDependents, type DependentRecord } from './dataHelpers';
 import { listAllCatalogEntities } from './entityLoader';
 import { updateEntityWithAuditIfVersion } from './entityMutations';
-import { listEligibleApproverIds, isSoleApprover } from './entityChangeOperations';
+import {
+  resolveEntityOwnerAdminTargets,
+  resolveEntityApprovalTargets,
+  approvalCaseShouldComplete,
+  isSoleApprover
+} from './entityChangeOperations';
+import { eligibleUserIdsForGovernanceTargets } from '../governance/governanceTargetResolution';
 import type {
   AcknowledgeDeprecationBody,
   CancelDeprecationBody,
@@ -34,8 +40,7 @@ import {
   decideGovernanceAssignment,
   recordGovernanceEvent,
   resolveAssignmentNotifications,
-  resolveCaseNotifications,
-  resolveScopeAwareEscalationTarget
+  resolveCaseNotifications
 } from '../governance/governanceOperations';
 import { isEligibleForAssignment } from '../governance/governanceEligibility';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
@@ -390,35 +395,18 @@ export const proposeEntityDeprecation = async (
 
   const baselineImpact = await computeDirectImpact(db, workspace, canonicalEntityId, null);
 
-  const eligibleApproverIds = await listEligibleApproverIds(
+  const { config: approvalConfig, targets } = await resolveEntityApprovalTargets(
     db,
     workspace,
-    entity.owner ? entity.owner : null
+    ENTITY_DEPRECATION_CASE_KIND,
+    encodeCaseSubkind(schema.id),
+    [entity]
   );
   const userId = event.context.user.id;
-  const selfApprovalAllowed = isSoleApprover(eligibleApproverIds, userId);
-
-  const assignments = entity.owner
-    ? [
-        {
-          action: 'approve' as const,
-          target: {
-            type: 'team_role' as const,
-            teamId: entity.owner,
-            teamRole: 'team_admin' as const
-          }
-        },
-        {
-          action: 'approve' as const,
-          target: { type: 'capability' as const, capability: 'ent.approve' as const }
-        }
-      ]
-    : [
-        {
-          action: 'approve' as const,
-          target: { type: 'capability' as const, capability: 'ent.approve' as const }
-        }
-      ];
+  const eligibleApproverIds = await eligibleUserIdsForGovernanceTargets(db, workspace, targets);
+  const selfApprovalAllowed =
+    approvalConfig.requiredApprovals === 1 && isSoleApprover(eligibleApproverIds, userId);
+  const assignments = targets.map(target => ({ action: 'approve' as const, target }));
 
   const now = new Date();
   const caseRow = await db.core.transaction(async tx =>
@@ -441,7 +429,8 @@ export const proposeEntityDeprecation = async (
           successorEntityId: body.successorEntityId ?? null,
           projectId: body.projectId ?? null,
           notes: body.notes ?? null,
-          baselineImpact
+          baselineImpact,
+          requiredApprovals: approvalConfig.requiredApprovals
         },
         assignments
       },
@@ -478,6 +467,11 @@ export const createDeprecationGovernanceRegistry = (
           );
         },
         independentAssignmentActions: new Set(['acknowledge' as const]),
+        shouldCompleteCase: context =>
+          approvalCaseShouldComplete({
+            ...context,
+            requiredApprovals: Number(context.case.payload['requiredApprovals']) || 1
+          }),
         handleDecision: async (tx, { event, decision }) => {
           if (decision !== 'acknowledge' || !pendingAck) return;
           if (String(event.metadata['assignmentId']) !== pendingAck.assignmentId) return;
@@ -587,12 +581,11 @@ export const createDeprecationGovernanceRegistry = (
         reminders: { approachingDays: [3], overdueDays: [2] },
         escalation: {
           overdueDays: 5,
-          target: (db, caseRow) =>
-            resolveScopeAwareEscalationTarget(
-              db,
-              caseRow.workspace,
-              (caseRow.payload['projectId'] as string | null) ?? null
-            )
+          target: async (db, caseRow) => {
+            const entity = await db.catalog.getEntity(caseRow.workspace, caseRow.subject_id);
+            if (!entity) return [];
+            return resolveEntityOwnerAdminTargets(db, caseRow.workspace, [entity]);
+          }
         }
       }
     ]

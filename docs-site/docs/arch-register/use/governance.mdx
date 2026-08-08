@@ -34,6 +34,10 @@ Two special cases are supported:
 - if you are the sole eligible approver, you can self-approve your own submission
 - authorized users can record an approval bypass, which is captured in the audit trail
 
+Approval targets use the configured entity-owner-admin strategy, followed by configured fallback users or teams.
+Workspace administrators are used if no approval target resolves. The configured approval quorum determines how many
+distinct approval slots and actors are required.
+
 ## Entity Deprecation
 
 Administrators can configure a schema-scoped entity deprecation workflow in **Workspace Settings → Workflows**. When
@@ -44,6 +48,9 @@ enabled, retiring an entity goes through a deprecation proposal rather than a di
 - affected owner teams are notified and asked to acknowledge the deprecation
 - the deprecation can be postponed, finalized on schedule, or cancelled while in flight
 
+Deprecation approval uses the same entity-owner-admin strategy and fallback rules. Affected owner teams retain their
+separate acknowledgement tasks.
+
 Finalizing moves the entity to the workspace's designated deprecated lifecycle state, configured in
 **Workspace Settings → Lifecycle**.
 
@@ -52,7 +59,9 @@ Finalizing moves the entity to the workspace's designated deprecated lifecycle s
 Document status approval is configured for a document type's enum field in **Workspace Settings → Workflows**. The
 workflow configuration uses the shared approval and reminder settings, while its document-status extension identifies
 the status values that require approval. Status values that are not selected continue without an approval case.
-Escalation is available only for case kinds that register escalation support.
+Approval and escalation can independently use a selected active user or team field from the document type. If the
+field has no valid value, configured fallback users and teams are used, followed by workspace administrators. Escalation
+is available only for case kinds that register escalation support; assessment responses remain notification-only.
 
 ## Related Pages
 
