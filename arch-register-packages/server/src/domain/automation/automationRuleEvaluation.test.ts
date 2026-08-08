@@ -255,6 +255,79 @@ describe('enqueueAutomationRuleRuns', () => {
     expect(enqueueOneOffRun).not.toHaveBeenCalled();
   });
 
+  it('matches a greater_than_or_equal condition against a plain numeric field', async () => {
+    const rule: AutomationRuleDbResult = {
+      ...baseRule,
+      conditions: [{ field: 'score', operator: 'greater_than_or_equal', value: 15 }]
+    };
+    const enqueueOneOffRun = vi.fn(async input => input);
+    const db = {
+      automationRule: { listRules: vi.fn(async () => [rule]) },
+      catalog: {
+        getEntity: vi.fn(async () => ({ owner: null, data: { score: 20 } })),
+        getSchema: vi.fn(async () => ({ fields: [{ id: 'score' }] }))
+      },
+      jobs: { enqueueOneOffRun }
+    } as unknown as DatabaseAdapter;
+
+    expect(await enqueueAutomationRuleRuns(db, baseAuditLog)).toBe(1);
+  });
+
+  it('does not match a less_than condition once the value falls below the threshold', async () => {
+    const rule: AutomationRuleDbResult = {
+      ...baseRule,
+      conditions: [{ field: 'score', operator: 'less_than', value: 15 }]
+    };
+    const db = {
+      automationRule: { listRules: vi.fn(async () => [rule]) },
+      catalog: {
+        getEntity: vi.fn(async () => ({ owner: null, data: { score: 20 } })),
+        getSchema: vi.fn(async () => ({ fields: [{ id: 'score' }] }))
+      },
+      jobs: { enqueueOneOffRun: vi.fn(async input => input) }
+    } as unknown as DatabaseAdapter;
+
+    expect(await enqueueAutomationRuleRuns(db, baseAuditLog)).toBe(0);
+  });
+
+  it('compares a currency field by its amount', async () => {
+    const rule: AutomationRuleDbResult = {
+      ...baseRule,
+      conditions: [{ field: 'budget', operator: 'greater_than', value: 1000 }]
+    };
+    const enqueueOneOffRun = vi.fn(async input => input);
+    const db = {
+      automationRule: { listRules: vi.fn(async () => [rule]) },
+      catalog: {
+        getEntity: vi.fn(async () => ({
+          owner: null,
+          data: { budget: { amount: 1500, currency: 'USD' } }
+        })),
+        getSchema: vi.fn(async () => ({ fields: [{ id: 'budget' }] }))
+      },
+      jobs: { enqueueOneOffRun }
+    } as unknown as DatabaseAdapter;
+
+    expect(await enqueueAutomationRuleRuns(db, baseAuditLog)).toBe(1);
+  });
+
+  it('fails closed for a numeric comparison against a missing or non-numeric value', async () => {
+    const rule: AutomationRuleDbResult = {
+      ...baseRule,
+      conditions: [{ field: 'score', operator: 'greater_than', value: 15 }]
+    };
+    const db = {
+      automationRule: { listRules: vi.fn(async () => [rule]) },
+      catalog: {
+        getEntity: vi.fn(async () => ({ owner: null, data: {} })),
+        getSchema: vi.fn(async () => ({ fields: [{ id: 'score' }] }))
+      },
+      jobs: { enqueueOneOffRun: vi.fn(async input => input) }
+    } as unknown as DatabaseAdapter;
+
+    expect(await enqueueAutomationRuleRuns(db, baseAuditLog)).toBe(0);
+  });
+
   it('ignores non-entity audit rows entirely', async () => {
     const enqueueOneOffRun = vi.fn(async input => input);
     const db = makeDb(baseRule, enqueueOneOffRun);

@@ -21,7 +21,11 @@ export const automationConditionOperatorSchema = z.enum([
   'equals',
   'not_equals',
   'is_empty',
-  'is_not_empty'
+  'is_not_empty',
+  'greater_than',
+  'greater_than_or_equal',
+  'less_than',
+  'less_than_or_equal'
 ]);
 
 export const automationConditionSchema = z.object({
