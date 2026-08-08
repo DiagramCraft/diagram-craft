@@ -26,6 +26,7 @@ export const formatMetricResultValue = (
   result: MetricResult
 ): string => {
   if (result.value == null) return '—';
+  if (metric.aggregation === 'percentage') return `${Math.round(result.value)}%`;
   if (isCurrencyMetric(metric, sourceSchema)) {
     if (result.currencyMixed) return `${roundedMetricValue(result.value)} (Unconverted)`;
     if (result.currencyCode) {
@@ -64,8 +65,13 @@ export const formatMetricSourceValue = (
   return String(raw);
 };
 
-export const formatMetricLegendValue = (value: number | null, legend: MetricLegend): string => {
+export const formatMetricLegendValue = (
+  value: number | null,
+  legend: MetricLegend,
+  aggregation?: MetricConfig['aggregation']
+): string => {
   if (value == null) return '—';
+  if (aggregation === 'percentage') return `${Math.round(value)}%`;
   if (legend.currencyMixed) return `${roundedMetricValue(value)} (Unconverted)`;
   if (legend.currencyCode) {
     return formatCurrencyValue({ amount: value, currency: legend.currencyCode });

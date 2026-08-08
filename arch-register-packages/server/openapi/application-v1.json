@@ -107057,7 +107057,7 @@
                             ]
                           }
                         ],
-                        "description": "Value source for the metric"
+                        "description": "Value source for the metric; unused when aggregation is \"percentage\""
                       },
                       "aggregation": {
                         "enum": [
@@ -107066,10 +107066,48 @@
                           "average",
                           "minimum",
                           "maximum",
-                          "worst"
+                          "worst",
+                          "percentage"
                         ],
                         "type": "string",
                         "description": "Aggregation function applied across matching descendant entities"
+                      },
+                      "numeratorCondition": {
+                        "type": "object",
+                        "properties": {
+                          "fieldId": {
+                            "type": "string",
+                            "description": "Field identifier to filter on"
+                          },
+                          "op": {
+                            "enum": [
+                              "equals",
+                              "not_equals",
+                              "contains",
+                              "starts_with",
+                              "ends_with",
+                              "empty",
+                              "not_empty",
+                              "before",
+                              "after",
+                              "on",
+                              "gt",
+                              "lt",
+                              "gte",
+                              "lte"
+                            ],
+                            "type": "string",
+                            "description": "Filter operation"
+                          },
+                          "value": {
+                            "description": "Filter value (type depends on field and operation)"
+                          }
+                        },
+                        "required": [
+                          "fieldId",
+                          "op"
+                        ],
+                        "description": "Condition matching the terminal entities counted in the numerator of a \"percentage\" aggregation; required when aggregation is \"percentage\""
                       },
                       "worstDirection": {
                         "enum": [

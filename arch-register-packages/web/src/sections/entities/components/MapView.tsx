@@ -1,4 +1,11 @@
-import { useMemo, useCallback, useEffect, type KeyboardEvent, type MouseEvent } from 'react';
+import {
+  useMemo,
+  useCallback,
+  useEffect,
+  useRef,
+  type KeyboardEvent,
+  type MouseEvent
+} from 'react';
 import styles from './MapView.module.css';
 import { TbChevronDown, TbEyeOff, TbTrash } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
@@ -58,6 +65,9 @@ import {
   textColorForFill
 } from './mapColorScales';
 import { useMapMetricRollup } from './useMapMetricRollup';
+import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
+import { Button } from '@diagram-craft/app-components/Button';
+import { FilterBuilder } from '../../../components/FilterBuilder';
 import { useFieldGroupAccess } from '../../../auth/useFieldGroupAccess';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
@@ -189,6 +199,9 @@ const metricValueLabel = (
   lifecycleStates: WorkspaceLifecycleState[]
 ): string | null => {
   if (!metric) return null;
+  if (metric.aggregation === 'percentage') {
+    return result ? formatMetricResultValue(metric, sourceSchema, result) : null;
+  }
   if (
     isLeaf &&
     metric.source.kind === 'field' &&
@@ -228,6 +241,13 @@ const resolveBoxColor = (
   const directValue = getDirectMetricValue(node, metric, sourceSchema, isLeaf);
   const colorMin = legend.min ?? directMetricRange.min;
   const colorMax = legend.max ?? directMetricRange.max;
+
+  if (metric.aggregation === 'percentage') {
+    if (!result || result.value == null || legend.min == null || legend.max == null) {
+      return NEUTRAL_MISSING_COLOR;
+    }
+    return numericColor(result.value, legend.min, legend.max);
+  }
 
   if (
     !result ||
@@ -276,6 +296,7 @@ const getDirectMetricValue = (
   sourceSchema: EntitySchema | RelationSchema | undefined,
   isLeaf: boolean
 ): DirectMetricValue | null => {
+  if (metric.aggregation === 'percentage') return null;
   if (!isLeaf || node._schema.id !== metric.sourceSchemaId) return null;
   const record = node as Record<string, unknown>;
   if (metric.source.kind === 'enum') {
@@ -306,6 +327,7 @@ const getDirectMetricValue = (
 const hasMissingMetricData = (metric: MetricConfig, result: MetricResult | undefined): boolean => {
   if (!result) return true;
   if (result.sourceCount === 0) return true;
+  if (metric.aggregation === 'percentage') return result.value == null;
   return isEnumSource(metric.source) ? result.dominantValue == null : result.value == null;
 };
 
@@ -363,7 +385,7 @@ const buildMetricRows = (
   }
 
   const rows: EntityHoverCardRow[] = [];
-  if (isEnumSource(metric.source)) {
+  if (metric.aggregation !== 'percentage' && isEnumSource(metric.source)) {
     rows.push({ label: metricLabel, value: result.dominantLabel ?? '—' });
     if (result.distribution.length > 0) {
       rows.push({
@@ -371,7 +393,11 @@ const buildMetricRows = (
         value: result.distribution.map(d => `${d.label}: ${d.count}`).join(', ')
       });
     }
-  } else if (metric.source.kind === 'lifecycle' && result.lifecycleId != null) {
+  } else if (
+    metric.aggregation !== 'percentage' &&
+    metric.source.kind === 'lifecycle' &&
+    result.lifecycleId != null
+  ) {
     const label =
       lifecycleStates.find(s => s.id === result.lifecycleId)?.label ?? result.lifecycleId;
     rows.push({ label: metricLabel, value: label });
@@ -559,7 +585,7 @@ export const MapView = ({
   joinedAssessment,
   onCountChange
 }: MapViewProps) => {
-  const { schemas, currencies } = useWorkspaceContext();
+  const { schemas, currencies, enums, teams } = useWorkspaceContext();
   const { data: relationSchemas = [] } = useRelationSchemas(workspaceId);
   const cfg = useMemo(() => normalizeMapConfig(config), [config]);
   const schemaIds = useMemo(
@@ -720,6 +746,7 @@ export const MapView = ({
     : null;
   const metricSourceSchema = metricTerminalSchema;
   const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
+  const numeratorConditionPopoverRef = useRef<PopoverActions | null>(null);
   const metricSourceOptions = useMemo(
     () =>
       getMetricSourceOptions(
@@ -1063,7 +1090,11 @@ export const MapView = ({
                           ? (metricConfig.worstDirection ?? 'high')
                           : undefined,
                       targetCurrency:
-                        aggregation === 'count' ? undefined : metricConfig.targetCurrency
+                        aggregation === 'count' || aggregation === 'percentage'
+                          ? undefined
+                          : metricConfig.targetCurrency,
+                      numeratorCondition:
+                        aggregation === 'percentage' ? metricConfig.numeratorCondition : undefined
                     });
                   }}
                 >
@@ -1127,6 +1158,41 @@ export const MapView = ({
                   </select>
                   <TbChevronDown size={11} />
                 </div>
+              )}
+
+              {metricConfig.aggregation === 'percentage' && metricTerminalEntitySchema && (
+                <Popover.Root actionsRef={numeratorConditionPopoverRef}>
+                  <Popover.Trigger
+                    element={
+                      <Button
+                        size="sm"
+                        variant={metricConfig.numeratorCondition ? 'primary' : 'secondary'}
+                      >
+                        {metricConfig.numeratorCondition ? 'Numerator: 1 condition' : 'Numerator…'}
+                      </Button>
+                    }
+                  />
+                  <Popover.Content sideOffset={4} align="start" arrow={false} closeButton={false}>
+                    <FilterBuilder
+                      conditions={
+                        metricConfig.numeratorCondition ? [metricConfig.numeratorCondition] : []
+                      }
+                      onChange={conditions =>
+                        setMetricConfig({
+                          ...metricConfig,
+                          numeratorCondition: conditions[conditions.length - 1]
+                        })
+                      }
+                      onClose={() => numeratorConditionPopoverRef.current?.close()}
+                      schemas={[metricTerminalEntitySchema]}
+                      lifecycleStates={lifecycleStates}
+                      owners={teams}
+                      enums={enums}
+                      selectedSchemaId={metricTerminalEntitySchema.id}
+                      getFieldGroupAccess={getFieldGroupAccess}
+                    />
+                  </Popover.Content>
+                </Popover.Root>
               )}
 
               <label className={styles.metricToggle}>
@@ -1257,6 +1323,7 @@ export const MapView = ({
           <MapLegend
             metricLabel={metricLabel}
             source={metricConfig.source}
+            aggregation={metricConfig.aggregation}
             legend={legend}
             lifecycleStates={lifecycleStates}
           />
