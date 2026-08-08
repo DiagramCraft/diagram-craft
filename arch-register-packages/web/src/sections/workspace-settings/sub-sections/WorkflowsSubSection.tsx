@@ -788,9 +788,7 @@ export const WorkflowsSubSection = ({
                     {!row.config.approvals &&
                       !row.config.reminders &&
                       !row.config.escalation &&
-                      !row.config.external && (
-                      <span className={styles.summary}>None</span>
-                    )}
+                      !row.config.external && <span className={styles.summary}>None</span>}
                   </div>
                 </Table.Cell>
                 <Table.Cell>

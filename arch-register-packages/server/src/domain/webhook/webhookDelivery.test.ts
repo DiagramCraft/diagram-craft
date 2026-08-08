@@ -104,9 +104,7 @@ describe('webhook delivery', () => {
       jobs: { enqueueOneOffRun }
     } as unknown as DatabaseAdapter;
 
-    expect(
-      await enqueueGovernanceWebhookDeliveries(db, caseRow, governanceEvent, true)
-    ).toBe(1);
+    expect(await enqueueGovernanceWebhookDeliveries(db, caseRow, governanceEvent, true)).toBe(1);
     expect(enqueueOneOffRun).toHaveBeenCalledWith(
       expect.objectContaining({
         job_type: 'webhook.delivery',

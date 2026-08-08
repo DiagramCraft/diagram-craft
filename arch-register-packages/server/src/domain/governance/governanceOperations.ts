@@ -217,10 +217,7 @@ export const recordGovernanceEvent = async (
   ).governanceCaseConfig;
   const configRows =
     typeof configAdapter?.listCaseConfigForKind === 'function'
-      ? await tx.governanceCaseConfig.listCaseConfigForKind(
-          caseRow.workspace,
-          caseRow.case_kind
-        )
+      ? await tx.governanceCaseConfig.listCaseConfigForKind(caseRow.workspace, caseRow.case_kind)
       : [];
   const external =
     resolveGovernanceWorkflowConfig(configRows, caseRow.case_subkind, { extensions: {} }, true)

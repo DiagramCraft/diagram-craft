@@ -151,16 +151,10 @@ export const createIntegrationGovernanceCase = async (
   const caseSubkind = input.caseSubkind ?? null;
   await requireExternalWorkflow(db, workspace, input.caseKind, caseSubkind);
   const dedupeKey = input.dedupeKey ?? `integration:${input.idempotencyKey}`;
-  const existing = await db.governance.getCaseByDedupeKey(
-    workspace,
-    input.caseKind,
-    dedupeKey
-  );
+  const existing = await db.governance.getCaseByDedupeKey(workspace, input.caseKind, dedupeKey);
   if (existing) return toApiCase(existing);
 
-  const assignments = input.inboxItems.map(item =>
-    targetToSpec(item.target, item.action)
-  );
+  const assignments = input.inboxItems.map(item => targetToSpec(item.target, item.action));
   const createInput: CreateGovernanceCaseInput = {
     caseKind: input.caseKind,
     caseSubkind,
@@ -224,10 +218,11 @@ export const createIntegrationGovernanceInboxItem = async (
   const spec = targetToSpec(input.target, input.action);
   const existing = await db.governance.getAssignment(assignmentId);
   if (existing) {
-    httpAssert.true(
-      existing.case_id === caseId && existing.action === spec.action,
-      { status: 409, statusText: 'Conflict', message: 'Inbox-item idempotency key was reused' }
-    );
+    httpAssert.true(existing.case_id === caseId && existing.action === spec.action, {
+      status: 409,
+      statusText: 'Conflict',
+      message: 'Inbox-item idempotency key was reused'
+    });
     return toInboxItem(existing, caseRow);
   }
 
@@ -240,9 +235,7 @@ export const createIntegrationGovernanceInboxItem = async (
       target_type: spec.target.type,
       target_user_id: spec.target.type === 'user' ? spec.target.userId : null,
       target_team_id:
-        spec.target.type === 'team' || spec.target.type === 'team_role'
-          ? spec.target.teamId
-          : null,
+        spec.target.type === 'team' || spec.target.type === 'team_role' ? spec.target.teamId : null,
       target_team_role: spec.target.type === 'team_role' ? spec.target.teamRole : null,
       target_capability: spec.target.type === 'capability' ? spec.target.capability : null,
       created_at: new Date()
@@ -296,13 +289,7 @@ export const decideIntegrationGovernanceInboxItem = async (
   const caseRow = await db.governance.getCase(workspace, assignment.case_id);
   httpAssert.present(caseRow, { status: 404, message: 'Governance case not found' });
   await requireExternalWorkflow(db, workspace, caseRow.case_kind, caseRow.case_subkind);
-  return decideGovernanceAssignment(
-    db,
-    workspaceName,
-    assignmentId,
-    event,
-    input,
-    registry,
-    { externalIntegration: true }
-  );
+  return decideGovernanceAssignment(db, workspaceName, assignmentId, event, input, registry, {
+    externalIntegration: true
+  });
 };

@@ -245,9 +245,7 @@ export const enqueueGovernanceWebhookDeliveries = async (
   if (matching.length === 0) return 0;
 
   const assignmentId =
-    typeof event.metadata['assignmentId'] === 'string'
-      ? event.metadata['assignmentId']
-      : null;
+    typeof event.metadata['assignmentId'] === 'string' ? event.metadata['assignmentId'] : null;
   const webhookEvent: WebhookEvent = {
     version: '1',
     id: event.id,

@@ -150,14 +150,10 @@ test.describe('versioned API surface aliases', () => {
     expect(integrationSpec.paths['/integrations/v1/{workspace}/entities/{id}']).toBeDefined();
     expect(integrationSpec.paths['/integrations/v1/{workspace}/governance/cases']).toBeDefined();
     expect(
-      integrationSpec.paths[
-        '/integrations/v1/{workspace}/governance/cases/{id}/inbox-items'
-      ]
+      integrationSpec.paths['/integrations/v1/{workspace}/governance/cases/{id}/inbox-items']
     ).toBeDefined();
     expect(
-      integrationSpec.paths[
-        '/integrations/v1/{workspace}/governance/inbox-items/{id}/decisions'
-      ]
+      integrationSpec.paths['/integrations/v1/{workspace}/governance/inbox-items/{id}/decisions']
     ).toBeDefined();
     expect(adapterSpec.paths['/adapters/diagram-craft/{workspace}/schemas']).toBeDefined();
     expect(adapterSpec.paths['/adapters/diagram-craft/{workspace}/ai/generate']).toBeDefined();
