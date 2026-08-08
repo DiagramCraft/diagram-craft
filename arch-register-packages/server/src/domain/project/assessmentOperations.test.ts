@@ -71,7 +71,8 @@ describe('createAssessmentGovernanceRegistry', () => {
     ).toEqual({
       supportsApprovals: false,
       supportsReminders: true,
-      supportsEscalation: false
+      supportsEscalation: false,
+      supportsInitiationFields: false
     });
   });
 });
