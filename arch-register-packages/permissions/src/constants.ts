@@ -131,7 +131,9 @@ export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, Workspace
     'governance.external',
     'comments',
     'schema.edit',
-    'schema.publish'
+    'schema.publish',
+    'artifact.content.view',
+    'artifact.manage'
   ],
   admin: [
     'ws.view',
@@ -156,7 +158,9 @@ export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, Workspace
     'governance.external',
     'comments',
     'schema.edit',
-    'schema.publish'
+    'schema.publish',
+    'artifact.content.view',
+    'artifact.manage'
   ],
   editor: [
     'ws.view',
@@ -168,7 +172,9 @@ export const WORKSPACE_ROLE_CAPABILITIES: Record<BuiltinWorkspaceRole, Workspace
     'content.edit',
     'ent.edit',
     'ent.propose',
-    'comments'
+    'comments',
+    'artifact.content.view',
+    'artifact.manage'
   ],
   reviewer: ['ws.view', 'content.view', 'ent.propose', 'comments'],
   viewer: ['ws.view', 'content.view']
@@ -265,7 +271,9 @@ export const WORKSPACE_CAPABILITY_GROUPS: Array<{
       { id: 'ent.approve', name: 'Approve entity changes' },
       { id: 'ent.override', name: 'Bypass entity approval' },
       { id: 'governance.external', name: 'Manage external governance workflows' },
-      { id: 'comments', name: 'Comment & discuss' }
+      { id: 'comments', name: 'Comment & discuss' },
+      { id: 'artifact.content.view', name: 'View raw artifact content' },
+      { id: 'artifact.manage', name: 'Manage entity artifacts' }
     ]
   },
   {

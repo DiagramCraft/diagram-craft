@@ -244,6 +244,31 @@ const sharedFieldGroupLinkSchema = z
   })
   .describe('A schema-local inclusion of a workspace shared fieldgroup');
 
+export const artifactCapabilitySchema = z
+  .object({
+    type: z
+      .string()
+      .regex(/^[a-z][a-z0-9-]*$/)
+      .max(100)
+      .describe('Artifact capability/profile identifier'),
+    features: z
+      .array(
+        z
+          .string()
+          .regex(/^[a-z][a-z0-9-]*$/)
+          .max(100)
+      )
+      .default([])
+      .describe('Functionality exposed by this artifact capability'),
+    requiredFields: z
+      .array(z.string().min(1).max(100))
+      .default([])
+      .describe('Schema field ids required by this capability')
+  })
+  .describe('A typed artifact capability enabled for entities using the schema');
+
+export type ArtifactCapability = z.infer<typeof artifactCapabilitySchema>;
+
 const entitySchemaSchema = z.object({
   id: z.string().describe('Unique schema identifier'),
   workspace: z.string().describe('Parent workspace identifier'),
@@ -259,6 +284,10 @@ const entitySchemaSchema = z.object({
     .array(sharedFieldGroupLinkSchema)
     .optional()
     .describe('Included workspace shared fieldgroups, in display order'),
+  artifact_capabilities: z
+    .array(artifactCapabilitySchema)
+    .optional()
+    .describe('Functionality-driving artifact capabilities enabled by this schema'),
   color: z.string().nullable().describe('Schema color (hex format)'),
   icon: z.string().nullable().describe('Schema icon identifier'),
   entity_count: z.number().int().min(0).describe('Number of entities using this schema'),
@@ -293,6 +322,9 @@ const schemaVersionSchema = z.object({
     .array(sharedFieldGroupLinkSchema)
     .optional()
     .describe('Included workspace shared fieldgroups at this version'),
+  artifact_capabilities: z
+    .array(artifactCapabilitySchema)
+    .describe('Artifact capabilities enabled by this schema at this version'),
   color: z.string().nullable().describe('Schema color at this version'),
   icon: z.string().nullable().describe('Schema icon at this version'),
   changeSummary: z
@@ -328,6 +360,10 @@ const createSchemaBodySchema = z.object({
     v => (v === undefined ? undefined : Array.isArray(v) ? v : []),
     z.array(sharedFieldGroupLinkSchema).optional().describe('Included workspace shared fieldgroups')
   ),
+  artifact_capabilities: z
+    .array(artifactCapabilitySchema)
+    .optional()
+    .describe('Functionality-driving artifact capabilities enabled by this schema'),
   color: z.preprocess(
     v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
     z.string().nullable().optional().describe('Schema color (hex format)')

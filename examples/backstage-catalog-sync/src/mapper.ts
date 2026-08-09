@@ -175,6 +175,10 @@ const mapApiFields = (
     archEntity.api_type = entity.spec.type;
   }
 
+  if (entity.spec.version && typeof entity.spec.version === 'string') {
+    archEntity.api_version = entity.spec.version;
+  }
+
   retainRelationship(entity, 'system', 'system', relationships);
 
   // Note: spec.definition is not stored in the template by default
