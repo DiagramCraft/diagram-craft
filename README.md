@@ -1,152 +1,153 @@
-# Diagram Craft
+# Diagram Craft & Arch Register
 
-Diagram Craft is an open-source interactive diagram editor, exploring advanced features such as multi-user
-collaboration, model driven diagrams and many more.
-Diagram Craft is built to use very few dependencies, making it easy to integrate
-into your own projects.
+This repository contains two connected tools for visualizing and managing Enterprise Architecture:
 
-Diagram Craft is currently in alpha, and is not yet ready for production use..
+- **Diagram Craft** is an interactive editor for creating, arranging, styling, and sharing technical and visual
+  diagrams.
+- **Arch Register** is a collaborative Enterprise Architecture management platform for cataloguing systems,
+  relationships, projects, documentation, and governance activity.
 
-![Screenshot Diagram Craft](docs/images/screenshot.png)
+They can be used independently or together: Arch Register provides the structured architecture context, while Diagram
+Craft provides the visual editing experience for associated diagrams.
 
-A demo is available at https://diagramcraft.github.io/diagram-craft/app/.
+## Diagram Craft
 
-## Features
+Diagram Craft is an open-source diagram editor that can run in the browser, as a desktop application, in a self-hosted
+deployment, or embedded in another application. It is currently in alpha and is not yet ready for production use.
 
-* **Multi-user collaboration**: Work simultaneously with team members on the same diagram with real-time updates,
-  comments, and version control.
+![Diagram Craft screenshot](docs/images/screenshot.png)
 
-* **Text to diagram conversion**: Automatically generate diagrams from text descriptions and convert existing diagrams
-  back to structured text for documentation and accessibility.
+### Highlights
 
-* **Advanced layer management**: Organize your diagrams with multiple layers, including specialized rule layers. Layers
-  can be locked, hidden, or grouped for precise control over complex diagrams.
+- **Rich diagram editing** — Create and style shapes, connectors, text, images, tables, and custom geometry on a large
+  canvas.
+- **Architecture notation support** — Use general-purpose shapes and stencil packages for C4, BPMN, UML, data
+  modelling, ArchiMate, and other specialized diagrams, with optional Draw.io-backed and vendor icon libraries.
+- **Organization and presentation** — Manage layers, groups, containers, nested diagram tabs, metadata, links, and
+  guided stories for presenting a document.
+- **Editing assistance** — Use alignment, distribution, snapping, guides, rulers, automatic layouts, boolean geometry,
+  undo/redo, and a command palette to work efficiently.
+- **Data-aware diagrams** — Attach local or external records to elements, display field values, query diagram content,
+  and define rules that change appearance, visibility, or actions.
+- **Collaboration and review** — Edit diagrams together in real time when collaboration services are configured, with
+  participant awareness, comments, and working history.
+- **Text and file workflows** — Edit diagrams through the text-to-diagram format, import Draw.io files, and export to
+  PNG or SVG. Native JSON, `.dcd`, and embedded Diagram Craft SVG formats preserve editable structure.
+- **AI-assisted workflows** — Convert between supported diagram and text representations; AI assistant capabilities are
+  experimental and provider-dependent.
 
-* **Nested tabs**: Structure complex projects with hierarchical tabs, allowing you to organize related diagrams together
-  while maintaining a clean workspace.
-
-* **Import from Drawio**: Import existing diagrams from Drawio, preserving layouts, styles, and connections.
-
-* **Extensive alignment and snapping capabilities**: Create aligned diagrams with intelligent snapping to
-  grids, and other elements.
-
-* **Integrated data management**: Connect your diagrams to data sources, enabling dynamic updates and interactive
-  elements. Create data-driven visualizations that automatically reflect changes in your underlying data.
-
-* **Rich visual effects**: Apply effects such as reflections, glass surfaces, and hand-drawn styles to
-  create visually appealing and distinctive diagrams.
-
-* **Boolean operations**: Combine shapes using union, intersection, difference, and other boolean operations to create
-  complex custom shapes with precision.
-
-* **Comments and review system**: Add comments, feedback, and review notes directly to diagrams, facilitating team
-  collaboration and iterative design processes.
-
-## Build/Configuration Instructions
-
-### Project Structure
-
-Diagram Craft is organized as a monorepo using pnpm workspaces. The project is divided into multiple packages in the
-`packages` directory:
-
-**Core Model & Data:**
-
-- `model`: Core data models (Diagram, DiagramNode, DiagramEdge, etc.)
-- `geometry`: Geometric utilities and mathematical operations
-- `utils`: Shared utility functions
-- `collaboration`: CRDT-based collaboration system for real-time editing
-
-**Canvas:**
-
-- `canvas`: Core canvas rendering engine with component system
-- `canvas-app`: Application-specific canvas features and tools
-- `canvas-react`: React integration for canvas components
-- `canvas-nodes`: Built-in node type definitions
-- `canvas-edges`: Built-in edge type definitions
-- `canvas-drawio`: Drawio import functionality and shape definitions
-
-**Application:**
-
-- `main`: Main React application (UI, toolbars, panels)
-- `app-components`: Reusable UI components built on Base UI
-- `markdown`: Markdown parsing and rendering utilities
-
-**Desktop:**
-
-- `electron-app`: Electron application wrapper for desktop distribution
-- `electron-client-api`: API layer for Electron-specific functionality
-
-**Server:**
-
-- `server-main`: Server-side code for collaboration features and REST data provider backend
-
-### Setup and Installation
-
-1. Ensure you have [pnpm](https://pnpm.io/) installed (version 9.3.0 or later)
-2. Clone the repository
-3. Install dependencies:
-   ```bash
-   pnpm install
-   ```
-
-### Development Scripts
-
-- `pnpm client:dev`: Start the development server for the main client application
-- `pnpm client:build`: Build the client application for production
-- `pnpm client:preview`: Preview the production build
-- `pnpm test`: Run unit tests
-- `pnpm lint`: Run linting checks
-
-### Server
-
-```bash
-pnpm install
-cd packages/server/main
-pnpm run dev
-```
-
-### Client
-
-```bash
-pnpm install
-pnpm run client:dev
-```
-
-### E2E Tests (diagram-craft)
-
-Functional Playwright tests for the diagram editor live in `packages/e2e/`. They auto-start the Vite dev server before running.
-
-```bash
-pnpm --filter @diagram-craft/e2e test
-```
+Try the [Diagram Craft demo](https://diagramcraft.github.io/diagram-craft/app/) or read the
+[Diagram Craft documentation](https://diagramcraft.github.io/diagram-craft/). The detailed capability inventory is in
+the [Diagram Craft feature map](feature-maps/diagram-craft.md).
 
 ## Arch Register
 
-Arch Register is a companion application for managing architectural entities, schemas, and documentation. It lives in `arch-register-packages/` as a set of independently deployable packages within this monorepo.
+Arch Register is a collaborative Enterprise Architecture tool for maintaining a structured system landscape. It gives
+teams a workspace in which they can register services, APIs, databases, teams, and other architectural entities, then
+connect them to the projects and documentation that explain how the landscape changes over time.
 
-See [`arch-register-packages/README.md`](arch-register-packages/README.md) for full documentation.
+![Arch Register screenshot](docs/images/screenshot_ar.png)
 
-### Quick start
+### Highlights
+
+- **Configurable architecture model** — Define entity schemas, fields, lifecycle states, reusable templates, and typed
+  relationships that match the organization’s architecture language.
+- **Structured catalog and analysis** — Create and maintain entities with ownership, hierarchy, history, and related
+  content, then explore them through table, cards, tree, graph, topology, radar, timeline, matrix, map, and other
+  configurable views.
+- **Projects and documentation** — Organize project files, Markdown pages, attachments, revisions, assessments,
+  milestones, and diagrams within workspace, project, and entity contexts.
+- **Visual architecture workflows** — Associate Diagram Craft diagrams with entities and projects, inspect diagram
+  previews, and create or edit diagrams from the architecture context.
+- **Governance and collaboration** — Coordinate planned changes, approvals, deprecation workflows, assessments,
+  discussions, watches, notifications, and audit history.
+- **Access control** — Manage workspace roles, teams, entity-level grants, project scope, and permission-aware access to
+  architecture data.
+- **Integration and automation** — Use the documented API and API tokens, CSV import/export, webhooks, MCP, recurring
+  jobs, and configurable automation rules. AI-assisted workflows and external content providers are experimental.
+
+See the [Arch Register package guide](arch-register-packages/README.md), the
+[Arch Register documentation](https://diagramcraft.github.io/diagram-craft/arch-register/intro), and the
+[Arch Register feature map](feature-maps/arch-register.md) for more detail.
+
+## How the products work together
+
+Arch Register is the structured catalog and collaboration space for architecture information. Diagram Craft is the
+canvas for turning that information into diagrams and communicating it visually. Associated diagrams can live alongside
+entities and projects, while Diagram Craft can also be used as a standalone editor for diagrams that are not managed by
+Arch Register.
+
+## Development
+
+This is a pnpm workspace monorepo. Install dependencies from the repository root:
+
+```bash
+pnpm install
+```
+
+### Diagram Craft
+
+Start the browser application:
+
+```bash
+pnpm client:dev
+```
+
+For the standalone REST data server, use a second terminal:
+
+```bash
+pnpm run -C packages/server-main dev
+```
+
+To start the Electron application instead:
+
+```bash
+pnpm electron:dev
+```
+
+### Arch Register
+
+Start the API server and web client in separate terminals:
 
 ```bash
 # Terminal 1 — API server (port 3010)
-cd arch-register-packages/server
-pnpm dev
+pnpm --filter @arch-register/server dev
 
-# Terminal 2 — Web client (port 5174)
-cd arch-register-packages/web
-pnpm dev
+# Terminal 2 — web client (port 5174)
+pnpm --filter @arch-register/web dev
 ```
 
-### Testing
+Server configuration is documented in [`arch-register-packages/server/.env.example`](arch-register-packages/server/.env.example).
+The [Arch Register package guide](arch-register-packages/README.md) covers the package structure, database options, and
+additional development workflows.
+
+### Documentation site
+
+Run the local documentation site with:
 
 ```bash
-# Unit tests (all packages, from repo root)
+pnpm docs:dev
+```
+
+## Testing and checks
+
+```bash
+# Unit and integration tests across the workspace
 pnpm test
 
-# API integration tests — starts a real server with SQLite, no browser
+# TypeScript checks
+pnpm lint:tsc
+
+# Arch Register API tests
 pnpm --filter @arch-register/e2e test:api
 
-# UI e2e tests — auto-starts server + web dev server
+# Arch Register UI end-to-end tests
 pnpm --filter @arch-register/e2e test:ui
 ```
+
+## Repository layout
+
+- `packages/` — Diagram Craft model, geometry, canvas, stencils, collaboration, applications, and servers
+- `arch-register-packages/` — Arch Register API contracts, server, web client, permissions, integrations, and tests
+- `docs-site/` — Documentation for both products
+- `feature-maps/` — Human-readable inventories of user-facing capabilities for Diagram Craft and Arch Register
