@@ -5,6 +5,7 @@ import type {
   UpdateDashboardRequest,
   WorkspaceDashboard as ApiWorkspaceDashboard
 } from '@arch-register/api-types/dashboardContract';
+import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { WorkspaceDashboardDbResult } from './db/dashboardDatabase';
 import { httpAssert } from '../../utils/httpAssert';
 
@@ -20,6 +21,28 @@ export const toApi = (row: WorkspaceDashboardDbResult): ApiWorkspaceDashboard =>
 
 const nextSortOrder = (existing: WorkspaceDashboardDbResult[]): number =>
   existing.reduce((max, row) => Math.max(max, row.sort_order), -1) + 1;
+
+export const replaceDefaultWorkspaceDashboardLayout = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  widgets: DashboardWidget[],
+  updatedBy: string | null
+): Promise<WorkspaceDashboardDbResult> => {
+  const existing = await db.dashboard.list(workspace);
+  const dashboard =
+    existing[0] ??
+    (await db.dashboard.create({
+      id: randomUUID(),
+      workspace,
+      name: 'Overview',
+      sort_order: 0,
+      updated_by: updatedBy
+    }));
+  return (await db.dashboard.update(workspace, dashboard.id, {
+    layout: widgets,
+    updated_by: updatedBy
+  }))!;
+};
 
 export const listWorkspaceDashboards = async (
   db: DatabaseAdapter,

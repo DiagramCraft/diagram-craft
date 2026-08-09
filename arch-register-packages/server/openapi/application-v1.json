@@ -38318,6 +38318,63 @@
                             "name"
                           ]
                         }
+                      },
+                      "dashboardWidgets": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Unique widget identifier"
+                            },
+                            "x": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Grid column position"
+                            },
+                            "y": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Grid row position"
+                            },
+                            "w": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Grid width in columns"
+                            },
+                            "h": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Grid height in rows"
+                            },
+                            "type": {
+                              "type": "string",
+                              "description": "Extensible widget type identifier"
+                            },
+                            "config": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {},
+                              "description": "Widget-specific configuration; interpreted by the widget implementation"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "x",
+                            "y",
+                            "w",
+                            "h",
+                            "type",
+                            "config"
+                          ]
+                        }
                       }
                     },
                     "required": [
@@ -38329,7 +38386,8 @@
                       "enums",
                       "documentTypes",
                       "relationSchemas",
-                      "fieldGroups"
+                      "fieldGroups",
+                      "dashboardWidgets"
                     ]
                   }
                 }
@@ -38433,6 +38491,11 @@
                         "items": {
                           "type": "string"
                         }
+                      },
+                      "dashboard": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Whether to apply the source template dashboard layout to the default dashboard"
                       }
                     },
                     "required": [
@@ -38560,6 +38623,11 @@
                           "items": {
                             "type": "string"
                           }
+                        },
+                        "dashboard": {
+                          "type": "boolean",
+                          "default": false,
+                          "description": "Whether to apply the source template dashboard layout to the default dashboard"
                         }
                       },
                       "required": [
@@ -38751,6 +38819,63 @@
                         ]
                       }
                     },
+                    "dashboardWidgets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Unique widget identifier"
+                          },
+                          "x": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid column position"
+                          },
+                          "y": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid row position"
+                          },
+                          "w": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid width in columns"
+                          },
+                          "h": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid height in rows"
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "Extensible widget type identifier"
+                          },
+                          "config": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {},
+                            "description": "Widget-specific configuration; interpreted by the widget implementation"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "x",
+                          "y",
+                          "w",
+                          "h",
+                          "type",
+                          "config"
+                        ]
+                      }
+                    },
                     "conflicts": {
                       "type": "array",
                       "items": {
@@ -38829,6 +38954,7 @@
                     "documentTypes",
                     "relationSchemas",
                     "fieldGroups",
+                    "dashboardWidgets",
                     "conflicts",
                     "keyPrefixRemaps",
                     "errors",
@@ -38935,6 +39061,11 @@
                         "items": {
                           "type": "string"
                         }
+                      },
+                      "dashboard": {
+                        "type": "boolean",
+                        "default": false,
+                        "description": "Whether to apply the source template dashboard layout to the default dashboard"
                       }
                     },
                     "required": [
@@ -39127,6 +39258,63 @@
                       ]
                     }
                   },
+                  "dashboardWidgets": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Unique widget identifier"
+                        },
+                        "x": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Grid column position"
+                        },
+                        "y": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Grid row position"
+                        },
+                        "w": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Grid width in columns"
+                        },
+                        "h": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Grid height in rows"
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "Extensible widget type identifier"
+                        },
+                        "config": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {},
+                          "description": "Widget-specific configuration; interpreted by the widget implementation"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "x",
+                        "y",
+                        "w",
+                        "h",
+                        "type",
+                        "config"
+                      ]
+                    }
+                  },
                   "keyPrefixRemaps": {
                     "type": "array",
                     "items": {
@@ -39168,6 +39356,7 @@
                   "documentTypes",
                   "relationSchemas",
                   "fieldGroups",
+                  "dashboardWidgets",
                   "keyPrefixRemaps",
                   "fingerprint",
                   "confirmed"
@@ -39208,6 +39397,11 @@
                       "type": "integer",
                       "minimum": -9007199254740991,
                       "maximum": 9007199254740991
+                    },
+                    "dashboardWidgets": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991
                     }
                   },
                   "required": [
@@ -39215,7 +39409,8 @@
                     "enums",
                     "documentTypes",
                     "relationSchemas",
-                    "fieldGroups"
+                    "fieldGroups",
+                    "dashboardWidgets"
                   ]
                 }
               }
