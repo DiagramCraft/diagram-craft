@@ -43,6 +43,14 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
     return row ? authMappers.user(row) : null;
   }
 
+  async listUsersByIds(ids: string[]) {
+    if (ids.length === 0) return [];
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM users WHERE id = ANY(${ids}) ORDER BY id
+    `;
+    return mapDatabaseRows(rows, authMappers.user);
+  }
+
   async createUser(input: UserDbCreate) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`

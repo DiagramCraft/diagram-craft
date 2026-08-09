@@ -10,6 +10,11 @@ export type WatchDbResult = {
 
 export type WatchDbCreate = WatchDbResult;
 
+export type WatcherEntityRow = {
+  user_id: string;
+  entity_id: string;
+};
+
 export type CreateNotificationsFromAuditInput = {
   auditLog: AuditLogDbResult;
   changedByDisplayName: string;
@@ -37,6 +42,7 @@ export const watchMappers = {
 
 export type WatchDatabase = {
   listWatcherUserIds(workspace: string, entityId: string): Promise<string[]>;
+  listWatcherUserIdsForEntities(workspace: string, entityIds: string[]): Promise<WatcherEntityRow[]>;
   listWatches(userId: string, workspace: string): Promise<WatchDbResult[]>;
   getWatch(userId: string, workspace: string, entityId: string): Promise<WatchDbResult | null>;
   createWatch(input: WatchDbCreate): Promise<WatchDbResult>;

@@ -137,6 +137,7 @@ export type AuthDatabase = {
   getUserByUserId(userId: string): Promise<UserDbResult | null>;
   getUserByEmail(email: string): Promise<UserDbResult | null>;
   getUserByOidc(issuer: string, subject: string): Promise<UserDbResult | null>;
+  listUsersByIds(ids: string[]): Promise<UserDbResult[]>;
   createUser(input: UserDbCreate): Promise<UserDbResult>;
   updateUser(id: string, input: UserDbUpdate): Promise<UserDbResult | null>;
   updateUserLastLogin(id: string, timestamp: Date): Promise<void>;

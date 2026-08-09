@@ -29,6 +29,8 @@ runContractSuiteAgainstBothDrivers('AuditDatabase', getDb => {
       expect(created.user_display_name).toBe(user.display_name);
       expect(created.changes).toEqual({ new: { name: 'my-entity' } });
       expect(created.metadata).toEqual({ source: 'test' });
+      expect(await db.audit.getAuditLog(workspace, created.id)).toEqual(created);
+      expect(await db.audit.getAuditLog(workspace, randomUUID())).toBeNull();
     });
 
     it('creates an audit log with a null user and empty JSON columns', async () => {

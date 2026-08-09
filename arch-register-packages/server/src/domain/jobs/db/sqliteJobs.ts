@@ -272,11 +272,11 @@ export class SqliteJobDatabase extends SqliteDatabaseBase implements JobDatabase
 
   async enqueueOneOffRun(input: OneOffJobRunDbCreate) {
     this.run(
-      `INSERT INTO job_run (
+      `INSERT OR IGNORE INTO job_run (
         id, schedule_id, workspace, job_type, system_identity, payload, priority,
         occurrence_at, coalesced_through_at, coalesced_count, planned_at, created_at,
-        status, max_attempts
-      ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 'queued', ?)`,
+        status, max_attempts, dedupe_key
+      ) VALUES (?, NULL, ?, ?, ?, ?, ?, ?, ?, 1, ?, ?, 'queued', ?, ?)`,
       [
         input.id,
         input.workspace,
@@ -288,10 +288,19 @@ export class SqliteJobDatabase extends SqliteDatabaseBase implements JobDatabase
         iso(input.created_at),
         iso(input.planned_at),
         iso(input.created_at),
-        input.max_attempts
+        input.max_attempts,
+        input.dedupe_key ?? null
       ]
     );
-    return this.get('SELECT * FROM job_run WHERE id = ?', [input.id], jobMappers.run)!;
+    return this.get(
+      input.dedupe_key == null
+        ? 'SELECT * FROM job_run WHERE id = ?'
+        : 'SELECT * FROM job_run WHERE (id = ? OR (workspace = ? AND job_type = ? AND dedupe_key = ?)) ORDER BY CASE WHEN id = ? THEN 0 ELSE 1 END LIMIT 1',
+      input.dedupe_key == null
+        ? [input.id]
+        : [input.id, input.workspace, input.job_type, input.dedupe_key, input.id],
+      jobMappers.run
+    )!;
   }
 
   async recoverExpiredRuns(now: Date) {

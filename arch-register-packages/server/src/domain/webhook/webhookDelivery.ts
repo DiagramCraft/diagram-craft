@@ -351,7 +351,8 @@ export const enqueueWebhookDeliveries = async (db: DatabaseAdapter, auditLog: Au
       jobType: JOB_TYPE,
       systemIdentity: SYSTEM_IDENTITY,
       payload: { webhookId: webhook.id, event },
-      maxAttempts: 5
+      maxAttempts: 5,
+      dedupeKey: `audit-webhook:${auditLog.id}:${webhook.id}`
     });
   }
   return matching.length;

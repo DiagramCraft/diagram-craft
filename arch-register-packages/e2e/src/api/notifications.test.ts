@@ -1,6 +1,7 @@
 import { createApiTest, expect } from '../helpers/fixtures';
 import { makeAuthHeader, seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 import { TEST_EDITOR_ID } from '../helpers/testIds';
+import { drainAuditFanoutJobs } from '../helpers/auditJobs';
 
 const componentId = '00000000-0000-0000-0003-000000000002';
 const editorUserId = TEST_EDITOR_ID;
@@ -114,6 +115,7 @@ test.describe('entity watch notifications', () => {
       }
     );
     expect(updateRes.status).toBe(200);
+    await drainAuditFanoutJobs(server.db, seedIds.workspace.default);
 
     const countRes = await fetch(
       `${server.baseUrl}/api/application/v1/default/notifications/count`,
@@ -164,6 +166,7 @@ test.describe('entity watch notifications', () => {
         _description: 'Another update to create a notification'
       })
     });
+    await drainAuditFanoutJobs(server.db, seedIds.workspace.default);
 
     const notificationsRes = await fetch(
       `${server.baseUrl}/api/application/v1/default/notifications`,
@@ -344,6 +347,7 @@ test.describe('entity watch notifications', () => {
       }
     );
     expect(selfUpdateRes.status).toBe(200);
+    await drainAuditFanoutJobs(server.db, seedIds.workspace.default);
 
     const zeroCountRes = await fetch(
       `${server.baseUrl}/api/application/v1/default/notifications/count`,
@@ -367,6 +371,7 @@ test.describe('entity watch notifications', () => {
         }
       );
       expect(updateRes.status).toBe(200);
+      await drainAuditFanoutJobs(server.db, seedIds.workspace.default);
     }
 
     const clearRes = await fetch(`${server.baseUrl}/api/application/v1/default/notifications`, {

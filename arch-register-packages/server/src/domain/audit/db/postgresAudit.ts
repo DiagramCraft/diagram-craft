@@ -11,6 +11,14 @@ export class PostgresAuditDatabase extends PostgresDatabaseBase implements Audit
     return rows.map(auditMappers.auditLog);
   }
 
+  async getAuditLog(workspace: string, id: string) {
+    const rows = await this.sql.unsafe<Record<string, unknown>[]>(
+      `${AUDIT_LOG_SELECT_SQL} WHERE audit_log.workspace = $1 AND audit_log.id = $2`,
+      [workspace, id]
+    );
+    return rows[0] ? auditMappers.auditLog(rows[0]) : null;
+  }
+
   async createAuditLog(input: AuditLogDbCreate) {
     try {
       const [inserted] = await this.sql<{ id: string }[]>`

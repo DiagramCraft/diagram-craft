@@ -122,8 +122,8 @@ const createScopedMarkdownDoc = async (
     afterCommit: [
       {
         name: 'audit',
-        run: () =>
-          writeAudit(db, {
+        run: tx =>
+          writeAudit(tx, {
             userId: authCtx.userId,
             workspace: ws,
             operation: 'create',
@@ -278,8 +278,8 @@ export const saveNewMarkdownContent = async (
         afterCommit: [
           {
             name: 'audit',
-            run: () =>
-              writeAudit(db, {
+            run: tx =>
+              writeAudit(tx, {
                 userId: authCtx.userId,
                 workspace: ws,
                 operation: 'create',
@@ -616,8 +616,8 @@ export const saveMarkdownContent = async (
         afterCommit: [
           {
             name: 'audit',
-            run: () =>
-              writeAudit(db, {
+            run: tx =>
+              writeAudit(tx, {
                 userId: authCtx.userId,
                 workspace: ws,
                 operation: 'update',
@@ -907,9 +907,9 @@ export const restoreMarkdownRevision = async (
         },
         afterCommit: [
           {
-            name: 'audit',
-            run: () =>
-              writeAudit(db, {
+        name: 'audit',
+        run: tx =>
+          writeAudit(tx, {
                 userId: authCtx.userId,
                 workspace: ws,
                 operation: 'update',

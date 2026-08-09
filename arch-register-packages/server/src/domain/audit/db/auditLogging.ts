@@ -1,11 +1,9 @@
+import { randomUUID } from 'node:crypto';
 import type { AuditEntityType, AuditOperation } from './auditDatabase';
 import type { DatabaseAdapter } from '../../../db/database';
 import { createLogger } from '../../../utils/logger';
-import { enqueueWebhookDeliveries } from '../../webhook/webhookDelivery';
-import { enqueueAutomationRuleRuns } from '../../automation/automationRuleEvaluation';
-import { isChannelEnabled } from '../../notification/notificationPreferences';
-import { buildUserAuthCtx } from '../../auth/authorization';
-import { canViewRelationNotification } from '../../catalog/relationNotificationAccess';
+import { enqueueOneOffJobRun } from '../../jobs/jobOperations';
+import { AUDIT_FANOUT_JOB_TYPE } from '../auditFanoutJob';
 
 // Keep the existing import path stable for the many callers that import
 // flattenEntityAuditFields from here.
@@ -43,9 +41,7 @@ export const logAudit = async (db: DatabaseAdapter, params: AuditLogParams): Pro
       'Failed to write audit log',
       error instanceof Error ? error : new Error(String(error))
     );
-    // Entity audit records also drive webhook delivery. Do not turn a failed
-    // enqueue into a successful mutation with a silently missing notification.
-    if (params.entityType === 'entity' || params.entityType === 'relation') throw error;
+    throw error;
   }
 };
 
@@ -55,7 +51,6 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
     const {
       workspace,
       userId = null,
-      userDisplayName,
       watcherUserIds,
       operation,
       entityType,
@@ -66,6 +61,25 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
       changes,
       metadata = {}
     } = params;
+
+    let resolvedWatcherUserIds = watcherUserIds;
+    if (
+      resolvedWatcherUserIds === undefined &&
+      operation === 'delete' &&
+      entityType === 'relation' &&
+      typeof tx.watch?.listWatcherUserIdsForEntities === 'function'
+    ) {
+      const relation = metadata['relation'];
+      const endpointIds =
+        typeof relation === 'object' && relation != null
+          ? [
+              (relation as { in?: { id?: unknown } }).in?.id,
+              (relation as { out?: { id?: unknown } }).out?.id
+            ].filter((id): id is string => typeof id === 'string')
+          : [];
+      const watcherRows = await tx.watch.listWatcherUserIdsForEntities(workspace, endpointIds);
+      resolvedWatcherUserIds = [...new Set(watcherRows.map(row => row.user_id))];
+    }
 
     const auditLog = await tx.audit.createAuditLog({
       workspace,
@@ -81,148 +95,23 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
       metadata
     });
 
-    // Some focused unit tests use partial database doubles without the webhook
-    // adapter. Real server adapters always provide it; skip enqueueing quietly
-    // for those doubles rather than treating the missing stub as an error.
-    const webhookAdapter = (tx as unknown as { webhook?: { listWebhooks?: unknown } }).webhook;
     if (
       (entityType === 'entity' || entityType === 'relation') &&
-      typeof webhookAdapter?.listWebhooks === 'function'
+      typeof tx.jobs?.enqueueOneOffRun === 'function'
     ) {
-      // Keep the audit row and delivery jobs in the same transaction. A failed
-      // enqueue rolls back the audit row instead of leaving a false impression
-      // that the change was delivered.
-      await enqueueWebhookDeliveries(tx, auditLog);
-    }
-
-    // Same partial-test-double tolerance as the webhook check above: skip enqueueing quietly
-    // when a focused unit test's database double doesn't provide the automationRule adapter.
-    const automationRuleAdapter = (tx as unknown as { automationRule?: { listRules?: unknown } })
-      .automationRule;
-    if (
-      (entityType === 'entity' || entityType === 'relation') &&
-      typeof automationRuleAdapter?.listRules === 'function'
-    ) {
-      // Rule *matching* runs synchronously here, in the same transaction as the mutation, so a
-      // failed enqueue rolls back the audit row rather than silently dropping a rule execution.
-      // Rule *actions* run later via the job queue (see automationRuleExecution.ts).
-      await enqueueAutomationRuleRuns(tx, auditLog, metadata);
-    }
-
-    if (entityType === 'entity' || entityType === 'relation') {
-      // Some focused unit tests use partial database doubles without the notification
-      // preference adapter. Real server adapters always provide it; skip the gating
-      // check quietly for those doubles rather than treating the missing stub as an error.
-      const notificationPreferenceAdapter = (
-        tx as unknown as { notificationPreference?: { listOverrides?: unknown } }
-      ).notificationPreference;
-
-      const relationContext = metadata['relation'];
-      const relationEndpointIds =
-        entityType === 'relation' && typeof relationContext === 'object' && relationContext != null
-          ? [
-              (relationContext as { in?: { id?: unknown } }).in?.id,
-              (relationContext as { out?: { id?: unknown } }).out?.id
-            ].filter((id): id is string => typeof id === 'string')
-          : [];
-      const watchedEntityIds = entityType === 'relation' ? relationEndpointIds : [entityId];
-      let watcherRecipients: Array<{
-        userId: string;
-        email: string | null;
-        inAppEnabled: boolean;
-        emailEnabled: boolean;
-      }> =
-        watcherUserIds?.map(userId => ({
-          userId,
-          email: null,
-          inAppEnabled: true,
-          emailEnabled: false
-        })) ?? [];
-      if (typeof notificationPreferenceAdapter?.listOverrides === 'function') {
-        const candidateWatcherIds = watcherUserIds ?? [
-          ...new Set(
-            (
-              await Promise.all(
-                watchedEntityIds.map(watchedId => tx.watch.listWatcherUserIds(workspace, watchedId))
-              )
-            ).flat()
-          )
-        ];
-        watcherRecipients = (
-          await Promise.all(
-            candidateWatcherIds.map(async userId => {
-              const user = await tx.auth.getUser(userId);
-              const inAppEnabled = await isChannelEnabled(
-                tx,
-                userId,
-                workspace,
-                'entity-watch-activity',
-                'in_app'
-              );
-              const emailEnabled =
-                user?.email != null &&
-                (await isChannelEnabled(tx, userId, workspace, 'entity-watch-activity', 'email'));
-              return inAppEnabled || emailEnabled
-                ? {
-                    userId,
-                    email: user?.email ?? null,
-                    inAppEnabled,
-                    emailEnabled
-                  }
-                : null;
-            })
-          )
-        ).filter((recipient): recipient is NonNullable<typeof recipient> => recipient != null);
-      }
-
-      if (entityType === 'relation') {
-        const relationContext = metadata['relation'];
-        const relationIds =
-          typeof relationContext === 'object' && relationContext != null
-            ? {
-                inEntityId: (relationContext as { in?: { id?: unknown } }).in?.id,
-                outEntityId: (relationContext as { out?: { id?: unknown } }).out?.id
-              }
-            : null;
-        const relation = await tx.relation.getRelation(workspace, entityId);
-        const ownerFromAudit = [auditLog.changes?.new, auditLog.changes?.old]
-          .map(changes => changes?.['_owner'])
-          .find((owner): owner is string | null => owner === null || typeof owner === 'string');
-        const owner = relation?.owner ?? ownerFromAudit ?? null;
-
-        watcherRecipients = (
-          await Promise.all(
-            watcherRecipients.map(async recipient => {
-              if (
-                typeof relationIds?.inEntityId !== 'string' ||
-                typeof relationIds.outEntityId !== 'string' ||
-                !auditLog.schema_id
-              ) {
-                return null;
-              }
-              try {
-                const authCtx = await buildUserAuthCtx(tx, workspace, recipient.userId);
-                const relationVisible = await canViewRelationNotification(tx, workspace, authCtx, {
-                  relationSchemaId: auditLog.schema_id,
-                  inEntityId: relationIds.inEntityId,
-                  outEntityId: relationIds.outEntityId,
-                  at: auditLog.timestamp,
-                  owner
-                });
-                return relationVisible ? { ...recipient, relationVisible: true } : null;
-              } catch {
-                return null;
-              }
-            })
-          )
-        ).filter((recipient): recipient is NonNullable<typeof recipient> => recipient != null);
-      }
-
-      await tx.watch.createNotificationsFromAudit({
-        auditLog,
-        changedByDisplayName: userDisplayName ?? userId ?? 'system',
-        watchedEntityIds,
-        watcherRecipients
+      await enqueueOneOffJobRun(tx, {
+        id: randomUUID(),
+        workspace,
+        jobType: AUDIT_FANOUT_JOB_TYPE,
+        systemIdentity: 'audit',
+        payload: {
+          auditLogId: auditLog.id,
+          ...(resolvedWatcherUserIds
+            ? { watcherUserIds: [...new Set(resolvedWatcherUserIds)] }
+            : {})
+        },
+        maxAttempts: 5,
+        dedupeKey: `audit-fanout:${auditLog.id}`
       });
     }
   };

@@ -72,5 +72,6 @@ export type AuditDatabase = {
    * strip `changes` immediately via `stripAuditChanges`. Enforced by `auditAccessBoundary.test.ts`.
    */
   listAuditLogs(ws: string): Promise<AuditLogDbResult[]>;
+  getAuditLog(ws: string, id: string): Promise<AuditLogDbResult | null>;
   createAuditLog(input: AuditLogDbCreate): Promise<AuditLogDbResult>;
 };

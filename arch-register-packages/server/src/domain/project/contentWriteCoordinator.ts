@@ -7,7 +7,7 @@ const logger = createLogger('content-write');
 
 export type ContentWriteStage = {
   name: 'preview' | 'references' | 'revision' | 'audit' | 'cleanup';
-  run(): Promise<void>;
+  run(db: DatabaseAdapter): Promise<void>;
 };
 
 export type ContentStorageChange =
@@ -80,10 +80,17 @@ export const coordinateContentWrite = async <T>(options: ContentWriteOptions<T>)
   }
 
   let result: T;
+  const writeAndAudit = async (transactionDb: DatabaseAdapter) => {
+    const transactionResult = await options.writeDatabase(transactionDb);
+    for (const stage of options.afterCommit ?? []) {
+      if (stage.name === 'audit') await stage.run(transactionDb);
+    }
+    return transactionResult;
+  };
   try {
     result = options.db.core?.transaction
-      ? await options.db.core.transaction(options.writeDatabase)
-      : await options.writeDatabase(options.db);
+      ? await options.db.core.transaction(writeAndAudit)
+      : await writeAndAudit(options.db);
   } catch (error) {
     for (const mutation of staged.reverse()) {
       try {
@@ -108,9 +115,9 @@ export const coordinateContentWrite = async <T>(options: ContentWriteOptions<T>)
       reportFailure('warn', 'Storage cleanup failed', { ...context, stage: 'cleanup' }, error);
     }
   }
-  for (const stage of options.afterCommit ?? []) {
+  for (const stage of (options.afterCommit ?? []).filter(stage => stage.name !== 'audit')) {
     try {
-      await stage.run();
+      await stage.run(options.db);
     } catch (error) {
       reportFailure(
         'warn',

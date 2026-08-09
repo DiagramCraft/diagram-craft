@@ -7,6 +7,10 @@ import { createJobServer, type JobHandler } from './worker';
 import { createStorage } from '@arch-register/server/storage/storage';
 import { createExternalContentJobHandler } from '@arch-register/server/domain/external-content/externalContentJobs';
 import { createWebhookDeliveryHandler } from '@arch-register/server/domain/webhook/webhookDelivery';
+import {
+  AUDIT_FANOUT_JOB_TYPE,
+  createAuditFanoutJobHandler
+} from '@arch-register/server/domain/audit/auditFanoutJob';
 import { createAutomationRuleExecutionHandler } from '@arch-register/server/domain/automation/automationRuleExecution';
 import { AUTOMATION_RULE_JOB_TYPE } from '@arch-register/server/domain/automation/automationRuleEvaluation';
 import { createGovernanceNotificationJobHandler } from '@arch-register/server/domain/governance/governanceNotifications';
@@ -79,6 +83,7 @@ const main = async () => {
   const governanceRegistry = createApplicationGovernanceRegistry();
   handlers.set('external-content.refresh', createExternalContentJobHandler(db, storage));
   handlers.set('webhook.delivery', createWebhookDeliveryHandler(db));
+  handlers.set(AUDIT_FANOUT_JOB_TYPE, createAuditFanoutJobHandler(db));
   handlers.set(AUTOMATION_RULE_JOB_TYPE, createAutomationRuleExecutionHandler(db));
   handlers.set('governance.notification', createGovernanceNotificationJobHandler(db));
   handlers.set(

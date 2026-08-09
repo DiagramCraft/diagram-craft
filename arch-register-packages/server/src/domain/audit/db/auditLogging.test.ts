@@ -2,8 +2,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { buildAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../../db/database';
 import { computeChanges, flattenEntityAuditFields, logAudit } from './auditLogging';
+import { createAuditWatcherNotifications } from '../auditWatcherNotifications';
 import { EntityDbCreate } from '../../catalog/db/catalogDatabase';
-import { buildUserAuthCtx } from '../../auth/authorization';
+import { buildUserAuthCtx, buildUserAuthCtxs } from '../../auth/authorization';
 import { canViewRelationNotification } from '../../catalog/relationNotificationAccess';
 
 const { loggerError } = vi.hoisted(() => ({ loggerError: vi.fn() }));
@@ -13,7 +14,8 @@ vi.mock('../../../utils/logger', () => ({
 }));
 
 vi.mock('../../auth/authorization', () => ({
-  buildUserAuthCtx: vi.fn()
+  buildUserAuthCtx: vi.fn(),
+  buildUserAuthCtxs: vi.fn()
 }));
 
 vi.mock('../../catalog/relationNotificationAccess', () => ({
@@ -145,7 +147,7 @@ describe('entity audit delivery', () => {
 
     await logAudit(makeTransactionalDatabase(events), entityAudit);
 
-    expect(events).toEqual(['begin', 'audit', 'job', 'notification', 'commit']);
+    expect(events).toEqual(['begin', 'audit', 'job', 'commit']);
   });
 
   it('surfaces webhook enqueue failures instead of committing a silent audit-only change', async () => {
@@ -189,11 +191,20 @@ describe('relation audit notification visibility', () => {
       audit: { createAuditLog: vi.fn(async () => auditLog) },
       relation: { getRelation: vi.fn(async () => ({ owner: null })) },
       watch: {
-        listWatcherUserIds: vi.fn(async () => ['allowed-user', 'blocked-user']),
+        listWatcherUserIdsForEntities: vi.fn(async () => [
+          { user_id: 'allowed-user', entity_id: 'entity-1' },
+          { user_id: 'blocked-user', entity_id: 'entity-1' }
+        ]),
         createNotificationsFromAudit: notifications
       },
-      notificationPreference: { listOverrides: vi.fn(async () => []) },
-      auth: { getUser: vi.fn(async userId => ({ id: userId, email: `${userId}@test.local` })) }
+      auth: {
+        listUsersByIds: vi.fn(async (userIds: string[]) =>
+          userIds.map(userId => ({ id: userId, email: `${userId}@test.local` }))
+        )
+      },
+      notificationPreference: {
+        listOverridesForUsers: vi.fn(async () => [])
+      }
     } as unknown as DatabaseAdapter;
 
     vi.mocked(buildUserAuthCtx).mockImplementation(async (_db, _workspace, userId) =>
@@ -210,19 +221,14 @@ describe('relation audit notification visibility', () => {
     vi.mocked(canViewRelationNotification).mockImplementation(
       async (_db, _workspace, authCtx) => authCtx.userId === 'allowed-user'
     );
+    vi.mocked(buildUserAuthCtxs).mockResolvedValue(
+      new Map([
+        ['allowed-user', buildAuthorizationContext({ userId: 'allowed-user', globalRoles: [], workspaceRole: null, teamAssignments: [], schemas: [], entities: [], grants: [] })],
+        ['blocked-user', buildAuthorizationContext({ userId: 'blocked-user', globalRoles: [], workspaceRole: null, teamAssignments: [], schemas: [], entities: [], grants: [] })]
+      ])
+    );
 
-    await logAudit(tx, {
-      workspace: 'ws-1',
-      userId: 'actor-1',
-      userDisplayName: 'Actor',
-      operation: 'create',
-      entityType: 'relation',
-      entityId: 'relation-1',
-      entityName: 'Entity 1 → Entity 2',
-      schemaId: 'relation-schema-1',
-      changes: { new: { _owner: null } },
-      metadata: auditLog.metadata
-    });
+    await createAuditWatcherNotifications(tx, auditLog);
 
     expect(notifications).toHaveBeenCalledWith(
       expect.objectContaining({

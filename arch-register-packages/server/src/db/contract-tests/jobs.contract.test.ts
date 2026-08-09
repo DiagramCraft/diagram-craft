@@ -139,6 +139,42 @@ runContractSuiteAgainstBothDrivers('JobDatabase', getDb => {
     });
   });
 
+  it('deduplicates one-off runs by workspace, job type, and key', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const now = new Date('2026-01-01T00:00:00.000Z');
+    const first = await db.jobs.enqueueOneOffRun({
+      id: randomUUID(),
+      workspace,
+      job_type: 'audit.fanout',
+      system_identity: 'audit',
+      payload: { auditLogId: 'audit-1' },
+      priority: 5,
+      planned_at: now,
+      created_at: now,
+      max_attempts: 5,
+      dedupe_key: 'audit-fanout:audit-1'
+    });
+    const second = await db.jobs.enqueueOneOffRun({
+      id: randomUUID(),
+      workspace,
+      job_type: 'audit.fanout',
+      system_identity: 'audit',
+      payload: { auditLogId: 'audit-1', retry: true },
+      priority: 5,
+      planned_at: now,
+      created_at: now,
+      max_attempts: 5,
+      dedupe_key: 'audit-fanout:audit-1'
+    });
+
+    expect(second.id).toBe(first.id);
+    expect(
+      (await db.jobs.listRuns(workspace, { jobType: 'audit.fanout', limit: 10, offset: 0 })).items
+    ).toHaveLength(1);
+    await db.jobs.cancelQueuedRun(workspace, first.id, now);
+  });
+
   it('rejects a retry after the worker lease expires', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);

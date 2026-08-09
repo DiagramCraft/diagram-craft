@@ -159,8 +159,8 @@ const writeScopedDiagram = async (
       },
       {
         name: 'audit',
-        run: () =>
-          writeAudit(db, {
+        run: tx =>
+          writeAudit(tx, {
             userId: authCtx.userId,
             workspace: ws,
             operation: existing ? 'update' : 'create',
@@ -356,8 +356,8 @@ export const saveFile = async (
           },
           {
             name: 'audit',
-            run: () =>
-              writeAudit(db, {
+            run: tx =>
+              writeAudit(tx, {
                 userId: authCtx.userId,
                 workspace: ws,
                 operation: isUpdate ? 'update' : 'create',
@@ -563,8 +563,8 @@ export const cloneContentFile = async (
         : []),
       {
         name: 'audit',
-        run: () =>
-          writeAudit(db, {
+        run: tx =>
+          writeAudit(tx, {
             userId: authCtx.userId,
             workspace: ws,
             operation: 'create',
@@ -769,8 +769,8 @@ export const relocateContentFile = async (
         : []),
       {
         name: 'audit',
-        run: () =>
-          writeAudit(db, {
+        run: tx =>
+          writeAudit(tx, {
             userId: authCtx.userId,
             workspace: ws,
             operation: 'update',

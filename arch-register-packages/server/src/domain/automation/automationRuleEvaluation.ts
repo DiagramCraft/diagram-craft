@@ -254,7 +254,8 @@ export const enqueueAutomationRuleRuns = async (
         automationRuleChain: [...chain, rule.id],
         event
       },
-      maxAttempts: 5
+      maxAttempts: 5,
+      dedupeKey: `audit-automation:${auditLog.id}:${rule.id}`
     });
   }
   return toRun.length;

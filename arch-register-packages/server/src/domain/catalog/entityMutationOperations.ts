@@ -765,50 +765,52 @@ export const deleteEntity = async (
   actor: EntityMutationActor
 ): Promise<{ success: boolean; message: string }> => {
   try {
-    const row = await db.catalog.getEntity(workspace, id);
-    httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
-    if (authCtx)
-      requireEntityAction(
-        authCtx,
-        row,
-        'admin_entity',
-        'You do not have permission to delete this entity'
-      );
+    return await db.core.transaction(async tx => {
+      const row = await tx.catalog.getEntity(workspace, id);
+      httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
+      if (authCtx)
+        requireEntityAction(
+          authCtx,
+          row,
+          'admin_entity',
+          'You do not have permission to delete this entity'
+        );
 
-    const watcherUserIds = await db.watch.listWatcherUserIds(workspace, row.id);
-    await db.catalog.deleteEntity(workspace, row.id);
+      const watcherUserIds = await tx.watch.listWatcherUserIds(workspace, row.id);
+      await tx.catalog.deleteEntity(workspace, row.id);
 
-    const existingVersions = await db.catalog.listEntityVersions(workspace, row.id);
-    const nextVersionNumber =
-      existingVersions.reduce((max, v) => Math.max(max, v.version_number), 0) + 1;
-    await db.catalog.createEntityVersion({
-      id: randomUUID(),
-      workspace,
-      record_id: row.id,
-      version_number: nextVersionNumber,
-      kind: 'deleted',
-      commit_message: null,
-      created_at: new Date(),
-      created_by: actor.id,
-      state: entityToBaseState(row),
-      applied_case_revision_id: null
+      const existingVersions = await tx.catalog.listEntityVersions(workspace, row.id);
+      const nextVersionNumber =
+        existingVersions.reduce((max, v) => Math.max(max, v.version_number), 0) + 1;
+      await tx.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace,
+        record_id: row.id,
+        version_number: nextVersionNumber,
+        kind: 'deleted',
+        commit_message: null,
+        created_at: new Date(),
+        created_by: actor.id,
+        state: entityToBaseState(row),
+        applied_case_revision_id: null
+      });
+
+      await logAudit(tx, {
+        workspace,
+        userId: actor.id,
+        userDisplayName: actor.displayName,
+        watcherUserIds,
+        operation: 'delete',
+        entityType: 'entity',
+        entityId: row.id,
+        entityName: row.name,
+        entitySlug: row.slug,
+        schemaId: row.schema_id,
+        changes: { old: flattenEntityAuditFields(row) }
+      });
+
+      return { success: true, message: `Data record '${id}' deleted` };
     });
-
-    await logAudit(db, {
-      workspace,
-      userId: actor.id,
-      userDisplayName: actor.displayName,
-      watcherUserIds,
-      operation: 'delete',
-      entityType: 'entity',
-      entityId: row.id,
-      entityName: row.name,
-      entitySlug: row.slug,
-      schemaId: row.schema_id,
-      changes: { old: flattenEntityAuditFields(row) }
-    });
-
-    return { success: true, message: `Data record '${id}' deleted` };
   } catch (error) {
     return handleError(error, 'Failed to delete data record');
   }

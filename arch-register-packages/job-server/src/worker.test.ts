@@ -50,7 +50,8 @@ const claim: JobRunClaim = {
     result: null,
     error: null,
     attempt_count: 1,
-    max_attempts: 1
+    max_attempts: 1,
+    dedupe_key: null
   }
 };
 

@@ -103,7 +103,7 @@ describe('coordinateContentWrite', () => {
     expect(staged.finalize).not.toHaveBeenCalled();
   });
 
-  it('does not fail a committed write when a derived stage fails', async () => {
+  it('fails the mutation when the transactional audit stage fails', async () => {
     const db = database(async callback => callback(db));
     const audit = vi.fn().mockRejectedValue(new Error('audit failed'));
 
@@ -116,11 +116,11 @@ describe('coordinateContentWrite', () => {
         writeDatabase: async () => 'saved',
         afterCommit: [{ name: 'audit', run: audit }]
       })
-    ).resolves.toBe('saved');
+    ).rejects.toThrow('audit failed');
     expect(audit).toHaveBeenCalledOnce();
   });
 
-  it.each(['preview', 'references', 'revision', 'audit'] as const)(
+  it.each(['preview', 'references', 'revision'] as const)(
     'continues after a %s failure and runs later stages',
     async failedStage => {
       const db = database(async callback => callback(db));
@@ -144,6 +144,26 @@ describe('coordinateContentWrite', () => {
       expect(later).toHaveBeenCalledOnce();
     }
   );
+
+  it('does not run later stages after a transactional audit failure', async () => {
+    const db = database(async callback => callback(db));
+    const later = vi.fn().mockResolvedValue(undefined);
+
+    await expect(
+      coordinateContentWrite({
+        db,
+        operation: 'update',
+        scope: 'project',
+        nodeIds: ['node'],
+        writeDatabase: async () => 'saved',
+        afterCommit: [
+          { name: 'audit', run: vi.fn().mockRejectedValue(new Error('audit failed')) },
+          { name: 'preview', run: later }
+        ]
+      })
+    ).rejects.toThrow('audit failed');
+    expect(later).not.toHaveBeenCalled();
+  });
 
   it('rolls back earlier storage mutations when a later commit fails', async () => {
     const first = mutation();

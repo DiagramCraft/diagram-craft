@@ -1,7 +1,8 @@
 import type {
   CreateNotificationsFromAuditInput,
   WatchDbCreate,
-  WatchDatabase
+  WatchDatabase,
+  WatcherEntityRow
 } from './watchDatabase';
 import { watchMappers } from './watchDatabase';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
@@ -14,6 +15,17 @@ export class SqliteWatchDatabase extends SqliteDatabaseBase implements WatchData
       [workspace, entityId]
     );
     return rows.map(row => row.user_id);
+  }
+
+  async listWatcherUserIdsForEntities(workspace: string, entityIds: string[]) {
+    if (entityIds.length === 0) return [];
+    const placeholders = entityIds.map(() => '?').join(', ');
+    return this.all<WatcherEntityRow>(
+      `SELECT user_id, entity_id FROM user_watch
+       WHERE workspace = ? AND entity_id IN (${placeholders})
+       ORDER BY entity_id, user_id`,
+      [workspace, ...entityIds]
+    );
   }
 
   async listWatches(userId: string, workspace: string) {
