@@ -43,6 +43,7 @@ import {
   workspaceDashboardContract,
   projectDashboardContract
 } from '@arch-register/api-types/dashboardContract';
+import { artifactContract } from '@arch-register/api-types/artifactContract';
 
 const makeFetch =
   (auth?: string) =>
@@ -111,6 +112,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
   const applicationAutomationRules = makeApplication(automationRuleContract).automationRules;
   const applicationExternalContent = makeApplication(externalContentContract).externalContent;
   const applicationWikiComments = makeApplication(wikiCommentContract).wikiComments;
+  const applicationArtifacts = makeApplication(artifactContract).artifacts;
 
   return {
     projects: applicationProjects,
@@ -124,6 +126,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     automationRules: applicationAutomationRules,
     externalContent: applicationExternalContent,
     wikiComments: applicationWikiComments,
+    artifacts: applicationArtifacts,
     auth: make(authPublicContract).auth,
     authProtected: make(authProtectedContract).authProtected,
     dev: make(devContract).dev,

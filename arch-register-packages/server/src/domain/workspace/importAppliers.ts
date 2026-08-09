@@ -6,7 +6,6 @@ import type {
   SchemaDbCreate
 } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
-import type { RelationSchemaDbCreate } from '../catalog/db/relationDatabase';
 
 import type {
   WorkspaceAuthorizationContext,
@@ -20,7 +19,6 @@ import { computeEntityCompleteness } from '../../utils/completeness';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
 import type { GovernanceWorkflowConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
-import type { SchemaGroup, SchemaField } from '@arch-register/api-types/schemaContract';
 import type {
   ExportConfig,
   ExportSchema,
@@ -41,8 +39,47 @@ import { requireTypedRelationEdit } from '../catalog/relationAccessControl';
 import { listAllRelations } from '../catalog/relationOperations';
 import { assertResolvedFieldGroupReferences } from '../catalog/schemaHelpers';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
+import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 
 type ImportResolution = { action: string; new_name?: string };
+
+const VALID_WORKSPACE_CAPABILITIES = new Set([
+  'ws.view',
+  'ws.settings',
+  'ws.delete',
+  'ws.audit',
+  'ws.manage_views',
+  'ws.manage_dashboard',
+  'people.invite',
+  'people.role',
+  'people.remove',
+  'people.teams',
+  'proj.create',
+  'proj.edit',
+  'proj.delete',
+  'content.view',
+  'content.edit',
+  'ent.edit',
+  'ent.propose',
+  'ent.approve',
+  'ent.override',
+  'ent.external_update',
+  'governance.external',
+  'comments',
+  'schema.edit',
+  'schema.publish'
+]);
+
+const toWorkspaceCapabilities = (capabilities: string[]): WorkspaceCapability[] => {
+  const parsed = capabilities.filter((capability): capability is WorkspaceCapability =>
+    VALID_WORKSPACE_CAPABILITIES.has(capability)
+  );
+  httpAssert.true(parsed.length === capabilities.length, {
+    status: 400,
+    message: 'Import contains an unknown workspace capability'
+  });
+  return parsed;
+};
 
 const resolveMappedId = (mapping: Map<string, string>, id: string | null | undefined) => {
   if (id == null) return null;
@@ -129,7 +166,7 @@ const importSharedFieldGroups = async (
       workspace,
       name: group.name,
       description: group.description,
-      fields: group.fields as SchemaDbCreate['fields'],
+      fields: group.fields,
       sort_order: group.sort_order,
       created_at: existing?.created_at ?? now,
       updated_at: now
@@ -209,7 +246,7 @@ export const importConfig = async (
     if (hasSkipResolution(resolutions, role.id)) continue;
 
     const nextId = preserveIds ? role.id : randomUUID();
-    const capabilities = role.capabilities as WorkspaceCapability[];
+    const capabilities = toWorkspaceCapabilities(role.capabilities);
     const existing = existingRolesById.get(nextId);
 
     if (existing) {
@@ -281,27 +318,18 @@ export const importSchemas = async (
     const existing =
       existingSchemasById.get(nextId) ?? existingSchemasByName.get(schema.name.toLowerCase());
     const fields = schema.fields.map(field => {
-      if (field != null && typeof field === 'object' && 'groupId' in field) {
-        const groupId = (field as { groupId?: string }).groupId;
-        if (groupId && idMapping.shared_field_groups.has(groupId)) {
-          return { ...field, groupId: idMapping.shared_field_groups.get(groupId) };
-        }
-      }
-      if (
-        field != null &&
-        typeof field === 'object' &&
-        'type' in field &&
-        (field as { type?: string }).type &&
-        ['reference', 'containment'].includes((field as { type: string }).type)
-      ) {
-        const typedField = field as { schemaId?: string };
+      const withGroup =
+        field.groupId && idMapping.shared_field_groups.has(field.groupId)
+          ? { ...field, groupId: idMapping.shared_field_groups.get(field.groupId) }
+          : field;
+      if (isReferenceOrContainmentField(withGroup)) {
         return {
-          ...field,
-          schemaId: resolveMappedId(idMapping.schemas, typedField.schemaId)
+          ...withGroup,
+          schemaId: resolveMappedId(idMapping.schemas, withGroup.schemaId) ?? withGroup.schemaId
         };
       }
-      return field;
-    }) as SchemaDbCreate['fields'];
+      return withGroup;
+    });
     const fieldById = new Map(fields.map(field => [field.id, field]));
     const templates = (schema.templates ?? []).map(template => {
       const templateFields: typeof template.values.fields = {};
@@ -355,10 +383,7 @@ export const importSchemas = async (
     };
 
     assertResolvedFieldGroupReferences(input.fields, input.groups ?? []);
-    validateDerivedFieldGroupAccess(
-      input.fields as SchemaField[],
-      (input.groups ?? []) as SchemaGroup[]
-    );
+    validateDerivedFieldGroupAccess(input.fields, input.groups ?? []);
 
     if (existing) {
       const previousKeyPrefix = existing.key_prefix;
@@ -451,14 +476,15 @@ export const importRelationSchemas = async (
     }
 
     const fields = source.fields.map(field => {
-      if (field == null || typeof field !== 'object') return field;
-      const groupId = (field as { groupId?: string }).groupId;
-      const withGroup = groupId
-        ? { ...field, groupId: idMapping.shared_field_groups.get(groupId) ?? groupId }
-        : field;
-      if ((withGroup as { type?: string }).type !== 'entityRelation') return withGroup;
-      const typedField = withGroup as { schemaId?: string };
-      return { ...withGroup, schemaId: resolveMappedId(idMapping.schemas, typedField.schemaId) };
+      const withGroup =
+        field.groupId && idMapping.shared_field_groups.has(field.groupId)
+          ? { ...field, groupId: idMapping.shared_field_groups.get(field.groupId) }
+          : field;
+      if (withGroup.type !== 'entityRelation') return withGroup;
+      return {
+        ...withGroup,
+        schemaId: resolveMappedId(idMapping.schemas, withGroup.schemaId) ?? withGroup.schemaId
+      };
     });
     const input = {
       id: nextId,
@@ -473,7 +499,7 @@ export const importRelationSchemas = async (
         source.out_schema_ids === 'any'
           ? ('any' as const)
           : source.out_schema_ids.map(id => resolveMappedId(idMapping.schemas, id)!),
-      fields: fields as RelationSchemaDbCreate['fields'],
+      fields,
       groups: (source.groups ?? []).map(group => ({
         ...group,
         id: idMapping.shared_field_groups.get(group.id) ?? group.id,
@@ -494,10 +520,7 @@ export const importRelationSchemas = async (
       updated_at: now
     };
 
-    assertResolvedFieldGroupReferences(
-      input.fields as Array<{ id: string; name?: string; groupId?: string }>,
-      input.groups as SchemaGroup[]
-    );
+    assertResolvedFieldGroupReferences(input.fields, input.groups);
 
     if (existing) {
       await db.relation.updateRelationSchema(workspace, nextId, {
@@ -626,7 +649,7 @@ export const importEntities = async (
           : (idMapping.lifecycle_states.get(entity.target_lifecycle) ?? null),
       target_lifecycle_date: entity.target_lifecycle_date,
       tags: entity.tags,
-      links: entity.links as EntityDbCreate['links'],
+      links: entity.links,
       data: entity.data,
       project_id: entity.project_id,
       created_at: existing?.created_at ?? now,
@@ -924,79 +947,94 @@ export const importContentNodes = async (
       entity_id: entityId
     });
 
-    const row = await db.project.upsertContentNode({
-      id: nextId,
-      workspace,
-      project_id: projectId,
-      entity_id: entityId,
-      parent_id: parentId,
-      path: node.path,
-      name: node.name,
-      type: node.type,
-      size_bytes: node.size_bytes,
-      comment_count: 0,
-      unresolved_comment_count: 0,
-      created_atIfNew: now,
-      updated_at: now,
-      created_byIfNew: null,
-      updated_by: authCtx.userId
-    } satisfies ContentNodeDbUpsert);
-
-    if (node.content_file && contentFiles?.has(node.content_file) && storage) {
-      await storage.write(
-        workspace,
-        storageProjectId,
-        row.id,
-        contentFiles.get(node.content_file)!
-      );
-    }
-
-    if (node.type !== 'folder') {
-      const previewBuffer = node.preview_file ? contentFiles?.get(node.preview_file) : undefined;
-      const previewSvg = previewBuffer ? previewBuffer.toString('utf8') : null;
-
-      if (projectId) {
-        await db.project.updateContentNodeDerivedData(
+    const content =
+      node.content_file && contentFiles?.has(node.content_file)
+        ? contentFiles.get(node.content_file)!
+        : undefined;
+    const previewBuffer = node.preview_file ? contentFiles?.get(node.preview_file) : undefined;
+    const previewSvg = previewBuffer ? previewBuffer.toString('utf8') : null;
+    let row!: Awaited<ReturnType<DatabaseAdapter['project']['upsertContentNode']>>;
+    await coordinateContentWrite({
+      db,
+      storage,
+      operation: 'workspace-import-content-node',
+      scope: projectId ? 'project' : entityId ? 'entity' : 'workspace',
+      nodeIds: [nextId],
+      storageChanges:
+        content && storage
+          ? [
+              {
+                type: 'write' as const,
+                workspace,
+                storageId: storageProjectId,
+                nodeId: nextId,
+                content
+              }
+            ]
+          : undefined,
+      writeDatabase: async tx => {
+        row = await tx.project.upsertContentNode({
+          id: nextId,
           workspace,
-          storageProjectId,
-          row.id,
-          node.size_bytes,
-          0,
-          0,
-          previewSvg,
-          now
-        );
-        await db.project.updateContentNodeTemplateStatus(
-          workspace,
-          storageProjectId,
-          row.id,
-          node.is_template,
-          node.is_workspace_template,
-          now
-        );
-      } else if (entityId) {
-        await db.project.updateContentNodeDerivedData(
-          workspace,
-          storageProjectId,
-          row.id,
-          node.size_bytes,
-          0,
-          0,
-          previewSvg,
-          now
-        );
-      } else {
-        await db.project.updateWorkspaceContentNodeDerivedData(
-          workspace,
-          row.id,
-          node.size_bytes,
-          0,
-          0,
-          previewSvg,
-          now
-        );
+          project_id: projectId,
+          entity_id: entityId,
+          parent_id: parentId,
+          path: node.path,
+          name: node.name,
+          type: node.type,
+          size_bytes: node.size_bytes,
+          comment_count: 0,
+          unresolved_comment_count: 0,
+          created_atIfNew: now,
+          updated_at: now,
+          created_byIfNew: null,
+          updated_by: authCtx.userId
+        } satisfies ContentNodeDbUpsert);
+        if (node.type !== 'folder') {
+          if (projectId) {
+            await tx.project.updateContentNodeDerivedData(
+              workspace,
+              storageProjectId,
+              row.id,
+              node.size_bytes,
+              0,
+              0,
+              previewSvg,
+              now
+            );
+            await tx.project.updateContentNodeTemplateStatus(
+              workspace,
+              storageProjectId,
+              row.id,
+              node.is_template,
+              node.is_workspace_template,
+              now
+            );
+          } else if (entityId) {
+            await tx.project.updateContentNodeDerivedData(
+              workspace,
+              storageProjectId,
+              row.id,
+              node.size_bytes,
+              0,
+              0,
+              previewSvg,
+              now
+            );
+          } else {
+            await tx.project.updateWorkspaceContentNodeDerivedData(
+              workspace,
+              row.id,
+              node.size_bytes,
+              0,
+              0,
+              previewSvg,
+              now
+            );
+          }
+        }
       }
-    }
+    });
 
     if (existing) {
       updated++;

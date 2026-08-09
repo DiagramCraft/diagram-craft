@@ -43,6 +43,11 @@ import {
   ensureAllNotificationDeliverySchedules,
   NOTIFICATION_DELIVERY_JOB_TYPE
 } from '@arch-register/server/domain/notification/emailDelivery';
+import {
+  createContentReconciliationJobHandler,
+  ensureAllContentReconciliationSchedules,
+  CONTENT_RECONCILIATION_SCAN_JOB_TYPE
+} from '@arch-register/server/domain/project/contentReconciliationJob';
 
 const logger = createLogger('job-server');
 
@@ -78,6 +83,7 @@ const main = async () => {
   const handlers = new Map<string, JobHandler>();
   const storage = createStorage();
   await ensureAllNotificationDeliverySchedules(db);
+  await ensureAllContentReconciliationSchedules(db);
   await ensureAllGovernanceDeadlineScanSchedules(db);
   await ensureAllCurrencyRatesSchedules(db);
   const governanceRegistry = createApplicationGovernanceRegistry();
@@ -103,6 +109,10 @@ const main = async () => {
   handlers.set(
     NOTIFICATION_DELIVERY_JOB_TYPE,
     createNotificationDeliveryJobHandler(db, createEmailDeliveryConfigFromEnv())
+  );
+  handlers.set(
+    CONTENT_RECONCILIATION_SCAN_JOB_TYPE,
+    createContentReconciliationJobHandler(db, storage)
   );
   const server = createJobServer({
     db,

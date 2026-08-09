@@ -4,6 +4,23 @@ import { dirname, join } from 'node:path';
 import { ZipArchive, type Archiver } from 'archiver';
 import unzipper from 'unzipper';
 import type { Readable } from 'node:stream';
+import type { ExportManifest } from '../domain/workspace/exportTypes';
+import {
+  parseExportManifest,
+  parseExportPackage,
+  type ParsedExportPackage
+} from '../domain/workspace/exportSchemas';
+
+export class ImportArchiveValidationError extends Error {
+  constructor(
+    readonly filename: string,
+    cause: unknown
+  ) {
+    const detail = cause instanceof Error ? cause.message : 'invalid JSON structure';
+    super(`Invalid import archive file "${filename}": ${detail}`, { cause });
+    this.name = 'ImportArchiveValidationError';
+  }
+}
 
 export class ZipBuilder {
   private archive: Archiver;
@@ -190,15 +207,15 @@ export class ZipExtractor {
    * Parse a ZIP buffer and extract JSON files and content files
    */
   static async parseImportZip(zipBuffer: Buffer): Promise<{
-    manifest: unknown;
-    config?: unknown;
-    schemas?: unknown;
-    relation_schemas?: unknown;
-    entities?: unknown;
-    relations?: unknown;
-    projects?: unknown;
-    content_nodes?: unknown;
-    documents?: unknown;
+    manifest: ExportManifest;
+    config?: ParsedExportPackage['config'];
+    schemas?: ParsedExportPackage['schemas'];
+    relation_schemas?: ParsedExportPackage['relation_schemas'];
+    entities?: ParsedExportPackage['entities'];
+    relations?: ParsedExportPackage['relations'];
+    projects?: ParsedExportPackage['projects'];
+    content_nodes?: ParsedExportPackage['content_nodes'];
+    documents?: ParsedExportPackage['documents'];
     contentFiles?: Map<string, Buffer>;
     jsonFiles: Map<string, string>;
   }> {
@@ -219,49 +236,61 @@ export class ZipExtractor {
 
     const manifestStr = files.get('manifest.json');
     if (!manifestStr) {
-      throw new Error('Invalid import file: manifest.json not found');
+      throw new ImportArchiveValidationError('manifest.json', new Error('manifest.json not found'));
     }
 
-    const result: {
-      manifest: unknown;
-      config?: unknown;
-      schemas?: unknown;
-      relation_schemas?: unknown;
-      entities?: unknown;
-      relations?: unknown;
-      projects?: unknown;
-      content_nodes?: unknown;
-      documents?: unknown;
-      contentFiles?: Map<string, Buffer>;
-      jsonFiles: Map<string, string>;
-    } = {
-      manifest: JSON.parse(manifestStr),
-      jsonFiles: files
+    const parseJson = <T>(filename: string, parser: (value: unknown) => T): T => {
+      const content = files.get(filename);
+      if (content === undefined) {
+        throw new ImportArchiveValidationError(filename, new Error('file not found'));
+      }
+      try {
+        return parser(JSON.parse(content));
+      } catch (error) {
+        if (error instanceof ImportArchiveValidationError) throw error;
+        throw new ImportArchiveValidationError(filename, error);
+      }
     };
 
-    const configStr = files.get('config.json');
-    if (configStr) result.config = JSON.parse(configStr);
+    const manifest = parseJson('manifest.json', parseExportManifest);
+    for (const [key, filename] of Object.entries(manifest.files)) {
+      if (key === 'content_directory') continue;
+      if (!files.has(filename)) {
+        throw new ImportArchiveValidationError(filename, new Error('declared file not found'));
+      }
+    }
 
-    const schemasStr = files.get('schemas.json');
-    if (schemasStr) result.schemas = JSON.parse(schemasStr);
+    let packageData: ParsedExportPackage;
+    try {
+      packageData = parseExportPackage({
+        ...(files.has('config.json') && { config: parseJson('config.json', value => value) }),
+        ...(files.has('schemas.json') && { schemas: parseJson('schemas.json', value => value) }),
+        ...(files.has('relation-schemas.json') && {
+          relation_schemas: parseJson('relation-schemas.json', value => value)
+        }),
+        ...(files.has('entities.json') && { entities: parseJson('entities.json', value => value) }),
+        ...(files.has('relations.json') && {
+          relations: parseJson('relations.json', value => value)
+        }),
+        ...(files.has('projects.json') && { projects: parseJson('projects.json', value => value) }),
+        ...(files.has('content-nodes.json') && {
+          content_nodes: parseJson('content-nodes.json', value => value)
+        }),
+        ...(files.has('documents.json') && {
+          documents: parseJson('documents.json', value => value)
+        })
+      });
+    } catch (error) {
+      if (error instanceof ImportArchiveValidationError) throw error;
+      throw new ImportArchiveValidationError('archive data', error);
+    }
 
-    const relationSchemasStr = files.get('relation-schemas.json');
-    if (relationSchemasStr) result.relation_schemas = JSON.parse(relationSchemasStr);
-
-    const entitiesStr = files.get('entities.json');
-    if (entitiesStr) result.entities = JSON.parse(entitiesStr);
-
-    const relationsStr = files.get('relations.json');
-    if (relationsStr) result.relations = JSON.parse(relationsStr);
-
-    const projectsStr = files.get('projects.json');
-    if (projectsStr) result.projects = JSON.parse(projectsStr);
-
-    const contentNodesStr = files.get('content-nodes.json');
-    if (contentNodesStr) result.content_nodes = JSON.parse(contentNodesStr);
-
-    const documentsStr = files.get('documents.json');
-    if (documentsStr) result.documents = JSON.parse(documentsStr);
+    const result = {
+      manifest,
+      ...packageData,
+      contentFiles: new Map<string, Buffer>(),
+      jsonFiles: files
+    };
 
     // Extract content files from content/ directory
     const contentFiles = new Map<string, Buffer>();

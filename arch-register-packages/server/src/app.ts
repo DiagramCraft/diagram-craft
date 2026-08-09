@@ -66,6 +66,7 @@ import { createWebhookORPCHandler } from './domain/webhook/webhookOrpc';
 import { createAutomationRuleORPCHandler } from './domain/automation/automationRuleOrpc';
 import { createDocumentORPCHandler } from './domain/document/documentOrpc';
 import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
+import { createArtifactORPCHandler } from './domain/artifact/artifactOrpc';
 import { createApplicationGovernanceRegistry } from './domain/governance/governanceRegistryFactory';
 import { getHttpErrorLogLevel } from './utils/errorLogging';
 
@@ -176,6 +177,7 @@ export const createApp = (
   app.use(createEntityChangeORPCHandler(db));
   app.use(createRelationChangeORPCHandler(db));
   app.use(createEntityDeprecationORPCHandler(db));
+  app.use(createArtifactORPCHandler(db));
   app.use(createWorkspaceTemplateORPCHandler(db));
   app.use(createWorkspaceViewORPCHandler(db));
   app.use(createWorkspaceDashboardORPCHandler(db));

@@ -19,7 +19,7 @@ import { exportWorkspace, calculateChecksum } from './exportOperations';
 import { parseImport } from './importParseOperations';
 import { executeImport } from './importExecutionOperations';
 import { storeImportCache, getImportCache, deleteImportCache } from './importCache';
-import { ZipBuilder, ZipExtractor } from '../../utils/zipBuilder';
+import { ImportArchiveValidationError, ZipBuilder, ZipExtractor } from '../../utils/zipBuilder';
 import { SCHEMA_TEMPLATES } from '../catalog/schemaTemplates';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 import {
@@ -27,23 +27,24 @@ import {
   listDefinitionImportSources,
   previewDefinitionImport
 } from './definitionImportOperations';
-import type {
-  ExportManifest,
-  ExportConfig,
-  ExportSchema,
-  ExportRelationSchema,
-  ExportEntity,
-  ExportRelation,
-  ExportProject,
-  ExportContentNode,
-  ExportDocumentData
-} from './exportTypes';
 
 type ORPCContext = {
   db: DatabaseAdapter;
   storage: StorageAdapter | undefined;
   event: AuthenticatedEvent;
 };
+
+type FileWithArrayBuffer = { arrayBuffer: () => Promise<ArrayBuffer> };
+type FileWithData = { data: Buffer };
+
+const hasArrayBuffer = (value: unknown): value is FileWithArrayBuffer =>
+  value !== null &&
+  typeof value === 'object' &&
+  'arrayBuffer' in value &&
+  typeof value.arrayBuffer === 'function';
+
+const hasBufferData = (value: unknown): value is FileWithData =>
+  value !== null && typeof value === 'object' && 'data' in value && Buffer.isBuffer(value.data);
 
 const wsRouter = implement(workspaceManagementContract)
   .$context<ORPCContext>()
@@ -194,24 +195,16 @@ export const workspaceManagementORPCRouter = wsRouter.router({
 
         // Extract ZIP file contents
         // ORPC/OpenAPI may pass the file as Buffer, Blob, or File
-        const file = input.body.file;
+        const file: unknown = input.body.file;
         let zipBuffer: Buffer;
-
-        type FileWithArrayBuffer = { arrayBuffer: () => Promise<ArrayBuffer> };
-        type FileWithData = { data: Buffer };
 
         if (Buffer.isBuffer(file)) {
           zipBuffer = file;
-        } else if (file && typeof (file as FileWithArrayBuffer).arrayBuffer === 'function') {
-          const arrayBuffer = await (file as FileWithArrayBuffer).arrayBuffer();
+        } else if (hasArrayBuffer(file)) {
+          const arrayBuffer = await file.arrayBuffer();
           zipBuffer = Buffer.from(arrayBuffer);
-        } else if (
-          file &&
-          typeof file === 'object' &&
-          'data' in file &&
-          Buffer.isBuffer((file as FileWithData).data)
-        ) {
-          zipBuffer = (file as FileWithData).data;
+        } else if (hasBufferData(file)) {
+          zipBuffer = file.data;
         } else {
           throw new HTTPError({
             status: 400,
@@ -219,8 +212,16 @@ export const workspaceManagementORPCRouter = wsRouter.router({
           });
         }
 
-        const extracted = await ZipExtractor.parseImportZip(zipBuffer);
-        const manifest = extracted.manifest as ExportManifest;
+        let extracted: Awaited<ReturnType<typeof ZipExtractor.parseImportZip>>;
+        try {
+          extracted = await ZipExtractor.parseImportZip(zipBuffer);
+        } catch (error) {
+          if (error instanceof ImportArchiveValidationError) {
+            throw new HTTPError({ status: 400, message: error.message });
+          }
+          throw error;
+        }
+        const manifest = extracted.manifest;
         for (const [path, checksum] of Object.entries(manifest.checksums ?? {})) {
           const content = extracted.jsonFiles.get(path);
           if (!content || calculateChecksum(content) !== checksum) {
@@ -232,16 +233,7 @@ export const workspaceManagementORPCRouter = wsRouter.router({
         }
 
         // Parse and validate the import data
-        const result = await parseImport(context.db, authCtx, workspaceId, manifest, {
-          config: extracted.config as ExportConfig | undefined,
-          schemas: extracted.schemas as ExportSchema[] | undefined,
-          relation_schemas: extracted.relation_schemas as ExportRelationSchema[] | undefined,
-          entities: extracted.entities as ExportEntity[] | undefined,
-          relations: extracted.relations as ExportRelation[] | undefined,
-          projects: extracted.projects as ExportProject[] | undefined,
-          content_nodes: extracted.content_nodes as ExportContentNode[] | undefined,
-          documents: extracted.documents as ExportDocumentData | undefined
-        });
+        const result = await parseImport(context.db, authCtx, workspaceId, manifest, extracted);
 
         if (!result.valid) return result;
 
@@ -251,16 +243,7 @@ export const workspaceManagementORPCRouter = wsRouter.router({
           workspaceId,
           authCtx.userId,
           manifest,
-          {
-            config: extracted.config as ExportConfig | undefined,
-            schemas: extracted.schemas as ExportSchema[] | undefined,
-            relation_schemas: extracted.relation_schemas as ExportRelationSchema[] | undefined,
-            entities: extracted.entities as ExportEntity[] | undefined,
-            relations: extracted.relations as ExportRelation[] | undefined,
-            projects: extracted.projects as ExportProject[] | undefined,
-            content_nodes: extracted.content_nodes as ExportContentNode[] | undefined,
-            documents: extracted.documents as ExportDocumentData | undefined
-          },
+          extracted,
           extracted.contentFiles
         );
 

@@ -1,11 +1,24 @@
-import { TeamRole, WorkspaceCapability } from '@arch-register/permissions';
+import {
+  WORKSPACE_CAPABILITY_GROUPS,
+  type TeamRole,
+  type WorkspaceCapability
+} from '@arch-register/permissions';
 import type { ImportCacheEntry } from '../importCache';
 import {
+  databaseEnum,
   databaseBoolean,
   databaseDate,
-  parseDatabaseJson,
+  parseDatabaseJsonWithGuard,
   type DatabaseRow
 } from '../../../db/rowMappers';
+
+const TEAM_ROLES = ['team_admin', 'team_editor', 'team_reviewer'] as const;
+const WORKSPACE_CAPABILITIES = WORKSPACE_CAPABILITY_GROUPS.flatMap(group =>
+  group.caps.map(capability => capability.id)
+);
+const isWorkspaceCapabilities = (value: unknown): value is WorkspaceCapability[] =>
+  Array.isArray(value) &&
+  value.every(item => WORKSPACE_CAPABILITIES.some(capability => capability === item));
 
 export type WorkspaceDbResult = {
   id: string;
@@ -190,7 +203,7 @@ export const workspaceMappers = {
     workspace: String(row['workspace']),
     team_id: String(row['team_id']),
     user_id: String(row['user_id']),
-    role: String(row['role']) as TeamMembershipDbResult['role'],
+    role: databaseEnum(row['role'], TEAM_ROLES, 'workspace_team_membership.role'),
     created_at: databaseDate(row['created_at'])
   }),
   roleDefinition: (row: DatabaseRow): RoleDefinitionDbResult => ({
@@ -200,10 +213,11 @@ export const workspaceMappers = {
     description: String(row['description']),
     tone: String(row['tone']),
     builtin: databaseBoolean(row['builtin']),
-    capabilities: parseDatabaseJson<RoleDefinitionDbResult['capabilities']>(
+    capabilities: parseDatabaseJsonWithGuard(
       row['capabilities'],
       [],
-      'workspace_role.capabilities'
+      'workspace_role.capabilities',
+      isWorkspaceCapabilities
     ),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
@@ -212,6 +226,7 @@ export const workspaceMappers = {
 
 export type WorkspaceDatabase = {
   listWorkspaces(): Promise<WorkspaceDbResult[]>;
+  listWorkspacesForUser(userId: string): Promise<WorkspaceDbResult[]>;
   getWorkspace(id: string): Promise<WorkspaceDbResult | null>;
   createWorkspace(input: WorkspaceDbCreate): Promise<WorkspaceDbResult>;
   updateWorkspace(id: string, input: WorkspaceDbUpdate): Promise<WorkspaceDbResult | null>;

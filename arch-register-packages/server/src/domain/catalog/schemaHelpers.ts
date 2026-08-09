@@ -10,6 +10,7 @@ import {
   SchemaGroup,
   SchemaVersion,
   SharedFieldGroupLink,
+  ArtifactCapability,
   isReferenceOrContainmentField,
   isTypedRelationField
 } from '@arch-register/api-types/schemaContract';
@@ -25,6 +26,7 @@ type SchemaMutationPayload = {
   templates: EntityTemplate[];
   groups: SchemaGroup[];
   shared_field_group_links: SharedFieldGroupLink[];
+  artifact_capabilities?: ArtifactCapability[];
   color: string | null;
   icon: string | null;
   defaultOwner: string | null;
@@ -284,7 +286,7 @@ export const clearOrphanedGroupIds = <F extends { groupId?: string }>(
 
 export const findUnresolvedFieldGroupReferences = (
   fields: Array<{ id: string; name?: string; groupId?: string }>,
-  groups: SchemaGroup[]
+  groups: Array<{ id: string }>
 ) => {
   const groupIds = new Set(groups.map(group => group.id));
   return fields.flatMap(field =>
@@ -296,7 +298,7 @@ export const findUnresolvedFieldGroupReferences = (
 
 export const assertResolvedFieldGroupReferences = (
   fields: Array<{ id: string; name?: string; groupId?: string }>,
-  groups: SchemaGroup[]
+  groups: Array<{ id: string }>
 ) => {
   const unresolved = findUnresolvedFieldGroupReferences(fields, groups);
   httpAssert.true(unresolved.length === 0, {
@@ -325,6 +327,7 @@ export const buildCreateSchemaInput = (
     templates = [],
     groups = [],
     shared_field_group_links = [],
+    artifact_capabilities,
     color,
     icon,
     default_owner
@@ -347,6 +350,7 @@ export const buildCreateSchemaInput = (
     templates: normalizeEntityTemplates(templates, normalizedFields),
     groups: normalizedGroups,
     shared_field_group_links: normalizeSharedFieldGroupLinks(shared_field_group_links),
+    ...(Array.isArray(artifact_capabilities) && { artifact_capabilities }),
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
     default_owner: resolveSchemaDefaultOwner(default_owner, teamIds, null),
@@ -369,6 +373,7 @@ export const buildUpdateSchemaInput = (
     templates,
     groups,
     shared_field_group_links,
+    artifact_capabilities,
     color,
     icon,
     default_owner
@@ -399,6 +404,11 @@ export const buildUpdateSchemaInput = (
       groups !== undefined
         ? normalizeSharedFieldGroupLinks(shared_field_group_links)
         : (current.shared_field_group_links ?? []),
+    ...(artifact_capabilities !== undefined
+      ? { artifact_capabilities: Array.isArray(artifact_capabilities) ? artifact_capabilities : [] }
+      : current.artifact_capabilities !== undefined
+        ? { artifact_capabilities: current.artifact_capabilities }
+        : {}),
     color: color !== undefined ? (typeof color === 'string' ? color : null) : current.color,
     icon: icon !== undefined ? (typeof icon === 'string' ? icon : null) : current.icon,
     defaultOwner:
@@ -591,6 +601,7 @@ export const toApiSchema = (
     templates: schema.templates ?? [],
     groups: schema.groups ?? [],
     shared_field_group_links: schema.shared_field_group_links ?? [],
+    artifact_capabilities: schema.artifact_capabilities ?? [],
     color: schema.color,
     icon: schema.icon,
     entity_count: entityCount,
@@ -655,6 +666,7 @@ export const toApiSchemaVersion = (
     templates: EntityTemplate[];
     groups: SchemaGroup[];
     shared_field_group_links?: SharedFieldGroupLink[];
+    artifact_capabilities?: ArtifactCapability[];
     color: string | null;
     icon: string | null;
     change_summary: Record<string, unknown>;
@@ -670,6 +682,7 @@ export const toApiSchemaVersion = (
   templates: row.templates,
   groups: row.groups,
   shared_field_group_links: row.shared_field_group_links ?? [],
+  artifact_capabilities: row.artifact_capabilities ?? [],
   color: row.color,
   icon: row.icon,
   changeSummary: row.change_summary,

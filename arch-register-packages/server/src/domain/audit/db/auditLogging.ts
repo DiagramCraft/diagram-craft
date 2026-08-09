@@ -28,6 +28,7 @@ type AuditLogParams = {
     new?: Record<string, unknown>;
   };
   metadata?: Record<string, unknown>;
+  dedupeKey?: string;
 };
 
 /**
@@ -59,7 +60,8 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
       entitySlug = null,
       schemaId = null,
       changes,
-      metadata = {}
+      metadata = {},
+      dedupeKey
     } = params;
 
     let resolvedWatcherUserIds = watcherUserIds;
@@ -92,7 +94,8 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
       entity_slug: entitySlug,
       schema_id: schemaId,
       changes,
-      metadata
+      metadata,
+      dedupe_key: dedupeKey ?? null
     });
 
     if (

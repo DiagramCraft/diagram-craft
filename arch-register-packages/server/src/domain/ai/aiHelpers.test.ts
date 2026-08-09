@@ -4,6 +4,7 @@ import {
   buildConversationAutoTitle,
   createAiConfigResponse,
   extractUserTextContent,
+  parseAiChatMessagesFromUnknown,
   parseExtractResponse
 } from './aiHelpers';
 import { AiConfigDbResult } from './db/aiDatabase';
@@ -32,6 +33,23 @@ const config: AiConfigDbResult = {
 };
 
 describe('ai chat route helpers', () => {
+  it('accepts TanStack model and UI messages and rejects malformed messages', () => {
+    expect(
+      parseAiChatMessagesFromUnknown([
+        { role: 'user', content: 'hello' },
+        {
+          id: 'message-1',
+          role: 'assistant',
+          parts: [{ type: 'text', content: 'Hi' }]
+        }
+      ])
+    ).toHaveLength(2);
+
+    expect(() =>
+      parseAiChatMessagesFromUnknown([{ role: 'user', content: { unsupported: true } }])
+    ).toThrow('Invalid AI chat messages');
+  });
+
   it('extracts text content from string, array, and parts-based messages', () => {
     expect(extractUserTextContent({ content: 'hello world' })).toBe('hello world');
     expect(
@@ -136,6 +154,10 @@ describe('ai chat route helpers', () => {
     expect(parseExtractResponse('not json')).toEqual({
       entities: [],
       raw: 'not json'
+    });
+    expect(parseExtractResponse('[{"name":3,"schema_id":"schema-api"}]')).toEqual({
+      entities: [],
+      raw: '[{"name":3,"schema_id":"schema-api"}]'
     });
   });
 });

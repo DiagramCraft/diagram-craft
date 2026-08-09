@@ -442,7 +442,9 @@
                                   "governance.external",
                                   "comments",
                                   "schema.edit",
-                                  "schema.publish"
+                                  "schema.publish",
+                                  "artifact.content.view",
+                                  "artifact.manage"
                                 ],
                                 "type": "string"
                               },
@@ -960,7 +962,9 @@
                             "governance.external",
                             "comments",
                             "schema.edit",
-                            "schema.publish"
+                            "schema.publish",
+                            "artifact.content.view",
+                            "artifact.manage"
                           ],
                           "type": "string"
                         },
@@ -1052,7 +1056,9 @@
                         "governance.external",
                         "comments",
                         "schema.edit",
-                        "schema.publish"
+                        "schema.publish",
+                        "artifact.content.view",
+                        "artifact.manage"
                       ],
                       "type": "string"
                     },
@@ -1131,7 +1137,9 @@
                           "governance.external",
                           "comments",
                           "schema.edit",
-                          "schema.publish"
+                          "schema.publish",
+                          "artifact.content.view",
+                          "artifact.manage"
                         ],
                         "type": "string"
                       },
@@ -1249,7 +1257,9 @@
                           "governance.external",
                           "comments",
                           "schema.edit",
-                          "schema.publish"
+                          "schema.publish",
+                          "artifact.content.view",
+                          "artifact.manage"
                         ],
                         "type": "string"
                       },

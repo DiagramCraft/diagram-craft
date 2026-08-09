@@ -22,7 +22,7 @@ export class PostgresAuditDatabase extends PostgresDatabaseBase implements Audit
   async createAuditLog(input: AuditLogDbCreate) {
     try {
       const [inserted] = await this.sql<{ id: string }[]>`
-        INSERT INTO audit_log (id, workspace, timestamp, user_id, operation, entity_type, entity_id, entity_name, entity_slug, schema_id, changes, metadata)
+        INSERT INTO audit_log (id, workspace, timestamp, user_id, operation, entity_type, entity_id, entity_name, entity_slug, schema_id, changes, metadata, dedupe_key)
         VALUES (
           gen_random_uuid(),
           ${input.workspace},
@@ -35,13 +35,17 @@ export class PostgresAuditDatabase extends PostgresDatabaseBase implements Audit
           ${input.entity_slug},
           ${input.schema_id},
           ${this.json(input.changes)},
-          ${this.json(input.metadata)}
+          ${this.json(input.metadata)},
+          ${input.dedupe_key ?? null}
         )
+        ON CONFLICT DO NOTHING
         RETURNING id
       `;
       const [row] = await this.sql.unsafe<Record<string, unknown>[]>(
-        `${AUDIT_LOG_SELECT_SQL} WHERE audit_log.id = $1`,
-        [inserted!.id]
+        inserted
+          ? `${AUDIT_LOG_SELECT_SQL} WHERE audit_log.id = $1`
+          : `${AUDIT_LOG_SELECT_SQL} WHERE audit_log.workspace = $1 AND audit_log.dedupe_key = $2`,
+        inserted ? [inserted.id] : [input.workspace, input.dedupe_key ?? null]
       );
       return auditMappers.auditLog(row!);
     } catch (error) {

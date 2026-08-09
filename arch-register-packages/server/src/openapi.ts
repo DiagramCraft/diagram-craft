@@ -49,6 +49,7 @@ import { governanceWorkflowConfigContract } from '@arch-register/api-types/gover
 import { milestoneContract } from '@arch-register/api-types/milestoneContract';
 import { wikiCommentContract } from '@arch-register/api-types/wikiCommentContract';
 import { devContract } from '@arch-register/api-types/devContract';
+import { artifactContract } from '@arch-register/api-types/artifactContract';
 
 export const allContracts = {
   ...workspaceEnumContract,
@@ -95,7 +96,8 @@ export const allContracts = {
   ...governanceWorkflowConfigContract,
   ...milestoneContract,
   ...wikiCommentContract,
-  ...devContract
+  ...devContract,
+  ...artifactContract
 };
 
 const coreContracts = {
@@ -166,7 +168,8 @@ export const getApplicationOpenAPISpec = () => {
       ...workspaceMetricContract,
       ...jobsContract,
       ...webhookContract,
-      ...documentContract
+      ...documentContract,
+      ...artifactContract
     },
     {
       info: {

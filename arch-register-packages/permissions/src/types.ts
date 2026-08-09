@@ -48,7 +48,9 @@ export type WorkspaceCapability =
   | 'governance.external'
   | 'comments'
   | 'schema.edit'
-  | 'schema.publish';
+  | 'schema.publish'
+  | 'artifact.content.view'
+  | 'artifact.manage';
 
 export type EntityRole = 'editor' | 'contributor' | 'entity_admin';
 

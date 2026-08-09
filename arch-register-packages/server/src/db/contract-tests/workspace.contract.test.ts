@@ -35,6 +35,25 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
       const result = await db.workspace.deleteWorkspace(randomUUID());
       expect(result).toEqual({ workspace: null, projectIds: [] });
     });
+
+    it('lists only workspaces where a user is an explicit member', async () => {
+      const db = getDb();
+      const memberWorkspace = await createFixtureWorkspace(db);
+      const otherWorkspace = await createFixtureWorkspace(db);
+      const user = await createFixtureUser(db);
+
+      await db.workspace.setWorkspaceMemberRole(memberWorkspace, user.id, 'viewer', new Date());
+
+      expect(
+        (await db.workspace.listWorkspacesForUser(user.id)).map(workspace => workspace.id)
+      ).toEqual([memberWorkspace]);
+      expect(await db.workspace.listWorkspacesForUser(randomUUID())).toEqual([]);
+
+      await db.workspace.setWorkspaceMemberRole(otherWorkspace, user.id, 'viewer', new Date());
+      expect(
+        (await db.workspace.listWorkspacesForUser(user.id)).map(workspace => workspace.id).sort()
+      ).toEqual([memberWorkspace, otherWorkspace].sort());
+    });
   });
 
   describe('lifecycle states', () => {
