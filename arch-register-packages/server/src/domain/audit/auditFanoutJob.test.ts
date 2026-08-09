@@ -9,11 +9,8 @@ const mocks = vi.hoisted(() => ({
   createAuditWatcherNotifications: vi.fn()
 }));
 
-const {
-  enqueueWebhookDeliveries,
-  enqueueAutomationRuleRuns,
-  createAuditWatcherNotifications
-} = mocks;
+const { enqueueWebhookDeliveries, enqueueAutomationRuleRuns, createAuditWatcherNotifications } =
+  mocks;
 
 vi.mock('../webhook/webhookDelivery', () => ({
   enqueueWebhookDeliveries: mocks.enqueueWebhookDeliveries
@@ -84,11 +81,9 @@ describe('audit fan-out job', () => {
       auditLog,
       auditLog.metadata
     );
-    expect(createAuditWatcherNotifications).toHaveBeenCalledWith(
-      expect.anything(),
-      auditLog,
-      ['watcher-1']
-    );
+    expect(createAuditWatcherNotifications).toHaveBeenCalledWith(expect.anything(), auditLog, [
+      'watcher-1'
+    ]);
   });
 
   it('skips invalid and missing audit payloads', async () => {

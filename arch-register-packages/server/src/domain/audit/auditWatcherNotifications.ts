@@ -53,10 +53,7 @@ const resolveRecipients = async (
   const overrides = new Map<string, Map<string, boolean>>();
   for (const preference of preferences) {
     const userOverrides = overrides.get(preference.user_id) ?? new Map<string, boolean>();
-    userOverrides.set(
-      `${preference.notification_type}:${preference.channel}`,
-      preference.enabled
-    );
+    userOverrides.set(`${preference.notification_type}:${preference.channel}`, preference.enabled);
     overrides.set(preference.user_id, userOverrides);
   }
 
@@ -83,14 +80,8 @@ export const createAuditWatcherNotifications = async (
   explicitWatcherUserIds?: string[]
 ) => {
   const endpointIds = relationEndpointIds(auditLog);
-  const watchedEntityIds =
-    auditLog.entity_type === 'relation' ? endpointIds : [auditLog.entity_id];
-  let recipients = await resolveRecipients(
-    db,
-    auditLog,
-    watchedEntityIds,
-    explicitWatcherUserIds
-  );
+  const watchedEntityIds = auditLog.entity_type === 'relation' ? endpointIds : [auditLog.entity_id];
+  let recipients = await resolveRecipients(db, auditLog, watchedEntityIds, explicitWatcherUserIds);
 
   if (auditLog.entity_type === 'relation') {
     const relation = await db.relation.getRelation(auditLog.workspace, auditLog.entity_id);
@@ -109,18 +100,13 @@ export const createAuditWatcherNotifications = async (
           const authCtx = contexts.get(recipient.userId);
           if (!authCtx || !auditLog.schema_id || !endpointIds[0] || !endpointIds[1]) return null;
           try {
-            const visible = await canViewRelationNotification(
-              db,
-              auditLog.workspace,
-              authCtx,
-              {
-                relationSchemaId: auditLog.schema_id,
-                inEntityId: endpointIds[0],
-                outEntityId: endpointIds[1],
-                at: auditLog.timestamp,
-                owner
-              }
-            );
+            const visible = await canViewRelationNotification(db, auditLog.workspace, authCtx, {
+              relationSchemaId: auditLog.schema_id,
+              inEntityId: endpointIds[0],
+              outEntityId: endpointIds[1],
+              at: auditLog.timestamp,
+              owner
+            });
             return visible ? { ...recipient, relationVisible: true } : null;
           } catch {
             return null;

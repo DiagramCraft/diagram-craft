@@ -299,12 +299,12 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
         RETURNING *
       `;
       if (row) return this.mapRun(row);
-      const existingRows = await (this.sql<DatabaseRow[]>`
+      const existingRows = await this.sql<DatabaseRow[]>`
         SELECT * FROM job_run
         WHERE workspace = ${input.workspace}
           AND job_type = ${input.job_type}
           AND dedupe_key = ${input.dedupe_key ?? null}
-      `);
+      `;
       return this.mapRun(existingRows[0]!);
     } catch (error) {
       return normalizePostgresError(error);

@@ -20,7 +20,8 @@ const parsePayload = (payload: Record<string, unknown>): AuditFanoutPayload | nu
   return { auditLogId, ...(watcherUserIds ? { watcherUserIds } : {}) };
 };
 
-export const createAuditFanoutJobHandler = (db: DatabaseAdapter) =>
+export const createAuditFanoutJobHandler =
+  (db: DatabaseAdapter) =>
   async (context: { workspace: string; payload: Record<string, unknown> }) => {
     const payload = parsePayload(context.payload);
     if (!payload) return { skipped: true, reason: 'invalid-payload' };
@@ -31,11 +32,7 @@ export const createAuditFanoutJobHandler = (db: DatabaseAdapter) =>
     try {
       return await db.core.transaction(async tx => {
         const webhookCount = await enqueueWebhookDeliveries(tx, auditLog);
-        const automationCount = await enqueueAutomationRuleRuns(
-          tx,
-          auditLog,
-          auditLog.metadata
-        );
+        const automationCount = await enqueueAutomationRuleRuns(tx, auditLog, auditLog.metadata);
         await createAuditWatcherNotifications(tx, auditLog, payload.watcherUserIds);
         return { webhookCount, automationCount };
       });

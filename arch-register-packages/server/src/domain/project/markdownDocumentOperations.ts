@@ -907,9 +907,9 @@ export const restoreMarkdownRevision = async (
         },
         afterCommit: [
           {
-        name: 'audit',
-        run: tx =>
-          writeAudit(tx, {
+            name: 'audit',
+            run: tx =>
+              writeAudit(tx, {
                 userId: authCtx.userId,
                 workspace: ws,
                 operation: 'update',

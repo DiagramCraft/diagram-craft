@@ -223,8 +223,30 @@ describe('relation audit notification visibility', () => {
     );
     vi.mocked(buildUserAuthCtxs).mockResolvedValue(
       new Map([
-        ['allowed-user', buildAuthorizationContext({ userId: 'allowed-user', globalRoles: [], workspaceRole: null, teamAssignments: [], schemas: [], entities: [], grants: [] })],
-        ['blocked-user', buildAuthorizationContext({ userId: 'blocked-user', globalRoles: [], workspaceRole: null, teamAssignments: [], schemas: [], entities: [], grants: [] })]
+        [
+          'allowed-user',
+          buildAuthorizationContext({
+            userId: 'allowed-user',
+            globalRoles: [],
+            workspaceRole: null,
+            teamAssignments: [],
+            schemas: [],
+            entities: [],
+            grants: []
+          })
+        ],
+        [
+          'blocked-user',
+          buildAuthorizationContext({
+            userId: 'blocked-user',
+            globalRoles: [],
+            workspaceRole: null,
+            teamAssignments: [],
+            schemas: [],
+            entities: [],
+            grants: []
+          })
+        ]
       ])
     );
 
