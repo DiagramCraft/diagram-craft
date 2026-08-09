@@ -241,6 +241,16 @@ describe('instantiateTemplate', () => {
       maxCount: 1,
       requirementLevel: 'required'
     });
+
+    expect(definitions.dashboardWidgets).toHaveLength(8);
+    expect(
+      definitions.dashboardWidgets.find(widget => widget.id === 'top-risks-by-score')
+    ).toMatchObject({
+      config: { schema: risk?.id, fieldId: 'residual_risk_score' }
+    });
+    expect(
+      definitions.dashboardWidgets.find(widget => widget.id === 'compliance-coverage')
+    ).toMatchObject({ config: { schema: complianceRequirement?.id } });
   });
 
   it('materializes the risk-compliance typed relations with correctly remapped endpoints', () => {

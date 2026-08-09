@@ -26,6 +26,7 @@ import {
   ENTITY_DEPRECATION_POLICY_CASE_KIND
 } from '../governance/schemaGovernancePolicy';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
+import { replaceDefaultWorkspaceDashboardLayout } from '../dashboard/dashboardOperations';
 
 const shortCodeFrom = (name: string): string =>
   name
@@ -869,6 +870,14 @@ export const createWorkspace = async (
             }
             for (const documentTemplate of definitions.documentTemplates) {
               await db.document.createDocumentTemplate(documentTemplate);
+            }
+            if (definitions.dashboardWidgets.length > 0) {
+              await replaceDefaultWorkspaceDashboardLayout(
+                db,
+                row.id,
+                definitions.dashboardWidgets,
+                authCtx.userId
+              );
             }
           }
         }

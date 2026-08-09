@@ -100,6 +100,34 @@ test.describe('workspace routes', () => {
     );
   });
 
+  test('POST /api/workspaces applies a template dashboard layout', async ({ server, orpc }) => {
+    const created = await orpc.workspaces.create({
+      body: { name: 'Risk Dashboard Workspace', template: 'risk-compliance' }
+    });
+
+    const [dashboards, schemas] = await Promise.all([
+      orpc.dashboard.list({ params: { workspace: created.url_slug } }),
+      server.db.catalog.listSchemas(created.id)
+    ]);
+    const risk = schemas.find(schema => schema.name === 'Risk');
+    const complianceRequirement = schemas.find(schema => schema.name === 'Compliance Requirement');
+
+    expect(dashboards).toHaveLength(1);
+    expect(dashboards[0]!.widgets).toHaveLength(8);
+    expect(dashboards[0]!.widgets).toContainEqual(
+      expect.objectContaining({
+        id: 'top-risks-by-score',
+        config: expect.objectContaining({ schema: risk?.id })
+      })
+    );
+    expect(dashboards[0]!.widgets).toContainEqual(
+      expect.objectContaining({
+        id: 'compliance-coverage',
+        config: expect.objectContaining({ schema: complianceRequirement?.id })
+      })
+    );
+  });
+
   test('POST /api/workspaces applies slug and badge overrides', async ({ orpc }) => {
     const created = await orpc.workspaces.create({
       body: {

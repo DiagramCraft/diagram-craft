@@ -16,6 +16,7 @@ import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaCo
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import { isEntityRelationField } from '@arch-register/api-types/relationSchemaContract';
 import type { DocumentAiAction, DocumentField } from '@arch-register/api-types/documentContract';
+import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { buildApiAuthCtx, requireWorkspaceAdmin } from '../auth/authorization';
@@ -25,6 +26,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import { resolveWorkspace } from './resolveWorkspace';
 import {
   SCHEMA_TEMPLATES,
+  resolveTemplateDashboardWidgets,
   type SchemaTemplate,
   type SymbolicField
 } from '../catalog/schemaTemplates';
@@ -46,6 +48,7 @@ import { buildRelationSchemaChangeSummary } from '../catalog/relationSchemaHelpe
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 import { getSchemaGovernancePoliciesBySchema } from '../governance/schemaGovernancePolicy';
 import { writeAudit } from '../audit/db/auditLogging';
+import { replaceDefaultWorkspaceDashboardLayout } from '../dashboard/dashboardOperations';
 
 type ImportableSchema = {
   id: string;
@@ -125,6 +128,7 @@ type DefinitionSource = {
   documentTypes: ImportableDocumentType[];
   relationSchemas: ImportableRelationSchema[];
   fieldGroups: ImportableFieldGroup[];
+  dashboardWidgets: DashboardWidget[];
   teamNames: Record<string, string>;
 };
 
@@ -137,6 +141,7 @@ type DefinitionImportPlan = {
   documentTypes: ImportableDocumentType[];
   relationSchemas: ImportableRelationSchema[];
   fieldGroups: ImportableFieldGroup[];
+  dashboardWidgets: DashboardWidget[];
   conflicts: Array<{
     kind: 'schema' | 'enum' | 'documentType' | 'relationSchema' | 'fieldGroup';
     id: string;
@@ -261,6 +266,7 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
     fields: fieldGroup.fields.map(toCanonicalField),
     sort_order: index
   })),
+  dashboardWidgets: template.dashboardWidgets ?? [],
   teamNames: {}
 });
 
@@ -355,6 +361,7 @@ const sourceFromWorkspace = async (
       fields: group.fields,
       sort_order: group.sort_order
     })),
+    dashboardWidgets: [],
     teamNames: Object.fromEntries(teamNames)
   };
 };
@@ -690,6 +697,7 @@ const buildPlan = async (
       dependency: false,
       definition: group
     })),
+    dashboardWidgets: selection.dashboard ? sourceData.dashboardWidgets : [],
     keyPrefixRemaps,
     errors,
     conflicts
@@ -703,6 +711,7 @@ const buildPlan = async (
     documentTypes,
     relationSchemas,
     fieldGroups,
+    dashboardWidgets: selection.dashboard ? sourceData.dashboardWidgets : [],
     conflicts,
     keyPrefixRemaps,
     errors,
@@ -744,6 +753,7 @@ const toPreview = (plan: DefinitionImportPlan): DefinitionImportPreview => ({
     dependency: false,
     definition: group
   })),
+  dashboardWidgets: plan.dashboardWidgets,
   conflicts: plan.conflicts,
   keyPrefixRemaps: plan.keyPrefixRemaps,
   errors: plan.errors,
@@ -759,7 +769,8 @@ const sourceOption = (source: DefinitionSource) => ({
   enums: source.enums.map(enumeration => ({ id: enumeration.id, name: enumeration.name })),
   documentTypes: source.documentTypes.map(type => ({ id: type.id, name: type.name })),
   relationSchemas: source.relationSchemas.map(schema => ({ id: schema.id, name: schema.name })),
-  fieldGroups: source.fieldGroups.map(group => ({ id: group.id, name: group.name }))
+  fieldGroups: source.fieldGroups.map(group => ({ id: group.id, name: group.name })),
+  dashboardWidgets: source.dashboardWidgets
 });
 
 const canAdminister = async (db: DatabaseAdapter, workspace: string, event: AuthenticatedEvent) => {
@@ -852,6 +863,7 @@ export const executeDefinitionImport = async (
           documentTypes: input.documentTypes,
           relationSchemas: input.relationSchemas,
           fieldGroups: input.fieldGroups,
+          dashboardWidgets: input.dashboardWidgets,
           renames: input.renames,
           keyPrefixRemaps: input.keyPrefixRemaps
         }) ===
@@ -861,6 +873,7 @@ export const executeDefinitionImport = async (
             documentTypes: expected.documentTypes,
             relationSchemas: expected.relationSchemas,
             fieldGroups: expected.fieldGroups,
+            dashboardWidgets: expected.dashboardWidgets,
             renames: expected.renames,
             keyPrefixRemaps: expected.keyPrefixRemaps
           }),
@@ -1133,6 +1146,15 @@ export const executeDefinitionImport = async (
             created_at: now
           });
         }
+
+        if (plan.dashboardWidgets.length > 0) {
+          await replaceDefaultWorkspaceDashboardLayout(
+            tx,
+            ws,
+            resolveTemplateDashboardWidgets(plan.dashboardWidgets, schemaIdMap),
+            authCtx.userId
+          );
+        }
       });
 
       return {
@@ -1140,7 +1162,8 @@ export const executeDefinitionImport = async (
         enums: plan.enums.length,
         documentTypes: plan.documentTypes.length,
         relationSchemas: plan.relationSchemas.length,
-        fieldGroups: plan.fieldGroups.length
+        fieldGroups: plan.fieldGroups.length,
+        dashboardWidgets: plan.dashboardWidgets.length
       };
     }
   );

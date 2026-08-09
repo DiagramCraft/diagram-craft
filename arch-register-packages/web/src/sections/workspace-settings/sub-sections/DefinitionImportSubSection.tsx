@@ -15,6 +15,7 @@ import { orpcClient } from '../../../lib/orpcClient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { relationSchemaKeys } from '../../../queries/relationSchemas';
 import { fieldGroupKeys } from '../../../queries/fieldGroups';
+import { invalidateDashboardQueries } from '../../../queries/dashboard';
 import styles from './ExportImportSubSection.module.css';
 
 const sourceKey = (source: DefinitionImportSource) => `${source.kind}:${source.id}`;
@@ -24,7 +25,8 @@ const emptySelection: DefinitionImportSelection = {
   enums: [],
   documentTypes: [],
   relationSchemas: [],
-  fieldGroups: []
+  fieldGroups: [],
+  dashboard: false
 };
 
 const selectionKinds = [
@@ -120,6 +122,7 @@ export const DefinitionImportSubSection = () => {
           documentTypes: preview!.documentTypes,
           relationSchemas: preview!.relationSchemas,
           fieldGroups: preview!.fieldGroups,
+          dashboardWidgets: preview!.dashboardWidgets,
           keyPrefixRemaps: preview!.keyPrefixRemaps,
           fingerprint: preview!.fingerprint,
           confirmed: true
@@ -132,6 +135,7 @@ export const DefinitionImportSubSection = () => {
         queryClient.invalidateQueries({ queryKey: ['document-types', workspaceSlug] }),
         queryClient.invalidateQueries({ queryKey: relationSchemaKeys.list(workspaceSlug) }),
         queryClient.invalidateQueries({ queryKey: fieldGroupKeys.list(workspaceSlug) }),
+        invalidateDashboardQueries(queryClient, workspaceSlug),
         queryClient.invalidateQueries({ queryKey: ['audit', workspaceSlug] })
       ]);
       setPreview(null);
@@ -144,11 +148,17 @@ export const DefinitionImportSubSection = () => {
       setError(mutationError instanceof Error ? mutationError.message : 'Import failed')
   });
 
-  const toggle = (kind: keyof DefinitionImportSelection, id: string, value: boolean) => {
+  const toggle = (kind: (typeof selectionKinds)[number], id: string, value: boolean) => {
     setSelection(previous => ({
       ...previous,
       [kind]: value ? [...previous[kind], id] : previous[kind].filter(item => item !== id)
     }));
+    setPreview(null);
+    setConfirmed(false);
+  };
+
+  const toggleDashboard = (value: boolean) => {
+    setSelection(previous => ({ ...previous, dashboard: value }));
     setPreview(null);
     setConfirmed(false);
   };
@@ -172,7 +182,7 @@ export const DefinitionImportSubSection = () => {
     );
   }
 
-  const canPreview = !!source && Object.values(selection).some(items => items.length > 0);
+  const canPreview = !!source && selectionKinds.some(kind => selection[kind].length > 0);
   const canExecute =
     !!preview && preview.errors.length === 0 && preview.conflicts.length === 0 && confirmed;
 
@@ -240,6 +250,27 @@ export const DefinitionImportSubSection = () => {
             );
           })}
 
+        {source && source.dashboardWidgets.length > 0 && (
+          <div className={styles.field}>
+            <div className={styles.fieldLeft}>
+              <div className={styles.fieldLabel}>Dashboard layout</div>
+              <div className={styles.fieldHint}>
+                Optionally replace the default dashboard with {source.dashboardWidgets.length}{' '}
+                template widgets.
+              </div>
+            </div>
+            <div className={styles.fieldRight}>
+              <label className={styles.checkboxRow}>
+                <Checkbox
+                  value={selection.dashboard}
+                  onChange={value => toggleDashboard(value ?? false)}
+                />
+                <span>Import dashboard layout</span>
+              </label>
+            </div>
+          </div>
+        )}
+
         {preview && (
           <div className={styles.field}>
             <div className={styles.fieldLeft}>
@@ -254,6 +285,10 @@ export const DefinitionImportSubSection = () => {
                     <span className={styles.summaryLabel}>{summaryLabels[kind]}</span>
                   </div>
                 ))}
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryCount}>{preview.dashboardWidgets.length}</span>
+                  <span className={styles.summaryLabel}>dashboard widgets</span>
+                </div>
               </div>
               {preview.errors.length > 0 && (
                 <div className={styles.previewMessages}>

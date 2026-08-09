@@ -50,6 +50,10 @@ import { GlobalRoleAssignmentDbResult } from '../domain/auth/db/authDatabase';
 import { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import {
+  resolveTemplateDashboardWidgets,
+  SCHEMA_TEMPLATES
+} from '../domain/catalog/schemaTemplates';
+import {
   seededAssessments,
   seededProjects,
   seededSchemas,
@@ -4337,11 +4341,20 @@ export const seedAssessments: AssessmentDbCreate[] = [
   }
 ];
 
+const seededRiskComplianceTemplate = SCHEMA_TEMPLATES.find(
+  template => template.id === 'risk-compliance'
+);
+const seededRiskComplianceDashboardWidgets = resolveTemplateDashboardWidgets(
+  seededRiskComplianceTemplate?.dashboardWidgets ?? [],
+  new Map([
+    ['risk', '00000000-0000-0000-0000-000000000013'],
+    ['compliance_requirement', '00000000-0000-0000-0000-000000000016']
+  ])
+);
+
 // The default workspace's "Overview" dashboard is otherwise seeded lazily on first client visit
-// (see web's DEFAULT_SEEDED_WIDGETS) - this pre-seeds it here with the same starter widgets plus
-// three generic, risk-schema-agnostic dashboard widgets (TopEntities, AggregateStat,
-// OverdueReviews - see #2848) configured against the risk-and-compliance schemas above, purely as
-// example seed data showing how those generic widgets can be used to track risk and compliance.
+// (see web's DEFAULT_SEEDED_WIDGETS). The risk/compliance template owns this complete seeded
+// layout, including the generic starter widgets and the risk/compliance widgets from #2848.
 export const seedWorkspaceDashboards: {
   id: string;
   workspace: string;
@@ -4354,82 +4367,7 @@ export const seedWorkspaceDashboards: {
     workspace: WORKSPACE_ID,
     name: 'Overview',
     sort_order: 0,
-    layout: [
-      {
-        id: 'default-entity-count',
-        type: 'Metric',
-        config: { metricType: 'entity-count' },
-        x: 0,
-        y: 0,
-        w: 3,
-        h: 2
-      },
-      {
-        id: 'default-project-count',
-        type: 'Metric',
-        config: { metricType: 'project-count' },
-        x: 3,
-        y: 0,
-        w: 3,
-        h: 2
-      },
-      {
-        id: 'default-diagram-count',
-        type: 'Metric',
-        config: { metricType: 'diagram-count' },
-        x: 6,
-        y: 0,
-        w: 3,
-        h: 2
-      },
-      {
-        id: 'default-completeness-percent',
-        type: 'Metric',
-        config: { metricType: 'completeness-percent' },
-        x: 9,
-        y: 0,
-        w: 3,
-        h: 2
-      },
-      {
-        id: 'top-risks-by-score',
-        type: 'TopEntities',
-        config: {
-          schema: '00000000-0000-0000-0000-000000000013', // Risk
-          fieldId: 'residual_risk_score',
-          direction: 'desc',
-          limit: 5,
-          label: 'Top risks by score'
-        },
-        x: 0,
-        y: 2,
-        w: 4,
-        h: 2
-      },
-      {
-        id: 'compliance-coverage',
-        type: 'AggregateStat',
-        config: {
-          schema: '00000000-0000-0000-0000-000000000016', // Compliance Requirement
-          numeratorCondition: { fieldId: 'status', op: 'equals', value: 'met' },
-          label: 'Compliance coverage'
-        },
-        x: 4,
-        y: 2,
-        w: 4,
-        h: 2
-      },
-      {
-        id: 'overdue-risk-control-reviews',
-        type: 'OverdueReviews',
-        config: { label: 'Overdue risk and control reviews' },
-        x: 8,
-        y: 2,
-        w: 4,
-        h: 2
-      },
-      { id: 'default-activity-feed', type: 'activity-feed', config: {}, x: 0, y: 4, w: 12, h: 6 }
-    ]
+    layout: seededRiskComplianceDashboardWidgets
   }
 ];
 
