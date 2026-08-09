@@ -3,7 +3,7 @@ import { buildAuthorizationContext } from '@arch-register/permissions';
 import { createAiChatTools } from './chatTools';
 import type { DatabaseAdapter } from '../../db/database';
 import { Entity, SchemaDbResult } from '../catalog/db/catalogDatabase';
-import { AuditLogDbResult } from '../audit/db/auditDatabase';
+import { AuditLogDbCreate, AuditLogDbResult } from '../audit/db/auditDatabase';
 import type {
   RelationDbCreate,
   RelationDbResult,
@@ -268,8 +268,7 @@ const entities: Entity[] = [
 const createdEntities: Entity[] = [];
 const updatedEntities: Entity[] = [];
 const createdAuditLogs: AuditLogDbResult[] = [];
-const createdNotifications: Array<{ changedByDisplayName: string; auditLog: AuditLogDbResult }> =
-  [];
+const queuedAuditJobs: Array<{ job_type: string; payload: Record<string, unknown> }> = [];
 
 const db = {
   catalog: {
@@ -385,17 +384,21 @@ const db = {
     allocatePublicId: vi.fn(async () => 1)
   },
   audit: {
-    createAuditLog: vi.fn(async (input: AuditLogDbResult) => {
-      createdAuditLogs.push(input);
-      return input;
+    createAuditLog: vi.fn(async (input: AuditLogDbCreate) => {
+      const auditLog = {
+        ...input,
+        id: `audit-${input.entity_id}`,
+        user_display_name: 'Test User'
+      } as AuditLogDbResult;
+      createdAuditLogs.push(auditLog);
+      return auditLog;
     })
   },
-  watch: {
-    createNotificationsFromAudit: vi.fn(
-      async (input: { changedByDisplayName: string; auditLog: AuditLogDbResult }) => {
-        createdNotifications.push(input);
-      }
-    )
+  jobs: {
+    enqueueOneOffRun: vi.fn(async (input: { job_type: string; payload: Record<string, unknown> }) => {
+      queuedAuditJobs.push(input);
+      return input;
+    })
   }
 } as unknown as DatabaseAdapter;
 
@@ -529,8 +532,9 @@ describe('createAiChatTools', () => {
       entity_type: 'entity',
       entity_name: 'Orders API'
     });
-    expect(createdNotifications.at(-1)).toMatchObject({
-      changedByDisplayName: actor.displayName
+    expect(queuedAuditJobs.at(-1)).toMatchObject({
+      job_type: 'audit.fanout',
+      payload: { auditLogId: 'audit-entity-app-1' }
     });
   });
 
@@ -563,8 +567,9 @@ describe('createAiChatTools', () => {
       entity_type: 'entity',
       entity_id: 'entity-app-1'
     });
-    expect(createdNotifications.at(-1)).toMatchObject({
-      changedByDisplayName: actor.displayName
+    expect(queuedAuditJobs.at(-1)).toMatchObject({
+      job_type: 'audit.fanout',
+      payload: { auditLogId: 'audit-entity-app-1' }
     });
   });
 
