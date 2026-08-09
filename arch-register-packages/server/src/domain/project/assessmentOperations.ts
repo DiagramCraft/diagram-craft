@@ -117,8 +117,7 @@ const getProjectOrThrow = async (db: DatabaseAdapter, ws: string, projectId: str
 const assertAssessmentType = async (
   db: DatabaseAdapter,
   workspace: string,
-  typeId: string | null | undefined,
-  allowInactive: boolean
+  typeId: string | null | undefined
 ) => {
   if (!typeId) return;
   const type = (await db.workspace.listAssessmentTypes(workspace)).find(item => item.id === typeId);
@@ -126,12 +125,6 @@ const assertAssessmentType = async (
     status: 400,
     message: `Assessment type '${typeId}' does not exist in this workspace`
   });
-  if (!allowInactive) {
-    httpAssert.true(type!.is_active, {
-      status: 400,
-      message: `Assessment type '${typeId}' is inactive`
-    });
-  }
 };
 
 export const listAssessments = async (
@@ -240,7 +233,7 @@ export const createAssessment = async (
       const scope = Array.isArray(body.scope) ? body.scope : [];
       const scopeConditions = Array.isArray(body.scope_conditions) ? body.scope_conditions : [];
       assertAssessmentScopeConditionsAuthorized(scope, scopeConditions, schemas, authCtx);
-      await assertAssessmentType(db, ws, body.assessment_type_id, false);
+      await assertAssessmentType(db, ws, body.assessment_type_id);
 
       const timestamp = new Date();
       const row = await db.project.createAssessment(
@@ -311,12 +304,7 @@ export const updateAssessment = async (
           authCtx
         );
       }
-      await assertAssessmentType(
-        db,
-        ws,
-        body.assessment_type_id,
-        body.assessment_type_id === existing.assessment_type_id
-      );
+      await assertAssessmentType(db, ws, body.assessment_type_id);
       const scopeConditions = Array.isArray(body.scope_conditions)
         ? mergeVisibleAssessmentScopeConditions(existing, body.scope_conditions, schemas, authCtx)
         : undefined;

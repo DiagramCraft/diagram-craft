@@ -65,14 +65,17 @@ const createCustomRole = async (
 };
 
 test.describe('workspace config routes', () => {
-  test('lists and replaces workspace assessment types', async ({ orpc, seededUsers: _ }) => {
+  test('replaces workspace assessment types and removes omitted types', async ({
+    orpc,
+    seededUsers: _
+  }) => {
     const typeId = '00000000-0000-0000-0099-000000000001';
     const result = await orpc.config.assessmentTypes.replace({
       params: { workspace: 'default' },
       body: {
         types: [
-          { id: typeId, name: 'Risk & compliance', sort_order: 99, is_active: true },
-          { name: 'Legacy reviews', sort_order: 0, is_active: false }
+          { id: typeId, name: 'Risk & compliance', sort_order: 99 },
+          { name: 'Legacy reviews', sort_order: 0 }
         ]
       }
     });
@@ -80,8 +83,8 @@ test.describe('workspace config routes', () => {
     expect(result.map(type => type.sort_order)).toEqual([0, 1]);
     expect(result).toEqual(
       expect.arrayContaining([
-        expect.objectContaining({ id: typeId, name: 'Risk & compliance', is_active: true }),
-        expect.objectContaining({ name: 'Legacy reviews', is_active: false })
+        expect.objectContaining({ id: typeId, name: 'Risk & compliance' }),
+        expect.objectContaining({ name: 'Legacy reviews' })
       ])
     );
 
@@ -89,6 +92,12 @@ test.describe('workspace config routes', () => {
       params: { workspace: 'default' }
     });
     expect(listed).toEqual(result);
+
+    const removed = await orpc.config.assessmentTypes.replace({
+      params: { workspace: 'default' },
+      body: { types: [{ id: typeId, name: 'Risk & compliance' }] }
+    });
+    expect(removed.map(type => type.id)).toEqual([typeId]);
   });
 
   test('GET /api/:workspace/config/lifecycle-states returns seeded states', async ({

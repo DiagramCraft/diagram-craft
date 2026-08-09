@@ -56,7 +56,7 @@
         - @id:ar.workspace.templates Administrators can create a workspace from a built-in architecture template,
           including its entity schemas, select-option enums, and document types and associated templates.
 
-        - @id:ar.workspace.configuration Administrators can configure workspace lifecycle states, teams, roles, members,
+        - @id:ar.workspace.configuration Administrators can configure workspace lifecycle states, assessment types, teams, roles, members,
           supported currencies and the workspace's default currency, document types, templates, AI, analytics, audit,
           and other workspace settings.
 

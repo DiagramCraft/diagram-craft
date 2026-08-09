@@ -213,7 +213,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
 
   async listAssessmentTypes(workspace: string) {
     const rows = await this.sql<DatabaseRow[]>`
-      SELECT id, workspace, name, sort_order, is_active, created_at, updated_at
+      SELECT id, workspace, name, sort_order, created_at, updated_at
       FROM workspace_assessment_type
       WHERE workspace = ${workspace}
       ORDER BY sort_order, id
@@ -224,13 +224,35 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
   async replaceAssessmentTypes(workspace: string, types: AssessmentTypeDbCreate[]) {
     try {
       await withTransaction(this.sql, async tx => {
-        await tx`DELETE FROM workspace_assessment_type WHERE workspace = ${workspace}`;
+        const typeIds = types.map(type => type.id);
+        if (typeIds.length === 0) {
+          await tx`UPDATE assessment SET assessment_type_id = NULL WHERE workspace = ${workspace}`;
+          await tx`DELETE FROM workspace_assessment_type WHERE workspace = ${workspace}`;
+          return;
+        }
+
+        await tx`
+          UPDATE assessment
+          SET assessment_type_id = NULL
+          WHERE workspace = ${workspace}
+            AND assessment_type_id IS NOT NULL
+            AND assessment_type_id NOT IN ${tx(typeIds)}
+        `;
+        await tx`
+          DELETE FROM workspace_assessment_type
+          WHERE workspace = ${workspace}
+            AND id NOT IN ${tx(typeIds)}
+        `;
         for (const type of types) {
           await tx`
             INSERT INTO workspace_assessment_type
-              (id, workspace, name, sort_order, is_active, created_at, updated_at)
+              (id, workspace, name, sort_order, created_at, updated_at)
             VALUES
-              (${type.id}, ${workspace}, ${type.name}, ${type.sort_order}, ${type.is_active}, ${type.created_at}, ${type.updated_at})
+              (${type.id}, ${workspace}, ${type.name}, ${type.sort_order}, ${type.created_at}, ${type.updated_at})
+            ON CONFLICT (workspace, id) DO UPDATE SET
+              name = EXCLUDED.name,
+              sort_order = EXCLUDED.sort_order,
+              updated_at = EXCLUDED.updated_at
           `;
         }
       });

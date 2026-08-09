@@ -721,14 +721,11 @@ export const AssessmentEditorDialog = ({
                 }}
               >
                 <Select.Item value="">Uncategorized</Select.Item>
-                {assessmentTypes
-                  .filter(type => type.is_active || type.id === assessmentTypeId)
-                  .map(type => (
-                    <Select.Item key={type.id} value={type.id}>
-                      {type.name}
-                      {!type.is_active ? ' (inactive)' : ''}
-                    </Select.Item>
-                  ))}
+                {assessmentTypes.map(type => (
+                  <Select.Item key={type.id} value={type.id}>
+                    {type.name}
+                  </Select.Item>
+                ))}
               </Select.Root>
             </div>
           </div>
