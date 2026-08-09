@@ -17,6 +17,7 @@ export type AuditLogDbResult = {
     new?: Record<string, unknown>;
   };
   metadata: Record<string, unknown>;
+  dedupe_key?: string | null;
 };
 
 export type AuditLogDbCreate = Omit<AuditLogDbResult, 'id' | 'user_display_name'>;
@@ -60,7 +61,8 @@ export const auditMappers = {
     entity_slug: row['entity_slug'] == null ? null : String(row['entity_slug']),
     schema_id: row['schema_id'] == null ? null : String(row['schema_id']),
     changes: parseDatabaseJson(row['changes'], {}, 'audit_log.changes'),
-    metadata: parseDatabaseJson(row['metadata'], {}, 'audit_log.metadata')
+    metadata: parseDatabaseJson(row['metadata'], {}, 'audit_log.metadata'),
+    dedupe_key: row['dedupe_key'] == null ? null : String(row['dedupe_key'])
   })
 };
 

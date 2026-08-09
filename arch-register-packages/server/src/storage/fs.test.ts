@@ -47,6 +47,53 @@ describe('FilesystemStorage staged mutations', () => {
     });
   });
 
+  it('recovers a committed write after the original process is gone', async () => {
+    const { storage } = await makeStorage();
+    await storage.write('ws', 'project', 'node', Buffer.from('old'));
+    const operationId = '00000000-0000-0000-0000-000000000001';
+    const staged = await storage.stageWrite(
+      'ws',
+      'project',
+      'node',
+      Buffer.from('new'),
+      operationId
+    );
+    await staged.commit();
+
+    await storage.reconcile(
+      {
+        operationId,
+        action: 'write',
+        workspace: 'ws',
+        projectId: 'project',
+        fileId: 'node'
+      },
+      'finalize'
+    );
+
+    expect((await storage.read('ws', 'project', 'node')).toString()).toBe('new');
+  });
+
+  it('rolls back an uncommitted staged write after restart', async () => {
+    const { storage } = await makeStorage();
+    await storage.write('ws', 'project', 'node', Buffer.from('old'));
+    const operationId = '00000000-0000-0000-0000-000000000002';
+    await storage.stageWrite('ws', 'project', 'node', Buffer.from('new'), operationId);
+
+    await storage.reconcile(
+      {
+        operationId,
+        action: 'write',
+        workspace: 'ws',
+        projectId: 'project',
+        fileId: 'node'
+      },
+      'rollback'
+    );
+
+    expect((await storage.read('ws', 'project', 'node')).toString()).toBe('old');
+  });
+
   it('reads from a fallback directory when content has not been migrated', async () => {
     const primaryRoot = await mkdtemp(join(tmpdir(), 'arch-register-storage-primary-'));
     const fallbackRoot = await mkdtemp(join(tmpdir(), 'arch-register-storage-fallback-'));

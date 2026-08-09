@@ -32,6 +32,7 @@ import { PostgresChangeCaseDatabase } from '../domain/catalog/db/postgresChangeC
 import { PostgresExternalIdentityDatabase } from '../domain/externalIdentity/db/postgresExternalIdentity';
 import { PostgresRelationDatabase } from '../domain/catalog/db/postgresRelation';
 import { PostgresCurrencyRatesDatabase } from '../domain/currencyRates/db/postgresCurrencyRates';
+import { PostgresContentReconciliationDatabase } from '../domain/project/db/postgresContentReconciliation';
 import { PostgresArtifactDatabase } from '../domain/artifact/db/postgresArtifact';
 import { createLogger } from '../utils/logger';
 
@@ -78,6 +79,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly externalIdentity: PostgresExternalIdentityDatabase;
   readonly relation: PostgresRelationDatabase;
   readonly currencyRates: PostgresCurrencyRatesDatabase;
+  readonly contentReconciliation: PostgresContentReconciliationDatabase;
   readonly artifact: PostgresArtifactDatabase;
   readonly core;
 
@@ -112,6 +114,7 @@ export class PostgresDatabase implements DatabaseAdapter {
       externalIdentity: new PostgresExternalIdentityDatabase(sql),
       relation: new PostgresRelationDatabase(sql),
       currencyRates: new PostgresCurrencyRatesDatabase(sql),
+      contentReconciliation: new PostgresContentReconciliationDatabase(sql),
       artifact: new PostgresArtifactDatabase(sql)
     };
     let bound!: DatabaseAdapter;
@@ -177,6 +180,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.externalIdentity = new PostgresExternalIdentityDatabase(this.sql);
     this.relation = new PostgresRelationDatabase(this.sql);
     this.currencyRates = new PostgresCurrencyRatesDatabase(this.sql);
+    this.contentReconciliation = new PostgresContentReconciliationDatabase(this.sql);
     this.artifact = new PostgresArtifactDatabase(this.sql);
 
     this.core = {

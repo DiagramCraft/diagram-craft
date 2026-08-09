@@ -17,8 +17,10 @@ import { buildFileTree } from './contentTreeOperations';
 import { toApiProject, toApiProjectDetail } from './projectHelpers';
 import { formatPublicId } from '../../utils/publicIds';
 import type { Project, ProjectDetail } from '@arch-register/api-types/projectContract';
+import { createLogger } from '../../utils/logger';
 
 const PROJECT_STATUSES = ['draft', 'active', 'complete', 'cancelled'] as const;
+const logger = createLogger('project-crud');
 type ProjectStatus = (typeof PROJECT_STATUSES)[number];
 
 const parseProjectStatus = (value: unknown): ProjectStatus => {
@@ -315,7 +317,13 @@ export const deleteProject = async (
       });
 
       if (storage) {
-        await storage.deleteAll(ws, project.id).catch(() => {});
+        await storage.deleteAll(ws, project.id).catch(error => {
+          logger.error('Project storage cleanup failed', {
+            workspace: ws,
+            projectId: project.id,
+            error: error instanceof Error ? error.message : String(error)
+          });
+        });
       }
 
       return { success: true, message: `Project '${project.id}' deleted` };

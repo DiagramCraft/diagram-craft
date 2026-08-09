@@ -27,6 +27,8 @@ import {
 } from '../governance/schemaGovernancePolicy';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import { replaceDefaultWorkspaceDashboardLayout } from '../dashboard/dashboardOperations';
+import { coordinateContentWrite } from '../project/contentWriteCoordinator';
+import { createLogger } from '../../utils/logger';
 
 const shortCodeFrom = (name: string): string =>
   name
@@ -34,6 +36,8 @@ const shortCodeFrom = (name: string): string =>
     .map(w => (w[0] ?? '').toUpperCase())
     .join('')
     .slice(0, 5);
+
+const logger = createLogger('workspace-operations');
 
 const generateCopiedSchemaKeyPrefix = (seed: string) => {
   const bytes = createHash('sha1').update(seed).digest();
@@ -318,28 +322,49 @@ const copyTypedWorkspaceDocuments = async (
       sourceNode.type === 'folder' || !storage
         ? null
         : await storage.read(sourceWorkspace, sourceStorageScope, sourceNode.id);
-    if (content && storage)
-      await storage.write(targetWorkspace, targetStorageScope, nodeId, content);
-    await db.project.upsertContentNode({
-      id: nodeId,
-      workspace: targetWorkspace,
-      project_id: sourceNode.project_id ? (projectMap.get(sourceNode.project_id) ?? null) : null,
-      entity_id: sourceNode.entity_id ? (entityMap.get(sourceNode.entity_id) ?? null) : null,
-      parent_id: sourceNode.parent_id ? (nodeMap.get(sourceNode.parent_id) ?? null) : null,
-      path: sourceNode.path,
-      name: sourceNode.name,
-      role: sourceNode.role,
-      type: sourceNode.type,
-      size_bytes: sourceNode.size_bytes,
-      comment_count: sourceNode.comment_count,
-      unresolved_comment_count: sourceNode.unresolved_comment_count,
-      created_atIfNew: sourceNode.created_at,
-      updated_at: timestamp,
-      created_byIfNew: sourceNode.created_by,
-      updated_by: sourceNode.updated_by,
-      mime_type: sourceNode.mime_type,
-      original_filename: sourceNode.original_filename,
-      mount_id: null
+    await coordinateContentWrite({
+      db,
+      storage,
+      operation: 'workspace-copy-content-node',
+      scope: 'workspace-copy',
+      nodeIds: [nodeId],
+      storageChanges:
+        content && storage
+          ? [
+              {
+                type: 'write',
+                workspace: targetWorkspace,
+                storageId: targetStorageScope,
+                nodeId,
+                content
+              }
+            ]
+          : undefined,
+      writeDatabase: async tx => {
+        await tx.project.upsertContentNode({
+          id: nodeId,
+          workspace: targetWorkspace,
+          project_id: sourceNode.project_id
+            ? (projectMap.get(sourceNode.project_id) ?? null)
+            : null,
+          entity_id: sourceNode.entity_id ? (entityMap.get(sourceNode.entity_id) ?? null) : null,
+          parent_id: sourceNode.parent_id ? (nodeMap.get(sourceNode.parent_id) ?? null) : null,
+          path: sourceNode.path,
+          name: sourceNode.name,
+          role: sourceNode.role,
+          type: sourceNode.type,
+          size_bytes: sourceNode.size_bytes,
+          comment_count: sourceNode.comment_count,
+          unresolved_comment_count: sourceNode.unresolved_comment_count,
+          created_atIfNew: sourceNode.created_at,
+          updated_at: timestamp,
+          created_byIfNew: sourceNode.created_by,
+          updated_by: sourceNode.updated_by,
+          mime_type: sourceNode.mime_type,
+          original_filename: sourceNode.original_filename,
+          mount_id: null
+        });
+      }
     });
   }
 
@@ -993,7 +1018,15 @@ export const deleteWorkspace = async (
 
       if (storage) {
         await Promise.all(
-          projectIds.map(projectId => storage.deleteAll(id, projectId).catch(() => {}))
+          projectIds.map(projectId =>
+            storage.deleteAll(id, projectId).catch(error => {
+              logger.error('Workspace project storage cleanup failed', {
+                workspace: id,
+                projectId,
+                error: error instanceof Error ? error.message : String(error)
+              });
+            })
+          )
         );
       }
 

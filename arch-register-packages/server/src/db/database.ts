@@ -26,6 +26,7 @@ import type { ChangeCaseDatabase } from '../domain/catalog/db/changeCaseDatabase
 import type { CatalogRecordExternalIdentityDatabase } from '../domain/externalIdentity/db/externalIdentityDatabase';
 import type { RelationDatabase } from '../domain/catalog/db/relationDatabase';
 import type { CurrencyRatesDatabase } from '../domain/currencyRates/db/currencyRatesDatabase';
+import type { ContentReconciliationDatabase } from '../domain/project/db/contentReconciliationDatabase';
 import type { ArtifactDatabase } from '../domain/artifact/db/artifactDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
@@ -71,6 +72,7 @@ export type DatabaseAdapter = {
   externalIdentity: CatalogRecordExternalIdentityDatabase;
   relation: RelationDatabase;
   currencyRates: CurrencyRatesDatabase;
+  contentReconciliation: ContentReconciliationDatabase;
   artifact: ArtifactDatabase;
 };
 
