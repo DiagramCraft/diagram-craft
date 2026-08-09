@@ -27,9 +27,9 @@ const DEFAULT_SEEDED_WIDGETS: ApiProjectDashboard['widgets'] = [
     h: 2
   },
   {
-    id: 'default-active-assessments',
-    type: 'active-assessments',
-    config: {},
+    id: 'default-assessments',
+    type: 'Assessments',
+    config: { mode: 'active' },
     x: 6,
     y: 0,
     w: 3,

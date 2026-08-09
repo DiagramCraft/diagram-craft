@@ -1709,8 +1709,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       },
       {
         id: 'overdue-risk-control-reviews',
-        type: 'OverdueReviews',
-        config: { label: 'Overdue risk and control reviews' },
+        type: 'Assessments',
+        config: { mode: 'overdue', label: 'Overdue risk and control reviews' },
         x: 8,
         y: 2,
         w: 4,

@@ -245,6 +245,7 @@ export const WorkspaceLayout = () => {
       lifecycleStates,
       teams,
       projectEntityTypes,
+      assessmentTypes,
       currencies,
       canManageWorkspaces,
       canAdministerWorkspace,

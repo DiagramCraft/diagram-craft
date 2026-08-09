@@ -251,6 +251,12 @@ describe('instantiateTemplate', () => {
     expect(
       definitions.dashboardWidgets.find(widget => widget.id === 'compliance-coverage')
     ).toMatchObject({ config: { schema: complianceRequirement?.id } });
+    expect(
+      definitions.dashboardWidgets.find(widget => widget.id === 'overdue-risk-control-reviews')
+    ).toMatchObject({
+      type: 'Assessments',
+      config: { mode: 'overdue', label: 'Overdue risk and control reviews' }
+    });
   });
 
   it('materializes the risk-compliance typed relations with correctly remapped endpoints', () => {
