@@ -288,14 +288,24 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
         INSERT INTO job_run (
           id, schedule_id, workspace, job_type, system_identity, payload, priority,
           occurrence_at, coalesced_through_at, coalesced_count, planned_at, created_at,
-          status, max_attempts
+          status, max_attempts, dedupe_key
         ) VALUES (
           ${input.id}, NULL, ${input.workspace}, ${input.job_type}, ${input.system_identity},
           ${this.json(input.payload)}, ${input.priority}, ${input.created_at}, ${input.created_at},
-          1, ${input.planned_at}, ${input.created_at}, 'queued', ${input.max_attempts}
-        ) RETURNING *
+          1, ${input.planned_at}, ${input.created_at}, 'queued', ${input.max_attempts},
+          ${input.dedupe_key ?? null}
+        )
+        ON CONFLICT (workspace, job_type, dedupe_key) WHERE dedupe_key IS NOT NULL DO NOTHING
+        RETURNING *
       `;
-      return this.mapRun(row!);
+      if (row) return this.mapRun(row);
+      const existingRows = await this.sql<DatabaseRow[]>`
+        SELECT * FROM job_run
+        WHERE workspace = ${input.workspace}
+          AND job_type = ${input.job_type}
+          AND dedupe_key = ${input.dedupe_key ?? null}
+      `;
+      return this.mapRun(existingRows[0]!);
     } catch (error) {
       return normalizePostgresError(error);
     }

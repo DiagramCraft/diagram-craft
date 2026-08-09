@@ -14,6 +14,15 @@ export class SqliteAuditDatabase extends SqliteDatabaseBase implements AuditData
     );
   }
 
+  async getAuditLog(workspace: string, id: string) {
+    return this.get(
+      `${AUDIT_LOG_SELECT_SQL}
+      WHERE audit_log.workspace = ? AND audit_log.id = ?`,
+      [workspace, id],
+      auditMappers.auditLog
+    );
+  }
+
   async createAuditLog(input: AuditLogDbCreate) {
     const id = newid();
     this.run(

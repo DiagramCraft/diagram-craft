@@ -17,6 +17,17 @@ export class SqliteNotificationPreferenceDatabase
     );
   }
 
+  async listOverridesForUsers(userIds: string[], workspace: string) {
+    if (userIds.length === 0) return [];
+    const placeholders = userIds.map(() => '?').join(', ');
+    return this.all(
+      `SELECT * FROM user_notification_preference
+       WHERE workspace = ? AND user_id IN (${placeholders})`,
+      [workspace, ...userIds],
+      notificationPreferenceMappers.preference
+    );
+  }
+
   async setOverrides(userId: string, workspace: string, entries: NotificationPreferenceOverride[]) {
     const updatedAt = new Date().toISOString();
     for (const entry of entries) {

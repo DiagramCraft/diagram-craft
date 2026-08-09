@@ -345,3 +345,40 @@ export const buildUserAuthCtx = async (
   const entityData = await fetchEntityAuthorizationContextData(dataProvider, workspace);
   return buildEntityAuthorizationContext(workspaceContext, entityData);
 };
+
+/** Builds authorization contexts for several users while sharing workspace-wide permission data. */
+export const buildUserAuthCtxs = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  userIds: string[]
+): Promise<Map<string, AuthorizationContext>> => {
+  if (userIds.length === 0) return new Map();
+
+  const provider = new ServerDataProvider(db);
+  const [entityData, workspaceRoles, teams, memberships] = await Promise.all([
+    fetchEntityAuthorizationContextData(provider, workspace),
+    provider.getWorkspaceRoles?.(workspace) ?? Promise.resolve([]),
+    provider.getTeams(workspace),
+    db.workspace.listTeamAssignments(workspace)
+  ]);
+  const contexts = await Promise.all(
+    [...new Set(userIds)].map(async userId => {
+      const [globalRoles, workspaceRole] = await Promise.all([
+        provider.getGlobalRoles(userId),
+        provider.getWorkspaceRole(workspace, userId)
+      ]);
+      const workspaceContext = buildWorkspaceAuthorizationContext({
+        userId,
+        globalRoles,
+        workspaceRole,
+        workspaceRoles,
+        teams,
+        teamAssignments: memberships
+          .filter(membership => membership.user_id === userId)
+          .map(membership => ({ teamId: membership.team_id, role: membership.role }))
+      });
+      return [userId, buildEntityAuthorizationContext(workspaceContext, entityData)] as const;
+    })
+  );
+  return new Map(contexts);
+};

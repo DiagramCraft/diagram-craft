@@ -116,8 +116,8 @@ export const uploadMarkdownAttachment = async (
         afterCommit: [
           {
             name: 'audit',
-            run: () =>
-              writeAudit(db, {
+            run: tx =>
+              writeAudit(tx, {
                 userId: authCtx.userId,
                 workspace: ws,
                 operation: isUpdate ? 'update' : 'create',
@@ -236,8 +236,8 @@ export const createMarkdownDiagramAttachment = async (
         afterCommit: [
           {
             name: 'audit',
-            run: () =>
-              writeAudit(db, {
+            run: tx =>
+              writeAudit(tx, {
                 userId: authCtx.userId,
                 workspace: ws,
                 operation: 'create',

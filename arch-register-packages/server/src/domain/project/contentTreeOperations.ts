@@ -119,8 +119,8 @@ export const deleteContentFolder = async (
         afterCommit: [
           {
             name: 'audit',
-            run: () =>
-              writeAudit(db, {
+            run: tx =>
+              writeAudit(tx, {
                 userId: authCtx.userId,
                 workspace: ws,
                 operation: 'delete',
@@ -196,8 +196,8 @@ export const deleteContentFile = async (
         afterCommit: [
           {
             name: 'audit',
-            run: () =>
-              writeAudit(db, {
+            run: tx =>
+              writeAudit(tx, {
                 userId: authCtx.userId,
                 workspace: ws,
                 operation: 'delete',
@@ -268,8 +268,8 @@ export const renameContentFolder = async (
         afterCommit: [
           {
             name: 'audit',
-            run: () =>
-              writeAudit(db, {
+            run: tx =>
+              writeAudit(tx, {
                 userId: authCtx.userId,
                 workspace: ws,
                 operation: 'update',

@@ -30,6 +30,16 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
     );
   }
 
+  async listUsersByIds(ids: string[]) {
+    if (ids.length === 0) return [];
+    const placeholders = ids.map(() => '?').join(', ');
+    return this.all(
+      `SELECT * FROM users WHERE id IN (${placeholders}) ORDER BY id`,
+      ids,
+      authMappers.user
+    );
+  }
+
   async createUser(input: UserDbCreate) {
     this.run(
       'INSERT INTO users (id, user_id, email, display_name, auth_provider, password_hash, oidc_issuer, oidc_subject, is_active, color, created_at, updated_at, last_login_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',

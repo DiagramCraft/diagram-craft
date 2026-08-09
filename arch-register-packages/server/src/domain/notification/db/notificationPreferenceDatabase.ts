@@ -28,6 +28,10 @@ export const notificationPreferenceMappers = {
 
 export type NotificationPreferenceDatabase = {
   listOverrides(userId: string, workspace: string): Promise<NotificationPreferenceDbResult[]>;
+  listOverridesForUsers(
+    userIds: string[],
+    workspace: string
+  ): Promise<NotificationPreferenceDbResult[]>;
   setOverrides(
     userId: string,
     workspace: string,

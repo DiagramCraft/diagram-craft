@@ -2,7 +2,8 @@ import { randomUUID } from 'node:crypto';
 import type {
   WatchDbCreate,
   WatchDatabase,
-  CreateNotificationsFromAuditInput
+  CreateNotificationsFromAuditInput,
+  WatcherEntityRow
 } from './watchDatabase';
 import { watchMappers } from './watchDatabase';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
@@ -16,6 +17,15 @@ export class PostgresWatchDatabase extends PostgresDatabaseBase implements Watch
       ORDER BY user_id
     `;
     return rows.map(row => row.user_id);
+  }
+
+  async listWatcherUserIdsForEntities(workspace: string, entityIds: string[]) {
+    if (entityIds.length === 0) return [];
+    return this.sql<WatcherEntityRow[]>`
+      SELECT user_id, entity_id FROM user_watch
+      WHERE workspace = ${workspace} AND entity_id = ANY(${entityIds})
+      ORDER BY entity_id, user_id
+    `;
   }
 
   async listWatches(userId: string, workspace: string) {

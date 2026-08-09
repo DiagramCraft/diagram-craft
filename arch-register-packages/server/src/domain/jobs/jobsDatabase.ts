@@ -89,6 +89,7 @@ export type JobRunDbResult = {
   error: string | null;
   attempt_count: number;
   max_attempts: number;
+  dedupe_key: string | null;
 };
 
 export type OneOffJobRunDbCreate = {
@@ -101,6 +102,7 @@ export type OneOffJobRunDbCreate = {
   planned_at: Date;
   created_at: Date;
   max_attempts: number;
+  dedupe_key?: string | null;
 };
 
 export type JobRunClaim = {
@@ -227,6 +229,7 @@ export const jobMappers = {
     result: row['result'] == null ? null : parseDatabaseJson(row['result'], {}, 'job_run.result'),
     error: row['error'] == null ? null : String(row['error']),
     attempt_count: Number(row['attempt_count'] ?? 0),
-    max_attempts: Number(row['max_attempts'] ?? 1)
+    max_attempts: Number(row['max_attempts'] ?? 1),
+    dedupe_key: row['dedupe_key'] == null ? null : String(row['dedupe_key'])
   })
 };

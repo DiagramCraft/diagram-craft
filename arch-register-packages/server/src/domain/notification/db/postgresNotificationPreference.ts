@@ -18,6 +18,15 @@ export class PostgresNotificationPreferenceDatabase
     return mapDatabaseRows(rows, notificationPreferenceMappers.preference);
   }
 
+  async listOverridesForUsers(userIds: string[], workspace: string) {
+    if (userIds.length === 0) return [];
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM user_notification_preference
+      WHERE workspace = ${workspace} AND user_id = ANY(${userIds})
+    `;
+    return mapDatabaseRows(rows, notificationPreferenceMappers.preference);
+  }
+
   async setOverrides(userId: string, workspace: string, entries: NotificationPreferenceOverride[]) {
     if (entries.length === 0) return;
     try {

@@ -139,6 +139,7 @@ export const enqueueOneOffJobRun = async (
     payload: Record<string, unknown>;
     priority?: number;
     maxAttempts?: number;
+    dedupeKey?: string | null;
   },
   now = new Date()
 ) => {
@@ -159,7 +160,8 @@ export const enqueueOneOffJobRun = async (
     priority,
     planned_at: now,
     created_at: now,
-    max_attempts: maxAttempts
+    max_attempts: maxAttempts,
+    dedupe_key: input.dedupeKey ?? null
   });
 };
 

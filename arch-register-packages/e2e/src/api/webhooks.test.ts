@@ -3,6 +3,7 @@ import { afterAll, beforeAll } from 'vitest';
 import { logAudit } from '@arch-register/server/domain/audit/db/auditLogging';
 import { seedIds, TEST_ADMIN } from '../helpers/seedHelper';
 import { AUDIT_ENTITY_1_ID } from '../helpers/testIds';
+import { drainAuditFanoutJobs } from '../helpers/auditJobs';
 
 const test = createApiTest();
 const originalNodeEnv = process.env['NODE_ENV'];
@@ -77,6 +78,7 @@ test.describe('workspace webhooks', () => {
       schemaId: null,
       changes: { new: { _name: 'Webhook test entity' } }
     });
+    await drainAuditFanoutJobs(server.db, seedIds.workspace.default);
     const page = await server.db.jobs.listRuns(seedIds.workspace.default, {
       limit: 20,
       offset: 0

@@ -84,8 +84,8 @@ export const uploadContentFile = async (
     afterCommit: [
       {
         name: 'audit',
-        run: () =>
-          writeAudit(db, {
+        run: tx =>
+          writeAudit(tx, {
             userId: authCtx.userId,
             workspace: ws,
             operation: existingFile ? 'update' : 'create',
