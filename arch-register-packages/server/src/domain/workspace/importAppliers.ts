@@ -41,6 +41,7 @@ import { requireTypedRelationEdit } from '../catalog/relationAccessControl';
 import { listAllRelations } from '../catalog/relationOperations';
 import { assertResolvedFieldGroupReferences } from '../catalog/schemaHelpers';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
+import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 
 type ImportResolution = { action: string; new_name?: string };
 
@@ -924,79 +925,94 @@ export const importContentNodes = async (
       entity_id: entityId
     });
 
-    const row = await db.project.upsertContentNode({
-      id: nextId,
-      workspace,
-      project_id: projectId,
-      entity_id: entityId,
-      parent_id: parentId,
-      path: node.path,
-      name: node.name,
-      type: node.type,
-      size_bytes: node.size_bytes,
-      comment_count: 0,
-      unresolved_comment_count: 0,
-      created_atIfNew: now,
-      updated_at: now,
-      created_byIfNew: null,
-      updated_by: authCtx.userId
-    } satisfies ContentNodeDbUpsert);
-
-    if (node.content_file && contentFiles?.has(node.content_file) && storage) {
-      await storage.write(
-        workspace,
-        storageProjectId,
-        row.id,
-        contentFiles.get(node.content_file)!
-      );
-    }
-
-    if (node.type !== 'folder') {
-      const previewBuffer = node.preview_file ? contentFiles?.get(node.preview_file) : undefined;
-      const previewSvg = previewBuffer ? previewBuffer.toString('utf8') : null;
-
-      if (projectId) {
-        await db.project.updateContentNodeDerivedData(
+    const content =
+      node.content_file && contentFiles?.has(node.content_file)
+        ? contentFiles.get(node.content_file)!
+        : undefined;
+    const previewBuffer = node.preview_file ? contentFiles?.get(node.preview_file) : undefined;
+    const previewSvg = previewBuffer ? previewBuffer.toString('utf8') : null;
+    let row!: Awaited<ReturnType<DatabaseAdapter['project']['upsertContentNode']>>;
+    await coordinateContentWrite({
+      db,
+      storage,
+      operation: 'workspace-import-content-node',
+      scope: projectId ? 'project' : entityId ? 'entity' : 'workspace',
+      nodeIds: [nextId],
+      storageChanges:
+        content && storage
+          ? [
+              {
+                type: 'write' as const,
+                workspace,
+                storageId: storageProjectId,
+                nodeId: nextId,
+                content
+              }
+            ]
+          : undefined,
+      writeDatabase: async tx => {
+        row = await tx.project.upsertContentNode({
+          id: nextId,
           workspace,
-          storageProjectId,
-          row.id,
-          node.size_bytes,
-          0,
-          0,
-          previewSvg,
-          now
-        );
-        await db.project.updateContentNodeTemplateStatus(
-          workspace,
-          storageProjectId,
-          row.id,
-          node.is_template,
-          node.is_workspace_template,
-          now
-        );
-      } else if (entityId) {
-        await db.project.updateContentNodeDerivedData(
-          workspace,
-          storageProjectId,
-          row.id,
-          node.size_bytes,
-          0,
-          0,
-          previewSvg,
-          now
-        );
-      } else {
-        await db.project.updateWorkspaceContentNodeDerivedData(
-          workspace,
-          row.id,
-          node.size_bytes,
-          0,
-          0,
-          previewSvg,
-          now
-        );
+          project_id: projectId,
+          entity_id: entityId,
+          parent_id: parentId,
+          path: node.path,
+          name: node.name,
+          type: node.type,
+          size_bytes: node.size_bytes,
+          comment_count: 0,
+          unresolved_comment_count: 0,
+          created_atIfNew: now,
+          updated_at: now,
+          created_byIfNew: null,
+          updated_by: authCtx.userId
+        } satisfies ContentNodeDbUpsert);
+        if (node.type !== 'folder') {
+          if (projectId) {
+            await tx.project.updateContentNodeDerivedData(
+              workspace,
+              storageProjectId,
+              row.id,
+              node.size_bytes,
+              0,
+              0,
+              previewSvg,
+              now
+            );
+            await tx.project.updateContentNodeTemplateStatus(
+              workspace,
+              storageProjectId,
+              row.id,
+              node.is_template,
+              node.is_workspace_template,
+              now
+            );
+          } else if (entityId) {
+            await tx.project.updateContentNodeDerivedData(
+              workspace,
+              storageProjectId,
+              row.id,
+              node.size_bytes,
+              0,
+              0,
+              previewSvg,
+              now
+            );
+          } else {
+            await tx.project.updateWorkspaceContentNodeDerivedData(
+              workspace,
+              row.id,
+              node.size_bytes,
+              0,
+              0,
+              previewSvg,
+              now
+            );
+          }
+        }
       }
-    }
+    });
 
     if (existing) {
       updated++;

@@ -275,8 +275,8 @@ describe('createFromTemplate', () => {
     expect(storage.write).not.toHaveBeenCalled();
   });
 
-  it('deletes the inserted node when storage write fails', async () => {
-    const { db, deleteContentNodeByPath } = makeDb();
+  it('does not insert a node when storage write fails', async () => {
+    const { db, deleteContentNodeByPath, upsertContentNode } = makeDb();
     const storage = {
       read: vi.fn(async () => Buffer.from(JSON.stringify(makeValidDocument()), 'utf8')),
       write: vi.fn(async () => {
@@ -301,11 +301,8 @@ describe('createFromTemplate', () => {
       message: 'Failed to create from template'
     });
 
-    expect(deleteContentNodeByPath).toHaveBeenCalledWith(
-      'ws-1',
-      'source-project',
-      'New Diagram.json'
-    );
+    expect(upsertContentNode).not.toHaveBeenCalled();
+    expect(deleteContentNodeByPath).not.toHaveBeenCalled();
   });
 
   it('creates a new diagram from a workspace template in another project', async () => {

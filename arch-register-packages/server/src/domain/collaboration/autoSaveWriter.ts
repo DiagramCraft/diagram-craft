@@ -7,6 +7,7 @@ import type { StorageAdapter } from '../../storage/storage';
 import { createLogger } from '../../utils/logger';
 import type { AutoSaveWriter } from './diagramAutoSave';
 import { parseRoomPath } from './roomPath';
+import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 
 const logger = createLogger('CollaborationAutoSave');
 
@@ -40,8 +41,6 @@ export const createAutoSaveWriter = (
     const buf = Buffer.from(content, 'utf8');
     const updatedAt = new Date();
     const scope = storageScope(workspace, node);
-    await storage.write(workspace, scope, node.id, buf);
-
     let commentCount = 0;
     let unresolvedCommentCount = 0;
     let previewSvg: string | null = null;
@@ -57,27 +56,39 @@ export const createAutoSaveWriter = (
       // clear derived preview/count data.
     }
 
-    if (node.project_id || node.entity_id) {
-      await db.project.updateContentNodeDerivedData(
-        workspace,
-        scope,
-        node.id,
-        buf.length,
-        commentCount,
-        unresolvedCommentCount,
-        previewSvg,
-        updatedAt
-      );
-    } else {
-      await db.project.updateWorkspaceContentNodeDerivedData(
-        workspace,
-        node.id,
-        buf.length,
-        commentCount,
-        unresolvedCommentCount,
-        previewSvg,
-        updatedAt
-      );
-    }
+    await coordinateContentWrite({
+      db,
+      storage,
+      operation: 'collaboration-autosave',
+      scope: node.project_id ? 'project' : node.entity_id ? 'entity' : 'workspace',
+      nodeIds: [node.id],
+      storageChanges: [
+        { type: 'write', workspace, storageId: scope, nodeId: node.id, content: buf }
+      ],
+      writeDatabase: async tx => {
+        if (node.project_id || node.entity_id) {
+          await tx.project.updateContentNodeDerivedData(
+            workspace,
+            scope,
+            node.id,
+            buf.length,
+            commentCount,
+            unresolvedCommentCount,
+            previewSvg,
+            updatedAt
+          );
+        } else {
+          await tx.project.updateWorkspaceContentNodeDerivedData(
+            workspace,
+            node.id,
+            buf.length,
+            commentCount,
+            unresolvedCommentCount,
+            previewSvg,
+            updatedAt
+          );
+        }
+      }
+    });
   };
 };

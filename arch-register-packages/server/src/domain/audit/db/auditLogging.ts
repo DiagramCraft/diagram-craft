@@ -30,6 +30,7 @@ type AuditLogParams = {
     new?: Record<string, unknown>;
   };
   metadata?: Record<string, unknown>;
+  dedupeKey?: string;
 };
 
 /**
@@ -64,7 +65,8 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
       entitySlug = null,
       schemaId = null,
       changes,
-      metadata = {}
+      metadata = {},
+      dedupeKey
     } = params;
 
     const auditLog = await tx.audit.createAuditLog({
@@ -78,7 +80,8 @@ export const writeAudit = async (db: DatabaseAdapter, params: AuditLogParams): P
       entity_slug: entitySlug,
       schema_id: schemaId,
       changes,
-      metadata
+      metadata,
+      dedupe_key: dedupeKey ?? null
     });
 
     // Some focused unit tests use partial database doubles without the webhook

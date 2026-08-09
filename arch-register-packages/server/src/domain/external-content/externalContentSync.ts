@@ -2,7 +2,10 @@ import { randomUUID } from 'node:crypto';
 import { basename, dirname } from 'node:path';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
-import { coordinateContentWrite } from '../project/contentWriteCoordinator';
+import {
+  coordinateContentWrite,
+  type ContentStorageChange
+} from '../project/contentWriteCoordinator';
 import { syncDiagramContentMetadata } from '../project/projectOperationHelpers';
 import { isMarkdownPath, stripMarkdownExtension } from '../project/contentFileHelpers';
 import type { ExternalContentMountDbResult } from './db/externalContentDatabase';
@@ -150,7 +153,7 @@ const syncMount = async (
   const stale = existing
     .filter(node => !nodeIds.has(node.path))
     .sort((a, b) => b.path.length - a.path.length);
-  const storageChanges = upserts
+  const storageChanges: ContentStorageChange[] = upserts
     .filter(item => item.content)
     .map(item => ({
       type: 'write' as const,
@@ -159,6 +162,16 @@ const syncMount = async (
       nodeId: nodeIds.get(item.path)!,
       content: item.content!
     }));
+  storageChanges.push(
+    ...stale
+      .filter(node => node.type !== 'folder')
+      .map(node => ({
+        type: 'delete' as const,
+        workspace: mount.workspace,
+        storageId: scope.storage_id,
+        nodeId: node.id
+      }))
+  );
 
   await coordinateContentWrite({
     db,
@@ -236,11 +249,6 @@ const syncMount = async (
       });
     }
   });
-  for (const node of stale) {
-    throwIfAborted(signal);
-    if (node.type !== 'folder')
-      await storage.delete(mount.workspace, scope.storage_id, node.id).catch(() => undefined);
-  }
   return { files: desired.desiredFiles.size, folders: desired.folders.length };
 };
 

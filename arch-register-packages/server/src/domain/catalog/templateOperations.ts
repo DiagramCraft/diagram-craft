@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import {
@@ -7,6 +8,7 @@ import {
   requireWorkspaceAdmin
 } from '../auth/authorization';
 import { defineOperation } from '../operation';
+import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 import { httpAssert } from '../../utils/httpAssert';
 import { HTTPError } from 'h3';
 import {
@@ -281,70 +283,81 @@ export const createFromTemplate = async (
 
       const doc = fileData;
       const commentCounts = getDiagramCommentCounts(doc);
+      const nodeId = randomUUID();
 
-      const row = await db.project.upsertContentNode({
-        workspace: ws,
-        project_id: projectId,
-        path: newPath,
-        name,
-        size_bytes: newContent.length,
-        comment_count: commentCounts.commentCount,
-        unresolved_comment_count: commentCounts.unresolvedCommentCount,
-        created_atIfNew: timestamp,
-        updated_at: timestamp
-      });
-
-      try {
-        await storage.write(ws, projectId, row.id, newContent);
-      } catch (error) {
-        await db.project.deleteContentNodeByPath(ws, projectId, newPath).catch(() => {});
-        throw error;
-      }
-
-      try {
-        const { generateAccurateSvgPreview } = await import('../diagram/serverDiagramRenderer');
-        const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-        const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
-        await db.project.updateContentNodeDerivedData(
-          ws,
-          projectId,
-          row.id,
-          newContent.length,
-          commentCounts.commentCount,
-          commentCounts.unresolvedCommentCount,
-          previewSvg ?? null,
-          timestamp
-        );
-      } catch {
-        await db.project.updateContentNodeDerivedData(
-          ws,
-          projectId,
-          row.id,
-          newContent.length,
-          commentCounts.commentCount,
-          commentCounts.unresolvedCommentCount,
-          null,
-          timestamp
-        );
-      }
-
-      const { logAudit, extractEntityFields } = await import('../audit/db/auditLogging');
-      await logAudit(db, {
-        userId: authCtx.userId,
-        workspace: ws,
-        operation: 'create',
-        entityType: 'content_node',
-        entityId: row.id,
-        entityName: row.name,
-        changes: {
-          new: extractEntityFields(row)
+      let row!: Awaited<ReturnType<DatabaseAdapter['project']['upsertContentNode']>>;
+      await coordinateContentWrite({
+        db,
+        storage,
+        operation: 'create-from-template',
+        scope: 'project',
+        nodeIds: [nodeId],
+        storageChanges: [
+          {
+            type: 'write',
+            workspace: ws,
+            storageId: projectId,
+            nodeId,
+            content: newContent
+          }
+        ],
+        writeDatabase: async tx => {
+          row = await tx.project.upsertContentNode({
+            workspace: ws,
+            id: nodeId,
+            project_id: projectId,
+            path: newPath,
+            name,
+            size_bytes: newContent.length,
+            comment_count: commentCounts.commentCount,
+            unresolved_comment_count: commentCounts.unresolvedCommentCount,
+            created_atIfNew: timestamp,
+            updated_at: timestamp
+          });
         },
-        metadata: {
-          project_id: projectId,
-          path: newPath,
-          created_from_template: templatePath,
-          template_project_id: templateProjectId
-        }
+        afterCommit: [
+          {
+            name: 'preview',
+            run: async () => {
+              const { generateAccurateSvgPreview } = await import(
+                '../diagram/serverDiagramRenderer'
+              );
+              const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
+              const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
+              await db.project.updateContentNodeDerivedData(
+                ws,
+                projectId,
+                row.id,
+                newContent.length,
+                commentCounts.commentCount,
+                commentCounts.unresolvedCommentCount,
+                previewSvg ?? null,
+                timestamp
+              );
+            }
+          },
+          {
+            name: 'audit',
+            run: async () => {
+              const { logAudit, extractEntityFields } = await import('../audit/db/auditLogging');
+              await logAudit(db, {
+                userId: authCtx.userId,
+                workspace: ws,
+                operation: 'create',
+                entityType: 'content_node',
+                entityId: row.id,
+                entityName: row.name,
+                changes: { new: extractEntityFields(row) },
+                metadata: {
+                  project_id: projectId,
+                  path: newPath,
+                  created_from_template: templatePath,
+                  template_project_id: templateProjectId
+                }
+              });
+            }
+          }
+        ]
       });
 
       const { toApiProjectFile } = await import('../project/projectHelpers');

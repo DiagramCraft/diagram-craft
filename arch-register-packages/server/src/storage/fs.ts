@@ -1,7 +1,12 @@
 import { join, resolve, dirname, sep } from 'node:path';
 import { randomUUID } from 'node:crypto';
-import { mkdir, readFile, writeFile, unlink, rm, rename } from 'node:fs/promises';
-import type { StagedStorageMutation, StorageAdapter } from './storage.types';
+import { access, mkdir, readFile, writeFile, unlink, rm, rename } from 'node:fs/promises';
+import type {
+  StagedStorageMutation,
+  StorageAdapter,
+  StorageReconciliationAction,
+  StorageReconciliationOperation
+} from './storage.types';
 
 const ignoreMissing = async (operation: () => Promise<void>) => {
   try {
@@ -90,12 +95,12 @@ export class FilesystemStorage implements StorageAdapter {
     workspace: string,
     projectId: string,
     fileId: string,
-    content: Buffer
+    content: Buffer,
+    operationId = randomUUID()
   ): Promise<StagedStorageMutation> {
     const target = this.resolvePath(workspace, projectId, fileId);
-    const suffix = randomUUID();
-    const staged = `${target}.staged-${suffix}`;
-    const backup = `${target}.backup-${suffix}`;
+    const staged = `${target}.staged-${operationId}`;
+    const backup = `${target}.backup-${operationId}`;
     await mkdir(dirname(target), { recursive: true });
     await writeFile(staged, content);
     let committed = false;
@@ -132,18 +137,30 @@ export class FilesystemStorage implements StorageAdapter {
   async stageDelete(
     workspace: string,
     projectId: string,
-    fileId: string
+    fileId: string,
+    operationId = randomUUID()
   ): Promise<StagedStorageMutation> {
     const target = this.resolvePath(workspace, projectId, fileId);
-    const quarantine = `${target}.deleted-${randomUUID()}`;
+    const quarantine = `${target}.deleted-${operationId}`;
     let committed = false;
     return {
       commit: async () => {
-        await rename(target, quarantine);
-        committed = true;
+        try {
+          await rename(target, quarantine);
+          committed = true;
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code === 'ENOENT') committed = true;
+          else throw error;
+        }
       },
       rollback: async () => {
-        if (committed) await rename(quarantine, target);
+        if (committed) {
+          try {
+            await rename(quarantine, target);
+          } catch (error) {
+            if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+          }
+        }
       },
       finalize: async () => {
         await ignoreMissing(() => unlink(quarantine));
@@ -157,5 +174,67 @@ export class FilesystemStorage implements StorageAdapter {
 
   async deleteAll(workspace: string, projectId: string): Promise<void> {
     await rm(this.resolvePath(workspace, projectId, ''), { recursive: true, force: true });
+  }
+
+  async reconcile(
+    operation: StorageReconciliationOperation,
+    action: StorageReconciliationAction
+  ): Promise<void> {
+    const target = this.resolvePath(operation.workspace, operation.projectId, operation.fileId);
+    const staged = `${target}.staged-${operation.operationId}`;
+    const backup = `${target}.backup-${operation.operationId}`;
+    const quarantine = `${target}.deleted-${operation.operationId}`;
+
+    if (operation.action === 'write') {
+      if (action === 'commit') {
+        try {
+          await rename(target, backup);
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        }
+        try {
+          await rename(staged, target);
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        }
+        return;
+      }
+      if (action === 'rollback') {
+        let hasBackup = true;
+        try {
+          await access(backup);
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code === 'ENOENT') hasBackup = false;
+          else throw error;
+        }
+        await ignoreMissing(() => unlink(staged));
+        if (hasBackup) await ignoreMissing(() => unlink(target));
+        try {
+          if (hasBackup) await rename(backup, target);
+        } catch (error) {
+          if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+        }
+        return;
+      }
+      await ignoreMissing(() => unlink(staged));
+      await ignoreMissing(() => unlink(backup));
+      return;
+    }
+
+    if (action === 'commit') {
+      try {
+        await rename(target, quarantine);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      }
+    } else if (action === 'rollback') {
+      try {
+        await rename(quarantine, target);
+      } catch (error) {
+        if ((error as NodeJS.ErrnoException).code !== 'ENOENT') throw error;
+      }
+    } else {
+      await ignoreMissing(() => unlink(quarantine));
+    }
   }
 }
