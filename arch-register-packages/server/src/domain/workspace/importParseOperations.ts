@@ -19,7 +19,6 @@ import type {
   ImportDiagnostic,
   ExportDocumentData
 } from './exportTypes';
-import type { SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
 import { findUnresolvedFieldGroupReferences } from '../catalog/schemaHelpers';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 
@@ -461,8 +460,8 @@ const validateSchemas = async (
       });
     }
 
-    const fields = schema.fields as SchemaField[];
-    const groups = (schema.groups ?? []) as SchemaGroup[];
+    const fields = schema.fields;
+    const groups = schema.groups ?? [];
     const unresolved = findUnresolvedFieldGroupReferences(fields, groups);
     errors.push(
       ...unresolved.map(
@@ -564,8 +563,8 @@ const validateRelationSchemas = async (
     }
 
     const unresolved = findUnresolvedFieldGroupReferences(
-      relationSchema.fields as Array<{ id: string; name?: string; groupId?: string }>,
-      (relationSchema.groups ?? []) as SchemaGroup[]
+      relationSchema.fields,
+      relationSchema.groups ?? []
     );
     errors.push(
       ...unresolved.map(
@@ -638,7 +637,7 @@ const validateEntities = async (
 
 const listAllRelations = async (db: DatabaseAdapter, workspace: string) => {
   const pageSize = 200;
-  const relations = [] as Awaited<ReturnType<typeof db.relation.listRelations>>['items'];
+  const relations: Awaited<ReturnType<typeof db.relation.listRelations>>['items'] = [];
   let offset = 0;
   while (true) {
     const page = await db.relation.listRelations(

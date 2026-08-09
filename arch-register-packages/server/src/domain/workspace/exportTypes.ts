@@ -7,6 +7,17 @@ import type {
   DocumentMetadata
 } from '@arch-register/api-types/documentContract';
 import type { GovernanceWorkflowConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
+import type {
+  EntityTemplate,
+  SchemaField,
+  SchemaGroup,
+  SharedFieldGroupLink
+} from '@arch-register/api-types/schemaContract';
+import type { EntityLink } from '@arch-register/api-types/entityContract';
+import type {
+  RelationField,
+  RelationSchemaGroup
+} from '@arch-register/api-types/relationSchemaContract';
 
 export type ExportDataType =
   | 'config'
@@ -87,11 +98,11 @@ export type ExportConfig = {
 export type ExportSchema = {
   id: string;
   name: string;
-  fields: unknown[];
-  groups?: import('@arch-register/api-types/schemaContract').SchemaGroup[];
-  shared_field_group_links?: import('@arch-register/api-types/schemaContract').SharedFieldGroupLink[];
+  fields: SchemaField[];
+  groups?: SchemaGroup[];
+  shared_field_group_links?: SharedFieldGroupLink[];
   shared_field_groups?: ExportSharedFieldGroup[];
-  templates?: import('@arch-register/api-types/schemaContract').EntityTemplate[];
+  templates?: EntityTemplate[];
   color: string | null;
   icon: string | null;
   default_owner: string | null;
@@ -111,9 +122,9 @@ export type ExportRelationSchema = {
   description: string;
   in_schema_ids: string[] | 'any';
   out_schema_ids: string[] | 'any';
-  fields: unknown[];
-  groups?: import('@arch-register/api-types/relationSchemaContract').RelationSchemaGroup[];
-  shared_field_group_links?: import('@arch-register/api-types/schemaContract').SharedFieldGroupLink[];
+  fields: RelationField[];
+  groups?: RelationSchemaGroup[];
+  shared_field_group_links?: SharedFieldGroupLink[];
   shared_field_groups?: ExportSharedFieldGroup[];
   color: string | null;
   icon: string | null;
@@ -125,7 +136,7 @@ export type ExportSharedFieldGroup = {
   id: string;
   name: string;
   description: string | null;
-  fields: unknown[];
+  fields: SchemaField[];
   sort_order: number;
 };
 
@@ -142,7 +153,7 @@ export type ExportEntity = {
   target_lifecycle: string | null;
   target_lifecycle_date: string | null;
   tags: string[];
-  links: unknown[];
+  links: EntityLink[];
   data: Record<string, unknown>;
   project_id: string | null;
   grants?: Array<{

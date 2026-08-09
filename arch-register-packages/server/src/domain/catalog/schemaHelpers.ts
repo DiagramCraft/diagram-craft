@@ -284,7 +284,7 @@ export const clearOrphanedGroupIds = <F extends { groupId?: string }>(
 
 export const findUnresolvedFieldGroupReferences = (
   fields: Array<{ id: string; name?: string; groupId?: string }>,
-  groups: SchemaGroup[]
+  groups: Array<{ id: string }>
 ) => {
   const groupIds = new Set(groups.map(group => group.id));
   return fields.flatMap(field =>
@@ -296,7 +296,7 @@ export const findUnresolvedFieldGroupReferences = (
 
 export const assertResolvedFieldGroupReferences = (
   fields: Array<{ id: string; name?: string; groupId?: string }>,
-  groups: SchemaGroup[]
+  groups: Array<{ id: string }>
 ) => {
   const unresolved = findUnresolvedFieldGroupReferences(fields, groups);
   httpAssert.true(unresolved.length === 0, {

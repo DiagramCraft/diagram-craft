@@ -61,7 +61,7 @@ export type AiMessageDbCreate = {
 export const aiMappers = {
   config: (row: DatabaseRow): AiConfigDbResult => ({
     workspace: String(row['workspace']),
-    provider: String(row['provider']) as AiConfigDbResult['provider'],
+    provider: databaseEnum(row['provider'], AI_PROVIDERS, 'ai_config.provider'),
     api_key_enc: row['api_key_enc'] == null ? null : String(row['api_key_enc']),
     base_url: row['base_url'] == null ? null : String(row['base_url']),
     model: row['model'] == null ? null : String(row['model']),
@@ -82,9 +82,9 @@ export const aiMappers = {
   message: (row: DatabaseRow): AiMessageDbResult => ({
     id: String(row['id']),
     conversation_id: String(row['conversation_id']),
-    role: String(row['role']) as AiMessageDbResult['role'],
+    role: databaseEnum(row['role'], AI_MESSAGE_ROLES, 'ai_message.role'),
     content: String(row['content']),
-    metadata: parseDatabaseJson(row['metadata'], {}, 'ai_message.metadata'),
+    metadata: parseDatabaseJsonWithGuard(row['metadata'], {}, 'ai_message.metadata', isMetadata),
     created_at: databaseDate(row['created_at'])
   })
 };
@@ -109,8 +109,14 @@ export type AiDatabase = {
   createMessage(input: AiMessageDbCreate): Promise<AiMessageDbResult>;
 };
 import {
+  databaseEnum,
   databaseBoolean,
   databaseDate,
-  parseDatabaseJson,
+  parseDatabaseJsonWithGuard,
   type DatabaseRow
 } from '../../../db/rowMappers';
+
+const AI_PROVIDERS = ['openrouter', 'openai'] as const;
+const AI_MESSAGE_ROLES = ['system', 'user', 'assistant'] as const;
+const isMetadata = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object' && !Array.isArray(value);

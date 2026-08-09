@@ -2,7 +2,7 @@ import { createOpenRouterText, openRouterText } from '@tanstack/ai-openrouter';
 import { createOpenaiChat, openaiText } from '@tanstack/ai-openai';
 import { decrypt } from '../../utils/encryption';
 import type { DatabaseAdapter } from '../../db/database';
-import { AiProvider } from '@arch-register/api-types/aiContract';
+import type { AiProvider } from '@arch-register/api-types/aiContract';
 
 export type EffectiveAiConfig = {
   provider: AiProvider;
@@ -17,13 +17,24 @@ const DEFAULT_OPENROUTER_MODEL = 'anthropic/claude-sonnet-4-20250514';
 const DEFAULT_OPENAI_MODEL = 'gpt-4o';
 const DEFAULT_TEMPERATURE = 0.7;
 
+type OpenAIModel = Parameters<typeof openaiText>[0];
+type OpenRouterModel = Parameters<typeof openRouterText>[0];
+
+/**
+ * The TanStack provider packages model their built-in model catalogue as a tuple,
+ * while OpenAI-compatible endpoints and OpenRouter accept configured model IDs.
+ * Keep that SDK interop assertion in one small, reviewed boundary.
+ */
+const configuredOpenAIModel = (model: string): OpenAIModel => model as OpenAIModel;
+const configuredOpenRouterModel = (model: string): OpenRouterModel => model as OpenRouterModel;
+
 export const resolveAiConfig = async (
   db: DatabaseAdapter,
   workspaceId: string
 ): Promise<EffectiveAiConfig | null> => {
   const wsConfig = await db.ai.getAiConfig(workspaceId);
   if (wsConfig?.enabled === false) return null;
-  const provider = (wsConfig?.provider ?? 'openrouter') as AiProvider;
+  const provider: AiProvider = wsConfig?.provider ?? 'openrouter';
 
   const apiKey = wsConfig?.api_key_enc
     ? decrypt(wsConfig.api_key_enc)
@@ -53,21 +64,18 @@ export const resolveAiConfig = async (
 export const createAiTextAdapter = (config: EffectiveAiConfig) => {
   if (config.provider === 'openai') {
     if (config.apiKey === process.env['OPENAI_API_KEY']) {
-      return openaiText(config.model as Parameters<typeof openaiText>[0], {
+      return openaiText(configuredOpenAIModel(config.model), {
         ...(config.baseUrl ? { baseURL: config.baseUrl } : {})
       });
     }
-    return createOpenaiChat(config.model as Parameters<typeof createOpenaiChat>[0], config.apiKey, {
+    return createOpenaiChat(configuredOpenAIModel(config.model), config.apiKey, {
       ...(config.baseUrl ? { baseURL: config.baseUrl } : {})
     });
   }
 
   // OpenRouter (default)
   if (config.apiKey === process.env['OPENROUTER_API_KEY']) {
-    return openRouterText(config.model as Parameters<typeof openRouterText>[0]);
+    return openRouterText(configuredOpenRouterModel(config.model));
   }
-  return createOpenRouterText(
-    config.model as Parameters<typeof createOpenRouterText>[0],
-    config.apiKey
-  );
+  return createOpenRouterText(configuredOpenRouterModel(config.model), config.apiKey);
 };

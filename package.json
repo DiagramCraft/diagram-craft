@@ -19,7 +19,7 @@
     "test:watch": "vitest watch",
     "test:bench": "vitest bench --run",
     "lint:tsc": "tsc --noEmit",
-    "lint": "biome lint --max-diagnostics=100 && pnpm lint:tsc",
+    "lint": "biome lint --max-diagnostics=100 && pnpm lint:tsc && pnpm --filter @arch-register/server lint:runtime-boundaries",
     "format": "biome format --write",
     "format:check": "biome format",
     "docs:typedoc": "pnpm --filter docs-site typedoc",

@@ -3,30 +3,55 @@ import { WorkspaceAiConfig } from '@arch-register/api-types/aiContract';
 import type { AiConfigInputDbUpsert } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { encrypt } from '../../utils/encryption';
+import type { ModelMessage, UIMessage } from '@tanstack/ai';
+import { aiChatMessageSchema, type AiChatMessage } from '@arch-register/api-types/aiContract';
+import { z } from 'zod';
 
-export const extractUserTextContent = (message: {
-  content?: unknown;
-  parts?: Array<{ type?: string; content?: string }>;
-}): string => {
-  if (Array.isArray(message.parts)) {
-    return message.parts
-      .filter(part => part.type === 'text')
-      .map(part => part.content ?? '')
+const isRecord = (value: unknown): value is Record<string, unknown> =>
+  value !== null && typeof value === 'object';
+
+const extractedEntitySchema = z.object({
+  name: z.string(),
+  schema_id: z.string(),
+  fields: z.record(z.string(), z.unknown()).optional(),
+  confidence: z.number().min(0).max(1).optional(),
+  source: z.string().optional()
+});
+
+export const parseAiChatMessages = (messages: AiChatMessage[]): Array<ModelMessage | UIMessage> =>
+  messages as Array<ModelMessage | UIMessage>;
+
+export const parseAiChatMessagesFromUnknown = (
+  messages: unknown
+): Array<ModelMessage | UIMessage> => {
+  const parsed = aiChatMessageSchema.array().safeParse(messages);
+  if (!parsed.success) {
+    throw new Error('Invalid AI chat messages');
+  }
+  return parseAiChatMessages(parsed.data);
+};
+
+export const extractUserTextContent = (message: unknown): string => {
+  if (!isRecord(message)) return '';
+
+  const parts = message['parts'];
+  if (Array.isArray(parts)) {
+    return parts
+      .filter(isRecord)
+      .filter(part => part['type'] === 'text')
+      .map(part => (typeof part['content'] === 'string' ? part['content'] : ''))
       .join('');
   }
 
-  const content = message.content;
+  const content = message['content'];
   if (typeof content === 'string') {
     return content;
   }
   if (Array.isArray(content)) {
     return content
-      .filter(
-        (part): part is { type?: string; content?: string } =>
-          part != null && typeof part === 'object'
-      )
-      .filter(part => part.type === 'text')
-      .map(part => part.content ?? '')
+      .filter(isRecord)
+      .filter(part => part['type'] === 'text')
+      .map(part => (typeof part['content'] === 'string' ? part['content'] : ''))
       .join('');
   }
   return '';
@@ -128,7 +153,8 @@ export const parseExtractResponse = (result: string) => {
   try {
     const jsonMatch = result.match(/\[[\s\S]*\]/);
     if (jsonMatch) {
-      return { entities: JSON.parse(jsonMatch[0]) };
+      const parsed = extractedEntitySchema.array().safeParse(JSON.parse(jsonMatch[0]));
+      if (parsed.success) return { entities: parsed.data };
     }
     return { entities: [], raw: result };
   } catch {
