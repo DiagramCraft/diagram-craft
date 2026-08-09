@@ -58,7 +58,8 @@ const stageStorageChange = async (
       );
     }
     return {
-      commit: () => storage.write(change.workspace, change.storageId, change.nodeId, change.content),
+      commit: () =>
+        storage.write(change.workspace, change.storageId, change.nodeId, change.content),
       rollback: async () => undefined,
       finalize: async () => undefined
     };
