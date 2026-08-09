@@ -28,6 +28,7 @@ import {
 } from '../domain/catalog/db/catalogDatabase';
 import { ChangeCaseDbCreate } from '../domain/catalog/db/changeCaseDatabase';
 import { computeEntityCompleteness } from '../utils/completeness';
+import { materializeDerivedFields } from '../domain/derived/derivedFields';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import type {
   RelationSchemaDbResult,
@@ -47,6 +48,7 @@ import {
 import { AuditOperation } from '../domain/audit/db/auditDatabase';
 import { GlobalRoleAssignmentDbResult } from '../domain/auth/db/authDatabase';
 import { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
+import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import {
   seededAssessments,
   seededProjects,
@@ -3551,7 +3553,16 @@ export const seedEntities: Entity[] = seedEntitiesRaw.map(entity => {
   const schema = seedSchemaById.get(entity.schema_id);
   if (!schema)
     throw new Error(`Seed entity '${entity.id}' references unknown schema '${entity.schema_id}'`);
-  return { ...entity, completeness: computeEntityCompleteness(entity, schema) };
+  // Seed fixtures are inserted directly (bootstrapSeed.ts), bypassing the normal create path that
+  // materializes `type: 'derived'` fields on write - do it here so seeded entities carry computed
+  // derived values (e.g. Risk's residual_risk_score) just like entities created through the app.
+  const data = materializeDerivedFields(
+    schema.fields,
+    entity.data,
+    { objectType: 'entity', objectId: entity.id },
+    schema.groups
+  );
+  return { ...entity, data, completeness: computeEntityCompleteness({ ...entity, data }, schema) };
 });
 
 export const seedProjects: ProjectDbCreate[] = [
@@ -4299,6 +4310,126 @@ export const seedAssessments: AssessmentDbCreate[] = [
     next_occurrence_at: null,
     created_at: now,
     updated_at: now
+  },
+  {
+    // Past-due, still-open assessment scoped to the Risk and Control schemas - gives the
+    // OverdueReviews dashboard widget (#2848) something to show in the demo dataset.
+    id: '00000000-0000-0000-0023-000000000001',
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.authMigration.id,
+    name: 'Quarterly risk and control review',
+    description: 'Reassess risk scores and control effectiveness for the auth migration.',
+    status: 'open',
+    mode: 'confirm',
+    scope: ['00000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000014'],
+    scope_conditions: [],
+    fields: [],
+    groups: [],
+    assigned_team_ids: [],
+    due_at: new Date('2026-01-15T00:00:00.000Z'),
+    recurrence: { type: 'monthly', intervalMonths: 3 },
+    response_window_days: null,
+    current_occurrence: 1,
+    pending_occurrence_job_run_id: null,
+    next_occurrence_at: null,
+    created_at: now,
+    updated_at: now
+  }
+];
+
+// The default workspace's "Overview" dashboard is otherwise seeded lazily on first client visit
+// (see web's DEFAULT_SEEDED_WIDGETS) - this pre-seeds it here with the same starter widgets plus
+// three generic, risk-schema-agnostic dashboard widgets (TopEntities, AggregateStat,
+// OverdueReviews - see #2848) configured against the risk-and-compliance schemas above, purely as
+// example seed data showing how those generic widgets can be used to track risk and compliance.
+export const seedWorkspaceDashboards: {
+  id: string;
+  workspace: string;
+  name: string;
+  sort_order: number;
+  layout: DashboardWidget[];
+}[] = [
+  {
+    id: '00000000-0000-0000-0022-000000000001',
+    workspace: WORKSPACE_ID,
+    name: 'Overview',
+    sort_order: 0,
+    layout: [
+      {
+        id: 'default-entity-count',
+        type: 'Metric',
+        config: { metricType: 'entity-count' },
+        x: 0,
+        y: 0,
+        w: 3,
+        h: 2
+      },
+      {
+        id: 'default-project-count',
+        type: 'Metric',
+        config: { metricType: 'project-count' },
+        x: 3,
+        y: 0,
+        w: 3,
+        h: 2
+      },
+      {
+        id: 'default-diagram-count',
+        type: 'Metric',
+        config: { metricType: 'diagram-count' },
+        x: 6,
+        y: 0,
+        w: 3,
+        h: 2
+      },
+      {
+        id: 'default-completeness-percent',
+        type: 'Metric',
+        config: { metricType: 'completeness-percent' },
+        x: 9,
+        y: 0,
+        w: 3,
+        h: 2
+      },
+      {
+        id: 'top-risks-by-score',
+        type: 'TopEntities',
+        config: {
+          schema: '00000000-0000-0000-0000-000000000013', // Risk
+          fieldId: 'residual_risk_score',
+          direction: 'desc',
+          limit: 5,
+          label: 'Top risks by score'
+        },
+        x: 0,
+        y: 2,
+        w: 4,
+        h: 2
+      },
+      {
+        id: 'compliance-coverage',
+        type: 'AggregateStat',
+        config: {
+          schema: '00000000-0000-0000-0000-000000000016', // Compliance Requirement
+          numeratorCondition: { fieldId: 'status', op: 'equals', value: 'met' },
+          label: 'Compliance coverage'
+        },
+        x: 4,
+        y: 2,
+        w: 4,
+        h: 2
+      },
+      {
+        id: 'overdue-risk-control-reviews',
+        type: 'OverdueReviews',
+        config: { label: 'Overdue risk and control reviews' },
+        x: 8,
+        y: 2,
+        w: 4,
+        h: 2
+      },
+      { id: 'default-activity-feed', type: 'activity-feed', config: {}, x: 0, y: 4, w: 12, h: 6 }
+    ]
   }
 ];
 

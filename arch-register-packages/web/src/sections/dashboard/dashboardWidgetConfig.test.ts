@@ -101,6 +101,94 @@ describe('parseKnownDashboardWidget', () => {
     ).toBe('Markdown');
   });
 
+  it('parses an AggregateStat widget with a numerator condition', () => {
+    const widget = parseKnownDashboardWidget({
+      id: 'aggregate-stat',
+      type: 'AggregateStat',
+      config: {
+        schema: 'compliance_requirement',
+        numeratorCondition: { fieldId: 'status', op: 'equals', value: 'met' },
+        label: 'Compliance coverage'
+      },
+      x: 0,
+      y: 0,
+      w: 3,
+      h: 2
+    });
+
+    expect(widget?.type).toBe('AggregateStat');
+  });
+
+  it('rejects an AggregateStat widget without a schema or numerator condition', () => {
+    expect(
+      parseKnownDashboardWidget({
+        id: 'aggregate-stat',
+        type: 'AggregateStat',
+        config: { schema: '' },
+        x: 0,
+        y: 0,
+        w: 3,
+        h: 2
+      })
+    ).toBeNull();
+  });
+
+  it('parses a TopEntities widget with a sort field', () => {
+    const widget = parseKnownDashboardWidget({
+      id: 'top-entities',
+      type: 'TopEntities',
+      config: { schema: 'risk', fieldId: 'residual_risk_score', direction: 'desc', limit: 5 },
+      x: 0,
+      y: 0,
+      w: 4,
+      h: 4
+    });
+
+    expect(widget?.type).toBe('TopEntities');
+  });
+
+  it('rejects a TopEntities widget without a field or valid direction', () => {
+    expect(
+      parseKnownDashboardWidget({
+        id: 'top-entities',
+        type: 'TopEntities',
+        config: { schema: 'risk', fieldId: '', direction: 'sideways', limit: 5 },
+        x: 0,
+        y: 0,
+        w: 4,
+        h: 4
+      })
+    ).toBeNull();
+  });
+
+  it('parses an OverdueReviews widget with no schema filter', () => {
+    const widget = parseKnownDashboardWidget({
+      id: 'overdue-reviews',
+      type: 'OverdueReviews',
+      config: {},
+      x: 0,
+      y: 0,
+      w: 3,
+      h: 3
+    });
+
+    expect(widget?.type).toBe('OverdueReviews');
+  });
+
+  it('rejects an OverdueReviews widget with a non-string schema', () => {
+    expect(
+      parseKnownDashboardWidget({
+        id: 'overdue-reviews',
+        type: 'OverdueReviews',
+        config: { schema: 42 },
+        x: 0,
+        y: 0,
+        w: 3,
+        h: 3
+      })
+    ).toBeNull();
+  });
+
   it('returns null for unknown widget types', () => {
     expect(
       parseKnownDashboardWidget({
