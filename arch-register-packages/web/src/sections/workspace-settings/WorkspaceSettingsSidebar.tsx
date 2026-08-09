@@ -17,7 +17,8 @@ import {
   TbWebhook,
   TbFileDescription,
   TbBolt,
-  TbKey
+  TbKey,
+  TbClipboardCheck
 } from 'react-icons/tb';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TreeRow } from '../../components/TreeRow';
@@ -39,6 +40,12 @@ type SettingsNavItem = {
 const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'general', label: 'General', icon: <TbSettings size={12} />, group: 'Workspace' },
   { id: 'currencies', label: 'Currencies', icon: <TbTag size={12} />, group: 'Workspace' },
+  {
+    id: 'assessment-types',
+    label: 'Assessment types',
+    icon: <TbClipboardCheck size={12} />,
+    group: 'Workspace'
+  },
   { id: 'model-overview', label: 'Overview', icon: <TbCode size={12} />, group: 'Model' },
   { id: 'schemas', label: 'Entity Schema', icon: <TbCode size={12} />, group: 'Model' },
   {

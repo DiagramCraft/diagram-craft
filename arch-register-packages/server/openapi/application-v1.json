@@ -58903,6 +58903,194 @@
         }
       }
     },
+    "/{workspace}/config/assessment-types": {
+      "get": {
+        "operationId": "config.assessmentTypes.list",
+        "summary": "List assessment types",
+        "description": "Retrieves the workspace-managed assessment types.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique assessment type identifier"
+                      },
+                      "workspace": {
+                        "type": "string",
+                        "description": "Parent workspace identifier"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Assessment type name"
+                      },
+                      "sort_order": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "description": "Display order (0-based)"
+                      },
+                      "is_active": {
+                        "type": "boolean",
+                        "description": "Whether the type is available for new assessments"
+                      },
+                      "created_at": {
+                        "description": "ISO 8601 creation timestamp"
+                      },
+                      "updated_at": {
+                        "description": "ISO 8601 last update timestamp"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "workspace",
+                      "name",
+                      "sort_order",
+                      "is_active"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "config.assessmentTypes.replace",
+        "summary": "Replace assessment types",
+        "description": "Replaces the workspace assessment type configuration. Existing types can be marked inactive instead of removed.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "types": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Optional ID for updating an existing type"
+                        },
+                        "name": {
+                          "type": "string",
+                          "description": "Assessment type name"
+                        },
+                        "sort_order": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Display order (defaults to list position)"
+                        },
+                        "is_active": {
+                          "type": "boolean",
+                          "description": "Whether the type is available for new assessments"
+                        }
+                      },
+                      "required": [
+                        "name"
+                      ]
+                    }
+                  }
+                },
+                "required": [
+                  "types"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique assessment type identifier"
+                      },
+                      "workspace": {
+                        "type": "string",
+                        "description": "Parent workspace identifier"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Assessment type name"
+                      },
+                      "sort_order": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "description": "Display order (0-based)"
+                      },
+                      "is_active": {
+                        "type": "boolean",
+                        "description": "Whether the type is available for new assessments"
+                      },
+                      "created_at": {
+                        "description": "ISO 8601 creation timestamp"
+                      },
+                      "updated_at": {
+                        "description": "ISO 8601 last update timestamp"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "workspace",
+                      "name",
+                      "sort_order",
+                      "is_active"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/config/currencies": {
       "get": {
         "operationId": "config.currencies.list",
@@ -94880,6 +95068,17 @@
                         "type": "string",
                         "description": "Whether entities are assessed by filling in fields, or by a single \"confirmed accurate\" action"
                       },
+                      "assessment_type_id": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Optional workspace-managed assessment type identifier"
+                      },
                       "scope": {
                         "type": "array",
                         "items": {
@@ -95457,6 +95656,17 @@
                     "description": "Whether entities are assessed by filling in fields, or by a single \"confirmed accurate\" action",
                     "default": "fields"
                   },
+                  "assessment_type_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional workspace-managed assessment type identifier"
+                  },
                   "scope": {
                     "type": "array",
                     "items": {
@@ -95933,6 +96143,17 @@
                       ],
                       "type": "string",
                       "description": "Whether entities are assessed by filling in fields, or by a single \"confirmed accurate\" action"
+                    },
+                    "assessment_type_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional workspace-managed assessment type identifier"
                     },
                     "scope": {
                       "type": "array",
@@ -96539,6 +96760,17 @@
                       "type": "string",
                       "description": "Whether entities are assessed by filling in fields, or by a single \"confirmed accurate\" action"
                     },
+                    "assessment_type_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional workspace-managed assessment type identifier"
+                    },
                     "scope": {
                       "type": "array",
                       "items": {
@@ -97124,6 +97356,17 @@
                     "description": "Whether entities are assessed by filling in fields, or by a single \"confirmed accurate\" action",
                     "default": "fields"
                   },
+                  "assessment_type_id": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional workspace-managed assessment type identifier"
+                  },
                   "scope": {
                     "type": "array",
                     "items": {
@@ -97600,6 +97843,17 @@
                       ],
                       "type": "string",
                       "description": "Whether entities are assessed by filling in fields, or by a single \"confirmed accurate\" action"
+                    },
+                    "assessment_type_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional workspace-managed assessment type identifier"
                     },
                     "scope": {
                       "type": "array",
@@ -98284,6 +98538,17 @@
                       ],
                       "type": "string",
                       "description": "Whether entities are assessed by filling in fields, or by a single \"confirmed accurate\" action"
+                    },
+                    "assessment_type_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional workspace-managed assessment type identifier"
                     },
                     "scope": {
                       "type": "array",

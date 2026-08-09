@@ -1,7 +1,8 @@
 import { createContext, useContext } from 'react';
 import type {
   WorkspaceTeam,
-  SupportedCurrency
+  SupportedCurrency,
+  AssessmentType
 } from '@arch-register/api-types/workspaceConfigContract';
 import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -22,6 +23,7 @@ export type WorkspaceContextType = {
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
   projectEntityTypes: ProjectEntityType[];
+  assessmentTypes: AssessmentType[];
   currencies: { currencies: SupportedCurrency[]; default_currency: string };
   permissions: {
     canManageWorkspaces: boolean;

@@ -10,7 +10,7 @@ import styles from './WidgetRowList.module.css';
 const MAX_ITEMS = 4;
 
 export type OverdueReviewsWidgetConfig = {
-  schema?: string;
+  assessmentTypeId?: string;
   label?: string;
 };
 
@@ -32,9 +32,9 @@ export const OverdueReviewsWidget = ({ config }: Props) => {
     const now = new Date().toISOString();
     return assessments
       .filter(a => a.status === 'open' && !!a.due_at && a.due_at < now)
-      .filter(a => !config.schema || a.scope.includes(config.schema))
+      .filter(a => !config.assessmentTypeId || a.assessment_type_id === config.assessmentTypeId)
       .sort((a, b) => (a.due_at ?? '').localeCompare(b.due_at ?? ''));
-  }, [assessments, config.schema]);
+  }, [assessments, config.assessmentTypeId]);
 
   if (dashboardSurface === 'project' && !projectId) {
     return <div className={`${styles.emptyInline} dim`}>No project in context.</div>;

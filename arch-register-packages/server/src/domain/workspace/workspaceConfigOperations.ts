@@ -120,6 +120,77 @@ export const replaceProjectEntityTypes = async (
   );
 };
 
+export const listAssessmentTypes = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent
+) => {
+  const authCtx = await buildApiAuthCtx(db, workspace, event);
+  requireWorkspaceCapability(authCtx, 'ws.view');
+  return await db.workspace.listAssessmentTypes(workspace);
+};
+
+export const replaceAssessmentTypes = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  types: Array<{
+    id?: string;
+    name: string;
+    sort_order?: number;
+    is_active?: boolean;
+  }>,
+  event: AuthenticatedEvent
+) => {
+  const authCtx = await buildApiAuthCtx(db, workspace, event);
+  requireWorkspaceCapability(authCtx, 'ws.settings');
+
+  const now = new Date();
+  const existing = await db.workspace.listAssessmentTypes(workspace);
+  const normalized = types.map((type, index) => ({
+    id: typeof type.id === 'string' && type.id.trim() ? type.id : randomUUID(),
+    name: type.name.trim(),
+    sort_order: index,
+    is_active: type.is_active ?? true,
+    created_at: now,
+    updated_at: now
+  }));
+  httpAssert.true(
+    normalized.every(type => type.name.length > 0),
+    {
+      message: 'Assessment type names must not be empty'
+    }
+  );
+  httpAssert.true(new Set(normalized.map(type => type.id)).size === normalized.length, {
+    message: 'Duplicate assessment type ids'
+  });
+  httpAssert.true(
+    new Set(normalized.map(type => type.name.toLocaleLowerCase())).size === normalized.length,
+    { message: 'Assessment type names must be unique' }
+  );
+
+  const submittedIds = new Set(normalized.map(type => type.id));
+  const retainedInactive = existing
+    .filter(type => !submittedIds.has(type.id))
+    .map(type => ({
+      id: type.id,
+      name: type.name,
+      sort_order: normalized.length,
+      is_active: false,
+      created_at: type.created_at,
+      updated_at: now
+    }));
+
+  return await db.workspace.replaceAssessmentTypes(
+    workspace,
+    [...normalized, ...retainedInactive].map(type => ({
+      ...type,
+      workspace,
+      created_at: type.created_at,
+      updated_at: type.updated_at
+    }))
+  );
+};
+
 const normalizeCurrencyCode = (value: string) => value.trim().toUpperCase();
 
 export const listSupportedCurrencies = async (

@@ -11,6 +11,7 @@ import {
   TeamListOptions,
   SupportedCurrencyDbResult,
   SupportedCurrencyConfigDbResult,
+  AssessmentTypeDbCreate,
   DEFAULT_SUPPORTED_CURRENCIES
 } from './workspaceDatabase';
 import { workspaceMappers } from './workspaceDatabase';
@@ -98,6 +99,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       this.run('DELETE FROM workspace_role WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM team_membership WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspaceId]);
+      this.run('DELETE FROM workspace_assessment_type WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_currency WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_owner WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM audit_log WHERE workspace = ?', [workspaceId]);
@@ -199,6 +201,38 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     });
     tx();
     return await this.listProjectEntityTypes(workspace);
+  }
+
+  async listAssessmentTypes(workspace: string) {
+    return this.all(
+      'SELECT id, workspace, name, sort_order, is_active, created_at, updated_at FROM workspace_assessment_type WHERE workspace = ? ORDER BY sort_order, id',
+      [workspace],
+      workspaceMappers.assessmentType
+    );
+  }
+
+  async replaceAssessmentTypes(workspace: string, types: AssessmentTypeDbCreate[]) {
+    const tx = this.db.transaction(() => {
+      this.run('DELETE FROM workspace_assessment_type WHERE workspace = ?', [workspace]);
+      for (const type of types) {
+        this.run(
+          `INSERT INTO workspace_assessment_type
+             (id, workspace, name, sort_order, is_active, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+          [
+            type.id,
+            workspace,
+            type.name,
+            type.sort_order,
+            type.is_active ? 1 : 0,
+            type.created_at.toISOString(),
+            type.updated_at.toISOString()
+          ]
+        );
+      }
+    });
+    tx();
+    return await this.listAssessmentTypes(workspace);
   }
 
   async getSupportedCurrencies(workspace: string): Promise<SupportedCurrencyConfigDbResult> {

@@ -87,6 +87,7 @@ export const buildCreateAssessmentInput = (
     name,
     description,
     mode,
+    assessment_type_id,
     scope,
     scope_conditions,
     fields,
@@ -109,6 +110,10 @@ export const buildCreateAssessmentInput = (
     description: typeof description === 'string' ? description : '',
     status: 'draft',
     mode: toAssessmentMode(mode, 'fields'),
+    assessment_type_id:
+      assessment_type_id === null || typeof assessment_type_id === 'string'
+        ? (assessment_type_id ?? null)
+        : null,
     scope: toScope(scope, []),
     scope_conditions: toScopeConditions(scope_conditions, []),
     fields: clearOrphanedGroupIds(toAssessmentFields(fields, []), normalizedGroups),
@@ -134,6 +139,7 @@ export const buildUpdateAssessmentInput = (
     name,
     description,
     mode,
+    assessment_type_id,
     scope,
     scope_conditions,
     fields,
@@ -152,6 +158,12 @@ export const buildUpdateAssessmentInput = (
     description: typeof description === 'string' ? description : existing.description,
     status: existing.status,
     mode: toAssessmentMode(mode, existing.mode),
+    assessment_type_id:
+      assessment_type_id === undefined
+        ? existing.assessment_type_id
+        : assessment_type_id === null || typeof assessment_type_id === 'string'
+          ? assessment_type_id
+          : existing.assessment_type_id,
     scope: toScope(scope, existing.scope),
     scope_conditions: toScopeConditions(scope_conditions, existing.scope_conditions),
     fields: clearOrphanedGroupIds(toAssessmentFields(fields, existing.fields), normalizedGroups),
@@ -192,6 +204,7 @@ export const toApiAssessment = (
   description: row.description,
   status: row.status,
   mode: row.mode,
+  assessment_type_id: row.assessment_type_id ?? null,
   scope: row.scope,
   scope_conditions: visibleAssessmentScopeConditions(row, schemas, authCtx),
   fields: row.fields,

@@ -11,6 +11,7 @@ import {
   TeamListOptions,
   SupportedCurrencyDbResult,
   SupportedCurrencyConfigDbResult,
+  AssessmentTypeDbCreate,
   DEFAULT_SUPPORTED_CURRENCIES
 } from './workspaceDatabase';
 import { workspaceMappers } from './workspaceDatabase';
@@ -205,6 +206,35 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         }
       });
       return await this.listProjectEntityTypes(workspace);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async listAssessmentTypes(workspace: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT id, workspace, name, sort_order, is_active, created_at, updated_at
+      FROM workspace_assessment_type
+      WHERE workspace = ${workspace}
+      ORDER BY sort_order, id
+    `;
+    return mapDatabaseRows(rows, workspaceMappers.assessmentType);
+  }
+
+  async replaceAssessmentTypes(workspace: string, types: AssessmentTypeDbCreate[]) {
+    try {
+      await withTransaction(this.sql, async tx => {
+        await tx`DELETE FROM workspace_assessment_type WHERE workspace = ${workspace}`;
+        for (const type of types) {
+          await tx`
+            INSERT INTO workspace_assessment_type
+              (id, workspace, name, sort_order, is_active, created_at, updated_at)
+            VALUES
+              (${type.id}, ${workspace}, ${type.name}, ${type.sort_order}, ${type.is_active}, ${type.created_at}, ${type.updated_at})
+          `;
+        }
+      });
+      return await this.listAssessmentTypes(workspace);
     } catch (error) {
       return normalizePostgresError(error);
     }

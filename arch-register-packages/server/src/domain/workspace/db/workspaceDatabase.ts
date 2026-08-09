@@ -45,6 +45,18 @@ export type ProjectEntityTypeDbResult = {
 
 export type ProjectEntityTypeDbCreate = ProjectEntityTypeDbResult;
 
+export type AssessmentTypeDbResult = {
+  id: string;
+  workspace: string;
+  name: string;
+  sort_order: number;
+  is_active: boolean;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type AssessmentTypeDbCreate = AssessmentTypeDbResult;
+
 export type SupportedCurrencyDbResult = {
   workspace: string;
   code: string;
@@ -146,6 +158,15 @@ export const workspaceMappers = {
     sort_order: Number(row['sort_order']),
     created_at: databaseDate(row['created_at'])
   }),
+  assessmentType: (row: DatabaseRow): AssessmentTypeDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    name: String(row['name']),
+    sort_order: Number(row['sort_order']),
+    is_active: databaseBoolean(row['is_active']),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
+  }),
   supportedCurrency: (row: DatabaseRow): SupportedCurrencyDbResult => ({
     workspace: String(row['workspace']),
     code: String(row['code']),
@@ -211,6 +232,12 @@ export type WorkspaceDatabase = {
     ws: string,
     types: ProjectEntityTypeDbCreate[]
   ): Promise<ProjectEntityTypeDbResult[]>;
+
+  listAssessmentTypes(ws: string): Promise<AssessmentTypeDbResult[]>;
+  replaceAssessmentTypes(
+    ws: string,
+    types: AssessmentTypeDbCreate[]
+  ): Promise<AssessmentTypeDbResult[]>;
 
   getSupportedCurrencies(ws: string): Promise<SupportedCurrencyConfigDbResult>;
   replaceSupportedCurrencies(

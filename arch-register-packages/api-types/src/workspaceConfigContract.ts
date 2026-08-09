@@ -24,6 +24,23 @@ export const projectEntityTypeSchema = z.object({
   sort_order: z.number().int().describe('Display order (0-based)')
 });
 
+export const assessmentTypeSchema = z.object({
+  id: z.string().describe('Unique assessment type identifier'),
+  workspace: z.string().describe('Parent workspace identifier'),
+  name: z.string().describe('Assessment type name'),
+  sort_order: z.number().int().describe('Display order (0-based)'),
+  is_active: z.boolean().describe('Whether the type is available for new assessments'),
+  created_at: timestampOutputSchema.describe('ISO 8601 creation timestamp'),
+  updated_at: timestampOutputSchema.describe('ISO 8601 last update timestamp')
+});
+
+const assessmentTypeInputSchema = z.object({
+  id: z.string().optional().describe('Optional ID for updating an existing type'),
+  name: z.string().describe('Assessment type name'),
+  sort_order: z.number().int().optional().describe('Display order (defaults to list position)'),
+  is_active: z.boolean().optional().describe('Whether the type is available for new assessments')
+});
+
 const supportedCurrencySchema = z.object({
   code: z
     .string()
@@ -464,6 +481,36 @@ export const workspaceConfigContract = oc.tag('Workspace Config').router({
         )
         .output(z.array(projectEntityTypeSchema))
     },
+    assessmentTypes: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/assessment-types',
+          inputStructure: 'detailed',
+          summary: 'List assessment types',
+          description: 'Retrieves the workspace-managed assessment types.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws }))
+        .output(z.array(assessmentTypeSchema)),
+      replace: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/assessment-types',
+          inputStructure: 'detailed',
+          summary: 'Replace assessment types',
+          description:
+            'Replaces the workspace assessment type configuration. Existing types can be marked inactive instead of removed.',
+          tags: ['Workspace Config']
+        })
+        .input(
+          z.object({
+            params: ws,
+            body: z.object({ types: z.array(assessmentTypeInputSchema) })
+          })
+        )
+        .output(z.array(assessmentTypeSchema))
+    },
     currencies: {
       list: oc
         .route({
@@ -515,6 +562,7 @@ export type WorkspaceRoleCapability = z.infer<typeof workspaceCapabilitySchema>;
 export type WorkspaceTeam = z.infer<typeof teamSchema>;
 export type WorkspaceTeamInput = z.infer<typeof teamInputSchema>;
 export type SupportedCurrency = z.infer<typeof supportedCurrencySchema>;
+export type AssessmentType = z.infer<typeof assessmentTypeSchema>;
 export type TeamAssignmentInfo = z.infer<typeof teamAssignmentSchema>;
 export type {
   WorkspaceApiToken,

@@ -161,7 +161,7 @@ describe('parseKnownDashboardWidget', () => {
     ).toBeNull();
   });
 
-  it('parses an OverdueReviews widget with no schema filter', () => {
+  it('parses an OverdueReviews widget with no assessment type filter', () => {
     const widget = parseKnownDashboardWidget({
       id: 'overdue-reviews',
       type: 'OverdueReviews',
@@ -175,12 +175,12 @@ describe('parseKnownDashboardWidget', () => {
     expect(widget?.type).toBe('OverdueReviews');
   });
 
-  it('rejects an OverdueReviews widget with a non-string schema', () => {
+  it('rejects an OverdueReviews widget with a non-string assessment type', () => {
     expect(
       parseKnownDashboardWidget({
         id: 'overdue-reviews',
         type: 'OverdueReviews',
-        config: { schema: 42 },
+        config: { assessmentTypeId: 42 },
         x: 0,
         y: 0,
         w: 3,

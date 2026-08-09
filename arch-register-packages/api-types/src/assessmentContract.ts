@@ -123,6 +123,11 @@ const assessmentSchema = z.object({
   description: z.string().describe('Assessment description'),
   status: z.enum(['draft', 'open', 'closed', 'archived']).describe('Assessment status'),
   mode: assessmentModeSchema,
+  assessment_type_id: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Optional workspace-managed assessment type identifier'),
   scope: z.array(z.string()).describe('Entity schema ids this assessment applies to'),
   scope_conditions: z
     .array(filterConditionSchema)
@@ -188,6 +193,11 @@ const assessmentBodySchema = z
       z.string().optional().describe('Assessment description')
     ),
     mode: assessmentModeSchema.optional().default('fields'),
+    assessment_type_id: z
+      .string()
+      .nullable()
+      .optional()
+      .describe('Optional workspace-managed assessment type identifier'),
     scope: z.preprocess(
       value => (Array.isArray(value) ? value : undefined),
       z.array(z.string()).optional().describe('Entity schema ids this assessment applies to')

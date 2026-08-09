@@ -296,6 +296,7 @@ export type AssessmentDbResult = {
   description: string;
   status: 'draft' | 'open' | 'closed' | 'archived';
   mode: 'fields' | 'confirm';
+  assessment_type_id?: string | null;
   scope: string[];
   scope_conditions: FilterCondition[];
   fields: AssessmentField[];
@@ -482,6 +483,8 @@ export const projectMappers = {
     description: String(row['description'] ?? ''),
     status: row['status'] as AssessmentDbResult['status'],
     mode: (row['mode'] as AssessmentDbResult['mode']) ?? 'fields',
+    assessment_type_id:
+      row['assessment_type_id'] == null ? null : String(row['assessment_type_id']),
     scope: parseDatabaseJson(row['scope'], [], 'assessment.scope'),
     scope_conditions: parseDatabaseJson(row['scope_conditions'], [], 'assessment.scope_conditions'),
     fields: parseDatabaseJson(row['fields'], [], 'assessment.fields'),

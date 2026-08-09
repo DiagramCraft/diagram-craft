@@ -381,12 +381,15 @@ export const AssessmentEditorDialog = ({
   onSave: (data: AssessmentFormData, status: Assessment['status']) => void;
   onCancel: () => void;
 }) => {
-  const { workspaceSlug, lifecycleStates, teams } = useWorkspaceContext();
+  const { workspaceSlug, lifecycleStates, teams, assessmentTypes } = useWorkspaceContext();
   const getFieldGroupAccess = useFieldGroupAccess(workspaceSlug);
   const portal = usePortal();
   const isNew = !assessment;
   const [name, setName] = useState(assessment?.name ?? '');
   const [description, setDescription] = useState(assessment?.description ?? '');
+  const [assessmentTypeId, setAssessmentTypeId] = useState<string>(
+    assessment?.assessment_type_id ?? ''
+  );
   const [scope, setScope] = useState<string[]>(assessment?.scope ?? []);
   const [scopeConditions, setScopeConditions] = useState<FilterCondition[]>(
     assessment?.scope_conditions.map(condition => ({ ...condition })) ?? []
@@ -567,6 +570,7 @@ export const AssessmentEditorDialog = ({
     if (templateId === START_FROM_SCRATCH) {
       setName('');
       setDescription('');
+      setAssessmentTypeId('');
       setScope([]);
       setScopeConditions([]);
       setFields([]);
@@ -641,6 +645,7 @@ export const AssessmentEditorDialog = ({
                 name: name.trim(),
                 description: description.trim(),
                 mode,
+                assessment_type_id: assessmentTypeId.trim() || null,
                 scope,
                 scope_conditions: scopeConditions,
                 fields: mode === 'confirm' ? [] : fields,
@@ -704,6 +709,28 @@ export const AssessmentEditorDialog = ({
               placeholder="Explain the purpose of this assessment"
               style={{ width: '100%' }}
             />
+          </div>
+          <div className={styles.section}>
+            <div className={styles.sectionLabel}>Assessment type</div>
+            <div style={{ width: 280 }}>
+              <Select.Root
+                value={assessmentTypeId}
+                onChange={value => {
+                  markDirty();
+                  setAssessmentTypeId(value ?? '');
+                }}
+              >
+                <Select.Item value="">Uncategorized</Select.Item>
+                {assessmentTypes
+                  .filter(type => type.is_active || type.id === assessmentTypeId)
+                  .map(type => (
+                    <Select.Item key={type.id} value={type.id}>
+                      {type.name}
+                      {!type.is_active ? ' (inactive)' : ''}
+                    </Select.Item>
+                  ))}
+              </Select.Root>
+            </div>
           </div>
           <div className={styles.section}>
             <div className={styles.sectionLabel}>Status</div>

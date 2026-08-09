@@ -449,6 +449,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         description: '',
         status: 'draft',
         mode: 'fields',
+        assessment_type_id: 'assessment-type-1',
         scope: ['entity-1', 'entity-2'],
         scope_conditions: [],
         groups: [],
@@ -465,11 +466,13 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       });
 
       expect(created.scope).toEqual(['entity-1', 'entity-2']);
+      expect(created.assessment_type_id).toBe('assessment-type-1');
       expect(created.scope_conditions).toEqual([]);
       expect(created.fields).toEqual([]);
 
       const fetched = await db.project.getAssessmentById(workspace, created.id);
       expect(fetched!.scope).toEqual(['entity-1', 'entity-2']);
+      expect(fetched!.assessment_type_id).toBe('assessment-type-1');
     });
 
     it('round-trips the confirm-only mode', async () => {

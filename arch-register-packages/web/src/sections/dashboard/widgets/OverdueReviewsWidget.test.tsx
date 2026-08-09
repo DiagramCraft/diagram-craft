@@ -73,7 +73,7 @@ describe('OverdueReviewsWidget', () => {
     expect(html.indexOf('Overdue B')).toBeLessThan(html.indexOf('Overdue A'));
   });
 
-  it('filters by schema scope when configured', () => {
+  it('filters by assessment type when configured', () => {
     useProjectAssessmentsMock.mockReturnValue({ data: [], isLoading: false });
     useAssessmentsMock.mockReturnValue({
       data: [
@@ -83,6 +83,7 @@ describe('OverdueReviewsWidget', () => {
           status: 'open',
           due_at: '2020-01-01T00:00:00.000Z',
           scope: ['risk'],
+          assessment_type_id: 'risk-compliance',
           project_id: 'p1'
         },
         {
@@ -91,13 +92,16 @@ describe('OverdueReviewsWidget', () => {
           status: 'open',
           due_at: '2020-01-01T00:00:00.000Z',
           scope: ['service'],
+          assessment_type_id: 'service-review',
           project_id: 'p1'
         }
       ],
       isLoading: false
     });
 
-    const html = renderToStaticMarkup(<OverdueReviewsWidget config={{ schema: 'risk' }} />);
+    const html = renderToStaticMarkup(
+      <OverdueReviewsWidget config={{ assessmentTypeId: 'risk-compliance' }} />
+    );
 
     expect(html).toContain('Risk review');
     expect(html).not.toContain('Service review');
