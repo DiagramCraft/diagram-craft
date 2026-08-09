@@ -17,7 +17,8 @@ import {
   buildAiConfigInput,
   parseExtractResponse,
   extractUserTextContent,
-  buildConversationAutoTitle
+  buildConversationAutoTitle,
+  parseAiChatMessagesFromUnknown
 } from './aiHelpers';
 import { chat } from '@tanstack/ai';
 import { buildSystemPrompt } from './systemPromptBuilder';
@@ -64,7 +65,7 @@ type ORPCContext = {
 };
 
 type AiORPCDeps = {
-  chatImpl?: (options: Record<string, unknown>) => unknown;
+  chatImpl?: typeof chat;
   resolveAiConfigImpl?: typeof resolveAiConfig;
   createAiTextAdapterImpl?: typeof createAiTextAdapter;
   buildSystemPromptImpl?: typeof buildSystemPrompt;
@@ -268,11 +269,11 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           adapter,
           messages: [{ role: 'user', content: input.body.text }],
           systemPrompts: [systemPrompt],
-          temperature: 0.3,
+          modelOptions: { temperature: 0.3 },
           stream: false
         });
 
-        return parseExtractResponse(result as string);
+        return parseExtractResponse(result);
       }),
 
       chat: aiRouter.ai.chat.handler(async ({ input, context }) => {
@@ -300,10 +301,10 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           displayName: user.display_name
         });
 
+        const messages = parseAiChatMessagesFromUnknown(input.body.messages);
         const stream = chatImpl({
           adapter,
-          // biome-ignore lint/suspicious/noExplicitAny: TanStack AI chat message types are complex and vary by provider
-          messages: input.body.messages as any,
+          messages,
           systemPrompts: [systemPrompt],
           tools,
           modelOptions: { temperature: aiConfig.temperature },
@@ -312,15 +313,15 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           parentRunId: input.body.parentRunId
         });
 
-        const conversationId =
-          // biome-ignore lint/suspicious/noExplicitAny: forwardedProps type varies by client implementation
-          (input.body.forwardedProps as any)?.conversationId ?? input.body.conversationId;
+        const forwardedConversationId =
+          input.body.forwardedProps &&
+          typeof input.body.forwardedProps['conversationId'] === 'string'
+            ? input.body.forwardedProps['conversationId']
+            : undefined;
+        const conversationId = forwardedConversationId ?? input.body.conversationId;
 
         if (conversationId) {
-          // biome-ignore lint/suspicious/noExplicitAny: Message array type varies by AI provider
-          const lastUserMsg = [...(input.body.messages as any[])]
-            .reverse()
-            .find(m => m.role === 'user');
+          const lastUserMsg = [...messages].reverse().find(m => m.role === 'user');
           if (lastUserMsg) {
             const textContent = extractUserTextContent(lastUserMsg);
             if (textContent) {
@@ -347,26 +348,41 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
           const capturedToolCalls: Array<{ name: string; args: string; result?: unknown }> = [];
 
           try {
-            // biome-ignore lint/suspicious/noExplicitAny: Stream chunk type varies by AI provider implementation
-            for await (const chunk of stream as AsyncIterable<any>) {
+            for await (const chunk of stream) {
               if (
                 (chunk.type === 'TEXT_MESSAGE_CONTENT' ||
                   chunk.type === 'REASONING_MESSAGE_CONTENT') &&
-                chunk.delta
+                'delta' in chunk &&
+                typeof chunk.delta === 'string' &&
+                chunk.delta.length > 0
               ) {
                 capturedContent.push(chunk.delta);
               }
-              if (chunk.type === 'TOOL_CALL_START' && chunk.toolCallName) {
+              if (
+                chunk.type === 'TOOL_CALL_START' &&
+                'toolCallName' in chunk &&
+                typeof chunk.toolCallName === 'string' &&
+                chunk.toolCallName.length > 0
+              ) {
                 capturedToolCalls.push({
                   name: chunk.toolCallName,
                   args: '',
                   result: undefined
                 });
               }
-              if (chunk.type === 'TOOL_CALL_ARGS' && capturedToolCalls.length > 0) {
-                capturedToolCalls[capturedToolCalls.length - 1]!.args += chunk.delta ?? '';
+              if (
+                chunk.type === 'TOOL_CALL_ARGS' &&
+                capturedToolCalls.length > 0 &&
+                'delta' in chunk
+              ) {
+                capturedToolCalls[capturedToolCalls.length - 1]!.args +=
+                  typeof chunk.delta === 'string' ? chunk.delta : '';
               }
-              if (chunk.type === 'TOOL_CALL_RESULT' && capturedToolCalls.length > 0) {
+              if (
+                chunk.type === 'TOOL_CALL_RESULT' &&
+                capturedToolCalls.length > 0 &&
+                'content' in chunk
+              ) {
                 capturedToolCalls[capturedToolCalls.length - 1]!.result = chunk.content;
               }
 

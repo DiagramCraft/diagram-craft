@@ -60995,8 +60995,518 @@
                 "properties": {
                   "messages": {
                     "type": "array",
-                    "items": {},
-                    "description": "Chat messages"
+                    "items": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "role": {
+                              "enum": [
+                                "user",
+                                "assistant",
+                                "tool"
+                              ],
+                              "type": "string"
+                            },
+                            "content": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                },
+                                {
+                                  "type": "array",
+                                  "items": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "text"
+                                          },
+                                          "content": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "content"
+                                        ],
+                                        "additionalProperties": {}
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "image"
+                                          }
+                                        },
+                                        "required": [
+                                          "type"
+                                        ],
+                                        "additionalProperties": {}
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "audio"
+                                          }
+                                        },
+                                        "required": [
+                                          "type"
+                                        ],
+                                        "additionalProperties": {}
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "video"
+                                          }
+                                        },
+                                        "required": [
+                                          "type"
+                                        ],
+                                        "additionalProperties": {}
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "document"
+                                          }
+                                        },
+                                        "required": [
+                                          "type"
+                                        ],
+                                        "additionalProperties": {}
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "tool-call"
+                                          },
+                                          "id": {
+                                            "type": "string"
+                                          },
+                                          "name": {
+                                            "type": "string"
+                                          },
+                                          "arguments": {
+                                            "type": "string"
+                                          },
+                                          "state": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "id",
+                                          "name",
+                                          "arguments",
+                                          "state"
+                                        ],
+                                        "additionalProperties": {}
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "tool-result"
+                                          },
+                                          "toolCallId": {
+                                            "type": "string"
+                                          },
+                                          "content": {
+                                            "anyOf": [
+                                              {
+                                                "type": "string"
+                                              },
+                                              {
+                                                "type": "array",
+                                                "items": {}
+                                              }
+                                            ]
+                                          },
+                                          "state": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "toolCallId",
+                                          "content",
+                                          "state"
+                                        ],
+                                        "additionalProperties": {}
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "thinking"
+                                          },
+                                          "content": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "content"
+                                        ],
+                                        "additionalProperties": {}
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "structured-output"
+                                          },
+                                          "status": {
+                                            "enum": [
+                                              "streaming",
+                                              "complete",
+                                              "error"
+                                            ],
+                                            "type": "string"
+                                          },
+                                          "raw": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "status",
+                                          "raw"
+                                        ],
+                                        "additionalProperties": {}
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "type": {
+                                            "const": "ui-resource"
+                                          },
+                                          "resource": {
+                                            "type": "object",
+                                            "properties": {
+                                              "uri": {
+                                                "type": "string"
+                                              },
+                                              "mimeType": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "required": [
+                                              "uri",
+                                              "mimeType"
+                                            ],
+                                            "additionalProperties": {}
+                                          },
+                                          "toolCallId": {
+                                            "type": "string"
+                                          },
+                                          "toolName": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "type",
+                                          "resource",
+                                          "toolCallId",
+                                          "toolName"
+                                        ],
+                                        "additionalProperties": {}
+                                      }
+                                    ]
+                                  }
+                                }
+                              ]
+                            },
+                            "name": {
+                              "type": "string"
+                            },
+                            "toolCalls": {
+                              "type": "array",
+                              "items": {}
+                            },
+                            "toolCallId": {
+                              "type": "string"
+                            },
+                            "thinking": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "content": {
+                                    "type": "string"
+                                  },
+                                  "signature": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "content"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "role",
+                            "content"
+                          ],
+                          "additionalProperties": {}
+                        },
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "role": {
+                              "enum": [
+                                "system",
+                                "user",
+                                "assistant"
+                              ],
+                              "type": "string"
+                            },
+                            "parts": {
+                              "type": "array",
+                              "items": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "const": "text"
+                                      },
+                                      "content": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "content"
+                                    ],
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "const": "image"
+                                      }
+                                    },
+                                    "required": [
+                                      "type"
+                                    ],
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "const": "audio"
+                                      }
+                                    },
+                                    "required": [
+                                      "type"
+                                    ],
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "const": "video"
+                                      }
+                                    },
+                                    "required": [
+                                      "type"
+                                    ],
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "const": "document"
+                                      }
+                                    },
+                                    "required": [
+                                      "type"
+                                    ],
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "const": "tool-call"
+                                      },
+                                      "id": {
+                                        "type": "string"
+                                      },
+                                      "name": {
+                                        "type": "string"
+                                      },
+                                      "arguments": {
+                                        "type": "string"
+                                      },
+                                      "state": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "id",
+                                      "name",
+                                      "arguments",
+                                      "state"
+                                    ],
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "const": "tool-result"
+                                      },
+                                      "toolCallId": {
+                                        "type": "string"
+                                      },
+                                      "content": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "array",
+                                            "items": {}
+                                          }
+                                        ]
+                                      },
+                                      "state": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "toolCallId",
+                                      "content",
+                                      "state"
+                                    ],
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "const": "thinking"
+                                      },
+                                      "content": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "content"
+                                    ],
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "const": "structured-output"
+                                      },
+                                      "status": {
+                                        "enum": [
+                                          "streaming",
+                                          "complete",
+                                          "error"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "raw": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "status",
+                                      "raw"
+                                    ],
+                                    "additionalProperties": {}
+                                  },
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "type": {
+                                        "const": "ui-resource"
+                                      },
+                                      "resource": {
+                                        "type": "object",
+                                        "properties": {
+                                          "uri": {
+                                            "type": "string"
+                                          },
+                                          "mimeType": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "uri",
+                                          "mimeType"
+                                        ],
+                                        "additionalProperties": {}
+                                      },
+                                      "toolCallId": {
+                                        "type": "string"
+                                      },
+                                      "toolName": {
+                                        "type": "string"
+                                      }
+                                    },
+                                    "required": [
+                                      "type",
+                                      "resource",
+                                      "toolCallId",
+                                      "toolName"
+                                    ],
+                                    "additionalProperties": {}
+                                  }
+                                ]
+                              }
+                            },
+                            "createdAt": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "string",
+                                  "format": "date-time",
+                                  "x-native-type": "date"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "role",
+                            "parts"
+                          ],
+                          "additionalProperties": {}
+                        }
+                      ]
+                    },
+                    "description": "TanStack AI model or UI messages"
                   },
                   "threadId": {
                     "type": "string",

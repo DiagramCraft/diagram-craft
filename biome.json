@@ -126,6 +126,16 @@
   },
   "overrides": [
     {
+      "includes": ["arch-register-packages/server/src/**/*.ts", "!**/*.test.ts"],
+      "linter": {
+        "rules": {
+          "suspicious": {
+            "noExplicitAny": "error"
+          }
+        }
+      }
+    },
+    {
       "includes": ["**/*.test.ts", "**/*.bench.ts", "**/test-support/*"],
       "linter": {
         "rules": {

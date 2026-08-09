@@ -13,6 +13,71 @@ const aiConversationSchema = z.object({
 
 const aiProviderSchema = z.enum(['openrouter', 'openai']).describe('AI provider type');
 
+const aiMessagePartSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('text'), content: z.string() }).passthrough(),
+  z.object({ type: z.literal('image') }).passthrough(),
+  z.object({ type: z.literal('audio') }).passthrough(),
+  z.object({ type: z.literal('video') }).passthrough(),
+  z.object({ type: z.literal('document') }).passthrough(),
+  z
+    .object({
+      type: z.literal('tool-call'),
+      id: z.string(),
+      name: z.string(),
+      arguments: z.string(),
+      state: z.string()
+    })
+    .passthrough(),
+  z
+    .object({
+      type: z.literal('tool-result'),
+      toolCallId: z.string(),
+      content: z.union([z.string(), z.array(z.unknown())]),
+      state: z.string()
+    })
+    .passthrough(),
+  z.object({ type: z.literal('thinking'), content: z.string() }).passthrough(),
+  z
+    .object({
+      type: z.literal('structured-output'),
+      status: z.enum(['streaming', 'complete', 'error']),
+      raw: z.string()
+    })
+    .passthrough(),
+  z
+    .object({
+      type: z.literal('ui-resource'),
+      resource: z.object({ uri: z.string(), mimeType: z.string() }).passthrough(),
+      toolCallId: z.string(),
+      toolName: z.string()
+    })
+    .passthrough()
+]);
+
+const aiModelMessageSchema = z
+  .object({
+    role: z.enum(['user', 'assistant', 'tool']),
+    content: z.union([z.string(), z.null(), z.array(aiMessagePartSchema)]),
+    name: z.string().optional(),
+    toolCalls: z.array(z.unknown()).optional(),
+    toolCallId: z.string().optional(),
+    thinking: z
+      .array(z.object({ content: z.string(), signature: z.string().optional() }))
+      .optional()
+  })
+  .passthrough();
+
+const aiUiMessageSchema = z
+  .object({
+    id: z.string(),
+    role: z.enum(['system', 'user', 'assistant']),
+    parts: z.array(aiMessagePartSchema),
+    createdAt: z.union([z.string(), z.date()]).optional()
+  })
+  .passthrough();
+
+export const aiChatMessageSchema = z.union([aiModelMessageSchema, aiUiMessageSchema]);
+
 const aiMessageSchema = z.object({
   id: z.string().describe('Unique message identifier'),
   conversation_id: z.string().describe('Parent conversation identifier'),
@@ -210,7 +275,7 @@ export const aiContract = oc.tag('AI').router({
         z.object({
           params: ws,
           body: z.object({
-            messages: z.array(z.unknown()).describe('Chat messages'),
+            messages: z.array(aiChatMessageSchema).describe('TanStack AI model or UI messages'),
             threadId: z.string().optional().describe('Thread identifier for context'),
             runId: z.string().optional().describe('Run identifier'),
             parentRunId: z.string().optional().describe('Parent run identifier'),
@@ -231,6 +296,7 @@ export const aiContract = oc.tag('AI').router({
 // ── Exported Types ───────────────────────────────────────────
 
 export type AiProvider = z.infer<typeof aiProviderSchema>;
+export type AiChatMessage = z.infer<typeof aiChatMessageSchema>;
 export type WorkspaceAiConfig = z.infer<typeof aiConfigSchema>;
 export type UpsertAiConfigRequest = z.infer<typeof aiConfigUpdateSchema>;
 export type AiConversation = z.infer<typeof aiConversationSchema>;

@@ -2,6 +2,7 @@ import { DatabaseError } from './databaseError';
 
 export type DatabaseRow = Record<string, unknown>;
 export type DatabaseRowMapper<T> = (row: DatabaseRow) => T;
+export type DatabaseValueGuard<T> = (value: unknown) => value is T;
 
 /**
  * Database JSON columns are returned as strings by SQLite and as decoded
@@ -17,6 +18,41 @@ export const parseDatabaseJson = <T>(value: unknown, fallback: T, field: string)
   } catch (error) {
     throw new DatabaseError('unknown', `Invalid JSON in database column "${field}"`, error);
   }
+};
+
+export const parseDatabaseJsonWithGuard = <T>(
+  value: unknown,
+  fallback: T,
+  field: string,
+  guard: DatabaseValueGuard<T>
+): T => {
+  if (value == null || value === '') return fallback;
+
+  let parsed: unknown = value;
+  if (typeof value === 'string') {
+    try {
+      parsed = JSON.parse(value);
+    } catch (error) {
+      throw new DatabaseError('unknown', `Invalid JSON in database column "${field}"`, error);
+    }
+  }
+
+  if (!guard(parsed)) {
+    throw new DatabaseError('unknown', `Invalid value in database column "${field}"`);
+  }
+  return parsed;
+};
+
+export const databaseEnum = <T extends string>(
+  value: unknown,
+  values: readonly T[],
+  field: string
+): T => {
+  const match = values.find(candidate => candidate === value);
+  if (match === undefined) {
+    throw new DatabaseError('unknown', `Invalid value in database column "${field}"`);
+  }
+  return match;
 };
 
 export const databaseDate = (value: unknown): Date =>
