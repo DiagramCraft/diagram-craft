@@ -37,6 +37,17 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
     return mapDatabaseRows(rows, workspaceMappers.workspace);
   }
 
+  async listWorkspacesForUser(userId: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT workspace.*
+      FROM workspace
+      INNER JOIN workspace_member ON workspace_member.workspace = workspace.id
+      WHERE workspace_member.user_id = ${userId}
+      ORDER BY workspace.name
+    `;
+    return mapDatabaseRows(rows, workspaceMappers.workspace);
+  }
+
   async getWorkspace(id: string) {
     const [row] = await this.sql<DatabaseRow[]>`
       SELECT * FROM workspace WHERE id = ${id}
