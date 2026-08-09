@@ -534,7 +534,7 @@ describe('createAiChatTools', () => {
     });
     expect(queuedAuditJobs.at(-1)).toMatchObject({
       job_type: 'audit.fanout',
-      payload: { auditLogId: 'audit-entity-app-1' }
+      payload: { auditLogId: createdAuditLogs.at(-1)?.id }
     });
   });
 
@@ -569,7 +569,7 @@ describe('createAiChatTools', () => {
     });
     expect(queuedAuditJobs.at(-1)).toMatchObject({
       job_type: 'audit.fanout',
-      payload: { auditLogId: 'audit-entity-app-1' }
+      payload: { auditLogId: createdAuditLogs.at(-1)?.id }
     });
   });
 
