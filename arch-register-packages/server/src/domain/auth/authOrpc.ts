@@ -182,7 +182,7 @@ export const authProtectedORPCRouter = protectedRouter.router({
       const user = context.event.context.user as UserDbResult;
       const [roleAssignments, workspaces] = await Promise.all([
         context.db.auth.listGlobalRoleAssignments(user.id),
-        context.db.workspace.listWorkspaces()
+        context.db.workspace.listWorkspacesForUser(user.id)
       ]);
       const globalRoles = roleAssignments.map(a => a.role);
 

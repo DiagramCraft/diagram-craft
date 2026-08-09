@@ -23,6 +23,18 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
     return this.all('SELECT * FROM workspace ORDER BY name', [], workspaceMappers.workspace);
   }
 
+  async listWorkspacesForUser(userId: string) {
+    return this.all(
+      `SELECT workspace.*
+       FROM workspace
+       INNER JOIN workspace_member ON workspace_member.workspace = workspace.id
+       WHERE workspace_member.user_id = ?
+       ORDER BY workspace.name`,
+      [userId],
+      workspaceMappers.workspace
+    );
+  }
+
   async getWorkspace(id: string) {
     return this.get('SELECT * FROM workspace WHERE id = ?', [id], workspaceMappers.workspace);
   }

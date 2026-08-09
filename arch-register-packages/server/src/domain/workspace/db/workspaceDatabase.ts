@@ -212,6 +212,7 @@ export const workspaceMappers = {
 
 export type WorkspaceDatabase = {
   listWorkspaces(): Promise<WorkspaceDbResult[]>;
+  listWorkspacesForUser(userId: string): Promise<WorkspaceDbResult[]>;
   getWorkspace(id: string): Promise<WorkspaceDbResult | null>;
   createWorkspace(input: WorkspaceDbCreate): Promise<WorkspaceDbResult>;
   updateWorkspace(id: string, input: WorkspaceDbUpdate): Promise<WorkspaceDbResult | null>;
