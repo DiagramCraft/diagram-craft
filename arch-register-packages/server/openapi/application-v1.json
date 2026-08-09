@@ -58950,10 +58950,6 @@
                         "maximum": 9007199254740991,
                         "description": "Display order (0-based)"
                       },
-                      "is_active": {
-                        "type": "boolean",
-                        "description": "Whether the type is available for new assessments"
-                      },
                       "created_at": {
                         "description": "ISO 8601 creation timestamp"
                       },
@@ -58965,8 +58961,7 @@
                       "id",
                       "workspace",
                       "name",
-                      "sort_order",
-                      "is_active"
+                      "sort_order"
                     ]
                   }
                 }
@@ -59018,10 +59013,6 @@
                           "minimum": -9007199254740991,
                           "maximum": 9007199254740991,
                           "description": "Display order (defaults to list position)"
-                        },
-                        "is_active": {
-                          "type": "boolean",
-                          "description": "Whether the type is available for new assessments"
                         }
                       },
                       "required": [
@@ -59065,10 +59056,6 @@
                         "maximum": 9007199254740991,
                         "description": "Display order (0-based)"
                       },
-                      "is_active": {
-                        "type": "boolean",
-                        "description": "Whether the type is available for new assessments"
-                      },
                       "created_at": {
                         "description": "ISO 8601 creation timestamp"
                       },
@@ -59080,8 +59067,7 @@
                       "id",
                       "workspace",
                       "name",
-                      "sort_order",
-                      "is_active"
+                      "sort_order"
                     ]
                   }
                 }

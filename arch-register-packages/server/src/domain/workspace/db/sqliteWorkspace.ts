@@ -205,7 +205,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
 
   async listAssessmentTypes(workspace: string) {
     return this.all(
-      'SELECT id, workspace, name, sort_order, is_active, created_at, updated_at FROM workspace_assessment_type WHERE workspace = ? ORDER BY sort_order, id',
+      'SELECT id, workspace, name, sort_order, created_at, updated_at FROM workspace_assessment_type WHERE workspace = ? ORDER BY sort_order, id',
       [workspace],
       workspaceMappers.assessmentType
     );
@@ -213,18 +213,40 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
 
   async replaceAssessmentTypes(workspace: string, types: AssessmentTypeDbCreate[]) {
     const tx = this.db.transaction(() => {
-      this.run('DELETE FROM workspace_assessment_type WHERE workspace = ?', [workspace]);
+      const typeIds = types.map(type => type.id);
+      if (typeIds.length === 0) {
+        this.run('UPDATE assessment SET assessment_type_id = NULL WHERE workspace = ?', [
+          workspace
+        ]);
+        this.run('DELETE FROM workspace_assessment_type WHERE workspace = ?', [workspace]);
+        return;
+      }
+
+      const placeholders = typeIds.map(() => '?').join(', ');
+      this.run(
+        `UPDATE assessment
+         SET assessment_type_id = NULL
+         WHERE workspace = ? AND assessment_type_id IS NOT NULL AND assessment_type_id NOT IN (${placeholders})`,
+        [workspace, ...typeIds]
+      );
+      this.run(
+        `DELETE FROM workspace_assessment_type WHERE workspace = ? AND id NOT IN (${placeholders})`,
+        [workspace, ...typeIds]
+      );
       for (const type of types) {
         this.run(
           `INSERT INTO workspace_assessment_type
-             (id, workspace, name, sort_order, is_active, created_at, updated_at)
-           VALUES (?, ?, ?, ?, ?, ?, ?)`,
+             (id, workspace, name, sort_order, created_at, updated_at)
+           VALUES (?, ?, ?, ?, ?, ?)
+           ON CONFLICT(workspace, id) DO UPDATE SET
+             name = excluded.name,
+             sort_order = excluded.sort_order,
+             updated_at = excluded.updated_at`,
           [
             type.id,
             workspace,
             type.name,
             type.sort_order,
-            type.is_active ? 1 : 0,
             type.created_at.toISOString(),
             type.updated_at.toISOString()
           ]

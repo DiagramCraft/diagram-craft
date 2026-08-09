@@ -50,7 +50,6 @@ export type AssessmentTypeDbResult = {
   workspace: string;
   name: string;
   sort_order: number;
-  is_active: boolean;
   created_at: Date;
   updated_at: Date;
 };
@@ -163,7 +162,6 @@ export const workspaceMappers = {
     workspace: String(row['workspace']),
     name: String(row['name']),
     sort_order: Number(row['sort_order']),
-    is_active: databaseBoolean(row['is_active']),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),

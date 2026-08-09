@@ -311,7 +311,6 @@ export const seedAssessmentTypes: AssessmentTypeDbResult[] = [
     workspace: WORKSPACE_ID,
     name: 'Risk & compliance',
     sort_order: 0,
-    is_active: true,
     created_at: now,
     updated_at: now
   },
@@ -320,7 +319,6 @@ export const seedAssessmentTypes: AssessmentTypeDbResult[] = [
     workspace: WORKSPACE_ID,
     name: 'Quality Review',
     sort_order: 1,
-    is_active: true,
     created_at: now,
     updated_at: now
   },
@@ -329,7 +327,6 @@ export const seedAssessmentTypes: AssessmentTypeDbResult[] = [
     workspace: WORKSPACE_ID,
     name: 'Project',
     sort_order: 2,
-    is_active: true,
     created_at: now,
     updated_at: now
   }

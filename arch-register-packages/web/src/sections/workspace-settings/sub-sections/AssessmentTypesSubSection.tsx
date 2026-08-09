@@ -6,10 +6,10 @@ import type { AssessmentType } from '@arch-register/api-types/workspaceConfigCon
 import { useUpdateAssessmentTypes } from '../../../hooks/useWorkspaceConfig';
 import styles from './LifecycleSubSection.module.css';
 
-type DraftAssessmentType = Pick<AssessmentType, 'id' | 'name' | 'is_active'>;
+type DraftAssessmentType = Pick<AssessmentType, 'id' | 'name'>;
 
 const toDraft = (types: AssessmentType[]): DraftAssessmentType[] =>
-  types.map(type => ({ id: type.id, name: type.name, is_active: type.is_active }));
+  types.map(type => ({ id: type.id, name: type.name }));
 
 export const AssessmentTypesSubSection = ({
   workspaceId,
@@ -49,8 +49,8 @@ export const AssessmentTypesSubSection = ({
         <div className={styles.sectionHead}>
           <div className={styles.sectionTitle}>Assessment types</div>
           <div className={styles.sectionSub}>
-            Categorize assessments for dashboards and future assessment views. Inactive types remain
-            available on existing assessments.
+            Categorize assessments for dashboards and future assessment views. Removing a type
+            uncategorizes existing assessments that used it.
           </div>
         </div>
         <div className={styles.sectionBody}>
@@ -69,28 +69,10 @@ export const AssessmentTypesSubSection = ({
                 }
                 placeholder="Name (e.g. Risk & compliance)"
               />
-              <label style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-                <input
-                  type="checkbox"
-                  checked={type.is_active}
-                  onChange={event =>
-                    setTypes(current =>
-                      current.map((item, i) =>
-                        i === index ? { ...item, is_active: event.target.checked } : item
-                      )
-                    )
-                  }
-                />
-                Active
-              </label>
               <Button
-                onClick={() =>
-                  setTypes(current =>
-                    current.map((item, i) => (i === index ? { ...item, is_active: false } : item))
-                  )
-                }
+                onClick={() => setTypes(current => current.filter((_, i) => i !== index))}
                 style={{ padding: '0 6px' }}
-                title="Deactivate type"
+                title="Delete type"
               >
                 <TbTrash size={12} />
               </Button>
@@ -98,12 +80,7 @@ export const AssessmentTypesSubSection = ({
           ))}
           <Button
             icon={<TbPlus size={12} />}
-            onClick={() =>
-              setTypes(current => [
-                ...current,
-                { id: crypto.randomUUID(), name: '', is_active: true }
-              ])
-            }
+            onClick={() => setTypes(current => [...current, { id: crypto.randomUUID(), name: '' }])}
             style={{ marginTop: 8 }}
           >
             Add assessment type

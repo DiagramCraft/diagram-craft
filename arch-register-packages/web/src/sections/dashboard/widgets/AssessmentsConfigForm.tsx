@@ -36,14 +36,11 @@ export const AssessmentsConfigForm = ({ config, onChange }: Props) => {
           onChange={value => onChange({ ...config, assessmentTypeId: optionalText(value ?? '') })}
         >
           <Select.Item value="">Any assessment type</Select.Item>
-          {assessmentTypes
-            .filter(type => type.is_active || type.id === config.assessmentTypeId)
-            .map(type => (
-              <Select.Item key={type.id} value={type.id}>
-                {type.name}
-                {!type.is_active ? ' (inactive)' : ''}
-              </Select.Item>
-            ))}
+          {assessmentTypes.map(type => (
+            <Select.Item key={type.id} value={type.id}>
+              {type.name}
+            </Select.Item>
+          ))}
         </Select.Root>
       </DialogSection>
       <DialogSection label="Display" required={false}>

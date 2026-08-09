@@ -440,6 +440,17 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const db = getDb();
       const { workspace, project } = await createFullFixtureSet(db);
       const now = new Date();
+      const assessmentTypeId = randomUUID();
+      await db.workspace.replaceAssessmentTypes(workspace, [
+        {
+          id: assessmentTypeId,
+          workspace,
+          name: 'Security review',
+          sort_order: 0,
+          created_at: now,
+          updated_at: now
+        }
+      ]);
 
       const created = await db.project.createAssessment({
         id: randomUUID(),
@@ -449,7 +460,7 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
         description: '',
         status: 'draft',
         mode: 'fields',
-        assessment_type_id: 'assessment-type-1',
+        assessment_type_id: assessmentTypeId,
         scope: ['entity-1', 'entity-2'],
         scope_conditions: [],
         groups: [],
@@ -466,13 +477,13 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       });
 
       expect(created.scope).toEqual(['entity-1', 'entity-2']);
-      expect(created.assessment_type_id).toBe('assessment-type-1');
+      expect(created.assessment_type_id).toBe(assessmentTypeId);
       expect(created.scope_conditions).toEqual([]);
       expect(created.fields).toEqual([]);
 
       const fetched = await db.project.getAssessmentById(workspace, created.id);
       expect(fetched!.scope).toEqual(['entity-1', 'entity-2']);
-      expect(fetched!.assessment_type_id).toBe('assessment-type-1');
+      expect(fetched!.assessment_type_id).toBe(assessmentTypeId);
     });
 
     it('round-trips the confirm-only mode', async () => {

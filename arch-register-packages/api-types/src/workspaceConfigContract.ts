@@ -29,7 +29,6 @@ export const assessmentTypeSchema = z.object({
   workspace: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Assessment type name'),
   sort_order: z.number().int().describe('Display order (0-based)'),
-  is_active: z.boolean().describe('Whether the type is available for new assessments'),
   created_at: timestampOutputSchema.describe('ISO 8601 creation timestamp'),
   updated_at: timestampOutputSchema.describe('ISO 8601 last update timestamp')
 });
@@ -37,8 +36,7 @@ export const assessmentTypeSchema = z.object({
 const assessmentTypeInputSchema = z.object({
   id: z.string().optional().describe('Optional ID for updating an existing type'),
   name: z.string().describe('Assessment type name'),
-  sort_order: z.number().int().optional().describe('Display order (defaults to list position)'),
-  is_active: z.boolean().optional().describe('Whether the type is available for new assessments')
+  sort_order: z.number().int().optional().describe('Display order (defaults to list position)')
 });
 
 const supportedCurrencySchema = z.object({

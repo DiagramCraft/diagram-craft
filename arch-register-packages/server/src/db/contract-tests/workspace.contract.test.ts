@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFixtureWorkspace } from './projectFixtures';
+import { createFixtureProject, createFixtureWorkspace } from './projectFixtures';
 import { createFixtureUser } from './authFixtures';
 
 runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
@@ -110,10 +110,11 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
   });
 
   describe('assessment types', () => {
-    it('replaces assessment types while preserving stable ids and inactive rows', async () => {
+    it('replaces assessment types while removing omitted rows', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const id = randomUUID();
+      const removedId = randomUUID();
 
       const first = await db.workspace.replaceAssessmentTypes(workspace, [
         {
@@ -121,13 +122,21 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
           workspace,
           name: 'Risk & compliance',
           sort_order: 0,
-          is_active: true,
+          created_at: new Date(),
+          updated_at: new Date()
+        },
+        {
+          id: removedId,
+          workspace,
+          name: 'Legacy reviews',
+          sort_order: 1,
           created_at: new Date(),
           updated_at: new Date()
         }
       ]);
       expect(first).toEqual([
-        expect.objectContaining({ id, name: 'Risk & compliance', is_active: true })
+        expect.objectContaining({ id, name: 'Risk & compliance' }),
+        expect.objectContaining({ id: removedId, name: 'Legacy reviews' })
       ]);
 
       const second = await db.workspace.replaceAssessmentTypes(workspace, [
@@ -136,14 +145,79 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
           workspace,
           name: 'Risk reviews',
           sort_order: 0,
-          is_active: false,
           created_at: new Date(),
           updated_at: new Date()
         }
       ]);
-      expect(second).toEqual([
-        expect.objectContaining({ id, name: 'Risk reviews', is_active: false })
+      expect(second).toEqual([expect.objectContaining({ id, name: 'Risk reviews' })]);
+      expect(second.some(type => type.id === removedId)).toBe(false);
+    });
+
+    it('clears assessment references when a type is removed', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const project = await createFixtureProject(db, workspace);
+      const retainedId = randomUUID();
+      const removedId = randomUUID();
+      const now = new Date();
+
+      await db.workspace.replaceAssessmentTypes(workspace, [
+        {
+          id: retainedId,
+          workspace,
+          name: 'Retained',
+          sort_order: 0,
+          created_at: now,
+          updated_at: now
+        },
+        {
+          id: removedId,
+          workspace,
+          name: 'Removed',
+          sort_order: 1,
+          created_at: now,
+          updated_at: now
+        }
       ]);
+
+      const assessment = await db.project.createAssessment({
+        id: randomUUID(),
+        workspace,
+        project_id: project.id,
+        name: 'Review',
+        description: '',
+        status: 'draft',
+        mode: 'fields',
+        assessment_type_id: removedId,
+        scope: [],
+        scope_conditions: [],
+        fields: [],
+        groups: [],
+        assigned_team_ids: [],
+        due_at: null,
+        recurrence: { type: 'none' },
+        response_window_days: null,
+        current_occurrence: 1,
+        pending_occurrence_job_run_id: null,
+        next_occurrence_at: null,
+        created_at: now,
+        updated_at: now
+      });
+
+      await db.workspace.replaceAssessmentTypes(workspace, [
+        {
+          id: retainedId,
+          workspace,
+          name: 'Retained',
+          sort_order: 0,
+          created_at: now,
+          updated_at: now
+        }
+      ]);
+
+      expect(
+        (await db.project.getAssessmentById(workspace, assessment.id))?.assessment_type_id
+      ).toBe(null);
     });
   });
 

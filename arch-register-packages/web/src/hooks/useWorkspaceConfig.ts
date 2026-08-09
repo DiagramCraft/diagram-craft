@@ -140,9 +140,7 @@ export const useAssessmentTypes = (workspaceSlug: string, enabled = true) => {
 export const useUpdateAssessmentTypes = (workspaceId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (
-      types: Array<Pick<AssessmentType, 'id' | 'name' | 'is_active'> & { sort_order?: number }>
-    ) =>
+    mutationFn: (types: Array<Pick<AssessmentType, 'id' | 'name'> & { sort_order?: number }>) =>
       orpcClient.config.assessmentTypes.replace({
         params: { workspace: workspaceId },
         body: { types }
