@@ -395,10 +395,12 @@ const db = {
     })
   },
   jobs: {
-    enqueueOneOffRun: vi.fn(async (input: { job_type: string; payload: Record<string, unknown> }) => {
-      queuedAuditJobs.push(input);
-      return input;
-    })
+    enqueueOneOffRun: vi.fn(
+      async (input: { job_type: string; payload: Record<string, unknown> }) => {
+        queuedAuditJobs.push(input);
+        return input;
+      }
+    )
   }
 } as unknown as DatabaseAdapter;
 
