@@ -886,8 +886,8 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
 
   async createAssessment(input: AssessmentDbCreate) {
     this.run(
-      `INSERT INTO assessment (id, workspace, project_id, name, description, status, mode, scope, scope_conditions, fields, groups, assigned_team_ids, due_at, recurrence, response_window_days, current_occurrence, pending_occurrence_job_run_id, next_occurrence_at, created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO assessment (id, workspace, project_id, name, description, status, mode, assessment_type_id, scope, scope_conditions, fields, groups, assigned_team_ids, due_at, recurrence, response_window_days, current_occurrence, pending_occurrence_job_run_id, next_occurrence_at, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         input.workspace,
@@ -896,6 +896,7 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
         input.description,
         input.status,
         input.mode,
+        input.assessment_type_id,
         JSON.stringify(input.scope),
         JSON.stringify(input.scope_conditions),
         JSON.stringify(input.fields),
@@ -922,13 +923,14 @@ export class SqliteProjectDatabase extends SqliteDatabaseBase implements Project
   ) {
     this.run(
       `UPDATE assessment
-       SET name = ?, description = ?, status = ?, mode = ?, scope = ?, scope_conditions = ?, fields = ?, groups = ?, assigned_team_ids = ?, due_at = ?, recurrence = ?, response_window_days = ?, current_occurrence = ?, pending_occurrence_job_run_id = ?, next_occurrence_at = ?, updated_at = ?
+       SET name = ?, description = ?, status = ?, mode = ?, assessment_type_id = ?, scope = ?, scope_conditions = ?, fields = ?, groups = ?, assigned_team_ids = ?, due_at = ?, recurrence = ?, response_window_days = ?, current_occurrence = ?, pending_occurrence_job_run_id = ?, next_occurrence_at = ?, updated_at = ?
        WHERE workspace = ? AND project_id = ? AND id = ?`,
       [
         input.name,
         input.description,
         input.status,
         input.mode,
+        input.assessment_type_id,
         JSON.stringify(input.scope),
         JSON.stringify(input.scope_conditions),
         JSON.stringify(input.fields),

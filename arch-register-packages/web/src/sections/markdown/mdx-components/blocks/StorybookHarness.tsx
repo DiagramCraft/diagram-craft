@@ -36,6 +36,7 @@ const workspaceContext = {
   lifecycleStates,
   teams: [],
   projectEntityTypes: [],
+  assessmentTypes: [],
   permissions: {
     canManageWorkspaces: false,
     canViewSchemas: true,

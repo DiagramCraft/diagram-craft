@@ -2,7 +2,8 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import type {
   TeamAssignmentInfo,
   WorkspaceTeamInput,
-  SupportedCurrency
+  SupportedCurrency,
+  AssessmentType
 } from '@arch-register/api-types/workspaceConfigContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { orpcClient } from '../lib/orpcClient';
@@ -19,6 +20,8 @@ export const workspaceConfigKeys = {
     [...workspaceConfigKeys.all, 'team-assignments', workspaceId] as const,
   projectEntityTypes: (workspaceId: string) =>
     [...workspaceConfigKeys.all, 'project-entity-types', workspaceId] as const,
+  assessmentTypes: (workspaceId: string) =>
+    [...workspaceConfigKeys.all, 'assessment-types', workspaceId] as const,
   currencies: (workspaceId: string) =>
     [...workspaceConfigKeys.all, 'currencies', workspaceId] as const
 };
@@ -125,6 +128,31 @@ export const useProjectEntityTypes = (workspaceSlug: string, enabled = true) => 
   });
 };
 
+export const useAssessmentTypes = (workspaceSlug: string, enabled = true) => {
+  return useQuery({
+    queryKey: workspaceConfigKeys.assessmentTypes(workspaceSlug),
+    queryFn: () => orpcClient.config.assessmentTypes.list({ params: { workspace: workspaceSlug } }),
+    enabled: enabled && !!workspaceSlug,
+    staleTime: 5 * 60 * 1000
+  });
+};
+
+export const useUpdateAssessmentTypes = (workspaceId: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (
+      types: Array<Pick<AssessmentType, 'id' | 'name' | 'is_active'> & { sort_order?: number }>
+    ) =>
+      orpcClient.config.assessmentTypes.replace({
+        params: { workspace: workspaceId },
+        body: { types }
+      }),
+    onSuccess: value => {
+      queryClient.setQueryData(workspaceConfigKeys.assessmentTypes(workspaceId), value);
+    }
+  });
+};
+
 export const useSupportedCurrencies = (workspaceSlug: string, enabled = true) =>
   useQuery({
     queryKey: workspaceConfigKeys.currencies(workspaceSlug),
@@ -153,6 +181,7 @@ export const useWorkspaceConfig = (workspaceSlug: string, enabled = true) => {
   const teams = useTeams(workspaceSlug, enabled);
   const teamAssignments = useTeamAssignments(workspaceSlug, enabled);
   const projectEntityTypes = useProjectEntityTypes(workspaceSlug, enabled);
+  const assessmentTypes = useAssessmentTypes(workspaceSlug, enabled);
   const currencies = useSupportedCurrencies(workspaceSlug, enabled);
 
   return {
@@ -160,18 +189,21 @@ export const useWorkspaceConfig = (workspaceSlug: string, enabled = true) => {
     teams: teams.data ?? [],
     teamAssignments: teamAssignments.data ?? [],
     projectEntityTypes: projectEntityTypes.data ?? [],
+    assessmentTypes: assessmentTypes.data ?? [],
     currencies: currencies.data ?? { currencies: [], default_currency: 'USD' },
     isLoading:
       lifecycleStates.isLoading ||
       teams.isLoading ||
       teamAssignments.isLoading ||
       projectEntityTypes.isLoading ||
+      assessmentTypes.isLoading ||
       currencies.isLoading,
     isError:
       lifecycleStates.isError ||
       teams.isError ||
       teamAssignments.isError ||
       projectEntityTypes.isError ||
+      assessmentTypes.isError ||
       currencies.isError
   };
 };

@@ -22,6 +22,7 @@ import { WebhooksSubSection } from './sub-sections/WebhooksSubSection';
 import { AutomationRulesSubSection } from './sub-sections/AutomationRulesSubSection';
 import { CreateJobDialog } from '../../components/jobs/CreateJobDialog';
 import { WorkspaceApiTokensSubSection } from './sub-sections/WorkspaceApiTokensSubSection';
+import { AssessmentTypesSubSection } from './sub-sections/AssessmentTypesSubSection';
 
 const WorkspaceAnalyticsScreen = lazy(() =>
   import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
@@ -38,6 +39,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'currencies': {
     title: 'Currencies',
     sub: 'Configure the supported currencies and default currency for this workspace.'
+  },
+  'assessment-types': {
+    title: 'Assessment types',
+    sub: 'Configure categories used to organize workspace assessments and dashboard views.'
   },
   'model-overview': {
     title: 'Model Overview',
@@ -229,6 +234,12 @@ export const WorkspaceSettingsScreen = () => {
           workspaceId={workspace.id}
           currencies={ctx.currencies.currencies}
           defaultCurrency={ctx.currencies.default_currency}
+        />
+      )}
+      {section === 'assessment-types' && (
+        <AssessmentTypesSubSection
+          workspaceId={workspace.id}
+          assessmentTypes={ctx.assessmentTypes}
         />
       )}
       {section === 'roles' && (

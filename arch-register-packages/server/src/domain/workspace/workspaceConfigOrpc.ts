@@ -25,6 +25,8 @@ import {
   listUsers,
   listProjectEntityTypes,
   replaceProjectEntityTypes,
+  listAssessmentTypes,
+  replaceAssessmentTypes,
   listSupportedCurrencies,
   replaceSupportedCurrencies
 } from './workspaceConfigOperations';
@@ -157,6 +159,16 @@ export const workspaceConfigORPCRouter = configRouter.router({
           );
         }
       )
+    },
+    assessmentTypes: {
+      list: configRouter.config.assessmentTypes.list.handler(async ({ context }) => {
+        const { workspace } = context;
+        return await listAssessmentTypes(context.db, workspace, context.event);
+      }),
+      replace: configRouter.config.assessmentTypes.replace.handler(async ({ input, context }) => {
+        const { workspace } = context;
+        return await replaceAssessmentTypes(context.db, workspace, input.body.types, context.event);
+      })
     },
     currencies: {
       list: configRouter.config.currencies.list.handler(async ({ context }) => {

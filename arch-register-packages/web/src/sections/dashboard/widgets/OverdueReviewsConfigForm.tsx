@@ -13,21 +13,24 @@ type Props = {
 };
 
 export const OverdueReviewsConfigForm = ({ config, onChange }: Props) => {
-  const { schemas } = useWorkspaceContext();
+  const { assessmentTypes } = useWorkspaceContext();
 
   return (
     <>
-      <DialogSection label="Entity type" required={false}>
+      <DialogSection label="Assessment type" required={false}>
         <Select.Root
-          value={config.schema ?? ''}
-          onChange={value => onChange({ ...config, schema: optionalText(value ?? '') })}
+          value={config.assessmentTypeId ?? ''}
+          onChange={value => onChange({ ...config, assessmentTypeId: optionalText(value ?? '') })}
         >
-          <Select.Item value="">Any type</Select.Item>
-          {schemas.map(schema => (
-            <Select.Item key={schema.id} value={schema.id}>
-              {schema.name}
-            </Select.Item>
-          ))}
+          <Select.Item value="">Any assessment type</Select.Item>
+          {assessmentTypes
+            .filter(type => type.is_active || type.id === config.assessmentTypeId)
+            .map(type => (
+              <Select.Item key={type.id} value={type.id}>
+                {type.name}
+                {!type.is_active ? ' (inactive)' : ''}
+              </Select.Item>
+            ))}
         </Select.Root>
       </DialogSection>
       <DialogSection label="Display" required={false}>

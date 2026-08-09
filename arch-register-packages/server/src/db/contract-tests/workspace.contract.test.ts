@@ -109,6 +109,44 @@ runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
     });
   });
 
+  describe('assessment types', () => {
+    it('replaces assessment types while preserving stable ids and inactive rows', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const id = randomUUID();
+
+      const first = await db.workspace.replaceAssessmentTypes(workspace, [
+        {
+          id,
+          workspace,
+          name: 'Risk & compliance',
+          sort_order: 0,
+          is_active: true,
+          created_at: new Date(),
+          updated_at: new Date()
+        }
+      ]);
+      expect(first).toEqual([
+        expect.objectContaining({ id, name: 'Risk & compliance', is_active: true })
+      ]);
+
+      const second = await db.workspace.replaceAssessmentTypes(workspace, [
+        {
+          id,
+          workspace,
+          name: 'Risk reviews',
+          sort_order: 0,
+          is_active: false,
+          created_at: new Date(),
+          updated_at: new Date()
+        }
+      ]);
+      expect(second).toEqual([
+        expect.objectContaining({ id, name: 'Risk reviews', is_active: false })
+      ]);
+    });
+  });
+
   describe('teams and team assignments', () => {
     it('replaces teams and assignments atomically, dropping orphaned assignments', async () => {
       const db = getDb();

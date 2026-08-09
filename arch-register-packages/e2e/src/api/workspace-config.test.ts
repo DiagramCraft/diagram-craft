@@ -65,6 +65,32 @@ const createCustomRole = async (
 };
 
 test.describe('workspace config routes', () => {
+  test('lists and replaces workspace assessment types', async ({ orpc, seededUsers: _ }) => {
+    const typeId = '00000000-0000-0000-0099-000000000001';
+    const result = await orpc.config.assessmentTypes.replace({
+      params: { workspace: 'default' },
+      body: {
+        types: [
+          { id: typeId, name: 'Risk & compliance', sort_order: 99, is_active: true },
+          { name: 'Legacy reviews', sort_order: 0, is_active: false }
+        ]
+      }
+    });
+
+    expect(result.map(type => type.sort_order)).toEqual([0, 1]);
+    expect(result).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: typeId, name: 'Risk & compliance', is_active: true }),
+        expect.objectContaining({ name: 'Legacy reviews', is_active: false })
+      ])
+    );
+
+    const listed = await orpc.config.assessmentTypes.list({
+      params: { workspace: 'default' }
+    });
+    expect(listed).toEqual(result);
+  });
+
   test('GET /api/:workspace/config/lifecycle-states returns seeded states', async ({
     orpc,
     seededUsers: _

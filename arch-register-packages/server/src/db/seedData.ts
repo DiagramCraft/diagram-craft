@@ -15,6 +15,7 @@ import {
   OwnerDbResult,
   LifecycleStateDbResult,
   ProjectEntityTypeDbResult,
+  AssessmentTypeDbResult,
   SupportedCurrencyDbResult
 } from '../domain/workspace/db/workspaceDatabase';
 import {
@@ -297,6 +298,18 @@ export const seedProjectEntityTypes: ProjectEntityTypeDbResult[] = [
     label: 'Used',
     sort_order: 3,
     created_at: now
+  }
+];
+
+export const seedAssessmentTypes: AssessmentTypeDbResult[] = [
+  {
+    id: '00000000-0000-0000-0024-000000000001',
+    workspace: WORKSPACE_ID,
+    name: 'Risk & compliance',
+    sort_order: 0,
+    is_active: true,
+    created_at: now,
+    updated_at: now
   }
 ];
 
@@ -4321,6 +4334,7 @@ export const seedAssessments: AssessmentDbCreate[] = [
     description: 'Reassess risk scores and control effectiveness for the auth migration.',
     status: 'open',
     mode: 'confirm',
+    assessment_type_id: '00000000-0000-0000-0024-000000000001',
     scope: ['00000000-0000-0000-0000-000000000013', '00000000-0000-0000-0000-000000000014'],
     scope_conditions: [],
     fields: [],
@@ -4340,8 +4354,8 @@ export const seedAssessments: AssessmentDbCreate[] = [
 // The default workspace's "Overview" dashboard is otherwise seeded lazily on first client visit
 // (see web's DEFAULT_SEEDED_WIDGETS) - this pre-seeds it here with the same starter widgets plus
 // three generic, risk-schema-agnostic dashboard widgets (TopEntities, AggregateStat,
-// OverdueReviews - see #2848) configured against the risk-and-compliance schemas above, purely as
-// example seed data showing how those generic widgets can be used to track risk and compliance.
+// OverdueReviews - see #2848) configured against the seeded assessment type, purely as example
+// data showing how generic widgets can be used to track risk and compliance.
 export const seedWorkspaceDashboards: {
   id: string;
   workspace: string;
@@ -4422,7 +4436,10 @@ export const seedWorkspaceDashboards: {
       {
         id: 'overdue-risk-control-reviews',
         type: 'OverdueReviews',
-        config: { label: 'Overdue risk and control reviews' },
+        config: {
+          assessmentTypeId: '00000000-0000-0000-0024-000000000001',
+          label: 'Overdue risk and control reviews'
+        },
         x: 8,
         y: 2,
         w: 4,

@@ -8,6 +8,7 @@ import {
   seedGlobalRoleAssignments,
   seedLifecycleStates,
   seedProjectEntityTypes,
+  seedAssessmentTypes,
   seedLocalUsers,
   seedOwners,
   seedProjectFiles,
@@ -287,6 +288,10 @@ export const seedBootstrapData = async (
     await db.workspace.replaceProjectEntityTypes(
       workspace.id,
       seedProjectEntityTypes.filter(t => t.workspace === workspace.id)
+    );
+    await db.workspace.replaceAssessmentTypes(
+      workspace.id,
+      seedAssessmentTypes.filter(type => type.workspace === workspace.id)
     );
     await db.workspace.replaceTeams(
       workspace.id,
