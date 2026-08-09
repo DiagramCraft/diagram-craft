@@ -27,6 +27,7 @@ import {
   seedTeamAssignments,
   seedUserWatches,
   seedWikiPageBodies,
+  seedWorkspaceDashboards,
   seedWorkspaceMembers,
   seedWorkspaces
 } from './seedData';
@@ -349,6 +350,19 @@ export const seedBootstrapData = async (
   }
   for (const view of seedSavedViews) {
     await db.view.createSavedView(view);
+  }
+  for (const dashboard of seedWorkspaceDashboards) {
+    const created = await db.dashboard.create({
+      id: dashboard.id,
+      workspace: dashboard.workspace,
+      name: dashboard.name,
+      sort_order: dashboard.sort_order,
+      updated_by: null
+    });
+    await db.dashboard.update(dashboard.workspace, created.id, {
+      layout: dashboard.layout,
+      updated_by: null
+    });
   }
   for (const file of seedProjectFiles) {
     await db.project.upsertContentNode({

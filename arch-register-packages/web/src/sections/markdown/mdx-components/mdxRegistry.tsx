@@ -70,6 +70,18 @@ import {
   MARKDOWN_WIDGET_TYPE,
   markdownWidgetSpec
 } from '../../dashboard/widgets/MarkdownRegistration';
+import {
+  AGGREGATE_STAT_TYPE,
+  aggregateStatSpec
+} from '../../dashboard/widgets/AggregateStatRegistration';
+import {
+  TOP_ENTITIES_TYPE,
+  topEntitiesSpec
+} from '../../dashboard/widgets/TopEntitiesRegistration';
+import {
+  OVERDUE_REVIEWS_TYPE,
+  overdueReviewsSpec
+} from '../../dashboard/widgets/OverdueReviewsRegistration';
 import type { DashboardWidgetSpec, MdxComponentSpec } from './types';
 export type { SlashCommandDef, EditorSpec, MdxComponentSpec, DashboardWidgetSpec } from './types';
 
@@ -102,7 +114,10 @@ export const MDX_COMPONENTS = {
   [ACTIVITY_FEED_TYPE]: activityFeedSpec,
   [ACTIVE_ASSESSMENTS_TYPE]: activeAssessmentsSpec,
   [UPCOMING_MILESTONES_TYPE]: upcomingMilestonesSpec,
-  [MARKDOWN_WIDGET_TYPE]: markdownWidgetSpec
+  [MARKDOWN_WIDGET_TYPE]: markdownWidgetSpec,
+  [AGGREGATE_STAT_TYPE]: aggregateStatSpec,
+  [TOP_ENTITIES_TYPE]: topEntitiesSpec,
+  [OVERDUE_REVIEWS_TYPE]: overdueReviewsSpec
 } satisfies Record<string, MdxComponentSpec>;
 
 export type MdxComponentName = keyof typeof MDX_COMPONENTS;

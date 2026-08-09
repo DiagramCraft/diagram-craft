@@ -73,6 +73,50 @@ export type FieldDef = {
   options?: { value: string; label: string }[];
 };
 
+/**
+ * FieldDefs for `schema`'s own fields (no entity built-ins like name/owner/lifecycle) - reusable
+ * by callers that only need to build a condition scoped to a single schema, such as
+ * AggregateStatConfigForm's numerator-condition picker.
+ */
+export const getSchemaFieldDefs = (
+  schema: EntitySchema | undefined,
+  enums: WorkspaceEnum[],
+  getFieldGroupAccess: (
+    accessControl: FieldGroupAccessControl | undefined
+  ) => FieldGroupAccess = () => 'edit'
+): FieldDef[] => {
+  if (!schema) return [];
+  return schema.fields
+    .filter(f => {
+      if (!f.groupId) return true;
+      const group = schema.groups?.find(g => g.id === f.groupId);
+      return getFieldGroupAccess(group?.accessControl) !== 'none';
+    })
+    .map((f): FieldDef => {
+      let type: FieldDef['type'] = 'text';
+      let options: FieldDef['options'];
+
+      if (f.type === 'date') type = 'date';
+      else if (f.type === 'select') {
+        type = 'select';
+        const en = enums.find(e => e.id === f.enumId);
+        options = en?.options ?? [];
+      } else if (f.type === 'boolean') type = 'boolean';
+      else if (f.type === 'number' || f.type === 'currency') type = 'number';
+      else if (f.type === 'derived') {
+        type =
+          f.resultType === 'select'
+            ? 'select'
+            : f.resultType === 'rating'
+              ? 'rating'
+              : f.resultType;
+        if (type === 'select') options = f.options ?? [];
+      }
+
+      return { id: f.id, name: f.name, type, options };
+    });
+};
+
 type Props = {
   conditions: FilterCondition[];
   onChange: (conditions: FilterCondition[]) => void;
@@ -128,41 +172,11 @@ export const FilterBuilder = ({
       }
     ];
 
-    let schemaFields: FieldDef[] = [];
-    if (selectedSchemaId) {
-      const schema = schemas.find(s => s.id === selectedSchemaId);
-      if (schema) {
-        schemaFields = schema.fields
-          .filter(f => {
-            if (!f.groupId) return true;
-            const group = schema.groups?.find(g => g.id === f.groupId);
-            return getFieldGroupAccess(group?.accessControl) !== 'none';
-          })
-          .map(f => {
-            let type: FieldDef['type'] = 'text';
-            let options: FieldDef['options'];
-
-            if (f.type === 'date') type = 'date';
-            else if (f.type === 'select') {
-              type = 'select';
-              const en = enums.find(e => e.id === f.enumId);
-              options = en?.options ?? [];
-            } else if (f.type === 'boolean') type = 'boolean';
-            else if (f.type === 'number' || f.type === 'currency') type = 'number';
-            else if (f.type === 'derived') {
-              type =
-                f.resultType === 'select'
-                  ? 'select'
-                  : f.resultType === 'rating'
-                    ? 'rating'
-                    : f.resultType;
-              if (type === 'select') options = f.options ?? [];
-            }
-
-            return { id: f.id, name: f.name, type, options };
-          });
-      }
-    }
+    const schemaFields = getSchemaFieldDefs(
+      selectedSchemaId ? schemas.find(s => s.id === selectedSchemaId) : undefined,
+      enums,
+      getFieldGroupAccess
+    );
 
     const assessmentFields: FieldDef[] = joinedAssessment
       ? [

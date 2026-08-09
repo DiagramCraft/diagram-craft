@@ -130,7 +130,11 @@ export const getMetricSourceOptions = (
       const group = schema.groups?.find(g => g.id === field.groupId);
       if (getFieldGroupAccess(group?.accessControl) === 'none') continue;
     }
-    if (field.type === 'number' || field.type === 'currency') {
+    if (
+      field.type === 'number' ||
+      field.type === 'currency' ||
+      (field.type === 'derived' && field.resultType === 'number')
+    ) {
       options.push({ source: { kind: 'field', fieldId: field.id }, label: field.name });
     } else if (field.type === 'select') {
       options.push({ source: { kind: 'enum', fieldId: field.id }, label: field.name });
