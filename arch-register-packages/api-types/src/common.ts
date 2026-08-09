@@ -74,7 +74,9 @@ export const workspaceCapabilitySchema = z.enum([
   'governance.external',
   'comments',
   'schema.edit',
-  'schema.publish'
+  'schema.publish',
+  'artifact.content.view',
+  'artifact.manage'
 ]);
 
 // ── External / AI-generated field metadata (shared by entity schemas & document types) ──────

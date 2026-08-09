@@ -1064,6 +1064,14 @@ export const seedSchemas: SchemaDbResult[] = (
           schemaId: '00000000-0000-0000-0000-000000000002',
           minCount: 1,
           maxCount: 1
+        },
+        { id: 'api_version', name: 'API Version', type: 'text' }
+      ],
+      artifact_capabilities: [
+        {
+          type: 'api-specification',
+          features: ['operations', 'documentation'],
+          requiredFields: ['api_type', 'api_version']
         }
       ],
       color: AR_COLOR_BLUE,

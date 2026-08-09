@@ -33,6 +33,7 @@ import { PostgresExternalIdentityDatabase } from '../domain/externalIdentity/db/
 import { PostgresRelationDatabase } from '../domain/catalog/db/postgresRelation';
 import { PostgresCurrencyRatesDatabase } from '../domain/currencyRates/db/postgresCurrencyRates';
 import { PostgresContentReconciliationDatabase } from '../domain/project/db/postgresContentReconciliation';
+import { PostgresArtifactDatabase } from '../domain/artifact/db/postgresArtifact';
 import { createLogger } from '../utils/logger';
 
 const PGCRYPTO_EXISTS_NOTICE = 'extension "pgcrypto" already exists, skipping';
@@ -79,6 +80,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly relation: PostgresRelationDatabase;
   readonly currencyRates: PostgresCurrencyRatesDatabase;
   readonly contentReconciliation: PostgresContentReconciliationDatabase;
+  readonly artifact: PostgresArtifactDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -112,7 +114,8 @@ export class PostgresDatabase implements DatabaseAdapter {
       externalIdentity: new PostgresExternalIdentityDatabase(sql),
       relation: new PostgresRelationDatabase(sql),
       currencyRates: new PostgresCurrencyRatesDatabase(sql),
-      contentReconciliation: new PostgresContentReconciliationDatabase(sql)
+      contentReconciliation: new PostgresContentReconciliationDatabase(sql),
+      artifact: new PostgresArtifactDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -178,6 +181,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.relation = new PostgresRelationDatabase(this.sql);
     this.currencyRates = new PostgresCurrencyRatesDatabase(this.sql);
     this.contentReconciliation = new PostgresContentReconciliationDatabase(this.sql);
+    this.artifact = new PostgresArtifactDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,

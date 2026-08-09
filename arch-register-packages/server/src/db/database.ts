@@ -27,6 +27,7 @@ import type { CatalogRecordExternalIdentityDatabase } from '../domain/externalId
 import type { RelationDatabase } from '../domain/catalog/db/relationDatabase';
 import type { CurrencyRatesDatabase } from '../domain/currencyRates/db/currencyRatesDatabase';
 import type { ContentReconciliationDatabase } from '../domain/project/db/contentReconciliationDatabase';
+import type { ArtifactDatabase } from '../domain/artifact/db/artifactDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -72,6 +73,7 @@ export type DatabaseAdapter = {
   relation: RelationDatabase;
   currencyRates: CurrencyRatesDatabase;
   contentReconciliation: ContentReconciliationDatabase;
+  artifact: ArtifactDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -206,6 +208,15 @@ export type {
   CurrencyRateSnapshotDbResult,
   CurrencyRatesDatabase
 } from '../domain/currencyRates/db/currencyRatesDatabase';
+export type {
+  ArtifactDatabase,
+  ArtifactDiagnosticDb,
+  ArtifactRevisionDbCreate,
+  ArtifactRevisionDbResult,
+  ArtifactDbCreate,
+  ArtifactDbResult,
+  ArtifactDbUpdate
+} from '../domain/artifact/db/artifactDatabase';
 
 // Legacy names for backward compatibility during transition if needed,
 // but we plan to update all usages.

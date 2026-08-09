@@ -113,6 +113,12 @@
           to a schema group render under a labeled section in the entity's Properties panel, with ungrouped fields
           shown first.
 
+        - @id:ar.entities.artifacts Schemas can opt entities into typed, functionality-driving artifacts such as API
+          specifications or compliance evidence. Authorized users can register artifact sources, retain immutable
+          revisions, inspect processing status and safe diagnostics, and retrieve raw content through a separate
+          permission. Artifact capabilities declare their supported features and required schema fields; the catalog
+          does not treat arbitrary binary documents as a generic attachment store.
+
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can
           define typed relation schemas with mandatory "in"/"out" endpoints (each constrained to a set of allowed
