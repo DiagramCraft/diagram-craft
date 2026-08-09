@@ -58,10 +58,7 @@ import {
   ACTIVITY_FEED_TYPE,
   activityFeedSpec
 } from '../../dashboard/widgets/ActivityFeedRegistration';
-import {
-  ACTIVE_ASSESSMENTS_TYPE,
-  activeAssessmentsSpec
-} from '../../dashboard/widgets/ActiveAssessmentsRegistration';
+import { ASSESSMENTS_TYPE, assessmentsSpec } from '../../dashboard/widgets/AssessmentsRegistration';
 import {
   UPCOMING_MILESTONES_TYPE,
   upcomingMilestonesSpec
@@ -78,10 +75,6 @@ import {
   TOP_ENTITIES_TYPE,
   topEntitiesSpec
 } from '../../dashboard/widgets/TopEntitiesRegistration';
-import {
-  OVERDUE_REVIEWS_TYPE,
-  overdueReviewsSpec
-} from '../../dashboard/widgets/OverdueReviewsRegistration';
 import type { DashboardWidgetSpec, MdxComponentSpec } from './types';
 export type { SlashCommandDef, EditorSpec, MdxComponentSpec, DashboardWidgetSpec } from './types';
 
@@ -112,12 +105,11 @@ export const MDX_COMPONENTS = {
   [ENTITY_ACTIVITY_TREND_CHART_TYPE]: entityActivityTrendChartSpec,
   [ENTITY_STALE_REPORT_TYPE]: entityStaleReportSpec,
   [ACTIVITY_FEED_TYPE]: activityFeedSpec,
-  [ACTIVE_ASSESSMENTS_TYPE]: activeAssessmentsSpec,
+  [ASSESSMENTS_TYPE]: assessmentsSpec,
   [UPCOMING_MILESTONES_TYPE]: upcomingMilestonesSpec,
   [MARKDOWN_WIDGET_TYPE]: markdownWidgetSpec,
   [AGGREGATE_STAT_TYPE]: aggregateStatSpec,
-  [TOP_ENTITIES_TYPE]: topEntitiesSpec,
-  [OVERDUE_REVIEWS_TYPE]: overdueReviewsSpec
+  [TOP_ENTITIES_TYPE]: topEntitiesSpec
 } satisfies Record<string, MdxComponentSpec>;
 
 export type MdxComponentName = keyof typeof MDX_COMPONENTS;

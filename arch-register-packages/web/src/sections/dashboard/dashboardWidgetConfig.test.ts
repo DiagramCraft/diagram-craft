@@ -161,32 +161,57 @@ describe('parseKnownDashboardWidget', () => {
     ).toBeNull();
   });
 
-  it('parses an OverdueReviews widget with no assessment type filter', () => {
+  it('parses an Assessments widget with a mode and no assessment type filter', () => {
     const widget = parseKnownDashboardWidget({
-      id: 'overdue-reviews',
-      type: 'OverdueReviews',
-      config: {},
+      id: 'assessments',
+      type: 'Assessments',
+      config: { mode: 'overdue' },
       x: 0,
       y: 0,
       w: 3,
       h: 3
     });
 
-    expect(widget?.type).toBe('OverdueReviews');
+    expect(widget?.type).toBe('Assessments');
   });
 
-  it('rejects an OverdueReviews widget with a non-string assessment type', () => {
+  it('rejects an Assessments widget with an invalid mode or non-string assessment type', () => {
     expect(
       parseKnownDashboardWidget({
-        id: 'overdue-reviews',
-        type: 'OverdueReviews',
-        config: { assessmentTypeId: 42 },
+        id: 'assessments',
+        type: 'Assessments',
+        config: { mode: 'invalid', assessmentTypeId: 42 },
         x: 0,
         y: 0,
         w: 3,
         h: 3
       })
     ).toBeNull();
+  });
+
+  it('uses the configured assessment label and falls back to Assessments', () => {
+    expect(
+      getWidgetTitle({
+        id: 'assessments',
+        type: 'Assessments',
+        config: { mode: 'active', label: 'Reviews' },
+        x: 0,
+        y: 0,
+        w: 3,
+        h: 3
+      })
+    ).toBe('Reviews');
+    expect(
+      getWidgetTitle({
+        id: 'assessments',
+        type: 'Assessments',
+        config: { mode: 'active', label: '  ' },
+        x: 0,
+        y: 0,
+        w: 3,
+        h: 3
+      })
+    ).toBe('Assessments');
   });
 
   it('returns null for unknown widget types', () => {

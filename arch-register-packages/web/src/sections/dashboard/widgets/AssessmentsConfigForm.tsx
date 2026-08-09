@@ -1,22 +1,35 @@
 import { Select } from '@diagram-craft/app-components/Select';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { DialogSection } from '../../markdown/editor/BlockDialog';
-import type { OverdueReviewsWidgetConfig } from './OverdueReviewsWidget';
+import type { AssessmentWidgetMode, AssessmentsWidgetConfig } from './AssessmentsWidget';
 import styles from '../WidgetConfigDialog.module.css';
 
 const optionalText = (value: string): string | undefined =>
   value.trim() === '' ? undefined : value;
 
 type Props = {
-  config: OverdueReviewsWidgetConfig;
-  onChange: (config: OverdueReviewsWidgetConfig) => void;
+  config: AssessmentsWidgetConfig;
+  onChange: (config: AssessmentsWidgetConfig) => void;
 };
 
-export const OverdueReviewsConfigForm = ({ config, onChange }: Props) => {
+export const AssessmentsConfigForm = ({ config, onChange }: Props) => {
   const { assessmentTypes } = useWorkspaceContext();
 
   return (
     <>
+      <DialogSection label="Mode" required>
+        <Select.Root
+          value={config.mode}
+          onChange={value =>
+            onChange({ ...config, mode: (value ?? 'active') as AssessmentWidgetMode })
+          }
+        >
+          <Select.Item value="active">Active</Select.Item>
+          <Select.Item value="upcoming">Upcoming</Select.Item>
+          <Select.Item value="overdue">Overdue</Select.Item>
+          <Select.Item value="all">All</Select.Item>
+        </Select.Root>
+      </DialogSection>
       <DialogSection label="Assessment type" required={false}>
         <Select.Root
           value={config.assessmentTypeId ?? ''}
@@ -43,7 +56,7 @@ export const OverdueReviewsConfigForm = ({ config, onChange }: Props) => {
                 className={styles.labelInput}
                 value={config.label ?? ''}
                 onChange={e => onChange({ ...config, label: optionalText(e.target.value) })}
-                placeholder="e.g. Overdue risk and control reviews"
+                placeholder="e.g. Risk and compliance reviews"
               />
             </div>
           </label>

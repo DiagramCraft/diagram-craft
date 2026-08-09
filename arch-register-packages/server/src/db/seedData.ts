@@ -314,6 +314,24 @@ export const seedAssessmentTypes: AssessmentTypeDbResult[] = [
     is_active: true,
     created_at: now,
     updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0024-000000000002',
+    workspace: WORKSPACE_ID,
+    name: 'Quality Review',
+    sort_order: 1,
+    is_active: true,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0024-000000000003',
+    workspace: WORKSPACE_ID,
+    name: 'Project',
+    sort_order: 2,
+    is_active: true,
+    created_at: now,
+    updated_at: now
   }
 ];
 
@@ -4330,7 +4348,7 @@ export const seedAssessments: AssessmentDbCreate[] = [
   },
   {
     // Past-due, still-open assessment scoped to the Risk and Control schemas - gives the
-    // OverdueReviews dashboard widget (#2848) something to show in the demo dataset.
+    // Assessments dashboard widget (#2860) something to show in the demo dataset.
     id: '00000000-0000-0000-0023-000000000001',
     workspace: WORKSPACE_ID,
     project_id: seededProjects.authMigration.id,
@@ -4365,7 +4383,7 @@ const seededRiskComplianceDashboardWidgets = resolveTemplateDashboardWidgets(
     ['compliance_requirement', '00000000-0000-0000-0000-000000000016']
   ])
 ).map(widget =>
-  widget.type === 'OverdueReviews'
+  widget.type === 'Assessments'
     ? {
         ...widget,
         config: {
