@@ -1054,6 +1054,45 @@
                         },
                         "description": "Included workspace shared fieldgroups, in display order"
                       },
+                      "artifact_capabilities": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "maxLength": 100,
+                              "pattern": "^[a-z][a-z0-9-]*$",
+                              "description": "Artifact capability/profile identifier"
+                            },
+                            "features": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "maxLength": 100,
+                                "pattern": "^[a-z][a-z0-9-]*$"
+                              },
+                              "default": [],
+                              "description": "Functionality exposed by this artifact capability"
+                            },
+                            "requiredFields": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 100
+                              },
+                              "default": [],
+                              "description": "Schema field ids required by this capability"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "description": "A typed artifact capability enabled for entities using the schema"
+                        },
+                        "description": "Functionality-driving artifact capabilities enabled by this schema"
+                      },
                       "color": {
                         "anyOf": [
                           {
@@ -2125,6 +2164,45 @@
                     },
                     "description": "Included workspace shared fieldgroups"
                   },
+                  "artifact_capabilities": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "maxLength": 100,
+                          "pattern": "^[a-z][a-z0-9-]*$",
+                          "description": "Artifact capability/profile identifier"
+                        },
+                        "features": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "pattern": "^[a-z][a-z0-9-]*$"
+                          },
+                          "default": [],
+                          "description": "Functionality exposed by this artifact capability"
+                        },
+                        "requiredFields": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          },
+                          "default": [],
+                          "description": "Schema field ids required by this capability"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "description": "A typed artifact capability enabled for entities using the schema"
+                    },
+                    "description": "Functionality-driving artifact capabilities enabled by this schema"
+                  },
                   "color": {
                     "anyOf": [
                       {
@@ -3188,6 +3266,45 @@
                         "description": "A schema-local inclusion of a workspace shared fieldgroup"
                       },
                       "description": "Included workspace shared fieldgroups, in display order"
+                    },
+                    "artifact_capabilities": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "pattern": "^[a-z][a-z0-9-]*$",
+                            "description": "Artifact capability/profile identifier"
+                          },
+                          "features": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 100,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "default": [],
+                            "description": "Functionality exposed by this artifact capability"
+                          },
+                          "requiredFields": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100
+                            },
+                            "default": [],
+                            "description": "Schema field ids required by this capability"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "description": "A typed artifact capability enabled for entities using the schema"
+                      },
+                      "description": "Functionality-driving artifact capabilities enabled by this schema"
                     },
                     "color": {
                       "anyOf": [
@@ -4322,6 +4439,45 @@
                       },
                       "description": "Included workspace shared fieldgroups, in display order"
                     },
+                    "artifact_capabilities": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "pattern": "^[a-z][a-z0-9-]*$",
+                            "description": "Artifact capability/profile identifier"
+                          },
+                          "features": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 100,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "default": [],
+                            "description": "Functionality exposed by this artifact capability"
+                          },
+                          "requiredFields": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100
+                            },
+                            "default": [],
+                            "description": "Schema field ids required by this capability"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "description": "A typed artifact capability enabled for entities using the schema"
+                      },
+                      "description": "Functionality-driving artifact capabilities enabled by this schema"
+                    },
                     "color": {
                       "anyOf": [
                         {
@@ -5400,6 +5556,45 @@
                       "description": "A schema-local inclusion of a workspace shared fieldgroup"
                     },
                     "description": "Included workspace shared fieldgroups"
+                  },
+                  "artifact_capabilities": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "type": {
+                          "type": "string",
+                          "maxLength": 100,
+                          "pattern": "^[a-z][a-z0-9-]*$",
+                          "description": "Artifact capability/profile identifier"
+                        },
+                        "features": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "pattern": "^[a-z][a-z0-9-]*$"
+                          },
+                          "default": [],
+                          "description": "Functionality exposed by this artifact capability"
+                        },
+                        "requiredFields": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 100
+                          },
+                          "default": [],
+                          "description": "Schema field ids required by this capability"
+                        }
+                      },
+                      "required": [
+                        "type"
+                      ],
+                      "description": "A typed artifact capability enabled for entities using the schema"
+                    },
+                    "description": "Functionality-driving artifact capabilities enabled by this schema"
                   },
                   "color": {
                     "anyOf": [
@@ -6493,6 +6688,45 @@
                         "description": "A schema-local inclusion of a workspace shared fieldgroup"
                       },
                       "description": "Included workspace shared fieldgroups, in display order"
+                    },
+                    "artifact_capabilities": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "type": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "pattern": "^[a-z][a-z0-9-]*$",
+                            "description": "Artifact capability/profile identifier"
+                          },
+                          "features": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "maxLength": 100,
+                              "pattern": "^[a-z][a-z0-9-]*$"
+                            },
+                            "default": [],
+                            "description": "Functionality exposed by this artifact capability"
+                          },
+                          "requiredFields": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1,
+                              "maxLength": 100
+                            },
+                            "default": [],
+                            "description": "Schema field ids required by this capability"
+                          }
+                        },
+                        "required": [
+                          "type"
+                        ],
+                        "description": "A typed artifact capability enabled for entities using the schema"
+                      },
+                      "description": "Functionality-driving artifact capabilities enabled by this schema"
                     },
                     "color": {
                       "anyOf": [
@@ -7677,6 +7911,45 @@
                         },
                         "description": "Included workspace shared fieldgroups at this version"
                       },
+                      "artifact_capabilities": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "maxLength": 100,
+                              "pattern": "^[a-z][a-z0-9-]*$",
+                              "description": "Artifact capability/profile identifier"
+                            },
+                            "features": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "maxLength": 100,
+                                "pattern": "^[a-z][a-z0-9-]*$"
+                              },
+                              "default": [],
+                              "description": "Functionality exposed by this artifact capability"
+                            },
+                            "requiredFields": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 100
+                              },
+                              "default": [],
+                              "description": "Schema field ids required by this capability"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "description": "A typed artifact capability enabled for entities using the schema"
+                        },
+                        "description": "Artifact capabilities enabled by this schema at this version"
+                      },
                       "color": {
                         "anyOf": [
                           {
@@ -7730,6 +8003,7 @@
                       "fields",
                       "templates",
                       "groups",
+                      "artifact_capabilities",
                       "color",
                       "icon",
                       "changeSummary",
@@ -57516,7 +57790,9 @@
                             "governance.external",
                             "comments",
                             "schema.edit",
-                            "schema.publish"
+                            "schema.publish",
+                            "artifact.content.view",
+                            "artifact.manage"
                           ],
                           "type": "string"
                         },
@@ -57608,7 +57884,9 @@
                         "governance.external",
                         "comments",
                         "schema.edit",
-                        "schema.publish"
+                        "schema.publish",
+                        "artifact.content.view",
+                        "artifact.manage"
                       ],
                       "type": "string"
                     },
@@ -57682,7 +57960,9 @@
                           "governance.external",
                           "comments",
                           "schema.edit",
-                          "schema.publish"
+                          "schema.publish",
+                          "artifact.content.view",
+                          "artifact.manage"
                         ],
                         "type": "string"
                       },
@@ -57785,7 +58065,9 @@
                         "governance.external",
                         "comments",
                         "schema.edit",
-                        "schema.publish"
+                        "schema.publish",
+                        "artifact.content.view",
+                        "artifact.manage"
                       ],
                       "type": "string"
                     },
@@ -57859,7 +58141,9 @@
                           "governance.external",
                           "comments",
                           "schema.edit",
-                          "schema.publish"
+                          "schema.publish",
+                          "artifact.content.view",
+                          "artifact.manage"
                         ],
                         "type": "string"
                       },
@@ -57973,7 +58257,9 @@
                           "governance.external",
                           "comments",
                           "schema.edit",
-                          "schema.publish"
+                          "schema.publish",
+                          "artifact.content.view",
+                          "artifact.manage"
                         ],
                         "type": "string"
                       },
@@ -58402,7 +58688,9 @@
                             "governance.external",
                             "comments",
                             "schema.edit",
-                            "schema.publish"
+                            "schema.publish",
+                            "artifact.content.view",
+                            "artifact.manage"
                           ],
                           "type": "string"
                         },
@@ -58504,7 +58792,9 @@
                         "governance.external",
                         "comments",
                         "schema.edit",
-                        "schema.publish"
+                        "schema.publish",
+                        "artifact.content.view",
+                        "artifact.manage"
                       ],
                       "type": "string"
                     },
@@ -58578,7 +58868,9 @@
                           "governance.external",
                           "comments",
                           "schema.edit",
-                          "schema.publish"
+                          "schema.publish",
+                          "artifact.content.view",
+                          "artifact.manage"
                         ],
                         "type": "string"
                       },
@@ -58704,7 +58996,9 @@
                           "governance.external",
                           "comments",
                           "schema.edit",
-                          "schema.publish"
+                          "schema.publish",
+                          "artifact.content.view",
+                          "artifact.manage"
                         ],
                         "type": "string"
                       },
@@ -114973,6 +115267,1455 @@
                     "archived",
                     "created_at",
                     "updated_at"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/entities/{entityId}/artifacts": {
+      "get": {
+        "operationId": "artifacts.list",
+        "summary": "List entity artifacts",
+        "description": "Lists functionality-driving artifacts attached to an existing catalog entity.",
+        "tags": [
+          "Artifacts",
+          "Artifacts"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "entity": {
+                      "type": "object",
+                      "properties": {
+                        "canView": {
+                          "type": "boolean",
+                          "description": "Whether the user can view this entity"
+                        },
+                        "canEdit": {
+                          "type": "boolean",
+                          "description": "Whether the user can edit this entity"
+                        },
+                        "canDelete": {
+                          "type": "boolean",
+                          "description": "Whether the user can delete this entity"
+                        },
+                        "canAdmin": {
+                          "type": "boolean",
+                          "description": "Whether the user can manage entity permissions"
+                        },
+                        "canCreateChild": {
+                          "type": "boolean",
+                          "description": "Whether the user can create child entities"
+                        },
+                        "_uid": {
+                          "type": "string",
+                          "description": "Unique entity identifier"
+                        },
+                        "_publicId": {
+                          "type": "string",
+                          "description": "Public entity identifier (e.g., APP-001)"
+                        },
+                        "_schema": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "name": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name"
+                          ],
+                          "description": "Entity schema reference"
+                        },
+                        "_name": {
+                          "type": "string",
+                          "description": "Entity name"
+                        },
+                        "_slug": {
+                          "type": "string",
+                          "description": "Entity URL slug"
+                        },
+                        "_namespace": {
+                          "type": "string",
+                          "description": "Entity namespace for organization"
+                        },
+                        "_description": {
+                          "type": "string",
+                          "description": "Entity description"
+                        },
+                        "_owner": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Entity owner"
+                        },
+                        "_lifecycle": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Current lifecycle state"
+                        },
+                        "_targetLifecycle": {
+                          "anyOf": [
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name"
+                              ]
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Target lifecycle state"
+                        },
+                        "_targetLifecycleDate": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Target date for lifecycle transition (ISO 8601)"
+                        },
+                        "_tags": {
+                          "type": "array",
+                          "items": {
+                            "type": "string"
+                          },
+                          "description": "Entity tags"
+                        },
+                        "_links": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "url": {
+                                "type": "string",
+                                "description": "Link URL"
+                              },
+                              "title": {
+                                "type": "string",
+                                "description": "Link title/label"
+                              },
+                              "type": {
+                                "type": "string",
+                                "description": "Link type (e.g., \"documentation\", \"repository\")"
+                              }
+                            },
+                            "required": [
+                              "url",
+                              "title"
+                            ]
+                          },
+                          "description": "External links associated with the entity"
+                        },
+                        "_updatedAt": {
+                          "type": "string",
+                          "description": "ISO 8601 timestamp of the entity's most recent update"
+                        },
+                        "_version": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991,
+                          "description": "Optimistic concurrency version"
+                        },
+                        "_approvalPolicyOverride": {
+                          "anyOf": [
+                            {
+                              "enum": [
+                                "required",
+                                "disabled"
+                              ],
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Entity-specific approval policy override"
+                        },
+                        "_projectId": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Set when this entity was created solely for one project — excluded from global listings/search, visible only within that project. Distinct from _projectLink, which associates an otherwise-normal entity with a project without restricting visibility."
+                        },
+                        "_completeness": {
+                          "anyOf": [
+                            {
+                              "type": "number"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Field completeness percentage (0-100)"
+                        },
+                        "_projectLink": {
+                          "type": "object",
+                          "properties": {
+                            "linked": {
+                              "type": "boolean",
+                              "description": "Whether the entity is linked to a project"
+                            },
+                            "entityType": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "name"
+                                  ]
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Project entity type classification"
+                            },
+                            "isDone": {
+                              "type": "boolean",
+                              "description": "Whether the entity is marked as done in the project"
+                            }
+                          },
+                          "required": [
+                            "linked",
+                            "entityType",
+                            "isDone"
+                          ],
+                          "description": "Project linkage information"
+                        },
+                        "_externalMetadata": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "additionalProperties": {
+                            "type": "object",
+                            "properties": {
+                              "fieldId": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "external_kind": {
+                                "enum": [
+                                  "ai",
+                                  "integration",
+                                  "automation"
+                                ],
+                                "type": "string"
+                              },
+                              "status": {
+                                "enum": [
+                                  "success",
+                                  "failed",
+                                  "outdated"
+                                ],
+                                "type": "string"
+                              },
+                              "source": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "Free-form source label supplied by the updater"
+                              },
+                              "timestamp": {
+                                "type": "string",
+                                "description": "ISO 8601 timestamp, inferred by the server"
+                              },
+                              "explanation": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "findings": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                }
+                              },
+                              "sourceVersion": {
+                                "anyOf": [
+                                  {
+                                    "anyOf": [
+                                      {
+                                        "type": "string"
+                                      },
+                                      {
+                                        "type": "number"
+                                      }
+                                    ]
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Updater version, if applicable"
+                              },
+                              "requestId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "External request/run identifier, for tracing to an API call, job run, or AI generation"
+                              },
+                              "failureNotice": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "actionId": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "sourceRevision": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "exclusiveMinimum": 0
+                              },
+                              "generatorVersion": {
+                                "type": "integer",
+                                "minimum": -9007199254740991,
+                                "maximum": 9007199254740991,
+                                "exclusiveMinimum": 0
+                              }
+                            },
+                            "required": [
+                              "fieldId",
+                              "external_kind",
+                              "status",
+                              "source",
+                              "timestamp"
+                            ]
+                          },
+                          "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                        },
+                        "_projections": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {},
+                          "description": "Values returned by structured EntityQuery projections"
+                        }
+                      },
+                      "required": [
+                        "canView",
+                        "canEdit",
+                        "canDelete",
+                        "canAdmin",
+                        "canCreateChild",
+                        "_uid",
+                        "_publicId",
+                        "_schema",
+                        "_name",
+                        "_slug",
+                        "_namespace",
+                        "_description",
+                        "_owner",
+                        "_lifecycle",
+                        "_targetLifecycle",
+                        "_targetLifecycleDate",
+                        "_tags",
+                        "_links",
+                        "_projectId",
+                        "_completeness"
+                      ],
+                      "additionalProperties": {},
+                      "description": "Complete entity record with schema-specific fields"
+                    },
+                    "artifacts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Artifact identifier"
+                          },
+                          "workspace": {
+                            "type": "string",
+                            "description": "Workspace identifier"
+                          },
+                          "entityId": {
+                            "type": "string",
+                            "description": "Owning catalog entity identifier"
+                          },
+                          "artifactType": {
+                            "type": "string",
+                            "maxLength": 100,
+                            "pattern": "^[a-z][a-z0-9-]*$",
+                            "description": "Artifact capability/profile identifier, such as api-specification"
+                          },
+                          "kind": {
+                            "enum": [
+                              "document",
+                              "url",
+                              "repository",
+                              "link"
+                            ],
+                            "type": "string",
+                            "description": "How an artifact is provided"
+                          },
+                          "location": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Source location or null for submitted content"
+                          },
+                          "mediaType": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Declared source media type"
+                          },
+                          "status": {
+                            "enum": [
+                              "not_configured",
+                              "link_only",
+                              "pending",
+                              "current",
+                              "stale",
+                              "failed",
+                              "invalid",
+                              "unsupported"
+                            ],
+                            "type": "string",
+                            "description": "Current artifact processing status"
+                          },
+                          "currentRevisionId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Last successful artifact revision"
+                          },
+                          "lastAttemptAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "ISO 8601 timestamp of the last processing attempt"
+                          },
+                          "lastSuccessAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "ISO 8601 timestamp of the last successful processing"
+                          },
+                          "diagnostic": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "category": {
+                                    "enum": [
+                                      "invalid_source",
+                                      "unsupported_media_type",
+                                      "unsupported_version",
+                                      "source_unavailable",
+                                      "source_forbidden",
+                                      "source_timeout",
+                                      "source_too_large",
+                                      "security_blocked",
+                                      "normalization_failed"
+                                    ],
+                                    "type": "string",
+                                    "description": "Stable artifact processing diagnostic category"
+                                  },
+                                  "message": {
+                                    "type": "string",
+                                    "description": "Safe diagnostic message; source content and secrets are excluded"
+                                  },
+                                  "timestamp": {
+                                    "type": "string",
+                                    "description": "ISO 8601 diagnostic timestamp"
+                                  }
+                                },
+                                "required": [
+                                  "category",
+                                  "message",
+                                  "timestamp"
+                                ]
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "description": "ISO 8601 creation timestamp"
+                          },
+                          "updatedAt": {
+                            "type": "string",
+                            "description": "ISO 8601 update timestamp"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "workspace",
+                          "entityId",
+                          "artifactType",
+                          "kind",
+                          "location",
+                          "mediaType",
+                          "status",
+                          "currentRevisionId",
+                          "lastAttemptAt",
+                          "lastSuccessAt",
+                          "diagnostic",
+                          "createdAt",
+                          "updatedAt"
+                        ]
+                      }
+                    },
+                    "status": {
+                      "enum": [
+                        "not_configured",
+                        "link_only",
+                        "pending",
+                        "current",
+                        "stale",
+                        "failed",
+                        "invalid",
+                        "unsupported"
+                      ],
+                      "type": "string",
+                      "description": "Aggregate status across the entity artifacts"
+                    }
+                  },
+                  "required": [
+                    "entity",
+                    "artifacts",
+                    "status"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "artifacts.create",
+        "summary": "Register an entity artifact",
+        "description": "Registers a typed artifact capability and its source without accepting arbitrary binary documents.",
+        "tags": [
+          "Artifacts",
+          "Artifacts"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "artifactType": {
+                    "type": "string",
+                    "maxLength": 100,
+                    "pattern": "^[a-z][a-z0-9-]*$",
+                    "description": "Artifact capability/profile identifier, such as api-specification"
+                  },
+                  "kind": {
+                    "enum": [
+                      "document",
+                      "url",
+                      "repository",
+                      "link"
+                    ],
+                    "type": "string",
+                    "description": "How an artifact is provided"
+                  },
+                  "location": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 2000
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "mediaType": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "artifactType",
+                  "kind"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Artifact identifier"
+                    },
+                    "workspace": {
+                      "type": "string",
+                      "description": "Workspace identifier"
+                    },
+                    "entityId": {
+                      "type": "string",
+                      "description": "Owning catalog entity identifier"
+                    },
+                    "artifactType": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "pattern": "^[a-z][a-z0-9-]*$",
+                      "description": "Artifact capability/profile identifier, such as api-specification"
+                    },
+                    "kind": {
+                      "enum": [
+                        "document",
+                        "url",
+                        "repository",
+                        "link"
+                      ],
+                      "type": "string",
+                      "description": "How an artifact is provided"
+                    },
+                    "location": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Source location or null for submitted content"
+                    },
+                    "mediaType": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Declared source media type"
+                    },
+                    "status": {
+                      "enum": [
+                        "not_configured",
+                        "link_only",
+                        "pending",
+                        "current",
+                        "stale",
+                        "failed",
+                        "invalid",
+                        "unsupported"
+                      ],
+                      "type": "string",
+                      "description": "Current artifact processing status"
+                    },
+                    "currentRevisionId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Last successful artifact revision"
+                    },
+                    "lastAttemptAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 timestamp of the last processing attempt"
+                    },
+                    "lastSuccessAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 timestamp of the last successful processing"
+                    },
+                    "diagnostic": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "category": {
+                              "enum": [
+                                "invalid_source",
+                                "unsupported_media_type",
+                                "unsupported_version",
+                                "source_unavailable",
+                                "source_forbidden",
+                                "source_timeout",
+                                "source_too_large",
+                                "security_blocked",
+                                "normalization_failed"
+                              ],
+                              "type": "string",
+                              "description": "Stable artifact processing diagnostic category"
+                            },
+                            "message": {
+                              "type": "string",
+                              "description": "Safe diagnostic message; source content and secrets are excluded"
+                            },
+                            "timestamp": {
+                              "type": "string",
+                              "description": "ISO 8601 diagnostic timestamp"
+                            }
+                          },
+                          "required": [
+                            "category",
+                            "message",
+                            "timestamp"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 update timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "entityId",
+                    "artifactType",
+                    "kind",
+                    "location",
+                    "mediaType",
+                    "status",
+                    "currentRevisionId",
+                    "lastAttemptAt",
+                    "lastSuccessAt",
+                    "diagnostic",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/entities/{entityId}/artifacts/{artifactId}": {
+      "put": {
+        "operationId": "artifacts.update",
+        "summary": "Update artifact status",
+        "description": "Records a safe processing status and diagnostic without changing the last successful revision.",
+        "tags": [
+          "Artifacts",
+          "Artifacts"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "artifactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "not_configured",
+                      "link_only",
+                      "pending",
+                      "current",
+                      "stale",
+                      "failed",
+                      "invalid",
+                      "unsupported"
+                    ],
+                    "type": "string",
+                    "description": "Current artifact processing status"
+                  },
+                  "diagnostic": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "category": {
+                            "enum": [
+                              "invalid_source",
+                              "unsupported_media_type",
+                              "unsupported_version",
+                              "source_unavailable",
+                              "source_forbidden",
+                              "source_timeout",
+                              "source_too_large",
+                              "security_blocked",
+                              "normalization_failed"
+                            ],
+                            "type": "string",
+                            "description": "Stable artifact processing diagnostic category"
+                          },
+                          "message": {
+                            "type": "string",
+                            "description": "Safe diagnostic message; source content and secrets are excluded"
+                          },
+                          "timestamp": {
+                            "type": "string",
+                            "description": "ISO 8601 diagnostic timestamp"
+                          }
+                        },
+                        "required": [
+                          "category",
+                          "message",
+                          "timestamp"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Artifact identifier"
+                    },
+                    "workspace": {
+                      "type": "string",
+                      "description": "Workspace identifier"
+                    },
+                    "entityId": {
+                      "type": "string",
+                      "description": "Owning catalog entity identifier"
+                    },
+                    "artifactType": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "pattern": "^[a-z][a-z0-9-]*$",
+                      "description": "Artifact capability/profile identifier, such as api-specification"
+                    },
+                    "kind": {
+                      "enum": [
+                        "document",
+                        "url",
+                        "repository",
+                        "link"
+                      ],
+                      "type": "string",
+                      "description": "How an artifact is provided"
+                    },
+                    "location": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Source location or null for submitted content"
+                    },
+                    "mediaType": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Declared source media type"
+                    },
+                    "status": {
+                      "enum": [
+                        "not_configured",
+                        "link_only",
+                        "pending",
+                        "current",
+                        "stale",
+                        "failed",
+                        "invalid",
+                        "unsupported"
+                      ],
+                      "type": "string",
+                      "description": "Current artifact processing status"
+                    },
+                    "currentRevisionId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Last successful artifact revision"
+                    },
+                    "lastAttemptAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 timestamp of the last processing attempt"
+                    },
+                    "lastSuccessAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 timestamp of the last successful processing"
+                    },
+                    "diagnostic": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "category": {
+                              "enum": [
+                                "invalid_source",
+                                "unsupported_media_type",
+                                "unsupported_version",
+                                "source_unavailable",
+                                "source_forbidden",
+                                "source_timeout",
+                                "source_too_large",
+                                "security_blocked",
+                                "normalization_failed"
+                              ],
+                              "type": "string",
+                              "description": "Stable artifact processing diagnostic category"
+                            },
+                            "message": {
+                              "type": "string",
+                              "description": "Safe diagnostic message; source content and secrets are excluded"
+                            },
+                            "timestamp": {
+                              "type": "string",
+                              "description": "ISO 8601 diagnostic timestamp"
+                            }
+                          },
+                          "required": [
+                            "category",
+                            "message",
+                            "timestamp"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "updatedAt": {
+                      "type": "string",
+                      "description": "ISO 8601 update timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "entityId",
+                    "artifactType",
+                    "kind",
+                    "location",
+                    "mediaType",
+                    "status",
+                    "currentRevisionId",
+                    "lastAttemptAt",
+                    "lastSuccessAt",
+                    "diagnostic",
+                    "createdAt",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/entities/{entityId}/artifacts/{artifactId}/revisions": {
+      "post": {
+        "operationId": "artifacts.createRevision",
+        "summary": "Record an artifact revision",
+        "description": "Stores an accepted bounded artifact document and advances the artifact current revision.",
+        "tags": [
+          "Artifacts",
+          "Artifacts"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "artifactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "sourceRevision": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 500
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "mediaType": {
+                    "anyOf": [
+                      {
+                        "type": "string",
+                        "maxLength": 200
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ]
+                  },
+                  "content": {
+                    "type": "string",
+                    "minLength": 1,
+                    "maxLength": 2000000
+                  }
+                },
+                "required": [
+                  "content"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Immutable artifact revision identifier"
+                    },
+                    "artifactId": {
+                      "type": "string",
+                      "description": "Owning artifact identifier"
+                    },
+                    "sourceRevision": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Provider or repository revision identifier"
+                    },
+                    "checksum": {
+                      "type": "string",
+                      "description": "SHA-256 checksum of the accepted artifact document"
+                    },
+                    "mediaType": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Source media type"
+                    },
+                    "contentSize": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "Stored source size in bytes"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "description": "ISO 8601 acceptance timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "artifactId",
+                    "sourceRevision",
+                    "checksum",
+                    "mediaType",
+                    "contentSize",
+                    "createdAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/entities/{entityId}/artifacts/{artifactId}/revisions/{revisionId}/content": {
+      "get": {
+        "operationId": "artifacts.getRevisionContent",
+        "summary": "Get artifact content",
+        "description": "Returns raw artifact content through an explicitly authorized endpoint.",
+        "tags": [
+          "Artifacts",
+          "Artifacts"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "artifactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "revisionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Immutable artifact revision identifier"
+                    },
+                    "artifactId": {
+                      "type": "string",
+                      "description": "Owning artifact identifier"
+                    },
+                    "sourceRevision": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Provider or repository revision identifier"
+                    },
+                    "checksum": {
+                      "type": "string",
+                      "description": "SHA-256 checksum of the accepted artifact document"
+                    },
+                    "mediaType": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Source media type"
+                    },
+                    "contentSize": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "Stored source size in bytes"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "description": "ISO 8601 acceptance timestamp"
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Raw artifact content; only returned by the explicit content endpoint"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "artifactId",
+                    "sourceRevision",
+                    "checksum",
+                    "mediaType",
+                    "contentSize",
+                    "createdAt",
+                    "content"
                   ]
                 }
               }

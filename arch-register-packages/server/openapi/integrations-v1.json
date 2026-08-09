@@ -1054,6 +1054,45 @@
                         },
                         "description": "Included workspace shared fieldgroups, in display order"
                       },
+                      "artifact_capabilities": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "type": {
+                              "type": "string",
+                              "maxLength": 100,
+                              "pattern": "^[a-z][a-z0-9-]*$",
+                              "description": "Artifact capability/profile identifier"
+                            },
+                            "features": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "maxLength": 100,
+                                "pattern": "^[a-z][a-z0-9-]*$"
+                              },
+                              "default": [],
+                              "description": "Functionality exposed by this artifact capability"
+                            },
+                            "requiredFields": {
+                              "type": "array",
+                              "items": {
+                                "type": "string",
+                                "minLength": 1,
+                                "maxLength": 100
+                              },
+                              "default": [],
+                              "description": "Schema field ids required by this capability"
+                            }
+                          },
+                          "required": [
+                            "type"
+                          ],
+                          "description": "A typed artifact capability enabled for entities using the schema"
+                        },
+                        "description": "Functionality-driving artifact capabilities enabled by this schema"
+                      },
                       "color": {
                         "anyOf": [
                           {

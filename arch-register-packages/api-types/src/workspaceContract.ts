@@ -636,7 +636,9 @@ export type WorkspaceRoleCapability =
   | 'governance.external'
   | 'comments'
   | 'schema.edit'
-  | 'schema.publish';
+  | 'schema.publish'
+  | 'artifact.content.view'
+  | 'artifact.manage';
 
 export type WorkspaceRoleDefinition = {
   id: string;
