@@ -21,7 +21,8 @@ test.describe('definition import', () => {
       enums: [],
       documentTypes: selectedDocumentType ? [selectedDocumentType.id] : [],
       relationSchemas: [],
-      fieldGroups: []
+      fieldGroups: [],
+      dashboard: false
     };
     const preview = await orpc.workspaces.definitionImportPreview({
       params: { workspace: target.url_slug },
@@ -46,6 +47,7 @@ test.describe('definition import', () => {
         documentTypes: preview.documentTypes,
         relationSchemas: preview.relationSchemas,
         fieldGroups: preview.fieldGroups,
+        dashboardWidgets: preview.dashboardWidgets,
         keyPrefixRemaps: preview.keyPrefixRemaps,
         fingerprint: preview.fingerprint,
         confirmed: true
@@ -57,7 +59,8 @@ test.describe('definition import', () => {
       enums: preview.enums.length,
       documentTypes: preview.documentTypes.length,
       relationSchemas: preview.relationSchemas.length,
-      fieldGroups: preview.fieldGroups.length
+      fieldGroups: preview.fieldGroups.length,
+      dashboardWidgets: preview.dashboardWidgets.length
     });
 
     const [schemas, enums, documentTypes] = await Promise.all([
@@ -102,7 +105,8 @@ test.describe('definition import', () => {
           enums: [],
           documentTypes: [],
           relationSchemas: [],
-          fieldGroups: []
+          fieldGroups: [],
+          dashboard: false
         }
       }
     });
@@ -123,6 +127,7 @@ test.describe('definition import', () => {
           documentTypes: preview.documentTypes,
           relationSchemas: preview.relationSchemas,
           fieldGroups: preview.fieldGroups,
+          dashboardWidgets: preview.dashboardWidgets,
           keyPrefixRemaps: preview.keyPrefixRemaps,
           fingerprint: preview.fingerprint,
           confirmed: true
@@ -154,6 +159,7 @@ test.describe('definition import', () => {
         documentTypes: renamedPreview.documentTypes,
         relationSchemas: renamedPreview.relationSchemas,
         fieldGroups: renamedPreview.fieldGroups,
+        dashboardWidgets: renamedPreview.dashboardWidgets,
         keyPrefixRemaps: renamedPreview.keyPrefixRemaps,
         fingerprint: renamedPreview.fingerprint,
         confirmed: true
@@ -193,7 +199,8 @@ test.describe('definition import', () => {
           enums: [],
           documentTypes: [],
           relationSchemas: [relationSchema.id],
-          fieldGroups: [fieldGroup.id]
+          fieldGroups: [fieldGroup.id],
+          dashboard: false
         }
       }
     });
@@ -226,6 +233,7 @@ test.describe('definition import', () => {
         documentTypes: preview.documentTypes,
         relationSchemas: preview.relationSchemas,
         fieldGroups: preview.fieldGroups,
+        dashboardWidgets: preview.dashboardWidgets,
         keyPrefixRemaps: preview.keyPrefixRemaps,
         fingerprint: preview.fingerprint,
         confirmed: true
@@ -237,7 +245,8 @@ test.describe('definition import', () => {
       enums: preview.enums.length,
       documentTypes: preview.documentTypes.length,
       relationSchemas: 1,
-      fieldGroups: 1
+      fieldGroups: 1,
+      dashboardWidgets: preview.dashboardWidgets.length
     });
 
     const [createdSchemas, createdEnums, createdRelationSchemas, createdFieldGroups] =
@@ -296,17 +305,39 @@ test.describe('definition import', () => {
           enums: [],
           documentTypes: [],
           relationSchemas: [relationSchema.id],
-          fieldGroups: []
+          fieldGroups: [],
+          dashboard: true
         }
       }
     });
 
     expect(preview.errors).toEqual([]);
     expect(preview.conflicts).toEqual([]);
+    expect(preview.dashboardWidgets).toHaveLength(8);
     const dependencySchemaNames = preview.schemas
       .filter(schema => schema.dependency)
       .map(schema => schema.name);
     expect(dependencySchemaNames).toEqual(expect.arrayContaining(['Risk', 'Control']));
+
+    const existingDashboards = await orpc.dashboard.list({
+      params: { workspace: target.url_slug }
+    });
+    await orpc.dashboard.update({
+      params: { workspace: target.url_slug, id: existingDashboards[0]!.id },
+      body: {
+        widgets: [
+          {
+            id: 'existing-widget',
+            type: 'Metric',
+            config: { metricType: 'entity-count' },
+            x: 0,
+            y: 0,
+            w: 3,
+            h: 2
+          }
+        ]
+      }
+    });
 
     const result = await orpc.workspaces.definitionImportExecute({
       params: { workspace: target.url_slug },
@@ -318,6 +349,7 @@ test.describe('definition import', () => {
         documentTypes: preview.documentTypes,
         relationSchemas: preview.relationSchemas,
         fieldGroups: preview.fieldGroups,
+        dashboardWidgets: preview.dashboardWidgets,
         keyPrefixRemaps: preview.keyPrefixRemaps,
         fingerprint: preview.fingerprint,
         confirmed: true
@@ -326,7 +358,10 @@ test.describe('definition import', () => {
 
     expect(result.relationSchemas).toBe(1);
 
-    const createdSchemas = await server.db.catalog.listSchemas(target.id);
+    const [createdSchemas, dashboards] = await Promise.all([
+      server.db.catalog.listSchemas(target.id),
+      orpc.dashboard.list({ params: { workspace: target.url_slug } })
+    ]);
     const riskSchema = createdSchemas.find(schema => schema.name === 'Risk');
     expect(riskSchema).toBeDefined();
     expect(riskSchema?.fields).toContainEqual(
@@ -340,6 +375,63 @@ test.describe('definition import', () => {
         resultType: 'number'
       })
     );
+    expect(dashboards[0]!.widgets).toHaveLength(preview.dashboardWidgets.length);
+    expect(dashboards[0]!.widgets).toContainEqual(
+      expect.objectContaining({
+        id: 'top-risks-by-score',
+        config: expect.objectContaining({ schema: riskSchema?.id })
+      })
+    );
+  });
+
+  test('can skip the built-in template dashboard layout', async ({ orpc, server }) => {
+    const target = await orpc.workspaces.create({
+      body: { name: 'Risk Dashboard Opt-out Target' }
+    });
+    const sources = await orpc.workspaces.definitionImportSources({
+      params: { workspace: target.url_slug }
+    });
+    const builtin = sources.find(
+      source => source.kind === 'builtin' && source.id === 'risk-compliance'
+    )!;
+    const relationSchema = builtin.relationSchemas.find(
+      schema => schema.name === 'Risk Mitigation'
+    )!;
+    const preview = await orpc.workspaces.definitionImportPreview({
+      params: { workspace: target.url_slug },
+      body: {
+        source: { kind: 'builtin', id: builtin.id },
+        selection: {
+          schemas: [],
+          enums: [],
+          documentTypes: [],
+          relationSchemas: [relationSchema.id],
+          fieldGroups: [],
+          dashboard: false
+        }
+      }
+    });
+
+    expect(preview.dashboardWidgets).toEqual([]);
+    const result = await orpc.workspaces.definitionImportExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        source: preview.source,
+        selection: preview.selection,
+        schemas: preview.schemas,
+        enums: preview.enums,
+        documentTypes: preview.documentTypes,
+        relationSchemas: preview.relationSchemas,
+        fieldGroups: preview.fieldGroups,
+        dashboardWidgets: preview.dashboardWidgets,
+        keyPrefixRemaps: preview.keyPrefixRemaps,
+        fingerprint: preview.fingerprint,
+        confirmed: true
+      }
+    });
+
+    expect(result.dashboardWidgets).toBe(0);
+    expect(await server.db.dashboard.list(target.id)).toEqual([]);
   });
 
   test('blocks a case-insensitive name collision for a relation schema and field group', async ({
@@ -401,7 +493,8 @@ test.describe('definition import', () => {
           enums: [],
           documentTypes: [],
           relationSchemas: [relationSchema.id],
-          fieldGroups: [fieldGroup.id]
+          fieldGroups: [fieldGroup.id],
+          dashboard: false
         }
       }
     });
@@ -423,6 +516,7 @@ test.describe('definition import', () => {
           documentTypes: preview.documentTypes,
           relationSchemas: preview.relationSchemas,
           fieldGroups: preview.fieldGroups,
+          dashboardWidgets: preview.dashboardWidgets,
           keyPrefixRemaps: preview.keyPrefixRemaps,
           fingerprint: preview.fingerprint,
           confirmed: true
@@ -453,6 +547,7 @@ test.describe('definition import', () => {
         documentTypes: renamedPreview.documentTypes,
         relationSchemas: renamedPreview.relationSchemas,
         fieldGroups: renamedPreview.fieldGroups,
+        dashboardWidgets: renamedPreview.dashboardWidgets,
         keyPrefixRemaps: renamedPreview.keyPrefixRemaps,
         fingerprint: renamedPreview.fingerprint,
         confirmed: true
@@ -484,7 +579,8 @@ test.describe('definition import', () => {
           enums: [],
           documentTypes: [],
           relationSchemas: [],
-          fieldGroups: [fieldGroup.id]
+          fieldGroups: [fieldGroup.id],
+          dashboard: false
         }
       }
     });
@@ -505,6 +601,7 @@ test.describe('definition import', () => {
         documentTypes: preview.documentTypes,
         relationSchemas: preview.relationSchemas,
         fieldGroups: preview.fieldGroups,
+        dashboardWidgets: preview.dashboardWidgets,
         keyPrefixRemaps: preview.keyPrefixRemaps,
         fingerprint: preview.fingerprint,
         confirmed: true

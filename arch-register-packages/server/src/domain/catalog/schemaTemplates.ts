@@ -19,6 +19,7 @@ import type {
   DocumentTypeDbCreate
 } from '../document/db/documentDatabase';
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
+import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
 import type { RelationSchemaDbCreate } from './db/relationDatabase';
 import { normalizePublicIdPrefix } from '../../utils/publicIds';
 
@@ -93,6 +94,10 @@ export type SymbolicDocumentTemplate = {
   metadataDefaults: DocumentMetadata;
 };
 
+export type SymbolicDashboardWidget = Omit<DashboardWidget, 'config'> & {
+  config: Record<string, unknown>;
+};
+
 export type SymbolicRelationSchema = {
   symId: string;
   name: string;
@@ -120,6 +125,7 @@ export type SchemaTemplate = {
   relationSchemas?: SymbolicRelationSchema[];
   documentTypes: SymbolicDocumentType[];
   documentTemplates: SymbolicDocumentTemplate[];
+  dashboardWidgets?: SymbolicDashboardWidget[];
 };
 
 export type SymbolicFieldGroup = {
@@ -1635,9 +1641,99 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       }
     ],
     documentTypes: commonDocumentTypes,
-    documentTemplates: commonDocumentTemplates
+    documentTemplates: commonDocumentTemplates,
+    dashboardWidgets: [
+      {
+        id: 'default-entity-count',
+        type: 'Metric',
+        config: { metricType: 'entity-count' },
+        x: 0,
+        y: 0,
+        w: 3,
+        h: 2
+      },
+      {
+        id: 'default-project-count',
+        type: 'Metric',
+        config: { metricType: 'project-count' },
+        x: 3,
+        y: 0,
+        w: 3,
+        h: 2
+      },
+      {
+        id: 'default-diagram-count',
+        type: 'Metric',
+        config: { metricType: 'diagram-count' },
+        x: 6,
+        y: 0,
+        w: 3,
+        h: 2
+      },
+      {
+        id: 'default-completeness-percent',
+        type: 'Metric',
+        config: { metricType: 'completeness-percent' },
+        x: 9,
+        y: 0,
+        w: 3,
+        h: 2
+      },
+      {
+        id: 'top-risks-by-score',
+        type: 'TopEntities',
+        config: {
+          schema: 'risk',
+          fieldId: 'residual_risk_score',
+          direction: 'desc',
+          limit: 5,
+          label: 'Top risks by score'
+        },
+        x: 0,
+        y: 2,
+        w: 4,
+        h: 2
+      },
+      {
+        id: 'compliance-coverage',
+        type: 'AggregateStat',
+        config: {
+          schema: 'compliance_requirement',
+          numeratorCondition: { fieldId: 'status', op: 'equals', value: 'met' },
+          label: 'Compliance coverage'
+        },
+        x: 4,
+        y: 2,
+        w: 4,
+        h: 2
+      },
+      {
+        id: 'overdue-risk-control-reviews',
+        type: 'OverdueReviews',
+        config: { label: 'Overdue risk and control reviews' },
+        x: 8,
+        y: 2,
+        w: 4,
+        h: 2
+      },
+      { id: 'default-activity-feed', type: 'activity-feed', config: {}, x: 0, y: 4, w: 12, h: 6 }
+    ]
   }
 ];
+
+export const resolveTemplateDashboardWidgets = (
+  widgets: readonly SymbolicDashboardWidget[],
+  schemaIdMap: ReadonlyMap<string, string>
+): DashboardWidget[] =>
+  widgets.map(widget => ({
+    ...widget,
+    config: {
+      ...widget.config,
+      ...(typeof widget.config.schema === 'string' && {
+        schema: schemaIdMap.get(widget.config.schema) ?? widget.config.schema
+      })
+    }
+  }));
 
 export type InstantiatedTemplate = {
   schemas: SchemaDbCreate[];
@@ -1646,6 +1742,7 @@ export type InstantiatedTemplate = {
   relationSchemas: RelationSchemaDbCreate[];
   documentTypes: DocumentTypeDbCreate[];
   documentTemplates: DocumentTemplateDbCreate[];
+  dashboardWidgets: DashboardWidget[];
 };
 
 export const instantiateTemplateDefinitions = (
@@ -1661,7 +1758,8 @@ export const instantiateTemplateDefinitions = (
       fieldGroups: [],
       relationSchemas: [],
       documentTypes: [],
-      documentTemplates: []
+      documentTemplates: [],
+      dashboardWidgets: []
     };
   }
 
@@ -1851,7 +1949,15 @@ export const instantiateTemplateDefinitions = (
     })
   );
 
-  return { schemas, enums, fieldGroups, relationSchemas, documentTypes, documentTemplates };
+  return {
+    schemas,
+    enums,
+    fieldGroups,
+    relationSchemas,
+    documentTypes,
+    documentTemplates,
+    dashboardWidgets: resolveTemplateDashboardWidgets(template.dashboardWidgets ?? [], idMap)
+  };
 };
 
 export const instantiateTemplateDocuments = (

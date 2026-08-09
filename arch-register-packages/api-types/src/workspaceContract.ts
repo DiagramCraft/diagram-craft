@@ -1,6 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws } from '@arch-register/api-types/common';
+import { dashboardWidgetSchema } from '@arch-register/api-types/dashboardContract';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
@@ -38,7 +39,11 @@ const definitionImportSelectionSchema = z.object({
   enums: z.array(z.string()),
   documentTypes: z.array(z.string()),
   relationSchemas: z.array(z.string()),
-  fieldGroups: z.array(z.string())
+  fieldGroups: z.array(z.string()),
+  dashboard: z
+    .boolean()
+    .default(false)
+    .describe('Whether to apply the source template dashboard layout to the default dashboard')
 });
 
 const definitionImportRenameSchema = z.object({
@@ -63,7 +68,8 @@ const definitionImportSourceOptionSchema = z.object({
   enums: z.array(z.object({ id: z.string(), name: z.string() })),
   documentTypes: z.array(z.object({ id: z.string(), name: z.string() })),
   relationSchemas: z.array(z.object({ id: z.string(), name: z.string() })),
-  fieldGroups: z.array(z.object({ id: z.string(), name: z.string() }))
+  fieldGroups: z.array(z.object({ id: z.string(), name: z.string() })),
+  dashboardWidgets: z.array(dashboardWidgetSchema)
 });
 
 const definitionImportConflictSchema = z.object({
@@ -82,6 +88,7 @@ const definitionImportPreviewSchema = z.object({
   documentTypes: z.array(definitionImportDefinitionSchema),
   relationSchemas: z.array(definitionImportDefinitionSchema),
   fieldGroups: z.array(definitionImportDefinitionSchema),
+  dashboardWidgets: z.array(dashboardWidgetSchema),
   conflicts: z.array(definitionImportConflictSchema),
   keyPrefixRemaps: z.array(
     z.object({ sourceId: z.string(), name: z.string(), from: z.string(), to: z.string() })
@@ -105,6 +112,7 @@ const definitionImportExecuteRequestSchema = z.object({
   documentTypes: z.array(definitionImportDefinitionSchema),
   relationSchemas: z.array(definitionImportDefinitionSchema),
   fieldGroups: z.array(definitionImportDefinitionSchema),
+  dashboardWidgets: z.array(dashboardWidgetSchema),
   keyPrefixRemaps: z.array(
     z.object({ sourceId: z.string(), name: z.string(), from: z.string(), to: z.string() })
   ),
@@ -117,7 +125,8 @@ const definitionImportExecuteResponseSchema = z.object({
   enums: z.number().int(),
   documentTypes: z.number().int(),
   relationSchemas: z.number().int(),
-  fieldGroups: z.number().int()
+  fieldGroups: z.number().int(),
+  dashboardWidgets: z.number().int()
 });
 
 // ── Export/Import schemas ─────────────────────────────────────
