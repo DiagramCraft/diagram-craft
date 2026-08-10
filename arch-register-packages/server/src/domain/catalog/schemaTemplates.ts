@@ -13,7 +13,8 @@ import type {
   WorkspaceEnumDbCreate
 } from '../../db/database';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
-import type { ArtifactCapability, SchemaField } from '@arch-register/api-types/schemaContract';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
+import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import type {
   DocumentTemplateDbCreate,
   DocumentTypeDbCreate
@@ -69,7 +70,7 @@ export type TemplateSchema = {
   icon: string;
   fields: SymbolicField[];
   sharedFieldGroupIds?: string[];
-  artifactCapabilities?: ArtifactCapability[];
+  entityCapabilities?: EntityCapability[];
 };
 
 export type SymbolicEnum = {
@@ -641,7 +642,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           },
           { id: 'api_version', name: 'API Version', type: 'text' }
         ],
-        artifactCapabilities: [
+        entityCapabilities: [
           {
             type: 'api-specification'
           }
@@ -786,7 +787,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           },
           { id: 'api_version', name: 'API Version', type: 'text' }
         ],
-        artifactCapabilities: [
+        entityCapabilities: [
           {
             type: 'api-specification'
           }
@@ -1892,7 +1893,7 @@ export const instantiateTemplateDefinitions = (
       shared_field_group_links: (schema.sharedFieldGroupIds ?? []).map(id => ({
         groupId: fieldGroupIdMap.get(id) ?? id
       })),
-      artifact_capabilities: schema.artifactCapabilities ?? [],
+      entity_capabilities: schema.entityCapabilities ?? [],
       default_owner: null,
       created_at: now,
       updated_at: now

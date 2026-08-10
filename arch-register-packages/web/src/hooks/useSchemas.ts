@@ -4,7 +4,6 @@ import { invalidateEntityQueries } from '../queries/entities';
 import { invalidateAuditQueries } from '../queries/audit';
 import { workspaceAnalyticsKeys } from '../queries/workspaceAnalytics';
 import {
-  ArtifactCapability,
   EntityTemplate,
   FieldMigrations,
   SchemaField,
@@ -13,6 +12,7 @@ import {
   SharedFieldGroupLink,
   ValidationRule
 } from '@arch-register/api-types/schemaContract';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { orpcClient } from '../lib/orpcClient';
 import { normalizeApiError } from '../lib/http';
@@ -70,7 +70,7 @@ export const useUpdateSchema = (workspaceId: string) => {
         templates?: EntityTemplate[];
         groups?: SchemaGroup[];
         shared_field_group_links?: SharedFieldGroupLink[];
-        artifact_capabilities?: ArtifactCapability[];
+        entity_capabilities?: EntityCapability[];
         validation_rules?: ValidationRule[];
         color?: string | null;
         icon?: string | null;
@@ -96,8 +96,8 @@ export const useUpdateSchema = (workspaceId: string) => {
                   groups: variables.data.groups ?? schema.groups,
                   shared_field_group_links:
                     variables.data.shared_field_group_links ?? schema.shared_field_group_links,
-                  artifact_capabilities:
-                    variables.data.artifact_capabilities ?? schema.artifact_capabilities,
+                  entity_capabilities:
+                    variables.data.entity_capabilities ?? schema.entity_capabilities,
                   validation_rules: variables.data.validation_rules ?? schema.validation_rules,
                   color: variables.data.color ?? schema.color,
                   icon: variables.data.icon ?? schema.icon

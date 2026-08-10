@@ -68,7 +68,7 @@ export const EntityContentSidebar = ({
   const schemaIndex = context.schemas.findIndex(schema => schema.id === entity?._schema?.id);
   const schema = schemaIndex >= 0 ? context.schemas[schemaIndex] : undefined;
   const apiCapable =
-    schema?.artifact_capabilities?.some(capability => capability.type === 'api-specification') ??
+    schema?.entity_capabilities?.some(capability => capability.type === 'api-specification') ??
     false;
   const accentColor = schema ? resolveSchemaColor(schema, schemaIndex) : 'var(--accent-fg)';
   const treeRef = useRef<ContentTreeHandle>(null);

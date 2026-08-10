@@ -2,19 +2,19 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import type {
   EntitySchema,
   EntityTemplate,
-  ArtifactCapability,
   SchemaField,
   SchemaGroup,
   SharedFieldGroupLink,
   ValidationRule
 } from '@arch-register/api-types/schemaContract';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { FieldType } from '../../lib/schemaPresentation';
 import { SchemaFieldsEditor } from './SchemaFieldsEditor';
 import { SchemaTemplatesEditor } from './SchemaTemplatesEditor';
 import { SchemaValidationEditor } from './SchemaValidationEditor';
-import { SchemaArtifactCapabilitiesEditor } from './SchemaArtifactCapabilitiesEditor';
+import { SchemaEntityCapabilitiesEditor } from './SchemaEntityCapabilitiesEditor';
 
 export type SchemaPanelTab = 'fields' | 'templates' | 'capabilities' | 'validation';
 
@@ -40,13 +40,13 @@ export const SchemaEditorTabs = ({
   onRemoveGroup,
   onRemoveSharedGroup,
   templates,
-  artifactCapabilities,
+  entityCapabilities,
   onAddTemplate,
   onEditTemplate,
   onDeleteTemplate,
-  onAddArtifactCapability,
-  onUpdateArtifactCapability,
-  onDeleteArtifactCapability,
+  onAddEntityCapability,
+  onUpdateEntityCapability,
+  onDeleteEntityCapability,
   validationRules,
   validationPreviewPending,
   validationPreviewMessage,
@@ -77,13 +77,13 @@ export const SchemaEditorTabs = ({
   onRemoveGroup: (groupId: string) => void;
   onRemoveSharedGroup: (groupId: string) => void;
   templates: EntityTemplate[];
-  artifactCapabilities: ArtifactCapability[];
+  entityCapabilities: EntityCapability[];
   onAddTemplate: () => void;
   onEditTemplate: (template: EntityTemplate) => void;
   onDeleteTemplate: (templateId: string) => void;
-  onAddArtifactCapability: (type: string) => void;
-  onUpdateArtifactCapability: (index: number, patch: Partial<ArtifactCapability>) => void;
-  onDeleteArtifactCapability: (index: number) => void;
+  onAddEntityCapability: (type: string) => void;
+  onUpdateEntityCapability: (index: number, patch: Partial<EntityCapability>) => void;
+  onDeleteEntityCapability: (index: number) => void;
   validationRules: ValidationRule[];
   validationPreviewPending: boolean;
   validationPreviewMessage: string | null;
@@ -132,13 +132,13 @@ export const SchemaEditorTabs = ({
       />
     </Tabs.Content>
     <Tabs.Content value="capabilities" style={{ height: 'auto' }}>
-      <SchemaArtifactCapabilitiesEditor
-        capabilities={artifactCapabilities}
+      <SchemaEntityCapabilitiesEditor
+        capabilities={entityCapabilities}
         fields={fields}
         canEdit={canEdit}
-        onAdd={onAddArtifactCapability}
-        onUpdate={onUpdateArtifactCapability}
-        onDelete={onDeleteArtifactCapability}
+        onAdd={onAddEntityCapability}
+        onUpdate={onUpdateEntityCapability}
+        onDelete={onDeleteEntityCapability}
       />
     </Tabs.Content>
     <Tabs.Content value="validation" style={{ height: 'auto' }}>

@@ -17,9 +17,9 @@ import {
   SchemaField,
   SchemaGroup,
   SharedFieldGroupLink,
-  ArtifactCapability,
   ValidationRule
 } from '@arch-register/api-types/schemaContract';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import { EntityLink } from '@arch-register/api-types/entityContract';
 import type { EntityRole } from '@arch-register/permissions';
 import type { ExternalMetadata } from '@arch-register/api-types/common';
@@ -88,7 +88,7 @@ export type SchemaDbResult = {
   templates?: EntityTemplate[];
   groups?: SchemaGroup[];
   shared_field_group_links?: SharedFieldGroupLink[];
-  artifact_capabilities?: ArtifactCapability[];
+  entity_capabilities?: EntityCapability[];
   validation_rules?: ValidationRule[];
   color: string | null;
   icon: string | null;
@@ -121,7 +121,7 @@ export type SchemaVersionDbResult = {
   templates: EntityTemplate[];
   groups: SchemaGroup[];
   shared_field_group_links: SharedFieldGroupLink[];
-  artifact_capabilities?: ArtifactCapability[];
+  entity_capabilities?: EntityCapability[];
   validation_rules?: ValidationRule[];
   color: string | null;
   icon: string | null;
@@ -439,10 +439,10 @@ export const catalogMappers = {
       [],
       'entity_schema.shared_field_group_links'
     ),
-    artifact_capabilities: parseDatabaseJson(
-      row['artifact_capabilities'],
+    entity_capabilities: parseDatabaseJson(
+      row['entity_capabilities'],
       [],
-      'entity_schema.artifact_capabilities'
+      'entity_schema.entity_capabilities'
     ),
     validation_rules: parseDatabaseJson(
       row['validation_rules'],
@@ -474,10 +474,10 @@ export const catalogMappers = {
       [],
       'entity_schema_version.shared_field_group_links'
     ),
-    artifact_capabilities: parseDatabaseJson(
-      row['artifact_capabilities'],
+    entity_capabilities: parseDatabaseJson(
+      row['entity_capabilities'],
       [],
-      'entity_schema_version.artifact_capabilities'
+      'entity_schema_version.entity_capabilities'
     ),
     validation_rules: parseDatabaseJson(
       row['validation_rules'],

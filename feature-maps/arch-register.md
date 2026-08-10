@@ -67,7 +67,7 @@
             read-only derived fields calculated using a sandboxed expression over sibling fields and a bounded
             one-hop JSON entity context (`entity`, including direct references, containment, and typed-relation targets), with a
             declared text, number, currency, select, boolean, or rating result type,
-            enable supported artifact integrations from an integration catalog, with each integration declaring its
+            enable supported entity capabilities from a dedicated integration catalog, with each capability declaring its
             available features and required schema fields; schema-level Bonsai validation rules with blocking errors or non-blocking warnings, field-specific messages,
             activation/deactivation, revision through schema versioning, and preview testing against existing entities;
             relation types use the same Bonsai rule model over a depth-1 relation context (`relation`, including its
@@ -128,8 +128,9 @@
         - @id:ar.entities.artifacts Schemas can opt entities into typed, functionality-driving artifacts such as API
           specifications or compliance evidence. Authorized users can upload document-based API specifications from
           entity details, register artifact sources, retain immutable revisions, inspect processing status and safe
-          diagnostics, and retrieve raw content through a separate permission. Artifact capabilities declare their
-          supported features and required schema fields; the catalog
+          diagnostics, and retrieve raw content through a separate permission. Entity capabilities declare which
+          integration-backed behavior is enabled for a schema; capability metadata, supported features, and required
+          schema fields are owned by the integration catalog. The catalog
           does not treat arbitrary binary documents as a generic attachment store. OpenAPI 3.0/3.1 and AsyncAPI 2.x/3.0
           documents can be validated and synchronously projected into queryable operations or messages with stable
           identifiers, source pointers, summaries, filters, pagination, and visible partial/unsupported diagnostics;

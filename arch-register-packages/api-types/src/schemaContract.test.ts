@@ -1,12 +1,12 @@
 import { describe, expect, it } from 'vitest';
 import {
-  artifactCapabilitySchema,
   isReferenceOrContainmentField,
   isRelationLikeField,
   isTypedRelationField,
   schemaFieldInputSchema,
   type SchemaField
 } from './schemaContract';
+import { entityCapabilitySchema } from './entityCapabilityContract';
 
 const baseField = {
   id: 'field-1',
@@ -14,9 +14,9 @@ const baseField = {
   requirementLevel: 'optional' as const
 };
 
-describe('artifact capabilities', () => {
+describe('entity capabilities', () => {
   it('stores only the integration profile enabled by a schema', () => {
-    const result = artifactCapabilitySchema.parse({
+    const result = entityCapabilitySchema.parse({
       type: 'api-specification',
       features: ['operations'],
       requiredFields: ['api_type']
