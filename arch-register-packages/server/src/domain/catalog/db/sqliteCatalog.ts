@@ -18,6 +18,7 @@ import type {
   TimelineMarkerDbResult
 } from './catalogDatabase';
 import { ENTITY_SELECT_SQL, catalogMappers, resolveEntityListPagination } from './catalogDatabase';
+import { compileEntityViewPermissionScope } from './entityPermissionScope';
 import { SqliteDatabaseBase } from '../../../db/sqliteBase';
 import { isUuidLike } from '../../../utils/publicIds';
 import {
@@ -357,8 +358,17 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       if (clause) whereParts.push(clause);
     }
 
+    const permissionScope = compileEntityViewPermissionScope(
+      workspace,
+      filters?.permissionScope ?? null,
+      'sqlite',
+      addParam
+    );
+    whereParts.push(permissionScope.predicate);
+
     return this.all(
-      `${ENTITY_JOINS_SQL} WHERE ${whereParts.join(' AND ')} ORDER BY e.name, e.id LIMIT ? OFFSET ?`,
+      `${permissionScope.cte ? `WITH RECURSIVE ${permissionScope.cte}` : ''}
+       ${ENTITY_JOINS_SQL} WHERE ${whereParts.join(' AND ')} ORDER BY e.name, e.id LIMIT ? OFFSET ?`,
       [...params, limit, offset],
       catalogMappers.enrichedEntity
     );

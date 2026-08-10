@@ -26,6 +26,8 @@ import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import type { TypedRelationVisibilityPolicy } from './relationAccessControl';
+import { compileEntityViewPermissionScope } from './db/entityPermissionScope';
+import type { EntityViewPermissionScope } from './db/entityPermissionScope';
 
 export type EntityQueryDialect = 'postgres' | 'sqlite';
 
@@ -33,6 +35,7 @@ export type CompiledEntityQuery = { sql: string; params: unknown[] };
 
 export type CompiledEntityQueryOptions = {
   visibleEntityIds?: readonly string[];
+  permissionScope?: EntityViewPermissionScope | null;
   // Additional entity-id scope, used for user collection membership. Keeping this in the scope
   // CTE ensures SQL pagination and COUNT(*) see the same candidate set.
   collectionEntityIds?: readonly string[];
@@ -92,6 +95,7 @@ type CompileState = {
   relationSourceConstraints: readonly RelationSourceConstraint[];
   relationRootTemporalCandidate: RelationRootTemporalCandidate | null;
   visibleEntityIds?: readonly string[];
+  permissionScope?: EntityViewPermissionScope | null;
   collectionEntityIds?: readonly string[];
   relationVisibility?: TypedRelationVisibilityPolicy;
   limit?: number;
@@ -1977,6 +1981,13 @@ const buildScopeCte = (state: CompileState): string => {
   const assessmentParam = hasAssessment ? addParam(state, state.assessmentId) : null;
   const workspaceParam = addParam(state, state.workspace);
   const scopeClause = projectScopeClause('e.id', 'e.workspace', 'e.project_id', state);
+  const permissionScope = compileEntityViewPermissionScope(
+    state.workspace,
+    state.permissionScope ?? null,
+    state.dialect,
+    value => addParam(state, value),
+    'e'
+  );
   const visibleClause =
     state.visibleEntityIds == null
       ? ''
@@ -1989,8 +2000,8 @@ const buildScopeCte = (state: CompileState): string => {
       : state.collectionEntityIds.length === 0
         ? '1=0'
         : `e.id IN (${state.collectionEntityIds.map(id => addParam(state, id)).join(', ')})`;
-  const scopedWhere = `${scopeClause} AND ${visibleClause || '1=1'} AND ${collectionClause || '1=1'}`;
-  return `${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn}\n      FROM catalog_record e\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.kind = 'entity'\n        AND e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopedWhere}\n    )`;
+  const scopedWhere = `${scopeClause} AND ${visibleClause || '1=1'} AND ${collectionClause || '1=1'} AND ${permissionScope.predicate}`;
+  return `${permissionScope.cte ? `${permissionScope.cte},\n    ` : ''}${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn}\n      FROM catalog_record e\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.kind = 'entity'\n        AND e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopedWhere}\n    )`;
 };
 
 // JSON/JSONB shape matching relationToBaseState (relationHelpers.ts) — this is exactly what
@@ -2285,6 +2296,7 @@ const buildQueryFragments = (
       authCtx
     ),
     visibleEntityIds: options.visibleEntityIds,
+    permissionScope: options.permissionScope,
     collectionEntityIds: options.collectionEntityIds,
     relationVisibility: options.relationVisibility,
     limit: options.limit,

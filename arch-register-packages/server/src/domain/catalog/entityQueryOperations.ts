@@ -46,6 +46,7 @@ import {
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import { toRedactedApiRelation } from './relationHelpers';
 import { buildTypedRelationVisibilityPolicy } from './relationAccessControl';
+import { buildEntityViewPermissionScope } from './db/entityPermissionScope';
 
 const checker = new PermissionChecker();
 
@@ -187,7 +188,7 @@ export const resolveJoinedAssessment = async (
   return { assessment, responsesByEntity };
 };
 
-const visibleEntityIdsForQuery = async (
+const visibleEntityIdsForTemporalQuery = async (
   db: DatabaseAdapter,
   workspace: string,
   authCtx: AuthorizationContext | null
@@ -248,10 +249,16 @@ const compileEntityQueries = async (
   if (query.assessmentId) {
     await resolveJoinedAssessment(db, workspace, authCtx, query.assessmentId, true);
   }
-  const visibleEntityIds = await visibleEntityIdsForQuery(db, workspace, authCtx);
+  // Live queries compile visibility against catalog_record. Temporal queries retain the
+  // reconstructed-ID fallback until the permission graph can be evaluated against historical
+  // entity state without changing semantics.
+  const visibleEntityIds = query.asOf
+    ? await visibleEntityIdsForTemporalQuery(db, workspace, authCtx)
+    : undefined;
   const scopeOptions = {
     visibleEntityIds,
-    collectionEntityIds: collectionEntityIds ?? undefined
+    collectionEntityIds: collectionEntityIds ?? undefined,
+    permissionScope: query.asOf ? null : buildEntityViewPermissionScope(authCtx)
   };
 
   try {
@@ -527,6 +534,7 @@ const collectEntities = async (
   const rows: CollectedEntity[] = [];
 
   const hasWorkspaceWideView = authCtx != null && checker.hasWorkspaceWideEntityView(authCtx);
+  const permissionScope = buildEntityViewPermissionScope(authCtx);
 
   const processEntity = (entity: EntityDbResult, extraConditions: FilterCondition[]) => {
     if (
@@ -645,7 +653,8 @@ const collectEntities = async (
         q: q ?? '',
         conditions: otherConditions,
         projectId,
-        projectScope
+        projectScope,
+        ...(permissionScope ? { permissionScope } : {})
       },
       {
         limit: dbPageSize,
@@ -681,7 +690,9 @@ export const getEntityFacets = async (
 ): Promise<EntityFacets> => {
   try {
     const [allEntities, schemas] = await Promise.all([
-      listAllCatalogEntities(db, workspace),
+      listAllCatalogEntities(db, workspace, {
+        permissionScope: buildEntityViewPermissionScope(authCtx)
+      }),
       db.catalog.listSchemas(workspace)
     ]);
     const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
@@ -776,7 +787,11 @@ export const getEntityTree = async (
       await Promise.all([
         db.catalog.listSchemas(workspace),
         db.relation.listRelationSchemas(workspace),
-        listAllCatalogEntities(db, workspace, { projectId, projectScope }),
+        listAllCatalogEntities(db, workspace, {
+          projectId,
+          projectScope,
+          permissionScope: buildEntityViewPermissionScope(authCtx)
+        }),
         projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([]),
         resolveJoinedAssessment(
           db,

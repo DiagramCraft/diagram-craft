@@ -15,6 +15,7 @@ import { listAllCatalogEntities } from './entityLoader';
 import { listEntities, type EntityQueryOptions } from './entityQueryOperations';
 import { ENTITY_DEFAULTS } from '../../constants';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
+import { buildEntityViewPermissionScope } from './db/entityPermissionScope';
 
 /** Fetches every relation instance for a relation schema, following pagination to completion. */
 const listAllRelationsForSchema = async (
@@ -124,7 +125,9 @@ export const exportEntitiesCsv = async (
 ) => {
   const [schemas, allEntitiesRaw, entities] = await Promise.all([
     db.catalog.listSchemas(workspace),
-    listAllCatalogEntities(db, workspace),
+    listAllCatalogEntities(db, workspace, {
+      permissionScope: buildEntityViewPermissionScope(authCtx)
+    }),
     listEntities(db, workspace, authCtx, { ...query, view: 'full', limit: null, offset: 0 })
   ]);
   const allEntities = filterVisibleEntities(authCtx, allEntitiesRaw);
