@@ -43,6 +43,16 @@ test.describe('entities section', () => {
     await entitiesPage.startEditingEntity();
   });
 
+  test('opens entity actions and detail dialogs', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.goto();
+    await entitiesPage.openEntity(authApiEntity.name);
+    await entitiesPage.openEntityJsonDialog();
+    await page.getByRole('button', { name: 'Close' }).click();
+    await entitiesPage.openCollectionsDialog();
+  });
+
   test('shows the entity browser in table view', async ({ page }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
 
