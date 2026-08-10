@@ -38,7 +38,7 @@ import type { AssessmentResponse } from '@arch-register/api-types/assessmentResp
 import { getAssessmentEnumOptions } from '@arch-register/api-types/assessmentFieldOptions';
 import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRoutes';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
-import { AssessmentEditorDialog } from './ProjectAssessments';
+import { AssessmentEditorDialog } from './components/AssessmentEditorDialog';
 import { AssessmentFieldCell } from './components/AssessmentFieldCells';
 import {
   AssessmentFilterBuilder,
