@@ -18,11 +18,30 @@ describe('entity capabilities', () => {
   it('stores only the integration profile enabled by a schema', () => {
     const result = entityCapabilitySchema.parse({
       type: 'api-specification',
+      fieldMappings: { api_type: 'protocol_kind' },
       features: ['operations'],
       requiredFields: ['api_type']
     });
 
-    expect(result).toEqual({ type: 'api-specification' });
+    expect(result).toEqual({
+      type: 'api-specification',
+      fieldMappings: { api_type: 'protocol_kind' }
+    });
+  });
+
+  it('rejects empty mapping role or field IDs', () => {
+    expect(
+      entityCapabilitySchema.safeParse({
+        type: 'api-specification',
+        fieldMappings: { '': 'protocol_kind' }
+      }).success
+    ).toBe(false);
+    expect(
+      entityCapabilitySchema.safeParse({
+        type: 'api-specification',
+        fieldMappings: { api_type: '' }
+      }).success
+    ).toBe(false);
   });
 });
 

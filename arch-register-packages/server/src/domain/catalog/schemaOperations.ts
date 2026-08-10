@@ -28,6 +28,7 @@ import {
   describeHardBlockedChange,
   findUnresolvedFieldMigrations
 } from './schemaHelpers';
+import { remapEntityCapabilityFieldMappings } from '@arch-register/api-types/integrationCatalog';
 import { compileSchemaWithSharedGroups } from './fieldGroupHelpers';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import {
@@ -323,6 +324,21 @@ export const updateWorkspaceSchema = async (
       validateDerivedFieldGroupAccess(finalFields, compiledNext.groups ?? []);
 
       const changeSummary = buildSchemaChangeSummary(oldRow.fields, finalFields, fieldMigrations);
+      const entityCapabilityRenames = [
+        ...fieldChanges.flatMap(change =>
+          change.kind === 'renamed' && change.renamedToId
+            ? [{ oldFieldId: change.fieldId, newFieldId: change.renamedToId }]
+            : []
+        ),
+        ...dataMigrations.flatMap(migration =>
+          migration.action === 'rename' && migration.newFieldId
+            ? [{ oldFieldId: migration.oldFieldId, newFieldId: migration.newFieldId }]
+            : []
+        )
+      ];
+      const entityCapabilities = next.entity_capabilities
+        ? remapEntityCapabilityFieldMappings(next.entity_capabilities, entityCapabilityRenames)
+        : undefined;
 
       const configMigrations: Array<{
         action: 'rename' | 'remove';
@@ -395,7 +411,7 @@ export const updateWorkspaceSchema = async (
           templates: next.templates,
           groups: compiledNext.groups,
           shared_field_group_links: compiledNext.shared_field_group_links ?? [],
-          entity_capabilities: next.entity_capabilities,
+          entity_capabilities: entityCapabilities,
           validation_rules: next.validation_rules,
           color: next.color,
           icon: next.icon,
@@ -432,6 +448,7 @@ export const updateWorkspaceSchema = async (
           templates: updated.templates ?? [],
           groups: updated.groups ?? [],
           shared_field_group_links: updated.shared_field_group_links ?? [],
+          entity_capabilities: updated.entity_capabilities ?? [],
           color: updated.color,
           icon: updated.icon,
           validation_rules: updated.validation_rules ?? [],

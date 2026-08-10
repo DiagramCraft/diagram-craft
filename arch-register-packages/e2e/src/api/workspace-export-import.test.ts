@@ -19,6 +19,59 @@ const suggestedResolutions = (parseResult: {
   );
 
 test.describe('workspace export/import', () => {
+  test('exports and imports schema capability field mappings', async ({ orpc, server }) => {
+    const suffix = randomUUID();
+    const source = await orpc.workspaces.create({
+      body: { name: `Capability mapping source ${suffix}`, badge: 'CMS' }
+    });
+    const mapping = {
+      type: 'api-specification' as const,
+      fieldMappings: { api_type: 'protocol_kind', api_version: 'contract_version' }
+    };
+    const schema = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: {
+        name: `Mapped schema ${suffix}`,
+        fields: [
+          { id: 'protocol_kind', name: 'Protocol kind', type: 'text' },
+          { id: 'contract_version', name: 'Contract version', type: 'text' }
+        ],
+        entity_capabilities: [mapping]
+      }
+    });
+    const archive = await orpc.workspaces.export({
+      params: { workspace: source.url_slug },
+      body: { include: ['schemas'], options: { include_content: false } }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Capability mapping target ${suffix}`, badge: 'CMT' }
+    });
+    const parsed = await orpc.workspaces.importParse({
+      params: { workspace: target.url_slug },
+      body: {
+        file: new File([archive.body as Blob], 'capability-mapping-export.zip', {
+          type: 'application/zip'
+        })
+      }
+    });
+    expect(parsed.valid).toBe(true);
+    const execute = await orpc.workspaces.importExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        import_id: (parsed as any).import_id,
+        include: ['schemas'],
+        conflict_resolutions: suggestedResolutions(parsed as any),
+        options: { preserve_ids: false, update_references: true }
+      }
+    });
+    expect(execute.success).toBe(true);
+
+    const imported = (await server.db.catalog.listSchemas(target.id)).find(
+      item => item.name === schema.name
+    );
+    expect(imported?.entity_capabilities).toEqual([mapping]);
+  });
+
   test('exports and imports typed relation schemas and remapped relation endpoints', async ({
     orpc,
     server

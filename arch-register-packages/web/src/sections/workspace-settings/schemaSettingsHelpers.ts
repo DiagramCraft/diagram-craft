@@ -1,4 +1,6 @@
 import type { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
+import { remapEntityCapabilityFieldMappings } from '@arch-register/api-types/integrationCatalog';
 import type { FieldType } from '../../lib/schemaPresentation';
 
 export const updateTemplateFieldId = (
@@ -23,6 +25,15 @@ export const removeTemplateField = (
     delete fields[fieldId];
     return { ...template, values: { ...template.values, fields } };
   });
+
+export const updateCapabilityFieldMappingId = (
+  capabilities: EntityCapability[],
+  previousFieldId: string,
+  nextFieldId: string
+): EntityCapability[] =>
+  remapEntityCapabilityFieldMappings(capabilities, [
+    { oldFieldId: previousFieldId, newFieldId: nextFieldId }
+  ]);
 
 export const createSchemaFieldForType = (
   field: SchemaField,

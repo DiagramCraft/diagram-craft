@@ -361,6 +361,9 @@ export const importSchemas = async (
       name: schema.name,
       description: existing?.description ?? '',
       fields,
+      ...(schema.entity_capabilities !== undefined && {
+        entity_capabilities: schema.entity_capabilities
+      }),
       groups: (schema.groups ?? []).map(group => ({
         ...group,
         id: idMapping.shared_field_groups.get(group.id) ?? group.id,
@@ -391,6 +394,9 @@ export const importSchemas = async (
         name: input.name,
         description: input.description,
         fields: input.fields,
+        ...(input.entity_capabilities !== undefined && {
+          entity_capabilities: input.entity_capabilities
+        }),
         templates: input.templates,
         groups: input.groups,
         shared_field_group_links: input.shared_field_group_links,

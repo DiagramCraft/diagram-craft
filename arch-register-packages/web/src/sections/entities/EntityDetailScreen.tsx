@@ -36,6 +36,7 @@ import {
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
 import { EntitySummary } from '@arch-register/api-types/entityContract';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { EntityContentView } from './EntityContentView';
 import { EntityChangeApprovalPanel } from './components/EntityChangeApprovalPanel';
@@ -157,9 +158,10 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const [initiationFieldValues, setInitiationFieldValues] = useState<Record<string, unknown>>({});
 
   const schema = schemaEntry?.schema ?? null;
-  const apiCapable =
-    schema?.entity_capabilities?.some(capability => capability.type === 'api-specification') ??
-    false;
+  const apiCapability: EntityCapability | undefined = schema?.entity_capabilities?.find(
+    capability => capability.type === 'api-specification'
+  );
+  const apiCapable = apiCapability !== undefined;
   const tab = requestedTab === 'api' && !apiCapable ? 'overview' : requestedTab;
   const updateApiSearch = useCallback(
     (patch: Partial<EntityDetailSearchParams>, replace = true) => {
@@ -373,6 +375,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         <EntityApiSection
           workspaceId={workspaceId}
           entity={entity}
+          entityCapability={apiCapability}
           outgoing={outgoing}
           incoming={incoming}
           search={search}

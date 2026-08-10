@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import type {
   ApiSpecificationItem,
   ApiSpecificationRevision,
@@ -7,6 +8,10 @@ import type {
   Artifact,
   ArtifactStatus
 } from '@arch-register/api-types/artifactContract';
+import {
+  getEntityCapabilityDefinition,
+  resolveEntityCapabilityFieldId
+} from '@arch-register/api-types/integrationCatalog';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { SearchInput } from '../../components/SearchInput';
@@ -49,6 +54,7 @@ const PAGE_SIZE = 50;
 type Props = {
   workspaceId: string;
   entity: EntityRecord;
+  entityCapability?: EntityCapability;
   outgoing: Relation[];
   incoming: Relation[];
   search: EntityDetailSearchParams;
@@ -58,6 +64,16 @@ type Props = {
 const readStringField = (entity: EntityRecord, fieldId: string) => {
   const value = entity[fieldId];
   return typeof value === 'string' ? value : undefined;
+};
+
+const readMappedStringField = (
+  entity: EntityRecord,
+  capability: EntityCapability,
+  roleId: string
+) => {
+  const definition = getEntityCapabilityDefinition(capability.type);
+  const role = definition?.fieldRoles.find(candidate => candidate.id === roleId);
+  return readStringField(entity, role ? resolveEntityCapabilityFieldId(capability, role) : roleId);
 };
 
 const formatDate = (value: string | null | undefined) => {
@@ -141,6 +157,7 @@ const ApiContext = ({
 
 const ApiMetadata = ({
   entity,
+  capability,
   artifact,
   revision,
   protocol,
@@ -150,6 +167,7 @@ const ApiMetadata = ({
   onRefresh
 }: {
   entity: EntityRecord;
+  capability: EntityCapability;
   artifact: Artifact | undefined;
   revision: ApiSpecificationRevision | undefined;
   protocol: ApiSpecificationProtocol | null | undefined;
@@ -158,8 +176,8 @@ const ApiMetadata = ({
   isRefreshing: boolean;
   onRefresh: () => void;
 }) => {
-  const declaredType = readStringField(entity, 'api_type');
-  const declaredVersion = readStringField(entity, 'api_version');
+  const declaredType = readMappedStringField(entity, capability, 'api_type');
+  const declaredVersion = readMappedStringField(entity, capability, 'api_version');
   const statusLabel = selectionRequired
     ? 'Select source'
     : getArtifactStatusLabel(artifact?.status ?? 'not_configured');
@@ -365,8 +383,8 @@ const RevisionDiagnostics = ({ revision }: { revision: ApiSpecificationRevision 
           {revision.diagnostics.length === 1 ? '' : 's'} are attached to this revision.
         </div>
         <ul className={styles.diagnosticList}>
-          {revision.diagnostics.map(diagnostic => (
-            <li key={`${diagnostic.code}-${diagnostic.source?.pointer ?? ''}`}>
+          {revision.diagnostics.map((diagnostic, index) => (
+            <li key={`${diagnostic.code}-${diagnostic.source?.pointer ?? ''}-${index}`}>
               <strong>{diagnostic.code}</strong>: {diagnostic.message}
             </li>
           ))}
@@ -599,11 +617,13 @@ const StatusNotice = ({
 export const EntityApiSection = ({
   workspaceId,
   entity,
+  entityCapability,
   outgoing,
   incoming,
   search,
   onSearchChange
 }: Props) => {
+  const capability = entityCapability ?? { type: 'api-specification' };
   const { canManageArtifacts, canViewArtifactContent } = useWorkspaceAuthorization(workspaceId);
   const canManageApiArtifacts = canManageArtifacts && entity.canEdit;
   const artifactsQuery = useEntityArtifacts(workspaceId, entity._uid);
@@ -616,6 +636,7 @@ export const EntityApiSection = ({
     () => selectApiSpecificationArtifacts(artifactsQuery.data?.artifacts ?? []),
     [artifactsQuery.data?.artifacts]
   );
+  const capability = entityCapability ?? { type: 'api-specification' };
   const artifactIds = useMemo(() => apiArtifacts.map(artifact => artifact.id), [apiArtifacts]);
   const revisionQueries = useApiSpecificationRevisionLists(
     workspaceId,
@@ -641,8 +662,8 @@ export const EntityApiSection = ({
   const artifact = selection.artifact;
   const revision = selection.revision;
   const revisionId = revision?.revision.id ?? '';
-  const declaredType = readStringField(entity, 'api_type');
   const protocol = revision?.protocol;
+  const declaredType = readMappedStringField(entity, capability, 'api_type');
   const kind =
     protocol === 'openapi' || (protocol == null && declaredType === 'openapi')
       ? ('operation' as const)
@@ -687,6 +708,7 @@ export const EntityApiSection = ({
   );
   const [rawOpenRevisionId, setRawOpenRevisionId] = useState<string | null>(null);
   const rawSelectionKey = `${artifact?.id ?? ''}:${revisionId}`;
+  // biome-ignore lint/correctness/useExhaustiveDependencies: intentionally reset when the selected source or revision changes
   useEffect(() => {
     setRawOpenRevisionId(null);
   }, [rawSelectionKey]);
@@ -746,6 +768,7 @@ export const EntityApiSection = ({
     <main className={styles.page}>
       <ApiMetadata
         entity={entity}
+        capability={capability}
         artifact={artifact}
         revision={revision}
         protocol={selectedProtocol}
@@ -814,7 +837,7 @@ export const EntityApiSection = ({
         />
       )}
 
-      {artifact && !revision && !selectionRequired && (
+      {artifact && !revision && !selectionRequired && !revisionsLoading && (
         <EmptyState
           title="No browseable version selected"
           subtitle="This source does not have a successful normalized revision available yet."
