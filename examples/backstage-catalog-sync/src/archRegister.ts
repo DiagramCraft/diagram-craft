@@ -5,12 +5,26 @@ interface Schema {
   name: string;
 }
 
+interface RelationSchema {
+  id: string;
+  name: string;
+  in: { schemaIds: string[] | 'any' };
+  out: { schemaIds: string[] | 'any' };
+}
+
 export interface SyncResult {
   status: 'created' | 'updated' | 'unchanged';
   entity: {
     _uid: string;
     _publicId: string;
     _name: string;
+  };
+}
+
+export interface RelationSyncResult {
+  status: 'created' | 'updated' | 'unchanged';
+  relation: {
+    _uid: string;
   };
 }
 
@@ -148,6 +162,76 @@ export const discoverSchemas = async (
 };
 
 /**
+ * Fetches all typed relation schemas from the workspace.
+ */
+export const fetchRelationSchemas = async (
+  workspace: string,
+  token: string,
+  baseUrl: string
+): Promise<RelationSchema[]> => {
+  const url = `${baseUrl}/api/integrations/v1/${workspace}/relation-schemas`;
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      }
+    });
+  } catch (error) {
+    throw requestFailure(url, error);
+  }
+
+  if (!response.ok) {
+    const responseBody = await response.text();
+    if (response.status === 401) {
+      throw new Error('Authentication failed. Check your ARCH_REGISTER_TOKEN.');
+    }
+    if (response.status === 404) {
+      throw new Error(`Workspace '${workspace}' not found.`);
+    }
+    const detail = responseBody.trim().slice(0, 500);
+    throw new Error(
+      `Failed to fetch relation schemas: ${response.status} ${response.statusText}${detail ? ` - ${detail}` : ''}`
+    );
+  }
+
+  try {
+    return (await response.json()) as RelationSchema[];
+  } catch (error) {
+    throw new Error(
+      `Invalid relation schema response from ${url}: ${error instanceof Error ? error.message : String(error)}`
+    );
+  }
+};
+
+/**
+ * Auto-discovers the API participation relation schema IDs by exact name.
+ */
+export const discoverRelationSchemas = async (
+  workspace: string,
+  token: string,
+  baseUrl: string
+): Promise<Record<'provides-api' | 'consumes-api', string>> => {
+  const relationSchemas = await fetchRelationSchemas(workspace, token, baseUrl);
+  const mapping: Partial<Record<'provides-api' | 'consumes-api', string>> = {};
+
+  for (const relationSchema of relationSchemas) {
+    const nameLower = relationSchema.name.toLowerCase();
+    if (nameLower === 'provides api') {
+      mapping['provides-api'] = relationSchema.id;
+    } else if (nameLower === 'consumes api') {
+      mapping['consumes-api'] = relationSchema.id;
+    }
+  }
+
+  return {
+    'provides-api': mapping['provides-api'] ?? '',
+    'consumes-api': mapping['consumes-api'] ?? ''
+  };
+};
+
+/**
  * Syncs an entity to Arch Register using the integration API
  * Uses the idempotent upsert endpoint with external identity
  */
@@ -229,6 +313,87 @@ export const syncEntity = async (
 
   const result = (await response.json()) as SyncResult;
   return result;
+};
+
+/**
+ * Idempotently syncs a typed API participation relation by external identity.
+ */
+export const syncRelation = async (
+  workspace: string,
+  source: string,
+  externalKey: string,
+  relation: {
+    schemaId: string;
+    inEntityId: string;
+    outEntityId: string;
+  },
+  token: string,
+  baseUrl: string
+): Promise<RelationSyncResult> => {
+  const encodedSource = encodeURIComponent(source);
+  const encodedKey = encodeURIComponent(externalKey);
+  const url = `${baseUrl}/api/integrations/v1/${workspace}/relations/byExternalKey/${encodedSource}/${encodedKey}`;
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        _schemaId: relation.schemaId,
+        _inEntityId: relation.inEntityId,
+        _outEntityId: relation.outEntityId
+      })
+    });
+  } catch (error) {
+    throw createSyncError(requestFailure(url, error).message, undefined, error);
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorDetails: unknown;
+    try {
+      errorDetails = JSON.parse(errorText);
+    } catch {
+      errorDetails = errorText;
+    }
+
+    if (response.status === 401) {
+      throw createSyncError(
+        'Authentication failed. Check your ARCH_REGISTER_TOKEN.',
+        response.status,
+        errorDetails
+      );
+    }
+    if (response.status === 403) {
+      throw createSyncError('Permission denied while syncing a typed relation.', response.status, errorDetails);
+    }
+    if (response.status === 400) {
+      throw createSyncError(
+        `Validation error: ${JSON.stringify(errorDetails)}`,
+        response.status,
+        errorDetails
+      );
+    }
+    if (response.status === 404) {
+      throw createSyncError(
+        'Relation schema or endpoint entity not found. Check relation schema discovery and entity sync order.',
+        response.status,
+        errorDetails
+      );
+    }
+
+    throw createSyncError(
+      `Relation sync failed: ${response.status} ${response.statusText}`,
+      response.status,
+      errorDetails
+    );
+  }
+
+  return (await response.json()) as RelationSyncResult;
 };
 
 /**

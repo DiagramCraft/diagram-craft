@@ -173,6 +173,53 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
       expect(await db.relation.countRelationsForSchema(workspace, relationSchemaId)).toBe(0);
     });
 
+    it('keeps provider and consumer API relations distinct on both endpoints', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const componentSchemaId = await createFixtureSchema(db, workspace);
+      const apiSchemaId = await createFixtureSchema(db, workspace);
+      const providesSchemaId = await createFixtureRelationSchema(
+        db,
+        workspace,
+        [componentSchemaId],
+        [apiSchemaId]
+      );
+      const consumesSchemaId = await createFixtureRelationSchema(
+        db,
+        workspace,
+        [componentSchemaId],
+        [apiSchemaId]
+      );
+      const component = await createFixtureCatalogEntity(db, workspace, componentSchemaId, {
+        name: 'Catalog Component'
+      });
+      const api = await createFixtureCatalogEntity(db, workspace, apiSchemaId, {
+        name: 'Catalog API'
+      });
+
+      for (const [schemaId, relationId] of [
+        [providesSchemaId, randomUUID()],
+        [consumesSchemaId, randomUUID()]
+      ] as const) {
+        await db.relation.createRelation({
+          id: relationId,
+          workspace,
+          schema_id: schemaId,
+          in_entity_id: component.id,
+          out_entity_id: api.id,
+          data: {},
+          created_at: new Date(),
+          updated_at: new Date()
+        });
+      }
+
+      const apiRelations = await db.relation.listRelationsForEntity(workspace, api.id);
+      expect(apiRelations.incoming).toHaveLength(2);
+      expect(new Set(apiRelations.incoming.map(relation => relation.schema_id))).toEqual(
+        new Set([providesSchemaId, consumesSchemaId])
+      );
+    });
+
     it('defaults owner/lifecycle at creation and supports independent updates, including clearing to null', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);

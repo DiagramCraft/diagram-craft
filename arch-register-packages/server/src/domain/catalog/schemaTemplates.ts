@@ -137,6 +137,46 @@ export type SymbolicFieldGroup = {
   fields: SymbolicField[];
 };
 
+const apiProviderRelationSchema: SymbolicRelationSchema = {
+  symId: 'provides-api',
+  name: 'Provides API',
+  description: 'Associates a Component or System with an API it provides.',
+  inSymSchemaIds: ['component', 'system'],
+  outSymSchemaIds: ['api'],
+  fields: [],
+  color: AR_COLOR_GREEN,
+  icon: 'plug'
+};
+
+const apiConsumerRelationSchema: SymbolicRelationSchema = {
+  symId: 'consumes-api',
+  name: 'Consumes API',
+  description: 'Associates a Component or System with an API it consumes.',
+  inSymSchemaIds: ['component', 'system'],
+  outSymSchemaIds: ['api'],
+  fields: [],
+  color: AR_COLOR_BLUE,
+  icon: 'download'
+};
+
+const apiParticipationRelationSchemas = [
+  apiProviderRelationSchema,
+  apiConsumerRelationSchema
+];
+
+const apiParticipationField = (
+  id: string,
+  name: string,
+  relationSchemaId: string,
+  direction: 'in' | 'out'
+): SymbolicField => ({
+  id,
+  name,
+  type: 'typedRelation',
+  symRelationSchemaId: relationSchemaId,
+  direction
+});
+
 const enumDefinition = (
   id: string,
   name: string,
@@ -566,6 +606,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 1,
             maxCount: 1
           },
+          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'out'),
+          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'out'),
           {
             id: 'contracts',
             name: 'Contracts',
@@ -593,24 +635,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 1,
             maxCount: 1
           },
-          {
-            id: 'provides_apis',
-            name: 'Provided APIs',
-            predicate: 'provides',
-            type: 'reference',
-            symSchemaId: 'api',
-            minCount: 0,
-            maxCount: -1
-          },
-          {
-            id: 'consumes_apis',
-            name: 'Consumed APIs',
-            predicate: 'consumes',
-            type: 'reference',
-            symSchemaId: 'api',
-            minCount: 0,
-            maxCount: -1
-          },
+          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'out'),
+          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'out'),
           {
             id: 'depends_on',
             name: 'Depends On',
@@ -640,7 +666,9 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 1,
             maxCount: 1
           },
-          { id: 'api_version', name: 'API Version', type: 'text' }
+          { id: 'api_version', name: 'API Version', type: 'text' },
+          apiParticipationField('providers', 'Providers', 'provides-api', 'in'),
+          apiParticipationField('consumers', 'Consumers', 'consumes-api', 'in')
         ],
         entityCapabilities: [
           {
@@ -713,6 +741,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     enums: [backstageEnums[0]!, piiClassificationEnum, contractPurposeEnum, ...technologyEnums],
     fieldGroups: [piiClassificationFieldGroup],
     relationSchemas: [
+      ...apiParticipationRelationSchemas,
       {
         symId: 'system-contract',
         name: 'System Contract',
@@ -765,7 +794,9 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             symSchemaId: 'domain',
             minCount: 0,
             maxCount: 1
-          }
+          },
+          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'out'),
+          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'out')
         ]
       },
       {
@@ -785,7 +816,9 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 0,
             maxCount: 1
           },
-          { id: 'api_version', name: 'API Version', type: 'text' }
+          { id: 'api_version', name: 'API Version', type: 'text' },
+          apiParticipationField('providers', 'Providers', 'provides-api', 'in'),
+          apiParticipationField('consumers', 'Consumers', 'consumes-api', 'in')
         ],
         entityCapabilities: [
           {
@@ -812,24 +845,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 0,
             maxCount: 1
           },
-          {
-            id: 'provides_apis',
-            name: 'Provided APIs',
-            predicate: 'provides',
-            type: 'reference',
-            symSchemaId: 'api',
-            minCount: 0,
-            maxCount: -1
-          },
-          {
-            id: 'consumes_apis',
-            name: 'Consumed APIs',
-            predicate: 'consumes',
-            type: 'reference',
-            symSchemaId: 'api',
-            minCount: 0,
-            maxCount: -1
-          }
+          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'out'),
+          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'out')
         ]
       },
       {
@@ -855,6 +872,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       }
     ],
     enums: backstageEnums,
+    relationSchemas: apiParticipationRelationSchemas,
     documentTypes: commonDocumentTypes,
     documentTemplates: commonDocumentTemplates
   },

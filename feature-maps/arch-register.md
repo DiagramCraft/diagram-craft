@@ -155,6 +155,10 @@
           access control (a user needs edit access under both to change it). The field renders inline among the
           entity's other Properties, listing the relation instances the entity participates in with each row showing
           the connected entity and key field values (subject to field-group redaction) and linking to that entity.
+          The built-in Default and Backstage templates provide first-class "Provides API" and "Consumes API"
+          relation schemas, allowing Components and Systems to point to APIs while API entities expose inverse
+          provider and consumer views; these relations are available to the same graph, topology, search, and
+          permission surfaces as other typed relations.
           While editing the entity, users can add, edit, and remove relation instances directly inline — adding
           picks another entity from schemas the relation type allows and fills in the relation's own fields (subject
           to field-group access control); these changes are saved together with the rest of the entity's edits in one
@@ -590,7 +594,9 @@
           idempotently create or update a typed relation instance by a durable (source, external key) identity, the
           same pattern as entity sync, so repeated submissions from an integration converge on the same relation
           instead of creating duplicates. The "in"/"out" endpoints and schema are fixed at creation and cannot be
-          changed by a later sync call.
+          changed by a later sync call. The Backstage catalog sync example discovers the API participation relation
+          schemas and synchronizes Component/System provider and consumer references as stable typed-relation
+          identities.
 
         - @id:ar.integrations.mcp External AI or automation clients can use the MCP server’s supported entity and
           typed-relation discovery, bounded traversal, and mutation tools. Typed relation mutations require the MCP

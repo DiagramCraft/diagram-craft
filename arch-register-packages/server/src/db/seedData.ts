@@ -67,6 +67,9 @@ const now = new Date('2026-01-01T00:00:00.000Z');
 const WORKSPACE_ID = seededWorkspaces.default.id;
 const WORKSPACE2_ID = seededWorkspaces.second.id;
 
+const API_PROVIDER_RELATION_SCHEMA_ID = '00000000-0000-0000-0000-000000000034';
+const API_CONSUMER_RELATION_SCHEMA_ID = '00000000-0000-0000-0000-000000000035';
+
 const LIFECYCLE_IDS = {
   proposed: '90000000-0000-0000-0000-000000000011',
   experimental: '90000000-0000-0000-0000-000000000012',
@@ -922,6 +925,22 @@ export const seedSchemas: SchemaDbResult[] = (
           direction: 'in'
         },
         {
+          id: 'provides_apis',
+          name: 'Provided APIs',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: '00000000-0000-0000-0000-000000000034',
+          direction: 'out'
+        },
+        {
+          id: 'consumes_apis',
+          name: 'Consumed APIs',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: '00000000-0000-0000-0000-000000000035',
+          direction: 'out'
+        },
+        {
           id: 'contracts',
           name: 'Contracts',
           type: 'typedRelation',
@@ -972,20 +991,18 @@ export const seedSchemas: SchemaDbResult[] = (
         {
           id: 'provides_apis',
           name: 'Provided APIs',
-          type: 'reference',
-          predicate: 'provides',
-          schemaId: '00000000-0000-0000-0000-000000000004',
-          minCount: 0,
-          maxCount: -1
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: '00000000-0000-0000-0000-000000000034',
+          direction: 'out'
         },
         {
           id: 'consumes_apis',
           name: 'Consumed APIs',
-          type: 'reference',
-          predicate: 'consumes',
-          schemaId: '00000000-0000-0000-0000-000000000004',
-          minCount: 0,
-          maxCount: -1
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: '00000000-0000-0000-0000-000000000035',
+          direction: 'out'
         },
         {
           id: 'depends_on',
@@ -1092,7 +1109,23 @@ export const seedSchemas: SchemaDbResult[] = (
           minCount: 1,
           maxCount: 1
         },
-        { id: 'api_version', name: 'API Version', type: 'text' }
+        { id: 'api_version', name: 'API Version', type: 'text' },
+        {
+          id: 'providers',
+          name: 'Providers',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: '00000000-0000-0000-0000-000000000034',
+          direction: 'in'
+        },
+        {
+          id: 'consumers',
+          name: 'Consumers',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: '00000000-0000-0000-0000-000000000035',
+          direction: 'in'
+        }
       ],
       entity_capabilities: [
         {
@@ -3614,6 +3647,15 @@ const seedEntitiesRaw: SeedEntityInput[] = [
 
 const seedSchemaById = new Map(seedSchemas.map(schema => [schema.id, schema]));
 
+const stripSeedApiRelationshipFields = (data: SeedEntityInput['data']): SeedEntityInput['data'] => {
+  const {
+    provides_apis: _providesApis,
+    consumes_apis: _consumesApis,
+    ...remaining
+  } = data;
+  return remaining;
+};
+
 export const seedEntities: Entity[] = seedEntitiesRaw.map(entity => {
   const schema = seedSchemaById.get(entity.schema_id);
   if (!schema)
@@ -3624,15 +3666,16 @@ export const seedEntities: Entity[] = seedEntitiesRaw.map(entity => {
   // Typed relations are inserted after entities during bootstrap, so expose their initial
   // context as empty arrays. bootstrapSeed recalculates all derived fields after relation rows
   // have been inserted and replaces these provisional values with the relation-aware results.
+  const entityData = stripSeedApiRelationshipFields(entity.data);
   const initialDerivedContext = {
-    ...entity.data,
+    ...entityData,
     ...Object.fromEntries(
       schema.fields.filter(field => field.type === 'typedRelation').map(field => [field.id, []])
     )
   };
   const data = materializeDerivedFields(
     schema.fields,
-    entity.data,
+    entityData,
     { objectType: 'entity', objectId: entity.id },
     schema.groups,
     initialDerivedContext
@@ -5693,6 +5736,44 @@ export const seedAiConfig: AiConfigInputDbUpsert = {
 // reference field (see #2532).
 export const seedRelationSchemas: RelationSchemaDbResult[] = [
   {
+    id: '00000000-0000-0000-0000-000000000034',
+    workspace: WORKSPACE_ID,
+    name: 'Provides API',
+    description: 'Associates a Component or System with an API it provides.',
+    in_schema_ids: [
+      '00000000-0000-0000-0000-000000000003',
+      '00000000-0000-0000-0000-000000000002'
+    ],
+    out_schema_ids: ['00000000-0000-0000-0000-000000000004'],
+    fields: [],
+    groups: [],
+    shared_field_group_links: [],
+    color: AR_COLOR_GREEN,
+    icon: 'plug',
+    relation_approval_policy: 'disabled',
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0000-000000000035',
+    workspace: WORKSPACE_ID,
+    name: 'Consumes API',
+    description: 'Associates a Component or System with an API it consumes.',
+    in_schema_ids: [
+      '00000000-0000-0000-0000-000000000003',
+      '00000000-0000-0000-0000-000000000002'
+    ],
+    out_schema_ids: ['00000000-0000-0000-0000-000000000004'],
+    fields: [],
+    groups: [],
+    shared_field_group_links: [],
+    color: AR_COLOR_BLUE,
+    icon: 'download',
+    relation_approval_policy: 'disabled',
+    created_at: now,
+    updated_at: now
+  },
+  {
     id: '00000000-0000-0000-0000-000000000031',
     workspace: WORKSPACE_ID,
     name: 'System Contract',
@@ -5815,7 +5896,54 @@ const DATA_FLOW_SCHEMA_ID = '00000000-0000-0000-0000-000000000030';
 const RISK_CONTROL_SCHEMA_ID = '00000000-0000-0000-0000-000000000032';
 const CONTROL_REQUIREMENT_SCHEMA_ID = '00000000-0000-0000-0000-000000000033';
 
+const seedEntityById = new Map(seedEntities.map(entity => [entity.id, entity]));
+let nextSeedApiRelationIndex = 100;
+
+const seedApiRelations: RelationDbCreate[] = seedEntitiesRaw.flatMap(entity => {
+  if (
+    entity.schema_id !== '00000000-0000-0000-0000-000000000003' &&
+    entity.schema_id !== '00000000-0000-0000-0000-000000000002'
+  ) {
+    return [];
+  }
+
+  const source = seedEntityById.get(entity.id);
+  if (!source) return [];
+
+  return (['provides_apis', 'consumes_apis'] as const).flatMap(field => {
+    const relationSchemaId =
+      field === 'provides_apis'
+        ? API_PROVIDER_RELATION_SCHEMA_ID
+        : API_CONSUMER_RELATION_SCHEMA_ID;
+    const references = entity.data[field];
+    if (!Array.isArray(references)) return [];
+
+    return references.flatMap(reference => {
+      if (typeof reference !== 'string') return [];
+      const target = seedEntityById.get(reference);
+      if (target?.schema_id !== '00000000-0000-0000-0000-000000000004') return [];
+
+      const relationIndex = nextSeedApiRelationIndex++;
+      return [
+        {
+          id: `00000000-0000-0000-0009-${relationIndex.toString(16).padStart(12, '0')}`,
+          workspace: WORKSPACE_ID,
+          schema_id: relationSchemaId,
+          in_entity_id: source.id,
+          out_entity_id: target.id,
+          data: {},
+          owner: source.owner,
+          lifecycle: source.lifecycle,
+          created_at: now,
+          updated_at: now
+        }
+      ];
+    });
+  });
+});
+
 export const seedRelations: RelationDbCreate[] = [
+  ...seedApiRelations,
   {
     id: '00000000-0000-0000-0009-000000000004',
     workspace: WORKSPACE_ID,

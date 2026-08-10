@@ -488,7 +488,7 @@ describe('searchWorkspace relations', () => {
     updated_at: new Date()
   };
 
-  const makeRelationDb = (): DatabaseAdapter =>
+  const makeRelationDb = (relationSchemaName = 'Depends On'): DatabaseAdapter =>
     ({
       catalog: {
         listSchemas: vi.fn(async () => [entitySchema]),
@@ -505,10 +505,14 @@ describe('searchWorkspace relations', () => {
         listWorkspaceContentNodes: vi.fn(async () => [])
       },
       relation: {
-        listRelationSchemas: vi.fn(async () => [relationSchema]),
+        listRelationSchemas: vi.fn(async () => [
+          { ...relationSchema, name: relationSchemaName }
+        ]),
         listRelations: vi.fn(
           async (_ws: string, _filters: unknown, { offset }: { offset: number }) =>
-            offset === 0 ? { items: [relation], total: 1 } : { items: [], total: 1 }
+            offset === 0
+              ? { items: [{ ...relation, schema_name: relationSchemaName }], total: 1 }
+              : { items: [], total: 1 }
         )
       }
     }) as unknown as DatabaseAdapter;
@@ -542,6 +546,19 @@ describe('searchWorkspace relations', () => {
 
     expect(result.relations).toEqual([
       expect.objectContaining({ relationId: 'relation-1', matchedMetadata: ['outEntity'] })
+    ]);
+  });
+
+  it('matches API participation relation schema names', async () => {
+    const result = await searchWorkspace(
+      makeRelationDb('Provides API'),
+      'default',
+      { q: 'Provides API', types: 'relations' },
+      { context: { user: { id: 'user-1' } } } as never
+    );
+
+    expect(result.relations).toEqual([
+      expect.objectContaining({ relationId: 'relation-1', schemaName: 'Provides API' })
     ]);
   });
 

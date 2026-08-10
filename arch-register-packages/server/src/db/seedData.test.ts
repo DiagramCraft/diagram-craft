@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import {
   seedAssessmentTypes,
   seedAssessments,
+  seedEntities,
   seedRelationSchemas,
   seedRelations,
   seedSchemas,
@@ -107,5 +108,36 @@ describe('contract allocation seed data', () => {
     expect(
       seedRelations.filter(relation => relation.schema_id === systemContract?.id)
     ).toHaveLength(3);
+  });
+});
+
+describe('API participation seed data', () => {
+  it('seeds typed provider and consumer relations instead of generic API arrays', () => {
+    const component = seedSchemas.find(schema => schema.name === 'Component');
+    const api = seedSchemas.find(schema => schema.name === 'API');
+    const provides = seedRelationSchemas.find(schema => schema.name === 'Provides API');
+    const consumes = seedRelationSchemas.find(schema => schema.name === 'Consumes API');
+    const apiGateway = seedEntities.find(entity => entity.public_id === 'CMP-1');
+
+    expect(provides?.in_schema_ids).toEqual([component?.id, '00000000-0000-0000-0000-000000000002']);
+    expect(provides?.out_schema_ids).toEqual([api?.id]);
+    expect(consumes?.in_schema_ids).toEqual([component?.id, '00000000-0000-0000-0000-000000000002']);
+    expect(consumes?.out_schema_ids).toEqual([api?.id]);
+    expect(component?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'provides_apis',
+        type: 'typedRelation',
+        relationSchemaId: provides?.id,
+        direction: 'out'
+      })
+    );
+    expect(apiGateway?.data).not.toHaveProperty('provides_apis');
+    expect(apiGateway?.data).not.toHaveProperty('consumes_apis');
+    expect(
+      seedRelations.filter(
+        relation =>
+          relation.schema_id === provides?.id || relation.schema_id === consumes?.id
+      )
+    ).toHaveLength(16);
   });
 });

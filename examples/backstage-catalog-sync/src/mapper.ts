@@ -28,6 +28,7 @@ export interface RelationshipMapping {
   field: string;
   defaultKind: string;
   references: BackstageReferenceValue[];
+  typedRelation?: 'provides-api' | 'consumes-api';
 }
 
 /**
@@ -111,12 +112,14 @@ const retainRelationship = (
   entity: BackstageEntity,
   field: string,
   defaultKind: string,
-  relationships: RelationshipMapping[]
+  relationships: RelationshipMapping[],
+  typedRelation?: RelationshipMapping['typedRelation']
 ): void => {
   const value = entity.spec[field];
   relationships.push({
     field,
     defaultKind,
+    ...(typedRelation ? { typedRelation } : {}),
     references:
       value === undefined
         ? []
@@ -147,8 +150,8 @@ const mapComponentFields = (
   }
 
   retainRelationship(entity, 'system', 'system', relationships);
-  retainRelationship(entity, 'providesApis', 'api', relationships);
-  retainRelationship(entity, 'consumesApis', 'api', relationships);
+  retainRelationship(entity, 'providesApis', 'api', relationships, 'provides-api');
+  retainRelationship(entity, 'consumesApis', 'api', relationships, 'consumes-api');
 
   // Warn about unmapped fields
   if (entity.spec.dependsOn) {
@@ -225,6 +228,8 @@ const mapSystemFields = (
   relationships: RelationshipMapping[]
 ): void => {
   retainRelationship(entity, 'domain', 'domain', relationships);
+  retainRelationship(entity, 'providesApis', 'api', relationships, 'provides-api');
+  retainRelationship(entity, 'consumesApis', 'api', relationships, 'consumes-api');
 };
 
 /**

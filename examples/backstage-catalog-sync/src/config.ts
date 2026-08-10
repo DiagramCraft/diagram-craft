@@ -6,6 +6,11 @@ export interface SchemaMapping {
   resource?: string;
 }
 
+export interface RelationSchemaMapping {
+  'provides-api'?: string;
+  'consumes-api'?: string;
+}
+
 export interface Config {
   githubToken?: string;
   githubOrg: string;
@@ -13,6 +18,7 @@ export interface Config {
   archRegisterWorkspace: string;
   archRegisterToken: string;
   schemaMapping: SchemaMapping;
+  relationSchemaMapping: RelationSchemaMapping;
   dryRun: boolean;
   verbose: boolean;
 }
@@ -54,6 +60,11 @@ export const readConfig = (args: string[]): Config => {
     resource: process.env.SCHEMA_RESOURCE
   };
 
+  const relationSchemaMapping: RelationSchemaMapping = {
+    'provides-api': process.env.RELATION_SCHEMA_PROVIDES_API,
+    'consumes-api': process.env.RELATION_SCHEMA_CONSUMES_API
+  };
+
   // Optional: Dry run mode
   const dryRun = parsedArgs.dryRun || process.env.DRY_RUN === 'true';
 
@@ -67,6 +78,7 @@ export const readConfig = (args: string[]): Config => {
     archRegisterWorkspace,
     archRegisterToken,
     schemaMapping,
+    relationSchemaMapping,
     dryRun,
     verbose
   };
@@ -128,6 +140,8 @@ Environment Variables:
   SCHEMA_COMPONENT               Component schema UUID (optional, auto-discovered if not set)
   SCHEMA_API                     API schema UUID (optional, auto-discovered if not set)
   SCHEMA_RESOURCE                Resource schema UUID (optional, auto-discovered if not set)
+  RELATION_SCHEMA_PROVIDES_API   Provides API relation schema UUID (optional, auto-discovered if not set)
+  RELATION_SCHEMA_CONSUMES_API   Consumes API relation schema UUID (optional, auto-discovered if not set)
   DRY_RUN                        Set to 'true' for dry run mode (optional)
 
 Examples:
