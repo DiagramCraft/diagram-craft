@@ -135,6 +135,25 @@ test('typed artifacts and revisions preserve lifecycle state', async ({ orpc, se
     status: 'unsupported',
     diagnostics: [expect.objectContaining({ category: 'unsupported_version' })]
   });
+  const revisionSummaries = await orpc.artifacts.listApiSpecificationRevisions({
+    params: { workspace: 'default', entityId, artifactId: artifact.id }
+  });
+  expect(revisionSummaries).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        revision: expect.objectContaining({ id: unsupportedRevision.id }),
+        status: 'unsupported',
+        isCurrent: false,
+        diagnostics: [expect.objectContaining({ category: 'unsupported_version' })]
+      }),
+      expect.objectContaining({
+        revision: expect.objectContaining({ id: revision.id }),
+        status: 'current',
+        isCurrent: true
+      })
+    ])
+  );
+  expect(revisionSummaries[0]).not.toHaveProperty('content');
 
   await expect(
     orpc.artifacts.create({
@@ -217,6 +236,114 @@ test('typed artifacts and revisions preserve lifecycle state', async ({ orpc, se
     offset: 0
   });
   expect(afterRepeatedRefresh.total).toBe(1);
+});
+
+test('keeps multiple API sources and their revision histories separate', async ({ orpc }) => {
+  const entityId = '00000000-0000-0000-0000-e2e000000101';
+  const createSource = () =>
+    orpc.artifacts.create({
+      params: { workspace: 'default', entityId },
+      body: {
+        artifactType: 'api-specification',
+        kind: 'document',
+        mediaType: 'application/json'
+      }
+    });
+  const content = (operationId: string, version: string) =>
+    JSON.stringify({
+      openapi: '3.1.0',
+      info: { title: `Source ${operationId}`, version },
+      paths: {
+        '/pets': {
+          get: {
+            operationId,
+            responses: { '200': { description: 'ok' } }
+          }
+        }
+      }
+    });
+
+  const firstSource = await createSource();
+  const firstRevision = await orpc.artifacts.createRevision({
+    params: { workspace: 'default', entityId, artifactId: firstSource.id },
+    body: {
+      sourceRevision: 'source-a-v1',
+      mediaType: 'application/json',
+      content: content('sourceA_v1', '1.0.0')
+    }
+  });
+  const currentRevision = await orpc.artifacts.createRevision({
+    params: { workspace: 'default', entityId, artifactId: firstSource.id },
+    body: {
+      sourceRevision: 'source-a-v2',
+      mediaType: 'application/json',
+      content: content('sourceA_v2', '2.0.0')
+    }
+  });
+  const secondSource = await createSource();
+  const secondRevision = await orpc.artifacts.createRevision({
+    params: { workspace: 'default', entityId, artifactId: secondSource.id },
+    body: {
+      sourceRevision: 'source-b-v1',
+      mediaType: 'application/json',
+      content: content('sourceB_v1', '1.0.0')
+    }
+  });
+
+  const collection = await orpc.artifacts.list({
+    params: { workspace: 'default', entityId }
+  });
+  expect(collection.artifacts).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({ id: firstSource.id, currentRevisionId: currentRevision.id }),
+      expect.objectContaining({ id: secondSource.id, currentRevisionId: secondRevision.id })
+    ])
+  );
+
+  const firstRevisions = await orpc.artifacts.listApiSpecificationRevisions({
+    params: { workspace: 'default', entityId, artifactId: firstSource.id }
+  });
+  expect(firstRevisions).toEqual(
+    expect.arrayContaining([
+      expect.objectContaining({
+        revision: expect.objectContaining({
+          id: firstRevision.id,
+          sourceRevision: 'source-a-v1'
+        }),
+        isCurrent: false
+      }),
+      expect.objectContaining({
+        revision: expect.objectContaining({
+          id: currentRevision.id,
+          sourceRevision: 'source-a-v2'
+        }),
+        isCurrent: true
+      })
+    ])
+  );
+
+  const secondRevisions = await orpc.artifacts.listApiSpecificationRevisions({
+    params: { workspace: 'default', entityId, artifactId: secondSource.id }
+  });
+  expect(secondRevisions).toHaveLength(1);
+  expect(secondRevisions[0]).toMatchObject({
+    revision: expect.objectContaining({ id: secondRevision.id, sourceRevision: 'source-b-v1' }),
+    isCurrent: true
+  });
+
+  const historicalProjection = await orpc.artifacts.listApiSpecification({
+    params: {
+      workspace: 'default',
+      entityId,
+      artifactId: firstSource.id,
+      revisionId: firstRevision.id
+    },
+    query: { limit: 50, offset: 0 }
+  });
+  expect(historicalProjection).toMatchObject({
+    revision: { isCurrent: false },
+    items: [{ identifier: 'sourceA_v1' }]
+  });
 });
 
 test('artifacts require entity and content authorization', async ({ server }) => {

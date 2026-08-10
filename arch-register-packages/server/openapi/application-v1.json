@@ -120423,6 +120423,278 @@
       }
     },
     "/{workspace}/entities/{entityId}/artifacts/{artifactId}/revisions": {
+      "get": {
+        "operationId": "artifacts.listApiSpecificationRevisions",
+        "summary": "List API specification revisions",
+        "description": "Lists API specification revision metadata, including current status and diagnostics, without returning raw source content.",
+        "tags": [
+          "Artifacts",
+          "Artifacts"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "artifactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "revision": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Immutable artifact revision identifier"
+                          },
+                          "artifactId": {
+                            "type": "string",
+                            "description": "Owning artifact identifier"
+                          },
+                          "sourceRevision": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Provider or repository revision identifier"
+                          },
+                          "checksum": {
+                            "type": "string",
+                            "description": "SHA-256 checksum of the accepted artifact document"
+                          },
+                          "mediaType": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Source media type"
+                          },
+                          "contentSize": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                            "description": "Stored source size in bytes"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "description": "ISO 8601 acceptance timestamp"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "artifactId",
+                          "sourceRevision",
+                          "checksum",
+                          "mediaType",
+                          "contentSize",
+                          "createdAt"
+                        ]
+                      },
+                      "protocol": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "openapi",
+                              "asyncapi"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "specificationVersion": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "title": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "description": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "status": {
+                        "enum": [
+                          "current",
+                          "invalid",
+                          "unsupported"
+                        ],
+                        "type": "string"
+                      },
+                      "isCurrent": {
+                        "type": "boolean",
+                        "description": "Whether this is the artifact's current successful revision"
+                      },
+                      "itemCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "diagnostics": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "severity": {
+                              "enum": [
+                                "error",
+                                "warning"
+                              ],
+                              "type": "string"
+                            },
+                            "category": {
+                              "enum": [
+                                "parse_error",
+                                "validation_error",
+                                "unsupported_media_type",
+                                "unsupported_version",
+                                "unsupported_construct",
+                                "unresolved_reference",
+                                "duplicate_identifier",
+                                "missing_identifier",
+                                "resource_limit",
+                                "normalization_error"
+                              ],
+                              "type": "string"
+                            },
+                            "code": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "source": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "pointer": {
+                                      "type": "string",
+                                      "description": "JSON Pointer into the source document"
+                                    },
+                                    "line": {
+                                      "anyOf": [
+                                        {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 9007199254740991
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "1-based source line when available"
+                                    },
+                                    "column": {
+                                      "anyOf": [
+                                        {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 9007199254740991
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "1-based source column when available"
+                                    }
+                                  },
+                                  "required": [
+                                    "pointer",
+                                    "line",
+                                    "column"
+                                  ]
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "severity",
+                            "category",
+                            "code",
+                            "message",
+                            "source"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "revision",
+                      "protocol",
+                      "specificationVersion",
+                      "title",
+                      "description",
+                      "status",
+                      "isCurrent",
+                      "itemCount",
+                      "diagnostics"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
       "post": {
         "operationId": "artifacts.createRevision",
         "summary": "Record an artifact revision",
@@ -120935,6 +121207,10 @@
                           ],
                           "type": "string"
                         },
+                        "isCurrent": {
+                          "type": "boolean",
+                          "description": "Whether this is the artifact's current successful revision"
+                        },
                         "itemCount": {
                           "type": "integer",
                           "minimum": 0,
@@ -121038,6 +121314,7 @@
                         "title",
                         "description",
                         "status",
+                        "isCurrent",
                         "itemCount",
                         "diagnostics"
                       ]

@@ -221,6 +221,7 @@ export type {
   ArtifactDiagnosticDb,
   ArtifactRevisionDbCreate,
   ArtifactRevisionDbResult,
+  ArtifactRevisionSummaryDbResult,
   ArtifactDbCreate,
   ArtifactDbResult,
   ArtifactDbUpdate

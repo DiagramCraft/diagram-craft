@@ -96,6 +96,18 @@ export class SqliteArtifactDatabase extends SqliteDatabaseBase implements Artifa
     return artifact ? { artifact, started: result.changes > 0 } : null;
   }
 
+  async listRevisionSummaries(workspace: string, artifactId: string) {
+    return this.all(
+      `SELECT id, workspace, artifact_id, source_revision, checksum, media_type,
+              length(CAST(content AS BLOB)) AS content_size, created_at
+       FROM catalog_artifact_revision
+       WHERE workspace = ? AND artifact_id = ?
+       ORDER BY created_at DESC, id DESC`,
+      [workspace, artifactId],
+      artifactMappers.revisionSummary
+    );
+  }
+
   async getRevision(workspace: string, id: string) {
     return this.get(
       'SELECT * FROM catalog_artifact_revision WHERE workspace = ? AND id = ?',

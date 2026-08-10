@@ -179,6 +179,89 @@ test.describe('entities section', () => {
     await expect(page.locator('summary').getByText('PUBLISH', { exact: true })).toBeVisible();
   });
 
+  test('selects API sources and historical versions without conflating them', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+    await entitiesPage.goto();
+
+    const sourceARevision1 = await entitiesPage.seedApiSpecification(
+      authApiEntity.id,
+      {
+        openapi: '3.1.0',
+        info: { title: 'Auth API v1', version: '1.0.0' },
+        paths: {
+          '/source-a-v1': {
+            get: {
+              operationId: 'sourceAV1',
+              responses: { '200': { description: 'ok' } }
+            }
+          }
+        }
+      },
+      'source-a-v1'
+    );
+    await entitiesPage.seedApiSpecificationRevision(
+      authApiEntity.id,
+      sourceARevision1.artifactId,
+      {
+        openapi: '3.1.0',
+        info: { title: 'Auth API v2', version: '2.0.0' },
+        paths: {
+          '/source-a-v2': {
+            get: {
+              operationId: 'sourceAV2',
+              responses: { '200': { description: 'ok' } }
+            }
+          }
+        }
+      },
+      'source-a-v2'
+    );
+    await entitiesPage.seedApiSpecification(
+      authApiEntity.id,
+      {
+        openapi: '3.1.0',
+        info: { title: 'Auth API alternate', version: '1.0.0' },
+        paths: {
+          '/source-b-v1': {
+            get: {
+              operationId: 'sourceBV1',
+              responses: { '200': { description: 'ok' } }
+            }
+          }
+        }
+      },
+      'source-b-v1'
+    );
+
+    await entitiesPage.goto();
+    await entitiesPage.openApiCatalog(authApiEntity.name);
+
+    await expect(
+      page.getByRole('region', { name: 'API specification sources and versions' })
+    ).toBeVisible();
+    await expect(page.getByRole('button', { name: /source-a-v1/ })).toBeVisible();
+    await expect(page.getByRole('button', { name: /source-a-v2/ })).toHaveCount(2);
+    await expect(page.getByRole('button', { name: /source-b-v1/ })).toHaveCount(2);
+    await expect(page.getByText('Select an API source')).toBeVisible();
+    await expect(page.getByText('sourceAV1')).toHaveCount(0);
+    await expect(page.getByText('sourceBV1')).toHaveCount(0);
+
+    await page.getByRole('button', { name: /Historical .*source-a-v1/ }).click();
+    await expect(page).toHaveURL(
+      new RegExp(
+        `apiArtifactId=${sourceARevision1.artifactId}.*apiRevisionId=${sourceARevision1.revisionId}`
+      )
+    );
+    await expect(page.getByText('Historical · source-a-v1', { exact: false })).toBeVisible();
+    await expect(page.getByText('sourceAV1')).toBeVisible();
+    await expect(page.getByText('sourceAV2')).toHaveCount(0);
+    await expect(page.getByText('sourceBV1')).toHaveCount(0);
+
+    await page.reload();
+    await expect(page.getByText('sourceAV1')).toBeVisible();
+    await expect(page.getByText('Historical · source-a-v1', { exact: false })).toBeVisible();
+  });
+
   test('restores entity filters through reload and browser history', async ({ page }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
 

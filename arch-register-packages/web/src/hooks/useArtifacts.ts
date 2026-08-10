@@ -1,6 +1,7 @@
-import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ApiSpecificationProjectionQuery,
+  ApiSpecificationRevision,
   Artifact,
   ArtifactSourceKind,
   ArtifactStatus
@@ -21,13 +22,37 @@ export const selectApiSpecificationArtifacts = (artifacts: Artifact[]) =>
     .filter(artifact => artifact.artifactType === 'api-specification')
     .sort(
       (left, right) =>
-        right.updatedAt.localeCompare(left.updatedAt) ||
-        Number(Boolean(right.currentRevisionId)) - Number(Boolean(left.currentRevisionId)) ||
-        right.id.localeCompare(left.id)
+        left.createdAt.localeCompare(right.createdAt) || right.id.localeCompare(left.id)
     );
 
-export const selectApiSpecificationArtifact = (artifacts: Artifact[]) =>
-  selectApiSpecificationArtifacts(artifacts)[0];
+export type ApiSpecificationSourceState = {
+  artifact: Artifact;
+  revisions: ApiSpecificationRevision[];
+};
+
+export const resolveApiSpecificationSelection = (
+  sources: ApiSpecificationSourceState[],
+  selectedArtifactId?: string,
+  selectedRevisionId?: string
+) => {
+  const selectedSource = selectedArtifactId
+    ? sources.find(source => source.artifact.id === selectedArtifactId)
+    : selectedRevisionId
+      ? sources.find(source =>
+          source.revisions.some(revision => revision.revision.id === selectedRevisionId)
+        )
+      : sources.length === 1
+        ? sources[0]
+        : undefined;
+
+  if (!selectedSource) return { artifact: undefined, revision: undefined };
+
+  const revision = selectedRevisionId
+    ? selectedSource.revisions.find(candidate => candidate.revision.id === selectedRevisionId)
+    : selectedSource.revisions.find(candidate => candidate.isCurrent);
+
+  return { artifact: selectedSource.artifact, revision };
+};
 
 export const getArtifactStatusLabel = (status: ArtifactStatus) => {
   switch (status) {
@@ -60,6 +85,23 @@ export const useEntityArtifacts = (workspaceId: string, entityId: string, enable
     enabled: enabled && !!workspaceId && !!entityId,
     refetchInterval: query =>
       query.state.data?.artifacts.some(artifact => artifact.status === 'pending') ? 2_000 : false
+  });
+
+export const useApiSpecificationRevisionLists = (
+  workspaceId: string,
+  entityId: string,
+  artifactIds: string[],
+  enabled = true
+) =>
+  useQueries({
+    queries: artifactIds.map(artifactId => ({
+      queryKey: artifactKeys.apiSpecificationRevisions(workspaceId, entityId, artifactId),
+      queryFn: () =>
+        orpcClient.artifacts.listApiSpecificationRevisions({
+          params: { workspace: workspaceId, entityId, artifactId }
+        }),
+      enabled: enabled && !!workspaceId && !!entityId && !!artifactId
+    }))
   });
 
 export type ApiSpecificationSourceInput = {

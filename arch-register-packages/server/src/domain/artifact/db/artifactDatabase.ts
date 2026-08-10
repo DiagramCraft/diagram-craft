@@ -40,6 +40,10 @@ export type ArtifactRevisionDbResult = {
   created_at: Date;
 };
 
+export type ArtifactRevisionSummaryDbResult = Omit<ArtifactRevisionDbResult, 'content'> & {
+  content_size: number;
+};
+
 export type ArtifactDbCreate = Omit<
   ArtifactDbResult,
   | 'current_revision_id'
@@ -109,6 +113,16 @@ export const artifactMappers = {
     media_type: row['media_type'] == null ? null : String(row['media_type']),
     content: String(row['content']),
     created_at: databaseDate(row['created_at'])
+  }),
+  revisionSummary: (row: DatabaseRow): ArtifactRevisionSummaryDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    artifact_id: String(row['artifact_id']),
+    source_revision: row['source_revision'] == null ? null : String(row['source_revision']),
+    checksum: String(row['checksum']),
+    media_type: row['media_type'] == null ? null : String(row['media_type']),
+    content_size: Number(row['content_size'] ?? 0),
+    created_at: databaseDate(row['created_at'])
   })
 };
 
@@ -126,6 +140,10 @@ export type ArtifactDatabase = {
     id: string,
     timestamp: Date
   ): Promise<ArtifactAttemptResult | null>;
+  listRevisionSummaries(
+    workspace: string,
+    artifactId: string
+  ): Promise<ArtifactRevisionSummaryDbResult[]>;
   getRevision(workspace: string, id: string): Promise<ArtifactRevisionDbResult | null>;
   getRevisionByChecksum(
     workspace: string,

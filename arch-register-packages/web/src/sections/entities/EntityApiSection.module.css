@@ -154,6 +154,134 @@
   font-style: italic;
 }
 
+.sourcePicker {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  background: var(--panel-bg);
+  overflow: hidden;
+}
+
+.sourcePickerHeader {
+  padding: 12px 14px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.sourcePickerHint,
+.sourceKind,
+.sourceEmpty {
+  color: var(--base-fg-more-dim);
+  font-size: 11px;
+}
+
+.sourcePickerHint {
+  margin-top: 4px;
+}
+
+.sourceList {
+  display: flex;
+  flex-direction: column;
+}
+
+.sourceCard {
+  padding: 10px 14px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.sourceCard:last-child {
+  border-bottom: 0;
+}
+
+.sourceCardSelected {
+  background: color-mix(in oklch, var(--accent-fg) 5%, transparent);
+}
+
+.sourceCardHeader {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.sourceButton,
+.versionButton {
+  border: 0;
+  color: inherit;
+  background: transparent;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.sourceButton {
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-width: 0;
+  padding: 0;
+}
+
+.sourceButton:hover,
+.versionButton:hover {
+  color: var(--accent-fg);
+}
+
+.sourceName,
+.versionLabel {
+  min-width: 0;
+  overflow-wrap: anywhere;
+}
+
+.sourceName {
+  color: var(--base-fg);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sourceKind {
+  flex: 0 0 auto;
+  text-transform: capitalize;
+}
+
+.versionList {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin-top: 8px;
+  padding-left: 12px;
+}
+
+.versionButton {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 5px 7px;
+  border-radius: var(--r);
+}
+
+.versionButtonSelected {
+  color: var(--accent-fg);
+  background: var(--cmp-bg);
+  outline: 1px solid var(--cmp-border);
+}
+
+.versionLabel {
+  color: var(--base-fg-dim);
+  font-size: 11px;
+}
+
+.versionStatus {
+  flex: 0 0 auto;
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: capitalize;
+}
+
+.diagnosticList {
+  margin: 6px 0 0;
+  padding-left: 16px;
+}
+
 .contextSection {
   padding: 12px 14px;
 }

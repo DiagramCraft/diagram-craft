@@ -144,6 +144,7 @@ export const apiSpecificationRevisionSchema = z.object({
   title: z.string().nullable(),
   description: z.string().nullable(),
   status: z.enum(['current', 'invalid', 'unsupported']),
+  isCurrent: z.boolean().describe("Whether this is the artifact's current successful revision"),
   itemCount: z.number().int().min(0),
   diagnostics: z.array(apiSpecificationDiagnosticSchema)
 });
@@ -253,6 +254,18 @@ export const artifactContract = oc.tag('Artifacts').router({
       })
       .input(z.object({ params: artifactParamsSchema, body: updateArtifactBodySchema }))
       .output(artifactSchema),
+    listApiSpecificationRevisions: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/entities/{entityId}/artifacts/{artifactId}/revisions',
+        inputStructure: 'detailed',
+        summary: 'List API specification revisions',
+        description:
+          'Lists API specification revision metadata, including current status and diagnostics, without returning raw source content.',
+        tags: ['Artifacts']
+      })
+      .input(z.object({ params: artifactParamsSchema }))
+      .output(z.array(apiSpecificationRevisionSchema)),
     createRevision: oc
       .route({
         method: 'POST',
@@ -308,4 +321,5 @@ export type ApiSpecificationDiagnosticCategory = z.infer<
 export type ApiSpecificationSourceLocation = z.infer<typeof apiSpecificationSourceLocationSchema>;
 export type ApiSpecificationDiagnostic = z.infer<typeof apiSpecificationDiagnosticSchema>;
 export type ApiSpecificationItem = z.infer<typeof apiSpecificationItemSchema>;
+export type ApiSpecificationRevision = z.infer<typeof apiSpecificationRevisionSchema>;
 export type ApiSpecificationProjectionQuery = z.infer<typeof projectionQuerySchema>;

@@ -2,6 +2,11 @@ import { expect } from '@playwright/test';
 import { workspaceEntitiesRoute } from '../support/routes';
 import { WorkspacePage } from './WorkspacePage';
 
+export type SeededApiSpecification = {
+  artifactId: string;
+  revisionId: string;
+};
+
 export class EntitiesPage extends WorkspacePage {
   goto = async (search?: Record<string, string | undefined>) => {
     const query = new URLSearchParams();
@@ -67,7 +72,11 @@ export class EntitiesPage extends WorkspacePage {
     await expect(this.page).toHaveURL(/tab=api/);
   };
 
-  seedApiSpecification = async (entityId: string, content: Record<string, unknown>) => {
+  seedApiSpecification = async (
+    entityId: string,
+    content: Record<string, unknown>,
+    sourceRevision = `ui-${Date.now()}`
+  ): Promise<SeededApiSpecification> => {
     const baseUrl = new URL(
       `/api/application/v1/${this.workspaceSlug}/entities/${entityId}/artifacts`,
       this.page.url()
@@ -84,11 +93,35 @@ export class EntitiesPage extends WorkspacePage {
     const revisionResponse = await this.page.request.post(`${baseUrl}/${artifact.id}/revisions`, {
       data: {
         mediaType: 'application/json',
-        sourceRevision: `ui-${Date.now()}`,
+        sourceRevision,
         content: JSON.stringify(content)
       }
     });
     expect(revisionResponse.ok()).toBe(true);
+    const revision = (await revisionResponse.json()) as { id: string };
+    return { artifactId: artifact.id, revisionId: revision.id };
+  };
+
+  seedApiSpecificationRevision = async (
+    entityId: string,
+    artifactId: string,
+    content: Record<string, unknown>,
+    sourceRevision: string
+  ): Promise<SeededApiSpecification> => {
+    const baseUrl = new URL(
+      `/api/application/v1/${this.workspaceSlug}/entities/${entityId}/artifacts`,
+      this.page.url()
+    ).toString();
+    const revisionResponse = await this.page.request.post(`${baseUrl}/${artifactId}/revisions`, {
+      data: {
+        mediaType: 'application/json',
+        sourceRevision,
+        content: JSON.stringify(content)
+      }
+    });
+    expect(revisionResponse.ok()).toBe(true);
+    const revision = (await revisionResponse.json()) as { id: string };
+    return { artifactId, revisionId: revision.id };
   };
 
   expectEntityDetailLoaded = async (name: string) => {

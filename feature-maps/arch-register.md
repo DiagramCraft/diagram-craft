@@ -136,9 +136,11 @@
           documents can be validated and synchronously projected into queryable operations or messages with stable
           identifiers, source pointers, summaries, filters, pagination, and visible partial/unsupported diagnostics;
           external references are preserved without network fetching. API-capable entity details include a dedicated
-          API catalog section for browsing normalized operations or messages, inspecting source/revision/status and
-          diagnostics, filtering and paginating results, and opening permitted raw or canonical external sources;
-          stale and failed ingestion is explicitly distinguished from the last successful revision.
+          API catalog section for browsing normalized operations or messages, inspecting separately grouped API
+          sources and immutable versions, explicitly selecting a source/revision, identifying each source's current
+          successful version, inspecting source/revision/status and diagnostics, filtering and paginating results, and
+          opening permitted raw or canonical external sources; stale and failed ingestion is explicitly distinguished
+          from the last successful revision.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can

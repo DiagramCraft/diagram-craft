@@ -6,6 +6,7 @@ import type { ApiSpecificationItem, Artifact } from '@arch-register/api-types/ar
 
 const mocks = vi.hoisted(() => ({
   artifacts: vi.fn(),
+  revisionLists: vi.fn(),
   projection: vi.fn(),
   content: vi.fn(),
   createSource: vi.fn(),
@@ -30,8 +31,29 @@ vi.mock('../../hooks/useArtifacts', () => ({
     artifacts
       .filter(artifact => artifact.artifactType === 'api-specification')
       .sort((left, right) => right.updatedAt.localeCompare(left.updatedAt)),
-  selectApiSpecificationArtifact: (artifacts: Artifact[]) => artifacts[0],
+  resolveApiSpecificationSelection: (
+    sources: Array<{
+      artifact: Artifact;
+      revisions: Array<{ revision: { id: string }; isCurrent: boolean }>;
+    }>,
+    selectedArtifactId?: string,
+    selectedRevisionId?: string
+  ) => {
+    const source = selectedArtifactId
+      ? sources.find(item => item.artifact.id === selectedArtifactId)
+      : sources.length === 1
+        ? sources[0]
+        : undefined;
+    if (!source) return { artifact: undefined, revision: undefined };
+    return {
+      artifact: source.artifact,
+      revision: selectedRevisionId
+        ? source.revisions.find(item => item.revision.id === selectedRevisionId)
+        : source.revisions.find(item => item.isCurrent)
+    };
+  },
   useEntityArtifacts: mocks.artifacts,
+  useApiSpecificationRevisionLists: mocks.revisionLists,
   useApiSpecificationProjection: mocks.projection,
   useArtifactRevisionContent: mocks.content,
   useCreateApiSpecificationSource: mocks.createSource,
@@ -149,6 +171,7 @@ const makeProjection = (items: ApiSpecificationItem[]) => ({
     title: 'Example API',
     description: null,
     status: 'current',
+    isCurrent: true,
     itemCount: items.length,
     diagnostics: []
   },
@@ -161,7 +184,7 @@ const makeProjection = (items: ApiSpecificationItem[]) => ({
 const renderApi = (
   entity: EntityRecord,
   artifact: Artifact | undefined,
-  projection: unknown,
+  projection: ReturnType<typeof makeProjection> | undefined,
   entityCapability?: EntityCapability
 ) => {
   mocks.artifacts.mockReturnValue({
@@ -176,6 +199,17 @@ const renderApi = (
     isError: false,
     refetch: vi.fn()
   });
+  mocks.revisionLists.mockReturnValue(
+    artifact && projection
+      ? [
+          {
+            data: [projection.revision],
+            isPending: false,
+            isError: false
+          }
+        ]
+      : []
+  );
   mocks.content.mockReturnValue({ data: undefined, isLoading: false, isError: false });
 
   return renderToStaticMarkup(
@@ -197,6 +231,67 @@ describe('EntityApiSection', () => {
     mocks.createSource.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
     mocks.refresh.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
     mocks.upload.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
+    mocks.revisionLists.mockReturnValue([]);
+  });
+
+  it('lists multiple API sources and does not choose one automatically', () => {
+    const first = makeArtifact({
+      id: 'artifact-a',
+      currentRevisionId: 'revision-a',
+      updatedAt: '2026-02-01T00:00:00.000Z'
+    });
+    const second = makeArtifact({
+      id: 'artifact-b',
+      currentRevisionId: 'revision-b',
+      updatedAt: '2026-03-01T00:00:00.000Z'
+    });
+    const firstRevision = {
+      ...makeProjection([makeItem()]).revision,
+      revision: {
+        ...makeProjection([makeItem()]).revision.revision,
+        id: 'revision-a',
+        artifactId: 'artifact-a',
+        sourceRevision: 'source-a'
+      }
+    };
+    const secondRevision = {
+      ...makeProjection([makeItem({ id: 'item-b', identifier: 'listOrders' })]).revision,
+      revision: {
+        ...makeProjection([makeItem()]).revision.revision,
+        id: 'revision-b',
+        artifactId: 'artifact-b',
+        sourceRevision: 'source-b'
+      }
+    };
+    mocks.artifacts.mockReturnValue({
+      data: { artifacts: [first, second], status: 'current' },
+      isLoading: false,
+      isError: false,
+      refetch: vi.fn()
+    });
+    mocks.revisionLists.mockReturnValue([
+      { data: [firstRevision], isPending: false, isError: false },
+      { data: [secondRevision], isPending: false, isError: false }
+    ]);
+    mocks.projection.mockReturnValue({ data: undefined, isLoading: false, isError: false });
+    mocks.content.mockReturnValue({ data: undefined, isLoading: false, isError: false });
+
+    const markup = renderToStaticMarkup(
+      <EntityApiSection
+        workspaceId="workspace-1"
+        entity={makeEntity('openapi')}
+        outgoing={[]}
+        incoming={[]}
+        search={{ tab: 'api' }}
+        onSearchChange={() => {}}
+      />
+    );
+
+    expect(markup).toContain('Sources and versions');
+    expect(markup).toContain('source-a');
+    expect(markup).toContain('source-b');
+    expect(markup).toContain('Select an API source');
+    expect(markup).not.toContain('listPets');
   });
 
   it('browses a normalized OpenAPI operation without exposing raw content by default', () => {

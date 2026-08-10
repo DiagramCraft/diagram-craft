@@ -32,6 +32,7 @@ runContractSuiteAgainstBothDrivers('ArtifactDatabase', getDb => {
       expect(await db.artifact.listArtifacts(workspace, entity.id)).toEqual([source]);
       expect(source.current_revision_id).toBeNull();
       expect(source.diagnostic).toBeNull();
+      expect(await db.artifact.listRevisionSummaries(workspace, source.id)).toEqual([]);
     });
 
     it('deduplicates revisions by source and checksum and retains failure diagnostics', async () => {
@@ -95,6 +96,24 @@ runContractSuiteAgainstBothDrivers('ArtifactDatabase', getDb => {
       expect(await db.artifact.getRevisionByChecksum(workspace, source.id, 'sha256-1')).toEqual(
         revision
       );
+
+      const later = new Date(now.getTime() + 1000);
+      const secondRevision = await db.artifact.createRevision({
+        id: randomUUID(),
+        workspace,
+        artifact_id: source.id,
+        source_revision: 'main:2',
+        checksum: 'sha256-2',
+        media_type: 'application/json',
+        content: '{"openapi":"3.1.0","info":{"version":"2"}}',
+        created_at: later
+      });
+      const summaries = await db.artifact.listRevisionSummaries(workspace, source.id);
+      expect(summaries.map(summary => summary.id)).toEqual([secondRevision.id, revision.id]);
+      expect(summaries[0]).toMatchObject({
+        source_revision: 'main:2',
+        content_size: Buffer.byteLength(secondRevision.content, 'utf8')
+      });
     });
 
     it('starts one refresh attempt at a time and clears the previous diagnostic', async () => {

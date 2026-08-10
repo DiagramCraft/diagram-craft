@@ -20,7 +20,8 @@ import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDataba
 import type {
   ArtifactDbResult,
   ArtifactDiagnosticDb,
-  ArtifactRevisionDbResult
+  ArtifactRevisionDbResult,
+  ArtifactRevisionSummaryDbResult
 } from './db/artifactDatabase';
 
 const MAX_ARTIFACT_BYTES = 2_000_000;
@@ -215,6 +216,16 @@ export const toRevision = (revision: ArtifactRevisionDbResult) => ({
   checksum: revision.checksum,
   mediaType: revision.media_type,
   contentSize: Buffer.byteLength(revision.content, 'utf8'),
+  createdAt: revision.created_at.toISOString()
+});
+
+export const toRevisionSummary = (revision: ArtifactRevisionSummaryDbResult) => ({
+  id: revision.id,
+  artifactId: revision.artifact_id,
+  sourceRevision: revision.source_revision,
+  checksum: revision.checksum,
+  mediaType: revision.media_type,
+  contentSize: revision.content_size,
   createdAt: revision.created_at.toISOString()
 });
 
