@@ -1,7 +1,7 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { requireWorkspaceCapability } from '../auth/authorization';
+import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import {
   NOTIFICATION_CHANNEL_CATALOG,
@@ -49,12 +49,16 @@ export const getNotificationPreferences = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<NotificationPreferencesResponse> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
-
-  const overrides = await db.notificationPreference.listOverrides(event.context.user.id, ws);
-  return buildResponse(overrides);
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
+      const overrides = await db.notificationPreference.listOverrides(event.context.user.id, ws);
+      return buildResponse(overrides);
+    }
+  });
 };
 
 export const updateNotificationPreferences = async (
@@ -63,22 +67,27 @@ export const updateNotificationPreferences = async (
   event: AuthenticatedEvent,
   entries: { notificationType: string; channel: string; enabled: boolean }[]
 ): Promise<NotificationPreferencesResponse> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
 
-  for (const entry of entries) {
-    httpAssert.true(isNotificationType(entry.notificationType), {
-      status: 400,
-      message: `Unknown notification type '${entry.notificationType}'`
-    });
-    httpAssert.true(isNotificationChannel(entry.channel), {
-      status: 400,
-      message: `Unknown notification channel '${entry.channel}'`
-    });
-  }
+      for (const entry of entries) {
+        httpAssert.true(isNotificationType(entry.notificationType), {
+          status: 400,
+          message: `Unknown notification type '${entry.notificationType}'`
+        });
+        httpAssert.true(isNotificationChannel(entry.channel), {
+          status: 400,
+          message: `Unknown notification channel '${entry.channel}'`
+        });
+      }
 
-  await db.notificationPreference.setOverrides(event.context.user.id, ws, entries);
-  const overrides = await db.notificationPreference.listOverrides(event.context.user.id, ws);
-  return buildResponse(overrides);
+      await db.notificationPreference.setOverrides(event.context.user.id, ws, entries);
+      const overrides = await db.notificationPreference.listOverrides(event.context.user.id, ws);
+      return buildResponse(overrides);
+    }
+  });
 };

@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildApiEntityAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import type {
   WorkspaceAuthorizationContext,
@@ -25,6 +24,7 @@ import {
 import type { GovernanceCaseKindConfig } from '../governance/governanceRegistry';
 import { equalEntityValue, mutableStateKeys } from './entityDiff';
 import { finalizeApprovalBypass, withdrawApproval } from './approvalLifecycleOperations';
+import { runAuthorizedOperation } from '../operation';
 
 export type ApprovalRequestBody = {
   baseVersion: number;
@@ -176,6 +176,8 @@ export const listEligibleApproverIds = async (
     users
       .filter(user => user.is_active)
       .map(async user => {
+        // Each candidate user needs a synthetic authorization context to evaluate that candidate's own
+        // capabilities; this is background target resolution, not route authorization.
         const authCtx = await buildApiEntityAuthCtx(
           db,
           workspace,
@@ -261,59 +263,54 @@ export const createApprovalWorkflow = <TSubject, TApproval>(
 ) => {
   const loadForView = async (
     db: DatabaseAdapter,
-    workspaceName: string,
+    workspace: string,
     subjectId: string,
-    event: AuthenticatedEvent
+    authCtx: AuthorizationContext
   ) => {
-    const workspace = await resolveWorkspace(db.catalog, workspaceName);
-    const authCtx = await buildApiEntityAuthCtx(db, workspace, event);
     const subject = await getSubjectOrThrow(db, workspace, subjectId, adapter);
     await adapter.assertCanView(db, workspace, authCtx, subject);
-    return { workspace, authCtx, subject };
+    return subject;
   };
 
   const loadForProposal = async (
     db: DatabaseAdapter,
-    workspaceName: string,
+    workspace: string,
     subjectId: string,
-    event: AuthenticatedEvent
+    authCtx: AuthorizationContext
   ) => {
-    const workspace = await resolveWorkspace(db.catalog, workspaceName);
-    const authCtx = await buildApiEntityAuthCtx(db, workspace, event);
     const subject = await getSubjectOrThrow(db, workspace, subjectId, adapter);
     await adapter.assertCanPropose(db, workspace, authCtx, subject);
     requireWorkspaceCapability(authCtx, 'ent.propose');
-    return { workspace, authCtx, subject };
+    return subject;
   };
 
-  const get = async (
+  const get = (
     db: DatabaseAdapter,
     workspaceName: string,
     subjectId: string,
     event: AuthenticatedEvent
-  ): Promise<TApproval | null> => {
-    const { workspace, authCtx, subject } = await loadForView(db, workspaceName, subjectId, event);
-    const proposal = await db.entityChange.getOpenApproval(
-      workspace,
-      adapter.getSubjectId(subject)
-    );
-    return proposal ? adapter.toApiApproval(db, proposal, authCtx) : null;
-  };
+  ): Promise<TApproval | null> =>
+    runAuthorizedOperation({
+      db,
+      event,
+      scope: { kind: 'entity', workspace: workspaceName },
+      operation: async ({ ws, authCtx }) => {
+        const subject = await loadForView(db, ws, subjectId, authCtx);
+        const proposal = await db.entityChange.getOpenApproval(ws, adapter.getSubjectId(subject));
+        return proposal ? adapter.toApiApproval(db, proposal, authCtx) : null;
+      }
+    });
 
-  const submit = async (
+  const submitWithContext = async (
     db: DatabaseAdapter,
-    workspaceName: string,
+    workspace: string,
     subjectId: string,
     event: AuthenticatedEvent,
+    authCtx: AuthorizationContext,
     body: ApprovalRequestBody,
     expectedProposalId?: string
   ): Promise<TApproval> => {
-    const { workspace, authCtx, subject } = await loadForProposal(
-      db,
-      workspaceName,
-      subjectId,
-      event
-    );
+    const subject = await loadForProposal(db, workspace, subjectId, authCtx);
     const policy = await adapter.resolvePolicy(db, workspace, subject);
     httpAssert.true(policy.required, {
       status: 409,
@@ -428,6 +425,20 @@ export const createApprovalWorkflow = <TSubject, TApproval>(
     return adapter.toApiApproval(db, proposal, authCtx);
   };
 
+  const submit = (
+    db: DatabaseAdapter,
+    workspaceName: string,
+    subjectId: string,
+    event: AuthenticatedEvent,
+    body: ApprovalRequestBody
+  ): Promise<TApproval> =>
+    runAuthorizedOperation({
+      db,
+      event,
+      scope: { kind: 'entity', workspace: workspaceName },
+      operation: ({ ws, authCtx }) => submitWithContext(db, ws, subjectId, event, authCtx, body)
+    });
+
   const resubmit = (
     db: DatabaseAdapter,
     workspaceName: string,
@@ -435,22 +446,25 @@ export const createApprovalWorkflow = <TSubject, TApproval>(
     proposalId: string,
     event: AuthenticatedEvent,
     body: ApprovalRequestBody
-  ) => submit(db, workspaceName, subjectId, event, body, proposalId);
+  ): Promise<TApproval> =>
+    runAuthorizedOperation({
+      db,
+      event,
+      scope: { kind: 'entity', workspace: workspaceName },
+      operation: ({ ws, authCtx }) =>
+        submitWithContext(db, ws, subjectId, event, authCtx, body, proposalId)
+    });
 
-  const withdraw = async (
+  const withdrawWithContext = async (
     db: DatabaseAdapter,
-    workspaceName: string,
+    workspace: string,
     subjectId: string,
     proposalId: string,
     event: AuthenticatedEvent,
+    authCtx: AuthorizationContext,
     reason?: string
   ): Promise<TApproval> => {
-    const { workspace, authCtx, subject } = await loadForProposal(
-      db,
-      workspaceName,
-      subjectId,
-      event
-    );
+    const subject = await loadForProposal(db, workspace, subjectId, authCtx);
     return withdrawApproval(db, {
       workspace,
       subjectId: adapter.getSubjectId(subject),
@@ -466,19 +480,31 @@ export const createApprovalWorkflow = <TSubject, TApproval>(
     });
   };
 
-  const bypass = async (
+  const withdraw = (
     db: DatabaseAdapter,
     workspaceName: string,
     subjectId: string,
+    proposalId: string,
     event: AuthenticatedEvent,
+    reason?: string
+  ): Promise<TApproval> =>
+    runAuthorizedOperation({
+      db,
+      event,
+      scope: { kind: 'entity', workspace: workspaceName },
+      operation: ({ ws, authCtx }) =>
+        withdrawWithContext(db, ws, subjectId, proposalId, event, authCtx, reason)
+    });
+
+  const bypassWithContext = async (
+    db: DatabaseAdapter,
+    workspace: string,
+    subjectId: string,
+    event: AuthenticatedEvent,
+    authCtx: AuthorizationContext,
     body: ApprovalBypassRequestBody
   ) => {
-    const { workspace, authCtx, subject } = await loadForProposal(
-      db,
-      workspaceName,
-      subjectId,
-      event
-    );
+    const subject = await loadForProposal(db, workspace, subjectId, authCtx);
     requireWorkspaceCapability(authCtx, 'ent.override');
     const canonicalSubjectId = adapter.getSubjectId(subject);
     const updated = await db.core.transaction(async tx => {
@@ -512,6 +538,20 @@ export const createApprovalWorkflow = <TSubject, TApproval>(
     });
     return { subjectId: canonicalSubjectId, version: updated.version, bypassed: true as const };
   };
+
+  const bypass = (
+    db: DatabaseAdapter,
+    workspaceName: string,
+    subjectId: string,
+    event: AuthenticatedEvent,
+    body: ApprovalBypassRequestBody
+  ) =>
+    runAuthorizedOperation({
+      db,
+      event,
+      scope: { kind: 'entity', workspace: workspaceName },
+      operation: ({ ws, authCtx }) => bypassWithContext(db, ws, subjectId, event, authCtx, body)
+    });
 
   return { get, submit, resubmit, withdraw, bypass };
 };

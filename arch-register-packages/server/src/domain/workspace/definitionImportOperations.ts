@@ -383,6 +383,8 @@ const getSource = async (
     status: 400,
     message: 'The source workspace must be different from the destination workspace'
   });
+  // Definition import authorizes the distinct source workspace independently of the destination
+  // context used by the route operation.
   const sourceAuthCtx = await buildApiAuthCtx(db, sourceWorkspace, event);
   requireWorkspaceAdmin(sourceAuthCtx, 'You must administer the source workspace');
   return sourceFromWorkspace(db, sourceWorkspace);
@@ -774,6 +776,7 @@ const sourceOption = (source: DefinitionSource) => ({
 });
 
 const canAdminister = async (db: DatabaseAdapter, workspace: string, event: AuthenticatedEvent) => {
+  // Sources are listed across workspaces, so each candidate must be checked with its own context.
   const authCtx = await buildApiAuthCtx(db, workspace, event);
   return (
     checker.hasGlobalPermission(authCtx, 'admin_platform') ||

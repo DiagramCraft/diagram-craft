@@ -3,12 +3,8 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import type { CreateJobBody } from '@arch-register/api-types/jobsContract';
 import { httpAssert } from '../../utils/httpAssert';
-import {
-  buildApiAuthCtx,
-  requireWorkspaceAdmin,
-  requireWorkspaceCapability
-} from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { requireWorkspaceAdmin, requireWorkspaceCapability } from '../auth/authorization';
+import { runAuthorizedOperation, type WorkspaceOperationContext } from '../operation';
 import { nextJobOccurrence, validateJobScheduleRecurrence } from './jobRecurrence';
 import { assertTechnologyEolMapping, destinationFieldIds } from './technologyEolMapping';
 import type {
@@ -31,6 +27,20 @@ export type CreateJobScheduleInput = {
 };
 
 export type UpdateJobScheduleInput = Partial<Omit<CreateJobScheduleInput, 'workspace'>>;
+
+const runJobAdminOperation = <Result>(
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent,
+  operation: (context: WorkspaceOperationContext) => Promise<Result>
+) =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    before: context => requireWorkspaceAdmin(context.authCtx),
+    operation
+  });
 
 const assertPriority = (priority: number) => {
   if (!Number.isInteger(priority) || priority < 1 || priority > 10) {
@@ -279,11 +289,10 @@ export const listJobServers = async (
   event: AuthenticatedEvent,
   now = new Date()
 ) => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceAdmin(authCtx);
-  const servers = await db.jobs.listServers();
-  return servers.map(server => toApiJobServer(server, now));
+  return runJobAdminOperation(db, workspace, event, async () => {
+    const servers = await db.jobs.listServers();
+    return servers.map(server => toApiJobServer(server, now));
+  });
 };
 
 export const listJobSchedules = async (
@@ -291,25 +300,24 @@ export const listJobSchedules = async (
   workspace: string,
   event: AuthenticatedEvent
 ) => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceAdmin(authCtx);
-  const [schedules, schemas] = await Promise.all([
-    db.jobs.listSchedules(ws),
-    db.catalog.listSchemas(ws)
-  ]);
-  const schemaNames = new Map(schemas.map(schema => [schema.id, schema.name]));
-  return schedules.map(schedule =>
-    toApiJobSchedule(
-      schedule,
-      typeof schedule.payload['schemaId'] === 'string'
-        ? {
-            id: schedule.payload['schemaId'],
-            name: schemaNames.get(schedule.payload['schemaId']) ?? null
-          }
-        : null
-    )
-  );
+  return runJobAdminOperation(db, workspace, event, async ({ ws }) => {
+    const [schedules, schemas] = await Promise.all([
+      db.jobs.listSchedules(ws),
+      db.catalog.listSchemas(ws)
+    ]);
+    const schemaNames = new Map(schemas.map(schema => [schema.id, schema.name]));
+    return schedules.map(schedule =>
+      toApiJobSchedule(
+        schedule,
+        typeof schedule.payload['schemaId'] === 'string'
+          ? {
+              id: schedule.payload['schemaId'],
+              name: schemaNames.get(schedule.payload['schemaId']) ?? null
+            }
+          : null
+      )
+    );
+  });
 };
 
 const TECHNOLOGY_EOL_JOB_TYPE = 'technology-eol';
@@ -321,103 +329,102 @@ const createTechnologyEolJob = async (
   body: Extract<CreateJobBody, { jobType: 'technology-eol' }>,
   event: AuthenticatedEvent
 ) => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceAdmin(authCtx);
-  requireWorkspaceCapability(authCtx, 'schema.edit');
+  return runJobAdminOperation(db, workspace, event, async ({ ws, authCtx }) => {
+    requireWorkspaceCapability(authCtx, 'schema.edit');
 
-  const now = new Date();
-  return db.core.transaction(async tx => {
-    const schema = await tx.catalog.getSchema(ws, body.schemaId);
-    const targetSchema = assertTechnologyEolMapping(schema, body.mapping);
-    const schedules = await tx.jobs.listSchedules(ws);
-    httpAssert.true(
-      !schedules.some(
-        schedule =>
-          schedule.job_type === TECHNOLOGY_EOL_JOB_TYPE &&
-          schedule.payload['schemaId'] === body.schemaId
-      ),
-      { status: 409, message: 'A Technology End of Life job already exists for this schema' }
-    );
+    const now = new Date();
+    return db.core.transaction(async tx => {
+      const schema = await tx.catalog.getSchema(ws, body.schemaId);
+      const targetSchema = assertTechnologyEolMapping(schema, body.mapping);
+      const schedules = await tx.jobs.listSchedules(ws);
+      httpAssert.true(
+        !schedules.some(
+          schedule =>
+            schedule.job_type === TECHNOLOGY_EOL_JOB_TYPE &&
+            schedule.payload['schemaId'] === body.schemaId
+        ),
+        { status: 409, message: 'A Technology End of Life job already exists for this schema' }
+      );
 
-    const destinationIds = new Set(destinationFieldIds(body.mapping));
-    const nextFields = targetSchema.fields.map(field => {
-      if (field.type === 'derived') return field;
-      return destinationIds.has(field.id)
-        ? { ...field, external_kind: 'integration' as const, refresh_mode: 'scheduled' as const }
-        : field;
-    });
-    const updatedSchema = await tx.catalog.updateSchema(ws, targetSchema.id, {
-      name: targetSchema.name,
-      key_prefix: targetSchema.key_prefix,
-      description: targetSchema.description,
-      fields: nextFields,
-      templates: targetSchema.templates ?? [],
-      groups: targetSchema.groups ?? [],
-      color: targetSchema.color,
-      icon: targetSchema.icon,
-      default_owner: targetSchema.default_owner,
-      version: (targetSchema.version ?? 1) + 1,
-      updated_at: now
-    });
-    httpAssert.present(updatedSchema, { status: 404, message: 'Target schema not found' });
+      const destinationIds = new Set(destinationFieldIds(body.mapping));
+      const nextFields = targetSchema.fields.map(field => {
+        if (field.type === 'derived') return field;
+        return destinationIds.has(field.id)
+          ? { ...field, external_kind: 'integration' as const, refresh_mode: 'scheduled' as const }
+          : field;
+      });
+      const updatedSchema = await tx.catalog.updateSchema(ws, targetSchema.id, {
+        name: targetSchema.name,
+        key_prefix: targetSchema.key_prefix,
+        description: targetSchema.description,
+        fields: nextFields,
+        templates: targetSchema.templates ?? [],
+        groups: targetSchema.groups ?? [],
+        color: targetSchema.color,
+        icon: targetSchema.icon,
+        default_owner: targetSchema.default_owner,
+        version: (targetSchema.version ?? 1) + 1,
+        updated_at: now
+      });
+      httpAssert.present(updatedSchema, { status: 404, message: 'Target schema not found' });
 
-    await tx.catalog.createSchemaVersion({
-      id: randomUUID(),
-      workspace: ws,
-      schema_id: targetSchema.id,
-      version: updatedSchema.version ?? 1,
-      name: updatedSchema.name,
-      description: updatedSchema.description,
-      fields: updatedSchema.fields,
-      templates: updatedSchema.templates ?? [],
-      groups: updatedSchema.groups ?? [],
-      color: updatedSchema.color,
-      icon: updatedSchema.icon,
-      change_summary: { source: TECHNOLOGY_EOL_JOB_TYPE, externalFields: [...destinationIds] },
-      created_by: authCtx.userId,
-      created_at: now
-    });
-
-    await tx.audit.createAuditLog({
-      workspace: ws,
-      timestamp: now,
-      user_id: authCtx.userId,
-      operation: 'update',
-      entity_type: 'entity_schema',
-      entity_id: targetSchema.id,
-      entity_name: targetSchema.name,
-      entity_slug: null,
-      schema_id: targetSchema.id,
-      changes: { old: { fields: targetSchema.fields }, new: { fields: updatedSchema.fields } },
-      metadata: { source: TECHNOLOGY_EOL_JOB_TYPE, externalFields: [...destinationIds] }
-    });
-
-    const recurrence =
-      body.frequency.unit === 'minutes'
-        ? {
-            type: 'minutes' as const,
-            intervalMinutes: body.frequency.value,
-            startsAt: new Date(now.getTime() + body.frequency.value * 60_000)
-          }
-        : {
-            type: 'hours' as const,
-            intervalHours: body.frequency.value,
-            startsAt: new Date(now.getTime() + body.frequency.value * 3_600_000)
-          };
-    const schedule = await createJobSchedule(
-      tx,
-      {
+      await tx.catalog.createSchemaVersion({
+        id: randomUUID(),
         workspace: ws,
-        jobType: TECHNOLOGY_EOL_JOB_TYPE,
-        systemIdentity: TECHNOLOGY_EOL_SYSTEM_IDENTITY,
-        payload: { schemaId: targetSchema.id, mapping: body.mapping },
-        priority: 5,
-        recurrence
-      },
-      now
-    );
-    return toApiJobSchedule(schedule, { id: targetSchema.id, name: targetSchema.name });
+        schema_id: targetSchema.id,
+        version: updatedSchema.version ?? 1,
+        name: updatedSchema.name,
+        description: updatedSchema.description,
+        fields: updatedSchema.fields,
+        templates: updatedSchema.templates ?? [],
+        groups: updatedSchema.groups ?? [],
+        color: updatedSchema.color,
+        icon: updatedSchema.icon,
+        change_summary: { source: TECHNOLOGY_EOL_JOB_TYPE, externalFields: [...destinationIds] },
+        created_by: authCtx.userId,
+        created_at: now
+      });
+
+      await tx.audit.createAuditLog({
+        workspace: ws,
+        timestamp: now,
+        user_id: authCtx.userId,
+        operation: 'update',
+        entity_type: 'entity_schema',
+        entity_id: targetSchema.id,
+        entity_name: targetSchema.name,
+        entity_slug: null,
+        schema_id: targetSchema.id,
+        changes: { old: { fields: targetSchema.fields }, new: { fields: updatedSchema.fields } },
+        metadata: { source: TECHNOLOGY_EOL_JOB_TYPE, externalFields: [...destinationIds] }
+      });
+
+      const recurrence =
+        body.frequency.unit === 'minutes'
+          ? {
+              type: 'minutes' as const,
+              intervalMinutes: body.frequency.value,
+              startsAt: new Date(now.getTime() + body.frequency.value * 60_000)
+            }
+          : {
+              type: 'hours' as const,
+              intervalHours: body.frequency.value,
+              startsAt: new Date(now.getTime() + body.frequency.value * 3_600_000)
+            };
+      const schedule = await createJobSchedule(
+        tx,
+        {
+          workspace: ws,
+          jobType: TECHNOLOGY_EOL_JOB_TYPE,
+          systemIdentity: TECHNOLOGY_EOL_SYSTEM_IDENTITY,
+          payload: { schemaId: targetSchema.id, mapping: body.mapping },
+          priority: 5,
+          recurrence
+        },
+        now
+      );
+      return toApiJobSchedule(schedule, { id: targetSchema.id, name: targetSchema.name });
+    });
   });
 };
 
@@ -454,38 +461,36 @@ export const updateWorkspaceJobSchedule = async (
   event: AuthenticatedEvent,
   now = new Date()
 ) => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceAdmin(authCtx);
+  return runJobAdminOperation(db, workspace, event, async ({ ws }) => {
+    const existing = await db.jobs.getSchedule(id);
+    httpAssert.present(existing, {
+      status: 404,
+      statusText: 'Not Found',
+      message: 'Job schedule not found'
+    });
+    httpAssert.true(existing.workspace === ws, {
+      status: 404,
+      statusText: 'Not Found',
+      message: 'Job schedule not found'
+    });
 
-  const existing = await db.jobs.getSchedule(id);
-  httpAssert.present(existing, {
-    status: 404,
-    statusText: 'Not Found',
-    message: 'Job schedule not found'
+    const updated = await updateJobSchedule(
+      db,
+      id,
+      {
+        priority: input.priority,
+        recurrence: input.recurrence ? fromApiRecurrence(input.recurrence) : undefined,
+        enabled: input.enabled
+      },
+      now
+    );
+    httpAssert.present(updated, {
+      status: 404,
+      statusText: 'Not Found',
+      message: 'Job schedule not found'
+    });
+    return toApiJobSchedule(updated);
   });
-  httpAssert.true(existing.workspace === ws, {
-    status: 404,
-    statusText: 'Not Found',
-    message: 'Job schedule not found'
-  });
-
-  const updated = await updateJobSchedule(
-    db,
-    id,
-    {
-      priority: input.priority,
-      recurrence: input.recurrence ? fromApiRecurrence(input.recurrence) : undefined,
-      enabled: input.enabled
-    },
-    now
-  );
-  httpAssert.present(updated, {
-    status: 404,
-    statusText: 'Not Found',
-    message: 'Job schedule not found'
-  });
-  return toApiJobSchedule(updated);
 };
 
 export const triggerJobScheduleRun = async (
@@ -495,34 +500,32 @@ export const triggerJobScheduleRun = async (
   event: AuthenticatedEvent,
   now = new Date()
 ) => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceAdmin(authCtx);
+  return runJobAdminOperation(db, workspace, event, async ({ ws }) => {
+    const existing = await db.jobs.getSchedule(id);
+    httpAssert.present(existing, {
+      status: 404,
+      statusText: 'Not Found',
+      message: 'Job schedule not found'
+    });
+    httpAssert.true(existing.workspace === ws, {
+      status: 404,
+      statusText: 'Not Found',
+      message: 'Job schedule not found'
+    });
+    httpAssert.true(existing.enabled, {
+      status: 409,
+      statusText: 'Conflict',
+      message: 'Disabled job schedules cannot be run'
+    });
 
-  const existing = await db.jobs.getSchedule(id);
-  httpAssert.present(existing, {
-    status: 404,
-    statusText: 'Not Found',
-    message: 'Job schedule not found'
+    const run = await enqueueJobRun(db, id, now);
+    httpAssert.present(run, {
+      status: 409,
+      statusText: 'Conflict',
+      message: 'Disabled job schedules cannot be run'
+    });
+    return toApiJobRun(run, now);
   });
-  httpAssert.true(existing.workspace === ws, {
-    status: 404,
-    statusText: 'Not Found',
-    message: 'Job schedule not found'
-  });
-  httpAssert.true(existing.enabled, {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'Disabled job schedules cannot be run'
-  });
-
-  const run = await enqueueJobRun(db, id, now);
-  httpAssert.present(run, {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'Disabled job schedules cannot be run'
-  });
-  return toApiJobRun(run, now);
 };
 
 export const listJobRuns = async (
@@ -533,27 +536,25 @@ export const listJobRuns = async (
   now = new Date(),
   jobType?: string
 ) => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceAdmin(authCtx);
+  return runJobAdminOperation(db, workspace, event, async ({ ws }) => {
+    const options: JobRunListOptions = {
+      scheduleId: query.scheduleId,
+      jobType,
+      status: query.status,
+      plannedFrom: parseOptionalDate(query.plannedFrom, 'plannedFrom'),
+      plannedTo: parseOptionalDate(query.plannedTo, 'plannedTo'),
+      limit: query.limit ?? 50,
+      offset: query.offset ?? 0
+    };
+    const page = await db.jobs.listRuns(ws, options);
 
-  const options: JobRunListOptions = {
-    scheduleId: query.scheduleId,
-    jobType,
-    status: query.status,
-    plannedFrom: parseOptionalDate(query.plannedFrom, 'plannedFrom'),
-    plannedTo: parseOptionalDate(query.plannedTo, 'plannedTo'),
-    limit: query.limit ?? 50,
-    offset: query.offset ?? 0
-  };
-  const page = await db.jobs.listRuns(ws, options);
-
-  return {
-    items: page.items.map(run => toApiJobRun(run, now)),
-    total: page.total,
-    limit: options.limit,
-    offset: options.offset
-  };
+    return {
+      items: page.items.map(run => toApiJobRun(run, now)),
+      total: page.total,
+      limit: options.limit,
+      offset: options.offset
+    };
+  });
 };
 
 export const cancelJobRun = async (
@@ -563,42 +564,40 @@ export const cancelJobRun = async (
   event: AuthenticatedEvent,
   now = new Date()
 ) => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceAdmin(authCtx);
-
-  const existing = await db.jobs.getRun(id);
-  httpAssert.present(existing, {
-    status: 404,
-    statusText: 'Not Found',
-    message: 'Job run not found'
-  });
-  httpAssert.true(existing.workspace === ws, {
-    status: 404,
-    statusText: 'Not Found',
-    message: 'Job run not found'
-  });
-  httpAssert.true(existing.status === 'queued', {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'Only queued job runs can be cancelled'
-  });
-
-  const cancelled = await db.jobs.cancelQueuedRun(ws, id, now);
-  if (cancelled) return toApiJobRun(cancelled, now);
-
-  const current = await db.jobs.getRun(id);
-  if (current?.workspace === ws && current.status !== 'queued') {
-    httpAssert.true(false, {
+  return runJobAdminOperation(db, workspace, event, async ({ ws }) => {
+    const existing = await db.jobs.getRun(id);
+    httpAssert.present(existing, {
+      status: 404,
+      statusText: 'Not Found',
+      message: 'Job run not found'
+    });
+    httpAssert.true(existing.workspace === ws, {
+      status: 404,
+      statusText: 'Not Found',
+      message: 'Job run not found'
+    });
+    httpAssert.true(existing.status === 'queued', {
       status: 409,
       statusText: 'Conflict',
       message: 'Only queued job runs can be cancelled'
     });
-  }
-  httpAssert.present(cancelled, {
-    status: 404,
-    statusText: 'Not Found',
-    message: 'Job run not found'
+
+    const cancelled = await db.jobs.cancelQueuedRun(ws, id, now);
+    if (cancelled) return toApiJobRun(cancelled, now);
+
+    const current = await db.jobs.getRun(id);
+    if (current?.workspace === ws && current.status !== 'queued') {
+      httpAssert.true(false, {
+        status: 409,
+        statusText: 'Conflict',
+        message: 'Only queued job runs can be cancelled'
+      });
+    }
+    httpAssert.present(cancelled, {
+      status: 404,
+      statusText: 'Not Found',
+      message: 'Job run not found'
+    });
+    return toApiJobRun(cancelled, now);
   });
-  return toApiJobRun(cancelled, now);
 };

@@ -24,8 +24,8 @@ import {
 } from '../governance/governanceOperations';
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
 import type { GovernanceAssignmentTarget } from '../governance/governanceOperations';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { requireWorkspaceCapability } from '../auth/authorization';
+import { runAuthorizedOperation } from '../operation';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import { parseGovernanceWorkflowConfig } from '../governance/governanceWorkflowConfig';
 import { resolveApprovalTargets } from '../governance/governanceTargetResolution';
@@ -489,40 +489,41 @@ export const listDocumentWorkflowHistory = async (
   documentType: Pick<DocumentType, 'fields'>,
   event: AuthenticatedEvent
 ): Promise<DocumentWorkflowHistoryEvent[]> => {
-  const node = await db.project.getAnyContentNodeById(workspace, nodeId);
-  httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
-  await requireMarkdownNodeAccess(
+  return runAuthorizedOperation({
     db,
-    workspace,
-    await buildApiAuthCtx(db, workspace, event),
-    node,
-    'read'
-  );
-  const fieldNames = new Map(documentType.fields.map(field => [field.id, field.name]));
-  const requests = await db.document.listWorkflowRequests(workspace, nodeId);
-  const result: DocumentWorkflowHistoryEvent[] = [];
-  for (const request of requests) {
-    for (const item of await db.governance.listEvents(request.case_id)) {
-      if (
-        item.event_type !== 'approved' &&
-        item.event_type !== 'rejected' &&
-        item.event_type !== 'admin_override'
-      )
-        continue;
-      result.push({
-        id: item.id,
-        fieldId: request.field_id,
-        fieldName: fieldNames.get(request.field_id) ?? request.field_id,
-        eventType: item.event_type,
-        actorUserId: item.actor_user_id,
-        occurredAt: item.occurred_at.toISOString(),
-        reason: item.reason,
-        targetValue: request.target_value,
-        caseId: request.case_id
-      });
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
+      await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
+      const fieldNames = new Map(documentType.fields.map(field => [field.id, field.name]));
+      const requests = await db.document.listWorkflowRequests(ws, nodeId);
+      const result: DocumentWorkflowHistoryEvent[] = [];
+      for (const request of requests) {
+        for (const item of await db.governance.listEvents(request.case_id)) {
+          if (
+            item.event_type !== 'approved' &&
+            item.event_type !== 'rejected' &&
+            item.event_type !== 'admin_override'
+          )
+            continue;
+          result.push({
+            id: item.id,
+            fieldId: request.field_id,
+            fieldName: fieldNames.get(request.field_id) ?? request.field_id,
+            eventType: item.event_type,
+            actorUserId: item.actor_user_id,
+            occurredAt: item.occurred_at.toISOString(),
+            reason: item.reason,
+            targetValue: request.target_value,
+            caseId: request.case_id
+          });
+        }
+      }
+      return result.sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt));
     }
-  }
-  return result.sort((a, b) => Date.parse(b.occurredAt) - Date.parse(a.occurredAt));
+  });
 };
 
 export const overrideDocumentWorkflow = async (
@@ -534,95 +535,100 @@ export const overrideDocumentWorkflow = async (
   reason: string,
   event: AuthenticatedEvent
 ): Promise<DocumentWorkflowStatus[]> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(
-    authCtx,
-    'ent.override',
-    'You do not have permission to override document workflows'
-  );
-  const node = await db.project.getAnyContentNodeById(ws, nodeId);
-  httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
-  await requireMarkdownNodeAccess(db, ws, authCtx, node, 'edit');
-  const document = await db.document.getDocumentMetadata(ws, nodeId);
-  httpAssert.present(document, {
-    status: 409,
-    message: 'The governed document metadata is missing'
-  });
-  const documentType = document.document_type_id
-    ? await db.document.getDocumentType(ws, document.document_type_id)
-    : null;
-  const field = documentType?.fields.find(candidate => candidate.id === fieldId);
-  httpAssert.present(field, { status: 400, message: `Workflow field '${fieldId}' not found` });
-  const statusConfig = field
-    ? (await loadDocumentStatusConfigs(db, ws, document.document_type_id ?? '')).get(fieldId)
-    : undefined;
-  httpAssert.true(field.type === 'enum' && statusConfig != null, {
-    status: 400,
-    message: 'Only configured workflow fields can be overridden'
-  });
-  httpAssert.true(statusOption(field, targetValue) != null, {
-    status: 400,
-    message: `Unknown status value '${targetValue}'`
-  });
-  httpAssert.true(reason.trim().length > 0, {
-    status: 400,
-    message: 'An override reason is required'
-  });
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(
+        authCtx,
+        'ent.override',
+        'You do not have permission to override document workflows'
+      );
+      const node = await db.project.getAnyContentNodeById(ws, nodeId);
+      httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
+      await requireMarkdownNodeAccess(db, ws, authCtx, node, 'edit');
+      const document = await db.document.getDocumentMetadata(ws, nodeId);
+      httpAssert.present(document, {
+        status: 409,
+        message: 'The governed document metadata is missing'
+      });
+      const documentType = document.document_type_id
+        ? await db.document.getDocumentType(ws, document.document_type_id)
+        : null;
+      const field = documentType?.fields.find(candidate => candidate.id === fieldId);
+      httpAssert.present(field, { status: 400, message: `Workflow field '${fieldId}' not found` });
+      const statusConfig = field
+        ? (await loadDocumentStatusConfigs(db, ws, document.document_type_id ?? '')).get(fieldId)
+        : undefined;
+      httpAssert.true(field.type === 'enum' && statusConfig != null, {
+        status: 400,
+        message: 'Only configured workflow fields can be overridden'
+      });
+      httpAssert.true(statusOption(field, targetValue) != null, {
+        status: 400,
+        message: `Unknown status value '${targetValue}'`
+      });
+      httpAssert.true(reason.trim().length > 0, {
+        status: 400,
+        message: 'An override reason is required'
+      });
 
-  const request = (await db.document.getCurrentWorkflowRequests(ws, nodeId)).find(
-    item => item.field_id === fieldId && item.target_value === targetValue
-  );
-  httpAssert.present(request, {
-    status: 409,
-    message: 'The requested workflow target is no longer pending'
-  });
-  const now = new Date();
-  await db.core.transaction(async tx => {
-    const caseRow = await tx.governance.getCase(ws, request.case_id);
-    if (caseRow?.status === 'open') {
-      const cancelled = await tx.governance.cancelCaseIfOpen(caseRow.id, now);
-      if (cancelled) {
-        const assignmentIds = await tx.governance.supersedeAllOpenAssignmentsForCase(
-          caseRow.id,
-          now
-        );
-        await resolveAssignmentNotifications(tx, assignmentIds, now);
-        await resolveCaseNotifications(tx, caseRow.id, now);
-        await recordGovernanceEvent(tx, cancelled, {
-          eventType: 'cancelled',
+      const request = (await db.document.getCurrentWorkflowRequests(ws, nodeId)).find(
+        item => item.field_id === fieldId && item.target_value === targetValue
+      );
+      httpAssert.present(request, {
+        status: 409,
+        message: 'The requested workflow target is no longer pending'
+      });
+      const now = new Date();
+      await db.core.transaction(async tx => {
+        const caseRow = await tx.governance.getCase(ws, request.case_id);
+        if (caseRow?.status === 'open') {
+          const cancelled = await tx.governance.cancelCaseIfOpen(caseRow.id, now);
+          if (cancelled) {
+            const assignmentIds = await tx.governance.supersedeAllOpenAssignmentsForCase(
+              caseRow.id,
+              now
+            );
+            await resolveAssignmentNotifications(tx, assignmentIds, now);
+            await resolveCaseNotifications(tx, caseRow.id, now);
+            await recordGovernanceEvent(tx, cancelled, {
+              eventType: 'cancelled',
+              actorUserId: authCtx.userId,
+              previousStatus: 'open',
+              resultingStatus: 'cancelled',
+              reason: reason.trim(),
+              metadata: { requestId: request.id, fieldId, targetValue }
+            });
+          }
+        }
+        const currentCase = await tx.governance.getCase(ws, request.case_id);
+        httpAssert.present(currentCase, { status: 409, message: 'The workflow case is missing' });
+        await recordGovernanceEvent(tx, currentCase, {
+          eventType: 'admin_override',
           actorUserId: authCtx.userId,
-          previousStatus: 'open',
-          resultingStatus: 'cancelled',
+          previousStatus: currentCase.status,
+          resultingStatus: currentCase.status,
           reason: reason.trim(),
           metadata: { requestId: request.id, fieldId, targetValue }
         });
-      }
-    }
-    const currentCase = await tx.governance.getCase(ws, request.case_id);
-    httpAssert.present(currentCase, { status: 409, message: 'The workflow case is missing' });
-    await recordGovernanceEvent(tx, currentCase, {
-      eventType: 'admin_override',
-      actorUserId: authCtx.userId,
-      previousStatus: currentCase.status,
-      resultingStatus: currentCase.status,
-      reason: reason.trim(),
-      metadata: { requestId: request.id, fieldId, targetValue }
-    });
-    await tx.document.upsertDocumentMetadata({
-      workspace: document.workspace,
-      node_id: document.node_id,
-      document_type_id: document.document_type_id,
-      values: { ...document.values, [fieldId]: targetValue },
-      generated_metadata: document.generated_metadata,
-      updated_at: now
-    });
-    await tx.document.updateWorkflowRequestStatus(ws, request.id, 'approved', now);
-  });
+        await tx.document.upsertDocumentMetadata({
+          workspace: document.workspace,
+          node_id: document.node_id,
+          document_type_id: document.document_type_id,
+          values: { ...document.values, [fieldId]: targetValue },
+          generated_metadata: document.generated_metadata,
+          updated_at: now
+        });
+        await tx.document.updateWorkflowRequestStatus(ws, request.id, 'approved', now);
+      });
 
-  return getDocumentWorkflowStatuses(db, ws, nodeId, documentType, {
-    ...document.values,
-    [fieldId]: targetValue
+      return getDocumentWorkflowStatuses(db, ws, nodeId, documentType, {
+        ...document.values,
+        [fieldId]: targetValue
+      });
+    }
   });
 };
 

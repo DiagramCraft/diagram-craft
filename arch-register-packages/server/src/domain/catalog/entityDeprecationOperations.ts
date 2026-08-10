@@ -3,12 +3,8 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import type { Entity, EntityDbUpdate, SchemaDbResult } from './db/catalogDatabase';
 import { computeEntityCompleteness } from '../../utils/completeness';
-import {
-  buildApiEntityAuthCtx as buildApiAuthCtx,
-  requireEntityAction,
-  requireWorkspaceCapability
-} from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { requireEntityAction, requireWorkspaceCapability } from '../auth/authorization';
+import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import { buildEntityDependents, type DependentRecord } from './dataHelpers';
 import { listAllCatalogEntities } from './entityLoader';
@@ -36,7 +32,7 @@ import type {
 import type { EntityDeprecationAckDbResult } from './db/entityDeprecationDatabase';
 import {
   createGovernanceCaseInTransaction,
-  decideGovernanceAssignment,
+  decideGovernanceAssignmentWithContext,
   recordGovernanceEvent,
   resolveAssignmentNotifications,
   resolveCaseNotifications
@@ -287,9 +283,8 @@ const assertCanPropose = async (
   db: DatabaseAdapter,
   workspace: string,
   entityId: string,
-  event: AuthenticatedEvent
+  authCtx: AuthorizationContext
 ) => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
   const entity = await db.catalog.getEntity(workspace, entityId);
   httpAssert.present(entity, { status: 404, message: 'Entity not found' });
   requireEntityAction(authCtx, entity, 'view_entity');
@@ -330,13 +325,18 @@ export const getEntityDeprecation = async (
   entityId: string,
   event: AuthenticatedEvent
 ): Promise<DeprecationCase | null> => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  const entity = await db.catalog.getEntity(workspace, entityId);
-  httpAssert.present(entity, { status: 404, message: 'Entity not found' });
-  requireEntityAction(authCtx, entity, 'view_entity');
-  const caseRow = await getOpenCase(db, workspace, entity.id);
-  return caseRow ? await toApiCase(db, caseRow, entity, authCtx) : null;
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace: workspaceName },
+    operation: async ({ ws, authCtx }) => {
+      const entity = await db.catalog.getEntity(ws, entityId);
+      httpAssert.present(entity, { status: 404, message: 'Entity not found' });
+      requireEntityAction(authCtx, entity, 'view_entity');
+      const caseRow = await getOpenCase(db, ws, entity.id);
+      return caseRow ? await toApiCase(db, caseRow, entity, authCtx) : null;
+    }
+  });
 };
 
 // ── Propose ──────────────────────────────────────────────────────
@@ -348,96 +348,105 @@ export const proposeEntityDeprecation = async (
   event: AuthenticatedEvent,
   body: ProposeDeprecationBody
 ): Promise<DeprecationCase> => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const { authCtx, entity } = await assertCanPropose(db, workspace, entityId, event);
-  const canonicalEntityId = entity.id;
-  const schema = await db.catalog.getSchema(workspace, entity.schema_id);
-  httpAssert.present(schema, { status: 404, message: 'Entity schema not found' });
-  httpAssert.true(
-    await getSchemaPolicy(db, workspace, schema.id, ENTITY_DEPRECATION_POLICY_CASE_KIND),
-    {
-      status: 409,
-      statusText: 'Conflict',
-      message: "The deprecation workflow is not enabled for this entity's schema"
-    }
-  );
-  const deprecatedStateId = await getDeprecatedLifecycleStateId(db, workspace);
-  httpAssert.true(entity.lifecycle !== deprecatedStateId, {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'This entity is already in the deprecated lifecycle state'
-  });
-  httpAssert.true(body.baseVersion === (entity.version ?? 1), {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'The entity changed since this proposal was prepared'
-  });
-  httpAssert.true(!Number.isNaN(Date.parse(body.targetDate)), {
-    status: 400,
-    message: 'The target deprecation date is not a valid date'
-  });
-  const existingOpenCase = await getOpenCase(db, workspace, canonicalEntityId);
-  httpAssert.true(existingOpenCase == null, {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'Only one active deprecation case is allowed per entity'
-  });
-
-  if (body.successorEntityId) {
-    const successor = await db.catalog.getEntity(workspace, body.successorEntityId);
-    httpAssert.present(successor, { status: 400, message: 'The successor entity does not exist' });
-  }
-  if (body.projectId) {
-    const project = await db.project.getProject(workspace, body.projectId);
-    httpAssert.present(project, { status: 400, message: 'The related project does not exist' });
-  }
-
-  const baselineImpact = await computeDirectImpact(db, workspace, canonicalEntityId, null);
-
-  const { config: approvalConfig, targets } = await resolveEntityApprovalTargets(
+  return runAuthorizedOperation({
     db,
-    workspace,
-    ENTITY_DEPRECATION_CASE_KIND,
-    encodeCaseSubkind(schema.id),
-    [entity]
-  );
-  const userId = event.context.user.id;
-  const eligibleApproverIds = await eligibleUserIdsForGovernanceTargets(db, workspace, targets);
-  const selfApprovalAllowed =
-    approvalConfig.requiredApprovals === 1 && isSoleApprover(eligibleApproverIds, userId);
-  const assignments = targets.map(target => ({ action: 'approve' as const, target }));
+    event,
+    scope: { kind: 'entity', workspace: workspaceName },
+    operation: async ({ ws: workspace, authCtx }) => {
+      const { entity } = await assertCanPropose(db, workspace, entityId, authCtx);
+      const canonicalEntityId = entity.id;
+      const schema = await db.catalog.getSchema(workspace, entity.schema_id);
+      httpAssert.present(schema, { status: 404, message: 'Entity schema not found' });
+      httpAssert.true(
+        await getSchemaPolicy(db, workspace, schema.id, ENTITY_DEPRECATION_POLICY_CASE_KIND),
+        {
+          status: 409,
+          statusText: 'Conflict',
+          message: "The deprecation workflow is not enabled for this entity's schema"
+        }
+      );
+      const deprecatedStateId = await getDeprecatedLifecycleStateId(db, workspace);
+      httpAssert.true(entity.lifecycle !== deprecatedStateId, {
+        status: 409,
+        statusText: 'Conflict',
+        message: 'This entity is already in the deprecated lifecycle state'
+      });
+      httpAssert.true(body.baseVersion === (entity.version ?? 1), {
+        status: 409,
+        statusText: 'Conflict',
+        message: 'The entity changed since this proposal was prepared'
+      });
+      httpAssert.true(!Number.isNaN(Date.parse(body.targetDate)), {
+        status: 400,
+        message: 'The target deprecation date is not a valid date'
+      });
+      const existingOpenCase = await getOpenCase(db, workspace, canonicalEntityId);
+      httpAssert.true(existingOpenCase == null, {
+        status: 409,
+        statusText: 'Conflict',
+        message: 'Only one active deprecation case is allowed per entity'
+      });
 
-  const now = new Date();
-  const caseRow = await db.core.transaction(async tx =>
-    createGovernanceCaseInTransaction(
-      tx,
-      workspace,
-      userId,
-      {
-        caseKind: ENTITY_DEPRECATION_CASE_KIND,
-        caseSubkind: encodeCaseSubkind(schema.id),
-        subjectType: 'entity',
-        subjectId: canonicalEntityId,
-        subjectVersion: null,
-        policyVersion: DEPRECATION_POLICY_VERSION,
-        selfApprovalAllowed,
-        dueAt: new Date(body.targetDate),
-        payload: {
-          reason: body.reason,
-          targetDate: body.targetDate,
-          successorEntityId: body.successorEntityId ?? null,
-          projectId: body.projectId ?? null,
-          notes: body.notes ?? null,
-          baselineImpact,
-          requiredApprovals: approvalConfig.requiredApprovals
-        },
-        initiationFieldValues: body.initiationFields,
-        assignments
-      },
-      now
-    )
-  );
-  return await toApiCase(db, caseRow, entity, authCtx);
+      if (body.successorEntityId) {
+        const successor = await db.catalog.getEntity(workspace, body.successorEntityId);
+        httpAssert.present(successor, {
+          status: 400,
+          message: 'The successor entity does not exist'
+        });
+      }
+      if (body.projectId) {
+        const project = await db.project.getProject(workspace, body.projectId);
+        httpAssert.present(project, { status: 400, message: 'The related project does not exist' });
+      }
+
+      const baselineImpact = await computeDirectImpact(db, workspace, canonicalEntityId, null);
+
+      const { config: approvalConfig, targets } = await resolveEntityApprovalTargets(
+        db,
+        workspace,
+        ENTITY_DEPRECATION_CASE_KIND,
+        encodeCaseSubkind(schema.id),
+        [entity]
+      );
+      const userId = event.context.user.id;
+      const eligibleApproverIds = await eligibleUserIdsForGovernanceTargets(db, workspace, targets);
+      const selfApprovalAllowed =
+        approvalConfig.requiredApprovals === 1 && isSoleApprover(eligibleApproverIds, userId);
+      const assignments = targets.map(target => ({ action: 'approve' as const, target }));
+
+      const now = new Date();
+      const caseRow = await db.core.transaction(async tx =>
+        createGovernanceCaseInTransaction(
+          tx,
+          workspace,
+          userId,
+          {
+            caseKind: ENTITY_DEPRECATION_CASE_KIND,
+            caseSubkind: encodeCaseSubkind(schema.id),
+            subjectType: 'entity',
+            subjectId: canonicalEntityId,
+            subjectVersion: null,
+            policyVersion: DEPRECATION_POLICY_VERSION,
+            selfApprovalAllowed,
+            dueAt: new Date(body.targetDate),
+            payload: {
+              reason: body.reason,
+              targetDate: body.targetDate,
+              successorEntityId: body.successorEntityId ?? null,
+              projectId: body.projectId ?? null,
+              notes: body.notes ?? null,
+              baselineImpact,
+              requiredApprovals: approvalConfig.requiredApprovals
+            },
+            initiationFieldValues: body.initiationFields,
+            assignments
+          },
+          now
+        )
+      );
+      return await toApiCase(db, caseRow, entity, authCtx);
+    }
+  });
 };
 
 // ── Governance registry (approve / acknowledge domain effects) ──
@@ -601,51 +610,57 @@ export const acknowledgeEntityDeprecation = async (
   event: AuthenticatedEvent,
   body: AcknowledgeDeprecationBody
 ): Promise<DeprecationCase> => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  const entity = await db.catalog.getEntity(workspace, entityId);
-  httpAssert.present(entity, { status: 404, message: 'Entity not found' });
-  requireEntityAction(authCtx, entity, 'view_entity');
-  const caseRow = await requireCase(db, workspace, entity.id, caseId);
-
-  const userId = event.context.user.id;
-  const assignments = await db.governance.listAssignmentsForCase(caseRow.id);
-  const assignment = assignments.find(
-    (a: GovernanceAssignmentDbResult) =>
-      a.action === 'acknowledge' &&
-      a.status === 'open' &&
-      isEligibleForAssignment(authCtx, userId, a)
-  );
-  httpAssert.present(assignment, {
-    status: 403,
-    statusText: 'Forbidden',
-    message: 'You do not have an open acknowledgement task for this deprecation'
-  });
-
-  const registry = createDeprecationGovernanceRegistry({
-    assignmentId: assignment.id,
-    actorUserId: userId,
-    comment: body.comment ?? null,
-    plannedRemediation: body.plannedRemediation ?? null,
-    remediationProjectId: body.remediationProjectId ?? null,
-    targetRemediationDate: body.targetRemediationDate ?? null,
-    riskAccepted: body.riskAccepted ?? false
-  });
-
-  await decideGovernanceAssignment(
+  return runAuthorizedOperation({
     db,
-    workspace,
-    assignment.id,
     event,
-    { decision: 'acknowledge', idempotencyKey: body.idempotencyKey },
-    registry
-  );
-  const [refreshedEntity, refreshedCase] = await Promise.all([
-    db.catalog.getEntity(workspace, entityId),
-    db.governance.getCase(workspace, caseRow.id)
-  ]);
-  httpAssert.present(refreshedCase, { status: 404, message: 'Deprecation case not found' });
-  return await toApiCase(db, refreshedCase, refreshedEntity ?? entity, authCtx);
+    scope: { kind: 'entity', workspace: workspaceName },
+    operation: async ({ ws: workspace, authCtx }) => {
+      const entity = await db.catalog.getEntity(workspace, entityId);
+      httpAssert.present(entity, { status: 404, message: 'Entity not found' });
+      requireEntityAction(authCtx, entity, 'view_entity');
+      const caseRow = await requireCase(db, workspace, entity.id, caseId);
+
+      const userId = event.context.user.id;
+      const assignments = await db.governance.listAssignmentsForCase(caseRow.id);
+      const assignment = assignments.find(
+        (a: GovernanceAssignmentDbResult) =>
+          a.action === 'acknowledge' &&
+          a.status === 'open' &&
+          isEligibleForAssignment(authCtx, userId, a)
+      );
+      httpAssert.present(assignment, {
+        status: 403,
+        statusText: 'Forbidden',
+        message: 'You do not have an open acknowledgement task for this deprecation'
+      });
+
+      const registry = createDeprecationGovernanceRegistry({
+        assignmentId: assignment.id,
+        actorUserId: userId,
+        comment: body.comment ?? null,
+        plannedRemediation: body.plannedRemediation ?? null,
+        remediationProjectId: body.remediationProjectId ?? null,
+        targetRemediationDate: body.targetRemediationDate ?? null,
+        riskAccepted: body.riskAccepted ?? false
+      });
+
+      await decideGovernanceAssignmentWithContext(
+        db,
+        workspace,
+        assignment.id,
+        event,
+        authCtx,
+        { decision: 'acknowledge', idempotencyKey: body.idempotencyKey },
+        registry
+      );
+      const [refreshedEntity, refreshedCase] = await Promise.all([
+        db.catalog.getEntity(workspace, entityId),
+        db.governance.getCase(workspace, caseRow.id)
+      ]);
+      httpAssert.present(refreshedCase, { status: 404, message: 'Deprecation case not found' });
+      return await toApiCase(db, refreshedCase, refreshedEntity ?? entity, authCtx);
+    }
+  });
 };
 
 // ── Refresh scope ─────────────────────────────────────────────────
@@ -657,69 +672,74 @@ export const refreshEntityDeprecationScope = async (
   caseId: string,
   event: AuthenticatedEvent
 ): Promise<DeprecationCase> => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  const entity = await db.catalog.getEntity(workspace, entityId);
-  httpAssert.present(entity, { status: 404, message: 'Entity not found' });
-  requireEntityAction(authCtx, entity, 'view_entity');
-  const caseRow = await requireCase(db, workspace, entity.id, caseId);
-  httpAssert.true(caseRow.status === 'open', {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'Only an open deprecation case can be refreshed'
-  });
-  httpAssert.true(isOwnerTeamAdmin(authCtx, entity) || isWorkspaceApprover(authCtx), {
-    status: 403,
-    statusText: 'Forbidden',
-    message: 'You cannot refresh this deprecation scope'
-  });
-
-  const currentImpact = await computeDirectImpact(db, workspace, entity.id, null);
-  const existingAcks = await db.entityDeprecation.listAcksForCase(caseRow.id);
-  const knownTeams = new Set(existingAcks.map(ack => ack.owner_team_id));
-  const byTeam = groupByOwnerTeam(currentImpact);
-  const newlyAffectedTeams = [...byTeam.keys()].filter(teamId => !knownTeams.has(teamId));
-
-  const baselineImpact = (caseRow.payload['baselineImpact'] as DeprecationImpactEntry[]) ?? [];
-  const baselineIds = new Set(baselineImpact.map(entry => entry.entityId));
-  const currentIds = new Set(currentImpact.map(entry => entry.entityId));
-  const addedEntityIds = [...currentIds].filter(id => !baselineIds.has(id));
-  const removedEntityIds = [...baselineIds].filter(id => !currentIds.has(id));
-
-  const now = new Date();
-  const updatedCase = await db.core.transaction(async tx => {
-    for (const teamId of newlyAffectedTeams) {
-      const assignment = await tx.governance.createAssignment({
-        id: randomUUID(),
-        case_id: caseRow.id,
-        workspace,
-        action: 'acknowledge',
-        target_type: 'team_role',
-        target_user_id: null,
-        target_team_id: teamId,
-        target_team_role: 'team_admin',
-        target_capability: null,
-        created_at: now
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace: workspaceName },
+    operation: async ({ ws: workspace, authCtx }) => {
+      const entity = await db.catalog.getEntity(workspace, entityId);
+      httpAssert.present(entity, { status: 404, message: 'Entity not found' });
+      requireEntityAction(authCtx, entity, 'view_entity');
+      const caseRow = await requireCase(db, workspace, entity.id, caseId);
+      httpAssert.true(caseRow.status === 'open', {
+        status: 409,
+        statusText: 'Conflict',
+        message: 'Only an open deprecation case can be refreshed'
       });
-      await tx.entityDeprecation.createAck({
-        id: randomUUID(),
-        case_id: caseRow.id,
-        workspace,
-        owner_team_id: teamId,
-        assignment_id: assignment.id,
-        created_at: now
+      httpAssert.true(isOwnerTeamAdmin(authCtx, entity) || isWorkspaceApprover(authCtx), {
+        status: 403,
+        statusText: 'Forbidden',
+        message: 'You cannot refresh this deprecation scope'
       });
+
+      const currentImpact = await computeDirectImpact(db, workspace, entity.id, null);
+      const existingAcks = await db.entityDeprecation.listAcksForCase(caseRow.id);
+      const knownTeams = new Set(existingAcks.map(ack => ack.owner_team_id));
+      const byTeam = groupByOwnerTeam(currentImpact);
+      const newlyAffectedTeams = [...byTeam.keys()].filter(teamId => !knownTeams.has(teamId));
+
+      const baselineImpact = (caseRow.payload['baselineImpact'] as DeprecationImpactEntry[]) ?? [];
+      const baselineIds = new Set(baselineImpact.map(entry => entry.entityId));
+      const currentIds = new Set(currentImpact.map(entry => entry.entityId));
+      const addedEntityIds = [...currentIds].filter(id => !baselineIds.has(id));
+      const removedEntityIds = [...baselineIds].filter(id => !currentIds.has(id));
+
+      const now = new Date();
+      const updatedCase = await db.core.transaction(async tx => {
+        for (const teamId of newlyAffectedTeams) {
+          const assignment = await tx.governance.createAssignment({
+            id: randomUUID(),
+            case_id: caseRow.id,
+            workspace,
+            action: 'acknowledge',
+            target_type: 'team_role',
+            target_user_id: null,
+            target_team_id: teamId,
+            target_team_role: 'team_admin',
+            target_capability: null,
+            created_at: now
+          });
+          await tx.entityDeprecation.createAck({
+            id: randomUUID(),
+            case_id: caseRow.id,
+            workspace,
+            owner_team_id: teamId,
+            assignment_id: assignment.id,
+            created_at: now
+          });
+        }
+        return await recordGovernanceEvent(tx, caseRow, {
+          eventType: 'scope_refreshed',
+          actorUserId: event.context.user.id,
+          previousStatus: caseRow.status,
+          resultingStatus: caseRow.status,
+          reason: null,
+          metadata: { newlyAffectedTeams, addedEntityIds, removedEntityIds }
+        }).then(() => caseRow);
+      });
+      return await toApiCase(db, updatedCase, entity, authCtx);
     }
-    return await recordGovernanceEvent(tx, caseRow, {
-      eventType: 'scope_refreshed',
-      actorUserId: event.context.user.id,
-      previousStatus: caseRow.status,
-      resultingStatus: caseRow.status,
-      reason: null,
-      metadata: { newlyAffectedTeams, addedEntityIds, removedEntityIds }
-    }).then(() => caseRow);
   });
-  return await toApiCase(db, updatedCase, entity, authCtx);
 };
 
 // ── Postpone ───────────────────────────────────────────────────────
@@ -732,65 +752,70 @@ export const postponeEntityDeprecation = async (
   event: AuthenticatedEvent,
   body: PostponeDeprecationBody
 ): Promise<DeprecationCase> => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  const entity = await db.catalog.getEntity(workspace, entityId);
-  httpAssert.present(entity, { status: 404, message: 'Entity not found' });
-  requireEntityAction(authCtx, entity, 'view_entity');
-  const caseRow = await requireCase(db, workspace, entity.id, caseId);
-  httpAssert.true(caseRow.status === 'open', {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'Only an open deprecation case can be postponed'
-  });
-  httpAssert.true(entity.target_lifecycle_date != null, {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'This deprecation has not yet been approved and scheduled'
-  });
-  httpAssert.true(isOwnerTeamAdmin(authCtx, entity) || isWorkspaceApprover(authCtx), {
-    status: 403,
-    statusText: 'Forbidden',
-    message: 'You cannot postpone this deprecation'
-  });
-  httpAssert.true(!Number.isNaN(Date.parse(body.targetDate)), {
-    status: 400,
-    message: 'The new target date is not a valid date'
-  });
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace: workspaceName },
+    operation: async ({ ws: workspace, authCtx }) => {
+      const entity = await db.catalog.getEntity(workspace, entityId);
+      httpAssert.present(entity, { status: 404, message: 'Entity not found' });
+      requireEntityAction(authCtx, entity, 'view_entity');
+      const caseRow = await requireCase(db, workspace, entity.id, caseId);
+      httpAssert.true(caseRow.status === 'open', {
+        status: 409,
+        statusText: 'Conflict',
+        message: 'Only an open deprecation case can be postponed'
+      });
+      httpAssert.true(entity.target_lifecycle_date != null, {
+        status: 409,
+        statusText: 'Conflict',
+        message: 'This deprecation has not yet been approved and scheduled'
+      });
+      httpAssert.true(isOwnerTeamAdmin(authCtx, entity) || isWorkspaceApprover(authCtx), {
+        status: 403,
+        statusText: 'Forbidden',
+        message: 'You cannot postpone this deprecation'
+      });
+      httpAssert.true(!Number.isNaN(Date.parse(body.targetDate)), {
+        status: 400,
+        message: 'The new target date is not a valid date'
+      });
 
-  const previousTargetDate = entity.target_lifecycle_date;
-  const userId = event.context.user.id;
-  await db.core.transaction(async tx => {
-    const current = await tx.catalog.getEntity(workspace, entityId);
-    httpAssert.present(current, { status: 404, message: 'Entity not found' });
-    const schema = await tx.catalog.getSchema(workspace, current.schema_id);
-    httpAssert.present(schema, { status: 409, message: 'The entity schema no longer exists' });
-    const updated = await updateEntityWithAuditIfVersion(tx, {
-      workspace,
-      entityId,
-      previous: current,
-      next: fullEntityUpdate(current, schema, { target_lifecycle_date: body.targetDate }),
-      expectedVersion: current.version ?? 1,
-      actor: { id: userId, displayName: event.context.user.display_name },
-      auditMetadata: { governanceCaseId: caseRow.id, deprecationPostponed: true }
-    });
-    httpAssert.present(updated, {
-      status: 409,
-      statusText: 'Conflict',
-      message: 'The entity changed while the postponement was being applied'
-    });
-    await recordGovernanceEvent(tx, caseRow, {
-      eventType: 'postponed',
-      actorUserId: userId,
-      previousStatus: caseRow.status,
-      resultingStatus: caseRow.status,
-      reason: body.reason,
-      metadata: { previousTargetDate, newTargetDate: body.targetDate }
-    });
-  });
+      const previousTargetDate = entity.target_lifecycle_date;
+      const userId = event.context.user.id;
+      await db.core.transaction(async tx => {
+        const current = await tx.catalog.getEntity(workspace, entityId);
+        httpAssert.present(current, { status: 404, message: 'Entity not found' });
+        const schema = await tx.catalog.getSchema(workspace, current.schema_id);
+        httpAssert.present(schema, { status: 409, message: 'The entity schema no longer exists' });
+        const updated = await updateEntityWithAuditIfVersion(tx, {
+          workspace,
+          entityId,
+          previous: current,
+          next: fullEntityUpdate(current, schema, { target_lifecycle_date: body.targetDate }),
+          expectedVersion: current.version ?? 1,
+          actor: { id: userId, displayName: event.context.user.display_name },
+          auditMetadata: { governanceCaseId: caseRow.id, deprecationPostponed: true }
+        });
+        httpAssert.present(updated, {
+          status: 409,
+          statusText: 'Conflict',
+          message: 'The entity changed while the postponement was being applied'
+        });
+        await recordGovernanceEvent(tx, caseRow, {
+          eventType: 'postponed',
+          actorUserId: userId,
+          previousStatus: caseRow.status,
+          resultingStatus: caseRow.status,
+          reason: body.reason,
+          metadata: { previousTargetDate, newTargetDate: body.targetDate }
+        });
+      });
 
-  const refreshedEntity = await db.catalog.getEntity(workspace, entityId);
-  return await toApiCase(db, caseRow, refreshedEntity ?? entity, authCtx);
+      const refreshedEntity = await db.catalog.getEntity(workspace, entityId);
+      return await toApiCase(db, caseRow, refreshedEntity ?? entity, authCtx);
+    }
+  });
 };
 
 // ── Finalize ─────────────────────────────────────────────────────
@@ -803,117 +828,122 @@ export const finalizeEntityDeprecation = async (
   event: AuthenticatedEvent,
   body: FinalizeDeprecationBody
 ): Promise<DeprecationCase> => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  const entity = await db.catalog.getEntity(workspace, entityId);
-  httpAssert.present(entity, { status: 404, message: 'Entity not found' });
-  requireEntityAction(authCtx, entity, 'view_entity');
-  const caseRow = await requireCase(db, workspace, entity.id, caseId);
-  httpAssert.true(caseRow.status === 'open', {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'This deprecation case is not open'
-  });
-  httpAssert.true(entity.target_lifecycle_date != null, {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'This deprecation has not yet been approved and scheduled'
-  });
-
-  const isOwnerAdmin = isOwnerTeamAdmin(authCtx, entity);
-  const isApprover = isWorkspaceApprover(authCtx);
-  httpAssert.true(isOwnerAdmin || isApprover, {
-    status: 403,
-    statusText: 'Forbidden',
-    message: 'You cannot finalize this deprecation'
-  });
-
-  const targetDate = Date.parse(entity.target_lifecycle_date!);
-  const beforeTargetDate = Date.now() < targetDate;
-  if (beforeTargetDate) {
-    httpAssert.true(isApprover, {
-      status: 403,
-      statusText: 'Forbidden',
-      message: 'Only a workspace entity approver can finalize before the target date'
-    });
-    requireWorkspaceCapability(authCtx, 'ent.override');
-    httpAssert.true(body.override === true && !!body.reason, {
-      status: 400,
-      message: 'Finalizing before the target date requires an explicit override reason'
-    });
-  }
-
-  const acks = await db.entityDeprecation.listAcksForCase(caseRow.id);
-  const outstandingAcks = acks.filter(ack => ack.status === 'open');
-  if (outstandingAcks.length > 0) {
-    httpAssert.true(!!body.reason, {
-      status: 400,
-      message: 'Finalizing with outstanding acknowledgements requires a reason'
-    });
-  }
-
-  const userId = event.context.user.id;
-  const now = new Date();
-  const completedCase = await db.core.transaction(async tx => {
-    const current = await tx.catalog.getEntity(workspace, entityId);
-    httpAssert.present(current, { status: 404, message: 'Entity not found' });
-    const deprecatedStateId = await getDeprecatedLifecycleStateId(tx, workspace);
-    const schema = await tx.catalog.getSchema(workspace, current.schema_id);
-    httpAssert.present(schema, { status: 409, message: 'The entity schema no longer exists' });
-    const updated = await updateEntityWithAuditIfVersion(tx, {
-      workspace,
-      entityId,
-      previous: current,
-      next: fullEntityUpdate(current, schema, {
-        lifecycle: deprecatedStateId,
-        target_lifecycle: null,
-        target_lifecycle_date: null
-      }),
-      expectedVersion: current.version ?? 1,
-      actor: { id: userId, displayName: event.context.user.display_name },
-      auditMetadata: { governanceCaseId: caseRow.id, deprecationFinalized: true }
-    });
-    httpAssert.present(updated, {
-      status: 409,
-      statusText: 'Conflict',
-      message: 'The entity changed while finalization was being applied'
-    });
-
-    const completed = await tx.governance.completeCaseIfOpen(caseRow.id, 'finalized', now);
-    httpAssert.present(completed, {
-      status: 409,
-      statusText: 'Conflict',
-      message: 'This deprecation case has already been completed or cancelled'
-    });
-    const finalizedSupersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(
-      caseRow.id,
-      now
-    );
-    await resolveAssignmentNotifications(tx, finalizedSupersededIds, now);
-    await resolveCaseNotifications(tx, completed.id, now);
-    await recordGovernanceEvent(tx, completed, {
-      eventType: 'finalized',
-      actorUserId: userId,
-      previousStatus: 'open',
-      resultingStatus: 'completed',
-      reason: body.reason ?? null,
-      metadata: { outstandingAcks: outstandingAcks.length, override: beforeTargetDate }
-    });
-    if (beforeTargetDate) {
-      await recordGovernanceEvent(tx, completed, {
-        eventType: 'finalization_override',
-        actorUserId: userId,
-        previousStatus: 'completed',
-        resultingStatus: 'completed',
-        reason: body.reason ?? null,
-        metadata: {}
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace: workspaceName },
+    operation: async ({ ws: workspace, authCtx }) => {
+      const entity = await db.catalog.getEntity(workspace, entityId);
+      httpAssert.present(entity, { status: 404, message: 'Entity not found' });
+      requireEntityAction(authCtx, entity, 'view_entity');
+      const caseRow = await requireCase(db, workspace, entity.id, caseId);
+      httpAssert.true(caseRow.status === 'open', {
+        status: 409,
+        statusText: 'Conflict',
+        message: 'This deprecation case is not open'
       });
-    }
-    return completed;
-  });
+      httpAssert.true(entity.target_lifecycle_date != null, {
+        status: 409,
+        statusText: 'Conflict',
+        message: 'This deprecation has not yet been approved and scheduled'
+      });
 
-  const refreshedEntity = await db.catalog.getEntity(workspace, entityId);
-  return await toApiCase(db, completedCase, refreshedEntity ?? entity, authCtx);
+      const isOwnerAdmin = isOwnerTeamAdmin(authCtx, entity);
+      const isApprover = isWorkspaceApprover(authCtx);
+      httpAssert.true(isOwnerAdmin || isApprover, {
+        status: 403,
+        statusText: 'Forbidden',
+        message: 'You cannot finalize this deprecation'
+      });
+
+      const targetDate = Date.parse(entity.target_lifecycle_date!);
+      const beforeTargetDate = Date.now() < targetDate;
+      if (beforeTargetDate) {
+        httpAssert.true(isApprover, {
+          status: 403,
+          statusText: 'Forbidden',
+          message: 'Only a workspace entity approver can finalize before the target date'
+        });
+        requireWorkspaceCapability(authCtx, 'ent.override');
+        httpAssert.true(body.override === true && !!body.reason, {
+          status: 400,
+          message: 'Finalizing before the target date requires an explicit override reason'
+        });
+      }
+
+      const acks = await db.entityDeprecation.listAcksForCase(caseRow.id);
+      const outstandingAcks = acks.filter(ack => ack.status === 'open');
+      if (outstandingAcks.length > 0) {
+        httpAssert.true(!!body.reason, {
+          status: 400,
+          message: 'Finalizing with outstanding acknowledgements requires a reason'
+        });
+      }
+
+      const userId = event.context.user.id;
+      const now = new Date();
+      const completedCase = await db.core.transaction(async tx => {
+        const current = await tx.catalog.getEntity(workspace, entityId);
+        httpAssert.present(current, { status: 404, message: 'Entity not found' });
+        const deprecatedStateId = await getDeprecatedLifecycleStateId(tx, workspace);
+        const schema = await tx.catalog.getSchema(workspace, current.schema_id);
+        httpAssert.present(schema, { status: 409, message: 'The entity schema no longer exists' });
+        const updated = await updateEntityWithAuditIfVersion(tx, {
+          workspace,
+          entityId,
+          previous: current,
+          next: fullEntityUpdate(current, schema, {
+            lifecycle: deprecatedStateId,
+            target_lifecycle: null,
+            target_lifecycle_date: null
+          }),
+          expectedVersion: current.version ?? 1,
+          actor: { id: userId, displayName: event.context.user.display_name },
+          auditMetadata: { governanceCaseId: caseRow.id, deprecationFinalized: true }
+        });
+        httpAssert.present(updated, {
+          status: 409,
+          statusText: 'Conflict',
+          message: 'The entity changed while finalization was being applied'
+        });
+
+        const completed = await tx.governance.completeCaseIfOpen(caseRow.id, 'finalized', now);
+        httpAssert.present(completed, {
+          status: 409,
+          statusText: 'Conflict',
+          message: 'This deprecation case has already been completed or cancelled'
+        });
+        const finalizedSupersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(
+          caseRow.id,
+          now
+        );
+        await resolveAssignmentNotifications(tx, finalizedSupersededIds, now);
+        await resolveCaseNotifications(tx, completed.id, now);
+        await recordGovernanceEvent(tx, completed, {
+          eventType: 'finalized',
+          actorUserId: userId,
+          previousStatus: 'open',
+          resultingStatus: 'completed',
+          reason: body.reason ?? null,
+          metadata: { outstandingAcks: outstandingAcks.length, override: beforeTargetDate }
+        });
+        if (beforeTargetDate) {
+          await recordGovernanceEvent(tx, completed, {
+            eventType: 'finalization_override',
+            actorUserId: userId,
+            previousStatus: 'completed',
+            resultingStatus: 'completed',
+            reason: body.reason ?? null,
+            metadata: {}
+          });
+        }
+        return completed;
+      });
+
+      const refreshedEntity = await db.catalog.getEntity(workspace, entityId);
+      return await toApiCase(db, completedCase, refreshedEntity ?? entity, authCtx);
+    }
+  });
 };
 
 // ── Cancel ─────────────────────────────────────────────────────────
@@ -926,69 +956,77 @@ export const cancelEntityDeprecation = async (
   event: AuthenticatedEvent,
   body: CancelDeprecationBody
 ): Promise<DeprecationCase> => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  const entity = await db.catalog.getEntity(workspace, entityId);
-  httpAssert.present(entity, { status: 404, message: 'Entity not found' });
-  requireEntityAction(authCtx, entity, 'view_entity');
-  const caseRow = await requireCase(db, workspace, entity.id, caseId);
-  httpAssert.true(caseRow.status === 'open', {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'This deprecation case is not open'
-  });
-
-  const userId = event.context.user.id;
-  httpAssert.true(
-    isOwnerTeamAdmin(authCtx, entity) ||
-      isWorkspaceApprover(authCtx) ||
-      caseRow.initiator_user_id === userId,
-    { status: 403, statusText: 'Forbidden', message: 'You cannot cancel this deprecation' }
-  );
-
-  const now = new Date();
-  const cancelledCase = await db.core.transaction(async tx => {
-    const current = await tx.catalog.getEntity(workspace, entityId);
-    httpAssert.present(current, { status: 404, message: 'Entity not found' });
-    if (current.target_lifecycle != null || current.target_lifecycle_date != null) {
-      const schema = await tx.catalog.getSchema(workspace, current.schema_id);
-      httpAssert.present(schema, { status: 409, message: 'The entity schema no longer exists' });
-      await updateEntityWithAuditIfVersion(tx, {
-        workspace,
-        entityId,
-        previous: current,
-        next: fullEntityUpdate(current, schema, {
-          target_lifecycle: null,
-          target_lifecycle_date: null
-        }),
-        expectedVersion: current.version ?? 1,
-        actor: { id: userId, displayName: event.context.user.display_name },
-        auditMetadata: { governanceCaseId: caseRow.id, deprecationCancelled: true }
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace: workspaceName },
+    operation: async ({ ws: workspace, authCtx }) => {
+      const entity = await db.catalog.getEntity(workspace, entityId);
+      httpAssert.present(entity, { status: 404, message: 'Entity not found' });
+      requireEntityAction(authCtx, entity, 'view_entity');
+      const caseRow = await requireCase(db, workspace, entity.id, caseId);
+      httpAssert.true(caseRow.status === 'open', {
+        status: 409,
+        statusText: 'Conflict',
+        message: 'This deprecation case is not open'
       });
-    }
-    const cancelled = await tx.governance.cancelCaseIfOpen(caseRow.id, now);
-    httpAssert.present(cancelled, {
-      status: 409,
-      statusText: 'Conflict',
-      message: 'This deprecation case has already been completed or cancelled'
-    });
-    const cancelledSupersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(
-      caseRow.id,
-      now
-    );
-    await resolveAssignmentNotifications(tx, cancelledSupersededIds, now);
-    await resolveCaseNotifications(tx, cancelled.id, now);
-    await recordGovernanceEvent(tx, cancelled, {
-      eventType: 'cancelled',
-      actorUserId: userId,
-      previousStatus: 'open',
-      resultingStatus: 'cancelled',
-      reason: body.reason,
-      metadata: {}
-    });
-    return cancelled;
-  });
 
-  const refreshedEntity = await db.catalog.getEntity(workspace, entityId);
-  return await toApiCase(db, cancelledCase, refreshedEntity ?? entity, authCtx);
+      const userId = event.context.user.id;
+      httpAssert.true(
+        isOwnerTeamAdmin(authCtx, entity) ||
+          isWorkspaceApprover(authCtx) ||
+          caseRow.initiator_user_id === userId,
+        { status: 403, statusText: 'Forbidden', message: 'You cannot cancel this deprecation' }
+      );
+
+      const now = new Date();
+      const cancelledCase = await db.core.transaction(async tx => {
+        const current = await tx.catalog.getEntity(workspace, entityId);
+        httpAssert.present(current, { status: 404, message: 'Entity not found' });
+        if (current.target_lifecycle != null || current.target_lifecycle_date != null) {
+          const schema = await tx.catalog.getSchema(workspace, current.schema_id);
+          httpAssert.present(schema, {
+            status: 409,
+            message: 'The entity schema no longer exists'
+          });
+          await updateEntityWithAuditIfVersion(tx, {
+            workspace,
+            entityId,
+            previous: current,
+            next: fullEntityUpdate(current, schema, {
+              target_lifecycle: null,
+              target_lifecycle_date: null
+            }),
+            expectedVersion: current.version ?? 1,
+            actor: { id: userId, displayName: event.context.user.display_name },
+            auditMetadata: { governanceCaseId: caseRow.id, deprecationCancelled: true }
+          });
+        }
+        const cancelled = await tx.governance.cancelCaseIfOpen(caseRow.id, now);
+        httpAssert.present(cancelled, {
+          status: 409,
+          statusText: 'Conflict',
+          message: 'This deprecation case has already been completed or cancelled'
+        });
+        const cancelledSupersededIds = await tx.governance.supersedeAllOpenAssignmentsForCase(
+          caseRow.id,
+          now
+        );
+        await resolveAssignmentNotifications(tx, cancelledSupersededIds, now);
+        await resolveCaseNotifications(tx, cancelled.id, now);
+        await recordGovernanceEvent(tx, cancelled, {
+          eventType: 'cancelled',
+          actorUserId: userId,
+          previousStatus: 'open',
+          resultingStatus: 'cancelled',
+          reason: body.reason,
+          metadata: {}
+        });
+        return cancelled;
+      });
+
+      const refreshedEntity = await db.catalog.getEntity(workspace, entityId);
+      return await toApiCase(db, cancelledCase, refreshedEntity ?? entity, authCtx);
+    }
+  });
 };

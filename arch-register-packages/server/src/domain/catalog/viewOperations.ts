@@ -1,12 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import {
-  buildApiAuthCtx,
-  buildApiEntityAuthCtx,
-  requireEntityAction,
-  requireWorkspaceCapability
-} from '../auth/authorization';
+import { requireEntityAction, requireWorkspaceCapability } from '../auth/authorization';
+import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import type {
   CreateSavedViewRequest,
@@ -395,7 +391,7 @@ export const toApi = (view: SavedViewDbResult): ApiSavedView => ({
 });
 
 const canAccessPinnedEntity = (
-  authCtx: Awaited<ReturnType<typeof buildApiEntityAuthCtx>>,
+  authCtx: Parameters<typeof requireEntityAction>[0],
   entityMap: Map<string, Entity>,
   entityId: string
 ) => {
@@ -548,31 +544,37 @@ export const listPinnedEntities = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<PinnedEntity[]> => {
-  const authCtx = await buildApiEntityAuthCtx(db, workspace, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const userId = event.context.user.id;
-  const [pins, entities] = await Promise.all([
-    db.catalog.listPinnedEntities(userId, workspace),
-    listAllCatalogEntities(db, workspace)
-  ]);
-  const entityMap = new Map(entities.map(entity => [entity.id, entity]));
+      const userId = event.context.user.id;
+      const [pins, entities] = await Promise.all([
+        db.catalog.listPinnedEntities(userId, ws),
+        listAllCatalogEntities(db, ws)
+      ]);
+      const entityMap = new Map(entities.map(entity => [entity.id, entity]));
 
-  return pins
-    .map(pin => {
-      const entity = entityMap.get(pin.entity_id);
-      if (!entity) return null;
-      if (!canAccessPinnedEntity(authCtx, entityMap, pin.entity_id)) return null;
-      return {
-        entity_id: entity.id,
-        entity_public_id: entity.public_id ?? entity.id,
-        entity_name: entity.name,
-        entity_slug: entity.slug,
-        schema_id: entity.schema_id,
-        created_at: pin.created_at.toISOString()
-      };
-    })
-    .filter((item): item is PinnedEntity => item != null);
+      return pins
+        .map(pin => {
+          const entity = entityMap.get(pin.entity_id);
+          if (!entity) return null;
+          if (!canAccessPinnedEntity(authCtx, entityMap, pin.entity_id)) return null;
+          return {
+            entity_id: entity.id,
+            entity_public_id: entity.public_id ?? entity.id,
+            entity_name: entity.name,
+            entity_slug: entity.slug,
+            schema_id: entity.schema_id,
+            created_at: pin.created_at.toISOString()
+          };
+        })
+        .filter((item): item is PinnedEntity => item != null);
+    }
+  });
 };
 
 export const createPinnedEntity = async (
@@ -581,28 +583,39 @@ export const createPinnedEntity = async (
   entityId: string,
   event: AuthenticatedEvent
 ): Promise<PinnedEntity> => {
-  const authCtx = await buildApiEntityAuthCtx(db, workspace, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const entity = await db.catalog.getEntity(workspace, entityId);
-  httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
-  requireEntityAction(authCtx, entity, 'view_entity', 'You do not have access to pin this entity');
+      const entity = await db.catalog.getEntity(ws, entityId);
+      httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+      requireEntityAction(
+        authCtx,
+        entity,
+        'view_entity',
+        'You do not have access to pin this entity'
+      );
 
-  const pin = await db.catalog.createPinnedEntity({
-    user_id: event.context.user.id,
-    workspace,
-    entity_id: entity.id,
-    created_at: new Date()
+      const pin = await db.catalog.createPinnedEntity({
+        user_id: event.context.user.id,
+        workspace: ws,
+        entity_id: entity.id,
+        created_at: new Date()
+      });
+
+      return {
+        entity_id: entity.id,
+        entity_public_id: entity.public_id ?? entity.id,
+        entity_name: entity.name,
+        entity_slug: entity.slug,
+        schema_id: entity.schema_id,
+        created_at: pin.created_at.toISOString()
+      };
+    }
   });
-
-  return {
-    entity_id: entity.id,
-    entity_public_id: entity.public_id ?? entity.id,
-    entity_name: entity.name,
-    entity_slug: entity.slug,
-    schema_id: entity.schema_id,
-    created_at: pin.created_at.toISOString()
-  };
 };
 
 export const deletePinnedEntity = async (
@@ -611,12 +624,18 @@ export const deletePinnedEntity = async (
   entityId: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; message: string }> => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const entity = await db.catalog.getEntity(workspace, entityId);
-  httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
-  await db.catalog.deletePinnedEntity(event.context.user.id, workspace, entity.id);
+      const entity = await db.catalog.getEntity(ws, entityId);
+      httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+      await db.catalog.deletePinnedEntity(event.context.user.id, ws, entity.id);
 
-  return { success: true, message: `Entity '${entityId}' unpinned` };
+      return { success: true, message: `Entity '${entityId}' unpinned` };
+    }
+  });
 };

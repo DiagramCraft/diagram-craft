@@ -3,11 +3,9 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { runAuthorizedOperation } from '../operation';
-import { buildApiAuthCtx } from '../auth/authorization';
 import { writeAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { toApiProjectFile } from './projectHelpers';
 import type { ContentNodeDbResult } from './db/projectDatabase';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import {
   contentNodeScopeFields,
@@ -36,73 +34,79 @@ export const uploadContentFile = async (
   mimeType: string,
   originalFilename: string,
   event: AuthenticatedEvent
-): Promise<ProjectFile> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  const resolved = await scope.resolve(db, ws, identifier, authCtx, 'edit');
-  const nodes = await resolved.listNodes(db, ws);
-  assertContentPathWritable(nodes, filePath);
-  const existingFile = nodes.find(node => node.path === filePath && node.type === 'file');
-  const timestamp = new Date();
-  const nodeId = existingFile?.id ?? randomUUID();
-  let row!: ContentNodeDbResult;
-
-  await coordinateContentWrite({
+): Promise<ProjectFile> =>
+  runAuthorizedOperation({
     db,
-    storage,
-    operation: existingFile ? 'update-upload' : 'create-upload',
-    scope: resolved.kind,
-    nodeIds: [nodeId],
-    storageChanges: [
-      {
-        type: 'write',
-        workspace: ws,
-        storageId: resolved.storageId,
-        nodeId,
-        content: buffer
-      }
-    ],
-    writeDatabase: async tx => {
-      row = await tx.project.upsertContentNode({
-        id: nodeId,
-        workspace: ws,
-        ...contentNodeScopeFields(resolved),
-        parent_id: contentParentId(nodes, filePath),
-        path: filePath,
-        name: originalFilename,
-        type: 'file',
-        size_bytes: buffer.length,
-        comment_count: 0,
-        unresolved_comment_count: 0,
-        created_atIfNew: existingFile?.created_at ?? timestamp,
-        updated_at: timestamp,
-        created_byIfNew: existingFile?.created_by ?? authCtx.userId,
-        updated_by: authCtx.userId,
-        mime_type: mimeType,
-        original_filename: originalFilename
-      });
-    },
-    afterCommit: [
-      {
-        name: 'audit',
-        run: tx =>
-          writeAudit(tx, {
-            userId: authCtx.userId,
+    event,
+    scope: { kind: 'workspace', workspace },
+    fallback: 'Failed to upload file',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
+      const resolved = await scope.resolve(db, ws, identifier, authCtx, 'edit');
+      const nodes = await resolved.listNodes(db, ws);
+      assertContentPathWritable(nodes, filePath);
+      const existingFile = nodes.find(node => node.path === filePath && node.type === 'file');
+      const timestamp = new Date();
+      const nodeId = existingFile?.id ?? randomUUID();
+      let row!: ContentNodeDbResult;
+
+      await coordinateContentWrite({
+        db,
+        storage,
+        operation: existingFile ? 'update-upload' : 'create-upload',
+        scope: resolved.kind,
+        nodeIds: [nodeId],
+        storageChanges: [
+          {
+            type: 'write',
             workspace: ws,
-            operation: existingFile ? 'update' : 'create',
-            entityType: 'content_node',
-            entityId: row.id,
-            entityName: row.name,
-            changes: existingFile
-              ? computeChanges(extractEntityFields(existingFile), extractEntityFields(row))
-              : { new: extractEntityFields(row) },
-            metadata: { ...resolved.auditMetadata, path: filePath }
-          })
-      }
-    ]
+            storageId: resolved.storageId,
+            nodeId,
+            content: buffer
+          }
+        ],
+        writeDatabase: async tx => {
+          row = await tx.project.upsertContentNode({
+            id: nodeId,
+            workspace: ws,
+            ...contentNodeScopeFields(resolved),
+            parent_id: contentParentId(nodes, filePath),
+            path: filePath,
+            name: originalFilename,
+            type: 'file',
+            size_bytes: buffer.length,
+            comment_count: 0,
+            unresolved_comment_count: 0,
+            created_atIfNew: existingFile?.created_at ?? timestamp,
+            updated_at: timestamp,
+            created_byIfNew: existingFile?.created_by ?? authCtx.userId,
+            updated_by: authCtx.userId,
+            mime_type: mimeType,
+            original_filename: originalFilename
+          });
+        },
+        afterCommit: [
+          {
+            name: 'audit',
+            run: tx =>
+              writeAudit(tx, {
+                userId: authCtx.userId,
+                workspace: ws,
+                operation: existingFile ? 'update' : 'create',
+                entityType: 'content_node',
+                entityId: row.id,
+                entityName: row.name,
+                changes: existingFile
+                  ? computeChanges(extractEntityFields(existingFile), extractEntityFields(row))
+                  : { new: extractEntityFields(row) },
+                metadata: { ...resolved.auditMetadata, path: filePath }
+              })
+          }
+        ]
+      });
+      return toApiProjectFile(row);
+    }
   });
-  return toApiProjectFile(row);
-};
 
 export const downloadContentFile = async (
   scope: ContentScopeResolver,

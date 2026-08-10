@@ -2,7 +2,7 @@ import { implement } from '@orpc/server';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { createOrpcHandler } from '../../utils/orpcHandler';
-import { orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
+import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   listLifecycleStates,
   replaceLifecycleStates,
@@ -35,21 +35,18 @@ type ORPCContext = {
 
 const configRouter = implement(workspaceConfigContract)
   .$context<ORPCContext>()
-  .use(orpcErrorMiddleware)
-  .use(workspaceScoped);
+  .use(orpcErrorMiddleware);
 
 export const workspaceConfigORPCRouter = configRouter.router({
   config: {
     lifecycleStates: {
-      list: configRouter.config.lifecycleStates.list.handler(async ({ context }) => {
-        const { workspace } = context;
-        return await listLifecycleStates(context.db, workspace, context.event);
+      list: configRouter.config.lifecycleStates.list.handler(async ({ input, context }) => {
+        return await listLifecycleStates(context.db, input.params.workspace, context.event);
       }),
       replace: configRouter.config.lifecycleStates.replace.handler(async ({ input, context }) => {
-        const { workspace } = context;
         return await replaceLifecycleStates(
           context.db,
-          workspace,
+          input.params.workspace,
           input.body.states,
           context.event
         );
@@ -57,98 +54,112 @@ export const workspaceConfigORPCRouter = configRouter.router({
     },
     teams: {
       list: configRouter.config.teams.list.handler(async ({ input, context }) => {
-        const { workspace } = context;
-        return await listTeams(context.db, workspace, context.event, input.query ?? undefined);
+        return await listTeams(
+          context.db,
+          input.params.workspace,
+          context.event,
+          input.query ?? undefined
+        );
       }),
       replace: configRouter.config.teams.replace.handler(async ({ input, context }) => {
-        const { workspace } = context;
-        return await replaceTeams(context.db, workspace, input.body.teams, context.event);
+        return await replaceTeams(
+          context.db,
+          input.params.workspace,
+          input.body.teams,
+          context.event
+        );
       })
     },
     teamAssignments: {
-      list: configRouter.config.teamAssignments.list.handler(async ({ context }) => {
-        const { workspace } = context;
-        return await listTeamAssignments(context.db, workspace, context.event);
+      list: configRouter.config.teamAssignments.list.handler(async ({ input, context }) => {
+        return await listTeamAssignments(context.db, input.params.workspace, context.event);
       }),
       replace: configRouter.config.teamAssignments.replace.handler(async ({ input, context }) => {
-        const { workspace } = context;
         return await replaceTeamAssignments(
           context.db,
-          workspace,
+          input.params.workspace,
           input.body.assignments,
           context.event
         );
       })
     },
     roles: {
-      list: configRouter.config.roles.list.handler(async ({ context }) => {
-        const { workspace } = context;
-        return await listRoles(context.db, workspace, context.event);
+      list: configRouter.config.roles.list.handler(async ({ input, context }) => {
+        return await listRoles(context.db, input.params.workspace, context.event);
       }),
       create: configRouter.config.roles.create.handler(async ({ input, context }) => {
-        const { workspace } = context;
-        return await createRole(context.db, workspace, input.body, context.event);
+        return await createRole(context.db, input.params.workspace, input.body, context.event);
       }),
       update: configRouter.config.roles.update.handler(async ({ input, context }) => {
-        const { workspace } = context;
-        return await updateRole(context.db, workspace, input.params.id, input.body, context.event);
+        return await updateRole(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          input.body,
+          context.event
+        );
       }),
       remove: configRouter.config.roles.remove.handler(async ({ input, context }) => {
-        const { workspace } = context;
-        return await deleteRole(context.db, workspace, input.params.id, context.event);
+        return await deleteRole(context.db, input.params.workspace, input.params.id, context.event);
       })
     },
     members: {
-      list: configRouter.config.members.list.handler(async ({ context }) => {
-        const { workspace } = context;
-        return await listMembers(context.db, workspace, context.event);
+      list: configRouter.config.members.list.handler(async ({ input, context }) => {
+        return await listMembers(context.db, input.params.workspace, context.event);
       }),
       updateRole: configRouter.config.members.updateRole.handler(async ({ input, context }) => {
-        const { workspace } = context;
         return await updateMemberRole(
           context.db,
-          workspace,
+          input.params.workspace,
           input.params.id,
           input.body.roleId,
           context.event
         );
       }),
       remove: configRouter.config.members.remove.handler(async ({ input, context }) => {
-        const { workspace } = context;
-        return await removeMember(context.db, workspace, input.params.id, context.event);
+        return await removeMember(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          context.event
+        );
       })
     },
     users: {
       list: configRouter.config.users.list.handler(async ({ input, context }) => {
-        const { workspace } = context;
-        return await listUsers(context.db, workspace, context.event, input.query ?? undefined);
+        return await listUsers(
+          context.db,
+          input.params.workspace,
+          context.event,
+          input.query ?? undefined
+        );
       })
     },
     tokens: {
-      list: configRouter.config.tokens.list.handler(async ({ context }) => {
-        const { workspace } = context;
-        return await listApiTokens(context.db, workspace, context.event);
+      list: configRouter.config.tokens.list.handler(async ({ input, context }) => {
+        return await listApiTokens(context.db, input.params.workspace, context.event);
       }),
       create: configRouter.config.tokens.create.handler(async ({ input, context }) => {
-        const { workspace } = context;
-        return await createApiToken(context.db, workspace, input.body, context.event);
+        return await createApiToken(context.db, input.params.workspace, input.body, context.event);
       }),
       revoke: configRouter.config.tokens.revoke.handler(async ({ input, context }) => {
-        const { workspace } = context;
-        return await revokeApiToken(context.db, workspace, input.params.id, context.event);
+        return await revokeApiToken(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          context.event
+        );
       })
     },
     projectEntityTypes: {
-      list: configRouter.config.projectEntityTypes.list.handler(async ({ context }) => {
-        const { workspace } = context;
-        return await listProjectEntityTypes(context.db, workspace, context.event);
+      list: configRouter.config.projectEntityTypes.list.handler(async ({ input, context }) => {
+        return await listProjectEntityTypes(context.db, input.params.workspace, context.event);
       }),
       replace: configRouter.config.projectEntityTypes.replace.handler(
         async ({ input, context }) => {
-          const { workspace } = context;
           return await replaceProjectEntityTypes(
             context.db,
-            workspace,
+            input.params.workspace,
             input.body.types,
             context.event
           );
@@ -156,25 +167,26 @@ export const workspaceConfigORPCRouter = configRouter.router({
       )
     },
     assessmentTypes: {
-      list: configRouter.config.assessmentTypes.list.handler(async ({ context }) => {
-        const { workspace } = context;
-        return await listAssessmentTypes(context.db, workspace, context.event);
+      list: configRouter.config.assessmentTypes.list.handler(async ({ input, context }) => {
+        return await listAssessmentTypes(context.db, input.params.workspace, context.event);
       }),
       replace: configRouter.config.assessmentTypes.replace.handler(async ({ input, context }) => {
-        const { workspace } = context;
-        return await replaceAssessmentTypes(context.db, workspace, input.body.types, context.event);
+        return await replaceAssessmentTypes(
+          context.db,
+          input.params.workspace,
+          input.body.types,
+          context.event
+        );
       })
     },
     currencies: {
-      list: configRouter.config.currencies.list.handler(async ({ context }) => {
-        const { workspace } = context;
-        return await listSupportedCurrencies(context.db, workspace, context.event);
+      list: configRouter.config.currencies.list.handler(async ({ input, context }) => {
+        return await listSupportedCurrencies(context.db, input.params.workspace, context.event);
       }),
       replace: configRouter.config.currencies.replace.handler(async ({ input, context }) => {
-        const { workspace } = context;
         return await replaceSupportedCurrencies(
           context.db,
-          workspace,
+          input.params.workspace,
           input.body.currencies,
           input.body.default_currency,
           context.event

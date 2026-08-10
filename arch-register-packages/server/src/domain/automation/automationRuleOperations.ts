@@ -2,12 +2,12 @@ import { randomUUID } from 'node:crypto';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AutomationRuleInput } from '@arch-register/api-types/automationRuleContract';
-import { buildApiAuthCtx, requireWorkspaceAdmin } from '../auth/authorization';
+import { requireWorkspaceAdmin } from '../auth/authorization';
 import {
   isFieldViewRestricted,
   requireNoRestrictedFieldWrites
 } from '../auth/fieldGroupAccessControl';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { runAuthorizedOperation, type WorkspaceOperationContext } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import type { AutomationRuleDbResult } from './db/automationRuleDatabase';
 import { AUTOMATION_RULE_JOB_TYPE } from './automationRuleEvaluation';
@@ -146,12 +146,19 @@ export const toApiAutomationRule = (
   };
 };
 
-const authorize = async (db: DatabaseAdapter, workspace: string, event: AuthenticatedEvent) => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceAdmin(authCtx);
-  return { ws, authCtx };
-};
+const runAutomationOperation = <Result>(
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent,
+  operation: (context: WorkspaceOperationContext) => Promise<Result>
+) =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    before: context => requireWorkspaceAdmin(context.authCtx),
+    operation
+  });
 
 const validateInput = async (
   db: DatabaseAdapter,
@@ -305,18 +312,19 @@ export const listAutomationRules = async (
   workspace: string,
   event: AuthenticatedEvent
 ) => {
-  const { ws, authCtx } = await authorize(db, workspace, event);
-  const [entitySchemas, relationSchemas] = await Promise.all([
-    db.catalog.listSchemas(ws),
-    db.relation?.listRelationSchemas ? db.relation.listRelationSchemas(ws) : Promise.resolve([])
-  ]);
-  return (await db.automationRule.listRules(ws)).map(rule =>
-    toApiAutomationRule(
-      rule,
-      authCtx,
-      rule.resource_type === 'relation' ? relationSchemas : entitySchemas
-    )
-  );
+  return runAutomationOperation(db, workspace, event, async ({ ws, authCtx }) => {
+    const [entitySchemas, relationSchemas] = await Promise.all([
+      db.catalog.listSchemas(ws),
+      db.relation?.listRelationSchemas ? db.relation.listRelationSchemas(ws) : Promise.resolve([])
+    ]);
+    return (await db.automationRule.listRules(ws)).map(rule =>
+      toApiAutomationRule(
+        rule,
+        authCtx,
+        rule.resource_type === 'relation' ? relationSchemas : entitySchemas
+      )
+    );
+  });
 };
 
 export const createAutomationRule = async (
@@ -325,25 +333,26 @@ export const createAutomationRule = async (
   input: AutomationRuleInput,
   event: AuthenticatedEvent
 ) => {
-  const { ws, authCtx } = await authorize(db, workspace, event);
-  const schemas = await validateInput(db, ws, input, authCtx);
-  const now = new Date();
-  const rule = await db.automationRule.createRule({
-    id: randomUUID(),
-    workspace: ws,
-    created_by: authCtx.userId,
-    name: input.name,
-    description: input.description ?? null,
-    resource_type: input.resource_type,
-    schema_id: input.schema_id ?? null,
-    trigger: input.trigger,
-    conditions: input.conditions,
-    actions: input.actions,
-    enabled: input.enabled,
-    created_at: now,
-    updated_at: now
+  return runAutomationOperation(db, workspace, event, async ({ ws, authCtx }) => {
+    const schemas = await validateInput(db, ws, input, authCtx);
+    const now = new Date();
+    const rule = await db.automationRule.createRule({
+      id: randomUUID(),
+      workspace: ws,
+      created_by: authCtx.userId,
+      name: input.name,
+      description: input.description ?? null,
+      resource_type: input.resource_type,
+      schema_id: input.schema_id ?? null,
+      trigger: input.trigger,
+      conditions: input.conditions,
+      actions: input.actions,
+      enabled: input.enabled,
+      created_at: now,
+      updated_at: now
+    });
+    return toApiAutomationRule(rule, authCtx, schemas);
   });
-  return toApiAutomationRule(rule, authCtx, schemas);
 };
 
 export const updateAutomationRule = async (
@@ -353,23 +362,24 @@ export const updateAutomationRule = async (
   input: AutomationRuleInput,
   event: AuthenticatedEvent
 ) => {
-  const { ws, authCtx } = await authorize(db, workspace, event);
-  const existing = await db.automationRule.getRule(ws, id);
-  httpAssert.present(existing, { status: 404, message: 'Automation rule not found' });
-  const schemas = await validateInput(db, ws, input, authCtx);
-  const updated = await db.automationRule.updateRule(ws, id, {
-    name: input.name,
-    description: input.description ?? null,
-    resource_type: input.resource_type,
-    schema_id: input.schema_id ?? null,
-    trigger: input.trigger,
-    conditions: input.conditions,
-    actions: input.actions,
-    enabled: input.enabled,
-    updated_at: new Date()
+  return runAutomationOperation(db, workspace, event, async ({ ws, authCtx }) => {
+    const existing = await db.automationRule.getRule(ws, id);
+    httpAssert.present(existing, { status: 404, message: 'Automation rule not found' });
+    const schemas = await validateInput(db, ws, input, authCtx);
+    const updated = await db.automationRule.updateRule(ws, id, {
+      name: input.name,
+      description: input.description ?? null,
+      resource_type: input.resource_type,
+      schema_id: input.schema_id ?? null,
+      trigger: input.trigger,
+      conditions: input.conditions,
+      actions: input.actions,
+      enabled: input.enabled,
+      updated_at: new Date()
+    });
+    httpAssert.present(updated, { status: 404, message: 'Automation rule not found' });
+    return toApiAutomationRule(updated, authCtx, schemas);
   });
-  httpAssert.present(updated, { status: 404, message: 'Automation rule not found' });
-  return toApiAutomationRule(updated, authCtx, schemas);
 };
 
 export const deleteAutomationRule = async (
@@ -378,12 +388,13 @@ export const deleteAutomationRule = async (
   id: string,
   event: AuthenticatedEvent
 ) => {
-  const { ws } = await authorize(db, workspace, event);
-  httpAssert.true(await db.automationRule.deleteRule(ws, id), {
-    status: 404,
-    message: 'Automation rule not found'
+  return runAutomationOperation(db, workspace, event, async ({ ws }) => {
+    httpAssert.true(await db.automationRule.deleteRule(ws, id), {
+      status: 404,
+      message: 'Automation rule not found'
+    });
+    return { success: true };
   });
-  return { success: true };
 };
 
 export const listAutomationRuleRuns = async (

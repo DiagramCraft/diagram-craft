@@ -2,14 +2,13 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { runAuthorizedOperation } from '../operation';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
+import { runAuthorizedOperation, type WorkspaceOperationContext } from '../operation';
+import { requireWorkspaceCapability } from '../auth/authorization';
 import { writeAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 
 import { getMarkdownAttachmentNodes } from './contentNodeRoleUtils';
 import { toApiProjectFile } from './projectHelpers';
 import type { ContentNodeDbResult, MarkdownRevisionDbResult } from './db/projectDatabase';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import type { ContentScopeResolver } from './contentScope';
 import {
@@ -67,14 +66,12 @@ const createScopedMarkdownDoc = async (
   scope: ContentScopeResolver,
   db: DatabaseAdapter,
   storage: StorageAdapter,
-  workspace: string,
+  ws: string,
+  authCtx: WorkspaceOperationContext['authCtx'],
   identifier: string | undefined,
   name: string,
-  folder: string | undefined,
-  event: AuthenticatedEvent
+  folder: string | undefined
 ): Promise<ProjectFile> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
   const resolved = await scope.resolve(db, ws, identifier, authCtx, 'edit');
   const nodes = await resolved.listNodes(db, ws);
   const filePath = folder ? `${folder}/${name}.md` : `${name}.md`;
@@ -299,16 +296,15 @@ export const createProjectMarkdownDoc = async (
   folder: string | undefined,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  return createScopedMarkdownDoc(
-    PROJECT_SCOPE,
+  return runAuthorizedOperation({
     db,
-    storage,
-    workspace,
-    projectId,
-    name,
-    folder,
-    event
-  );
+    event,
+    scope: { kind: 'workspace', workspace },
+    fallback: 'Failed to create project markdown document',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: ({ ws, authCtx }) =>
+      createScopedMarkdownDoc(PROJECT_SCOPE, db, storage, ws, authCtx, projectId, name, folder)
+  });
 };
 
 export const createEntityMarkdownDoc = async (
@@ -320,16 +316,15 @@ export const createEntityMarkdownDoc = async (
   folder: string | undefined,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  return createScopedMarkdownDoc(
-    ENTITY_SCOPE,
+  return runAuthorizedOperation({
     db,
-    storage,
-    workspace,
-    entityId,
-    name,
-    folder,
-    event
-  );
+    event,
+    scope: { kind: 'workspace', workspace },
+    fallback: 'Failed to create entity markdown document',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: ({ ws, authCtx }) =>
+      createScopedMarkdownDoc(ENTITY_SCOPE, db, storage, ws, authCtx, entityId, name, folder)
+  });
 };
 
 export const createWorkspaceMarkdownDoc = async (
@@ -340,16 +335,15 @@ export const createWorkspaceMarkdownDoc = async (
   folder: string | undefined,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  return createScopedMarkdownDoc(
-    WORKSPACE_SCOPE,
+  return runAuthorizedOperation({
     db,
-    storage,
-    workspace,
-    undefined,
-    name,
-    folder,
-    event
-  );
+    event,
+    scope: { kind: 'workspace', workspace },
+    fallback: 'Failed to create workspace markdown document',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: ({ ws, authCtx }) =>
+      createScopedMarkdownDoc(WORKSPACE_SCOPE, db, storage, ws, authCtx, undefined, name, folder)
+  });
 };
 
 export const getMarkdownContent = async (

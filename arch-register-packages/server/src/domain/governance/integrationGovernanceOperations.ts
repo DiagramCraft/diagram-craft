@@ -2,11 +2,11 @@ import { createHash, randomUUID } from 'node:crypto';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { requireWorkspaceCapability } from '../auth/authorization';
+import { runAuthorizedOperation, type WorkspaceOperationContext } from '../operation';
 import {
   createGovernanceCaseInTransaction,
-  decideGovernanceAssignment,
+  decideGovernanceAssignmentWithContext,
   recordGovernanceEvent,
   toApiAssignment,
   toApiCase,
@@ -26,17 +26,22 @@ import type { WorkspaceCapability } from '@arch-register/permissions';
 
 const registry = createApplicationGovernanceRegistry();
 
-const requireIntegrationAccess = async (
+const runIntegrationGovernanceOperation = <Result>(
   db: DatabaseAdapter,
   workspaceName: string,
-  event: AuthenticatedEvent
-) => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  requireWorkspaceCapability(authCtx, 'governance.external');
-  requireWorkspaceCapability(authCtx, 'ws.view');
-  return workspace;
-};
+  event: AuthenticatedEvent,
+  operation: (context: WorkspaceOperationContext) => Promise<Result>
+) =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace: workspaceName },
+    before: context => {
+      requireWorkspaceCapability(context.authCtx, 'governance.external');
+      requireWorkspaceCapability(context.authCtx, 'ws.view');
+    },
+    operation
+  });
 
 const requireExternalWorkflow = async (
   db: DatabaseAdapter,
@@ -111,21 +116,22 @@ export const listIntegrationGovernanceCases = async (
     subjectId?: string;
   }
 ) => {
-  const workspace = await requireIntegrationAccess(db, workspaceName, event);
-  const rows = await db.governance.listCases(workspace, query);
-  const external = await Promise.all(
-    rows.map(async row => {
-      const resolved = await resolveGovernanceWorkflowMode(
-        db,
-        workspace,
-        row.case_kind,
-        row.case_subkind,
-        registry
-      );
-      return resolved.config.external === true ? row : null;
-    })
-  );
-  return external.filter(row => row != null).map(toApiCase);
+  return runIntegrationGovernanceOperation(db, workspaceName, event, async ({ ws }) => {
+    const rows = await db.governance.listCases(ws, query);
+    const external = await Promise.all(
+      rows.map(async row => {
+        const resolved = await resolveGovernanceWorkflowMode(
+          db,
+          ws,
+          row.case_kind,
+          row.case_subkind,
+          registry
+        );
+        return resolved.config.external === true ? row : null;
+      })
+    );
+    return external.filter(row => row != null).map(toApiCase);
+  });
 };
 
 export const getIntegrationGovernanceCase = async (
@@ -134,11 +140,12 @@ export const getIntegrationGovernanceCase = async (
   caseId: string,
   event: AuthenticatedEvent
 ) => {
-  const workspace = await requireIntegrationAccess(db, workspaceName, event);
-  const row = await db.governance.getCase(workspace, caseId);
-  httpAssert.present(row, { status: 404, message: 'Governance case not found' });
-  await requireExternalWorkflow(db, workspace, row.case_kind, row.case_subkind);
-  return toApiCase(row);
+  return runIntegrationGovernanceOperation(db, workspaceName, event, async ({ ws }) => {
+    const row = await db.governance.getCase(ws, caseId);
+    httpAssert.present(row, { status: 404, message: 'Governance case not found' });
+    await requireExternalWorkflow(db, ws, row.case_kind, row.case_subkind);
+    return toApiCase(row);
+  });
 };
 
 export const createIntegrationGovernanceCase = async (
@@ -147,42 +154,43 @@ export const createIntegrationGovernanceCase = async (
   input: IntegrationGovernanceCaseCreate,
   event: AuthenticatedEvent
 ) => {
-  const workspace = await requireIntegrationAccess(db, workspaceName, event);
-  const caseSubkind = input.caseSubkind ?? null;
-  await requireExternalWorkflow(db, workspace, input.caseKind, caseSubkind);
-  const dedupeKey = input.dedupeKey ?? `integration:${input.idempotencyKey}`;
-  const existing = await db.governance.getCaseByDedupeKey(workspace, input.caseKind, dedupeKey);
-  if (existing) return toApiCase(existing);
+  return runIntegrationGovernanceOperation(db, workspaceName, event, async ({ ws }) => {
+    const caseSubkind = input.caseSubkind ?? null;
+    await requireExternalWorkflow(db, ws, input.caseKind, caseSubkind);
+    const dedupeKey = input.dedupeKey ?? `integration:${input.idempotencyKey}`;
+    const existing = await db.governance.getCaseByDedupeKey(ws, input.caseKind, dedupeKey);
+    if (existing) return toApiCase(existing);
 
-  const assignments = input.inboxItems.map(item => targetToSpec(item.target, item.action));
-  const createInput: CreateGovernanceCaseInput = {
-    caseKind: input.caseKind,
-    caseSubkind,
-    dedupeKey,
-    subjectType: input.subjectType,
-    subjectId: input.subjectId,
-    subjectVersion: input.subjectVersion ?? null,
-    policyVersion: input.policyVersion ?? null,
-    selfApprovalAllowed: input.selfApprovalAllowed,
-    dueAt: input.dueAt ? new Date(input.dueAt) : null,
-    payload: input.payload,
-    initiationFieldValues: input.initiationFields,
-    skipInitiationFields: input.initiationFields === undefined,
-    assignments,
-    allowEmptyAssignments: true,
-    createAssignmentsInExternalMode: true
-  };
-  const created = await db.core.transaction(async tx =>
-    createGovernanceCaseInTransaction(
-      tx,
-      workspace,
-      event.context.user.id,
-      createInput,
-      new Date(),
-      randomUUID()
-    )
-  );
-  return toApiCase(created);
+    const assignments = input.inboxItems.map(item => targetToSpec(item.target, item.action));
+    const createInput: CreateGovernanceCaseInput = {
+      caseKind: input.caseKind,
+      caseSubkind,
+      dedupeKey,
+      subjectType: input.subjectType,
+      subjectId: input.subjectId,
+      subjectVersion: input.subjectVersion ?? null,
+      policyVersion: input.policyVersion ?? null,
+      selfApprovalAllowed: input.selfApprovalAllowed,
+      dueAt: input.dueAt ? new Date(input.dueAt) : null,
+      payload: input.payload,
+      initiationFieldValues: input.initiationFields,
+      skipInitiationFields: input.initiationFields === undefined,
+      assignments,
+      allowEmptyAssignments: true,
+      createAssignmentsInExternalMode: true
+    };
+    const created = await db.core.transaction(async tx =>
+      createGovernanceCaseInTransaction(
+        tx,
+        ws,
+        event.context.user.id,
+        createInput,
+        new Date(),
+        randomUUID()
+      )
+    );
+    return toApiCase(created);
+  });
 };
 
 export const listIntegrationGovernanceInboxItems = async (
@@ -191,12 +199,13 @@ export const listIntegrationGovernanceInboxItems = async (
   caseId: string,
   event: AuthenticatedEvent
 ) => {
-  const workspace = await requireIntegrationAccess(db, workspaceName, event);
-  const caseRow = await db.governance.getCase(workspace, caseId);
-  httpAssert.present(caseRow, { status: 404, message: 'Governance case not found' });
-  await requireExternalWorkflow(db, workspace, caseRow.case_kind, caseRow.case_subkind);
-  const assignments = await db.governance.listAssignmentsForCase(caseId);
-  return assignments.map(assignment => toInboxItem(assignment, caseRow));
+  return runIntegrationGovernanceOperation(db, workspaceName, event, async ({ ws }) => {
+    const caseRow = await db.governance.getCase(ws, caseId);
+    httpAssert.present(caseRow, { status: 404, message: 'Governance case not found' });
+    await requireExternalWorkflow(db, ws, caseRow.case_kind, caseRow.case_subkind);
+    const assignments = await db.governance.listAssignmentsForCase(caseId);
+    return assignments.map(assignment => toInboxItem(assignment, caseRow));
+  });
 };
 
 export const createIntegrationGovernanceInboxItem = async (
@@ -206,53 +215,56 @@ export const createIntegrationGovernanceInboxItem = async (
   input: IntegrationGovernanceInboxItemCreate,
   event: AuthenticatedEvent
 ) => {
-  const workspace = await requireIntegrationAccess(db, workspaceName, event);
-  const caseRow = await db.governance.getCase(workspace, caseId);
-  httpAssert.present(caseRow, { status: 404, message: 'Governance case not found' });
-  await requireExternalWorkflow(db, workspace, caseRow.case_kind, caseRow.case_subkind);
-  httpAssert.true(caseRow.status === 'open', {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'Only open governance cases can receive inbox items'
-  });
-
-  const assignmentId = deterministicAssignmentId(workspace, caseId, input.idempotencyKey);
-  const spec = targetToSpec(input.target, input.action);
-  const existing = await db.governance.getAssignment(assignmentId);
-  if (existing) {
-    httpAssert.true(existing.case_id === caseId && existing.action === spec.action, {
+  return runIntegrationGovernanceOperation(db, workspaceName, event, async ({ ws }) => {
+    const caseRow = await db.governance.getCase(ws, caseId);
+    httpAssert.present(caseRow, { status: 404, message: 'Governance case not found' });
+    await requireExternalWorkflow(db, ws, caseRow.case_kind, caseRow.case_subkind);
+    httpAssert.true(caseRow.status === 'open', {
       status: 409,
       statusText: 'Conflict',
-      message: 'Inbox-item idempotency key was reused'
+      message: 'Only open governance cases can receive inbox items'
     });
-    return toInboxItem(existing, caseRow);
-  }
 
-  const assignment = await db.core.transaction(async tx => {
-    const created = await tx.governance.createAssignment({
-      id: assignmentId,
-      case_id: caseId,
-      workspace,
-      action: spec.action,
-      target_type: spec.target.type,
-      target_user_id: spec.target.type === 'user' ? spec.target.userId : null,
-      target_team_id:
-        spec.target.type === 'team' || spec.target.type === 'team_role' ? spec.target.teamId : null,
-      target_team_role: spec.target.type === 'team_role' ? spec.target.teamRole : null,
-      target_capability: spec.target.type === 'capability' ? spec.target.capability : null,
-      created_at: new Date()
+    const assignmentId = deterministicAssignmentId(ws, caseId, input.idempotencyKey);
+    const spec = targetToSpec(input.target, input.action);
+    const existing = await db.governance.getAssignment(assignmentId);
+    if (existing) {
+      httpAssert.true(existing.case_id === caseId && existing.action === spec.action, {
+        status: 409,
+        statusText: 'Conflict',
+        message: 'Inbox-item idempotency key was reused'
+      });
+      return toInboxItem(existing, caseRow);
+    }
+
+    const assignment = await db.core.transaction(async tx => {
+      const created = await tx.governance.createAssignment({
+        id: assignmentId,
+        case_id: caseId,
+        workspace: ws,
+        action: spec.action,
+        target_type: spec.target.type,
+        target_user_id: spec.target.type === 'user' ? spec.target.userId : null,
+        target_team_id:
+          spec.target.type === 'team' || spec.target.type === 'team_role'
+            ? spec.target.teamId
+            : null,
+        target_team_role: spec.target.type === 'team_role' ? spec.target.teamRole : null,
+        target_capability: spec.target.type === 'capability' ? spec.target.capability : null,
+        created_at: new Date()
+      });
+      await recordGovernanceEvent(tx, caseRow, {
+        eventType: 'assigned',
+        actorUserId: event.context.user.id,
+        previousStatus: caseRow.status,
+        resultingStatus: caseRow.status,
+        reason: null,
+        metadata: { assignmentId, trigger: 'external_integration' }
+      });
+      return created;
     });
-    await recordGovernanceEvent(tx, caseRow, {
-      eventType: 'assigned',
-      actorUserId: event.context.user.id,
-      previousStatus: caseRow.status,
-      resultingStatus: caseRow.status,
-      reason: null,
-      metadata: { assignmentId, trigger: 'external_integration' }
-    });
-    return created;
+    return toInboxItem(assignment, caseRow);
   });
-  return toInboxItem(assignment, caseRow);
 };
 
 export const getIntegrationGovernanceInboxItem = async (
@@ -261,17 +273,18 @@ export const getIntegrationGovernanceInboxItem = async (
   assignmentId: string,
   event: AuthenticatedEvent
 ) => {
-  const workspace = await requireIntegrationAccess(db, workspaceName, event);
-  const assignment = await db.governance.getAssignment(assignmentId);
-  httpAssert.present(assignment, { status: 404, message: 'Governance inbox item not found' });
-  httpAssert.true(assignment.workspace === workspace, {
-    status: 404,
-    message: 'Governance inbox item not found'
+  return runIntegrationGovernanceOperation(db, workspaceName, event, async ({ ws }) => {
+    const assignment = await db.governance.getAssignment(assignmentId);
+    httpAssert.present(assignment, { status: 404, message: 'Governance inbox item not found' });
+    httpAssert.true(assignment.workspace === ws, {
+      status: 404,
+      message: 'Governance inbox item not found'
+    });
+    const caseRow = await db.governance.getCase(ws, assignment.case_id);
+    httpAssert.present(caseRow, { status: 404, message: 'Governance case not found' });
+    await requireExternalWorkflow(db, ws, caseRow.case_kind, caseRow.case_subkind);
+    return toInboxItem(assignment, caseRow);
   });
-  const caseRow = await db.governance.getCase(workspace, assignment.case_id);
-  httpAssert.present(caseRow, { status: 404, message: 'Governance case not found' });
-  await requireExternalWorkflow(db, workspace, caseRow.case_kind, caseRow.case_subkind);
-  return toInboxItem(assignment, caseRow);
 };
 
 export const decideIntegrationGovernanceInboxItem = async (
@@ -281,17 +294,25 @@ export const decideIntegrationGovernanceInboxItem = async (
   input: IntegrationGovernanceDecision,
   event: AuthenticatedEvent
 ) => {
-  const workspace = await requireIntegrationAccess(db, workspaceName, event);
-  const assignment = await db.governance.getAssignment(assignmentId);
-  httpAssert.present(assignment, { status: 404, message: 'Governance inbox item not found' });
-  httpAssert.true(assignment.workspace === workspace, {
-    status: 404,
-    message: 'Governance inbox item not found'
-  });
-  const caseRow = await db.governance.getCase(workspace, assignment.case_id);
-  httpAssert.present(caseRow, { status: 404, message: 'Governance case not found' });
-  await requireExternalWorkflow(db, workspace, caseRow.case_kind, caseRow.case_subkind);
-  return decideGovernanceAssignment(db, workspaceName, assignmentId, event, input, registry, {
-    externalIntegration: true
+  return runIntegrationGovernanceOperation(db, workspaceName, event, async ({ ws, authCtx }) => {
+    const assignment = await db.governance.getAssignment(assignmentId);
+    httpAssert.present(assignment, { status: 404, message: 'Governance inbox item not found' });
+    httpAssert.true(assignment.workspace === ws, {
+      status: 404,
+      message: 'Governance inbox item not found'
+    });
+    const caseRow = await db.governance.getCase(ws, assignment.case_id);
+    httpAssert.present(caseRow, { status: 404, message: 'Governance case not found' });
+    await requireExternalWorkflow(db, ws, caseRow.case_kind, caseRow.case_subkind);
+    return decideGovernanceAssignmentWithContext(
+      db,
+      ws,
+      assignmentId,
+      event,
+      authCtx,
+      input,
+      registry,
+      { externalIntegration: true }
+    );
   });
 };

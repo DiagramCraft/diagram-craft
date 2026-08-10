@@ -5,8 +5,8 @@ import type {
   WebhookEventFilter,
   WebhookOperation
 } from '@arch-register/api-types/webhookContract';
-import { buildApiAuthCtx, requireFieldGroupAdminBypass } from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { requireFieldGroupAdminBypass } from '../auth/authorization';
+import { runAuthorizedOperation, type WorkspaceOperationContext } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import type { WorkspaceWebhookDbResult } from './db/webhookDatabase';
 import { assertPublicOutboundHost, UnsafeOutboundHostError } from '../../utils/outboundUrlSafety';
@@ -97,20 +97,28 @@ export const toApiWebhook = (webhook: WorkspaceWebhookDbResult) => ({
   updated_at: webhook.updated_at.toISOString()
 });
 
-const authorize = async (db: DatabaseAdapter, workspace: string, event: AuthenticatedEvent) => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireFieldGroupAdminBypass(authCtx);
-  return ws;
-};
+const runWebhookOperation = <Result>(
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent,
+  operation: (context: WorkspaceOperationContext) => Promise<Result>
+) =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    before: context => requireFieldGroupAdminBypass(context.authCtx),
+    operation
+  });
 
 export const listWebhooks = async (
   db: DatabaseAdapter,
   workspace: string,
   event: AuthenticatedEvent
 ) => {
-  const ws = await authorize(db, workspace, event);
-  return (await db.webhook.listWebhooks(ws)).map(toApiWebhook);
+  return runWebhookOperation(db, workspace, event, async ({ ws }) =>
+    (await db.webhook.listWebhooks(ws)).map(toApiWebhook)
+  );
 };
 
 export const createWebhook = async (
@@ -119,22 +127,23 @@ export const createWebhook = async (
   input: { url: string; event_filter: WebhookEventFilter; enabled: boolean },
   event: AuthenticatedEvent
 ) => {
-  const ws = await authorize(db, workspace, event);
-  const now = new Date();
-  const secret = generateSecret();
-  const url = normalizeWebhookUrl(input.url);
-  await assertSafeWebhookUrl(url);
-  const webhook = await db.webhook.createWebhook({
-    id: randomUUID(),
-    workspace: ws,
-    url,
-    event_filter: await normalizeFilter(db, ws, input.event_filter),
-    hmac_secret: secret,
-    enabled: input.enabled,
-    created_at: now,
-    updated_at: now
+  return runWebhookOperation(db, workspace, event, async ({ ws }) => {
+    const now = new Date();
+    const secret = generateSecret();
+    const url = normalizeWebhookUrl(input.url);
+    await assertSafeWebhookUrl(url);
+    const webhook = await db.webhook.createWebhook({
+      id: randomUUID(),
+      workspace: ws,
+      url,
+      event_filter: await normalizeFilter(db, ws, input.event_filter),
+      hmac_secret: secret,
+      enabled: input.enabled,
+      created_at: now,
+      updated_at: now
+    });
+    return { webhook: toApiWebhook(webhook), secret };
   });
-  return { webhook: toApiWebhook(webhook), secret };
 };
 
 export const updateWebhook = async (
@@ -144,20 +153,21 @@ export const updateWebhook = async (
   input: { url: string; event_filter: WebhookEventFilter; enabled: boolean },
   event: AuthenticatedEvent
 ) => {
-  const ws = await authorize(db, workspace, event);
-  const existing = await db.webhook.getWebhook(ws, id);
-  httpAssert.present(existing, { status: 404, message: 'Webhook not found' });
-  const url = normalizeWebhookUrl(input.url);
-  await assertSafeWebhookUrl(url);
-  const updated = await db.webhook.updateWebhook(ws, id, {
-    url,
-    event_filter: await normalizeFilter(db, ws, input.event_filter),
-    hmac_secret: existing.hmac_secret,
-    enabled: input.enabled,
-    updated_at: new Date()
+  return runWebhookOperation(db, workspace, event, async ({ ws }) => {
+    const existing = await db.webhook.getWebhook(ws, id);
+    httpAssert.present(existing, { status: 404, message: 'Webhook not found' });
+    const url = normalizeWebhookUrl(input.url);
+    await assertSafeWebhookUrl(url);
+    const updated = await db.webhook.updateWebhook(ws, id, {
+      url,
+      event_filter: await normalizeFilter(db, ws, input.event_filter),
+      hmac_secret: existing.hmac_secret,
+      enabled: input.enabled,
+      updated_at: new Date()
+    });
+    httpAssert.present(updated, { status: 404, message: 'Webhook not found' });
+    return toApiWebhook(updated);
   });
-  httpAssert.present(updated, { status: 404, message: 'Webhook not found' });
-  return toApiWebhook(updated);
 };
 
 export const deleteWebhook = async (
@@ -166,12 +176,13 @@ export const deleteWebhook = async (
   id: string,
   event: AuthenticatedEvent
 ) => {
-  const ws = await authorize(db, workspace, event);
-  httpAssert.true(await db.webhook.deleteWebhook(ws, id), {
-    status: 404,
-    message: 'Webhook not found'
+  return runWebhookOperation(db, workspace, event, async ({ ws }) => {
+    httpAssert.true(await db.webhook.deleteWebhook(ws, id), {
+      status: 404,
+      message: 'Webhook not found'
+    });
+    return { success: true };
   });
-  return { success: true };
 };
 
 export const rotateWebhookSecret = async (
@@ -180,17 +191,18 @@ export const rotateWebhookSecret = async (
   id: string,
   event: AuthenticatedEvent
 ) => {
-  const ws = await authorize(db, workspace, event);
-  const existing = await db.webhook.getWebhook(ws, id);
-  httpAssert.present(existing, { status: 404, message: 'Webhook not found' });
-  const secret = generateSecret();
-  const updated = await db.webhook.updateWebhook(ws, id, {
-    url: existing.url,
-    event_filter: existing.event_filter,
-    hmac_secret: secret,
-    enabled: existing.enabled,
-    updated_at: new Date()
+  return runWebhookOperation(db, workspace, event, async ({ ws }) => {
+    const existing = await db.webhook.getWebhook(ws, id);
+    httpAssert.present(existing, { status: 404, message: 'Webhook not found' });
+    const secret = generateSecret();
+    const updated = await db.webhook.updateWebhook(ws, id, {
+      url: existing.url,
+      event_filter: existing.event_filter,
+      hmac_secret: secret,
+      enabled: existing.enabled,
+      updated_at: new Date()
+    });
+    httpAssert.present(updated, { status: 404, message: 'Webhook not found' });
+    return { webhook: toApiWebhook(updated), secret };
   });
-  httpAssert.present(updated, { status: 404, message: 'Webhook not found' });
-  return { webhook: toApiWebhook(updated), secret };
 };

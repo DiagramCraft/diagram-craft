@@ -1,7 +1,7 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { buildApiEntityAuthCtx as buildApiAuthCtx, canAccessProject } from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { canAccessProject } from '../auth/authorization';
+import { runAuthorizedOperation } from '../operation';
 import { SEARCH_DEFAULTS } from '../../constants';
 import { PermissionChecker, type AuthorizationContext } from '@arch-register/permissions';
 import type { EntityDbResult } from '../catalog/db/catalogDatabase';
@@ -102,19 +102,16 @@ const parseTypesFromString = (value: string | undefined): SearchType[] => {
   ];
 };
 
-export const searchWorkspace = async (
+const searchWorkspaceForContext = async (
   db: DatabaseAdapter,
-  workspace: string,
+  ws: string,
   params: {
     q?: string;
     limitPerType?: number;
     types?: string;
   },
-  event: AuthenticatedEvent
+  authCtx: AuthorizationContext
 ) => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-
   const q = params.q?.trim() ?? '';
   const limitPerType = params.limitPerType ?? SEARCH_DEFAULTS.LIMIT_PER_TYPE;
   const types = parseTypesFromString(params.types);
@@ -423,3 +420,20 @@ export const searchWorkspace = async (
     relations: relationResults
   };
 };
+
+export const searchWorkspace = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  params: {
+    q?: string;
+    limitPerType?: number;
+    types?: string;
+  },
+  event: AuthenticatedEvent
+) =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: ({ ws, authCtx }) => searchWorkspaceForContext(db, ws, params, authCtx)
+  });
