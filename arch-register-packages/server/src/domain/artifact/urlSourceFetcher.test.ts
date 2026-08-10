@@ -3,11 +3,7 @@ import type { IncomingHttpHeaders } from 'node:http';
 import type { RequestOptions } from 'node:https';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import { lookup } from 'node:dns/promises';
-import {
-  fetchUrlSource,
-  MAX_URL_SOURCE_BYTES,
-  UrlSourceFetchError
-} from './urlSourceFetcher';
+import { fetchUrlSource, MAX_URL_SOURCE_BYTES, UrlSourceFetchError } from './urlSourceFetcher';
 
 const mocks = vi.hoisted(() => ({
   dnsLookup: vi.fn(),
@@ -74,11 +70,7 @@ describe('URL source fetcher', () => {
 
   it('limits the response and pins HTTPS requests to the validated DNS address', async () => {
     queueResponse(
-      response(
-        200,
-        { 'content-type': 'application/yaml', etag: '"spec-1"' },
-        'openapi: 3.1.0\n'
-      )
+      response(200, { 'content-type': 'application/yaml', etag: '"spec-1"' }, 'openapi: 3.1.0\n')
     );
 
     await expect(

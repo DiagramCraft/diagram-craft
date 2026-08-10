@@ -7,7 +7,15 @@ vi.mock('@diagram-craft/app-components/Dialog', () => ({
 }));
 
 vi.mock('@diagram-craft/app-components/FormElement', () => ({
-  FormElement: ({ label, hint, children }: { label: string; hint: string; children: React.ReactNode }) => (
+  FormElement: ({
+    label,
+    hint,
+    children
+  }: {
+    label: string;
+    hint: string;
+    children: React.ReactNode;
+  }) => (
     <label>
       {label}
       <span>{hint}</span>
@@ -21,12 +29,7 @@ const { ApiSpecificationSourceDialog } = await import('./ApiSpecificationSourceD
 describe('ApiSpecificationSourceDialog', () => {
   it('offers metadata-only links and fetchable HTTPS URL sources', () => {
     const markup = renderToStaticMarkup(
-      <ApiSpecificationSourceDialog
-        open
-        onClose={vi.fn()}
-        onCreate={vi.fn()}
-        isPending={false}
-      />
+      <ApiSpecificationSourceDialog open onClose={vi.fn()} onCreate={vi.fn()} isPending={false} />
     );
 
     expect(markup).toContain('External link');

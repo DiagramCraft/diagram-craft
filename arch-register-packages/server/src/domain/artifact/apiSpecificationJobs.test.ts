@@ -3,10 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { ArtifactDbResult } from './db/artifactDatabase';
 import { RetryableJobError } from '../jobs/jobRetry';
 import { UrlSourceFetchError } from './urlSourceFetcher';
-import {
-  API_SPECIFICATION_URL_REFRESH_JOB_TYPE,
-  createApiSpecificationUrlRefreshJobHandler
-} from './apiSpecificationJobs';
+import { createApiSpecificationUrlRefreshJobHandler } from './apiSpecificationJobs';
 
 const mocks = vi.hoisted(() => ({
   fetchUrlSource: vi.fn(),
@@ -90,10 +87,7 @@ describe('API specification URL refresh job', () => {
       artifact.id,
       expect.objectContaining({ status: 'pending', diagnostic: null })
     );
-    expect(mocks.fetchUrlSource).toHaveBeenCalledWith(
-      artifact.location,
-      expect.any(AbortSignal)
-    );
+    expect(mocks.fetchUrlSource).toHaveBeenCalledWith(artifact.location, expect.any(AbortSignal));
     expect(mocks.ingestArtifactRevision).toHaveBeenCalledWith(
       db,
       'workspace-1',
@@ -134,19 +128,14 @@ describe('API specification URL refresh job', () => {
     );
     const handler = createApiSpecificationUrlRefreshJobHandler(db);
 
-    await expect(
-      handler(makeContext({ attemptCount: 3, maxAttempts: 3 }))
-    ).rejects.toMatchObject({ category: 'source_forbidden' });
-    expect(mocks.recordArtifactFetchFailure).toHaveBeenCalledWith(
-      db,
-      'workspace-1',
-      artifact.id,
-      {
-        category: 'source_forbidden',
-        message: 'URL source [redacted-url] returned HTTP 403',
-        retryable: false
-      }
-    );
+    await expect(handler(makeContext({ attemptCount: 3, maxAttempts: 3 }))).rejects.toMatchObject({
+      category: 'source_forbidden'
+    });
+    expect(mocks.recordArtifactFetchFailure).toHaveBeenCalledWith(db, 'workspace-1', artifact.id, {
+      category: 'source_forbidden',
+      message: 'URL source [redacted-url] returned HTTP 403',
+      retryable: false
+    });
   });
 
   it('skips artifacts that are not URL API specification sources', async () => {
