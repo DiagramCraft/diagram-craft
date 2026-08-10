@@ -75,7 +75,7 @@ export const createEntityEditState = (
     _tags: (entity._tags ?? []).join(', ')
   };
   for (const field of schema.fields) {
-    if (isTypedRelationField(field)) continue;
+    if (isTypedRelationField(field) || field.type === 'derived') continue;
     state[field.id] = isReferenceOrContainmentField(field)
       ? relationIds(entity[field.id])
       : (entity[field.id] ?? '');
@@ -111,7 +111,7 @@ export const createEntityUpdateBody = (
 ): EntityUpdateBody => {
   const dataFields: Record<string, unknown> = {};
   for (const field of schema.fields) {
-    if (isTypedRelationField(field)) continue;
+    if (isTypedRelationField(field) || field.type === 'derived') continue;
     dataFields[field.id] = isReferenceOrContainmentField(field)
       ? relationIds(editState[field.id])
       : (editState[field.id] ?? '');

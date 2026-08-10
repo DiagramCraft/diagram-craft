@@ -4,6 +4,8 @@ import { Entity, EntityVersionKind } from './db/catalogDatabase';
 import { outdateExternalMetadata, valueEquals } from '../externalMetadata/externalMetadataHelpers';
 import { materializeDerivedFields } from '../derived/derivedFields';
 import { assertCatalogMutationTransaction } from './mutationTransaction';
+import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
+import { assertEntityGraphValid, validateEntityGraph } from './entityValidationRules';
 
 const AUTOSAVE_KEEP_COUNT = 50;
 
@@ -80,6 +82,8 @@ export const createEntityWithAudit = async (
       }
     : params.entity;
   const row = await db.catalog.createEntity(entity);
+  await recalculateEntityDerivedFields(db, params.workspace, [row.id]);
+  assertEntityGraphValid(await validateEntityGraph(db, params.workspace, [row.id]));
 
   await logAudit(db, {
     workspace: params.workspace,
@@ -156,6 +160,8 @@ export const updateEntityWithAudit = async (
   const row = await db.catalog.updateEntity(params.workspace, params.entityId, next);
 
   if (row == null) return null;
+  await recalculateEntityDerivedFields(db, params.workspace, [params.entityId]);
+  assertEntityGraphValid(await validateEntityGraph(db, params.workspace, [params.entityId]));
 
   await logAudit(db, {
     workspace: params.workspace,
@@ -205,6 +211,8 @@ export const updateEntityWithAuditIfVersion = async (
   );
 
   if (row == null) return null;
+  await recalculateEntityDerivedFields(db, params.workspace, [params.entityId]);
+  assertEntityGraphValid(await validateEntityGraph(db, params.workspace, [params.entityId]));
 
   await logAudit(db, {
     workspace: params.workspace,

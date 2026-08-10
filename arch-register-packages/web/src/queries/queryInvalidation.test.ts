@@ -40,10 +40,14 @@ describe('workspace-scoped invalidation', () => {
 
     expect(invalidateQueries.mock.calls.map(([options]) => options.queryKey)).toEqual([
       ['entities', 'list', 'ws-1'],
+      ['entities', 'detail', 'ws-1'],
       ['entities', 'count', 'ws-1'],
       ['entities', 'tree', 'ws-1'],
       ['entities', 'facets', 'ws-1'],
       ['entities', 'timelineMarkers', 'ws-1'],
+      ['entities', 'relations', 'ws-1'],
+      ['entities', 'typed-relations', 'ws-1'],
+      ['entities', 'batch-relations', 'ws-1'],
       ['audit', 'log', 'ws-1'],
       ['audit', 'stats', 'ws-1'],
       ['workspace-analytics', 'ws-1']

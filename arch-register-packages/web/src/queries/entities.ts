@@ -50,17 +50,22 @@ export const invalidateEntityDetails = async (
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) }),
     queryClient.invalidateQueries({ queryKey: entityKeys.json(workspaceId, entityId, 1) }),
-    queryClient.invalidateQueries({ queryKey: entityKeys.relations(workspaceId, entityId) })
+    queryClient.invalidateQueries({ queryKey: entityKeys.relations(workspaceId, entityId) }),
+    queryClient.invalidateQueries({ queryKey: entityKeys.typedRelations(workspaceId, entityId) })
   ]);
 };
 
 export const invalidateEntityQueries = async (queryClient: QueryClient, workspaceId: string) => {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: entityKeys.workspaceLists(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: entityKeys.workspaceDetails(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: entityKeys.counts(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: entityKeys.trees(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: entityKeys.facets(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: entityKeys.timelineMarkers(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: entityKeys.workspaceRelations(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: entityKeys.workspaceTypedRelations(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: entityKeys.workspaceBatchRelations(workspaceId) }),
     invalidateAuditQueries(queryClient, workspaceId)
   ]);
 };

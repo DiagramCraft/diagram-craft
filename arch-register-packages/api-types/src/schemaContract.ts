@@ -183,6 +183,16 @@ const derivedFieldResponseSchema = derivedFieldInputSchema
     }
   });
 
+export const validationRuleSchema = z.object({
+  id: z.string().min(1).describe('Stable validation rule identifier'),
+  name: z.string().min(1).describe('Validation rule display name'),
+  expression: z.string().min(1).describe('Bonsai boolean expression evaluated against the record'),
+  message: z.string().min(1).describe('Message shown when the rule fails'),
+  severity: z.enum(['error', 'warning']).describe('Whether the rule blocks saving'),
+  fieldId: z.string().min(1).optional().describe('Optional field receiving the diagnostic'),
+  active: z.boolean().default(true).describe('Whether the rule is currently enforced')
+});
+
 export const schemaFieldResponseSchema = z
   .discriminatedUnion('type', [
     textFieldSchema,
@@ -277,6 +287,7 @@ export const artifactCapabilitySchema = z
   .describe('A typed artifact capability enabled for entities using the schema');
 
 export type ArtifactCapability = z.infer<typeof artifactCapabilitySchema>;
+export type ValidationRule = z.infer<typeof validationRuleSchema>;
 
 const entitySchemaSchema = z.object({
   id: z.string().describe('Unique schema identifier'),
@@ -297,6 +308,10 @@ const entitySchemaSchema = z.object({
     .array(artifactCapabilitySchema)
     .optional()
     .describe('Functionality-driving artifact capabilities enabled by this schema'),
+  validation_rules: z
+    .array(validationRuleSchema)
+    .optional()
+    .describe('Bonsai validation rules evaluated when entities are saved'),
   color: z.string().nullable().describe('Schema color (hex format)'),
   icon: z.string().nullable().describe('Schema icon identifier'),
   entity_count: z.number().int().min(0).describe('Number of entities using this schema'),
@@ -334,6 +349,10 @@ const schemaVersionSchema = z.object({
   artifact_capabilities: z
     .array(artifactCapabilitySchema)
     .describe('Artifact capabilities enabled by this schema at this version'),
+  validation_rules: z
+    .array(validationRuleSchema)
+    .optional()
+    .describe('Validation rules defined by the schema at this version'),
   color: z.string().nullable().describe('Schema color at this version'),
   icon: z.string().nullable().describe('Schema icon at this version'),
   changeSummary: z
@@ -373,6 +392,10 @@ const createSchemaBodySchema = z.object({
     .array(artifactCapabilitySchema)
     .optional()
     .describe('Functionality-driving artifact capabilities enabled by this schema'),
+  validation_rules: z
+    .array(validationRuleSchema)
+    .optional()
+    .describe('Validation rules evaluated when entities are saved'),
   color: z.preprocess(
     v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
     z.string().nullable().optional().describe('Schema color (hex format)')
@@ -391,6 +414,14 @@ const updateSchemaBodySchema = createSchemaBodySchema.extend({
     .describe(
       'Resolutions for fields being renamed/removed/archived while entities exist, keyed by the old field id'
     )
+});
+
+const validationPreviewResultSchema = z.object({
+  entityId: z.string(),
+  schemaId: z.string(),
+  schemaVersion: z.number().int().min(1),
+  errors: z.array(z.record(z.string(), z.unknown())),
+  warnings: z.array(z.record(z.string(), z.unknown()))
 });
 
 const deleteSchemaResponseSchema = z.object({
@@ -461,6 +492,25 @@ export const workspaceSchemaContract = oc.tag('Schemas').router({
         })
       )
       .output(entitySchemaSchema),
+    previewValidation: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/schemas/{id}/validation/preview',
+        inputStructure: 'detailed',
+        summary: 'Preview entity validation rules',
+        description: 'Evaluates unsaved validation rules against existing entities.',
+        tags: ['Schemas']
+      })
+      .input(
+        z.object({
+          params: wsAndUUID,
+          body: z.object({
+            validation_rules: z.array(validationRuleSchema),
+            entityIds: z.array(z.string()).optional()
+          })
+        })
+      )
+      .output(z.array(validationPreviewResultSchema)),
     remove: oc
       .route({
         method: 'DELETE',

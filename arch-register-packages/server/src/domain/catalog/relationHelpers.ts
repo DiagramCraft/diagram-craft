@@ -370,7 +370,8 @@ export const toApiRelation = (
   canEdit: true,
   canDelete: true,
   canAdmin: authCtx == null || checker.hasRelationPermission(authCtx, row, 'admin_relation'),
-  ...row.data
+  ...row.data,
+  ...(row.validation ? { _validation: row.validation } : {})
 });
 
 /**

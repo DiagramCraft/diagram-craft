@@ -57,6 +57,7 @@ import { isTypedRelationField } from '@arch-register/api-types/schemaContract';
 import { applyRelationFieldDelta } from './relationFieldMutations';
 import { withCatalogMutationTransaction } from './mutationTransaction';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
+import { assertEntityGraphValid, validateEntityGraph } from './entityValidationRules';
 
 type SupportedCurrencyLookup = (
   workspace: string
@@ -70,6 +71,14 @@ const getSupportedCurrencyCodes = async (db: DatabaseAdapter, workspace: string)
   if (lookup == null) return null;
   const config = await lookup.call(db.workspace, workspace);
   return new Set(config.currencies.map(currency => currency.code));
+};
+
+const addValidationResult = (
+  entity: EntityRecord,
+  summary: Awaited<ReturnType<typeof validateEntityGraph>>
+) => {
+  const current = summary.results.find(result => result.entityId === entity._uid);
+  return current && current.warnings.length > 0 ? { ...entity, _validation: current } : entity;
 };
 
 export const allocateEntityPublicId = async (
@@ -201,8 +210,9 @@ export const createEntity = async (
       const recalculated = recalculatedAvailable
         ? ((await tx.catalog.getEntity(workspace, row.id)) ?? row)
         : row;
-
-      return toApiEntity(recalculated, authCtx, schema);
+      const validation = await validateEntityGraph(tx, workspace, [row.id]);
+      assertEntityGraphValid(validation);
+      return addValidationResult(toApiEntity(recalculated, authCtx, schema), validation);
     });
   } catch (error) {
     return handleError(error, 'Failed to create data record');
@@ -434,10 +444,18 @@ export const bulkCreateEntities = async (
         createdRows.push({ id: row.id, schema: draft.schema });
       }
       const recalculatedAvailable = await recalculateEntityDerivedFields(tx, workspace);
+      const validation = await validateEntityGraph(
+        tx,
+        workspace,
+        createdRows.map(createdRow => createdRow.id)
+      );
+      assertEntityGraphValid(validation);
       return Promise.all(
         createdRows.map(async ({ id, schema }, index) => {
           const row = recalculatedAvailable ? await tx.catalog.getEntity(workspace, id) : null;
-          return row ? toApiEntity(row, authCtx, schema) : created[index]!;
+          return row
+            ? addValidationResult(toApiEntity(row, authCtx, schema), validation)
+            : created[index]!;
         })
       );
     });
@@ -707,7 +725,9 @@ export const updateEntity = async (
       const recalculated = recalculatedAvailable
         ? ((await tx.catalog.getEntity(workspace, id)) ?? row)
         : row;
-      return toApiEntity(recalculated, authCtx, schema);
+      const validation = await validateEntityGraph(tx, workspace, [id]);
+      assertEntityGraphValid(validation);
+      return addValidationResult(toApiEntity(recalculated, authCtx, schema), validation);
     });
   } catch (error) {
     return handleError(error, 'Failed to update data record');
@@ -772,7 +792,9 @@ export const cloneEntity = async (
       const recalculated = recalculatedAvailable
         ? ((await tx.catalog.getEntity(workspace, row.id)) ?? row)
         : row;
-      return toApiEntity(recalculated, authCtx, schema);
+      const validation = await validateEntityGraph(tx, workspace, [row.id]);
+      assertEntityGraphValid(validation);
+      return addValidationResult(toApiEntity(recalculated, authCtx, schema), validation);
     });
   } catch (error) {
     return handleError(error, 'Failed to clone data record');

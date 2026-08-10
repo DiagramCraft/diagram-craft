@@ -67,6 +67,7 @@ import { EntityPlanningReviewSection } from './components/EntityPlanningReviewSe
 import { Title } from '../../components/Title';
 import { EmptyState } from '../../components/EmptyState';
 import { LoadingState } from '../../components/LoadingState';
+import { Banner } from '../../components/Banner';
 import {
   HOME_TAB_IDS,
   CONTEXT_TAB_IDS,
@@ -552,6 +553,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     setSaveConfirmDueDate,
     saveConfirmSignificant,
     setSaveConfirmSignificant,
+    saveError,
     executeSave,
     executeBypass,
     confirmDelete,
@@ -960,6 +962,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           values={initiationFieldValues}
           onChange={setInitiationFieldValues}
         />
+        {saveError && <Banner variant="error">{saveError}</Banner>}
         <FormElement label="" required>
           <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
             <input

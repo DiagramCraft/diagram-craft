@@ -87,6 +87,9 @@ const invalidateRelationEndpoints = async (
     // to the inline field editor's own entityKeys.typedRelations query.
     queryClient.invalidateQueries({ queryKey: entityKeys.workspaceBatchRelations(workspaceId) }),
     ...entityIds.map(entityId =>
+      queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) })
+    ),
+    ...entityIds.map(entityId =>
       queryClient.invalidateQueries({ queryKey: entityKeys.typedRelations(workspaceId, entityId) })
     ),
     ...entityIds.map(entityId =>

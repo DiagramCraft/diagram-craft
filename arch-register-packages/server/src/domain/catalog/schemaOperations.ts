@@ -35,6 +35,7 @@ import {
   validateDerivedFieldGroupAccess
 } from '../derived/derivedFields';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
+import { previewEntityValidation } from './entityValidationRules';
 import {
   getSchemaGovernancePolicies,
   getSchemaGovernancePoliciesBySchema
@@ -112,6 +113,33 @@ export const listWorkspaceSchemas = async (
   );
 };
 
+export const previewWorkspaceSchemaValidation = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  schemaId: string,
+  body: {
+    validation_rules: import('@arch-register/api-types/schemaContract').ValidationRule[];
+    entityIds?: string[];
+  },
+  event: AuthenticatedEvent
+) =>
+  defineOperation(
+    db,
+    workspace,
+    event,
+    { fallback: 'Failed to preview schema validation', dbErrorMessages },
+    async ({ authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'schema.edit');
+      return previewEntityValidation(
+        db,
+        workspace,
+        schemaId,
+        body.validation_rules,
+        body.entityIds
+      );
+    }
+  );
+
 export const getWorkspaceSchema = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -180,6 +208,7 @@ export const createWorkspaceSchema = async (
         groups: row.groups ?? [],
         shared_field_group_links: row.shared_field_group_links ?? [],
         artifact_capabilities: row.artifact_capabilities ?? [],
+        validation_rules: row.validation_rules ?? [],
         color: row.color,
         icon: row.icon,
         change_summary: buildSchemaChangeSummary(null, row.fields),
@@ -374,6 +403,7 @@ export const updateWorkspaceSchema = async (
           groups: compiledNext.groups,
           shared_field_group_links: compiledNext.shared_field_group_links ?? [],
           artifact_capabilities: next.artifact_capabilities,
+          validation_rules: next.validation_rules,
           color: next.color,
           icon: next.icon,
           default_owner: next.defaultOwner,
@@ -411,6 +441,7 @@ export const updateWorkspaceSchema = async (
           shared_field_group_links: updated.shared_field_group_links ?? [],
           color: updated.color,
           icon: updated.icon,
+          validation_rules: updated.validation_rules ?? [],
           change_summary: changeSummary,
           created_by: authCtx.userId,
           created_at: next.updated_at

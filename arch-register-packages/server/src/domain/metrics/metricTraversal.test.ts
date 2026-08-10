@@ -105,7 +105,7 @@ const path = [
     kind: 'typedRelation' as const,
     fieldId: 'contracts',
     relationSchemaId: relationSchema.id,
-    direction: 'out' as const
+    direction: 'in' as const
   }
 ];
 
@@ -133,7 +133,7 @@ describe('collectMetricTerminals', () => {
         name: 'Contracts',
         type: 'typedRelation',
         relationSchemaId: relationSchema.id,
-        direction: 'out',
+        direction: 'in',
         requirementLevel: 'optional'
       }
     ]),

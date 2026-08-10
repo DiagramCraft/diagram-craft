@@ -42,7 +42,8 @@ import type {
   EntitySchema,
   FieldMigrations,
   PendingFieldChange,
-  SharedFieldGroupLink
+  SharedFieldGroupLink,
+  ValidationRule
 } from '@arch-register/api-types/schemaContract';
 import { EmptyState } from '../../components/EmptyState';
 import { GroupDialog } from '../../components/GroupsEditor';
@@ -77,6 +78,7 @@ export const RelationSchemaSettingsScreen = () => {
   const [fields, setFields] = useState<RelationField[]>([]);
   const [groups, setGroups] = useState<RelationSchemaGroup[]>([]);
   const [sharedFieldGroupLinks, setSharedFieldGroupLinks] = useState<SharedFieldGroupLink[]>([]);
+  const [validationRules, setValidationRules] = useState<ValidationRule[]>([]);
   const [accessDialogGroupId, setAccessDialogGroupId] = useState<string | null>(null);
   const [color, setColor] = useState<string | null>(null);
   const [icon, setIcon] = useState<string | null>(null);
@@ -120,6 +122,7 @@ export const RelationSchemaSettingsScreen = () => {
       setFields(selected.fields);
       setGroups(selected.groups);
       setSharedFieldGroupLinks(selected.shared_field_group_links ?? []);
+      setValidationRules(selected.validation_rules ?? []);
       setColor(selected.color);
       setIcon(selected.icon);
       setDirty(false);
@@ -145,6 +148,7 @@ export const RelationSchemaSettingsScreen = () => {
             fields,
             groups,
             shared_field_group_links: sharedFieldGroupLinks,
+            validation_rules: validationRules,
             color,
             icon,
             fieldMigrations
@@ -170,6 +174,7 @@ export const RelationSchemaSettingsScreen = () => {
       fields,
       groups,
       sharedFieldGroupLinks,
+      validationRules,
       color,
       icon,
       dirty,
@@ -250,6 +255,21 @@ export const RelationSchemaSettingsScreen = () => {
       ...(groupId && { groupId })
     };
     setFields(prev => [...prev, newField]);
+    setDirty(true);
+  };
+
+  const addValidationRule = () => {
+    setValidationRules(current => [
+      ...current,
+      {
+        id: `rule-${Date.now()}`,
+        name: 'New rule',
+        expression: 'true',
+        message: 'Relation validation failed',
+        severity: 'error',
+        active: true
+      }
+    ]);
     setDirty(true);
   };
 
@@ -659,6 +679,101 @@ export const RelationSchemaSettingsScreen = () => {
                   No fields defined yet. Click "Add field" to get started.
                 </div>
               )}
+
+              <div className={styles.fieldsHead}>
+                <div className={styles.sectionLabel}>Validation rules</div>
+                {canEdit && (
+                  <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addValidationRule}>
+                    Add rule
+                  </Button>
+                )}
+              </div>
+              <div className={styles.fieldsTable}>
+                {validationRules.map((rule, index) => (
+                  <div className={styles.formRow} key={rule.id}>
+                    <TextInput
+                      value={rule.name}
+                      disabled={!canEdit}
+                      onChange={value => {
+                        setValidationRules(current =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, name: value ?? '' } : item
+                          )
+                        );
+                        setDirty(true);
+                      }}
+                    />
+                    <TextArea
+                      value={rule.expression}
+                      disabled={!canEdit}
+                      onChange={value => {
+                        setValidationRules(current =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, expression: value ?? '' } : item
+                          )
+                        );
+                        setDirty(true);
+                      }}
+                      rows={2}
+                    />
+                    <TextInput
+                      value={rule.message}
+                      disabled={!canEdit}
+                      onChange={value => {
+                        setValidationRules(current =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, message: value ?? '' } : item
+                          )
+                        );
+                        setDirty(true);
+                      }}
+                    />
+                    <Select.Root
+                      value={rule.severity}
+                      disabled={!canEdit}
+                      onChange={value => {
+                        setValidationRules(current =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index
+                              ? { ...item, severity: value as ValidationRule['severity'] }
+                              : item
+                          )
+                        );
+                        setDirty(true);
+                      }}
+                    >
+                      <Select.Item value="error">Blocking error</Select.Item>
+                      <Select.Item value="warning">Warning</Select.Item>
+                    </Select.Root>
+                    <Button
+                      variant="ghost"
+                      disabled={!canEdit}
+                      onClick={() => {
+                        setValidationRules(current =>
+                          current.map((item, itemIndex) =>
+                            itemIndex === index ? { ...item, active: !item.active } : item
+                          )
+                        );
+                        setDirty(true);
+                      }}
+                    >
+                      {rule.active ? 'Deactivate' : 'Activate'}
+                    </Button>
+                    {canEdit && (
+                      <Button
+                        variant="ghost"
+                        icon={<TbTrash size={12} />}
+                        onClick={() => {
+                          setValidationRules(current =>
+                            current.filter((_, itemIndex) => itemIndex !== index)
+                          );
+                          setDirty(true);
+                        }}
+                      />
+                    )}
+                  </div>
+                ))}
+              </div>
 
               <div className={styles.formActions}>
                 {canEdit && (

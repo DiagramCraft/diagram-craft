@@ -201,7 +201,7 @@ export const getMetricPathOptions = (
     } else if (field.type === 'typedRelation') {
       const relationSchema = relationSchemaById.get(field.relationSchemaId);
       const endpointSchemaIds =
-        field.direction === 'out' ? relationSchema?.out.schemaIds : relationSchema?.in.schemaIds;
+        field.direction === 'in' ? relationSchema?.out.schemaIds : relationSchema?.in.schemaIds;
       const targetSchemaIds =
         endpointSchemaIds === 'any'
           ? entitySchemas.map(candidate => candidate.id)

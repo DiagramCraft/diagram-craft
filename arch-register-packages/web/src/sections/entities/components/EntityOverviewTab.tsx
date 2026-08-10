@@ -810,13 +810,13 @@ const PropertyRow = ({
   const renderDisplay = () => {
     if (field.type === 'typedRelation') {
       const records = (
-        field.direction === 'out' ? typedRelationsOutgoing : typedRelationsIncoming
+        field.direction === 'in' ? typedRelationsOutgoing : typedRelationsIncoming
       ).filter(record => record._schema.id === field.relationSchemaId);
       if (records.length === 0) return <span className={sharedStyles.dim}>—</span>;
       return (
         <RelationRecordList
           records={records}
-          direction={field.direction === 'out' ? 'outgoing' : 'incoming'}
+          direction={field.direction === 'in' ? 'outgoing' : 'incoming'}
           relationSchema={relationSchemas.find(rs => rs.id === field.relationSchemaId)}
           workspaceId={workspaceSlug}
         />
@@ -867,7 +867,7 @@ const PropertyRow = ({
   const renderTypedRelationEditor = () => {
     if (field.type !== 'typedRelation') return null;
     const records = (
-      field.direction === 'out' ? typedRelationsOutgoing : typedRelationsIncoming
+      field.direction === 'in' ? typedRelationsOutgoing : typedRelationsIncoming
     ).filter(record => record._schema.id === field.relationSchemaId);
     return (
       <TypedRelationFieldEditor

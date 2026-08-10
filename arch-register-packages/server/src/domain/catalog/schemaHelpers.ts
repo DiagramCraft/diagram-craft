@@ -11,12 +11,14 @@ import {
   SchemaVersion,
   SharedFieldGroupLink,
   ArtifactCapability,
+  ValidationRule,
   isReferenceOrContainmentField,
   isTypedRelationField
 } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { normalizePublicIdPrefix, validatePublicIdPrefix } from '../../utils/publicIds';
 import { buildDerivedPlan } from '../derived/derivedFields';
+import { assertValidationRulesValid, normalizeValidationRules } from './entityValidationRules';
 import type { SchemaGovernancePolicies } from '../governance/schemaGovernancePolicy';
 type SchemaMutationPayload = {
   name: string;
@@ -27,6 +29,7 @@ type SchemaMutationPayload = {
   groups: SchemaGroup[];
   shared_field_group_links: SharedFieldGroupLink[];
   artifact_capabilities?: ArtifactCapability[];
+  validation_rules: ValidationRule[];
   color: string | null;
   icon: string | null;
   defaultOwner: string | null;
@@ -328,6 +331,7 @@ export const buildCreateSchemaInput = (
     groups = [],
     shared_field_group_links = [],
     artifact_capabilities,
+    validation_rules,
     color,
     icon,
     default_owner
@@ -335,6 +339,8 @@ export const buildCreateSchemaInput = (
   httpAssert.string(name, { message: 'name is required and must be a string' });
   const normalizedGroups = normalizeSchemaGroups(groups);
   const normalizedFields = normalizeSchemaFields(fields);
+  const normalizedValidationRules = normalizeValidationRules(validation_rules, normalizedFields);
+  assertValidationRulesValid(normalizedValidationRules);
   assertResolvedFieldGroupReferences(normalizedFields, normalizedGroups);
 
   return {
@@ -351,6 +357,7 @@ export const buildCreateSchemaInput = (
     groups: normalizedGroups,
     shared_field_group_links: normalizeSharedFieldGroupLinks(shared_field_group_links),
     ...(Array.isArray(artifact_capabilities) && { artifact_capabilities }),
+    validation_rules: normalizedValidationRules,
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
     default_owner: resolveSchemaDefaultOwner(default_owner, teamIds, null),
@@ -374,6 +381,7 @@ export const buildUpdateSchemaInput = (
     groups,
     shared_field_group_links,
     artifact_capabilities,
+    validation_rules,
     color,
     icon,
     default_owner
@@ -383,6 +391,11 @@ export const buildUpdateSchemaInput = (
     groups !== undefined ? normalizeSchemaGroups(groups) : (current.groups ?? []);
   const rawFields = fields !== undefined ? normalizeSchemaFields(fields) : current.fields;
   const normalizedFields = rawFields;
+  const normalizedValidationRules =
+    validation_rules !== undefined
+      ? normalizeValidationRules(validation_rules, normalizedFields)
+      : (current.validation_rules ?? []);
+  assertValidationRulesValid(normalizedValidationRules);
   assertResolvedFieldGroupReferences(normalizedFields, normalizedGroups);
 
   return {
@@ -409,6 +422,7 @@ export const buildUpdateSchemaInput = (
       : current.artifact_capabilities !== undefined
         ? { artifact_capabilities: current.artifact_capabilities }
         : {}),
+    validation_rules: normalizedValidationRules,
     color: color !== undefined ? (typeof color === 'string' ? color : null) : current.color,
     icon: icon !== undefined ? (typeof icon === 'string' ? icon : null) : current.icon,
     defaultOwner:
@@ -602,6 +616,7 @@ export const toApiSchema = (
     groups: schema.groups ?? [],
     shared_field_group_links: schema.shared_field_group_links ?? [],
     artifact_capabilities: schema.artifact_capabilities ?? [],
+    validation_rules: schema.validation_rules ?? [],
     color: schema.color,
     icon: schema.icon,
     entity_count: entityCount,
@@ -667,6 +682,7 @@ export const toApiSchemaVersion = (
     groups: SchemaGroup[];
     shared_field_group_links?: SharedFieldGroupLink[];
     artifact_capabilities?: ArtifactCapability[];
+    validation_rules?: ValidationRule[];
     color: string | null;
     icon: string | null;
     change_summary: Record<string, unknown>;
@@ -683,6 +699,7 @@ export const toApiSchemaVersion = (
   groups: row.groups,
   shared_field_group_links: row.shared_field_group_links ?? [],
   artifact_capabilities: row.artifact_capabilities ?? [],
+  validation_rules: row.validation_rules ?? [],
   color: row.color,
   icon: row.icon,
   changeSummary: row.change_summary,

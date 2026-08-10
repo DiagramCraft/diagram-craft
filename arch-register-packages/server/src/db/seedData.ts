@@ -927,7 +927,15 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000031',
-          direction: 'out'
+          direction: 'in'
+        },
+        {
+          id: 'budget',
+          name: 'Budget',
+          type: 'derived',
+          requirementLevel: 'optional',
+          expression: 'entity.contracts.map(.allocation * .entity.annual_cost.amount / 100) |> sum',
+          resultType: 'number'
         }
       ],
       color: AR_COLOR_PURPLE,
@@ -1016,12 +1024,31 @@ export const seedSchemas: SchemaDbResult[] = (
         { id: 'annual_cost', name: 'Annual Cost', type: 'currency' },
         { id: 'setup_fee', name: 'Setup Fee', type: 'currency' },
         {
+          id: 'allocated',
+          name: 'Allocated',
+          type: 'derived',
+          requirementLevel: 'optional',
+          expression: 'entity.system.map(.allocation) |> sum',
+          resultType: 'number'
+        },
+        {
           id: 'system',
           name: 'System',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000031',
-          direction: 'in'
+          direction: 'out'
+        }
+      ],
+      validation_rules: [
+        {
+          id: 'allocated-at-most-100',
+          name: 'Allocated cannot exceed 100%',
+          expression: 'entity.allocated <= 100',
+          message: 'A Contract cannot be allocated to more than 100% of its capacity.',
+          severity: 'error',
+          fieldId: 'allocated',
+          active: true
         }
       ],
       color: AR_COLOR_ORANGE,
@@ -3596,11 +3623,21 @@ export const seedEntities: Entity[] = seedEntitiesRaw.map(entity => {
   // Seed fixtures are inserted directly (bootstrapSeed.ts), bypassing the normal create path that
   // materializes `type: 'derived'` fields on write - do it here so seeded entities carry computed
   // derived values (e.g. Risk's residual_risk_score) just like entities created through the app.
+  // Typed relations are inserted after entities during bootstrap, so expose their initial
+  // context as empty arrays. bootstrapSeed recalculates all derived fields after relation rows
+  // have been inserted and replaces these provisional values with the relation-aware results.
+  const initialDerivedContext = {
+    ...entity.data,
+    ...Object.fromEntries(
+      schema.fields.filter(field => field.type === 'typedRelation').map(field => [field.id, []])
+    )
+  };
   const data = materializeDerivedFields(
     schema.fields,
     entity.data,
     { objectType: 'entity', objectId: entity.id },
-    schema.groups
+    schema.groups,
+    initialDerivedContext
   );
   return { ...entity, data, completeness: computeEntityCompleteness({ ...entity, data }, schema) };
 });
@@ -5672,6 +5709,14 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
         type: 'select',
         enumId: '00000000-0000-0000-0000-e00000000008',
         requirementLevel: 'required'
+      },
+      {
+        id: 'allocation',
+        name: 'Allocation',
+        type: 'number',
+        min: 0,
+        max: 100,
+        requirementLevel: 'required'
       }
     ],
     groups: [],
@@ -5780,7 +5825,7 @@ export const seedRelations: RelationDbCreate[] = [
     // Customer Portal -> Acme Cloud contract: annual software license.
     in_entity_id: '00000000-0000-0000-0002-000000000001',
     out_entity_id: '00000000-0000-0000-000a-000000000001',
-    data: { purpose: 'license' },
+    data: { purpose: 'license', allocation: 60 },
     created_at: now,
     updated_at: now
   },
@@ -5791,7 +5836,7 @@ export const seedRelations: RelationDbCreate[] = [
     // Identity Platform -> Nordic Systems contract: managed support.
     in_entity_id: '00000000-0000-0000-0002-000000000002',
     out_entity_id: '00000000-0000-0000-000a-000000000002',
-    data: { purpose: 'support' },
+    data: { purpose: 'support', allocation: 100 },
     created_at: now,
     updated_at: now
   },
@@ -5802,7 +5847,7 @@ export const seedRelations: RelationDbCreate[] = [
     // Customer Portal -> Acme Cloud support contract.
     in_entity_id: '00000000-0000-0000-0002-000000000001',
     out_entity_id: '00000000-0000-0000-000a-000000000003',
-    data: { purpose: 'support' },
+    data: { purpose: 'support', allocation: 40 },
     created_at: now,
     updated_at: now
   },

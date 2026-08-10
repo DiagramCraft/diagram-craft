@@ -1094,6 +1094,60 @@
                         },
                         "description": "Functionality-driving artifact capabilities enabled by this schema"
                       },
+                      "validation_rules": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Stable validation rule identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Validation rule display name"
+                            },
+                            "expression": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Bonsai boolean expression evaluated against the record"
+                            },
+                            "message": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Message shown when the rule fails"
+                            },
+                            "severity": {
+                              "enum": [
+                                "error",
+                                "warning"
+                              ],
+                              "type": "string",
+                              "description": "Whether the rule blocks saving"
+                            },
+                            "fieldId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Optional field receiving the diagnostic"
+                            },
+                            "active": {
+                              "type": "boolean",
+                              "default": true,
+                              "description": "Whether the rule is currently enforced"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "expression",
+                            "message",
+                            "severity"
+                          ]
+                        },
+                        "description": "Bonsai validation rules evaluated when entities are saved"
+                      },
                       "color": {
                         "anyOf": [
                           {
@@ -1858,6 +1912,60 @@
                         },
                         "description": "Included workspace shared fieldgroups, in display order"
                       },
+                      "validation_rules": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Stable validation rule identifier"
+                            },
+                            "name": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Validation rule display name"
+                            },
+                            "expression": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Bonsai boolean expression evaluated against the record"
+                            },
+                            "message": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Message shown when the rule fails"
+                            },
+                            "severity": {
+                              "enum": [
+                                "error",
+                                "warning"
+                              ],
+                              "type": "string",
+                              "description": "Whether the rule blocks saving"
+                            },
+                            "fieldId": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Optional field receiving the diagnostic"
+                            },
+                            "active": {
+                              "type": "boolean",
+                              "default": true,
+                              "description": "Whether the rule is currently enforced"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "name",
+                            "expression",
+                            "message",
+                            "severity"
+                          ]
+                        },
+                        "description": "Bonsai validation rules evaluated when typed relations are saved"
+                      },
                       "color": {
                         "anyOf": [
                           {
@@ -2620,6 +2728,60 @@
                       },
                       "description": "Included workspace shared fieldgroups, in display order"
                     },
+                    "validation_rules": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Stable validation rule identifier"
+                          },
+                          "name": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Validation rule display name"
+                          },
+                          "expression": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Bonsai boolean expression evaluated against the record"
+                          },
+                          "message": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Message shown when the rule fails"
+                          },
+                          "severity": {
+                            "enum": [
+                              "error",
+                              "warning"
+                            ],
+                            "type": "string",
+                            "description": "Whether the rule blocks saving"
+                          },
+                          "fieldId": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Optional field receiving the diagnostic"
+                          },
+                          "active": {
+                            "type": "boolean",
+                            "default": true,
+                            "description": "Whether the rule is currently enforced"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "expression",
+                          "message",
+                          "severity"
+                        ]
+                      },
+                      "description": "Bonsai validation rules evaluated when typed relations are saved"
+                    },
                     "color": {
                       "anyOf": [
                         {
@@ -3034,6 +3196,116 @@
                               ]
                             },
                             "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                          },
+                          "_validation": {
+                            "type": "object",
+                            "properties": {
+                              "relationId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "errors": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "ruleId": {
+                                      "type": "string"
+                                    },
+                                    "relationId": {
+                                      "type": "string"
+                                    },
+                                    "schemaId": {
+                                      "type": "string"
+                                    },
+                                    "schemaVersion": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "severity": {
+                                      "enum": [
+                                        "error",
+                                        "warning"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "message": {
+                                      "type": "string"
+                                    },
+                                    "fieldId": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "ruleId",
+                                    "relationId",
+                                    "schemaId",
+                                    "schemaVersion",
+                                    "severity",
+                                    "message"
+                                  ]
+                                }
+                              },
+                              "warnings": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "ruleId": {
+                                      "type": "string"
+                                    },
+                                    "relationId": {
+                                      "type": "string"
+                                    },
+                                    "schemaId": {
+                                      "type": "string"
+                                    },
+                                    "schemaVersion": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "severity": {
+                                      "enum": [
+                                        "error",
+                                        "warning"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "message": {
+                                      "type": "string"
+                                    },
+                                    "fieldId": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "ruleId",
+                                    "relationId",
+                                    "schemaId",
+                                    "schemaVersion",
+                                    "severity",
+                                    "message"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "relationId",
+                              "schemaId",
+                              "schemaVersion",
+                              "errors",
+                              "warnings"
+                            ],
+                            "description": "Validation diagnostics produced while saving this relation"
                           }
                         },
                         "required": [
@@ -3439,6 +3711,116 @@
                         ]
                       },
                       "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                    },
+                    "_validation": {
+                      "type": "object",
+                      "properties": {
+                        "relationId": {
+                          "type": "string"
+                        },
+                        "schemaId": {
+                          "type": "string"
+                        },
+                        "schemaVersion": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string"
+                              },
+                              "relationId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "fieldId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "relationId",
+                              "schemaId",
+                              "schemaVersion",
+                              "severity",
+                              "message"
+                            ]
+                          }
+                        },
+                        "warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string"
+                              },
+                              "relationId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "fieldId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "relationId",
+                              "schemaId",
+                              "schemaVersion",
+                              "severity",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "relationId",
+                        "schemaId",
+                        "schemaVersion",
+                        "errors",
+                        "warnings"
+                      ],
+                      "description": "Validation diagnostics produced while saving this relation"
                     }
                   },
                   "required": [
@@ -3755,6 +4137,116 @@
                         ]
                       },
                       "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                    },
+                    "_validation": {
+                      "type": "object",
+                      "properties": {
+                        "relationId": {
+                          "type": "string"
+                        },
+                        "schemaId": {
+                          "type": "string"
+                        },
+                        "schemaVersion": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string"
+                              },
+                              "relationId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "fieldId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "relationId",
+                              "schemaId",
+                              "schemaVersion",
+                              "severity",
+                              "message"
+                            ]
+                          }
+                        },
+                        "warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string"
+                              },
+                              "relationId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "fieldId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "relationId",
+                              "schemaId",
+                              "schemaVersion",
+                              "severity",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "relationId",
+                        "schemaId",
+                        "schemaVersion",
+                        "errors",
+                        "warnings"
+                      ],
+                      "description": "Validation diagnostics produced while saving this relation"
                     }
                   },
                   "required": [
@@ -4137,6 +4629,116 @@
                         ]
                       },
                       "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                    },
+                    "_validation": {
+                      "type": "object",
+                      "properties": {
+                        "relationId": {
+                          "type": "string"
+                        },
+                        "schemaId": {
+                          "type": "string"
+                        },
+                        "schemaVersion": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string"
+                              },
+                              "relationId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "fieldId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "relationId",
+                              "schemaId",
+                              "schemaVersion",
+                              "severity",
+                              "message"
+                            ]
+                          }
+                        },
+                        "warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string"
+                              },
+                              "relationId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "fieldId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "relationId",
+                              "schemaId",
+                              "schemaVersion",
+                              "severity",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "relationId",
+                        "schemaId",
+                        "schemaVersion",
+                        "errors",
+                        "warnings"
+                      ],
+                      "description": "Validation diagnostics produced while saving this relation"
                     }
                   },
                   "required": [
@@ -4511,6 +5113,116 @@
                               ]
                             },
                             "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                          },
+                          "_validation": {
+                            "type": "object",
+                            "properties": {
+                              "relationId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "errors": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "ruleId": {
+                                      "type": "string"
+                                    },
+                                    "relationId": {
+                                      "type": "string"
+                                    },
+                                    "schemaId": {
+                                      "type": "string"
+                                    },
+                                    "schemaVersion": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "severity": {
+                                      "enum": [
+                                        "error",
+                                        "warning"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "message": {
+                                      "type": "string"
+                                    },
+                                    "fieldId": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "ruleId",
+                                    "relationId",
+                                    "schemaId",
+                                    "schemaVersion",
+                                    "severity",
+                                    "message"
+                                  ]
+                                }
+                              },
+                              "warnings": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "ruleId": {
+                                      "type": "string"
+                                    },
+                                    "relationId": {
+                                      "type": "string"
+                                    },
+                                    "schemaId": {
+                                      "type": "string"
+                                    },
+                                    "schemaVersion": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "severity": {
+                                      "enum": [
+                                        "error",
+                                        "warning"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "message": {
+                                      "type": "string"
+                                    },
+                                    "fieldId": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "ruleId",
+                                    "relationId",
+                                    "schemaId",
+                                    "schemaVersion",
+                                    "severity",
+                                    "message"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "relationId",
+                              "schemaId",
+                              "schemaVersion",
+                              "errors",
+                              "warnings"
+                            ],
+                            "description": "Validation diagnostics produced while saving this relation"
                           }
                         },
                         "required": [
@@ -4793,6 +5505,116 @@
                               ]
                             },
                             "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                          },
+                          "_validation": {
+                            "type": "object",
+                            "properties": {
+                              "relationId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "errors": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "ruleId": {
+                                      "type": "string"
+                                    },
+                                    "relationId": {
+                                      "type": "string"
+                                    },
+                                    "schemaId": {
+                                      "type": "string"
+                                    },
+                                    "schemaVersion": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "severity": {
+                                      "enum": [
+                                        "error",
+                                        "warning"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "message": {
+                                      "type": "string"
+                                    },
+                                    "fieldId": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "ruleId",
+                                    "relationId",
+                                    "schemaId",
+                                    "schemaVersion",
+                                    "severity",
+                                    "message"
+                                  ]
+                                }
+                              },
+                              "warnings": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "ruleId": {
+                                      "type": "string"
+                                    },
+                                    "relationId": {
+                                      "type": "string"
+                                    },
+                                    "schemaId": {
+                                      "type": "string"
+                                    },
+                                    "schemaVersion": {
+                                      "type": "integer",
+                                      "minimum": 1,
+                                      "maximum": 9007199254740991
+                                    },
+                                    "severity": {
+                                      "enum": [
+                                        "error",
+                                        "warning"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    "message": {
+                                      "type": "string"
+                                    },
+                                    "fieldId": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "ruleId",
+                                    "relationId",
+                                    "schemaId",
+                                    "schemaVersion",
+                                    "severity",
+                                    "message"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "relationId",
+                              "schemaId",
+                              "schemaVersion",
+                              "errors",
+                              "warnings"
+                            ],
+                            "description": "Validation diagnostics produced while saving this relation"
                           }
                         },
                         "required": [
@@ -5242,6 +6064,116 @@
                         ]
                       },
                       "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                    },
+                    "_validation": {
+                      "type": "object",
+                      "properties": {
+                        "entityId": {
+                          "type": "string"
+                        },
+                        "schemaId": {
+                          "type": "string"
+                        },
+                        "schemaVersion": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string"
+                              },
+                              "entityId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "fieldId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "entityId",
+                              "schemaId",
+                              "schemaVersion",
+                              "severity",
+                              "message"
+                            ]
+                          }
+                        },
+                        "warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string"
+                              },
+                              "entityId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "fieldId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "entityId",
+                              "schemaId",
+                              "schemaVersion",
+                              "severity",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "entityId",
+                        "schemaId",
+                        "schemaVersion",
+                        "errors",
+                        "warnings"
+                      ],
+                      "description": "Validation diagnostics produced by the most recent mutation response"
                     },
                     "_projections": {
                       "type": "object",
@@ -6011,6 +6943,116 @@
                       },
                       "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                     },
+                    "_validation": {
+                      "type": "object",
+                      "properties": {
+                        "entityId": {
+                          "type": "string"
+                        },
+                        "schemaId": {
+                          "type": "string"
+                        },
+                        "schemaVersion": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string"
+                              },
+                              "entityId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "fieldId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "entityId",
+                              "schemaId",
+                              "schemaVersion",
+                              "severity",
+                              "message"
+                            ]
+                          }
+                        },
+                        "warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string"
+                              },
+                              "entityId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "fieldId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "entityId",
+                              "schemaId",
+                              "schemaVersion",
+                              "severity",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "entityId",
+                        "schemaId",
+                        "schemaVersion",
+                        "errors",
+                        "warnings"
+                      ],
+                      "description": "Validation diagnostics produced by the most recent mutation response"
+                    },
                     "_projections": {
                       "type": "object",
                       "propertyNames": {
@@ -6478,6 +7520,116 @@
                         ]
                       },
                       "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                    },
+                    "_validation": {
+                      "type": "object",
+                      "properties": {
+                        "entityId": {
+                          "type": "string"
+                        },
+                        "schemaId": {
+                          "type": "string"
+                        },
+                        "schemaVersion": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string"
+                              },
+                              "entityId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "fieldId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "entityId",
+                              "schemaId",
+                              "schemaVersion",
+                              "severity",
+                              "message"
+                            ]
+                          }
+                        },
+                        "warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string"
+                              },
+                              "entityId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "fieldId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "entityId",
+                              "schemaId",
+                              "schemaVersion",
+                              "severity",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "entityId",
+                        "schemaId",
+                        "schemaVersion",
+                        "errors",
+                        "warnings"
+                      ],
+                      "description": "Validation diagnostics produced by the most recent mutation response"
                     },
                     "_projections": {
                       "type": "object",
@@ -7270,6 +8422,116 @@
                           },
                           "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
                         },
+                        "_validation": {
+                          "type": "object",
+                          "properties": {
+                            "entityId": {
+                              "type": "string"
+                            },
+                            "schemaId": {
+                              "type": "string"
+                            },
+                            "schemaVersion": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991
+                            },
+                            "errors": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "ruleId": {
+                                    "type": "string"
+                                  },
+                                  "entityId": {
+                                    "type": "string"
+                                  },
+                                  "schemaId": {
+                                    "type": "string"
+                                  },
+                                  "schemaVersion": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "severity": {
+                                    "enum": [
+                                      "error",
+                                      "warning"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "message": {
+                                    "type": "string"
+                                  },
+                                  "fieldId": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "ruleId",
+                                  "entityId",
+                                  "schemaId",
+                                  "schemaVersion",
+                                  "severity",
+                                  "message"
+                                ]
+                              }
+                            },
+                            "warnings": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "ruleId": {
+                                    "type": "string"
+                                  },
+                                  "entityId": {
+                                    "type": "string"
+                                  },
+                                  "schemaId": {
+                                    "type": "string"
+                                  },
+                                  "schemaVersion": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "severity": {
+                                    "enum": [
+                                      "error",
+                                      "warning"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "message": {
+                                    "type": "string"
+                                  },
+                                  "fieldId": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "ruleId",
+                                  "entityId",
+                                  "schemaId",
+                                  "schemaVersion",
+                                  "severity",
+                                  "message"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "entityId",
+                            "schemaId",
+                            "schemaVersion",
+                            "errors",
+                            "warnings"
+                          ],
+                          "description": "Validation diagnostics produced by the most recent mutation response"
+                        },
                         "_projections": {
                           "type": "object",
                           "propertyNames": {
@@ -7618,6 +8880,116 @@
                         ]
                       },
                       "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                    },
+                    "_validation": {
+                      "type": "object",
+                      "properties": {
+                        "relationId": {
+                          "type": "string"
+                        },
+                        "schemaId": {
+                          "type": "string"
+                        },
+                        "schemaVersion": {
+                          "type": "integer",
+                          "minimum": 1,
+                          "maximum": 9007199254740991
+                        },
+                        "errors": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string"
+                              },
+                              "relationId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "fieldId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "relationId",
+                              "schemaId",
+                              "schemaVersion",
+                              "severity",
+                              "message"
+                            ]
+                          }
+                        },
+                        "warnings": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "ruleId": {
+                                "type": "string"
+                              },
+                              "relationId": {
+                                "type": "string"
+                              },
+                              "schemaId": {
+                                "type": "string"
+                              },
+                              "schemaVersion": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 9007199254740991
+                              },
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "fieldId": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "ruleId",
+                              "relationId",
+                              "schemaId",
+                              "schemaVersion",
+                              "severity",
+                              "message"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "relationId",
+                        "schemaId",
+                        "schemaVersion",
+                        "errors",
+                        "warnings"
+                      ],
+                      "description": "Validation diagnostics produced while saving this relation"
                     }
                   },
                   "required": [
@@ -8040,6 +9412,116 @@
                             ]
                           },
                           "description": "Latest external-update metadata, keyed by field id, for external_kind fields"
+                        },
+                        "_validation": {
+                          "type": "object",
+                          "properties": {
+                            "relationId": {
+                              "type": "string"
+                            },
+                            "schemaId": {
+                              "type": "string"
+                            },
+                            "schemaVersion": {
+                              "type": "integer",
+                              "minimum": 1,
+                              "maximum": 9007199254740991
+                            },
+                            "errors": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "ruleId": {
+                                    "type": "string"
+                                  },
+                                  "relationId": {
+                                    "type": "string"
+                                  },
+                                  "schemaId": {
+                                    "type": "string"
+                                  },
+                                  "schemaVersion": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "severity": {
+                                    "enum": [
+                                      "error",
+                                      "warning"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "message": {
+                                    "type": "string"
+                                  },
+                                  "fieldId": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "ruleId",
+                                  "relationId",
+                                  "schemaId",
+                                  "schemaVersion",
+                                  "severity",
+                                  "message"
+                                ]
+                              }
+                            },
+                            "warnings": {
+                              "type": "array",
+                              "items": {
+                                "type": "object",
+                                "properties": {
+                                  "ruleId": {
+                                    "type": "string"
+                                  },
+                                  "relationId": {
+                                    "type": "string"
+                                  },
+                                  "schemaId": {
+                                    "type": "string"
+                                  },
+                                  "schemaVersion": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 9007199254740991
+                                  },
+                                  "severity": {
+                                    "enum": [
+                                      "error",
+                                      "warning"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "message": {
+                                    "type": "string"
+                                  },
+                                  "fieldId": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "ruleId",
+                                  "relationId",
+                                  "schemaId",
+                                  "schemaVersion",
+                                  "severity",
+                                  "message"
+                                ]
+                              }
+                            }
+                          },
+                          "required": [
+                            "relationId",
+                            "schemaId",
+                            "schemaVersion",
+                            "errors",
+                            "warnings"
+                          ],
+                          "description": "Validation diagnostics produced while saving this relation"
                         }
                       },
                       "required": [

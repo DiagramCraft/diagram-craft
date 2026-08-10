@@ -176,13 +176,16 @@ const expandTypedRelationStep = async (
         field.direction === step.direction
     );
     if (!typedField) continue;
+    // A typed-relation field's direction identifies the endpoint occupied by the current entity.
+    // An `in` field therefore follows the row's outgoing edge to its `out` endpoint, while an
+    // `out` field follows the incoming edge to its `in` endpoint.
     const rows =
-      step.direction === 'out'
+      step.direction === 'in'
         ? (outgoingByEntity.get(occurrence.entity.id) ?? [])
         : (incomingByEntity.get(occurrence.entity.id) ?? []);
     for (const row of dedupeRelationRows(rows)) {
       if (row.schema_id !== step.relationSchemaId) continue;
-      const targetId = step.direction === 'out' ? row.out_entity_id : row.in_entity_id;
+      const targetId = step.direction === 'in' ? row.out_entity_id : row.in_entity_id;
       const target = entityById.get(targetId);
       const targetSchema = target ? schemaById.get(target.schema_id) : undefined;
       if (!target || !targetSchema) continue;
@@ -192,22 +195,17 @@ const expandTypedRelationStep = async (
           [
             {
               schema: currentSchema,
-              direction: step.direction === 'out' ? 'in' : 'out'
+              direction: step.direction
             },
             {
               schema: targetSchema,
-              direction: step.direction === 'out' ? 'out' : 'in'
+              direction: step.direction === 'in' ? 'out' : 'in'
             }
           ],
           row.schema_id,
           row.owner
         ) ||
-        !canViewTypedRelationFromEndpoint(
-          authCtx,
-          currentSchema,
-          row.schema_id,
-          step.direction === 'out' ? 'in' : 'out'
-        )
+        !canViewTypedRelationFromEndpoint(authCtx, currentSchema, row.schema_id, step.direction)
       ) {
         continue;
       }

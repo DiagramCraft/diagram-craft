@@ -1,4 +1,5 @@
 import { FormElement } from '@diagram-craft/app-components/FormElement';
+import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -114,14 +115,14 @@ export const RelationFieldInput = ({
   if (field.type === 'number') {
     return (
       <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
-        <input
-          type="number"
-          step="1"
+        <NumberInput
+          value={stringValue}
+          numberOfDecimals={0}
+          step={1}
           min={field.min}
           max={field.max}
           disabled={disabled}
-          value={stringValue}
-          onChange={event => onChange(event.target.value)}
+          onChange={value => onChange(value === undefined ? '' : String(value))}
           style={{ width: '100%' }}
         />
       </FormElement>

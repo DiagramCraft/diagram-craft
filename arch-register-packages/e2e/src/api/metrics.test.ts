@@ -43,7 +43,7 @@ const domainToContractMetric = {
       kind: 'typedRelation' as const,
       fieldId: 'contracts',
       relationSchemaId: systemContractRelationSchemaId,
-      direction: 'out' as const
+      direction: 'in' as const
     }
   ]
 };
