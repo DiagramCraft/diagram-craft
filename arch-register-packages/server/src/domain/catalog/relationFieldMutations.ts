@@ -2,19 +2,19 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import { PermissionChecker, type AuthorizationContext } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
-import { logAudit, computeChanges } from '../audit/db/auditLogging';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import {
   extractRelationOwnerOrLifecycleId,
-  flattenRelationAuditFields,
   assertRelationMutationsSupported,
   toRedactedApiRelation,
-  validateRelationEndpoints,
-  relationAuditContext,
-  relationToBaseState
+  validateRelationEndpoints
 } from './relationHelpers';
 import { requireTypedRelationFieldEdit } from './relationAccessControl';
-import { RELATION_AUTOSAVE_KEEP_COUNT } from './relationMutations';
+import {
+  createRelationWithAudit,
+  deleteRelationWithAudit,
+  updateRelationWithAudit
+} from './relationMutations';
 import type { TypedRelationField } from '@arch-register/api-types/schemaContract';
 import type { RelationFieldDelta } from '@arch-register/api-types/entityContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
@@ -90,45 +90,22 @@ export const applyRelationFieldDelta = async (
     }
 
     const timestamp = new Date();
-    const row = await db.relation.createRelation({
-      id: randomUUID(),
+    const row = await createRelationWithAudit(db, {
       workspace,
-      schema_id: schema.id,
-      in_entity_id: inEntity!.id,
-      out_entity_id: outEntity!.id,
-      data: createFieldData,
-      owner,
-      lifecycle,
-      created_at: timestamp,
-      updated_at: timestamp
+      actor,
+      relation: {
+        id: randomUUID(),
+        workspace,
+        schema_id: schema.id,
+        in_entity_id: inEntity!.id,
+        out_entity_id: outEntity!.id,
+        data: createFieldData,
+        owner,
+        lifecycle,
+        created_at: timestamp,
+        updated_at: timestamp
+      }
     });
-
-    await logAudit(db, {
-      userId: actor.id,
-      userDisplayName: actor.displayName,
-      workspace,
-      operation: 'create',
-      entityType: 'relation',
-      entityId: row.id,
-      entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
-      schemaId: row.schema_id,
-      changes: { new: flattenRelationAuditFields(row) },
-      metadata: { relation: relationAuditContext(row) }
-    });
-
-    await db.catalog.createEntityVersion({
-      id: randomUUID(),
-      workspace,
-      record_id: row.id,
-      version_number: row.version,
-      kind: 'autosave',
-      commit_message: null,
-      created_at: timestamp,
-      created_by: actor.id,
-      state: relationToBaseState(row),
-      applied_case_revision_id: null
-    });
-    await db.catalog.pruneAutosaveVersions(workspace, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
 
     results.push(toRedactedApiRelation(row, authCtx, schema));
   }
@@ -170,43 +147,20 @@ export const applyRelationFieldDelta = async (
 
     const nextData = { ...oldRow.data, ...fieldData };
     const timestamp = new Date();
-    const row = await db.relation.updateRelation(workspace, update.id, {
-      data: nextData,
-      owner: nextOwner,
-      lifecycle: nextLifecycle,
-      version: oldRow.version + 1,
-      updated_at: timestamp
+    const row = await updateRelationWithAudit(db, {
+      workspace,
+      relationId: update.id,
+      previous: oldRow,
+      next: {
+        data: nextData,
+        owner: nextOwner,
+        lifecycle: nextLifecycle,
+        version: oldRow.version + 1,
+        updated_at: timestamp
+      },
+      actor
     });
     httpAssert.present(row, { status: 404, message: `Relation '${update.id}' not found` });
-
-    await logAudit(db, {
-      userId: actor.id,
-      userDisplayName: actor.displayName,
-      workspace,
-      operation: 'update',
-      entityType: 'relation',
-      entityId: update.id,
-      entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
-      schemaId: row.schema_id,
-      changes: computeChanges(flattenRelationAuditFields(oldRow), flattenRelationAuditFields(row), {
-        alwaysInclude: ['_inEntityId', '_outEntityId']
-      }),
-      metadata: { relation: relationAuditContext(row) }
-    });
-
-    await db.catalog.createEntityVersion({
-      id: randomUUID(),
-      workspace,
-      record_id: row.id,
-      version_number: row.version,
-      kind: 'autosave',
-      commit_message: null,
-      created_at: timestamp,
-      created_by: actor.id,
-      state: relationToBaseState(row),
-      applied_case_revision_id: null
-    });
-    await db.catalog.pruneAutosaveVersions(workspace, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
 
     results.push(toRedactedApiRelation(row, authCtx, schema));
   }
@@ -224,35 +178,14 @@ export const applyRelationFieldDelta = async (
       message: `Relation '${id}' is not connected to this entity`
     });
 
-    await db.relation.deleteRelation(workspace, id);
-
-    await logAudit(db, {
-      userId: actor.id,
-      userDisplayName: actor.displayName,
-      workspace,
-      operation: 'delete',
-      entityType: 'relation',
-      entityId: id,
-      entityName: `${oldRow.in_entity_name} → ${oldRow.out_entity_name}`,
-      schemaId: oldRow.schema_id,
-      changes: { old: flattenRelationAuditFields(oldRow) },
-      metadata: { relation: relationAuditContext(oldRow) }
-    });
-
     const existingVersions = await db.catalog.listEntityVersions(workspace, id);
     const nextVersionNumber =
       existingVersions.reduce((max, v) => Math.max(max, v.version_number), 0) + 1;
-    await db.catalog.createEntityVersion({
-      id: randomUUID(),
+    await deleteRelationWithAudit(db, {
       workspace,
-      record_id: id,
-      version_number: nextVersionNumber,
-      kind: 'deleted',
-      commit_message: null,
-      created_at: new Date(),
-      created_by: actor.id,
-      state: relationToBaseState(oldRow),
-      applied_case_revision_id: null
+      relation: oldRow,
+      actor,
+      versionNumber: nextVersionNumber
     });
   }
 

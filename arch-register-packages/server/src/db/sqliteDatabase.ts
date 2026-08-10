@@ -112,6 +112,7 @@ export class SqliteDatabase implements DatabaseAdapter {
 
     this.core = {
       driver: 'sqlite' as const,
+      isTransaction: false,
       close: async () => {
         this.db.close();
       },

@@ -16,6 +16,7 @@ import { computeEntityCompleteness } from '../../utils/completeness';
 import { computeChanges, logAudit } from '../audit/db/auditLogging';
 import { flattenRelationAuditFields, relationAuditContext } from '../catalog/relationHelpers';
 import { canViewRelationNotification } from '../catalog/relationNotificationAccess';
+import { withCatalogMutationTransaction } from '../catalog/mutationTransaction';
 
 const checker = new PermissionChecker();
 
@@ -300,38 +301,40 @@ const handleSetFieldValue: AutomationActionHandler = async context => {
   // Threading `automationRuleChain` through `auditMetadata` is what lets `writeAudit` (re-entered
   // by `updateEntityWithAudit` below) know this update is itself the result of a rule firing, so
   // it can refuse to enqueue a rule that's already in the chain instead of looping forever.
-  await updateEntityWithAudit(db, {
-    workspace: event.workspace,
-    entityId: entity.id,
-    previous: entity,
-    actor: AUTOMATION_RULE_SYSTEM_ACTOR,
-    auditMetadata: { automationRuleChain: chain, source: 'automation-rule', ruleId: rule.id },
-    next: {
-      slug: entity.slug,
-      namespace: entity.namespace,
-      name: entity.name,
-      description: entity.description,
-      owner: entity.owner,
-      lifecycle: entity.lifecycle,
-      target_lifecycle: entity.target_lifecycle,
-      target_lifecycle_date: entity.target_lifecycle_date,
-      tags: entity.tags,
-      links: entity.links,
-      schema_id: entity.schema_id,
-      data: nextData,
-      project_id: entity.project_id,
-      updated_at: new Date(),
-      completeness: computeEntityCompleteness(
-        {
-          description: entity.description,
-          owner: entity.owner,
-          lifecycle: entity.lifecycle,
-          data: nextData
-        },
-        schema
-      )
-    }
-  });
+  await withCatalogMutationTransaction(db, tx =>
+    updateEntityWithAudit(tx, {
+      workspace: event.workspace,
+      entityId: entity.id,
+      previous: entity,
+      actor: AUTOMATION_RULE_SYSTEM_ACTOR,
+      auditMetadata: { automationRuleChain: chain, source: 'automation-rule', ruleId: rule.id },
+      next: {
+        slug: entity.slug,
+        namespace: entity.namespace,
+        name: entity.name,
+        description: entity.description,
+        owner: entity.owner,
+        lifecycle: entity.lifecycle,
+        target_lifecycle: entity.target_lifecycle,
+        target_lifecycle_date: entity.target_lifecycle_date,
+        tags: entity.tags,
+        links: entity.links,
+        schema_id: entity.schema_id,
+        data: nextData,
+        project_id: entity.project_id,
+        updated_at: new Date(),
+        completeness: computeEntityCompleteness(
+          {
+            description: entity.description,
+            owner: entity.owner,
+            lifecycle: entity.lifecycle,
+            data: nextData
+          },
+          schema
+        )
+      }
+    })
+  );
 };
 
 /**

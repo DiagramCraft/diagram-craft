@@ -69,7 +69,9 @@ const makeDb = () =>
         ...input,
         owner_name: null,
         schema_name: 'Service'
-      }))
+      })),
+      createEntityVersion: vi.fn(async () => ({})),
+      pruneAutosaveVersions: vi.fn(async () => {})
     },
     workspace: {
       listLifecycleStates: vi.fn(async () => []),

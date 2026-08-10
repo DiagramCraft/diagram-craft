@@ -1,12 +1,14 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { RelationDbCreate, RelationDbResult, RelationDbUpdate } from './db/relationDatabase';
+import type { EntityVersionKind } from './db/catalogDatabase';
 import { logAudit, computeChanges } from '../audit/db/auditLogging';
 import {
   flattenRelationAuditFields,
   relationAuditContext,
   relationToBaseState
 } from './relationHelpers';
+import { assertCatalogMutationTransaction } from './mutationTransaction';
 
 export const RELATION_AUTOSAVE_KEEP_COUNT = 50;
 
@@ -29,6 +31,17 @@ type UpdateRelationWithAuditParams = {
   next: RelationDbUpdate;
   actor: RelationMutationActor;
   auditMetadata?: Record<string, unknown>;
+  versionKind?: EntityVersionKind;
+  commitMessage?: string | null;
+  appliedCaseRevisionId?: string | null;
+};
+
+type DeleteRelationWithAuditParams = {
+  workspace: string;
+  relation: RelationDbResult;
+  actor: RelationMutationActor;
+  versionNumber: number;
+  auditMetadata?: Record<string, unknown>;
 };
 
 /**
@@ -40,6 +53,7 @@ export const createRelationWithAudit = async (
   db: DatabaseAdapter,
   params: CreateRelationWithAuditParams
 ): Promise<RelationDbResult> => {
+  assertCatalogMutationTransaction(db);
   const row = await db.relation.createRelation(params.relation);
 
   await logAudit(db, {
@@ -72,6 +86,43 @@ export const createRelationWithAudit = async (
   return row;
 };
 
+export const deleteRelationWithAudit = async (
+  db: DatabaseAdapter,
+  params: DeleteRelationWithAuditParams
+): Promise<RelationDbResult | null> => {
+  assertCatalogMutationTransaction(db);
+  const deleted = await db.relation.deleteRelation(params.workspace, params.relation.id);
+  if (deleted == null) return null;
+
+  await db.catalog.createEntityVersion({
+    id: randomUUID(),
+    workspace: params.workspace,
+    record_id: params.relation.id,
+    version_number: params.versionNumber,
+    kind: 'deleted',
+    commit_message: null,
+    created_at: new Date(),
+    created_by: params.actor.id,
+    state: relationToBaseState(params.relation),
+    applied_case_revision_id: null
+  });
+
+  await logAudit(db, {
+    userId: params.actor.id,
+    userDisplayName: params.actor.displayName ?? null,
+    workspace: params.workspace,
+    operation: 'delete',
+    entityType: 'relation',
+    entityId: params.relation.id,
+    entityName: `${params.relation.in_entity_name} → ${params.relation.out_entity_name}`,
+    schemaId: params.relation.schema_id,
+    changes: { old: flattenRelationAuditFields(params.relation) },
+    metadata: { relation: relationAuditContext(params.relation), ...params.auditMetadata }
+  });
+
+  return deleted;
+};
+
 /**
  * Raw update + audit-log + version-snapshot for a relation instance, with no permission checks —
  * mirrors `updateEntityWithAudit` (entityMutations.ts). Callers (`updateWorkspaceRelation`,
@@ -81,6 +132,7 @@ export const updateRelationWithAudit = async (
   db: DatabaseAdapter,
   params: UpdateRelationWithAuditParams
 ): Promise<RelationDbResult | null> => {
+  assertCatalogMutationTransaction(db);
   const row = await db.relation.updateRelation(params.workspace, params.relationId, params.next);
   if (row == null) return null;
 
@@ -107,12 +159,12 @@ export const updateRelationWithAudit = async (
     workspace: params.workspace,
     record_id: row.id,
     version_number: row.version,
-    kind: 'autosave',
-    commit_message: null,
+    kind: params.versionKind ?? 'autosave',
+    commit_message: params.commitMessage ?? null,
     created_at: row.updated_at,
     created_by: params.actor.id,
     state: relationToBaseState(row),
-    applied_case_revision_id: null
+    applied_case_revision_id: params.appliedCaseRevisionId ?? null
   });
   await db.catalog.pruneAutosaveVersions(params.workspace, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
 

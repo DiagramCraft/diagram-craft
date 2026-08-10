@@ -40,6 +40,7 @@ import {
   requireTypedRelationEdit
 } from '../catalog/relationAccessControl';
 import { requireWorkspaceCapability } from '../auth/authorization';
+import { withCatalogMutationTransaction } from '../catalog/mutationTransaction';
 
 const checker = new PermissionChecker();
 
@@ -1041,50 +1042,52 @@ export const createAiChatTools = (
       );
     }
 
-    const timestamp = new Date();
     if (!schema.key_prefix) throw new Error(`Schema '${args.schemaId}' is missing a key prefix`);
-    const publicId = formatPublicId(
-      schema.key_prefix,
-      await db.workspace.allocatePublicId(schema.key_prefix, timestamp)
-    );
-    const entity = await createEntityWithAudit(db, {
-      workspace: workspaceId,
-      actor,
-      entity: {
-        id: randomUUID(),
+    const entity = await withCatalogMutationTransaction(db, async tx => {
+      const timestamp = new Date();
+      const publicId = formatPublicId(
+        schema.key_prefix,
+        await tx.workspace.allocatePublicId(schema.key_prefix, timestamp)
+      );
+      return createEntityWithAudit(tx, {
         workspace: workspaceId,
-        public_id: publicId,
-        slug:
-          typeof args.slug === 'string' && args.slug.trim().length > 0
-            ? args.slug.trim()
-            : slugify(requestedName),
-        namespace:
-          typeof args.namespace === 'string' && args.namespace.trim().length > 0
-            ? args.namespace.trim()
-            : 'default',
-        name: requestedName,
-        description: typeof args.description === 'string' ? args.description : '',
-        owner,
-        lifecycle,
-        target_lifecycle: null,
-        target_lifecycle_date: null,
-        tags: filterStringArray(args.tags),
-        links: [],
-        schema_id: schema.id,
-        data: args.fields ?? {},
-        project_id: null,
-        created_at: timestamp,
-        updated_at: timestamp,
-        completeness: computeEntityCompleteness(
-          {
-            description: typeof args.description === 'string' ? args.description : '',
-            owner,
-            lifecycle,
-            data: args.fields ?? {}
-          },
-          schema
-        )
-      }
+        actor,
+        entity: {
+          id: randomUUID(),
+          workspace: workspaceId,
+          public_id: publicId,
+          slug:
+            typeof args.slug === 'string' && args.slug.trim().length > 0
+              ? args.slug.trim()
+              : slugify(requestedName),
+          namespace:
+            typeof args.namespace === 'string' && args.namespace.trim().length > 0
+              ? args.namespace.trim()
+              : 'default',
+          name: requestedName,
+          description: typeof args.description === 'string' ? args.description : '',
+          owner,
+          lifecycle,
+          target_lifecycle: null,
+          target_lifecycle_date: null,
+          tags: filterStringArray(args.tags),
+          links: [],
+          schema_id: schema.id,
+          data: args.fields ?? {},
+          project_id: null,
+          created_at: timestamp,
+          updated_at: timestamp,
+          completeness: computeEntityCompleteness(
+            {
+              description: typeof args.description === 'string' ? args.description : '',
+              owner,
+              lifecycle,
+              data: args.fields ?? {}
+            },
+            schema
+          )
+        }
+      });
     });
 
     return {
@@ -1153,48 +1156,50 @@ export const createAiChatTools = (
       );
     }
 
-    const entity = await updateEntityWithAudit(db, {
-      workspace: workspaceId,
-      entityId: current.id,
-      previous: current,
-      actor,
-      next: {
-        slug:
-          typeof args.slug === 'string' && args.slug.trim().length > 0
-            ? args.slug.trim()
-            : current.slug,
-        namespace:
-          typeof args.namespace === 'string' && args.namespace.trim().length > 0
-            ? args.namespace.trim()
-            : current.namespace,
-        name:
-          typeof args.name === 'string' && args.name.trim().length > 0
-            ? args.name.trim()
-            : current.name,
-        description: nextDescription,
-        owner: nextOwner,
-        lifecycle: nextLifecycle,
-        target_lifecycle: current.target_lifecycle,
-        target_lifecycle_date: current.target_lifecycle_date,
-        tags: args.tags === undefined ? current.tags : filterStringArray(args.tags),
-        links: current.links,
-        schema_id: current.schema_id,
-        data: nextData,
-        project_id: current.project_id,
-        updated_at: new Date(),
-        completeness: schema
-          ? computeEntityCompleteness(
-              {
-                description: nextDescription,
-                owner: nextOwner,
-                lifecycle: nextLifecycle,
-                data: nextData
-              },
-              schema
-            )
-          : current.completeness
-      }
-    });
+    const entity = await withCatalogMutationTransaction(db, tx =>
+      updateEntityWithAudit(tx, {
+        workspace: workspaceId,
+        entityId: current.id,
+        previous: current,
+        actor,
+        next: {
+          slug:
+            typeof args.slug === 'string' && args.slug.trim().length > 0
+              ? args.slug.trim()
+              : current.slug,
+          namespace:
+            typeof args.namespace === 'string' && args.namespace.trim().length > 0
+              ? args.namespace.trim()
+              : current.namespace,
+          name:
+            typeof args.name === 'string' && args.name.trim().length > 0
+              ? args.name.trim()
+              : current.name,
+          description: nextDescription,
+          owner: nextOwner,
+          lifecycle: nextLifecycle,
+          target_lifecycle: current.target_lifecycle,
+          target_lifecycle_date: current.target_lifecycle_date,
+          tags: args.tags === undefined ? current.tags : filterStringArray(args.tags),
+          links: current.links,
+          schema_id: current.schema_id,
+          data: nextData,
+          project_id: current.project_id,
+          updated_at: new Date(),
+          completeness: schema
+            ? computeEntityCompleteness(
+                {
+                  description: nextDescription,
+                  owner: nextOwner,
+                  lifecycle: nextLifecycle,
+                  data: nextData
+                },
+                schema
+              )
+            : current.completeness
+        }
+      })
+    );
     if (!entity) throw new Error(`Failed to update entity '${current.id}'`);
 
     return {
