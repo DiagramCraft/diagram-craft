@@ -1,13 +1,32 @@
 import { bonsai, type ASTNode, type CompiledExpression } from 'bonsai-js';
+import { arrays, math } from 'bonsai-js/stdlib';
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
 import type { SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
+import { currencyValueSchema } from '@arch-register/api-types/common';
 import { createLogger } from '../../utils/logger';
 import { httpAssert } from '../../utils/httpAssert';
 
 export type DerivedFieldDefinition = {
   id: string;
   expression: string;
-  resultType: 'text' | 'number' | 'select' | 'boolean' | 'rating';
+  resultType: 'text' | 'number' | 'currency' | 'select' | 'boolean' | 'rating';
+};
+
+export type DerivedGraphNode = {
+  id: string;
+  schemaId: string;
+  values: Record<string, unknown>;
+  edge?: {
+    kind: 'reference' | 'containment' | 'typedRelation';
+    fieldId?: string;
+    relationSchemaId?: string;
+    relationId?: string;
+  };
+};
+
+export type DerivedEvaluationGraph = {
+  entity: DerivedGraphNode;
+  dependents: DerivedGraphNode[];
 };
 
 type DerivedPlan = {
@@ -17,7 +36,11 @@ type DerivedPlan = {
   references: Map<string, string[]>;
 };
 
-type EvaluationContext = { values: Record<string, unknown> };
+type EvaluationContext = {
+  values: Record<string, unknown>;
+  entity?: DerivedGraphNode;
+  dependents?: DerivedGraphNode[];
+};
 
 type GroupAccessBoundary =
   | { kind: 'unrestricted' }
@@ -26,10 +49,12 @@ type GroupAccessBoundary =
 
 const logger = createLogger('derived-fields');
 
-const engine = bonsai<EvaluationContext>({ timeout: 50, maxDepth: 50 }).addContextFunction(
-  'field',
-  (context, fieldId) => context.values[String(fieldId)]
-);
+const engine = bonsai<EvaluationContext>({ timeout: 50, maxDepth: 50 })
+  .use(arrays)
+  .use(math)
+  .addContextFunction('field', (context, fieldId) => context.values[String(fieldId)]);
+
+const ALLOWED_CONTEXT_IDENTIFIERS = new Set(['entity', 'dependents']);
 
 const derivedField = (field: SchemaField | AssessmentField): DerivedFieldDefinition | null =>
   field.type === 'derived'
@@ -55,8 +80,41 @@ const collectDependencies = (node: ASTNode, dependencies: string[]) => {
   }
 
   for (const value of Object.values(node)) {
-    if (value && typeof value === 'object' && 'type' in value) {
+    if (Array.isArray(value)) {
+      value.forEach(item => {
+        if (item && typeof item === 'object' && 'type' in item) {
+          collectDependencies(item as ASTNode, dependencies);
+        }
+      });
+    } else if (value && typeof value === 'object' && 'type' in value) {
       collectDependencies(value as ASTNode, dependencies);
+    }
+  }
+};
+
+const collectObjectLiteralKeys = (node: ASTNode, keys: Set<string>) => {
+  const objectProperty = node as unknown as {
+    type: string;
+    computed?: boolean;
+    key?: { type: string; name?: string };
+  };
+  if (
+    objectProperty.type === 'ObjectProperty' &&
+    !objectProperty.computed &&
+    objectProperty.key?.type === 'Identifier' &&
+    objectProperty.key.name
+  ) {
+    keys.add(objectProperty.key.name);
+  }
+  for (const value of Object.values(node)) {
+    if (Array.isArray(value)) {
+      value.forEach(item => {
+        if (item && typeof item === 'object' && 'type' in item) {
+          collectObjectLiteralKeys(item as ASTNode, keys);
+        }
+      });
+    } else if (value && typeof value === 'object' && 'type' in value) {
+      collectObjectLiteralKeys(value as ASTNode, keys);
     }
   }
 };
@@ -81,9 +139,15 @@ export const buildDerivedPlan = (fields: Array<SchemaField | AssessmentField>): 
           .join('; ')}`
       );
     }
-    if (validation.references.identifiers.length > 0) {
+    const objectLiteralKeys = new Set<string>();
+    collectObjectLiteralKeys(validation.ast, objectLiteralKeys);
+    const unsupportedIdentifiers = validation.references.identifiers.filter(
+      identifier =>
+        !ALLOWED_CONTEXT_IDENTIFIERS.has(identifier) && !objectLiteralKeys.has(identifier)
+    );
+    if (unsupportedIdentifiers.length > 0) {
       throw new Error(
-        `Derived field '${definition.id}' may only reference sibling fields with field() — found ${validation.references.identifiers.join(', ')}`
+        `Derived field '${definition.id}' may only reference sibling fields with field(), entity, or dependents — found ${unsupportedIdentifiers.join(', ')}`
       );
     }
 
@@ -257,6 +321,11 @@ const coerceResult = (field: DerivedFieldDefinition, value: unknown): unknown =>
         throw new Error('Expected an integer number');
       }
       return value;
+    case 'currency': {
+      const parsed = currencyValueSchema.safeParse(value);
+      if (!parsed.success) throw new Error('Expected a finite amount and three-letter currency');
+      return parsed.data;
+    }
     case 'boolean':
       if (typeof value !== 'boolean') throw new Error(`Expected boolean, received ${typeof value}`);
       return value;
@@ -276,7 +345,8 @@ export const evaluateDerivedFields = (
   plan: DerivedPlan,
   inputValues: Record<string, unknown>,
   context: { objectType: 'entity' | 'assessment'; objectId: string },
-  unsafeDerivedFieldIds: ReadonlySet<string> = new Set()
+  unsafeDerivedFieldIds: ReadonlySet<string> = new Set(),
+  graph?: DerivedEvaluationGraph
 ): Record<string, unknown> => {
   const values = { ...inputValues };
   for (const field of plan.fields) {
@@ -290,7 +360,11 @@ export const evaluateDerivedFields = (
       continue;
     }
     try {
-      const result = plan.compiled.get(field.id)!.evaluateSync({ values });
+      const result = plan.compiled.get(field.id)!.evaluateSync({
+        values,
+        entity: graph?.entity,
+        dependents: graph?.dependents ?? []
+      });
       const coerced = coerceResult(field, result);
       if (coerced === undefined) delete values[field.id];
       else values[field.id] = coerced;
@@ -311,13 +385,14 @@ export const materializeDerivedFields = (
   fields: Array<SchemaField | AssessmentField>,
   values: Record<string, unknown>,
   context: { objectType: 'entity' | 'assessment'; objectId: string },
-  groups?: SchemaGroup[]
+  groups?: SchemaGroup[],
+  graph?: DerivedEvaluationGraph
 ) => {
   const plan = buildDerivedPlan(fields);
   const unsafeDerivedFieldIds = groups
     ? getDerivedFieldIdsWithUnresolvedGroups(fields, groups)
     : new Set<string>();
-  return evaluateDerivedFields(plan, values, context, unsafeDerivedFieldIds);
+  return evaluateDerivedFields(plan, values, context, unsafeDerivedFieldIds, graph);
 };
 
 export const assertNoDerivedFieldWrites = (

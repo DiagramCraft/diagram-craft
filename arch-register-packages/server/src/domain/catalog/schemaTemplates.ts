@@ -32,7 +32,7 @@ export type SymbolicField =
       name: string;
       type: 'derived';
       expression: string;
-      resultType: 'text' | 'number' | 'select' | 'boolean' | 'rating';
+      resultType: 'text' | 'number' | 'currency' | 'select' | 'boolean' | 'rating';
       enumId?: string;
     }
   | {

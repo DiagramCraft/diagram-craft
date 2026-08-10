@@ -1119,6 +1119,7 @@ export const FieldRow = ({
             >
               <Select.Item value="text">Text</Select.Item>
               <Select.Item value="number">Number</Select.Item>
+              <Select.Item value="currency">Currency</Select.Item>
               <Select.Item value="select">Select</Select.Item>
               <Select.Item value="boolean">Boolean</Select.Item>
               <Select.Item value="rating">Rating</Select.Item>

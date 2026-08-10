@@ -64,11 +64,12 @@
             reusable shared fieldgroups, relationships, and schema-specific behavior, including currency fields and
             date fields that can generate schema-field-scoped approaching and overdue governance reminders,
             the built-in Vendor/Contract model where Contract records contain exactly one Vendor,
-            read-only derived fields
-            calculated from sibling
-            fields using a sandboxed expression and a declared text, number, select, boolean, or rating result type,
+            read-only derived fields calculated using a sandboxed expression over sibling fields and a bounded
+            one-hop graph context (`entity` and direct `dependents`, including typed-relation targets), with a
+            declared text, number, currency, select, boolean, or rating result type,
             and externally managed fields (by AI, an integration, or an internal automation) with a refresh mode of
-            on-change or scheduled. Derived values are materialized when inputs or definitions change, and are excluded
+            on-change or scheduled. Derived values are materialized and synchronously recalculated for affected
+            entities when inputs, relations, or definitions change, and are excluded
             from required-field completeness. Fields can be organized into named, presentation-only groups (with an
             optional description) that render as labeled sections wherever fields appear as a form or list; this has no
             effect on validation, required-ness, or completeness. A group — a schema-local group, or a schema's

@@ -34,6 +34,7 @@ import {
   materializeDerivedFields,
   validateDerivedFieldGroupAccess
 } from '../derived/derivedFields';
+import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
 import {
   getSchemaGovernancePolicies,
   getSchemaGovernancePoliciesBySchema
@@ -433,6 +434,8 @@ export const updateWorkspaceSchema = async (
             );
           }
         }
+
+        await recalculateEntityDerivedFields(tx, ws);
 
         return updated;
       });

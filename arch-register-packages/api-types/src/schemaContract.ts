@@ -97,7 +97,14 @@ const typedRelationFieldSchema = baseFieldSchema.extend({
     .describe('Which endpoint of the relation schema this entity schema occupies')
 });
 
-const derivedResultTypeSchema = z.enum(['text', 'number', 'select', 'boolean', 'rating']);
+const derivedResultTypeSchema = z.enum([
+  'text',
+  'number',
+  'currency',
+  'select',
+  'boolean',
+  'rating'
+]);
 
 const derivedFieldBaseSchema = baseFieldSchema
   .omit({ external_kind: true, refresh_mode: true })
@@ -108,7 +115,9 @@ const derivedFieldBaseSchema = baseFieldSchema
 
 const derivedFieldInputSchema = derivedFieldBaseSchema
   .extend({
-    type: z.literal('derived').describe('Read-only value derived from sibling fields'),
+    type: z
+      .literal('derived')
+      .describe('Read-only value derived from the current entity and its bounded graph context'),
     requirementLevel: z.literal('optional').describe('Derived fields are never required'),
     expression: z.string().min(1).describe('Sandboxed expression used to calculate the value'),
     resultType: derivedResultTypeSchema.describe('Underlying type of the calculated value'),

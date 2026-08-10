@@ -109,7 +109,9 @@ export const getSchemaFieldDefs = (
             ? 'select'
             : f.resultType === 'rating'
               ? 'rating'
-              : f.resultType;
+              : f.resultType === 'currency'
+                ? 'number'
+                : f.resultType;
         if (type === 'select') options = f.options ?? [];
       }
 

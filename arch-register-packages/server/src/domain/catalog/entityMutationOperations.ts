@@ -56,6 +56,7 @@ import { assertNoDerivedFieldWrites } from '../derived/derivedFields';
 import { isTypedRelationField } from '@arch-register/api-types/schemaContract';
 import { applyRelationFieldDelta } from './relationFieldMutations';
 import { withCatalogMutationTransaction } from './mutationTransaction';
+import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
 
 type SupportedCurrencyLookup = (
   workspace: string
@@ -196,7 +197,12 @@ export const createEntity = async (
         }
       });
 
-      return toApiEntity(row, authCtx, schema);
+      const recalculatedAvailable = await recalculateEntityDerivedFields(tx, workspace, [row.id]);
+      const recalculated = recalculatedAvailable
+        ? ((await tx.catalog.getEntity(workspace, row.id)) ?? row)
+        : row;
+
+      return toApiEntity(recalculated, authCtx, schema);
     });
   } catch (error) {
     return handleError(error, 'Failed to create data record');
@@ -416,6 +422,7 @@ export const bulkCreateEntities = async (
       }
 
       const created: EntityRecord[] = [];
+      const createdRows: Array<{ id: string; schema: BulkEntityDraft['schema'] }> = [];
       for (const draft of drafts) {
         draft.entity.completeness = computeEntityCompleteness(draft.entity, draft.schema);
         const row = await createEntityWithAudit(tx, {
@@ -424,8 +431,15 @@ export const bulkCreateEntities = async (
           entity: draft.entity
         });
         created.push(toApiEntity(row, authCtx, draft.schema));
+        createdRows.push({ id: row.id, schema: draft.schema });
       }
-      return created;
+      const recalculatedAvailable = await recalculateEntityDerivedFields(tx, workspace);
+      return Promise.all(
+        createdRows.map(async ({ id, schema }, index) => {
+          const row = recalculatedAvailable ? await tx.catalog.getEntity(workspace, id) : null;
+          return row ? toApiEntity(row, authCtx, schema) : created[index]!;
+        })
+      );
     });
   } catch (error) {
     return handleError(error, 'Failed to create data records');
@@ -689,7 +703,11 @@ export const updateEntity = async (
       });
 
       httpAssert.present(row, { status: 404, message: `Data record '${id}' not found` });
-      return toApiEntity(row, authCtx, schema);
+      const recalculatedAvailable = await recalculateEntityDerivedFields(tx, workspace);
+      const recalculated = recalculatedAvailable
+        ? ((await tx.catalog.getEntity(workspace, id)) ?? row)
+        : row;
+      return toApiEntity(recalculated, authCtx, schema);
     });
   } catch (error) {
     return handleError(error, 'Failed to update data record');
@@ -750,7 +768,11 @@ export const cloneEntity = async (
         }
       });
 
-      return toApiEntity(row, authCtx, schema);
+      const recalculatedAvailable = await recalculateEntityDerivedFields(tx, workspace, [row.id]);
+      const recalculated = recalculatedAvailable
+        ? ((await tx.catalog.getEntity(workspace, row.id)) ?? row)
+        : row;
+      return toApiEntity(recalculated, authCtx, schema);
     });
   } catch (error) {
     return handleError(error, 'Failed to clone data record');
@@ -778,6 +800,7 @@ export const deleteEntity = async (
 
       const watcherUserIds = await tx.watch.listWatcherUserIds(workspace, row.id);
       await tx.catalog.deleteEntity(workspace, row.id);
+      await recalculateEntityDerivedFields(tx, workspace);
 
       const existingVersions = await tx.catalog.listEntityVersions(workspace, row.id);
       const nextVersionNumber =

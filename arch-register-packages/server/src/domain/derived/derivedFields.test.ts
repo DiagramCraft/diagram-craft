@@ -71,6 +71,53 @@ describe('derived fields', () => {
     });
   });
 
+  it('evaluates one-hop dependent aggregates and currency results', () => {
+    const fields: SchemaField[] = [
+      {
+        id: 'annual_cost',
+        name: 'Annual cost',
+        type: 'currency'
+      },
+      {
+        id: 'total_cost',
+        name: 'Total cost',
+        type: 'derived',
+        requirementLevel: 'optional',
+        expression:
+          "{ amount: dependents.map(.values['annual_cost'].amount) |> sum, currency: 'USD' }",
+        resultType: 'currency'
+      }
+    ];
+    const graph = {
+      entity: { id: 'system-1', schemaId: 'system', values: {} },
+      dependents: [
+        {
+          id: 'contract-1',
+          schemaId: 'contract',
+          values: { annual_cost: { amount: 1200, currency: 'USD' } }
+        },
+        {
+          id: 'contract-2',
+          schemaId: 'contract',
+          values: { annual_cost: { amount: 800, currency: 'USD' } }
+        }
+      ]
+    };
+
+    expect(materializeDerivedFields(fields, {}, entityContext, [], graph)).toEqual({
+      total_cost: { amount: 2000, currency: 'USD' }
+    });
+  });
+
+  it('rejects unsupported graph identifiers while allowing entity and dependents', () => {
+    expect(() =>
+      buildDerivedPlan([
+        derivedSchemaText('total', 'dependents.map(.values.amount) |> sum'),
+        derivedSchemaText('invalid', 'workspace.secret')
+      ])
+    ).toThrow(/workspace/);
+  });
+
   it('omits derived values when an input is missing or the result has the wrong type', () => {
     const fields: AssessmentField[] = [
       field('input'),

@@ -46,7 +46,10 @@ export const formatMetricSourceValue = (
 
   const fieldId = metric.source.fieldId;
   const field = sourceSchema?.fields.find(candidate => candidate.id === fieldId);
-  if (field?.type === 'currency') {
+  if (
+    field?.type === 'currency' ||
+    (field?.type === 'derived' && field.resultType === 'currency')
+  ) {
     if (
       typeof raw !== 'object' ||
       raw === null ||

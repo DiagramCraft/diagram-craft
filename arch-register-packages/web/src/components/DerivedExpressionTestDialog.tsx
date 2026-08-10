@@ -1,5 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import { bonsai } from 'bonsai-js';
+import { arrays, math } from 'bonsai-js/stdlib';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -21,16 +22,29 @@ type Props = {
   onSave: (expression: string) => void;
 };
 
-const engine = bonsai<{ values: Record<string, unknown> }>({
-  timeout: 50,
-  maxDepth: 50
-}).addContextFunction('field', (context, fieldId) => context.values[String(fieldId)]);
+type EvaluationContext = {
+  values: Record<string, unknown>;
+  entity: { id: string; schemaId: string; values: Record<string, unknown> };
+  dependents: Array<{ id: string; schemaId: string; values: Record<string, unknown> }>;
+};
+
+const engine = bonsai<EvaluationContext>({ timeout: 50, maxDepth: 50 })
+  .use(arrays)
+  .use(math)
+  .addContextFunction('field', (context, fieldId) => context.values[String(fieldId)]);
 
 const parseValue = (field: ExpressionTestField, value: string): unknown => {
   if (value.trim() === '') return undefined;
   const valueType = field.type === 'derived' ? field.resultType : field.type;
   if (valueType === 'number' || valueType === 'rating') return Number(value);
   if (valueType === 'boolean') return value.trim().toLowerCase() === 'true';
+  if (valueType === 'currency') {
+    try {
+      return JSON.parse(value);
+    } catch {
+      return value;
+    }
+  }
   return value;
 };
 
@@ -50,11 +64,13 @@ export const DerivedExpressionTestDialog = ({
 }: Props) => {
   const [expression, setExpression] = useState(initialExpression);
   const [values, setValues] = useState<Record<string, string>>({});
+  const [dependentsJson, setDependentsJson] = useState('[]');
 
   useEffect(() => {
     if (open) {
       setExpression(initialExpression);
       setValues({});
+      setDependentsJson('[]');
     }
   }, [initialExpression, open]);
 
@@ -68,16 +84,24 @@ export const DerivedExpressionTestDialog = ({
     }
     try {
       const compiled = engine.compile(expression);
+      const dependents = JSON.parse(dependentsJson);
+      if (!Array.isArray(dependents)) throw new Error('Direct dependents must be a JSON array');
       const inputValues = Object.fromEntries(
         fields
           .filter(item => item.id !== field.id)
           .map(item => [item.id, parseValue(item, values[item.id] ?? '')])
       );
-      return { value: compiled.evaluateSync({ values: inputValues }) };
+      return {
+        value: compiled.evaluateSync({
+          values: inputValues,
+          entity: { id: 'test-entity', schemaId: 'current', values: inputValues },
+          dependents
+        })
+      };
     } catch (error) {
       return { error: error instanceof Error ? error.message : String(error) };
     }
-  }, [expression, field.id, fields, open, values]);
+  }, [dependentsJson, expression, field.id, fields, open, values]);
 
   return (
     <Dialog
@@ -91,6 +115,23 @@ export const DerivedExpressionTestDialog = ({
       ]}
     >
       <div style={{ display: 'grid', gap: 16 }}>
+        <div>
+          <div className="dim" style={{ fontSize: 12, marginBottom: 4 }}>
+            Direct dependents (JSON)
+          </div>
+          <TextArea
+            value={dependentsJson}
+            onChange={value => setDependentsJson(value ?? '[]')}
+            rows={4}
+            placeholder={
+              '[{"schemaId":"contract","values":{"annual_cost":{"amount":1200,"currency":"USD"}}}]'
+            }
+          />
+          <div className="dim" style={{ fontSize: 12, marginTop: 4 }}>
+            Use <code>entity</code> and <code>dependents</code> for one-hop graph expressions. For
+            example: <code>dependents.map(.values[&apos;annual_cost&apos;].amount) |&gt; sum</code>.
+          </div>
+        </div>
         <div>
           <div className="dim" style={{ fontSize: 12, marginBottom: 4 }}>
             Expression
