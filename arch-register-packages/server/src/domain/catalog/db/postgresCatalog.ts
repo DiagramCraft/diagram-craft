@@ -671,7 +671,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       LEFT JOIN users u ON u.id = v.created_by
       WHERE v.workspace = ${workspace} AND v.created_at <= ${asOf}
       ${entityIds != null ? this.sql`AND v.record_id = ANY(${entityIds})` : this.sql``}
-      ORDER BY v.record_id, v.created_at ASC
+      ORDER BY v.record_id, v.created_at ASC, v.version_number ASC, v.id ASC
     `;
     return mapDatabaseRows(rows, catalogMappers.entityVersion);
   }
@@ -684,7 +684,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       LEFT JOIN users u ON u.id = v.created_by
       WHERE v.workspace = ${workspace} AND v.created_at <= ${asOf}
       ${relationIds != null ? this.sql`AND v.record_id = ANY(${relationIds})` : this.sql``}
-      ORDER BY v.record_id, v.created_at ASC
+      ORDER BY v.record_id, v.created_at ASC, v.version_number ASC, v.id ASC
     `;
     return mapDatabaseRows(rows, catalogMappers.entityVersion);
   }
@@ -713,7 +713,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     if (entityIds != null && entityIds.length === 0) return [];
     const rows = await this.sql<DatabaseRow[]>`
       SELECT m.id, c.workspace, m.record_id AS entity_id,
-             c.id AS case_id, r.id AS case_revision_id,
+             c.id AS case_id, r.id AS case_revision_id, r.revision_number,
              c.project_id,
              CASE WHEN c.milestone_id IS NULL THEN c.effective_date ELSE NULL END AS target_date,
              c.milestone_id,
@@ -722,15 +722,22 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
              m.proposed_state
       FROM record_change_case_record_version m
       JOIN catalog_record cr ON cr.id = m.record_id AND cr.kind = 'entity'
-      JOIN entity_change_case_revision r ON r.id = m.revision_id
+      JOIN entity_change_case_revision r ON r.id = m.revision_id AND r.is_active = TRUE
       JOIN entity_change_case c ON c.id = r.case_id
+      LEFT JOIN project_milestone pm ON pm.id = c.milestone_id AND pm.workspace = c.workspace
       LEFT JOIN users u ON u.id = r.created_by
       WHERE c.workspace = ${workspace}
+        AND c.purpose = 'planned_change'
+        AND c.status IN ('planned', 'in_approval')
         AND r.status IN ('draft', 'submitted', 'changes_requested')
         AND r.created_at <= ${asOf}
-        AND (c.milestone_id IS NOT NULL OR c.effective_date IS NULL OR c.effective_date <= ${asOf.toISOString().slice(0, 10)})
+        AND (
+          COALESCE(c.effective_date, pm.target_date) IS NULL OR
+          COALESCE(c.effective_date, pm.target_date) <= ${asOf.toISOString().slice(0, 10)}
+        )
         ${entityIds != null ? this.sql`AND m.record_id = ANY(${entityIds})` : this.sql``}
-      ORDER BY m.record_id, r.created_at ASC
+      ORDER BY m.record_id, COALESCE(c.effective_date, pm.target_date) NULLS FIRST, r.created_at ASC,
+               r.revision_number ASC, c.id ASC, m.id ASC
     `;
     return mapDatabaseRows(rows, catalogMappers.plannedEntityChange);
   }
@@ -739,7 +746,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     if (relationIds != null && relationIds.length === 0) return [];
     const rows = await this.sql<DatabaseRow[]>`
       SELECT m.id, c.workspace, m.record_id AS entity_id,
-             c.id AS case_id, r.id AS case_revision_id,
+             c.id AS case_id, r.id AS case_revision_id, r.revision_number,
              c.project_id,
              CASE WHEN c.milestone_id IS NULL THEN c.effective_date ELSE NULL END AS target_date,
              c.milestone_id,
@@ -748,15 +755,22 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
              m.proposed_state
       FROM record_change_case_record_version m
       JOIN catalog_record cr ON cr.id = m.record_id AND cr.kind = 'relation'
-      JOIN entity_change_case_revision r ON r.id = m.revision_id
+      JOIN entity_change_case_revision r ON r.id = m.revision_id AND r.is_active = TRUE
       JOIN entity_change_case c ON c.id = r.case_id
+      LEFT JOIN project_milestone pm ON pm.id = c.milestone_id AND pm.workspace = c.workspace
       LEFT JOIN users u ON u.id = r.created_by
       WHERE c.workspace = ${workspace}
+        AND c.purpose = 'planned_change'
+        AND c.status IN ('planned', 'in_approval')
         AND r.status IN ('draft', 'submitted', 'changes_requested')
         AND r.created_at <= ${asOf}
-        AND (c.milestone_id IS NOT NULL OR c.effective_date IS NULL OR c.effective_date <= ${asOf.toISOString().slice(0, 10)})
+        AND (
+          COALESCE(c.effective_date, pm.target_date) IS NULL OR
+          COALESCE(c.effective_date, pm.target_date) <= ${asOf.toISOString().slice(0, 10)}
+        )
         ${relationIds != null ? this.sql`AND m.record_id = ANY(${relationIds})` : this.sql``}
-      ORDER BY m.record_id, r.created_at ASC
+      ORDER BY m.record_id, COALESCE(c.effective_date, pm.target_date) NULLS FIRST, r.created_at ASC,
+               r.revision_number ASC, c.id ASC, m.id ASC
     `;
     return mapDatabaseRows(rows, catalogMappers.plannedEntityChange);
   }

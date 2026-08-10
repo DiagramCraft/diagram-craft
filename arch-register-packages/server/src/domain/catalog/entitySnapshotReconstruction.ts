@@ -37,7 +37,14 @@ const compareFutureUpdates = (
   const aDate = effectiveTargetDate(a, milestoneTargetDates);
   const bDate = effectiveTargetDate(b, milestoneTargetDates);
   if (aDate !== bDate) return aDate < bDate ? -1 : 1;
-  return a.created_at.getTime() - b.created_at.getTime();
+  const createdAtDifference = a.created_at.getTime() - b.created_at.getTime();
+  if (createdAtDifference !== 0) return createdAtDifference;
+  if (a.revision_number !== b.revision_number)
+    return a.revision_number < b.revision_number ? -1 : 1;
+  if (a.case_revision_id !== b.case_revision_id)
+    return a.case_revision_id < b.case_revision_id ? -1 : 1;
+  if (a.id !== b.id) return a.id < b.id ? -1 : 1;
+  return 0;
 };
 
 const entityToState = (entity: EntityDbResult): Record<string, unknown> => ({
@@ -79,6 +86,7 @@ export const resolveFutureUpdatesByRecord = async (
   db: DatabaseAdapter,
   workspace: string,
   authCtx: AuthorizationContext | null,
+  asOf: Date,
   plannedChanges: PlannedEntityChangeDbResult[],
   plannedChangesProjectId: string | null | undefined,
   excludeOverdueChangesBefore?: Date
@@ -102,17 +110,18 @@ export const resolveFutureUpdatesByRecord = async (
       applicablePlannedChanges.filter(c => c.project_id != null).map(c => c.project_id as string)
     )
   ];
+  const futureUpdateProjectIdSet = new Set(futureUpdateProjectIds);
   const accessibleProjectIds = new Set(
     authCtx == null
       ? futureUpdateProjectIds
-      : (
-          await Promise.all(
-            futureUpdateProjectIds.map(async projectId => {
-              const project = await db.project.getProject(workspace, projectId);
-              return project != null && canAccessProject(authCtx, project.owner) ? projectId : null;
-            })
-          )
-        ).filter((id): id is string => id != null)
+      : futureUpdateProjectIds.length === 0
+        ? []
+        : (await db.project.listProjects(workspace))
+            .filter(
+              project =>
+                futureUpdateProjectIdSet.has(project.id) && canAccessProject(authCtx, project.owner)
+            )
+            .map(project => project.id)
   );
 
   // Planned changes targeting a milestone have a null target_date — their effective date is the
@@ -125,13 +134,20 @@ export const resolveFutureUpdatesByRecord = async (
         .map(c => c.milestone_id as string)
     )
   ];
+  const milestoneIdSet = new Set(milestoneIds);
   const milestoneTargetDates = new Map(
     milestoneIds.length === 0
       ? []
       : (await db.project.listMilestones(workspace))
-          .filter(m => milestoneIds.includes(m.id))
+          .filter(m => milestoneIdSet.has(m.id))
           .map(m => [m.id, m.target_date] as const)
   );
+
+  const asOfDate = asOf.toISOString().slice(0, 10);
+  const asOfFilteredChanges = applicablePlannedChanges.filter(change => {
+    const effectiveDate = effectiveTargetDate(change, milestoneTargetDates);
+    return !effectiveDate || effectiveDate <= asOfDate;
+  });
 
   // Landscape diffing can exclude "overdue" changes — planned changes whose target date has
   // already passed (relative to `excludeOverdueChangesBefore`, typically "now") but were never
@@ -140,8 +156,8 @@ export const resolveFutureUpdatesByRecord = async (
   // target_date and no milestone) aren't excluded — there's nothing to judge as overdue.
   const overdueFilteredChanges =
     excludeOverdueChangesBefore == null
-      ? applicablePlannedChanges
-      : applicablePlannedChanges.filter(change => {
+      ? asOfFilteredChanges
+      : asOfFilteredChanges.filter(change => {
           const effectiveDate = effectiveTargetDate(change, milestoneTargetDates);
           if (!effectiveDate) return true;
           return effectiveDate >= excludeOverdueChangesBefore.toISOString().slice(0, 10);
@@ -197,8 +213,8 @@ export const reconstructEntitiesAsOf = async (
   const ownerNameMap = new Map(owners.map(o => [o.id, o.name]));
   const lifecycleLabelMap = new Map(lifecycles.map(l => [l.id, l.label]));
 
-  // `listEntityVersionsAsOf` returns rows ordered by (record_id, created_at ASC), so the last
-  // row seen per entity is its latest version baseline at or before `asOf`.
+  // `listEntityVersionsAsOf` returns rows ordered by (record_id, created_at ASC, version_number
+  // ASC), so the last row seen per entity is its latest version baseline at or before `asOf`.
   const baselineByEntity = new Map<string, EntityVersionDbResult>();
   for (const version of baselineVersions) {
     baselineByEntity.set(version.record_id, version);
@@ -208,6 +224,7 @@ export const reconstructEntitiesAsOf = async (
     db,
     workspace,
     authCtx,
+    asOf,
     plannedChanges,
     plannedChangesProjectId,
     excludeOverdueChangesBefore
@@ -259,19 +276,22 @@ export const reconstructEntitiesAsOf = async (
 
   const results: EntityDbResult[] = [];
 
+  const applyFutureUpdates = (entityId: string, initialState: Record<string, unknown>) => {
+    let state = initialState;
+    for (const update of futureUpdatesByEntity.get(entityId) ?? []) {
+      state = mergeState(state, update.proposed_state);
+    }
+    return state;
+  };
+
   for (const [entityId, baseline] of baselineByEntity) {
     if (baseline.kind === 'deleted') continue;
 
-    let state = baseline.state;
-
     // Already in date order — resolveFutureUpdatesByRecord builds this list by walking
     // date-sorted case-revision groups, so re-sorting here would just re-derive the same order.
-    const futureUpdates = futureUpdatesByEntity.get(entityId) ?? [];
-    for (const update of futureUpdates) {
-      state = mergeState(state, update.proposed_state);
-    }
-
-    results.push(buildResult(entityId, state, baseline.created_at));
+    results.push(
+      buildResult(entityId, applyFutureUpdates(entityId, baseline.state), baseline.created_at)
+    );
   }
 
   // Fallback for entities with zero version history at all — ever, at any date — e.g. created
@@ -308,13 +328,9 @@ export const reconstructEntitiesAsOf = async (
     if (idsWithVersionHistory.has(live.id)) continue;
     if (live.created_at > asOf) continue;
 
-    let state = entityToState(live);
-    const futureUpdates = futureUpdatesByEntity.get(live.id) ?? [];
-    for (const update of futureUpdates) {
-      state = mergeState(state, update.proposed_state);
-    }
-
-    results.push(buildResult(live.id, state, live.created_at));
+    results.push(
+      buildResult(live.id, applyFutureUpdates(live.id, entityToState(live)), live.created_at)
+    );
   }
 
   return results;

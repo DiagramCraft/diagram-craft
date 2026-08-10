@@ -1911,25 +1911,28 @@ const buildTemporalSource = (state: CompileState): string => {
     active_future_events AS (
       SELECT m.record_id,
              c.id AS case_id,
-             c.effective_date,
+             COALESCE(c.effective_date, pm.target_date) AS effective_date,
              r.created_at,
              r.revision_number,
              m.proposed_state,
              ROW_NUMBER() OVER (
                PARTITION BY m.record_id
-               ORDER BY c.effective_date, r.created_at, r.revision_number, c.id
+               ORDER BY COALESCE(c.effective_date, pm.target_date), r.created_at,
+                        r.revision_number, c.id
              ) AS event_number
       FROM record_change_case_record_version m
       JOIN entity_change_case_revision r
         ON r.id = m.revision_id
        AND r.is_active = ${state.dialect === 'postgres' ? 'TRUE' : '1'}
       JOIN entity_change_case c ON c.id = r.case_id
+      LEFT JOIN project_milestone pm ON pm.id = c.milestone_id AND pm.workspace = c.workspace
       WHERE c.workspace = ${eventWorkspaceParam}
+        AND c.purpose = 'planned_change'
         AND c.status IN ('planned', 'in_approval')
         AND r.status IN ('draft', 'submitted', 'changes_requested')
         AND r.created_at <= ${eventCreatedParam}
-        AND c.effective_date IS NOT NULL
-        AND c.effective_date <= ${eventDateParam}
+        AND COALESCE(c.effective_date, pm.target_date) IS NOT NULL
+        AND COALESCE(c.effective_date, pm.target_date) <= ${eventDateParam}
         AND ${caseProjectClause}
     ),
     future_state (record_id, workspace, state, event_number) AS (
@@ -2136,13 +2139,14 @@ const buildTemporalRelationSource = (state: CompileState): string => {
     active_future_relation_events AS (
       SELECT m.record_id,
              c.id AS case_id,
-             c.effective_date,
+             COALESCE(c.effective_date, pm.target_date) AS effective_date,
              r.created_at,
              r.revision_number,
              m.proposed_state,
              ROW_NUMBER() OVER (
                PARTITION BY m.record_id
-               ORDER BY c.effective_date, r.created_at, r.revision_number, c.id
+               ORDER BY COALESCE(c.effective_date, pm.target_date), r.created_at,
+                        r.revision_number, c.id
              ) AS event_number
       FROM record_change_case_record_version m
       JOIN catalog_record cr ON cr.id = m.record_id AND cr.kind = 'relation'
@@ -2150,12 +2154,14 @@ const buildTemporalRelationSource = (state: CompileState): string => {
         ON r.id = m.revision_id
        AND r.is_active = ${state.dialect === 'postgres' ? 'TRUE' : '1'}
       JOIN entity_change_case c ON c.id = r.case_id
+      LEFT JOIN project_milestone pm ON pm.id = c.milestone_id AND pm.workspace = c.workspace
       WHERE c.workspace = ${eventWorkspaceParam}
+        AND c.purpose = 'planned_change'
         AND c.status IN ('planned', 'in_approval')
         AND r.status IN ('draft', 'submitted', 'changes_requested')
         AND r.created_at <= ${eventCreatedParam}
-        AND c.effective_date IS NOT NULL
-        AND c.effective_date <= ${eventDateParam}
+        AND COALESCE(c.effective_date, pm.target_date) IS NOT NULL
+        AND COALESCE(c.effective_date, pm.target_date) <= ${eventDateParam}
         AND ${caseProjectClause}
         AND ${eventRelationSourceClause}
     ),

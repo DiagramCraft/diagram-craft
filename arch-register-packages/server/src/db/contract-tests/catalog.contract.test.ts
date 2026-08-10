@@ -721,6 +721,108 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       expect(afterEffectiveDate[0]?.case_id).toBe(futureCase.id);
     });
 
+    it('resolves milestone dates when listing planned changes as of a date', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const project = await createFixtureProject(db, workspace);
+      const user = await createFixtureUser(db);
+      const milestone = await db.project.createMilestone({
+        id: randomUUID(),
+        workspace,
+        project_id: project.id,
+        name: 'Q2 milestone',
+        target_date: '2030-06-01',
+        status: 'planned',
+        sort_order: 0,
+        created_at: new Date(),
+        updated_at: new Date()
+      });
+
+      await db.changeCase.createCase({
+        id: randomUUID(),
+        workspace,
+        project_id: project.id,
+        name: null,
+        description: null,
+        effective_date: null,
+        milestone_id: milestone.id,
+        message: null,
+        created_by: user.id,
+        created_at: new Date(),
+        members: [
+          {
+            entity_id: entity.id,
+            base_version: 1,
+            base_state: {},
+            proposed_state: { name: 'Milestone Name' },
+            diff: {}
+          }
+        ]
+      });
+
+      const beforeMilestone = await db.catalog.listPlannedEntityChangesAsOf(
+        workspace,
+        new Date('2030-05-01T00:00:00.000Z'),
+        [entity.id]
+      );
+      expect(beforeMilestone).toHaveLength(0);
+
+      const onMilestone = await db.catalog.listPlannedEntityChangesAsOf(
+        workspace,
+        new Date('2030-06-01T00:00:00.000Z'),
+        [entity.id]
+      );
+      expect(onMilestone).toHaveLength(1);
+      expect(onMilestone[0]?.milestone_id).toBe(milestone.id);
+    });
+
+    it('excludes open approval proposals from planned entity changes', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const now = new Date();
+
+      await db.entityChange.createApproval({
+        id: randomUUID(),
+        workspace,
+        entity_id: entity.id,
+        status: 'open',
+        initiator_user_id: null,
+        created_at: now,
+        updated_at: now,
+        closed_at: null
+      });
+      const approval = (await db.entityChange.listApprovals(workspace, 'open'))[0]!;
+      await db.entityChange.createApprovalRevision({
+        id: randomUUID(),
+        proposal_id: approval.id,
+        workspace,
+        entity_id: entity.id,
+        revision_number: 1,
+        base_version: 1,
+        base_state: { id: entity.id },
+        proposed_state: { name: 'Unapproved Name' },
+        diff: { name: 'Unapproved Name' },
+        policy_version: '1',
+        resolved_policy: {},
+        message: null,
+        created_by: null,
+        status: 'submitted',
+        created_at: now,
+        resolved_at: null
+      });
+
+      const result = await db.catalog.listPlannedEntityChangesAsOf(
+        workspace,
+        new Date(Date.now() + 60_000),
+        [entity.id]
+      );
+      expect(result).toHaveLength(0);
+    });
+
     it('excludes relation members from an unscoped listPlannedEntityChangesAsOf', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);

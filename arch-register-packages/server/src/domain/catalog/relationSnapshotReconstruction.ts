@@ -38,8 +38,8 @@ export const reconstructRelationsAsOf = async (
 
   const schemaNameMap = new Map(relationSchemas.map(s => [s.id, s.name]));
 
-  // `listRelationVersionsAsOf` returns rows ordered by (record_id, created_at ASC), so the last
-  // row seen per relation is its latest version baseline at or before `asOf`.
+  // `listRelationVersionsAsOf` returns rows ordered by (record_id, created_at ASC, version_number
+  // ASC), so the last row seen per relation is its latest version baseline at or before `asOf`.
   const baselineByRelation = new Map<string, EntityVersionDbResult>();
   for (const version of baselineVersions) {
     baselineByRelation.set(version.record_id, version);
@@ -49,6 +49,7 @@ export const reconstructRelationsAsOf = async (
     db,
     workspace,
     authCtx,
+    asOf,
     plannedChanges,
     plannedChangesProjectId,
     excludeOverdueChangesBefore
