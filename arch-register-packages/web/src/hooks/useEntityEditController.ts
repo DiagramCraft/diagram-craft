@@ -49,6 +49,7 @@ export const useEntityEditController = ({
   const [saveConfirmDueDate, setSaveConfirmDueDate] = useState('');
   const [saveConfirmSignificant, setSaveConfirmSignificant] = useState(false);
   const [pendingSaveBody, setPendingSaveBody] = useState<Record<string, unknown> | null>(null);
+  const [saveError, setSaveError] = useState('');
   const [confirmDelete, setConfirmDelete] = useState(false);
 
   const startEdit = () => {
@@ -89,12 +90,26 @@ export const useEntityEditController = ({
     setSaveConfirmMessage('');
     setSaveConfirmDueDate('');
     setSaveConfirmSignificant(false);
+    setSaveError('');
     setSaveConfirmOpen(true);
+  };
+
+  const handleSaveSuccess = () => {
+    setSaveConfirmOpen(false);
+    setEditing(false);
+    setEditState({});
+    setTypedRelationEditState({});
+    setEditLinks([]);
+    setPendingSaveBody(null);
+  };
+
+  const handleSaveError = (error: unknown) => {
+    setSaveError(error instanceof Error ? error.message : 'Unable to save entity');
   };
 
   const executeSave = () => {
     if (!pendingSaveBody) return;
-    setSaveConfirmOpen(false);
+    setSaveError('');
     if (approvalRequired) {
       submitProposal.mutate(
         {
@@ -105,13 +120,8 @@ export const useEntityEditController = ({
           initiationFields: initiationFieldValues
         },
         {
-          onSuccess: () => {
-            setEditing(false);
-            setEditState({});
-            setTypedRelationEditState({});
-            setEditLinks([]);
-            setPendingSaveBody(null);
-          }
+          onSuccess: handleSaveSuccess,
+          onError: handleSaveError
         }
       );
       return;
@@ -123,12 +133,9 @@ export const useEntityEditController = ({
           if (saveConfirmSignificant) {
             promoteEntityVersion.mutate({ commitMessage: saveConfirmMessage ?? undefined });
           }
-          setEditing(false);
-          setEditState({});
-          setTypedRelationEditState({});
-          setEditLinks([]);
-          setPendingSaveBody(null);
-        }
+          handleSaveSuccess();
+        },
+        onError: handleSaveError
       }
     );
   };
@@ -136,7 +143,7 @@ export const useEntityEditController = ({
   const executeBypass = () => {
     const reason = saveConfirmMessage.trim();
     if (!canBypassApproval || !pendingSaveBody || reason === '') return;
-    setSaveConfirmOpen(false);
+    setSaveError('');
     bypassApproval.mutate(
       {
         baseVersion: entity?._version ?? 1,
@@ -144,13 +151,8 @@ export const useEntityEditController = ({
         reason
       },
       {
-        onSuccess: () => {
-          setEditing(false);
-          setEditState({});
-          setTypedRelationEditState({});
-          setEditLinks([]);
-          setPendingSaveBody(null);
-        }
+        onSuccess: handleSaveSuccess,
+        onError: handleSaveError
       }
     );
   };
@@ -184,6 +186,7 @@ export const useEntityEditController = ({
     setSaveConfirmDueDate,
     saveConfirmSignificant,
     setSaveConfirmSignificant,
+    saveError,
     executeSave,
     executeBypass,
     confirmDelete,

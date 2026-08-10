@@ -22,8 +22,9 @@ const formatValue = (
   numberOfDecimals: number
 ) => {
   const [number, unit] = parseNumberAndUnit(value) ?? [];
+  const resolvedUnit = unit ?? defaultUnit;
   return number !== undefined
-    ? `${round(number, numberOfDecimals)} ${unit ?? defaultUnit ?? ''}`
+    ? `${round(number, numberOfDecimals)}${resolvedUnit ? ` ${resolvedUnit}` : ''}`
     : fallback;
 };
 
@@ -85,8 +86,11 @@ export const NumberInput = (props: Props) => {
   const hasFocus = useRef(false);
 
   const updateCurrentValue = useCallback(() => {
+    const rawValue = props.value.toString();
     setCurrentValue(
-      formatValue(props.value.toString(), props.defaultUnit, currentValue, numberOfDecimals)
+      rawValue === ''
+        ? ''
+        : formatValue(rawValue, props.defaultUnit, currentValue, numberOfDecimals)
     );
   }, [props.value, props.defaultUnit, currentValue, numberOfDecimals]);
 
@@ -104,7 +108,7 @@ export const NumberInput = (props: Props) => {
         const newUnit = p[1] ?? props.defaultUnit;
 
         setTimeout(() => props.onChange(newValue, newUnit), 0);
-        return `${newValue.toString()} ${newUnit ?? ''}`;
+        return `${newValue.toString()}${newUnit ? ` ${newUnit}` : ''}`;
       });
     },
     [props]

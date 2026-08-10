@@ -20,6 +20,26 @@ import { KEY_FIELD_COUNT, formatRelationFieldValue } from './RelationRecordList'
 import sharedStyles from '../EntityDetailScreen.module.css';
 import styles from './EntityRelationsTab.module.css';
 
+const toRelationFieldValue = (
+  field: RelationSchema['fields'][number],
+  value: string | string[]
+): unknown => {
+  if (field.type === 'entityRelation') return relationIds(value);
+  if (value === '') return null;
+  if (field.type === 'boolean') return value === 'true';
+  if (field.type === 'number') return Number(value);
+  return value;
+};
+
+const pendingFieldValue = (
+  pendingUpdate: Record<string, unknown> | undefined,
+  fieldId: string,
+  fallback: unknown
+) =>
+  pendingUpdate !== undefined && Object.hasOwn(pendingUpdate, fieldId)
+    ? pendingUpdate[fieldId]
+    : fallback;
+
 type Props = {
   workspaceId: string;
   field: TypedRelationField;
@@ -47,6 +67,7 @@ export const TypedRelationFieldEditor = ({
 }: Props) => {
   const [adding, setAdding] = useState(false);
   const [expandedUid, setExpandedUid] = useState<string | null>(null);
+  const [draftEntityNames, setDraftEntityNames] = useState<Record<string, string>>({});
   const { schemas } = useWorkspaceContext();
   const direction = field.direction === 'in' ? 'outgoing' : 'incoming';
   const otherEndpoint = field.direction === 'in' ? 'out' : 'in';
@@ -78,7 +99,7 @@ export const TypedRelationFieldEditor = ({
         const fieldSummaries = activeFields
           .slice(0, KEY_FIELD_COUNT)
           .map(f => {
-            const value = pendingUpdate?.[f.id] ?? record[f.id];
+            const value = pendingFieldValue(pendingUpdate, f.id, record[f.id]);
             const formatted = formatRelationFieldValue(f, value);
             return formatted !== null ? `${f.name}: ${formatted}` : null;
           })
@@ -147,8 +168,9 @@ export const TypedRelationFieldEditor = ({
                   <FormElement label="Owner">
                     <Select.Root
                       value={
-                        (String(pendingUpdate?.['_owner'] ?? record._owner?.id ?? '') ||
-                          undefined) as string | undefined
+                        (String(
+                          pendingFieldValue(pendingUpdate, '_owner', record._owner?.id) ?? ''
+                        ) || undefined) as string | undefined
                       }
                       disabled={!record.canAdmin}
                       onChange={value => onUpdateField(record._uid, '_owner', value ?? '')}
@@ -167,8 +189,10 @@ export const TypedRelationFieldEditor = ({
                   <FormElement label="Lifecycle">
                     <Select.Root
                       value={
-                        (String(pendingUpdate?.['_lifecycle'] ?? record._lifecycle?.id ?? '') ||
-                          undefined) as string | undefined
+                        (String(
+                          pendingFieldValue(pendingUpdate, '_lifecycle', record._lifecycle?.id) ??
+                            ''
+                        ) || undefined) as string | undefined
                       }
                       disabled={!record.canEdit}
                       onChange={value => onUpdateField(record._uid, '_lifecycle', value ?? '')}
@@ -190,10 +214,12 @@ export const TypedRelationFieldEditor = ({
                       field={f}
                       value={
                         f.type === 'entityRelation'
-                          ? relationIds(pendingUpdate?.[f.id] ?? record[f.id])
-                          : String(pendingUpdate?.[f.id] ?? record[f.id] ?? '')
+                          ? relationIds(pendingFieldValue(pendingUpdate, f.id, record[f.id]))
+                          : String(pendingFieldValue(pendingUpdate, f.id, record[f.id]) ?? '')
                       }
-                      onChange={value => onUpdateField(record._uid, f.id, value)}
+                      onChange={value =>
+                        onUpdateField(record._uid, f.id, toRelationFieldValue(f, value))
+                      }
                     />
                   </div>
                 ))}
@@ -206,11 +232,27 @@ export const TypedRelationFieldEditor = ({
       {fieldState.create.map((draft, index) => (
         <div
           key={`draft-${index}`}
-          style={{ display: 'flex', alignItems: 'center', gap: 6, marginBottom: 6 }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            marginBottom: 6,
+            border: '1px solid var(--panel-border)',
+            borderRadius: 4,
+            padding: 8,
+            background: 'var(--base-bg)'
+          }}
         >
-          <span className={sharedStyles.dim} style={{ flex: 1 }}>
-            {otherEntityCandidates.find(e => e._uid === draft.otherEntityId)?._name ??
-              draft.otherEntityId}
+          <span style={{ flex: 1 }}>
+            <span className={styles.relationLead}>
+              <TbChevronRight size={10} className={sharedStyles.dim} />
+              <span style={{ color: 'var(--base-fg)', fontWeight: 500 }}>
+                {draftEntityNames[draft.otherEntityId] ??
+                  otherEntityCandidates.find(e => e._uid === draft.otherEntityId)?._name ??
+                  otherEntityCandidates.find(e => e._uid === draft.otherEntityId)?._slug ??
+                  draft.otherEntityId}
+              </span>
+            </span>
           </span>
           {!disabled && (
             <Button variant="ghost" onClick={() => onRemoveDraft(index)}>
@@ -230,6 +272,13 @@ export const TypedRelationFieldEditor = ({
             lifecycleStates={lifecycleStates}
             onCancel={() => setAdding(false)}
             onConfirm={draft => {
+              const entity = otherEntityCandidates.find(e => e._uid === draft.otherEntityId);
+              if (entity) {
+                setDraftEntityNames(names => ({
+                  ...names,
+                  [entity._uid]: entity._name ?? entity._slug
+                }));
+              }
               onCreate(draft);
               setAdding(false);
             }}

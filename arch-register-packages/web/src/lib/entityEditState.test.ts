@@ -19,6 +19,13 @@ const schema = {
       requirementLevel: null,
       relationSchemaId: 'rel-1',
       direction: 'out'
+    },
+    {
+      id: 'computedValue',
+      type: 'derived',
+      requirementLevel: 'optional',
+      expression: '1',
+      resultType: 'number'
     }
   ]
 } as never;
@@ -99,12 +106,14 @@ describe('entity detail edit state', () => {
     expect(slugifyEntityName('Payments & Billing API')).toBe('payments-billing-api');
   });
 
-  it('excludes typedRelation fields from the edit state and update body dataFields', () => {
+  it('excludes typedRelation and derived fields from the edit state and update body dataFields', () => {
     const state = createEntityEditState(entity, schema);
     expect(state).not.toHaveProperty('runsOn');
+    expect(state).not.toHaveProperty('computedValue');
 
     const body = createEntityUpdateBody(entity, schema, state, links);
     expect(body).not.toHaveProperty('runsOn');
+    expect(body).not.toHaveProperty('computedValue');
     expect(body).not.toHaveProperty('_relations');
   });
 
