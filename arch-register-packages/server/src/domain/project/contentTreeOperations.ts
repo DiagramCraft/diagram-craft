@@ -1,7 +1,7 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { extractEntityFields, writeAudit } from '../audit/db/auditLogging';
 import { httpAssert } from '../../utils/httpAssert';
 import { collectHiddenAttachmentNodeIds } from './contentNodeRoleUtils';
@@ -75,18 +75,16 @@ export const deleteContentFolder = async (
 ): Promise<{ success: boolean; count: number }> => {
   const fallback =
     scope.kind === 'project' ? 'Failed to delete folder' : `Failed to delete ${scope.kind} folder`;
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback,
-      dbErrorMessages: {
-        unique: 'A project with that name already exists in this workspace',
-        foreign: 'Foreign key constraint violation'
-      }
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback,
+    dbErrorMessages: {
+      unique: 'A project with that name already exists in this workspace',
+      foreign: 'Foreign key constraint violation'
     },
-    async ({ ws, authCtx }) => {
+    operation: async ({ ws, authCtx }) => {
       const resolved = await scope.resolve(db, ws, identifier, authCtx, 'edit');
 
       const nodes = await listNodesForReadOnlyCheck(scope, db, ws, resolved);
@@ -136,7 +134,7 @@ export const deleteContentFolder = async (
 
       return { success: true, count: result.length };
     }
-  );
+  });
 };
 
 export const deleteContentFile = async (
@@ -150,18 +148,16 @@ export const deleteContentFile = async (
 ): Promise<{ success: boolean }> => {
   const fallback =
     scope.kind === 'project' ? 'Failed to delete file' : `Failed to delete ${scope.kind} file`;
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback,
-      dbErrorMessages: {
-        unique: 'A project with that name already exists in this workspace',
-        foreign: 'Foreign key constraint violation'
-      }
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback,
+    dbErrorMessages: {
+      unique: 'A project with that name already exists in this workspace',
+      foreign: 'Foreign key constraint violation'
     },
-    async ({ ws, authCtx }) => {
+    operation: async ({ ws, authCtx }) => {
       const resolved = await scope.resolve(db, ws, identifier, authCtx, 'edit');
       const nodes = await resolved.listNodes(db, ws);
       const file = nodes.find(node => node.path === filePath);
@@ -212,7 +208,7 @@ export const deleteContentFile = async (
       });
       return { success: true };
     }
-  );
+  });
 };
 
 /**
@@ -234,18 +230,16 @@ export const renameContentFolder = async (
 ): Promise<{ success: boolean; message: string; count: number }> => {
   const fallback =
     scope.kind === 'project' ? 'Failed to rename folder' : `Failed to rename ${scope.kind} folder`;
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback,
-      dbErrorMessages: {
-        unique: 'A project with that name already exists in this workspace',
-        foreign: 'Foreign key constraint violation'
-      }
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback,
+    dbErrorMessages: {
+      unique: 'A project with that name already exists in this workspace',
+      foreign: 'Foreign key constraint violation'
     },
-    async ({ ws, authCtx }) => {
+    operation: async ({ ws, authCtx }) => {
       const resolved = await scope.resolve(db, ws, identifier, authCtx, 'edit');
       const nodes = await listNodesForReadOnlyCheck(scope, db, ws, resolved);
       assertContentSubtreeWritable(nodes, oldPath);
@@ -285,5 +279,5 @@ export const renameContentFolder = async (
 
       return { success: true, message: `Renamed ${result.length} file(s)`, count: result.length };
     }
-  );
+  });
 };

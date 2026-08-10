@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { HTTPError } from 'h3';
 import {
   canAccessProject,
@@ -43,15 +43,13 @@ export const listProjects = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<Project[]> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve projects',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve projects',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const projects = await db.project.listProjects(ws);
       const visibleProjects = projects.filter(project => canAccessProject(authCtx, project.owner));
       const fileCounts = new Map<string, number>();
@@ -74,7 +72,7 @@ export const listProjects = async (
           return rank[a.status] - rank[b.status] || a.name.localeCompare(b.name);
         });
     }
-  );
+  });
 };
 
 export const getProject = async (
@@ -83,22 +81,20 @@ export const getProject = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<ProjectDetail> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve project',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve project',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const project = await db.project.getProject(ws, id);
       httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
       requireProjectAccess(authCtx, project.owner);
       const files = await db.project.listContentNodes(ws, project.id);
       return toApiProjectDetail(project, buildFileTree(files), authCtx);
     }
-  );
+  });
 };
 
 export const createProject = async (
@@ -116,15 +112,13 @@ export const createProject = async (
   },
   event: AuthenticatedEvent
 ): Promise<Project> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to create project',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to create project',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const teamIds = new Set((await db.workspace.listTeams(ws)).map(row => row.id));
       const timestamp = new Date();
       const workspaceRow = await db.workspace.getWorkspace(ws);
@@ -173,7 +167,7 @@ export const createProject = async (
 
       return toApiProject(row, 0, authCtx);
     }
-  );
+  });
 };
 
 export const updateProject = async (
@@ -192,15 +186,13 @@ export const updateProject = async (
   },
   event: AuthenticatedEvent
 ): Promise<Project> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to update project',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to update project',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const oldRow = await db.project.getProject(ws, id);
       httpAssert.present(oldRow, { status: 404, message: `Project '${id}' not found` });
       const teamIds = new Set((await db.workspace.listTeams(ws)).map(row => row.id));
@@ -275,7 +267,7 @@ export const updateProject = async (
       const fileCount = (await db.project.listContentNodes(ws, oldRow.id)).length;
       return toApiProject(row, fileCount, authCtx);
     }
-  );
+  });
 };
 
 export const deleteProject = async (
@@ -285,15 +277,13 @@ export const deleteProject = async (
   event: AuthenticatedEvent,
   storage?: StorageAdapter
 ): Promise<{ success: boolean; message: string }> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to delete project',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to delete project',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const project = await db.project.getProject(ws, id);
       httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
 
@@ -328,5 +318,5 @@ export const deleteProject = async (
 
       return { success: true, message: `Project '${project.id}' deleted` };
     }
-  );
+  });
 };

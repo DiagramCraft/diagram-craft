@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { getDiagramCommentCounts } from '../diagram/commentCounts';
 import { getDiagramEntityRefs } from '../diagram/diagramEntityRefs';
 import { buildApiAuthCtx, requireProjectAccess, requireProjectAction } from '../auth/authorization';
@@ -198,29 +198,27 @@ export const getFileContent = async (
   filePath: string,
   event: AuthenticatedEvent
 ): Promise<Record<string, unknown>> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to read file',
-      dbErrorMessages: projectDbErrorMessages,
-      onError: error => {
-        if (
-          error != null &&
-          typeof error === 'object' &&
-          'code' in error &&
-          (error as { code: string }).code === 'ENOENT'
-        ) {
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `File '${filePath}' not found`
-          });
-        }
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to read file',
+    dbErrorMessages: projectDbErrorMessages,
+    onError: error => {
+      if (
+        error != null &&
+        typeof error === 'object' &&
+        'code' in error &&
+        (error as { code: string }).code === 'ENOENT'
+      ) {
+        throw new HTTPError({
+          status: 404,
+          statusText: 'Not Found',
+          message: `File '${filePath}' not found`
+        });
       }
     },
-    async ({ ws, authCtx }) => {
+    operation: async ({ ws, authCtx }) => {
       // Try to get as project first
       const project = await db.project.getProject(ws, id);
 
@@ -247,7 +245,7 @@ export const getFileContent = async (
       const content = await storage.read(ws, storageId, file.id);
       return JSON.parse(content.toString('utf8'));
     }
-  );
+  });
 };
 
 export const saveFile = async (
@@ -259,15 +257,13 @@ export const saveFile = async (
   body: Record<string, unknown>,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to write file',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to write file',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const content = Buffer.from(JSON.stringify(body), 'utf8');
       const displayName = displayNameFromBody(body, filePath);
 
@@ -375,7 +371,7 @@ export const saveFile = async (
 
       return toApiProjectFile(savedRow);
     }
-  );
+  });
 };
 
 export const cloneContentFile = async (
@@ -816,15 +812,13 @@ export const getWorkspaceFileContent = async (
   filePath: string,
   event: AuthenticatedEvent
 ): Promise<Record<string, unknown>> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve workspace file content',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve workspace file content',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireNonProjectContentAccess(authCtx, 'read');
       const wsNodes = await db.project.listWorkspaceContentNodes(ws);
       const file = wsNodes.find(n => n.path === filePath && n.type === 'diagram') ?? null;
@@ -832,7 +826,7 @@ export const getWorkspaceFileContent = async (
       const content = await storage.read(ws, ws, file.id);
       return JSON.parse(content.toString('utf8'));
     }
-  );
+  });
 };
 
 export const saveWorkspaceFile = async (
@@ -852,15 +846,13 @@ export const getProjectFile = async (
   fileId: string,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve file',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve file',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, fileId);
       httpAssert.present(node, { status: 404, message: `File '${fileId}' not found` });
       if (node.project_id) {
@@ -873,7 +865,7 @@ export const getProjectFile = async (
       }
       return toApiProjectFile(node);
     }
-  );
+  });
 };
 
 export const getFileContentById = async (
@@ -883,15 +875,13 @@ export const getFileContentById = async (
   fileId: string,
   event: AuthenticatedEvent
 ): Promise<Record<string, unknown>> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve file content',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve file content',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, fileId);
       httpAssert.present(node, { status: 404, message: `File '${fileId}' not found` });
 
@@ -912,5 +902,5 @@ export const getFileContentById = async (
       const content = await storage.read(ws, storageId, node.id);
       return JSON.parse(content.toString('utf8'));
     }
-  );
+  });
 };

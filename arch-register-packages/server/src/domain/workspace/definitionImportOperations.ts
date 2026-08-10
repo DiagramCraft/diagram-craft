@@ -21,7 +21,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { buildApiAuthCtx, requireWorkspaceAdmin } from '../auth/authorization';
 import { PermissionChecker } from '@arch-register/permissions';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import { resolveWorkspace } from './resolveWorkspace';
 import {
@@ -786,12 +786,12 @@ export const listDefinitionImportSources = async (
   workspace: string,
   event: AuthenticatedEvent
 ) =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve definition import sources' },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve definition import sources',
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceAdmin(authCtx, 'You must administer the destination workspace');
       const builtinSources = SCHEMA_TEMPLATES.map(template =>
         sourceOption(sourceFromBuiltin(template))
@@ -806,7 +806,7 @@ export const listDefinitionImportSources = async (
       );
       return [...builtinSources, ...workspaceSources.filter(item => item !== null)];
     }
-  );
+  });
 
 export const previewDefinitionImport = async (
   db: DatabaseAdapter,
@@ -818,18 +818,18 @@ export const previewDefinitionImport = async (
   },
   event: AuthenticatedEvent
 ) =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to preview definition import' },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to preview definition import',
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceAdmin(authCtx, 'You must administer the destination workspace');
       return toPreview(
         await buildPlan(db, ws, input.source, input.selection, input.renames, event)
       );
     }
-  );
+  });
 
 export const executeDefinitionImport = async (
   db: DatabaseAdapter,
@@ -837,12 +837,12 @@ export const executeDefinitionImport = async (
   input: DefinitionImportExecuteRequest,
   event: AuthenticatedEvent
 ): Promise<DefinitionImportExecuteResponse> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to execute definition import' },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to execute definition import',
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceAdmin(authCtx, 'You must administer the destination workspace');
       const plan = await buildPlan(db, ws, input.source, input.selection, input.renames, event);
       httpAssert.true(plan.errors.length === 0, { status: 409, message: plan.errors.join('; ') });
@@ -1166,4 +1166,4 @@ export const executeDefinitionImport = async (
         dashboardWidgets: plan.dashboardWidgets.length
       };
     }
-  );
+  });

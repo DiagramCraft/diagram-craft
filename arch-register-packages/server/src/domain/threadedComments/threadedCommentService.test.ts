@@ -28,6 +28,7 @@ const authCtxMock = {
 
 vi.mock('../auth/authorization', () => ({
   buildApiAuthCtx: vi.fn(async () => authCtxMock),
+  buildApiEntityAuthCtx: vi.fn(async () => authCtxMock),
   requireWorkspaceCapability: vi.fn()
 }));
 
@@ -123,7 +124,7 @@ const makeAdapter = () => {
     ThreadedCommentApiBase,
     TestCreateInput
   > = {
-    buildTargetAuthContext: vi.fn(async () => authCtxMock),
+    targetScope: 'workspace',
     resolveTarget: vi.fn(async () => {}),
     listPosts: vi.fn(async () => [makeRow()]),
     getPost,

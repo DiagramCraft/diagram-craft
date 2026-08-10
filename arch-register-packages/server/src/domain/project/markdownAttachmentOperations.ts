@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 
 import { writeAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { fileNameFromPath } from './contentFileHelpers';
@@ -34,15 +34,13 @@ export const uploadMarkdownAttachment = async (
   originalFilename: string,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to upload markdown attachment',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to upload markdown attachment',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const fileName = fileNameFromPath(filePath) ?? originalFilename;
       const markdownNode = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(markdownNode, {
@@ -139,7 +137,7 @@ export const uploadMarkdownAttachment = async (
 
       return toApiProjectFile(row);
     }
-  );
+  });
 };
 
 export const createMarkdownDiagramAttachment = async (
@@ -151,15 +149,13 @@ export const createMarkdownDiagramAttachment = async (
   content: Record<string, unknown>,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to create diagram attachment',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to create diagram attachment',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const markdownNode = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(markdownNode, {
         status: 404,
@@ -257,5 +253,5 @@ export const createMarkdownDiagramAttachment = async (
 
       return toApiProjectFile(row);
     }
-  );
+  });
 };

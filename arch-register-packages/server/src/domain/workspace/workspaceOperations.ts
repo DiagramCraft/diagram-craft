@@ -3,7 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { requireGlobalPermission } from '../auth/authorization';
-import { defineGlobalOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { HTTPError } from 'h3';
 import { handleDbError, slugify } from '../../utils/http';
@@ -477,14 +477,13 @@ export const createWorkspace = async (
   event: AuthenticatedEvent,
   storage?: StorageAdapter
 ): Promise<Workspace> => {
-  return defineGlobalOperation(
-    db,
-    event,
-    {
-      fallback: 'Failed to create workspace',
-      dbErrorMessages: { unique: 'A workspace with that name already exists' }
-    },
-    async ({ authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'global' },
+    fallback: 'Failed to create workspace',
+    dbErrorMessages: { unique: 'A workspace with that name already exists' },
+    operation: async ({ authCtx }) => {
       requireGlobalPermission(authCtx, 'admin_platform');
       const timestamp = new Date();
       const row = await db.workspace.createWorkspace(buildCreateInput(input, timestamp));
@@ -925,7 +924,7 @@ export const createWorkspace = async (
         throw error;
       }
     }
-  );
+  });
 };
 
 export const updateWorkspace = async (
@@ -940,14 +939,13 @@ export const updateWorkspace = async (
   },
   event: AuthenticatedEvent
 ): Promise<Workspace> => {
-  return defineGlobalOperation(
-    db,
-    event,
-    {
-      fallback: 'Failed to update workspace',
-      dbErrorMessages: { unique: 'A workspace with that name already exists' }
-    },
-    async ({ authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'global' },
+    fallback: 'Failed to update workspace',
+    dbErrorMessages: { unique: 'A workspace with that name already exists' },
+    operation: async ({ authCtx }) => {
       requireGlobalPermission(authCtx, 'admin_platform');
       const oldRow = await db.workspace.getWorkspace(id);
       if (oldRow == null)
@@ -990,7 +988,7 @@ export const updateWorkspace = async (
 
       return toApiWorkspace(row);
     }
-  );
+  });
 };
 
 export const deleteWorkspace = async (
@@ -999,14 +997,13 @@ export const deleteWorkspace = async (
   event: AuthenticatedEvent,
   storage?: StorageAdapter
 ): Promise<{ success: boolean; message: string }> => {
-  return defineGlobalOperation(
-    db,
-    event,
-    {
-      fallback: 'Failed to delete workspace',
-      dbErrorMessages: { unique: 'A workspace with that name already exists' }
-    },
-    async ({ authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'global' },
+    fallback: 'Failed to delete workspace',
+    dbErrorMessages: { unique: 'A workspace with that name already exists' },
+    operation: async ({ authCtx }) => {
       requireGlobalPermission(authCtx, 'admin_platform');
       const { workspace, projectIds } = await db.workspace.deleteWorkspace(id);
       if (workspace == null)
@@ -1032,5 +1029,5 @@ export const deleteWorkspace = async (
 
       return { success: true, message: `Workspace '${workspace.name}' deleted` };
     }
-  );
+  });
 };

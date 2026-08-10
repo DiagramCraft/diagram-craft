@@ -7,7 +7,7 @@ import {
   requireProjectAction,
   requireWorkspaceAdmin
 } from '../auth/authorization';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 import { httpAssert } from '../../utils/httpAssert';
 import { HTTPError } from 'h3';
@@ -100,15 +100,13 @@ export const listAllTemplates = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<ReturnType<typeof buildAllTemplatesResponse>> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve templates',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve templates',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const projects = await db.project.listProjects(ws);
       const projectsWithFiles: ProjectWithFiles[] = [];
 
@@ -120,7 +118,7 @@ export const listAllTemplates = async (
 
       return buildAllTemplatesResponse(projectsWithFiles);
     }
-  );
+  });
 };
 
 export const listProjectTemplates = async (
@@ -129,15 +127,13 @@ export const listProjectTemplates = async (
   projectId: string,
   event: AuthenticatedEvent
 ): Promise<ReturnType<typeof buildProjectTemplatesResponse>> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve project templates',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve project templates',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const project = await db.project.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
       requireProjectAccess(authCtx, project.owner);
@@ -153,7 +149,7 @@ export const listProjectTemplates = async (
 
       return buildProjectTemplatesResponse(projectsWithFiles, projectId);
     }
-  );
+  });
 };
 
 export const toggleTemplateStatus = async (
@@ -165,15 +161,13 @@ export const toggleTemplateStatus = async (
   is_workspace_template: boolean,
   event: AuthenticatedEvent
 ): Promise<ReturnType<typeof import('../project/projectHelpers').toApiProjectFile>> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to update template status',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to update template status',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const project = await db.project.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
 
@@ -199,7 +193,7 @@ export const toggleTemplateStatus = async (
       const { toApiProjectFile } = await import('../project/projectHelpers');
       return toApiProjectFile(updatedFile!);
     }
-  );
+  });
 };
 
 export const createFromTemplate = async (
@@ -214,15 +208,13 @@ export const createFromTemplate = async (
   folder: string | null | undefined,
   event: AuthenticatedEvent
 ): Promise<ReturnType<typeof import('../project/projectHelpers').toApiProjectFile>> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to create from template',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to create from template',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const project = await db.project.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
 
@@ -363,5 +355,5 @@ export const createFromTemplate = async (
       const { toApiProjectFile } = await import('../project/projectHelpers');
       return toApiProjectFile(row);
     }
-  );
+  });
 };

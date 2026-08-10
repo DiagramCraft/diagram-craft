@@ -7,7 +7,7 @@ import {
 } from '../auth/authorization';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { httpAssert } from '../../utils/httpAssert';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import {
   buildCreateAssessmentInput,
   buildUpdateAssessmentInput,
@@ -132,17 +132,15 @@ export const listAssessments = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<Assessment[]> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve assessments',
-      dbErrorMessages: {
-        unique: 'An assessment with that name already exists in this project'
-      }
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve assessments',
+    dbErrorMessages: {
+      unique: 'An assessment with that name already exists in this project'
     },
-    async ({ ws, authCtx }) => {
+    operation: async ({ ws, authCtx }) => {
       const [rows, projects, entities, schemas] = await Promise.all([
         db.project.listAssessments(ws),
         db.project.listProjects(ws),
@@ -168,7 +166,7 @@ export const listAssessments = async (
           )
       );
     }
-  );
+  });
 };
 
 export const getAssessment = async (
@@ -177,17 +175,15 @@ export const getAssessment = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<Assessment> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve assessment',
-      dbErrorMessages: {
-        unique: 'An assessment with that name already exists in this project'
-      }
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve assessment',
+    dbErrorMessages: {
+      unique: 'An assessment with that name already exists in this project'
     },
-    async ({ ws, authCtx }) => {
+    operation: async ({ ws, authCtx }) => {
       const row = await db.project.getAssessmentById(ws, id);
       httpAssert.present(row, { status: 404, message: `Assessment '${id}' not found` });
       const project = await getProjectOrThrow(db, ws, row.project_id);
@@ -201,7 +197,7 @@ export const getAssessment = async (
         schemas
       );
     }
-  );
+  });
 };
 
 export const createAssessment = async (
@@ -210,17 +206,15 @@ export const createAssessment = async (
   body: CreateAssessmentRequest,
   event: AuthenticatedEvent
 ): Promise<Assessment> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to create assessment',
-      dbErrorMessages: {
-        unique: 'An assessment with that name already exists in this project'
-      }
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to create assessment',
+    dbErrorMessages: {
+      unique: 'An assessment with that name already exists in this project'
     },
-    async ({ ws, authCtx }) => {
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, body.project_id);
       requireProjectAction(
         authCtx,
@@ -258,7 +252,7 @@ export const createAssessment = async (
         schemas
       );
     }
-  );
+  });
 };
 
 export const updateAssessment = async (
@@ -268,17 +262,15 @@ export const updateAssessment = async (
   body: UpdateAssessmentRequest,
   event: AuthenticatedEvent
 ): Promise<Assessment> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to update assessment',
-      dbErrorMessages: {
-        unique: 'An assessment with that name already exists in this project'
-      }
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to update assessment',
+    dbErrorMessages: {
+      unique: 'An assessment with that name already exists in this project'
     },
-    async ({ ws, authCtx }) => {
+    operation: async ({ ws, authCtx }) => {
       const existing = await db.project.getAssessmentById(ws, id);
       httpAssert.present(existing, { status: 404, message: `Assessment '${id}' not found` });
       const project = await getProjectOrThrow(db, ws, existing.project_id);
@@ -363,7 +355,7 @@ export const updateAssessment = async (
         schemas
       );
     }
-  );
+  });
 };
 
 export const updateAssessmentStatus = async (
@@ -373,17 +365,15 @@ export const updateAssessmentStatus = async (
   body: UpdateAssessmentStatusRequest,
   event: AuthenticatedEvent
 ): Promise<Assessment> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to update assessment status',
-      dbErrorMessages: {
-        unique: 'An assessment with that name already exists in this project'
-      }
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to update assessment status',
+    dbErrorMessages: {
+      unique: 'An assessment with that name already exists in this project'
     },
-    async ({ ws, authCtx }) => {
+    operation: async ({ ws, authCtx }) => {
       const oldRow = await db.project.getAssessmentById(ws, id);
       httpAssert.present(oldRow, { status: 404, message: `Assessment '${id}' not found` });
       const project = await getProjectOrThrow(db, ws, oldRow.project_id);
@@ -447,7 +437,7 @@ export const updateAssessmentStatus = async (
         schemas
       );
     }
-  );
+  });
 };
 
 export const deleteAssessment = async (
@@ -456,17 +446,15 @@ export const deleteAssessment = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; message: string }> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to delete assessment',
-      dbErrorMessages: {
-        unique: 'An assessment with that name already exists in this project'
-      }
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to delete assessment',
+    dbErrorMessages: {
+      unique: 'An assessment with that name already exists in this project'
     },
-    async ({ ws, authCtx }) => {
+    operation: async ({ ws, authCtx }) => {
       const row = await db.project.getAssessmentById(ws, id);
       httpAssert.present(row, { status: 404, message: `Assessment '${id}' not found` });
       const project = await getProjectOrThrow(db, ws, row.project_id);
@@ -491,5 +479,5 @@ export const deleteAssessment = async (
 
       return { success: true, message: `Assessment '${id}' deleted` };
     }
-  );
+  });
 };

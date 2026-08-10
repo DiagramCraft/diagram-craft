@@ -3,7 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { requireSchemaRead, requireWorkspaceCapability } from '../auth/authorization';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { handleDbError } from '../../utils/http';
 import { httpAssert } from '../../utils/httpAssert';
 import { countEntities } from './entityQueryOperations';
@@ -81,15 +81,13 @@ export const listWorkspaceSchemas = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<EntitySchema[]> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve schemas',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve schemas',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
       const [schemas, enums, allEntities, policiesBySchema] = await Promise.all([
         db.catalog.listSchemas(ws),
@@ -110,7 +108,7 @@ export const listWorkspaceSchemas = async (
         )
       );
     }
-  );
+  });
 };
 
 export const previewWorkspaceSchemaValidation = async (
@@ -123,12 +121,13 @@ export const previewWorkspaceSchemaValidation = async (
   },
   event: AuthenticatedEvent
 ) =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to preview schema validation', dbErrorMessages },
-    async ({ authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to preview schema validation',
+    dbErrorMessages,
+    operation: async ({ authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       return previewEntityValidation(
         db,
@@ -138,7 +137,7 @@ export const previewWorkspaceSchemaValidation = async (
         body.entityIds
       );
     }
-  );
+  });
 
 export const getWorkspaceSchema = async (
   db: DatabaseAdapter,
@@ -146,15 +145,13 @@ export const getWorkspaceSchema = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<EntitySchema> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve schema',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve schema',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
       const [row, enums] = await Promise.all([
         db.catalog.getSchema(ws, id),
@@ -164,7 +161,7 @@ export const getWorkspaceSchema = async (
       const entityCount = await countEntitiesForSchema(db, ws, id);
       return toApiSchema(row, entityCount, enums, await getSchemaGovernancePolicies(db, ws, id));
     }
-  );
+  });
 };
 
 export const createWorkspaceSchema = async (
@@ -173,15 +170,13 @@ export const createWorkspaceSchema = async (
   body: Record<string, unknown>,
   event: AuthenticatedEvent
 ): Promise<EntitySchema> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to create schema',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to create schema',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const teamIds = new Set((await db.workspace.listTeams(ws)).map(owner => owner.id));
       const timestamp = new Date();
@@ -229,7 +224,7 @@ export const createWorkspaceSchema = async (
       const enums = await db.catalog.listEnums(ws);
       return toApiSchema(row, 0, enums, await getSchemaGovernancePolicies(db, ws, row.id));
     }
-  );
+  });
 };
 
 export const updateWorkspaceSchema = async (
@@ -239,15 +234,13 @@ export const updateWorkspaceSchema = async (
   body: Record<string, unknown>,
   event: AuthenticatedEvent
 ): Promise<EntitySchema> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to update schema',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to update schema',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const oldRow = await db.catalog.getSchema(ws, id);
       httpAssert.present(oldRow, { status: 404, message: `Schema '${id}' not found` });
@@ -501,7 +494,7 @@ export const updateWorkspaceSchema = async (
       const enums = await db.catalog.listEnums(ws);
       return toApiSchema(row, entityCount, enums, await getSchemaGovernancePolicies(db, ws, id));
     }
-  );
+  });
 };
 
 export const listWorkspaceSchemaVersions = async (
@@ -510,15 +503,13 @@ export const listWorkspaceSchemaVersions = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<SchemaVersion[]> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve schema version history',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve schema version history',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
       const schema = await db.catalog.getSchema(ws, id);
       httpAssert.present(schema, { status: 404, message: `Schema '${id}' not found` });
@@ -528,7 +519,7 @@ export const listWorkspaceSchemaVersions = async (
       ]);
       return versions.map(version => toApiSchemaVersion(version, enums));
     }
-  );
+  });
 };
 
 export const deleteWorkspaceSchema = async (
@@ -537,15 +528,13 @@ export const deleteWorkspaceSchema = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; message: string }> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to delete schema',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to delete schema',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const schema = await db.catalog.getSchema(ws, id);
       httpAssert.present(schema, { status: 404, message: `Schema '${id}' not found` });
@@ -574,5 +563,5 @@ export const deleteWorkspaceSchema = async (
 
       return { success: true, message: `Schema '${id}' deleted` };
     }
-  );
+  });
 };

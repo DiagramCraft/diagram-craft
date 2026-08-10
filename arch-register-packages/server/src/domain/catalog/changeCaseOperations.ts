@@ -3,7 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
-import { defineEntityOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import {
   requireEntityAction,
   requireProjectAccess,
@@ -594,19 +594,19 @@ export const listChangeCasesByProject = async (
   projectId: string,
   event: AuthenticatedEvent
 ): Promise<ChangeCase[]> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve change cases' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to retrieve change cases',
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, projectId);
       requireProjectAccess(authCtx, project.owner);
 
       const rows = await db.changeCase.listCasesByProject(ws, project.id);
       return Promise.all(rows.map(row => toApiChangeCase(db, ws, row, authCtx)));
     }
-  );
+  });
 };
 
 export const listChangeCasesByEntity = async (
@@ -615,12 +615,12 @@ export const listChangeCasesByEntity = async (
   entityId: string,
   event: AuthenticatedEvent
 ): Promise<ChangeCase[]> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve change cases' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to retrieve change cases',
+    operation: async ({ ws, authCtx }) => {
       const entity = await db.catalog.getEntity(ws, entityId);
       httpAssert.present(entity, { status: 404, message: `Data record '${entityId}' not found` });
       requireEntityAction(
@@ -633,7 +633,7 @@ export const listChangeCasesByEntity = async (
       const rows = await db.changeCase.listCasesByEntity(ws, entity.id);
       return Promise.all(rows.map(row => toApiChangeCase(db, ws, row, authCtx)));
     }
-  );
+  });
 };
 
 export const getChangeCase = async (
@@ -643,19 +643,19 @@ export const getChangeCase = async (
   caseId: string,
   event: AuthenticatedEvent
 ): Promise<ChangeCase> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve change case' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to retrieve change case',
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, projectId);
       requireProjectAccess(authCtx, project.owner);
 
       const changeCase = await getCaseOrThrow(db, ws, caseId);
       return toApiChangeCase(db, ws, changeCase, authCtx);
     }
-  );
+  });
 };
 
 export const createChangeCase = async (
@@ -665,12 +665,12 @@ export const createChangeCase = async (
   event: AuthenticatedEvent,
   body: CreateChangeCaseRequest
 ): Promise<ChangeCase> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to create change case' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to create change case',
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, projectId);
       requireCaseEditAccess(authCtx, project);
       assertDraftReferences(body.members, body.newEntities);
@@ -743,7 +743,7 @@ export const createChangeCase = async (
 
       return toApiChangeCase(db, ws, changeCase, authCtx);
     }
-  );
+  });
 };
 
 export const addEntityToChangeCase = async (
@@ -754,12 +754,12 @@ export const addEntityToChangeCase = async (
   event: AuthenticatedEvent,
   body: { entityId: string; proposedState: Record<string, unknown> }
 ): Promise<ChangeCase> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to add entity to change case' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to add entity to change case',
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, projectId);
       requireCaseEditAccess(authCtx, project);
 
@@ -792,7 +792,7 @@ export const addEntityToChangeCase = async (
 
       return toApiChangeCase(db, ws, changeCase, authCtx);
     }
-  );
+  });
 };
 
 /**
@@ -808,12 +808,12 @@ export const addRelationToChangeCase = async (
   event: AuthenticatedEvent,
   body: AddRelationChangeCaseMemberRequest
 ): Promise<ChangeCase> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to add relation to change case' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to add relation to change case',
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, projectId);
       requireCaseEditAccess(authCtx, project);
 
@@ -854,7 +854,7 @@ export const addRelationToChangeCase = async (
 
       return toApiChangeCase(db, ws, changeCase, authCtx);
     }
-  );
+  });
 };
 
 export const removeEntityFromChangeCase = async (
@@ -865,12 +865,12 @@ export const removeEntityFromChangeCase = async (
   memberId: string,
   event: AuthenticatedEvent
 ): Promise<ChangeCase> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to remove entity from change case' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to remove entity from change case',
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, projectId);
       requireCaseEditAccess(authCtx, project);
 
@@ -894,7 +894,7 @@ export const removeEntityFromChangeCase = async (
 
       return toApiChangeCase(db, ws, changeCase, authCtx);
     }
-  );
+  });
 };
 
 export const updateChangeCaseMemberProposedState = async (
@@ -906,12 +906,12 @@ export const updateChangeCaseMemberProposedState = async (
   event: AuthenticatedEvent,
   body: { proposedState: Record<string, unknown> }
 ): Promise<ChangeCase> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to update change case member' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to update change case member',
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, projectId);
       requireCaseEditAccess(authCtx, project);
 
@@ -959,7 +959,7 @@ export const updateChangeCaseMemberProposedState = async (
 
       return toApiChangeCase(db, ws, changeCase, authCtx);
     }
-  );
+  });
 };
 
 export const updateChangeCaseFields = async (
@@ -970,12 +970,12 @@ export const updateChangeCaseFields = async (
   event: AuthenticatedEvent,
   body: UpdateChangeCaseRequest
 ): Promise<ChangeCase> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to update change case' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to update change case',
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, projectId);
       requireCaseEditAccess(authCtx, project);
 
@@ -1006,7 +1006,7 @@ export const updateChangeCaseFields = async (
 
       return toApiChangeCase(db, ws, updated, authCtx);
     }
-  );
+  });
 };
 
 export const saveChangeCaseDraft = async (
@@ -1017,12 +1017,12 @@ export const saveChangeCaseDraft = async (
   event: AuthenticatedEvent,
   body: SaveChangeCaseDraftRequest
 ): Promise<ChangeCase> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to save change case draft' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to save change case draft',
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, projectId);
       requireCaseEditAccess(authCtx, project);
       assertDraftReferences(body.members, body.newEntities);
@@ -1139,7 +1139,7 @@ export const saveChangeCaseDraft = async (
       });
       return toApiChangeCase(db, ws, updated, authCtx);
     }
-  );
+  });
 };
 
 export const withdrawChangeCase = async (
@@ -1149,12 +1149,12 @@ export const withdrawChangeCase = async (
   caseId: string,
   event: AuthenticatedEvent
 ): Promise<ChangeCase> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to withdraw change case' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to withdraw change case',
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, projectId);
       requireCaseEditAccess(authCtx, project);
 
@@ -1166,7 +1166,7 @@ export const withdrawChangeCase = async (
 
       return toApiChangeCase(db, ws, withdrawn, authCtx);
     }
-  );
+  });
 };
 
 export const deleteChangeCase = async (
@@ -1176,12 +1176,12 @@ export const deleteChangeCase = async (
   caseId: string,
   event: AuthenticatedEvent
 ): Promise<{ success: true; message: string }> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to delete change case' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to delete change case',
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, projectId);
       requireCaseEditAccess(authCtx, project);
 
@@ -1195,7 +1195,7 @@ export const deleteChangeCase = async (
 
       return { success: true as const, message: 'Change case deleted' };
     }
-  );
+  });
 };
 
 const buildConflicts = async (
@@ -1232,12 +1232,12 @@ export const checkChangeCaseApplyConflicts = async (
   caseId: string,
   event: AuthenticatedEvent
 ): Promise<ChangeCaseApplyConflict[]> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to check change case conflicts' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to check change case conflicts',
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, projectId);
       requireProjectAccess(authCtx, project.owner);
 
@@ -1246,7 +1246,7 @@ export const checkChangeCaseApplyConflicts = async (
       const { conflicts } = await buildConflicts(db, ws, revision);
       return conflicts;
     }
-  );
+  });
 };
 
 export const applyChangeCase = async (
@@ -1257,12 +1257,12 @@ export const applyChangeCase = async (
   event: AuthenticatedEvent,
   body: ApplyChangeCaseRequest
 ): Promise<ChangeCase> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to apply change case' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to apply change case',
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, projectId);
       requireCaseEditAccess(authCtx, project);
 
@@ -1399,5 +1399,5 @@ export const applyChangeCase = async (
 
       return toApiChangeCase(db, ws, appliedCase, authCtx);
     }
-  );
+  });
 };

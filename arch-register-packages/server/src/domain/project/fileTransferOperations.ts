@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { buildApiAuthCtx, requireProjectAccess } from '../auth/authorization';
 import { writeAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { folderFromPath } from './contentFileHelpers';
@@ -111,15 +111,13 @@ export const downloadProjectFile = async (
   filePath: string,
   event: AuthenticatedEvent
 ): Promise<{ buffer: Buffer; mimeType: string | null; originalFilename: string | null }> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to download file',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to download file',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const project = await db.project.getProject(ws, id);
       httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
       requireProjectAccess(authCtx, project.owner);
@@ -132,7 +130,7 @@ export const downloadProjectFile = async (
       const buffer = await storage.read(ws, projectUuid, file.id);
       return { buffer, mimeType: file.mime_type, originalFilename: file.original_filename };
     }
-  );
+  });
 };
 
 export const downloadEntityFile = async (
@@ -143,15 +141,13 @@ export const downloadEntityFile = async (
   filePath: string,
   event: AuthenticatedEvent
 ): Promise<{ buffer: Buffer; mimeType: string | null; originalFilename: string | null }> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to download entity file',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to download entity file',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireNonProjectContentAccess(authCtx, 'read');
       const entity = await db.catalog.getEntity(ws, entityId);
       httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
@@ -165,7 +161,7 @@ export const downloadEntityFile = async (
       const buffer = await storage.read(ws, entityUuid, file.id);
       return { buffer, mimeType: file.mime_type, originalFilename: file.original_filename };
     }
-  );
+  });
 };
 
 export const downloadWorkspaceFile = async (
@@ -175,15 +171,13 @@ export const downloadWorkspaceFile = async (
   filePath: string,
   event: AuthenticatedEvent
 ): Promise<{ buffer: Buffer; mimeType: string | null; originalFilename: string | null }> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to download workspace file',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to download workspace file',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireNonProjectContentAccess(authCtx, 'read');
       const wsNodes = await db.project.listWorkspaceContentNodes(ws);
       const file = wsNodes.find(n => n.path === filePath) ?? null;
@@ -193,5 +187,5 @@ export const downloadWorkspaceFile = async (
       const buffer = await storage.read(ws, ws, file.id);
       return { buffer, mimeType: file.mime_type, originalFilename: file.original_filename };
     }
-  );
+  });
 };

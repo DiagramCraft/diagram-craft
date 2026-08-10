@@ -1,7 +1,7 @@
 import type { DatabaseAdapter } from '../../db/database';
 
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineEntityOperation, defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { requireEntityAction } from '../auth/authorization';
 
 import { toApiProjectFile } from './projectHelpers';
@@ -34,12 +34,13 @@ export const listRelatedContent = async (
   entityId: string,
   event: AuthenticatedEvent
 ) =>
-  defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve related content', dbErrorMessages: projectDbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to retrieve related content',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const entity = await db.catalog.getEntity(ws, entityId);
       httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
       requireEntityAction(
@@ -88,7 +89,7 @@ export const listRelatedContent = async (
       }
       return result;
     }
-  );
+  });
 
 // Documents whose entity_link/document_link metadata points at this document.
 // Mirrors listRelatedContent's entity-reverse-lookup, but for a document target;
@@ -100,12 +101,13 @@ export const listDocumentBacklinks = async (
   nodeId: string,
   event: AuthenticatedEvent
 ) =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve document backlinks', dbErrorMessages: projectDbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve document backlinks',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const targetNode = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(targetNode, {
         status: 404,
@@ -157,7 +159,7 @@ export const listDocumentBacklinks = async (
       }
       return result;
     }
-  );
+  });
 
 export const listDocuments = async (
   db: DatabaseAdapter,
@@ -175,12 +177,13 @@ export const listDocuments = async (
   },
   event: AuthenticatedEvent
 ): Promise<DocumentListItem[]> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to list documents', dbErrorMessages: projectDbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to list documents',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const resolvedProject = options.projectId
         ? await db.project.getProject(ws, options.projectId)
         : null;
@@ -278,4 +281,4 @@ export const listDocuments = async (
         workflow
       }));
     }
-  );
+  });

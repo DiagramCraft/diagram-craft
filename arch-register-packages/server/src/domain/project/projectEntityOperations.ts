@@ -1,6 +1,6 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineEntityOperation, defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import {
   canAccessProject,
   requireEntityAction,
@@ -22,22 +22,20 @@ export const listProjectEntities = async (
   projectId: string,
   event: AuthenticatedEvent
 ): Promise<ProjectEntity[]> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve project entities',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve project entities',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const project = await db.project.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
       requireProjectAccess(authCtx, project.owner);
       const rows = await db.project.listProjectEntities(ws, project.id);
       return rows.map(toApiProjectEntity);
     }
-  );
+  });
 };
 
 export const addProjectEntity = async (
@@ -47,15 +45,13 @@ export const addProjectEntity = async (
   input: { entity_id: string; entity_type?: string | null; is_done?: boolean },
   event: AuthenticatedEvent
 ): Promise<ProjectEntity> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to add entity to project',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to add entity to project',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const project = await db.project.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
       requireProjectAction(
@@ -74,7 +70,7 @@ export const addProjectEntity = async (
       });
       return toApiProjectEntity(row);
     }
-  );
+  });
 };
 
 export const updateProjectEntity = async (
@@ -85,15 +81,13 @@ export const updateProjectEntity = async (
   input: { entity_type?: string | null; is_done?: boolean },
   event: AuthenticatedEvent
 ): Promise<ProjectEntity> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to update project entity',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to update project entity',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const project = await db.project.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
       requireProjectAction(
@@ -122,7 +116,7 @@ export const updateProjectEntity = async (
       });
       return toApiProjectEntity(row);
     }
-  );
+  });
 };
 
 export const removeProjectEntity = async (
@@ -132,15 +126,13 @@ export const removeProjectEntity = async (
   entityId: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean }> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to remove entity from project',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to remove entity from project',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const project = await db.project.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
       requireProjectAction(
@@ -152,7 +144,7 @@ export const removeProjectEntity = async (
       await db.project.removeProjectEntity(ws, project.id, entityId);
       return { success: true };
     }
-  );
+  });
 };
 
 export const getEntityProjects = async (
@@ -161,15 +153,13 @@ export const getEntityProjects = async (
   entityId: string,
   event: AuthenticatedEvent
 ): Promise<EntityProject[]> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve entity projects',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to retrieve entity projects',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const entity = await db.catalog.getEntity(ws, entityId);
       httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
       requireEntityAction(
@@ -188,7 +178,7 @@ export const getEntityProjects = async (
             : null
         }));
     }
-  );
+  });
 };
 
 export const getEntityDiagramFiles = async (
@@ -197,15 +187,13 @@ export const getEntityDiagramFiles = async (
   entityId: string,
   event: AuthenticatedEvent
 ): Promise<DiagramEntityFile[]> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve entity diagram files',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve entity diagram files',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws }) => {
       const entity = await db.catalog.getEntity(ws, entityId);
       httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
       const rows = await db.project.getEntityDiagramFiles(ws, entity.id);
@@ -244,5 +232,5 @@ export const getEntityDiagramFiles = async (
         }
       }));
     }
-  );
+  });
 };

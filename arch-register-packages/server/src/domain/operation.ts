@@ -8,7 +8,11 @@ import { handleDbError, type DbErrorMapping } from '../utils/http';
 import { buildApiAuthCtx, buildApiEntityAuthCtx, GLOBAL_WS } from './auth/authorization';
 import { resolveWorkspace } from './workspace/resolveWorkspace';
 
-export type OperationContext = {
+export type GlobalOperationContext = {
+  authCtx: WorkspaceAuthorizationContext;
+};
+
+export type WorkspaceOperationContext = {
   ws: string;
   authCtx: WorkspaceAuthorizationContext;
 };
@@ -18,76 +22,85 @@ export type EntityOperationContext = {
   authCtx: AuthorizationContext;
 };
 
-export type OperationErrorOptions = {
-  fallback: string;
+export type OperationScope =
+  | { kind: 'global' }
+  | { kind: 'workspace'; workspace: string }
+  | { kind: 'entity'; workspace: string };
+
+export type OperationContextForScope<Scope extends OperationScope> = Scope extends {
+  kind: 'global';
+}
+  ? GlobalOperationContext
+  : Scope extends { kind: 'entity' }
+    ? EntityOperationContext
+    : WorkspaceOperationContext;
+
+export type OperationErrorOptions<Context> = {
+  fallback?: string;
   dbErrorMessages?: DbErrorMapping;
-  before?: (context: OperationContext) => void;
+  before?: (context: Context) => void;
   onError?: (error: unknown) => void;
 };
 
-export const defineOperation = async <T>(
-  db: DatabaseAdapter,
-  workspace: string,
-  event: AuthenticatedEvent,
-  options: OperationErrorOptions,
-  operation: (context: OperationContext) => Promise<T>
-): Promise<T> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
+const DEFAULT_OPERATION_FALLBACK = 'Internal Server Error';
 
-  let authCtx: WorkspaceAuthorizationContext;
-  try {
-    authCtx = await buildApiAuthCtx(db, ws, event);
-  } catch (error) {
-    options.onError?.(error);
-    return handleDbError(error, options.fallback, options.dbErrorMessages);
-  }
-
-  options.before?.({ ws, authCtx });
-
-  try {
-    return await operation({ ws, authCtx });
-  } catch (error) {
-    options.onError?.(error);
-    return handleDbError(error, options.fallback, options.dbErrorMessages);
-  }
+export type RunAuthorizedOperationOptions<
+  Scope extends OperationScope,
+  Result
+> = OperationErrorOptions<OperationContextForScope<Scope>> & {
+  db: DatabaseAdapter;
+  event: AuthenticatedEvent;
+  scope: Scope;
+  operation: (context: OperationContextForScope<Scope>) => Promise<Result>;
 };
 
-export const defineGlobalOperation = async <T>(
-  db: DatabaseAdapter,
-  event: AuthenticatedEvent,
-  options: OperationErrorOptions,
-  operation: (context: { authCtx: WorkspaceAuthorizationContext }) => Promise<T>
-): Promise<T> => {
-  try {
-    const authCtx = await buildApiAuthCtx(db, GLOBAL_WS, event);
-    return await operation({ authCtx });
-  } catch (error) {
+/**
+ * Resolves the requested authorization scope and runs a domain operation behind
+ * the shared HTTP/database error boundary.
+ *
+ * This helper deliberately does not create transactions. Operations own their
+ * transaction boundaries so a callback can coordinate database and non-database
+ * side effects without being nested in an implicit transaction.
+ */
+export const runAuthorizedOperation = async <Scope extends OperationScope, Result>(
+  options: RunAuthorizedOperationOptions<Scope, Result>
+): Promise<Result> => {
+  const handleError = (error: unknown): never => {
     options.onError?.(error);
-    return handleDbError(error, options.fallback, options.dbErrorMessages);
-  }
-};
+    return handleDbError(
+      error,
+      options.fallback ?? DEFAULT_OPERATION_FALLBACK,
+      options.dbErrorMessages
+    );
+  };
 
-export const defineEntityOperation = async <T>(
-  db: DatabaseAdapter,
-  workspace: string,
-  event: AuthenticatedEvent,
-  options: OperationErrorOptions,
-  operation: (context: EntityOperationContext) => Promise<T>
-): Promise<T> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-
-  let authCtx: AuthorizationContext;
-  try {
-    authCtx = await buildApiEntityAuthCtx(db, ws, event);
-  } catch (error) {
-    options.onError?.(error);
-    return handleDbError(error, options.fallback, options.dbErrorMessages);
-  }
+  const execute = async (context: OperationContextForScope<Scope>): Promise<Result> => {
+    // Keep preflight authorization callbacks outside the database error mapper.
+    // Existing callers rely on their authorization errors reaching the route
+    // boundary unchanged.
+    options.before?.(context);
+    try {
+      return await options.operation(context);
+    } catch (error) {
+      return handleError(error);
+    }
+  };
 
   try {
-    return await operation({ ws, authCtx });
+    if (options.scope.kind === 'global') {
+      const authCtx = await buildApiAuthCtx(options.db, GLOBAL_WS, options.event);
+      const context = { authCtx } as OperationContextForScope<Scope>;
+      return execute(context);
+    }
+
+    const ws = await resolveWorkspace(options.db.catalog, options.scope.workspace);
+    const authCtx =
+      options.scope.kind === 'entity'
+        ? await buildApiEntityAuthCtx(options.db, ws, options.event)
+        : await buildApiAuthCtx(options.db, ws, options.event);
+    const context = { ws, authCtx } as OperationContextForScope<Scope>;
+    return execute(context);
   } catch (error) {
-    options.onError?.(error);
-    return handleDbError(error, options.fallback, options.dbErrorMessages);
+    return handleError(error);
   }
 };
