@@ -204,15 +204,28 @@ test.describe('EntityQuery permission routes', () => {
     resources
   }) => {
     const query: EntityQuery = { root: { kind: 'and', children: [] } };
-    const response = await fetch(
-      `${server.baseUrl}/api/application/v1/default/data?${new URLSearchParams({
-        projectId: resources.projectIds.authMigration,
-        projectScope: 'project',
-        entityQuery: JSON.stringify(query)
-      })}`,
-      { headers: { Authorization: personas.workspaceViewer.auth } }
-    );
+    const queryParams = {
+      projectId: resources.projectIds.authMigration,
+      projectScope: 'project' as const,
+      entityQuery: query
+    };
+    const queryString = new URLSearchParams({
+      projectId: queryParams.projectId,
+      projectScope: queryParams.projectScope,
+      entityQuery: JSON.stringify(queryParams.entityQuery)
+    });
+    const headers = { Authorization: personas.workspaceViewer.auth };
 
-    expect(response.status).toBe(403);
+    const [listResponse, countResponse, treeResponse, exportResponse] = await Promise.all([
+      fetch(`${server.baseUrl}/api/application/v1/default/data?${queryString}`, { headers }),
+      fetch(`${server.baseUrl}/api/application/v1/default/data/count?${queryString}`, { headers }),
+      fetch(`${server.baseUrl}/api/application/v1/default/data/tree?${queryString}`, { headers }),
+      fetch(`${server.baseUrl}/api/application/v1/default/data/export?${queryString}`, { headers })
+    ]);
+
+    expect(listResponse.status).toBe(403);
+    expect(countResponse.status).toBe(403);
+    expect(treeResponse.status).toBe(403);
+    expect(exportResponse.status).toBe(403);
   });
 });
