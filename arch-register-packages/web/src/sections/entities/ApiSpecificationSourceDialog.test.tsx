@@ -30,7 +30,7 @@ describe('ApiSpecificationSourceDialog', () => {
     );
 
     expect(markup).toContain('External link');
-    expect(markup).toContain('no normalized operations');
+    expect(markup).toContain('without importing operations');
     expect(markup).toContain('HTTPS URL');
     expect(markup).toContain('Fetch, validate, and refresh');
   });
