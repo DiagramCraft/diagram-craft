@@ -43,6 +43,7 @@ import { entityToBaseState } from '../domain/catalog/entityMutations';
 import type { StorageAdapter } from '../storage/storage.types';
 import { buildDefaultAdrDocuments } from '../domain/document/documentDefaults';
 import { randomUUID } from 'node:crypto';
+import { recalculateEntityDerivedFields } from '../domain/derived/derivedRecalculation';
 import type { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
 
 type Database = Awaited<ReturnType<typeof createDatabase>>;
@@ -330,6 +331,7 @@ export const seedBootstrapData = async (
   for (const relation of seedRelations) {
     await db.relation.createRelation(relation);
   }
+  await recalculateEntityDerivedFields(db, seededWorkspaces.default.id);
   for (const assessment of seedAssessments) {
     await db.project.createAssessment(assessment);
   }

@@ -48,8 +48,8 @@ export const TypedRelationFieldEditor = ({
   const [adding, setAdding] = useState(false);
   const [expandedUid, setExpandedUid] = useState<string | null>(null);
   const { schemas } = useWorkspaceContext();
-  const direction = field.direction === 'out' ? 'outgoing' : 'incoming';
-  const otherEndpoint = field.direction === 'out' ? 'in' : 'out';
+  const direction = field.direction === 'in' ? 'outgoing' : 'incoming';
+  const otherEndpoint = field.direction === 'in' ? 'out' : 'in';
   const otherEndpointSchemaIds = relationSchema?.[otherEndpoint].schemaIds;
   const otherSchemaIds =
     otherEndpointSchemaIds === 'any'

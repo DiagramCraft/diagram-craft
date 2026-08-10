@@ -5,6 +5,7 @@ import { seededEntities, seededProjects, seededWorkspaces } from '../seedFixture
 import type { StorageAdapter } from '../../storage/storage.types';
 import { runContractSuiteAgainstBothDrivers } from './harness';
 import { listEntitiesWithCount } from '../../domain/catalog/entityQueryOperations';
+import { getEntityJsonProjection } from '../../domain/catalog/entityProjectionOperations';
 
 const noopStorage: StorageAdapter = {
   read: async () => Buffer.alloc(0),
@@ -41,6 +42,31 @@ runContractSuiteAgainstBothDrivers('seededEntityQuery', getDb => {
     expect(eolResults.items[0]?._projections).toMatchObject({
       technology_release_eol: expect.any(Array)
     });
+
+    const customerPortal = await db.catalog.getEntity(
+      workspace,
+      seededEntities.default.customerPortal.id
+    );
+    const acmeLicense = await db.catalog.getEntity(
+      workspace,
+      seededEntities.default.acmeContract.id
+    );
+    const acmeSupport = await db.catalog.getEntity(
+      workspace,
+      seededEntities.default.acmeSupportContract.id
+    );
+    expect(customerPortal?.data.budget).toBe(87000);
+    expect(acmeLicense?.data.allocated).toBe(60);
+    expect(acmeSupport?.data.allocated).toBe(40);
+
+    const customerPortalProjection = await getEntityJsonProjection(
+      db,
+      workspace,
+      seededEntities.default.customerPortal.id,
+      1,
+      null
+    );
+    expect(customerPortalProjection.contracts).toHaveLength(2);
 
     const identityAnchoredQuery: EntityQuery = {
       root: {
