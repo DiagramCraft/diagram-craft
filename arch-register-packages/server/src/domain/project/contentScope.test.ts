@@ -49,10 +49,13 @@ describe('PROJECT_SCOPE.resolve', () => {
     ).rejects.toThrow(HTTPError);
   });
 
-  it('does not enforce a permission check for read actions', async () => {
+  it('enforces project access for read actions', async () => {
     const db = makeDb({ id: 'project-1', owner: null });
     await expect(
       PROJECT_SCOPE.resolve(db, 'ws-1', 'project-1', deniedAuthCtx, 'read')
+    ).rejects.toThrow(HTTPError);
+    await expect(
+      PROJECT_SCOPE.resolve(db, 'ws-1', 'project-1', allowedAuthCtx, 'read')
     ).resolves.toBeDefined();
   });
 
@@ -63,6 +66,7 @@ describe('PROJECT_SCOPE.resolve', () => {
     expect(scope.kind).toBe('project');
     expect(scope.storageId).toBe('project-1');
     expect(scope.projectId).toBe('project-1');
+    expect(scope.projectPublicId).toBeUndefined();
     expect(scope.entityId).toBeNull();
     expect(scope.auditMetadata).toEqual({ project_id: 'project-1' });
   });
