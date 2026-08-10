@@ -8,7 +8,7 @@ import type {
 } from '@arch-register/api-types/entityDeprecationContract';
 import { orpcClient } from '../lib/orpcClient';
 import { entityKeys } from '../queries/entities';
-import { governanceKeys } from './useGovernance';
+import { invalidateGovernanceQueries } from '../queries/governance';
 
 export const entityDeprecationKeys = {
   current: (workspace: string, entityId: string) =>
@@ -32,7 +32,7 @@ const invalidateAfterMutation = async (
       queryKey: entityDeprecationKeys.current(workspace, entityId)
     }),
     queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspace, entityId) }),
-    queryClient.invalidateQueries({ queryKey: governanceKeys.all })
+    invalidateGovernanceQueries(queryClient, workspace)
   ]);
 };
 

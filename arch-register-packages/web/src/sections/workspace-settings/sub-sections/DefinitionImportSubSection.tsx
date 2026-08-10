@@ -13,9 +13,10 @@ import type {
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { orpcClient } from '../../../lib/orpcClient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { relationSchemaKeys } from '../../../queries/relationSchemas';
-import { fieldGroupKeys } from '../../../queries/fieldGroups';
-import { invalidateDashboardQueries } from '../../../queries/dashboard';
+import {
+  definitionImportKeys,
+  invalidateDefinitionImportQueries
+} from '../../../queries/definitionImports';
 import styles from './ExportImportSubSection.module.css';
 
 const sourceKey = (source: DefinitionImportSource) => `${source.kind}:${source.id}`;
@@ -81,7 +82,7 @@ export const DefinitionImportSubSection = () => {
   const [error, setError] = useState<string | null>(null);
 
   const sourcesQuery = useQuery({
-    queryKey: ['definition-import-sources', workspaceSlug],
+    queryKey: definitionImportKeys.sources(workspaceSlug),
     queryFn: () =>
       orpcClient.workspaces.definitionImportSources({ params: { workspace: workspaceSlug } }),
     enabled: permissions.canAdministerWorkspace ?? false
@@ -129,15 +130,7 @@ export const DefinitionImportSubSection = () => {
         }
       }),
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: ['schemas', 'list', workspaceSlug] }),
-        queryClient.invalidateQueries({ queryKey: ['enums', 'list', workspaceSlug] }),
-        queryClient.invalidateQueries({ queryKey: ['document-types', workspaceSlug] }),
-        queryClient.invalidateQueries({ queryKey: relationSchemaKeys.list(workspaceSlug) }),
-        queryClient.invalidateQueries({ queryKey: fieldGroupKeys.list(workspaceSlug) }),
-        invalidateDashboardQueries(queryClient, workspaceSlug),
-        queryClient.invalidateQueries({ queryKey: ['audit', workspaceSlug] })
-      ]);
+      await invalidateDefinitionImportQueries(queryClient, workspaceSlug);
       setPreview(null);
       setSelection(emptySelection);
       setRenames([]);
