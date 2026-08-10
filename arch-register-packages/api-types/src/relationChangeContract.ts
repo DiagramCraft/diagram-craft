@@ -1,64 +1,15 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { wsAndId } from '@arch-register/api-types/common';
+import { createChangeApprovalSchemas } from '@arch-register/api-types/changeApprovalSchemas';
 
-const relationChangeApprovalStatusSchema = z.enum(['open', 'approved', 'rejected', 'withdrawn']);
-const relationChangeApprovalRevisionStatusSchema = z.enum([
-  'submitted',
-  'changes_requested',
-  'stale',
-  'approved',
-  'rejected',
-  'withdrawn'
-]);
-
-const relationChangeApprovalRevisionSchema = z.object({
-  id: z.string(),
-  approvalId: z.string(),
-  relationId: z.string(),
-  revisionNumber: z.number().int(),
-  baseVersion: z.number().int(),
-  baseState: z.record(z.string(), z.unknown()),
-  proposedState: z.record(z.string(), z.unknown()),
-  diff: z.record(z.string(), z.unknown()),
-  policyVersion: z.string(),
-  resolvedPolicy: z.record(z.string(), z.unknown()),
-  message: z.string().nullable(),
-  createdBy: z.string().nullable(),
-  createdByName: z.string().nullable(),
-  status: relationChangeApprovalRevisionStatusSchema,
-  createdAt: z.string(),
-  resolvedAt: z.string().nullable(),
-  caseId: z.string().nullable()
-});
-
-const relationChangeApprovalSchema = z.object({
-  id: z.string(),
-  workspace: z.string(),
-  relationId: z.string(),
-  status: relationChangeApprovalStatusSchema,
-  initiatorUserId: z.string().nullable(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  closedAt: z.string().nullable(),
-  revisions: z.array(relationChangeApprovalRevisionSchema)
-});
-
-const relationChangeApprovalRequestBodySchema = z.object({
-  baseVersion: z.number().int().min(1),
-  proposedState: z.record(z.string(), z.unknown()),
-  message: z.string().optional(),
-  dueAt: z.string().optional(),
-  initiationFields: z.record(z.string(), z.unknown()).optional()
-});
-
-const withdrawRelationChangeApprovalBodySchema = z.object({
-  reason: z.string().optional()
-});
-
-const relationApprovalBypassRequestBodySchema = relationChangeApprovalRequestBodySchema.extend({
-  reason: z.string().min(1)
-});
+const {
+  approvalRevisionSchema: relationChangeApprovalRevisionSchema,
+  approvalSchema: relationChangeApprovalSchema,
+  approvalRequestBodySchema: relationChangeApprovalRequestBodySchema,
+  withdrawBodySchema: withdrawRelationChangeApprovalBodySchema,
+  bypassBodySchema: relationApprovalBypassRequestBodySchema
+} = createChangeApprovalSchemas('relationId');
 
 export const relationChangeContract = oc.tag('Relation change approval').router({
   relationChanges: {

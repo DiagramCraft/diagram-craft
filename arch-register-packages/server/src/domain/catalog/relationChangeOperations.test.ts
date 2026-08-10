@@ -42,15 +42,17 @@ const governanceMocks = vi.hoisted(() => ({
 
 vi.mock('../governance/governanceOperations', () => governanceMocks);
 
-const entityChangeMocks = vi.hoisted(() => ({
+const approvalWorkflowMocks = vi.hoisted(() => ({
   listEligibleApproverIds: vi.fn(async () => new Set(['user-1'])),
   isSoleApprover: vi.fn(() => true)
 }));
 
-vi.mock('./entityChangeOperations', async () => ({
-  ...(await vi.importActual<typeof import('./entityChangeOperations')>('./entityChangeOperations')),
-  listEligibleApproverIds: entityChangeMocks.listEligibleApproverIds,
-  isSoleApprover: entityChangeMocks.isSoleApprover
+vi.mock('./approvalWorkflowOperations', async () => ({
+  ...(await vi.importActual<typeof import('./approvalWorkflowOperations')>(
+    './approvalWorkflowOperations'
+  )),
+  listEligibleApproverIds: approvalWorkflowMocks.listEligibleApproverIds,
+  isSoleApprover: approvalWorkflowMocks.isSoleApprover
 }));
 
 const now = new Date('2026-06-29T12:00:00.000Z');

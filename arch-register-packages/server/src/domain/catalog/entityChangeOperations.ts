@@ -36,11 +36,14 @@ import {
   recordGovernanceEvent,
   type GovernanceAssignmentTarget
 } from '../governance/governanceOperations';
+import { findApprovalCaseForRevision } from './approvalLifecycleOperations';
 import {
-  finalizeApprovalBypass,
-  findApprovalCaseForRevision,
-  withdrawApproval
-} from './approvalLifecycleOperations';
+  approvalCaseShouldComplete,
+  createApprovalGovernanceCaseConfig,
+  createApprovalWorkflow,
+  isSoleApprover
+} from './approvalWorkflowOperations';
+import type { ApprovalSubjectAdapter } from './approvalWorkflowOperations';
 import type { GovernanceCaseDbResult } from '../governance/db/governanceDatabase';
 import type {
   AuthorizationContext,
@@ -128,48 +131,6 @@ const policyFor = async (
   };
 };
 
-const authorizationEventForUser = (userId: string) =>
-  ({ context: { user: { id: userId } } }) as unknown as AuthenticatedEvent;
-
-export const listEligibleApproverIds = async (
-  db: DatabaseAdapter,
-  workspace: string,
-  ownerTeamId: string | null
-) => {
-  const [users, teamAssignments] = await Promise.all([
-    db.auth.listUsers(),
-    db.workspace.listTeamAssignments(workspace)
-  ]);
-  const activeUserIds = new Set(users.filter(user => user.is_active).map(user => user.id));
-  const eligibleApproverIds = new Set(
-    teamAssignments
-      .filter(
-        assignment =>
-          ownerTeamId != null &&
-          assignment.team_id === ownerTeamId &&
-          assignment.role === 'team_admin' &&
-          activeUserIds.has(assignment.user_id)
-      )
-      .map(assignment => assignment.user_id)
-  );
-
-  await Promise.all(
-    users
-      .filter(user => user.is_active)
-      .map(async user => {
-        const authCtx = await buildApiAuthCtx(db, workspace, authorizationEventForUser(user.id));
-        if (permissionChecker.hasWorkspaceCapability(authCtx, 'ent.approve')) {
-          eligibleApproverIds.add(user.id);
-        }
-      })
-  );
-
-  return eligibleApproverIds;
-};
-
-export const isSoleApprover = (eligibleApproverIds: ReadonlySet<string>, userId: string) =>
-  eligibleApproverIds.size === 1 && eligibleApproverIds.has(userId);
-
 const entityWorkflowDefaultConfig = defaultWorkflowConfigForCaseKind({
   workflowConfig: schemaWorkflowConfig
 });
@@ -219,31 +180,6 @@ export const resolveEntityApprovalTargets = async (
     config.requiredApprovals
   );
   return { config, targets };
-};
-
-export const approvalCaseShouldComplete = async ({
-  tx,
-  case: caseRow,
-  assignmentId,
-  actorUserId,
-  decision,
-  requiredApprovals
-}: {
-  tx: DatabaseAdapter;
-  case: GovernanceCaseDbResult;
-  assignmentId: string;
-  actorUserId: string;
-  decision: 'approve' | 'reject' | 'request_changes' | 'acknowledge';
-  requiredApprovals: number;
-}) => {
-  if (decision !== 'approve') return true;
-  const events = await tx.governance.listEvents(caseRow.id);
-  const approved = events.filter(event => event.event_type === 'approved');
-  const actorIds = new Set(approved.map(event => event.actor_user_id).filter(Boolean));
-  actorIds.add(actorUserId);
-  const assignmentIds = new Set(approved.map(event => String(event.metadata['assignmentId'])));
-  assignmentIds.add(assignmentId);
-  return assignmentIds.size >= requiredApprovals && actorIds.size >= requiredApprovals;
 };
 
 export const entityRequiresApproval = async (
@@ -602,6 +538,211 @@ const toApiBulkApproval = async (
   };
 };
 
+// Entity escalation follows the same owner-admin strategy as approval. Bulk cases deliberately
+// fall back when their members have zero or multiple distinct owner teams.
+const resolveEntityOwnerAdminEscalationTargets = async (
+  db: DatabaseAdapter,
+  caseRow: GovernanceCaseDbResult
+): Promise<GovernanceAssignmentTarget[]> => {
+  const entityIds =
+    (caseRow.payload['entityIds'] as string[] | undefined) ??
+    ((caseRow.payload['entityId'] as string | undefined)
+      ? [caseRow.payload['entityId'] as string]
+      : []);
+  const entities = await Promise.all(
+    entityIds.map(entityId => db.catalog.getEntity(caseRow.workspace, entityId))
+  );
+  return resolveEntityOwnerAdminTargets(
+    db,
+    caseRow.workspace,
+    entities.filter(entity => entity != null).map(entity => ({ owner: entity.owner }))
+  );
+};
+
+const entityApprovalAdapter: ApprovalSubjectAdapter<Entity, EntityChangeApproval> = {
+  subjectName: 'Entity' as const,
+  subjectType: 'entity',
+  caseKind: ENTITY_CHANGE_CASE_KIND,
+  getSubject: (db: DatabaseAdapter, workspace: string, entityId: string) =>
+    db.catalog.getEntity(workspace, entityId),
+  getSubjectId: (entity: Entity) => entity.id,
+  getVersion: (entity: Entity) => entity.version ?? 1,
+  assertCanView: (
+    _db: DatabaseAdapter,
+    _workspace: string,
+    authCtx: AuthorizationContext,
+    entity: Entity
+  ) => {
+    requireEntityAction(authCtx, entity, 'view_entity');
+  },
+  assertCanPropose: (
+    _db: DatabaseAdapter,
+    _workspace: string,
+    authCtx: AuthorizationContext,
+    entity: Entity
+  ) => {
+    requireEntityAction(authCtx, entity, 'view_entity');
+    requireEntityAction(authCtx, entity, 'edit_entity');
+  },
+  prepareProposal: async (
+    db: DatabaseAdapter,
+    workspace: string,
+    entity: Entity,
+    proposedState: Record<string, unknown>,
+    authCtx: AuthorizationContext
+  ) => {
+    const { state, update } = await buildProposedEntity(
+      db,
+      workspace,
+      entity,
+      proposedState,
+      authCtx
+    );
+    if (update.owner !== entity.owner || update.project_id !== entity.project_id) {
+      requireEntityAction(authCtx, entity, 'admin_entity');
+    }
+    const baseState = entityState(entity);
+    return { baseState, proposedState: state, diff: buildDiff(baseState, state) };
+  },
+  resolvePolicy: async (db, workspace, entity) => {
+    const schema = await db.catalog.getSchema(workspace, entity.schema_id);
+    httpAssert.present(schema, { status: 404, message: 'Entity schema not found' });
+    const policy = await policyFor(db, workspace, schema, entity);
+    return { required: policy.required, policyVersion: policy.policyVersion };
+  },
+  resolveSubmission: async (
+    db: DatabaseAdapter,
+    workspace: string,
+    entity: Entity,
+    userId: string,
+    policy
+  ) => {
+    const schema = await db.catalog.getSchema(workspace, entity.schema_id);
+    httpAssert.present(schema, { status: 404, message: 'Entity schema not found' });
+    const { config, targets } = await resolveEntityApprovalTargets(
+      db,
+      workspace,
+      ENTITY_CHANGE_CASE_KIND,
+      encodeCaseSubkind(schema.id),
+      [entity]
+    );
+    const assignments = targets.map(target => ({ action: 'approve' as const, target }));
+    const eligibleApproverIds = await eligibleUserIdsForGovernanceTargets(db, workspace, targets);
+    const selfApprovalAllowed =
+      config.requiredApprovals === 1 && isSoleApprover(eligibleApproverIds, userId);
+    return {
+      required: policy.required,
+      policyVersion: policy.policyVersion,
+      resolvedPolicy: {
+        ...policy,
+        selfApprovalAllowed,
+        requiredApprovals: config.requiredApprovals,
+        strategy: config.strategy ?? ENTITY_OWNER_ADMIN_STRATEGY,
+        targets
+      },
+      assignments,
+      selfApprovalAllowed,
+      requiredApprovals: config.requiredApprovals,
+      caseSubkind: encodeCaseSubkind(schema.id),
+      casePayload: { entityId: entity.id }
+    };
+  },
+  toApiApproval,
+  applyBypass: async ({ tx, workspace, subject: entity, event, body }) => {
+    const { update } = await buildProposedEntity(tx, workspace, entity, body.proposedState);
+    const row = await updateEntityWithAuditIfVersion(tx, {
+      workspace,
+      entityId: entity.id,
+      previous: entity,
+      next: update,
+      expectedVersion: body.baseVersion,
+      actor: { id: event.context.user.id, displayName: event.context.user.display_name },
+      auditMetadata: { approvalBypass: true, reason: body.reason }
+    });
+    return row == null ? null : { version: row.version ?? 1 };
+  },
+  governance: {
+    subjectName: 'Entity',
+    workflowConfig: schemaWorkflowConfig,
+    reminders: { approachingDays: [2], overdueDays: [1, 5] },
+    escalation: { overdueDays: 5, target: resolveEntityOwnerAdminEscalationTargets },
+    getSubjectIdFromCase: caseRow => String(caseRow.payload['entityId']),
+    subjectVisible: async (db, authCtx, workspace, subjectId) => {
+      const entity = await db.catalog.getEntity(workspace, subjectId);
+      return (
+        entity != null && permissionChecker.hasEntityPermission(authCtx, entity, 'view_entity')
+      );
+    },
+    getSubject: (db, workspace, subjectId) => db.catalog.getEntity(workspace, subjectId),
+    toBaseState: entity => entityState(entity),
+    conflictMessage: (_entity, keys) =>
+      `The proposal is stale because the entity changed in: ${keys.join(', ')}`,
+    applyDomainEffect: async ({ tx, caseRow, event, revision, subject: entity, nextState }) => {
+      const proposalId = String(caseRow.payload['proposalId']);
+      const entityId = entity.id;
+      const actor = event.actor_user_id ? await tx.auth.getUser(event.actor_user_id) : null;
+      const nextDescription = String(nextState['description'] ?? '');
+      const nextOwner = (nextState['owner'] as string | null) ?? null;
+      const nextLifecycle = (nextState['lifecycle'] as string | null) ?? null;
+      const nextData = (nextState['data'] as Record<string, unknown>) ?? {};
+      const nextSchemaId = String(nextState['schema_id']);
+      const nextSchema = await tx.catalog.getSchema(caseRow.workspace, nextSchemaId);
+      httpAssert.present(nextSchema, {
+        status: 409,
+        message: 'The entity schema no longer exists'
+      });
+      const updated = await updateEntityWithAuditIfVersion(tx, {
+        workspace: caseRow.workspace,
+        entityId,
+        previous: entity,
+        next: {
+          slug: String(nextState['slug']),
+          namespace: String(nextState['namespace']),
+          name: String(nextState['name']),
+          description: nextDescription,
+          owner: nextOwner,
+          lifecycle: nextLifecycle,
+          target_lifecycle: (nextState['target_lifecycle'] as string | null) ?? null,
+          target_lifecycle_date: (nextState['target_lifecycle_date'] as string | null) ?? null,
+          tags: Array.isArray(nextState['tags'])
+            ? nextState['tags'].filter((value): value is string => typeof value === 'string')
+            : [],
+          links: Array.isArray(nextState['links']) ? nextState['links'] : [],
+          schema_id: nextSchemaId,
+          data: nextData,
+          project_id: (nextState['project_id'] as string | null) ?? null,
+          updated_at: new Date(),
+          completeness: computeEntityCompleteness(
+            {
+              description: nextDescription,
+              owner: nextOwner,
+              lifecycle: nextLifecycle,
+              data: nextData
+            },
+            nextSchema
+          )
+        },
+        expectedVersion: entity.version ?? 1,
+        actor: {
+          id: event.actor_user_id ?? caseRow.initiator_user_id ?? 'system',
+          displayName: actor?.display_name ?? null
+        },
+        auditMetadata: { governanceCaseId: caseRow.id, proposalId, revisionId: revision.id },
+        versionKind: 'case_applied',
+        appliedCaseRevisionId: revision.id
+      });
+      httpAssert.present(updated, {
+        status: 409,
+        statusText: 'Conflict',
+        message: 'The entity changed after this proposal was submitted'
+      });
+      return { entityId, entityVersion: updated.version ?? 1 };
+    }
+  }
+};
+
+const entityApprovalWorkflow = createApprovalWorkflow(entityApprovalAdapter);
+
 const assertCanPropose = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -617,20 +758,12 @@ const assertCanPropose = async (
   return { authCtx, entity };
 };
 
-export const getEntityChangeApproval = async (
+export const getEntityChangeApproval = (
   db: DatabaseAdapter,
   workspaceName: string,
   entityId: string,
   event: AuthenticatedEvent
-) => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  const entity = await db.catalog.getEntity(workspace, entityId);
-  httpAssert.present(entity, { status: 404, message: 'Entity not found' });
-  requireEntityAction(authCtx, entity, 'view_entity');
-  const proposal = await db.entityChange.getOpenApproval(workspace, entity.id);
-  return proposal ? await toApiApproval(db, proposal, authCtx) : null;
-};
+) => entityApprovalWorkflow.get(db, workspaceName, entityId, event);
 
 export const getBulkEntityChangeApproval = async (
   db: DatabaseAdapter,
@@ -795,154 +928,13 @@ export const submitBulkEntityChangeApproval = async (
   return await toApiBulkApproval(db, proposal, authCtx);
 };
 
-const submitProposal = async (
-  db: DatabaseAdapter,
-  workspaceName: string,
-  entityId: string,
-  event: AuthenticatedEvent,
-  body: EntityChangeApprovalRequestBody,
-  expectedProposalId?: string
-) => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const { authCtx, entity } = await assertCanPropose(db, workspace, entityId, event);
-  const canonicalEntityId = entity.id;
-  const schema = await db.catalog.getSchema(workspace, entity.schema_id);
-  httpAssert.present(schema, { status: 404, message: 'Entity schema not found' });
-  const policy = await policyFor(db, workspace, schema, entity);
-  httpAssert.true(policy.required, {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'This entity does not require an approval proposal'
-  });
-  const { state: proposedState, update } = await buildProposedEntity(
-    db,
-    workspace,
-    entity,
-    body.proposedState,
-    authCtx
-  );
-  const baseState = entityState(entity);
-  const diff = buildDiff(baseState, proposedState);
-  httpAssert.true(Object.keys(diff).length > 0, {
-    status: 400,
-    message: 'The proposal does not change the entity'
-  });
-  httpAssert.true(body.baseVersion === (entity.version ?? 1), {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'The entity changed while this proposal was being edited'
-  });
-  if (update.owner !== entity.owner || update.project_id !== entity.project_id) {
-    requireEntityAction(authCtx, entity, 'admin_entity');
-  }
-
-  const userId = event.context.user.id;
-  const now = new Date();
-  const proposal = await db.core.transaction(async tx => {
-    let root = await tx.entityChange.getOpenApproval(workspace, canonicalEntityId);
-    if (expectedProposalId != null) {
-      httpAssert.true(root?.id === expectedProposalId, {
-        status: 404,
-        message: 'Entity proposal not found'
-      });
-    }
-    if (root == null) {
-      root = await tx.entityChange.createApproval({
-        id: randomUUID(),
-        workspace,
-        entity_id: canonicalEntityId,
-        status: 'open',
-        initiator_user_id: userId,
-        created_at: now,
-        updated_at: now,
-        closed_at: null
-      });
-    } else {
-      httpAssert.true(root.initiator_user_id === userId, {
-        status: 403,
-        message: 'Only the proposal initiator can submit a new revision'
-      });
-      const previous = await tx.entityChange.getLatestApprovalRevision(workspace, root.id);
-      httpAssert.true(previous?.status === 'changes_requested' || previous?.status === 'stale', {
-        status: 409,
-        message: 'The current entity proposal is already awaiting a decision'
-      });
-    }
-
-    const previous = await tx.entityChange.getLatestApprovalRevision(workspace, root.id);
-    const { config: approvalConfig, targets } = await resolveEntityApprovalTargets(
-      tx,
-      workspace,
-      ENTITY_CHANGE_CASE_KIND,
-      encodeCaseSubkind(schema.id),
-      [entity]
-    );
-    const assignments = targets.map(target => ({ action: 'approve' as const, target }));
-    const eligibleApproverIds = await eligibleUserIdsForGovernanceTargets(tx, workspace, targets);
-    const selfApprovalAllowed =
-      approvalConfig.requiredApprovals === 1 && isSoleApprover(eligibleApproverIds, userId);
-    const resolvedPolicy = {
-      ...policy,
-      selfApprovalAllowed,
-      requiredApprovals: approvalConfig.requiredApprovals,
-      strategy: approvalConfig.strategy ?? ENTITY_OWNER_ADMIN_STRATEGY,
-      targets
-    };
-    const revision = await tx.entityChange.createApprovalRevision({
-      id: randomUUID(),
-      proposal_id: root.id,
-      workspace,
-      entity_id: canonicalEntityId,
-      revision_number: (previous?.revision_number ?? 0) + 1,
-      base_version: body.baseVersion,
-      base_state: baseState,
-      proposed_state: proposedState,
-      diff,
-      policy_version: policy.policyVersion,
-      resolved_policy: resolvedPolicy,
-      message: body.message ?? null,
-      created_by: userId,
-      status: 'submitted',
-      created_at: now,
-      resolved_at: null
-    });
-
-    await createGovernanceCaseInTransaction(
-      tx,
-      workspace,
-      userId,
-      {
-        caseKind: ENTITY_CHANGE_CASE_KIND,
-        caseSubkind: encodeCaseSubkind(schema.id),
-        subjectType: 'entity',
-        subjectId: canonicalEntityId,
-        subjectVersion: revision.id,
-        policyVersion: policy.policyVersion,
-        selfApprovalAllowed,
-        dueAt: body.dueAt ? new Date(body.dueAt) : null,
-        payload: {
-          proposalId: root.id,
-          revisionId: revision.id,
-          entityId: canonicalEntityId,
-          requiredApprovals: approvalConfig.requiredApprovals
-        },
-        initiationFieldValues: body.initiationFields,
-        assignments
-      },
-      now
-    );
-    return root;
-  });
-  return await toApiApproval(db, proposal, authCtx);
-};
-
 export const submitEntityChangeApproval = (
   db: DatabaseAdapter,
   workspace: string,
   entityId: string,
   event: AuthenticatedEvent,
   body: EntityChangeApprovalRequestBody
-) => submitProposal(db, workspace, entityId, event, body);
+) => entityApprovalWorkflow.submit(db, workspace, entityId, event, body);
 
 export const resubmitEntityChangeApproval = (
   db: DatabaseAdapter,
@@ -951,7 +943,7 @@ export const resubmitEntityChangeApproval = (
   proposalId: string,
   event: AuthenticatedEvent,
   body: EntityChangeApprovalRequestBody
-) => submitProposal(db, workspace, entityId, event, body, proposalId);
+) => entityApprovalWorkflow.resubmit(db, workspace, entityId, proposalId, event, body);
 
 export const withdrawEntityChangeApproval = async (
   db: DatabaseAdapter,
@@ -960,23 +952,7 @@ export const withdrawEntityChangeApproval = async (
   proposalId: string,
   event: AuthenticatedEvent,
   reason?: string
-) => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const { authCtx, entity } = await assertCanPropose(db, workspace, entityId, event);
-  return withdrawApproval(db, {
-    workspace,
-    subjectId: entity.id,
-    proposalId,
-    event,
-    authCtx,
-    reason,
-    adapter: {
-      caseKind: ENTITY_CHANGE_CASE_KIND,
-      subjectName: 'Entity',
-      toApiApproval
-    }
-  });
-};
+) => entityApprovalWorkflow.withdraw(db, workspaceName, entityId, proposalId, event, reason);
 
 export const bypassEntityApproval = async (
   db: DatabaseAdapter,
@@ -984,254 +960,16 @@ export const bypassEntityApproval = async (
   entityId: string,
   event: AuthenticatedEvent,
   body: EntityChangeApprovalRequestBody & { reason: string }
-) => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const { authCtx, entity } = await assertCanPropose(db, workspace, entityId, event);
-  const canonicalEntityId = entity.id;
-  requireWorkspaceCapability(authCtx, 'ent.override');
-  const updated = await db.core.transaction(async tx => {
-    const now = new Date();
-    const { update } = await buildProposedEntity(tx, workspace, entity, body.proposedState);
-    const row = await updateEntityWithAuditIfVersion(tx, {
-      workspace,
-      entityId: canonicalEntityId,
-      previous: entity,
-      next: update,
-      expectedVersion: body.baseVersion,
-      actor: { id: event.context.user.id, displayName: event.context.user.display_name },
-      auditMetadata: { approvalBypass: true, reason: body.reason }
-    });
-    if (row == null) return null;
-
-    await finalizeApprovalBypass(tx, {
-      workspace,
-      subjectId: canonicalEntityId,
-      actorUserId: event.context.user.id,
-      reason: body.reason,
-      now,
-      adapter: { caseKind: ENTITY_CHANGE_CASE_KIND }
-    });
-    return row;
-  });
-  httpAssert.present(updated, {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'The entity changed while the bypass was being applied'
-  });
-  return { entityId: canonicalEntityId, version: updated.version ?? 1, bypassed: true as const };
-};
-
-// Entity escalation follows the same owner-admin strategy as approval. Bulk cases deliberately
-// fall back when their members have zero or multiple distinct owner teams.
-const resolveEntityOwnerAdminEscalationTargets = async (
-  db: DatabaseAdapter,
-  caseRow: GovernanceCaseDbResult
-): Promise<GovernanceAssignmentTarget[]> => {
-  const entityIds =
-    (caseRow.payload['entityIds'] as string[] | undefined) ??
-    ((caseRow.payload['entityId'] as string | undefined)
-      ? [caseRow.payload['entityId'] as string]
-      : []);
-  const entities = await Promise.all(
-    entityIds.map(entityId => db.catalog.getEntity(caseRow.workspace, entityId))
-  );
-  return resolveEntityOwnerAdminTargets(
-    db,
-    caseRow.workspace,
-    entities.filter(entity => entity != null).map(entity => ({ owner: entity.owner }))
-  );
-};
+) =>
+  entityApprovalWorkflow.bypass(db, workspaceName, entityId, event, body).then(result => ({
+    entityId: result.subjectId,
+    version: result.version,
+    bypassed: result.bypassed
+  }));
 
 export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
   new Map([
-    [
-      ENTITY_CHANGE_CASE_KIND,
-      {
-        workflowConfig: schemaWorkflowConfig,
-        subjectVisible: async (
-          db,
-          _authCtx: AuthorizationContext,
-          workspace: string,
-          subjectId: string
-        ) => {
-          const entity = await db.catalog.getEntity(workspace, subjectId);
-          return (
-            entity != null && permissionChecker.hasEntityPermission(_authCtx, entity, 'view_entity')
-          );
-        },
-        beforeDecision: async (tx, { case: caseRow, decision }) => {
-          if (decision !== 'approve') return 'proceed';
-          const revision = await tx.entityChange.getApprovalRevision(
-            caseRow.workspace,
-            String(caseRow.payload['revisionId'])
-          );
-          const entity = await tx.catalog.getEntity(
-            caseRow.workspace,
-            String(caseRow.payload['entityId'])
-          );
-          if (!revision || !entity) return 'proceed';
-          const currentState = entityState(entity);
-          const conflicting = Object.keys(revision.diff).some(
-            key =>
-              !equalEntityValue(revision.base_state[key], currentState[key]) &&
-              !equalEntityValue(currentState[key], revision.proposed_state[key])
-          );
-          if (!conflicting) return 'proceed';
-          await tx.entityChange.updateApprovalRevisionStatus(
-            caseRow.workspace,
-            revision.id,
-            'stale',
-            new Date()
-          );
-          return 'stale';
-        },
-        shouldCompleteCase: context =>
-          approvalCaseShouldComplete({
-            ...context,
-            requiredApprovals: Number(context.case.payload['requiredApprovals']) || 1
-          }),
-        handleDecision: async (tx, { case: caseRow, decision }) => {
-          const payload = caseRow.payload;
-          const revisionId = String(payload['revisionId']);
-          const proposalId = String(payload['proposalId']);
-          if (decision === 'request_changes') {
-            await tx.entityChange.updateApprovalRevisionStatus(
-              caseRow.workspace,
-              revisionId,
-              'changes_requested'
-            );
-          } else if (decision === 'reject') {
-            await tx.entityChange.updateApprovalRevisionStatus(
-              caseRow.workspace,
-              revisionId,
-              'rejected',
-              new Date()
-            );
-            await tx.entityChange.updateApprovalStatus(
-              caseRow.workspace,
-              proposalId,
-              'rejected',
-              new Date(),
-              new Date()
-            );
-          }
-        },
-        applyDomainEffect: async (tx, { case: caseRow, event }) => {
-          const payload = caseRow.payload;
-          const revisionId = String(payload['revisionId']);
-          const proposalId = String(payload['proposalId']);
-          const entityId = String(payload['entityId']);
-          const revision = await tx.entityChange.getApprovalRevision(caseRow.workspace, revisionId);
-          httpAssert.present(revision, {
-            status: 409,
-            message: 'The proposal revision no longer exists'
-          });
-          const entity = await tx.catalog.getEntity(caseRow.workspace, entityId);
-          httpAssert.present(entity, {
-            status: 409,
-            message: 'The governed entity no longer exists'
-          });
-          const currentState = entityState(entity);
-          const touchedKeys = Object.keys(revision.diff);
-          const conflictingKeys = touchedKeys.filter(
-            key =>
-              !equalEntityValue(revision.base_state[key], currentState[key]) &&
-              !equalEntityValue(currentState[key], revision.proposed_state[key])
-          );
-          httpAssert.true(conflictingKeys.length === 0, {
-            status: 409,
-            statusText: 'Conflict',
-            message: `The proposal is stale because the entity changed in: ${conflictingKeys.join(', ')}`
-          });
-          const next = { ...revision.proposed_state };
-          for (const key of mutableStateKeys) {
-            if (!touchedKeys.includes(key)) next[key] = currentState[key];
-          }
-          const actor = event.actor_user_id ? await tx.auth.getUser(event.actor_user_id) : null;
-          const nextDescription = String(next['description'] ?? '');
-          const nextOwner = (next['owner'] as string | null) ?? null;
-          const nextLifecycle = (next['lifecycle'] as string | null) ?? null;
-          const nextData = (next['data'] as Record<string, unknown>) ?? {};
-          const nextSchemaId = String(next['schema_id']);
-          // Recompute rather than trust the frozen value on `revision.proposed_state` — untouched
-          // fields above were just reconciled against the entity's current state, so the
-          // completeness score must reflect that same merged state, not the state at proposal time.
-          const nextSchema = await tx.catalog.getSchema(caseRow.workspace, nextSchemaId);
-          httpAssert.present(nextSchema, {
-            status: 409,
-            message: 'The entity schema no longer exists'
-          });
-          const updated = await updateEntityWithAuditIfVersion(tx, {
-            workspace: caseRow.workspace,
-            entityId,
-            previous: entity,
-            next: {
-              slug: String(next['slug']),
-              namespace: String(next['namespace']),
-              name: String(next['name']),
-              description: nextDescription,
-              owner: nextOwner,
-              lifecycle: nextLifecycle,
-              target_lifecycle: (next['target_lifecycle'] as string | null) ?? null,
-              target_lifecycle_date: (next['target_lifecycle_date'] as string | null) ?? null,
-              tags: Array.isArray(next['tags'])
-                ? next['tags'].filter((value): value is string => typeof value === 'string')
-                : [],
-              links: Array.isArray(next['links']) ? next['links'] : [],
-              schema_id: nextSchemaId,
-              data: nextData,
-              project_id: (next['project_id'] as string | null) ?? null,
-              updated_at: new Date(),
-              completeness: computeEntityCompleteness(
-                {
-                  description: nextDescription,
-                  owner: nextOwner,
-                  lifecycle: nextLifecycle,
-                  data: nextData
-                },
-                nextSchema
-              )
-            },
-            expectedVersion: entity.version ?? 1,
-            actor: {
-              id: event.actor_user_id ?? caseRow.initiator_user_id ?? 'system',
-              displayName: actor?.display_name ?? null
-            },
-            auditMetadata: { governanceCaseId: caseRow.id, proposalId, revisionId },
-            versionKind: 'case_applied',
-            appliedCaseRevisionId: revisionId
-          });
-          httpAssert.present(updated, {
-            status: 409,
-            statusText: 'Conflict',
-            message: 'The entity changed after this proposal was submitted'
-          });
-          await tx.entityChange.updateApprovalRevisionStatus(
-            caseRow.workspace,
-            revisionId,
-            'approved',
-            new Date()
-          );
-          await tx.entityChange.updateApprovalStatus(
-            caseRow.workspace,
-            proposalId,
-            'approved',
-            new Date(),
-            new Date()
-          );
-          await recordGovernanceEvent(tx, caseRow, {
-            eventType: 'domain_effect_applied',
-            actorUserId: event.actor_user_id,
-            previousStatus: caseRow.status,
-            resultingStatus: caseRow.status,
-            reason: null,
-            metadata: { entityId, proposalId, revisionId, entityVersion: updated.version ?? 1 }
-          });
-        },
-        reminders: { approachingDays: [2], overdueDays: [1, 5] },
-        escalation: { overdueDays: 5, target: resolveEntityOwnerAdminEscalationTargets }
-      }
-    ],
+    [ENTITY_CHANGE_CASE_KIND, createApprovalGovernanceCaseConfig(entityApprovalAdapter.governance)],
     [
       ENTITY_CHANGE_CASE_BULK_KIND,
       {
