@@ -2327,7 +2327,12 @@ const buildQueryFragments = (
   }
   whereParts.push(compileNode(query.root, ROOT_ALIAS, schemas, relationSchemas, state, true));
 
-  const withClause = `WITH${state.asOf ? ' RECURSIVE' : ''} ${cte},\n    ${relationCte}${projectionCtes.length > 0 ? `,\n    ${projectionCtes.join(',\n    ')}` : ''}`;
+  const needsRecursiveWith =
+    state.asOf != null ||
+    (state.permissionScope != null &&
+      !state.permissionScope.workspaceWide &&
+      state.permissionScope.scopedViewAllowed);
+  const withClause = `WITH${needsRecursiveWith ? ' RECURSIVE' : ''} ${cte},\n    ${relationCte}${projectionCtes.length > 0 ? `,\n    ${projectionCtes.join(',\n    ')}` : ''}`;
 
   return { rootKind, state, withClause, whereParts, projectionObject };
 };

@@ -1,4 +1,5 @@
-import { test, expect } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from '../fixtures';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { AccountSettingsPage } from '../pages/AccountSettingsPage';
 import { seededUser } from '../support/users';

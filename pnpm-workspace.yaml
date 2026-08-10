@@ -8,6 +8,7 @@ packages:
 allowBuilds:
   '@openrouter/sdk': true
   '@parcel/watcher': true
+  '@scarf/scarf': false
   argon2: true
   better-sqlite3: true
   core-js: false

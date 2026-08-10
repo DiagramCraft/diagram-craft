@@ -1,5 +1,5 @@
 import postgres from 'postgres';
-import type { DatabaseAdapter } from './database';
+import type { ArtifactProjectionDatabases, DatabaseAdapter } from './database';
 import { runPostgresMigrations } from './migrate';
 import { type PostgresSqlClient } from './postgresBase';
 import { PostgresAuditDatabase } from '../domain/audit/db/postgresAudit';
@@ -34,6 +34,10 @@ import { PostgresRelationDatabase } from '../domain/catalog/db/postgresRelation'
 import { PostgresCurrencyRatesDatabase } from '../domain/currencyRates/db/postgresCurrencyRates';
 import { PostgresContentReconciliationDatabase } from '../domain/project/db/postgresContentReconciliation';
 import { PostgresArtifactDatabase } from '../domain/artifact/db/postgresArtifact';
+import { PostgresApiSpecificationDatabase } from '../domain/artifact/db/postgresApiSpecification';
+import { apiSpecificationArtifactProcessor } from '../domain/artifact/apiSpecificationProcessor';
+import { createArtifactProcessorRegistry } from '../domain/artifact/artifactProcessor';
+import type { ArtifactProcessorRegistry } from '../domain/artifact/artifactProcessor';
 import { createLogger } from '../utils/logger';
 
 const PGCRYPTO_EXISTS_NOTICE = 'extension "pgcrypto" already exists, skipping';
@@ -81,6 +85,8 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly currencyRates: PostgresCurrencyRatesDatabase;
   readonly contentReconciliation: PostgresContentReconciliationDatabase;
   readonly artifact: PostgresArtifactDatabase;
+  readonly artifactProjections: ArtifactProjectionDatabases;
+  readonly artifactProcessors: ArtifactProcessorRegistry;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -115,7 +121,11 @@ export class PostgresDatabase implements DatabaseAdapter {
       relation: new PostgresRelationDatabase(sql),
       currencyRates: new PostgresCurrencyRatesDatabase(sql),
       contentReconciliation: new PostgresContentReconciliationDatabase(sql),
-      artifact: new PostgresArtifactDatabase(sql)
+      artifact: new PostgresArtifactDatabase(sql),
+      artifactProjections: {
+        apiSpecification: new PostgresApiSpecificationDatabase(sql)
+      },
+      artifactProcessors: createArtifactProcessorRegistry([apiSpecificationArtifactProcessor])
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -182,6 +192,10 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.currencyRates = new PostgresCurrencyRatesDatabase(this.sql);
     this.contentReconciliation = new PostgresContentReconciliationDatabase(this.sql);
     this.artifact = new PostgresArtifactDatabase(this.sql);
+    this.artifactProjections = {
+      apiSpecification: new PostgresApiSpecificationDatabase(this.sql)
+    };
+    this.artifactProcessors = createArtifactProcessorRegistry([apiSpecificationArtifactProcessor]);
 
     this.core = {
       driver: 'postgres' as const,

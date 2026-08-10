@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from '../fixtures';
 import { DataModelPage } from '../pages/DataModelPage';
 import { workspaceModelOverviewRoute } from '../support/routes';
 import { componentSchema } from '../support/schemas';

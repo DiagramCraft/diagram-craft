@@ -128,7 +128,10 @@
           specifications or compliance evidence. Authorized users can register artifact sources, retain immutable
           revisions, inspect processing status and safe diagnostics, and retrieve raw content through a separate
           permission. Artifact capabilities declare their supported features and required schema fields; the catalog
-          does not treat arbitrary binary documents as a generic attachment store.
+          does not treat arbitrary binary documents as a generic attachment store. OpenAPI 3.0/3.1 and AsyncAPI 2.x/3.0
+          documents can be validated and synchronously projected into queryable operations or messages with stable
+          identifiers, source pointers, summaries, filters, pagination, and visible partial/unsupported diagnostics;
+          external references are preserved without network fetching.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can

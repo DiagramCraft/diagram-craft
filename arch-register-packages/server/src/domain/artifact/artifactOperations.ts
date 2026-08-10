@@ -20,7 +20,11 @@ import type {
 
 const MAX_ARTIFACT_BYTES = 2_000_000;
 
-const getEntityAndSchema = async (db: DatabaseAdapter, workspace: string, entityId: string) => {
+export const getEntityAndSchema = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entityId: string
+) => {
   const entity = await db.catalog.getEntity(workspace, entityId);
   httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
   const schema = await db.catalog.getSchema(workspace, entity.schema_id);
@@ -28,7 +32,7 @@ const getEntityAndSchema = async (db: DatabaseAdapter, workspace: string, entity
   return { entity, schema };
 };
 
-const requireEntityView = (authCtx: AuthorizationContext, entity: EntityDbResult) =>
+export const requireEntityView = (authCtx: AuthorizationContext, entity: EntityDbResult) =>
   requireEntityAction(
     authCtx,
     entity,
@@ -160,7 +164,7 @@ const toArtifact = (artifact: ArtifactDbResult) => ({
   updatedAt: artifact.updated_at.toISOString()
 });
 
-const toRevision = (revision: ArtifactRevisionDbResult) => ({
+export const toRevision = (revision: ArtifactRevisionDbResult) => ({
   id: revision.id,
   artifactId: revision.artifact_id,
   sourceRevision: revision.source_revision,
@@ -301,12 +305,39 @@ export const createArtifactRevision = async (
   });
   const checksum = createHash('sha256').update(body.content, 'utf8').digest('hex');
   const existing = await db.artifact.getRevisionByChecksum(workspace, artifact.id, checksum);
-  if (existing) return toRevision(existing);
-
+  const revisionId = existing?.id ?? randomUUID();
   const timestamp = new Date();
+  const processor = db.artifactProcessors.get(artifact.artifact_type);
+  const processing =
+    processor == null
+      ? null
+      : await processor.processRevision({
+          revisionId,
+          content: body.content,
+          mediaType: body.mediaType ?? artifact.media_type,
+          timestamp
+        });
+  if (existing) {
+    if (processing) {
+      await db.core.transaction(async tx => {
+        await processing.persist(tx, { workspace, revisionId: existing.id, timestamp });
+        await tx.artifact.updateArtifact(workspace, artifact.id, {
+          status: processing.status,
+          current_revision_id:
+            processing.status === 'current' ? existing.id : artifact.current_revision_id,
+          last_attempt_at: timestamp,
+          last_success_at: processing.status === 'current' ? timestamp : artifact.last_success_at,
+          diagnostic: processing.diagnostic,
+          updated_at: timestamp
+        });
+      });
+    }
+    return toRevision(existing);
+  }
+
   const revision = await db.core.transaction(async tx => {
     const created = await tx.artifact.createRevision({
-      id: randomUUID(),
+      id: revisionId,
       workspace,
       artifact_id: artifact.id,
       source_revision: body.sourceRevision ?? null,
@@ -315,12 +346,21 @@ export const createArtifactRevision = async (
       content: body.content,
       created_at: timestamp
     });
+    if (processing) {
+      await processing.persist(tx, { workspace, revisionId: created.id, timestamp });
+    }
     await tx.artifact.updateArtifact(workspace, artifact.id, {
-      status: 'current',
-      current_revision_id: created.id,
+      status: processing?.status ?? 'current',
+      current_revision_id:
+        processing?.status === 'current' || processing == null
+          ? created.id
+          : artifact.current_revision_id,
       last_attempt_at: timestamp,
-      last_success_at: timestamp,
-      diagnostic: null,
+      last_success_at:
+        processing == null || processing.status === 'current'
+          ? timestamp
+          : artifact.last_success_at,
+      diagnostic: processing?.diagnostic ?? null,
       updated_at: timestamp
     });
     return created;

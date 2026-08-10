@@ -1,6 +1,6 @@
 import { readFileSync } from 'node:fs';
 import Database from 'better-sqlite3';
-import type { DatabaseAdapter } from './database';
+import type { ArtifactProjectionDatabases, DatabaseAdapter } from './database';
 import { runSqliteMigrations } from './migrate';
 import { SqliteAuditDatabase } from '../domain/audit/db/sqliteAudit';
 import { SqliteCatalogDatabase } from '../domain/catalog/db/sqliteCatalog';
@@ -33,6 +33,12 @@ import { SqliteRelationDatabase } from '../domain/catalog/db/sqliteRelation';
 import { SqliteCurrencyRatesDatabase } from '../domain/currencyRates/db/sqliteCurrencyRates';
 import { SqliteContentReconciliationDatabase } from '../domain/project/db/sqliteContentReconciliation';
 import { SqliteArtifactDatabase } from '../domain/artifact/db/sqliteArtifact';
+import { SqliteApiSpecificationDatabase } from '../domain/artifact/db/sqliteApiSpecification';
+import { apiSpecificationArtifactProcessor } from '../domain/artifact/apiSpecificationProcessor';
+import {
+  createArtifactProcessorRegistry,
+  type ArtifactProcessorRegistry
+} from '../domain/artifact/artifactProcessor';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -69,6 +75,8 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly currencyRates;
   readonly contentReconciliation;
   readonly artifact;
+  readonly artifactProjections: ArtifactProjectionDatabases;
+  readonly artifactProcessors: ArtifactProcessorRegistry;
   private transactionTail: Promise<void> = Promise.resolve();
 
   constructor(filePath: string) {
@@ -107,6 +115,10 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.currencyRates = new SqliteCurrencyRatesDatabase(() => this.db);
     this.contentReconciliation = new SqliteContentReconciliationDatabase(() => this.db);
     this.artifact = new SqliteArtifactDatabase(() => this.db);
+    this.artifactProjections = {
+      apiSpecification: new SqliteApiSpecificationDatabase(() => this.db)
+    };
+    this.artifactProcessors = createArtifactProcessorRegistry([apiSpecificationArtifactProcessor]);
 
     runSqliteMigrations(this.db);
 
@@ -180,7 +192,9 @@ export class SqliteDatabase implements DatabaseAdapter {
       relation: this.relation,
       currencyRates: this.currencyRates,
       contentReconciliation: this.contentReconciliation,
-      artifact: this.artifact
+      artifact: this.artifact,
+      artifactProjections: this.artifactProjections,
+      artifactProcessors: this.artifactProcessors
     };
   }
 
