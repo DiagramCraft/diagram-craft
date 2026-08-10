@@ -1,12 +1,21 @@
 import type { AuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
-import { getEntityAndSchema, requireEntityView, toRevision } from './artifactOperations';
+import {
+  getEntityAndSchema,
+  requireEntityView,
+  toRevision,
+  toRevisionSummary
+} from './artifactOperations';
 import type {
   ApiSpecificationDiagnosticDb,
   ApiSpecificationItemDbResult,
   ApiSpecificationRevisionDbResult
 } from './db/apiSpecificationDatabase';
+import type {
+  ArtifactRevisionDbResult,
+  ArtifactRevisionSummaryDbResult
+} from './db/artifactDatabase';
 
 const toApiSpecificationDiagnostic = (diagnostic: ApiSpecificationDiagnosticDb) => ({
   severity: diagnostic.severity,
@@ -49,21 +58,72 @@ const toApiSpecificationItem = (item: ApiSpecificationItemDbResult) => ({
   }
 });
 
+type RevisionMetadata = ArtifactRevisionDbResult | ArtifactRevisionSummaryDbResult;
+
 const toApiSpecificationRevision = (
-  revision: Awaited<ReturnType<DatabaseAdapter['artifact']['getRevision']>>,
-  projection: ApiSpecificationRevisionDbResult
+  revision: RevisionMetadata,
+  projection: ApiSpecificationRevisionDbResult,
+  isCurrent: boolean
 ) => {
-  httpAssert.present(revision, { status: 404, message: 'Artifact revision not found' });
   return {
-    revision: toRevision(revision),
+    revision: 'content' in revision ? toRevision(revision) : toRevisionSummary(revision),
     protocol: projection.protocol,
     specificationVersion: projection.specification_version,
     title: projection.title,
     description: projection.description,
     status: projection.status,
+    isCurrent,
     itemCount: projection.item_count,
     diagnostics: projection.diagnostics.map(toApiSpecificationDiagnostic)
   };
+};
+
+const getApiSpecificationArtifact = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entityId: string,
+  artifactId: string,
+  authCtx: AuthorizationContext
+) => {
+  const { entity } = await getEntityAndSchema(db, workspace, entityId);
+  requireEntityView(authCtx, entity);
+  const artifact = await db.artifact.getArtifact(workspace, artifactId);
+  httpAssert.present(artifact, { status: 404, message: 'Artifact not found' });
+  httpAssert.true(artifact.entity_id === entity.id, { status: 404, message: 'Artifact not found' });
+  httpAssert.true(artifact.artifact_type === 'api-specification', {
+    status: 409,
+    message: 'Only API specification artifacts have API specification projections'
+  });
+  return artifact;
+};
+
+export const listApiSpecificationRevisions = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entityId: string,
+  artifactId: string,
+  authCtx: AuthorizationContext
+) => {
+  const artifact = await getApiSpecificationArtifact(db, workspace, entityId, artifactId, authCtx);
+  const revisions = await db.artifact.listRevisionSummaries(workspace, artifact.id);
+  const projections = await Promise.all(
+    revisions.map(revision =>
+      db.artifactProjections.apiSpecification.getRevision(workspace, revision.id)
+    )
+  );
+
+  return revisions.map((revision, index) => {
+    const projection = projections[index];
+    httpAssert.present(projection, {
+      status: 409,
+      message: 'Artifact revision has not been projected as an API specification'
+    });
+    return toApiSpecificationRevision(
+      revision,
+      projection,
+      artifact.current_revision_id === revision.id
+    );
+  });
 };
 
 export const listApiSpecification = async (
@@ -84,15 +144,7 @@ export const listApiSpecification = async (
   },
   authCtx: AuthorizationContext
 ) => {
-  const { entity } = await getEntityAndSchema(db, workspace, entityId);
-  requireEntityView(authCtx, entity);
-  const artifact = await db.artifact.getArtifact(workspace, artifactId);
-  httpAssert.present(artifact, { status: 404, message: 'Artifact not found' });
-  httpAssert.true(artifact.entity_id === entity.id, { status: 404, message: 'Artifact not found' });
-  httpAssert.true(artifact.artifact_type === 'api-specification', {
-    status: 409,
-    message: 'Only API specification artifacts have API specification projections'
-  });
+  const artifact = await getApiSpecificationArtifact(db, workspace, entityId, artifactId, authCtx);
   const revision = await db.artifact.getRevision(workspace, revisionId);
   httpAssert.present(revision, { status: 404, message: 'Artifact revision not found' });
   httpAssert.true(revision.artifact_id === artifact.id, {
@@ -114,7 +166,11 @@ export const listApiSpecification = async (
     query
   );
   return {
-    revision: toApiSpecificationRevision(revision, projection),
+    revision: toApiSpecificationRevision(
+      revision,
+      projection,
+      artifact.current_revision_id === revision.id
+    ),
     items: page.items.map(toApiSpecificationItem),
     total: page.total,
     limit: query.limit,

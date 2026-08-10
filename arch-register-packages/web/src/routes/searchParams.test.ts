@@ -65,7 +65,9 @@ describe('validateEntityDetailSearch', () => {
         apiAction: 'get',
         apiTag: 'pets',
         apiDeprecated: 'false',
-        apiPage: '2'
+        apiPage: '2',
+        apiArtifactId: 'artifact-1',
+        apiRevisionId: 'revision-2'
       })
     ).toMatchObject({
       tab: 'api',
@@ -74,7 +76,9 @@ describe('validateEntityDetailSearch', () => {
       apiAction: 'get',
       apiTag: 'pets',
       apiDeprecated: 'false',
-      apiPage: 2
+      apiPage: 2,
+      apiArtifactId: 'artifact-1',
+      apiRevisionId: 'revision-2'
     });
 
     expect(

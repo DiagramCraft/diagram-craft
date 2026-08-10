@@ -73,6 +73,16 @@ export class PostgresArtifactDatabase extends PostgresDatabaseBase implements Ar
     }
   }
 
+  async listRevisionSummaries(workspace: string, artifactId: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT id, workspace, artifact_id, source_revision, checksum, media_type,
+             octet_length(content) AS content_size, created_at
+      FROM catalog_artifact_revision
+      WHERE workspace = ${workspace} AND artifact_id = ${artifactId}
+      ORDER BY created_at DESC, id DESC`;
+    return rows.map(artifactMappers.revisionSummary);
+  }
+
   async getRevision(workspace: string, id: string) {
     const rows = await this.sql<DatabaseRow[]>`
       SELECT * FROM catalog_artifact_revision WHERE workspace = ${workspace} AND id = ${id}`;

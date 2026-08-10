@@ -106,6 +106,8 @@ export type EntityDetailSearchParams = {
   apiTag?: string;
   apiDeprecated?: 'true' | 'false';
   apiPage?: number;
+  apiArtifactId?: string;
+  apiRevisionId?: string;
   tab?:
     | 'overview'
     | 'api'
@@ -161,6 +163,8 @@ export const validateEntityDetailSearch = (
   apiDeprecated:
     raw.apiDeprecated === 'true' || raw.apiDeprecated === 'false' ? raw.apiDeprecated : undefined,
   apiPage: validatePositivePage(raw.apiPage),
+  apiArtifactId: typeof raw.apiArtifactId === 'string' ? raw.apiArtifactId : undefined,
+  apiRevisionId: typeof raw.apiRevisionId === 'string' ? raw.apiRevisionId : undefined,
   tab:
     raw.tab === 'overview' ||
     raw.tab === 'api' ||
