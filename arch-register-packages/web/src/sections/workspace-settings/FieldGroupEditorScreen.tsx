@@ -123,7 +123,7 @@ const SharedFieldRow = ({
             disabled={!canEdit}
             onChange={value => onUpdate({ expression: value ?? '' } as Partial<SchemaField>)}
             rows={2}
-            placeholder='field("input_field")'
+            placeholder="entity.input_field"
           />
         </FormElement>
       );

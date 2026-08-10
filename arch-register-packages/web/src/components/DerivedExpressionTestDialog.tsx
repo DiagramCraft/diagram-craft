@@ -3,8 +3,6 @@ import { bonsai } from 'bonsai-js';
 import { arrays, math } from 'bonsai-js/stdlib';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { Table } from './table/Table';
 
 export type ExpressionTestField = {
   id: string;
@@ -13,40 +11,23 @@ export type ExpressionTestField = {
   resultType?: string;
 };
 
+export type ExpressionTestRoot = 'entity' | 'assessment';
+
 type Props = {
   open: boolean;
   field: ExpressionTestField;
-  fields: ExpressionTestField[];
   expression: string;
+  root?: ExpressionTestRoot;
   onClose: () => void;
   onSave: (expression: string) => void;
 };
 
-type EvaluationContext = {
-  values: Record<string, unknown>;
-  entity: { id: string; schemaId: string; values: Record<string, unknown> };
-  dependents: Array<{ id: string; schemaId: string; values: Record<string, unknown> }>;
-};
-
-const engine = bonsai<EvaluationContext>({ timeout: 50, maxDepth: 50 })
+const engine = bonsai<{
+  entity?: Record<string, unknown>;
+  assessment?: Record<string, unknown>;
+}>({ timeout: 50, maxDepth: 50 })
   .use(arrays)
-  .use(math)
-  .addContextFunction('field', (context, fieldId) => context.values[String(fieldId)]);
-
-const parseValue = (field: ExpressionTestField, value: string): unknown => {
-  if (value.trim() === '') return undefined;
-  const valueType = field.type === 'derived' ? field.resultType : field.type;
-  if (valueType === 'number' || valueType === 'rating') return Number(value);
-  if (valueType === 'boolean') return value.trim().toLowerCase() === 'true';
-  if (valueType === 'currency') {
-    try {
-      return JSON.parse(value);
-    } catch {
-      return value;
-    }
-  }
-  return value;
-};
+  .use(math);
 
 const formatValue = (value: unknown) => {
   if (value === undefined || value === null || value === '') return 'Empty';
@@ -57,20 +38,18 @@ const formatValue = (value: unknown) => {
 export const DerivedExpressionTestDialog = ({
   open,
   field,
-  fields,
   expression: initialExpression,
+  root = 'entity',
   onClose,
   onSave
 }: Props) => {
   const [expression, setExpression] = useState(initialExpression);
-  const [values, setValues] = useState<Record<string, string>>({});
-  const [dependentsJson, setDependentsJson] = useState('[]');
+  const [rootJson, setRootJson] = useState('{}');
 
   useEffect(() => {
     if (open) {
       setExpression(initialExpression);
-      setValues({});
-      setDependentsJson('[]');
+      setRootJson('{}');
     }
   }, [initialExpression, open]);
 
@@ -83,25 +62,16 @@ export const DerivedExpressionTestDialog = ({
       };
     }
     try {
+      const rootValue = JSON.parse(rootJson);
+      if (rootValue == null || typeof rootValue !== 'object' || Array.isArray(rootValue)) {
+        throw new Error(`${root} JSON must be an object`);
+      }
       const compiled = engine.compile(expression);
-      const dependents = JSON.parse(dependentsJson);
-      if (!Array.isArray(dependents)) throw new Error('Direct dependents must be a JSON array');
-      const inputValues = Object.fromEntries(
-        fields
-          .filter(item => item.id !== field.id)
-          .map(item => [item.id, parseValue(item, values[item.id] ?? '')])
-      );
-      return {
-        value: compiled.evaluateSync({
-          values: inputValues,
-          entity: { id: 'test-entity', schemaId: 'current', values: inputValues },
-          dependents
-        })
-      };
+      return { value: compiled.evaluateSync({ [root]: rootValue }) };
     } catch (error) {
       return { error: error instanceof Error ? error.message : String(error) };
     }
-  }, [dependentsJson, expression, field.id, fields, open, values]);
+  }, [expression, open, root, rootJson]);
 
   return (
     <Dialog
@@ -117,74 +87,32 @@ export const DerivedExpressionTestDialog = ({
       <div style={{ display: 'grid', gap: 16 }}>
         <div>
           <div className="dim" style={{ fontSize: 12, marginBottom: 4 }}>
-            Direct dependents (JSON)
-          </div>
-          <TextArea
-            value={dependentsJson}
-            onChange={value => setDependentsJson(value ?? '[]')}
-            rows={4}
-            placeholder={
-              '[{"schemaId":"contract","values":{"annual_cost":{"amount":1200,"currency":"USD"}}}]'
-            }
-          />
-          <div className="dim" style={{ fontSize: 12, marginTop: 4 }}>
-            Use <code>entity</code> and <code>dependents</code> for one-hop graph expressions. For
-            example: <code>dependents.map(.values[&apos;annual_cost&apos;].amount) |&gt; sum</code>.
-          </div>
-        </div>
-        <div>
-          <div className="dim" style={{ fontSize: 12, marginBottom: 4 }}>
             Expression
           </div>
           <TextArea
             value={expression}
             onChange={value => setExpression(value ?? '')}
             rows={3}
-            placeholder='field("input_field") + 1'
+            placeholder="entity.amount * 1.25"
           />
         </div>
         <div>
-          <div className="dim" style={{ fontSize: 12, marginBottom: 6 }}>
-            Input values
+          <div className="dim" style={{ fontSize: 12, marginBottom: 4 }}>
+            {root === 'entity' ? 'Entity' : 'Assessment'} JSON
           </div>
-          <Table.Root bordered={false} layout="fixed">
-            <Table.Head>
-              <Table.Row>
-                <Table.HeaderCell>ID</Table.HeaderCell>
-                <Table.HeaderCell>Label</Table.HeaderCell>
-                <Table.HeaderCell>Value</Table.HeaderCell>
-              </Table.Row>
-            </Table.Head>
-            <Table.Body>
-              {fields
-                .filter(item => item.id !== field.id)
-                .map(item => (
-                  <Table.Row key={item.id}>
-                    <Table.Cell>
-                      <code style={{ fontSize: 11 }}>{item.id}</code>
-                    </Table.Cell>
-                    <Table.Cell>{item.label || item.id}</Table.Cell>
-                    <Table.Cell>
-                      <TextInput
-                        value={values[item.id] ?? ''}
-                        onChange={value =>
-                          setValues(current => ({ ...current, [item.id]: value ?? '' }))
-                        }
-                        placeholder={
-                          item.type === 'boolean' ||
-                          (item.type === 'derived' && item.resultType === 'boolean')
-                            ? 'true or false'
-                            : (item.resultType ?? item.type)
-                        }
-                      />
-                    </Table.Cell>
-                  </Table.Row>
-                ))}
-              {fields.length === 1 && (
-                <Table.EmptyRow colSpan={3} title="This expression has no other fields to input." />
-              )}
-            </Table.Body>
-          </Table.Root>
+          <TextArea
+            value={rootJson}
+            onChange={value => setRootJson(value ?? '{}')}
+            rows={10}
+            placeholder={
+              '{"metadata":{"name":"Analytics Platform"},"dataFlowsIn":[{"protocol":"Kafka","entity":{"metadata":{"name":"Customer Portal"}}}]}'
+            }
+          />
+          <div className="dim" style={{ fontSize: 12, marginTop: 4 }}>
+            {root === 'entity'
+              ? "The JSON has the current entity's fields at the top level, plus metadata and direct relation targets."
+              : "The JSON has the assessment's response fields at the top level."}
+          </div>
         </div>
         <div>
           <div className="dim" style={{ fontSize: 12, marginBottom: 4 }}>

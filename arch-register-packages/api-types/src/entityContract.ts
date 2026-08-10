@@ -715,6 +715,28 @@ export const workspaceEntityContract = oc.tag('Entities').router({
       })
       .input(z.object({ params: wsAndId }))
       .output(entityRecordSchema),
+    json: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/data/{id}/json',
+        inputStructure: 'detailed',
+        summary: 'Get entity JSON projection',
+        description:
+          'Retrieves an entity as a depth-limited JSON projection. Depth 1 includes direct relation targets.',
+        tags: ['Entities']
+      })
+      .input(
+        z.object({
+          params: wsAndId,
+          query: z.object({
+            depth: z.preprocess(
+              value => (value === undefined ? 1 : Number(value)),
+              z.number().int().min(0).max(10).default(1)
+            )
+          })
+        })
+      )
+      .output(z.record(z.string(), z.unknown())),
     relations: oc
       .route({
         method: 'GET',

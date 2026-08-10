@@ -383,7 +383,7 @@ export const SchemaSettingsScreen = () => {
               ...base,
               type: 'derived',
               requirementLevel: 'optional' as const,
-              expression: inputField ? `field("${inputField.id}")` : '""',
+              expression: inputField ? `entity.${inputField.id}` : '""',
               resultType: 'text' as const
             };
           }
@@ -468,7 +468,6 @@ export const SchemaSettingsScreen = () => {
       <FieldRow
         key={fieldKeysRef.current.get(f.id) ?? f.id}
         field={f}
-        fields={fields}
         schemas={schemas}
         relationSchemas={relationSchemas}
         enums={enums}
@@ -912,7 +911,6 @@ const NO_GROUP = '__no_group__';
 
 export const FieldRow = ({
   field,
-  fields,
   schemas,
   relationSchemas,
   enums,
@@ -924,7 +922,6 @@ export const FieldRow = ({
   canEdit
 }: {
   field: SchemaField;
-  fields: SchemaField[];
   schemas: EntitySchema[];
   relationSchemas: RelationSchema[];
   enums: WorkspaceEnum[];
@@ -1147,7 +1144,7 @@ export const FieldRow = ({
               disabled={!canEdit}
               onChange={value => onUpdate({ expression: value ?? '' } as Partial<SchemaField>)}
               rows={2}
-              placeholder='field("input_field")'
+              placeholder="entity.input_field"
             />
           </FormElement>
         </>
@@ -1309,7 +1306,6 @@ export const FieldRow = ({
         <DerivedExpressionTestDialog
           open={expressionTestOpen}
           field={{ ...field, label: field.name }}
-          fields={fields.map(item => ({ ...item, label: item.name }))}
           expression={field.expression}
           onClose={() => setExpressionTestOpen(false)}
           onSave={expression => {

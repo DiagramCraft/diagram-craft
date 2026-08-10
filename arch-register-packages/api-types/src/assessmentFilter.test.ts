@@ -20,7 +20,7 @@ const fields: AssessmentField[] = [
     requirementLevel: 'optional',
     type: 'derived',
     resultType: 'select',
-    expression: 'field("rating1")',
+    expression: 'assessment.rating1',
     options: [
       { value: 'invest', label: 'Invest' },
       { value: 'tolerate', label: 'Tolerate' }

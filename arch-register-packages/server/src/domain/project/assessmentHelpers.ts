@@ -20,7 +20,7 @@ import { visibleAssessmentScopeConditions } from './assessmentScopeAccess';
 const toAssessmentFields = (value: unknown, fallback: AssessmentField[]) => {
   const fields = Array.isArray(value) ? (value as AssessmentField[]) : fallback;
   try {
-    buildDerivedPlan(fields);
+    buildDerivedPlan(fields, 'assessment');
   } catch (error) {
     httpAssert.true(false, {
       status: 400,

@@ -65,7 +65,7 @@ const assessment: Assessment = {
       requirementLevel: 'optional',
       type: 'derived',
       resultType: 'select',
-      expression: 'field("rating1")',
+      expression: 'entity.rating1',
       options: [
         { value: 'invest', label: 'Invest' },
         { value: 'tolerate', label: 'Tolerate' }

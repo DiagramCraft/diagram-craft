@@ -4,12 +4,19 @@ Derived fields are read-only schema fields whose values are calculated from othe
 same entity (or assessment response). They use the sandboxed [`bonsai-js`](https://github.com/danfry1/bonsai-js)
 expression engine and are materialized when the owning record is created or updated.
 
-Entity expressions also receive a bounded graph context: `entity` is the current entity and
-`dependents` contains its direct neighbors through reference, containment, or typed-relation
-edges. Traversal stops at that one-hop boundary. The server recalculates affected entities
+Entity expressions receive a bounded JSON context under `entity`. It contains the current entity
+and expands direct neighbors through reference, containment, or typed-relation edges. Traversal
+stops at that one-hop boundary. The server recalculates affected entities
 synchronously after entity, relation, schema, and field-group mutations. Source entity visibility
 is administrator-trusted for this calculation; output field-group access is still enforced when
 values are returned to users.
+
+Assessment response expressions use `assessment` instead. The assessment object contains the
+response fields for that assessment only; it does not expose catalog relations:
+
+```text
+assessment.business_fit >= 6 && assessment.technical_fit >= 6 ? 'invest' : 'review'
+```
 
 ## Schema setup
 
@@ -21,7 +28,7 @@ A derived field has the following shape:
   "name": "Inherent Risk Score",
   "type": "derived",
   "requirementLevel": "optional",
-  "expression": "field('likelihood') * field('impact')",
+  "expression": "entity.likelihood * entity.impact",
   "resultType": "number"
 }
 ```
@@ -40,17 +47,19 @@ mutations. The server recalculates them from the submitted source values.
 
 ## Expressions
 
-Use `field()` with a string literal containing the source field ID. Bare identifiers are not
-allowed:
+Entity expressions receive an `entity` JSON object. Current-entity fields are available at the top
+level of that object, together with `metadata` and direct relation targets. Assessment expressions
+receive response values under `assessment`:
 
 ```text
-field('likelihood') * field('impact')
+entity.likelihood * entity.impact
+
+assessment.business_fit >= 6 ? 'strong' : 'review'
 ```
 
-`field()` is deliberately a string-based accessor rather than a direct variable lookup. Field IDs
-are user-defined strings and are not necessarily valid expression identifiers. Requiring a literal
-also lets the server validate referenced fields and determine derived-field dependencies before
-evaluation.
+Field IDs that are not valid Bonsai identifiers use bracket notation, for example
+`entity['annual-cost']`. Derived fields always receive a depth-1 projection: direct references,
+containment targets, and typed-relation targets are expanded once; nested targets remain at depth 0.
 
 Derived fields may depend on other derived fields. The server evaluates them in dependency order:
 
@@ -66,7 +75,7 @@ Derived fields may depend on other derived fields. The server evaluates them in 
     "name": "With tax",
     "type": "derived",
     "requirementLevel": "optional",
-    "expression": "field('amount') * 1.25",
+    "expression": "entity.amount * 1.25",
     "resultType": "number"
   },
   {
@@ -74,19 +83,19 @@ Derived fields may depend on other derived fields. The server evaluates them in 
     "name": "Rounded total",
     "type": "derived",
     "requirementLevel": "optional",
-    "expression": "field('with_tax') + 1",
+    "expression": "entity.with_tax + 1",
     "resultType": "number"
   }
 ]
 ```
 
-For entity fields, direct neighbors can be aggregated with Bonsai's array helpers. Each graph node
-has `id`, `schemaId`, and `values`; relation metadata is available under `edge`:
+For entity fields, direct relation targets can be aggregated with Bonsai's array helpers. Each
+expanded target has the same JSON shape, with nested relations left at depth 0:
 
 ```text
-dependents
-  .filter(.schemaId == 'contract')
-  .map(.values['annual_cost'].amount)
+entity.dataFlowsIn
+  .filter(.entity.metadata.schemaId == 'system')
+  .map(.entity.annual_cost.amount)
   |> sum
 ```
 
@@ -94,34 +103,30 @@ To return a currency value, combine the aggregate with an explicit currency code
 
 ```text
 {
-  amount: dependents.map(.values['annual_cost'].amount) |> sum,
+  amount: entity.contracts.map(.entity.annual_cost.amount) |> sum,
   currency: 'USD'
 }
 ```
-
-Use `entity.values['field_id']` when the current entity must be addressed through the graph
-context. The `field('field_id')` function remains available for sibling fields and is preferred
-when the field is part of the same schema definition.
 
 The expression engine supports Bonsai's normal operators, conditionals, and safe built-ins. For
 example, a residual risk score can reduce the impact according to the selected mitigation level:
 
 ```text
-field('likelihood') * (
-  field('mitigation_effectiveness') == 'full'
+entity.likelihood * (
+  entity.mitigation_effectiveness == 'full'
     ? 0
-    : field('mitigation_effectiveness') == 'substantial'
-      ? (field('impact') - 2 < 1 ? 1 : field('impact') - 2)
-      : field('mitigation_effectiveness') == 'partial'
-        ? (field('impact') - 1 < 1 ? 1 : field('impact') - 1)
-        : field('impact')
+    : entity.mitigation_effectiveness == 'substantial'
+      ? (entity.impact - 2 < 1 ? 1 : entity.impact - 2)
+      : entity.mitigation_effectiveness == 'partial'
+        ? (entity.impact - 1 < 1 ? 1 : entity.impact - 1)
+        : entity.impact
 )
 ```
 
 For a text result, the expression can combine sibling values:
 
 ```text
-field('vendor') + ' — ' + field('contract_number')
+entity.vendor + ' — ' + entity.contract_number
 ```
 
 ## Evaluation behavior
@@ -155,7 +160,7 @@ Define numeric inputs and a calculated score on a Risk schema:
       "name": "Inherent Risk Score",
       "type": "derived",
       "requirementLevel": "optional",
-      "expression": "field('likelihood') * field('impact')",
+      "expression": "entity.likelihood * entity.impact",
       "resultType": "number"
     }
   ]
@@ -176,7 +181,7 @@ entities:
   "name": "Annual contract cost",
   "type": "derived",
   "requirementLevel": "optional",
-  "expression": "dependents.filter(.schemaId == 'contract').map(.values['annual_cost'].amount) |> sum",
+  "expression": "entity.contracts.map(.entity.annual_cost.amount) |> sum",
   "resultType": "number"
 }
 ```
@@ -194,7 +199,7 @@ A derived select can classify a numeric score. It must reference an existing wor
   "name": "Risk band",
   "type": "derived",
   "requirementLevel": "optional",
-  "expression": "field('inherent_risk_score') >= 15 ? 'high' : 'normal'",
+  "expression": "entity.inherent_risk_score >= 15 ? 'high' : 'normal'",
   "resultType": "select",
   "enumId": "risk-band"
 }

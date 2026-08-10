@@ -136,7 +136,7 @@ test.describe('schema routes', () => {
               name: 'Salary Copy',
               type: 'derived',
               requirementLevel: 'optional',
-              expression: 'field("salary")',
+              expression: 'entity.salary',
               resultType: 'text'
             }
           ],
@@ -169,7 +169,7 @@ test.describe('schema routes', () => {
             name: 'Salary Copy',
             type: 'derived',
             requirementLevel: 'optional',
-            expression: 'field("salary")',
+            expression: 'entity.salary',
             resultType: 'text'
           }
         ]
@@ -188,7 +188,7 @@ test.describe('schema routes', () => {
               name: 'Salary Copy',
               type: 'derived',
               requirementLevel: 'optional',
-              expression: 'field("salary")',
+              expression: 'entity.salary',
               resultType: 'text'
             }
           ],

@@ -218,7 +218,7 @@ describe('instantiateTemplate', () => {
         id: 'inherent_risk_score',
         type: 'derived',
         requirementLevel: 'optional',
-        expression: "field('likelihood') * field('impact')",
+        expression: 'entity.likelihood * entity.impact',
         resultType: 'number'
       })
     );

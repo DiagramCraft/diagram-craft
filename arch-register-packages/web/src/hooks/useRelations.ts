@@ -91,6 +91,9 @@ const invalidateRelationEndpoints = async (
     ),
     ...entityIds.map(entityId =>
       queryClient.invalidateQueries({ queryKey: entityKeys.relations(workspaceId, entityId) })
+    ),
+    ...entityIds.map(entityId =>
+      queryClient.invalidateQueries({ queryKey: entityKeys.json(workspaceId, entityId, 1) })
     )
   ]);
 };

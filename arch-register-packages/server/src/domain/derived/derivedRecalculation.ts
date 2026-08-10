@@ -1,12 +1,19 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
+import type { RelationDbResult } from '../catalog/db/relationDatabase';
 import { decodeRefs } from '../../types';
-import { materializeDerivedFields, type DerivedGraphNode } from './derivedFields';
+import { materializeDerivedFields } from './derivedFields';
+import { buildEntityProjection } from './entityProjection';
 import { createLogger } from '../../utils/logger';
 
 const logger = createLogger('derived-recalculation');
 
-type EntityEdge = NonNullable<DerivedGraphNode['edge']>;
+type EntityEdge = {
+  kind: 'reference' | 'containment' | 'typedRelation';
+  fieldId?: string;
+  relationSchemaId?: string;
+  relationId?: string;
+};
 
 const stableStringify = (value: unknown): string => {
   if (value === undefined) return 'undefined';
@@ -59,35 +66,6 @@ const buildNeighborIndex = (entities: EntityDbResult[], schemas: SchemaDbResult[
   }
 
   return { entityById, neighborsByEntityId };
-};
-
-const buildGraph = (
-  entity: EntityDbResult,
-  entityById: Map<string, EntityDbResult>,
-  neighborsByEntityId: Map<string, Map<string, EntityEdge>>
-) => {
-  const entityNode: DerivedGraphNode = {
-    id: entity.id,
-    schemaId: entity.schema_id,
-    values: entity.data
-  };
-  const dependents = [...(neighborsByEntityId.get(entity.id)?.entries() ?? [])]
-    .sort(([left], [right]) => left.localeCompare(right))
-    .flatMap(([id, edge]) => {
-      const dependent = entityById.get(id);
-      return dependent
-        ? [
-            {
-              id: dependent.id,
-              schemaId: dependent.schema_id,
-              values: dependent.data,
-              edge
-            } satisfies DerivedGraphNode
-          ]
-        : [];
-    });
-
-  return { entity: entityNode, dependents };
 };
 
 const affectedEntityIds = (
@@ -147,9 +125,14 @@ export const recalculateEntityDerivedFields = async (
     workspace,
     entities.map(entity => entity.id)
   );
-  const allTypedRelations = [...relationRows.outgoing, ...relationRows.incoming].filter(
-    (row, index, rows) => rows.findIndex(candidate => candidate.id === row.id) === index
-  );
+  const allTypedRelations: RelationDbResult[] = [
+    ...relationRows.outgoing,
+    ...relationRows.incoming
+  ].filter((row, index, rows) => rows.findIndex(candidate => candidate.id === row.id) === index);
+  const relationSchemas =
+    typeof db.relation.listRelationSchemas === 'function'
+      ? await db.relation.listRelationSchemas(workspace)
+      : [];
 
   const { entityById, neighborsByEntityId } = buildNeighborIndex(entities, schemas);
   for (const relation of allTypedRelations) {
@@ -178,12 +161,21 @@ export const recalculateEntityDerivedFields = async (
       const schema = entity ? schemaById.get(entity.schema_id) : undefined;
       if (!entity || !schema?.fields.some(field => field.type === 'derived')) continue;
 
+      const projection = buildEntityProjection(
+        entity.id,
+        [...workingEntities.values()],
+        schemas,
+        allTypedRelations,
+        relationSchemas,
+        { depth: 1 }
+      );
+
       const nextData = materializeDerivedFields(
         schema.fields,
         entity.data,
         { objectType: 'entity', objectId: entity.id },
         schema.groups ?? [],
-        buildGraph(entity, workingEntities, neighborsByEntityId)
+        projection ?? entity.data
       );
       if (valuesEqual(entity.data, nextData)) continue;
       entity.data = nextData;

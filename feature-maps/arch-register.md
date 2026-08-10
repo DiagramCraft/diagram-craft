@@ -65,7 +65,7 @@
             date fields that can generate schema-field-scoped approaching and overdue governance reminders,
             the built-in Vendor/Contract model where Contract records contain exactly one Vendor,
             read-only derived fields calculated using a sandboxed expression over sibling fields and a bounded
-            one-hop graph context (`entity` and direct `dependents`, including typed-relation targets), with a
+            one-hop JSON entity context (`entity`, including direct references, containment, and typed-relation targets), with a
             declared text, number, currency, select, boolean, or rating result type,
             and externally managed fields (by AI, an integration, or an internal automation) with a refresh mode of
             on-change or scheduled. Derived values are materialized and synchronously recalculated for affected
@@ -113,6 +113,10 @@
           edit to any other field on the entity marks that entity's external field results outdated. Fields belonging
           to a schema group render under a labeled section in the entity's Properties panel, with ungrouped fields
           shown first.
+
+        - @id:ar.entities.json-view Users can open "View JSON" from an entity's details menu to inspect the
+          depth-1 JSON projection used by entity derived fields, including metadata, direct references, and typed
+          relation targets.
 
         - @id:ar.entities.artifacts Schemas can opt entities into typed, functionality-driving artifacts such as API
           specifications or compliance evidence. Authorized users can register artifact sources, retain immutable
@@ -346,7 +350,7 @@
           when defining a condition, and existing inaccessible conditions are hidden and fail closed for that caller.
           Enum fields can reference reusable workspace enums or define assessment-local option values.
           Rating fields use a 1-5 scale by default but a template or definition can widen it up to 1-10. Read-only
-          derived fields can calculate typed values from sibling responses and are excluded from response
+          derived fields can calculate typed values from sibling responses through the `assessment` JSON root and are excluded from response
           completeness and status. Fields can be organized into named, presentation-only groups (with an optional
           description) that render as labeled sections in the assessment editor and the per-entity assessment
           accordion; this is purely visual and does not affect the assessment grid/results view, where fields remain

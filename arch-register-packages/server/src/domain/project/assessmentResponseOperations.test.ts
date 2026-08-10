@@ -135,7 +135,7 @@ describe('upsertAssessmentResponse', () => {
             label: 'Double rating',
             type: 'derived',
             requirementLevel: 'optional',
-            expression: 'field("f1") + field("f1")',
+            expression: 'assessment.f1 + assessment.f1',
             resultType: 'number'
           }
         ]
@@ -159,7 +159,7 @@ describe('upsertAssessmentResponse', () => {
             label: 'Double rating',
             type: 'derived',
             requirementLevel: 'optional',
-            expression: 'field("f1") + field("f1")',
+            expression: 'assessment.f1 + assessment.f1',
             resultType: 'number'
           }
         ]

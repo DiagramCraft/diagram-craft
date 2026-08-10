@@ -55,23 +55,14 @@ const typedRelation = {
 } as RelationDbResult;
 
 describe('derived recalculation', () => {
-  it('recalculates transitive dependents across generic and typed relation edges', async () => {
+  it('recalculates derived values from generic and typed relation projections', async () => {
     const entities = [
       entity('domain-1', 'domain', {}),
       entity('system-1', 'system', { domain: ['domain-1'] }),
       entity('contract-1', 'contract', { annual_cost: { amount: 2000, currency: 'USD' } })
     ];
     const schemas = [
-      schema('domain', [
-        {
-          id: 'total',
-          name: 'Total',
-          type: 'derived',
-          requirementLevel: 'optional',
-          expression: "dependents.filter(.schemaId == 'system').map(.values['total']) |> sum",
-          resultType: 'number'
-        }
-      ]),
+      schema('domain', []),
       schema('system', [
         {
           id: 'domain',
@@ -82,12 +73,26 @@ describe('derived recalculation', () => {
           maxCount: 1
         },
         {
+          id: 'contracts',
+          name: 'Contracts',
+          type: 'typedRelation',
+          relationSchemaId: 'system-contract',
+          direction: 'in'
+        },
+        {
+          id: 'domain_name',
+          name: 'Domain name',
+          type: 'derived',
+          requirementLevel: 'optional',
+          expression: 'entity.domain.metadata.name',
+          resultType: 'text'
+        },
+        {
           id: 'total',
           name: 'Total',
           type: 'derived',
           requirementLevel: 'optional',
-          expression:
-            "dependents.filter(.schemaId == 'contract').map(.values['annual_cost'].amount) |> sum",
+          expression: 'entity.contracts.map(.entity.annual_cost.amount) |> sum',
           resultType: 'number'
         }
       ]),
@@ -114,7 +119,9 @@ describe('derived recalculation', () => {
 
     await recalculateEntityDerivedFields(db, 'workspace-1', ['contract-1']);
     expect(entities.find(candidate => candidate.id === 'system-1')?.data.total).toBe(2000);
-    expect(entities.find(candidate => candidate.id === 'domain-1')?.data.total).toBe(2000);
+    expect(entities.find(candidate => candidate.id === 'system-1')?.data.domain_name).toBe(
+      'domain-1'
+    );
 
     entities.find(candidate => candidate.id === 'contract-1')!.data.annual_cost = {
       amount: 2500,
@@ -122,6 +129,5 @@ describe('derived recalculation', () => {
     };
     await recalculateEntityDerivedFields(db, 'workspace-1', ['contract-1']);
     expect(entities.find(candidate => candidate.id === 'system-1')?.data.total).toBe(2500);
-    expect(entities.find(candidate => candidate.id === 'domain-1')?.data.total).toBe(2500);
   });
 });

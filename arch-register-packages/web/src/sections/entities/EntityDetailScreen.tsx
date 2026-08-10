@@ -26,6 +26,7 @@ import { GovernanceInitiationFields } from '../governance/GovernanceInitiationFi
 import { useGovernanceInitiationFields } from '../../hooks/useGovernanceInitiationFields';
 import {
   useEntity,
+  useEntityJson,
   useEntityRelations,
   useCloneEntity,
   useEntitiesBySchema
@@ -430,6 +431,12 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   );
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
+  const [viewJsonOpen, setViewJsonOpen] = useState(false);
+  const { data: entityJson, isLoading: entityJsonLoading } = useEntityJson(
+    workspaceId,
+    entityId,
+    viewJsonOpen
+  );
   const { data: changeApproval, isLoading: changeApprovalLoading } = useEntityChangeApproval(
     workspaceId,
     entityId
@@ -593,6 +600,10 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const entityName = entity._name ?? entity._slug;
   const latestApprovalRevision = changeApproval?.revisions.at(-1);
   const menuItems: MenuItem[] = [
+    {
+      label: 'View JSON',
+      onClick: () => setViewJsonOpen(true)
+    },
     {
       label: 'Collections…',
       icon: <TbBookmark size={14} />,
@@ -873,6 +884,33 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           }}
         />
       )}
+
+      <Dialog
+        open={viewJsonOpen}
+        onClose={() => setViewJsonOpen(false)}
+        title="Entity JSON (depth 1)"
+        width={800}
+        buttons={[{ label: 'Close', type: 'cancel', onClick: () => setViewJsonOpen(false) }]}
+      >
+        {entityJsonLoading ? (
+          <LoadingState text="Loading JSON…" size="sm" />
+        ) : (
+          <pre
+            style={{
+              margin: 0,
+              maxHeight: '70vh',
+              overflow: 'auto',
+              padding: 12,
+              whiteSpace: 'pre-wrap',
+              wordBreak: 'break-word',
+              background: 'var(--cmp-bg)',
+              fontSize: 12
+            }}
+          >
+            {JSON.stringify(entityJson ?? {}, null, 2)}
+          </pre>
+        )}
+      </Dialog>
 
       <Dialog
         open={saveConfirmOpen}
