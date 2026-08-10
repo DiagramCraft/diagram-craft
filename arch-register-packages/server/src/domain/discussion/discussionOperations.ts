@@ -1,7 +1,6 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import {
-  buildApiAuthCtx,
   buildApiEntityAuthCtx,
   requireEntityAction,
   requireProjectAccess,
@@ -10,8 +9,7 @@ import {
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import type { AuthorizationContext } from '@arch-register/permissions';
-import { randomUUID } from 'node:crypto';
-import type { DiscussionPostDbResult } from './db/discussionDatabase';
+import type { DiscussionPostDbCreate, DiscussionPostDbResult } from './db/discussionDatabase';
 import type {
   CreateDiscussionPostRequest,
   DiscussionObjectType,
@@ -20,8 +18,15 @@ import type {
   UpdateDiscussionPostRequest
 } from '@arch-register/api-types/discussionContract';
 import { createCommentNotifications } from '../notification/commentNotifications';
-
-const UNKNOWN_AUTHOR_NAME = 'Unknown user';
+import {
+  buildAuthorNameMap,
+  createThreadedComment,
+  deleteThreadedComment,
+  listThreadedComments,
+  mapThreadedCommentBase,
+  updateThreadedComment,
+  type ThreadedCommentAdapter
+} from '../threadedComments/threadedCommentService';
 
 type DiscussionObjectContext = {
   title: string;
@@ -98,26 +103,73 @@ const resolveObjectContext = async (
   };
 };
 
-const toApiPost = (
-  row: DiscussionPostDbResult,
-  authorNames: Map<string, string>
-): DiscussionPost => ({
-  id: row.id,
-  workspace: row.workspace,
-  objectType: row.object_type,
-  objectId: row.object_id,
-  parentPostId: row.parent_post_id,
-  authorId: row.author_id,
-  authorName: (row.author_id && authorNames.get(row.author_id)) ?? UNKNOWN_AUTHOR_NAME,
-  body: row.body,
-  createdAt: row.created_at.toISOString(),
-  updatedAt: row.updated_at.toISOString(),
-  editedAt: row.edited_at ? row.edited_at.toISOString() : null
-});
+type DiscussionTarget = {
+  objectType: DiscussionObjectType;
+  objectId: string;
+};
 
-const buildAuthorNameMap = async (db: DatabaseAdapter) => {
-  const users = await db.auth.listUsers();
-  return new Map(users.map(user => [user.id, user.display_name]));
+const discussionCommentAdapter: ThreadedCommentAdapter<
+  AuthorizationContext,
+  DiscussionTarget,
+  CreateDiscussionPostRequest,
+  DiscussionPostDbResult,
+  DiscussionPost,
+  DiscussionPostDbCreate
+> = {
+  buildTargetAuthContext: buildApiEntityAuthCtx,
+  resolveTarget: async (db, ws, authCtx, target) => {
+    await resolveObjectContext(db, ws, authCtx, target.objectType, target.objectId);
+  },
+  listPosts: (db, ws, target) => db.discussion.listByObject(ws, target.objectType, target.objectId),
+  getPost: (db, ws, postId) => db.discussion.getPost(ws, postId),
+  validateParentTarget: (parent, target) => {
+    httpAssert.true(
+      parent.object_type === target.objectType && parent.object_id === target.objectId,
+      {
+        status: 400,
+        message: 'Reply must target a post on the same object'
+      }
+    );
+  },
+  createInput: ({ workspace, id, target, parentPostId, authorId, body, timestamp }) => ({
+    id,
+    workspace,
+    object_type: target.objectType,
+    object_id: target.objectId,
+    parent_post_id: parentPostId,
+    author_id: authorId,
+    body,
+    created_at: timestamp,
+    updated_at: timestamp
+  }),
+  createPost: (db, input) => db.discussion.createPost(input),
+  updatePost: (db, ws, postId, body, updatedAt, editedAt) =>
+    db.discussion.updatePost(ws, postId, body, updatedAt, editedAt),
+  deletePost: (db, ws, postId) => db.discussion.deletePost(ws, postId),
+  toApiPost: (row, authorNames) => ({
+    ...mapThreadedCommentBase(row, authorNames),
+    objectType: row.object_type,
+    objectId: row.object_id
+  }),
+  createPermissionMessage: 'You do not have permission to post discussions',
+  createNotifications: async (
+    tx,
+    { workspace, target, row, parentPostId, parentAuthorId, actorUserId, occurredAt }
+  ) => {
+    if (target.objectType === 'assessment') return;
+
+    await createCommentNotifications(tx, {
+      workspace,
+      commentId: row.id,
+      objectType: target.objectType,
+      objectId: target.objectId,
+      commentSurface: 'discussion',
+      parentPostId,
+      parentAuthorId,
+      actorUserId,
+      occurredAt
+    });
+  }
 };
 
 export const listDiscussionPosts = async (
@@ -127,15 +179,13 @@ export const listDiscussionPosts = async (
   objectId: string,
   event: AuthenticatedEvent
 ): Promise<DiscussionPost[]> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
-  await resolveObjectContext(db, ws, authCtx, objectType, objectId);
-
-  const [rows, authorNames] = await Promise.all([
-    db.discussion.listByObject(ws, objectType, objectId),
-    buildAuthorNameMap(db)
-  ]);
-  return rows.map(row => toApiPost(row, authorNames));
+  return listThreadedComments(
+    db,
+    workspace,
+    { objectType, objectId },
+    event,
+    discussionCommentAdapter
+  );
 };
 
 export const summarizeDiscussions = async (
@@ -179,7 +229,7 @@ export const summarizeDiscussions = async (
       objectTitle: context.title,
       nav: context.nav,
       postCount: posts.length,
-      lastPost: toApiPost(lastPost, authorNames)
+      lastPost: discussionCommentAdapter.toApiPost(lastPost, authorNames)
     });
   }
 
@@ -192,60 +242,14 @@ export const createDiscussionPost = async (
   body: CreateDiscussionPostRequest,
   event: AuthenticatedEvent
 ): Promise<DiscussionPost> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
-  await resolveObjectContext(db, ws, authCtx, body.objectType, body.objectId);
-  requireWorkspaceCapability(authCtx, 'comments', 'You do not have permission to post discussions');
-
-  let parentAuthorId: string | null = null;
-  if (body.parentPostId) {
-    const parent = await db.discussion.getPost(ws, body.parentPostId);
-    httpAssert.present(parent, { status: 404, message: `Post '${body.parentPostId}' not found` });
-    httpAssert.true(parent.object_type === body.objectType && parent.object_id === body.objectId, {
-      status: 400,
-      message: 'Reply must target a post on the same object'
-    });
-    httpAssert.true(parent.parent_post_id === null, {
-      status: 400,
-      message: 'Reply must target a root post, not another reply'
-    });
-    parentAuthorId = parent.author_id;
-  }
-
-  const timestamp = new Date();
-  const write = async (tx: DatabaseAdapter) => {
-    const row = await tx.discussion.createPost({
-      id: randomUUID(),
-      workspace: ws,
-      object_type: body.objectType,
-      object_id: body.objectId,
-      parent_post_id: body.parentPostId ?? null,
-      author_id: event.context.user.id,
-      body: body.body,
-      created_at: timestamp,
-      updated_at: timestamp
-    });
-
-    if (body.objectType !== 'assessment') {
-      await createCommentNotifications(tx, {
-        workspace: ws,
-        commentId: row.id,
-        objectType: body.objectType,
-        objectId: body.objectId,
-        commentSurface: 'discussion',
-        parentPostId: body.parentPostId ?? null,
-        parentAuthorId,
-        actorUserId: event.context.user.id,
-        occurredAt: timestamp
-      });
-    }
-    return row;
-  };
-  const row =
-    db.core && !db.core.isTransaction ? await db.core.transaction(write) : await write(db);
-
-  const authorNames = await buildAuthorNameMap(db);
-  return toApiPost(row, authorNames);
+  return createThreadedComment(
+    db,
+    workspace,
+    { objectType: body.objectType, objectId: body.objectId },
+    body,
+    event,
+    discussionCommentAdapter
+  );
 };
 
 export const updateDiscussionPost = async (
@@ -255,24 +259,7 @@ export const updateDiscussionPost = async (
   body: UpdateDiscussionPostRequest,
   event: AuthenticatedEvent
 ): Promise<DiscussionPost> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'comments');
-
-  const existing = await db.discussion.getPost(ws, postId);
-  httpAssert.present(existing, { status: 404, message: `Post '${postId}' not found` });
-  httpAssert.true(existing.author_id === event.context.user.id, {
-    status: 403,
-    statusText: 'Forbidden',
-    message: 'You can only edit your own posts'
-  });
-
-  const timestamp = new Date();
-  const row = await db.discussion.updatePost(ws, postId, body.body, timestamp, timestamp);
-  httpAssert.present(row, { status: 404, message: `Post '${postId}' not found` });
-
-  const authorNames = await buildAuthorNameMap(db);
-  return toApiPost(row, authorNames);
+  return updateThreadedComment(db, workspace, postId, body.body, event, discussionCommentAdapter);
 };
 
 export const deleteDiscussionPost = async (
@@ -281,18 +268,5 @@ export const deleteDiscussionPost = async (
   postId: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; message: string }> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'comments');
-
-  const existing = await db.discussion.getPost(ws, postId);
-  httpAssert.present(existing, { status: 404, message: `Post '${postId}' not found` });
-  httpAssert.true(existing.author_id === event.context.user.id, {
-    status: 403,
-    statusText: 'Forbidden',
-    message: 'You can only delete your own posts'
-  });
-
-  await db.discussion.deletePost(ws, postId);
-  return { success: true, message: 'Post deleted' };
+  return deleteThreadedComment(db, workspace, postId, event, discussionCommentAdapter);
 };
