@@ -1,6 +1,6 @@
 import type { DatabaseAdapter } from '../../db/database';
 
-import { buildApiAuthCtx, requireProjectAccess, requireProjectAction } from '../auth/authorization';
+import { buildApiAuthCtx } from '../auth/authorization';
 import { logAudit, extractEntityFields } from '../audit/db/auditLogging';
 import { isMarkdownPath } from './contentFileHelpers';
 import {
@@ -25,11 +25,15 @@ import type {
 
 import { documentLinksFromMetadata } from '../document/documentValidation';
 import { outdateExternalMetadata } from '../externalMetadata/externalMetadataHelpers';
+import {
+  contentNodeScopeFields,
+  resolveContentScopeForNode,
+  type ResolvedContentScope
+} from './contentScope';
 
 import {
-  listSiblingNodes,
-  requireNonProjectContentAccess,
-  assertContentNodeWritable
+  assertContentNodeWritable,
+  requireNonProjectContentAccess
 } from './projectOperationHelpers';
 
 export const toApiMarkdownRevisionSummary = (
@@ -182,17 +186,17 @@ export const ensureMarkdownAttachmentContainer = async (
   ws: string,
   markdownNode: ContentNodeDbResult,
   authCtx: Awaited<ReturnType<typeof buildApiAuthCtx>>,
-  timestamp: Date
+  timestamp: Date,
+  resolved: ResolvedContentScope
 ) => {
-  const siblingNodes = await listSiblingNodes(db, ws, markdownNode);
+  const siblingNodes = await resolved.listNodes(db, ws);
   const existingContainer = getAttachmentContainerForMarkdownNode(siblingNodes, markdownNode.id);
   if (existingContainer) return existingContainer;
 
   const containerPath = getAttachmentContainerPath(markdownNode.path);
   const createdContainer = await db.project.createContentNodeIfAbsent({
     workspace: ws,
-    project_id: markdownNode.project_id,
-    entity_id: markdownNode.entity_id,
+    ...contentNodeScopeFields(resolved),
     parent_id: markdownNode.id,
     path: containerPath,
     name: ATTACHMENT_CONTAINER_NAME,
@@ -225,7 +229,7 @@ export const ensureMarkdownAttachmentContainer = async (
     return createdContainer;
   }
 
-  const nextSiblingNodes = await listSiblingNodes(db, ws, markdownNode);
+  const nextSiblingNodes = await resolved.listNodes(db, ws);
   const container = getAttachmentContainerForMarkdownNode(nextSiblingNodes, markdownNode.id);
   httpAssert.present(container, {
     status: 500,
@@ -234,33 +238,26 @@ export const ensureMarkdownAttachmentContainer = async (
   return container;
 };
 
+export const resolveMarkdownNodeScope = async (
+  db: DatabaseAdapter,
+  ws: string,
+  authCtx: Awaited<ReturnType<typeof buildApiAuthCtx>>,
+  node: { project_id: string | null; entity_id: string | null; mount_id?: string | null },
+  action: 'read' | 'edit'
+) => {
+  if (action === 'edit') assertContentNodeWritable(node);
+  if (!node.project_id) requireNonProjectContentAccess(authCtx, action);
+  return resolveContentScopeForNode(db, ws, authCtx, node, action, Boolean(node.project_id));
+};
+
 export const requireMarkdownNodeAccess = async (
   db: DatabaseAdapter,
   ws: string,
   authCtx: Awaited<ReturnType<typeof buildApiAuthCtx>>,
-  node: { project_id: string | null; mount_id?: string | null },
+  node: { project_id: string | null; entity_id: string | null; mount_id?: string | null },
   action: 'read' | 'edit'
 ) => {
-  if (action === 'edit') assertContentNodeWritable(node);
-  if (!node.project_id) {
-    requireNonProjectContentAccess(authCtx, action);
-    return;
-  }
-
-  const project = await db.project.getProject(ws, node.project_id);
-  httpAssert.present(project, { status: 404, message: `Project '${node.project_id}' not found` });
-
-  if (action === 'read') {
-    requireProjectAccess(authCtx, project.owner);
-    return;
-  }
-
-  requireProjectAction(
-    authCtx,
-    project.owner,
-    'edit_project',
-    'You do not have permission to modify this project'
-  );
+  await resolveMarkdownNodeScope(db, ws, authCtx, node, action);
 };
 
 // ── Markdown document operations ──────────────────────────────

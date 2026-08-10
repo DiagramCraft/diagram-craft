@@ -175,6 +175,7 @@ const renameCases: RenameScopeCase[] = [
       ({
         project: {
           getProject: vi.fn(async () => ({ id: 'project-1', owner: null })),
+          listContentNodes: vi.fn(async () => nodes),
           renameContentNodeFolder: vi.fn(async () => ['a', 'b'])
         }
       }) as unknown as DatabaseAdapter,
@@ -191,6 +192,7 @@ const renameCases: RenameScopeCase[] = [
           getEntity: vi.fn(async () => ({ id: 'entity-1' }))
         },
         project: {
+          listEntityContentNodes: vi.fn(async () => nodes),
           renameEntityContentNodeFolder: vi.fn(async () => ['a', 'b'])
         }
       }) as unknown as DatabaseAdapter,
@@ -204,6 +206,7 @@ const renameCases: RenameScopeCase[] = [
     makeDb: () =>
       ({
         project: {
+          listWorkspaceContentNodes: vi.fn(async () => nodes),
           renameWorkspaceContentNodeFolder: vi.fn(async () => ['a', 'b'])
         }
       }) as unknown as DatabaseAdapter,
