@@ -101,13 +101,7 @@ export const useApiSpecificationProjection = (
   enabled = true
 ) =>
   useQuery({
-    queryKey: artifactKeys.apiSpecification(
-      workspaceId,
-      entityId,
-      artifactId,
-      revisionId,
-      query
-    ),
+    queryKey: artifactKeys.apiSpecification(workspaceId, entityId, artifactId, revisionId, query),
     queryFn: () =>
       orpcClient.artifacts.listApiSpecification({
         params: { workspace: workspaceId, entityId, artifactId, revisionId },

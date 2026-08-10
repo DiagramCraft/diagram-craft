@@ -138,9 +138,7 @@ const ApiMetadata = ({
   sourceCount
 }: {
   entity: EntityRecord;
-  artifact:
-    | ReturnType<typeof selectApiSpecificationArtifact>
-    | undefined;
+  artifact: ReturnType<typeof selectApiSpecificationArtifact> | undefined;
   protocol: ApiSpecificationProtocol | null | undefined;
   sourceCount: number;
 }) => {
@@ -181,14 +179,20 @@ const ApiMetadata = ({
         <div className={`${styles.notice} ${styles.noticeError}`}>
           <TbAlertTriangle size={13} />
           <span>
-            <strong>{getArtifactStatusLabel(artifact.status)}:</strong> {artifact.diagnostic.message}
+            <strong>{getArtifactStatusLabel(artifact.status)}:</strong>{' '}
+            {artifact.diagnostic.message}
           </span>
         </div>
       )}
       {((artifact?.location?.length ?? 0) > 0 || entity._links.length > 0) && (
         <div className={styles.sourceActions}>
           {artifact?.location && (
-            <a href={artifact.location} target="_blank" rel="noreferrer" className={styles.sourceLink}>
+            <a
+              href={artifact.location}
+              target="_blank"
+              rel="noreferrer"
+              className={styles.sourceLink}
+            >
               <TbExternalLink size={13} />
               Open source
             </a>
@@ -315,9 +319,7 @@ const ItemDetails = ({ item }: { item: ApiSpecificationItem }) => {
     <div className={styles.itemDetails}>
       {item.description && <p className={styles.description}>{item.description}</p>}
       <div className={styles.detailGrid}>
-        {parameters && (
-          <DetailBlock label="Parameters" value={parameters} />
-        )}
+        {parameters && <DetailBlock label="Parameters" value={parameters} />}
         {input && <DetailBlock label="Input" value={input} />}
         {output && <DetailBlock label="Output" value={output} />}
         {Object.keys(item.metadata).length > 0 && (
@@ -347,7 +349,9 @@ const ApiItemRow = ({
   <details className={styles.item}>
     <summary>
       <span className={styles.itemAction}>{item.action.toUpperCase()}</span>
-      <span className={styles.itemResource}>{item.path ?? item.channel ?? 'Unspecified resource'}</span>
+      <span className={styles.itemResource}>
+        {item.path ?? item.channel ?? 'Unspecified resource'}
+      </span>
       <span className={styles.itemIdentifier}>{item.identifier}</span>
       {item.deprecated && <Chip tone="ghost">Deprecated</Chip>}
       <TbChevronDown className={styles.itemChevron} size={14} />
@@ -460,7 +464,15 @@ export const EntityApiSection = ({
       limit: PAGE_SIZE,
       offset: Math.max(page - 1, 0) * PAGE_SIZE
     }),
-    [kind, page, search.apiAction, search.apiDeprecated, search.apiQ, search.apiResource, search.apiTag]
+    [
+      kind,
+      page,
+      search.apiAction,
+      search.apiDeprecated,
+      search.apiQ,
+      search.apiResource,
+      search.apiTag
+    ]
   );
   const canLoadProjection =
     artifact != null &&
@@ -570,10 +582,7 @@ export const EntityApiSection = ({
               title="Normalized catalog unavailable"
               subtitle="The selected revision could not be read."
               action={
-                <Button
-                  variant="secondary"
-                  onClick={() => void projectionQueryResult.refetch()}
-                >
+                <Button variant="secondary" onClick={() => void projectionQueryResult.refetch()}>
                   Retry
                 </Button>
               }
@@ -588,33 +597,36 @@ export const EntityApiSection = ({
                     {projectionQueryResult.data.revision.title ?? 'Untitled specification'}
                   </div>
                   <div className={styles.catalogMeta}>
-                    Specification {projectionQueryResult.data.revision.specificationVersion ?? 'version unavailable'}
+                    Specification{' '}
+                    {projectionQueryResult.data.revision.specificationVersion ??
+                      'version unavailable'}
                     {' · '}
                     {projectionQueryResult.data.revision.itemCount} normalized {itemLabel}
                   </div>
                 </div>
                 <Chip tone="ghost">
-                  Revision {projectionQueryResult.data.revision.revision.sourceRevision ?? projectionQueryResult.data.revision.revision.id}
+                  Revision{' '}
+                  {projectionQueryResult.data.revision.revision.sourceRevision ??
+                    projectionQueryResult.data.revision.revision.id}
                 </Chip>
               </div>
               {projectionQueryResult.data.revision.diagnostics.length > 0 && (
                 <div className={`${styles.notice} ${styles.noticeWarning} ${styles.catalogNotice}`}>
                   <TbAlertTriangle size={13} />
                   <span>
-                    {projectionQueryResult.data.revision.diagnostics.length} normalization diagnostic
-                    {projectionQueryResult.data.revision.diagnostics.length === 1 ? '' : 's'}
-                    {' '}are attached to this revision.
+                    {projectionQueryResult.data.revision.diagnostics.length} normalization
+                    diagnostic
+                    {projectionQueryResult.data.revision.diagnostics.length === 1 ? '' : 's'} are
+                    attached to this revision.
                   </span>
                 </div>
               )}
-              <ApiFilters
-                protocol={protocol}
-                search={search}
-                onSearchChange={onSearchChange}
-              />
+              <ApiFilters protocol={protocol} search={search} onSearchChange={onSearchChange} />
               {items.length === 0 ? (
                 <EmptyState
-                  title={hasFilters ? `No ${itemLabel} match these filters` : `No ${itemLabel} found`}
+                  title={
+                    hasFilters ? `No ${itemLabel} match these filters` : `No ${itemLabel} found`
+                  }
                   subtitle={
                     hasFilters
                       ? 'Try clearing one or more filters.'
@@ -678,16 +690,19 @@ export const EntityApiSection = ({
         title="Raw API source"
         sub={rawContentQuery.data?.sourceRevision ?? rawOpenRevisionId ?? undefined}
         width="min(960px, 90vw)"
-        buttons={[
-          { label: 'Close', type: 'cancel', onClick: () => setRawOpenRevisionId(null) }
-        ]}
+        buttons={[{ label: 'Close', type: 'cancel', onClick: () => setRawOpenRevisionId(null) }]}
       >
         {rawContentQuery.isLoading ? (
           <LoadingState text="Loading source…" />
         ) : rawContentQuery.isError ? (
-          <EmptyState title="Raw source unavailable" subtitle="You may no longer have permission to view this source." />
+          <EmptyState
+            title="Raw source unavailable"
+            subtitle="You may no longer have permission to view this source."
+          />
         ) : (
-          <pre className={styles.rawContent}>{rawContentQuery.data?.content ?? 'No source content returned.'}</pre>
+          <pre className={styles.rawContent}>
+            {rawContentQuery.data?.content ?? 'No source content returned.'}
+          </pre>
         )}
       </Dialog>
     </main>

@@ -315,7 +315,7 @@
 .validationRuleRow {
   display: grid;
   grid-template-columns: minmax(0, 1fr) auto;
-  grid-template-areas: 'fields actions';
+  grid-template-areas: "fields actions";
   align-items: start;
   gap: 12px;
   padding: 12px;
@@ -338,8 +338,8 @@
   .validationRuleRow {
     grid-template-columns: minmax(0, 1fr);
     grid-template-areas:
-      'actions'
-      'fields';
+      "actions"
+      "fields";
   }
 
   .validationRuleActions {

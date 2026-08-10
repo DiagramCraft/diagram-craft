@@ -110,10 +110,7 @@ export const ValidationRulesEditor = ({
       ) : (
         <div className={styles.templateList}>
           {rules.map((rule, index) => (
-            <div
-              className={`${styles.templateRow} ${styles.validationRuleRow}`}
-              key={rule.id}
-            >
+            <div className={`${styles.templateRow} ${styles.validationRuleRow}`} key={rule.id}>
               <div className={styles.validationRuleActions}>
                 <Button variant="ghost" disabled={!canEdit} onClick={() => onToggle(index)}>
                   {rule.active ? 'Deactivate' : 'Activate'}

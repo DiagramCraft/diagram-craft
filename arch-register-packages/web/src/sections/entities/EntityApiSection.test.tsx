@@ -39,7 +39,14 @@ vi.mock('../../auth/WorkspaceAuthorizationContext', () => ({
 }));
 
 vi.mock('../../components/EntityNavigationLink', () => ({
-  EntityNavigationLink: ({ children, publicId, ...props }: { children: React.ReactNode; publicId: string }) => (
+  EntityNavigationLink: ({
+    children,
+    publicId,
+    ...props
+  }: {
+    children: React.ReactNode;
+    publicId: string;
+  }) => (
     <a href={`/entities/${publicId}`} {...props}>
       {children}
     </a>
@@ -179,11 +186,7 @@ describe('EntityApiSection', () => {
   });
 
   it('browses a normalized OpenAPI operation without exposing raw content by default', () => {
-    const markup = renderApi(
-      makeEntity('openapi'),
-      makeArtifact(),
-      makeProjection([makeItem()])
-    );
+    const markup = renderApi(makeEntity('openapi'), makeArtifact(), makeProjection([makeItem()]));
 
     expect(markup).toContain('OpenAPI catalog');
     expect(markup).toContain('GET');
@@ -206,11 +209,14 @@ describe('EntityApiSection', () => {
     });
     const markup = renderApi(
       makeEntity('asyncapi'),
-      makeArtifact({ status: 'stale', diagnostic: {
-        category: 'source_timeout',
-        message: 'Remote source timed out',
-        timestamp: '2026-01-02T00:00:00.000Z'
-      } }),
+      makeArtifact({
+        status: 'stale',
+        diagnostic: {
+          category: 'source_timeout',
+          message: 'Remote source timed out',
+          timestamp: '2026-01-02T00:00:00.000Z'
+        }
+      }),
       makeProjection([item])
     );
 

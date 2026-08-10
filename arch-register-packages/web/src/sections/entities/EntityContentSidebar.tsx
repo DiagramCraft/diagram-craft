@@ -84,8 +84,7 @@ export const EntityContentSidebar = ({
   const contentFolder = params._splat ?? null;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
   const tab = search.tab ?? 'overview';
-  const hasFilesOrFolders =
-    (data?.rootFiles.length ?? 0) > 0 || (data?.folders.length ?? 0) > 0;
+  const hasFilesOrFolders = (data?.rootFiles.length ?? 0) > 0 || (data?.folders.length ?? 0) > 0;
   const apiSearch = {
     apiQ: search.apiQ,
     apiResource: search.apiResource,

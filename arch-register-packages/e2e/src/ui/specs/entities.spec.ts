@@ -123,7 +123,9 @@ test.describe('entities section', () => {
     );
   });
 
-  test('browses normalized OpenAPI operations and keeps API filters shareable', async ({ page }) => {
+  test('browses normalized OpenAPI operations and keeps API filters shareable', async ({
+    page
+  }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
     await entitiesPage.goto();
     await entitiesPage.seedApiSpecification(authApiEntity.id, {

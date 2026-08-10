@@ -159,9 +159,7 @@ export const validateEntityDetailSearch = (
   apiAction: typeof raw.apiAction === 'string' ? raw.apiAction : undefined,
   apiTag: typeof raw.apiTag === 'string' ? raw.apiTag : undefined,
   apiDeprecated:
-    raw.apiDeprecated === 'true' || raw.apiDeprecated === 'false'
-      ? raw.apiDeprecated
-      : undefined,
+    raw.apiDeprecated === 'true' || raw.apiDeprecated === 'false' ? raw.apiDeprecated : undefined,
   apiPage: validatePositivePage(raw.apiPage),
   tab:
     raw.tab === 'overview' ||
