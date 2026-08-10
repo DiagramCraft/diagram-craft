@@ -23,6 +23,7 @@ import {
   SchemaField,
   SharedFieldGroupLink
 } from '@arch-register/api-types/schemaContract';
+import { assertValidationRulesValid, normalizeValidationRules } from './entityValidationRules';
 
 // resolveSelectFieldOptions/classifyFieldChanges (schemaHelpers.ts) are typed against entity
 // SchemaField[] but are fully generic at runtime — they only inspect id/name/type/enumId/
@@ -87,6 +88,7 @@ export const buildCreateRelationSchemaInput = (
     fields = [],
     groups = [],
     shared_field_group_links = [],
+    validation_rules = [],
     color,
     icon,
     relation_approval_policy
@@ -100,6 +102,8 @@ export const buildCreateRelationSchemaInput = (
 
   const normalizedGroups = normalizeSchemaGroups(groups) as RelationSchemaGroupDbShape[];
   const normalizedFields = clearOrphanedGroupIds(normalizeRelationFields(fields), normalizedGroups);
+  const validationRules = normalizeValidationRules(validation_rules, normalizedFields);
+  assertValidationRulesValid(validationRules, 'relation');
 
   return {
     id: idFactory(),
@@ -111,6 +115,7 @@ export const buildCreateRelationSchemaInput = (
     fields: normalizedFields,
     groups: normalizedGroups,
     shared_field_group_links: normalizeSharedFieldGroupLinks(shared_field_group_links),
+    validation_rules: validationRules,
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
     relation_approval_policy: 'disabled' as const,
@@ -133,6 +138,7 @@ export const buildUpdateRelationSchemaInput = (
     fields,
     groups,
     shared_field_group_links,
+    validation_rules,
     color,
     icon,
     relation_approval_policy
@@ -150,6 +156,11 @@ export const buildUpdateRelationSchemaInput = (
       : (current.groups ?? []);
   const rawFields = fields !== undefined ? normalizeRelationFields(fields) : current.fields;
   const normalizedFields = clearOrphanedGroupIds(rawFields, normalizedGroups);
+  const validationRules =
+    validation_rules !== undefined
+      ? normalizeValidationRules(validation_rules, normalizedFields)
+      : (current.validation_rules ?? []);
+  assertValidationRulesValid(validationRules, 'relation');
 
   return {
     name,
@@ -173,6 +184,7 @@ export const buildUpdateRelationSchemaInput = (
       groups !== undefined
         ? normalizeSharedFieldGroupLinks(shared_field_group_links)
         : (current.shared_field_group_links ?? []),
+    validation_rules: validationRules,
     color: color !== undefined ? (typeof color === 'string' ? color : null) : current.color,
     icon: icon !== undefined ? (typeof icon === 'string' ? icon : null) : current.icon,
     relation_approval_policy: (current.relation_approval_policy ?? 'disabled') as
@@ -277,6 +289,7 @@ export const toApiRelationSchema = (
     fields,
     groups: (schema.groups ?? []) as RelationSchema['groups'],
     shared_field_group_links: schema.shared_field_group_links ?? [],
+    validation_rules: schema.validation_rules ?? [],
     color: schema.color,
     icon: schema.icon,
     relation_count: relationCount,
@@ -343,6 +356,7 @@ export const toApiRelationSchemaVersion = (
     enums
   ) as RelationSchemaVersion['fields'],
   groups: row.groups as RelationSchemaVersion['groups'],
+  validation_rules: row.validation_rules ?? [],
   shared_field_group_links: (
     row as unknown as { shared_field_group_links?: SharedFieldGroupLink[] }
   ).shared_field_group_links,

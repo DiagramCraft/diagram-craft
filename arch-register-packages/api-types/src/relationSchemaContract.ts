@@ -7,6 +7,7 @@ import {
   externalFieldSchema,
   assertRefreshModeRequiresExternalKind
 } from '@arch-register/api-types/common';
+import { validationRuleSchema } from '@arch-register/api-types/schemaContract';
 
 const requirementLevelSchema = z
   .enum(['required', 'expected', 'optional'])
@@ -164,6 +165,10 @@ export const relationSchemaSchema = z.object({
     .array(sharedFieldGroupLinkSchema)
     .optional()
     .describe('Included workspace shared fieldgroups, in display order'),
+  validation_rules: z
+    .array(validationRuleSchema)
+    .optional()
+    .describe('Bonsai validation rules evaluated when typed relations are saved'),
   color: z.string().nullable().describe('Relation schema color (hex format)'),
   icon: z.string().nullable().describe('Relation schema icon identifier'),
   relation_count: z
@@ -194,6 +199,10 @@ const relationSchemaVersionSchema = z.object({
     .array(sharedFieldGroupLinkSchema)
     .optional()
     .describe('Included workspace shared fieldgroups at this version'),
+  validation_rules: z
+    .array(validationRuleSchema)
+    .optional()
+    .describe('Bonsai validation rules at this version'),
   color: z.string().nullable().describe('Relation schema color at this version'),
   icon: z.string().nullable().describe('Relation schema icon at this version'),
   changeSummary: z
@@ -223,6 +232,10 @@ const createRelationSchemaBodySchema = z.object({
     v => (v === undefined ? undefined : Array.isArray(v) ? v : []),
     z.array(sharedFieldGroupLinkSchema).optional().describe('Included workspace shared fieldgroups')
   ),
+  validation_rules: z
+    .array(validationRuleSchema)
+    .optional()
+    .describe('Initial Bonsai validation rules'),
   color: z.preprocess(
     v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
     z.string().nullable().optional().describe('Relation schema color (hex format)')

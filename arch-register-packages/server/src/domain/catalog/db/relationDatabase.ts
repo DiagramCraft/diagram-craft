@@ -1,7 +1,25 @@
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
-import type { SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
+import type { SharedFieldGroupLink, ValidationRule } from '@arch-register/api-types/schemaContract';
 import type { ExternalMetadata } from '@arch-register/api-types/common';
 import { databaseDate, parseDatabaseJson, type DatabaseRow } from '../../../db/rowMappers';
+
+type RelationValidationDiagnostic = {
+  ruleId: string;
+  relationId: string;
+  schemaId: string;
+  schemaVersion: number;
+  severity: 'error' | 'warning';
+  message: string;
+  fieldId?: string;
+};
+
+type RelationValidationResult = {
+  relationId: string;
+  schemaId: string;
+  schemaVersion: number;
+  errors: RelationValidationDiagnostic[];
+  warnings: RelationValidationDiagnostic[];
+};
 
 // -- Relation Schema
 
@@ -22,6 +40,7 @@ export type RelationSchemaDbResult = {
   fields: RelationField[];
   groups?: RelationSchemaGroupDbShape[];
   shared_field_group_links?: SharedFieldGroupLink[];
+  validation_rules?: ValidationRule[];
   color: string | null;
   icon: string | null;
   relation_approval_policy?: 'required' | 'disabled';
@@ -51,6 +70,7 @@ export type RelationSchemaVersionDbResult = {
   out_schema_ids: string[] | 'any';
   fields: RelationField[];
   groups: RelationSchemaGroupDbShape[];
+  validation_rules?: ValidationRule[];
   color: string | null;
   icon: string | null;
   change_summary: Record<string, unknown>;
@@ -106,6 +126,7 @@ export type RelationDbResult = {
   generated_metadata?: ExternalMetadata;
   created_at: Date;
   updated_at: Date;
+  validation?: RelationValidationResult;
 };
 
 // Row shape produced by a compiled relation-rooted EntityQuery (entityQueryIRCompiler.ts):
@@ -168,6 +189,11 @@ export const relationMappers = {
       [],
       'relation_schema.shared_field_group_links'
     ),
+    validation_rules: parseDatabaseJson(
+      row['validation_rules'],
+      [],
+      'relation_schema.validation_rules'
+    ),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),
     relation_approval_policy: String(
@@ -194,6 +220,11 @@ export const relationMappers = {
     ),
     fields: parseDatabaseJson(row['fields'], [], 'relation_schema_version.fields'),
     groups: parseDatabaseJson(row['groups'], [], 'relation_schema_version.groups'),
+    validation_rules: parseDatabaseJson(
+      row['validation_rules'],
+      [],
+      'relation_schema_version.validation_rules'
+    ),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),
     change_summary: parseDatabaseJson(

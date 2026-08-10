@@ -31,7 +31,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async createRelationSchema(input: RelationSchemaDbCreate) {
     this.run(
-      'INSERT INTO relation_schema (id, workspace, name, description, in_schema_ids, out_schema_ids, fields, groups, shared_field_group_links, color, icon, relation_approval_policy, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO relation_schema (id, workspace, name, description, in_schema_ids, out_schema_ids, fields, groups, shared_field_group_links, validation_rules, color, icon, relation_approval_policy, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -42,6 +42,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
         JSON.stringify(input.fields),
         JSON.stringify(input.groups ?? []),
         JSON.stringify(input.shared_field_group_links ?? []),
+        JSON.stringify(input.validation_rules ?? []),
         input.color,
         input.icon,
         input.relation_approval_policy ?? 'disabled',
@@ -55,7 +56,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async updateRelationSchema(workspace: string, id: string, input: RelationSchemaDbUpdate) {
     this.run(
-      'UPDATE relation_schema SET name = ?, description = ?, in_schema_ids = ?, out_schema_ids = ?, fields = ?, groups = ?, shared_field_group_links = ?, color = ?, icon = ?, relation_approval_policy = COALESCE(?, relation_approval_policy), version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE relation_schema SET name = ?, description = ?, in_schema_ids = ?, out_schema_ids = ?, fields = ?, groups = ?, shared_field_group_links = ?, validation_rules = ?, color = ?, icon = ?, relation_approval_policy = COALESCE(?, relation_approval_policy), version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
         input.description,
@@ -64,6 +65,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
         JSON.stringify(input.fields),
         JSON.stringify(input.groups ?? []),
         JSON.stringify(input.shared_field_group_links ?? []),
+        JSON.stringify(input.validation_rules ?? []),
         input.color,
         input.icon,
         input.relation_approval_policy ?? null,
@@ -93,7 +95,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async createRelationSchemaVersion(input: RelationSchemaVersionDbCreate) {
     this.run(
-      'INSERT INTO relation_schema_version (id, workspace, schema_id, version, name, description, in_schema_ids, out_schema_ids, fields, groups, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO relation_schema_version (id, workspace, schema_id, version, name, description, in_schema_ids, out_schema_ids, fields, groups, validation_rules, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -105,6 +107,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
         JSON.stringify(input.out_schema_ids),
         JSON.stringify(input.fields),
         JSON.stringify(input.groups),
+        JSON.stringify(input.validation_rules ?? []),
         input.color,
         input.icon,
         JSON.stringify(input.change_summary),

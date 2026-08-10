@@ -67,6 +67,10 @@
             read-only derived fields calculated using a sandboxed expression over sibling fields and a bounded
             one-hop JSON entity context (`entity`, including direct references, containment, and typed-relation targets), with a
             declared text, number, currency, select, boolean, or rating result type,
+            schema-level Bonsai validation rules with blocking errors or non-blocking warnings, field-specific messages,
+            activation/deactivation, revision through schema versioning, and preview testing against existing entities;
+            relation types use the same Bonsai rule model over a depth-1 relation context (`relation`, including its
+            typed fields and `in`/`out` endpoint projections),
             and externally managed fields (by AI, an integration, or an internal automation) with a refresh mode of
             on-change or scheduled. Derived values are materialized and synchronously recalculated for affected
             entities when inputs, relations, or definitions change, and are excluded
@@ -113,6 +117,8 @@
           edit to any other field on the entity marks that entity's external field results outdated. Fields belonging
           to a schema group render under a labeled section in the entity's Properties panel, with ungrouped fields
           shown first.
+          Entity saves return validation warnings and reject blocking validation rules atomically, including rules that
+          evaluate direct dependent entities through the same bounded JSON context.
 
         - @id:ar.entities.json-view Users can open "View JSON" from an entity's details menu to inspect the
           depth-1 JSON projection used by entity derived fields, including metadata, direct references, and typed
@@ -127,8 +133,10 @@
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can
           define typed relation schemas with mandatory "in"/"out" endpoints (each constrained to a set of allowed
-          entity schemas) and their own configurable fields, field groups, and access control; relation instances are
-          first-class, independently addressable, audited records rather than entity-data values. A typed relation
+          entity schemas) and their own configurable fields, field groups, access control, and validation rules;
+          relation instances are first-class, independently addressable, audited records rather than entity-data
+          values. Saving an entity also validates affected typed relation instances, and relation create/update/delete
+          mutations participate in the same atomic blocking-validation behavior. A typed relation
           schema is surfaced on an entity by adding a "typed relation" field to that entity's schema, bound to a
           relation schema and a direction ("in" or "out"); like any other field, it can be placed in a named field
           group and is subject to that group's access control on top of the target relation schema's own field-group

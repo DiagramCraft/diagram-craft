@@ -10,7 +10,8 @@ import {
   createWorkspaceSchema,
   updateWorkspaceSchema,
   deleteWorkspaceSchema,
-  listWorkspaceSchemaVersions
+  listWorkspaceSchemaVersions,
+  previewWorkspaceSchemaValidation
 } from './schemaOperations';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
 import { requestForApiSurface } from '../../utils/apiRouteAliases';
@@ -54,6 +55,15 @@ export const workspaceSchemaORPCRouter = schemaRouter.router({
         context.event
       );
     }),
+    previewValidation: schemaRouter.schemas.previewValidation.handler(async ({ input, context }) =>
+      previewWorkspaceSchemaValidation(
+        context.db,
+        input.params.workspace,
+        input.params.id,
+        input.body,
+        context.event
+      )
+    ),
     remove: schemaRouter.schemas.remove.handler(async ({ input, context }) => {
       return await deleteWorkspaceSchema(
         context.db,

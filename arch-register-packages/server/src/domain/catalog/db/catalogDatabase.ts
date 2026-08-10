@@ -17,7 +17,8 @@ import {
   SchemaField,
   SchemaGroup,
   SharedFieldGroupLink,
-  ArtifactCapability
+  ArtifactCapability,
+  ValidationRule
 } from '@arch-register/api-types/schemaContract';
 import { EntityLink } from '@arch-register/api-types/entityContract';
 import type { EntityRole } from '@arch-register/permissions';
@@ -88,6 +89,7 @@ export type SchemaDbResult = {
   groups?: SchemaGroup[];
   shared_field_group_links?: SharedFieldGroupLink[];
   artifact_capabilities?: ArtifactCapability[];
+  validation_rules?: ValidationRule[];
   color: string | null;
   icon: string | null;
   default_owner: string | null;
@@ -120,6 +122,7 @@ export type SchemaVersionDbResult = {
   groups: SchemaGroup[];
   shared_field_group_links: SharedFieldGroupLink[];
   artifact_capabilities?: ArtifactCapability[];
+  validation_rules?: ValidationRule[];
   color: string | null;
   icon: string | null;
   change_summary: Record<string, unknown>;
@@ -441,6 +444,11 @@ export const catalogMappers = {
       [],
       'entity_schema.artifact_capabilities'
     ),
+    validation_rules: parseDatabaseJson(
+      row['validation_rules'],
+      [],
+      'entity_schema.validation_rules'
+    ),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),
     default_owner: row['default_owner'] == null ? null : String(row['default_owner']),
@@ -470,6 +478,11 @@ export const catalogMappers = {
       row['artifact_capabilities'],
       [],
       'entity_schema_version.artifact_capabilities'
+    ),
+    validation_rules: parseDatabaseJson(
+      row['validation_rules'],
+      [],
+      'entity_schema_version.validation_rules'
     ),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),

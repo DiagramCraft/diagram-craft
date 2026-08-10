@@ -9,7 +9,8 @@ import {
   SchemaField,
   SchemaGroup,
   SchemaMigrationRequiredError,
-  SharedFieldGroupLink
+  SharedFieldGroupLink,
+  ValidationRule
 } from '@arch-register/api-types/schemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { orpcClient } from '../lib/orpcClient';
@@ -68,6 +69,7 @@ export const useUpdateSchema = (workspaceId: string) => {
         templates?: EntityTemplate[];
         groups?: SchemaGroup[];
         shared_field_group_links?: SharedFieldGroupLink[];
+        validation_rules?: ValidationRule[];
         color?: string | null;
         icon?: string | null;
         fieldMigrations?: FieldMigrations;
@@ -92,6 +94,7 @@ export const useUpdateSchema = (workspaceId: string) => {
                   groups: variables.data.groups ?? schema.groups,
                   shared_field_group_links:
                     variables.data.shared_field_group_links ?? schema.shared_field_group_links,
+                  validation_rules: variables.data.validation_rules ?? schema.validation_rules,
                   color: variables.data.color ?? schema.color,
                   icon: variables.data.icon ?? schema.icon
                 }
@@ -126,6 +129,21 @@ export const useUpdateSchema = (workspaceId: string) => {
     }
   });
 };
+
+export const usePreviewSchemaValidation = (workspaceId: string) =>
+  useMutation({
+    mutationFn: ({
+      schemaId,
+      validation_rules
+    }: {
+      schemaId: string;
+      validation_rules: NonNullable<EntitySchema['validation_rules']>;
+    }) =>
+      orpcClient.schemas.previewValidation({
+        params: { workspace: workspaceId, id: schemaId },
+        body: { validation_rules }
+      })
+  });
 
 // Hook for fetching a schema's version history
 export const useSchemaVersions = (workspaceId: string, schemaId: string | null) => {

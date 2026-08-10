@@ -12,7 +12,7 @@ import type {
   RelationSchema,
   RelationSchemaGroup
 } from '@arch-register/api-types/relationSchemaContract';
-import type { SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
+import type { SharedFieldGroupLink, ValidationRule } from '@arch-register/api-types/schemaContract';
 import { orpcClient } from '../lib/orpcClient';
 import { normalizeApiError } from '../lib/http';
 
@@ -48,6 +48,7 @@ export const useCreateRelationSchema = (workspaceId: string) => {
       fields?: RelationField[];
       groups?: RelationSchemaGroup[];
       shared_field_group_links?: SharedFieldGroupLink[];
+      validation_rules?: ValidationRule[];
       color?: string | null;
       icon?: string | null;
     }) => orpcClient.relationSchemas.create({ params: { workspace: workspaceId }, body }),
@@ -76,6 +77,7 @@ export const useUpdateRelationSchema = (workspaceId: string) => {
         fields?: RelationField[];
         groups?: RelationSchemaGroup[];
         shared_field_group_links?: SharedFieldGroupLink[];
+        validation_rules?: ValidationRule[];
         color?: string | null;
         icon?: string | null;
         fieldMigrations?: FieldMigrations;
@@ -107,6 +109,8 @@ export const useUpdateRelationSchema = (workspaceId: string) => {
                   shared_field_group_links:
                     variables.data.shared_field_group_links ??
                     relationSchema.shared_field_group_links,
+                  validation_rules:
+                    variables.data.validation_rules ?? relationSchema.validation_rules,
                   color: variables.data.color ?? relationSchema.color,
                   icon: variables.data.icon ?? relationSchema.icon
                 }

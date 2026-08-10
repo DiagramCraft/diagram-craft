@@ -42,6 +42,24 @@ const projectLinkSchema = z.object({
   isDone: z.boolean().describe('Whether the entity is marked as done in the project')
 });
 
+const entityValidationDiagnosticSchema = z.object({
+  ruleId: z.string(),
+  entityId: z.string(),
+  schemaId: z.string(),
+  schemaVersion: z.number().int().min(1),
+  severity: z.enum(['error', 'warning']),
+  message: z.string(),
+  fieldId: z.string().optional()
+});
+
+const entityValidationResultSchema = z.object({
+  entityId: z.string(),
+  schemaId: z.string(),
+  schemaVersion: z.number().int().min(1),
+  errors: z.array(entityValidationDiagnosticSchema),
+  warnings: z.array(entityValidationDiagnosticSchema)
+});
+
 const entityCapabilitiesSchema = z.object({
   canView: z.boolean().describe('Whether the user can view this entity'),
   canEdit: z.boolean().describe('Whether the user can edit this entity'),
@@ -90,6 +108,9 @@ const entitySummarySchema = entityCapabilitiesSchema.extend({
   _externalMetadata: externalMetadataSchema
     .optional()
     .describe('Latest external-update metadata, keyed by field id, for external_kind fields'),
+  _validation: entityValidationResultSchema
+    .optional()
+    .describe('Validation diagnostics produced by the most recent mutation response'),
   _projections: z
     .record(z.string(), z.unknown())
     .optional()

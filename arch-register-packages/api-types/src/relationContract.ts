@@ -21,6 +21,24 @@ const relationEndpointSchema = foreignKeySchema.extend({
   schemaId: z.string().optional().describe('Entity schema identifier for the endpoint')
 });
 
+const relationValidationDiagnosticSchema = z.object({
+  ruleId: z.string(),
+  relationId: z.string(),
+  schemaId: z.string(),
+  schemaVersion: z.number().int().min(1),
+  severity: z.enum(['error', 'warning']),
+  message: z.string(),
+  fieldId: z.string().optional()
+});
+
+const relationValidationResultSchema = z.object({
+  relationId: z.string(),
+  schemaId: z.string(),
+  schemaVersion: z.number().int().min(1),
+  errors: z.array(relationValidationDiagnosticSchema),
+  warnings: z.array(relationValidationDiagnosticSchema)
+});
+
 const relationSummarySchema = relationCapabilitiesSchema.extend({
   _uid: z.string().describe('Unique relation instance identifier'),
   _schema: foreignKeySchema.describe('Relation schema reference'),
@@ -33,7 +51,10 @@ const relationSummarySchema = relationCapabilitiesSchema.extend({
   _updatedAt: z.string().describe('ISO 8601 last update timestamp'),
   _externalMetadata: externalMetadataSchema
     .optional()
-    .describe('Latest external-update metadata, keyed by field id, for external_kind fields')
+    .describe('Latest external-update metadata, keyed by field id, for external_kind fields'),
+  _validation: relationValidationResultSchema
+    .optional()
+    .describe('Validation diagnostics produced while saving this relation')
 });
 
 // RelationRecord = RelationSummary + dynamic schema fields

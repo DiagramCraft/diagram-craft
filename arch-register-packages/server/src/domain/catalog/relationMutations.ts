@@ -10,6 +10,7 @@ import {
 } from './relationHelpers';
 import { assertCatalogMutationTransaction } from './mutationTransaction';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
+import { assertEntityGraphValid, validateEntityGraph } from './entityValidationRules';
 
 export const RELATION_AUTOSAVE_KEEP_COUNT = 50;
 
@@ -84,8 +85,18 @@ export const createRelationWithAudit = async (
   });
   await db.catalog.pruneAutosaveVersions(params.workspace, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
   await recalculateEntityDerivedFields(db, params.workspace, [row.in_entity_id, row.out_entity_id]);
+  const validation = await validateEntityGraph(db, params.workspace, [
+    row.in_entity_id,
+    row.out_entity_id
+  ]);
+  assertEntityGraphValid(validation);
 
-  return row;
+  return {
+    ...row,
+    ...(validation.relationResults.find(result => result.relationId === row.id)
+      ? { validation: validation.relationResults.find(result => result.relationId === row.id) }
+      : {})
+  };
 };
 
 export const deleteRelationWithAudit = async (
@@ -126,6 +137,11 @@ export const deleteRelationWithAudit = async (
     params.relation.in_entity_id,
     params.relation.out_entity_id
   ]);
+  const validation = await validateEntityGraph(db, params.workspace, [
+    params.relation.in_entity_id,
+    params.relation.out_entity_id
+  ]);
+  assertEntityGraphValid(validation);
 
   return deleted;
 };
@@ -181,6 +197,18 @@ export const updateRelationWithAudit = async (
     row.in_entity_id,
     row.out_entity_id
   ]);
+  const validation = await validateEntityGraph(db, params.workspace, [
+    params.previous.in_entity_id,
+    params.previous.out_entity_id,
+    row.in_entity_id,
+    row.out_entity_id
+  ]);
+  assertEntityGraphValid(validation);
 
-  return row;
+  return {
+    ...row,
+    ...(validation.relationResults.find(result => result.relationId === row.id)
+      ? { validation: validation.relationResults.find(result => result.relationId === row.id) }
+      : {})
+  };
 };

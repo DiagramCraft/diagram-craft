@@ -20,6 +20,7 @@ import { ICON_MAP } from '../../components/TypeBadge';
 import {
   useCreateSchema,
   useUpdateSchema,
+  usePreviewSchemaValidation,
   useDeleteSchema,
   useSchemaVersions,
   getSchemaMigrationRequired
@@ -37,7 +38,8 @@ import {
   PendingFieldChange,
   SchemaField,
   SchemaGroup,
-  SharedFieldGroupLink
+  SharedFieldGroupLink,
+  ValidationRule
 } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { EmptyState } from '../../components/EmptyState';
@@ -95,13 +97,18 @@ export const SchemaSettingsScreen = () => {
   const [editingTemplate, setEditingTemplate] = useState<EntityTemplate | null>(null);
   const [pendingFieldChanges, setPendingFieldChanges] = useState<PendingFieldChange[] | null>(null);
   const [showHistory, setShowHistory] = useState(false);
-  const [schemaPanelTab, setSchemaPanelTab] = useState<'fields' | 'templates'>('fields');
+  const [schemaPanelTab, setSchemaPanelTab] = useState<'fields' | 'templates' | 'validation'>(
+    'fields'
+  );
+  const [validationRules, setValidationRules] = useState<ValidationRule[]>([]);
+  const [validationPreviewMessage, setValidationPreviewMessage] = useState<string | null>(null);
   const [groupDialogOpen, setGroupDialogOpen] = useState(false);
   const [editingGroup, setEditingGroup] = useState<SchemaGroup | null>(null);
   const fieldKeysRef = useRef<Map<string, string>>(new Map());
 
   const createSchemaMutation = useCreateSchema(workspaceSlug);
   const updateSchemaMutation = useUpdateSchema(workspaceSlug);
+  const previewValidationMutation = usePreviewSchemaValidation(workspaceSlug);
   const deleteSchemaMutation = useDeleteSchema(workspaceSlug);
   const { data: schemaVersions, isLoading: schemaVersionsLoading } = useSchemaVersions(
     workspaceSlug,
@@ -131,6 +138,7 @@ export const SchemaSettingsScreen = () => {
       setTemplates(selected.templates);
       setGroups(selected.groups);
       setSharedFieldGroupLinks(selected.shared_field_group_links ?? []);
+      setValidationRules(selected.validation_rules ?? []);
       setColor(selected.color);
       setIcon(selected.icon);
       setDirty(false);
@@ -157,6 +165,7 @@ export const SchemaSettingsScreen = () => {
           JSON.stringify(groups) !== JSON.stringify(selected.groups) ||
           JSON.stringify(sharedFieldGroupLinks) !==
             JSON.stringify(selected.shared_field_group_links ?? []) ||
+          JSON.stringify(validationRules) !== JSON.stringify(selected.validation_rules ?? []) ||
           color !== selected.color ||
           icon !== selected.icon;
         if (schemaChanged) {
@@ -170,6 +179,7 @@ export const SchemaSettingsScreen = () => {
               templates,
               groups,
               shared_field_group_links: sharedFieldGroupLinks,
+              validation_rules: validationRules,
               color,
               icon,
               fieldMigrations
@@ -196,6 +206,7 @@ export const SchemaSettingsScreen = () => {
       templates,
       groups,
       sharedFieldGroupLinks,
+      validationRules,
       color,
       icon,
       dirty,
@@ -229,6 +240,38 @@ export const SchemaSettingsScreen = () => {
       // TODO: surface error
     }
   }, [createSchemaMutation, onSelectSchema]);
+
+  const addValidationRule = () => {
+    setValidationRules(current => [
+      ...current,
+      {
+        id: `rule-${Date.now()}`,
+        name: 'New validation rule',
+        expression: 'true',
+        message: 'Validation rule failed',
+        severity: 'error',
+        active: true
+      }
+    ]);
+    setDirty(true);
+  };
+
+  const previewValidation = async () => {
+    if (!selected) return;
+    try {
+      const results = await previewValidationMutation.mutateAsync({
+        schemaId: selected.id,
+        validation_rules: validationRules
+      });
+      const errors = results.reduce((count, result) => count + result.errors.length, 0);
+      const warnings = results.reduce((count, result) => count + result.warnings.length, 0);
+      setValidationPreviewMessage(
+        `Tested ${results.length} entities: ${errors} blocking error(s), ${warnings} warning(s).`
+      );
+    } catch (error) {
+      setValidationPreviewMessage(error instanceof Error ? error.message : 'Preview failed');
+    }
+  };
 
   const handleDeleteType = useCallback(() => {
     if (!selected) return;
@@ -619,6 +662,7 @@ export const SchemaSettingsScreen = () => {
                 <Tabs.List aria-label="Schema editor sections">
                   <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
                   <Tabs.Trigger value="templates">Templates</Tabs.Trigger>
+                  <Tabs.Trigger value="validation">Validation</Tabs.Trigger>
                 </Tabs.List>
 
                 <Tabs.Content value="fields" style={{ height: 'auto' }}>
@@ -793,6 +837,122 @@ export const SchemaSettingsScreen = () => {
                       ))
                     )}
                   </div>
+                </Tabs.Content>
+
+                <Tabs.Content value="validation" style={{ height: 'auto' }}>
+                  <div className={styles.fieldsHead}>
+                    <div className={styles.sectionLabel}>Validation rules</div>
+                    <div style={{ display: 'flex', gap: 8 }}>
+                      <Button
+                        variant="ghost"
+                        onClick={() => void previewValidation()}
+                        disabled={previewValidationMutation.isPending}
+                      >
+                        {previewValidationMutation.isPending ? 'Testing…' : 'Test rules'}
+                      </Button>
+                      {canEdit && (
+                        <Button
+                          variant="ghost"
+                          icon={<TbPlus size={11} />}
+                          onClick={addValidationRule}
+                        >
+                          Add rule
+                        </Button>
+                      )}
+                    </div>
+                  </div>
+                  {validationPreviewMessage && (
+                    <div className={styles.templateSummary}>{validationPreviewMessage}</div>
+                  )}
+                  {validationRules.length === 0 ? (
+                    <div className={styles.fieldsEmpty}>No validation rules defined.</div>
+                  ) : (
+                    <div className={styles.templateList}>
+                      {validationRules.map((rule, index) => (
+                        <div className={styles.templateRow} key={rule.id}>
+                          <div style={{ flex: 1, display: 'grid', gap: 8 }}>
+                            <TextInput
+                              value={rule.name}
+                              disabled={!canEdit}
+                              onChange={value => {
+                                const next = [...validationRules];
+                                next[index] = { ...rule, name: value ?? '' };
+                                setValidationRules(next);
+                                setDirty(true);
+                              }}
+                            />
+                            <TextArea
+                              value={rule.expression}
+                              disabled={!canEdit}
+                              onChange={value => {
+                                const next = [...validationRules];
+                                next[index] = { ...rule, expression: value ?? '' };
+                                setValidationRules(next);
+                                setDirty(true);
+                              }}
+                              rows={2}
+                              placeholder="entity.status != 'retired'"
+                            />
+                            <TextInput
+                              value={rule.message}
+                              disabled={!canEdit}
+                              onChange={value => {
+                                const next = [...validationRules];
+                                next[index] = { ...rule, message: value ?? '' };
+                                setValidationRules(next);
+                                setDirty(true);
+                              }}
+                              placeholder="Message shown when the rule fails"
+                            />
+                            <div style={{ display: 'flex', gap: 8 }}>
+                              <Select.Root
+                                value={rule.severity}
+                                disabled={!canEdit}
+                                onChange={value => {
+                                  const next = [...validationRules];
+                                  next[index] = {
+                                    ...rule,
+                                    severity: (value ?? 'error') as ValidationRule['severity']
+                                  };
+                                  setValidationRules(next);
+                                  setDirty(true);
+                                }}
+                              >
+                                <Select.Item value="error">Blocking error</Select.Item>
+                                <Select.Item value="warning">Warning</Select.Item>
+                              </Select.Root>
+                              <Button
+                                variant="ghost"
+                                disabled={!canEdit}
+                                onClick={() => {
+                                  const next = [...validationRules];
+                                  next[index] = { ...rule, active: !rule.active };
+                                  setValidationRules(next);
+                                  setDirty(true);
+                                }}
+                              >
+                                {rule.active ? 'Deactivate' : 'Activate'}
+                              </Button>
+                              {canEdit && (
+                                <Button
+                                  variant="ghost"
+                                  icon={<TbTrash size={12} />}
+                                  onClick={() => {
+                                    setValidationRules(current =>
+                                      current.filter(candidate => candidate.id !== rule.id)
+                                    );
+                                    setDirty(true);
+                                  }}
+                                >
+                                  Delete
+                                </Button>
+                              )}
+                            </div>
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  )}
                 </Tabs.Content>
               </Tabs.Root>
 
