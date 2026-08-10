@@ -1,26 +1,7 @@
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { PinnedEntity } from '@arch-register/api-types/watchContract';
 import { orpcClient } from '../lib/orpcClient';
-
-export const notificationKeys = {
-  all: ['notifications'] as const,
-  watched: (workspaceId: string) => [...notificationKeys.all, 'watching', workspaceId] as const,
-  pinned: (workspaceId: string) => [...notificationKeys.all, 'pinned', workspaceId] as const,
-  list: (workspaceId: string) => [...notificationKeys.all, 'list', workspaceId] as const,
-  count: (workspaceId: string) => [...notificationKeys.all, 'count', workspaceId] as const
-};
-
-export const invalidateNotificationQueries = async (
-  queryClient: QueryClient,
-  workspaceId: string
-) => {
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: notificationKeys.watched(workspaceId) }),
-    queryClient.invalidateQueries({ queryKey: notificationKeys.pinned(workspaceId) }),
-    queryClient.invalidateQueries({ queryKey: notificationKeys.list(workspaceId) }),
-    queryClient.invalidateQueries({ queryKey: notificationKeys.count(workspaceId) })
-  ]);
-};
+import { invalidateNotificationQueries, notificationKeys } from '../queries/notifications';
 
 export const useWatchedEntities = (workspaceId: string, enabled = true) =>
   useQuery({

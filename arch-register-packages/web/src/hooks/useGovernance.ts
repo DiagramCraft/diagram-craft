@@ -4,15 +4,8 @@ import type {
   ListGovernanceTasksQuery
 } from '@arch-register/api-types/governanceContract';
 import { orpcClient } from '../lib/orpcClient';
-
-export const governanceKeys = {
-  all: ['governance'] as const,
-  tasks: (workspaceId: string, query: ListGovernanceTasksQuery = {}) =>
-    [...governanceKeys.all, 'tasks', workspaceId, query] as const,
-  count: (workspaceId: string) => [...governanceKeys.all, 'count', workspaceId] as const,
-  submissions: (workspaceId: string, query: ListGovernanceSubmissionsQuery = {}) =>
-    [...governanceKeys.all, 'submissions', workspaceId, query] as const
-};
+import { governanceKeys, invalidateGovernanceQueries } from '../queries/governance';
+import { invalidateNotificationQueries } from '../queries/notifications';
 
 export const useGovernanceTasks = (
   workspaceId: string,
@@ -41,7 +34,7 @@ export const useGovernanceCaseEvents = (
   enabled = true
 ) =>
   useQuery({
-    queryKey: [...governanceKeys.all, 'events', workspaceId, caseId],
+    queryKey: governanceKeys.events(workspaceId, caseId ?? ''),
     queryFn: () =>
       orpcClient.governance.cases.events({ params: { workspace: workspaceId, id: caseId! } }),
     enabled: enabled && !!workspaceId && !!caseId
@@ -69,9 +62,7 @@ export const useWithdrawGovernanceCase = (workspaceId: string) => {
         params: { workspace: workspaceId, id: input.caseId },
         body: { reason: input.reason }
       }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: governanceKeys.all });
-    }
+    onSuccess: async () => invalidateGovernanceQueries(queryClient, workspaceId)
   });
 };
 
@@ -82,9 +73,7 @@ export const useSendGovernanceCaseReminder = (workspaceId: string) => {
       orpcClient.governance.cases.remind({
         params: { workspace: workspaceId, id: input.caseId }
       }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: governanceKeys.all });
-    }
+    onSuccess: async () => invalidateGovernanceQueries(queryClient, workspaceId)
   });
 };
 
@@ -106,8 +95,8 @@ export const useDecideGovernanceAssignment = (workspaceId: string) => {
       }),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({ queryKey: governanceKeys.all }),
-        queryClient.invalidateQueries({ queryKey: ['notifications'] })
+        invalidateGovernanceQueries(queryClient, workspaceId),
+        invalidateNotificationQueries(queryClient, workspaceId)
       ]);
     }
   });

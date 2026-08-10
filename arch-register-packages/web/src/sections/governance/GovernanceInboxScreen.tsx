@@ -9,7 +9,6 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Title } from '../../components/Title';
 import {
-  governanceKeys,
   useDecideGovernanceAssignment,
   useGovernanceSubmissions,
   useGovernanceTasks,
@@ -27,6 +26,7 @@ import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRo
 import { workspaceMarkdownRoute } from '../../routes/publicObjectRoutes';
 import { projectDetailRoute, asProjectPublicId } from '../../routes/publicObjectRoutes';
 import { entityKeys } from '../../queries/entities';
+import { governanceKeys } from '../../queries/governance';
 import { projectFileKeys } from '../../queries/content';
 import {
   bulkEntityChangeKeys,
@@ -251,7 +251,7 @@ export const GovernanceInboxScreen = () => {
   ];
   const caseEventsQueries = useQueries({
     queries: requestChangesCaseIds.map(caseId => ({
-      queryKey: [...governanceKeys.all, 'events', workspace, caseId],
+      queryKey: governanceKeys.events(workspace, caseId),
       queryFn: () => orpcClient.governance.cases.events({ params: { workspace, id: caseId } }),
       enabled: !!workspace
     }))

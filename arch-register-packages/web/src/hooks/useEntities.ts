@@ -14,7 +14,7 @@ import {
 } from '../queries/entities';
 import { schemaKeys } from '../queries/schemas';
 import { invalidateEntityVersionQueries } from '../queries/entityVersions';
-import { invalidateNotificationQueries } from './useNotifications';
+import { invalidateNotificationQueries } from '../queries/notifications';
 import { orpcClient } from '../lib/orpcClient';
 
 export const useEntities = (

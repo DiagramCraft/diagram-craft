@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
 import { entityKeys } from '../queries/entities';
+import { invalidateGovernanceQueries } from '../queries/governance';
 import type { EntityChangeBulkApprovalRequestBody } from '@arch-register/api-types/entityChangeContract';
 
 export const entityChangeKeys = {
@@ -47,7 +48,7 @@ export const useWithdrawEntityChangeApproval = (workspace: string) => {
           queryKey: entityChangeKeys.current(workspace, input.entityId)
         }),
         queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspace, input.entityId) }),
-        queryClient.invalidateQueries({ queryKey: ['governance'] })
+        invalidateGovernanceQueries(queryClient, workspace)
       ]);
     }
   });
@@ -74,7 +75,7 @@ export const useSubmitBulkEntityChangeApproval = (workspace: string) => {
     onSuccess: async () => {
       await Promise.all([
         queryClient.invalidateQueries({ queryKey: entityKeys.workspaceLists(workspace) }),
-        queryClient.invalidateQueries({ queryKey: ['governance'] })
+        invalidateGovernanceQueries(queryClient, workspace)
       ]);
     }
   });
@@ -94,7 +95,7 @@ export const useBypassEntityApproval = (workspace: string, entityId: string) => 
           queryKey: entityChangeKeys.current(workspace, entityId)
         }),
         queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspace, entityId) }),
-        queryClient.invalidateQueries({ queryKey: ['governance'] })
+        invalidateGovernanceQueries(queryClient, workspace)
       ]);
     }
   });

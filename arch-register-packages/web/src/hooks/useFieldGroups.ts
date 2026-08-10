@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import { orpcClient } from '../lib/orpcClient';
 import { fieldGroupKeys, invalidateDeletedFieldGroup } from '../queries/fieldGroups';
+import { schemaKeys } from '../queries/schemas';
 
 export const useFieldGroups = (workspaceSlug: string, enabled = true) =>
   useQuery({
@@ -47,7 +48,7 @@ export const useUpdateFieldGroup = (workspaceSlug: string) => {
       queryClient.invalidateQueries({
         queryKey: fieldGroupKeys.detail(workspaceSlug, variables.fieldGroupId)
       });
-      queryClient.invalidateQueries({ queryKey: ['schemas', 'list', workspaceSlug] });
+      queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceSlug) });
     }
   });
 };
