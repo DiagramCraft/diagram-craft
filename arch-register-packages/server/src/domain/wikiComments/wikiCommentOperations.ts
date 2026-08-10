@@ -5,19 +5,24 @@ import {
   requireProjectAccess,
   requireWorkspaceCapability
 } from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
-import { randomUUID } from 'node:crypto';
-import type { WikiCommentDbResult } from './db/wikiCommentDatabase';
+import type { WikiCommentDbCreate, WikiCommentDbResult } from './db/wikiCommentDatabase';
 import type {
   CreateWikiCommentRequest,
   UpdateWikiCommentRequest,
   WikiComment
 } from '@arch-register/api-types/wikiCommentContract';
 import { createCommentNotifications } from '../notification/commentNotifications';
-
-const UNKNOWN_AUTHOR_NAME = 'Unknown user';
+import {
+  createThreadedComment,
+  deleteThreadedComment,
+  listThreadedComments,
+  mapThreadedCommentBase,
+  resolveThreadedComment,
+  updateThreadedComment,
+  type ThreadedCommentAdapter
+} from '../threadedComments/threadedCommentService';
 
 const resolveNodeContext = async (
   db: DatabaseAdapter,
@@ -46,31 +51,100 @@ const resolveNodeContext = async (
   return node;
 };
 
-const toApiPost = (row: WikiCommentDbResult, authorNames: Map<string, string>): WikiComment => ({
-  id: row.id,
-  workspace: row.workspace,
-  nodeId: row.node_id,
-  parentPostId: row.parent_post_id,
-  authorId: row.author_id,
-  authorName: (row.author_id && authorNames.get(row.author_id)) ?? UNKNOWN_AUTHOR_NAME,
-  body: row.body,
-  anchor: {
-    quote: row.quote,
-    prefix: row.prefix,
-    suffix: row.suffix,
-    start: row.anchor_start,
-    end: row.anchor_end
+const wikiCommentAdapter: ThreadedCommentAdapter<
+  WorkspaceAuthorizationContext,
+  string,
+  CreateWikiCommentRequest,
+  WikiCommentDbResult,
+  WikiComment,
+  WikiCommentDbCreate
+> = {
+  buildTargetAuthContext: buildApiAuthCtx,
+  resolveTarget: async (db, ws, authCtx, nodeId) => {
+    await resolveNodeContext(db, ws, authCtx, nodeId);
   },
-  resolvedAt: row.resolved_at ? row.resolved_at.toISOString() : null,
-  resolvedBy: row.resolved_by,
-  createdAt: row.created_at.toISOString(),
-  updatedAt: row.updated_at.toISOString(),
-  editedAt: row.edited_at ? row.edited_at.toISOString() : null
-});
+  listPosts: (db, ws, nodeId) => db.wikiComment.listByNode(ws, nodeId),
+  getPost: (db, ws, postId) => db.wikiComment.getPost(ws, postId),
+  validateParentTarget: (parent, nodeId) => {
+    httpAssert.true(parent.node_id === nodeId, {
+      status: 400,
+      message: 'Reply must target a post on the same page'
+    });
+  },
+  createInput: ({
+    workspace,
+    id,
+    target,
+    request,
+    parentPostId,
+    authorId,
+    body,
+    timestamp,
+    parent
+  }) => {
+    const anchor = parent
+      ? {
+          quote: parent.quote,
+          prefix: parent.prefix,
+          suffix: parent.suffix,
+          start: parent.anchor_start,
+          end: parent.anchor_end
+        }
+      : request.anchor;
+    httpAssert.present(anchor, { status: 400, message: 'A root comment requires an anchor' });
 
-const buildAuthorNameMap = async (db: DatabaseAdapter) => {
-  const users = await db.auth.listUsers();
-  return new Map(users.map(user => [user.id, user.display_name]));
+    return {
+      id,
+      workspace,
+      node_id: target,
+      parent_post_id: parentPostId,
+      author_id: authorId,
+      body,
+      quote: anchor.quote,
+      prefix: anchor.prefix,
+      suffix: anchor.suffix,
+      anchor_start: anchor.start,
+      anchor_end: anchor.end,
+      created_at: timestamp,
+      updated_at: timestamp
+    };
+  },
+  createPost: (db, input) => db.wikiComment.createPost(input),
+  updatePost: (db, ws, postId, body, updatedAt, editedAt) =>
+    db.wikiComment.updatePost(ws, postId, body, updatedAt, editedAt),
+  deletePost: (db, ws, postId) => db.wikiComment.deletePost(ws, postId),
+  toApiPost: (row, authorNames) => ({
+    ...mapThreadedCommentBase(row, authorNames),
+    nodeId: row.node_id,
+    anchor: {
+      quote: row.quote,
+      prefix: row.prefix,
+      suffix: row.suffix,
+      start: row.anchor_start,
+      end: row.anchor_end
+    },
+    resolvedAt: row.resolved_at ? row.resolved_at.toISOString() : null,
+    resolvedBy: row.resolved_by
+  }),
+  createPermissionMessage: 'You do not have permission to comment on this page',
+  createNotifications: async (
+    tx,
+    { workspace, target, row, parentPostId, parentAuthorId, actorUserId, occurredAt }
+  ) => {
+    await createCommentNotifications(tx, {
+      workspace,
+      commentId: row.id,
+      objectType: 'content_node',
+      objectId: target,
+      commentSurface: 'inline',
+      parentPostId,
+      parentAuthorId,
+      actorUserId,
+      occurredAt
+    });
+  },
+  resolvePost: (db, ws, postId, resolvedAt, resolvedBy, updatedAt) =>
+    db.wikiComment.setResolved(ws, postId, resolvedAt, resolvedBy, updatedAt)
 };
 
 export const listWikiComments = async (
@@ -79,15 +153,7 @@ export const listWikiComments = async (
   nodeId: string,
   event: AuthenticatedEvent
 ): Promise<WikiComment[]> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  await resolveNodeContext(db, ws, authCtx, nodeId);
-
-  const [rows, authorNames] = await Promise.all([
-    db.wikiComment.listByNode(ws, nodeId),
-    buildAuthorNameMap(db)
-  ]);
-  return rows.map(row => toApiPost(row, authorNames));
+  return listThreadedComments(db, workspace, nodeId, event, wikiCommentAdapter);
 };
 
 export const createWikiComment = async (
@@ -97,77 +163,7 @@ export const createWikiComment = async (
   body: CreateWikiCommentRequest,
   event: AuthenticatedEvent
 ): Promise<WikiComment> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  await resolveNodeContext(db, ws, authCtx, nodeId);
-  requireWorkspaceCapability(
-    authCtx,
-    'comments',
-    'You do not have permission to comment on this page'
-  );
-
-  let anchor = body.anchor;
-
-  let parentAuthorId: string | null = null;
-  if (body.parentPostId) {
-    const parent = await db.wikiComment.getPost(ws, body.parentPostId);
-    httpAssert.present(parent, { status: 404, message: `Post '${body.parentPostId}' not found` });
-    httpAssert.true(parent.node_id === nodeId, {
-      status: 400,
-      message: 'Reply must target a post on the same page'
-    });
-    httpAssert.true(parent.parent_post_id === null, {
-      status: 400,
-      message: 'Reply must target a root post, not another reply'
-    });
-    anchor = {
-      quote: parent.quote,
-      prefix: parent.prefix,
-      suffix: parent.suffix,
-      start: parent.anchor_start,
-      end: parent.anchor_end
-    };
-    parentAuthorId = parent.author_id;
-  }
-
-  httpAssert.present(anchor, { status: 400, message: 'A root comment requires an anchor' });
-
-  const timestamp = new Date();
-  const write = async (tx: DatabaseAdapter) => {
-    const row = await tx.wikiComment.createPost({
-      id: randomUUID(),
-      workspace: ws,
-      node_id: nodeId,
-      parent_post_id: body.parentPostId ?? null,
-      author_id: event.context.user.id,
-      body: body.body,
-      quote: anchor.quote,
-      prefix: anchor.prefix,
-      suffix: anchor.suffix,
-      anchor_start: anchor.start,
-      anchor_end: anchor.end,
-      created_at: timestamp,
-      updated_at: timestamp
-    });
-
-    await createCommentNotifications(tx, {
-      workspace: ws,
-      commentId: row.id,
-      objectType: 'content_node',
-      objectId: nodeId,
-      commentSurface: 'inline',
-      parentPostId: body.parentPostId ?? null,
-      parentAuthorId,
-      actorUserId: event.context.user.id,
-      occurredAt: timestamp
-    });
-    return row;
-  };
-  const row =
-    db.core && !db.core.isTransaction ? await db.core.transaction(write) : await write(db);
-
-  const authorNames = await buildAuthorNameMap(db);
-  return toApiPost(row, authorNames);
+  return createThreadedComment(db, workspace, nodeId, body, event, wikiCommentAdapter);
 };
 
 export const updateWikiComment = async (
@@ -177,24 +173,7 @@ export const updateWikiComment = async (
   body: UpdateWikiCommentRequest,
   event: AuthenticatedEvent
 ): Promise<WikiComment> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'comments');
-
-  const existing = await db.wikiComment.getPost(ws, postId);
-  httpAssert.present(existing, { status: 404, message: `Post '${postId}' not found` });
-  httpAssert.true(existing.author_id === event.context.user.id, {
-    status: 403,
-    statusText: 'Forbidden',
-    message: 'You can only edit your own posts'
-  });
-
-  const timestamp = new Date();
-  const row = await db.wikiComment.updatePost(ws, postId, body.body, timestamp, timestamp);
-  httpAssert.present(row, { status: 404, message: `Post '${postId}' not found` });
-
-  const authorNames = await buildAuthorNameMap(db);
-  return toApiPost(row, authorNames);
+  return updateThreadedComment(db, workspace, postId, body.body, event, wikiCommentAdapter);
 };
 
 export const resolveWikiComment = async (
@@ -204,29 +183,7 @@ export const resolveWikiComment = async (
   resolved: boolean,
   event: AuthenticatedEvent
 ): Promise<WikiComment> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'comments');
-
-  const existing = await db.wikiComment.getPost(ws, postId);
-  httpAssert.present(existing, { status: 404, message: `Post '${postId}' not found` });
-  httpAssert.true(existing.parent_post_id === null, {
-    status: 400,
-    message: 'Only a root post can be resolved'
-  });
-
-  const timestamp = new Date();
-  const row = await db.wikiComment.setResolved(
-    ws,
-    postId,
-    resolved ? timestamp : null,
-    resolved ? event.context.user.id : null,
-    timestamp
-  );
-  httpAssert.present(row, { status: 404, message: `Post '${postId}' not found` });
-
-  const authorNames = await buildAuthorNameMap(db);
-  return toApiPost(row, authorNames);
+  return resolveThreadedComment(db, workspace, postId, resolved, event, wikiCommentAdapter);
 };
 
 export const deleteWikiComment = async (
@@ -235,18 +192,5 @@ export const deleteWikiComment = async (
   postId: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; message: string }> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'comments');
-
-  const existing = await db.wikiComment.getPost(ws, postId);
-  httpAssert.present(existing, { status: 404, message: `Post '${postId}' not found` });
-  httpAssert.true(existing.author_id === event.context.user.id, {
-    status: 403,
-    statusText: 'Forbidden',
-    message: 'You can only delete your own posts'
-  });
-
-  await db.wikiComment.deletePost(ws, postId);
-  return { success: true, message: 'Post deleted' };
+  return deleteThreadedComment(db, workspace, postId, event, wikiCommentAdapter);
 };
