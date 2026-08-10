@@ -1,6 +1,3 @@
-import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
-import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type {
   PendingFieldChange,
   SharedFieldGroupLink
@@ -11,12 +8,8 @@ import type {
 } from '@arch-register/api-types/relationSchemaContract';
 import type { SharedFieldGroup } from '@arch-register/api-types/fieldGroupContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
-import { GroupDialog } from '../../components/GroupsEditor';
-import { TeamAccessPicker } from '../../components/TeamAccessPicker';
-import {
-  FieldMigrationDialog,
-  type FieldMigrationChoices
-} from '../../dialogs/FieldMigrationDialog';
+import { SchemaEditorDialogs } from './SchemaEditorDialogs';
+import type { FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
 
 export const RelationSchemaSettingsDialogs = ({
   selected,
@@ -63,66 +56,32 @@ export const RelationSchemaSettingsDialogs = ({
   onCloseAccess: () => void;
   onSetGroupAccess: (groupId: string, teamIds: string[]) => void;
 }) => (
-  <>
-    <DeleteConfirmationDialog
-      open={confirmDelete}
-      title="Delete relation type?"
-      message={
-        selected ? (
-          <>
-            The relation type <b>{selected.name}</b> will be permanently deleted.
-          </>
-        ) : (
-          ''
-        )
-      }
-      detail="This can't be undone."
-      confirmLabel="Delete type"
-      onConfirm={onConfirmDelete}
-      onCancel={onCancelDelete}
-    />
-    <ErrorDialog
-      open={errorMessage !== null}
-      title="Something went wrong"
-      message={errorMessage}
-      onClose={onCloseError}
-    />
-    <FieldMigrationDialog
-      open={pendingFieldChanges !== null}
-      pendingChanges={pendingFieldChanges ?? []}
-      subjectLabel="relation type"
-      itemNoun="relation"
-      onCancel={onCancelMigration}
-      onConfirm={onConfirmMigration}
-    />
-    <GroupDialog
-      open={groupDialogOpen}
-      onClose={onCloseGroup}
-      onSave={onSaveGroup}
-      group={editingGroup}
-      groups={groups}
-      sharedGroups={fieldGroups.filter(
-        group => !sharedFieldGroupLinks.some(link => link.groupId === group.id)
-      )}
-      onAddSharedGroup={onAddSharedGroup}
-    />
-    <Dialog
-      open={accessDialogGroupId !== null}
-      onClose={onCloseAccess}
-      title="Field group access"
-      buttons={[{ label: 'Done', type: 'default', onClick: onCloseAccess }]}
-    >
-      {accessDialogGroupId && (
-        <TeamAccessPicker
-          teams={teams}
-          teamIds={
-            sharedFieldGroupLinks.find(link => link.groupId === accessDialogGroupId)?.teamIds ??
-            groups.find(group => group.id === accessDialogGroupId)?.accessControl?.teamIds ??
-            []
-          }
-          onChange={teamIds => onSetGroupAccess(accessDialogGroupId, teamIds)}
-        />
-      )}
-    </Dialog>
-  </>
+  <SchemaEditorDialogs
+    selectedName={selected?.name ?? null}
+    subjectLabel="relation type"
+    migrationSubjectLabel="relation type"
+    migrationItemNoun="relation"
+    deleteTitle="Delete relation type?"
+    deleteConfirmLabel="Delete type"
+    fieldGroups={fieldGroups}
+    sharedFieldGroupLinks={sharedFieldGroupLinks}
+    groups={groups}
+    teams={teams}
+    confirmDelete={confirmDelete}
+    errorMessage={errorMessage}
+    pendingFieldChanges={pendingFieldChanges}
+    groupDialogOpen={groupDialogOpen}
+    editingGroup={editingGroup}
+    accessDialogGroupId={accessDialogGroupId}
+    onConfirmDelete={onConfirmDelete}
+    onCancelDelete={onCancelDelete}
+    onCloseError={onCloseError}
+    onCancelMigration={onCancelMigration}
+    onConfirmMigration={onConfirmMigration}
+    onCloseGroup={onCloseGroup}
+    onSaveGroup={onSaveGroup}
+    onAddSharedGroup={onAddSharedGroup}
+    onCloseAccess={onCloseAccess}
+    onSetGroupAccess={onSetGroupAccess}
+  />
 );
