@@ -1,17 +1,15 @@
 import { randomUUID } from 'node:crypto';
-import type { DatabaseAdapter } from '../../db/database';
+import { DatabaseError, type DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import {
-  buildApiAuthCtx,
-  buildApiEntityAuthCtx,
-  requireWorkspaceCapability
-} from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { HTTPError } from 'h3';
+import { requireWorkspaceCapability } from '../auth/authorization';
+import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import type {
   AuthorizationContext,
   TeamRole,
-  WorkspaceCapability
+  WorkspaceCapability,
+  WorkspaceAuthorizationContext
 } from '@arch-register/permissions';
 import type {
   GovernanceAssignmentAction,
@@ -294,24 +292,29 @@ export const createGovernanceCase = async (
   event: AuthenticatedEvent,
   input: CreateGovernanceCaseInput
 ): Promise<GovernanceCase> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
-  httpAssert.true(input.assignments.length > 0 || input.allowEmptyAssignments === true, {
-    status: 400,
-    statusText: 'Bad Request',
-    message: 'A governance case requires at least one assignment'
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
+      httpAssert.true(input.assignments.length > 0 || input.allowEmptyAssignments === true, {
+        status: 400,
+        statusText: 'Bad Request',
+        message: 'A governance case requires at least one assignment'
+      });
+
+      const userId = event.context.user.id;
+      const now = new Date();
+      const caseId = randomUUID();
+
+      const created = await db.core.transaction(async tx =>
+        createGovernanceCaseInTransaction(tx, ws, userId, input, now, caseId)
+      );
+
+      return toApiCase(created);
+    }
   });
-
-  const userId = event.context.user.id;
-  const now = new Date();
-  const caseId = randomUUID();
-
-  const created = await db.core.transaction(async tx =>
-    createGovernanceCaseInTransaction(tx, ws, userId, input, now, caseId)
-  );
-
-  return toApiCase(created);
 };
 
 export const createGovernanceCaseInTransaction = async (
@@ -391,15 +394,14 @@ export const createGovernanceCaseInTransaction = async (
   return createdCase;
 };
 
-export const getGovernanceCase = async (
+const getGovernanceCaseForContext = async (
   db: DatabaseAdapter,
-  workspace: string,
+  ws: string,
   caseId: string,
   event: AuthenticatedEvent,
+  authCtx: AuthorizationContext,
   registry: GovernanceRegistry = createGovernanceRegistry()
 ): Promise<GovernanceCase> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const notFound = { status: 404, message: `Governance case '${caseId}' not found` };
@@ -421,15 +423,29 @@ export const getGovernanceCase = async (
   return toApiCase(caseRow);
 };
 
-export const listGovernanceCases = async (
+export const getGovernanceCase = async (
   db: DatabaseAdapter,
   workspace: string,
+  caseId: string,
   event: AuthenticatedEvent,
+  registry: GovernanceRegistry = createGovernanceRegistry()
+): Promise<GovernanceCase> =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: ({ ws, authCtx }) =>
+      getGovernanceCaseForContext(db, ws, caseId, event, authCtx, registry)
+  });
+
+const listGovernanceCasesForContext = async (
+  db: DatabaseAdapter,
+  ws: string,
+  event: AuthenticatedEvent,
+  authCtx: AuthorizationContext,
   query: ListGovernanceCasesQuery,
   registry: GovernanceRegistry = createGovernanceRegistry()
 ): Promise<GovernanceCase[]> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const filter: GovernanceCaseListFilter = {
@@ -452,20 +468,34 @@ export const listGovernanceCases = async (
   return visible.filter((row): row is GovernanceCaseDbResult => row != null).map(toApiCase);
 };
 
+export const listGovernanceCases = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent,
+  query: ListGovernanceCasesQuery,
+  registry: GovernanceRegistry = createGovernanceRegistry()
+): Promise<GovernanceCase[]> =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: ({ ws, authCtx }) =>
+      listGovernanceCasesForContext(db, ws, event, authCtx, query, registry)
+  });
+
 /**
  * Lists governance cases the current user initiated, along with each case's still-open
  * assignments — i.e. what the case is currently waiting on. Unlike `listGovernanceCases`,
  * this is scoped to the initiator regardless of `selfApprovalAllowed`, so a requestor can
  * always find their own submissions without needing approval rights.
  */
-export const listMySubmittedGovernanceCases = async (
+const listMySubmittedGovernanceCasesForContext = async (
   db: DatabaseAdapter,
-  workspace: string,
+  ws: string,
   event: AuthenticatedEvent,
+  authCtx: WorkspaceAuthorizationContext,
   query: ListGovernanceSubmissionsQuery
 ): Promise<GovernanceSubmission[]> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const userId = event.context.user.id;
@@ -491,15 +521,28 @@ export const listMySubmittedGovernanceCases = async (
   return submissions;
 };
 
-export const listGovernanceCaseEvents = async (
+export const listMySubmittedGovernanceCases = async (
   db: DatabaseAdapter,
   workspace: string,
+  event: AuthenticatedEvent,
+  query: ListGovernanceSubmissionsQuery
+): Promise<GovernanceSubmission[]> =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: ({ ws, authCtx }) =>
+      listMySubmittedGovernanceCasesForContext(db, ws, event, authCtx, query)
+  });
+
+const listGovernanceCaseEventsForContext = async (
+  db: DatabaseAdapter,
+  ws: string,
   caseId: string,
   event: AuthenticatedEvent,
+  authCtx: AuthorizationContext,
   registry: GovernanceRegistry = createGovernanceRegistry()
 ): Promise<GovernanceEvent[]> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const notFound = { status: 404, message: `Governance case '${caseId}' not found` };
@@ -522,15 +565,29 @@ export const listGovernanceCaseEvents = async (
   return events.map(toApiEvent);
 };
 
-export const listMyGovernanceAssignments = async (
+export const listGovernanceCaseEvents = async (
   db: DatabaseAdapter,
   workspace: string,
+  caseId: string,
   event: AuthenticatedEvent,
+  registry: GovernanceRegistry = createGovernanceRegistry()
+): Promise<GovernanceEvent[]> =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: ({ ws, authCtx }) =>
+      listGovernanceCaseEventsForContext(db, ws, caseId, event, authCtx, registry)
+  });
+
+const listMyGovernanceAssignmentsForContext = async (
+  db: DatabaseAdapter,
+  ws: string,
+  event: AuthenticatedEvent,
+  authCtx: AuthorizationContext,
   query: ListGovernanceTasksQuery = {},
   registry: GovernanceRegistry = createGovernanceRegistry()
 ): Promise<GovernanceTask[]> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const userId = event.context.user.id;
@@ -613,6 +670,21 @@ export const listMyGovernanceAssignments = async (
   );
 };
 
+export const listMyGovernanceAssignments = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent,
+  query: ListGovernanceTasksQuery = {},
+  registry: GovernanceRegistry = createGovernanceRegistry()
+): Promise<GovernanceTask[]> =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: ({ ws, authCtx }) =>
+      listMyGovernanceAssignmentsForContext(db, ws, event, authCtx, query, registry)
+  });
+
 export const countMyGovernanceAssignments = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -622,16 +694,15 @@ export const countMyGovernanceAssignments = async (
   return { count: tasks.length };
 };
 
-export const cancelGovernanceCase = async (
+const cancelGovernanceCaseForContext = async (
   db: DatabaseAdapter,
-  workspace: string,
+  ws: string,
   caseId: string,
   event: AuthenticatedEvent,
+  authCtx: AuthorizationContext,
   input: { reason?: string | null },
   registry: GovernanceRegistry = createGovernanceRegistry()
 ): Promise<GovernanceCase> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const notFound = { status: 404, message: `Governance case '${caseId}' not found` };
@@ -681,19 +752,34 @@ export const cancelGovernanceCase = async (
   return toApiCase(cancelled);
 };
 
-// Basic anti-spam guard on manual reminders; #2418's scheduled scan is not subject to this since
-// it already tracks per-window "already reminded" state independently.
-const REMINDER_COOLDOWN_MS = 4 * 60 * 60 * 1000;
-
-export const sendGovernanceCaseReminder = async (
+export const cancelGovernanceCase = async (
   db: DatabaseAdapter,
   workspace: string,
   caseId: string,
   event: AuthenticatedEvent,
+  input: { reason?: string | null },
+  registry: GovernanceRegistry = createGovernanceRegistry()
+): Promise<GovernanceCase> =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: ({ ws, authCtx }) =>
+      cancelGovernanceCaseForContext(db, ws, caseId, event, authCtx, input, registry)
+  });
+
+// Basic anti-spam guard on manual reminders; #2418's scheduled scan is not subject to this since
+// it already tracks per-window "already reminded" state independently.
+const REMINDER_COOLDOWN_MS = 4 * 60 * 60 * 1000;
+
+const sendGovernanceCaseReminderForContext = async (
+  db: DatabaseAdapter,
+  ws: string,
+  caseId: string,
+  event: AuthenticatedEvent,
+  authCtx: AuthorizationContext,
   registry: GovernanceRegistry = createGovernanceRegistry()
 ): Promise<{ case: GovernanceCase; event: GovernanceEvent }> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
 
   const notFound = { status: 404, message: `Governance case '${caseId}' not found` };
@@ -758,17 +844,31 @@ export const sendGovernanceCaseReminder = async (
   return { case: toApiCase(caseRow), event: toApiEvent(reminderEvent) };
 };
 
-export const decideGovernanceAssignment = async (
+export const sendGovernanceCaseReminder = async (
   db: DatabaseAdapter,
   workspace: string,
+  caseId: string,
+  event: AuthenticatedEvent,
+  registry: GovernanceRegistry = createGovernanceRegistry()
+): Promise<{ case: GovernanceCase; event: GovernanceEvent }> =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: ({ ws, authCtx }) =>
+      sendGovernanceCaseReminderForContext(db, ws, caseId, event, authCtx, registry)
+  });
+
+export const decideGovernanceAssignmentWithContext = async (
+  db: DatabaseAdapter,
+  ws: string,
   assignmentId: string,
   event: AuthenticatedEvent,
+  authCtx: WorkspaceAuthorizationContext,
   input: DecideGovernanceAssignmentInput,
   registry: GovernanceRegistry = createGovernanceRegistry(),
   options: GovernanceDecisionOptions = {}
 ): Promise<{ case: GovernanceCase; event: GovernanceEvent }> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
   httpAssert.string(input.idempotencyKey, {
     status: 400,
@@ -960,3 +1060,34 @@ export const decideGovernanceAssignment = async (
 
   return { case: toApiCase(result.case), event: toApiEvent(result.event) };
 };
+
+export const decideGovernanceAssignment = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  assignmentId: string,
+  event: AuthenticatedEvent,
+  input: DecideGovernanceAssignmentInput,
+  registry: GovernanceRegistry = createGovernanceRegistry(),
+  options: GovernanceDecisionOptions = {}
+): Promise<{ case: GovernanceCase; event: GovernanceEvent }> =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: ({ ws, authCtx }) =>
+      decideGovernanceAssignmentWithContext(
+        db,
+        ws,
+        assignmentId,
+        event,
+        authCtx,
+        input,
+        registry,
+        options
+      ),
+    // Synchronous governance effects historically propagated their domain errors to callers;
+    // keep that behavior while retaining the shared HTTP/database mapping.
+    onError: error => {
+      if (!HTTPError.isError(error) && !(error instanceof DatabaseError)) throw error;
+    }
+  });

@@ -5,12 +5,8 @@ import type {
 import type { AuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import {
-  buildApiEntityAuthCtx as buildApiAuthCtx,
-  filterVisibleEntities,
-  requireWorkspaceCapability
-} from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { filterVisibleEntities, requireWorkspaceCapability } from '../auth/authorization';
+import { runAuthorizedOperation } from '../operation';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { LifecycleStateDbResult } from '../workspace/db/workspaceDatabase';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
@@ -279,24 +275,29 @@ export const getWorkspaceAnalytics = async (
   event: AuthenticatedEvent,
   staleAfterDays = 90
 ): Promise<WorkspaceAnalytics> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'ws.audit');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.audit');
 
-  const [entities, schemas, lifecycleStates, auditRows] = await Promise.all([
-    listAllCatalogEntities(db, ws),
-    db.catalog.listSchemas(ws),
-    db.workspace.listLifecycleStates(ws),
-    db.audit.listAuditLogs(ws)
-  ]);
+      const [entities, schemas, lifecycleStates, auditRows] = await Promise.all([
+        listAllCatalogEntities(db, ws),
+        db.catalog.listSchemas(ws),
+        db.workspace.listLifecycleStates(ws),
+        db.audit.listAuditLogs(ws)
+      ]);
 
-  return computeWorkspaceAnalytics(
-    filterVisibleEntities(authCtx, entities),
-    schemas,
-    lifecycleStates,
-    staleAfterDays,
-    stripAuditChanges(auditRows),
-    new Date(),
-    authCtx
-  );
+      return computeWorkspaceAnalytics(
+        filterVisibleEntities(authCtx, entities),
+        schemas,
+        lifecycleStates,
+        staleAfterDays,
+        stripAuditChanges(auditRows),
+        new Date(),
+        authCtx
+      );
+    }
+  });
 };

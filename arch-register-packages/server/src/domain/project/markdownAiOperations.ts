@@ -204,6 +204,8 @@ export const testDocumentAiAction = async (
         outputField: outputField ?? undefined
       });
 
+      // AI tools need their own entity-grant context for tool-level visibility; the surrounding
+      // operation intentionally remains workspace-scoped for document settings access.
       const entityAuthCtx = await buildApiEntityAuthCtx(db, ws, event);
       const tools = createAiChatTools(
         db,

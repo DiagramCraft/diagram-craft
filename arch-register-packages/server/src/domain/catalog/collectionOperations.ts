@@ -1,12 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import {
-  buildApiAuthCtx,
-  buildApiEntityAuthCtx,
-  requireEntityAction,
-  requireWorkspaceCapability
-} from '../auth/authorization';
+import { requireEntityAction, requireWorkspaceCapability } from '../auth/authorization';
+import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import type { Collection } from '@arch-register/api-types/collectionContract';
 
@@ -31,10 +27,16 @@ export const listCollections = async (
   event: AuthenticatedEvent,
   entityId?: string
 ) => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
-  const collections = await db.view.listCollections(authCtx.userId, workspace, entityId);
-  return collections.map(collection => toApiCollection(collection));
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
+      const collections = await db.view.listCollections(authCtx.userId, ws, entityId);
+      return collections.map(collection => toApiCollection(collection));
+    }
+  });
 };
 
 export const createCollection = async (
@@ -43,20 +45,26 @@ export const createCollection = async (
   event: AuthenticatedEvent,
   name: string
 ) => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
-  const normalizedName = name.trim();
-  httpAssert.true(normalizedName, { status: 400, message: 'Collection name is required' });
-  const now = new Date();
-  const collection = await db.view.createCollection({
-    id: randomUUID(),
-    user_id: authCtx.userId,
-    workspace,
-    name: normalizedName,
-    created_at: now,
-    updated_at: now
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
+      const normalizedName = name.trim();
+      httpAssert.true(normalizedName, { status: 400, message: 'Collection name is required' });
+      const now = new Date();
+      const collection = await db.view.createCollection({
+        id: randomUUID(),
+        user_id: authCtx.userId,
+        workspace: ws,
+        name: normalizedName,
+        created_at: now,
+        updated_at: now
+      });
+      return toApiCollection(collection);
+    }
   });
-  return toApiCollection(collection);
 };
 
 export const updateCollection = async (
@@ -66,16 +74,22 @@ export const updateCollection = async (
   event: AuthenticatedEvent,
   name: string
 ) => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
-  const normalizedName = name.trim();
-  httpAssert.true(normalizedName, { status: 400, message: 'Collection name is required' });
-  const updated = await db.view.updateCollection(authCtx.userId, workspace, id, {
-    name: normalizedName,
-    updated_at: new Date()
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
+      const normalizedName = name.trim();
+      httpAssert.true(normalizedName, { status: 400, message: 'Collection name is required' });
+      const updated = await db.view.updateCollection(authCtx.userId, ws, id, {
+        name: normalizedName,
+        updated_at: new Date()
+      });
+      httpAssert.present(updated, { status: 404, message: 'Collection not found' });
+      return toApiCollection(updated);
+    }
   });
-  httpAssert.present(updated, { status: 404, message: 'Collection not found' });
-  return toApiCollection(updated);
 };
 
 export const deleteCollection = async (
@@ -84,11 +98,17 @@ export const deleteCollection = async (
   id: string,
   event: AuthenticatedEvent
 ) => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
-  const deleted = await db.view.deleteCollection(authCtx.userId, workspace, id);
-  httpAssert.present(deleted, { status: 404, message: 'Collection not found' });
-  return { success: true, message: 'Collection deleted' };
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
+      const deleted = await db.view.deleteCollection(authCtx.userId, ws, id);
+      httpAssert.present(deleted, { status: 404, message: 'Collection not found' });
+      return { success: true, message: 'Collection deleted' };
+    }
+  });
 };
 
 export const addEntityToCollection = async (
@@ -98,15 +118,26 @@ export const addEntityToCollection = async (
   entityId: string,
   event: AuthenticatedEvent
 ) => {
-  const authCtx = await buildApiEntityAuthCtx(db, workspace, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
-  const collection = await db.view.getCollection(authCtx.userId, workspace, collectionId);
-  httpAssert.present(collection, { status: 404, message: 'Collection not found' });
-  const entity = await db.catalog.getEntity(workspace, entityId);
-  httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
-  requireEntityAction(authCtx, entity, 'view_entity', 'You do not have access to add this entity');
-  await db.view.addCollectionEntity(authCtx.userId, workspace, collectionId, entity.id, new Date());
-  return { success: true, message: 'Entity added to collection' };
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
+      const collection = await db.view.getCollection(authCtx.userId, ws, collectionId);
+      httpAssert.present(collection, { status: 404, message: 'Collection not found' });
+      const entity = await db.catalog.getEntity(ws, entityId);
+      httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+      requireEntityAction(
+        authCtx,
+        entity,
+        'view_entity',
+        'You do not have access to add this entity'
+      );
+      await db.view.addCollectionEntity(authCtx.userId, ws, collectionId, entity.id, new Date());
+      return { success: true, message: 'Entity added to collection' };
+    }
+  });
 };
 
 export const removeEntityFromCollection = async (
@@ -116,10 +147,16 @@ export const removeEntityFromCollection = async (
   entityId: string,
   event: AuthenticatedEvent
 ) => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
-  const collection = await db.view.getCollection(authCtx.userId, workspace, collectionId);
-  httpAssert.present(collection, { status: 404, message: 'Collection not found' });
-  await db.view.removeCollectionEntity(authCtx.userId, workspace, collectionId, entityId);
-  return { success: true, message: 'Entity removed from collection' };
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
+      const collection = await db.view.getCollection(authCtx.userId, ws, collectionId);
+      httpAssert.present(collection, { status: 404, message: 'Collection not found' });
+      await db.view.removeCollectionEntity(authCtx.userId, ws, collectionId, entityId);
+      return { success: true, message: 'Entity removed from collection' };
+    }
+  });
 };

@@ -1,7 +1,7 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { requireWorkspaceCapability } from '../auth/authorization';
+import { runAuthorizedOperation } from '../operation';
 import { toApiAuditLogEntry, filterAndPaginateAuditLogs, computeAuditStats } from './auditHelpers';
 import { listEntities } from '../catalog/entityQueryOperations';
 import { parseEntityQuery, buildEntityQueryForExecution } from '../catalog/entityQuery';
@@ -216,9 +216,9 @@ const resolveAuditPublicIds = async (
   return entry;
 };
 
-export const listAuditLog = async (
+const listAuditLogForContext = async (
   db: DatabaseAdapter,
-  workspace: string,
+  ws: string,
   filters: {
     entityType?: string;
     entityId?: string;
@@ -231,10 +231,8 @@ export const listAuditLog = async (
     limit?: number;
     offset?: number;
   },
-  event: AuthenticatedEvent
+  authCtx: WorkspaceAuthorizationContext
 ): Promise<AuditLogEntry[]> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
   requireWorkspaceCapability(authCtx, 'ws.audit');
 
   let entityIds: string[] | null = null;
@@ -287,15 +285,43 @@ export const listAuditLog = async (
   return await Promise.all(entries.map(entry => resolveAuditPublicIds(db, ws, entry)));
 };
 
+export const listAuditLog = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  filters: {
+    entityType?: string;
+    entityId?: string;
+    schemaId?: string;
+    owner?: string;
+    lifecycle?: string;
+    operation?: string;
+    startDate?: string;
+    endDate?: string;
+    limit?: number;
+    offset?: number;
+  },
+  event: AuthenticatedEvent
+): Promise<AuditLogEntry[]> =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: ({ ws, authCtx }) => listAuditLogForContext(db, ws, filters, authCtx)
+  });
+
 export const getAuditStats = async (
   db: DatabaseAdapter,
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<AuditStats> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'ws.audit');
-
-  const rows = await db.audit.listAuditLogs(ws);
-  return computeAuditStats(stripAuditChanges(rows));
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.audit');
+      const rows = await db.audit.listAuditLogs(ws);
+      return computeAuditStats(stripAuditChanges(rows));
+    }
+  });
 };

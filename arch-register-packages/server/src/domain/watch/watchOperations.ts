@@ -1,12 +1,7 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import {
-  buildApiAuthCtx,
-  buildApiEntityAuthCtx,
-  requireEntityAction,
-  requireWorkspaceCapability
-} from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { requireEntityAction, requireWorkspaceCapability } from '../auth/authorization';
+import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import { PermissionChecker, type AuthorizationContext } from '@arch-register/permissions';
 import type { Entity } from '../catalog/db/catalogDatabase';
@@ -196,25 +191,30 @@ export const listWatching = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<WatchedEntity[]> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const userId = event.context.user.id;
-  const [watches, entities] = await Promise.all([
-    db.watch.listWatches(userId, ws),
-    listAllCatalogEntities(db, ws)
-  ]);
-  const entityMap = new Map(entities.map(entity => [entity.id, entity]));
+      const userId = event.context.user.id;
+      const [watches, entities] = await Promise.all([
+        db.watch.listWatches(userId, ws),
+        listAllCatalogEntities(db, ws)
+      ]);
+      const entityMap = new Map(entities.map(entity => [entity.id, entity]));
 
-  return watches
-    .map(watch => {
-      const entity = entityMap.get(watch.entity_id);
-      if (!entity) return null;
-      if (!checker.hasEntityPermission(authCtx, entity, 'view_entity')) return null;
-      return toWatchedEntity(entity, watch.created_at);
-    })
-    .filter((item): item is WatchedEntity => item != null);
+      return watches
+        .map(watch => {
+          const entity = entityMap.get(watch.entity_id);
+          if (!entity) return null;
+          if (!checker.hasEntityPermission(authCtx, entity, 'view_entity')) return null;
+          return toWatchedEntity(entity, watch.created_at);
+        })
+        .filter((item): item is WatchedEntity => item != null);
+    }
+  });
 };
 
 export const createWatch = async (
@@ -223,27 +223,32 @@ export const createWatch = async (
   entityId: string,
   event: AuthenticatedEvent
 ): Promise<WatchedEntity> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const entity = await db.catalog.getEntity(ws, entityId);
-  httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
-  requireEntityAction(
-    authCtx,
-    entity,
-    'view_entity',
-    'You do not have access to watch this entity'
-  );
+      const entity = await db.catalog.getEntity(ws, entityId);
+      httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+      requireEntityAction(
+        authCtx,
+        entity,
+        'view_entity',
+        'You do not have access to watch this entity'
+      );
 
-  const watch = await db.watch.createWatch({
-    user_id: event.context.user.id,
-    workspace: ws,
-    entity_id: entity.id,
-    created_at: new Date()
+      const watch = await db.watch.createWatch({
+        user_id: event.context.user.id,
+        workspace: ws,
+        entity_id: entity.id,
+        created_at: new Date()
+      });
+
+      return toWatchedEntity(entity, watch.created_at);
+    }
   });
-
-  return toWatchedEntity(entity, watch.created_at);
 };
 
 export const deleteWatch = async (
@@ -252,14 +257,19 @@ export const deleteWatch = async (
   entityId: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; message: string }> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const entity = await db.catalog.getEntity(ws, entityId);
-  httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
-  await db.watch.deleteWatch(event.context.user.id, ws, entity.id);
-  return { success: true, message: `Entity '${entityId}' unwatched` };
+      const entity = await db.catalog.getEntity(ws, entityId);
+      httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+      await db.watch.deleteWatch(event.context.user.id, ws, entity.id);
+      return { success: true, message: `Entity '${entityId}' unwatched` };
+    }
+  });
 };
 
 export const listNotifications = async (
@@ -267,22 +277,27 @@ export const listNotifications = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<NotificationItem[]> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const userId = event.context.user.id;
-  const entities = await listAllCatalogEntities(db, ws);
-  const entityMap = new Map(entities.map(entity => [entity.id, entity]));
-  const notifications = await listVisibleNotifications(db, ws, authCtx, userId, entityMap);
+      const userId = event.context.user.id;
+      const entities = await listAllCatalogEntities(db, ws);
+      const entityMap = new Map(entities.map(entity => [entity.id, entity]));
+      const notifications = await listVisibleNotifications(db, ws, authCtx, userId, entityMap);
 
-  // The bell is an unread inbox, not a history log: once a notification is read (including
-  // automatically, when its underlying action item is resolved) it drops out of view here even
-  // though the row is retained in the database.
-  return notifications
-    .filter(notification => notification.read_at == null)
-    .map(notification => toNotificationItem(notification, entityMap))
-    .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
+      // The bell is an unread inbox, not a history log: once a notification is read (including
+      // automatically, when its underlying action item is resolved) it drops out of view here even
+      // though the row is retained in the database.
+      return notifications
+        .filter(notification => notification.read_at == null)
+        .map(notification => toNotificationItem(notification, entityMap))
+        .sort((a, b) => Date.parse(b.timestamp) - Date.parse(a.timestamp));
+    }
+  });
 };
 
 export const getNotificationCount = async (
@@ -290,16 +305,21 @@ export const getNotificationCount = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<NotificationCount> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const userId = event.context.user.id;
-  const entities = await listAllCatalogEntities(db, ws);
-  const entityMap = new Map(entities.map(entity => [entity.id, entity]));
-  const notifications = await listVisibleNotifications(db, ws, authCtx, userId, entityMap);
+      const userId = event.context.user.id;
+      const entities = await listAllCatalogEntities(db, ws);
+      const entityMap = new Map(entities.map(entity => [entity.id, entity]));
+      const notifications = await listVisibleNotifications(db, ws, authCtx, userId, entityMap);
 
-  return { count: notifications.filter(notification => notification.read_at == null).length };
+      return { count: notifications.filter(notification => notification.read_at == null).length };
+    }
+  });
 };
 
 export const deleteNotification = async (
@@ -308,22 +328,27 @@ export const deleteNotification = async (
   notificationId: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; message: string }> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const markedRead = await db.notification.markRead(
-    event.context.user.id,
-    ws,
-    notificationId,
-    new Date()
-  );
-  httpAssert.true(markedRead, {
-    status: 404,
-    message: `Notification '${notificationId}' not found`
+      const markedRead = await db.notification.markRead(
+        event.context.user.id,
+        ws,
+        notificationId,
+        new Date()
+      );
+      httpAssert.true(markedRead, {
+        status: 404,
+        message: `Notification '${notificationId}' not found`
+      });
+
+      return { success: true, message: `Notification '${notificationId}' marked as read` };
+    }
   });
-
-  return { success: true, message: `Notification '${notificationId}' marked as read` };
 };
 
 export const clearNotifications = async (
@@ -331,10 +356,15 @@ export const clearNotifications = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; count: number; message: string }> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const markedRead = await db.notification.markAllRead(event.context.user.id, ws, new Date());
-  return { success: true, count: markedRead, message: 'Notifications marked as read' };
+      const markedRead = await db.notification.markAllRead(event.context.user.id, ws, new Date());
+      return { success: true, count: markedRead, message: 'Notifications marked as read' };
+    }
+  });
 };

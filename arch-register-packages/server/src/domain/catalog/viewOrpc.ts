@@ -144,17 +144,24 @@ export const workspaceViewORPCRouter = viewRouter.router({
     })
   },
   pinnedEntities: {
-    list: viewRouter.pinnedEntities.list.handler(async ({ context }) => {
-      const { workspace } = context;
-      return await listPinnedEntities(context.db, workspace, context.event);
+    list: viewRouter.pinnedEntities.list.handler(async ({ input, context }) => {
+      return await listPinnedEntities(context.db, input.params.workspace, context.event);
     }),
     create: viewRouter.pinnedEntities.create.handler(async ({ input, context }) => {
-      const { workspace } = context;
-      return await createPinnedEntity(context.db, workspace, input.body.entity_id, context.event);
+      return await createPinnedEntity(
+        context.db,
+        input.params.workspace,
+        input.body.entity_id,
+        context.event
+      );
     }),
     remove: viewRouter.pinnedEntities.remove.handler(async ({ input, context }) => {
-      const { workspace } = context;
-      return await deletePinnedEntity(context.db, workspace, input.params.id, context.event);
+      return await deletePinnedEntity(
+        context.db,
+        input.params.workspace,
+        input.params.id,
+        context.event
+      );
     })
   }
 });

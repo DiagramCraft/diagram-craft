@@ -3,9 +3,9 @@ import { WORKSPACE_ROLE_CAPABILITIES, type WorkspaceCapability } from '@arch-reg
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { httpAssert } from '../../utils/httpAssert';
-import { buildApiAuthCtx, requireWorkspaceCapability } from './authorization';
+import { requireWorkspaceCapability } from './authorization';
 import { generateApiToken, toApiToken, WORKSPACE_TOKEN_OWNER_ID } from './apiTokens';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { runAuthorizedOperation } from '../operation';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { recordApiTokenAudit } from './apiTokenAudit';
 
@@ -122,9 +122,15 @@ export const listApiTokens = async (
   workspace: string,
   event: AuthenticatedEvent
 ) => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  requireWorkspaceCapability(authCtx, 'people.role');
-  return (await db.auth.listApiTokens(workspace, WORKSPACE_TOKEN_OWNER_ID)).map(toApiToken);
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'people.role');
+      return (await db.auth.listApiTokens(ws, WORKSPACE_TOKEN_OWNER_ID)).map(toApiToken);
+    }
+  });
 };
 
 export const createApiToken = async (
@@ -133,9 +139,15 @@ export const createApiToken = async (
   input: CreateApiTokenInput,
   event: AuthenticatedEvent
 ) => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  requireWorkspaceCapability(authCtx, 'people.role');
-  return createToken(db, workspace, input, event, authCtx, WORKSPACE_TOKEN_OWNER_ID);
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'people.role');
+      return createToken(db, ws, input, event, authCtx, WORKSPACE_TOKEN_OWNER_ID);
+    }
+  });
 };
 
 export const listUserApiTokens = async (db: DatabaseAdapter, event: AuthenticatedEvent) => {
@@ -147,9 +159,13 @@ export const createUserApiToken = async (
   input: CreateApiTokenInput & { workspace: string },
   event: AuthenticatedEvent
 ) => {
-  const workspace = await resolveWorkspace(db.catalog, input.workspace);
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  return createToken(db, workspace, input, event, authCtx, event.context.user.id);
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace: input.workspace },
+    operation: ({ ws, authCtx }) =>
+      createToken(db, ws, input, event, authCtx, event.context.user.id)
+  });
 };
 
 export const revokeUserApiToken = async (
@@ -175,17 +191,23 @@ export const revokeApiToken = async (
   id: string,
   event: AuthenticatedEvent
 ) => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  requireWorkspaceCapability(authCtx, 'people.role');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'people.role');
 
-  const revoked = await db.auth.deleteApiToken(workspace, id, WORKSPACE_TOKEN_OWNER_ID);
-  httpAssert.present(revoked, { status: 404, message: 'API token not found' });
-  await recordApiTokenAudit(db.auth, {
-    workspace,
-    tokenId: revoked.id,
-    userId: event.context.user.id,
-    event: 'revoked',
-    metadata: { name: revoked.name }
+      const revoked = await db.auth.deleteApiToken(ws, id, WORKSPACE_TOKEN_OWNER_ID);
+      httpAssert.present(revoked, { status: 404, message: 'API token not found' });
+      await recordApiTokenAudit(db.auth, {
+        workspace: ws,
+        tokenId: revoked.id,
+        userId: event.context.user.id,
+        event: 'revoked',
+        metadata: { name: revoked.name }
+      });
+      return toApiToken(revoked);
+    }
   });
-  return toApiToken(revoked);
 };

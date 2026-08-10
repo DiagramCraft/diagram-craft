@@ -555,6 +555,8 @@ export const listTypedRelationsForEntity = async (
       const [{ outgoing, incoming }, schemas, entityAuthCtx] = await Promise.all([
         db.relation.listRelationsForEntity(ws, entity.id),
         db.relation.listRelationSchemas(ws),
+        // Endpoint visibility spans a second entity authorization context; keep it separate from
+        // the outer workspace-scoped operation so endpoint grants are evaluated independently.
         buildApiEntityAuthCtx(db, ws, event)
       ]);
       const endpointEntityIds = new Set([
