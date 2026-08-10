@@ -1,80 +1,39 @@
-import { useState, useCallback, useRef, useEffect, useMemo } from 'react';
-import { useParams, useSearch, useNavigate } from '@tanstack/react-router';
+import { useCallback, useMemo } from 'react';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import type { MarkdownSearchParams } from '../../routes/searchParams';
-import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import {
-  useMarkdownContent,
-  useMarkdownRevisions,
-  useRestoreMarkdownRevision,
-  useSaveMarkdownContent,
-  useSaveNewMarkdownContent,
-  useMigrateMarkdownContent
-} from '../../hooks/useMarkdownContent';
-import {
-  useUploadMarkdownAttachment,
-  useDeleteMarkdownAttachment
-} from '../../hooks/useAttachments';
-import { RenameDialog } from '../../components/RenameDialog';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
-import { newid } from '@diagram-craft/utils/id';
-import styles from './MarkdownEditorScreen.module.css';
-import { MdxContext } from './MdxContext';
-import { extractFirstHeadingTitle } from './preview/markdownTitle';
-import { MarkdownEditorHeader } from './MarkdownEditorHeader';
-import { MarkdownEditorToolbar } from './MarkdownEditorToolbar';
-import { MarkdownEditorPane } from './MarkdownEditorPane';
-import { MarkdownHistoryPanel } from './MarkdownHistoryPanel';
-import { useWikiComments } from '../../hooks/useWikiComments';
-import {
-  type CommentsDisplayMode,
-  nextCommentsDisplayMode
-} from '../wikiComments/commentsDisplayMode';
-import { LoadingState } from '../../components/LoadingState';
-import {
-  projectDetailRoute,
-  entityDetailRoute,
-  asProjectPublicId,
-  asEntityPublicId,
-  projectDiagramRoute,
-  entityDiagramRoute,
-  projectMarkdownRoute,
-  entityMarkdownRoute,
-  workspaceMarkdownRoute
-} from '../../routes/publicObjectRoutes';
-import {
-  deriveMarkdownEditorTitleView,
-  getInitialMarkdownEditorScreenState,
-  type MarkdownPaneMode,
-  type MarkdownEditorScreenState
-} from './MarkdownEditorScreen.state';
-import { MarkdownDiagramSessionContext } from './MarkdownDiagramSessionContext';
-import { MarkdownCloseDialog } from './MarkdownCloseDialog';
-import { MarkdownChangeImpactDialog, type MarkdownSaveIntent } from './MarkdownChangeImpactDialog';
-import { hasWorkflowFields } from './markdownChangeImpact';
-import { useMarkdownDiagramSessionTracking } from './useMarkdownDiagramSessionTracking';
-import { useMarkdownCloseFlow } from './useMarkdownCloseFlow';
-import { useMarkdownDocumentScope } from './useMarkdownDocumentScope';
 import type { ContentScope } from '../../hooks/useContentScope';
-import { downloadUrl } from '../../lib/browserDownload';
-import { applicationWorkspacePath } from '../../lib/applicationApi';
+import { useMarkdownContent, useMarkdownRevisions } from '../../hooks/useMarkdownContent';
 import { useDocumentTemplates, useDocumentTypes } from '../../hooks/useDocuments';
 import { useGovernanceWorkflowConfig } from '../../hooks/useGovernanceWorkflowConfig';
 import { useEnums } from '../../hooks/useEnums';
-import { MarkdownPropertiesPanel, validateDocMetadata } from './MarkdownPropertiesPanel';
-import { ApiError } from '../../lib/http';
-import { runDocumentAiAction } from '../../hooks/useDocumentAiActions';
-import { useAiStatus } from '../../hooks/useAiConfig';
-import { useCreateConversation } from '../../hooks/useAiConversations';
-import { AiActionResultPanel } from './AiActionResultPanel';
-import { writeAiActionSeed } from '../../lib/aiActionSeed';
-import type { DocumentAiAction } from '@arch-register/api-types/documentContract';
-import type { RunAiActionResponse } from '@arch-register/api-types/projectContract';
-
-const extractToc = (markdown: string): string[] =>
-  markdown.match(/^## .+$/gm)?.map(l => l.slice(3).trim()) ?? [];
-
-const calcReadTime = (text: string): number =>
-  Math.max(1, Math.round(text.split(/\s+/).filter(Boolean).length / 200));
+import { useWikiComments } from '../../hooks/useWikiComments';
+import { useMarkdownDocumentScope } from './useMarkdownDocumentScope';
+import { useMarkdownDiagramSessionTracking } from './useMarkdownDiagramSessionTracking';
+import { MarkdownDiagramSessionContext } from './MarkdownDiagramSessionContext';
+import { MdxContext } from './MdxContext';
+import { MarkdownEditorContent } from './MarkdownEditorContent';
+import { MarkdownEditorDialogs } from './MarkdownEditorDialogs';
+import {
+  asEntityPublicId,
+  asProjectPublicId,
+  entityDetailRoute,
+  entityDiagramRoute,
+  entityMarkdownRoute,
+  projectDetailRoute,
+  projectDiagramRoute,
+  projectMarkdownRoute,
+  workspaceMarkdownRoute
+} from '../../routes/publicObjectRoutes';
+import { applicationWorkspacePath } from '../../lib/applicationApi';
+import { downloadUrl } from '../../lib/browserDownload';
+import { LoadingState } from '../../components/LoadingState';
+import styles from './MarkdownEditorScreen.module.css';
+import {
+  useMarkdownEditorController,
+  type MarkdownEditorSearchUpdate
+} from './useMarkdownEditorController';
+import { newid } from '@diagram-craft/utils/id';
 
 const relativeDate = (iso: string): string => {
   const ms = Date.now() - new Date(iso).getTime();
@@ -94,9 +53,7 @@ export const MarkdownEditorScreen = () => {
   const params = useParams({ strict: false });
   const search = useSearch({ strict: false });
   // workspaceSlug is always present: this screen only mounts under the entity/project/content
-  // wiki routes, all of which define it. nodeId is only present on the "existing document"
-  // routes (.../wiki/$nodeId) -- the "new document" routes (.../wiki/new) omit it, which is
-  // the signal we use to distinguish draft (new, unsaved) mode from editing an existing doc.
+  // wiki routes. nodeId is omitted by the new-document routes, which signals draft mode.
   const workspaceSlug = params.workspaceSlug!;
   const nodeId = params.nodeId ?? '';
   const isDraft = !params.nodeId;
@@ -110,6 +67,7 @@ export const MarkdownEditorScreen = () => {
   const draftFolder = search.draftFolder;
   const draftType = search.draftType ?? null;
   const draftTemplate = search.draftTemplate ?? null;
+  const selectedRevisionId = search.revisionId;
   const contentScope: ContentScope = projectId
     ? { kind: 'project', workspaceId: workspaceSlug, projectId }
     : entityId
@@ -133,16 +91,8 @@ export const MarkdownEditorScreen = () => {
     workspaceSlug,
     nodeId
   );
-  const saveMutation = useSaveMarkdownContent(contentScope, nodeId);
   const { data: governanceWorkflowConfig } = useGovernanceWorkflowConfig(workspaceSlug);
   const { data: workspaceEnums = [] } = useEnums(workspaceSlug);
-  const migrateMutation = useMigrateMarkdownContent(contentScope, nodeId);
-  const saveNewMutation = useSaveNewMarkdownContent(contentScope);
-  const restoreMutation = useRestoreMarkdownRevision(contentScope, nodeId);
-  const uploadAttachmentMutation = useUploadMarkdownAttachment(contentScope, nodeId);
-  const deleteAttachmentMutation = useDeleteMarkdownAttachment(contentScope, nodeId);
-  const createConversationMutation = useCreateConversation(workspaceSlug);
-  const { data: aiStatus } = useAiStatus(workspaceSlug, !isDraft);
   const { file, parentLabel, renameFile, deleteFile } = useMarkdownDocumentScope({
     workspaceSlug,
     nodeId,
@@ -156,115 +106,16 @@ export const MarkdownEditorScreen = () => {
     () => rootWikiComments.filter(c => c.resolvedAt == null).length,
     [rootWikiComments]
   );
-
-  const [body, setBody] = useState('');
-  const [documentTypeId, setDocumentTypeId] = useState<string | null>(isDraft ? draftType : null);
-  const [metadata, setMetadata] = useState<NonNullable<typeof data>['metadata']>({});
-  const [generatedMetadata, setGeneratedMetadata] = useState<
-    NonNullable<typeof data>['generated_metadata']
-  >({});
-  const [paneMode, setPaneMode] = useState<MarkdownPaneMode>(
-    isDraft || requestedMode === 'edit' ? 'edit' : 'preview'
-  );
-  const [commentsMode, setCommentsMode] = useState<CommentsDisplayMode>('side');
-  const screenState = useMemo<MarkdownEditorScreenState>(
-    () =>
-      isDraft
-        ? { screenMode: 'edit', paneMode, viewPanel: 'preview' }
-        : { ...getInitialMarkdownEditorScreenState(requestedMode, requestedPanel), paneMode },
-    [isDraft, paneMode, requestedMode, requestedPanel]
-  );
-  const [dirty, setDirty] = useState(isDraft);
-  const [changeKind, setChangeKind] = useState<'minor' | 'major'>('minor');
-  const [pendingSaveIntent, setPendingSaveIntent] = useState<MarkdownSaveIntent | null>(null);
-  const [initiationFieldValues, setInitiationFieldValues] = useState<Record<string, unknown>>({});
-  const [attemptedSave, setAttemptedSave] = useState(false);
-  const [draftSaveError, setDraftSaveError] = useState<string | null>(null);
-  const [renameOpen, setRenameOpen] = useState(false);
-  const [deleteOpen, setDeleteOpen] = useState(false);
-  const [attachmentDeleteTarget, setAttachmentDeleteTarget] = useState<ProjectFile | null>(null);
-  const [runningAiActionId, setRunningAiActionId] = useState<string | null>(null);
-  const [aiActionResult, setAiActionResult] = useState<RunAiActionResponse | null>(null);
-  const [aiActionStreamingText, setAiActionStreamingText] = useState('');
-  const [aiActionError, setAiActionError] = useState<string | null>(null);
-  const [aiActionPanelOpen, setAiActionPanelOpen] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const initializedRef = useRef(false);
-  const previousNodeIdRef = useRef(nodeId);
-
-  const selectedRevisionId = search.revisionId;
-
-  const documentTitle = isDraft ? draftName : (file?.name ?? 'Markdown document');
   const isReadOnly = !!file?.read_only;
-  const attachments = data?.attachments ?? [];
-  const headingTitle = useMemo(() => extractFirstHeadingTitle(body), [body]);
-  const resolvedTitle = headingTitle ?? documentTitle;
-  const toc = useMemo(() => extractToc(body), [body]);
-  const readTime = useMemo(() => calcReadTime(body), [body]);
   const updatedLabel = file?.updated_at ? relativeDate(file.updated_at) : null;
-  const availableDocumentTypes = useMemo(() => {
-    if (!data?.document_type || documentTypes.some(type => type.id === data.document_type?.id))
-      return documentTypes;
-    return [...documentTypes, data.document_type];
-  }, [data?.document_type, documentTypes]);
-  const selectedDocumentType = documentTypeId
-    ? (availableDocumentTypes.find(type => type.id === documentTypeId) ?? null)
-    : null;
-  const documentFields =
-    documentTypeId == null ? [] : (selectedDocumentType?.fields ?? data?.available_fields ?? []);
-  const workflowEnabled = hasWorkflowFields(documentFields);
-  const documentInitiationFields = useMemo(() => {
-    if (!documentTypeId) return [];
-    const seen = new Set<string>();
-    return (governanceWorkflowConfig?.configs ?? [])
-      .filter(
-        row =>
-          row.case_kind === 'document.status' && row.case_subkind?.startsWith(`${documentTypeId}:`)
-      )
-      .flatMap(row => row.config.initiationFields ?? [])
-      .map(field =>
-        field.type === 'enum' && !field.options && field.enumId
-          ? {
-              ...field,
-              options: workspaceEnums.find(item => item.id === field.enumId)?.options ?? []
-            }
-          : field
-      )
-      .filter(field => {
-        if (seen.has(field.id)) return false;
-        seen.add(field.id);
-        return true;
-      });
-  }, [documentTypeId, governanceWorkflowConfig?.configs, workspaceEnums]);
-  const titleView = useMemo(
-    () =>
-      deriveMarkdownEditorTitleView(screenState, {
-        revisionsCount: revisions.length,
-        updatedLabel,
-        readTime
-      }),
-    [screenState, revisions.length, updatedLabel, readTime]
-  );
 
-  // navigate's function-update form for search means updateSearch only needs navigate as dep
-  const updateSearch = useCallback(
-    (
-      next: Partial<{
-        mode: MarkdownEditorScreenState['screenMode'] | undefined;
-        panel: MarkdownEditorScreenState['viewPanel'] | undefined;
-        revisionId: string | undefined;
-        historyMode: 'preview' | 'compare' | undefined;
-        compareMode: 'to-current' | 'changes-in-version' | undefined;
-        diagramSessionId: string | undefined;
-      }>,
-      replace = false
-    ) => {
-      // This screen is shared across three sibling wiki routes with identical
-      // search schemas; there's no single static route to scope `navigate` to,
-      // so the search-updater type can't be inferred and needs a manual cast.
+  const updateSearch = useCallback<MarkdownEditorSearchUpdate>(
+    (next, replace = false) => {
+      // This screen is shared across three sibling wiki routes with identical search schemas;
+      // there is no single static route to scope navigate to, so the updater needs this cast.
       navigate({
-        search: ((prev: MarkdownSearchParams) => ({
-          ...prev,
+        search: ((previous: MarkdownSearchParams) => ({
+          ...previous,
           ...next
         })) as never,
         replace
@@ -273,39 +124,13 @@ export const MarkdownEditorScreen = () => {
     [navigate]
   );
 
-  useEffect(() => {
-    if (!isReadOnly || requestedMode !== 'edit') return;
-    setPaneMode('preview');
-    updateSearch({ mode: 'preview', panel: 'preview' }, true);
-  }, [isReadOnly, requestedMode, updateSearch]);
-
-  useEffect(() => {
-    // Draft mode manages paneMode purely locally via the toolbar; it never round-trips
-    // through `mode` search params the way the existing-document editor does.
-    if (isDraft) return;
-    setPaneMode(requestedMode === 'edit' ? 'edit' : 'preview');
-  }, [isDraft, requestedMode]);
-
-  const {
-    sessionId,
-    createdDiagramsRef,
-    trackCreatedDiagram,
-    hasPendingDiagramChanges,
-    clearDiagramSessionState,
-    rotateDiagramSession,
-    resetForNewDocument,
-    loadDiagramContentByPath,
-    saveDiagramContentByPath,
-    refreshDiagramPreviewCaches
-  } = useMarkdownDiagramSessionTracking({
+  const diagram = useMarkdownDiagramSessionTracking({
     workspaceSlug,
     projectId,
     entityId,
     initialSessionId: search.diagramSessionId ?? newid(),
-    onSessionIdChange: sid => updateSearch({ diagramSessionId: sid }, true)
+    onSessionIdChange: sessionId => updateSearch({ diagramSessionId: sessionId }, true)
   });
-
-  const hasUnsavedChanges = dirty || hasPendingDiagramChanges;
 
   const handleNavigateBack = useCallback(() => {
     if (projectId) {
@@ -315,7 +140,7 @@ export const MarkdownEditorScreen = () => {
     } else {
       navigate({ to: '/$workspaceSlug/content', params: { workspaceSlug } });
     }
-  }, [navigate, workspaceSlug, projectId, entityId]);
+  }, [entityId, navigate, projectId, workspaceSlug]);
 
   const exitMarkdownEditor = useCallback(() => {
     updateSearch({
@@ -327,247 +152,6 @@ export const MarkdownEditorScreen = () => {
       diagramSessionId: undefined
     });
   }, [updateSearch]);
-
-  const handleCloseFlowExit = useCallback(() => {
-    setBody(data?.body ?? '');
-    setDirty(false);
-    exitMarkdownEditor();
-  }, [data?.body, exitMarkdownEditor]);
-
-  const deleteAttachment = useCallback(
-    (path: string) => deleteAttachmentMutation.mutateAsync(path),
-    [deleteAttachmentMutation]
-  );
-
-  const {
-    closeDialogOpen,
-    closeSummary,
-    clearCloseSummary,
-    handleClose,
-    handleCancelClose,
-    handleKeepDiagramChanges,
-    handleRevertEligibleDiagramChanges
-  } = useMarkdownCloseFlow({
-    dirty,
-    hasPendingDiagramChanges,
-    savedBody: data?.body ?? '',
-    sessionId,
-    createdDiagramsRef,
-    loadDiagramContentByPath,
-    saveDiagramContentByPath,
-    refreshDiagramPreviewCaches,
-    clearDiagramSessionState,
-    deleteAttachment,
-    onExit: handleCloseFlowExit
-  });
-
-  // Discarding a fresh, never-saved draft is a plain exit -- there's no saved state to protect
-  // and no confirmation dialog today, unlike closing an existing (already-saved) document.
-  const handleDraftClose = useCallback(() => {
-    clearDiagramSessionState();
-    handleNavigateBack();
-  }, [clearDiagramSessionState, handleNavigateBack]);
-
-  useEffect(() => {
-    if (previousNodeIdRef.current === nodeId) return;
-    resetForNewDocument();
-    previousNodeIdRef.current = nodeId;
-    initializedRef.current = false;
-    setBody('');
-    setDirty(false);
-    setAttemptedSave(false);
-    setPendingSaveIntent(null);
-    setChangeKind('minor');
-    handleCancelClose();
-    clearCloseSummary();
-  }, [nodeId, resetForNewDocument, handleCancelClose, clearCloseSummary]);
-
-  useEffect(() => {
-    if (requestedMode !== 'edit') return;
-    if (search.diagramSessionId === sessionId) return;
-    updateSearch({ diagramSessionId: sessionId }, true);
-  }, [requestedMode, search.diagramSessionId, sessionId, updateSearch]);
-
-  useEffect(() => {
-    if (isDraft || !data) return;
-    if (!initializedRef.current) {
-      setBody(data.body);
-      setDocumentTypeId(data.document_type_id);
-      setMetadata(data.metadata);
-      setGeneratedMetadata(data.generated_metadata ?? {});
-      initializedRef.current = true;
-      setDirty(false);
-      return;
-    }
-    if (!dirty) {
-      setBody(data.body);
-      setDocumentTypeId(data.document_type_id);
-      setMetadata(data.metadata);
-      setGeneratedMetadata(data.generated_metadata ?? {});
-    }
-  }, [isDraft, data, dirty]);
-
-  useEffect(() => {
-    if (!isDraft) return;
-    if (initializedRef.current || documentTypesLoading || draftTemplatesLoading) return;
-    const template = draftTemplates.find(item => item.id === draftTemplate);
-    setBody(template ? template.body.split('{{title}}').join(draftName) : '');
-    setDocumentTypeId(template?.document_type_id ?? draftType);
-    setMetadata(template?.metadata_defaults ?? {});
-    setDirty(true);
-    initializedRef.current = true;
-  }, [
-    isDraft,
-    documentTypesLoading,
-    draftTemplatesLoading,
-    draftTemplates,
-    draftTemplate,
-    draftType,
-    draftName
-  ]);
-
-  useEffect(() => {
-    if (screenState.viewPanel !== 'history' || revisions.length === 0) return;
-    if (selectedRevisionId) return;
-    updateSearch(
-      {
-        mode: 'preview',
-        panel: 'history',
-        revisionId: revisions[0]!.id
-      },
-      true
-    );
-  }, [revisions, screenState.viewPanel, selectedRevisionId, updateSearch]);
-
-  const handleChange = useCallback((value: string) => {
-    setBody(value);
-    setDirty(true);
-  }, []);
-
-  const handleDocumentTypeChange = useCallback((id: string | null) => {
-    setDocumentTypeId(id);
-    setDirty(true);
-  }, []);
-
-  const handleMetadataChange = useCallback(
-    (fieldId: string, value: string | number | boolean | string[] | null | undefined) => {
-      setMetadata(current => {
-        if (value === undefined) {
-          const next = { ...current };
-          delete next[fieldId];
-          return next;
-        }
-        return { ...current, [fieldId]: value };
-      });
-      setDirty(true);
-    },
-    []
-  );
-
-  const saveExistingDocument = useCallback(
-    async (kind: 'minor' | 'major') => {
-      const currentDocumentTypeId = data?.document_type_id ?? null;
-      const input = {
-        body,
-        name: headingTitle ?? undefined,
-        document_type_id: documentTypeId,
-        metadata,
-        change_kind: kind,
-        initiation_fields: initiationFieldValues
-      };
-      if (documentTypeId !== currentDocumentTypeId) {
-        await migrateMutation.mutateAsync(input);
-      } else {
-        await saveMutation.mutateAsync(input);
-      }
-    },
-    [
-      body,
-      data?.document_type_id,
-      documentTypeId,
-      headingTitle,
-      metadata,
-      migrateMutation,
-      saveMutation,
-      initiationFieldValues
-    ]
-  );
-
-  const completeExistingSave = useCallback(
-    async (kind: 'minor' | 'major', closeAfterSave: boolean) => {
-      await saveExistingDocument(kind);
-      setDirty(false);
-      setAttemptedSave(false);
-      if (closeAfterSave) {
-        clearDiagramSessionState();
-        clearCloseSummary();
-        exitMarkdownEditor();
-      } else {
-        rotateDiagramSession();
-        clearCloseSummary();
-      }
-    },
-    [
-      clearCloseSummary,
-      clearDiagramSessionState,
-      exitMarkdownEditor,
-      rotateDiagramSession,
-      saveExistingDocument
-    ]
-  );
-
-  const validateExistingSave = useCallback(() => {
-    if (Object.keys(validateDocMetadata(documentFields, metadata).errors).length > 0) {
-      setAttemptedSave(true);
-      return false;
-    }
-    if (saveMutation.isPending || migrateMutation.isPending) return false;
-    return true;
-  }, [documentFields, metadata, migrateMutation.isPending, saveMutation.isPending]);
-
-  const requestExistingSave = useCallback(
-    async (intent: MarkdownSaveIntent) => {
-      if (!validateExistingSave()) return;
-      if (workflowEnabled) {
-        setPendingSaveIntent(intent);
-        return;
-      }
-      await completeExistingSave('minor', intent === 'save-and-close');
-    },
-    [completeExistingSave, validateExistingSave, workflowEnabled]
-  );
-
-  const handleChangeImpactCancel = useCallback(() => {
-    setPendingSaveIntent(null);
-    setChangeKind('minor');
-  }, []);
-
-  const handleChangeImpactConfirm = useCallback(async () => {
-    const intent = pendingSaveIntent;
-    if (!intent) return;
-    setPendingSaveIntent(null);
-    const kind = changeKind;
-    setChangeKind('minor');
-    await completeExistingSave(kind, intent === 'save-and-close');
-  }, [changeKind, completeExistingSave, pendingSaveIntent]);
-
-  const saveDraftDocument = useCallback(async () => {
-    const title = resolvedTitle.trim();
-    if (!title) return null;
-    setDraftSaveError(null);
-    try {
-      return await saveNewMutation.mutateAsync({
-        name: title,
-        folder: draftFolder,
-        body,
-        document_type_id: documentTypeId,
-        metadata
-      });
-    } catch (cause) {
-      setDraftSaveError(cause instanceof ApiError ? cause.message : 'Unable to save document');
-      return null;
-    }
-  }, [resolvedTitle, draftFolder, body, documentTypeId, metadata, saveNewMutation]);
 
   const navigateToSavedDraft = useCallback(
     (savedFile: ProjectFile) => {
@@ -590,245 +174,38 @@ export const MarkdownEditorScreen = () => {
     [entityId, navigate, projectId, workspaceSlug]
   );
 
-  const handleSave = useCallback(async () => {
-    if (isDraft) {
-      if (saveNewMutation.isPending) return;
-      const savedFile = await saveDraftDocument();
-      if (!savedFile) return;
-      setDirty(false);
-      navigateToSavedDraft(savedFile);
-      return;
-    }
-    if (isReadOnly) return;
-    if (!dirty) {
-      if (hasPendingDiagramChanges) {
-        rotateDiagramSession();
-        clearCloseSummary();
-      }
-      return;
-    }
-    await requestExistingSave('save');
-  }, [
-    isDraft,
-    saveNewMutation.isPending,
-    saveDraftDocument,
-    navigateToSavedDraft,
-    dirty,
-    hasPendingDiagramChanges,
-    rotateDiagramSession,
-    clearCloseSummary,
-    isReadOnly,
-    requestExistingSave
-  ]);
-
-  const handleSaveAndClose = useCallback(async () => {
-    if (isDraft) {
-      if (saveNewMutation.isPending) return;
-      const savedFile = await saveDraftDocument();
-      if (!savedFile) return;
-      setDirty(false);
-      clearDiagramSessionState();
-      handleNavigateBack();
-      return;
-    }
-    if (isReadOnly) {
-      clearDiagramSessionState();
-      clearCloseSummary();
-      exitMarkdownEditor();
-      return;
-    }
-    if (dirty) {
-      await requestExistingSave('save-and-close');
-      return;
-    }
-    clearDiagramSessionState();
-    clearCloseSummary();
-    exitMarkdownEditor();
-  }, [
-    isDraft,
-    saveNewMutation.isPending,
-    saveDraftDocument,
-    clearDiagramSessionState,
-    handleNavigateBack,
-    dirty,
-    clearCloseSummary,
-    exitMarkdownEditor,
-    isReadOnly,
-    requestExistingSave
-  ]);
-
-  const handleEnterEdit = useCallback(() => {
-    if (isReadOnly) return;
-    setPaneMode('edit');
-    updateSearch({
-      mode: 'edit',
-      panel: undefined,
-      revisionId: undefined,
-      historyMode: undefined,
-      compareMode: undefined,
-      diagramSessionId: sessionId
-    });
-  }, [isReadOnly, sessionId, updateSearch]);
-
-  const handlePreview = useCallback(() => {
-    updateSearch({
-      mode: 'preview',
-      panel: 'preview',
-      revisionId: undefined,
-      historyMode: undefined,
-      compareMode: undefined,
-      diagramSessionId: undefined
-    });
-  }, [updateSearch]);
-
-  const handleOpenHistory = useCallback(() => {
-    updateSearch({
-      mode: 'preview',
-      panel: 'history',
-      revisionId: revisions[0]?.id,
-      historyMode: undefined,
-      compareMode: undefined,
-      diagramSessionId: undefined
-    });
-  }, [revisions, updateSearch]);
-
-  const handleSelectPane = useCallback((mode: MarkdownPaneMode) => {
-    setPaneMode(mode);
-  }, []);
-
-  const handleRenameConfirm = useCallback(
-    async (newName: string) => {
-      if (!file || isReadOnly) return;
-      await renameFile(newName);
-      setRenameOpen(false);
-    },
-    [file, isReadOnly, renameFile]
-  );
-
-  const handleDeleteConfirm = useCallback(async () => {
-    if (!file || isReadOnly) return;
-    await deleteFile();
-    setDeleteOpen(false);
-    handleNavigateBack();
-  }, [file, isReadOnly, deleteFile, handleNavigateBack]);
-
-  const handleAttachmentDeleteConfirm = useCallback(async () => {
-    if (!attachmentDeleteTarget || isReadOnly) return;
-    await deleteAttachment(attachmentDeleteTarget.path);
-    setAttachmentDeleteTarget(null);
-  }, [attachmentDeleteTarget, isReadOnly, deleteAttachment]);
-
-  const handleRunAiAction = useCallback(
-    async (action: DocumentAiAction) => {
-      setRunningAiActionId(action.id);
-      setAiActionError(null);
-      setAiActionResult(null);
-      setAiActionStreamingText('');
-      setAiActionPanelOpen(true);
-      try {
-        const result = await runDocumentAiAction(workspaceSlug, nodeId, action.id, delta =>
-          setAiActionStreamingText(current => current + delta)
-        );
-        setAiActionResult(result);
-      } catch (cause) {
-        setAiActionError(cause instanceof Error ? cause.message : 'Failed to run AI action');
-      } finally {
-        setRunningAiActionId(null);
-      }
-    },
-    [nodeId, workspaceSlug]
-  );
-
-  const handleContinueInConversation = useCallback(
-    async (result: RunAiActionResponse) => {
-      writeAiActionSeed({
-        documentTitle: result.documentTitle,
-        documentLink: window.location.href,
-        actionPrompt: result.prompt,
-        answer: result.answer
-      });
-      const conversation = await createConversationMutation.mutateAsync(undefined);
-      setAiActionPanelOpen(false);
+  const navigateToConversation = useCallback(
+    (conversationId: string) => {
       navigate({
         to: '/$workspaceSlug/assistant',
         params: { workspaceSlug },
-        search: { conversation: conversation.id }
+        search: { conversation: conversationId }
       });
     },
-    [createConversationMutation, navigate, workspaceSlug]
+    [navigate, workspaceSlug]
   );
 
-  const handleSelectRevision = useCallback(
-    (revisionId: string) => {
-      updateSearch({
-        mode: 'preview',
-        panel: 'history',
-        revisionId,
-        historyMode: historyMode === 'compare' ? 'compare' : undefined,
-        compareMode: historyMode === 'compare' ? compareMode : undefined,
-        diagramSessionId: undefined
-      });
-    },
-    [historyMode, compareMode, updateSearch]
-  );
-
-  const handleEnterCompare = useCallback(
-    (mode: 'to-current' | 'changes-in-version') => {
-      updateSearch({
-        mode: 'preview',
-        panel: 'history',
-        historyMode: 'compare',
-        compareMode: mode,
-        revisionId: selectedRevisionId,
-        diagramSessionId: undefined
-      });
-    },
-    [selectedRevisionId, updateSearch]
-  );
-
-  const handleViewVersion = useCallback(() => {
-    updateSearch({
-      mode: 'preview',
-      panel: 'history',
-      revisionId: selectedRevisionId,
-      historyMode: undefined,
-      compareMode: undefined,
-      diagramSessionId: undefined
-    });
-  }, [selectedRevisionId, updateSearch]);
-
-  const handleRestore = useCallback(
-    async (revisionId: string) => {
-      if (isReadOnly || restoreMutation.isPending) return;
-      await restoreMutation.mutateAsync({ revisionId, change_kind: 'major' });
-      setDirty(false);
-      clearDiagramSessionState();
-      exitMarkdownEditor();
-    },
-    [isReadOnly, restoreMutation, clearDiagramSessionState, exitMarkdownEditor]
-  );
-
-  const handleOpenAttachment = useCallback(
+  const downloadAttachment = useCallback(
     (attachment: ProjectFile) => {
-      if (attachment.type === 'file') {
-        const href = projectId
+      const path = encodeURIComponent(attachment.path);
+      const href = projectId
+        ? applicationWorkspacePath(
+            workspaceSlug,
+            `/projects/${projectId}/files/download?path=${path}`
+          )
+        : entityId
           ? applicationWorkspacePath(
               workspaceSlug,
-              `/projects/${projectId}/files/download?path=${encodeURIComponent(attachment.path)}`
+              `/entities/${entityId}/content/files/download?path=${path}`
             )
-          : entityId
-            ? applicationWorkspacePath(
-                workspaceSlug,
-                `/entities/${entityId}/content/files/download?path=${encodeURIComponent(attachment.path)}`
-              )
-            : applicationWorkspacePath(
-                workspaceSlug,
-                `/content/files/download?path=${encodeURIComponent(attachment.path)}`
-              );
-        downloadUrl(href, attachment.original_filename ?? attachment.name);
-        return;
-      }
+          : applicationWorkspacePath(workspaceSlug, `/content/files/download?path=${path}`);
+      downloadUrl(href, attachment.original_filename ?? attachment.name);
+    },
+    [entityId, projectId, workspaceSlug]
+  );
 
+  const openAttachment = useCallback(
+    (attachment: ProjectFile) => {
       if (attachment.type === 'markdown') {
         if (projectId) {
           navigate(
@@ -859,16 +236,46 @@ export const MarkdownEditorScreen = () => {
     [entityId, navigate, projectId, workspaceSlug]
   );
 
-  const handleAttachmentInputChange = useCallback(
-    async (event: React.ChangeEvent<HTMLInputElement>) => {
-      const files = Array.from(event.target.files ?? []);
-      event.target.value = '';
-      for (const file of files) {
-        await uploadAttachmentMutation.mutateAsync(file);
-      }
-    },
-    [uploadAttachmentMutation]
-  );
+  const controller = useMarkdownEditorController({
+    workspaceSlug,
+    nodeId,
+    projectId,
+    entityId,
+    isDraft,
+    isReadOnly,
+    data,
+    file,
+    documentTitle: isDraft ? draftName : (file?.name ?? 'Markdown document'),
+    draftName,
+    draftFolder,
+    draftType,
+    draftTemplate,
+    draftTemplates,
+    draftTemplatesLoading,
+    documentTypes,
+    documentTypesLoading,
+    governanceWorkflowConfig,
+    workspaceEnums,
+    contentScope,
+    requestedMode,
+    requestedPanel,
+    diagramSessionId: search.diagramSessionId,
+    historyMode,
+    compareMode,
+    selectedRevisionId,
+    revisions,
+    updatedLabel,
+    onNavigateBack: handleNavigateBack,
+    onNavigateToSavedDraft: navigateToSavedDraft,
+    onExit: exitMarkdownEditor,
+    onNavigateToConversation: navigateToConversation,
+    onOpenAttachment: openAttachment,
+    onDownloadAttachment: downloadAttachment,
+    renameFile,
+    deleteFile,
+    updateSearch,
+    diagram
+  });
 
   if (!isDraft && isLoading) {
     return (
@@ -890,206 +297,31 @@ export const MarkdownEditorScreen = () => {
     <MdxContext.Provider
       value={{ workspaceSlug, projectId, entityId, nodeId: isDraft ? undefined : nodeId }}
     >
-      <MarkdownDiagramSessionContext.Provider value={{ sessionId, trackCreatedDiagram }}>
-        <div className={styles.screen}>
-          <input
-            ref={fileInputRef}
-            type="file"
-            multiple
-            className={styles.hiddenInput}
-            onChange={handleAttachmentInputChange}
-          />
-
-          <MarkdownEditorHeader
-            workspaceSlug={workspaceSlug}
-            projectId={projectId}
-            entityId={entityId}
-            parentLabel={parentLabel}
-            resolvedTitle={resolvedTitle}
-            description={
-              isDraft
-                ? (selectedDocumentType?.name ?? 'New markdown document')
-                : titleView.description
-            }
-            isViewMode={titleView.isViewMode && !isReadOnly}
-            isDraft={isDraft}
-            attachDisabled={titleView.attachDisabled || isReadOnly}
-            isUploadingAttachment={uploadAttachmentMutation.isPending}
-            onNavigateBack={handleNavigateBack}
-            actions={{
-              onAttachClick: () => {
-                if (!isReadOnly) fileInputRef.current?.click();
-              },
-              onEnterEdit: handleEnterEdit,
-              onOpenHistory: handleOpenHistory,
-              onRenameRequest: () => setRenameOpen(true),
-              onDeleteRequest: () => setDeleteOpen(true)
-            }}
-            commentsToggle={
-              hasWikiComments
-                ? {
-                    mode: commentsMode,
-                    openCount: openWikiCommentsCount,
-                    onCycle: () => setCommentsMode(nextCommentsDisplayMode)
-                  }
-                : null
-            }
-          />
-
-          {(isDraft || (!isReadOnly && screenState.screenMode === 'edit')) && (
-            <MarkdownEditorToolbar
-              paneMode={screenState.paneMode}
-              hasUnsavedChanges={hasUnsavedChanges}
-              onSelectPane={handleSelectPane}
-              onSave={handleSave}
-              onSaveAndClose={handleSaveAndClose}
-              onClose={isDraft ? handleDraftClose : handleClose}
-            />
-          )}
-
-          {/* viewPanel is only ever 'history' while screenMode is 'preview' (see MarkdownEditorScreen.state.ts); never true in draft mode */}
-          {!isDraft && screenState.viewPanel === 'history' ? (
-            <MarkdownHistoryPanel
-              workspaceSlug={workspaceSlug}
-              nodeId={nodeId}
-              currentBody={body}
-              currentMetadata={metadata}
-              currentDocumentTypeId={documentTypeId}
-              revisions={revisions}
-              revisionsLoading={revisionsLoading}
-              selectedRevisionId={selectedRevisionId}
-              historyMode={historyMode}
-              compareMode={compareMode}
-              isRestoring={restoreMutation.isPending}
-              onSelectRevision={handleSelectRevision}
-              onViewVersion={handleViewVersion}
-              onEnterCompare={handleEnterCompare}
-              onRestore={handleRestore}
-              onClose={handlePreview}
-            />
-          ) : (
-            <MarkdownEditorPane
-              screenMode={isReadOnly ? 'preview' : screenState.screenMode}
-              paneMode={isReadOnly ? 'preview' : screenState.paneMode}
-              body={body}
-              onChange={isReadOnly ? () => {} : handleChange}
-              toc={toc}
-              updatedLabel={updatedLabel}
-              readTime={readTime}
-              workspaceId={workspaceSlug}
-              nodeId={nodeId}
-              initialCommentId={search.commentId}
-              showDiscussion={!isDraft}
-              showBacklinks={!isDraft}
-              commentsMode={commentsMode}
-              aiActions={
-                !isDraft && aiStatus?.configured ? selectedDocumentType?.aiActions : undefined
-              }
-              runningAiActionId={runningAiActionId}
-              onRunAiAction={handleRunAiAction}
-              attachments={{
-                items: attachments,
-                onOpen: handleOpenAttachment,
-                onDeleteRequest: setAttachmentDeleteTarget,
-                isDeleting: deleteAttachmentMutation.isPending
-              }}
-              propertiesPanel={
-                <MarkdownPropertiesPanel
-                  key={nodeId}
-                  documentTypeId={documentTypeId}
-                  documentTypes={availableDocumentTypes}
-                  fields={documentFields}
-                  metadata={metadata}
-                  generatedMetadata={generatedMetadata}
-                  workflow={data?.workflow}
-                  readOnly={isReadOnly || screenState.screenMode !== 'edit'}
-                  attemptedSave={attemptedSave}
-                  onTypeChange={handleDocumentTypeChange}
-                  onValueChange={handleMetadataChange}
-                />
-              }
-            />
-          )}
-
-          {draftSaveError && (
-            <div role="alert" className={styles.loading}>
-              {draftSaveError}
-            </div>
-          )}
-
-          <AiActionResultPanel
-            open={aiActionPanelOpen}
-            result={aiActionResult}
-            streamingText={aiActionStreamingText}
-            loading={runningAiActionId !== null}
-            errorMessage={aiActionError}
-            onClose={() => setAiActionPanelOpen(false)}
-            onContinueInConversation={result => void handleContinueInConversation(result)}
-          />
-
-          <RenameDialog
-            open={renameOpen}
-            currentName={file?.name ?? ''}
-            entityType="document"
-            onRename={handleRenameConfirm}
-            onCancel={() => setRenameOpen(false)}
-          />
-
-          <DeleteConfirmationDialog
-            open={deleteOpen}
-            title="Delete document?"
-            message={
-              <>
-                The document <b>{file?.name ?? ''}</b> will be permanently deleted.
-              </>
-            }
-            detail="This can't be undone."
-            confirmLabel="Delete document"
-            onConfirm={handleDeleteConfirm}
-            onCancel={() => setDeleteOpen(false)}
-          />
-
-          <DeleteConfirmationDialog
-            open={attachmentDeleteTarget !== null}
-            title="Delete attachment?"
-            message={
-              <>
-                The attachment{' '}
-                <b>
-                  {attachmentDeleteTarget?.original_filename ?? attachmentDeleteTarget?.name ?? ''}
-                </b>{' '}
-                will be permanently deleted.
-              </>
-            }
-            detail="This can't be undone."
-            confirmLabel="Delete attachment"
-            onConfirm={handleAttachmentDeleteConfirm}
-            onCancel={() => setAttachmentDeleteTarget(null)}
-          />
-
-          <MarkdownCloseDialog
-            open={closeDialogOpen}
-            summary={closeSummary}
-            onCancel={handleCancelClose}
-            onCloseWithSelection={diagramIds =>
-              void (diagramIds.length > 0
-                ? handleRevertEligibleDiagramChanges(diagramIds)
-                : handleKeepDiagramChanges())
-            }
-          />
-
-          <MarkdownChangeImpactDialog
-            open={pendingSaveIntent !== null}
-            intent={pendingSaveIntent}
-            changeKind={changeKind}
-            initiationFields={documentInitiationFields}
-            initiationFieldValues={initiationFieldValues}
-            onInitiationFieldValuesChange={setInitiationFieldValues}
-            onChangeKind={setChangeKind}
-            onCancel={handleChangeImpactCancel}
-            onConfirm={() => void handleChangeImpactConfirm()}
-          />
-        </div>
+      <MarkdownDiagramSessionContext.Provider
+        value={{ sessionId: diagram.sessionId, trackCreatedDiagram: diagram.trackCreatedDiagram }}
+      >
+        <MarkdownEditorContent
+          workspaceSlug={workspaceSlug}
+          projectId={projectId}
+          entityId={entityId}
+          nodeId={nodeId}
+          commentId={search.commentId}
+          parentLabel={parentLabel}
+          isDraft={isDraft}
+          isReadOnly={isReadOnly}
+          controller={controller}
+          hasWikiComments={hasWikiComments}
+          openWikiCommentsCount={openWikiCommentsCount}
+          commentsMode={controller.commentsMode}
+          onNavigateBack={handleNavigateBack}
+          revisions={revisions}
+          revisionsLoading={revisionsLoading}
+          selectedRevisionId={selectedRevisionId}
+          historyMode={historyMode}
+          compareMode={compareMode}
+          updatedLabel={updatedLabel}
+          dialogs={<MarkdownEditorDialogs fileName={file?.name ?? ''} controller={controller} />}
+        />
       </MarkdownDiagramSessionContext.Provider>
     </MdxContext.Provider>
   );
