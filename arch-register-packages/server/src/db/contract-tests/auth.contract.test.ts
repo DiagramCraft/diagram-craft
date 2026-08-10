@@ -163,6 +163,74 @@ runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {
     });
   });
 
+  describe('refresh sessions', () => {
+    it('creates, consumes, revokes, and cleans up refresh sessions', async () => {
+      const db = getDb();
+      const user = await createFixtureUser(db);
+      const now = new Date();
+      const familyId = randomUUID();
+      const created = await db.auth.createRefreshSession({
+        id: randomUUID(),
+        family_id: familyId,
+        user_id: user.id,
+        token_hash: `hash-${randomUUID()}`,
+        issued_at: now,
+        expires_at: new Date(now.getTime() + 60_000),
+        consumed_at: null,
+        replaced_by: null,
+        revoked_at: null
+      });
+
+      expect(await db.auth.getRefreshSessionByTokenHash(created.token_hash)).toEqual(created);
+      expect(await db.auth.consumeRefreshSession(created.id, now, randomUUID())).toBe(true);
+      expect(await db.auth.consumeRefreshSession(created.id, now, randomUUID())).toBe(false);
+
+      await db.auth.revokeRefreshSessionFamily(familyId, now);
+      expect((await db.auth.getRefreshSessionByTokenHash(created.token_hash))?.revoked_at).toEqual(
+        now
+      );
+
+      const expired = await db.auth.createRefreshSession({
+        id: randomUUID(),
+        family_id: randomUUID(),
+        user_id: user.id,
+        token_hash: `expired-${randomUUID()}`,
+        issued_at: new Date(now.getTime() - 120_000),
+        expires_at: new Date(now.getTime() - 60_000),
+        consumed_at: null,
+        replaced_by: null,
+        revoked_at: null
+      });
+      await db.auth.cleanupExpiredRefreshSessions(now);
+      expect(await db.auth.getRefreshSessionByTokenHash(expired.token_hash)).toBeNull();
+    });
+
+    it('revokes all sessions when credentials or account state changes', async () => {
+      const db = getDb();
+      const user = await createFixtureUser(db);
+      const now = new Date();
+      const tokenHash = `security-${randomUUID()}`;
+      await db.auth.createRefreshSession({
+        id: randomUUID(),
+        family_id: randomUUID(),
+        user_id: user.id,
+        token_hash: tokenHash,
+        issued_at: now,
+        expires_at: new Date(now.getTime() + 60_000),
+        consumed_at: null,
+        replaced_by: null,
+        revoked_at: null
+      });
+
+      await db.auth.updateUser(user.id, {
+        password_hash: 'new-hash',
+        updated_at: now
+      });
+
+      expect((await db.auth.getRefreshSessionByTokenHash(tokenHash))?.revoked_at).not.toBeNull();
+    });
+  });
+
   describe('global role assignments', () => {
     it('replaces role assignments atomically', async () => {
       const db = getDb();

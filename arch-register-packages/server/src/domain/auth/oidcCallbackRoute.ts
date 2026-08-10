@@ -1,10 +1,11 @@
 import { defineHandler, getQuery, H3, redirect } from 'h3';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
-import { generateTokenPair, getTokenExpirySeconds } from '../../utils/jwt';
+import { getTokenExpirySeconds } from '../../utils/jwt';
 import { handleCallback } from './oidcClient';
 import { setAuthCookies } from '../../utils/cookies';
 import { httpAssert } from '../../utils/httpAssert';
+import { issueTokenPair } from './refreshSessions';
 
 // GET /api/auth/oidc/callback — browser-facing OAuth redirect, not a JSON API endpoint
 export const createOidcCallbackRoute = (db: DatabaseAdapter) => {
@@ -12,7 +13,10 @@ export const createOidcCallbackRoute = (db: DatabaseAdapter) => {
   // route instance so it cannot outlive the adapter it was created with.
   const cleanupTimer = setInterval(
     async () => {
-      await db.auth.cleanupExpiredOidcAuthStates();
+      await Promise.all([
+        db.auth.cleanupExpiredOidcAuthStates(),
+        db.auth.cleanupExpiredRefreshSessions(new Date())
+      ]);
     },
     5 * 60 * 1000
   );
@@ -84,7 +88,7 @@ export const createOidcCallbackRoute = (db: DatabaseAdapter) => {
         message: 'User account is inactive'
       });
 
-      const tokens = generateTokenPair(user);
+      const tokens = await issueTokenPair(db, user);
       setAuthCookies(
         event,
         tokens.access_token,

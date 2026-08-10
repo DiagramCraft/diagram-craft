@@ -1,4 +1,5 @@
 import jwt from 'jsonwebtoken';
+import { randomUUID } from 'node:crypto';
 import type { JWTPayload } from '../types';
 import { UserDbResult } from '../domain/auth/db/authDatabase';
 
@@ -64,7 +65,8 @@ export const generateRefreshToken = (user: UserDbResult): string => {
     email: user.email ?? undefined,
     name: user.display_name,
     provider: user.auth_provider,
-    type: 'refresh'
+    type: 'refresh',
+    jti: randomUUID()
   };
 
   return jwt.sign(payload, getSecret(), {

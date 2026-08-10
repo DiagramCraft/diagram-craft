@@ -95,7 +95,44 @@ test.describe('auth public routes', () => {
     });
   });
 
-  test('POST /api/auth/refresh accepts refresh token from the request body', async ({
+  test('POST /api/auth/refresh accepts refresh token from the request body', async ({ orpc }) => {
+    const login = await orpc.auth.login({
+      body: { username: 'test-admin', password: 'TestPassword123!' }
+    });
+    const result = await orpc.auth.refresh({ body: { refresh_token: login.refresh_token } });
+    expect(result).toMatchObject({
+      token_type: 'Bearer',
+      access_token: expect.any(String),
+      refresh_token: expect.any(String)
+    });
+    expect(result.refresh_token).not.toBe(login.refresh_token);
+  });
+
+  test('POST /api/auth/refresh detects reuse and revokes the refresh-token family', async ({
+    orpc
+  }) => {
+    const login = await orpc.auth.login({
+      body: { username: 'test-admin', password: 'TestPassword123!' }
+    });
+    const rotated = await orpc.auth.refresh({
+      body: { refresh_token: login.refresh_token }
+    });
+
+    await expect(
+      orpc.auth.refresh({ body: { refresh_token: login.refresh_token } })
+    ).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+      message: 'Invalid or expired refresh token'
+    });
+    await expect(
+      orpc.auth.refresh({ body: { refresh_token: rotated.refresh_token } })
+    ).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+      message: 'Invalid or expired refresh token'
+    });
+  });
+
+  test('POST /api/auth/refresh rejects legacy stateless refresh tokens', async ({
     server,
     orpc
   }) => {
@@ -103,11 +140,11 @@ test.describe('auth public routes', () => {
     expect(user).toBeTruthy();
 
     const tokens = generateTokenPair(user!);
-    const result = await orpc.auth.refresh({ body: { refresh_token: tokens.refresh_token } });
-    expect(result).toMatchObject({
-      token_type: 'Bearer',
-      access_token: expect.any(String),
-      refresh_token: expect.any(String)
+    await expect(
+      orpc.auth.refresh({ body: { refresh_token: tokens.refresh_token } })
+    ).rejects.toMatchObject({
+      code: 'UNAUTHORIZED',
+      message: 'Invalid or expired refresh token'
     });
   });
 
@@ -121,9 +158,61 @@ test.describe('auth public routes', () => {
     ).rejects.toMatchObject({ code: 'UNAUTHORIZED', message: 'Invalid token type' });
   });
 
-  test('POST /api/auth/logout clears auth state', async ({ orpc }) => {
-    const result = await orpc.auth.logout(undefined);
+  test('POST /api/auth/logout revokes the supplied refresh session', async ({ orpc }) => {
+    const login = await orpc.auth.login({
+      body: { username: 'test-admin', password: 'TestPassword123!' }
+    });
+    const result = await orpc.auth.logout({
+      body: { refresh_token: login.refresh_token }
+    });
     expect(result).toEqual({ ok: true });
+    await expect(
+      orpc.auth.refresh({ body: { refresh_token: login.refresh_token } })
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+  });
+});
+
+test.describe('auth session security events', () => {
+  test('password changes revoke all refresh sessions', async ({ server, orpc }) => {
+    const userId = '00000000-0000-0000-0000-e2e000000010';
+    const { password } = await createLocalUser(server.db, {
+      id: userId,
+      userId: 'password-session-user',
+      email: 'password-session@e2e.test'
+    });
+    const login = await orpc.auth.login({
+      body: { username: 'password-session-user', password }
+    });
+
+    await server.db.auth.updateUser(userId, {
+      password_hash: 'changed-password-hash',
+      updated_at: new Date()
+    });
+
+    await expect(
+      orpc.auth.refresh({ body: { refresh_token: login.refresh_token } })
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+  });
+
+  test('deactivating an account revokes all refresh sessions', async ({ server, orpc }) => {
+    const userId = '00000000-0000-0000-0000-e2e000000011';
+    const { password } = await createLocalUser(server.db, {
+      id: userId,
+      userId: 'inactive-session-user',
+      email: 'inactive-session@e2e.test'
+    });
+    const login = await orpc.auth.login({
+      body: { username: 'inactive-session-user', password }
+    });
+
+    await server.db.auth.updateUser(userId, {
+      is_active: false,
+      updated_at: new Date()
+    });
+
+    await expect(
+      orpc.auth.refresh({ body: { refresh_token: login.refresh_token } })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN', message: 'User account is inactive' });
   });
 });
 

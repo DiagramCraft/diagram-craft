@@ -44,6 +44,7 @@ export type JWTPayload = {
   name: string;
   provider: AuthProvider;
   type: 'access' | 'refresh';
+  jti?: string;
   iat: number;
   exp: number;
 };

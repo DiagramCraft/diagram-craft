@@ -5,10 +5,11 @@ import type { H3Event } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
 import { orpcAssert } from '../../utils/orpcAssert';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
-import { generateTokenPair, getTokenExpirySeconds } from '../../utils/jwt';
+import { getTokenExpirySeconds } from '../../utils/jwt';
 import { setAuthCookies } from '../../utils/cookies';
 import { devContract } from '@arch-register/api-types/devContract';
 import { isDevUserSwitcherEnabled } from './devMode';
+import { issueTokenPair } from '../auth/refreshSessions';
 
 type DevORPCContext = {
   db: DatabaseAdapter;
@@ -50,7 +51,7 @@ export const devORPCRouter = devRouter.router({
       orpcAssert.present(user, { code: 'NOT_FOUND', message: 'User not found' });
       orpcAssert.true(user.is_active, { code: 'FORBIDDEN', message: 'User account is inactive' });
 
-      const tokens = generateTokenPair(user);
+      const tokens = await issueTokenPair(context.db, user);
       setAuthCookies(
         context.event,
         tokens.access_token,

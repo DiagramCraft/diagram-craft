@@ -224,6 +224,27 @@
           "Auth",
           "Auth"
         ],
+        "requestBody": {
+          "required": false,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "body": {
+                    "type": "object",
+                    "properties": {
+                      "refresh_token": {
+                        "type": "string",
+                        "description": "Refresh token to revoke (can also be provided via cookie)"
+                      }
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
         "responses": {
           "200": {
             "description": "OK",

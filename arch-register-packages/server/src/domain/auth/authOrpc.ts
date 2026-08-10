@@ -6,7 +6,7 @@ import type { H3Event } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
-import { generateTokenPair, getTokenExpirySeconds, verifyToken } from '../../utils/jwt';
+import { getTokenExpirySeconds, verifyToken } from '../../utils/jwt';
 import { generateAuthUrl } from './oidcClient';
 import { clearAuthCookies, setAuthCookies } from '../../utils/cookies';
 import { getCookie } from 'h3';
@@ -24,6 +24,7 @@ import type { TeamRole } from '@arch-register/permissions';
 import type { UserDbResult } from './db/authDatabase';
 import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
 import { createUserApiToken, listUserApiTokens, revokeUserApiToken } from './apiTokenOperations';
+import { issueTokenPair, revokeRefreshToken, rotateRefreshToken } from './refreshSessions';
 
 const getAuthMode = () => process.env['AUTH_MODE'] ?? 'local';
 
@@ -73,7 +74,7 @@ export const authPublicORPCRouter = publicRouter.router({
       orpcAssert.true(isValid, { code: 'UNAUTHORIZED', message: 'Invalid username or password' });
 
       await context.db.auth.updateUserLastLogin(user.id, new Date());
-      const tokens = generateTokenPair(user);
+      const tokens = await issueTokenPair(context.db, user);
       setAuthCookies(
         context.event,
         tokens.access_token,
@@ -126,7 +127,15 @@ export const authPublicORPCRouter = publicRouter.router({
       orpcAssert.present(user, { code: 'UNAUTHORIZED', message: 'User not found' });
       orpcAssert.true(user.is_active, { code: 'FORBIDDEN', message: 'User account is inactive' });
 
-      const tokens = generateTokenPair(user);
+      const rotation = await rotateRefreshToken(context.db, refreshToken, user);
+      if (rotation.status === 'reused') {
+        throw new ORPCError('UNAUTHORIZED', { message: 'Invalid or expired refresh token' });
+      }
+      if (rotation.status === 'invalid') {
+        throw new ORPCError('UNAUTHORIZED', { message: 'Invalid or expired refresh token' });
+      }
+
+      const tokens = rotation.tokens;
       setAuthCookies(
         context.event,
         tokens.access_token,
@@ -137,7 +146,15 @@ export const authPublicORPCRouter = publicRouter.router({
       return tokens;
     }),
 
-    logout: publicRouter.auth.logout.handler(async ({ context }) => {
+    logout: publicRouter.auth.logout.handler(async ({ input, context }) => {
+      const cookieToken = getCookie(
+        context.event as Parameters<typeof getCookie>[0],
+        'ar_refresh_token'
+      );
+      const refreshToken = selectRefreshToken(cookieToken, input?.body);
+      if (refreshToken) {
+        await revokeRefreshToken(context.db, refreshToken);
+      }
       clearAuthCookies(context.event);
       return { ok: true };
     })
