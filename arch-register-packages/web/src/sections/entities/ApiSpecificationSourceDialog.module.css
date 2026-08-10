@@ -1,0 +1,66 @@
+.options,
+.form {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  min-width: min(440px, 70vw);
+}
+
+.option {
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  gap: 4px;
+  padding: 12px;
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  color: var(--base-fg);
+  background: var(--cmp-bg);
+  text-align: left;
+  cursor: pointer;
+}
+
+.option:hover {
+  border-color: var(--accent-fg);
+}
+
+.optionTitle {
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.optionDescription,
+.back {
+  color: var(--base-fg-dim);
+  font-size: 11px;
+}
+
+.back {
+  align-self: flex-start;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: pointer;
+}
+
+.back:hover {
+  color: var(--accent-fg);
+}
+
+.input {
+  width: 100%;
+  box-sizing: border-box;
+  height: 30px;
+  padding: 0 8px;
+  border: 1px solid var(--cmp-border);
+  border-radius: var(--r);
+  color: var(--base-fg);
+  background: var(--cmp-bg);
+  font: inherit;
+  font-size: 12px;
+}
+
+.error {
+  color: var(--danger-fg);
+  font-size: 12px;
+}

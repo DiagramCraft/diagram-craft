@@ -15,6 +15,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { requireEntityAction, requireWorkspaceCapability } from '../auth/authorization';
 import { toApiEntity } from '../catalog/entityHelpers';
+import { enqueueOneOffJobRun } from '../jobs/jobOperations';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type {
   ArtifactDbResult,
@@ -23,6 +24,34 @@ import type {
 } from './db/artifactDatabase';
 
 const MAX_ARTIFACT_BYTES = 2_000_000;
+export const API_SPECIFICATION_URL_REFRESH_JOB_TYPE = 'artifact.api-specification.refresh';
+export const API_SPECIFICATION_URL_REFRESH_SYSTEM_IDENTITY = 'artifact-api-specification';
+const API_SPECIFICATION_URL_REFRESH_MAX_ATTEMPTS = 3;
+
+export type ArtifactRevisionInput = {
+  sourceRevision?: string | null;
+  mediaType?: string | null;
+  content: string;
+};
+
+const enqueueApiSpecificationUrlRefresh = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  artifactId: string,
+  now: Date
+) =>
+  enqueueOneOffJobRun(
+    db,
+    {
+      workspace,
+      jobType: API_SPECIFICATION_URL_REFRESH_JOB_TYPE,
+      systemIdentity: API_SPECIFICATION_URL_REFRESH_SYSTEM_IDENTITY,
+      payload: { artifactId },
+      priority: 5,
+      maxAttempts: API_SPECIFICATION_URL_REFRESH_MAX_ATTEMPTS
+    },
+    now
+  );
 
 export const getEntityAndSchema = async (
   db: DatabaseAdapter,
@@ -106,6 +135,12 @@ const assertSafeSourceLocation = (kind: ArtifactSourceKind, location: string | n
     status: 400,
     message: 'Source locations must not contain credentials'
   });
+  if (kind === 'url') {
+    httpAssert.true(url.hash === '', {
+      status: 400,
+      message: 'URL sources must not contain a fragment'
+    });
+  }
 
   const hostname = url.hostname.toLowerCase();
   httpAssert.true(
@@ -234,8 +269,8 @@ export const createArtifact = async (
   const location = body.location ?? null;
   assertSafeSourceLocation(body.kind, location);
   const timestamp = new Date();
-  return toArtifact(
-    await db.artifact.createArtifact({
+  const artifact = await db.core.transaction(async tx => {
+    const created = await tx.artifact.createArtifact({
       id: randomUUID(),
       workspace,
       entity_id: entity.id,
@@ -246,8 +281,46 @@ export const createArtifact = async (
       status: initialStatus(body.kind),
       created_at: timestamp,
       updated_at: timestamp
-    })
-  );
+    });
+    if (body.artifactType === 'api-specification' && body.kind === 'url') {
+      await enqueueApiSpecificationUrlRefresh(tx, workspace, created.id, timestamp);
+    }
+    return created;
+  });
+  return toArtifact(artifact);
+};
+
+export const refreshArtifact = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entityId: string,
+  artifactId: string,
+  authCtx: AuthorizationContext
+) => {
+  const { entity } = await getEntityAndSchema(db, workspace, entityId);
+  requireArtifactWrite(authCtx, entity);
+  const artifact = await db.artifact.getArtifact(workspace, artifactId);
+  httpAssert.present(artifact, { status: 404, message: 'Artifact not found' });
+  httpAssert.true(artifact.entity_id === entity.id, { status: 404, message: 'Artifact not found' });
+  httpAssert.true(artifact.artifact_type === 'api-specification', {
+    status: 409,
+    message: 'Only API specification artifacts can be refreshed'
+  });
+  httpAssert.true(artifact.kind === 'url', {
+    status: 409,
+    message: 'Only URL artifacts can be refreshed'
+  });
+
+  const timestamp = new Date();
+  const refreshed = await db.core.transaction(async tx => {
+    const attempt = await tx.artifact.beginAttempt(workspace, artifact.id, timestamp);
+    httpAssert.present(attempt, { status: 404, message: 'Artifact not found' });
+    if (attempt.started) {
+      await enqueueApiSpecificationUrlRefresh(tx, workspace, artifact.id, timestamp);
+    }
+    return attempt.artifact;
+  });
+  return toArtifact(refreshed);
 };
 
 export const updateArtifact = async (
@@ -291,19 +364,17 @@ export const updateArtifact = async (
   );
 };
 
-export const createArtifactRevision = async (
+export const ingestArtifactRevision = async (
   db: DatabaseAdapter,
   workspace: string,
   entityId: string,
   artifactId: string,
-  body: { sourceRevision?: string | null; mediaType?: string | null; content: string },
-  authCtx: AuthorizationContext
+  body: ArtifactRevisionInput
 ) => {
-  const { entity, schema } = await getEntityAndSchema(db, workspace, entityId);
-  requireArtifactWrite(authCtx, entity);
+  const { schema } = await getEntityAndSchema(db, workspace, entityId);
   const artifact = await db.artifact.getArtifact(workspace, artifactId);
   httpAssert.present(artifact, { status: 404, message: 'Artifact not found' });
-  httpAssert.true(artifact.entity_id === entity.id, { status: 404, message: 'Artifact not found' });
+  httpAssert.true(artifact.entity_id === entityId, { status: 404, message: 'Artifact not found' });
   httpAssert.true(artifact.kind !== 'link', {
     status: 409,
     message: 'Link artifacts cannot store a document revision'
@@ -333,6 +404,7 @@ export const createArtifactRevision = async (
         await processing.persist(tx, { workspace, revisionId: existing.id, timestamp });
         await tx.artifact.updateArtifact(workspace, artifact.id, {
           status: processing.status,
+          media_type: body.mediaType ?? artifact.media_type,
           current_revision_id:
             processing.status === 'current' ? existing.id : artifact.current_revision_id,
           last_attempt_at: timestamp,
@@ -361,6 +433,7 @@ export const createArtifactRevision = async (
     }
     await tx.artifact.updateArtifact(workspace, artifact.id, {
       status: processing?.status ?? 'current',
+      media_type: body.mediaType ?? artifact.media_type,
       current_revision_id:
         processing?.status === 'current' || processing == null
           ? created.id
@@ -376,6 +449,41 @@ export const createArtifactRevision = async (
     return created;
   });
   return toRevision(revision);
+};
+
+export const createArtifactRevision = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entityId: string,
+  artifactId: string,
+  body: ArtifactRevisionInput,
+  authCtx: AuthorizationContext
+) => {
+  const { entity } = await getEntityAndSchema(db, workspace, entityId);
+  requireArtifactWrite(authCtx, entity);
+  return ingestArtifactRevision(db, workspace, entity.id, artifactId, body);
+};
+
+export const recordArtifactFetchFailure = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  artifactId: string,
+  diagnostic: {
+    category: ArtifactDiagnosticCategory;
+    message: string;
+  },
+  timestamp = new Date()
+) => {
+  const artifact = await db.artifact.getArtifact(workspace, artifactId);
+  if (!artifact) return null;
+  const status: ArtifactStatus = artifact.current_revision_id ? 'stale' : 'failed';
+  const updated = await db.artifact.updateArtifact(workspace, artifact.id, {
+    status,
+    diagnostic: { category: diagnostic.category, message: diagnostic.message, timestamp },
+    last_attempt_at: timestamp,
+    updated_at: timestamp
+  });
+  return updated ? toArtifact(updated) : null;
 };
 
 export const getArtifactRevisionContent = async (

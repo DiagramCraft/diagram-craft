@@ -57,6 +57,7 @@ export type ArtifactDbUpdate = Partial<
   Pick<
     ArtifactDbResult,
     | 'status'
+    | 'media_type'
     | 'current_revision_id'
     | 'last_attempt_at'
     | 'last_success_at'
@@ -64,6 +65,11 @@ export type ArtifactDbUpdate = Partial<
     | 'updated_at'
   >
 >;
+
+export type ArtifactAttemptResult = {
+  artifact: ArtifactDbResult;
+  started: boolean;
+};
 
 export type ArtifactRevisionDbCreate = Omit<ArtifactRevisionDbResult, 'created_at'> & {
   created_at: Date;
@@ -115,6 +121,11 @@ export type ArtifactDatabase = {
     id: string,
     input: ArtifactDbUpdate
   ): Promise<ArtifactDbResult | null>;
+  beginAttempt(
+    workspace: string,
+    id: string,
+    timestamp: Date
+  ): Promise<ArtifactAttemptResult | null>;
   getRevision(workspace: string, id: string): Promise<ArtifactRevisionDbResult | null>;
   getRevisionByChecksum(
     workspace: string,

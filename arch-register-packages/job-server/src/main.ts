@@ -6,6 +6,8 @@ import { createLogger } from '@arch-register/server/utils/logger';
 import { createJobServer, type JobHandler } from './worker';
 import { createStorage } from '@arch-register/server/storage/storage';
 import { createExternalContentJobHandler } from '@arch-register/server/domain/external-content/externalContentJobs';
+import { createApiSpecificationUrlRefreshJobHandler } from '@arch-register/server/domain/artifact/apiSpecificationJobs';
+import { API_SPECIFICATION_URL_REFRESH_JOB_TYPE } from '@arch-register/server/domain/artifact/artifactOperations';
 import { createWebhookDeliveryHandler } from '@arch-register/server/domain/webhook/webhookDelivery';
 import {
   AUDIT_FANOUT_JOB_TYPE,
@@ -88,6 +90,10 @@ const main = async () => {
   await ensureAllCurrencyRatesSchedules(db);
   const governanceRegistry = createApplicationGovernanceRegistry();
   handlers.set('external-content.refresh', createExternalContentJobHandler(db, storage));
+  handlers.set(
+    API_SPECIFICATION_URL_REFRESH_JOB_TYPE,
+    createApiSpecificationUrlRefreshJobHandler(db)
+  );
   handlers.set('webhook.delivery', createWebhookDeliveryHandler(db));
   handlers.set(AUDIT_FANOUT_JOB_TYPE, createAuditFanoutJobHandler(db));
   handlers.set(AUTOMATION_RULE_JOB_TYPE, createAutomationRuleExecutionHandler(db));
