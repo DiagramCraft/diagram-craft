@@ -456,4 +456,3 @@ export const createRelationGovernanceRegistry = (): GovernanceRegistry =>
       createApprovalGovernanceCaseConfig(relationApprovalAdapter.governance)
     ]
   ]);
-

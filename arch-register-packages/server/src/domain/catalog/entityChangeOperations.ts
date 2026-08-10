@@ -2,12 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter, EntityDbUpdate } from '../../db/database';
 import type { Entity } from './db/catalogDatabase';
-import {
-  buildApiEntityAuthCtx as buildApiAuthCtx,
-  requireEntityAction,
-  requireWorkspaceCapability
-} from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { requireEntityAction, requireWorkspaceCapability } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import {
   getLifecycleValues,
@@ -73,6 +68,7 @@ import {
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import { defaultWorkflowConfigForCaseKind } from '../governance/governanceRegistry';
 import { resolveGovernanceWorkflowConfig } from '../governance/governanceWorkflowConfig';
+import { runAuthorizedOperation } from '../operation';
 import {
   eligibleUserIdsForGovernanceTargets,
   resolveApprovalTargets,
@@ -743,21 +739,6 @@ const entityApprovalAdapter: ApprovalSubjectAdapter<Entity, EntityChangeApproval
 
 const entityApprovalWorkflow = createApprovalWorkflow(entityApprovalAdapter);
 
-const assertCanPropose = async (
-  db: DatabaseAdapter,
-  workspace: string,
-  entityId: string,
-  event: AuthenticatedEvent
-) => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  const entity = await db.catalog.getEntity(workspace, entityId);
-  httpAssert.present(entity, { status: 404, message: 'Entity not found' });
-  requireEntityAction(authCtx, entity, 'view_entity');
-  requireEntityAction(authCtx, entity, 'edit_entity');
-  requireWorkspaceCapability(authCtx, 'ent.propose');
-  return { authCtx, entity };
-};
-
 export const getEntityChangeApproval = (
   db: DatabaseAdapter,
   workspaceName: string,
@@ -765,168 +746,180 @@ export const getEntityChangeApproval = (
   event: AuthenticatedEvent
 ) => entityApprovalWorkflow.get(db, workspaceName, entityId, event);
 
-export const getBulkEntityChangeApproval = async (
+export const getBulkEntityChangeApproval = (
   db: DatabaseAdapter,
   workspaceName: string,
   proposalId: string,
   event: AuthenticatedEvent
-) => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  const proposal = await db.entityChange.getApproval(workspace, proposalId);
-  if (!proposal) return null;
-  const apiProposal = await toApiBulkApproval(db, proposal, authCtx);
-  for (const entityId of apiProposal.entityIds) {
-    const entity = await db.catalog.getEntity(workspace, entityId);
-    if (entity) requireEntityAction(authCtx, entity, 'view_entity');
-  }
-  return apiProposal;
-};
+) =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace: workspaceName },
+    operation: async ({ ws, authCtx }) => {
+      const proposal = await db.entityChange.getApproval(ws, proposalId);
+      if (!proposal) return null;
+      const apiProposal = await toApiBulkApproval(db, proposal, authCtx);
+      for (const entityId of apiProposal.entityIds) {
+        const entity = await db.catalog.getEntity(ws, entityId);
+        if (entity) requireEntityAction(authCtx, entity, 'view_entity');
+      }
+      return apiProposal;
+    }
+  });
 
 export const submitBulkEntityChangeApproval = async (
   db: DatabaseAdapter,
   workspaceName: string,
   event: AuthenticatedEvent,
   body: EntityChangeBulkApprovalRequestBody
-): Promise<EntityChangeBulkApproval> => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  httpAssert.true(body.members.length >= 2, {
-    status: 400,
-    message: 'A bulk entity change proposal requires at least two entities'
-  });
-
-  const userId = event.context.user.id;
-  const now = new Date();
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-
-  type PreparedMember = {
-    entity: Entity;
-    baseState: Record<string, unknown>;
-    proposedState: Record<string, unknown>;
-    diff: Record<string, unknown>;
-    policy: ResolvedEntityApprovalPolicy;
-  };
-
-  const prepared: PreparedMember[] = [];
-  for (const member of body.members) {
-    const { authCtx, entity } = await assertCanPropose(db, workspace, member.entityId, event);
-    requireWorkspaceCapability(authCtx, 'ent.propose');
-    const schema = await db.catalog.getSchema(workspace, entity.schema_id);
-    httpAssert.present(schema, { status: 404, message: 'Entity schema not found' });
-    const policy = await policyFor(db, workspace, schema, entity);
-    httpAssert.true(policy.required, {
-      status: 409,
-      statusText: 'Conflict',
-      message: `Entity ${entity.name} does not require an approval proposal`
-    });
-    const { state: proposedState, update } = await buildProposedEntity(
-      db,
-      workspace,
-      entity,
-      member.proposedState,
-      authCtx
-    );
-    const baseState = entityState(entity);
-    const diff = buildDiff(baseState, proposedState);
-    if (Object.keys(diff).length === 0) continue;
-    httpAssert.true(member.baseVersion === (entity.version ?? 1), {
-      status: 409,
-      statusText: 'Conflict',
-      message: `Entity ${entity.name} changed while this proposal was being prepared`
-    });
-    if (update.owner !== entity.owner || update.project_id !== entity.project_id) {
-      requireEntityAction(authCtx, entity, 'admin_entity');
-    }
-    prepared.push({ entity, baseState, proposedState, diff, policy });
-  }
-
-  httpAssert.true(prepared.length >= 2, {
-    status: 400,
-    message: 'A bulk entity change proposal requires at least two entities with actual changes'
-  });
-
-  const { config: bulkApprovalConfig, targets } = await resolveEntityApprovalTargets(
+): Promise<EntityChangeBulkApproval> =>
+  runAuthorizedOperation({
     db,
-    workspace,
-    ENTITY_CHANGE_CASE_BULK_KIND,
-    null,
-    prepared.map(member => member.entity)
-  );
-  const assignments = targets.map(target => ({ action: 'approve' as const, target }));
-  const eligibleApproverIds = await eligibleUserIdsForGovernanceTargets(db, workspace, targets);
-  const selfApprovalAllowed =
-    bulkApprovalConfig.requiredApprovals === 1 && isSoleApprover(eligibleApproverIds, userId);
-  const policyVersion = prepared
-    .map(member => member.policy.policyVersion)
-    .sort()
-    .join('|');
+    event,
+    scope: { kind: 'entity', workspace: workspaceName },
+    operation: async ({ ws, authCtx }) => {
+      const workspace = ws;
+      httpAssert.true(body.members.length >= 2, {
+        status: 400,
+        message: 'A bulk entity change proposal requires at least two entities'
+      });
 
-  const proposal = await db.core.transaction(async tx => {
-    const caseId = randomUUID();
-    const root = await tx.entityChange.createApproval({
-      id: caseId,
-      workspace,
-      entity_id: prepared[0]!.entity.id,
-      status: 'open',
-      initiator_user_id: userId,
-      created_at: now,
-      updated_at: now,
-      closed_at: null
-    });
-    const revisionId = randomUUID();
-    await tx.entityChange.createBulkApprovalRevision({
-      id: revisionId,
-      proposal_id: root.id,
-      workspace,
-      revision_number: 1,
-      policy_version: policyVersion,
-      resolved_policy: {
-        selfApprovalAllowed,
-        requiredApprovals: bulkApprovalConfig.requiredApprovals,
-        strategy: bulkApprovalConfig.strategy ?? ENTITY_OWNER_ADMIN_STRATEGY,
-        targets
-      },
-      message: body.message ?? null,
-      created_by: userId,
-      status: 'submitted',
-      created_at: now,
-      resolved_at: null,
-      members: prepared.map(member => ({
-        entity_id: member.entity.id,
-        base_version: member.entity.version ?? 1,
-        base_state: member.baseState,
-        proposed_state: member.proposedState,
-        diff: member.diff
-      }))
-    });
+      const userId = event.context.user.id;
+      const now = new Date();
 
-    await createGovernanceCaseInTransaction(
-      tx,
-      workspace,
-      userId,
-      {
-        caseKind: ENTITY_CHANGE_CASE_BULK_KIND,
-        subjectType: 'entity_change_case',
-        subjectId: root.id,
-        subjectVersion: revisionId,
-        policyVersion,
-        selfApprovalAllowed,
-        dueAt: body.dueAt ? new Date(body.dueAt) : null,
-        payload: {
-          proposalId: root.id,
-          revisionId,
-          entityIds: prepared.map(member => member.entity.id),
-          requiredApprovals: bulkApprovalConfig.requiredApprovals
-        },
-        initiationFieldValues: body.initiationFields,
-        assignments
-      },
-      now
-    );
-    return root;
+      type PreparedMember = {
+        entity: Entity;
+        baseState: Record<string, unknown>;
+        proposedState: Record<string, unknown>;
+        diff: Record<string, unknown>;
+        policy: ResolvedEntityApprovalPolicy;
+      };
+
+      const prepared: PreparedMember[] = [];
+      for (const member of body.members) {
+        const entity = await db.catalog.getEntity(workspace, member.entityId);
+        httpAssert.present(entity, { status: 404, message: 'Entity not found' });
+        requireEntityAction(authCtx, entity, 'view_entity');
+        requireEntityAction(authCtx, entity, 'edit_entity');
+        requireWorkspaceCapability(authCtx, 'ent.propose');
+        const schema = await db.catalog.getSchema(workspace, entity.schema_id);
+        httpAssert.present(schema, { status: 404, message: 'Entity schema not found' });
+        const policy = await policyFor(db, workspace, schema, entity);
+        httpAssert.true(policy.required, {
+          status: 409,
+          statusText: 'Conflict',
+          message: `Entity ${entity.name} does not require an approval proposal`
+        });
+        const { state: proposedState, update } = await buildProposedEntity(
+          db,
+          workspace,
+          entity,
+          member.proposedState,
+          authCtx
+        );
+        const baseState = entityState(entity);
+        const diff = buildDiff(baseState, proposedState);
+        if (Object.keys(diff).length === 0) continue;
+        httpAssert.true(member.baseVersion === (entity.version ?? 1), {
+          status: 409,
+          statusText: 'Conflict',
+          message: `Entity ${entity.name} changed while this proposal was being prepared`
+        });
+        if (update.owner !== entity.owner || update.project_id !== entity.project_id) {
+          requireEntityAction(authCtx, entity, 'admin_entity');
+        }
+        prepared.push({ entity, baseState, proposedState, diff, policy });
+      }
+
+      httpAssert.true(prepared.length >= 2, {
+        status: 400,
+        message: 'A bulk entity change proposal requires at least two entities with actual changes'
+      });
+
+      const { config: bulkApprovalConfig, targets } = await resolveEntityApprovalTargets(
+        db,
+        workspace,
+        ENTITY_CHANGE_CASE_BULK_KIND,
+        null,
+        prepared.map(member => member.entity)
+      );
+      const assignments = targets.map(target => ({ action: 'approve' as const, target }));
+      const eligibleApproverIds = await eligibleUserIdsForGovernanceTargets(db, workspace, targets);
+      const selfApprovalAllowed =
+        bulkApprovalConfig.requiredApprovals === 1 && isSoleApprover(eligibleApproverIds, userId);
+      const policyVersion = prepared
+        .map(member => member.policy.policyVersion)
+        .sort()
+        .join('|');
+
+      const proposal = await db.core.transaction(async tx => {
+        const caseId = randomUUID();
+        const root = await tx.entityChange.createApproval({
+          id: caseId,
+          workspace,
+          entity_id: prepared[0]!.entity.id,
+          status: 'open',
+          initiator_user_id: userId,
+          created_at: now,
+          updated_at: now,
+          closed_at: null
+        });
+        const revisionId = randomUUID();
+        await tx.entityChange.createBulkApprovalRevision({
+          id: revisionId,
+          proposal_id: root.id,
+          workspace,
+          revision_number: 1,
+          policy_version: policyVersion,
+          resolved_policy: {
+            selfApprovalAllowed,
+            requiredApprovals: bulkApprovalConfig.requiredApprovals,
+            strategy: bulkApprovalConfig.strategy ?? ENTITY_OWNER_ADMIN_STRATEGY,
+            targets
+          },
+          message: body.message ?? null,
+          created_by: userId,
+          status: 'submitted',
+          created_at: now,
+          resolved_at: null,
+          members: prepared.map(member => ({
+            entity_id: member.entity.id,
+            base_version: member.entity.version ?? 1,
+            base_state: member.baseState,
+            proposed_state: member.proposedState,
+            diff: member.diff
+          }))
+        });
+
+        await createGovernanceCaseInTransaction(
+          tx,
+          workspace,
+          userId,
+          {
+            caseKind: ENTITY_CHANGE_CASE_BULK_KIND,
+            subjectType: 'entity_change_case',
+            subjectId: root.id,
+            subjectVersion: revisionId,
+            policyVersion,
+            selfApprovalAllowed,
+            dueAt: body.dueAt ? new Date(body.dueAt) : null,
+            payload: {
+              proposalId: root.id,
+              revisionId,
+              entityIds: prepared.map(member => member.entity.id),
+              requiredApprovals: bulkApprovalConfig.requiredApprovals
+            },
+            initiationFieldValues: body.initiationFields,
+            assignments
+          },
+          now
+        );
+        return root;
+      });
+      return await toApiBulkApproval(db, proposal, authCtx);
+    }
   });
-  return await toApiBulkApproval(db, proposal, authCtx);
-};
 
 export const submitEntityChangeApproval = (
   db: DatabaseAdapter,
@@ -1196,4 +1189,3 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
       }
     ]
   ]);
-
