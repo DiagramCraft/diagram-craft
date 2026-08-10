@@ -676,7 +676,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
        JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'entity'
        LEFT JOIN users u ON u.id = v.created_by
        WHERE v.workspace = ? AND v.created_at <= ? ${filter}
-       ORDER BY v.record_id, v.created_at ASC`,
+       ORDER BY v.record_id, v.created_at ASC, v.version_number ASC, v.id ASC`,
       [workspace, asOf.toISOString(), ...(entityIds ?? [])],
       catalogMappers.entityVersion
     );
@@ -692,7 +692,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
        JOIN catalog_record cr ON cr.id = v.record_id AND cr.kind = 'relation'
        LEFT JOIN users u ON u.id = v.created_by
        WHERE v.workspace = ? AND v.created_at <= ? ${filter}
-       ORDER BY v.record_id, v.created_at ASC`,
+       ORDER BY v.record_id, v.created_at ASC, v.version_number ASC, v.id ASC`,
       [workspace, asOf.toISOString(), ...(relationIds ?? [])],
       catalogMappers.entityVersion
     );
@@ -723,7 +723,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       entityIds != null ? `AND m.record_id IN (${entityIds.map(() => '?').join(',')})` : '';
     return this.all(
       `SELECT m.id, c.workspace, m.record_id AS entity_id,
-              c.id AS case_id, r.id AS case_revision_id,
+              c.id AS case_id, r.id AS case_revision_id, r.revision_number,
               c.project_id,
               CASE WHEN c.milestone_id IS NULL THEN c.effective_date ELSE NULL END AS target_date,
               c.milestone_id,
@@ -732,15 +732,20 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
               m.proposed_state
        FROM record_change_case_record_version m
        JOIN catalog_record cr ON cr.id = m.record_id AND cr.kind = 'entity'
-       JOIN entity_change_case_revision r ON r.id = m.revision_id
+       JOIN entity_change_case_revision r ON r.id = m.revision_id AND r.is_active = 1
        JOIN entity_change_case c ON c.id = r.case_id
+       LEFT JOIN project_milestone pm ON pm.id = c.milestone_id AND pm.workspace = c.workspace
        LEFT JOIN users u ON u.id = r.created_by
        WHERE c.workspace = ?
+         AND c.purpose = 'planned_change'
+         AND c.status IN ('planned', 'in_approval')
          AND r.status IN ('draft', 'submitted', 'changes_requested')
          AND r.created_at <= ?
-         AND (c.milestone_id IS NOT NULL OR c.effective_date IS NULL OR c.effective_date <= ?)
+         AND (COALESCE(c.effective_date, pm.target_date) IS NULL OR COALESCE(c.effective_date, pm.target_date) <= ?)
          ${entityFilter}
-       ORDER BY m.record_id, r.created_at ASC`,
+       ORDER BY m.record_id, COALESCE(c.effective_date, pm.target_date) IS NULL DESC,
+                COALESCE(c.effective_date, pm.target_date) ASC, r.created_at ASC,
+                r.revision_number ASC, c.id ASC, m.id ASC`,
       [workspace, asOf.toISOString(), asOf.toISOString().slice(0, 10), ...(entityIds ?? [])],
       catalogMappers.plannedEntityChange
     );
@@ -752,7 +757,7 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
       relationIds != null ? `AND m.record_id IN (${relationIds.map(() => '?').join(',')})` : '';
     return this.all(
       `SELECT m.id, c.workspace, m.record_id AS entity_id,
-              c.id AS case_id, r.id AS case_revision_id,
+              c.id AS case_id, r.id AS case_revision_id, r.revision_number,
               c.project_id,
               CASE WHEN c.milestone_id IS NULL THEN c.effective_date ELSE NULL END AS target_date,
               c.milestone_id,
@@ -761,15 +766,20 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
               m.proposed_state
        FROM record_change_case_record_version m
        JOIN catalog_record cr ON cr.id = m.record_id AND cr.kind = 'relation'
-       JOIN entity_change_case_revision r ON r.id = m.revision_id
+       JOIN entity_change_case_revision r ON r.id = m.revision_id AND r.is_active = 1
        JOIN entity_change_case c ON c.id = r.case_id
+       LEFT JOIN project_milestone pm ON pm.id = c.milestone_id AND pm.workspace = c.workspace
        LEFT JOIN users u ON u.id = r.created_by
        WHERE c.workspace = ?
+         AND c.purpose = 'planned_change'
+         AND c.status IN ('planned', 'in_approval')
          AND r.status IN ('draft', 'submitted', 'changes_requested')
          AND r.created_at <= ?
-         AND (c.milestone_id IS NOT NULL OR c.effective_date IS NULL OR c.effective_date <= ?)
+         AND (COALESCE(c.effective_date, pm.target_date) IS NULL OR COALESCE(c.effective_date, pm.target_date) <= ?)
          ${relationFilter}
-       ORDER BY m.record_id, r.created_at ASC`,
+       ORDER BY m.record_id, COALESCE(c.effective_date, pm.target_date) IS NULL DESC,
+                COALESCE(c.effective_date, pm.target_date) ASC, r.created_at ASC,
+                r.revision_number ASC, c.id ASC, m.id ASC`,
       [workspace, asOf.toISOString(), asOf.toISOString().slice(0, 10), ...(relationIds ?? [])],
       catalogMappers.plannedEntityChange
     );

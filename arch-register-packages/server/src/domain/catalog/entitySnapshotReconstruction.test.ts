@@ -88,6 +88,7 @@ const basePlannedChange = (
   entity_id: 'entity-1',
   case_id: 'case-1',
   case_revision_id: 'revision-1',
+  revision_number: 1,
   project_id: null,
   target_date: null,
   milestone_id: null,
@@ -103,7 +104,8 @@ const makeDb = (
   versions: EntityVersionDbResult[],
   plannedChanges: PlannedEntityChangeDbResult[] = [],
   liveEntities: EntityDbResult[] = [],
-  projects: Array<{ id: string; owner: string | null }> = []
+  projects: Array<{ id: string; owner: string | null }> = [],
+  milestones: Array<{ id: string; target_date: string }> = []
 ) => {
   const listEntityVersionsAsOf = vi.fn(
     async (_workspace: string, asOf: Date, entityIds?: string[]) =>
@@ -115,7 +117,9 @@ const makeDb = (
         .sort(
           (a, b) =>
             a.record_id.localeCompare(b.record_id) ||
-            a.created_at.getTime() - b.created_at.getTime()
+            a.created_at.getTime() - b.created_at.getTime() ||
+            a.version_number - b.version_number ||
+            a.id.localeCompare(b.id)
         )
   );
 
@@ -123,7 +127,8 @@ const makeDb = (
     async (_workspace: string, asOf: Date, entityIds?: string[]) =>
       plannedChanges.filter(c => {
         if (entityIds != null && !entityIds.includes(c.entity_id)) return false;
-        return c.target_date != null && new Date(c.target_date) <= asOf && c.created_at <= asOf;
+        const isRawDateInRange = c.target_date == null || new Date(c.target_date) <= asOf;
+        return (c.milestone_id != null || isRawDateInRange) && c.created_at <= asOf;
       })
   );
 
@@ -159,7 +164,8 @@ const makeDb = (
       getProject: vi.fn(
         async (_workspace: string, id: string) => projects.find(p => p.id === id) ?? null
       ),
-      listMilestones: vi.fn(async () => [])
+      listProjects: vi.fn(async () => projects),
+      listMilestones: vi.fn(async () => milestones)
     },
     workspace: {
       listTeams: vi.fn(async () => [{ id: 'owner-1', name: 'Team A' }]),
@@ -337,6 +343,108 @@ describe('reconstructEntitiesAsOf', () => {
     expect(afterBoth[0]?.lifecycle).toBe('lc-1');
     expect(afterBoth[0]?.lifecycle_label).toBe('Active');
     expect(afterBoth[0]?.owner_name).toBe('Team A');
+  });
+
+  it('does not apply a milestone change before its target date', async () => {
+    const versions = [
+      baseVersion({
+        record_id: 'entity-1',
+        state: { id: 'entity-1', name: 'Baseline Name', schema_id: 'schema-1', data: {} }
+      })
+    ];
+    const plannedChange = basePlannedChange({
+      milestone_id: 'milestone-1',
+      created_at: new Date('2026-01-10T00:00:00.000Z'),
+      proposed_state: { name: 'Milestone Name' }
+    });
+    const db = makeDb(
+      versions,
+      [plannedChange],
+      [],
+      [],
+      [{ id: 'milestone-1', target_date: '2026-06-01' }]
+    );
+
+    const beforeMilestone = await reconstructEntitiesAsOf(
+      db,
+      'ws-1',
+      new Date('2026-05-31T00:00:00.000Z'),
+      null
+    );
+    expect(beforeMilestone[0]?.name).toBe('Baseline Name');
+
+    const onMilestone = await reconstructEntitiesAsOf(
+      db,
+      'ws-1',
+      new Date('2026-06-01T00:00:00.000Z'),
+      null
+    );
+    expect(onMilestone[0]?.name).toBe('Milestone Name');
+  });
+
+  it('uses version number to select the latest baseline when timestamps tie', async () => {
+    const timestamp = new Date('2026-01-01T00:00:00.000Z');
+    const db = makeDb([
+      baseVersion({
+        id: 'version-1',
+        version_number: 1,
+        created_at: timestamp,
+        state: { id: 'entity-1', name: 'Older Name', schema_id: 'schema-1', data: {} }
+      }),
+      baseVersion({
+        id: 'version-2',
+        version_number: 2,
+        created_at: timestamp,
+        state: { id: 'entity-1', name: 'Latest Name', schema_id: 'schema-1', data: {} }
+      })
+    ]);
+
+    const result = await reconstructEntitiesAsOf(
+      db,
+      'ws-1',
+      new Date('2026-02-01T00:00:00.000Z'),
+      null
+    );
+
+    expect(result[0]?.name).toBe('Latest Name');
+  });
+
+  it('orders same-date planned revisions deterministically', async () => {
+    const timestamp = new Date('2026-01-10T00:00:00.000Z');
+    const db = makeDb(
+      [
+        baseVersion({
+          state: { id: 'entity-1', name: 'Baseline Name', schema_id: 'schema-1', data: {} }
+        })
+      ],
+      [
+        basePlannedChange({
+          id: 'change-2',
+          case_revision_id: 'revision-2',
+          revision_number: 2,
+          target_date: '2026-06-01',
+          created_at: timestamp,
+          proposed_state: { name: 'Revision Two' }
+        }),
+        basePlannedChange({
+          id: 'change-1',
+          case_revision_id: 'revision-1',
+          revision_number: 1,
+          target_date: '2026-06-01',
+          created_at: timestamp,
+          proposed_state: { name: 'Revision One' }
+        })
+      ]
+    );
+
+    const result = await reconstructEntitiesAsOf(
+      db,
+      'ws-1',
+      new Date('2026-07-01T00:00:00.000Z'),
+      null
+    );
+
+    expect(result[0]?.name).toBe('Revision Two');
   });
 
   describe('project access control for planned changes', () => {

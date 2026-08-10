@@ -306,6 +306,7 @@ export type PlannedEntityChangeDbResult = {
   entity_id: string;
   case_id: string;
   case_revision_id: string;
+  revision_number: number;
   project_id: string | null;
   target_date: string | null;
   milestone_id: string | null;
@@ -375,6 +376,7 @@ export const catalogMappers = {
     entity_id: String(row['entity_id']),
     case_id: String(row['case_id']),
     case_revision_id: String(row['case_revision_id']),
+    revision_number: Number(row['revision_number']),
     project_id: row['project_id'] == null ? null : String(row['project_id']),
     target_date: row['target_date'] == null ? null : databaseDateOnly(row['target_date']),
     milestone_id: row['milestone_id'] == null ? null : String(row['milestone_id']),
