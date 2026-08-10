@@ -3648,11 +3648,7 @@ const seedEntitiesRaw: SeedEntityInput[] = [
 const seedSchemaById = new Map(seedSchemas.map(schema => [schema.id, schema]));
 
 const stripSeedApiRelationshipFields = (data: SeedEntityInput['data']): SeedEntityInput['data'] => {
-  const {
-    provides_apis: _providesApis,
-    consumes_apis: _consumesApis,
-    ...remaining
-  } = data;
+  const { provides_apis: _providesApis, consumes_apis: _consumesApis, ...remaining } = data;
   return remaining;
 };
 
@@ -5740,10 +5736,7 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     workspace: WORKSPACE_ID,
     name: 'Provides API',
     description: 'Associates a Component or System with an API it provides.',
-    in_schema_ids: [
-      '00000000-0000-0000-0000-000000000003',
-      '00000000-0000-0000-0000-000000000002'
-    ],
+    in_schema_ids: ['00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000002'],
     out_schema_ids: ['00000000-0000-0000-0000-000000000004'],
     fields: [],
     groups: [],
@@ -5759,10 +5752,7 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     workspace: WORKSPACE_ID,
     name: 'Consumes API',
     description: 'Associates a Component or System with an API it consumes.',
-    in_schema_ids: [
-      '00000000-0000-0000-0000-000000000003',
-      '00000000-0000-0000-0000-000000000002'
-    ],
+    in_schema_ids: ['00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000002'],
     out_schema_ids: ['00000000-0000-0000-0000-000000000004'],
     fields: [],
     groups: [],
@@ -5912,9 +5902,7 @@ const seedApiRelations: RelationDbCreate[] = seedEntitiesRaw.flatMap(entity => {
 
   return (['provides_apis', 'consumes_apis'] as const).flatMap(field => {
     const relationSchemaId =
-      field === 'provides_apis'
-        ? API_PROVIDER_RELATION_SCHEMA_ID
-        : API_CONSUMER_RELATION_SCHEMA_ID;
+      field === 'provides_apis' ? API_PROVIDER_RELATION_SCHEMA_ID : API_CONSUMER_RELATION_SCHEMA_ID;
     const references = entity.data[field];
     if (!Array.isArray(references)) return [];
 

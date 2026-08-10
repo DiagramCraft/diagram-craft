@@ -505,9 +505,7 @@ describe('searchWorkspace relations', () => {
         listWorkspaceContentNodes: vi.fn(async () => [])
       },
       relation: {
-        listRelationSchemas: vi.fn(async () => [
-          { ...relationSchema, name: relationSchemaName }
-        ]),
+        listRelationSchemas: vi.fn(async () => [{ ...relationSchema, name: relationSchemaName }]),
         listRelations: vi.fn(
           async (_ws: string, _filters: unknown, { offset }: { offset: number }) =>
             offset === 0

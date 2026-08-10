@@ -119,9 +119,15 @@ describe('API participation seed data', () => {
     const consumes = seedRelationSchemas.find(schema => schema.name === 'Consumes API');
     const apiGateway = seedEntities.find(entity => entity.public_id === 'CMP-1');
 
-    expect(provides?.in_schema_ids).toEqual([component?.id, '00000000-0000-0000-0000-000000000002']);
+    expect(provides?.in_schema_ids).toEqual([
+      component?.id,
+      '00000000-0000-0000-0000-000000000002'
+    ]);
     expect(provides?.out_schema_ids).toEqual([api?.id]);
-    expect(consumes?.in_schema_ids).toEqual([component?.id, '00000000-0000-0000-0000-000000000002']);
+    expect(consumes?.in_schema_ids).toEqual([
+      component?.id,
+      '00000000-0000-0000-0000-000000000002'
+    ]);
     expect(consumes?.out_schema_ids).toEqual([api?.id]);
     expect(component?.fields).toContainEqual(
       expect.objectContaining({
@@ -135,8 +141,7 @@ describe('API participation seed data', () => {
     expect(apiGateway?.data).not.toHaveProperty('consumes_apis');
     expect(
       seedRelations.filter(
-        relation =>
-          relation.schema_id === provides?.id || relation.schema_id === consumes?.id
+        relation => relation.schema_id === provides?.id || relation.schema_id === consumes?.id
       )
     ).toHaveLength(16);
   });

@@ -369,7 +369,11 @@ export const syncRelation = async (
       );
     }
     if (response.status === 403) {
-      throw createSyncError('Permission denied while syncing a typed relation.', response.status, errorDetails);
+      throw createSyncError(
+        'Permission denied while syncing a typed relation.',
+        response.status,
+        errorDetails
+      );
     }
     if (response.status === 400) {
       throw createSyncError(

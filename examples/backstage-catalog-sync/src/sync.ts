@@ -452,7 +452,11 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
           } catch (error) {
             const errorMsg = error instanceof Error ? error.message : String(error);
             report.failed++;
-            report.errors.push({ repo: item.repo.fullName, entity: item.entityRef, error: errorMsg });
+            report.errors.push({
+              repo: item.repo.fullName,
+              entity: item.entityRef,
+              error: errorMsg
+            });
             continue;
           }
 

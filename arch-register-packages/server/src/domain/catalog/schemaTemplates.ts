@@ -159,10 +159,7 @@ const apiConsumerRelationSchema: SymbolicRelationSchema = {
   icon: 'download'
 };
 
-const apiParticipationRelationSchemas = [
-  apiProviderRelationSchema,
-  apiConsumerRelationSchema
-];
+const apiParticipationRelationSchemas = [apiProviderRelationSchema, apiConsumerRelationSchema];
 
 const apiParticipationField = (
   id: string,

@@ -29,10 +29,7 @@ describe('Arch Register typed relation integration', () => {
         'consumes-api': 'consumer-schema'
       });
     });
-    assert.equal(
-      requestedUrl,
-      'https://ar.example/api/integrations/v1/workspace/relation-schemas'
-    );
+    assert.equal(requestedUrl, 'https://ar.example/api/integrations/v1/workspace/relation-schemas');
   });
 
   it('syncs a typed relation by a stable external identity', async () => {
