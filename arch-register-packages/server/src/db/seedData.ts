@@ -930,7 +930,7 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000034',
-          direction: 'out'
+          direction: 'in'
         },
         {
           id: 'consumes_apis',
@@ -938,7 +938,7 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000035',
-          direction: 'out'
+          direction: 'in'
         },
         {
           id: 'contracts',
@@ -994,7 +994,7 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000034',
-          direction: 'out'
+          direction: 'in'
         },
         {
           id: 'consumes_apis',
@@ -1002,7 +1002,7 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000035',
-          direction: 'out'
+          direction: 'in'
         },
         {
           id: 'depends_on',
@@ -1116,7 +1116,7 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000034',
-          direction: 'in'
+          direction: 'out'
         },
         {
           id: 'consumers',
@@ -1124,7 +1124,7 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000035',
-          direction: 'in'
+          direction: 'out'
         }
       ],
       entity_capabilities: [

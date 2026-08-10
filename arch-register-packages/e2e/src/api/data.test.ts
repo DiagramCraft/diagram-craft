@@ -419,7 +419,7 @@ test.describe('data routes', () => {
       incoming: expect.arrayContaining([
         expect.objectContaining({
           entityId: componentId,
-          fieldName: 'Consumed APIs',
+          fieldName: 'Consumers',
           kind: 'typed',
           relationSchemaId: consumesApiRelationSchemaId
         })

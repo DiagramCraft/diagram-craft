@@ -603,8 +603,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 1,
             maxCount: 1
           },
-          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'out'),
-          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'out'),
+          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'in'),
+          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'in'),
           {
             id: 'contracts',
             name: 'Contracts',
@@ -632,8 +632,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 1,
             maxCount: 1
           },
-          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'out'),
-          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'out'),
+          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'in'),
+          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'in'),
           {
             id: 'depends_on',
             name: 'Depends On',
@@ -664,8 +664,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             maxCount: 1
           },
           { id: 'api_version', name: 'API Version', type: 'text' },
-          apiParticipationField('providers', 'Providers', 'provides-api', 'in'),
-          apiParticipationField('consumers', 'Consumers', 'consumes-api', 'in')
+          apiParticipationField('providers', 'Providers', 'provides-api', 'out'),
+          apiParticipationField('consumers', 'Consumers', 'consumes-api', 'out')
         ],
         entityCapabilities: [
           {
@@ -792,8 +792,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 0,
             maxCount: 1
           },
-          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'out'),
-          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'out')
+          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'in'),
+          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'in')
         ]
       },
       {
@@ -814,8 +814,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             maxCount: 1
           },
           { id: 'api_version', name: 'API Version', type: 'text' },
-          apiParticipationField('providers', 'Providers', 'provides-api', 'in'),
-          apiParticipationField('consumers', 'Consumers', 'consumes-api', 'in')
+          apiParticipationField('providers', 'Providers', 'provides-api', 'out'),
+          apiParticipationField('consumers', 'Consumers', 'consumes-api', 'out')
         ],
         entityCapabilities: [
           {
@@ -842,8 +842,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 0,
             maxCount: 1
           },
-          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'out'),
-          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'out')
+          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'in'),
+          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'in')
         ]
       },
       {

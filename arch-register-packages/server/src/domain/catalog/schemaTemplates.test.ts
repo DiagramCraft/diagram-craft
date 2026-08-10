@@ -57,12 +57,12 @@ describe('instantiateTemplate', () => {
     expect(component?.fields.find(field => field.id === 'consumes_apis')).toMatchObject({
       id: 'consumes_apis',
       type: 'typedRelation',
-      direction: 'out'
+      direction: 'in'
     });
     expect(api?.fields.find(field => field.id === 'consumers')).toMatchObject({
       id: 'consumers',
       type: 'typedRelation',
-      direction: 'in'
+      direction: 'out'
     });
   });
 
@@ -182,7 +182,7 @@ describe('instantiateTemplate', () => {
         id: 'provides_apis',
         type: 'typedRelation',
         relationSchemaId: provides?.id,
-        direction: 'out'
+        direction: 'in'
       })
     );
     expect(system?.fields).toContainEqual(
@@ -190,7 +190,7 @@ describe('instantiateTemplate', () => {
         id: 'consumes_apis',
         type: 'typedRelation',
         relationSchemaId: consumes?.id,
-        direction: 'out'
+        direction: 'in'
       })
     );
     expect(api?.fields).toContainEqual(
@@ -198,7 +198,7 @@ describe('instantiateTemplate', () => {
         id: 'providers',
         type: 'typedRelation',
         relationSchemaId: provides?.id,
-        direction: 'in'
+        direction: 'out'
       })
     );
   });

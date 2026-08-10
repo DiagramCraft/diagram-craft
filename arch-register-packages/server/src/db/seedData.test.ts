@@ -134,7 +134,7 @@ describe('API participation seed data', () => {
         id: 'provides_apis',
         type: 'typedRelation',
         relationSchemaId: provides?.id,
-        direction: 'out'
+        direction: 'in'
       })
     );
     expect(apiGateway?.data).not.toHaveProperty('provides_apis');
