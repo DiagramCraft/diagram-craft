@@ -12,12 +12,12 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import type { FieldType } from '../../lib/schemaPresentation';
 import type {
-  ArtifactCapability,
   EntitySchema,
   EntityTemplate,
   SchemaField,
   SchemaGroup
 } from '@arch-register/api-types/schemaContract';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import {
   useCreateSchema,
   useDeleteSchema,
@@ -50,7 +50,7 @@ const deriveKeyPrefix = (value: string) =>
 type EntityEditorExtra = {
   keyPrefix: string;
   templates: EntityTemplate[];
-  artifactCapabilities: ArtifactCapability[];
+  entityCapabilities: EntityCapability[];
 };
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
@@ -100,7 +100,7 @@ export const SchemaSettingsScreen = () => {
         description: schema.description,
         fields: schema.fields,
         templates: schema.templates,
-        artifactCapabilities: schema.artifact_capabilities ?? [],
+        entityCapabilities: schema.entity_capabilities ?? [],
         groups: schema.groups,
         sharedFieldGroupLinks: schema.shared_field_group_links ?? [],
         validationRules: schema.validation_rules ?? [],
@@ -132,8 +132,8 @@ export const SchemaSettingsScreen = () => {
         JSON.stringify(draft.groups) !== JSON.stringify(schema.groups) ||
         JSON.stringify(draft.sharedFieldGroupLinks) !==
           JSON.stringify(schema.shared_field_group_links ?? []) ||
-        JSON.stringify(draft.artifactCapabilities) !==
-          JSON.stringify(schema.artifact_capabilities ?? []) ||
+        JSON.stringify(draft.entityCapabilities) !==
+          JSON.stringify(schema.entity_capabilities ?? []) ||
         JSON.stringify(draft.validationRules) !== JSON.stringify(schema.validation_rules ?? []) ||
         draft.color !== schema.color ||
         draft.icon !== schema.icon,
@@ -148,7 +148,7 @@ export const SchemaSettingsScreen = () => {
             templates: draft.templates,
             groups: draft.groups,
             shared_field_group_links: draft.sharedFieldGroupLinks,
-            artifact_capabilities: draft.artifactCapabilities,
+            entity_capabilities: draft.entityCapabilities,
             validation_rules: draft.validationRules,
             color: draft.color,
             icon: draft.icon,
@@ -293,7 +293,7 @@ export const SchemaSettingsScreen = () => {
             enums={enums}
             teams={teams}
             templates={draft.templates}
-            artifactCapabilities={draft.artifactCapabilities}
+            entityCapabilities={draft.entityCapabilities}
             validationRules={draft.validationRules}
             validationPreviewPending={previewValidationMutation.isPending}
             validationPreviewMessage={validationPreviewMessage}
@@ -345,29 +345,28 @@ export const SchemaSettingsScreen = () => {
                 templates: current.templates.filter(template => template.id !== templateId)
               }))
             }
-            onAddArtifactCapability={type =>
+            onAddEntityCapability={type =>
               editor.updateDraft(current =>
-                current.artifactCapabilities.some(capability => capability.type === type)
+                current.entityCapabilities.some(capability => capability.type === type)
                   ? current
                   : {
                       ...current,
-                      artifactCapabilities: [...current.artifactCapabilities, { type }]
+                      entityCapabilities: [...current.entityCapabilities, { type }]
                     }
               )
             }
-            onUpdateArtifactCapability={(index, patch) =>
+            onUpdateEntityCapability={(index, patch) =>
               editor.updateDraft(current => ({
                 ...current,
-                artifactCapabilities: current.artifactCapabilities.map(
-                  (capability, capabilityIndex) =>
-                    capabilityIndex === index ? { ...capability, ...patch } : capability
+                entityCapabilities: current.entityCapabilities.map((capability, capabilityIndex) =>
+                  capabilityIndex === index ? { ...capability, ...patch } : capability
                 )
               }))
             }
-            onDeleteArtifactCapability={index =>
+            onDeleteEntityCapability={index =>
               editor.updateDraft(current => ({
                 ...current,
-                artifactCapabilities: current.artifactCapabilities.filter(
+                entityCapabilities: current.entityCapabilities.filter(
                   (_, capabilityIndex) => capabilityIndex !== index
                 )
               }))

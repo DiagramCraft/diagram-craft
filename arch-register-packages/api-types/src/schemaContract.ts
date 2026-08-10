@@ -7,7 +7,7 @@ import {
   assertRefreshModeRequiresExternalKind,
   namedGroupSchema
 } from '@arch-register/api-types/common';
-import { artifactTypeSchema } from './artifactContract';
+import { entityCapabilitySchema } from './entityCapabilityContract';
 
 const requirementLevelSchema = z
   .enum(['required', 'expected', 'optional'])
@@ -264,13 +264,6 @@ const sharedFieldGroupLinkSchema = z
   })
   .describe('A schema-local inclusion of a workspace shared fieldgroup');
 
-export const artifactCapabilitySchema = z
-  .object({
-    type: artifactTypeSchema.describe('Artifact integration/profile enabled for this schema')
-  })
-  .describe('An artifact integration enabled for entities using the schema');
-
-export type ArtifactCapability = z.infer<typeof artifactCapabilitySchema>;
 export type ValidationRule = z.infer<typeof validationRuleSchema>;
 
 const entitySchemaSchema = z.object({
@@ -288,10 +281,10 @@ const entitySchemaSchema = z.object({
     .array(sharedFieldGroupLinkSchema)
     .optional()
     .describe('Included workspace shared fieldgroups, in display order'),
-  artifact_capabilities: z
-    .array(artifactCapabilitySchema)
+  entity_capabilities: z
+    .array(entityCapabilitySchema)
     .optional()
-    .describe('Functionality-driving artifact capabilities enabled by this schema'),
+    .describe('Integration-backed entity capabilities enabled by this schema'),
   validation_rules: z
     .array(validationRuleSchema)
     .optional()
@@ -330,9 +323,9 @@ const schemaVersionSchema = z.object({
     .array(sharedFieldGroupLinkSchema)
     .optional()
     .describe('Included workspace shared fieldgroups at this version'),
-  artifact_capabilities: z
-    .array(artifactCapabilitySchema)
-    .describe('Artifact capabilities enabled by this schema at this version'),
+  entity_capabilities: z
+    .array(entityCapabilitySchema)
+    .describe('Entity capabilities enabled by this schema at this version'),
   validation_rules: z
     .array(validationRuleSchema)
     .optional()
@@ -372,10 +365,10 @@ const createSchemaBodySchema = z.object({
     v => (v === undefined ? undefined : Array.isArray(v) ? v : []),
     z.array(sharedFieldGroupLinkSchema).optional().describe('Included workspace shared fieldgroups')
   ),
-  artifact_capabilities: z
-    .array(artifactCapabilitySchema)
+  entity_capabilities: z
+    .array(entityCapabilitySchema)
     .optional()
-    .describe('Functionality-driving artifact capabilities enabled by this schema'),
+    .describe('Integration-backed entity capabilities enabled by this schema'),
   validation_rules: z
     .array(validationRuleSchema)
     .optional()

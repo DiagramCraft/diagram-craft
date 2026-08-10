@@ -10,12 +10,12 @@ import {
   SchemaGroup,
   SchemaVersion,
   SharedFieldGroupLink,
-  ArtifactCapability,
   ValidationRule,
   isReferenceOrContainmentField,
   isTypedRelationField
 } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import { normalizePublicIdPrefix, validatePublicIdPrefix } from '../../utils/publicIds';
 import { buildDerivedPlan } from '../derived/derivedFields';
 import { assertValidationRulesValid, normalizeValidationRules } from './entityValidationRules';
@@ -28,7 +28,7 @@ type SchemaMutationPayload = {
   templates: EntityTemplate[];
   groups: SchemaGroup[];
   shared_field_group_links: SharedFieldGroupLink[];
-  artifact_capabilities?: ArtifactCapability[];
+  entity_capabilities?: EntityCapability[];
   validation_rules: ValidationRule[];
   color: string | null;
   icon: string | null;
@@ -330,7 +330,7 @@ export const buildCreateSchemaInput = (
     templates = [],
     groups = [],
     shared_field_group_links = [],
-    artifact_capabilities,
+    entity_capabilities,
     validation_rules,
     color,
     icon,
@@ -356,7 +356,7 @@ export const buildCreateSchemaInput = (
     templates: normalizeEntityTemplates(templates, normalizedFields),
     groups: normalizedGroups,
     shared_field_group_links: normalizeSharedFieldGroupLinks(shared_field_group_links),
-    ...(Array.isArray(artifact_capabilities) && { artifact_capabilities }),
+    ...(Array.isArray(entity_capabilities) && { entity_capabilities }),
     validation_rules: normalizedValidationRules,
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
@@ -380,7 +380,7 @@ export const buildUpdateSchemaInput = (
     templates,
     groups,
     shared_field_group_links,
-    artifact_capabilities,
+    entity_capabilities,
     validation_rules,
     color,
     icon,
@@ -417,10 +417,10 @@ export const buildUpdateSchemaInput = (
       groups !== undefined
         ? normalizeSharedFieldGroupLinks(shared_field_group_links)
         : (current.shared_field_group_links ?? []),
-    ...(artifact_capabilities !== undefined
-      ? { artifact_capabilities: Array.isArray(artifact_capabilities) ? artifact_capabilities : [] }
-      : current.artifact_capabilities !== undefined
-        ? { artifact_capabilities: current.artifact_capabilities }
+    ...(entity_capabilities !== undefined
+      ? { entity_capabilities: Array.isArray(entity_capabilities) ? entity_capabilities : [] }
+      : current.entity_capabilities !== undefined
+        ? { entity_capabilities: current.entity_capabilities }
         : {}),
     validation_rules: normalizedValidationRules,
     color: color !== undefined ? (typeof color === 'string' ? color : null) : current.color,
@@ -615,7 +615,7 @@ export const toApiSchema = (
     templates: schema.templates ?? [],
     groups: schema.groups ?? [],
     shared_field_group_links: schema.shared_field_group_links ?? [],
-    artifact_capabilities: schema.artifact_capabilities ?? [],
+    entity_capabilities: schema.entity_capabilities ?? [],
     validation_rules: schema.validation_rules ?? [],
     color: schema.color,
     icon: schema.icon,
@@ -681,7 +681,7 @@ export const toApiSchemaVersion = (
     templates: EntityTemplate[];
     groups: SchemaGroup[];
     shared_field_group_links?: SharedFieldGroupLink[];
-    artifact_capabilities?: ArtifactCapability[];
+    entity_capabilities?: EntityCapability[];
     validation_rules?: ValidationRule[];
     color: string | null;
     icon: string | null;
@@ -698,7 +698,7 @@ export const toApiSchemaVersion = (
   templates: row.templates,
   groups: row.groups,
   shared_field_group_links: row.shared_field_group_links ?? [],
-  artifact_capabilities: row.artifact_capabilities ?? [],
+  entity_capabilities: row.entity_capabilities ?? [],
   validation_rules: row.validation_rules ?? [],
   color: row.color,
   icon: row.icon,

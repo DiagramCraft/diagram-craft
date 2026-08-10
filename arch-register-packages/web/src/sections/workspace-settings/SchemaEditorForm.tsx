@@ -1,12 +1,12 @@
 import type {
   EntitySchema,
   EntityTemplate,
-  ArtifactCapability,
   SchemaField,
   SchemaGroup,
   SharedFieldGroupLink,
   ValidationRule
 } from '@arch-register/api-types/schemaContract';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -34,7 +34,7 @@ export const SchemaEditorForm = ({
   enums,
   teams,
   templates,
-  artifactCapabilities,
+  entityCapabilities,
   validationRules,
   validationPreviewPending,
   validationPreviewMessage,
@@ -56,9 +56,9 @@ export const SchemaEditorForm = ({
   onAddTemplate,
   onEditTemplate,
   onDeleteTemplate,
-  onAddArtifactCapability,
-  onUpdateArtifactCapability,
-  onDeleteArtifactCapability,
+  onAddEntityCapability,
+  onUpdateEntityCapability,
+  onDeleteEntityCapability,
   onPreviewValidation,
   onAddValidationRule,
   onUpdateValidationRule,
@@ -85,7 +85,7 @@ export const SchemaEditorForm = ({
   enums: WorkspaceEnum[];
   teams: { id: string; name: string }[];
   templates: EntityTemplate[];
-  artifactCapabilities: ArtifactCapability[];
+  entityCapabilities: EntityCapability[];
   validationRules: ValidationRule[];
   validationPreviewPending: boolean;
   validationPreviewMessage: string | null;
@@ -107,9 +107,9 @@ export const SchemaEditorForm = ({
   onAddTemplate: () => void;
   onEditTemplate: (template: EntityTemplate) => void;
   onDeleteTemplate: (templateId: string) => void;
-  onAddArtifactCapability: (type: string) => void;
-  onUpdateArtifactCapability: (index: number, patch: Partial<ArtifactCapability>) => void;
-  onDeleteArtifactCapability: (index: number) => void;
+  onAddEntityCapability: (type: string) => void;
+  onUpdateEntityCapability: (index: number, patch: Partial<EntityCapability>) => void;
+  onDeleteEntityCapability: (index: number) => void;
   onPreviewValidation: () => void;
   onAddValidationRule: () => void;
   onUpdateValidationRule: (index: number, patch: Partial<ValidationRule>) => void;
@@ -169,13 +169,13 @@ export const SchemaEditorForm = ({
       onRemoveGroup={onRemoveGroup}
       onRemoveSharedGroup={onRemoveSharedGroup}
       templates={templates}
-      artifactCapabilities={artifactCapabilities}
+      entityCapabilities={entityCapabilities}
       onAddTemplate={onAddTemplate}
       onEditTemplate={onEditTemplate}
       onDeleteTemplate={onDeleteTemplate}
-      onAddArtifactCapability={onAddArtifactCapability}
-      onUpdateArtifactCapability={onUpdateArtifactCapability}
-      onDeleteArtifactCapability={onDeleteArtifactCapability}
+      onAddEntityCapability={onAddEntityCapability}
+      onUpdateEntityCapability={onUpdateEntityCapability}
+      onDeleteEntityCapability={onDeleteEntityCapability}
       validationRules={validationRules}
       validationPreviewPending={validationPreviewPending}
       validationPreviewMessage={validationPreviewMessage}

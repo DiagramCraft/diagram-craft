@@ -3,35 +3,33 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TbTrash } from 'react-icons/tb';
 import {
-  artifactCapabilityDefinitions,
-  type ArtifactCapabilityDefinition
-} from '@arch-register/api-types/artifactContract';
-import type { ArtifactCapability, SchemaField } from '@arch-register/api-types/schemaContract';
+  entityCapabilityDefinitions,
+  type EntityCapabilityDefinition
+} from '@arch-register/api-types/integrationCatalog';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
+import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import styles from './SchemaSettingsScreen.module.css';
 
-const getDefinition = (type: string): ArtifactCapabilityDefinition | undefined =>
-  artifactCapabilityDefinitions.find(definition => definition.type === type);
+const getDefinition = (type: string): EntityCapabilityDefinition | undefined =>
+  entityCapabilityDefinitions.find(definition => definition.type === type);
 
 const getMissingRequiredFields = (
-  definition: ArtifactCapabilityDefinition,
+  definition: EntityCapabilityDefinition,
   fields: SchemaField[]
 ) => {
   const fieldIds = new Set(fields.map(field => field.id));
   return definition.requiredFields.filter(fieldId => !fieldIds.has(fieldId));
 };
 
-const isEnabledElsewhere = (
-  capabilities: ArtifactCapability[],
-  currentIndex: number,
-  type: string
-) => capabilities.some((capability, index) => index !== currentIndex && capability.type === type);
+const isEnabledElsewhere = (capabilities: EntityCapability[], currentIndex: number, type: string) =>
+  capabilities.some((capability, index) => index !== currentIndex && capability.type === type);
 
-export const getAvailableArtifactCapabilityDefinitions = (capabilities: ArtifactCapability[]) =>
-  artifactCapabilityDefinitions.filter(
+export const getAvailableEntityCapabilityDefinitions = (capabilities: EntityCapability[]) =>
+  entityCapabilityDefinitions.filter(
     definition => !capabilities.some(capability => capability.type === definition.type)
   );
 
-export const SchemaArtifactCapabilitiesEditor = ({
+export const SchemaEntityCapabilitiesEditor = ({
   capabilities,
   fields,
   canEdit,
@@ -39,26 +37,26 @@ export const SchemaArtifactCapabilitiesEditor = ({
   onUpdate,
   onDelete
 }: {
-  capabilities: ArtifactCapability[];
+  capabilities: EntityCapability[];
   fields: SchemaField[];
   canEdit: boolean;
   onAdd: (type: string) => void;
-  onUpdate: (index: number, patch: Partial<ArtifactCapability>) => void;
+  onUpdate: (index: number, patch: Partial<EntityCapability>) => void;
   onDelete: (index: number) => void;
 }) => {
-  const availableDefinitions = getAvailableArtifactCapabilityDefinitions(capabilities);
+  const availableDefinitions = getAvailableEntityCapabilityDefinitions(capabilities);
 
   return (
     <>
       <div className={styles.fieldsHead}>
         <div>
-          <div className={styles.sectionLabel}>Artifact integrations</div>
+          <div className={styles.sectionLabel}>Entity capabilities</div>
         </div>
         {canEdit && (
           <Select.Root
             value={undefined}
             disabled={availableDefinitions.length === 0}
-            placeholder={availableDefinitions.length === 0 ? 'All enabled' : 'Add integration...'}
+            placeholder={availableDefinitions.length === 0 ? 'All enabled' : 'Add capability...'}
             onChange={value => {
               if (value) onAdd(value);
             }}
@@ -73,7 +71,7 @@ export const SchemaArtifactCapabilitiesEditor = ({
         )}
       </div>
       {capabilities.length === 0 ? (
-        <div className={styles.fieldsEmpty}>No artifact integrations enabled for this schema.</div>
+        <div className={styles.fieldsEmpty}>No entity capabilities enabled for this schema.</div>
       ) : (
         <div className={styles.capabilityList}>
           {capabilities.map((capability, index) => {
@@ -86,16 +84,16 @@ export const SchemaArtifactCapabilitiesEditor = ({
               <div className={styles.capabilityCard} key={`${capability.type}-${index}`}>
                 <div className={styles.capabilityHeader}>
                   <div className={styles.capabilityIntegration}>
-                    <FormElement label="Integration">
+                    <FormElement label="Capability">
                       <Select.Root
                         value={capability.type}
                         disabled={!canEdit}
-                        placeholder="Select integration..."
+                        placeholder="Select capability..."
                         onChange={value => {
                           if (value) onUpdate(index, { type: value });
                         }}
                       >
-                        {artifactCapabilityDefinitions.map(candidate => (
+                        {entityCapabilityDefinitions.map(candidate => (
                           <Select.Item
                             key={candidate.type}
                             value={candidate.type}
@@ -154,15 +152,14 @@ export const SchemaArtifactCapabilitiesEditor = ({
                     </div>
                     {missingRequiredFields.length > 0 && (
                       <div className={styles.capabilityUnknownFields}>
-                        Schema fields required by this integration are missing:{' '}
+                        Schema fields required by this capability are missing:{' '}
                         {missingRequiredFields.join(', ')}
                       </div>
                     )}
                   </>
                 ) : (
                   <div className={styles.capabilityUnknownFields}>
-                    This integration is no longer available. Remove it or choose another
-                    integration.
+                    This capability is no longer available. Remove it or choose another capability.
                   </div>
                 )}
               </div>

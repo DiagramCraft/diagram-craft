@@ -2,37 +2,12 @@ import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws } from '@arch-register/api-types/common';
 import { entityRecordSchema } from '@arch-register/api-types/entityContract';
+import { entityCapabilityTypeSchema } from './entityCapabilityContract';
 
 /** A functionality-driving artifact profile, not an arbitrary file extension. */
-export const artifactTypeSchema = z
-  .string()
-  .regex(/^[a-z][a-z0-9-]*$/, 'Artifact type must be a lowercase hyphenated identifier')
-  .max(100)
-  .describe('Artifact capability/profile identifier, such as api-specification');
-
-/** Integration-owned metadata for an artifact profile available to schemas. */
-export const artifactCapabilityDefinitionSchema = z.object({
-  type: artifactTypeSchema,
-  label: z.string().min(1),
-  description: z.string().min(1),
-  features: z.array(z.string().min(1)),
-  requiredFields: z.array(z.string().min(1))
-});
-
-export type ArtifactCapabilityDefinition = z.infer<typeof artifactCapabilityDefinitionSchema>;
-
-export const artifactCapabilityDefinitions: ArtifactCapabilityDefinition[] = [
-  {
-    type: 'api-specification',
-    label: 'API specification',
-    description: 'OpenAPI and AsyncAPI documents with normalized operations or messages.',
-    features: ['operations', 'documentation'],
-    requiredFields: ['api_type', 'api_version']
-  }
-];
-
-export const getArtifactCapabilityDefinition = (type: string) =>
-  artifactCapabilityDefinitions.find(capability => capability.type === type);
+export const artifactTypeSchema = entityCapabilityTypeSchema.describe(
+  'Artifact profile identifier, such as api-specification'
+);
 
 export const artifactSourceKindSchema = z
   .enum(['document', 'url', 'repository', 'link'])
@@ -249,7 +224,7 @@ export const artifactContract = oc.tag('Artifacts').router({
         inputStructure: 'detailed',
         summary: 'Register an entity artifact',
         description:
-          'Registers a typed artifact capability and its source without accepting arbitrary binary documents.',
+          'Registers a typed artifact profile and its source without accepting arbitrary binary documents.',
         tags: ['Artifacts']
       })
       .input(z.object({ params: entityParamsSchema, body: createArtifactBodySchema }))

@@ -7,7 +7,7 @@ import type {
   ArtifactStatus,
   ArtifactType
 } from '@arch-register/api-types/artifactContract';
-import { getArtifactCapabilityDefinition } from '@arch-register/api-types/artifactContract';
+import { getEntityCapabilityDefinition } from '@arch-register/api-types/integrationCatalog';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { requireEntityAction, requireWorkspaceCapability } from '../auth/authorization';
@@ -84,22 +84,22 @@ const requireArtifactWrite = (authCtx: AuthorizationContext, entity: EntityDbRes
   );
 };
 
-const assertArtifactCapability = (schema: SchemaDbResult, artifactType: ArtifactType) => {
-  const enabled = (schema.artifact_capabilities ?? []).some(item => item.type === artifactType);
+const assertEntityCapabilityForArtifact = (schema: SchemaDbResult, artifactType: ArtifactType) => {
+  const enabled = (schema.entity_capabilities ?? []).some(item => item.type === artifactType);
   httpAssert.true(enabled, {
     status: 409,
-    message: `Schema '${schema.name}' does not declare artifact capability '${artifactType}'`
+    message: `Schema '${schema.name}' does not declare entity capability '${artifactType}'`
   });
-  const definition = getArtifactCapabilityDefinition(artifactType);
+  const definition = getEntityCapabilityDefinition(artifactType);
   httpAssert.present(definition, {
     status: 409,
-    message: `Artifact capability '${artifactType}' is not available`
+    message: `Entity capability '${artifactType}' is not available`
   });
   const fieldIds = new Set(schema.fields.map(field => field.id));
   const missingFields = definition.requiredFields.filter(fieldId => !fieldIds.has(fieldId));
   httpAssert.true(missingFields.length === 0, {
     status: 409,
-    message: `Schema '${schema.name}' is missing fields required by artifact capability '${artifactType}': ${missingFields.join(', ')}`
+    message: `Schema '${schema.name}' is missing fields required by entity capability '${artifactType}': ${missingFields.join(', ')}`
   });
 };
 
@@ -262,7 +262,7 @@ export const createArtifact = async (
 ) => {
   const { entity, schema } = await getEntityAndSchema(db, workspace, entityId);
   requireArtifactWrite(authCtx, entity);
-  assertArtifactCapability(schema, body.artifactType);
+  assertEntityCapabilityForArtifact(schema, body.artifactType);
   const location = body.location ?? null;
   assertSafeSourceLocation(body.kind, location);
   const timestamp = new Date();

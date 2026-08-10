@@ -158,7 +158,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
 
   const schema = schemaEntry?.schema ?? null;
   const apiCapable =
-    schema?.artifact_capabilities?.some(capability => capability.type === 'api-specification') ??
+    schema?.entity_capabilities?.some(capability => capability.type === 'api-specification') ??
     false;
   const tab = requestedTab === 'api' && !apiCapable ? 'overview' : requestedTab;
   const updateApiSearch = useCallback(
