@@ -1,10 +1,15 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import type {
   ApiSpecificationItem,
   ApiSpecificationProtocol,
   ArtifactStatus
 } from '@arch-register/api-types/artifactContract';
+import {
+  getEntityCapabilityDefinition,
+  resolveEntityCapabilityFieldId
+} from '@arch-register/api-types/integrationCatalog';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { SearchInput } from '../../components/SearchInput';
@@ -45,6 +50,7 @@ const PAGE_SIZE = 50;
 type Props = {
   workspaceId: string;
   entity: EntityRecord;
+  entityCapability?: EntityCapability;
   outgoing: Relation[];
   incoming: Relation[];
   search: EntityDetailSearchParams;
@@ -54,6 +60,16 @@ type Props = {
 const readStringField = (entity: EntityRecord, fieldId: string) => {
   const value = entity[fieldId];
   return typeof value === 'string' ? value : undefined;
+};
+
+const readMappedStringField = (
+  entity: EntityRecord,
+  capability: EntityCapability,
+  roleId: string
+) => {
+  const definition = getEntityCapabilityDefinition(capability.type);
+  const role = definition?.fieldRoles.find(candidate => candidate.id === roleId);
+  return readStringField(entity, role ? resolveEntityCapabilityFieldId(capability, role) : roleId);
 };
 
 const formatDate = (value: string | null | undefined) => {
@@ -137,6 +153,7 @@ const ApiContext = ({
 
 const ApiMetadata = ({
   entity,
+  capability,
   artifact,
   protocol,
   sourceCount,
@@ -145,6 +162,7 @@ const ApiMetadata = ({
   onRefresh
 }: {
   entity: EntityRecord;
+  capability: EntityCapability;
   artifact: ReturnType<typeof selectApiSpecificationArtifact> | undefined;
   protocol: ApiSpecificationProtocol | null | undefined;
   sourceCount: number;
@@ -152,8 +170,8 @@ const ApiMetadata = ({
   isRefreshing: boolean;
   onRefresh: () => void;
 }) => {
-  const declaredType = readStringField(entity, 'api_type');
-  const declaredVersion = readStringField(entity, 'api_version');
+  const declaredType = readMappedStringField(entity, capability, 'api_type');
+  const declaredVersion = readMappedStringField(entity, capability, 'api_version');
 
   return (
     <section className={styles.metadata} aria-label="API specification metadata">
@@ -446,11 +464,13 @@ const StatusNotice = ({
 export const EntityApiSection = ({
   workspaceId,
   entity,
+  entityCapability,
   outgoing,
   incoming,
   search,
   onSearchChange
 }: Props) => {
+  const capability = entityCapability ?? { type: 'api-specification' };
   const { canManageArtifacts, canViewArtifactContent } = useWorkspaceAuthorization(workspaceId);
   const canManageApiArtifacts = canManageArtifacts && entity.canEdit;
   const artifactsQuery = useEntityArtifacts(workspaceId, entity._uid);
@@ -465,7 +485,7 @@ export const EntityApiSection = ({
   );
   const artifact = apiArtifacts[0];
   const revisionId = artifact?.currentRevisionId ?? '';
-  const declaredType = readStringField(entity, 'api_type');
+  const declaredType = readMappedStringField(entity, capability, 'api_type');
   const kind =
     declaredType === 'openapi'
       ? ('operation' as const)
@@ -563,6 +583,7 @@ export const EntityApiSection = ({
     <main className={styles.page}>
       <ApiMetadata
         entity={entity}
+        capability={capability}
         artifact={artifact}
         protocol={protocol}
         sourceCount={apiArtifacts.length}

@@ -10,6 +10,7 @@ import type {
   ExportRelationSchema,
   ExportSchema
 } from './exportTypes';
+import { entityCapabilitySchema } from '@arch-register/api-types/entityCapabilityContract';
 
 const exportDataTypeSchema = z.enum([
   'config',
@@ -122,6 +123,7 @@ const exportSchemaSchema = z
     id: z.string(),
     name: z.string(),
     fields: z.array(z.unknown()),
+    entity_capabilities: z.array(entityCapabilitySchema).optional(),
     groups: z.array(z.unknown()).optional(),
     shared_field_group_links: z.array(z.unknown()).optional(),
     shared_field_groups: z.array(sharedFieldGroupSchema).optional(),

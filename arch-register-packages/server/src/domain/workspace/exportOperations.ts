@@ -297,6 +297,7 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
     id: schema.id,
     name: schema.name,
     fields: schema.fields,
+    entity_capabilities: schema.entity_capabilities ?? [],
     groups: schema.groups ?? [],
     shared_field_group_links: schema.shared_field_group_links ?? [],
     shared_field_groups: resolveSharedFieldGroups(

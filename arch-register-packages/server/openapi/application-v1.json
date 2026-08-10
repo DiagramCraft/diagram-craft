@@ -1065,6 +1065,18 @@
                               "maxLength": 100,
                               "pattern": "^[a-z][a-z0-9-]*$",
                               "description": "Entity capability enabled for this schema"
+                            },
+                            "fieldMappings": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "additionalProperties": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "description": "Integration semantic role IDs mapped to local schema field IDs"
                             }
                           },
                           "required": [
@@ -2210,6 +2222,18 @@
                           "maxLength": 100,
                           "pattern": "^[a-z][a-z0-9-]*$",
                           "description": "Entity capability enabled for this schema"
+                        },
+                        "fieldMappings": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "description": "Integration semantic role IDs mapped to local schema field IDs"
                         }
                       },
                       "required": [
@@ -3348,6 +3372,18 @@
                             "maxLength": 100,
                             "pattern": "^[a-z][a-z0-9-]*$",
                             "description": "Entity capability enabled for this schema"
+                          },
+                          "fieldMappings": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "additionalProperties": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "description": "Integration semantic role IDs mapped to local schema field IDs"
                           }
                         },
                         "required": [
@@ -4555,6 +4591,18 @@
                             "maxLength": 100,
                             "pattern": "^[a-z][a-z0-9-]*$",
                             "description": "Entity capability enabled for this schema"
+                          },
+                          "fieldMappings": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "additionalProperties": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "description": "Integration semantic role IDs mapped to local schema field IDs"
                           }
                         },
                         "required": [
@@ -5708,6 +5756,18 @@
                           "maxLength": 100,
                           "pattern": "^[a-z][a-z0-9-]*$",
                           "description": "Entity capability enabled for this schema"
+                        },
+                        "fieldMappings": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "description": "Integration semantic role IDs mapped to local schema field IDs"
                         }
                       },
                       "required": [
@@ -6875,6 +6935,18 @@
                             "maxLength": 100,
                             "pattern": "^[a-z][a-z0-9-]*$",
                             "description": "Entity capability enabled for this schema"
+                          },
+                          "fieldMappings": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "additionalProperties": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "description": "Integration semantic role IDs mapped to local schema field IDs"
                           }
                         },
                         "required": [
@@ -8291,6 +8363,18 @@
                               "maxLength": 100,
                               "pattern": "^[a-z][a-z0-9-]*$",
                               "description": "Entity capability enabled for this schema"
+                            },
+                            "fieldMappings": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "additionalProperties": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "description": "Integration semantic role IDs mapped to local schema field IDs"
                             }
                           },
                           "required": [
@@ -119904,7 +119988,7 @@
                       "type": "string",
                       "maxLength": 100,
                       "pattern": "^[a-z][a-z0-9-]*$",
-                      "description": "Artifact capability/profile identifier, such as api-specification"
+                      "description": "Artifact profile identifier, such as api-specification"
                     },
                     "kind": {
                       "enum": [

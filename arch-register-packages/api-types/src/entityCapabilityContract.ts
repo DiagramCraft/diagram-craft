@@ -10,7 +10,11 @@ export const entityCapabilityTypeSchema = z
 /** Schema-owned opt-in; capability metadata is resolved from the integration catalog. */
 export const entityCapabilitySchema = z
   .object({
-    type: entityCapabilityTypeSchema.describe('Entity capability enabled for this schema')
+    type: entityCapabilityTypeSchema.describe('Entity capability enabled for this schema'),
+    fieldMappings: z
+      .record(z.string().min(1), z.string().min(1))
+      .optional()
+      .describe('Integration semantic role IDs mapped to local schema field IDs')
   })
   .describe('An entity capability enabled for entities using the schema');
 

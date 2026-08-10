@@ -7,6 +7,7 @@ import type {
   DocumentMetadata
 } from '@arch-register/api-types/documentContract';
 import type { GovernanceWorkflowConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import type {
   EntityTemplate,
   SchemaField,
@@ -99,6 +100,7 @@ export type ExportSchema = {
   id: string;
   name: string;
   fields: SchemaField[];
+  entity_capabilities?: EntityCapability[];
   groups?: SchemaGroup[];
   shared_field_group_links?: SharedFieldGroupLink[];
   shared_field_groups?: ExportSharedFieldGroup[];
