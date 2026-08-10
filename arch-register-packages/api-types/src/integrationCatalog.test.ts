@@ -55,7 +55,10 @@ describe('entity capability field mappings', () => {
     const archived = resolveEntityCapabilityFieldMappings(
       { type: 'api-specification', fieldMappings: { api_version: 'api_version' } },
       definition,
-      [{ id: 'api_type', type: 'text' }, { id: 'api_version', type: 'text', archived: true }]
+      [
+        { id: 'api_type', type: 'text' },
+        { id: 'api_version', type: 'text', archived: true }
+      ]
     );
     expect(archived.issues.some(issue => issue.code === 'archived_target')).toBe(true);
 

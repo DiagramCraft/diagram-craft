@@ -331,5 +331,8 @@ test('artifact registration resolves capability mappings instead of standard fie
       params: { workspace: 'default', entityId: invalidEntityId },
       body: { artifactType: 'api-specification', kind: 'document' }
     })
-  ).rejects.toMatchObject({ code: 'CONFLICT', message: expect.stringContaining('missing_protocol') });
+  ).rejects.toMatchObject({
+    code: 'CONFLICT',
+    message: expect.stringContaining('missing_protocol')
+  });
 });

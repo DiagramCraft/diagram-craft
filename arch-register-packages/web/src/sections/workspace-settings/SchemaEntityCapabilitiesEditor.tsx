@@ -134,9 +134,8 @@ export const SchemaEntityCapabilitiesEditor = ({
                           {definition.fieldRoles.map(role => {
                             const fieldId = resolveEntityCapabilityFieldId(capability, role);
                             const field = fields.find(candidate => candidate.id === fieldId);
-                            const roleIssues = resolution?.issues.filter(
-                              issue => issue.roleId === role.id
-                            ) ?? [];
+                            const roleIssues =
+                              resolution?.issues.filter(issue => issue.roleId === role.id) ?? [];
                             const validOptions = fields.filter(
                               candidate =>
                                 !candidate.archived &&

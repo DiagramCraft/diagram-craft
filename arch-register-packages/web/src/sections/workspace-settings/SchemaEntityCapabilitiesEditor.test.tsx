@@ -43,14 +43,18 @@ describe('SchemaEntityCapabilitiesEditor', () => {
   it('renders custom targets and invalid mapping warnings', () => {
     const markup = renderToStaticMarkup(
       <SchemaEntityCapabilitiesEditor
-        capabilities={[{
-          type: 'api-specification',
-          fieldMappings: { api_type: 'protocol_kind', api_version: 'archived_version' }
-        }]}
-        fields={[
-          { id: 'protocol_kind', name: 'Protocol kind', type: 'text' },
-          { id: 'archived_version', name: 'Archived version', type: 'text', archived: true }
-        ] as SchemaField[]}
+        capabilities={[
+          {
+            type: 'api-specification',
+            fieldMappings: { api_type: 'protocol_kind', api_version: 'archived_version' }
+          }
+        ]}
+        fields={
+          [
+            { id: 'protocol_kind', name: 'Protocol kind', type: 'text' },
+            { id: 'archived_version', name: 'Archived version', type: 'text', archived: true }
+          ] as SchemaField[]
+        }
         canEdit
         onAdd={vi.fn()}
         onUpdate={vi.fn()}

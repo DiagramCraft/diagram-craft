@@ -83,10 +83,7 @@ const makeArtifact = (overrides: Partial<Artifact> = {}): Artifact => ({
   ...overrides
 });
 
-const makeEntity = (
-  apiType: string,
-  extra: Record<string, unknown> = {}
-): EntityRecord =>
+const makeEntity = (apiType: string, extra: Record<string, unknown> = {}): EntityRecord =>
   ({
     canView: true,
     canEdit: true,

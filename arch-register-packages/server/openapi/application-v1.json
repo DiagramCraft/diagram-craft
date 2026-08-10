@@ -119988,7 +119988,7 @@
                       "type": "string",
                       "maxLength": 100,
                       "pattern": "^[a-z][a-z0-9-]*$",
-                      "description": "Artifact capability/profile identifier, such as api-specification"
+                      "description": "Artifact profile identifier, such as api-specification"
                     },
                     "kind": {
                       "enum": [
