@@ -636,7 +636,6 @@ export const EntityApiSection = ({
     () => selectApiSpecificationArtifacts(artifactsQuery.data?.artifacts ?? []),
     [artifactsQuery.data?.artifacts]
   );
-  const capability = entityCapability ?? { type: 'api-specification' };
   const artifactIds = useMemo(() => apiArtifacts.map(artifact => artifact.id), [apiArtifacts]);
   const revisionQueries = useApiSpecificationRevisionLists(
     workspaceId,
