@@ -1,41 +1,23 @@
-import { createDatabase } from './factory';
 import {
   seedEntities,
   seedCollectionEntities,
   seedCollections,
-  seedAiConfig,
   seedAssessments,
-  seedGlobalRoleAssignments,
-  seedLifecycleStates,
-  seedProjectEntityTypes,
-  seedAssessmentTypes,
-  seedLocalUsers,
-  seedOwners,
   seedProjectFiles,
   seedAdrDocuments,
   seedProjects,
   seedMilestones,
   seedChangeCases,
   seedProjectEntities,
-  seedSavedViews,
-  seedEnums,
   seedNotificationEvents,
   seedRelationSchemas,
   seedRelations,
-  seedSchemas,
-  seedSupportedCurrencies,
-  seedSharedFieldGroups,
-  seedTeamAssignments,
   seedUserWatches,
   seedWikiPageBodies,
-  seedWorkspaceDashboards,
-  seedWorkspaceMembers,
-  seedWorkspaces
+  seedWorkspaceDashboards
 } from './seedData';
-import { seededTestPassword, seededWorkspaces } from './seedFixtures';
+import { seededWorkspaces } from './seedFixtures';
 import { decodeRefs } from '../types';
-import { hashPassword } from '../utils/password';
-import { UserDbCreate } from './database';
 import { ContainmentField, ReferenceField } from '@arch-register/api-types/schemaContract';
 import { savedViewQuerySchema } from '@arch-register/api-types/viewContract';
 import { listAllCatalogEntities } from '../domain/catalog/entityLoader';
@@ -45,8 +27,19 @@ import { buildDefaultAdrDocuments } from '../domain/document/documentDefaults';
 import { randomUUID } from 'node:crypto';
 import { recalculateEntityDerivedFields } from '../domain/derived/derivedRecalculation';
 import type { AiConfigInputDbUpsert } from '../domain/ai/db/aiDatabase';
+import type { DatabaseAdapter } from './database';
+import {
+  seedAiConfiguration,
+  seedBootstrapUsers,
+  seedCatalogDefinitions,
+  seedCatalogEntities,
+  seedCatalogViews,
+  seedPublicIdCounters,
+  seedWorkspaceBase,
+  seedWorkspaceConfiguration
+} from './seedPhases';
 
-type Database = Awaited<ReturnType<typeof createDatabase>>;
+type Database = DatabaseAdapter;
 
 export type BootstrapSeedOptions = {
   aiConfig?: AiConfigInputDbUpsert;
@@ -159,56 +152,6 @@ export const validateBootstrapSeed = async (db: Database) => {
   );
 };
 
-const seedBootstrapUsers = async (db: Database) => {
-  const passwordHash = await hashPassword(seededTestPassword);
-  const now = new Date();
-
-  for (const user of seedLocalUsers) {
-    await db.auth.createUser({
-      id: user.id,
-      user_id: user.user_id,
-      email: user.email,
-      display_name: user.display_name,
-      auth_provider: 'local',
-      password_hash: passwordHash,
-      oidc_issuer: null,
-      oidc_subject: null,
-      is_active: true,
-      color: user.color,
-      created_at: now,
-      updated_at: now,
-      last_login_at: null
-    } as UserDbCreate);
-  }
-
-  for (const workspace of seedWorkspaces) {
-    await db.workspace.replaceTeamAssignments(
-      workspace.id,
-      seedTeamAssignments.filter(assignment => assignment.workspace === workspace.id)
-    );
-  }
-
-  const rolesByUser = new Map<string, Array<(typeof seedGlobalRoleAssignments)[number]['role']>>();
-  for (const assignment of seedGlobalRoleAssignments) {
-    const current = rolesByUser.get(assignment.user_id) ?? [];
-    current.push(assignment.role);
-    rolesByUser.set(assignment.user_id, current);
-  }
-
-  for (const user of seedLocalUsers) {
-    await db.auth.replaceGlobalRoleAssignments(user.id, rolesByUser.get(user.id) ?? [], now);
-  }
-
-  for (const member of seedWorkspaceMembers) {
-    await db.workspace.setWorkspaceMemberRole(
-      member.workspace,
-      member.user_id,
-      member.role,
-      member.created_at
-    );
-  }
-};
-
 const seedBootstrapWatchesAndNotifications = async (db: Database) => {
   for (const watch of seedUserWatches) {
     await db.watch.createWatch({
@@ -264,67 +207,15 @@ export const seedBootstrapData = async (
   storage: StorageAdapter,
   options: BootstrapSeedOptions = {}
 ) => {
-  const aiConfig = options.aiConfig ?? seedAiConfig;
   const syncTimestamp = new Date();
-  for (const workspace of seedWorkspaces) {
-    await db.workspace.createWorkspace(workspace);
-    await db.workspace.registerPublicIdPrefix(
-      workspace.short_code,
-      'workspace',
-      workspace.id,
-      workspace.created_at
-    );
-  }
-  for (const workspace of seedWorkspaces) {
-    const currencies = seedSupportedCurrencies.filter(
-      currency => currency.workspace === workspace.id
-    );
-    await db.workspace.replaceSupportedCurrencies(workspace.id, currencies, currencies[0]!.code);
-  }
-  for (const workspace of seedWorkspaces) {
-    await db.workspace.replaceLifecycleStates(
-      workspace.id,
-      seedLifecycleStates.filter(state => state.workspace === workspace.id)
-    );
-    await db.workspace.replaceProjectEntityTypes(
-      workspace.id,
-      seedProjectEntityTypes.filter(t => t.workspace === workspace.id)
-    );
-    await db.workspace.replaceAssessmentTypes(
-      workspace.id,
-      seedAssessmentTypes.filter(type => type.workspace === workspace.id)
-    );
-    await db.workspace.replaceTeams(
-      workspace.id,
-      seedOwners.filter(owner => owner.workspace === workspace.id)
-    );
-  }
-  for (const e of seedEnums) {
-    await db.catalog.createEnum(e);
-  }
-  for (const fieldGroup of seedSharedFieldGroups) {
-    await db.catalog.createSharedFieldGroup(fieldGroup);
-  }
-  for (const schema of seedSchemas) {
-    await db.catalog.createSchema(schema);
-    if (schema.key_prefix) {
-      await db.workspace.registerPublicIdPrefix(
-        schema.key_prefix,
-        'schema',
-        schema.id,
-        schema.created_at
-      );
-    }
-  }
-  for (const workspace of seedWorkspaces) {
-    await db.ai.upsertAiConfig(workspace.id, aiConfig);
-  }
+  await seedWorkspaceBase(db);
+  await seedWorkspaceConfiguration(db);
+  await seedCatalogDefinitions(db);
+  await seedAiConfiguration(db, options.aiConfig);
   for (const project of seedProjects) {
     await db.project.createProject(project);
   }
-  for (const entity of seedEntities) {
-    await db.catalog.createEntity(entity);
-  }
+  await seedCatalogEntities(db, seedEntities);
   for (const relationSchema of seedRelationSchemas) {
     await db.relation.createRelationSchema(relationSchema);
   }
@@ -342,22 +233,8 @@ export const seedBootstrapData = async (
     await db.project.addProjectEntity(link);
   }
 
-  const maxByPrefix = new Map<string, number>();
-  for (const item of [...seedProjects, ...seedEntities]) {
-    if (!item.public_id) continue;
-    const parts = item.public_id.split('-');
-    const prefix = parts.slice(0, -1).join('-');
-    const seq = parseInt(parts.at(-1) ?? '0', 10);
-    if (prefix && !Number.isNaN(seq)) {
-      maxByPrefix.set(prefix, Math.max(maxByPrefix.get(prefix) ?? 0, seq));
-    }
-  }
-  for (const [prefix, max] of maxByPrefix) {
-    await db.workspace.setPublicIdNextNumber(prefix, max + 1, syncTimestamp);
-  }
-  for (const view of seedSavedViews) {
-    await db.view.createSavedView(view);
-  }
+  await seedPublicIdCounters(db, [...seedProjects, ...seedEntities], syncTimestamp);
+  await seedCatalogViews(db);
   for (const dashboard of seedWorkspaceDashboards) {
     const created = await db.dashboard.create({
       id: dashboard.id,
