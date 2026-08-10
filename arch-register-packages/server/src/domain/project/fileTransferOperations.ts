@@ -3,14 +3,20 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { runAuthorizedOperation } from '../operation';
-import { buildApiAuthCtx, requireProjectAccess } from '../auth/authorization';
+import { buildApiAuthCtx } from '../auth/authorization';
 import { writeAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
-import { folderFromPath } from './contentFileHelpers';
 import { toApiProjectFile } from './projectHelpers';
 import type { ContentNodeDbResult } from './db/projectDatabase';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
-import type { ContentScopeResolver } from './contentScope';
+import {
+  contentNodeScopeFields,
+  contentParentId,
+  ENTITY_SCOPE,
+  PROJECT_SCOPE,
+  WORKSPACE_SCOPE,
+  type ContentScopeResolver
+} from './contentScope';
 import { coordinateContentWrite } from './contentWriteCoordinator';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import {
@@ -37,10 +43,6 @@ export const uploadContentFile = async (
   const nodes = await resolved.listNodes(db, ws);
   assertContentPathWritable(nodes, filePath);
   const existingFile = nodes.find(node => node.path === filePath && node.type === 'file');
-  const folderPath = folderFromPath(filePath);
-  const parentId = folderPath
-    ? (nodes.find(node => node.path === folderPath && node.type === 'folder')?.id ?? null)
-    : null;
   const timestamp = new Date();
   const nodeId = existingFile?.id ?? randomUUID();
   let row!: ContentNodeDbResult;
@@ -64,9 +66,8 @@ export const uploadContentFile = async (
       row = await tx.project.upsertContentNode({
         id: nodeId,
         workspace: ws,
-        project_id: resolved.projectId,
-        entity_id: resolved.entityId,
-        parent_id: parentId,
+        ...contentNodeScopeFields(resolved),
+        parent_id: contentParentId(nodes, filePath),
         path: filePath,
         name: originalFilename,
         type: 'file',
@@ -103,6 +104,41 @@ export const uploadContentFile = async (
   return toApiProjectFile(row);
 };
 
+export const downloadContentFile = async (
+  scope: ContentScopeResolver,
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  identifier: string | undefined,
+  filePath: string,
+  event: AuthenticatedEvent,
+  fallback: string
+): Promise<{ buffer: Buffer; mimeType: string | null; originalFilename: string | null }> =>
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: fallback,
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
+      if (scope.kind !== 'project') requireNonProjectContentAccess(authCtx, 'read');
+      const resolved = await scope.resolve(
+        db,
+        ws,
+        identifier,
+        authCtx,
+        'read',
+        scope.kind === 'project'
+      );
+      const file = await resolved.findNodeByPath(db, ws, filePath);
+      httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
+      httpAssert.true(file.type === 'file', { status: 400, message: 'Node is not a binary file' });
+
+      const buffer = await storage.read(ws, resolved.storageId, file.id);
+      return { buffer, mimeType: file.mime_type, originalFilename: file.original_filename };
+    }
+  });
+
 export const downloadProjectFile = async (
   db: DatabaseAdapter,
   storage: StorageAdapter,
@@ -111,26 +147,16 @@ export const downloadProjectFile = async (
   filePath: string,
   event: AuthenticatedEvent
 ): Promise<{ buffer: Buffer; mimeType: string | null; originalFilename: string | null }> => {
-  return runAuthorizedOperation({
-    db: db,
-    event: event,
-    scope: { kind: 'workspace', workspace: workspace },
-    fallback: 'Failed to download file',
-    dbErrorMessages: projectDbErrorMessages,
-    operation: async ({ ws, authCtx }) => {
-      const project = await db.project.getProject(ws, id);
-      httpAssert.present(project, { status: 404, message: `Project '${id}' not found` });
-      requireProjectAccess(authCtx, project.owner);
-      const projectUuid = project.id;
-
-      const file = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
-      httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
-      httpAssert.true(file.type === 'file', { status: 400, message: 'Node is not a binary file' });
-
-      const buffer = await storage.read(ws, projectUuid, file.id);
-      return { buffer, mimeType: file.mime_type, originalFilename: file.original_filename };
-    }
-  });
+  return downloadContentFile(
+    PROJECT_SCOPE,
+    db,
+    storage,
+    workspace,
+    id,
+    filePath,
+    event,
+    'Failed to download file'
+  );
 };
 
 export const downloadEntityFile = async (
@@ -141,27 +167,16 @@ export const downloadEntityFile = async (
   filePath: string,
   event: AuthenticatedEvent
 ): Promise<{ buffer: Buffer; mimeType: string | null; originalFilename: string | null }> => {
-  return runAuthorizedOperation({
-    db: db,
-    event: event,
-    scope: { kind: 'workspace', workspace: workspace },
-    fallback: 'Failed to download entity file',
-    dbErrorMessages: projectDbErrorMessages,
-    operation: async ({ ws, authCtx }) => {
-      requireNonProjectContentAccess(authCtx, 'read');
-      const entity = await db.catalog.getEntity(ws, entityId);
-      httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
-      const entityUuid = entity.id;
-
-      const entityNodes = await db.project.listEntityContentNodes(ws, entityUuid);
-      const file = entityNodes.find(n => n.path === filePath) ?? null;
-      httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
-      httpAssert.true(file.type === 'file', { status: 400, message: 'Node is not a binary file' });
-
-      const buffer = await storage.read(ws, entityUuid, file.id);
-      return { buffer, mimeType: file.mime_type, originalFilename: file.original_filename };
-    }
-  });
+  return downloadContentFile(
+    ENTITY_SCOPE,
+    db,
+    storage,
+    workspace,
+    entityId,
+    filePath,
+    event,
+    'Failed to download entity file'
+  );
 };
 
 export const downloadWorkspaceFile = async (
@@ -171,21 +186,14 @@ export const downloadWorkspaceFile = async (
   filePath: string,
   event: AuthenticatedEvent
 ): Promise<{ buffer: Buffer; mimeType: string | null; originalFilename: string | null }> => {
-  return runAuthorizedOperation({
-    db: db,
-    event: event,
-    scope: { kind: 'workspace', workspace: workspace },
-    fallback: 'Failed to download workspace file',
-    dbErrorMessages: projectDbErrorMessages,
-    operation: async ({ ws, authCtx }) => {
-      requireNonProjectContentAccess(authCtx, 'read');
-      const wsNodes = await db.project.listWorkspaceContentNodes(ws);
-      const file = wsNodes.find(n => n.path === filePath) ?? null;
-      httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
-      httpAssert.true(file.type === 'file', { status: 400, message: 'Node is not a binary file' });
-
-      const buffer = await storage.read(ws, ws, file.id);
-      return { buffer, mimeType: file.mime_type, originalFilename: file.original_filename };
-    }
-  });
+  return downloadContentFile(
+    WORKSPACE_SCOPE,
+    db,
+    storage,
+    workspace,
+    undefined,
+    filePath,
+    event,
+    'Failed to download workspace file'
+  );
 };

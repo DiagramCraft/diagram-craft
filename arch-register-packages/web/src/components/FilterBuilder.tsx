@@ -129,7 +129,8 @@ type Props = {
   enums: WorkspaceEnum[];
   selectedSchemaId?: string | null;
   joinedAssessment?: Assessment | null;
-  // Resolves a field group's access for the current caller — pass `useFieldGroupAccess(workspaceId)`.
+  // Resolves a field group's access for the current caller — pass
+  // `useWorkspaceAuthorization(workspaceId).getFieldGroupAccess`.
   // Defaults to unrestricted (matches the hook's own no-context fallback) so this stays a pure,
   // presentational component usable without an auth context (e.g. in Storybook).
   getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;

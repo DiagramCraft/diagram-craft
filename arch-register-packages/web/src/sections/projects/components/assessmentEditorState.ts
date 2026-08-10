@@ -14,7 +14,10 @@ import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspace
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { useFieldGroupAccess } from '../../../auth/useFieldGroupAccess';
+import {
+  useWorkspaceAuthorization,
+  type WorkspaceAuthorization
+} from '../../../auth/WorkspaceAuthorizationContext';
 import { toFieldId } from '../../../utils/fieldId';
 import { useEntityCountsBySchema } from '../../../hooks/useEntities';
 import {
@@ -76,7 +79,7 @@ export type AssessmentEditorController = {
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];
   assessmentTypes: AssessmentType[];
-  getFieldGroupAccess: ReturnType<typeof useFieldGroupAccess>;
+  getFieldGroupAccess: WorkspaceAuthorization['getFieldGroupAccess'];
   teamLabels: Map<string, string>;
   allowedScopeConditionFields: Set<string>;
   previewCount: number;
@@ -176,7 +179,7 @@ export const useAssessmentEditorController = ({
   schemas: EntitySchema[];
 }): AssessmentEditorController => {
   const { workspaceSlug, lifecycleStates, teams, assessmentTypes } = useWorkspaceContext();
-  const getFieldGroupAccess = useFieldGroupAccess(workspaceSlug);
+  const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceSlug);
   const isNew = !assessment;
   const [draft, setDraft] = useState<AssessmentEditorDraft>(() =>
     createInitialAssessmentEditorDraft(assessment)

@@ -7,7 +7,7 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { ApiError } from '../lib/http';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
-import { usePermissions } from '../auth/PermissionContext';
+import { useWorkspaceAuthorization } from '../auth/WorkspaceAuthorizationContext';
 import { ColorPicker } from '../components/ColorPicker';
 import { useCreateProject } from '../hooks/useProjects';
 import styles from './AddEntityDialog.module.css';
@@ -36,7 +36,7 @@ export const AddProjectDialog = ({
   workspaceId,
   teams
 }: AddProjectDialogProps) => {
-  const { canCreateProject } = usePermissions();
+  const { canCreateProject } = useWorkspaceAuthorization(workspaceId);
   const createProjectMutation = useCreateProject(workspaceId);
   const [name, setName] = useState('');
   const [description, setDescription] = useState('');
@@ -49,10 +49,10 @@ export const AddProjectDialog = ({
   const nameRef = useRef<HTMLInputElement>(null);
   useAutoFocus(nameRef, { enabled: open });
   const creatableTeams = useMemo(
-    () => teams.filter(team => canCreateProject(workspaceId, team.id)),
-    [canCreateProject, teams, workspaceId]
+    () => teams.filter(team => canCreateProject(team.id)),
+    [canCreateProject, teams]
   );
-  const canCreateWithoutOwner = canCreateProject(workspaceId, null);
+  const canCreateWithoutOwner = canCreateProject(null);
 
   useEffect(() => {
     if (open) {

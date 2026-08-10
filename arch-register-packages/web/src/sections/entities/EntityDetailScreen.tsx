@@ -34,7 +34,7 @@ import {
   entityDetailRoute
 } from '../../routes/publicObjectRoutes';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import { useWorkspacePermissions } from '../../auth/useWorkspacePermissions';
+import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
 import { EntitySummary } from '@arch-register/api-types/entityContract';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { EntityContentView } from './EntityContentView';
@@ -73,7 +73,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     permissions
   } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
-  const { canOverrideEntityApproval } = useWorkspacePermissions(workspaceId);
+  const { canOverrideEntityApproval } = useWorkspaceAuthorization(workspaceId);
   const canViewAudit = permissions.canViewAudit;
   const contentFolder = folder ?? null;
 

@@ -28,7 +28,7 @@ import {
 } from './mapMetricPresentation';
 import { textColorForFill } from './mapColorScales';
 import { useMapMetricRollup } from './useMapMetricRollup';
-import { useFieldGroupAccess } from '../../../auth/useFieldGroupAccess';
+import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { MapLegend } from './MapLegend';
 import { MapConfigControls } from './MapConfigControls';
 import { MapTreeContent } from './MapTreeContent';
@@ -192,7 +192,7 @@ export const MapView = ({
       }
     : null;
   const metricSourceSchema = metricTerminalSchema;
-  const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
+  const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
   const numeratorConditionPopoverRef = useRef<PopoverActions | null>(null);
   const metricSourceOptions = useMemo(
     () =>

@@ -12,7 +12,13 @@ import type { ContentNodeDbResult, MarkdownRevisionDbResult } from './db/project
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import type { ContentScopeResolver } from './contentScope';
-import { ENTITY_SCOPE, PROJECT_SCOPE, WORKSPACE_SCOPE } from './contentScope';
+import {
+  contentNodeScopeFields,
+  contentParentId,
+  ENTITY_SCOPE,
+  PROJECT_SCOPE,
+  WORKSPACE_SCOPE
+} from './contentScope';
 import type {
   MarkdownContent,
   MarkdownRevisionDetail,
@@ -38,12 +44,7 @@ import {
 
 import { coordinateContentWrite } from './contentWriteCoordinator';
 import { scheduleMetadataGenerationForDocument } from '../document/documentMetadataGenerationJob';
-import {
-  listSiblingNodes,
-  projectDbErrorMessages,
-  storageScope,
-  assertContentPathWritable
-} from './projectOperationHelpers';
+import { projectDbErrorMessages, assertContentPathWritable } from './projectOperationHelpers';
 
 import {
   toApiMarkdownRevisionSummary,
@@ -53,7 +54,7 @@ import {
   metadataEquals,
   outdateGeneratedMetadata,
   resolveDocumentMetadata,
-  requireMarkdownNodeAccess,
+  resolveMarkdownNodeScope,
   isMarkdownNode,
   readMarkdownBody
 } from './markdownOperationHelpers';
@@ -78,9 +79,6 @@ const createScopedMarkdownDoc = async (
   const nodes = await resolved.listNodes(db, ws);
   const filePath = folder ? `${folder}/${name}.md` : `${name}.md`;
   assertContentPathWritable(nodes, filePath);
-  const parentId = folder
-    ? (nodes.find(node => node.path === folder && node.type === 'folder')?.id ?? null)
-    : null;
   const content = Buffer.from(EMPTY_MARKDOWN_BODY);
   const timestamp = new Date();
   const nodeId = randomUUID();
@@ -104,9 +102,8 @@ const createScopedMarkdownDoc = async (
       row = await tx.project.upsertContentNode({
         id: nodeId,
         workspace: ws,
-        project_id: resolved.projectId,
-        entity_id: resolved.entityId,
-        parent_id: parentId,
+        ...contentNodeScopeFields(resolved),
+        parent_id: contentParentId(nodes, filePath),
         path: filePath,
         name,
         type: 'markdown',
@@ -188,9 +185,6 @@ export const saveNewMarkdownContent = async (
       const nodes = await resolved.listNodes(db, ws);
       const filePath = input.folder ? `${input.folder}/${input.name}.md` : `${input.name}.md`;
       assertContentPathWritable(nodes, filePath);
-      const parentId = input.folder
-        ? (nodes.find(node => node.path === input.folder && node.type === 'folder')?.id ?? null)
-        : null;
       const documentType = input.document_type_id
         ? await db.document.getDocumentType(ws, input.document_type_id)
         : null;
@@ -226,9 +220,8 @@ export const saveNewMarkdownContent = async (
           row = await tx.project.upsertContentNode({
             id: nodeId,
             workspace: ws,
-            project_id: resolved.projectId,
-            entity_id: resolved.entityId,
-            parent_id: parentId,
+            ...contentNodeScopeFields(resolved),
+            parent_id: contentParentId(nodes, filePath),
             path: filePath,
             name: input.name,
             type: 'markdown',
@@ -379,10 +372,10 @@ export const getMarkdownContent = async (
         status: 400,
         message: 'Node is not a markdown document'
       });
-      await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
-      const siblingNodes = await listSiblingNodes(db, ws, node);
+      const resolved = await resolveMarkdownNodeScope(db, ws, authCtx, node, 'read');
+      const siblingNodes = await resolved.listNodes(db, ws);
       const attachments = getMarkdownAttachmentNodes(siblingNodes, node.id).map(toApiProjectFile);
-      const content = await storage.read(ws, storageScope(ws, node), node.id);
+      const content = await storage.read(ws, resolved.storageId, node.id);
       const document = await getDocumentState(db, ws, node);
       return {
         body: readMarkdownBody(content),
@@ -444,7 +437,7 @@ export const saveMarkdownContent = async (
         status: 400,
         message: 'Node is not a markdown document'
       });
-      await requireMarkdownNodeAccess(db, ws, authCtx, node, 'edit');
+      const resolved = await resolveMarkdownNodeScope(db, ws, authCtx, node, 'edit');
       const currentDocument = await getDocumentState(db, ws, node);
       const nextDocumentTypeId =
         documentTypeId === undefined ? currentDocument.documentTypeId : documentTypeId;
@@ -512,7 +505,7 @@ export const saveMarkdownContent = async (
       const content = Buffer.from(JSON.stringify({ body }), 'utf8');
       const timestamp = new Date();
       const nextName = name?.trim() ? name.trim() : node.name;
-      const previousContent = await storage.read(ws, storageScope(ws, node), node.id);
+      const previousContent = await storage.read(ws, resolved.storageId, node.id);
       const bodyChanged = readMarkdownBody(previousContent) !== body;
       const metadataChanged = !metadataEquals(currentDocument.metadata, nextMetadata);
       const effectiveChange = bodyChanged || metadataChanged;
@@ -530,14 +523,14 @@ export const saveMarkdownContent = async (
         db,
         storage,
         operation: 'update-markdown',
-        scope: node.project_id ? 'project' : node.entity_id ? 'entity' : 'workspace',
+        scope: resolved.kind,
         nodeIds: [node.id],
         storageChanges: bodyChanged
           ? [
               {
                 type: 'write',
                 workspace: ws,
-                storageId: storageScope(ws, node),
+                storageId: resolved.storageId,
                 nodeId: node.id,
                 content
               }
@@ -547,8 +540,7 @@ export const saveMarkdownContent = async (
           row = await tx.project.upsertContentNode({
             id: node.id,
             workspace: ws,
-            project_id: node.project_id,
-            entity_id: node.entity_id,
+            ...contentNodeScopeFields(resolved),
             parent_id: node.parent_id,
             path: node.path,
             name: nextName,
@@ -696,7 +688,7 @@ export const listMarkdownRevisions = async (
         status: 400,
         message: 'Node is not a markdown document'
       });
-      await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
+      await resolveMarkdownNodeScope(db, ws, authCtx, node, 'read');
       const revisions = await db.project.listMarkdownRevisions(ws, node.id);
       return revisions.map(toApiMarkdownRevisionSummary);
     }
@@ -722,7 +714,7 @@ export const listMarkdownWorkflowHistory = async (
         status: 400,
         message: 'Node is not a markdown document'
       });
-      await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
+      await resolveMarkdownNodeScope(db, ws, authCtx, node, 'read');
       const document = await getDocumentState(db, ws, node);
       if (!document.documentType) return [];
       return listDocumentWorkflowHistory(db, ws, nodeId, document.documentType, event);
@@ -749,7 +741,7 @@ export const getMarkdownRevision = async (
         status: 400,
         message: 'Node is not a markdown document'
       });
-      await requireMarkdownNodeAccess(db, ws, authCtx, node, 'read');
+      await resolveMarkdownNodeScope(db, ws, authCtx, node, 'read');
       const revision = await db.project.getMarkdownRevision(ws, node.id, revisionId);
       httpAssert.present(revision, { status: 404, message: `Revision '${revisionId}' not found` });
       return toApiMarkdownRevisionDetail(revision);
@@ -780,7 +772,7 @@ export const restoreMarkdownRevision = async (
         status: 400,
         message: 'Node is not a markdown document'
       });
-      await requireMarkdownNodeAccess(db, ws, authCtx, node, 'edit');
+      const resolved = await resolveMarkdownNodeScope(db, ws, authCtx, node, 'edit');
       const revision = await db.project.getMarkdownRevision(ws, node.id, revisionId);
       httpAssert.present(revision, { status: 404, message: `Revision '${revisionId}' not found` });
       const currentDocument = await getDocumentState(db, ws, node);
@@ -804,7 +796,7 @@ export const restoreMarkdownRevision = async (
       const content = Buffer.from(JSON.stringify({ body: revision.body }), 'utf8');
       const timestamp = new Date();
       const nextName = revision.title?.trim() ? revision.title.trim() : node.name;
-      const previousContent = await storage.read(ws, storageScope(ws, node), node.id);
+      const previousContent = await storage.read(ws, resolved.storageId, node.id);
       const effectiveChange =
         readMarkdownBody(previousContent) !== revision.body ||
         !metadataEquals(currentDocument.metadata, resolvedMetadata.values);
@@ -814,13 +806,13 @@ export const restoreMarkdownRevision = async (
         db,
         storage,
         operation: 'restore-markdown',
-        scope: node.project_id ? 'project' : node.entity_id ? 'entity' : 'workspace',
+        scope: resolved.kind,
         nodeIds: [node.id],
         storageChanges: [
           {
             type: 'write',
             workspace: ws,
-            storageId: storageScope(ws, node),
+            storageId: resolved.storageId,
             nodeId: node.id,
             content
           }
@@ -829,8 +821,7 @@ export const restoreMarkdownRevision = async (
           row = await tx.project.upsertContentNode({
             id: node.id,
             workspace: ws,
-            project_id: node.project_id,
-            entity_id: node.entity_id,
+            ...contentNodeScopeFields(resolved),
             parent_id: node.parent_id,
             path: node.path,
             name: nextName,

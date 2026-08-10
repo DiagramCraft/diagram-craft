@@ -5,7 +5,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { runAuthorizedOperation } from '../operation';
 import { getDiagramCommentCounts } from '../diagram/commentCounts';
 import { getDiagramEntityRefs } from '../diagram/diagramEntityRefs';
-import { buildApiAuthCtx, requireProjectAccess, requireProjectAction } from '../auth/authorization';
+import { buildApiAuthCtx } from '../auth/authorization';
 import { writeAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import {
   fileNameFromPath,
@@ -23,7 +23,14 @@ import { HTTPError } from 'h3';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 
-import { ENTITY_SCOPE, WORKSPACE_SCOPE } from './contentScope';
+import {
+  contentNodeScopeFields,
+  contentParentId,
+  ENTITY_SCOPE,
+  PROJECT_SCOPE,
+  resolveContentScopeForNode,
+  WORKSPACE_SCOPE
+} from './contentScope';
 import type { ContentScopeResolver } from './contentScope';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
@@ -31,8 +38,8 @@ import { coordinateContentWrite } from './contentWriteCoordinator';
 import {
   projectDbErrorMessages,
   reloadContentNode,
-  requireNonProjectContentAccess,
   syncDiagramContentMetadata,
+  requireNonProjectContentAccess,
   assertContentPathWritable,
   assertContentNodeWritable
 } from './projectOperationHelpers';
@@ -84,10 +91,6 @@ const writeScopedDiagram = async (
   const nodes = await resolved.listNodes(db, ws);
   assertContentPathWritable(nodes, filePath);
   const existing = nodes.find(node => node.path === filePath && node.type === 'diagram');
-  const folderPath = folderFromPath(filePath);
-  const parentId = folderPath
-    ? (nodes.find(node => node.path === folderPath && node.type === 'folder')?.id ?? null)
-    : null;
   const content = Buffer.from(JSON.stringify(body));
   const doc = body as unknown as SerializedDiagramDocument;
   const timestamp = new Date();
@@ -114,9 +117,8 @@ const writeScopedDiagram = async (
       await tx.project.upsertContentNode({
         id: nodeId,
         workspace: ws,
-        project_id: resolved.projectId,
-        entity_id: resolved.entityId,
-        parent_id: parentId,
+        ...contentNodeScopeFields(resolved),
+        parent_id: contentParentId(nodes, filePath),
         path: filePath,
         name: displayNameFromBody(body, filePath),
         size_bytes: content.length,
@@ -190,19 +192,33 @@ export const createEntityFile = async (
   return writeScopedDiagram(ENTITY_SCOPE, db, storage, workspace, entityId, filePath, body, event);
 };
 
-export const getFileContent = async (
+const resolveLegacyContentScope = async (
+  db: DatabaseAdapter,
+  ws: string,
+  identifier: string
+): Promise<ContentScopeResolver> => {
+  return (await db.project.getProject(ws, identifier)) ? PROJECT_SCOPE : ENTITY_SCOPE;
+};
+
+type ContentScopeSelection =
+  | ContentScopeResolver
+  | ((db: DatabaseAdapter, ws: string) => Promise<ContentScopeResolver>);
+
+const readScopedDiagram = async (
+  scopeSelection: ContentScopeSelection,
   db: DatabaseAdapter,
   storage: StorageAdapter,
   workspace: string,
-  id: string,
+  identifier: string | undefined,
   filePath: string,
-  event: AuthenticatedEvent
-): Promise<Record<string, unknown>> => {
-  return runAuthorizedOperation({
+  event: AuthenticatedEvent,
+  fallback: string
+): Promise<Record<string, unknown>> =>
+  runAuthorizedOperation({
     db: db,
     event: event,
     scope: { kind: 'workspace', workspace: workspace },
-    fallback: 'Failed to read file',
+    fallback: fallback,
     dbErrorMessages: projectDbErrorMessages,
     onError: error => {
       if (
@@ -219,33 +235,47 @@ export const getFileContent = async (
       }
     },
     operation: async ({ ws, authCtx }) => {
-      // Try to get as project first
-      const project = await db.project.getProject(ws, id);
-
-      let file: { id: string; path: string } | null = null;
-      let storageId = id;
-
-      if (project) {
-        // It's a project - use normal project file lookup
-        requireProjectAccess(authCtx, project.owner);
-        storageId = project.id;
-        file = await db.project.getContentNodeByPath(ws, project.id, filePath);
-      } else {
-        // Not a project - try as entity content (resolve public id → UUID)
-        const entity = await db.catalog.getEntity(ws, id);
-        if (entity) {
-          const entityNodes = await db.project.listEntityContentNodes(ws, entity.id);
-          file = entityNodes.find(n => n.path === filePath && n.type === 'diagram') ?? null;
-          storageId = entity.id; // entity UUID is used as storage path
-        }
-      }
-
+      const scope =
+        typeof scopeSelection === 'function' ? await scopeSelection(db, ws) : scopeSelection;
+      if (scope.kind !== 'project') requireNonProjectContentAccess(authCtx, 'read');
+      const resolved = await scope.resolve(
+        db,
+        ws,
+        identifier,
+        authCtx,
+        'read',
+        scope.kind === 'project'
+      );
+      const file = await resolved.findNodeByPath(db, ws, filePath);
       httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
+      httpAssert.true(file.type === 'diagram', {
+        status: 400,
+        message: 'Node is not a diagram file'
+      });
 
-      const content = await storage.read(ws, storageId, file.id);
+      const content = await storage.read(ws, resolved.storageId, file.id);
       return JSON.parse(content.toString('utf8'));
     }
   });
+
+export const getFileContent = async (
+  db: DatabaseAdapter,
+  storage: StorageAdapter,
+  workspace: string,
+  id: string,
+  filePath: string,
+  event: AuthenticatedEvent
+): Promise<Record<string, unknown>> => {
+  return readScopedDiagram(
+    (scopeDb, ws) => resolveLegacyContentScope(scopeDb, ws, id),
+    db,
+    storage,
+    workspace,
+    id,
+    filePath,
+    event,
+    'Failed to read file'
+  );
 };
 
 export const saveFile = async (
@@ -263,113 +293,9 @@ export const saveFile = async (
     scope: { kind: 'workspace', workspace: workspace },
     fallback: 'Failed to write file',
     dbErrorMessages: projectDbErrorMessages,
-    operation: async ({ ws, authCtx }) => {
-      const content = Buffer.from(JSON.stringify(body), 'utf8');
-      const displayName = displayNameFromBody(body, filePath);
-
-      const project = await db.project.getProject(ws, id);
-
-      // If not a project, treat as entity diagram
-      if (!project) {
-        return await createEntityFile(db, storage, workspace, id, filePath, body, event);
-      }
-      const projectUuid = project.id;
-
-      requireProjectAction(
-        authCtx,
-        project.owner,
-        'edit_project',
-        'You do not have permission to modify this project'
-      );
-
-      const existingFile = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
-      if (existingFile) assertContentNodeWritable(existingFile);
-      assertContentPathWritable(await db.project.listContentNodes(ws, projectUuid), filePath);
-      const isUpdate = !!existingFile;
-
-      const fileLastSlash = filePath.lastIndexOf('/');
-      let fileParentId: string | null = null;
-      if (fileLastSlash !== -1) {
-        const folderPath = filePath.substring(0, fileLastSlash);
-        const parentFolder = await db.project.getContentNodeByPath(ws, projectUuid, folderPath);
-        fileParentId = parentFolder?.id ?? null;
-      }
-
-      // TODO: We should add validation here
-      const doc = body as unknown as SerializedDiagramDocument;
-
-      const timestamp = new Date();
-      const commentCounts = getDiagramCommentCounts(doc);
-      const nodeId = existingFile?.id ?? randomUUID();
-      const entityRefs = getDiagramEntityRefs(doc);
-      let savedRow!: ContentNodeDbResult;
-      await coordinateContentWrite({
-        db,
-        storage,
-        operation: isUpdate ? 'update' : 'create',
-        scope: 'project',
-        nodeIds: [nodeId],
-        storageChanges: [{ type: 'write', workspace: ws, storageId: projectUuid, nodeId, content }],
-        writeDatabase: async tx => {
-          const row = await tx.project.upsertContentNode({
-            id: nodeId,
-            workspace: ws,
-            project_id: projectUuid,
-            parent_id: fileParentId,
-            path: filePath,
-            name: String(displayName),
-            size_bytes: content.length,
-            comment_count: commentCounts.commentCount,
-            unresolved_comment_count: commentCounts.unresolvedCommentCount,
-            created_atIfNew: existingFile?.created_at ?? timestamp,
-            updated_at: timestamp,
-            created_byIfNew: existingFile?.created_by ?? authCtx.userId,
-            updated_by: authCtx.userId
-          });
-          await syncDiagramContentMetadata(tx, ws, row.id, doc, timestamp);
-          savedRow = await reloadContentNode(tx, ws, row.id);
-        },
-        afterCommit: [
-          {
-            name: 'preview',
-            run: async () => {
-              const { generateAccurateSvgPreview } = await import(
-                '../diagram/serverDiagramRenderer'
-              );
-              const { generateSvgPreview } = await import('../diagram/svgPreviewGenerator');
-              const previewSvg = (await generateAccurateSvgPreview(doc)) ?? generateSvgPreview(doc);
-              await db.project.updateContentNodePreview(
-                ws,
-                projectUuid,
-                nodeId,
-                previewSvg ?? null
-              );
-            }
-          },
-          {
-            name: 'references',
-            run: () => db.project.syncDiagramEntityRefs(ws, nodeId, entityRefs)
-          },
-          {
-            name: 'audit',
-            run: tx =>
-              writeAudit(tx, {
-                userId: authCtx.userId,
-                workspace: ws,
-                operation: isUpdate ? 'update' : 'create',
-                entityType: 'content_node',
-                entityId: nodeId,
-                entityName: savedRow.name,
-                changes: isUpdate
-                  ? computeChanges(extractEntityFields(existingFile), extractEntityFields(savedRow))
-                  : { new: extractEntityFields(savedRow) },
-                metadata: { project_id: projectUuid, path: filePath }
-              })
-          }
-        ]
-      });
-
-      return toApiProjectFile(savedRow);
+    operation: async ({ ws }) => {
+      const scope = await resolveLegacyContentScope(db, ws, id);
+      return writeScopedDiagram(scope, db, storage, workspace, id, filePath, body, event);
     }
   });
 };
@@ -470,8 +396,7 @@ export const cloneContentFile = async (
       saved = await tx.project.upsertContentNode({
         id: rootId,
         workspace: ws,
-        project_id: resolved.projectId,
-        entity_id: resolved.entityId,
+        ...contentNodeScopeFields(resolved),
         parent_id: source.parent_id,
         path: clonePath,
         name: cloneName,
@@ -493,8 +418,7 @@ export const cloneContentFile = async (
         await tx.project.upsertContentNode({
           id: idMap.get(node.id)!,
           workspace: ws,
-          project_id: resolved.projectId,
-          entity_id: resolved.entityId,
+          ...contentNodeScopeFields(resolved),
           parent_id:
             node.parent_id === source.id ? rootId : (idMap.get(node.parent_id ?? '') ?? null),
           path: buildRelocatedAttachmentPath(oldRoot, newRoot, node.path),
@@ -600,10 +524,7 @@ export const relocateContentFile = async (
     message: `A file already exists at '${newPath}'`
   });
   const displayName = getDisplayNameForPath(source, newPath);
-  const folderPath = folderFromPath(newPath);
-  const parentId = folderPath
-    ? (nodes.find(node => node.path === folderPath && node.type === 'folder')?.id ?? null)
-    : null;
+  const parentId = contentParentId(nodes, newPath);
   const timestamp = new Date();
   const rootId = randomUUID();
   const sourceContent = await storage.read(ws, resolved.storageId, source.id);
@@ -675,8 +596,7 @@ export const relocateContentFile = async (
       saved = await tx.project.upsertContentNode({
         id: rootId,
         workspace: ws,
-        project_id: resolved.projectId,
-        entity_id: resolved.entityId,
+        ...contentNodeScopeFields(resolved),
         parent_id: parentId,
         path: newPath,
         name: displayName,
@@ -698,8 +618,7 @@ export const relocateContentFile = async (
         await tx.project.upsertContentNode({
           id: idMap.get(node.id)!,
           workspace: ws,
-          project_id: resolved.projectId,
-          entity_id: resolved.entityId,
+          ...contentNodeScopeFields(resolved),
           parent_id:
             node.parent_id === source.id ? rootId : (idMap.get(node.parent_id ?? '') ?? null),
           path: buildRelocatedAttachmentPath(oldRoot, newRoot, node.path),
@@ -812,21 +731,16 @@ export const getWorkspaceFileContent = async (
   filePath: string,
   event: AuthenticatedEvent
 ): Promise<Record<string, unknown>> => {
-  return runAuthorizedOperation({
-    db: db,
-    event: event,
-    scope: { kind: 'workspace', workspace: workspace },
-    fallback: 'Failed to retrieve workspace file content',
-    dbErrorMessages: projectDbErrorMessages,
-    operation: async ({ ws, authCtx }) => {
-      requireNonProjectContentAccess(authCtx, 'read');
-      const wsNodes = await db.project.listWorkspaceContentNodes(ws);
-      const file = wsNodes.find(n => n.path === filePath && n.type === 'diagram') ?? null;
-      httpAssert.present(file, { status: 404, message: `File '${filePath}' not found` });
-      const content = await storage.read(ws, ws, file.id);
-      return JSON.parse(content.toString('utf8'));
-    }
-  });
+  return readScopedDiagram(
+    WORKSPACE_SCOPE,
+    db,
+    storage,
+    workspace,
+    undefined,
+    filePath,
+    event,
+    'Failed to retrieve workspace file content'
+  );
 };
 
 export const saveWorkspaceFile = async (
@@ -855,14 +769,8 @@ export const getProjectFile = async (
     operation: async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, fileId);
       httpAssert.present(node, { status: 404, message: `File '${fileId}' not found` });
-      if (node.project_id) {
-        const project = await db.project.getProject(ws, node.project_id);
-        httpAssert.present(project, { status: 404, message: 'Project not found' });
-        requireProjectAccess(authCtx, project.owner);
-        node.project_public_id = project.public_id;
-      } else {
-        requireNonProjectContentAccess(authCtx, 'read');
-      }
+      const resolved = await resolveContentScopeForNode(db, ws, authCtx, node, 'read');
+      if (resolved.kind === 'project') node.project_public_id = resolved.projectPublicId;
       return toApiProjectFile(node);
     }
   });
@@ -884,22 +792,8 @@ export const getFileContentById = async (
     operation: async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, fileId);
       httpAssert.present(node, { status: 404, message: `File '${fileId}' not found` });
-
-      let storageId: string;
-      if (node.project_id) {
-        const project = await db.project.getProject(ws, node.project_id);
-        httpAssert.present(project, { status: 404, message: 'Project not found' });
-        requireProjectAccess(authCtx, project.owner);
-        storageId = node.project_id;
-      } else if (node.entity_id) {
-        requireNonProjectContentAccess(authCtx, 'read');
-        storageId = node.entity_id;
-      } else {
-        requireNonProjectContentAccess(authCtx, 'read');
-        storageId = ws;
-      }
-
-      const content = await storage.read(ws, storageId, node.id);
+      const resolved = await resolveContentScopeForNode(db, ws, authCtx, node, 'read');
+      const content = await storage.read(ws, resolved.storageId, node.id);
       return JSON.parse(content.toString('utf8'));
     }
   });

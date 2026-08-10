@@ -40,7 +40,7 @@ import {
   flattenChangeCaseMembers
 } from './snapshotDisplay';
 import { ExternalMetadataIndicator } from '../../../components/ExternalMetadataIndicator';
-import { useFieldGroupAccess } from '../../../auth/useFieldGroupAccess';
+import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { resolveGroupAccessControl } from '../../../lib/fieldGroupAccess';
 import type { FieldGroupAccess } from '@arch-register/permissions';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
@@ -119,7 +119,7 @@ export const EntityOverviewTab = ({
     milestones.filter(milestone => futureSnapshotProjectIds.includes(milestone.project_id))
   );
 
-  const getFieldGroupAccess = useFieldGroupAccess(workspaceSlug);
+  const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceSlug);
 
   const getTypedRelationFieldState = (fieldId: string) =>
     typedRelationEditState[fieldId] ?? emptyTypedRelationFieldState();

@@ -16,13 +16,14 @@ import type { ProjectFile } from '@arch-register/api-types/projectContract';
 
 import { coordinateContentWrite } from './contentWriteCoordinator';
 
-import { listSiblingNodes, projectDbErrorMessages, storageScope } from './projectOperationHelpers';
+import { projectDbErrorMessages } from './projectOperationHelpers';
 
 import {
   ensureMarkdownAttachmentContainer,
-  requireMarkdownNodeAccess,
+  resolveMarkdownNodeScope,
   isMarkdownNode
 } from './markdownOperationHelpers';
+import { contentNodeScopeFields } from './contentScope';
 export const uploadMarkdownAttachment = async (
   db: DatabaseAdapter,
   storage: StorageAdapter,
@@ -51,7 +52,7 @@ export const uploadMarkdownAttachment = async (
         status: 400,
         message: 'Node is not a markdown document'
       });
-      await requireMarkdownNodeAccess(db, ws, authCtx, markdownNode, 'edit');
+      const resolved = await resolveMarkdownNodeScope(db, ws, authCtx, markdownNode, 'edit');
 
       const timestamp = new Date();
       const container = await ensureMarkdownAttachmentContainer(
@@ -59,10 +60,11 @@ export const uploadMarkdownAttachment = async (
         ws,
         markdownNode,
         authCtx,
-        timestamp
+        timestamp,
+        resolved
       );
       const attachmentPath = `${container.path}/${fileName}`;
-      const siblingNodes = await listSiblingNodes(db, ws, markdownNode);
+      const siblingNodes = await resolved.listNodes(db, ws);
       const existingFile =
         getMarkdownAttachmentNodes(siblingNodes, markdownNode.id).find(
           node => node.path === attachmentPath && node.type === 'file'
@@ -85,7 +87,7 @@ export const uploadMarkdownAttachment = async (
           {
             type: 'write',
             workspace: ws,
-            storageId: storageScope(ws, markdownNode),
+            storageId: resolved.storageId,
             nodeId: attachmentId,
             content: buffer
           }
@@ -94,8 +96,7 @@ export const uploadMarkdownAttachment = async (
           row = await tx.project.upsertContentNode({
             id: attachmentId,
             workspace: ws,
-            project_id: markdownNode.project_id,
-            entity_id: markdownNode.entity_id,
+            ...contentNodeScopeFields(resolved),
             parent_id: container.id,
             path: attachmentPath,
             name: originalFilename,
@@ -165,7 +166,7 @@ export const createMarkdownDiagramAttachment = async (
         status: 400,
         message: 'Node is not a markdown document'
       });
-      await requireMarkdownNodeAccess(db, ws, authCtx, markdownNode, 'edit');
+      const resolved = await resolveMarkdownNodeScope(db, ws, authCtx, markdownNode, 'edit');
 
       const timestamp = new Date();
       const container = await ensureMarkdownAttachmentContainer(
@@ -173,10 +174,11 @@ export const createMarkdownDiagramAttachment = async (
         ws,
         markdownNode,
         authCtx,
-        timestamp
+        timestamp,
+        resolved
       );
 
-      const siblingNodes = await listSiblingNodes(db, ws, markdownNode);
+      const siblingNodes = await resolved.listNodes(db, ws);
       const existingDiagrams = getMarkdownAttachmentNodes(siblingNodes, markdownNode.id).filter(
         n => n.type === 'diagram'
       );
@@ -205,7 +207,7 @@ export const createMarkdownDiagramAttachment = async (
           {
             type: 'write',
             workspace: ws,
-            storageId: storageScope(ws, markdownNode),
+            storageId: resolved.storageId,
             nodeId: attachmentId,
             content: buffer
           }
@@ -214,8 +216,7 @@ export const createMarkdownDiagramAttachment = async (
           row = await tx.project.upsertContentNode({
             id: attachmentId,
             workspace: ws,
-            project_id: markdownNode.project_id,
-            entity_id: markdownNode.entity_id,
+            ...contentNodeScopeFields(resolved),
             parent_id: container.id,
             path: diagramPath,
             name: diagramName,
