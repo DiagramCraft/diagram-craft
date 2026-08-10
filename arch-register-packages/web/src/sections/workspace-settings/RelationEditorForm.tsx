@@ -1,7 +1,3 @@
-import { Button } from '@diagram-craft/app-components/Button';
-import { TextArea } from '@diagram-craft/app-components/TextArea';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { TbTrash } from 'react-icons/tb';
 import type {
   EntitySchema,
   SharedFieldGroupLink,
@@ -12,12 +8,11 @@ import type {
   RelationField,
   RelationSchemaGroup
 } from '@arch-register/api-types/relationSchemaContract';
-import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
-import { ICON_MAP } from '../../components/TypeBadge';
-import { SCHEMA_ICONS } from '../../lib/schemaPresentation';
 import type { RelationFieldType } from '../../lib/schemaPresentation';
 import { RelationEndpointEditor } from './RelationEndpointEditor';
-import { RelationFieldsEditor, RelationValidationEditor } from './RelationFieldsEditor';
+import { RelationFieldsEditor } from './RelationFieldsEditor';
+import { SchemaEditorFormShell } from './SchemaEditorFormShell';
+import { ValidationRulesEditor } from './ValidationRulesEditor';
 import styles from './SchemaSettingsScreen.module.css';
 
 export const RelationEditorForm = ({
@@ -99,86 +94,42 @@ export const RelationEditorForm = ({
   onDelete: () => void;
   onSave: () => void;
 }) => (
-  <div className={styles.editor}>
-    <div className={styles.formRow}>
-      <div>
-        <div className={styles.formLabel}>Name</div>
-        <TextInput
-          value={name}
-          disabled={!canEdit}
-          onChange={value => onNameChange(value ?? '')}
-          style={{ width: '100%' }}
+  <SchemaEditorFormShell
+    name={name}
+    description={description}
+    color={color}
+    icon={icon}
+    dirty={dirty}
+    canEdit={canEdit}
+    updatePending={updatePending}
+    descriptionPlaceholder="What does this relation type represent?"
+    afterDescription={
+      <div className={styles.formRow}>
+        <RelationEndpointEditor
+          label="In endpoint"
+          hint="Entity types allowed at the 'in' end of this relation."
+          endpoint={inEndpoint}
+          schemas={schemas}
+          canEdit={canEdit}
+          onChange={onInEndpointChange}
+        />
+        <RelationEndpointEditor
+          label="Out endpoint"
+          hint="Entity types allowed at the 'out' end of this relation."
+          endpoint={outEndpoint}
+          schemas={schemas}
+          canEdit={canEdit}
+          onChange={onOutEndpointChange}
         />
       </div>
-    </div>
-    <div className={styles.formRow}>
-      <div>
-        <div className={styles.formLabel}>Description</div>
-        <TextArea
-          value={description}
-          disabled={!canEdit}
-          placeholder="What does this relation type represent?"
-          onChange={value => onDescriptionChange(value ?? '')}
-          rows={4}
-          style={{ width: '100%' }}
-        />
-      </div>
-    </div>
-    <div className={styles.formRow}>
-      <RelationEndpointEditor
-        label="In endpoint"
-        hint="Entity types allowed at the 'in' end of this relation."
-        endpoint={inEndpoint}
-        schemas={schemas}
-        canEdit={canEdit}
-        onChange={onInEndpointChange}
-      />
-      <RelationEndpointEditor
-        label="Out endpoint"
-        hint="Entity types allowed at the 'out' end of this relation."
-        endpoint={outEndpoint}
-        schemas={schemas}
-        canEdit={canEdit}
-        onChange={onOutEndpointChange}
-      />
-    </div>
-    <div className={styles.appearanceRow}>
-      <div>
-        <div className={styles.formLabel}>Color</div>
-        <div className={styles.colorSwatches}>
-          {SCHEMA_COLORS.map(option => (
-            <button
-              type="button"
-              key={option}
-              className={`${styles.swatch} ${color === option ? styles.swatchActive : ''}`}
-              style={{ background: option }}
-              disabled={!canEdit}
-              onClick={() => onColorChange(option)}
-            />
-          ))}
-        </div>
-      </div>
-      <div>
-        <div className={styles.formLabel}>Icon</div>
-        <div className={styles.iconPicker}>
-          {SCHEMA_ICONS.map(id => {
-            const Icon = ICON_MAP[id];
-            return (
-              <button
-                type="button"
-                key={id}
-                className={`${styles.iconOption} ${icon === id ? styles.iconOptionActive : ''}`}
-                title={id}
-                disabled={!canEdit}
-                onClick={() => onIconChange(id)}
-              >
-                <Icon size={14} />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+    }
+    onNameChange={onNameChange}
+    onDescriptionChange={onDescriptionChange}
+    onColorChange={onColorChange}
+    onIconChange={onIconChange}
+    onDelete={onDelete}
+    onSave={onSave}
+  >
     <RelationFieldsEditor
       fields={fields}
       groups={groups}
@@ -198,7 +149,8 @@ export const RelationEditorForm = ({
       onRemoveGroup={onRemoveGroup}
       onRemoveSharedGroup={onRemoveSharedGroup}
     />
-    <RelationValidationEditor
+    <ValidationRulesEditor
+      variant="relation"
       rules={validationRules}
       canEdit={canEdit}
       onAdd={onAddValidationRule}
@@ -206,18 +158,5 @@ export const RelationEditorForm = ({
       onToggle={onToggleValidationRule}
       onDelete={onDeleteValidationRule}
     />
-    <div className={styles.formActions}>
-      {canEdit && (
-        <Button variant="danger" icon={<TbTrash size={12} />} onClick={onDelete}>
-          Delete type
-        </Button>
-      )}
-      <div style={{ flex: 1 }} />
-      {canEdit && dirty && (
-        <Button variant="primary" onClick={onSave} disabled={updatePending}>
-          {updatePending ? 'Saving...' : 'Save'}
-        </Button>
-      )}
-    </div>
-  </div>
+  </SchemaEditorFormShell>
 );

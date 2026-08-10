@@ -1,7 +1,3 @@
-import { Button } from '@diagram-craft/app-components/Button';
-import { TextArea } from '@diagram-craft/app-components/TextArea';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { TbTrash } from 'react-icons/tb';
 import type {
   EntitySchema,
   EntityTemplate,
@@ -12,10 +8,9 @@ import type {
 } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
-import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
-import { ICON_MAP } from '../../components/TypeBadge';
-import { SCHEMA_ICONS } from '../../lib/schemaPresentation';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { FieldType } from '../../lib/schemaPresentation';
+import { SchemaEditorFormShell } from './SchemaEditorFormShell';
 import { SchemaEditorTabs, type SchemaPanelTab } from './SchemaEditorTabs';
 import styles from './SchemaSettingsScreen.module.css';
 
@@ -114,79 +109,35 @@ export const SchemaEditorForm = ({
   onDelete: () => void;
   onSave: () => void;
 }) => (
-  <div className={styles.editor}>
-    <div className={styles.formRow}>
-      <div>
-        <div className={styles.formLabel}>Name</div>
-        <TextInput
-          value={name}
-          disabled={!canEdit}
-          onChange={value => onNameChange(value ?? '')}
-          style={{ width: '100%' }}
-        />
-      </div>
-    </div>
-    <div className={styles.formRow}>
-      <div>
-        <div className={styles.formLabel}>Key Prefix</div>
-        <TextInput
-          value={keyPrefix}
-          disabled={!canEdit}
-          onChange={value => onKeyPrefixChange(value ?? '')}
-          style={{ width: '100%' }}
-        />
-      </div>
-    </div>
-    <div className={styles.formRow}>
-      <div>
-        <div className={styles.formLabel}>Description</div>
-        <TextArea
-          value={description}
-          disabled={!canEdit}
-          placeholder="What does this entity type represent?"
-          onChange={value => onDescriptionChange(value ?? '')}
-          rows={4}
-          style={{ width: '100%' }}
-        />
-      </div>
-    </div>
-    <div className={styles.appearanceRow}>
-      <div>
-        <div className={styles.formLabel}>Color</div>
-        <div className={styles.colorSwatches}>
-          {SCHEMA_COLORS.map(option => (
-            <button
-              type="button"
-              key={option}
-              className={`${styles.swatch} ${color === option ? styles.swatchActive : ''}`}
-              style={{ background: option }}
-              disabled={!canEdit}
-              onClick={() => onColorChange(option)}
-            />
-          ))}
+  <SchemaEditorFormShell
+    name={name}
+    description={description}
+    color={color}
+    icon={icon}
+    dirty={dirty}
+    canEdit={canEdit}
+    updatePending={updatePending}
+    descriptionPlaceholder="What does this entity type represent?"
+    beforeDescription={
+      <div className={styles.formRow}>
+        <div>
+          <div className={styles.formLabel}>Key Prefix</div>
+          <TextInput
+            value={keyPrefix}
+            disabled={!canEdit}
+            onChange={value => onKeyPrefixChange(value ?? '')}
+            style={{ width: '100%' }}
+          />
         </div>
       </div>
-      <div>
-        <div className={styles.formLabel}>Icon</div>
-        <div className={styles.iconPicker}>
-          {SCHEMA_ICONS.map(id => {
-            const Icon = ICON_MAP[id];
-            return (
-              <button
-                type="button"
-                key={id}
-                className={`${styles.iconOption} ${icon === id ? styles.iconOptionActive : ''}`}
-                title={id}
-                disabled={!canEdit}
-                onClick={() => onIconChange(id)}
-              >
-                <Icon size={14} />
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    </div>
+    }
+    onNameChange={onNameChange}
+    onDescriptionChange={onDescriptionChange}
+    onColorChange={onColorChange}
+    onIconChange={onIconChange}
+    onDelete={onDelete}
+    onSave={onSave}
+  >
     <SchemaEditorTabs
       activeTab={panelTab}
       onTabChange={onPanelTabChange}
@@ -221,18 +172,5 @@ export const SchemaEditorForm = ({
       onToggleValidationRule={onToggleValidationRule}
       onDeleteValidationRule={onDeleteValidationRule}
     />
-    <div className={styles.formActions}>
-      {canEdit && (
-        <Button variant="danger" icon={<TbTrash size={12} />} onClick={onDelete}>
-          Delete type
-        </Button>
-      )}
-      <div style={{ flex: 1 }} />
-      {canEdit && dirty && (
-        <Button variant="primary" onClick={onSave} disabled={updatePending}>
-          {updatePending ? 'Saving...' : 'Save'}
-        </Button>
-      )}
-    </div>
-  </div>
+  </SchemaEditorFormShell>
 );

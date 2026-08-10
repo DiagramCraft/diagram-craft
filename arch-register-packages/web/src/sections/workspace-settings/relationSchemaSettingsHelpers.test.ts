@@ -1,11 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
-import {
-  buildRelationFieldMigrations,
-  createRelationFieldForType,
-  firstRemainingRelationSchemaId,
-  setEndpointSchemaIds
-} from './relationSchemaSettingsHelpers';
+import { createRelationFieldForType, setEndpointSchemaIds } from './relationSchemaSettingsHelpers';
+import { buildFieldMigrations, firstRemainingId } from './schemaEditorState';
 
 const field = (id: string): RelationField => ({
   id,
@@ -43,15 +39,13 @@ describe('relation schema settings helpers', () => {
   });
 
   it('selects the first remaining relation schema after deletion', () => {
-    expect(
-      firstRemainingRelationSchemaId([{ id: 'deleted' }, { id: 'remaining' }], 'deleted')
-    ).toBe('remaining');
-    expect(firstRemainingRelationSchemaId([{ id: 'deleted' }], 'deleted')).toBe('');
+    expect(firstRemainingId([{ id: 'deleted' }, { id: 'remaining' }], 'deleted')).toBe('remaining');
+    expect(firstRemainingId([{ id: 'deleted' }], 'deleted')).toBe('');
   });
 
   it('serializes relation field migration choices', () => {
     expect(
-      buildRelationFieldMigrations(
+      buildFieldMigrations(
         [{ fieldId: 'removed', fieldName: 'Removed', kind: 'removed', entityCount: 1 }],
         { removed: 'archive' }
       )

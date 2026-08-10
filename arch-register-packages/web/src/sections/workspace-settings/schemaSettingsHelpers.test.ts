@@ -1,12 +1,11 @@
 import { describe, expect, it } from 'vitest';
 import type { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
 import {
-  buildFieldMigrations,
   createSchemaFieldForType,
-  firstRemainingId,
   removeTemplateField,
   updateTemplateFieldId
 } from './schemaSettingsHelpers';
+import { buildFieldMigrations, firstRemainingId } from './schemaEditorState';
 
 const field = (id: string): SchemaField => ({
   id,
