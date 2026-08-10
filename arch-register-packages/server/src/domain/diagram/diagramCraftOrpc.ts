@@ -21,6 +21,7 @@ import { toDiagramCraftData, toDiagramCraftSchema } from './diagramCraftTransfor
 import { toDiagramCraftRelationReferences } from './diagramCraftTransforms';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { ENTITY_DEFAULTS } from '../../constants';
+import { buildEntityViewPermissionScope } from '../catalog/db/entityPermissionScope';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -53,7 +54,9 @@ export const createDiagramCraftORPCRouter = () => {
 
         const entityAuthCtx = await buildApiEntityAuthCtx(context.db, workspace, context.event);
         const [allEntities, schemas] = await Promise.all([
-          listAllCatalogEntities(context.db, workspace),
+          listAllCatalogEntities(context.db, workspace, {
+            permissionScope: buildEntityViewPermissionScope(entityAuthCtx)
+          }),
           context.db.catalog.listSchemas(workspace)
         ]);
         const schemaById = new Map(schemas.map(schema => [schema.id, schema]));

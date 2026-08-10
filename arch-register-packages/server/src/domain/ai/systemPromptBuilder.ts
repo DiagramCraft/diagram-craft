@@ -2,6 +2,7 @@ import type { AuthorizationContext } from '@arch-register/permissions';
 import { filterVisibleEntities } from '../auth/authorization';
 import type { DatabaseAdapter } from '../../db/database';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
+import { buildEntityViewPermissionScope } from '../catalog/db/entityPermissionScope';
 
 export const buildSystemPrompt = async (
   db: DatabaseAdapter,
@@ -10,7 +11,12 @@ export const buildSystemPrompt = async (
   customPrompt: string | null
 ): Promise<string> => {
   const schemas = await db.catalog.listSchemas(workspaceId);
-  const entities = filterVisibleEntities(authCtx, await listAllCatalogEntities(db, workspaceId));
+  const entities = filterVisibleEntities(
+    authCtx,
+    await listAllCatalogEntities(db, workspaceId, {
+      permissionScope: buildEntityViewPermissionScope(authCtx)
+    })
+  );
   const lifecycleStates = await db.workspace.listLifecycleStates(workspaceId);
   const teams = await db.workspace.listTeams(workspaceId);
 

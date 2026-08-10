@@ -18,6 +18,7 @@ import type {
   TimelineMarkerDbResult
 } from './catalogDatabase';
 import { ENTITY_SELECT_SQL, catalogMappers, resolveEntityListPagination } from './catalogDatabase';
+import { compileEntityViewPermissionScope } from './entityPermissionScope';
 import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
 import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
 import { isUuidLike } from '../../../utils/publicIds';
@@ -344,10 +345,19 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       if (clause) whereParts.push(clause);
     }
 
+    const permissionScope = compileEntityViewPermissionScope(
+      workspace,
+      filters?.permissionScope ?? null,
+      'postgres',
+      addParam
+    );
+    whereParts.push(permissionScope.predicate);
+
     const limitParam = addParam(limit);
     const offsetParam = addParam(offset);
     const rows = await this.sql.unsafe<DatabaseRow[]>(
-      `${ENTITY_SELECT_SQL} WHERE ${whereParts.join(' AND ')}
+      `${permissionScope.cte ? `WITH RECURSIVE ${permissionScope.cte}` : ''}
+       ${ENTITY_SELECT_SQL} WHERE ${whereParts.join(' AND ')}
        ORDER BY e.name, e.id
        LIMIT ${limitParam}
        OFFSET ${offsetParam}`,

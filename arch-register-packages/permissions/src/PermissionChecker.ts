@@ -222,7 +222,7 @@ export class PermissionChecker {
    * bulk/list queries can use this to skip the per-entity `hasEntityPermission` check entirely
    * (falling back to it only when this returns false, e.g. a token/role scoped to `ws.view` only).
    */
-  hasWorkspaceWideEntityView(context: AuthorizationContext): boolean {
+  hasWorkspaceWideEntityView(context: WorkspaceAuthorizationContext): boolean {
     if (!context.workspaceCapabilityCeiling && context.globalPermissions.has('admin_platform')) {
       return true;
     }

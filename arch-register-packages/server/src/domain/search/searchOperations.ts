@@ -14,6 +14,7 @@ import {
 } from '../auth/fieldGroupAccessControl';
 import { canViewTypedRelation } from '../catalog/relationAccessControl';
 import { listAllRelations } from '../catalog/relationOperations';
+import { buildEntityViewPermissionScope } from '../catalog/db/entityPermissionScope';
 
 const checker = new PermissionChecker();
 
@@ -131,7 +132,9 @@ export const searchWorkspace = async (
       ? db.catalog.listSchemas(ws)
       : Promise.resolve([]),
     types.includes('entities') || types.includes('files') || types.includes('relations')
-      ? listAllCatalogEntities(db, ws)
+      ? listAllCatalogEntities(db, ws, {
+          permissionScope: buildEntityViewPermissionScope(authCtx)
+        })
       : Promise.resolve([]),
     types.includes('relations') ? listAllRelations(db, ws, {}) : Promise.resolve([]),
     types.includes('relations') ? db.relation.listRelationSchemas(ws) : Promise.resolve([])

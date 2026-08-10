@@ -29,6 +29,7 @@ import {
   type DatabaseRow
 } from '../../../db/rowMappers';
 import { ENTITY_DEFAULTS } from '../../../constants';
+import type { EntityViewPermissionScope } from './entityPermissionScope';
 
 export const ENTITY_SELECT_SQL = `
   SELECT e.*,
@@ -54,6 +55,8 @@ export type EntityListDbFilters = {
   // both modes retain global-listing semantics and return only project_id IS NULL rows.
   projectId?: string | null;
   projectScope?: 'project' | 'all';
+  /** SQL-backed entity visibility scope for bulk reads. */
+  permissionScope?: EntityViewPermissionScope | null;
 };
 
 export type EntityListDbPagination = {
