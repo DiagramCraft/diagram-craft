@@ -72,4 +72,23 @@ export class EntitiesPage extends WorkspacePage {
     await expect(this.page.getByRole('button', { name: 'Save' })).toBeVisible();
     await expect(this.page.getByRole('button', { name: 'Cancel' })).toBeVisible();
   };
+
+  openEntityActions = async () => {
+    await this.page.getByRole('button', { name: 'Entity actions' }).click();
+    await expect(this.page.getByRole('menu')).toBeVisible();
+  };
+
+  openEntityJsonDialog = async () => {
+    await this.openEntityActions();
+    await this.page.getByRole('menuitem', { name: 'View JSON' }).click();
+    await expect(
+      this.page.getByRole('alertdialog', { name: 'Entity JSON (depth 1)' })
+    ).toBeVisible();
+  };
+
+  openCollectionsDialog = async () => {
+    await this.openEntityActions();
+    await this.page.getByRole('menuitem', { name: 'Collections…' }).click();
+    await expect(this.page.getByRole('alertdialog', { name: 'Manage collections' })).toBeVisible();
+  };
 }

@@ -1,28 +1,9 @@
 import { useMemo, useCallback, useState } from 'react';
-import { useQueryClient } from '@tanstack/react-query';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import styles from './EntityDetailScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
-import { TypeBadge } from '../../components/TypeBadge';
-import { StatusChip } from '../../components/StatusChip';
-import {
-  TbChevronLeft,
-  TbEdit,
-  TbDots,
-  TbTrash,
-  TbCopy,
-  TbBell,
-  TbPinned,
-  TbBookmark
-} from 'react-icons/tb';
+import { TbChevronLeft } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
-import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
-import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { Dialog } from '@diagram-craft/app-components/Dialog';
-import { TextInput } from '@diagram-craft/app-components/TextInput';
-import { DateInput } from '@diagram-craft/app-components/DateInput';
-import { FormElement } from '@diagram-craft/app-components/FormElement';
-import { GovernanceInitiationFields } from '../governance/GovernanceInitiationFields';
 import { useGovernanceInitiationFields } from '../../hooks/useGovernanceInitiationFields';
 import {
   useEntity,
@@ -34,12 +15,9 @@ import {
 import { useEntityTypedRelations } from '../../hooks/useRelations';
 import { useEntityVersions } from '../../hooks/useEntityVersions';
 import { useChangeCasesByEntity } from '../../hooks/useChangeCases';
-import { useBypassEntityApproval, useEntityChangeApproval } from '../../hooks/useEntityChanges';
+import { useEntityChangeApproval } from '../../hooks/useEntityChanges';
 import { useEntityDeprecation } from '../../hooks/useEntityDeprecation';
-import {
-  EntityDeprecationPanel,
-  ProposeEntityDeprecationDialog
-} from './components/EntityDeprecationPanel';
+import { EntityDeprecationPanel } from './components/EntityDeprecationPanel';
 import { useEntityEditController } from '../../hooks/useEntityEditController';
 import { useEntityDiagramFiles, useEntityProjects } from '../../hooks/useProjects';
 import {
@@ -60,14 +38,15 @@ import { useWorkspacePermissions } from '../../auth/useWorkspacePermissions';
 import { EntitySummary } from '@arch-register/api-types/entityContract';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { EntityContentView } from './EntityContentView';
+import { EntityChangeApprovalPanel } from './components/EntityChangeApprovalPanel';
+import { EntityDetailDialogs } from './components/EntityDetailDialogs';
+import { EntityDetailHeader } from './components/EntityDetailHeader';
 import { EntityOverviewSection } from './components/EntityOverviewSection';
 import { EntityContextSection } from './components/EntityContextSection';
 import { EntityCollaborationSection } from './components/EntityCollaborationSection';
 import { EntityPlanningReviewSection } from './components/EntityPlanningReviewSection';
-import { Title } from '../../components/Title';
 import { EmptyState } from '../../components/EmptyState';
 import { LoadingState } from '../../components/LoadingState';
-import { Banner } from '../../components/Banner';
 import {
   HOME_TAB_IDS,
   CONTEXT_TAB_IDS,
@@ -78,312 +57,6 @@ import {
 } from './types/entityDetailTypes';
 import type { EntityDetailSearchParams } from '../../routes/searchParams';
 import { buildEntityRefLookup } from './entityDetailHelpers';
-import { CollectionPickerDialog } from './components/CollectionPickerDialog';
-import type { EntityChangeApprovalRevision } from '@arch-register/api-types/entityChangeContract';
-import { useAuth } from '../../auth/AuthContext';
-import {
-  useDecideGovernanceAssignment,
-  useGovernanceCaseEvents,
-  useGovernanceTasks
-} from '../../hooks/useGovernance';
-import { entityChangeKeys } from '../../hooks/useEntityChanges';
-import { entityKeys } from '../../queries/entities';
-
-const changeApprovalFieldLabels: Record<string, string> = {
-  slug: 'Slug',
-  namespace: 'Namespace',
-  name: 'Name',
-  description: 'Description',
-  owner: 'Owner',
-  lifecycle: 'Lifecycle',
-  target_lifecycle: 'Target lifecycle',
-  target_lifecycle_date: 'Target lifecycle date',
-  tags: 'Tags',
-  links: 'Links',
-  schema_id: 'Schema',
-  data: 'Entity fields',
-  project_id: 'Project'
-};
-
-const changeApprovalStatusLabels: Record<EntityChangeApprovalRevision['status'], string> = {
-  submitted: 'Awaiting approval',
-  changes_requested: 'Changes requested',
-  stale: 'Stale · resubmit required',
-  approved: 'Approved',
-  rejected: 'Rejected',
-  withdrawn: 'Withdrawn'
-};
-
-const humanizeChangeApprovalKey = (key: string) =>
-  key.replaceAll('_', ' ').replace(/\b\w/g, character => character.toUpperCase());
-
-const formatChangeApprovalValue = (value: unknown): string => {
-  if (value == null || value === '') return 'Empty';
-  if (Array.isArray(value)) {
-    if (value.length === 0) return 'Empty';
-    return value.map(formatChangeApprovalValue).join(', ');
-  }
-  if (typeof value === 'object') {
-    const record = value as Record<string, unknown>;
-    if (typeof record['name'] === 'string') return record['name'];
-    if (typeof record['label'] === 'string') return record['label'];
-    return Object.entries(record)
-      .map(
-        ([key, nestedValue]) =>
-          `${humanizeChangeApprovalKey(key)}: ${formatChangeApprovalValue(nestedValue)}`
-      )
-      .join(' · ');
-  }
-  return String(value);
-};
-
-const changeApprovalValuesEqual = (left: unknown, right: unknown): boolean => {
-  if (left === right) return true;
-  if (left == null || right == null || typeof left !== typeof right) return false;
-  if (Array.isArray(left) || Array.isArray(right)) {
-    if (!Array.isArray(left) || !Array.isArray(right) || left.length !== right.length) return false;
-    return left.every((value, index) => changeApprovalValuesEqual(value, right[index]));
-  }
-  if (typeof left === 'object' && typeof right === 'object') {
-    const leftRecord = left as Record<string, unknown>;
-    const rightRecord = right as Record<string, unknown>;
-    const keys = new Set([...Object.keys(leftRecord), ...Object.keys(rightRecord)]);
-    return [...keys].every(key => changeApprovalValuesEqual(leftRecord[key], rightRecord[key]));
-  }
-  return false;
-};
-
-const changeApprovalDiffRows = (revision: EntityChangeApprovalRevision) =>
-  Object.entries(revision.diff).flatMap(([key, change]) => {
-    const values = change as { before?: unknown; after?: unknown };
-    if (
-      key === 'data' &&
-      values.before != null &&
-      typeof values.before === 'object' &&
-      !Array.isArray(values.before) &&
-      values.after != null &&
-      typeof values.after === 'object' &&
-      !Array.isArray(values.after)
-    ) {
-      const before = values.before as Record<string, unknown>;
-      const after = values.after as Record<string, unknown>;
-      return [...new Set([...Object.keys(before), ...Object.keys(after)])]
-        .filter(field => !changeApprovalValuesEqual(before[field], after[field]))
-        .map(field => ({
-          field: `Entity field · ${humanizeChangeApprovalKey(field)}`,
-          before: before[field],
-          after: after[field]
-        }));
-    }
-    return [
-      {
-        field: changeApprovalFieldLabels[key] ?? humanizeChangeApprovalKey(key),
-        before: values.before,
-        after: values.after
-      }
-    ];
-  });
-
-const EntityChangeApprovalPanel = ({
-  revision,
-  workspaceId,
-  entityId,
-  canOverrideApproval
-}: {
-  revision: EntityChangeApprovalRevision;
-  workspaceId: string;
-  entityId: string;
-  canOverrideApproval: boolean;
-}) => {
-  const { user } = useAuth();
-  const queryClient = useQueryClient();
-  const bypass = useBypassEntityApproval(workspaceId, entityId);
-  const [bypassDialogOpen, setBypassDialogOpen] = useState(false);
-  const [bypassReason, setBypassReason] = useState('');
-  const [requestChangesDialogOpen, setRequestChangesDialogOpen] = useState(false);
-  const [requestChangesReason, setRequestChangesReason] = useState('');
-  const { data: governanceTasks = [] } = useGovernanceTasks(workspaceId, {
-    caseKind: 'entity.change',
-    state: 'open'
-  });
-  const { data: caseEvents = [] } = useGovernanceCaseEvents(
-    workspaceId,
-    revision.status === 'changes_requested' ? revision.caseId : null
-  );
-  const decide = useDecideGovernanceAssignment(workspaceId);
-  const approvalTask = governanceTasks.find(
-    task =>
-      task.case.id === revision.caseId &&
-      task.assignment.action === 'approve' &&
-      task.requiresAction &&
-      (task.case.initiatorUserId !== user?.id || task.case.selfApprovalAllowed)
-  );
-  const status = changeApprovalStatusLabels[revision.status];
-  const rows = changeApprovalDiffRows(revision);
-  const requestedChangesReason = [...caseEvents]
-    .reverse()
-    .find(caseEvent => caseEvent.eventType === 'changes_requested')?.reason;
-  const invalidateProposalQueries = () =>
-    Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: entityChangeKeys.current(workspaceId, entityId)
-      }),
-      queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) })
-    ]);
-  const approve = () => {
-    if (!approvalTask) return;
-    decide.mutate(
-      { assignmentId: approvalTask.assignment.id, decision: 'approve' },
-      { onSuccess: invalidateProposalQueries }
-    );
-  };
-  const executeRequestChanges = () => {
-    if (!approvalTask) return;
-    const reason = requestChangesReason.trim();
-    if (reason === '') return;
-    decide.mutate(
-      { assignmentId: approvalTask.assignment.id, decision: 'request_changes', reason },
-      {
-        onSuccess: async () => {
-          await invalidateProposalQueries();
-          setRequestChangesDialogOpen(false);
-          setRequestChangesReason('');
-        }
-      }
-    );
-  };
-  const executeBypass = () => {
-    const reason = bypassReason.trim();
-    if (reason === '') return;
-    bypass.mutate(
-      {
-        baseVersion: revision.baseVersion,
-        proposedState: revision.proposedState,
-        reason
-      },
-      {
-        onSuccess: () => {
-          setBypassDialogOpen(false);
-          setBypassReason('');
-        }
-      }
-    );
-  };
-  return (
-    <>
-      <section className={styles.proposalPanel} aria-labelledby="entity-change-proposal-title">
-        <div className={styles.proposalHeader}>
-          <div>
-            <div className={styles.proposalEyebrow}>Entity change proposal</div>
-            <h2 id="entity-change-proposal-title" className={styles.proposalTitle}>
-              Revision {revision.revisionNumber}
-            </h2>
-            <div className={styles.proposalMeta}>
-              Proposed by {revision.createdByName ?? 'Unknown user'} ·{' '}
-              {new Date(revision.createdAt).toLocaleString()}
-            </div>
-          </div>
-          <div className={styles.proposalActions}>
-            <span className={styles.proposalStatus}>{status}</span>
-            {approvalTask && (
-              <>
-                <Button variant="primary" onClick={approve} disabled={decide.isPending}>
-                  {decide.isPending ? 'Approving…' : 'Approve change'}
-                </Button>
-                <Button
-                  onClick={() => setRequestChangesDialogOpen(true)}
-                  disabled={decide.isPending}
-                >
-                  Request changes
-                </Button>
-              </>
-            )}
-            {canOverrideApproval && (
-              <Button
-                variant="danger"
-                onClick={() => setBypassDialogOpen(true)}
-                disabled={bypass.isPending}
-              >
-                Bypass approval
-              </Button>
-            )}
-          </div>
-        </div>
-        {revision.message && <p className={styles.proposalMessage}>{revision.message}</p>}
-        {revision.status === 'changes_requested' && requestedChangesReason && (
-          <p className={styles.proposalMessage}>
-            <strong>Reviewer requested changes:</strong> {requestedChangesReason}
-          </p>
-        )}
-        <div className={styles.proposalDiff}>
-          <div className={styles.proposalDiffHeader}>
-            <span>Field</span>
-            <span>Current value</span>
-            <span>Proposed value</span>
-          </div>
-          {rows.map(row => (
-            <div className={styles.proposalDiffRow} key={row.field}>
-              <strong className={styles.proposalField}>{row.field}</strong>
-              <span className={styles.proposalBefore}>{formatChangeApprovalValue(row.before)}</span>
-              <span className={styles.proposalAfter}>{formatChangeApprovalValue(row.after)}</span>
-            </div>
-          ))}
-        </div>
-      </section>
-      <Dialog
-        open={bypassDialogOpen}
-        onClose={() => setBypassDialogOpen(false)}
-        title="Bypass approval?"
-        buttons={[
-          { label: 'Cancel', type: 'cancel', onClick: () => setBypassDialogOpen(false) },
-          {
-            label: bypass.isPending ? 'Applying…' : 'Bypass approval',
-            type: 'danger',
-            disabled: bypass.isPending || bypassReason.trim() === '',
-            onClick: executeBypass
-          }
-        ]}
-      >
-        <p>
-          This applies the proposed changes immediately and closes the approval case. Enter a reason
-          for the audited override.
-        </p>
-        <FormElement label="Reason" required>
-          <TextInput
-            value={bypassReason}
-            onChange={value => setBypassReason(value ?? '')}
-            placeholder="Explain why approval is being bypassed"
-            style={{ width: '100%' }}
-          />
-        </FormElement>
-      </Dialog>
-      <Dialog
-        open={requestChangesDialogOpen}
-        onClose={() => setRequestChangesDialogOpen(false)}
-        title="Request changes?"
-        buttons={[
-          { label: 'Cancel', type: 'cancel', onClick: () => setRequestChangesDialogOpen(false) },
-          {
-            label: decide.isPending ? 'Submitting…' : 'Request changes',
-            type: 'default',
-            disabled: decide.isPending || requestChangesReason.trim() === '',
-            onClick: executeRequestChanges
-          }
-        ]}
-      >
-        <p>The proposer will be notified and can revise and resubmit this proposal.</p>
-        <FormElement label="Reason" required>
-          <TextInput
-            value={requestChangesReason}
-            onChange={value => setRequestChangesReason(value ?? '')}
-            placeholder="Explain what needs to change"
-            style={{ width: '100%' }}
-          />
-        </FormElement>
-      </Dialog>
-    </>
-  );
-};
 
 export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const navigate = useNavigate();
@@ -575,7 +248,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     onDeleted: navigateToEntities
   });
 
-  const handleClone = async () => {
+  const handleClone = () => {
     cloneEntity.mutate(entityId, {
       onSuccess: cloned => navigateToEntity(cloned._publicId)
     });
@@ -601,159 +274,54 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
 
   const entityName = entity._name ?? entity._slug;
   const latestApprovalRevision = changeApproval?.revisions.at(-1);
-  const menuItems: MenuItem[] = [
-    {
-      label: 'View JSON',
-      onClick: () => setViewJsonOpen(true)
-    },
-    {
-      label: 'Collections…',
-      icon: <TbBookmark size={14} />,
-      onClick: () => setCollectionPickerOpen(true)
-    },
-    ...(entity.canEdit && !deprecation && schema?.deprecation_policy === 'required'
-      ? [{ label: 'Propose deprecation…', onClick: () => setProposeDeprecationOpen(true) }]
-      : []),
-    ...(entity.canCreateChild
-      ? [{ label: 'Clone', icon: <TbCopy size={14} />, onClick: handleClone }]
-      : []),
-    ...(entity.canDelete
-      ? [{ label: 'Delete', icon: <TbTrash size={14} />, danger: true, onClick: handleDelete }]
-      : [])
-  ];
 
   return (
     <div className={`${styles.screen} ${tab === 'graph' ? styles.graphMode : ''}`}>
       {/* Header - hidden when viewing folder content */}
       {!contentFolder && (
-        <div className={styles.head}>
-          <Title
-            breadcrumb={[
-              {
-                label: 'Home',
-                onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-              },
-              { label: 'Entities', onClick: () => navigateToEntities() }
-            ]}
-            icon={<TypeBadge color={color} name={schema?.name} icon={schema?.icon} size={32} />}
-            eyebrow={schema?.name ?? 'Entity'}
-            title={entityName}
-            chips={
-              entity._lifecycle || changeApproval || deprecation ? (
-                <>
-                  {entity._lifecycle && (
-                    <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
-                  )}
-                  {entity._targetLifecycle &&
-                    entity._lifecycle &&
-                    entity._targetLifecycle.id !== entity._lifecycle.id && (
-                      <>
-                        <span>→</span>
-                        <StatusChip
-                          value={entity._targetLifecycle.id}
-                          lifecycleStates={lifecycleStates}
-                        />
-                      </>
-                    )}
-                  {changeApproval && (
-                    <span>
-                      {changeApproval.revisions.at(-1)?.status === 'changes_requested'
-                        ? 'Changes requested'
-                        : 'Approval pending'}
-                    </span>
-                  )}
-                  {deprecation && (
-                    <span>
-                      {deprecation.overdue
-                        ? `Deprecation overdue (${deprecation.targetDate})`
-                        : deprecation.phase === 'scheduled'
-                          ? `Scheduled for deprecation (${deprecation.targetDate})`
-                          : 'Deprecation proposed'}
-                    </span>
-                  )}
-                </>
-              ) : undefined
-            }
-            description={entity._description}
-            toggleButtons={
-              !editing ? (
-                <>
-                  <button
-                    type="button"
-                    className={`${styles.watchBtn} ${isWatched ? styles.watchBtnActive : ''}`}
-                    onClick={() =>
-                      isWatched
-                        ? deleteWatch.mutate(entity?._uid ?? entityId)
-                        : createWatch.mutate(entity?._uid ?? entityId)
-                    }
-                    disabled={createWatch.isPending || deleteWatch.isPending}
-                    title={isWatched ? 'Unwatch entity' : 'Watch entity'}
-                    aria-label={isWatched ? 'Unwatch entity' : 'Watch entity'}
-                  >
-                    <TbBell size={16} />
-                  </button>
-                  <button
-                    type="button"
-                    className={`${styles.watchBtn} ${isPinned ? styles.watchBtnActive : ''}`}
-                    onClick={() =>
-                      isPinned
-                        ? deletePinnedEntity.mutate(entity?._uid ?? entityId)
-                        : createPinnedEntity.mutate({
-                            entityId: entity?._uid ?? entityId,
-                            entityPublicId: entity?._publicId ?? entityId,
-                            entityName: entity._name ?? entity._slug,
-                            entitySlug: entity._slug,
-                            schemaId: entity._schema.id
-                          })
-                    }
-                    disabled={createPinnedEntity.isPending || deletePinnedEntity.isPending}
-                    title={isPinned ? 'Unpin entity' : 'Pin entity'}
-                    aria-label={isPinned ? 'Unpin entity' : 'Pin entity'}
-                  >
-                    <TbPinned size={16} />
-                  </button>
-                </>
-              ) : undefined
-            }
-            buttons={
-              !editing ? (
-                entity.canEdit ? (
-                  <Button icon={<TbEdit size={12} />} onClick={startEdit}>
-                    Edit
-                  </Button>
-                ) : undefined
-              ) : (
-                <>
-                  {entity.canDelete && (
-                    <Button variant="danger" icon={<TbTrash size={12} />} onClick={handleDelete}>
-                      Delete
-                    </Button>
-                  )}
-                  <Button onClick={cancelEdit}>Cancel</Button>
-                  <Button
-                    variant="primary"
-                    onClick={saveEdit}
-                    disabled={isSaving || saveConfirmOpen}
-                  >
-                    {isSaving ? 'Saving...' : approvalRequired ? 'Request approval' : 'Save'}
-                  </Button>
-                </>
-              )
-            }
-            menu={
-              menuItems.length > 0 ? (
-                <DropdownMenu
-                  trigger={
-                    <button type="button" className={styles.iconBtn}>
-                      <TbDots size={14} />
-                    </button>
-                  }
-                  items={menuItems}
-                />
-              ) : undefined
-            }
-          />
-        </div>
+        <EntityDetailHeader
+          entity={entity}
+          entityName={entityName}
+          schema={schema}
+          schemaColor={color}
+          lifecycleStates={lifecycleStates}
+          changeApproval={changeApproval}
+          deprecation={deprecation}
+          editing={editing}
+          isWatched={isWatched}
+          isPinned={isPinned}
+          approvalRequired={approvalRequired}
+          isSaving={isSaving}
+          saveConfirmOpen={saveConfirmOpen}
+          watchPending={createWatch.isPending || deleteWatch.isPending}
+          pinPending={createPinnedEntity.isPending || deletePinnedEntity.isPending}
+          onHome={() => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })}
+          onEntities={navigateToEntities}
+          onToggleWatch={() =>
+            isWatched
+              ? deleteWatch.mutate(entity._uid ?? entityId)
+              : createWatch.mutate(entity._uid ?? entityId)
+          }
+          onTogglePin={() =>
+            isPinned
+              ? deletePinnedEntity.mutate(entity._uid ?? entityId)
+              : createPinnedEntity.mutate({
+                  entityId: entity._uid ?? entityId,
+                  entityPublicId: entity._publicId ?? entityId,
+                  entityName: entity._name ?? entity._slug,
+                  entitySlug: entity._slug,
+                  schemaId: entity._schema.id
+                })
+          }
+          onStartEdit={startEdit}
+          onDelete={handleDelete}
+          onCancelEdit={cancelEdit}
+          onSaveEdit={saveEdit}
+          onViewJson={() => setViewJsonOpen(true)}
+          onOpenCollections={() => setCollectionPickerOpen(true)}
+          onProposeDeprecation={() => setProposeDeprecationOpen(true)}
+          onClone={handleClone}
+        />
       )}
 
       {/* Content folder view */}
@@ -887,122 +455,41 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         />
       )}
 
-      <Dialog
-        open={viewJsonOpen}
-        onClose={() => setViewJsonOpen(false)}
-        title="Entity JSON (depth 1)"
-        width={800}
-        buttons={[{ label: 'Close', type: 'cancel', onClick: () => setViewJsonOpen(false) }]}
-      >
-        {entityJsonLoading ? (
-          <LoadingState text="Loading JSON…" size="sm" />
-        ) : (
-          <pre
-            style={{
-              margin: 0,
-              maxHeight: '70vh',
-              overflow: 'auto',
-              padding: 12,
-              whiteSpace: 'pre-wrap',
-              wordBreak: 'break-word',
-              background: 'var(--cmp-bg)',
-              fontSize: 12
-            }}
-          >
-            {JSON.stringify(entityJson ?? {}, null, 2)}
-          </pre>
-        )}
-      </Dialog>
-
-      <Dialog
-        open={saveConfirmOpen}
-        onClose={() => setSaveConfirmOpen(false)}
-        title="Save changes"
-        buttons={[
-          { label: 'Cancel', type: 'cancel', onClick: () => setSaveConfirmOpen(false) },
-          {
-            label: isSaving ? 'Saving...' : approvalRequired ? 'Request approval' : 'Save',
-            type: 'default',
-            disabled: isSaving,
-            onClick: executeSave
-          },
-          ...(approvalRequired &&
-          canOverrideEntityApproval &&
-          !changeApprovalLoading &&
-          changeApproval == null
-            ? [
-                {
-                  label: isSaving ? 'Bypassing...' : 'Bypass approval',
-                  type: 'danger' as const,
-                  disabled: isSaving || saveConfirmMessage.trim() === '',
-                  onClick: executeBypass
-                }
-              ]
-            : [])
-        ]}
-      >
-        <FormElement
-          label={approvalRequired && canOverrideEntityApproval ? 'Note / bypass reason' : 'Note'}
-          required={approvalRequired && canOverrideEntityApproval}
-        >
-          <TextInput
-            value={saveConfirmMessage}
-            onChange={v => setSaveConfirmMessage(v ?? '')}
-            placeholder="Describe what changed"
-            style={{ width: '100%' }}
-          />
-        </FormElement>
-        {approvalRequired && (
-          <FormElement label="Due date (optional)">
-            <DateInput value={saveConfirmDueDate} onChange={v => setSaveConfirmDueDate(v ?? '')} />
-          </FormElement>
-        )}
-        <GovernanceInitiationFields
-          fields={entityInitiationFields}
-          values={initiationFieldValues}
-          onChange={setInitiationFieldValues}
-        />
-        {saveError && <Banner variant="error">{saveError}</Banner>}
-        <FormElement label="" required>
-          <label style={{ display: 'flex', alignItems: 'center', gap: 8, cursor: 'pointer' }}>
-            <input
-              type="checkbox"
-              checked={saveConfirmSignificant}
-              onChange={e => setSaveConfirmSignificant(e.target.checked)}
-            />
-            <span style={{ fontSize: 13 }}>Mark as significant version</span>
-          </label>
-        </FormElement>
-      </Dialog>
-
-      <DeleteConfirmationDialog
-        open={confirmDelete}
-        title="Delete entity?"
-        message={
-          <>
-            The entity <b>{entityName}</b> will be permanently deleted.
-          </>
-        }
-        detail="This can't be undone."
-        confirmLabel="Delete entity"
-        onConfirm={doDelete}
-        onCancel={() => setConfirmDelete(false)}
-      />
-      {collectionPickerOpen && (
-        <CollectionPickerDialog
-          open={true}
-          workspaceId={workspaceId}
-          entityId={entity._uid}
-          entityName={entityName}
-          onClose={() => setCollectionPickerOpen(false)}
-        />
-      )}
-      <ProposeEntityDeprecationDialog
-        open={proposeDeprecationOpen}
-        onClose={() => setProposeDeprecationOpen(false)}
+      <EntityDetailDialogs
+        entity={entity}
+        entityName={entityName}
         workspaceId={workspaceId}
         entityId={entityId}
-        baseVersion={entity._version ?? 1}
+        viewJsonOpen={viewJsonOpen}
+        setViewJsonOpen={setViewJsonOpen}
+        entityJson={entityJson}
+        entityJsonLoading={entityJsonLoading}
+        saveConfirmOpen={saveConfirmOpen}
+        setSaveConfirmOpen={setSaveConfirmOpen}
+        saveConfirmMessage={saveConfirmMessage}
+        setSaveConfirmMessage={setSaveConfirmMessage}
+        saveConfirmDueDate={saveConfirmDueDate}
+        setSaveConfirmDueDate={setSaveConfirmDueDate}
+        saveConfirmSignificant={saveConfirmSignificant}
+        setSaveConfirmSignificant={setSaveConfirmSignificant}
+        saveError={saveError}
+        isSaving={isSaving}
+        approvalRequired={approvalRequired}
+        canOverrideApproval={canOverrideEntityApproval}
+        changeApprovalLoading={changeApprovalLoading}
+        hasChangeApproval={changeApproval != null}
+        executeSave={executeSave}
+        executeBypass={executeBypass}
+        confirmDelete={confirmDelete}
+        setConfirmDelete={setConfirmDelete}
+        doDelete={doDelete}
+        collectionPickerOpen={collectionPickerOpen}
+        setCollectionPickerOpen={setCollectionPickerOpen}
+        proposeDeprecationOpen={proposeDeprecationOpen}
+        setProposeDeprecationOpen={setProposeDeprecationOpen}
+        entityInitiationFields={entityInitiationFields}
+        initiationFieldValues={initiationFieldValues}
+        setInitiationFieldValues={setInitiationFieldValues}
       />
     </div>
   );
