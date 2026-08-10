@@ -28,8 +28,9 @@ const test = createApiTest({
   }
 });
 
-test('typed artifacts and revisions preserve lifecycle state', async ({ orpc }) => {
+test('typed artifacts and revisions preserve lifecycle state', async ({ orpc, server }) => {
   const entityId = '00000000-0000-0000-0000-e2e000000101';
+  const workspaceId = seedIds.workspace.default;
   const initial = await orpc.artifacts.list({ params: { workspace: 'default', entityId } });
   expect(initial).toMatchObject({ status: 'not_configured', artifacts: [] });
 
@@ -158,6 +159,64 @@ test('typed artifacts and revisions preserve lifecycle state', async ({ orpc }) 
     }
   });
   expect(failed).toMatchObject({ status: 'stale', currentRevisionId: revision.id });
+
+  const link = await orpc.artifacts.create({
+    params: { workspace: 'default', entityId },
+    body: {
+      artifactType: 'api-specification',
+      kind: 'link',
+      location: 'https://example.com/api-docs'
+    }
+  });
+  expect(link).toMatchObject({
+    artifactType: 'api-specification',
+    kind: 'link',
+    status: 'link_only',
+    currentRevisionId: null
+  });
+
+  const url = await orpc.artifacts.create({
+    params: { workspace: 'default', entityId },
+    body: {
+      artifactType: 'api-specification',
+      kind: 'url',
+      location: 'https://example.com/openapi.yaml'
+    }
+  });
+  expect(url).toMatchObject({
+    artifactType: 'api-specification',
+    kind: 'url',
+    status: 'pending'
+  });
+
+  const queued = await server.db.jobs.listRuns(workspaceId, {
+    jobType: 'artifact.api-specification.refresh',
+    limit: 10,
+    offset: 0
+  });
+  expect(queued).toMatchObject({
+    total: 1,
+    items: [
+      {
+        job_type: 'artifact.api-specification.refresh',
+        system_identity: 'artifact-api-specification',
+        payload: { artifactId: url.id },
+        max_attempts: 3,
+        status: 'queued'
+      }
+    ]
+  });
+
+  const repeatedRefresh = await orpc.artifacts.refresh({
+    params: { workspace: 'default', entityId, artifactId: url.id }
+  });
+  expect(repeatedRefresh).toMatchObject({ id: url.id, status: 'pending' });
+  const afterRepeatedRefresh = await server.db.jobs.listRuns(workspaceId, {
+    jobType: 'artifact.api-specification.refresh',
+    limit: 10,
+    offset: 0
+  });
+  expect(afterRepeatedRefresh.total).toBe(1);
 });
 
 test('artifacts require entity and content authorization', async ({ server }) => {
