@@ -26,8 +26,10 @@ vi.mock('../../../lib/orpcClient', () => ({
   orpcClient: { entities: { get: mocks.getEntity } }
 }));
 
-vi.mock('../../../auth/useFieldGroupAccess', () => ({
-  useFieldGroupAccess: () => () => 'edit' as const
+vi.mock('../../../auth/WorkspaceAuthorizationContext', () => ({
+  useWorkspaceAuthorization: () => ({
+    getFieldGroupAccess: () => 'edit' as const
+  })
 }));
 
 const schema = {

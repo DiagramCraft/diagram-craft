@@ -68,7 +68,7 @@ import { useMapMetricRollup } from './useMapMetricRollup';
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import { Button } from '@diagram-craft/app-components/Button';
 import { FilterBuilder } from '../../../components/FilterBuilder';
-import { useFieldGroupAccess } from '../../../auth/useFieldGroupAccess';
+import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { MapLegend } from './MapLegend';
@@ -745,7 +745,7 @@ export const MapView = ({
       }
     : null;
   const metricSourceSchema = metricTerminalSchema;
-  const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
+  const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
   const numeratorConditionPopoverRef = useRef<PopoverActions | null>(null);
   const metricSourceOptions = useMemo(
     () =>

@@ -9,7 +9,7 @@ import { orpcClient } from '../lib/orpcClient';
 import { ApiError } from '../lib/http';
 import { Banner } from '../components/Banner';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
-import { usePermissions } from '../auth/PermissionContext';
+import { useWorkspaceAuthorization } from '../auth/WorkspaceAuthorizationContext';
 import { useEntitiesBySchema } from '../hooks/useEntities';
 import { TbInfoCircle, TbAdjustments } from 'react-icons/tb';
 import styles from './AddEntityDialog.module.css';
@@ -23,7 +23,6 @@ import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContr
 import { EntityFieldInput } from './EntityFieldInput';
 import { applyEntityTemplate, createEntityFormDefaults } from '../lib/entityTemplates';
 import { useAutoFocus } from '../hooks/useAutoFocus';
-import { useFieldGroupAccess } from '../auth/useFieldGroupAccess';
 import { useSupportedCurrencies } from '../hooks/useWorkspaceConfig';
 import { resolveGroupAccessControl } from '../lib/fieldGroupAccess';
 
@@ -63,7 +62,7 @@ export const AddEntityDialog = ({
   teams,
   preselectedSchemaId
 }: AddEntityDialogProps) => {
-  const { canCreateTopLevelEntity } = usePermissions();
+  const { canCreateTopLevelEntity, getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
   const [schemaId, setSchemaId] = useState('');
   const [templateId, setTemplateId] = useState('');
   const [templateWarnings, setTemplateWarnings] = useState<string[]>([]);
@@ -82,10 +81,10 @@ export const AddEntityDialog = ({
   const nameRef = useRef<HTMLInputElement>(null);
   useAutoFocus(nameRef, { enabled: open });
   const creatableTeams = useMemo(
-    () => teams.filter(team => canCreateTopLevelEntity(workspaceId, team.id)),
-    [canCreateTopLevelEntity, teams, workspaceId]
+    () => teams.filter(team => canCreateTopLevelEntity(team.id)),
+    [canCreateTopLevelEntity, teams]
   );
-  const canCreateWithoutOwner = canCreateTopLevelEntity(workspaceId, null);
+  const canCreateWithoutOwner = canCreateTopLevelEntity(null);
 
   useEffect(() => {
     if (open) {
@@ -105,7 +104,6 @@ export const AddEntityDialog = ({
 
   const selectedSchema = schemas.find(s => s.id === schemaId);
 
-  const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
   const fieldAccessById = useMemo(() => {
     if (!selectedSchema) return new Map<string, FieldGroupAccess>();
     const groupAccessById = new Map(
