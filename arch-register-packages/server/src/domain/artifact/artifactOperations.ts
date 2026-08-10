@@ -7,7 +7,10 @@ import type {
   ArtifactStatus,
   ArtifactType
 } from '@arch-register/api-types/artifactContract';
-import { getEntityCapabilityDefinition } from '@arch-register/api-types/integrationCatalog';
+import {
+  getEntityCapabilityDefinition,
+  resolveEntityCapabilityFieldMappings
+} from '@arch-register/api-types/integrationCatalog';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { requireEntityAction, requireWorkspaceCapability } from '../auth/authorization';
@@ -56,8 +59,8 @@ const requireArtifactWrite = (authCtx: AuthorizationContext, entity: EntityDbRes
 };
 
 const assertEntityCapabilityForArtifact = (schema: SchemaDbResult, artifactType: ArtifactType) => {
-  const enabled = (schema.entity_capabilities ?? []).some(item => item.type === artifactType);
-  httpAssert.true(enabled, {
+  const capability = (schema.entity_capabilities ?? []).find(item => item.type === artifactType);
+  httpAssert.present(capability, {
     status: 409,
     message: `Schema '${schema.name}' does not declare entity capability '${artifactType}'`
   });
@@ -66,12 +69,12 @@ const assertEntityCapabilityForArtifact = (schema: SchemaDbResult, artifactType:
     status: 409,
     message: `Entity capability '${artifactType}' is not available`
   });
-  const fieldIds = new Set(schema.fields.map(field => field.id));
-  const missingFields = definition.requiredFields.filter(fieldId => !fieldIds.has(fieldId));
-  httpAssert.true(missingFields.length === 0, {
+  const resolution = resolveEntityCapabilityFieldMappings(capability, definition, schema.fields);
+  httpAssert.true(resolution.issues.length === 0, {
     status: 409,
-    message: `Schema '${schema.name}' is missing fields required by entity capability '${artifactType}': ${missingFields.join(', ')}`
+    message: `Schema '${schema.name}' has invalid field mappings for entity capability '${artifactType}': ${resolution.issues.map(issue => issue.message).join(' ')}`
   });
+  return resolution;
 };
 
 const assertSafeSourceLocation = (kind: ArtifactSourceKind, location: string | null) => {
@@ -296,7 +299,7 @@ export const createArtifactRevision = async (
   body: { sourceRevision?: string | null; mediaType?: string | null; content: string },
   authCtx: AuthorizationContext
 ) => {
-  const { entity } = await getEntityAndSchema(db, workspace, entityId);
+  const { entity, schema } = await getEntityAndSchema(db, workspace, entityId);
   requireArtifactWrite(authCtx, entity);
   const artifact = await db.artifact.getArtifact(workspace, artifactId);
   httpAssert.present(artifact, { status: 404, message: 'Artifact not found' });
@@ -309,6 +312,7 @@ export const createArtifactRevision = async (
     status: 413,
     message: 'Artifact content exceeds the 2 MB limit'
   });
+  assertEntityCapabilityForArtifact(schema, artifact.artifact_type);
   const checksum = createHash('sha256').update(body.content, 'utf8').digest('hex');
   const existing = await db.artifact.getRevisionByChecksum(workspace, artifact.id, checksum);
   const revisionId = existing?.id ?? randomUUID();

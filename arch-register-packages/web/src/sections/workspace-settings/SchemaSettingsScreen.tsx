@@ -29,6 +29,7 @@ import {
 import {
   createSchemaFieldForType,
   removeTemplateField,
+  updateCapabilityFieldMappingId,
   updateTemplateFieldId
 } from './schemaSettingsHelpers';
 import { SchemaEditorForm } from './SchemaEditorForm';
@@ -113,7 +114,12 @@ export const SchemaSettingsScreen = () => {
         createSchemaFieldForType(field, newType, fields, firstEnumId),
       onFieldIdChange: (draft, previousFieldId, nextFieldId) => ({
         ...draft,
-        templates: updateTemplateFieldId(draft.templates, previousFieldId, nextFieldId)
+        templates: updateTemplateFieldId(draft.templates, previousFieldId, nextFieldId),
+        entityCapabilities: updateCapabilityFieldMappingId(
+          draft.entityCapabilities,
+          previousFieldId,
+          nextFieldId
+        )
       }),
       onFieldRemoved: (draft, fieldId) => ({
         ...draft,

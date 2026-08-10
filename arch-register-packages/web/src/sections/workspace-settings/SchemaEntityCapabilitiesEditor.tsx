@@ -4,6 +4,8 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TbTrash } from 'react-icons/tb';
 import {
   entityCapabilityDefinitions,
+  resolveEntityCapabilityFieldId,
+  resolveEntityCapabilityFieldMappings,
   type EntityCapabilityDefinition
 } from '@arch-register/api-types/integrationCatalog';
 import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
@@ -12,14 +14,6 @@ import styles from './SchemaSettingsScreen.module.css';
 
 const getDefinition = (type: string): EntityCapabilityDefinition | undefined =>
   entityCapabilityDefinitions.find(definition => definition.type === type);
-
-const getMissingRequiredFields = (
-  definition: EntityCapabilityDefinition,
-  fields: SchemaField[]
-) => {
-  const fieldIds = new Set(fields.map(field => field.id));
-  return definition.requiredFields.filter(fieldId => !fieldIds.has(fieldId));
-};
 
 const isEnabledElsewhere = (capabilities: EntityCapability[], currentIndex: number, type: string) =>
   capabilities.some((capability, index) => index !== currentIndex && capability.type === type);
@@ -76,9 +70,9 @@ export const SchemaEntityCapabilitiesEditor = ({
         <div className={styles.capabilityList}>
           {capabilities.map((capability, index) => {
             const definition = getDefinition(capability.type);
-            const missingRequiredFields = definition
-              ? getMissingRequiredFields(definition, fields)
-              : [];
+            const resolution = definition
+              ? resolveEntityCapabilityFieldMappings(capability, definition, fields)
+              : null;
 
             return (
               <div className={styles.capabilityCard} key={`${capability.type}-${index}`}>
@@ -90,7 +84,7 @@ export const SchemaEntityCapabilitiesEditor = ({
                         disabled={!canEdit}
                         placeholder="Select capability..."
                         onChange={value => {
-                          if (value) onUpdate(index, { type: value });
+                          if (value) onUpdate(index, { type: value, fieldMappings: undefined });
                         }}
                       >
                         {entityCapabilityDefinitions.map(candidate => (
@@ -135,25 +129,72 @@ export const SchemaEntityCapabilitiesEditor = ({
                         </div>
                       </div>
                       <div>
-                        <div className={styles.capabilitySubheading}>Required schema fields</div>
+                        <div className={styles.capabilitySubheading}>Schema field mappings</div>
                         <div className={styles.capabilityFieldList}>
-                          {definition.requiredFields.map(fieldId => {
+                          {definition.fieldRoles.map(role => {
+                            const fieldId = resolveEntityCapabilityFieldId(capability, role);
                             const field = fields.find(candidate => candidate.id === fieldId);
+                            const roleIssues = resolution?.issues.filter(
+                              issue => issue.roleId === role.id
+                            ) ?? [];
+                            const validOptions = fields.filter(
+                              candidate =>
+                                !candidate.archived &&
+                                candidate.type !== 'derived' &&
+                                role.allowedTypes.some(type => type === candidate.type)
+                            );
+                            const optionIds = new Set(validOptions.map(candidate => candidate.id));
                             return (
-                              <div className={styles.capabilityFieldOption} key={fieldId}>
-                                <span>
-                                  {field?.name ?? 'Missing field'} <code>{fieldId}</code>
-                                </span>
+                              <div className={styles.capabilityFieldOption} key={role.id}>
+                                <FormElement label={role.label}>
+                                  <Select.Root
+                                    value={fieldId}
+                                    disabled={!canEdit}
+                                    onChange={nextFieldId => {
+                                      if (!nextFieldId) return;
+                                      const nextMappings = { ...(capability.fieldMappings ?? {}) };
+                                      if (nextFieldId === role.defaultFieldId) {
+                                        delete nextMappings[role.id];
+                                      } else {
+                                        nextMappings[role.id] = nextFieldId;
+                                      }
+                                      onUpdate(index, {
+                                        fieldMappings:
+                                          Object.keys(nextMappings).length > 0
+                                            ? nextMappings
+                                            : undefined
+                                      });
+                                    }}
+                                  >
+                                    {!optionIds.has(fieldId) && (
+                                      <Select.Item value={fieldId}>
+                                        {field?.name ?? 'Missing field'} · {fieldId}
+                                      </Select.Item>
+                                    )}
+                                    {validOptions.map(candidate => (
+                                      <Select.Item key={candidate.id} value={candidate.id}>
+                                        {candidate.name} · {candidate.id}
+                                      </Select.Item>
+                                    ))}
+                                  </Select.Root>
+                                </FormElement>
+                                <div className={styles.capabilityFieldHint}>
+                                  {role.description} Default: <code>{role.defaultFieldId}</code>
+                                </div>
+                                {roleIssues.length > 0 && (
+                                  <div className={styles.capabilityFieldError}>
+                                    {roleIssues.map(issue => issue.message).join(' ')}
+                                  </div>
+                                )}
                               </div>
                             );
                           })}
                         </div>
                       </div>
                     </div>
-                    {missingRequiredFields.length > 0 && (
+                    {resolution && resolution.issues.length > 0 && (
                       <div className={styles.capabilityUnknownFields}>
-                        Schema fields required by this capability are missing:{' '}
-                        {missingRequiredFields.join(', ')}
+                        Fix the field mapping before registering artifacts for this capability.
                       </div>
                     )}
                   </>

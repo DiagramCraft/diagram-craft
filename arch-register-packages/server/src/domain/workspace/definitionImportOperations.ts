@@ -12,6 +12,7 @@ import type {
   SchemaGroup,
   SharedFieldGroupLink
 } from '@arch-register/api-types/schemaContract';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import { isEntityRelationField } from '@arch-register/api-types/relationSchemaContract';
@@ -56,6 +57,7 @@ type ImportableSchema = {
   description: string;
   key_prefix: string;
   fields: SchemaField[];
+  entity_capabilities?: EntityCapability[];
   groups: SchemaGroup[];
   shared_field_group_links: SharedFieldGroupLink[];
   shared_field_groups: Array<{
@@ -212,6 +214,7 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
       .slice(0, 5)
       .toUpperCase(),
     fields: schema.fields.map(toCanonicalField),
+    entity_capabilities: schema.entityCapabilities ?? [],
     groups: [],
     shared_field_group_links: [],
     shared_field_groups: [],
@@ -306,6 +309,7 @@ const sourceFromWorkspace = async (
       description: schema.description,
       key_prefix: schema.key_prefix,
       fields: schema.fields,
+      entity_capabilities: schema.entity_capabilities ?? [],
       groups: schema.groups ?? [],
       shared_field_group_links: schema.shared_field_group_links ?? [],
       shared_field_groups: (schema.shared_field_group_links ?? []).flatMap(link => {
@@ -986,6 +990,7 @@ export const executeDefinitionImport = async (
             description: schema.description,
             key_prefix: schema.key_prefix,
             fields,
+            entity_capabilities: schema.entity_capabilities,
             groups,
             shared_field_group_links: schema.shared_field_group_links.map(link => ({
               ...link,
@@ -1015,6 +1020,7 @@ export const executeDefinitionImport = async (
             fields,
             templates: [],
             groups,
+            entity_capabilities: row.entity_capabilities ?? [],
             color: row.color,
             icon: row.icon,
             change_summary: buildSchemaChangeSummary(null, fields),

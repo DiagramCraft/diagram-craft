@@ -157,11 +157,30 @@
 
 .capabilityFieldOption {
   display: flex;
+  flex-direction: column;
   align-items: center;
   gap: 6px;
   min-width: 0;
   color: var(--base-fg-dim);
   font-size: 11px;
+}
+
+.capabilityFieldOption > :first-child {
+  width: 100%;
+}
+
+.capabilityFieldHint {
+  width: 100%;
+  color: var(--cmp-fg-disabled);
+  font-size: 10px;
+  line-height: 1.4;
+}
+
+.capabilityFieldError {
+  width: 100%;
+  color: var(--warning-fg);
+  font-size: 10px;
+  line-height: 1.4;
 }
 
 .capabilityFieldOption code {

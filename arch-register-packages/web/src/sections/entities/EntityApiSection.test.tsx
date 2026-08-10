@@ -1,6 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import type { ApiSpecificationItem, Artifact } from '@arch-register/api-types/artifactContract';
 
 const mocks = vi.hoisted(() => ({
@@ -78,7 +79,10 @@ const makeArtifact = (overrides: Partial<Artifact> = {}): Artifact => ({
   ...overrides
 });
 
-const makeEntity = (apiType: string): EntityRecord =>
+const makeEntity = (
+  apiType: string,
+  extra: Record<string, unknown> = {}
+): EntityRecord =>
   ({
     canView: true,
     canEdit: true,
@@ -101,7 +105,8 @@ const makeEntity = (apiType: string): EntityRecord =>
     _projectId: null,
     _completeness: 100,
     api_type: apiType,
-    api_version: 'v1'
+    api_version: 'v1',
+    ...extra
   }) as EntityRecord;
 
 const makeItem = (overrides: Partial<ApiSpecificationItem> = {}): ApiSpecificationItem => ({
@@ -152,7 +157,12 @@ const makeProjection = (items: ApiSpecificationItem[]) => ({
   offset: 0
 });
 
-const renderApi = (entity: EntityRecord, artifact: Artifact | undefined, projection: unknown) => {
+const renderApi = (
+  entity: EntityRecord,
+  artifact: Artifact | undefined,
+  projection: unknown,
+  entityCapability?: EntityCapability
+) => {
   mocks.artifacts.mockReturnValue({
     data: { artifacts: artifact ? [artifact] : [], status: artifact?.status ?? 'not_configured' },
     isLoading: false,
@@ -171,6 +181,7 @@ const renderApi = (entity: EntityRecord, artifact: Artifact | undefined, project
     <EntityApiSection
       workspaceId="workspace-1"
       entity={entity}
+      entityCapability={entityCapability}
       outgoing={[]}
       incoming={[]}
       search={{ tab: 'api' }}
@@ -245,5 +256,32 @@ describe('EntityApiSection', () => {
     const notConfiguredMarkup = renderApi(makeEntity('openapi'), undefined, undefined);
     expect(notConfiguredMarkup).toContain('No API specification configured');
     expect(notConfiguredMarkup).toContain('Upload API specification');
+  });
+
+  it('reads metadata and chooses the projection kind from mapped fields', () => {
+    const capability: EntityCapability = {
+      type: 'api-specification',
+      fieldMappings: {
+        api_type: 'protocol_kind',
+        api_version: 'contract_version'
+      }
+    };
+    const markup = renderApi(
+      makeEntity('ignored', { protocol_kind: 'asyncapi', contract_version: 'v2' }),
+      makeArtifact(),
+      makeProjection([
+        makeItem({
+          itemKind: 'message',
+          protocol: 'asyncapi',
+          channel: 'orders',
+          action: 'publish'
+        })
+      ]),
+      capability
+    );
+
+    expect(markup).toContain('asyncapi');
+    expect(markup).toContain('v2');
+    expect(mocks.projection.mock.calls.at(-1)?.[4]).toMatchObject({ kind: 'message' });
   });
 });

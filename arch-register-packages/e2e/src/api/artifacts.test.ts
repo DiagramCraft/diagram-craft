@@ -169,3 +169,108 @@ test('artifacts require entity and content authorization', async ({ server }) =>
     unauthenticated.artifacts.list({ params: { workspace: 'default', entityId } })
   ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
 });
+
+test('artifact registration resolves capability mappings instead of standard field IDs', async ({
+  orpc,
+  server
+}) => {
+  const schema = await orpc.schemas.create({
+    params: { workspace: 'default' },
+    body: {
+      name: 'Mapped API Schema',
+      fields: [
+        { id: 'protocol_kind', name: 'Protocol kind', type: 'text' },
+        { id: 'contract_version', name: 'Contract version', type: 'text' }
+      ],
+      entity_capabilities: [
+        {
+          type: 'api-specification',
+          fieldMappings: {
+            api_type: 'protocol_kind',
+            api_version: 'contract_version'
+          }
+        }
+      ]
+    }
+  });
+  const entityId = '00000000-0000-0000-0000-e2e000000102';
+  const now = new Date();
+  await server.db.catalog.createEntity({
+    id: entityId,
+    workspace: seedIds.workspace.default,
+    public_id: 'API-1000',
+    slug: 'mapped-api',
+    namespace: 'default',
+    name: 'Mapped API',
+    description: '',
+    owner: null,
+    lifecycle: null,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: [],
+    links: [],
+    schema_id: schema.id,
+    data: { protocol_kind: 'openapi', contract_version: '3.1.0' },
+    project_id: null,
+    created_at: now,
+    updated_at: now,
+    completeness: 0
+  });
+
+  const artifact = await orpc.artifacts.create({
+    params: { workspace: 'default', entityId },
+    body: { artifactType: 'api-specification', kind: 'document', mediaType: 'application/json' }
+  });
+  const content = JSON.stringify({
+    openapi: '3.1.0',
+    info: { title: 'Mapped API', version: '3.1.0' },
+    paths: {}
+  });
+  const revision = await orpc.artifacts.createRevision({
+    params: { workspace: 'default', entityId, artifactId: artifact.id },
+    body: { content, mediaType: 'application/json' }
+  });
+  expect(revision.artifactId).toBe(artifact.id);
+
+  const invalidSchema = await orpc.schemas.create({
+    params: { workspace: 'default' },
+    body: {
+      name: 'Invalid Mapped API Schema',
+      fields: [{ id: 'contract_version', name: 'Contract version', type: 'text' }],
+      entity_capabilities: [
+        {
+          type: 'api-specification',
+          fieldMappings: { api_type: 'missing_protocol', api_version: 'contract_version' }
+        }
+      ]
+    }
+  });
+  const invalidEntityId = '00000000-0000-0000-0000-e2e000000103';
+  await server.db.catalog.createEntity({
+    id: invalidEntityId,
+    workspace: seedIds.workspace.default,
+    public_id: 'API-1001',
+    slug: 'invalid-mapped-api',
+    namespace: 'default',
+    name: 'Invalid Mapped API',
+    description: '',
+    owner: null,
+    lifecycle: null,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: [],
+    links: [],
+    schema_id: invalidSchema.id,
+    data: { contract_version: '3.1.0' },
+    project_id: null,
+    created_at: now,
+    updated_at: now,
+    completeness: 0
+  });
+  await expect(
+    orpc.artifacts.create({
+      params: { workspace: 'default', entityId: invalidEntityId },
+      body: { artifactType: 'api-specification', kind: 'document' }
+    })
+  ).rejects.toMatchObject({ code: 'CONFLICT', message: expect.stringContaining('missing_protocol') });
+});
