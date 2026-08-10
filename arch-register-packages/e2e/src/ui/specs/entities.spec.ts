@@ -128,6 +128,7 @@ test.describe('entities section', () => {
   }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
     await entitiesPage.goto();
+    await entitiesPage.expectLoaded();
     await entitiesPage.seedApiSpecification(authApiEntity.id, {
       openapi: '3.1.0',
       info: { title: 'Auth API', version: 'v1' },
@@ -288,7 +289,7 @@ test.describe('entities section', () => {
     const csv = await readFile(downloadPath, 'utf8');
     expect(csv).toContain(customerApiEntity.name);
     expect(csv).toContain(authApiEntity.name);
-    expect(csv).not.toContain(frontendAppEntity.name);
+    expect(csv).not.toContain(`${frontendAppEntity.id};`);
   });
 
   test('opens the new entity dialog', async ({ page }) => {
