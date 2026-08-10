@@ -18,7 +18,7 @@ import type { RelationField } from '@arch-register/api-types/relationSchemaContr
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { EntityDbResult } from './db/catalogDatabase';
 import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { resolveRelationSchemaCatalogAt } from './schemaHistory';
 
 const BASE_COLUMNS = ['_schemaId', '_inEntityId', '_outEntityId'] as const;
@@ -617,13 +617,13 @@ export const exportRelationsCsvOperation = (
   event: AuthenticatedEvent,
   relationQuery: Parameters<typeof collectRelationsFromIR>[3]['relationQuery']
 ) =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to export relations' },
-    async ({ ws, authCtx }) => exportRelationsCsv(db, ws, authCtx, relationQuery)
-  );
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to export relations',
+    operation: async ({ ws, authCtx }) => exportRelationsCsv(db, ws, authCtx, relationQuery)
+  });
 
 export const downloadRelationImportTemplateOperation = (
   db: DatabaseAdapter,
@@ -631,13 +631,13 @@ export const downloadRelationImportTemplateOperation = (
   event: AuthenticatedEvent,
   schemaId: string
 ) =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to download relation import template' },
-    async ({ ws, authCtx }) => downloadRelationImportTemplate(db, ws, authCtx, schemaId)
-  );
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to download relation import template',
+    operation: async ({ ws, authCtx }) => downloadRelationImportTemplate(db, ws, authCtx, schemaId)
+  });
 
 export const parseRelationsImportOperation = (
   db: DatabaseAdapter,
@@ -645,13 +645,13 @@ export const parseRelationsImportOperation = (
   event: AuthenticatedEvent,
   csvContent: string
 ) =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to parse relation import' },
-    async ({ ws, authCtx }) => parseRelationsImport(db, ws, authCtx, csvContent)
-  );
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to parse relation import',
+    operation: async ({ ws, authCtx }) => parseRelationsImport(db, ws, authCtx, csvContent)
+  });
 
 export const commitRelationsImportOperation = (
   db: DatabaseAdapter,
@@ -659,10 +659,11 @@ export const commitRelationsImportOperation = (
   event: AuthenticatedEvent,
   relations: Array<Record<string, unknown>>
 ) =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to import relations' },
-    async ({ ws, authCtx }) => commitRelationsImport(db, ws, authCtx, event, relations, workspace)
-  );
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to import relations',
+    operation: async ({ ws, authCtx }) =>
+      commitRelationsImport(db, ws, authCtx, event, relations, workspace)
+  });

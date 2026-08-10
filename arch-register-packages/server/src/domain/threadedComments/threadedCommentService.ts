@@ -2,8 +2,8 @@ import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { requireWorkspaceCapability } from '../auth/authorization';
+import { runAuthorizedOperation, type WorkspaceOperationContext } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 
 const UNKNOWN_AUTHOR_NAME = 'Unknown user';
@@ -36,6 +36,8 @@ export type ThreadedCommentApiBase = {
   editedAt: string | null;
 };
 
+export type ThreadedCommentTargetScope = 'workspace' | 'entity';
+
 type CreateThreadedCommentParams<TTarget, TRequest, TRow extends ThreadedCommentRow> = {
   workspace: string;
   id: string;
@@ -67,11 +69,7 @@ export type ThreadedCommentAdapter<
   TResult,
   TCreateInput
 > = {
-  buildTargetAuthContext: (
-    db: DatabaseAdapter,
-    workspace: string,
-    event: AuthenticatedEvent
-  ) => Promise<TAuthContext>;
+  targetScope: ThreadedCommentTargetScope;
   resolveTarget: (
     db: DatabaseAdapter,
     workspace: string,
@@ -128,6 +126,40 @@ export const mapThreadedCommentBase = (
   editedAt: row.edited_at ? row.edited_at.toISOString() : null
 });
 
+const runThreadedCommentTargetOperation = async <
+  TAuthContext extends WorkspaceAuthorizationContext,
+  TTarget,
+  TRequest extends ThreadedCommentCreateRequest,
+  TRow extends ThreadedCommentRow,
+  TResult,
+  TCreateInput,
+  T
+>(
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent,
+  adapter: ThreadedCommentAdapter<TAuthContext, TTarget, TRequest, TRow, TResult, TCreateInput>,
+  operation: (context: WorkspaceOperationContext & { authCtx: TAuthContext }) => Promise<T>
+): Promise<T> => {
+  if (adapter.targetScope === 'entity') {
+    return runAuthorizedOperation({
+      db,
+      event,
+      scope: { kind: 'entity', workspace },
+      operation: async context =>
+        operation(context as unknown as WorkspaceOperationContext & { authCtx: TAuthContext })
+    });
+  }
+
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async context =>
+      operation(context as unknown as WorkspaceOperationContext & { authCtx: TAuthContext })
+  });
+};
+
 export const listThreadedComments = async <
   TAuthContext extends WorkspaceAuthorizationContext,
   TTarget,
@@ -142,15 +174,21 @@ export const listThreadedComments = async <
   event: AuthenticatedEvent,
   adapter: ThreadedCommentAdapter<TAuthContext, TTarget, TRequest, TRow, TResult, TCreateInput>
 ): Promise<TResult[]> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await adapter.buildTargetAuthContext(db, ws, event);
-  await adapter.resolveTarget(db, ws, authCtx, target);
+  return runThreadedCommentTargetOperation(
+    db,
+    workspace,
+    event,
+    adapter,
+    async ({ ws, authCtx }) => {
+      await adapter.resolveTarget(db, ws, authCtx, target);
 
-  const [rows, authorNames] = await Promise.all([
-    adapter.listPosts(db, ws, target),
-    buildAuthorNameMap(db)
-  ]);
-  return rows.map(row => adapter.toApiPost(row, authorNames));
+      const [rows, authorNames] = await Promise.all([
+        adapter.listPosts(db, ws, target),
+        buildAuthorNameMap(db)
+      ]);
+      return rows.map(row => adapter.toApiPost(row, authorNames));
+    }
+  );
 };
 
 export const createThreadedComment = async <
@@ -168,57 +206,63 @@ export const createThreadedComment = async <
   event: AuthenticatedEvent,
   adapter: ThreadedCommentAdapter<TAuthContext, TTarget, TRequest, TRow, TResult, TCreateInput>
 ): Promise<TResult> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await adapter.buildTargetAuthContext(db, ws, event);
-  await adapter.resolveTarget(db, ws, authCtx, target);
-  requireWorkspaceCapability(authCtx, 'comments', adapter.createPermissionMessage);
+  return runThreadedCommentTargetOperation(
+    db,
+    workspace,
+    event,
+    adapter,
+    async ({ ws, authCtx }) => {
+      await adapter.resolveTarget(db, ws, authCtx, target);
+      requireWorkspaceCapability(authCtx, 'comments', adapter.createPermissionMessage);
 
-  const parentPostId = request.parentPostId ?? null;
-  let parent: TRow | null = null;
-  if (parentPostId) {
-    parent = await adapter.getPost(db, ws, parentPostId);
-    httpAssert.present(parent, { status: 404, message: `Post '${parentPostId}' not found` });
-    adapter.validateParentTarget(parent, target);
-    httpAssert.true(parent.parent_post_id === null, {
-      status: 400,
-      message: 'Reply must target a root post, not another reply'
-    });
-  }
+      const parentPostId = request.parentPostId ?? null;
+      let parent: TRow | null = null;
+      if (parentPostId) {
+        parent = await adapter.getPost(db, ws, parentPostId);
+        httpAssert.present(parent, { status: 404, message: `Post '${parentPostId}' not found` });
+        adapter.validateParentTarget(parent, target);
+        httpAssert.true(parent.parent_post_id === null, {
+          status: 400,
+          message: 'Reply must target a root post, not another reply'
+        });
+      }
 
-  const timestamp = new Date();
-  const createInput = adapter.createInput({
-    workspace: ws,
-    id: randomUUID(),
-    target,
-    request,
-    body: request.body,
-    parentPostId,
-    parent,
-    authorId: event.context.user.id,
-    timestamp
-  });
-  const write = async (tx: DatabaseAdapter) => {
-    const row = await adapter.createPost(tx, createInput);
-
-    if (adapter.createNotifications) {
-      await adapter.createNotifications(tx, {
+      const timestamp = new Date();
+      const createInput = adapter.createInput({
         workspace: ws,
+        id: randomUUID(),
         target,
         request,
-        row,
+        body: request.body,
         parentPostId,
-        parentAuthorId: parent?.author_id ?? null,
-        actorUserId: event.context.user.id,
-        occurredAt: timestamp
+        parent,
+        authorId: event.context.user.id,
+        timestamp
       });
-    }
-    return row;
-  };
-  const row =
-    db.core && !db.core.isTransaction ? await db.core.transaction(write) : await write(db);
+      const write = async (tx: DatabaseAdapter) => {
+        const row = await adapter.createPost(tx, createInput);
 
-  const authorNames = await buildAuthorNameMap(db);
-  return adapter.toApiPost(row, authorNames);
+        if (adapter.createNotifications) {
+          await adapter.createNotifications(tx, {
+            workspace: ws,
+            target,
+            request,
+            row,
+            parentPostId,
+            parentAuthorId: parent?.author_id ?? null,
+            actorUserId: event.context.user.id,
+            occurredAt: timestamp
+          });
+        }
+        return row;
+      };
+      const row =
+        db.core && !db.core.isTransaction ? await db.core.transaction(write) : await write(db);
+
+      const authorNames = await buildAuthorNameMap(db);
+      return adapter.toApiPost(row, authorNames);
+    }
+  );
 };
 
 export const updateThreadedComment = async <
@@ -236,24 +280,29 @@ export const updateThreadedComment = async <
   event: AuthenticatedEvent,
   adapter: ThreadedCommentAdapter<TAuthContext, TTarget, TRequest, TRow, TResult, TCreateInput>
 ): Promise<TResult> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'comments');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'comments');
 
-  const existing = await adapter.getPost(db, ws, postId);
-  httpAssert.present(existing, { status: 404, message: `Post '${postId}' not found` });
-  httpAssert.true(existing.author_id === event.context.user.id, {
-    status: 403,
-    statusText: 'Forbidden',
-    message: 'You can only edit your own posts'
+      const existing = await adapter.getPost(db, ws, postId);
+      httpAssert.present(existing, { status: 404, message: `Post '${postId}' not found` });
+      httpAssert.true(existing.author_id === event.context.user.id, {
+        status: 403,
+        statusText: 'Forbidden',
+        message: 'You can only edit your own posts'
+      });
+
+      const timestamp = new Date();
+      const row = await adapter.updatePost(db, ws, postId, body, timestamp, timestamp);
+      httpAssert.present(row, { status: 404, message: `Post '${postId}' not found` });
+
+      const authorNames = await buildAuthorNameMap(db);
+      return adapter.toApiPost(row, authorNames);
+    }
   });
-
-  const timestamp = new Date();
-  const row = await adapter.updatePost(db, ws, postId, body, timestamp, timestamp);
-  httpAssert.present(row, { status: 404, message: `Post '${postId}' not found` });
-
-  const authorNames = await buildAuthorNameMap(db);
-  return adapter.toApiPost(row, authorNames);
 };
 
 export const deleteThreadedComment = async <
@@ -270,20 +319,25 @@ export const deleteThreadedComment = async <
   event: AuthenticatedEvent,
   adapter: ThreadedCommentAdapter<TAuthContext, TTarget, TRequest, TRow, TResult, TCreateInput>
 ): Promise<{ success: boolean; message: string }> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'comments');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'comments');
 
-  const existing = await adapter.getPost(db, ws, postId);
-  httpAssert.present(existing, { status: 404, message: `Post '${postId}' not found` });
-  httpAssert.true(existing.author_id === event.context.user.id, {
-    status: 403,
-    statusText: 'Forbidden',
-    message: 'You can only delete your own posts'
+      const existing = await adapter.getPost(db, ws, postId);
+      httpAssert.present(existing, { status: 404, message: `Post '${postId}' not found` });
+      httpAssert.true(existing.author_id === event.context.user.id, {
+        status: 403,
+        statusText: 'Forbidden',
+        message: 'You can only delete your own posts'
+      });
+
+      await adapter.deletePost(db, ws, postId);
+      return { success: true, message: 'Post deleted' };
+    }
   });
-
-  await adapter.deletePost(db, ws, postId);
-  return { success: true, message: 'Post deleted' };
 };
 
 export const resolveThreadedComment = async <
@@ -301,32 +355,37 @@ export const resolveThreadedComment = async <
   event: AuthenticatedEvent,
   adapter: ThreadedCommentAdapter<TAuthContext, TTarget, TRequest, TRow, TResult, TCreateInput>
 ): Promise<TResult> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'comments');
-
-  const existing = await adapter.getPost(db, ws, postId);
-  httpAssert.present(existing, { status: 404, message: `Post '${postId}' not found` });
-  httpAssert.true(existing.parent_post_id === null, {
-    status: 400,
-    message: 'Only a root post can be resolved'
-  });
-  httpAssert.present(adapter.resolvePost, {
-    status: 500,
-    message: 'Comment resolution is not supported for this surface'
-  });
-
-  const timestamp = new Date();
-  const row = await adapter.resolvePost(
+  return runAuthorizedOperation({
     db,
-    ws,
-    postId,
-    resolved ? timestamp : null,
-    resolved ? event.context.user.id : null,
-    timestamp
-  );
-  httpAssert.present(row, { status: 404, message: `Post '${postId}' not found` });
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'comments');
 
-  const authorNames = await buildAuthorNameMap(db);
-  return adapter.toApiPost(row, authorNames);
+      const existing = await adapter.getPost(db, ws, postId);
+      httpAssert.present(existing, { status: 404, message: `Post '${postId}' not found` });
+      httpAssert.true(existing.parent_post_id === null, {
+        status: 400,
+        message: 'Only a root post can be resolved'
+      });
+      httpAssert.present(adapter.resolvePost, {
+        status: 500,
+        message: 'Comment resolution is not supported for this surface'
+      });
+
+      const timestamp = new Date();
+      const row = await adapter.resolvePost(
+        db,
+        ws,
+        postId,
+        resolved ? timestamp : null,
+        resolved ? event.context.user.id : null,
+        timestamp
+      );
+      httpAssert.present(row, { status: 404, message: `Post '${postId}' not found` });
+
+      const authorNames = await buildAuthorNameMap(db);
+      return adapter.toApiPost(row, authorNames);
+    }
+  });
 };

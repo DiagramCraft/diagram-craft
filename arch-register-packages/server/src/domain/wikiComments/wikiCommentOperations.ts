@@ -1,10 +1,6 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import {
-  buildApiAuthCtx,
-  requireProjectAccess,
-  requireWorkspaceCapability
-} from '../auth/authorization';
+import { requireProjectAccess, requireWorkspaceCapability } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { WikiCommentDbCreate, WikiCommentDbResult } from './db/wikiCommentDatabase';
@@ -59,7 +55,7 @@ const wikiCommentAdapter: ThreadedCommentAdapter<
   WikiComment,
   WikiCommentDbCreate
 > = {
-  buildTargetAuthContext: buildApiAuthCtx,
+  targetScope: 'workspace',
   resolveTarget: async (db, ws, authCtx, nodeId) => {
     await resolveNodeContext(db, ws, authCtx, nodeId);
   },

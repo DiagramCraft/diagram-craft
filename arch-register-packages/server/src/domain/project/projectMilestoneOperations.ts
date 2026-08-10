@@ -3,7 +3,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { canAccessProject, requireProjectAction } from '../auth/authorization';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { httpAssert } from '../../utils/httpAssert';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import {
   buildCreateMilestoneInput,
   buildUpdateMilestoneInput,
@@ -31,12 +31,13 @@ export const listMilestones = async (
   projectId: string | undefined,
   event: AuthenticatedEvent
 ): Promise<Milestone[]> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve milestones', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve milestones',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const [rows, projects] = await Promise.all([
         db.project.listMilestones(ws),
         db.project.listProjects(ws)
@@ -56,7 +57,7 @@ export const listMilestones = async (
         .filter(row => visibleProjects.has(row.project_id))
         .map(toApiMilestone);
     }
-  );
+  });
 };
 
 export const getMilestone = async (
@@ -65,12 +66,13 @@ export const getMilestone = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<Milestone> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve milestone', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve milestone',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const row = await db.project.getMilestoneById(ws, id);
       httpAssert.present(row, { status: 404, message: `Milestone '${id}' not found` });
       const project = await getProjectOrThrow(db, ws, row.project_id);
@@ -79,7 +81,7 @@ export const getMilestone = async (
       }
       return toApiMilestone(row);
     }
-  );
+  });
 };
 
 export const createMilestone = async (
@@ -88,12 +90,13 @@ export const createMilestone = async (
   body: CreateMilestoneRequest,
   event: AuthenticatedEvent
 ): Promise<Milestone> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to create milestone', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to create milestone',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const project = await getProjectOrThrow(db, ws, body.project_id);
       requireProjectAction(
         authCtx,
@@ -119,7 +122,7 @@ export const createMilestone = async (
 
       return toApiMilestone(row);
     }
-  );
+  });
 };
 
 export const updateMilestone = async (
@@ -129,12 +132,13 @@ export const updateMilestone = async (
   body: UpdateMilestoneRequest,
   event: AuthenticatedEvent
 ): Promise<Milestone> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to update milestone', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to update milestone',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const oldRow = await db.project.getMilestoneById(ws, id);
       httpAssert.present(oldRow, { status: 404, message: `Milestone '${id}' not found` });
       const project = await getProjectOrThrow(db, ws, oldRow.project_id);
@@ -173,7 +177,7 @@ export const updateMilestone = async (
 
       return toApiMilestone(row);
     }
-  );
+  });
 };
 
 export const deleteMilestone = async (
@@ -182,12 +186,13 @@ export const deleteMilestone = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; message: string }> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to delete milestone', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to delete milestone',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const row = await db.project.getMilestoneById(ws, id);
       httpAssert.present(row, { status: 404, message: `Milestone '${id}' not found` });
       const project = await getProjectOrThrow(db, ws, row.project_id);
@@ -215,5 +220,5 @@ export const deleteMilestone = async (
 
       return { success: true, message: `Milestone '${id}' deleted` };
     }
-  );
+  });
 };

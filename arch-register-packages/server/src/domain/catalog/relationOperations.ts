@@ -8,7 +8,7 @@ import {
   requireWorkspaceCapability,
   buildApiEntityAuthCtx
 } from '../auth/authorization';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import { orpcAssert } from '../../utils/orpcAssert';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
@@ -102,12 +102,13 @@ export const listWorkspaceRelations = async (
   pagination: { limit?: number; offset?: number },
   event: AuthenticatedEvent
 ): Promise<{ items: RelationRecord[]; total: number }> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve relations', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve relations',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
       const [rows, schemas, entities] = await Promise.all([
         listAllRelations(db, ws, filters),
@@ -145,7 +146,7 @@ export const listWorkspaceRelations = async (
         total: visibleRows.length
       };
     }
-  );
+  });
 };
 
 export const queryWorkspaceRelations = async (
@@ -155,12 +156,13 @@ export const queryWorkspaceRelations = async (
   options: { view?: 'summary' | 'full'; limit?: number; offset?: number },
   event: AuthenticatedEvent
 ): Promise<RelationListPage> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve relations', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve relations',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
       return listRelationsWithCount(db, ws, authCtx, {
         relationQuery,
@@ -169,7 +171,7 @@ export const queryWorkspaceRelations = async (
         offset: options.offset
       });
     }
-  );
+  });
 };
 
 export const getWorkspaceRelation = async (
@@ -178,12 +180,13 @@ export const getWorkspaceRelation = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<RelationRecord> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve relation', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve relation',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
       const row = await db.relation.getRelation(ws, id);
       httpAssert.present(row, { status: 404, message: `Relation '${id}' not found` });
@@ -203,7 +206,7 @@ export const getWorkspaceRelation = async (
       const schema = await db.relation.getRelationSchema(ws, row.schema_id);
       return toRedactedApiRelation(row, authCtx, schema);
     }
-  );
+  });
 };
 
 export const createWorkspaceRelation = async (
@@ -212,12 +215,13 @@ export const createWorkspaceRelation = async (
   body: Record<string, unknown>,
   event: AuthenticatedEvent
 ): Promise<RelationRecord> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to create relation', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to create relation',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ent.edit');
 
       const schemaId = body._schemaId;
@@ -304,7 +308,7 @@ export const createWorkspaceRelation = async (
 
       return toRedactedApiRelation(row, authCtx, schema);
     }
-  );
+  });
 };
 
 export const updateWorkspaceRelation = async (
@@ -314,12 +318,13 @@ export const updateWorkspaceRelation = async (
   body: Record<string, unknown>,
   event: AuthenticatedEvent
 ): Promise<RelationRecord> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to update relation', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to update relation',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ent.edit');
       const oldRow = await db.relation.getRelation(ws, id);
       httpAssert.present(oldRow, { status: 404, message: `Relation '${id}' not found` });
@@ -385,7 +390,7 @@ export const updateWorkspaceRelation = async (
 
       return toRedactedApiRelation(row, authCtx, schema);
     }
-  );
+  });
 };
 
 export const deleteWorkspaceRelation = async (
@@ -394,12 +399,13 @@ export const deleteWorkspaceRelation = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; message: string }> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to delete relation', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to delete relation',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ent.edit');
       const row = await db.relation.getRelation(ws, id);
       httpAssert.present(row, { status: 404, message: `Relation '${id}' not found` });
@@ -437,7 +443,7 @@ export const deleteWorkspaceRelation = async (
 
       return { success: true, message: `Relation '${id}' deleted` };
     }
-  );
+  });
 };
 
 export const restoreWorkspaceRelationVersion = async (
@@ -448,12 +454,13 @@ export const restoreWorkspaceRelationVersion = async (
   commitMessage: string | null,
   event: AuthenticatedEvent
 ): Promise<ReturnType<typeof serializeEntityVersion>> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to restore relation version', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to restore relation version',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ent.edit');
       const row = await db.relation.getRelation(ws, id);
       httpAssert.present(row, { status: 404, message: `Relation '${id}' not found` });
@@ -524,7 +531,7 @@ export const restoreWorkspaceRelationVersion = async (
         })
       );
     }
-  );
+  });
 };
 
 export const listTypedRelationsForEntity = async (
@@ -533,12 +540,13 @@ export const listTypedRelationsForEntity = async (
   entityId: string,
   event: AuthenticatedEvent
 ): Promise<EntityTypedRelations> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve typed relations', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve typed relations',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
       const entity = await db.catalog.getEntity(ws, entityId);
       httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
@@ -610,5 +618,5 @@ export const listTypedRelationsForEntity = async (
           .map(toRecord)
       };
     }
-  );
+  });
 };

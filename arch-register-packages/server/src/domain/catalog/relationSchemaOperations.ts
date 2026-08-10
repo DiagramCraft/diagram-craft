@@ -3,7 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { requireSchemaRead, requireWorkspaceCapability } from '../auth/authorization';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import {
   classifyFieldChanges,
@@ -38,12 +38,13 @@ export const listWorkspaceRelationSchemas = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<RelationSchema[]> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve relation schemas', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve relation schemas',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
       const [schemas, enums] = await Promise.all([
         db.relation.listRelationSchemas(ws),
@@ -54,7 +55,7 @@ export const listWorkspaceRelationSchemas = async (
       );
       return schemas.map((schema, i) => toApiRelationSchema(schema, counts[i]!, enums));
     }
-  );
+  });
 };
 
 export const getWorkspaceRelationSchema = async (
@@ -63,12 +64,13 @@ export const getWorkspaceRelationSchema = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<RelationSchema> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve relation schema', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve relation schema',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
       const [row, enums] = await Promise.all([
         db.relation.getRelationSchema(ws, id),
@@ -78,7 +80,7 @@ export const getWorkspaceRelationSchema = async (
       const relationCount = await db.relation.countRelationsForSchema(ws, id);
       return toApiRelationSchema(row, relationCount, enums);
     }
-  );
+  });
 };
 
 export const createWorkspaceRelationSchema = async (
@@ -87,12 +89,13 @@ export const createWorkspaceRelationSchema = async (
   body: Record<string, unknown>,
   event: AuthenticatedEvent
 ): Promise<RelationSchema> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to create relation schema', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to create relation schema',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const timestamp = new Date();
       const [entitySchemas, sharedGroups] = await Promise.all([
@@ -136,7 +139,7 @@ export const createWorkspaceRelationSchema = async (
       const enums = await db.catalog.listEnums(ws);
       return toApiRelationSchema(row, 0, enums);
     }
-  );
+  });
 };
 
 export const updateWorkspaceRelationSchema = async (
@@ -146,12 +149,13 @@ export const updateWorkspaceRelationSchema = async (
   body: Record<string, unknown>,
   event: AuthenticatedEvent
 ): Promise<RelationSchema> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to update relation schema', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to update relation schema',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const oldRow = await db.relation.getRelationSchema(ws, id);
       httpAssert.present(oldRow, { status: 404, message: `Relation schema '${id}' not found` });
@@ -312,7 +316,7 @@ export const updateWorkspaceRelationSchema = async (
       const enums = await db.catalog.listEnums(ws);
       return toApiRelationSchema(row, relationCount, enums);
     }
-  );
+  });
 };
 
 export const listWorkspaceRelationSchemaVersions = async (
@@ -321,12 +325,13 @@ export const listWorkspaceRelationSchemaVersions = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<RelationSchemaVersion[]> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve relation schema version history', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve relation schema version history',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
       const schema = await db.relation.getRelationSchema(ws, id);
       httpAssert.present(schema, { status: 404, message: `Relation schema '${id}' not found` });
@@ -336,7 +341,7 @@ export const listWorkspaceRelationSchemaVersions = async (
       ]);
       return versions.map(version => toApiRelationSchemaVersion(version, enums));
     }
-  );
+  });
 };
 
 export const deleteWorkspaceRelationSchema = async (
@@ -345,12 +350,13 @@ export const deleteWorkspaceRelationSchema = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<{ success: boolean; message: string }> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to delete relation schema', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to delete relation schema',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const schema = await db.relation.getRelationSchema(ws, id);
       httpAssert.present(schema, { status: 404, message: `Relation schema '${id}' not found` });
@@ -376,5 +382,5 @@ export const deleteWorkspaceRelationSchema = async (
 
       return { success: true, message: `Relation schema '${id}' deleted` };
     }
-  );
+  });
 };

@@ -1,7 +1,7 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { requireWorkspaceCapability } from '../auth/authorization';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import {
   buildCreateEnumInput,
@@ -25,20 +25,18 @@ export const listWorkspaceEnums = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<WorkspaceEnum[]> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve enums',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve enums',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.view');
       const enums = await db.catalog.listEnums(ws);
       return enums.map(toApiEnum);
     }
-  );
+  });
 };
 
 export const getWorkspaceEnum = async (
@@ -47,21 +45,19 @@ export const getWorkspaceEnum = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<WorkspaceEnum> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve enum',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve enum',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.view');
       const row = await db.catalog.getEnum(ws, id);
       httpAssert.present(row, { status: 404, message: `Enum '${id}' not found` });
       return toApiEnum(row);
     }
-  );
+  });
 };
 
 export const createWorkspaceEnum = async (
@@ -70,21 +66,19 @@ export const createWorkspaceEnum = async (
   body: CreateEnumRequest,
   event: AuthenticatedEvent
 ): Promise<WorkspaceEnum> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to create enum',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to create enum',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const timestamp = new Date();
       const row = await db.catalog.createEnum(buildCreateEnumInput(ws, body, timestamp));
       return toApiEnum(row);
     }
-  );
+  });
 };
 
 export const updateWorkspaceEnum = async (
@@ -94,15 +88,13 @@ export const updateWorkspaceEnum = async (
   body: UpdateEnumRequest,
   event: AuthenticatedEvent
 ): Promise<WorkspaceEnum> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to update enum',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to update enum',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const oldRow = await db.catalog.getEnum(ws, id);
       httpAssert.present(oldRow, { status: 404, message: `Enum '${id}' not found` });
@@ -115,7 +107,7 @@ export const updateWorkspaceEnum = async (
       httpAssert.present(row, { status: 404, message: `Enum '${id}' not found` });
       return toApiEnum(row);
     }
-  );
+  });
 };
 
 export const deleteWorkspaceEnum = async (
@@ -124,15 +116,13 @@ export const deleteWorkspaceEnum = async (
   id: string,
   event: AuthenticatedEvent
 ) => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to delete enum',
-      dbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to delete enum',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const schemas = await db.catalog.listSchemas(ws);
       httpAssert.true(!isEnumReferencedBySchemas(schemas, id), {
@@ -146,5 +136,5 @@ export const deleteWorkspaceEnum = async (
       await db.catalog.deleteEnum(ws, id);
       return { success: true, message: `Enum '${id}' deleted` };
     }
-  );
+  });
 };

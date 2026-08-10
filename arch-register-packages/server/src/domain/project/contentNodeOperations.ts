@@ -1,7 +1,7 @@
 import type { DatabaseAdapter } from '../../db/database';
 
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 
 import { requireProjectAccess, requireWorkspaceAdmin } from '../auth/authorization';
 import { logAudit } from '../audit/db/auditLogging';
@@ -36,19 +36,17 @@ const listScopedContentNodes = async (
   event: AuthenticatedEvent,
   fallback: string
 ): Promise<FileTree> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback,
-      dbErrorMessages: projectDbErrorMessages,
-      before:
-        scope.kind === 'project'
-          ? undefined
-          : ({ authCtx }) => requireNonProjectContentAccess(authCtx, 'read')
-    },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: fallback,
+    dbErrorMessages: projectDbErrorMessages,
+    before:
+      scope.kind === 'project'
+        ? undefined
+        : ({ authCtx }) => requireNonProjectContentAccess(authCtx, 'read'),
+    operation: async ({ ws, authCtx }) => {
       const resolved = await scope.resolve(
         db,
         ws,
@@ -59,7 +57,7 @@ const listScopedContentNodes = async (
       );
       return buildFileTree(await resolved.listNodes(db, ws));
     }
-  );
+  });
 
 export const createScopedFolder = async (
   scope: ContentScopeResolver,
@@ -70,12 +68,13 @@ export const createScopedFolder = async (
   event: AuthenticatedEvent,
   fallback: string
 ): Promise<{ success: boolean; path: string; marker: ProjectFile | null }> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback, dbErrorMessages: projectDbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: fallback,
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       if (scope.kind !== 'project') requireNonProjectContentAccess(authCtx, 'edit');
       const resolved = await scope.resolve(
         db,
@@ -120,7 +119,7 @@ export const createScopedFolder = async (
 
       return { success: true, path: folderPath, marker: row ? toApiProjectFile(row) : null };
     }
-  );
+  });
 
 export const listProjectFiles = async (
   db: DatabaseAdapter,
@@ -176,15 +175,13 @@ export const updateTemplateStatus = async (
   isWorkspaceTemplate: boolean,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to update template status',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to update template status',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const project = await db.project.getProject(ws, projectId);
       httpAssert.present(project, { status: 404, message: `Project '${projectId}' not found` });
       const projectUuid = project.id;
@@ -210,7 +207,7 @@ export const updateTemplateStatus = async (
       const updatedFile = await db.project.getContentNodeByPath(ws, projectUuid, filePath);
       return toApiProjectFile(updatedFile!);
     }
-  );
+  });
 };
 
 export const listEntityContentNodes = async (

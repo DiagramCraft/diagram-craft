@@ -1,12 +1,11 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import {
-  buildApiEntityAuthCtx,
   requireEntityAction,
   requireProjectAccess,
   requireWorkspaceCapability
 } from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import type { DiscussionPostDbCreate, DiscussionPostDbResult } from './db/discussionDatabase';
@@ -116,7 +115,7 @@ const discussionCommentAdapter: ThreadedCommentAdapter<
   DiscussionPost,
   DiscussionPostDbCreate
 > = {
-  buildTargetAuthContext: buildApiEntityAuthCtx,
+  targetScope: 'entity',
   resolveTarget: async (db, ws, authCtx, target) => {
     await resolveObjectContext(db, ws, authCtx, target.objectType, target.objectId);
   },
@@ -193,47 +192,52 @@ export const summarizeDiscussions = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<DiscussionSummaryEntry[]> => {
-  const ws = await resolveWorkspace(db.catalog, workspace);
-  const authCtx = await buildApiEntityAuthCtx(db, ws, event);
-  requireWorkspaceCapability(authCtx, 'ws.view');
+  return runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'entity', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
 
-  const [rows, authorNames] = await Promise.all([
-    db.discussion.listAll(ws),
-    buildAuthorNameMap(db)
-  ]);
+      const [rows, authorNames] = await Promise.all([
+        db.discussion.listAll(ws),
+        buildAuthorNameMap(db)
+      ]);
 
-  const byObject = new Map<string, DiscussionPostDbResult[]>();
-  for (const row of rows) {
-    const key = `${row.object_type}:${row.object_id}`;
-    const existing = byObject.get(key);
-    if (existing) existing.push(row);
-    else byObject.set(key, [row]);
-  }
+      const byObject = new Map<string, DiscussionPostDbResult[]>();
+      for (const row of rows) {
+        const key = `${row.object_type}:${row.object_id}`;
+        const existing = byObject.get(key);
+        if (existing) existing.push(row);
+        else byObject.set(key, [row]);
+      }
 
-  const entries: DiscussionSummaryEntry[] = [];
-  for (const posts of byObject.values()) {
-    const [first] = posts;
-    if (!first) continue;
-    let context: DiscussionObjectContext;
-    try {
-      context = await resolveObjectContext(db, ws, authCtx, first.object_type, first.object_id);
-    } catch {
-      continue;
+      const entries: DiscussionSummaryEntry[] = [];
+      for (const posts of byObject.values()) {
+        const [first] = posts;
+        if (!first) continue;
+        let context: DiscussionObjectContext;
+        try {
+          context = await resolveObjectContext(db, ws, authCtx, first.object_type, first.object_id);
+        } catch {
+          continue;
+        }
+        const lastPost = posts.reduce((latest, post) =>
+          post.created_at > latest.created_at ? post : latest
+        );
+        entries.push({
+          objectType: first.object_type,
+          objectId: first.object_id,
+          objectTitle: context.title,
+          nav: context.nav,
+          postCount: posts.length,
+          lastPost: discussionCommentAdapter.toApiPost(lastPost, authorNames)
+        });
+      }
+
+      return entries.sort((a, b) => b.lastPost.createdAt.localeCompare(a.lastPost.createdAt));
     }
-    const lastPost = posts.reduce((latest, post) =>
-      post.created_at > latest.created_at ? post : latest
-    );
-    entries.push({
-      objectType: first.object_type,
-      objectId: first.object_id,
-      objectTitle: context.title,
-      nav: context.nav,
-      postCount: posts.length,
-      lastPost: discussionCommentAdapter.toApiPost(lastPost, authorNames)
-    });
-  }
-
-  return entries.sort((a, b) => b.lastPost.createdAt.localeCompare(a.lastPost.createdAt));
+  });
 };
 
 export const createDiscussionPost = async (

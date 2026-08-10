@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { getDiagramCommentCounts } from '../diagram/commentCounts';
 import { getDiagramEntityRefs } from '../diagram/diagramEntityRefs';
 import { buildApiAuthCtx } from '../auth/authorization';
@@ -214,29 +214,27 @@ const readScopedDiagram = async (
   event: AuthenticatedEvent,
   fallback: string
 ): Promise<Record<string, unknown>> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback,
-      dbErrorMessages: projectDbErrorMessages,
-      onError: error => {
-        if (
-          error != null &&
-          typeof error === 'object' &&
-          'code' in error &&
-          (error as { code: string }).code === 'ENOENT'
-        ) {
-          throw new HTTPError({
-            status: 404,
-            statusText: 'Not Found',
-            message: `File '${filePath}' not found`
-          });
-        }
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: fallback,
+    dbErrorMessages: projectDbErrorMessages,
+    onError: error => {
+      if (
+        error != null &&
+        typeof error === 'object' &&
+        'code' in error &&
+        (error as { code: string }).code === 'ENOENT'
+      ) {
+        throw new HTTPError({
+          status: 404,
+          statusText: 'Not Found',
+          message: `File '${filePath}' not found`
+        });
       }
     },
-    async ({ ws, authCtx }) => {
+    operation: async ({ ws, authCtx }) => {
       const scope =
         typeof scopeSelection === 'function' ? await scopeSelection(db, ws) : scopeSelection;
       if (scope.kind !== 'project') requireNonProjectContentAccess(authCtx, 'read');
@@ -258,7 +256,7 @@ const readScopedDiagram = async (
       const content = await storage.read(ws, resolved.storageId, file.id);
       return JSON.parse(content.toString('utf8'));
     }
-  );
+  });
 
 export const getFileContent = async (
   db: DatabaseAdapter,
@@ -289,19 +287,17 @@ export const saveFile = async (
   body: Record<string, unknown>,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to write file',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to write file',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws }) => {
       const scope = await resolveLegacyContentScope(db, ws, id);
       return writeScopedDiagram(scope, db, storage, workspace, id, filePath, body, event);
     }
-  );
+  });
 };
 
 export const cloneContentFile = async (
@@ -764,22 +760,20 @@ export const getProjectFile = async (
   fileId: string,
   event: AuthenticatedEvent
 ): Promise<ProjectFile> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve file',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve file',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, fileId);
       httpAssert.present(node, { status: 404, message: `File '${fileId}' not found` });
       const resolved = await resolveContentScopeForNode(db, ws, authCtx, node, 'read');
       if (resolved.kind === 'project') node.project_public_id = resolved.projectPublicId;
       return toApiProjectFile(node);
     }
-  );
+  });
 };
 
 export const getFileContentById = async (
@@ -789,20 +783,18 @@ export const getFileContentById = async (
   fileId: string,
   event: AuthenticatedEvent
 ): Promise<Record<string, unknown>> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve file content',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve file content',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, fileId);
       httpAssert.present(node, { status: 404, message: `File '${fileId}' not found` });
       const resolved = await resolveContentScopeForNode(db, ws, authCtx, node, 'read');
       const content = await storage.read(ws, resolved.storageId, node.id);
       return JSON.parse(content.toString('utf8'));
     }
-  );
+  });
 };

@@ -3,7 +3,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { requireProjectAccess, requireProjectAction } from '../auth/authorization';
 import { logAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 import { httpAssert } from '../../utils/httpAssert';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import {
   toApiAssessmentResponse,
   buildAssessmentResultsCsvData
@@ -38,12 +38,12 @@ export const listAssessmentResponses = async (
   assessmentId: string,
   event: AuthenticatedEvent
 ): Promise<AssessmentResponse[]> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve assessment responses' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve assessment responses',
+    operation: async ({ ws, authCtx }) => {
       const assessment = await getAssessmentOrThrow(db, ws, assessmentId);
       const project = await getProjectOrThrow(db, ws, assessment.project_id);
       requireProjectAccess(authCtx, project.owner);
@@ -56,7 +56,7 @@ export const listAssessmentResponses = async (
       );
       return rows.map(row => toApiAssessmentResponse(row, assessment));
     }
-  );
+  });
 };
 
 export const upsertAssessmentResponse = async (
@@ -67,12 +67,12 @@ export const upsertAssessmentResponse = async (
   body: UpsertAssessmentResponseRequest,
   event: AuthenticatedEvent
 ): Promise<AssessmentResponse> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to record assessment response' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to record assessment response',
+    operation: async ({ ws, authCtx }) => {
       const assessment = await getAssessmentOrThrow(db, ws, assessmentId);
       const project = await getProjectOrThrow(db, ws, assessment.project_id);
       requireProjectAction(
@@ -145,7 +145,7 @@ export const upsertAssessmentResponse = async (
 
       return toApiAssessmentResponse(row, assessment);
     }
-  );
+  });
 };
 
 export const exportAssessmentResponsesCsv = async (
@@ -154,12 +154,12 @@ export const exportAssessmentResponsesCsv = async (
   assessmentId: string,
   event: AuthenticatedEvent
 ): Promise<{ headers: Record<string, string>; body: Blob }> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to export assessment results' },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to export assessment results',
+    operation: async ({ ws, authCtx }) => {
       const assessment = await getAssessmentOrThrow(db, ws, assessmentId);
       const project = await getProjectOrThrow(db, ws, assessment.project_id);
       requireProjectAccess(authCtx, project.owner);
@@ -189,5 +189,5 @@ export const exportAssessmentResponsesCsv = async (
         body: new Blob([csvContent], { type: 'text/csv; charset=utf-8' })
       };
     }
-  );
+  });
 };

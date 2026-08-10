@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import {
   requireProjectAction,
@@ -116,16 +116,17 @@ export const listDocumentTypes = async (
   includeArchived: boolean | undefined,
   event: AuthenticatedEvent
 ): Promise<DocumentType[]> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve document types', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve document types',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.view');
       return (await db.document.listDocumentTypes(ws, includeArchived)).map(toApiType);
     }
-  );
+  });
 
 export const getDocumentType = async (
   db: DatabaseAdapter,
@@ -133,18 +134,19 @@ export const getDocumentType = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<DocumentType> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve document type', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve document type',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.view');
       const row = await db.document.getDocumentType(ws, id);
       httpAssert.present(row, { status: 404, message: `Document type '${id}' not found` });
       return toApiType(row);
     }
-  );
+  });
 
 export const createDocumentType = async (
   db: DatabaseAdapter,
@@ -152,12 +154,13 @@ export const createDocumentType = async (
   input: DocumentTypeWrite,
   event: AuthenticatedEvent
 ): Promise<DocumentType> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to create document type', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to create document type',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.settings');
       validateDocumentTypeWrite(input);
       const now = new Date();
@@ -186,7 +189,7 @@ export const createDocumentType = async (
       });
       return toApiType(row);
     }
-  );
+  });
 
 export const updateDocumentType = async (
   db: DatabaseAdapter,
@@ -195,12 +198,13 @@ export const updateDocumentType = async (
   input: DocumentTypeWrite,
   event: AuthenticatedEvent
 ): Promise<DocumentType> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to update document type', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to update document type',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.settings');
       validateDocumentTypeWrite(input);
       const current = await db.document.getDocumentType(ws, id);
@@ -387,7 +391,7 @@ export const updateDocumentType = async (
 
       return toApiType(row);
     }
-  );
+  });
 
 export const listDocumentTypeVersions = async (
   db: DatabaseAdapter,
@@ -395,19 +399,20 @@ export const listDocumentTypeVersions = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<DocumentTypeVersion[]> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve document type version history', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve document type version history',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.view');
       const documentType = await db.document.getDocumentType(ws, id);
       httpAssert.present(documentType, { status: 404, message: `Document type '${id}' not found` });
       const versions = await db.document.listDocumentTypeVersions(ws, id);
       return versions.map(toApiTypeVersion);
     }
-  );
+  });
 
 export const archiveDocumentType = async (
   db: DatabaseAdapter,
@@ -416,18 +421,19 @@ export const archiveDocumentType = async (
   archived: boolean,
   event: AuthenticatedEvent
 ): Promise<DocumentType> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to archive document type', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to archive document type',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.settings');
       const row = await db.document.archiveDocumentType(ws, id, archived, new Date());
       httpAssert.present(row, { status: 404, message: `Document type '${id}' not found` });
       return toApiType(row);
     }
-  );
+  });
 
 export const deleteDocumentType = async (
   db: DatabaseAdapter,
@@ -435,12 +441,13 @@ export const deleteDocumentType = async (
   id: string,
   event: AuthenticatedEvent
 ) =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to delete document type', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to delete document type',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.settings');
       const current = await db.document.getDocumentType(ws, id);
       httpAssert.present(current, { status: 404, message: `Document type '${id}' not found` });
@@ -477,7 +484,7 @@ export const deleteDocumentType = async (
       await db.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(ws, id);
       return { deleted: true };
     }
-  );
+  });
 
 export const listDocumentTemplates = async (
   db: DatabaseAdapter,
@@ -486,12 +493,13 @@ export const listDocumentTemplates = async (
   includeArchived: boolean | undefined,
   event: AuthenticatedEvent
 ): Promise<DocumentTemplate[]> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve document templates', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve document templates',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const resolvedProjectId = projectId
         ? await requireProjectTemplateAccess(db, ws, projectId, authCtx, false)
         : projectId;
@@ -504,7 +512,7 @@ export const listDocumentTemplates = async (
         })
       );
     }
-  );
+  });
 
 export const createDocumentTemplate = async (
   db: DatabaseAdapter,
@@ -512,12 +520,13 @@ export const createDocumentTemplate = async (
   input: DocumentTemplateWrite,
   event: AuthenticatedEvent
 ): Promise<DocumentTemplate> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to create document template', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to create document template',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const projectId = input.project_id
         ? await requireProjectTemplateAccess(db, ws, input.project_id, authCtx, true)
         : null;
@@ -537,7 +546,7 @@ export const createDocumentTemplate = async (
         })
       );
     }
-  );
+  });
 
 export const updateDocumentTemplate = async (
   db: DatabaseAdapter,
@@ -546,12 +555,13 @@ export const updateDocumentTemplate = async (
   input: DocumentTemplateWrite,
   event: AuthenticatedEvent
 ): Promise<DocumentTemplate> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to update document template', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to update document template',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const current = await db.document.getDocumentTemplate(ws, id);
       httpAssert.present(current, { status: 404, message: `Document template '${id}' not found` });
       const projectIdInput = input.project_id !== undefined ? input.project_id : current.project_id;
@@ -577,7 +587,7 @@ export const updateDocumentTemplate = async (
       });
       return toApiTemplate(row);
     }
-  );
+  });
 
 export const archiveDocumentTemplate = async (
   db: DatabaseAdapter,
@@ -586,12 +596,13 @@ export const archiveDocumentTemplate = async (
   archived: boolean,
   event: AuthenticatedEvent
 ): Promise<DocumentTemplate> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to archive document template', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to archive document template',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const current = await db.document.getDocumentTemplate(ws, id);
       httpAssert.present(current, { status: 404, message: `Document template '${id}' not found` });
       if (current.project_id)
@@ -599,7 +610,7 @@ export const archiveDocumentTemplate = async (
       else requireWorkspaceCapability(authCtx, 'ws.settings');
       return toApiTemplate(await db.document.archiveDocumentTemplate(ws, id, archived, new Date()));
     }
-  );
+  });
 
 export const deleteDocumentTemplate = async (
   db: DatabaseAdapter,
@@ -607,12 +618,13 @@ export const deleteDocumentTemplate = async (
   id: string,
   event: AuthenticatedEvent
 ) =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to delete document template', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to delete document template',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const current = await db.document.getDocumentTemplate(ws, id);
       httpAssert.present(current, { status: 404, message: `Document template '${id}' not found` });
       if (current.project_id)
@@ -621,4 +633,4 @@ export const deleteDocumentTemplate = async (
       await db.document.deleteDocumentTemplate(ws, id);
       return { deleted: true };
     }
-  );
+  });

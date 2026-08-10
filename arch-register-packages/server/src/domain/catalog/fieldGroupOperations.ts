@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { requireWorkspaceCapability } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import {
@@ -53,12 +53,13 @@ export const listWorkspaceSharedFieldGroups = async (
   workspace: string,
   event: AuthenticatedEvent
 ): Promise<SharedFieldGroup[]> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve shared fieldgroups', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve shared fieldgroups',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.view');
       const [groups, enums] = await Promise.all([
         db.catalog.listSharedFieldGroups(ws),
@@ -66,7 +67,7 @@ export const listWorkspaceSharedFieldGroups = async (
       ]);
       return groups.map(group => toApiSharedFieldGroup(group, enums));
     }
-  );
+  });
 
 export const getWorkspaceSharedFieldGroup = async (
   db: DatabaseAdapter,
@@ -74,16 +75,17 @@ export const getWorkspaceSharedFieldGroup = async (
   id: string,
   event: AuthenticatedEvent
 ): Promise<SharedFieldGroup> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve shared fieldgroup', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve shared fieldgroup',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.view');
       return apiGroup(db, ws, await db.catalog.getSharedFieldGroup(ws, id));
     }
-  );
+  });
 
 export const createWorkspaceSharedFieldGroup = async (
   db: DatabaseAdapter,
@@ -91,19 +93,20 @@ export const createWorkspaceSharedFieldGroup = async (
   body: CreateSharedFieldGroupRequest,
   event: AuthenticatedEvent
 ): Promise<SharedFieldGroup> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to create shared fieldgroup', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to create shared fieldgroup',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const row = await db.catalog.createSharedFieldGroup(
         buildCreateSharedFieldGroupInput(ws, body as Record<string, unknown>, new Date())
       );
       return apiGroup(db, ws, row);
     }
-  );
+  });
 
 export const updateWorkspaceSharedFieldGroup = async (
   db: DatabaseAdapter,
@@ -112,12 +115,13 @@ export const updateWorkspaceSharedFieldGroup = async (
   body: UpdateSharedFieldGroupRequest,
   event: AuthenticatedEvent
 ): Promise<SharedFieldGroup> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to update shared fieldgroup', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to update shared fieldgroup',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const oldGroup = await db.catalog.getSharedFieldGroup(ws, id);
       httpAssert.present(oldGroup, { status: 404, message: `Shared fieldgroup '${id}' not found` });
@@ -334,7 +338,7 @@ export const updateWorkspaceSharedFieldGroup = async (
       });
       return apiGroup(db, ws, updated);
     }
-  );
+  });
 
 export const deleteWorkspaceSharedFieldGroup = async (
   db: DatabaseAdapter,
@@ -342,12 +346,13 @@ export const deleteWorkspaceSharedFieldGroup = async (
   id: string,
   event: AuthenticatedEvent
 ) =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to delete shared fieldgroup', dbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to delete shared fieldgroup',
+    dbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const schemas = await db.catalog.listSchemas(ws);
       httpAssert.true(!isSharedFieldGroupReferencedBySchemas(schemas, id), {
@@ -359,4 +364,4 @@ export const deleteWorkspaceSharedFieldGroup = async (
       await db.catalog.deleteSharedFieldGroup(ws, id);
       return { success: true, message: `Shared fieldgroup '${id}' deleted` };
     }
-  );
+  });

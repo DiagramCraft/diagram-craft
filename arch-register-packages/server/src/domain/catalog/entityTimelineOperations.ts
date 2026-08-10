@@ -2,7 +2,7 @@ import type { TimelineViewData } from '@arch-register/api-types/entityContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { EntityVersionSummaryDbResult } from './db/catalogDatabase';
-import { defineEntityOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { PermissionChecker } from '@arch-register/permissions';
 
 const checker = new PermissionChecker();
@@ -19,12 +19,12 @@ export const getTimelineViewData = async (
   ids: string[],
   event: AuthenticatedEvent
 ): Promise<Record<string, TimelineViewData>> =>
-  defineEntityOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to retrieve timeline view data' },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to retrieve timeline view data',
+    operation: async ({ ws, authCtx }) => {
       const requestedIds = [...new Set(ids)];
       if (requestedIds.length === 0) return {};
 
@@ -81,4 +81,4 @@ export const getTimelineViewData = async (
 
       return result;
     }
-  );
+  });

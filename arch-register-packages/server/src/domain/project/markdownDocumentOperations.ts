@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 import { buildApiAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { writeAudit, extractEntityFields, computeChanges } from '../audit/db/auditLogging';
 
@@ -152,12 +152,13 @@ export const saveNewMarkdownContent = async (
   },
   event: AuthenticatedEvent
 ): Promise<ProjectFile> =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    { fallback: 'Failed to create markdown document', dbErrorMessages: projectDbErrorMessages },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to create markdown document',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const scope =
         input.scope === 'project'
           ? PROJECT_SCOPE
@@ -287,7 +288,7 @@ export const saveNewMarkdownContent = async (
       });
       return toApiProjectFile(row);
     }
-  );
+  });
 
 export const createProjectMarkdownDoc = async (
   db: DatabaseAdapter,
@@ -358,15 +359,13 @@ export const getMarkdownContent = async (
   nodeId: string,
   event: AuthenticatedEvent
 ): Promise<MarkdownContent> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve markdown content',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve markdown content',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
@@ -407,7 +406,7 @@ export const getMarkdownContent = async (
           : {})
       };
     }
-  );
+  });
 };
 
 export const saveMarkdownContent = async (
@@ -425,15 +424,13 @@ export const saveMarkdownContent = async (
   changeKind: 'minor' | 'major' = 'minor',
   initiationFieldValues?: Record<string, unknown>
 ): Promise<ProjectFile> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to save markdown content',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to save markdown content',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
@@ -640,7 +637,7 @@ export const saveMarkdownContent = async (
       });
       return toApiProjectFile(row);
     }
-  );
+  });
 };
 
 export const migrateMarkdownContent = async (
@@ -678,15 +675,13 @@ export const listMarkdownRevisions = async (
   nodeId: string,
   event: AuthenticatedEvent
 ): Promise<MarkdownRevisionSummary[]> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve markdown revisions',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve markdown revisions',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
@@ -697,7 +692,7 @@ export const listMarkdownRevisions = async (
       const revisions = await db.project.listMarkdownRevisions(ws, node.id);
       return revisions.map(toApiMarkdownRevisionSummary);
     }
-  );
+  });
 };
 
 export const listMarkdownWorkflowHistory = async (
@@ -706,15 +701,13 @@ export const listMarkdownWorkflowHistory = async (
   nodeId: string,
   event: AuthenticatedEvent
 ) =>
-  defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve document workflow history',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve document workflow history',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
@@ -726,7 +719,7 @@ export const listMarkdownWorkflowHistory = async (
       if (!document.documentType) return [];
       return listDocumentWorkflowHistory(db, ws, nodeId, document.documentType, event);
     }
-  );
+  });
 
 export const getMarkdownRevision = async (
   db: DatabaseAdapter,
@@ -735,15 +728,13 @@ export const getMarkdownRevision = async (
   revisionId: string,
   event: AuthenticatedEvent
 ): Promise<MarkdownRevisionDetail> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to retrieve markdown revision',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to retrieve markdown revision',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
@@ -755,7 +746,7 @@ export const getMarkdownRevision = async (
       httpAssert.present(revision, { status: 404, message: `Revision '${revisionId}' not found` });
       return toApiMarkdownRevisionDetail(revision);
     }
-  );
+  });
 };
 
 export const restoreMarkdownRevision = async (
@@ -768,15 +759,13 @@ export const restoreMarkdownRevision = async (
   changeKind: 'minor' | 'major' = 'major',
   initiationFieldValues?: Record<string, unknown>
 ): Promise<ProjectFile> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to restore markdown revision',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to restore markdown revision',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
@@ -924,5 +913,5 @@ export const restoreMarkdownRevision = async (
       });
       return toApiProjectFile(row);
     }
-  );
+  });
 };

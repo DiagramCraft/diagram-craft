@@ -1,8 +1,7 @@
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { defineEntityOperation } from '../operation';
-import { defineOperation } from '../operation';
+import { runAuthorizedOperation } from '../operation';
 
 import { buildApiEntityAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 
@@ -40,15 +39,13 @@ export const runDocumentAiAction = async (
   actionId: string,
   event: AuthenticatedEvent
 ): Promise<AsyncGenerator<RunAiActionEvent>> => {
-  return defineEntityOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to run AI action',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'entity', workspace: workspace },
+    fallback: 'Failed to run AI action',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       const node = await db.project.getAnyContentNodeById(ws, nodeId);
       httpAssert.present(node, { status: 404, message: `Markdown document '${nodeId}' not found` });
       httpAssert.true(isMarkdownNode(node), {
@@ -131,7 +128,7 @@ export const runDocumentAiAction = async (
         };
       })();
     }
-  );
+  });
 };
 
 export const testDocumentAiAction = async (
@@ -143,15 +140,13 @@ export const testDocumentAiAction = async (
   action: DocumentAiAction,
   event: AuthenticatedEvent
 ): Promise<AsyncGenerator<AiActionTestEvent>> => {
-  return defineOperation(
-    db,
-    workspace,
-    event,
-    {
-      fallback: 'Failed to test AI action',
-      dbErrorMessages: projectDbErrorMessages
-    },
-    async ({ ws, authCtx }) => {
+  return runAuthorizedOperation({
+    db: db,
+    event: event,
+    scope: { kind: 'workspace', workspace: workspace },
+    fallback: 'Failed to test AI action',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'ws.settings');
 
       const node = await db.project.getAnyContentNodeById(ws, nodeId);
@@ -381,5 +376,5 @@ export const testDocumentAiAction = async (
         };
       })();
     }
-  );
+  });
 };
