@@ -3,31 +3,19 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import type { RelationDbResult } from './db/relationDatabase';
 import type { EntityChangeApprovalDbResult } from './db/entityChangeDatabase';
-import {
-  buildApiEntityAuthCtx as buildApiAuthCtx,
-  requireWorkspaceCapability
-} from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
-import { listEligibleApproverIds, isSoleApprover } from './entityChangeOperations';
+import { isSoleApprover, listEligibleApproverIds } from './approvalWorkflowOperations';
 import {
-  createGovernanceCaseInTransaction,
-  recordGovernanceEvent
-} from '../governance/governanceOperations';
-import {
-  finalizeApprovalBypass,
-  findApprovalCaseForRevision,
-  withdrawApproval
-} from './approvalLifecycleOperations';
-import type {
-  AuthorizationContext,
-  WorkspaceAuthorizationContext
-} from '@arch-register/permissions';
+  createApprovalWorkflow,
+  createApprovalGovernanceCaseConfig
+} from './approvalWorkflowOperations';
+import type { ApprovalSubjectAdapter } from './approvalWorkflowOperations';
+import { findApprovalCaseForRevision } from './approvalLifecycleOperations';
+import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import {
   buildDiff,
   equalEntityValue,
   redactKnownDataDiff,
-  mutableStateKeys,
   type EntityFieldDiff
 } from './entityDiff';
 import {
@@ -55,8 +43,6 @@ import type {
 } from '@arch-register/api-types/relationChangeContract';
 
 export const RELATION_CHANGE_CASE_KIND = 'relation.change-case';
-
-const permissionCheckerCapability = 'ent.propose' as const;
 
 type ResolvedRelationApprovalPolicy = {
   required: boolean;
@@ -86,20 +72,6 @@ const policyFor = (
     selfApprovalAllowed: false,
     policyVersion: `relation-schema:${schema.id}:${schema.version ?? 1}:${override}`
   };
-};
-
-const assertCanPropose = async (
-  db: DatabaseAdapter,
-  workspace: string,
-  relationId: string,
-  event: AuthenticatedEvent
-) => {
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  const relation = await db.relation.getRelation(workspace, relationId);
-  httpAssert.present(relation, { status: 404, message: 'Relation not found' });
-  await requireRelationCaseMemberEditAccess(db, workspace, authCtx, relation);
-  requireWorkspaceCapability(authCtx, permissionCheckerCapability);
-  return { authCtx, relation };
 };
 
 const buildProposedRelation = async (
@@ -254,206 +226,49 @@ const toApiApproval = async (
   };
 };
 
-const submitProposal = async (
-  db: DatabaseAdapter,
-  workspaceName: string,
-  relationId: string,
-  event: AuthenticatedEvent,
-  body: RelationChangeApprovalRequestBody,
-  expectedProposalId?: string
-) => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const { authCtx, relation } = await assertCanPropose(db, workspace, relationId, event);
-  const canonicalRelationId = relation.id;
-  const schema = await db.relation.getRelationSchema(workspace, relation.schema_id);
-  httpAssert.present(schema, { status: 404, message: 'Relation schema not found' });
-  const policy = policyFor(schema, relation);
-  httpAssert.true(policy.required, {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'This relation does not require an approval proposal'
-  });
-  const { state: proposedState } = await buildProposedRelation(
-    db,
-    workspace,
-    relation,
-    body.proposedState,
-    authCtx
-  );
-  const baseState = relationToBaseState(relation);
-  const diff = buildDiff(baseState, proposedState);
-  httpAssert.true(Object.keys(diff).length > 0, {
-    status: 400,
-    message: 'The proposal does not change the relation'
-  });
-  httpAssert.true(body.baseVersion === relation.version, {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'The relation changed while this proposal was being edited'
-  });
-
-  const userId = event.context.user.id;
-  const now = new Date();
-  const proposal = await db.core.transaction(async tx => {
-    let root = await tx.entityChange.getOpenApproval(workspace, canonicalRelationId);
-    if (expectedProposalId != null) {
-      httpAssert.true(root?.id === expectedProposalId, {
-        status: 404,
-        message: 'Relation proposal not found'
-      });
-    }
-    if (root == null) {
-      root = await tx.entityChange.createApproval({
-        id: randomUUID(),
-        workspace,
-        entity_id: canonicalRelationId,
-        status: 'open',
-        initiator_user_id: userId,
-        created_at: now,
-        updated_at: now,
-        closed_at: null
-      });
-    } else {
-      httpAssert.true(root.initiator_user_id === userId, {
-        status: 403,
-        message: 'Only the proposal initiator can submit a new revision'
-      });
-      const previous = await tx.entityChange.getLatestApprovalRevision(workspace, root.id);
-      httpAssert.true(previous?.status === 'changes_requested' || previous?.status === 'stale', {
-        status: 409,
-        message: 'The current relation proposal is already awaiting a decision'
-      });
-    }
-
-    const previous = await tx.entityChange.getLatestApprovalRevision(workspace, root.id);
+const relationApprovalAdapter: ApprovalSubjectAdapter<RelationDbResult, RelationChangeApproval> = {
+  subjectName: 'Relation',
+  subjectType: 'relation',
+  caseKind: RELATION_CHANGE_CASE_KIND,
+  getSubject: (db, workspace, relationId) => db.relation.getRelation(workspace, relationId),
+  getSubjectId: relation => relation.id,
+  getVersion: relation => relation.version,
+  assertCanView: (db, workspace, authCtx, relation) =>
+    requireRelationCaseMemberEditAccess(db, workspace, authCtx, relation),
+  assertCanPropose: (db, workspace, authCtx, relation) =>
+    requireRelationCaseMemberEditAccess(db, workspace, authCtx, relation),
+  prepareProposal: async (db, workspace, relation, proposedState, authCtx) => {
+    const { state } = await buildProposedRelation(db, workspace, relation, proposedState, authCtx);
+    const baseState = relationToBaseState(relation);
+    return { baseState, proposedState: state, diff: buildDiff(baseState, state) };
+  },
+  resolvePolicy: async (db, workspace, relation) => {
+    const schema = await db.relation.getRelationSchema(workspace, relation.schema_id);
+    httpAssert.present(schema, { status: 404, message: 'Relation schema not found' });
+    const policy = policyFor(schema, relation);
+    return { required: policy.required, policyVersion: policy.policyVersion };
+  },
+  resolveSubmission: async (db, workspace, relation, userId, policy) => {
     const assignments = [
       {
         action: 'approve' as const,
         target: { type: 'capability' as const, capability: 'ent.approve' as const }
       }
     ];
-    const eligibleApproverIds = await listEligibleApproverIds(tx, workspace, null);
+    const eligibleApproverIds = await listEligibleApproverIds(db, workspace, null);
     const selfApprovalAllowed = isSoleApprover(eligibleApproverIds, userId);
-    const resolvedPolicy = { ...policy, selfApprovalAllowed };
-    const revision = await tx.entityChange.createApprovalRevision({
-      id: randomUUID(),
-      proposal_id: root.id,
-      workspace,
-      entity_id: canonicalRelationId,
-      revision_number: (previous?.revision_number ?? 0) + 1,
-      base_version: body.baseVersion,
-      base_state: baseState,
-      proposed_state: proposedState,
-      diff,
-      policy_version: policy.policyVersion,
-      resolved_policy: resolvedPolicy,
-      message: body.message ?? null,
-      created_by: userId,
-      status: 'submitted',
-      created_at: now,
-      resolved_at: null
-    });
-
-    await createGovernanceCaseInTransaction(
-      tx,
-      workspace,
-      userId,
-      {
-        caseKind: RELATION_CHANGE_CASE_KIND,
-        subjectType: 'relation',
-        subjectId: canonicalRelationId,
-        subjectVersion: revision.id,
-        policyVersion: policy.policyVersion,
-        selfApprovalAllowed,
-        dueAt: body.dueAt ? new Date(body.dueAt) : null,
-        payload: { proposalId: root.id, revisionId: revision.id, relationId: canonicalRelationId },
-        initiationFieldValues: body.initiationFields,
-        assignments
-      },
-      now
-    );
-    return root;
-  });
-  return await toApiApproval(db, proposal, authCtx);
-};
-
-export const submitRelationChangeApproval = (
-  db: DatabaseAdapter,
-  workspace: string,
-  relationId: string,
-  event: AuthenticatedEvent,
-  body: RelationChangeApprovalRequestBody
-) => submitProposal(db, workspace, relationId, event, body);
-
-export const resubmitRelationChangeApproval = (
-  db: DatabaseAdapter,
-  workspace: string,
-  relationId: string,
-  proposalId: string,
-  event: AuthenticatedEvent,
-  body: RelationChangeApprovalRequestBody
-) => submitProposal(db, workspace, relationId, event, body, proposalId);
-
-export const getRelationChangeApproval = async (
-  db: DatabaseAdapter,
-  workspaceName: string,
-  relationId: string,
-  event: AuthenticatedEvent
-) => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const authCtx = await buildApiAuthCtx(db, workspace, event);
-  const relation = await db.relation.getRelation(workspace, relationId);
-  httpAssert.present(relation, { status: 404, message: 'Relation not found' });
-  await requireRelationCaseMemberEditAccess(db, workspace, authCtx, relation);
-  const proposal = await db.entityChange.getOpenApproval(workspace, relation.id);
-  return proposal ? await toApiApproval(db, proposal, authCtx) : null;
-};
-
-export const withdrawRelationChangeApproval = async (
-  db: DatabaseAdapter,
-  workspaceName: string,
-  relationId: string,
-  proposalId: string,
-  event: AuthenticatedEvent,
-  reason?: string
-) => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const { authCtx, relation } = await assertCanPropose(db, workspace, relationId, event);
-  return withdrawApproval(db, {
-    workspace,
-    subjectId: relation.id,
-    proposalId,
-    event,
-    authCtx,
-    reason,
-    adapter: {
-      caseKind: RELATION_CHANGE_CASE_KIND,
-      subjectName: 'Relation',
-      toApiApproval
-    }
-  });
-};
-
-/**
- * Mirrors bypassEntityApproval (entityChangeOperations.ts): a direct, audited write that skips
- * approval entirely for holders of `ent.override`. If the relation has an open proposal, it is
- * marked approved and its governance case cancelled rather than left dangling against a base
- * version the bypass just moved past.
- */
-export const bypassRelationApproval = async (
-  db: DatabaseAdapter,
-  workspaceName: string,
-  relationId: string,
-  event: AuthenticatedEvent,
-  body: RelationApprovalBypassRequestBody
-) => {
-  const workspace = await resolveWorkspace(db.catalog, workspaceName);
-  const { authCtx, relation } = await assertCanPropose(db, workspace, relationId, event);
-  const canonicalRelationId = relation.id;
-  requireWorkspaceCapability(authCtx, 'ent.override');
-  const updated = await db.core.transaction(async tx => {
-    const now = new Date();
-    if (relation.version !== body.baseVersion) return null;
+    return {
+      required: policy.required,
+      policyVersion: policy.policyVersion,
+      resolvedPolicy: { ...policy, selfApprovalAllowed },
+      assignments,
+      selfApprovalAllowed,
+      requiredApprovals: 1,
+      casePayload: { relationId: relation.id }
+    };
+  },
+  toApiApproval,
+  applyBypass: async ({ tx, workspace, subject: relation, event, authCtx, body, now }) => {
     const { data } = await buildProposedRelation(
       tx,
       workspace,
@@ -461,7 +276,7 @@ export const bypassRelationApproval = async (
       body.proposedState,
       authCtx
     );
-    const row = await tx.relation.updateRelation(workspace, canonicalRelationId, {
+    const row = await tx.relation.updateRelation(workspace, relation.id, {
       data,
       version: relation.version + 1,
       updated_at: now
@@ -474,15 +289,13 @@ export const bypassRelationApproval = async (
       workspace,
       operation: 'update',
       entityType: 'relation',
-      entityId: canonicalRelationId,
+      entityId: relation.id,
       entityName: `${row.in_entity_name} → ${row.out_entity_name}`,
       schemaId: row.schema_id,
       changes: computeChanges(
         flattenRelationAuditFields(relation),
         flattenRelationAuditFields(row),
-        {
-          alwaysInclude: ['_inEntityId', '_outEntityId']
-        }
+        { alwaysInclude: ['_inEntityId', '_outEntityId'] }
       ),
       metadata: {
         relation: relationAuditContext(row),
@@ -490,11 +303,10 @@ export const bypassRelationApproval = async (
         reason: body.reason
       }
     });
-
     await tx.catalog.createEntityVersion({
       id: randomUUID(),
       workspace,
-      record_id: canonicalRelationId,
+      record_id: relation.id,
       version_number: row.version,
       kind: 'autosave',
       commit_message: null,
@@ -503,214 +315,144 @@ export const bypassRelationApproval = async (
       state: relationToBaseState(row),
       applied_case_revision_id: null
     });
-
-    await finalizeApprovalBypass(tx, {
-      workspace,
-      subjectId: canonicalRelationId,
-      actorUserId,
-      reason: body.reason,
-      now,
-      adapter: { caseKind: RELATION_CHANGE_CASE_KIND }
-    });
-    return row;
-  });
-  httpAssert.present(updated, {
-    status: 409,
-    statusText: 'Conflict',
-    message: 'The relation changed while the bypass was being applied'
-  });
-  return { relationId: canonicalRelationId, version: updated.version, bypassed: true as const };
+    return { version: row.version };
+  },
+  governance: {
+    subjectName: 'Relation',
+    workflowConfig: {
+      supportsApprovals: false,
+      supportsReminders: true,
+      supportsEscalation: false
+    },
+    reminders: { approachingDays: [2], overdueDays: [1, 5] },
+    getSubjectIdFromCase: caseRow => String(caseRow.payload['relationId']),
+    subjectVisible: async (db, authCtx, workspace, subjectId) => {
+      const relation = await db.relation.getRelation(workspace, subjectId);
+      if (!relation) return false;
+      const { inSchema, outSchema } = await getRelationOwnerSchemas(db, workspace, relation);
+      return canViewTypedRelation(
+        authCtx,
+        [
+          { schema: inSchema, direction: 'in' },
+          { schema: outSchema, direction: 'out' }
+        ],
+        relation.schema_id
+      );
+    },
+    getSubject: (db, workspace, subjectId) => db.relation.getRelation(workspace, subjectId),
+    toBaseState: relation => relationToBaseState(relation),
+    conflictMessage: (_relation, keys) =>
+      `The proposal is stale because the relation changed in: ${keys.join(', ')}`,
+    applyDomainEffect: async ({ tx, caseRow, event, revision, subject: relation, nextState }) => {
+      const relationId = relation.id;
+      const nextData = (nextState['data'] as Record<string, unknown>) ?? {};
+      const timestamp = new Date();
+      const nextRelation = await tx.relation.updateRelation(caseRow.workspace, relationId, {
+        data: nextData,
+        version: relation.version + 1,
+        updated_at: timestamp
+      });
+      httpAssert.present(nextRelation, {
+        status: 409,
+        statusText: 'Conflict',
+        message: 'The relation changed after this proposal was submitted'
+      });
+      const actorUserId = event.actor_user_id ?? caseRow.initiator_user_id ?? 'system';
+      await logAudit(tx, {
+        userId: actorUserId,
+        workspace: caseRow.workspace,
+        operation: 'update',
+        entityType: 'relation',
+        entityId: relationId,
+        entityName: `${nextRelation.in_entity_name} → ${nextRelation.out_entity_name}`,
+        schemaId: nextRelation.schema_id,
+        changes: computeChanges(
+          flattenRelationAuditFields(relation),
+          flattenRelationAuditFields(nextRelation),
+          { alwaysInclude: ['_inEntityId', '_outEntityId'] }
+        ),
+        metadata: {
+          relation: relationAuditContext(nextRelation),
+          governanceCaseId: caseRow.id,
+          proposalId: String(caseRow.payload['proposalId']),
+          revisionId: revision.id
+        }
+      });
+      await tx.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace: caseRow.workspace,
+        record_id: relationId,
+        version_number: nextRelation.version,
+        kind: 'case_applied',
+        commit_message: null,
+        created_at: timestamp,
+        created_by: actorUserId,
+        state: relationToBaseState(nextRelation),
+        applied_case_revision_id: revision.id
+      });
+      return { relationId, relationVersion: nextRelation.version };
+    }
+  }
 };
 
+const relationApprovalWorkflow = createApprovalWorkflow(relationApprovalAdapter);
+
+export const submitRelationChangeApproval = (
+  db: DatabaseAdapter,
+  workspace: string,
+  relationId: string,
+  event: AuthenticatedEvent,
+  body: RelationChangeApprovalRequestBody
+) => relationApprovalWorkflow.submit(db, workspace, relationId, event, body);
+
+export const resubmitRelationChangeApproval = (
+  db: DatabaseAdapter,
+  workspace: string,
+  relationId: string,
+  proposalId: string,
+  event: AuthenticatedEvent,
+  body: RelationChangeApprovalRequestBody
+) => relationApprovalWorkflow.resubmit(db, workspace, relationId, proposalId, event, body);
+
+export const getRelationChangeApproval = (
+  db: DatabaseAdapter,
+  workspaceName: string,
+  relationId: string,
+  event: AuthenticatedEvent
+) => relationApprovalWorkflow.get(db, workspaceName, relationId, event);
+
+export const withdrawRelationChangeApproval = (
+  db: DatabaseAdapter,
+  workspaceName: string,
+  relationId: string,
+  proposalId: string,
+  event: AuthenticatedEvent,
+  reason?: string
+) => relationApprovalWorkflow.withdraw(db, workspaceName, relationId, proposalId, event, reason);
+
 /**
- * Mirrors createEntityGovernanceRegistry (entityChangeOperations.ts). Without this registered
- * (app.ts spreads every domain's registry into one Map), an approved relation change proposal's
- * governance case would be marked decided but nothing would ever apply the resolved data back to
- * the live relation row — the write-side of the workflow only exists here.
+ * Mirrors bypassEntityApproval (entityChangeOperations.ts): a direct, audited write that skips
+ * approval entirely for holders of `ent.override`. If the relation has an open proposal, it is
+ * marked approved and its governance case cancelled rather than left dangling against a base
+ * version the bypass just moved past.
  */
+export const bypassRelationApproval = (
+  db: DatabaseAdapter,
+  workspaceName: string,
+  relationId: string,
+  event: AuthenticatedEvent,
+  body: RelationApprovalBypassRequestBody
+) =>
+  relationApprovalWorkflow.bypass(db, workspaceName, relationId, event, body).then(result => ({
+    relationId: result.subjectId,
+    version: result.version,
+    bypassed: result.bypassed
+  }));
+
 export const createRelationGovernanceRegistry = (): GovernanceRegistry =>
   new Map([
     [
       RELATION_CHANGE_CASE_KIND,
-      {
-        workflowConfig: {
-          supportsApprovals: false,
-          supportsReminders: true,
-          supportsEscalation: false
-        },
-        subjectVisible: async (
-          db: DatabaseAdapter,
-          authCtx: AuthorizationContext,
-          workspace: string,
-          subjectId: string
-        ) => {
-          const relation = await db.relation.getRelation(workspace, subjectId);
-          if (!relation) return false;
-          const { inSchema, outSchema } = await getRelationOwnerSchemas(db, workspace, relation);
-          return canViewTypedRelation(
-            authCtx,
-            [
-              { schema: inSchema, direction: 'in' },
-              { schema: outSchema, direction: 'out' }
-            ],
-            relation.schema_id
-          );
-        },
-        beforeDecision: async (tx, { case: caseRow, decision }) => {
-          if (decision !== 'approve') return 'proceed';
-          const revision = await tx.entityChange.getApprovalRevision(
-            caseRow.workspace,
-            String(caseRow.payload['revisionId'])
-          );
-          const relation = await tx.relation.getRelation(
-            caseRow.workspace,
-            String(caseRow.payload['relationId'])
-          );
-          if (!revision || !relation) return 'proceed';
-          const currentState = relationToBaseState(relation);
-          const conflicting = Object.keys(revision.diff).some(
-            key =>
-              !equalEntityValue(revision.base_state[key], currentState[key]) &&
-              !equalEntityValue(currentState[key], revision.proposed_state[key])
-          );
-          if (!conflicting) return 'proceed';
-          await tx.entityChange.updateApprovalRevisionStatus(
-            caseRow.workspace,
-            revision.id,
-            'stale',
-            new Date()
-          );
-          return 'stale';
-        },
-        handleDecision: async (tx, { case: caseRow, decision }) => {
-          const payload = caseRow.payload;
-          const revisionId = String(payload['revisionId']);
-          const proposalId = String(payload['proposalId']);
-          if (decision === 'request_changes') {
-            await tx.entityChange.updateApprovalRevisionStatus(
-              caseRow.workspace,
-              revisionId,
-              'changes_requested'
-            );
-          } else if (decision === 'reject') {
-            await tx.entityChange.updateApprovalRevisionStatus(
-              caseRow.workspace,
-              revisionId,
-              'rejected',
-              new Date()
-            );
-            await tx.entityChange.updateApprovalStatus(
-              caseRow.workspace,
-              proposalId,
-              'rejected',
-              new Date(),
-              new Date()
-            );
-          }
-        },
-        applyDomainEffect: async (tx, { case: caseRow, event }) => {
-          const payload = caseRow.payload;
-          const revisionId = String(payload['revisionId']);
-          const proposalId = String(payload['proposalId']);
-          const relationId = String(payload['relationId']);
-          const revision = await tx.entityChange.getApprovalRevision(caseRow.workspace, revisionId);
-          httpAssert.present(revision, {
-            status: 409,
-            message: 'The proposal revision no longer exists'
-          });
-          const relation = await tx.relation.getRelation(caseRow.workspace, relationId);
-          httpAssert.present(relation, {
-            status: 409,
-            message: 'The governed relation no longer exists'
-          });
-          const currentState = relationToBaseState(relation);
-          const touchedKeys = Object.keys(revision.diff);
-          const conflictingKeys = touchedKeys.filter(
-            key =>
-              !equalEntityValue(revision.base_state[key], currentState[key]) &&
-              !equalEntityValue(currentState[key], revision.proposed_state[key])
-          );
-          httpAssert.true(conflictingKeys.length === 0, {
-            status: 409,
-            statusText: 'Conflict',
-            message: `The proposal is stale because the relation changed in: ${conflictingKeys.join(', ')}`
-          });
-          const next = { ...revision.proposed_state };
-          for (const key of mutableStateKeys) {
-            if (!touchedKeys.includes(key)) next[key] = currentState[key];
-          }
-          const nextData = (next['data'] as Record<string, unknown>) ?? {};
-
-          const timestamp = new Date();
-          const nextRelation = await tx.relation.updateRelation(caseRow.workspace, relationId, {
-            data: nextData,
-            version: relation.version + 1,
-            updated_at: timestamp
-          });
-          httpAssert.present(nextRelation, {
-            status: 409,
-            statusText: 'Conflict',
-            message: 'The relation changed after this proposal was submitted'
-          });
-
-          const actorUserId = event.actor_user_id ?? caseRow.initiator_user_id ?? 'system';
-          await logAudit(tx, {
-            userId: actorUserId,
-            workspace: caseRow.workspace,
-            operation: 'update',
-            entityType: 'relation',
-            entityId: relationId,
-            entityName: `${nextRelation.in_entity_name} → ${nextRelation.out_entity_name}`,
-            schemaId: nextRelation.schema_id,
-            changes: computeChanges(
-              flattenRelationAuditFields(relation),
-              flattenRelationAuditFields(nextRelation),
-              { alwaysInclude: ['_inEntityId', '_outEntityId'] }
-            ),
-            metadata: {
-              relation: relationAuditContext(nextRelation),
-              governanceCaseId: caseRow.id,
-              proposalId,
-              revisionId
-            }
-          });
-
-          await tx.catalog.createEntityVersion({
-            id: randomUUID(),
-            workspace: caseRow.workspace,
-            record_id: relationId,
-            version_number: nextRelation.version,
-            kind: 'case_applied',
-            commit_message: null,
-            created_at: timestamp,
-            created_by: actorUserId,
-            state: relationToBaseState(nextRelation),
-            applied_case_revision_id: revisionId
-          });
-
-          await tx.entityChange.updateApprovalRevisionStatus(
-            caseRow.workspace,
-            revisionId,
-            'approved',
-            new Date()
-          );
-          await tx.entityChange.updateApprovalStatus(
-            caseRow.workspace,
-            proposalId,
-            'approved',
-            new Date(),
-            new Date()
-          );
-          await recordGovernanceEvent(tx, caseRow, {
-            eventType: 'domain_effect_applied',
-            actorUserId: event.actor_user_id,
-            previousStatus: caseRow.status,
-            resultingStatus: caseRow.status,
-            reason: null,
-            metadata: { relationId, proposalId, revisionId, relationVersion: nextRelation.version }
-          });
-        },
-        reminders: { approachingDays: [2], overdueDays: [1, 5] }
-      }
+      createApprovalGovernanceCaseConfig(relationApprovalAdapter.governance)
     ]
   ]);
