@@ -2,7 +2,6 @@ import { randomUUID } from 'node:crypto';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import { buildApiEntityAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import { httpAssert } from '../../utils/httpAssert';
 import type {
   WorkspaceAuthorizationContext,
