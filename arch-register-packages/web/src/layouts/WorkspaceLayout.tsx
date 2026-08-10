@@ -18,8 +18,7 @@ import { useProjects } from '../hooks/useProjects';
 import { useWorkspaceConfig } from '../hooks/useWorkspaceConfig';
 import { useAiConfig } from '../hooks/useAiConfig';
 import { useGovernanceTaskCount } from '../hooks/useGovernance';
-import { useWorkspacePermissions } from '../auth/useWorkspacePermissions';
-import { useAuthorizationData } from '../auth/AuthorizationDataContext';
+import { useWorkspaceAuthorization } from '../auth/WorkspaceAuthorizationContext';
 import { WorkspaceContext } from './WorkspaceContext';
 import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
@@ -105,13 +104,9 @@ export const WorkspaceLayout = () => {
     canManageJobs,
     canManageViews,
     canManageDashboard,
-    canManageAdminViews
-  } = useWorkspacePermissions(ws?.id);
-
-  // Get global permissions separately for the global settings link
-  const authData = useAuthorizationData();
-  const canManageGlobalRoles =
-    authData?.global_permissions?.includes('manage_workspace_roles') ?? false;
+    canManageAdminViews,
+    canManageGlobalRoles
+  } = useWorkspaceAuthorization(ws?.id);
 
   const availableSettingsSections = useMemo(
     () => [

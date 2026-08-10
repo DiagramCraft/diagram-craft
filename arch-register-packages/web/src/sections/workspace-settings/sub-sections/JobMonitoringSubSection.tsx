@@ -18,7 +18,7 @@ import {
   useRunJobScheduleNow,
   useUpdateJobSchedule
 } from '../../../hooks/useJobs';
-import { useWorkspacePermissions } from '../../../auth/useWorkspacePermissions';
+import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { Table } from '../../../components/table/Table';
 import { Chip } from '../../../components/Chip';
 import { EmptyState } from '../../../components/EmptyState';
@@ -298,7 +298,7 @@ const formatSummary = (result: Record<string, unknown> | null, error: string | n
 type JobsTab = 'schedules' | 'history' | 'servers';
 
 export const JobMonitoringSubSection = ({ workspaceSlug }: { workspaceSlug: string }) => {
-  const { canManageJobs } = useWorkspacePermissions(workspaceSlug);
+  const { canManageJobs } = useWorkspaceAuthorization(workspaceSlug);
   const [tab, setTab] = useState<JobsTab>('schedules');
   const [scheduleId, setScheduleId] = useState('');
   const [status, setStatus] = useState<'' | JobRunStatus>('');

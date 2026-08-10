@@ -7,7 +7,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { canClearBulkField, getBulkEditableFields, type BulkEditableField } from './bulkEditFields';
 import { useCancellableTimeout } from '../../../hooks/useCancellableTimeout';
-import { useFieldGroupAccess } from '../../../auth/useFieldGroupAccess';
+import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 
 export type BulkFieldRow = {
   rowId: string;
@@ -107,7 +107,7 @@ export const useEntityBrowserSelection = ({
 }: UseEntityBrowserSelectionProps) => {
   const updateEntityMutation = useUpdateEntity(workspaceId);
   const submitBulkProposalMutation = useSubmitBulkEntityChangeApproval(workspaceId);
-  const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
+  const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
   const previousFilteredCountRef = useRef(0);
   const { cancel, schedule } = useCancellableTimeout();
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set());

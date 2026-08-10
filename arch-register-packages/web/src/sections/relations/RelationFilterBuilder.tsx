@@ -30,7 +30,8 @@ type Props = {
   // entity-level _owner/_lifecycle fields.
   owners?: WorkspaceOwnerOption[];
   lifecycleStates?: WorkspaceLifecycleState[];
-  // Resolves a field group's access for the current caller — pass `useFieldGroupAccess(workspaceId)`.
+  // Resolves a field group's access for the current caller — pass
+  // `useWorkspaceAuthorization(workspaceId).getFieldGroupAccess`.
   // Defaults to unrestricted, matching FilterBuilder.tsx's own no-context fallback.
   getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
 };

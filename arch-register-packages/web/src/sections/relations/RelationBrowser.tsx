@@ -24,7 +24,7 @@ import { useTableSort } from '../../components/table/useTableSort';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { EntityNavigationLink } from '../../components/EntityNavigationLink';
 import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
-import { useFieldGroupAccess } from '../../auth/useFieldGroupAccess';
+import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useTeams, useLifecycleStates } from '../../hooks/useWorkspaceConfig';
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
@@ -82,7 +82,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     pageIndex,
     pageSize
   } = useRelationBrowserData(workspaceId, view);
-  const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
+  const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
   const { data: owners = [] } = useTeams(workspaceId);
   const { data: lifecycleStates = [] } = useLifecycleStates(workspaceId);
   const filterPopoverRef = useRef<PopoverActions | null>(null);

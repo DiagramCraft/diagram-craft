@@ -112,7 +112,7 @@ export type MetricPathOption = {
 /**
  * Selectable metric sources for `schema`'s descendants: numeric/currency/select fields, lifecycle,
  * and (if joined) assessment rating/enum fields. Fields in a group the caller cannot view are
- * omitted - pass `useFieldGroupAccess(workspaceId)` for `getFieldGroupAccess`, matching
+ * omitted - pass `useWorkspaceAuthorization(workspaceId).getFieldGroupAccess`, matching
  * `FilterBuilder`.
  */
 export const getMetricSourceOptions = (

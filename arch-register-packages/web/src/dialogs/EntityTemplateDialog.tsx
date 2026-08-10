@@ -23,7 +23,7 @@ import {
 import { EntityFieldInput } from './EntityFieldInput';
 import { useSupportedCurrencies } from '../hooks/useWorkspaceConfig';
 import styles from './AddEntityDialog.module.css';
-import { useFieldGroupAccess } from '../auth/useFieldGroupAccess';
+import { useWorkspaceAuthorization } from '../auth/WorkspaceAuthorizationContext';
 import { resolveGroupAccessControl } from '../lib/fieldGroupAccess';
 import type { FieldGroupAccess } from '@arch-register/permissions';
 
@@ -54,7 +54,7 @@ export const EntityTemplateDialog = ({
   const [meta, setMeta] = useState(createEntityFormDefaults().meta);
   const [error, setError] = useState('');
 
-  const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
+  const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
   const fieldAccessById = useMemo(() => {
     const groupAccessById = new Map(
       schema.groups.map(group => [

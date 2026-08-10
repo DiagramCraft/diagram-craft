@@ -15,7 +15,7 @@ import ReactDOM from 'react-dom/client';
 import { QueryClientProvider } from '@tanstack/react-query';
 import { RouterProvider } from '@tanstack/react-router';
 import { AuthProvider, useAuth } from './auth/AuthContext';
-import { PermissionProvider } from './auth/PermissionContext';
+import { WorkspaceAuthorizationProvider } from './auth/WorkspaceAuthorizationContext';
 import { queryClient } from './lib/queryClient';
 import { router } from './router';
 import { DialogContextProvider } from '@diagram-craft/app-components/Dialog';
@@ -77,13 +77,13 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
   <QueryClientProvider client={queryClient}>
     <GlobalErrorBoundary>
       <AuthProvider>
-        <PermissionProvider>
+        <WorkspaceAuthorizationProvider>
           <DialogContextProvider onDialogShow={() => {}} onDialogHide={() => {}}>
             <PortalContextProvider>
               <InnerApp />
             </PortalContextProvider>
           </DialogContextProvider>
-        </PermissionProvider>
+        </WorkspaceAuthorizationProvider>
       </AuthProvider>
     </GlobalErrorBoundary>
   </QueryClientProvider>

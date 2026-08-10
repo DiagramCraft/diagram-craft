@@ -14,7 +14,7 @@ import type {
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { FilterBuilder } from '../../../components/FilterBuilder';
-import { useFieldGroupAccess } from '../../../auth/useFieldGroupAccess';
+import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { SearchInput } from '../../../components/SearchInput';
 import {
   buildEntityQueryFromBrowserFilters,
@@ -85,7 +85,7 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
 
   const parseText = useParseEntityQueryText(workspaceId);
   const printText = usePrintEntityQueryText(workspaceId);
-  const getFieldGroupAccess = useFieldGroupAccess(workspaceId);
+  const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
 
   const canonicalQuery = (): EntityQuery =>
     entityQuery ??
