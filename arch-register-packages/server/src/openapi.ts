@@ -1,6 +1,7 @@
 import { defineHandler } from 'h3';
 import { OpenAPIGenerator } from '@orpc/openapi';
 import { ZodToJsonSchemaConverter } from '@orpc/zod/zod4';
+import { API_PREFIXES } from './constants';
 import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
 import { workspaceRelationSchemaContract } from '@arch-register/api-types/relationSchemaContract';
 import { workspaceRelationContract } from '@arch-register/api-types/relationContract';
@@ -119,7 +120,7 @@ export const getUnifiedOpenAPISpec = () => {
       title: 'Arch Register API',
       version: '1.0.0'
     },
-    servers: [{ url: '/api' }]
+    servers: [{ url: API_PREFIXES.root }]
   });
 
   return generatedUnifiedSpec;
@@ -176,7 +177,7 @@ export const getApplicationOpenAPISpec = () => {
         title: 'Arch Register Application API',
         version: '1.0.0'
       },
-      servers: [{ url: '/api/application/v1' }]
+      servers: [{ url: API_PREFIXES.application }]
     }
   );
 
@@ -206,7 +207,7 @@ export const getIntegrationOpenAPISpec = () => {
           title: 'Arch Register Integration API',
           version: '1.0.0'
         },
-        servers: [{ url: '/api' }]
+        servers: [{ url: API_PREFIXES.root }]
       }
     )
     .then(spec => {
@@ -234,7 +235,7 @@ export const getDiagramCraftAdapterOpenAPISpec = () => {
         title: 'Diagram Craft Adapter API',
         version: '1.0.0'
       },
-      servers: [{ url: '/api' }]
+      servers: [{ url: API_PREFIXES.root }]
     })
     .then(spec => {
       const paths = Object.fromEntries(

@@ -1,14 +1,9 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import {
-  entityScoped,
-  orpcErrorInterceptors,
-  orpcErrorMiddleware,
-  workspaceScoped
-} from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { API_PREFIXES } from '../../constants';
+import { entityScoped, orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
 import { relationSyncContract } from '@arch-register/api-types/relationSyncContract';
 import { syncRelationByExternalKey, getRelationByExternalKey } from './relationSyncOperations';
 
@@ -55,21 +50,8 @@ export const relationSyncORPCRouter = relationSyncRouter.router({
   }
 });
 
-export const relationSyncOpenAPIHandler = new OpenAPIHandler(relationSyncORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createRelationSyncORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const result = await relationSyncOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: {
-        db,
-        event: event as AuthenticatedEvent
-      }
-    });
-
-    if (result.matched) {
-      return result.response;
-    }
+  createOrpcHandler(relationSyncORPCRouter, {
+    prefix: API_PREFIXES.root,
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });

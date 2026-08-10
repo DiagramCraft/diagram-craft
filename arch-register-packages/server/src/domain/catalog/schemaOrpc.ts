@@ -1,9 +1,9 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { API_PREFIXES } from '../../constants';
+import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   listWorkspaceSchemas,
   getWorkspaceSchema,
@@ -83,33 +83,27 @@ export const workspaceSchemaORPCRouter = schemaRouter.router({
   }
 });
 
-export const workspaceSchemaOpenAPIHandler = new OpenAPIHandler(workspaceSchemaORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createWorkspaceSchemaORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const url = new URL(event.req.url);
-    const isIntegrationSchemaList =
-      event.req.method === 'GET' && /^\/api\/integrations\/v1\/[^/]+\/schemas$/.test(url.pathname);
-    const isApplicationSchemaRoute = /^\/api\/application\/v1\/[^/]+\/schemas(?:\/.*)?$/.test(
-      url.pathname
-    );
-    if (!isIntegrationSchemaList && !isApplicationSchemaRoute) return;
-    const result = await workspaceSchemaOpenAPIHandler.handle(
-      isIntegrationSchemaList
-        ? requestForApiSurface(event, '/api/integrations/v1', '/api')
-        : requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: {
-          db,
-          event: event as AuthenticatedEvent
-        }
-      }
-    );
-
-    if (result.matched) {
-      return result.response;
-    }
+  createOrpcHandler(workspaceSchemaORPCRouter, {
+    prefix: API_PREFIXES.root,
+    shouldHandle: event => {
+      const url = new URL(event.req.url);
+      return (
+        (event.req.method === 'GET' &&
+          new RegExp(`^${API_PREFIXES.integrations}/[^/]+/schemas$`).test(url.pathname)) ||
+        new RegExp(`^${API_PREFIXES.application}/[^/]+/schemas(?:/.*)?$`).test(url.pathname)
+      );
+    },
+    request: event => {
+      const url = new URL(event.req.url);
+      const isIntegrationSchemaList =
+        event.req.method === 'GET' &&
+        new RegExp(`^${API_PREFIXES.integrations}/[^/]+/schemas$`).test(url.pathname);
+      return requestForApiSurface(
+        event,
+        isIntegrationSchemaList ? API_PREFIXES.integrations : API_PREFIXES.application,
+        API_PREFIXES.root
+      );
+    },
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });

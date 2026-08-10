@@ -1,15 +1,10 @@
-import { defineHandler } from 'h3';
 import { implement, ORPCError } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { aiContract } from '@arch-register/api-types/aiContract';
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import {
-  orpcErrorInterceptors,
-  orpcErrorMiddleware,
-  workspaceScoped
-} from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
 import { buildApiEntityAuthCtx, requireWorkspaceCapability } from '../auth/authorization';
 import { resolveAiConfig, createAiTextAdapter } from './tanstackAiAdapter';
 import {
@@ -427,16 +422,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
   });
 };
 
-export const createAiORPCHandler = (db: DatabaseAdapter, deps: AiORPCDeps = {}) => {
-  const aiOpenAPIHandler = new OpenAPIHandler(createAiORPCRouter(deps), {
-    clientInterceptors: orpcErrorInterceptors
+export const createAiORPCHandler = (db: DatabaseAdapter, deps: AiORPCDeps = {}) =>
+  createOrpcHandler(createAiORPCRouter(deps), {
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });
-
-  return defineHandler(async event => {
-    const result = await aiOpenAPIHandler.handle(event.req, {
-      prefix: '/api/application/v1',
-      context: { db, event: event as AuthenticatedEvent }
-    });
-    if (result.matched) return result.response;
-  });
-};

@@ -14,6 +14,16 @@ export const SERVER_DEFAULTS = {
 } as const;
 
 /**
+ * HTTP prefixes shared by the Arch Register API surfaces.
+ */
+export const API_PREFIXES = {
+  root: '/api',
+  application: '/api/application/v1',
+  integrations: '/api/integrations/v1',
+  diagramCraft: '/api/adapters/diagram-craft'
+} as const;
+
+/**
  * Database error codes
  */
 export const DB_ERROR_CODES = {

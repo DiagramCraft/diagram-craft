@@ -1,16 +1,11 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { governanceWorkflowConfigContract } from '@arch-register/api-types/governanceWorkflowConfigContract';
 import type { GovernanceWorkflowConfigRow } from '@arch-register/api-types/governanceWorkflowConfigContract';
 import { governanceWorkflowConfigSchema } from '@arch-register/api-types/governanceCaseConfigSchemas';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import {
-  orpcErrorInterceptors,
-  orpcErrorMiddleware,
-  workspaceScoped
-} from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
 import { requireWorkspaceCapability } from '../auth/authorization';
 import { httpAssert } from '../../utils/httpAssert';
 import {
@@ -302,14 +297,7 @@ export const createGovernanceWorkflowConfigORPCHandler = (
   db: DatabaseAdapter,
   registry: GovernanceRegistry
 ) => {
-  const handler = new OpenAPIHandler(createGovernanceWorkflowConfigORPCRouter(registry), {
-    clientInterceptors: orpcErrorInterceptors
-  });
-  return defineHandler(async event => {
-    const result = await handler.handle(event.req, {
-      prefix: '/api/application/v1',
-      context: { db, event: event as AuthenticatedEvent }
-    });
-    if (result.matched) return result.response;
+  return createOrpcHandler(createGovernanceWorkflowConfigORPCRouter(registry), {
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });
 };
