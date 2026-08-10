@@ -1,13 +1,14 @@
 import { seedEntities } from '@arch-register/server/db/seedData';
 import { seededEntities } from '@arch-register/server/db/seedFixtures';
 import { expect, test as baseTest, createTestORPCClient } from '../helpers/fixtures';
-import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
+import { seedCatalogEntities, seedCatalogRelations, seedIds } from '../helpers/seedHelper';
 import type { TestORPCClient } from '../helpers/orpcTestClient';
 
 const test = baseTest.extend<{ seeded: true }>({
   seeded: [
     async ({ server }, use) => {
       await seedCatalogEntities(server.db);
+      await seedCatalogRelations(server.db);
       await use(true);
     },
     { scope: 'file' }
@@ -20,6 +21,7 @@ const apiId = '00000000-0000-0000-0004-000000000001';
 const componentId = '00000000-0000-0000-0003-000000000002';
 const componentSchemaId = '00000000-0000-0000-0000-000000000003';
 const apiSchemaId = '00000000-0000-0000-0000-000000000004';
+const consumesApiRelationSchemaId = '00000000-0000-0000-0000-000000000035';
 const contractSchemaId = '00000000-0000-0000-0000-000000000009';
 const defaultWorkspaceEntityCount = seedEntities.filter(
   entity => entity.workspace === seedIds.workspace.default && entity.project_id == null
@@ -365,7 +367,8 @@ test.describe('data routes', () => {
         expect.objectContaining({
           entityId: apiId,
           fieldName: 'Consumed APIs',
-          kind: 'reference'
+          kind: 'typed',
+          relationSchemaId: consumesApiRelationSchemaId
         })
       ])
     );
@@ -397,7 +400,8 @@ test.describe('data routes', () => {
         expect.objectContaining({
           entityId: apiId,
           fieldName: 'Consumed APIs',
-          kind: 'reference'
+          kind: 'typed',
+          relationSchemaId: consumesApiRelationSchemaId
         })
       ]),
       incoming: []
@@ -416,7 +420,8 @@ test.describe('data routes', () => {
         expect.objectContaining({
           entityId: componentId,
           fieldName: 'Consumed APIs',
-          kind: 'reference'
+          kind: 'typed',
+          relationSchemaId: consumesApiRelationSchemaId
         })
       ])
     });
