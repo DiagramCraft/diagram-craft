@@ -223,6 +223,11 @@ export const formatEntityDisplayValue = (
     );
   }
   if (field.schemaField?.type === 'date') return formatDate(value, String(value));
-  if (field.schemaField?.type === 'currency') return formatCurrencyValue(value);
+  if (
+    field.schemaField?.type === 'currency' ||
+    (field.schemaField?.type === 'derived' && field.schemaField.resultType === 'currency')
+  ) {
+    return formatCurrencyValue(value);
+  }
   return String(value);
 };

@@ -58,7 +58,12 @@ const isMetricSourceAvailable = (
 
   if (source.kind === 'field') {
     return sourceSchema.fields.some(
-      field => field.id === source.fieldId && (field.type === 'number' || field.type === 'currency')
+      field =>
+        field.id === source.fieldId &&
+        (field.type === 'number' ||
+          field.type === 'currency' ||
+          (field.type === 'derived' &&
+            (field.resultType === 'number' || field.resultType === 'currency')))
     );
   }
 
@@ -119,7 +124,10 @@ const extractValue = (
     source.kind === 'field'
       ? sourceSchema?.fields.find(candidate => candidate.id === source.fieldId)
       : undefined;
-  if (field?.type === 'currency') {
+  if (
+    field?.type === 'currency' ||
+    (field?.type === 'derived' && field.resultType === 'currency')
+  ) {
     const parsed = currencyValueSchema.safeParse(raw);
     return parsed.success
       ? { value: parsed.data.amount, lifecycleId: null, currencyCode: parsed.data.currency }
@@ -136,7 +144,11 @@ const isCurrencyFieldSource = (
   if (metric.source.kind !== 'field') return false;
   const fieldId = metric.source.fieldId;
   return (
-    sourceSchema?.fields.some(field => field.id === fieldId && field.type === 'currency') === true
+    sourceSchema?.fields.some(
+      field =>
+        field.id === fieldId &&
+        (field.type === 'currency' || (field.type === 'derived' && field.resultType === 'currency'))
+    ) === true
   );
 };
 

@@ -37,10 +37,7 @@ import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { toFieldId } from '../../utils/fieldId';
 import { TypeBadge } from '../../components/TypeBadge';
 import { GroupDialog } from '../../components/GroupsEditor';
-import {
-  DerivedExpressionTestDialog,
-  type ExpressionTestField
-} from '../../components/DerivedExpressionTestDialog';
+import { DerivedExpressionTestDialog } from '../../components/DerivedExpressionTestDialog';
 import { ProjectScreenLayout } from './ProjectScreenLayout';
 import sharedStyles from './ProjectDetailScreen.module.css';
 import styles from './ProjectAssessments.module.css';
@@ -481,7 +478,7 @@ export const AssessmentEditorDialog = ({
                 ...base,
                 type,
                 requirementLevel: 'optional' as const,
-                expression: inputField ? `field("${inputField.id}")` : '""',
+                expression: inputField ? `entity.${inputField.id}` : '""',
                 resultType: 'text' as const
               }
             : { ...base, type };
@@ -894,7 +891,6 @@ export const AssessmentEditorDialog = ({
                   <FieldRow
                     key={fieldKey(field.id)}
                     field={field}
-                    fields={fields}
                     groups={groups}
                     onUpdate={changes => updateField(field.id, changes)}
                     onRemove={() => removeField(field.id)}
@@ -950,7 +946,6 @@ export const AssessmentEditorDialog = ({
                         <FieldRow
                           key={fieldKey(field.id)}
                           field={field}
-                          fields={fields}
                           groups={groups}
                           onUpdate={changes => updateField(field.id, changes)}
                           onRemove={() => removeField(field.id)}
@@ -1068,13 +1063,11 @@ const uniqueAssessmentFieldId = (baseId: string, existingIds: string[], currentI
 
 const FieldRow = ({
   field,
-  fields,
   groups,
   onUpdate,
   onRemove
 }: {
   field: AssessmentField;
-  fields: AssessmentField[];
   groups: AssessmentGroup[];
   onUpdate: (changes: Partial<AssessmentField>) => void;
   onRemove: () => void;
@@ -1193,11 +1186,14 @@ const FieldRow = ({
               </Select.Root>
             </FormElement>
           )}
-          <FormElement label="Expression" hint='Reference sibling fields with field("id")'>
+          <FormElement
+            label="Expression"
+            hint="Reference response fields through assessment.field or assessment['field-id']"
+          >
             <TextInput
               value={field.expression}
               onChange={value => onUpdate({ expression: value ?? '' })}
-              placeholder='field("input_field")'
+              placeholder="assessment.input_field"
             />
           </FormElement>
         </>
@@ -1283,8 +1279,8 @@ const FieldRow = ({
         <DerivedExpressionTestDialog
           open={expressionTestOpen}
           field={field}
-          fields={fields as ExpressionTestField[]}
           expression={field.expression}
+          root="assessment"
           onClose={() => setExpressionTestOpen(false)}
           onSave={expression => {
             onUpdate({ expression });

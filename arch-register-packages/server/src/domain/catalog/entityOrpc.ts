@@ -28,6 +28,7 @@ import {
   getBatchEntityRelations,
   getEntityDependents
 } from './entityRelationshipOperations';
+import { getEntityJsonProjection } from './entityProjectionOperations';
 import {
   createEntity,
   bulkCreateEntities,
@@ -189,6 +190,16 @@ const entityHandlers = {
   get: entityRouter.entities.get.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
     return await getEntity(context.db, workspace, input.params.id, authCtx);
+  }),
+
+  json: entityRouter.entities.json.handler(async ({ input, context }) => {
+    return await getEntityJsonProjection(
+      context.db,
+      context.workspace,
+      input.params.id,
+      input.query.depth,
+      context.authCtx
+    );
   }),
 
   relations: entityRouter.entities.relations.handler(async ({ input, context }) => {

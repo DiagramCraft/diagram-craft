@@ -41,9 +41,9 @@ describe('assessment templates', () => {
           { value: 'eliminate', label: 'Eliminate' }
         ],
         expression:
-          '(field("business_fit")>=6 && field("technical_fit")>=6 && "invest") || ' +
-          '(field("business_fit")>=6 && field("technical_fit")<6 && "migrate") || ' +
-          '(field("business_fit")<6 && field("technical_fit")>=6 && "tolerate") || ' +
+          '(assessment.business_fit>=6 && assessment.technical_fit>=6 && "invest") || ' +
+          '(assessment.business_fit>=6 && assessment.technical_fit<6 && "migrate") || ' +
+          '(assessment.business_fit<6 && assessment.technical_fit>=6 && "tolerate") || ' +
           '"eliminate"'
       }
     ]);
@@ -55,10 +55,10 @@ describe('assessment templates', () => {
     const quadrantField = template.values.fields.find(f => f.id === 'time_quadrant');
     if (quadrantField?.type !== 'derived') throw new Error('expected a derived field');
 
-    const engine = bonsai<{ values: Record<string, unknown> }>({
+    const engine = bonsai<{ assessment: Record<string, unknown> }>({
       timeout: 50,
       maxDepth: 50
-    }).addContextFunction('field', (ctx, id) => ctx.values[String(id)]);
+    });
 
     const cases: [number, number, string][] = [
       [8, 8, 'invest'],
@@ -73,7 +73,9 @@ describe('assessment templates', () => {
 
     for (const [business_fit, technical_fit, expected] of cases) {
       expect(
-        engine.evaluateSync(quadrantField.expression, { values: { business_fit, technical_fit } })
+        engine.evaluateSync(quadrantField.expression, {
+          assessment: { business_fit, technical_fit }
+        })
       ).toBe(expected);
     }
   });

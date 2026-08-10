@@ -14,6 +14,8 @@ export const entityKeys = {
   workspaceDetails: (workspaceId: string) => [...entityKeys.details(), workspaceId] as const,
   detail: (workspaceId: string, entityId: string) =>
     [...entityKeys.workspaceDetails(workspaceId), entityId] as const,
+  json: (workspaceId: string, entityId: string, depth: number) =>
+    [...entityKeys.workspaceDetails(workspaceId), 'json', entityId, depth] as const,
   facets: (workspaceId: string) => [...entityKeys.all, 'facets', workspaceId] as const,
   timelineMarkers: (workspaceId: string) =>
     [...entityKeys.all, 'timelineMarkers', workspaceId] as const,
@@ -47,6 +49,7 @@ export const invalidateEntityDetails = async (
 ) => {
   await Promise.all([
     queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) }),
+    queryClient.invalidateQueries({ queryKey: entityKeys.json(workspaceId, entityId, 1) }),
     queryClient.invalidateQueries({ queryKey: entityKeys.relations(workspaceId, entityId) })
   ]);
 };

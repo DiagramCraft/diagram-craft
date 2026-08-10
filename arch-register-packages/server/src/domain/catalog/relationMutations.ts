@@ -9,6 +9,7 @@ import {
   relationToBaseState
 } from './relationHelpers';
 import { assertCatalogMutationTransaction } from './mutationTransaction';
+import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
 
 export const RELATION_AUTOSAVE_KEEP_COUNT = 50;
 
@@ -82,6 +83,7 @@ export const createRelationWithAudit = async (
     applied_case_revision_id: null
   });
   await db.catalog.pruneAutosaveVersions(params.workspace, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
+  await recalculateEntityDerivedFields(db, params.workspace, [row.in_entity_id, row.out_entity_id]);
 
   return row;
 };
@@ -119,6 +121,11 @@ export const deleteRelationWithAudit = async (
     changes: { old: flattenRelationAuditFields(params.relation) },
     metadata: { relation: relationAuditContext(params.relation), ...params.auditMetadata }
   });
+
+  await recalculateEntityDerivedFields(db, params.workspace, [
+    params.relation.in_entity_id,
+    params.relation.out_entity_id
+  ]);
 
   return deleted;
 };
@@ -167,6 +174,13 @@ export const updateRelationWithAudit = async (
     applied_case_revision_id: params.appliedCaseRevisionId ?? null
   });
   await db.catalog.pruneAutosaveVersions(params.workspace, row.id, RELATION_AUTOSAVE_KEEP_COUNT);
+
+  await recalculateEntityDerivedFields(db, params.workspace, [
+    params.previous.in_entity_id,
+    params.previous.out_entity_id,
+    row.in_entity_id,
+    row.out_entity_id
+  ]);
 
   return row;
 };

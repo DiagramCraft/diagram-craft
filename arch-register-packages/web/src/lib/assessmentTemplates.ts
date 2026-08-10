@@ -77,9 +77,9 @@ export const assessmentTemplates: AssessmentTemplate[] = [
           resultType: 'select',
           options: TIME_QUADRANT_OPTIONS,
           expression:
-            '(field("business_fit")>=6 && field("technical_fit")>=6 && "invest") || ' +
-            '(field("business_fit")>=6 && field("technical_fit")<6 && "migrate") || ' +
-            '(field("business_fit")<6 && field("technical_fit")>=6 && "tolerate") || ' +
+            '(assessment.business_fit>=6 && assessment.technical_fit>=6 && "invest") || ' +
+            '(assessment.business_fit>=6 && assessment.technical_fit<6 && "migrate") || ' +
+            '(assessment.business_fit<6 && assessment.technical_fit>=6 && "tolerate") || ' +
             '"eliminate"'
         }
       ]

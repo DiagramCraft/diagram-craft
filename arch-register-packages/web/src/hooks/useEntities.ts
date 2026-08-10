@@ -53,6 +53,17 @@ export const useEntity = (workspaceId: string, entityId: string) => {
   });
 };
 
+export const useEntityJson = (workspaceId: string, entityId: string, enabled = true) =>
+  useQuery({
+    queryKey: entityKeys.json(workspaceId, entityId, 1),
+    queryFn: () =>
+      orpcClient.entities.json({
+        params: { workspace: workspaceId, id: entityId },
+        query: { depth: 1 }
+      }),
+    enabled: enabled && !!workspaceId && !!entityId
+  });
+
 // Hook for fetching an entity-landscape diff between two reconstructed states — powers both the
 // project page's "What's changed" tab (from = now, to = project's end state) and the workspace
 // entities section's "Diff" view (from = now, to = a chosen future date, both scoped to the

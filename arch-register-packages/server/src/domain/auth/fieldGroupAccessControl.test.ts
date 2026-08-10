@@ -69,7 +69,7 @@ const legacyDerivedSchema: FieldGroupSchemaShape = {
       id: 'salary_copy',
       name: 'Salary copy',
       type: 'derived',
-      expression: 'field("salary")',
+      expression: 'entity.salary',
       resultType: 'text'
     }
   ],

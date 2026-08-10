@@ -133,7 +133,8 @@ export const getMetricSourceOptions = (
     if (
       field.type === 'number' ||
       field.type === 'currency' ||
-      (field.type === 'derived' && field.resultType === 'number')
+      (field.type === 'derived' &&
+        (field.resultType === 'number' || field.resultType === 'currency'))
     ) {
       options.push({ source: { kind: 'field', fieldId: field.id }, label: field.name });
     } else if (field.type === 'select') {
@@ -250,7 +251,13 @@ export const isCurrencyMetric = (
 ): boolean => {
   if (metric.source.kind !== 'field' || metric.aggregation === 'count') return false;
   const fieldId = metric.source.fieldId;
-  return schema?.fields.some(field => field.id === fieldId && field.type === 'currency') === true;
+  return (
+    schema?.fields.some(
+      field =>
+        field.id === fieldId &&
+        (field.type === 'currency' || (field.type === 'derived' && field.resultType === 'currency'))
+    ) === true
+  );
 };
 
 export const AGGREGATION_OPTIONS: { value: MetricAggregation; label: string }[] = [

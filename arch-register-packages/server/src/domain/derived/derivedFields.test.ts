@@ -15,7 +15,7 @@ const field = (id: string, type: AssessmentField['type'] = 'text'): AssessmentFi
       label: id,
       type,
       requirementLevel: 'optional',
-      expression: 'field("input")',
+      expression: 'assessment.input',
       resultType: 'text'
     };
   }
@@ -43,7 +43,7 @@ const derivedSchemaText = (id: string, expression: string, groupId?: string): Sc
 });
 
 describe('derived fields', () => {
-  it('evaluates sibling references in dependency order and materializes typed values', () => {
+  it('evaluates entity references in dependency order and materializes typed values', () => {
     const fields: AssessmentField[] = [
       field('input'),
       {
@@ -51,7 +51,7 @@ describe('derived fields', () => {
         label: 'Amount',
         type: 'derived',
         requirementLevel: 'optional',
-        expression: 'field("input") + 2',
+        expression: 'assessment.input + 2',
         resultType: 'number'
       },
       {
@@ -59,7 +59,7 @@ describe('derived fields', () => {
         label: 'Summary',
         type: 'derived',
         requirementLevel: 'optional',
-        expression: 'field("amount") + 3',
+        expression: 'assessment.amount + 3',
         resultType: 'number'
       }
     ];
@@ -71,6 +71,48 @@ describe('derived fields', () => {
     });
   });
 
+  it('evaluates one-hop dependent aggregates and currency results', () => {
+    const fields: SchemaField[] = [
+      {
+        id: 'annual_cost',
+        name: 'Annual cost',
+        type: 'currency'
+      },
+      {
+        id: 'contracts',
+        name: 'Contracts',
+        type: 'typedRelation',
+        relationSchemaId: 'system-contract',
+        direction: 'in'
+      },
+      {
+        id: 'total_cost',
+        name: 'Total cost',
+        type: 'derived',
+        requirementLevel: 'optional',
+        expression: "{ amount: entity.contracts.map(.annual_cost.amount) |> sum, currency: 'USD' }",
+        resultType: 'currency'
+      }
+    ];
+
+    expect(
+      materializeDerivedFields(fields, {}, entityContext, [], {
+        contracts: [
+          { annual_cost: { amount: 1200, currency: 'USD' } },
+          { annual_cost: { amount: 800, currency: 'USD' } }
+        ]
+      })
+    ).toEqual({
+      total_cost: { amount: 2000, currency: 'USD' }
+    });
+  });
+
+  it('rejects unsupported identifiers outside entity', () => {
+    expect(() => buildDerivedPlan([derivedSchemaText('invalid', 'workspace.secret')])).toThrow(
+      /workspace/
+    );
+  });
+
   it('omits derived values when an input is missing or the result has the wrong type', () => {
     const fields: AssessmentField[] = [
       field('input'),
@@ -79,7 +121,7 @@ describe('derived fields', () => {
         label: 'Derived',
         type: 'derived',
         requirementLevel: 'optional',
-        expression: 'field("input")',
+        expression: 'assessment.input',
         resultType: 'number'
       }
     ];
@@ -100,11 +142,11 @@ describe('derived fields', () => {
           label: 'Derived',
           type: 'derived',
           requirementLevel: 'optional',
-          expression: 'field("missing")',
+          expression: 'assessment.missing',
           resultType: 'text'
         }
       ])
-    ).toThrow(/unknown sibling field/);
+    ).toThrow(/unknown assessment field/);
 
     const cyclic = [
       {
@@ -112,7 +154,7 @@ describe('derived fields', () => {
         label: 'First',
         type: 'derived' as const,
         requirementLevel: 'optional' as const,
-        expression: 'field("second")',
+        expression: 'assessment.second',
         resultType: 'text' as const
       },
       {
@@ -120,7 +162,7 @@ describe('derived fields', () => {
         label: 'Second',
         type: 'derived' as const,
         requirementLevel: 'optional' as const,
-        expression: 'field("first")',
+        expression: 'assessment.first',
         resultType: 'text' as const
       }
     ];
@@ -130,7 +172,7 @@ describe('derived fields', () => {
   it('rejects an unrestricted derived field that references a restricted field', () => {
     expect(() =>
       validateDerivedFieldGroupAccess(
-        [schemaText('salary', 'hr'), derivedSchemaText('salary_copy', 'field("salary")')],
+        [schemaText('salary', 'hr'), derivedSchemaText('salary_copy', 'entity.salary')],
         [{ id: 'hr', name: 'HR', accessControl: { teamIds: ['team-hr'] } }]
       )
     ).toThrow(/salary_copy.*salary/);
@@ -139,7 +181,7 @@ describe('derived fields', () => {
   it('rejects a derived field that references a field with an unresolved group', () => {
     expect(() =>
       validateDerivedFieldGroupAccess(
-        [schemaText('salary', 'missing'), derivedSchemaText('salary_copy', 'field("salary")')],
+        [schemaText('salary', 'missing'), derivedSchemaText('salary_copy', 'entity.salary')],
         []
       )
     ).toThrow(/salary_copy.*salary.*unresolved field group.*missing/);
@@ -148,8 +190,8 @@ describe('derived fields', () => {
   it('removes legacy derived values with unresolved direct and transitive dependencies', () => {
     const fields = [
       schemaText('salary', 'missing'),
-      derivedSchemaText('salary_copy', 'field("salary")'),
-      derivedSchemaText('salary_label', 'field("salary_copy")')
+      derivedSchemaText('salary_copy', 'entity.salary'),
+      derivedSchemaText('salary_label', 'entity.salary_copy')
     ];
 
     expect(
@@ -165,7 +207,7 @@ describe('derived fields', () => {
   it('removes a derived value whose own group is unresolved', () => {
     expect(
       materializeDerivedFields(
-        [schemaText('input'), derivedSchemaText('output', 'field("input")', 'missing')],
+        [schemaText('input'), derivedSchemaText('output', 'entity.input', 'missing')],
         { input: 'value', output: 'stale' },
         entityContext,
         []
@@ -176,7 +218,7 @@ describe('derived fields', () => {
   it('allows a derived field in an equally or more restrictive group', () => {
     const fields = [
       schemaText('salary', 'hr'),
-      derivedSchemaText('salary_copy', 'field("salary")', 'hr-only')
+      derivedSchemaText('salary_copy', 'entity.salary', 'hr-only')
     ];
     const groups: SchemaGroup[] = [
       { id: 'hr', name: 'HR', accessControl: { teamIds: ['team-hr', 'team-payroll'] } },
@@ -192,7 +234,7 @@ describe('derived fields', () => {
         [
           schemaText('salary', 'hr'),
           schemaText('bonus', 'payroll'),
-          derivedSchemaText('compensation', 'field("salary") + field("bonus")', 'combined')
+          derivedSchemaText('compensation', 'entity.salary + entity.bonus', 'combined')
         ],
         [
           { id: 'hr', name: 'HR', accessControl: { teamIds: ['team-hr'] } },
@@ -212,8 +254,8 @@ describe('derived fields', () => {
       validateDerivedFieldGroupAccess(
         [
           schemaText('salary', 'hr'),
-          derivedSchemaText('salary_copy', 'field("salary")', 'hr'),
-          derivedSchemaText('salary_label', 'field("salary_copy")')
+          derivedSchemaText('salary_copy', 'entity.salary', 'hr'),
+          derivedSchemaText('salary_label', 'entity.salary_copy')
         ],
         [{ id: 'hr', name: 'HR', accessControl: { teamIds: ['team-hr'] } }]
       )

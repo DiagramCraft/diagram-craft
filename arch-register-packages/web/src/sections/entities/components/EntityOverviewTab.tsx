@@ -825,6 +825,7 @@ const PropertyRow = ({
     if (value == null || value === '') return <span className={sharedStyles.dim}>—</span>;
     if (field.type === 'derived') {
       if (field.resultType === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
+      if (field.resultType === 'currency') return <span>{formatCurrencyValue(value)}</span>;
       if (field.resultType === 'select') {
         const opt = field.options?.find(o => o.value === String(value));
         return <Chip tone="ghost">{opt?.label ?? String(value)}</Chip>;

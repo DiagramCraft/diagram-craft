@@ -32,7 +32,7 @@ export type SymbolicField =
       name: string;
       type: 'derived';
       expression: string;
-      resultType: 'text' | 'number' | 'select' | 'boolean' | 'rating';
+      resultType: 'text' | 'number' | 'currency' | 'select' | 'boolean' | 'rating';
       enumId?: string;
     }
   | {
@@ -1527,7 +1527,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             id: 'inherent_risk_score',
             name: 'Inherent Risk Score',
             type: 'derived',
-            expression: "field('likelihood') * field('impact')",
+            expression: 'entity.likelihood * entity.impact',
             resultType: 'number'
           },
           {
@@ -1541,7 +1541,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             name: 'Residual Risk Score',
             type: 'derived',
             expression:
-              "field('likelihood') * (field('mitigation_effectiveness') == 'full' ? 0 : field('mitigation_effectiveness') == 'substantial' ? (field('impact') - 2 < 1 ? 1 : field('impact') - 2) : field('mitigation_effectiveness') == 'partial' ? (field('impact') - 1 < 1 ? 1 : field('impact') - 1) : field('impact'))",
+              "entity.likelihood * (entity.mitigation_effectiveness == 'full' ? 0 : entity.mitigation_effectiveness == 'substantial' ? (entity.impact - 2 < 1 ? 1 : entity.impact - 2) : entity.mitigation_effectiveness == 'partial' ? (entity.impact - 1 < 1 ? 1 : entity.impact - 1) : entity.impact)",
             resultType: 'number'
           },
           { id: 'risk_owner', name: 'Risk Owner', type: 'text' },

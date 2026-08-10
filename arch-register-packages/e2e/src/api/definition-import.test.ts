@@ -371,7 +371,7 @@ test.describe('definition import', () => {
       expect.objectContaining({
         id: 'inherent_risk_score',
         type: 'derived',
-        expression: "field('likelihood') * field('impact')",
+        expression: 'entity.likelihood * entity.impact',
         resultType: 'number'
       })
     );

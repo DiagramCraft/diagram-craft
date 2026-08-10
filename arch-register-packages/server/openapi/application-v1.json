@@ -837,7 +837,7 @@
                                 },
                                 "type": {
                                   "const": "derived",
-                                  "description": "Read-only value derived from sibling fields"
+                                  "description": "Read-only value derived from the current entity and its bounded graph context"
                                 },
                                 "expression": {
                                   "type": "string",
@@ -848,6 +848,7 @@
                                   "enum": [
                                     "text",
                                     "number",
+                                    "currency",
                                     "select",
                                     "boolean",
                                     "rating"
@@ -1968,7 +1969,7 @@
                             },
                             "type": {
                               "const": "derived",
-                              "description": "Read-only value derived from sibling fields"
+                              "description": "Read-only value derived from the current entity and its bounded graph context"
                             },
                             "expression": {
                               "type": "string",
@@ -1979,6 +1980,7 @@
                               "enum": [
                                 "text",
                                 "number",
+                                "currency",
                                 "select",
                                 "boolean",
                                 "rating"
@@ -3050,7 +3052,7 @@
                               },
                               "type": {
                                 "const": "derived",
-                                "description": "Read-only value derived from sibling fields"
+                                "description": "Read-only value derived from the current entity and its bounded graph context"
                               },
                               "expression": {
                                 "type": "string",
@@ -3061,6 +3063,7 @@
                                 "enum": [
                                   "text",
                                   "number",
+                                  "currency",
                                   "select",
                                   "boolean",
                                   "rating"
@@ -4222,7 +4225,7 @@
                               },
                               "type": {
                                 "const": "derived",
-                                "description": "Read-only value derived from sibling fields"
+                                "description": "Read-only value derived from the current entity and its bounded graph context"
                               },
                               "expression": {
                                 "type": "string",
@@ -4233,6 +4236,7 @@
                                 "enum": [
                                   "text",
                                   "number",
+                                  "currency",
                                   "select",
                                   "boolean",
                                   "rating"
@@ -5361,7 +5365,7 @@
                             },
                             "type": {
                               "const": "derived",
-                              "description": "Read-only value derived from sibling fields"
+                              "description": "Read-only value derived from the current entity and its bounded graph context"
                             },
                             "expression": {
                               "type": "string",
@@ -5372,6 +5376,7 @@
                               "enum": [
                                 "text",
                                 "number",
+                                "currency",
                                 "select",
                                 "boolean",
                                 "rating"
@@ -6472,7 +6477,7 @@
                               },
                               "type": {
                                 "const": "derived",
-                                "description": "Read-only value derived from sibling fields"
+                                "description": "Read-only value derived from the current entity and its bounded graph context"
                               },
                               "expression": {
                                 "type": "string",
@@ -6483,6 +6488,7 @@
                                 "enum": [
                                   "text",
                                   "number",
+                                  "currency",
                                   "select",
                                   "boolean",
                                   "rating"
@@ -7694,7 +7700,7 @@
                                 },
                                 "type": {
                                   "const": "derived",
-                                  "description": "Read-only value derived from sibling fields"
+                                  "description": "Read-only value derived from the current entity and its bounded graph context"
                                 },
                                 "expression": {
                                   "type": "string",
@@ -7705,6 +7711,7 @@
                                   "enum": [
                                     "text",
                                     "number",
+                                    "currency",
                                     "select",
                                     "boolean",
                                     "rating"
@@ -33676,6 +33683,63 @@
                     "success",
                     "message"
                   ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/data/{id}/json": {
+      "get": {
+        "operationId": "entities.json",
+        "summary": "Get entity JSON projection",
+        "description": "Retrieves an entity as a depth-limited JSON projection. Depth 1 includes direct relation targets.",
+        "tags": [
+          "Entities",
+          "Entities"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "depth",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 10,
+              "default": 1
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "propertyNames": {
+                    "type": "string"
+                  },
+                  "additionalProperties": {}
                 }
               }
             }
@@ -62966,7 +63030,7 @@
                                 },
                                 "type": {
                                   "const": "derived",
-                                  "description": "Read-only value derived from sibling fields"
+                                  "description": "Read-only value derived from the current entity and its bounded graph context"
                                 },
                                 "expression": {
                                   "type": "string",
@@ -62977,6 +63041,7 @@
                                   "enum": [
                                     "text",
                                     "number",
+                                    "currency",
                                     "select",
                                     "boolean",
                                     "rating"
@@ -63843,7 +63908,7 @@
                             },
                             "type": {
                               "const": "derived",
-                              "description": "Read-only value derived from sibling fields"
+                              "description": "Read-only value derived from the current entity and its bounded graph context"
                             },
                             "expression": {
                               "type": "string",
@@ -63854,6 +63919,7 @@
                               "enum": [
                                 "text",
                                 "number",
+                                "currency",
                                 "select",
                                 "boolean",
                                 "rating"
@@ -64696,7 +64762,7 @@
                               },
                               "type": {
                                 "const": "derived",
-                                "description": "Read-only value derived from sibling fields"
+                                "description": "Read-only value derived from the current entity and its bounded graph context"
                               },
                               "expression": {
                                 "type": "string",
@@ -64707,6 +64773,7 @@
                                 "enum": [
                                   "text",
                                   "number",
+                                  "currency",
                                   "select",
                                   "boolean",
                                   "rating"
@@ -65614,7 +65681,7 @@
                               },
                               "type": {
                                 "const": "derived",
-                                "description": "Read-only value derived from sibling fields"
+                                "description": "Read-only value derived from the current entity and its bounded graph context"
                               },
                               "expression": {
                                 "type": "string",
@@ -65625,6 +65692,7 @@
                                 "enum": [
                                   "text",
                                   "number",
+                                  "currency",
                                   "select",
                                   "boolean",
                                   "rating"
@@ -66499,7 +66567,7 @@
                             },
                             "type": {
                               "const": "derived",
-                              "description": "Read-only value derived from sibling fields"
+                              "description": "Read-only value derived from the current entity and its bounded graph context"
                             },
                             "expression": {
                               "type": "string",
@@ -66510,6 +66578,7 @@
                               "enum": [
                                 "text",
                                 "number",
+                                "currency",
                                 "select",
                                 "boolean",
                                 "rating"
@@ -67378,7 +67447,7 @@
                               },
                               "type": {
                                 "const": "derived",
-                                "description": "Read-only value derived from sibling fields"
+                                "description": "Read-only value derived from the current entity and its bounded graph context"
                               },
                               "expression": {
                                 "type": "string",
@@ -67389,6 +67458,7 @@
                                 "enum": [
                                   "text",
                                   "number",
+                                  "currency",
                                   "select",
                                   "boolean",
                                   "rating"

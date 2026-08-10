@@ -30,6 +30,7 @@ import {
   materializeDerivedFields,
   validateDerivedFieldGroupAccess
 } from '../derived/derivedFields';
+import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
 import { computeChanges, extractEntityFields, logAudit } from '../audit/db/auditLogging';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 
@@ -318,6 +319,7 @@ export const updateWorkspaceSharedFieldGroup = async (
             );
           }
         }
+        await recalculateEntityDerivedFields(tx, ws);
         return group;
       });
       await logAudit(db, {

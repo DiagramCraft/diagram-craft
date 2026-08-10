@@ -837,7 +837,7 @@
                                 },
                                 "type": {
                                   "const": "derived",
-                                  "description": "Read-only value derived from sibling fields"
+                                  "description": "Read-only value derived from the current entity and its bounded graph context"
                                 },
                                 "expression": {
                                   "type": "string",
@@ -848,6 +848,7 @@
                                   "enum": [
                                     "text",
                                     "number",
+                                    "currency",
                                     "select",
                                     "boolean",
                                     "rating"

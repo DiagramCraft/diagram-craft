@@ -105,7 +105,7 @@ describe('buildCreateAssessmentInput', () => {
             label: 'Hyper',
             requirementLevel: 'optional',
             type: 'derived',
-            expression: 'field("rating")*5',
+            expression: 'assessment.rating*5',
             resultType: 'number'
           }
         ]

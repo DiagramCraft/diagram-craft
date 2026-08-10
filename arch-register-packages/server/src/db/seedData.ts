@@ -1252,7 +1252,7 @@ export const seedSchemas: SchemaDbResult[] = (
           name: 'Inherent Risk Score',
           type: 'derived',
           requirementLevel: 'optional',
-          expression: "field('likelihood') * field('impact')",
+          expression: 'entity.likelihood * entity.impact',
           resultType: 'number'
         },
         {
@@ -1267,7 +1267,7 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'derived',
           requirementLevel: 'optional',
           expression:
-            "field('likelihood') * (field('mitigation_effectiveness') == 'full' ? 0 : field('mitigation_effectiveness') == 'substantial' ? (field('impact') - 2 < 1 ? 1 : field('impact') - 2) : field('mitigation_effectiveness') == 'partial' ? (field('impact') - 1 < 1 ? 1 : field('impact') - 1) : field('impact'))",
+            "entity.likelihood * (entity.mitigation_effectiveness == 'full' ? 0 : entity.mitigation_effectiveness == 'substantial' ? (entity.impact - 2 < 1 ? 1 : entity.impact - 2) : entity.mitigation_effectiveness == 'partial' ? (entity.impact - 1 < 1 ? 1 : entity.impact - 1) : entity.impact)",
           resultType: 'number'
         },
         { id: 'risk_owner', name: 'Risk Owner', type: 'text' },
