@@ -60,11 +60,12 @@ export class SqliteArtifactDatabase extends SqliteDatabaseBase implements Artifa
     if (!existing) return null;
     const next = { ...existing, ...input };
     this.run(
-      `UPDATE catalog_artifact SET status = ?, current_revision_id = ?, last_attempt_at = ?,
+      `UPDATE catalog_artifact SET status = ?, media_type = ?, current_revision_id = ?, last_attempt_at = ?,
        last_success_at = ?, diagnostic_category = ?, diagnostic_message = ?, diagnostic_timestamp = ?, updated_at = ?
        WHERE workspace = ? AND id = ?`,
       [
         next.status,
+        next.media_type,
         next.current_revision_id,
         iso(next.last_attempt_at),
         iso(next.last_success_at),
@@ -77,6 +78,22 @@ export class SqliteArtifactDatabase extends SqliteDatabaseBase implements Artifa
       ]
     );
     return this.getArtifact(workspace, id);
+  }
+
+  async beginAttempt(workspace: string, id: string, timestamp: Date) {
+    const existing = await this.getArtifact(workspace, id);
+    if (!existing) return null;
+    if (existing.status === 'pending') return { artifact: existing, started: false };
+
+    const result = this.run(
+      `UPDATE catalog_artifact SET status = 'pending', last_attempt_at = ?,
+       diagnostic_category = NULL, diagnostic_message = NULL, diagnostic_timestamp = NULL,
+       updated_at = ?
+       WHERE workspace = ? AND id = ? AND status <> 'pending'`,
+      [timestamp.toISOString(), timestamp.toISOString(), workspace, id]
+    );
+    const artifact = await this.getArtifact(workspace, id);
+    return artifact ? { artifact, started: result.changes > 0 } : null;
   }
 
   async getRevision(workspace: string, id: string) {

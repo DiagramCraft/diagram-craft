@@ -7,6 +7,8 @@ const mocks = vi.hoisted(() => ({
   artifacts: vi.fn(),
   projection: vi.fn(),
   content: vi.fn(),
+  createSource: vi.fn(),
+  refresh: vi.fn(),
   upload: vi.fn(),
   authorization: vi.fn()
 }));
@@ -31,6 +33,8 @@ vi.mock('../../hooks/useArtifacts', () => ({
   useEntityArtifacts: mocks.artifacts,
   useApiSpecificationProjection: mocks.projection,
   useArtifactRevisionContent: mocks.content,
+  useCreateApiSpecificationSource: mocks.createSource,
+  useRefreshApiSpecification: mocks.refresh,
   useUploadApiSpecification: mocks.upload
 }));
 
@@ -181,7 +185,9 @@ const renderApi = (entity: EntityRecord, artifact: Artifact | undefined, project
 
 describe('EntityApiSection', () => {
   beforeEach(() => {
-    mocks.authorization.mockReturnValue({ canViewArtifactContent: true });
+    mocks.authorization.mockReturnValue({ canViewArtifactContent: true, canManageArtifacts: true });
+    mocks.createSource.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
+    mocks.refresh.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
     mocks.upload.mockReturnValue({ mutateAsync: vi.fn(), isPending: false });
   });
 
@@ -245,5 +251,31 @@ describe('EntityApiSection', () => {
     const notConfiguredMarkup = renderApi(makeEntity('openapi'), undefined, undefined);
     expect(notConfiguredMarkup).toContain('No API specification configured');
     expect(notConfiguredMarkup).toContain('Upload API specification');
+  });
+
+  it('shows a manual refresh control for URL sources and keeps pending status visible', () => {
+    const currentMarkup = renderApi(
+      makeEntity('openapi'),
+      makeArtifact({
+        kind: 'url',
+        location: 'https://example.com/openapi.yaml'
+      }),
+      makeProjection([makeItem()])
+    );
+    expect(currentMarkup).toContain('Refresh source');
+
+    const pendingMarkup = renderApi(
+      makeEntity('openapi'),
+      makeArtifact({
+        kind: 'url',
+        location: 'https://example.com/openapi.yaml',
+        status: 'pending',
+        currentRevisionId: null,
+        lastSuccessAt: null
+      }),
+      undefined
+    );
+    expect(pendingMarkup).toContain('Pending');
+    expect(pendingMarkup).toContain('The API source is being processed');
   });
 });

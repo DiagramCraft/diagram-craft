@@ -9,6 +9,8 @@ export type JobExecutionContext = {
   jobType: string;
   systemIdentity: string;
   payload: Record<string, unknown>;
+  attemptCount: number;
+  maxAttempts: number;
   // Aborted when the run's lease is lost; handlers should stop side effects as
   // another worker may already be executing the same run.
   signal: AbortSignal;
@@ -171,6 +173,8 @@ const executeClaim = async (
         jobType: claim.run.job_type,
         systemIdentity: claim.run.system_identity,
         payload: claim.run.payload,
+        attemptCount: claim.run.attempt_count,
+        maxAttempts: claim.run.max_attempts,
         signal: abortController.signal
       })
     );

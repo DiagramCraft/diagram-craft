@@ -43,7 +43,7 @@ export class PostgresArtifactDatabase extends PostgresDatabaseBase implements Ar
     try {
       const rows = await this.sql<DatabaseRow[]>`
         UPDATE catalog_artifact SET
-          status = ${next.status}, current_revision_id = ${next.current_revision_id},
+          status = ${next.status}, media_type = ${next.media_type}, current_revision_id = ${next.current_revision_id},
           last_attempt_at = ${next.last_attempt_at}, last_success_at = ${next.last_success_at},
           diagnostic_category = ${next.diagnostic?.category ?? null},
           diagnostic_message = ${next.diagnostic?.message ?? null},
@@ -51,6 +51,23 @@ export class PostgresArtifactDatabase extends PostgresDatabaseBase implements Ar
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *`;
       return mapDatabaseRow(rows[0], artifactMappers.artifact);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async beginAttempt(workspace: string, id: string, timestamp: Date) {
+    try {
+      const rows = await this.sql<DatabaseRow[]>`
+        UPDATE catalog_artifact
+        SET status = 'pending', last_attempt_at = ${timestamp},
+            diagnostic_category = NULL, diagnostic_message = NULL, diagnostic_timestamp = NULL,
+            updated_at = ${timestamp}
+        WHERE workspace = ${workspace} AND id = ${id} AND status <> 'pending'
+        RETURNING *`;
+      if (rows[0]) return { artifact: artifactMappers.artifact(rows[0]), started: true };
+      const existing = await this.getArtifact(workspace, id);
+      return existing ? { artifact: existing, started: false } : null;
     } catch (error) {
       return normalizePostgresError(error);
     }

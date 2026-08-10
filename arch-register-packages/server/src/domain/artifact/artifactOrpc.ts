@@ -13,6 +13,7 @@ import {
   createArtifactRevision,
   getArtifactRevisionContent,
   listArtifacts,
+  refreshArtifact,
   updateArtifact
 } from './artifactOperations';
 import { listApiSpecification } from './apiSpecificationOperations';
@@ -47,6 +48,20 @@ export const artifactORPCRouter = router.router({
         input.params.workspace
       );
       return createArtifact(context.db, workspace, input.params.entityId, input.body, authCtx);
+    }),
+    refresh: router.artifacts.refresh.handler(async ({ input, context }) => {
+      const { workspace, authCtx } = await getContext(
+        context.db,
+        context.event,
+        input.params.workspace
+      );
+      return refreshArtifact(
+        context.db,
+        workspace,
+        input.params.entityId,
+        input.params.artifactId,
+        authCtx
+      );
     }),
     update: router.artifacts.update.handler(async ({ input, context }) => {
       const { workspace, authCtx } = await getContext(
