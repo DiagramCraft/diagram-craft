@@ -180,6 +180,20 @@ export const authPublicContract = oc.tag('Auth').router({
         description: 'Invalidates the current user session and clears authentication cookies.',
         tags: ['Auth']
       })
+      .input(
+        z
+          .object({
+            body: z
+              .object({
+                refresh_token: z
+                  .string()
+                  .optional()
+                  .describe('Refresh token to revoke (can also be provided via cookie)')
+              })
+              .optional()
+          })
+          .optional()
+      )
       .output(z.object({ ok: z.boolean().describe('Whether logout was successful') }))
   }
 });

@@ -98,6 +98,9 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
         WHERE id = ${id}
         RETURNING *
       `;
+      if (row && (input.password_hash !== undefined || input.is_active === false)) {
+        await this.revokeAllRefreshSessionsForUser(id, new Date());
+      }
       return row ? authMappers.user(row) : null;
     } catch (error) {
       return normalizePostgresError(error);
@@ -139,6 +142,81 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
       ${limit == null ? this.sql`` : this.sql`LIMIT ${limit}`}
     `;
     return mapDatabaseRows(rows, authMappers.user);
+  }
+
+  async createRefreshSession(input: Parameters<AuthDatabase['createRefreshSession']>[0]) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        INSERT INTO auth_refresh_session (
+          id, family_id, user_id, token_hash, issued_at, expires_at,
+          consumed_at, replaced_by, revoked_at
+        )
+        VALUES (
+          ${input.id}, ${input.family_id}, ${input.user_id}, ${input.token_hash},
+          ${input.issued_at}, ${input.expires_at}, ${input.consumed_at ?? null},
+          ${input.replaced_by}, ${input.revoked_at ?? null}
+        )
+        RETURNING *
+      `;
+      return authMappers.refreshSession(row!);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async getRefreshSessionByTokenHash(tokenHash: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT * FROM auth_refresh_session WHERE token_hash = ${tokenHash}
+    `;
+    return row ? authMappers.refreshSession(row) : null;
+  }
+
+  async consumeRefreshSession(id: string, consumedAt: Date, replacedBy: string) {
+    try {
+      const rows = await this.sql<DatabaseRow[]>`
+        UPDATE auth_refresh_session
+        SET consumed_at = ${consumedAt}, replaced_by = ${replacedBy}
+        WHERE id = ${id} AND consumed_at IS NULL AND revoked_at IS NULL
+        RETURNING id
+      `;
+      return rows.length === 1;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async revokeRefreshSessionFamily(familyId: string, revokedAt: Date) {
+    try {
+      await this.sql`
+        UPDATE auth_refresh_session
+        SET revoked_at = COALESCE(revoked_at, ${revokedAt})
+        WHERE family_id = ${familyId} AND revoked_at IS NULL
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async revokeAllRefreshSessionsForUser(userId: string, revokedAt: Date) {
+    try {
+      await this.sql`
+        UPDATE auth_refresh_session
+        SET revoked_at = COALESCE(revoked_at, ${revokedAt})
+        WHERE user_id = ${userId} AND revoked_at IS NULL
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async cleanupExpiredRefreshSessions(now: Date) {
+    try {
+      await this.sql`
+        DELETE FROM auth_refresh_session WHERE expires_at < ${now}
+      `;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
   }
 
   async createApiToken(input: ApiTokenDbCreate) {

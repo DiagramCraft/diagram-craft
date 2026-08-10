@@ -60,6 +60,20 @@ export type UserListOptions = {
   limit?: number;
 };
 
+export type RefreshSessionDbResult = {
+  id: string;
+  family_id: string;
+  user_id: string;
+  token_hash: string;
+  issued_at: Date;
+  expires_at: Date;
+  consumed_at: Date | null;
+  replaced_by: string | null;
+  revoked_at: Date | null;
+};
+
+export type RefreshSessionDbCreate = RefreshSessionDbResult;
+
 export type ApiTokenDbResult = {
   id: string;
   workspace: string;
@@ -129,6 +143,17 @@ export const authMappers = {
     event: row['event'] as ApiTokenAuditEvent,
     created_at: databaseDate(row['created_at']),
     metadata: parseDatabaseJson(row['metadata'], {}, 'api_token_audit.metadata')
+  }),
+  refreshSession: (row: DatabaseRow): RefreshSessionDbResult => ({
+    id: String(row['id']),
+    family_id: String(row['family_id']),
+    user_id: String(row['user_id']),
+    token_hash: String(row['token_hash']),
+    issued_at: databaseDate(row['issued_at']),
+    expires_at: databaseDate(row['expires_at']),
+    consumed_at: row['consumed_at'] == null ? null : databaseDate(row['consumed_at']),
+    replaced_by: row['replaced_by'] == null ? null : String(row['replaced_by']),
+    revoked_at: row['revoked_at'] == null ? null : databaseDate(row['revoked_at'])
   })
 };
 
@@ -142,6 +167,13 @@ export type AuthDatabase = {
   updateUser(id: string, input: UserDbUpdate): Promise<UserDbResult | null>;
   updateUserLastLogin(id: string, timestamp: Date): Promise<void>;
   listUsers(options?: UserListOptions): Promise<UserDbResult[]>;
+
+  createRefreshSession(input: RefreshSessionDbCreate): Promise<RefreshSessionDbResult>;
+  getRefreshSessionByTokenHash(tokenHash: string): Promise<RefreshSessionDbResult | null>;
+  consumeRefreshSession(id: string, consumedAt: Date, replacedBy: string): Promise<boolean>;
+  revokeRefreshSessionFamily(familyId: string, revokedAt: Date): Promise<void>;
+  revokeAllRefreshSessionsForUser(userId: string, revokedAt: Date): Promise<void>;
+  cleanupExpiredRefreshSessions(now: Date): Promise<void>;
 
   createApiToken(input: ApiTokenDbCreate): Promise<ApiTokenDbResult>;
   listApiTokens(workspace: string, createdBy?: string): Promise<ApiTokenDbResult[]>;

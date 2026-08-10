@@ -96,6 +96,9 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
     values.push(id);
 
     this.run(`UPDATE users SET ${sets.join(', ')} WHERE id = ?`, values);
+    if (input.password_hash !== undefined || input.is_active === false) {
+      await this.revokeAllRefreshSessionsForUser(id, new Date());
+    }
     return await this.getUser(id);
   }
 
@@ -126,6 +129,62 @@ export class SqliteAuthDatabase extends SqliteDatabaseBase implements AuthDataba
       params,
       authMappers.user
     );
+  }
+
+  async createRefreshSession(input: Parameters<AuthDatabase['createRefreshSession']>[0]) {
+    this.run(
+      'INSERT INTO auth_refresh_session (id, family_id, user_id, token_hash, issued_at, expires_at, consumed_at, replaced_by, revoked_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      [
+        input.id,
+        input.family_id,
+        input.user_id,
+        input.token_hash,
+        input.issued_at.toISOString(),
+        input.expires_at.toISOString(),
+        input.consumed_at?.toISOString() ?? null,
+        input.replaced_by,
+        input.revoked_at?.toISOString() ?? null
+      ]
+    );
+    return (await this.get(
+      'SELECT * FROM auth_refresh_session WHERE id = ?',
+      [input.id],
+      authMappers.refreshSession
+    ))!;
+  }
+
+  async getRefreshSessionByTokenHash(tokenHash: string) {
+    return this.get(
+      'SELECT * FROM auth_refresh_session WHERE token_hash = ?',
+      [tokenHash],
+      authMappers.refreshSession
+    );
+  }
+
+  async consumeRefreshSession(id: string, consumedAt: Date, replacedBy: string) {
+    const result = this.run(
+      'UPDATE auth_refresh_session SET consumed_at = ?, replaced_by = ? WHERE id = ? AND consumed_at IS NULL AND revoked_at IS NULL',
+      [consumedAt.toISOString(), replacedBy, id]
+    );
+    return result.changes === 1;
+  }
+
+  async revokeRefreshSessionFamily(familyId: string, revokedAt: Date) {
+    this.run(
+      'UPDATE auth_refresh_session SET revoked_at = COALESCE(revoked_at, ?) WHERE family_id = ? AND revoked_at IS NULL',
+      [revokedAt.toISOString(), familyId]
+    );
+  }
+
+  async revokeAllRefreshSessionsForUser(userId: string, revokedAt: Date) {
+    this.run(
+      'UPDATE auth_refresh_session SET revoked_at = COALESCE(revoked_at, ?) WHERE user_id = ? AND revoked_at IS NULL',
+      [revokedAt.toISOString(), userId]
+    );
+  }
+
+  async cleanupExpiredRefreshSessions(now: Date) {
+    this.run('DELETE FROM auth_refresh_session WHERE expires_at < ?', [now.toISOString()]);
   }
 
   async createApiToken(input: ApiTokenDbCreate) {
