@@ -19,10 +19,13 @@ import {
   selectApiSpecificationArtifact,
   selectApiSpecificationArtifacts,
   useApiSpecificationProjection,
+  useCreateApiSpecificationSource,
   useArtifactRevisionContent,
   useEntityArtifacts,
+  useRefreshApiSpecification,
   useUploadApiSpecification
 } from '../../hooks/useArtifacts';
+import { ApiSpecificationSourceDialog } from './ApiSpecificationSourceDialog';
 import { UploadApiSpecificationDialog } from './UploadApiSpecificationDialog';
 import type { Relation } from './types/entityDetailTypes';
 import type { EntityDetailSearchParams } from '../../routes/searchParams';
@@ -32,6 +35,7 @@ import {
   TbAlertTriangle,
   TbChevronDown,
   TbExternalLink,
+  TbLink,
   TbRefresh,
   TbUpload
 } from 'react-icons/tb';
@@ -135,12 +139,18 @@ const ApiMetadata = ({
   entity,
   artifact,
   protocol,
-  sourceCount
+  sourceCount,
+  canManageArtifacts,
+  isRefreshing,
+  onRefresh
 }: {
   entity: EntityRecord;
   artifact: ReturnType<typeof selectApiSpecificationArtifact> | undefined;
   protocol: ApiSpecificationProtocol | null | undefined;
   sourceCount: number;
+  canManageArtifacts: boolean;
+  isRefreshing: boolean;
+  onRefresh: () => void;
 }) => {
   const declaredType = readStringField(entity, 'api_type');
   const declaredVersion = readStringField(entity, 'api_version');
@@ -209,6 +219,17 @@ const ApiMetadata = ({
               {link.title}
             </a>
           ))}
+          {artifact?.kind === 'url' && canManageArtifacts && (
+            <Button
+              variant="ghost"
+              size="xs"
+              disabled={isRefreshing || artifact.status === 'pending'}
+              onClick={onRefresh}
+            >
+              <TbRefresh size={13} />
+              {isRefreshing ? 'Refreshing…' : 'Refresh source'}
+            </Button>
+          )}
         </div>
       )}
     </section>
@@ -430,9 +451,13 @@ export const EntityApiSection = ({
   search,
   onSearchChange
 }: Props) => {
-  const { canViewArtifactContent } = useWorkspaceAuthorization(workspaceId);
+  const { canManageArtifacts, canViewArtifactContent } = useWorkspaceAuthorization(workspaceId);
+  const canManageApiArtifacts = canManageArtifacts && entity.canEdit;
   const artifactsQuery = useEntityArtifacts(workspaceId, entity._uid);
+  const createSource = useCreateApiSpecificationSource(workspaceId, entity._uid);
+  const refreshApiSpecification = useRefreshApiSpecification(workspaceId, entity._uid);
   const uploadApiSpecification = useUploadApiSpecification(workspaceId, entity._uid);
+  const [sourceOpen, setSourceOpen] = useState(false);
   const [uploadOpen, setUploadOpen] = useState(false);
   const apiArtifacts = useMemo(
     () => selectApiSpecificationArtifacts(artifactsQuery.data?.artifacts ?? []),
@@ -541,6 +566,11 @@ export const EntityApiSection = ({
         artifact={artifact}
         protocol={protocol}
         sourceCount={apiArtifacts.length}
+        canManageArtifacts={canManageApiArtifacts}
+        isRefreshing={refreshApiSpecification.isPending}
+        onRefresh={() => {
+          if (artifact) void refreshApiSpecification.mutateAsync(artifact.id);
+        }}
       />
       <ApiContext
         entityName={entity._name ?? entity._slug}
@@ -554,14 +584,26 @@ export const EntityApiSection = ({
           title="No API specification configured"
           subtitle="This schema supports API specifications, but this entity has no source attached yet."
           action={
-            <Button
-              variant="primary"
-              icon={<TbUpload size={14} />}
-              disabled={uploadApiSpecification.isPending}
-              onClick={() => setUploadOpen(true)}
-            >
-              Upload API specification
-            </Button>
+            <div className={styles.sourceActions}>
+              <Button
+                variant="primary"
+                icon={<TbUpload size={14} />}
+                disabled={uploadApiSpecification.isPending || !canManageApiArtifacts}
+                onClick={() => setUploadOpen(true)}
+              >
+                Upload API specification
+              </Button>
+              {canManageApiArtifacts && (
+                <Button
+                  variant="secondary"
+                  icon={<TbLink size={14} />}
+                  disabled={createSource.isPending}
+                  onClick={() => setSourceOpen(true)}
+                >
+                  Add API source
+                </Button>
+              )}
+            </div>
           }
         />
       )}
@@ -682,6 +724,13 @@ export const EntityApiSection = ({
         onClose={() => setUploadOpen(false)}
         onUpload={input => uploadApiSpecification.mutateAsync(input)}
         isPending={uploadApiSpecification.isPending}
+      />
+
+      <ApiSpecificationSourceDialog
+        open={sourceOpen}
+        onClose={() => setSourceOpen(false)}
+        onCreate={input => createSource.mutateAsync(input)}
+        isPending={createSource.isPending}
       />
 
       <Dialog

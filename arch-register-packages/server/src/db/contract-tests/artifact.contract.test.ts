@@ -96,5 +96,55 @@ runContractSuiteAgainstBothDrivers('ArtifactDatabase', getDb => {
         revision
       );
     });
+
+    it('starts one refresh attempt at a time and clears the previous diagnostic', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureEntity(db, workspace, schema);
+      const createdAt = new Date('2026-01-01T00:00:00.000Z');
+      const source = await db.artifact.createArtifact({
+        id: randomUUID(),
+        workspace,
+        entity_id: entity.id,
+        artifact_type: 'api-specification',
+        kind: 'url',
+        location: 'https://example.com/openapi.yaml',
+        media_type: null,
+        status: 'stale',
+        created_at: createdAt,
+        updated_at: createdAt
+      });
+      await db.artifact.updateArtifact(workspace, source.id, {
+        diagnostic: {
+          category: 'source_timeout',
+          message: 'The previous attempt timed out',
+          timestamp: createdAt
+        },
+        last_attempt_at: createdAt,
+        updated_at: createdAt
+      });
+
+      const startedAt = new Date('2026-01-01T00:01:00.000Z');
+      const first = await db.artifact.beginAttempt(workspace, source.id, startedAt);
+      expect(first).toMatchObject({
+        started: true,
+        artifact: {
+          status: 'pending',
+          diagnostic: null,
+          last_attempt_at: startedAt
+        }
+      });
+
+      const second = await db.artifact.beginAttempt(
+        workspace,
+        source.id,
+        new Date('2026-01-01T00:02:00.000Z')
+      );
+      expect(second).toMatchObject({
+        started: false,
+        artifact: { status: 'pending', last_attempt_at: startedAt }
+      });
+    });
   });
 });

@@ -254,6 +254,18 @@ export const artifactContract = oc.tag('Artifacts').router({
       })
       .input(z.object({ params: entityParamsSchema, body: createArtifactBodySchema }))
       .output(artifactSchema),
+    refresh: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/entities/{entityId}/artifacts/{artifactId}/refresh',
+        inputStructure: 'detailed',
+        summary: 'Refresh a URL artifact',
+        description:
+          'Queues a secure refresh for an HTTPS URL artifact and preserves its last successful revision while processing.',
+        tags: ['Artifacts']
+      })
+      .input(z.object({ params: artifactParamsSchema }))
+      .output(artifactSchema),
     update: oc
       .route({
         method: 'PUT',

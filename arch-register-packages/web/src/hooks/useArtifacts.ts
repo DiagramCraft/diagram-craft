@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ApiSpecificationProjectionQuery,
   Artifact,
+  ArtifactSourceKind,
   ArtifactStatus
 } from '@arch-register/api-types/artifactContract';
 import { artifactKeys } from '../queries/artifacts';
@@ -56,8 +57,52 @@ export const useEntityArtifacts = (workspaceId: string, entityId: string, enable
       orpcClient.artifacts.list({
         params: { workspace: workspaceId, entityId }
       }),
-    enabled: enabled && !!workspaceId && !!entityId
+    enabled: enabled && !!workspaceId && !!entityId,
+    refetchInterval: query =>
+      query.state.data?.artifacts.some(artifact => artifact.status === 'pending') ? 2_000 : false
   });
+
+export type ApiSpecificationSourceInput = {
+  kind: Extract<ArtifactSourceKind, 'link' | 'url'>;
+  location: string;
+};
+
+export const useCreateApiSpecificationSource = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: ({ kind, location }: ApiSpecificationSourceInput) =>
+      orpcClient.artifacts.create({
+        params: { workspace: workspaceId, entityId },
+        body: {
+          artifactType: 'api-specification',
+          kind,
+          location
+        }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: artifactKeys.entity(workspaceId, entityId)
+      });
+    }
+  });
+};
+
+export const useRefreshApiSpecification = (workspaceId: string, entityId: string) => {
+  const queryClient = useQueryClient();
+
+  return useMutation({
+    mutationFn: (artifactId: string) =>
+      orpcClient.artifacts.refresh({
+        params: { workspace: workspaceId, entityId, artifactId }
+      }),
+    onSuccess: async () => {
+      await queryClient.invalidateQueries({
+        queryKey: artifactKeys.entity(workspaceId, entityId)
+      });
+    }
+  });
+};
 
 export type UploadApiSpecificationInput = {
   content: string;
