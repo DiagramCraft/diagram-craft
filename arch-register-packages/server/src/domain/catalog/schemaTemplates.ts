@@ -643,9 +643,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         ],
         artifactCapabilities: [
           {
-            type: 'api-specification',
-            features: ['operations', 'documentation'],
-            requiredFields: ['api_type', 'api_version']
+            type: 'api-specification'
           }
         ],
         sharedFieldGroupIds: ['pii-classification']
@@ -790,9 +788,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         ],
         artifactCapabilities: [
           {
-            type: 'api-specification',
-            features: ['operations', 'documentation'],
-            requiredFields: ['api_type', 'api_version']
+            type: 'api-specification'
           }
         ]
       },

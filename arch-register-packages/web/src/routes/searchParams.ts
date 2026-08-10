@@ -100,8 +100,15 @@ export type EntityDetailSearchParams = {
   contentView?: 'grid' | 'list';
   sidebarTab?: SharedEntityBrowserSearchParams['sidebarTab'];
   collectionId?: string;
+  apiQ?: string;
+  apiResource?: string;
+  apiAction?: string;
+  apiTag?: string;
+  apiDeprecated?: 'true' | 'false';
+  apiPage?: number;
   tab?:
     | 'overview'
+    | 'api'
     | 'topology'
     | 'graph'
     | 'relations'
@@ -126,6 +133,15 @@ const validateSharedContentBrowserSearch = (
     raw.contentView === 'grid' || raw.contentView === 'list' ? raw.contentView : undefined
 });
 
+const validatePositivePage = (value: unknown) => {
+  if (typeof value === 'number' && Number.isInteger(value) && value > 0) return value;
+  if (typeof value === 'string' && /^\d+$/.test(value)) {
+    const page = Number(value);
+    return Number.isSafeInteger(page) && page > 0 ? page : undefined;
+  }
+  return undefined;
+};
+
 export type WorkspaceContentSearchParams = SharedContentBrowserSearchParams;
 
 export const validateWorkspaceContentSearch = (
@@ -138,8 +154,18 @@ export const validateEntityDetailSearch = (
   ...validateSharedContentBrowserSearch(raw),
   sidebarTab: validateSharedEntityBrowserSearch(raw).sidebarTab,
   collectionId: typeof raw.collectionId === 'string' ? raw.collectionId : undefined,
+  apiQ: typeof raw.apiQ === 'string' ? raw.apiQ : undefined,
+  apiResource: typeof raw.apiResource === 'string' ? raw.apiResource : undefined,
+  apiAction: typeof raw.apiAction === 'string' ? raw.apiAction : undefined,
+  apiTag: typeof raw.apiTag === 'string' ? raw.apiTag : undefined,
+  apiDeprecated:
+    raw.apiDeprecated === 'true' || raw.apiDeprecated === 'false'
+      ? raw.apiDeprecated
+      : undefined,
+  apiPage: validatePositivePage(raw.apiPage),
   tab:
     raw.tab === 'overview' ||
+    raw.tab === 'api' ||
     raw.tab === 'topology' ||
     raw.tab === 'graph' ||
     raw.tab === 'relations' ||

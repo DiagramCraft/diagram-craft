@@ -6,6 +6,7 @@ import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import {
   TbClipboardList,
   TbCompass,
+  TbApi,
   TbFileText,
   TbFolderOpen,
   TbHome,
@@ -21,6 +22,7 @@ import { TypeBadge } from '../../components/TypeBadge';
 import { useEntity } from '../../hooks/useEntities';
 import {
   HOME_TAB_IDS,
+  API_TAB_IDS,
   CONTEXT_TAB_IDS,
   COLLABORATION_TAB_IDS,
   PLANNING_TAB_IDS
@@ -65,6 +67,9 @@ export const EntityContentSidebar = ({
   const context = useWorkspaceContext();
   const schemaIndex = context.schemas.findIndex(schema => schema.id === entity?._schema?.id);
   const schema = schemaIndex >= 0 ? context.schemas[schemaIndex] : undefined;
+  const apiCapable =
+    schema?.artifact_capabilities?.some(capability => capability.type === 'api-specification') ??
+    false;
   const accentColor = schema ? resolveSchemaColor(schema, schemaIndex) : 'var(--accent-fg)';
   const treeRef = useRef<ContentTreeHandle>(null);
   const [folderDialog, setFolderDialog] = useState<{ open: boolean; parent: string | null }>({
@@ -79,12 +84,23 @@ export const EntityContentSidebar = ({
   const contentFolder = params._splat ?? null;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
   const tab = search.tab ?? 'overview';
+  const hasFilesOrFolders =
+    (data?.rootFiles.length ?? 0) > 0 || (data?.folders.length ?? 0) > 0;
+  const apiSearch = {
+    apiQ: search.apiQ,
+    apiResource: search.apiResource,
+    apiAction: search.apiAction,
+    apiTag: search.apiTag,
+    apiDeprecated: search.apiDeprecated,
+    apiPage: search.apiPage
+  };
 
   const navigateTab = (nextTab: EntityDetailSearchParams['tab']) => {
     navigate(
       entityDetailRoute(workspaceSlug, asEntityPublicId(entityId), {
         contentQuery: search.contentQuery,
         contentView: search.contentView,
+        ...apiSearch,
         tab: nextTab === 'overview' ? undefined : nextTab
       })
     );
@@ -94,13 +110,15 @@ export const EntityContentSidebar = ({
     const nextSearch = {
       contentQuery: search.contentQuery,
       contentView: search.contentView,
-      tab: search.tab
+      tab: search.tab,
+      ...apiSearch
     };
     if (folder) {
       navigate(
         entityContentFolderRoute(workspaceSlug, asEntityPublicId(entityId), folder, {
           contentQuery: search.contentQuery,
-          contentView: search.contentView
+          contentView: search.contentView,
+          ...apiSearch
         })
       );
     } else {
@@ -198,7 +216,19 @@ export const EntityContentSidebar = ({
           active={!contentFolder && PLANNING_TAB_IDS.includes(tab)}
           onClick={() => navigateTab('assessments')}
         />
-        <SidebarGroupLabel>Files</SidebarGroupLabel>
+        {apiCapable && (
+          <>
+            <SidebarGroupLabel>API</SidebarGroupLabel>
+            <TreeRow
+              label="API catalog"
+              icon={<TbApi size={13} />}
+              active={!contentFolder && API_TAB_IDS.includes(tab)}
+              onClick={() => navigateTab('api')}
+              testId="entity-api-tab"
+            />
+          </>
+        )}
+        {hasFilesOrFolders && <SidebarGroupLabel>Files</SidebarGroupLabel>}
         <ContentTree
           ref={treeRef}
           rootFiles={data?.rootFiles ?? []}

@@ -131,6 +131,7 @@ describe('WorkspaceAuthorizationProvider', () => {
 
     const result = resultRef.current!;
     expect(result.canViewSchemas).toBe(true);
+    expect(result.canViewArtifactContent).toBe(false);
     expect(result.canManageGlobalRoles).toBe(true);
     expect(result.hasGlobalPermission('manage_workspace_roles')).toBe(true);
     expect(result.canCreateProject('team-1')).toBe(true);

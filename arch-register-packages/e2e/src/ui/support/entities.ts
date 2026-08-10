@@ -28,6 +28,12 @@ export const authApiEntity = {
   name: seededEntities.default.authApi.name
 } as const;
 
+export const notificationsApiEntity = {
+  id: '00000000-0000-0000-0004-000000000005',
+  publicId: 'API-5',
+  name: 'Notifications API'
+} as const;
+
 export const frontendAppEntity = {
   id: seededEntities.default.frontendApp.id,
   publicId: seededEntities.default.frontendApp.publicId,

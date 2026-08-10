@@ -55,6 +55,36 @@ describe('validateEntityDetailSearch', () => {
       contentView: undefined
     });
   });
+
+  it('accepts API catalog filters and validates its page number', () => {
+    expect(
+      validateEntityDetailSearch({
+        tab: 'api',
+        apiQ: 'listPets',
+        apiResource: '/pets',
+        apiAction: 'get',
+        apiTag: 'pets',
+        apiDeprecated: 'false',
+        apiPage: '2'
+      })
+    ).toMatchObject({
+      tab: 'api',
+      apiQ: 'listPets',
+      apiResource: '/pets',
+      apiAction: 'get',
+      apiTag: 'pets',
+      apiDeprecated: 'false',
+      apiPage: 2
+    });
+
+    expect(
+      validateEntityDetailSearch({ tab: 'api', apiDeprecated: 'maybe', apiPage: '0' })
+    ).toMatchObject({
+      tab: 'api',
+      apiDeprecated: undefined,
+      apiPage: undefined
+    });
+  });
 });
 
 describe('validateSearchSearch', () => {

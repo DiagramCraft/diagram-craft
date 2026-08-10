@@ -61,6 +61,36 @@ export class EntitiesPage extends WorkspacePage {
     await expect(this.page.getByRole('heading', { name })).toBeVisible();
   };
 
+  openApiCatalog = async (name: string) => {
+    await this.openEntity(name);
+    await this.page.getByTestId('entity-api-tab').click();
+    await expect(this.page).toHaveURL(/tab=api/);
+  };
+
+  seedApiSpecification = async (entityId: string, content: Record<string, unknown>) => {
+    const baseUrl = new URL(
+      `/api/application/v1/${this.workspaceSlug}/entities/${entityId}/artifacts`,
+      this.page.url()
+    ).toString();
+    const artifactResponse = await this.page.request.post(baseUrl, {
+      data: {
+        artifactType: 'api-specification',
+        kind: 'document',
+        mediaType: 'application/json'
+      }
+    });
+    expect(artifactResponse.ok()).toBe(true);
+    const artifact = (await artifactResponse.json()) as { id: string };
+    const revisionResponse = await this.page.request.post(`${baseUrl}/${artifact.id}/revisions`, {
+      data: {
+        mediaType: 'application/json',
+        sourceRevision: `ui-${Date.now()}`,
+        content: JSON.stringify(content)
+      }
+    });
+    expect(revisionResponse.ok()).toBe(true);
+  };
+
   expectEntityDetailLoaded = async (name: string) => {
     await expect(this.page.getByRole('heading', { name })).toBeVisible();
     await expect(this.page.getByRole('tab', { name: 'Overview' })).toBeVisible();
