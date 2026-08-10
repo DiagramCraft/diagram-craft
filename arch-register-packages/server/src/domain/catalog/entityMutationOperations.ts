@@ -55,6 +55,7 @@ import {
 import { assertNoDerivedFieldWrites } from '../derived/derivedFields';
 import { isTypedRelationField } from '@arch-register/api-types/schemaContract';
 import { applyRelationFieldDelta } from './relationFieldMutations';
+import { withCatalogMutationTransaction } from './mutationTransaction';
 
 type SupportedCurrencyLookup = (
   workspace: string
@@ -164,37 +165,39 @@ export const createEntity = async (
     }
 
     const timestamp = new Date();
-    const publicId = await allocateEntityPublicId(db, workspace, payload.schemaId, timestamp);
-    const row = await createEntityWithAudit(db, {
-      workspace,
-      actor,
-      entity: {
-        id: randomUUID(),
+    return await withCatalogMutationTransaction(db, async tx => {
+      const publicId = await allocateEntityPublicId(tx, workspace, payload.schemaId, timestamp);
+      const row = await createEntityWithAudit(tx, {
         workspace,
-        public_id: publicId,
-        slug: payload.slug,
-        namespace: payload.namespace,
-        name: payload.name,
-        description: payload.description,
-        owner,
-        lifecycle,
-        target_lifecycle,
-        target_lifecycle_date,
-        tags: payload.tags,
-        links: payload.links,
-        schema_id: payload.schemaId,
-        data: normalizedFields,
-        project_id: payload.projectId,
-        created_at: timestamp,
-        updated_at: timestamp,
-        completeness: computeEntityCompleteness(
-          { description: payload.description, owner, lifecycle, data: normalizedFields },
-          schema
-        )
-      }
-    });
+        actor,
+        entity: {
+          id: randomUUID(),
+          workspace,
+          public_id: publicId,
+          slug: payload.slug,
+          namespace: payload.namespace,
+          name: payload.name,
+          description: payload.description,
+          owner,
+          lifecycle,
+          target_lifecycle,
+          target_lifecycle_date,
+          tags: payload.tags,
+          links: payload.links,
+          schema_id: payload.schemaId,
+          data: normalizedFields,
+          project_id: payload.projectId,
+          created_at: timestamp,
+          updated_at: timestamp,
+          completeness: computeEntityCompleteness(
+            { description: payload.description, owner, lifecycle, data: normalizedFields },
+            schema
+          )
+        }
+      });
 
-    return toApiEntity(row, authCtx, schema);
+      return toApiEntity(row, authCtx, schema);
+    });
   } catch (error) {
     return handleError(error, 'Failed to create data record');
   }
@@ -529,7 +532,7 @@ export const updateEntity = async (
         fields: payload.fields,
         entities
       });
-      const currencyConfig = await getSupportedCurrencyCodes(db, workspace);
+      const currencyConfig = await getSupportedCurrencyCodes(tx, workspace);
       if (currencyConfig) {
         normalizeEntityCurrencyFields(schema.fields, normalizedFields, currencyConfig);
       }
@@ -701,57 +704,54 @@ export const cloneEntity = async (
   actor: EntityMutationActor
 ): Promise<EntityRecord> => {
   try {
-    const source = await db.catalog.getEntity(workspace, id);
-    httpAssert.present(source, { status: 404, message: `Data record '${id}' not found` });
-    const schema = await db.catalog.getSchema(workspace, source.schema_id);
-    if (authCtx)
-      requireEntityAction(
-        authCtx,
-        source,
-        'create_child',
-        'You do not have permission to clone this entity'
-      );
+    return await withCatalogMutationTransaction(db, async tx => {
+      const source = await tx.catalog.getEntity(workspace, id);
+      httpAssert.present(source, { status: 404, message: `Data record '${id}' not found` });
+      const schema = await tx.catalog.getSchema(workspace, source.schema_id);
+      httpAssert.present(schema, {
+        status: 404,
+        message: `Schema '${source.schema_id}' not found`
+      });
+      if (authCtx)
+        requireEntityAction(
+          authCtx,
+          source,
+          'create_child',
+          'You do not have permission to clone this entity'
+        );
 
-    const baseName = source.name ? `${source.name} (copy)` : source.slug;
-    const baseSlug = slugify(baseName);
-    const timestamp = new Date();
-    const publicId = await allocateEntityPublicId(db, workspace, source.schema_id, timestamp);
-    const row = await db.catalog.createEntity({
-      id: randomUUID(),
-      workspace,
-      public_id: publicId,
-      slug: baseSlug,
-      namespace: source.namespace,
-      name: baseName,
-      description: source.description,
-      owner: source.owner,
-      lifecycle: source.lifecycle,
-      target_lifecycle: source.target_lifecycle,
-      target_lifecycle_date: source.target_lifecycle_date,
-      tags: source.tags,
-      links: source.links,
-      schema_id: source.schema_id,
-      data: source.data,
-      project_id: source.project_id,
-      created_at: timestamp,
-      updated_at: timestamp,
-      completeness: source.completeness
+      const baseName = source.name ? `${source.name} (copy)` : source.slug;
+      const baseSlug = slugify(baseName);
+      const timestamp = new Date();
+      const publicId = await allocateEntityPublicId(tx, workspace, source.schema_id, timestamp);
+      const row = await createEntityWithAudit(tx, {
+        workspace,
+        actor,
+        entity: {
+          id: randomUUID(),
+          workspace,
+          public_id: publicId,
+          slug: baseSlug,
+          namespace: source.namespace,
+          name: baseName,
+          description: source.description,
+          owner: source.owner,
+          lifecycle: source.lifecycle,
+          target_lifecycle: source.target_lifecycle,
+          target_lifecycle_date: source.target_lifecycle_date,
+          tags: source.tags,
+          links: source.links,
+          schema_id: source.schema_id,
+          data: source.data,
+          project_id: source.project_id,
+          created_at: timestamp,
+          updated_at: timestamp,
+          completeness: source.completeness
+        }
+      });
+
+      return toApiEntity(row, authCtx, schema);
     });
-
-    await logAudit(db, {
-      workspace,
-      userId: actor.id,
-      userDisplayName: actor.displayName,
-      operation: 'create',
-      entityType: 'entity',
-      entityId: row.id,
-      entityName: row.name,
-      entitySlug: row.slug,
-      schemaId: row.schema_id,
-      changes: { new: flattenEntityAuditFields(row) }
-    });
-
-    return toApiEntity(row, authCtx, schema);
   } catch (error) {
     return handleError(error, 'Failed to clone data record');
   }

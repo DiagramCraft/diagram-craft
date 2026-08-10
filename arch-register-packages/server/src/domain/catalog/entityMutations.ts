@@ -3,6 +3,7 @@ import { computeChanges, flattenEntityAuditFields, logAudit } from '../audit/db/
 import { Entity, EntityVersionKind } from './db/catalogDatabase';
 import { outdateExternalMetadata, valueEquals } from '../externalMetadata/externalMetadataHelpers';
 import { materializeDerivedFields } from '../derived/derivedFields';
+import { assertCatalogMutationTransaction } from './mutationTransaction';
 
 const AUTOSAVE_KEEP_COUNT = 50;
 
@@ -62,6 +63,7 @@ export const createEntityWithAudit = async (
   db: DatabaseAdapter,
   params: CreateEntityWithAuditParams
 ) => {
+  assertCatalogMutationTransaction(db);
   const schema = await db.catalog.getSchema(params.workspace, params.entity.schema_id);
   const entity = schema
     ? {
@@ -131,6 +133,7 @@ export const updateEntityWithAudit = async (
   db: DatabaseAdapter,
   params: UpdateEntityWithAuditParams
 ) => {
+  assertCatalogMutationTransaction(db);
   const schema = await db.catalog.getSchema(
     params.workspace,
     params.next.schema_id ?? params.previous.schema_id
@@ -192,6 +195,7 @@ export const updateEntityWithAuditIfVersion = async (
   db: DatabaseAdapter,
   params: ConditionalUpdateEntityWithAuditParams
 ) => {
+  assertCatalogMutationTransaction(db);
   const next = withOutdatedMetadataIfChanged(params.previous, params.next);
   const row = await db.catalog.updateEntityIfVersion(
     params.workspace,

@@ -13,6 +13,7 @@ import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDataba
 import { getSystemUserId } from '../auth/systemUsers';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { assertTechnologyEolMapping, isTechnologyEolMapping } from './technologyEolMapping';
+import { withCatalogMutationTransaction } from '../catalog/mutationTransaction';
 
 export const TECHNOLOGY_EOL_JOB_TYPE = 'technology-eol';
 export const TECHNOLOGY_EOL_SYSTEM_IDENTITY = 'technology-eol';
@@ -176,45 +177,47 @@ const applyRelease = async (
   }
   assertNoExternalFieldWrites(remainingFields, entity.data, nextData);
 
-  await updateEntityWithAudit(db, {
-    workspace: entity.workspace,
-    entityId: entity.id,
-    previous: entity,
-    actor: { id: TECHNOLOGY_EOL_SYSTEM_USER_ID, displayName: 'Technology EOL job' },
-    next: {
-      data: nextData,
-      generated_metadata: generatedMetadata,
-      updated_at: now,
-      name: entity.name,
-      slug: entity.slug,
-      namespace: entity.namespace,
-      description: entity.description,
-      owner: entity.owner,
-      lifecycle: entity.lifecycle,
-      target_lifecycle: entity.target_lifecycle,
-      target_lifecycle_date: entity.target_lifecycle_date,
-      tags: entity.tags,
-      links: entity.links,
-      schema_id: entity.schema_id,
-      project_id: entity.project_id,
-      approval_policy_override: entity.approval_policy_override,
-      completeness: computeEntityCompleteness(
-        {
-          description: entity.description,
-          owner: entity.owner,
-          lifecycle: entity.lifecycle,
-          data: nextData
-        },
-        schema
-      )
-    },
-    auditMetadata: {
-      external_kind: 'integration',
-      source: TECHNOLOGY_EOL_SOURCE,
-      requestId: jobId,
-      status
-    }
-  });
+  await withCatalogMutationTransaction(db, tx =>
+    updateEntityWithAudit(tx, {
+      workspace: entity.workspace,
+      entityId: entity.id,
+      previous: entity,
+      actor: { id: TECHNOLOGY_EOL_SYSTEM_USER_ID, displayName: 'Technology EOL job' },
+      next: {
+        data: nextData,
+        generated_metadata: generatedMetadata,
+        updated_at: now,
+        name: entity.name,
+        slug: entity.slug,
+        namespace: entity.namespace,
+        description: entity.description,
+        owner: entity.owner,
+        lifecycle: entity.lifecycle,
+        target_lifecycle: entity.target_lifecycle,
+        target_lifecycle_date: entity.target_lifecycle_date,
+        tags: entity.tags,
+        links: entity.links,
+        schema_id: entity.schema_id,
+        project_id: entity.project_id,
+        approval_policy_override: entity.approval_policy_override,
+        completeness: computeEntityCompleteness(
+          {
+            description: entity.description,
+            owner: entity.owner,
+            lifecycle: entity.lifecycle,
+            data: nextData
+          },
+          schema
+        )
+      },
+      auditMetadata: {
+        external_kind: 'integration',
+        source: TECHNOLOGY_EOL_SOURCE,
+        requestId: jobId,
+        status
+      }
+    })
+  );
 };
 
 export const createTechnologyEolJobHandler =

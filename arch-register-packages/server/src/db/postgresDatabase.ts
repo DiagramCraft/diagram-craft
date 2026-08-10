@@ -185,6 +185,7 @@ export class PostgresDatabase implements DatabaseAdapter {
 
     this.core = {
       driver: 'postgres' as const,
+      isTransaction: false,
       close: async () => {
         await this.sql.end();
       },

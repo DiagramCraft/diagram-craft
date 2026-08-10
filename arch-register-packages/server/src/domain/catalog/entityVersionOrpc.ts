@@ -22,6 +22,7 @@ import {
 } from './entityVersionOperations';
 import { entityVersionContract } from '@arch-register/api-types/entityVersionContract';
 import type { SchemaDbResult, SchemaVersionDbResult } from './db/catalogDatabase';
+import { withCatalogMutationTransaction } from './mutationTransaction';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -245,27 +246,30 @@ const entityVersionHandlers = {
     );
 
     const auditUser = context.event.context.user;
-    await updateEntityWithAudit(context.db, {
-      workspace,
-      entityId: entity.id,
-      previous: entity,
-      next: {
-        ...version.state,
-        // Older versions predating #2346 have no frozen completeness in state; fall back to the
-        // entity's current value rather than writing an undefined column.
-        completeness:
-          typeof version.state['completeness'] === 'number'
-            ? version.state['completeness']
-            : entity.completeness,
-        updated_at: new Date()
-      } as EntityDbUpdate,
-      actor: { id: auditUser.id, displayName: auditUser.display_name },
-      auditMetadata: {
-        restore_from_version_id: version.id,
-        restore_from_version_created_at: version.created_at.toISOString(),
-        restore_commit_message: input.body.commitMessage ?? null
-      }
-    });
+    await withCatalogMutationTransaction(context.db, tx =>
+      updateEntityWithAudit(tx, {
+        workspace,
+        entityId: entity.id,
+        previous: entity,
+        next: {
+          ...version.state,
+          // Older versions predating #2346 have no frozen completeness in state; fall back to the
+          // entity's current value rather than writing an undefined column.
+          completeness:
+            typeof version.state['completeness'] === 'number'
+              ? version.state['completeness']
+              : entity.completeness,
+          updated_at: new Date()
+        } as EntityDbUpdate,
+        actor: { id: auditUser.id, displayName: auditUser.display_name },
+        auditMetadata: {
+          restore_from_version_id: version.id,
+          restore_from_version_created_at: version.created_at.toISOString(),
+          restore_commit_message: input.body.commitMessage ?? null
+        },
+        versionKind: 'restored'
+      })
+    );
 
     return serializeEntityVersion(
       redactVersionState(version, authCtx, versionSchema, historicalSchema, {

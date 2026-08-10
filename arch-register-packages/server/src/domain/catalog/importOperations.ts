@@ -1,12 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter, EntityDbUpdate, EntityDbCreate } from '../../db/database';
 import { parseCsv, validateCsvData, csvRowToEntity } from '../../utils/csvImport';
-import {
-  computeChanges,
-  extractEntityFields,
-  flattenEntityAuditFields,
-  logAudit
-} from '../audit/db/auditLogging';
+import { extractEntityFields } from '../audit/db/auditLogging';
 import { slugify } from '../../utils/http';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { requireCanCreateTopLevelEntity, requireEntityAction } from '../auth/authorization';
@@ -28,6 +23,8 @@ import {
 } from '../auth/fieldGroupAccessControl';
 import { equalEntityValue } from './entityDiff';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
+import { createEntityWithAudit, updateEntityWithAudit } from './entityMutations';
+import { withCatalogMutationTransaction } from './mutationTransaction';
 
 const checker = new PermissionChecker();
 
@@ -245,215 +242,199 @@ export const importCommit = async (
     }
   }
 
-  for (const entityData of entityList) {
-    const existingId = entityData._existingId as string | undefined;
-    const existingEntity = existingId ? entitiesById.get(existingId) : undefined;
+  return await withCatalogMutationTransaction(db, async tx => {
+    for (const entityData of entityList) {
+      const existingId = entityData._existingId as string | undefined;
+      const existingEntity = existingId ? entitiesById.get(existingId) : undefined;
 
-    if (existingId) {
-      if (!existingEntity) throw new Error(`Entity ${existingId} not found`);
-      if (existingEntity.workspace !== workspace)
-        throw new Error(`Entity ${existingId} belongs to different workspace`);
-      if (existingEntity.schema_id !== schemaId)
-        throw new Error(`Entity ${existingId} has different schema type`);
-    } else {
-      const proposedSlug =
-        (entityData._slug as string) ?? slugify((entityData._name as string) ?? '');
-      const proposedNamespace = (entityData._namespace as string) ?? 'default';
-      if (entitiesBySlug.has(`${proposedNamespace}:${proposedSlug}`)) {
-        throw new Error(
-          `Slug "${proposedSlug}" already exists in namespace "${proposedNamespace}"`
-        );
+      if (existingId) {
+        if (!existingEntity) throw new Error(`Entity ${existingId} not found`);
+        if (existingEntity.workspace !== workspace)
+          throw new Error(`Entity ${existingId} belongs to different workspace`);
+        if (existingEntity.schema_id !== schemaId)
+          throw new Error(`Entity ${existingId} has different schema type`);
+      } else {
+        const proposedSlug =
+          (entityData._slug as string) ?? slugify((entityData._name as string) ?? '');
+        const proposedNamespace = (entityData._namespace as string) ?? 'default';
+        if (entitiesBySlug.has(`${proposedNamespace}:${proposedSlug}`)) {
+          throw new Error(
+            `Slug "${proposedSlug}" already exists in namespace "${proposedNamespace}"`
+          );
+        }
       }
-    }
 
-    const isUpdate = !!existingEntity;
-    const owner = resolveCreateOwner(
-      (entityData._owner as string | null) ?? null,
-      [],
-      schema,
-      teamIds,
-      authCtx.userId
-    );
+      const isUpdate = !!existingEntity;
+      const owner = resolveCreateOwner(
+        (entityData._owner as string | null) ?? null,
+        [],
+        schema,
+        teamIds,
+        authCtx.userId
+      );
 
-    const lifecycle = (entityData._lifecycle as string | null) ?? null;
-    if (lifecycle && !lifecycleValues.has(lifecycle))
-      throw new Error(`Invalid lifecycle value: ${lifecycle}`);
-    const target_lifecycle = (entityData._targetLifecycle as string | null) ?? null;
-    if (target_lifecycle && !lifecycleValues.has(target_lifecycle))
-      throw new Error(`Invalid target_lifecycle value: ${target_lifecycle}`);
-    const target_lifecycle_date = (entityData._targetLifecycleDate as string | null) ?? null;
+      const lifecycle = (entityData._lifecycle as string | null) ?? null;
+      if (lifecycle && !lifecycleValues.has(lifecycle))
+        throw new Error(`Invalid lifecycle value: ${lifecycle}`);
+      const target_lifecycle = (entityData._targetLifecycle as string | null) ?? null;
+      if (target_lifecycle && !lifecycleValues.has(target_lifecycle))
+        throw new Error(`Invalid target_lifecycle value: ${target_lifecycle}`);
+      const target_lifecycle_date = (entityData._targetLifecycleDate as string | null) ?? null;
 
-    const resolvedData = { ...entityData };
-    for (const field of schema.fields) {
-      if (isReferenceOrContainmentField(field) && resolvedData[field.id]) {
-        const value = resolvedData[field.id];
-        if (typeof value === 'string') {
-          const refNames = value
-            .split(',')
-            .map(n => n.trim())
-            .filter(Boolean);
-          const refIds = refNames
-            .map(name => nameToId.get(name.toLowerCase()))
-            .filter((id): id is string => id !== undefined);
-          if (refIds.length > 0) {
-            resolvedData[field.id] = refIds;
-          } else {
-            resolvedData[field.id] = [];
+      const resolvedData = { ...entityData };
+      for (const field of schema.fields) {
+        if (isReferenceOrContainmentField(field) && resolvedData[field.id]) {
+          const value = resolvedData[field.id];
+          if (typeof value === 'string') {
+            const refNames = value
+              .split(',')
+              .map(n => n.trim())
+              .filter(Boolean);
+            const refIds = refNames
+              .map(name => nameToId.get(name.toLowerCase()))
+              .filter((id): id is string => id !== undefined);
+            if (refIds.length > 0) {
+              resolvedData[field.id] = refIds;
+            } else {
+              resolvedData[field.id] = [];
+            }
           }
         }
       }
-    }
 
-    const dataFieldEntries = Object.entries(resolvedData).filter(([key]) => !key.startsWith('_'));
-    const presentFieldIds = new Set(dataFieldEntries.map(([key]) => key));
+      const dataFieldEntries = Object.entries(resolvedData).filter(([key]) => !key.startsWith('_'));
+      const presentFieldIds = new Set(dataFieldEntries.map(([key]) => key));
 
-    const normalizedRelationFields = normalizeEntityRelationFields({
-      schema,
-      fields: Object.fromEntries(dataFieldEntries),
-      entities: allEntities
-    });
+      const normalizedRelationFields = normalizeEntityRelationFields({
+        schema,
+        fields: Object.fromEntries(dataFieldEntries),
+        entities: allEntities
+      });
 
-    const changedFieldIds =
-      isUpdate && existingEntity
-        ? [...presentFieldIds].filter(
-            fieldId =>
-              !equalEntityValue(existingEntity.data[fieldId], normalizedRelationFields[fieldId])
-          )
-        : Object.keys(normalizedRelationFields);
-    requireNoRestrictedFieldWrites(
-      authCtx,
-      schema,
-      changedFieldIds,
-      'You do not have permission to set one or more restricted fields on this entity'
-    );
-
-    const finalData =
-      isUpdate && existingEntity
-        ? extractEntityFields({
-            ...existingEntity.data,
-            ...Object.fromEntries(
-              [...presentFieldIds].map(id => [id, normalizedRelationFields[id]])
+      const changedFieldIds =
+        isUpdate && existingEntity
+          ? [...presentFieldIds].filter(
+              fieldId =>
+                !equalEntityValue(existingEntity.data[fieldId], normalizedRelationFields[fieldId])
             )
-          })
-        : extractEntityFields(normalizedRelationFields);
-
-    if (isUpdate && existingId && existingEntity) {
-      requireEntityAction(
+          : Object.keys(normalizedRelationFields);
+      requireNoRestrictedFieldWrites(
         authCtx,
-        existingEntity,
-        'edit_entity',
-        'You do not have permission to update this entity'
+        schema,
+        changedFieldIds,
+        'You do not have permission to set one or more restricted fields on this entity'
       );
 
-      const updateInput: EntityDbUpdate = {
-        name: (resolvedData._name as string) ?? existingEntity.name,
-        slug: (resolvedData._slug as string) ?? existingEntity.slug,
-        namespace: (resolvedData._namespace as string) ?? existingEntity.namespace,
-        description: (resolvedData._description as string) ?? existingEntity.description,
-        owner,
-        lifecycle,
-        target_lifecycle,
-        target_lifecycle_date,
-        tags: Array.isArray(resolvedData._tags)
-          ? (resolvedData._tags as string[])
-          : existingEntity.tags,
-        links: existingEntity.links,
-        schema_id: existingEntity.schema_id,
-        data: finalData,
-        project_id: existingEntity.project_id,
-        updated_at: new Date(),
-        completeness: computeEntityCompleteness(
-          {
-            description: (resolvedData._description as string) ?? existingEntity.description,
-            owner,
-            lifecycle,
-            data: finalData
-          },
-          schema
-        )
-      };
+      const finalData =
+        isUpdate && existingEntity
+          ? extractEntityFields({
+              ...existingEntity.data,
+              ...Object.fromEntries(
+                [...presentFieldIds].map(id => [id, normalizedRelationFields[id]])
+              )
+            })
+          : extractEntityFields(normalizedRelationFields);
 
-      const updatedEntity = await db.catalog.updateEntity(workspace, existingId, updateInput);
-      if (!updatedEntity) throw new Error(`Failed to update entity ${existingId}`);
+      if (isUpdate && existingId && existingEntity) {
+        requireEntityAction(
+          authCtx,
+          existingEntity,
+          'edit_entity',
+          'You do not have permission to update this entity'
+        );
 
-      await logAudit(db, {
-        workspace,
-        userId: auditUser.id,
-        userDisplayName: auditUser.display_name,
-        operation: 'update',
-        entityType: 'entity',
-        entityId: existingId,
-        entityName: updatedEntity.name,
-        entitySlug: updatedEntity.slug,
-        schemaId: updatedEntity.schema_id,
-        changes: computeChanges(
-          flattenEntityAuditFields(existingEntity),
-          flattenEntityAuditFields(updatedEntity)
-        )
-      });
+        const updateInput: EntityDbUpdate = {
+          name: (resolvedData._name as string) ?? existingEntity.name,
+          slug: (resolvedData._slug as string) ?? existingEntity.slug,
+          namespace: (resolvedData._namespace as string) ?? existingEntity.namespace,
+          description: (resolvedData._description as string) ?? existingEntity.description,
+          owner,
+          lifecycle,
+          target_lifecycle,
+          target_lifecycle_date,
+          tags: Array.isArray(resolvedData._tags)
+            ? (resolvedData._tags as string[])
+            : existingEntity.tags,
+          links: existingEntity.links,
+          schema_id: existingEntity.schema_id,
+          data: finalData,
+          project_id: existingEntity.project_id,
+          updated_at: new Date(),
+          completeness: computeEntityCompleteness(
+            {
+              description: (resolvedData._description as string) ?? existingEntity.description,
+              owner,
+              lifecycle,
+              data: finalData
+            },
+            schema
+          )
+        };
 
-      updatedIds.push(existingId);
-      nameToId.set(updatedEntity.name.toLowerCase(), existingId);
-    } else {
-      httpAssert.present(schema.key_prefix, {
-        status: 409,
-        message: `Schema '${schemaId}' is missing a key prefix`
-      });
-      const createInput: EntityDbCreate = {
-        public_id: formatPublicId(
-          schema.key_prefix,
-          await db.workspace.allocatePublicId(schema.key_prefix, new Date())
-        ),
-        id: randomUUID(),
-        workspace,
-        schema_id: schemaId,
-        name: (resolvedData._name as string) ?? '',
-        slug: slugify((resolvedData._slug as string) ?? (resolvedData._name as string) ?? ''),
-        namespace: (resolvedData._namespace as string) ?? '',
-        description: (resolvedData._description as string) ?? '',
-        owner,
-        lifecycle,
-        target_lifecycle,
-        target_lifecycle_date,
-        tags: Array.isArray(resolvedData._tags) ? (resolvedData._tags as string[]) : [],
-        links: [],
-        data: finalData,
-        project_id: null,
-        created_at: new Date(),
-        updated_at: new Date(),
-        completeness: computeEntityCompleteness(
-          {
-            description: (resolvedData._description as string) ?? '',
-            owner,
-            lifecycle,
-            data: finalData
-          },
-          schema
-        )
-      };
+        const updatedEntity = await updateEntityWithAudit(tx, {
+          workspace,
+          entityId: existingId,
+          previous: existingEntity,
+          next: updateInput,
+          actor: { id: auditUser.id, displayName: auditUser.display_name }
+        });
+        if (!updatedEntity) throw new Error(`Failed to update entity ${existingId}`);
 
-      const entity = await db.catalog.createEntity(createInput);
-      await logAudit(db, {
-        workspace,
-        userId: auditUser.id,
-        userDisplayName: auditUser.display_name,
-        operation: 'create',
-        entityType: 'entity',
-        entityId: entity.id,
-        entityName: entity.name,
-        entitySlug: entity.slug,
-        schemaId: entity.schema_id,
-        changes: { new: flattenEntityAuditFields(entity) }
-      });
+        updatedIds.push(existingId);
+        nameToId.set(updatedEntity.name.toLowerCase(), existingId);
+      } else {
+        httpAssert.present(schema.key_prefix, {
+          status: 409,
+          message: `Schema '${schemaId}' is missing a key prefix`
+        });
+        const createInput: EntityDbCreate = {
+          public_id: formatPublicId(
+            schema.key_prefix,
+            await tx.workspace.allocatePublicId(schema.key_prefix, new Date())
+          ),
+          id: randomUUID(),
+          workspace,
+          schema_id: schemaId,
+          name: (resolvedData._name as string) ?? '',
+          slug: slugify((resolvedData._slug as string) ?? (resolvedData._name as string) ?? ''),
+          namespace: (resolvedData._namespace as string) ?? '',
+          description: (resolvedData._description as string) ?? '',
+          owner,
+          lifecycle,
+          target_lifecycle,
+          target_lifecycle_date,
+          tags: Array.isArray(resolvedData._tags) ? (resolvedData._tags as string[]) : [],
+          links: [],
+          data: finalData,
+          project_id: null,
+          created_at: new Date(),
+          updated_at: new Date(),
+          completeness: computeEntityCompleteness(
+            {
+              description: (resolvedData._description as string) ?? '',
+              owner,
+              lifecycle,
+              data: finalData
+            },
+            schema
+          )
+        };
 
-      createdIds.push(entity.id);
-      nameToId.set(entity.name.toLowerCase(), entity.id);
+        const entity = await createEntityWithAudit(tx, {
+          workspace,
+          actor: { id: auditUser.id, displayName: auditUser.display_name },
+          entity: createInput
+        });
+
+        createdIds.push(entity.id);
+        nameToId.set(entity.name.toLowerCase(), entity.id);
+      }
     }
-  }
 
-  return {
-    created: createdIds.length,
-    updated: updatedIds.length,
-    ids: [...createdIds, ...updatedIds]
-  };
+    return {
+      created: createdIds.length,
+      updated: updatedIds.length,
+      ids: [...createdIds, ...updatedIds]
+    };
+  });
 };
