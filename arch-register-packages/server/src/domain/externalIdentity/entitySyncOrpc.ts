@@ -1,14 +1,9 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import {
-  entityScoped,
-  orpcErrorInterceptors,
-  orpcErrorMiddleware,
-  workspaceScoped
-} from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { API_PREFIXES } from '../../constants';
+import { entityScoped, orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
 import { entitySyncContract } from '@arch-register/api-types/entitySyncContract';
 import { syncEntityByExternalKey, getEntityByExternalKey } from './entitySyncOperations';
 import { getEntity } from '../catalog/entityQueryOperations';
@@ -73,21 +68,8 @@ export const entitySyncORPCRouter = entitySyncRouter.router({
   }
 });
 
-export const entitySyncOpenAPIHandler = new OpenAPIHandler(entitySyncORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createEntitySyncORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const result = await entitySyncOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: {
-        db,
-        event: event as AuthenticatedEvent
-      }
-    });
-
-    if (result.matched) {
-      return result.response;
-    }
+  createOrpcHandler(entitySyncORPCRouter, {
+    prefix: API_PREFIXES.root,
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });

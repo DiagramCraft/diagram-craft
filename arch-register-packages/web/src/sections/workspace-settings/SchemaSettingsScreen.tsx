@@ -1,10 +1,9 @@
-import { useCallback, useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useMemo, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbCode, TbPlus } from 'react-icons/tb';
 import { TypeBadge } from '../../components/TypeBadge';
-import { Title } from '../../components/Title';
-import { EmptyState } from '../../components/EmptyState';
+import { EntityTemplateDialog } from '../../dialogs/EntityTemplateDialog';
 import { EnumEditorScreen } from './EnumEditorScreen';
 import { FieldGroupEditorScreen } from './FieldGroupEditorScreen';
 import { RelationSchemaSettingsScreen } from './RelationSchemaSettingsScreen';
@@ -13,13 +12,10 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import type { FieldType } from '../../lib/schemaPresentation';
 import type {
+  EntitySchema,
   EntityTemplate,
-  FieldMigrations,
-  PendingFieldChange,
   SchemaField,
-  SchemaGroup,
-  SharedFieldGroupLink,
-  ValidationRule
+  SchemaGroup
 } from '@arch-register/api-types/schemaContract';
 import {
   useCreateSchema,
@@ -29,24 +25,31 @@ import {
   useUpdateSchema,
   getSchemaMigrationRequired
 } from '../../hooks/useSchemas';
-import { toFieldId } from '../../utils/fieldId';
 import {
-  buildFieldMigrations,
   createSchemaFieldForType,
-  firstRemainingId,
   removeTemplateField,
   updateTemplateFieldId
 } from './schemaSettingsHelpers';
 import { SchemaEditorForm } from './SchemaEditorForm';
-import { SchemaSettingsDialogs } from './SchemaSettingsDialogs';
+import { SchemaEditorDialogs } from './SchemaEditorDialogs';
+import { SchemaEditorScreenShell } from './SchemaEditorScreenShell';
+import {
+  firstRemainingId,
+  useSchemaEditorController,
+  type SchemaEditorAdapter
+} from './schemaEditorState';
 import type { SchemaPanelTab } from './SchemaEditorTabs';
-import styles from './SchemaSettingsScreen.module.css';
 
 const deriveKeyPrefix = (value: string) =>
   value
     .replace(/[^a-z]/gi, '')
     .toUpperCase()
     .slice(0, 5);
+
+type EntityEditorExtra = {
+  keyPrefix: string;
+  templates: EntityTemplate[];
+};
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
@@ -66,200 +69,150 @@ export const SchemaSettingsScreen = () => {
     lifecycleStates
   } = useWorkspaceContext();
   const canEdit = permissions.canEditSchemas;
-  const [name, setName] = useState('');
-  const [keyPrefix, setKeyPrefix] = useState('');
-  const [description, setDescription] = useState('');
-  const [fields, setFields] = useState<SchemaField[]>([]);
-  const [templates, setTemplates] = useState<EntityTemplate[]>([]);
-  const [groups, setGroups] = useState<SchemaGroup[]>([]);
-  const [sharedFieldGroupLinks, setSharedFieldGroupLinks] = useState<SharedFieldGroupLink[]>([]);
-  const [accessDialogGroupId, setAccessDialogGroupId] = useState<string | null>(null);
-  const [color, setColor] = useState<string | null>(null);
-  const [icon, setIcon] = useState<string | null>(null);
-  const [dirty, setDirty] = useState(false);
-  const [confirmDelete, setConfirmDelete] = useState(false);
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
-  const [editingTemplate, setEditingTemplate] = useState<EntityTemplate | null>(null);
-  const [pendingFieldChanges, setPendingFieldChanges] = useState<PendingFieldChange[] | null>(null);
-  const [showHistory, setShowHistory] = useState(false);
-  const [schemaPanelTab, setSchemaPanelTab] = useState<SchemaPanelTab>('fields');
-  const [validationRules, setValidationRules] = useState<ValidationRule[]>([]);
-  const [validationPreviewMessage, setValidationPreviewMessage] = useState<string | null>(null);
-  const [groupDialogOpen, setGroupDialogOpen] = useState(false);
-  const [editingGroup, setEditingGroup] = useState<SchemaGroup | null>(null);
-  const fieldKeysRef = useRef<Map<string, string>>(new Map());
+  const selectedIndex = schemas.findIndex(schema => schema.id === selectedSchemaId);
+  const selected = selectedIndex >= 0 ? (schemas[selectedIndex] ?? null) : null;
 
   const createSchemaMutation = useCreateSchema(workspaceSlug);
   const updateSchemaMutation = useUpdateSchema(workspaceSlug);
   const previewValidationMutation = usePreviewSchemaValidation(workspaceSlug);
   const deleteSchemaMutation = useDeleteSchema(workspaceSlug);
-  const { data: schemaVersions, isLoading: schemaVersionsLoading } = useSchemaVersions(
-    workspaceSlug,
-    showHistory ? (selectedSchemaId ?? null) : null
-  );
 
   const onSelectSchema = useCallback(
     (id: string) => {
       navigate({
         to: '/$workspaceSlug/settings/schemas',
         params: { workspaceSlug },
-        search: { schema: id ?? undefined }
+        search: { schema: id || undefined }
       });
     },
     [navigate, workspaceSlug]
   );
 
-  const selectedIndex = schemas.findIndex(schema => schema.id === selectedSchemaId);
-  const selected = selectedIndex >= 0 ? (schemas[selectedIndex] ?? null) : null;
-
-  useEffect(() => {
-    if (!selected) return;
-    setName(selected.name);
-    setKeyPrefix(selected.key_prefix);
-    setDescription(selected.description);
-    setFields(selected.fields);
-    setTemplates(selected.templates);
-    setGroups(selected.groups);
-    setSharedFieldGroupLinks(selected.shared_field_group_links ?? []);
-    setValidationRules(selected.validation_rules ?? []);
-    setColor(selected.color);
-    setIcon(selected.icon);
-    setDirty(false);
-    setTemplateDialogOpen(false);
-    setShowHistory(false);
-    setPendingFieldChanges(null);
-    setGroupDialogOpen(false);
-    setEditingGroup(null);
-    fieldKeysRef.current.clear();
-  }, [selected]);
-
-  const handleSave = useCallback(
-    async (fieldMigrations?: FieldMigrations) => {
-      if (!selected || !dirty) return;
-      try {
-        const schemaChanged =
-          fieldMigrations !== undefined ||
-          name !== selected.name ||
-          keyPrefix !== selected.key_prefix ||
-          description !== selected.description ||
-          JSON.stringify(fields) !== JSON.stringify(selected.fields) ||
-          JSON.stringify(templates) !== JSON.stringify(selected.templates) ||
-          JSON.stringify(groups) !== JSON.stringify(selected.groups) ||
-          JSON.stringify(sharedFieldGroupLinks) !==
-            JSON.stringify(selected.shared_field_group_links ?? []) ||
-          JSON.stringify(validationRules) !== JSON.stringify(selected.validation_rules ?? []) ||
-          color !== selected.color ||
-          icon !== selected.icon;
-        if (schemaChanged) {
-          await updateSchemaMutation.mutateAsync({
-            schemaId: selected.id,
-            data: {
-              name,
-              key_prefix: keyPrefix,
-              description,
-              fields,
-              templates,
-              groups,
-              shared_field_group_links: sharedFieldGroupLinks,
-              validation_rules: validationRules,
-              color,
-              icon,
-              fieldMigrations
-            }
-          });
-        }
-        setDirty(false);
-        setPendingFieldChanges(null);
-      } catch (error: unknown) {
-        const migrationRequired = getSchemaMigrationRequired(error);
-        if (migrationRequired) {
-          setPendingFieldChanges(migrationRequired.pendingChanges);
-          return;
-        }
-        setErrorMessage(error instanceof Error ? error.message : 'Failed to save entity type');
-      }
-    },
-    [
-      selected,
-      name,
-      keyPrefix,
-      description,
-      fields,
-      templates,
-      groups,
-      sharedFieldGroupLinks,
-      validationRules,
-      color,
-      icon,
-      dirty,
-      updateSchemaMutation
-    ]
-  );
-
-  const confirmFieldMigrations = useCallback(
-    (choices: import('../../dialogs/FieldMigrationDialog').FieldMigrationChoices) => {
-      if (!pendingFieldChanges) return;
-      void handleSave(buildFieldMigrations(pendingFieldChanges, choices));
-    },
-    [pendingFieldChanges, handleSave]
-  );
-
-  const handleCreateType = useCallback(async () => {
-    try {
-      const created = await createSchemaMutation.mutateAsync({
-        name: 'New type',
-        key_prefix: 'TYPE',
-        fields: []
-      });
-      onSelectSchema(created.id);
-    } catch {
-      // TODO: surface error
-    }
-  }, [createSchemaMutation, onSelectSchema]);
-
-  const addValidationRule = () => {
-    setValidationRules(current => [
-      ...current,
-      {
+  const adapter = useMemo<
+    SchemaEditorAdapter<EntitySchema, SchemaField, SchemaGroup, EntityEditorExtra, FieldType>
+  >(
+    () => ({
+      createDraft: schema => ({
+        name: schema.name,
+        keyPrefix: schema.key_prefix,
+        description: schema.description,
+        fields: schema.fields,
+        templates: schema.templates,
+        groups: schema.groups,
+        sharedFieldGroupLinks: schema.shared_field_group_links ?? [],
+        validationRules: schema.validation_rules ?? [],
+        color: schema.color,
+        icon: schema.icon
+      }),
+      createField: (id, groupId) =>
+        ({ id, name: 'new_field', type: 'text', ...(groupId ? { groupId } : {}) }) as SchemaField,
+      changeFieldType: (field, newType, fields, firstEnumId) =>
+        createSchemaFieldForType(field, newType, fields, firstEnumId),
+      onFieldIdChange: (draft, previousFieldId, nextFieldId) => ({
+        ...draft,
+        templates: updateTemplateFieldId(draft.templates, previousFieldId, nextFieldId)
+      }),
+      onFieldRemoved: (draft, fieldId) => ({
+        ...draft,
+        templates: removeTemplateField(draft.templates, fieldId)
+      }),
+      onFieldTypeChanged: (draft, fieldId) => ({
+        ...draft,
+        templates: removeTemplateField(draft.templates, fieldId)
+      }),
+      hasChanges: (draft, schema) =>
+        draft.keyPrefix !== schema.key_prefix ||
+        draft.name !== schema.name ||
+        draft.description !== schema.description ||
+        JSON.stringify(draft.fields) !== JSON.stringify(schema.fields) ||
+        JSON.stringify(draft.templates) !== JSON.stringify(schema.templates) ||
+        JSON.stringify(draft.groups) !== JSON.stringify(schema.groups) ||
+        JSON.stringify(draft.sharedFieldGroupLinks) !==
+          JSON.stringify(schema.shared_field_group_links ?? []) ||
+        JSON.stringify(draft.validationRules) !== JSON.stringify(schema.validation_rules ?? []) ||
+        draft.color !== schema.color ||
+        draft.icon !== schema.icon,
+      save: async (schema, draft, fieldMigrations) => {
+        await updateSchemaMutation.mutateAsync({
+          schemaId: schema.id,
+          data: {
+            name: draft.name,
+            key_prefix: draft.keyPrefix,
+            description: draft.description,
+            fields: draft.fields,
+            templates: draft.templates,
+            groups: draft.groups,
+            shared_field_group_links: draft.sharedFieldGroupLinks,
+            validation_rules: draft.validationRules,
+            color: draft.color,
+            icon: draft.icon,
+            fieldMigrations
+          }
+        });
+      },
+      create: () =>
+        createSchemaMutation.mutateAsync({
+          name: 'New type',
+          key_prefix: 'TYPE',
+          fields: []
+        }),
+      remove: schema => deleteSchemaMutation.mutateAsync(schema.id).then(() => undefined),
+      getMigrationRequired: getSchemaMigrationRequired,
+      validationRuleDefaults: () => ({
         id: `rule-${Date.now()}`,
         name: 'New validation rule',
         expression: 'true',
         message: 'Validation rule failed',
         severity: 'error',
         active: true
+      }),
+      selectAfterDelete: (items, deletedId) => firstRemainingId(items, deletedId),
+      labels: {
+        subject: 'entity type',
+        itemNoun: 'entity',
+        deleteTitle: 'Delete entity type?',
+        deleteConfirmLabel: 'Delete type',
+        saveError: 'Failed to save entity type',
+        createError: 'Failed to create entity type',
+        deleteError: 'Failed to delete'
       }
-    ]);
-    setDirty(true);
-  };
+    }),
+    [createSchemaMutation, deleteSchemaMutation, updateSchemaMutation]
+  );
 
-  const updateValidationRule = (index: number, patch: Partial<ValidationRule>) => {
-    setValidationRules(current =>
-      current.map((rule, ruleIndex) => (ruleIndex === index ? { ...rule, ...patch } : rule))
-    );
-    setDirty(true);
-  };
+  const editor = useSchemaEditorController({
+    selected,
+    items: schemas,
+    fieldGroups,
+    firstEnumId: enums[0]?.id,
+    adapter,
+    onSelect: onSelectSchema
+  });
+  const draft = editor.draft;
+  const [schemaPanelTab, setSchemaPanelTab] = useState<SchemaPanelTab>('fields');
+  const [validationPreviewMessage, setValidationPreviewMessage] = useState<string | null>(null);
+  const [templateDialogOpen, setTemplateDialogOpen] = useState(false);
+  const [editingTemplate, setEditingTemplate] = useState<EntityTemplate | null>(null);
 
-  const toggleValidationRule = (index: number) => {
-    setValidationRules(current =>
-      current.map((rule, ruleIndex) =>
-        ruleIndex === index ? { ...rule, active: !rule.active } : rule
-      )
-    );
-    setDirty(true);
-  };
+  const { data: schemaVersions, isLoading: schemaVersionsLoading } = useSchemaVersions(
+    workspaceSlug,
+    editor.showHistory ? (selectedSchemaId ?? null) : null
+  );
 
-  const deleteValidationRule = (index: number) => {
-    setValidationRules(current => current.filter((_, ruleIndex) => ruleIndex !== index));
-    setDirty(true);
-  };
+  useEffect(() => {
+    if (!selectedSchemaId) return;
+    setSchemaPanelTab('fields');
+    setValidationPreviewMessage(null);
+    setTemplateDialogOpen(false);
+    setEditingTemplate(null);
+  }, [selectedSchemaId]);
 
-  const previewValidation = async () => {
-    if (!selected) return;
+  const previewValidation = useCallback(async () => {
+    if (!selected || !draft) return;
     try {
       const results = await previewValidationMutation.mutateAsync({
         schemaId: selected.id,
-        validation_rules: validationRules
+        validation_rules: draft.validationRules
       });
       const errors = results.reduce((count, result) => count + result.errors.length, 0);
       const warnings = results.reduce((count, result) => count + result.warnings.length, 0);
@@ -269,302 +222,207 @@ export const SchemaSettingsScreen = () => {
     } catch (error) {
       setValidationPreviewMessage(error instanceof Error ? error.message : 'Preview failed');
     }
-  };
-
-  const doDeleteType = useCallback(async () => {
-    if (!selected) return;
-    setConfirmDelete(false);
-    try {
-      await deleteSchemaMutation.mutateAsync(selected.id);
-      onSelectSchema(firstRemainingId(schemas, selected.id));
-    } catch (error: unknown) {
-      setErrorMessage(error instanceof Error ? error.message : 'Failed to delete');
-    }
-  }, [selected, deleteSchemaMutation, onSelectSchema, schemas]);
-
-  const updateField = (fieldId: string, patch: Partial<SchemaField>) => {
-    if (patch.id && patch.id !== fieldId) {
-      const nextFieldId = patch.id;
-      const stableKey = fieldKeysRef.current.get(fieldId);
-      if (stableKey) {
-        fieldKeysRef.current.delete(fieldId);
-        fieldKeysRef.current.set(nextFieldId, stableKey);
-      }
-      setTemplates(current => updateTemplateFieldId(current, fieldId, nextFieldId));
-    }
-    setFields(current =>
-      current.map(field => (field.id === fieldId ? ({ ...field, ...patch } as SchemaField) : field))
-    );
-    setDirty(true);
-  };
-
-  const removeField = (fieldId: string) => {
-    setFields(current => current.filter(field => field.id !== fieldId));
-    setTemplates(current => removeTemplateField(current, fieldId));
-    setDirty(true);
-  };
-
-  const addField = (groupId?: string) => {
-    const id = toFieldId('new_field');
-    fieldKeysRef.current.set(id, crypto.randomUUID());
-    setFields(
-      current =>
-        [
-          ...current,
-          { id, name: 'new_field', type: 'text', ...(groupId && { groupId }) }
-        ] as SchemaField[]
-    );
-    setDirty(true);
-  };
-
-  const addSharedFieldGroup = (groupId: string | undefined) => {
-    if (!groupId || sharedFieldGroupLinks.some(link => link.groupId === groupId)) return;
-    const sharedGroup = fieldGroups.find(group => group.id === groupId);
-    if (!sharedGroup) return;
-    setSharedFieldGroupLinks(current => [...current, { groupId }]);
-    setGroups(current => [
-      ...current,
-      {
-        id: sharedGroup.id,
-        name: sharedGroup.name,
-        ...(sharedGroup.description ? { description: sharedGroup.description } : {})
-      }
-    ]);
-    setDirty(true);
-  };
-
-  const removeSharedFieldGroup = (groupId: string) => {
-    setSharedFieldGroupLinks(current => current.filter(link => link.groupId !== groupId));
-    setGroups(current => current.filter(group => group.id !== groupId));
-    setDirty(true);
-  };
-
-  const setGroupAccess = (groupId: string, teamIds: string[]) => {
-    if (sharedFieldGroupLinks.some(link => link.groupId === groupId)) {
-      setSharedFieldGroupLinks(current =>
-        current.map(link =>
-          link.groupId === groupId ? { groupId, ...(teamIds.length > 0 ? { teamIds } : {}) } : link
-        )
-      );
-    } else {
-      setGroups(current =>
-        current.map(group => {
-          if (group.id !== groupId) return group;
-          const { accessControl: _accessControl, ...rest } = group;
-          return teamIds.length > 0 ? { ...rest, accessControl: { teamIds } } : rest;
-        })
-      );
-    }
-    setDirty(true);
-  };
-
-  const changeFieldType = (fieldId: string, newType: FieldType) => {
-    setFields(current =>
-      current.map(field =>
-        field.id === fieldId
-          ? createSchemaFieldForType(field, newType, current, enums[0]?.id)
-          : field
-      )
-    );
-    setTemplates(current => removeTemplateField(current, fieldId));
-    setDirty(true);
-  };
-
-  const saveTemplate = (template: EntityTemplate) => {
-    setTemplates(current => {
-      const index = current.findIndex(item => item.id === template.id);
-      return index === -1
-        ? [...current, template]
-        : current.map(item => (item.id === template.id ? template : item));
-    });
-    setDirty(true);
-    setTemplateDialogOpen(false);
-  };
-
-  const saveGroup = (group: SchemaGroup) => {
-    setGroups(current =>
-      current.some(item => item.id === group.id)
-        ? current.map(item => (item.id === group.id ? group : item))
-        : [...current, group]
-    );
-    setDirty(true);
-    setGroupDialogOpen(false);
-  };
-
-  const removeGroup = (groupId: string) => {
-    setGroups(current => current.filter(group => group.id !== groupId));
-    setFields(current =>
-      current.map(field => (field.groupId === groupId ? { ...field, groupId: undefined } : field))
-    );
-    setDirty(true);
-  };
+  }, [draft, previewValidationMutation, selected]);
 
   if (activeTab === 'enums') return <EnumEditorScreen />;
   if (activeTab === 'fieldgroups') return <FieldGroupEditorScreen />;
   if (activeTab === 'relation-types') return <RelationSchemaSettingsScreen />;
 
   return (
-    <div className={styles.screen}>
-      {selected ? (
-        <div>
-          <div className={styles.editorHead}>
-            <Title
-              breadcrumb={[
-                {
-                  label: 'Home',
-                  onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-                },
-                { label: 'Settings' }
-              ]}
-              titleTestId="schema-editor-title"
-              icon={
-                <TypeBadge
-                  color={color ?? resolveSchemaColor(selected, selectedIndex)}
-                  name={selected.name}
-                  icon={icon}
-                  size={26}
-                />
-              }
-              title={name}
-              description={`${selected.entity_count} entities · version ${selected.version}`}
-            />
-            <Button variant="ghost" onClick={() => setShowHistory(current => !current)}>
-              {showHistory ? 'Back to fields' : 'View history'}
-            </Button>
-          </div>
-          {showHistory ? (
-            <SchemaVersionHistorySubSection
-              versions={schemaVersions}
-              isLoading={schemaVersionsLoading}
-            />
-          ) : (
-            <SchemaEditorForm
-              name={name}
-              keyPrefix={keyPrefix}
-              description={description}
-              color={color}
-              icon={icon}
-              dirty={dirty}
-              canEdit={canEdit}
-              updatePending={updateSchemaMutation.isPending}
-              panelTab={schemaPanelTab}
-              fields={fields}
-              groups={groups}
-              sharedFieldGroupLinks={sharedFieldGroupLinks}
-              fieldKeys={fieldKeysRef.current}
-              schemas={schemas}
-              relationSchemas={relationSchemas}
-              enums={enums}
-              teams={teams}
-              templates={templates}
-              validationRules={validationRules}
-              validationPreviewPending={previewValidationMutation.isPending}
-              validationPreviewMessage={validationPreviewMessage}
-              onNameChange={value => {
-                setName(value);
-                if (!dirty || keyPrefix === deriveKeyPrefix(name))
-                  setKeyPrefix(deriveKeyPrefix(value));
-                setDirty(true);
-              }}
-              onKeyPrefixChange={value => {
-                setKeyPrefix(value.toUpperCase());
-                setDirty(true);
-              }}
-              onDescriptionChange={value => {
-                setDescription(value);
-                setDirty(true);
-              }}
-              onColorChange={value => {
-                setColor(value);
-                setDirty(true);
-              }}
-              onIconChange={value => {
-                setIcon(value);
-                setDirty(true);
-              }}
-              onPanelTabChange={setSchemaPanelTab}
-              onAddField={addField}
-              onAddGroup={() => {
-                setEditingGroup(null);
-                setGroupDialogOpen(true);
-              }}
-              onUpdateField={updateField}
-              onChangeFieldType={changeFieldType}
-              onRemoveField={removeField}
-              onEditGroup={group => {
-                setEditingGroup(group);
-                setGroupDialogOpen(true);
-              }}
-              onAccessGroup={setAccessDialogGroupId}
-              onRemoveGroup={removeGroup}
-              onRemoveSharedGroup={removeSharedFieldGroup}
-              onAddTemplate={() => {
-                setEditingTemplate(null);
-                setTemplateDialogOpen(true);
-              }}
-              onEditTemplate={template => {
-                setEditingTemplate(template);
-                setTemplateDialogOpen(true);
-              }}
-              onDeleteTemplate={templateId => {
-                setTemplates(current => current.filter(template => template.id !== templateId));
-                setDirty(true);
-              }}
-              onPreviewValidation={() => void previewValidation()}
-              onAddValidationRule={addValidationRule}
-              onUpdateValidationRule={updateValidationRule}
-              onToggleValidationRule={toggleValidationRule}
-              onDeleteValidationRule={deleteValidationRule}
-              onDelete={() => setConfirmDelete(true)}
-              onSave={() => void handleSave()}
-            />
-          )}
-        </div>
-      ) : (
-        <EmptyState
-          icon={<TbCode size={22} />}
-          title="No type selected"
-          subtitle="Select an entity type from the sidebar to edit its schema."
-          action={
-            canEdit && (
-              <Button variant="primary" icon={<TbPlus size={12} />} onClick={handleCreateType}>
-                New entity type
-              </Button>
-            )
+    <SchemaEditorScreenShell
+      hasSelection={Boolean(selected && draft)}
+      breadcrumb={[
+        {
+          label: 'Home',
+          onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
+        },
+        { label: 'Settings' }
+      ]}
+      titleTestId="schema-editor-title"
+      icon={
+        selected && draft ? (
+          <TypeBadge
+            color={draft.color ?? resolveSchemaColor(selected, selectedIndex)}
+            name={selected.name}
+            icon={draft.icon}
+            size={26}
+          />
+        ) : undefined
+      }
+      title={draft?.name ?? ''}
+      description={
+        selected ? `${selected.entity_count} entities · version ${selected.version}` : undefined
+      }
+      headerAction={
+        <Button variant="ghost" onClick={() => editor.setShowHistory(current => !current)}>
+          {editor.showHistory ? 'Back to fields' : 'View history'}
+        </Button>
+      }
+      history={
+        editor.showHistory ? (
+          <SchemaVersionHistorySubSection
+            versions={schemaVersions}
+            isLoading={schemaVersionsLoading}
+          />
+        ) : null
+      }
+      editor={
+        selected && draft ? (
+          <SchemaEditorForm
+            name={draft.name}
+            keyPrefix={draft.keyPrefix}
+            description={draft.description}
+            color={draft.color}
+            icon={draft.icon}
+            dirty={editor.dirty}
+            canEdit={canEdit}
+            updatePending={updateSchemaMutation.isPending}
+            panelTab={schemaPanelTab}
+            fields={draft.fields}
+            groups={draft.groups}
+            sharedFieldGroupLinks={draft.sharedFieldGroupLinks}
+            fieldKeys={editor.fieldKeys}
+            schemas={schemas}
+            relationSchemas={relationSchemas}
+            enums={enums}
+            teams={teams}
+            templates={draft.templates}
+            validationRules={draft.validationRules}
+            validationPreviewPending={previewValidationMutation.isPending}
+            validationPreviewMessage={validationPreviewMessage}
+            onNameChange={value =>
+              editor.updateDraft(current => ({
+                ...current,
+                name: value,
+                keyPrefix:
+                  !editor.dirty || current.keyPrefix === deriveKeyPrefix(current.name)
+                    ? deriveKeyPrefix(value)
+                    : current.keyPrefix
+              }))
+            }
+            onKeyPrefixChange={value =>
+              editor.updateDraft(current => ({ ...current, keyPrefix: value.toUpperCase() }))
+            }
+            onDescriptionChange={value =>
+              editor.updateDraft(current => ({ ...current, description: value }))
+            }
+            onColorChange={value => editor.updateDraft(current => ({ ...current, color: value }))}
+            onIconChange={value => editor.updateDraft(current => ({ ...current, icon: value }))}
+            onPanelTabChange={setSchemaPanelTab}
+            onAddField={editor.addField}
+            onAddGroup={() => {
+              editor.setEditingGroup(null);
+              editor.setGroupDialogOpen(true);
+            }}
+            onUpdateField={editor.updateField}
+            onChangeFieldType={editor.changeFieldType}
+            onRemoveField={editor.removeField}
+            onEditGroup={group => {
+              editor.setEditingGroup(group);
+              editor.setGroupDialogOpen(true);
+            }}
+            onAccessGroup={editor.setAccessDialogGroupId}
+            onRemoveGroup={editor.removeGroup}
+            onRemoveSharedGroup={editor.removeSharedFieldGroup}
+            onAddTemplate={() => {
+              setEditingTemplate(null);
+              setTemplateDialogOpen(true);
+            }}
+            onEditTemplate={template => {
+              setEditingTemplate(template);
+              setTemplateDialogOpen(true);
+            }}
+            onDeleteTemplate={templateId =>
+              editor.updateDraft(current => ({
+                ...current,
+                templates: current.templates.filter(template => template.id !== templateId)
+              }))
+            }
+            onPreviewValidation={() => void previewValidation()}
+            onAddValidationRule={editor.addValidationRule}
+            onUpdateValidationRule={editor.updateValidationRule}
+            onToggleValidationRule={editor.toggleValidationRule}
+            onDeleteValidationRule={editor.deleteValidationRule}
+            onDelete={() => editor.setConfirmDelete(true)}
+            onSave={() => void editor.save()}
+          />
+        ) : null
+      }
+      emptyIcon={<TbCode size={22} />}
+      emptyTitle="No type selected"
+      emptySubtitle="Select an entity type from the sidebar to edit its schema."
+      emptyAction={
+        canEdit ? (
+          <Button
+            variant="primary"
+            icon={<TbPlus size={12} />}
+            onClick={() => void editor.create()}
+          >
+            New entity type
+          </Button>
+        ) : null
+      }
+      dialogs={
+        <SchemaEditorDialogs
+          selectedName={selected?.name ?? null}
+          subjectLabel="entity type"
+          migrationSubjectLabel="schema"
+          migrationItemNoun="entity"
+          deleteTitle="Delete entity type?"
+          deleteConfirmLabel="Delete type"
+          fieldGroups={fieldGroups}
+          sharedFieldGroupLinks={draft?.sharedFieldGroupLinks ?? []}
+          groups={draft?.groups ?? []}
+          teams={teams}
+          confirmDelete={editor.confirmDelete}
+          errorMessage={editor.errorMessage}
+          pendingFieldChanges={editor.pendingFieldChanges}
+          groupDialogOpen={editor.groupDialogOpen}
+          editingGroup={editor.editingGroup}
+          accessDialogGroupId={editor.accessDialogGroupId}
+          onConfirmDelete={() => void editor.deleteSelected()}
+          onCancelDelete={() => editor.setConfirmDelete(false)}
+          onCloseError={() => editor.setErrorMessage(null)}
+          onCancelMigration={() => editor.setPendingFieldChanges(null)}
+          onConfirmMigration={editor.confirmFieldMigrations}
+          onCloseGroup={() => editor.setGroupDialogOpen(false)}
+          onSaveGroup={editor.saveGroup}
+          onAddSharedGroup={editor.addSharedFieldGroup}
+          onCloseAccess={() => editor.setAccessDialogGroupId(null)}
+          onSetGroupAccess={editor.setGroupAccess}
+          extraDialogs={
+            selected && draft ? (
+              <EntityTemplateDialog
+                open={templateDialogOpen}
+                onClose={() => setTemplateDialogOpen(false)}
+                onSave={template => {
+                  editor.updateDraft(current => {
+                    const index = current.templates.findIndex(item => item.id === template.id);
+                    return {
+                      ...current,
+                      templates:
+                        index === -1
+                          ? [...current.templates, template]
+                          : current.templates.map(item =>
+                              item.id === template.id ? template : item
+                            )
+                    };
+                  });
+                  setTemplateDialogOpen(false);
+                }}
+                workspaceId={workspaceSlug}
+                schema={
+                  { ...selected, fields: draft.fields, templates: draft.templates } as EntitySchema
+                }
+                template={editingTemplate}
+                templates={draft.templates}
+                teams={teams}
+                lifecycleStates={lifecycleStates}
+              />
+            ) : null
           }
         />
-      )}
-      <SchemaSettingsDialogs
-        selected={selected}
-        workspaceId={workspaceSlug}
-        fields={fields}
-        templates={templates}
-        teams={teams}
-        lifecycleStates={lifecycleStates}
-        fieldGroups={fieldGroups}
-        sharedFieldGroupLinks={sharedFieldGroupLinks}
-        groups={groups}
-        confirmDelete={confirmDelete}
-        errorMessage={errorMessage}
-        pendingFieldChanges={pendingFieldChanges}
-        groupDialogOpen={groupDialogOpen}
-        editingGroup={editingGroup}
-        accessDialogGroupId={accessDialogGroupId}
-        templateDialogOpen={templateDialogOpen}
-        editingTemplate={editingTemplate}
-        onConfirmDelete={doDeleteType}
-        onCancelDelete={() => setConfirmDelete(false)}
-        onCloseError={() => setErrorMessage(null)}
-        onCancelMigration={() => setPendingFieldChanges(null)}
-        onConfirmMigration={confirmFieldMigrations}
-        onCloseGroup={() => setGroupDialogOpen(false)}
-        onSaveGroup={saveGroup}
-        onAddSharedGroup={groupId => addSharedFieldGroup(groupId)}
-        onCloseAccess={() => setAccessDialogGroupId(null)}
-        onSetGroupAccess={setGroupAccess}
-        onCloseTemplate={() => setTemplateDialogOpen(false)}
-        onSaveTemplate={saveTemplate}
-      />
-    </div>
+      }
+    />
   );
 };

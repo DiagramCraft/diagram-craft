@@ -1,10 +1,10 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { H3Event } from 'h3';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { API_PREFIXES } from '../../constants';
 import type { DatabaseAdapter } from '../../db/database';
 import { orpcAssert } from '../../utils/orpcAssert';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
+import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import { getTokenExpirySeconds } from '../../utils/jwt';
 import { setAuthCookies } from '../../utils/cookies';
 import { devContract } from '@arch-register/api-types/devContract';
@@ -64,15 +64,8 @@ export const devORPCRouter = devRouter.router({
   }
 });
 
-export const devOpenAPIHandler = new OpenAPIHandler(devORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createDevORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const result = await devOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: { db, event }
-    });
-    if (result.matched) return result.response;
+  createOrpcHandler(devORPCRouter, {
+    prefix: API_PREFIXES.root,
+    context: event => ({ db, event })
   });

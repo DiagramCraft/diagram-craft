@@ -1,10 +1,10 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { integrationGovernanceContract } from '@arch-register/api-types/integrationGovernanceContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { API_PREFIXES } from '../../constants';
+import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   createIntegrationGovernanceCase,
   createIntegrationGovernanceInboxItem,
@@ -89,15 +89,8 @@ export const integrationGovernanceORPCRouter = router.router({
   }
 });
 
-const handler = new OpenAPIHandler(integrationGovernanceORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createIntegrationGovernanceORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const result = await handler.handle(event.req, {
-      prefix: '/api',
-      context: { db, event: event as AuthenticatedEvent }
-    });
-    if (result.matched) return result.response;
+  createOrpcHandler(integrationGovernanceORPCRouter, {
+    prefix: API_PREFIXES.root,
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });

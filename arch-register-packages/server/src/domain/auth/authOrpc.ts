@@ -1,11 +1,11 @@
-import { defineHandler } from 'h3';
 import { implement, ORPCError } from '@orpc/server';
 import { orpcAssert } from '../../utils/orpcAssert';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { H3Event } from 'h3';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { API_PREFIXES } from '../../constants';
+import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import { getTokenExpirySeconds, verifyToken } from '../../utils/jwt';
 import { generateAuthUrl } from './oidcClient';
 import { clearAuthCookies, setAuthCookies } from '../../utils/cookies';
@@ -161,17 +161,10 @@ export const authPublicORPCRouter = publicRouter.router({
   }
 });
 
-export const authPublicOpenAPIHandler = new OpenAPIHandler(authPublicORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createPublicAuthORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const result = await authPublicOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: { db, event }
-    });
-    if (result.matched) return result.response;
+  createOrpcHandler(authPublicORPCRouter, {
+    prefix: API_PREFIXES.root,
+    context: event => ({ db, event })
   });
 
 // ── Protected ORPC (requires auth) ───────────────────────────
@@ -326,15 +319,8 @@ export const authProtectedORPCRouter = protectedRouter.router({
   }
 });
 
-export const authProtectedOpenAPIHandler = new OpenAPIHandler(authProtectedORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createProtectedAuthORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const result = await authProtectedOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: { db, event: event as AuthenticatedEvent }
-    });
-    if (result.matched) return result.response;
+  createOrpcHandler(authProtectedORPCRouter, {
+    prefix: API_PREFIXES.root,
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });

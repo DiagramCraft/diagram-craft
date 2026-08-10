@@ -1,14 +1,10 @@
-import { defineHandler, HTTPError } from 'h3';
+import { HTTPError } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import {
-  orpcErrorInterceptors,
-  orpcErrorMiddleware,
-  workspaceScoped
-} from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
 import {
   listWorkspaces,
   createWorkspace,
@@ -297,25 +293,10 @@ export const workspaceManagementORPCRouter = wsRouter.router({
   }
 });
 
-export const workspaceManagementOpenAPIHandler = new OpenAPIHandler(workspaceManagementORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createWorkspaceManagementORPCHandler = (
   db: DatabaseAdapter,
   storage?: StorageAdapter
 ) =>
-  defineHandler(async event => {
-    const result = await workspaceManagementOpenAPIHandler.handle(event.req, {
-      prefix: '/api/application/v1',
-      context: {
-        db,
-        storage,
-        event: event as AuthenticatedEvent
-      }
-    });
-
-    if (result.matched) {
-      return result.response;
-    }
+  createOrpcHandler(workspaceManagementORPCRouter, {
+    context: event => ({ db, storage, event: event as AuthenticatedEvent })
   });

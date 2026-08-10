@@ -1,24 +1,17 @@
-import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
-import { Dialog } from '@diagram-craft/app-components/Dialog';
 import type {
   EntitySchema,
   EntityTemplate,
   PendingFieldChange,
-  SchemaGroup,
   SchemaField,
+  SchemaGroup,
   SharedFieldGroupLink
 } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type { SharedFieldGroup } from '@arch-register/api-types/fieldGroupContract';
-import { GroupDialog } from '../../components/GroupsEditor';
-import { TeamAccessPicker } from '../../components/TeamAccessPicker';
+import { SchemaEditorDialogs } from './SchemaEditorDialogs';
 import { EntityTemplateDialog } from '../../dialogs/EntityTemplateDialog';
-import {
-  FieldMigrationDialog,
-  type FieldMigrationChoices
-} from '../../dialogs/FieldMigrationDialog';
+import type { FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
 
 export const SchemaSettingsDialogs = ({
   selected,
@@ -81,77 +74,47 @@ export const SchemaSettingsDialogs = ({
   onCloseTemplate: () => void;
   onSaveTemplate: (template: EntityTemplate) => void;
 }) => (
-  <>
-    <DeleteConfirmationDialog
-      open={confirmDelete}
-      title="Delete entity type?"
-      message={
-        selected ? (
-          <>
-            The entity type <b>{selected.name}</b> will be permanently deleted.
-          </>
-        ) : (
-          ''
-        )
-      }
-      detail="This can't be undone."
-      confirmLabel="Delete type"
-      onConfirm={onConfirmDelete}
-      onCancel={onCancelDelete}
-    />
-    <ErrorDialog
-      open={errorMessage !== null}
-      title="Something went wrong"
-      message={errorMessage}
-      onClose={onCloseError}
-    />
-    <FieldMigrationDialog
-      open={pendingFieldChanges !== null}
-      pendingChanges={pendingFieldChanges ?? []}
-      onCancel={onCancelMigration}
-      onConfirm={onConfirmMigration}
-    />
-    <GroupDialog
-      open={groupDialogOpen}
-      onClose={onCloseGroup}
-      onSave={onSaveGroup}
-      group={editingGroup}
-      groups={groups}
-      sharedGroups={fieldGroups.filter(
-        group => !sharedFieldGroupLinks.some(link => link.groupId === group.id)
-      )}
-      onAddSharedGroup={onAddSharedGroup}
-    />
-    <Dialog
-      open={accessDialogGroupId !== null}
-      onClose={onCloseAccess}
-      title="Field group access"
-      buttons={[{ label: 'Done', type: 'default', onClick: onCloseAccess }]}
-    >
-      {accessDialogGroupId && (
-        <TeamAccessPicker
+  <SchemaEditorDialogs
+    selectedName={selected?.name ?? null}
+    subjectLabel="entity type"
+    migrationSubjectLabel="schema"
+    migrationItemNoun="entity"
+    deleteTitle="Delete entity type?"
+    deleteConfirmLabel="Delete type"
+    fieldGroups={fieldGroups}
+    sharedFieldGroupLinks={sharedFieldGroupLinks}
+    groups={groups}
+    teams={teams}
+    confirmDelete={confirmDelete}
+    errorMessage={errorMessage}
+    pendingFieldChanges={pendingFieldChanges}
+    groupDialogOpen={groupDialogOpen}
+    editingGroup={editingGroup}
+    accessDialogGroupId={accessDialogGroupId}
+    onConfirmDelete={onConfirmDelete}
+    onCancelDelete={onCancelDelete}
+    onCloseError={onCloseError}
+    onCancelMigration={onCancelMigration}
+    onConfirmMigration={onConfirmMigration}
+    onCloseGroup={onCloseGroup}
+    onSaveGroup={onSaveGroup}
+    onAddSharedGroup={onAddSharedGroup}
+    onCloseAccess={onCloseAccess}
+    onSetGroupAccess={onSetGroupAccess}
+    extraDialogs={
+      selected && (
+        <EntityTemplateDialog
+          open={templateDialogOpen}
+          onClose={onCloseTemplate}
+          onSave={onSaveTemplate}
+          workspaceId={workspaceId}
+          schema={{ ...selected, fields, templates } as EntitySchema}
+          template={editingTemplate}
+          templates={templates}
           teams={teams}
-          teamIds={
-            sharedFieldGroupLinks.find(link => link.groupId === accessDialogGroupId)?.teamIds ??
-            groups.find(group => group.id === accessDialogGroupId)?.accessControl?.teamIds ??
-            []
-          }
-          onChange={teamIds => onSetGroupAccess(accessDialogGroupId, teamIds)}
+          lifecycleStates={lifecycleStates}
         />
-      )}
-    </Dialog>
-    {selected && (
-      <EntityTemplateDialog
-        open={templateDialogOpen}
-        onClose={onCloseTemplate}
-        onSave={onSaveTemplate}
-        workspaceId={workspaceId}
-        schema={{ ...selected, fields, templates } as EntitySchema}
-        template={editingTemplate}
-        templates={templates}
-        teams={teams}
-        lifecycleStates={lifecycleStates}
-      />
-    )}
-  </>
+      )
+    }
+  />
 );

@@ -1,10 +1,9 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   listProjects,
   getProject,
@@ -776,22 +775,7 @@ export const projectORPCRouter = projectRouter.router({
   }
 });
 
-export const projectOpenAPIHandler = new OpenAPIHandler(projectORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createProjectORPCHandler = (db: DatabaseAdapter, storage?: StorageAdapter) =>
-  defineHandler(async event => {
-    const result = await projectOpenAPIHandler.handle(event.req, {
-      prefix: '/api/application/v1',
-      context: {
-        db,
-        storage,
-        event: event as AuthenticatedEvent
-      }
-    });
-
-    if (result.matched) {
-      return result.response;
-    }
+  createOrpcHandler(projectORPCRouter, {
+    context: event => ({ db, storage, event: event as AuthenticatedEvent })
   });

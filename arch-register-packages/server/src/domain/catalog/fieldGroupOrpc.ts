@@ -1,10 +1,9 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { workspaceFieldGroupContract } from '@arch-register/api-types/fieldGroupContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   createWorkspaceSharedFieldGroup,
   deleteWorkspaceSharedFieldGroup,
@@ -54,15 +53,7 @@ export const workspaceFieldGroupORPCRouter = router.router({
   }
 });
 
-const openAPIHandler = new OpenAPIHandler(workspaceFieldGroupORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createWorkspaceFieldGroupORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const result = await openAPIHandler.handle(event.req, {
-      prefix: '/api/application/v1',
-      context: { db, event: event as AuthenticatedEvent }
-    });
-    if (result.matched) return result.response;
+  createOrpcHandler(workspaceFieldGroupORPCRouter, {
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });

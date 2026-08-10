@@ -1,14 +1,9 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import { requireWorkspaceCapability } from '../auth/authorization';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import {
-  orpcErrorInterceptors,
-  orpcErrorMiddleware,
-  workspaceScoped
-} from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
 import {
   createWorkspaceDashboard,
   deleteWorkspaceDashboard,
@@ -69,21 +64,7 @@ export const workspaceDashboardORPCRouter = dashboardRouter.router({
   }
 });
 
-export const workspaceDashboardOpenAPIHandler = new OpenAPIHandler(workspaceDashboardORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createWorkspaceDashboardORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const result = await workspaceDashboardOpenAPIHandler.handle(event.req, {
-      prefix: '/api/application/v1',
-      context: {
-        db,
-        event: event as AuthenticatedEvent
-      }
-    });
-
-    if (result.matched) {
-      return result.response;
-    }
+  createOrpcHandler(workspaceDashboardORPCRouter, {
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });

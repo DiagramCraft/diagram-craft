@@ -2,55 +2,17 @@ import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndId } from '@arch-register/api-types/common';
 
-const entityChangeApprovalStatusSchema = z.enum(['open', 'approved', 'rejected', 'withdrawn']);
-const entityChangeApprovalRevisionStatusSchema = z.enum([
-  'submitted',
-  'changes_requested',
-  'stale',
-  'approved',
-  'rejected',
-  'withdrawn'
-]);
+import { createChangeApprovalSchemas } from '@arch-register/api-types/changeApprovalSchemas';
 
-const entityChangeApprovalRevisionSchema = z.object({
-  id: z.string(),
-  approvalId: z.string(),
-  entityId: z.string(),
-  revisionNumber: z.number().int(),
-  baseVersion: z.number().int(),
-  baseState: z.record(z.string(), z.unknown()),
-  proposedState: z.record(z.string(), z.unknown()),
-  diff: z.record(z.string(), z.unknown()),
-  policyVersion: z.string(),
-  resolvedPolicy: z.record(z.string(), z.unknown()),
-  message: z.string().nullable(),
-  createdBy: z.string().nullable(),
-  createdByName: z.string().nullable(),
-  status: entityChangeApprovalRevisionStatusSchema,
-  createdAt: z.string(),
-  resolvedAt: z.string().nullable(),
-  caseId: z.string().nullable()
-});
-
-const entityChangeApprovalSchema = z.object({
-  id: z.string(),
-  workspace: z.string(),
-  entityId: z.string(),
-  status: entityChangeApprovalStatusSchema,
-  initiatorUserId: z.string().nullable(),
-  createdAt: z.string(),
-  updatedAt: z.string(),
-  closedAt: z.string().nullable(),
-  revisions: z.array(entityChangeApprovalRevisionSchema)
-});
-
-const changeApprovalRequestBodySchema = z.object({
-  baseVersion: z.number().int().min(1),
-  proposedState: z.record(z.string(), z.unknown()),
-  message: z.string().optional(),
-  dueAt: z.string().optional(),
-  initiationFields: z.record(z.string(), z.unknown()).optional()
-});
+const {
+  approvalRevisionSchema: entityChangeApprovalRevisionSchema,
+  approvalSchema: entityChangeApprovalSchema,
+  approvalStatusSchema: entityChangeApprovalStatusSchema,
+  approvalRevisionStatusSchema: entityChangeApprovalRevisionStatusSchema,
+  approvalRequestBodySchema: changeApprovalRequestBodySchema,
+  withdrawBodySchema: withdrawChangeApprovalBodySchema,
+  bypassBodySchema: entityApprovalBypassRequestBodySchema
+} = createChangeApprovalSchemas('entityId');
 
 const entityChangeBulkApprovalMemberSchema = z.object({
   entityId: z.string(),
@@ -149,7 +111,7 @@ export const entityChangeContract = oc.tag('Entity change approval').router({
       .input(
         z.object({
           params: wsAndId.extend({ approvalId: z.string() }),
-          body: z.object({ reason: z.string().optional() })
+          body: withdrawChangeApprovalBodySchema
         })
       )
       .output(entityChangeApprovalSchema),
@@ -164,7 +126,7 @@ export const entityChangeContract = oc.tag('Entity change approval').router({
       .input(
         z.object({
           params: wsAndId,
-          body: changeApprovalRequestBodySchema.extend({ reason: z.string().min(1) })
+          body: entityApprovalBypassRequestBodySchema
         })
       )
       .output(

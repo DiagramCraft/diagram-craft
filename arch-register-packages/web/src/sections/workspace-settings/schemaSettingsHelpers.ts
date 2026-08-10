@@ -1,10 +1,4 @@
-import type {
-  EntityTemplate,
-  FieldMigrationAction,
-  FieldMigrations,
-  PendingFieldChange,
-  SchemaField
-} from '@arch-register/api-types/schemaContract';
+import type { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
 import type { FieldType } from '../../lib/schemaPresentation';
 
 export const updateTemplateFieldId = (
@@ -81,19 +75,3 @@ export const createSchemaFieldForType = (
       return { ...base, type: 'typedRelation', relationSchemaId: '', direction: 'out' };
   }
 };
-
-export const buildFieldMigrations = (
-  pendingChanges: PendingFieldChange[],
-  choices: Record<string, FieldMigrationAction['action']>
-): FieldMigrations => {
-  const migrations: FieldMigrations = {};
-  for (const change of pendingChanges) {
-    const action = choices[change.fieldId] ?? 'remove';
-    migrations[change.fieldId] =
-      action === 'rename' ? { action, renameTo: change.renamedToId } : { action };
-  }
-  return migrations;
-};
-
-export const firstRemainingId = <T extends { id: string }>(items: T[], deletedId: string): string =>
-  items.find(item => item.id !== deletedId)?.id ?? '';

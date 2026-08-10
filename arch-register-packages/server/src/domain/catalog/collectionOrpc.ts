@@ -1,9 +1,8 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
 import {
   addEntityToCollection,
@@ -76,15 +75,7 @@ export const workspaceCollectionORPCRouter = collectionRouter.router({
   }
 });
 
-export const workspaceCollectionOpenAPIHandler = new OpenAPIHandler(workspaceCollectionORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createWorkspaceCollectionORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const result = await workspaceCollectionOpenAPIHandler.handle(event.req, {
-      prefix: '/api/application/v1',
-      context: { db, event: event as AuthenticatedEvent }
-    });
-    if (result.matched) return result.response;
+  createOrpcHandler(workspaceCollectionORPCRouter, {
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });

@@ -11,10 +11,9 @@ import { listAllCatalogEntities } from './entityLoader';
 import { updateEntityWithAuditIfVersion } from './entityMutations';
 import {
   resolveEntityOwnerAdminTargets,
-  resolveEntityApprovalTargets,
-  approvalCaseShouldComplete,
-  isSoleApprover
+  resolveEntityApprovalTargets
 } from './entityChangeOperations';
+import { approvalCaseShouldComplete, isSoleApprover } from './approvalWorkflowOperations';
 import { eligibleUserIdsForGovernanceTargets } from '../governance/governanceTargetResolution';
 import type {
   AcknowledgeDeprecationBody,
