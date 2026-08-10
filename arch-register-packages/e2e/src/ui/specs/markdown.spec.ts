@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from '../fixtures';
 import { defaultWorkspace } from '../support/workspaces';
 
 const WIKI_HOME_ID = '00000000-0000-0000-0031-000000000006';

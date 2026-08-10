@@ -47,7 +47,18 @@ test('typed artifacts and revisions preserve lifecycle state', async ({ orpc }) 
     status: 'pending'
   });
 
-  const content = '{"openapi":"3.1.0","info":{"title":"Test","version":"1.0.0"}}';
+  const content = JSON.stringify({
+    openapi: '3.1.0',
+    info: { title: 'Test', version: '1.0.0' },
+    paths: {
+      '/pets': {
+        get: {
+          operationId: 'listPets',
+          responses: { '200': { description: 'ok' } }
+        }
+      }
+    }
+  });
   const revision = await orpc.artifacts.createRevision({
     params: { workspace: 'default', entityId, artifactId: artifact.id },
     body: { mediaType: 'application/json', sourceRevision: 'fixture-1', content }
@@ -68,6 +79,61 @@ test('typed artifacts and revisions preserve lifecycle state', async ({ orpc }) 
     params: { workspace: 'default', entityId, artifactId: artifact.id, revisionId: revision.id }
   });
   expect(raw.content).toBe(content);
+
+  const projection = await orpc.artifacts.listApiSpecification({
+    params: { workspace: 'default', entityId, artifactId: artifact.id, revisionId: revision.id },
+    query: { limit: 50, offset: 0 }
+  });
+  expect(projection).toMatchObject({
+    revision: {
+      revision: { id: revision.id },
+      protocol: 'openapi',
+      status: 'current',
+      itemCount: 1
+    },
+    total: 1,
+    items: [{ action: 'get', path: '/pets', identifier: 'listPets' }]
+  });
+
+  const repeated = await orpc.artifacts.createRevision({
+    params: { workspace: 'default', entityId, artifactId: artifact.id },
+    body: { mediaType: 'application/json', sourceRevision: 'fixture-1', content }
+  });
+  expect(repeated.id).toBe(revision.id);
+  const repeatedProjection = await orpc.artifacts.listApiSpecification({
+    params: { workspace: 'default', entityId, artifactId: artifact.id, revisionId: revision.id },
+    query: { limit: 50, offset: 0 }
+  });
+  expect(repeatedProjection.total).toBe(1);
+
+  const unsupportedRevision = await orpc.artifacts.createRevision({
+    params: { workspace: 'default', entityId, artifactId: artifact.id },
+    body: {
+      mediaType: 'application/json',
+      sourceRevision: 'fixture-unsupported',
+      content: JSON.stringify({ openapi: '2.0', info: { title: 'Legacy', version: '1.0.0' } })
+    }
+  });
+  const afterUnsupported = await orpc.artifacts.list({
+    params: { workspace: 'default', entityId }
+  });
+  expect(afterUnsupported).toMatchObject({
+    status: 'unsupported',
+    artifacts: [{ status: 'unsupported', currentRevisionId: revision.id }]
+  });
+  const unsupportedProjection = await orpc.artifacts.listApiSpecification({
+    params: {
+      workspace: 'default',
+      entityId,
+      artifactId: artifact.id,
+      revisionId: unsupportedRevision.id
+    },
+    query: { limit: 50, offset: 0 }
+  });
+  expect(unsupportedProjection.revision).toMatchObject({
+    status: 'unsupported',
+    diagnostics: [expect.objectContaining({ category: 'unsupported_version' })]
+  });
 
   await expect(
     orpc.artifacts.create({

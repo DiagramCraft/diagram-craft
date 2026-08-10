@@ -2,7 +2,6 @@ import { dirname, resolve } from 'node:path';
 import { randomBytes } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
 import { defineConfig, devices } from '@playwright/test';
-import { seededUserAuthStatePath } from './src/ui/support/authState';
 
 const packageDir = dirname(fileURLToPath(import.meta.url));
 const repoRoot = resolve(packageDir, '../..');
@@ -22,7 +21,6 @@ const dbEnv: Record<string, string> =
 
 export default defineConfig({
   testDir: './src/ui',
-  globalSetup: './global.setup.ts',
   fullyParallel: false,
   forbidOnly: !!process.env.CI,
   retries: process.env.CI ? 1 : 0,
@@ -30,8 +28,7 @@ export default defineConfig({
   reporter: process.env.CI ? 'github' : 'list',
   use: {
     baseURL: 'http://localhost:5175',
-    trace: 'on-first-retry',
-    storageState: seededUserAuthStatePath
+    trace: 'on-first-retry'
   },
   projects: [
     { name: 'chromium', testMatch: /specs\/.*\.spec\.ts/, use: { ...devices['Desktop Chrome'] } }

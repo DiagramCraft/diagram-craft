@@ -15,6 +15,7 @@ import {
   listArtifacts,
   updateArtifact
 } from './artifactOperations';
+import { listApiSpecification } from './apiSpecificationOperations';
 
 type ORPCContext = { db: DatabaseAdapter; event: AuthenticatedEvent };
 
@@ -91,7 +92,25 @@ export const artifactORPCRouter = router.router({
         input.params.revisionId,
         authCtx
       );
-    })
+    }),
+    listApiSpecification: router.artifacts.listApiSpecification.handler(
+      async ({ input, context }) => {
+        const { workspace, authCtx } = await getContext(
+          context.db,
+          context.event,
+          input.params.workspace
+        );
+        return listApiSpecification(
+          context.db,
+          workspace,
+          input.params.entityId,
+          input.params.artifactId,
+          input.params.revisionId,
+          input.query,
+          authCtx
+        );
+      }
+    )
   }
 });
 

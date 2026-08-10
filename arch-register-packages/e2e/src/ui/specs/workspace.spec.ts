@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from '../fixtures';
 import { EntitiesPage } from '../pages/EntitiesPage';
 import { HomePage } from '../pages/HomePage';
 import { SearchPage } from '../pages/SearchPage';

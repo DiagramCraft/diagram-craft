@@ -1,4 +1,5 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from '../fixtures';
 import { defaultWorkspace } from '../support/workspaces';
 
 const extractModule = '**/src/sections/ai-extract/ExtractScreen.tsx*';

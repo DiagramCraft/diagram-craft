@@ -1,8 +1,9 @@
-import { expect, test } from '@playwright/test';
+import { expect } from '@playwright/test';
+import { test } from '../fixtures';
 import { LoginPage } from '../pages/LoginPage';
 import { defaultWorkspace } from '../support/workspaces';
 
-test.use({ storageState: { cookies: [], origins: [] } });
+test.use({ authenticated: false });
 
 test('shows login form @quick', async ({ page }) => {
   const loginPage = new LoginPage(page);

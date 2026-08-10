@@ -86,6 +86,96 @@ export const artifactRevisionContentSchema = artifactRevisionSchema.extend({
     .describe('Raw artifact content; only returned by the explicit content endpoint')
 });
 
+export const apiSpecificationProtocolSchema = z.enum(['openapi', 'asyncapi']);
+export const apiSpecificationItemKindSchema = z.enum(['operation', 'message']);
+export const apiSpecificationDiagnosticSeveritySchema = z.enum(['error', 'warning']);
+export const apiSpecificationDiagnosticCategorySchema = z.enum([
+  'parse_error',
+  'validation_error',
+  'unsupported_media_type',
+  'unsupported_version',
+  'unsupported_construct',
+  'unresolved_reference',
+  'duplicate_identifier',
+  'missing_identifier',
+  'resource_limit',
+  'normalization_error'
+]);
+
+export const apiSpecificationSourceLocationSchema = z.object({
+  pointer: z.string().describe('JSON Pointer into the source document'),
+  line: z.number().int().min(1).nullable().describe('1-based source line when available'),
+  column: z.number().int().min(1).nullable().describe('1-based source column when available')
+});
+
+export const apiSpecificationDiagnosticSchema = z.object({
+  severity: apiSpecificationDiagnosticSeveritySchema,
+  category: apiSpecificationDiagnosticCategorySchema,
+  code: z.string(),
+  message: z.string(),
+  source: apiSpecificationSourceLocationSchema.nullable()
+});
+
+export const apiSpecificationItemSchema = z.object({
+  id: z.string(),
+  itemKey: z.string().describe('Stable source-relative item key'),
+  revisionId: z.string(),
+  protocol: apiSpecificationProtocolSchema,
+  itemKind: apiSpecificationItemKindSchema,
+  path: z.string().nullable(),
+  channel: z.string().nullable(),
+  action: z.string(),
+  identifier: z.string(),
+  declaredIdentifier: z.string().nullable(),
+  summary: z.string().nullable(),
+  description: z.string().nullable(),
+  tags: z.array(z.string()),
+  deprecated: z.boolean(),
+  parameters: z.array(z.record(z.string(), z.unknown())),
+  input: z.record(z.string(), z.unknown()).nullable(),
+  output: z.record(z.string(), z.unknown()).nullable(),
+  metadata: z.record(z.string(), z.unknown()),
+  source: apiSpecificationSourceLocationSchema
+});
+
+export const apiSpecificationRevisionSchema = z.object({
+  revision: artifactRevisionSchema,
+  protocol: apiSpecificationProtocolSchema.nullable(),
+  specificationVersion: z.string().nullable(),
+  title: z.string().nullable(),
+  description: z.string().nullable(),
+  status: z.enum(['current', 'invalid', 'unsupported']),
+  itemCount: z.number().int().min(0),
+  diagnostics: z.array(apiSpecificationDiagnosticSchema)
+});
+
+const projectionQueryNumber = (defaultValue: number) =>
+  z.coerce.number().int().min(0).default(defaultValue);
+
+const projectionQueryBoolean = z.preprocess(
+  value => (value === 'true' ? true : value === 'false' ? false : value),
+  z.boolean().optional()
+);
+
+const projectionQuerySchema = z.object({
+  q: z.string().max(200).optional(),
+  resource: z.string().max(500).optional(),
+  action: z.string().max(100).optional(),
+  kind: apiSpecificationItemKindSchema.optional(),
+  tag: z.string().max(200).optional(),
+  deprecated: projectionQueryBoolean,
+  limit: projectionQueryNumber(50).transform(value => Math.min(value, 200)),
+  offset: projectionQueryNumber(0)
+});
+
+export const apiSpecificationProjectionPageSchema = z.object({
+  revision: apiSpecificationRevisionSchema,
+  items: z.array(apiSpecificationItemSchema),
+  total: z.number().int().min(0),
+  limit: z.number().int().min(0),
+  offset: z.number().int().min(0)
+});
+
 export const artifactCollectionSchema = z.object({
   entity: entityRecordSchema,
   artifacts: z.array(artifactSchema),
@@ -174,7 +264,19 @@ export const artifactContract = oc.tag('Artifacts').router({
         tags: ['Artifacts']
       })
       .input(z.object({ params: revisionParamsSchema }))
-      .output(artifactRevisionContentSchema)
+      .output(artifactRevisionContentSchema),
+    listApiSpecification: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/entities/{entityId}/artifacts/{artifactId}/revisions/{revisionId}/projections/api-specification',
+        inputStructure: 'detailed',
+        summary: 'List API specification projection items',
+        description:
+          'Lists projected OpenAPI operations or AsyncAPI messages without returning the raw source document.',
+        tags: ['Artifacts']
+      })
+      .input(z.object({ params: revisionParamsSchema, query: projectionQuerySchema }))
+      .output(apiSpecificationProjectionPageSchema)
   }
 });
 
@@ -182,3 +284,15 @@ export type ArtifactType = z.infer<typeof artifactTypeSchema>;
 export type ArtifactSourceKind = z.infer<typeof artifactSourceKindSchema>;
 export type ArtifactStatus = z.infer<typeof artifactStatusSchema>;
 export type ArtifactDiagnosticCategory = z.infer<typeof artifactDiagnosticCategorySchema>;
+export type ApiSpecificationProtocol = z.infer<typeof apiSpecificationProtocolSchema>;
+export type ApiSpecificationItemKind = z.infer<typeof apiSpecificationItemKindSchema>;
+export type ApiSpecificationDiagnosticSeverity = z.infer<
+  typeof apiSpecificationDiagnosticSeveritySchema
+>;
+export type ApiSpecificationDiagnosticCategory = z.infer<
+  typeof apiSpecificationDiagnosticCategorySchema
+>;
+export type ApiSpecificationSourceLocation = z.infer<typeof apiSpecificationSourceLocationSchema>;
+export type ApiSpecificationDiagnostic = z.infer<typeof apiSpecificationDiagnosticSchema>;
+export type ApiSpecificationItem = z.infer<typeof apiSpecificationItemSchema>;
+export type ApiSpecificationProjectionQuery = z.infer<typeof projectionQuerySchema>;
