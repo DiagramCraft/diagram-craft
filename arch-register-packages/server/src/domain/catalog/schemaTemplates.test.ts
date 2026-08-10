@@ -49,14 +49,20 @@ describe('instantiateTemplate', () => {
     });
   });
 
-  it('preserves relation predicates when present in templates', () => {
+  it('materializes the Backstage API participation relations', () => {
     const schemas = instantiateTemplate('ws-1', 'backstage');
     const component = schemas.find(schema => schema.name === 'Component');
+    const api = schemas.find(schema => schema.name === 'API');
 
     expect(component?.fields.find(field => field.id === 'consumes_apis')).toMatchObject({
       id: 'consumes_apis',
-      type: 'reference',
-      predicate: 'consumes'
+      type: 'typedRelation',
+      direction: 'in'
+    });
+    expect(api?.fields.find(field => field.id === 'consumers')).toMatchObject({
+      id: 'consumers',
+      type: 'typedRelation',
+      direction: 'out'
     });
   });
 
@@ -155,6 +161,44 @@ describe('instantiateTemplate', () => {
         type: 'typedRelation',
         relationSchemaId: relation?.id,
         direction: 'in'
+      })
+    );
+  });
+
+  it('materializes API participation relations for Components, Systems, and APIs', () => {
+    const definitions = instantiateTemplateDefinitions('ws-1', 'default');
+    const component = definitions.schemas.find(schema => schema.name === 'Component');
+    const system = definitions.schemas.find(schema => schema.name === 'System');
+    const api = definitions.schemas.find(schema => schema.name === 'API');
+    const provides = definitions.relationSchemas.find(schema => schema.name === 'Provides API');
+    const consumes = definitions.relationSchemas.find(schema => schema.name === 'Consumes API');
+
+    expect(provides?.in_schema_ids).toEqual([component?.id, system?.id]);
+    expect(provides?.out_schema_ids).toEqual([api?.id]);
+    expect(consumes?.in_schema_ids).toEqual([component?.id, system?.id]);
+    expect(consumes?.out_schema_ids).toEqual([api?.id]);
+    expect(component?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'provides_apis',
+        type: 'typedRelation',
+        relationSchemaId: provides?.id,
+        direction: 'in'
+      })
+    );
+    expect(system?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'consumes_apis',
+        type: 'typedRelation',
+        relationSchemaId: consumes?.id,
+        direction: 'in'
+      })
+    );
+    expect(api?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'providers',
+        type: 'typedRelation',
+        relationSchemaId: provides?.id,
+        direction: 'out'
       })
     );
   });

@@ -48,8 +48,18 @@ describe('Backstage entity mapping', () => {
     assert.equal('system' in (result.entity ?? {}), false);
     assert.deepEqual(result.relationships, [
       { field: 'system', defaultKind: 'system', references: ['system:default/artists'] },
-      { field: 'providesApis', defaultKind: 'api', references: [] },
-      { field: 'consumesApis', defaultKind: 'api', references: [] }
+      {
+        field: 'providesApis',
+        defaultKind: 'api',
+        typedRelation: 'provides-api',
+        references: []
+      },
+      {
+        field: 'consumesApis',
+        defaultKind: 'api',
+        typedRelation: 'consumes-api',
+        references: []
+      }
     ]);
     assert.equal(
       result.warnings.some(warning => warning.includes('spec.system')),
@@ -94,6 +104,13 @@ describe('Backstage entity mapping', () => {
       mapBackstageToArchRegister(makeEntity('System', 'domain', 'my-domain'), schemaMapping)
         .relationships[0]?.defaultKind,
       'domain'
+    );
+    assert.equal(
+      mapBackstageToArchRegister(
+        makeEntity('System', 'providesApis', ['api:default/catalog']) as BackstageEntity,
+        schemaMapping
+      ).relationships[1]?.typedRelation,
+      'provides-api'
     );
     assert.deepEqual(
       mapBackstageToArchRegister(makeEntity('Domain', 'unused', 'ignored'), schemaMapping)

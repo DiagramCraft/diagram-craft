@@ -66,6 +66,16 @@ describe('groupRelationsByRelationSchema', () => {
     ]);
   });
 
+  it('keeps API providers and consumers in separate topology groups', () => {
+    const provider = typedRelation('provides_apis', 'api-one', 'provides-api', 'rel-1');
+    const consumer = typedRelation('consumes_apis', 'api-two', 'consumes-api', 'rel-2');
+
+    expect(groupRelationsByRelationSchema([provider, consumer])).toEqual([
+      { key: 'provides-api', label: 'provides_apis', relations: [provider] },
+      { key: 'consumes-api', label: 'consumes_apis', relations: [consumer] }
+    ]);
+  });
+
   it('falls back to fieldName when relationSchemaId is absent', () => {
     const withoutSchema = relation('dependsOn', 'one');
     expect(groupRelationsByRelationSchema([withoutSchema])).toEqual([

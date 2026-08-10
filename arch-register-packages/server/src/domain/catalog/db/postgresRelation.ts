@@ -178,7 +178,7 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
     const limitParam = addParam(limit);
     const offsetParam = addParam(offset);
     const rows = await this.sql.unsafe<DatabaseRow[]>(
-      `${RELATION_SELECT_SQL} WHERE ${where} ORDER BY r.created_at DESC LIMIT ${limitParam} OFFSET ${offsetParam}`,
+      `${RELATION_SELECT_SQL} WHERE ${where} ORDER BY r.created_at DESC, r.id DESC LIMIT ${limitParam} OFFSET ${offsetParam}`,
       params as Parameters<typeof this.sql.unsafe>[1]
     );
     return {
@@ -255,11 +255,11 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
 
   async listRelationsForEntity(workspace: string, entityId: string) {
     const outgoingRows = await this.sql.unsafe<DatabaseRow[]>(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.in_record_id = $2 ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.in_record_id = $2 ORDER BY r.created_at DESC, r.id DESC`,
       [workspace, entityId]
     );
     const incomingRows = await this.sql.unsafe<DatabaseRow[]>(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.out_record_id = $2 ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.out_record_id = $2 ORDER BY r.created_at DESC, r.id DESC`,
       [workspace, entityId]
     );
     return {
@@ -273,11 +273,11 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
     const placeholders = entityIds.map((_, i) => `$${i + 2}`).join(',');
     const params = [workspace, ...entityIds] as Parameters<typeof this.sql.unsafe>[1];
     const outgoingRows = await this.sql.unsafe<DatabaseRow[]>(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.in_record_id IN (${placeholders}) ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.in_record_id IN (${placeholders}) ORDER BY r.created_at DESC, r.id DESC`,
       params
     );
     const incomingRows = await this.sql.unsafe<DatabaseRow[]>(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.out_record_id IN (${placeholders}) ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = $1 AND r.out_record_id IN (${placeholders}) ORDER BY r.created_at DESC, r.id DESC`,
       params
     );
     return {

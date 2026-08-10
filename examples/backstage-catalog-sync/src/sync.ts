@@ -14,6 +14,8 @@ import {
   syncEntity,
   getEntityByExternalKey,
   discoverSchemas,
+  discoverRelationSchemas,
+  syncRelation,
   type SyncResult
 } from './archRegister.js';
 
@@ -23,6 +25,9 @@ export interface SyncReport {
   created: number;
   updated: number;
   unchanged: number;
+  relationsCreated: number;
+  relationsUpdated: number;
+  relationsUnchanged: number;
   skipped: number;
   failed: number;
   errors: Array<{
@@ -48,21 +53,10 @@ interface ScannedEntity {
   relationships: ReturnType<typeof mapBackstageToArchRegister>['relationships'];
 }
 
-const relationFieldName = (field: string): string => {
-  switch (field) {
-    case 'providesApis':
-      return 'provides_apis';
-    case 'consumesApis':
-      return 'consumes_apis';
-    default:
-      return field;
-  }
-};
-
 const relationFieldsForKind = (kind: string): string[] => {
   switch (kind) {
     case 'Component':
-      return ['system', 'provides_apis', 'consumes_apis'];
+      return ['system'];
     case 'API':
     case 'Resource':
       return ['system'];
@@ -86,6 +80,9 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     created: 0,
     updated: 0,
     unchanged: 0,
+    relationsCreated: 0,
+    relationsUpdated: 0,
+    relationsUnchanged: 0,
     skipped: 0,
     failed: 0,
     errors: [],
@@ -128,6 +125,45 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
       });
       return report;
     }
+  }
+
+  const relationSchemaMapping = { ...config.relationSchemaMapping };
+  const missingRelationSchemas = Object.entries(relationSchemaMapping).filter(([_, id]) => !id);
+  if (missingRelationSchemas.length > 0) {
+    console.log('🔎 Auto-discovering API participation relation schema IDs...');
+    try {
+      const discovered = await discoverRelationSchemas(
+        config.archRegisterWorkspace,
+        config.archRegisterToken,
+        config.archRegisterUrl
+      );
+
+      for (const relationKind of ['provides-api', 'consumes-api'] as const) {
+        if (!relationSchemaMapping[relationKind] && discovered[relationKind]) {
+          relationSchemaMapping[relationKind] = discovered[relationKind];
+          console.log(`   ✓ Found ${relationKind}: ${discovered[relationKind]}`);
+        }
+      }
+    } catch (error) {
+      console.error(
+        `   ✗ Relation schema discovery failed: ${error instanceof Error ? error.message : String(error)}`
+      );
+      report.errors.push({
+        repo: 'relation-schema-discovery',
+        error: error instanceof Error ? error.message : String(error)
+      });
+      return report;
+    }
+  }
+
+  const unresolvedRelationSchemas = (['provides-api', 'consumes-api'] as const).filter(
+    relationKind => !relationSchemaMapping[relationKind]
+  );
+  if (unresolvedRelationSchemas.length > 0) {
+    const error = `Missing typed relation schema mapping for: ${unresolvedRelationSchemas.join(', ')}. Configure RELATION_SCHEMA_PROVIDES_API and RELATION_SCHEMA_CONSUMES_API or ensure auto-discovery is working.`;
+    report.errors.push({ repo: 'relation-schema-discovery', error });
+    console.error(`   ✗ ${error}`);
+    return report;
   }
 
   // List all repositories
@@ -384,13 +420,73 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     }
   };
 
-  // Pass two: resolve and submit only changed relationship arrays.
+  // Pass two: resolve generic relationship fields and sync typed API participation relations.
   for (const item of scanned) {
     if (!syncResults.has(item.externalKey)) continue;
     const relationFields = relationFieldsForKind(item.entity.kind);
     const relationValues = new Map<string, string[]>();
+    const typedRelations: Array<{
+      relationKind: 'provides-api' | 'consumes-api';
+      relationSchemaId: string;
+      targetId: string;
+      targetKey: string;
+    }> = [];
+    const typedRelationKeys = new Set<string>();
+    const sourceEntityId = idsByReference.get(
+      canonicalReferenceKey({
+        kind: item.entity.kind,
+        namespace: item.entity.metadata.namespace ?? 'default',
+        name: item.entity.metadata.name
+      })
+    );
+
     for (const relationship of item.relationships) {
-      const field = relationFieldName(relationship.field);
+      if (relationship.typedRelation) {
+        const relationSchemaId = relationSchemaMapping[relationship.typedRelation];
+        for (const original of relationship.references) {
+          const parsed = parseBackstageReference(original, relationship.defaultKind);
+          const key = parsed && parsed.kind === 'api' ? canonicalReferenceKey(parsed) : null;
+          let id: string | null = null;
+          try {
+            id = key ? await resolveReference(key) : null;
+          } catch (error) {
+            const errorMsg = error instanceof Error ? error.message : String(error);
+            report.failed++;
+            report.errors.push({
+              repo: item.repo.fullName,
+              entity: item.entityRef,
+              error: errorMsg
+            });
+            continue;
+          }
+
+          if (id && key && relationSchemaId && sourceEntityId) {
+            const relationKey = `${relationship.typedRelation}/${key}`;
+            if (!typedRelationKeys.has(relationKey)) {
+              typedRelationKeys.add(relationKey);
+              typedRelations.push({
+                relationKind: relationship.typedRelation,
+                relationSchemaId,
+                targetId: id,
+                targetKey: key
+              });
+            }
+          } else {
+            const warning = `Unresolved relationship target for ${item.entityRef}.${relationship.field}: ${referenceDisplay(original)}`;
+            report.warnings.push({
+              repo: item.repo.fullName,
+              entity: item.entityRef,
+              field: relationship.field,
+              reference: referenceDisplay(original),
+              warning
+            });
+            if (config.verbose) console.log(`   ⚠️  ${warning}`);
+          }
+        }
+        continue;
+      }
+
+      const field = relationship.field;
       const resolved: string[] = [];
       for (const original of relationship.references) {
         const parsed = parseBackstageReference(original, relationship.defaultKind);
@@ -432,25 +528,58 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
         : [];
       if (JSON.stringify(currentValues) !== JSON.stringify(values)) changedFields[field] = values;
     }
-    if (Object.keys(changedFields).length === 0) continue;
-
-    const relationshipPayload = Object.fromEntries(
-      relationFields.map(field => [field, relationValues.get(field) ?? current[field] ?? []])
-    );
-
-    try {
-      await syncEntity(
-        config.archRegisterWorkspace,
-        source,
-        item.externalKey,
-        { ...item.mapped, ...relationshipPayload },
-        config.archRegisterToken,
-        config.archRegisterUrl
+    if (Object.keys(changedFields).length > 0) {
+      const relationshipPayload = Object.fromEntries(
+        relationFields.map(field => [field, relationValues.get(field) ?? current[field] ?? []])
       );
-    } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : String(error);
-      report.failed++;
-      report.errors.push({ repo: item.repo.fullName, entity: item.entityRef, error: errorMsg });
+
+      try {
+        await syncEntity(
+          config.archRegisterWorkspace,
+          source,
+          item.externalKey,
+          { ...item.mapped, ...relationshipPayload },
+          config.archRegisterToken,
+          config.archRegisterUrl
+        );
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        report.failed++;
+        report.errors.push({ repo: item.repo.fullName, entity: item.entityRef, error: errorMsg });
+      }
+    }
+
+    if (!sourceEntityId) continue;
+    for (const relation of typedRelations) {
+      try {
+        const result = await syncRelation(
+          config.archRegisterWorkspace,
+          source,
+          `${item.externalKey}/typed-relations/${relation.relationKind}/${relation.targetKey}`,
+          {
+            schemaId: relation.relationSchemaId,
+            inEntityId: sourceEntityId,
+            outEntityId: relation.targetId
+          },
+          config.archRegisterToken,
+          config.archRegisterUrl
+        );
+        switch (result.status) {
+          case 'created':
+            report.relationsCreated++;
+            break;
+          case 'updated':
+            report.relationsUpdated++;
+            break;
+          case 'unchanged':
+            report.relationsUnchanged++;
+            break;
+        }
+      } catch (error) {
+        const errorMsg = error instanceof Error ? error.message : String(error);
+        report.failed++;
+        report.errors.push({ repo: item.repo.fullName, entity: item.entityRef, error: errorMsg });
+      }
     }
   }
 
@@ -469,6 +598,9 @@ export const printReport = (report: SyncReport): void => {
   console.log(`  ✓ Created: ${report.created}`);
   console.log(`  ✓ Updated: ${report.updated}`);
   console.log(`  ✓ Unchanged: ${report.unchanged}`);
+  console.log(`  ↔ Relations created: ${report.relationsCreated}`);
+  console.log(`  ↔ Relations updated: ${report.relationsUpdated}`);
+  console.log(`  ↔ Relations unchanged: ${report.relationsUnchanged}`);
   console.log(`  ⊘ Skipped: ${report.skipped}`);
   console.log(`  ✗ Failed: ${report.failed}`);
 

@@ -191,7 +191,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
       params
     );
     const rows = this.all(
-      `${RELATION_SELECT_SQL} WHERE ${where} ORDER BY r.created_at DESC LIMIT ? OFFSET ?`,
+      `${RELATION_SELECT_SQL} WHERE ${where} ORDER BY r.created_at DESC, r.id DESC LIMIT ? OFFSET ?`,
       [...params, limit, offset],
       relationMappers.relation
     );
@@ -268,12 +268,12 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async listRelationsForEntity(workspace: string, entityId: string) {
     const outgoing = this.all(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.in_record_id = ? ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.in_record_id = ? ORDER BY r.created_at DESC, r.id DESC`,
       [workspace, entityId],
       relationMappers.relation
     );
     const incoming = this.all(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.out_record_id = ? ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.out_record_id = ? ORDER BY r.created_at DESC, r.id DESC`,
       [workspace, entityId],
       relationMappers.relation
     );
@@ -284,12 +284,12 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
     if (entityIds.length === 0) return { outgoing: [], incoming: [] };
     const placeholders = entityIds.map(() => '?').join(',');
     const outgoing = this.all(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.in_record_id IN (${placeholders}) ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.in_record_id IN (${placeholders}) ORDER BY r.created_at DESC, r.id DESC`,
       [workspace, ...entityIds],
       relationMappers.relation
     );
     const incoming = this.all(
-      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.out_record_id IN (${placeholders}) ORDER BY r.created_at DESC`,
+      `${RELATION_SELECT_SQL} WHERE r.workspace = ? AND r.out_record_id IN (${placeholders}) ORDER BY r.created_at DESC, r.id DESC`,
       [workspace, ...entityIds],
       relationMappers.relation
     );

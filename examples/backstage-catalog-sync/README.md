@@ -17,9 +17,9 @@ Supported kinds are `Component`, `API`, `Resource`, `System`, and `Domain`.
 
 The importer currently reads only `catalog-info.yaml` from the repository root. It does not resolve Backstage `Group`, `User`, `Location`, or `Template` entities.
 
-The importer synchronizes `system`, `domain`, `providesApis`, and `consumesApis` relationships. It scans all supported entities first, materializes scalar data, then resolves references to Arch Register IDs in a second pass. References may use Backstage's `kind:namespace/name`, `namespace/name`, or `name` forms; the field supplies defaults for omitted kind and namespace.
+The importer synchronizes `system` and `domain` as entity fields, and `providesApis` / `consumesApis` as first-class `Provides API` / `Consumes API` typed relations. Components and Systems are the relation source (`in`) endpoint and APIs are the target (`out`) endpoint; API entities expose the inverse provider and consumer views. It scans all supported entities first, materializes scalar data, then resolves references to Arch Register IDs in a second pass. References may use Backstage's `kind:namespace/name`, `namespace/name`, or `name` forms; the field supplies defaults for omitted kind and namespace.
 
-Missing, malformed, unsupported, or otherwise unresolved targets are omitted from the written relationship array and reported as relationship warnings. Relationship warnings do not fail the source entity; API and entity update failures still count as entity failures.
+Missing, malformed, unsupported, or otherwise unresolved targets are omitted from the written relationship or typed-relation sync and reported as relationship warnings. Relationship warnings do not fail the source entity; API and entity/relation update failures still count as entity failures. Typed relation identities are stable across repeat runs, so synchronization is idempotent.
 
 Owner references are also passed through as Backstage strings; Arch Register resolves them only when they match an existing team ID.
 
@@ -50,7 +50,7 @@ ARCH_REGISTER_WORKSPACE=backstage
 ARCH_REGISTER_TOKEN=ar_pat_...
 ```
 
-The schema UUIDs are discovered by name by default. Set `SCHEMA_DOMAIN`, `SCHEMA_SYSTEM`, `SCHEMA_COMPONENT`, `SCHEMA_API`, or `SCHEMA_RESOURCE` when explicit mappings are preferred.
+The entity and typed relation schema UUIDs are discovered by name by default. Set `SCHEMA_DOMAIN`, `SCHEMA_SYSTEM`, `SCHEMA_COMPONENT`, `SCHEMA_API`, or `SCHEMA_RESOURCE` when explicit entity mappings are preferred; `RELATION_SCHEMA_PROVIDES_API` and `RELATION_SCHEMA_CONSUMES_API` can explicitly configure the typed relation mappings.
 
 ## Usage
 
@@ -72,6 +72,8 @@ Each entity uses:
 - Key: `{namespace}/{kind}/{name}`
 
 For example, a default-namespace component named `artist-web` uses `default/component/artist-web`. This makes repeated runs update the same Arch Register entity instead of creating duplicates.
+
+Each typed API relation uses the source entity key, relation kind, and target API key, for example `default/component/artist-web/typed-relations/provides-api/default/api/artist-api`.
 
 ## Field mapping
 
@@ -103,4 +105,4 @@ pnpm typecheck
 pnpm test
 ```
 
-The tests cover YAML parsing, reference parsing, validation, external-key generation, supported-kind handling, and scalar/relationship mapping. Synchronization runs in two passes so repository order does not affect relationship resolution.
+The tests cover YAML parsing, reference parsing, validation, external-key generation, supported-kind handling, scalar/relationship mapping, and typed-relation request behavior. Synchronization runs in two passes so repository order does not affect relationship resolution.

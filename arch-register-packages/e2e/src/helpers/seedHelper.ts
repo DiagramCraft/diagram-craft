@@ -1,5 +1,11 @@
 import type { DatabaseAdapter } from '@arch-register/server/db/database';
-import { seedEntities, seedIds, seedWorkspaces } from '@arch-register/server/db/seedData';
+import {
+  seedEntities,
+  seedIds,
+  seedRelationSchemas,
+  seedRelations,
+  seedWorkspaces
+} from '@arch-register/server/db/seedData';
 import {
   seedAiConfiguration,
   seedCatalogDefinitions,
@@ -59,6 +65,15 @@ export async function seedCatalogEntities(db: DatabaseAdapter): Promise<void> {
   const entities = seedEntities.filter(entity => entity.project_id == null);
   await seedSharedCatalogEntities(db, entities);
   await seedPublicIdCounters(db, entities, syncTimestamp);
+}
+
+export async function seedCatalogRelations(db: DatabaseAdapter): Promise<void> {
+  for (const relationSchema of seedRelationSchemas) {
+    await db.relation.createRelationSchema(relationSchema);
+  }
+  for (const relation of seedRelations) {
+    await db.relation.createRelation(relation);
+  }
 }
 
 export async function seedCatalogViews(db: DatabaseAdapter): Promise<void> {
