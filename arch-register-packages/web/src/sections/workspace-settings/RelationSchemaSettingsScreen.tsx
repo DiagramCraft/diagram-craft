@@ -93,7 +93,7 @@ export const RelationSchemaSettingsScreen = () => {
   );
 
   const selectedIndex = relationSchemas.findIndex(schema => schema.id === selectedRelationSchemaId);
-  const selected = selectedIndex >= 0 ? relationSchemas[selectedIndex] ?? null : null;
+  const selected = selectedIndex >= 0 ? (relationSchemas[selectedIndex] ?? null) : null;
 
   useEffect(() => {
     if (!selected) return;
@@ -205,7 +205,9 @@ export const RelationSchemaSettingsScreen = () => {
       }
     }
     setFields(current =>
-      current.map(field => (field.id === fieldId ? ({ ...field, ...patch } as RelationField) : field))
+      current.map(field =>
+        field.id === fieldId ? ({ ...field, ...patch } as RelationField) : field
+      )
     );
     setDirty(true);
   };
@@ -218,10 +220,13 @@ export const RelationSchemaSettingsScreen = () => {
   const addField = (groupId?: string) => {
     const id = toFieldId('new_field');
     fieldKeysRef.current.set(id, crypto.randomUUID());
-    setFields(current => [
-      ...current,
-      { id, name: 'new_field', type: 'text', ...(groupId && { groupId }) }
-    ] as RelationField[]);
+    setFields(
+      current =>
+        [
+          ...current,
+          { id, name: 'new_field', type: 'text', ...(groupId && { groupId }) }
+        ] as RelationField[]
+    );
     setDirty(true);
   };
 
@@ -287,9 +292,7 @@ export const RelationSchemaSettingsScreen = () => {
     if (sharedFieldGroupLinks.some(link => link.groupId === groupId)) {
       setSharedFieldGroupLinks(current =>
         current.map(link =>
-          link.groupId === groupId
-            ? { groupId, ...(teamIds.length > 0 ? { teamIds } : {}) }
-            : link
+          link.groupId === groupId ? { groupId, ...(teamIds.length > 0 ? { teamIds } : {}) } : link
         )
       );
     } else {

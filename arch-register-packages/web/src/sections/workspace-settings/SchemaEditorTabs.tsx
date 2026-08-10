@@ -1,5 +1,12 @@
 import { Tabs } from '@diagram-craft/app-components/Tabs';
-import type { EntitySchema, EntityTemplate, SchemaField, SchemaGroup, SharedFieldGroupLink, ValidationRule } from '@arch-register/api-types/schemaContract';
+import type {
+  EntitySchema,
+  EntityTemplate,
+  SchemaField,
+  SchemaGroup,
+  SharedFieldGroupLink,
+  ValidationRule
+} from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { FieldType } from '../../lib/schemaPresentation';

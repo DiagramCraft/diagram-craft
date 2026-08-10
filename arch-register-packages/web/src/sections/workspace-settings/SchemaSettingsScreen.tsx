@@ -21,7 +21,14 @@ import type {
   SharedFieldGroupLink,
   ValidationRule
 } from '@arch-register/api-types/schemaContract';
-import { useCreateSchema, useDeleteSchema, usePreviewSchemaValidation, useSchemaVersions, useUpdateSchema, getSchemaMigrationRequired } from '../../hooks/useSchemas';
+import {
+  useCreateSchema,
+  useDeleteSchema,
+  usePreviewSchemaValidation,
+  useSchemaVersions,
+  useUpdateSchema,
+  getSchemaMigrationRequired
+} from '../../hooks/useSchemas';
 import { toFieldId } from '../../utils/fieldId';
 import {
   buildFieldMigrations,
@@ -104,7 +111,7 @@ export const SchemaSettingsScreen = () => {
   );
 
   const selectedIndex = schemas.findIndex(schema => schema.id === selectedSchemaId);
-  const selected = selectedIndex >= 0 ? schemas[selectedIndex] ?? null : null;
+  const selected = selectedIndex >= 0 ? (schemas[selectedIndex] ?? null) : null;
 
   useEffect(() => {
     if (!selected) return;
@@ -300,10 +307,13 @@ export const SchemaSettingsScreen = () => {
   const addField = (groupId?: string) => {
     const id = toFieldId('new_field');
     fieldKeysRef.current.set(id, crypto.randomUUID());
-    setFields(current => [
-      ...current,
-      { id, name: 'new_field', type: 'text', ...(groupId && { groupId }) }
-    ] as SchemaField[]);
+    setFields(
+      current =>
+        [
+          ...current,
+          { id, name: 'new_field', type: 'text', ...(groupId && { groupId }) }
+        ] as SchemaField[]
+    );
     setDirty(true);
   };
 
@@ -333,9 +343,7 @@ export const SchemaSettingsScreen = () => {
     if (sharedFieldGroupLinks.some(link => link.groupId === groupId)) {
       setSharedFieldGroupLinks(current =>
         current.map(link =>
-          link.groupId === groupId
-            ? { groupId, ...(teamIds.length > 0 ? { teamIds } : {}) }
-            : link
+          link.groupId === groupId ? { groupId, ...(teamIds.length > 0 ? { teamIds } : {}) } : link
         )
       );
     } else {
@@ -454,7 +462,8 @@ export const SchemaSettingsScreen = () => {
               validationPreviewMessage={validationPreviewMessage}
               onNameChange={value => {
                 setName(value);
-                if (!dirty || keyPrefix === deriveKeyPrefix(name)) setKeyPrefix(deriveKeyPrefix(value));
+                if (!dirty || keyPrefix === deriveKeyPrefix(name))
+                  setKeyPrefix(deriveKeyPrefix(value));
                 setDirty(true);
               }}
               onKeyPrefixChange={value => {

@@ -71,12 +71,12 @@ describe('schema settings helpers', () => {
       }
     ];
 
-    expect(
-      buildFieldMigrations(pendingChanges, { removed: 'archive', renamed: 'rename' })
-    ).toEqual({
-      removed: { action: 'archive' },
-      renamed: { action: 'rename', renameTo: 'new_name' }
-    });
+    expect(buildFieldMigrations(pendingChanges, { removed: 'archive', renamed: 'rename' })).toEqual(
+      {
+        removed: { action: 'archive' },
+        renamed: { action: 'rename', renameTo: 'new_name' }
+      }
+    );
     expect(firstRemainingId([{ id: 'deleted' }, { id: 'remaining' }], 'deleted')).toBe('remaining');
     expect(firstRemainingId([{ id: 'deleted' }], 'deleted')).toBe('');
   });

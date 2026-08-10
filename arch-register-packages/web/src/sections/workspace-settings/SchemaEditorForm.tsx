@@ -2,7 +2,14 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbTrash } from 'react-icons/tb';
-import type { EntitySchema, EntityTemplate, SchemaField, SchemaGroup, SharedFieldGroupLink, ValidationRule } from '@arch-register/api-types/schemaContract';
+import type {
+  EntitySchema,
+  EntityTemplate,
+  SchemaField,
+  SchemaGroup,
+  SharedFieldGroupLink,
+  ValidationRule
+} from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
@@ -111,13 +118,23 @@ export const SchemaEditorForm = ({
     <div className={styles.formRow}>
       <div>
         <div className={styles.formLabel}>Name</div>
-        <TextInput value={name} disabled={!canEdit} onChange={value => onNameChange(value ?? '')} style={{ width: '100%' }} />
+        <TextInput
+          value={name}
+          disabled={!canEdit}
+          onChange={value => onNameChange(value ?? '')}
+          style={{ width: '100%' }}
+        />
       </div>
     </div>
     <div className={styles.formRow}>
       <div>
         <div className={styles.formLabel}>Key Prefix</div>
-        <TextInput value={keyPrefix} disabled={!canEdit} onChange={value => onKeyPrefixChange(value ?? '')} style={{ width: '100%' }} />
+        <TextInput
+          value={keyPrefix}
+          disabled={!canEdit}
+          onChange={value => onKeyPrefixChange(value ?? '')}
+          style={{ width: '100%' }}
+        />
       </div>
     </div>
     <div className={styles.formRow}>

@@ -95,7 +95,5 @@ export const buildFieldMigrations = (
   return migrations;
 };
 
-export const firstRemainingId = <T extends { id: string }>(
-  items: T[],
-  deletedId: string
-): string => items.find(item => item.id !== deletedId)?.id ?? '';
+export const firstRemainingId = <T extends { id: string }>(items: T[], deletedId: string): string =>
+  items.find(item => item.id !== deletedId)?.id ?? '';

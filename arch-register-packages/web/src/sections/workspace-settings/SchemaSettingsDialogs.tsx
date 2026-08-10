@@ -1,14 +1,24 @@
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import type { EntitySchema, EntityTemplate, PendingFieldChange, SchemaGroup, SchemaField, SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
+import type {
+  EntitySchema,
+  EntityTemplate,
+  PendingFieldChange,
+  SchemaGroup,
+  SchemaField,
+  SharedFieldGroupLink
+} from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type { SharedFieldGroup } from '@arch-register/api-types/fieldGroupContract';
 import { GroupDialog } from '../../components/GroupsEditor';
 import { TeamAccessPicker } from '../../components/TeamAccessPicker';
 import { EntityTemplateDialog } from '../../dialogs/EntityTemplateDialog';
-import { FieldMigrationDialog, type FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
+import {
+  FieldMigrationDialog,
+  type FieldMigrationChoices
+} from '../../dialogs/FieldMigrationDialog';
 
 export const SchemaSettingsDialogs = ({
   selected,

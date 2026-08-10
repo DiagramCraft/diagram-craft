@@ -5,8 +5,15 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { TbDots, TbLock, TbPlus, TbTrash } from 'react-icons/tb';
-import type { EntitySchema, SharedFieldGroupLink, ValidationRule } from '@arch-register/api-types/schemaContract';
-import type { RelationField, RelationSchemaGroup } from '@arch-register/api-types/relationSchemaContract';
+import type {
+  EntitySchema,
+  SharedFieldGroupLink,
+  ValidationRule
+} from '@arch-register/api-types/schemaContract';
+import type {
+  RelationField,
+  RelationSchemaGroup
+} from '@arch-register/api-types/relationSchemaContract';
 import type { RelationFieldType } from '../../lib/schemaPresentation';
 import { resolveGroupAccessControl } from '../../lib/fieldGroupAccess';
 import { RelationFieldRow } from './RelationFieldRow';
@@ -119,7 +126,10 @@ export const RelationFieldsEditor = ({
                       <div className={styles.restrictedTeams}>
                         Restricted to{' '}
                         {teamIds
-                          .map(teamId => teams.find(team => team.id === teamId)?.name ?? 'Unavailable team')
+                          .map(
+                            teamId =>
+                              teams.find(team => team.id === teamId)?.name ?? 'Unavailable team'
+                          )
                           .join(', ')}
                       </div>
                     )}
@@ -154,9 +164,7 @@ export const RelationFieldsEditor = ({
                           <Menu.Item
                             type="danger"
                             onClick={() =>
-                              inherited
-                                ? onRemoveSharedGroup(group.id)
-                                : onRemoveGroup(group.id)
+                              inherited ? onRemoveSharedGroup(group.id) : onRemoveGroup(group.id)
                             }
                           >
                             Delete
@@ -176,7 +184,9 @@ export const RelationFieldsEditor = ({
           })}
         </div>
       ) : (
-        <div className={styles.fieldsEmpty}>No fields defined yet. Click "Add field" to get started.</div>
+        <div className={styles.fieldsEmpty}>
+          No fields defined yet. Click "Add field" to get started.
+        </div>
       )}
     </>
   );

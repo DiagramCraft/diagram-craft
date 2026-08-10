@@ -71,7 +71,8 @@ export const RelationFieldRow = ({
                   return;
                 }
                 const next = Number(raw);
-                if (!Number.isNaN(next)) onUpdate({ min: Math.trunc(next) } as Partial<RelationField>);
+                if (!Number.isNaN(next))
+                  onUpdate({ min: Math.trunc(next) } as Partial<RelationField>);
               }}
               placeholder="Unbounded"
             />
@@ -87,7 +88,8 @@ export const RelationFieldRow = ({
                   return;
                 }
                 const next = Number(raw);
-                if (!Number.isNaN(next)) onUpdate({ max: Math.trunc(next) } as Partial<RelationField>);
+                if (!Number.isNaN(next))
+                  onUpdate({ max: Math.trunc(next) } as Partial<RelationField>);
               }}
               placeholder="Unbounded"
             />
@@ -130,7 +132,9 @@ export const RelationFieldRow = ({
               disabled={!canEdit}
               onChange={value => {
                 const next = Number(value ?? 0);
-                onUpdate({ minCount: Number.isNaN(next) ? 0 : Math.max(0, next) } as Partial<RelationField>);
+                onUpdate({
+                  minCount: Number.isNaN(next) ? 0 : Math.max(0, next)
+                } as Partial<RelationField>);
               }}
             />
           </FormElement>
@@ -145,7 +149,9 @@ export const RelationFieldRow = ({
                   return;
                 }
                 const next = Number(raw);
-                onUpdate({ maxCount: Number.isNaN(next) ? -1 : Math.max(0, next) } as Partial<RelationField>);
+                onUpdate({
+                  maxCount: Number.isNaN(next) ? -1 : Math.max(0, next)
+                } as Partial<RelationField>);
               }}
               placeholder="Unbounded"
             />

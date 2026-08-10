@@ -2,7 +2,12 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { TbDots, TbLock, TbPlus } from 'react-icons/tb';
-import type { EntitySchema, SchemaField, SchemaGroup, SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
+import type {
+  EntitySchema,
+  SchemaField,
+  SchemaGroup,
+  SharedFieldGroupLink
+} from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { resolveGroupAccessControl } from '../../lib/fieldGroupAccess';
@@ -125,7 +130,10 @@ export const SchemaFieldsEditor = ({
                       <div className={styles.restrictedTeams}>
                         Restricted to{' '}
                         {teamIds
-                          .map(teamId => teams.find(team => team.id === teamId)?.name ?? 'Unavailable team')
+                          .map(
+                            teamId =>
+                              teams.find(team => team.id === teamId)?.name ?? 'Unavailable team'
+                          )
                           .join(', ')}
                       </div>
                     )}
@@ -160,9 +168,7 @@ export const SchemaFieldsEditor = ({
                           <Menu.Item
                             type="danger"
                             onClick={() =>
-                              inherited
-                                ? onRemoveSharedGroup(group.id)
-                                : onRemoveGroup(group.id)
+                              inherited ? onRemoveSharedGroup(group.id) : onRemoveGroup(group.id)
                             }
                           >
                             Delete
@@ -182,7 +188,9 @@ export const SchemaFieldsEditor = ({
           })}
         </div>
       ) : (
-        <div className={styles.fieldsEmpty}>No fields defined yet. Click "Add field" to get started.</div>
+        <div className={styles.fieldsEmpty}>
+          No fields defined yet. Click "Add field" to get started.
+        </div>
       )}
     </>
   );

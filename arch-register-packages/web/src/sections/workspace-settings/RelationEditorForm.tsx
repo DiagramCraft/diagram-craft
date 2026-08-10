@@ -2,8 +2,16 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbTrash } from 'react-icons/tb';
-import type { EntitySchema, SharedFieldGroupLink, ValidationRule } from '@arch-register/api-types/schemaContract';
-import type { RelationEndpoint, RelationField, RelationSchemaGroup } from '@arch-register/api-types/relationSchemaContract';
+import type {
+  EntitySchema,
+  SharedFieldGroupLink,
+  ValidationRule
+} from '@arch-register/api-types/schemaContract';
+import type {
+  RelationEndpoint,
+  RelationField,
+  RelationSchemaGroup
+} from '@arch-register/api-types/relationSchemaContract';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ICON_MAP } from '../../components/TypeBadge';
 import { SCHEMA_ICONS } from '../../lib/schemaPresentation';
@@ -95,7 +103,12 @@ export const RelationEditorForm = ({
     <div className={styles.formRow}>
       <div>
         <div className={styles.formLabel}>Name</div>
-        <TextInput value={name} disabled={!canEdit} onChange={value => onNameChange(value ?? '')} style={{ width: '100%' }} />
+        <TextInput
+          value={name}
+          disabled={!canEdit}
+          onChange={value => onNameChange(value ?? '')}
+          style={{ width: '100%' }}
+        />
       </div>
     </div>
     <div className={styles.formRow}>

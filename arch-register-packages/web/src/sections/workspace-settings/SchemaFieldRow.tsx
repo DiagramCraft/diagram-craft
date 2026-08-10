@@ -10,7 +10,11 @@ import { Menu } from '@diagram-craft/app-components/Menu';
 import { DerivedExpressionTestDialog } from '../../components/DerivedExpressionTestDialog';
 import { FIELD_TYPES, type FieldType } from '../../lib/schemaPresentation';
 import { toFieldId } from '../../utils/fieldId';
-import type { EntitySchema, SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
+import type {
+  EntitySchema,
+  SchemaField,
+  SchemaGroup
+} from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import styles from './SchemaSettingsScreen.module.css';
@@ -66,7 +70,9 @@ export const SchemaFieldRow = ({
     if (field.type === 'reference' || field.type === 'containment') {
       return (
         <>
-          <FormElement label={field.type === 'reference' ? 'Reference target' : 'Containment target'}>
+          <FormElement
+            label={field.type === 'reference' ? 'Reference target' : 'Containment target'}
+          >
             <Select.Root
               value={field.schemaId ?? undefined}
               disabled={!canEdit}
@@ -100,7 +106,9 @@ export const SchemaFieldRow = ({
                   disabled={!canEdit}
                   onChange={value => {
                     const next = Number(value ?? 0);
-                    onUpdate({ minCount: Number.isNaN(next) ? 0 : Math.max(0, next) } as Partial<SchemaField>);
+                    onUpdate({
+                      minCount: Number.isNaN(next) ? 0 : Math.max(0, next)
+                    } as Partial<SchemaField>);
                   }}
                 />
               </FormElement>
@@ -115,7 +123,9 @@ export const SchemaFieldRow = ({
                       return;
                     }
                     const next = Number(raw);
-                    onUpdate({ maxCount: Number.isNaN(next) ? -1 : Math.max(0, next) } as Partial<SchemaField>);
+                    onUpdate({
+                      maxCount: Number.isNaN(next) ? -1 : Math.max(0, next)
+                    } as Partial<SchemaField>);
                   }}
                   placeholder="Unbounded"
                 />
@@ -132,7 +142,9 @@ export const SchemaFieldRow = ({
             <Select.Root
               value={field.relationSchemaId || undefined}
               disabled={!canEdit}
-              onChange={value => onUpdate({ relationSchemaId: value ?? '' } as Partial<SchemaField>)}
+              onChange={value =>
+                onUpdate({ relationSchemaId: value ?? '' } as Partial<SchemaField>)
+              }
               placeholder="Select a relation type..."
             >
               {relationSchemas.map(rs => (
@@ -171,7 +183,8 @@ export const SchemaFieldRow = ({
                   return;
                 }
                 const next = Number(raw);
-                if (!Number.isNaN(next)) onUpdate({ min: Math.trunc(next) } as Partial<SchemaField>);
+                if (!Number.isNaN(next))
+                  onUpdate({ min: Math.trunc(next) } as Partial<SchemaField>);
               }}
               placeholder="Unbounded"
             />
@@ -187,7 +200,8 @@ export const SchemaFieldRow = ({
                   return;
                 }
                 const next = Number(raw);
-                if (!Number.isNaN(next)) onUpdate({ max: Math.trunc(next) } as Partial<SchemaField>);
+                if (!Number.isNaN(next))
+                  onUpdate({ max: Math.trunc(next) } as Partial<SchemaField>);
               }}
               placeholder="Unbounded"
             />
@@ -204,7 +218,10 @@ export const SchemaFieldRow = ({
               disabled={!canEdit}
               onChange={value =>
                 onUpdate({
-                  resultType: (value ?? 'text') as Extract<SchemaField, { type: 'derived' }>['resultType']
+                  resultType: (value ?? 'text') as Extract<
+                    SchemaField,
+                    { type: 'derived' }
+                  >['resultType']
                 } as Partial<SchemaField>)
               }
             >

@@ -1,13 +1,22 @@
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { ErrorDialog } from '@diagram-craft/app-components/ErrorDialog';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
-import type { PendingFieldChange, SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
-import type { RelationSchema, RelationSchemaGroup } from '@arch-register/api-types/relationSchemaContract';
+import type {
+  PendingFieldChange,
+  SharedFieldGroupLink
+} from '@arch-register/api-types/schemaContract';
+import type {
+  RelationSchema,
+  RelationSchemaGroup
+} from '@arch-register/api-types/relationSchemaContract';
 import type { SharedFieldGroup } from '@arch-register/api-types/fieldGroupContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { GroupDialog } from '../../components/GroupsEditor';
 import { TeamAccessPicker } from '../../components/TeamAccessPicker';
-import { FieldMigrationDialog, type FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
+import {
+  FieldMigrationDialog,
+  type FieldMigrationChoices
+} from '../../dialogs/FieldMigrationDialog';
 
 export const RelationSchemaSettingsDialogs = ({
   selected,
