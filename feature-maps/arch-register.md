@@ -127,9 +127,9 @@
 
         - @id:ar.entities.artifacts Schemas can opt entities into typed, functionality-driving artifacts such as API
           specifications or compliance evidence. Authorized users can upload document-based API specifications from
-          entity details, register link-only or HTTPS URL sources, retain immutable revisions, inspect asynchronous
-          processing status and safe
-          diagnostics, and retrieve raw content through a separate permission. Artifact capabilities declare their
+          entity details, register link-only or HTTPS URL sources, manually refresh URL sources, retain immutable
+          revisions, inspect asynchronous processing status and safe diagnostics, and retrieve raw content through a
+          separate permission. Artifact capabilities declare their
           supported features and required schema fields; the catalog
           does not treat arbitrary binary documents as a generic attachment store. OpenAPI 3.0/3.1 and AsyncAPI 2.x/3.0
           documents can be validated and synchronously projected into queryable operations or messages with stable
