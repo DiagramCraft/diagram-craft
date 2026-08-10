@@ -1,9 +1,8 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   createWikiComment,
   deleteWikiComment,
@@ -70,21 +69,7 @@ export const wikiCommentORPCRouter = wikiCommentRouter.router({
   }
 });
 
-export const wikiCommentOpenAPIHandler = new OpenAPIHandler(wikiCommentORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createWikiCommentORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const result = await wikiCommentOpenAPIHandler.handle(event.req, {
-      prefix: '/api/application/v1',
-      context: {
-        db,
-        event: event as AuthenticatedEvent
-      }
-    });
-
-    if (result.matched) {
-      return result.response;
-    }
+  createOrpcHandler(wikiCommentORPCRouter, {
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });

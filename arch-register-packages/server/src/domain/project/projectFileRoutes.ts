@@ -2,6 +2,7 @@ import { createRouter, getQuery, getRouterParam, readBody, assertBodySize, HTTPE
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
+import { API_PREFIXES } from '../../constants';
 import {
   uploadContentFile,
   downloadProjectFile,
@@ -207,7 +208,7 @@ export const createProjectFileRoutesHandler = (db: DatabaseAdapter, storage: Sto
     });
   };
 
-  registerRoutes('/api/application/v1');
+  registerRoutes(API_PREFIXES.application);
 
   return router;
 };

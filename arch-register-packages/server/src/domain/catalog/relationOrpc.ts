@@ -1,9 +1,9 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { API_PREFIXES } from '../../constants';
+import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import {
   listWorkspaceRelations,
   queryWorkspaceRelations,
@@ -134,10 +134,6 @@ export const workspaceRelationORPCRouter = relationRouter.router({
   }
 });
 
-export const workspaceRelationOpenAPIHandler = new OpenAPIHandler(workspaceRelationORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 const integrationRelationRouter = implement(integrationRelationContract)
   .$context<ORPCContext>()
   .use(orpcErrorMiddleware);
@@ -215,36 +211,13 @@ export const integrationRelationORPCRouter = integrationRelationRouter.router({
   }
 });
 
-export const integrationRelationOpenAPIHandler = new OpenAPIHandler(integrationRelationORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createWorkspaceRelationORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const result = await workspaceRelationOpenAPIHandler.handle(event.req, {
-      prefix: '/api/application/v1',
-      context: {
-        db,
-        event: event as AuthenticatedEvent
-      }
-    });
-
-    if (result.matched) {
-      return result.response;
-    }
+  createOrpcHandler(workspaceRelationORPCRouter, {
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });
 
 export const createIntegrationRelationORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const result = await integrationRelationOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: {
-        db,
-        event: event as AuthenticatedEvent
-      }
-    });
-
-    if (result.matched) {
-      return result.response;
-    }
+  createOrpcHandler(integrationRelationORPCRouter, {
+    prefix: API_PREFIXES.root,
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });

@@ -1,19 +1,16 @@
-import { defineHandler, HTTPError } from 'h3';
+import { HTTPError } from 'h3';
 import { implement, ORPCError } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { API_PREFIXES } from '../../constants';
 import {
   buildApiEntityAuthCtx,
   filterVisibleEntities,
   requireWorkspaceCapability
 } from '../auth/authorization';
-import {
-  orpcErrorInterceptors,
-  orpcErrorMiddleware,
-  workspaceScoped
-} from '../../utils/orpcErrors';
+import { orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
 import { resolveAiConfig } from '../ai/tanstackAiAdapter';
 import { ConfiguredAIServer } from '../ai/configuredAiServer';
 import type { AIGenerateRequest } from '../ai/aiServer';
@@ -150,24 +147,18 @@ export const createDiagramCraftORPCRouter = () => {
 const MAX_REQUEST_SIZE = 1 * 1024 * 1024;
 
 export const createDiagramCraftORPCHandler = (db: DatabaseAdapter) => {
-  const diagramCraftOpenAPIHandler = new OpenAPIHandler(createDiagramCraftORPCRouter(), {
-    clientInterceptors: orpcErrorInterceptors
-  });
-
-  return defineHandler(async event => {
-    const contentLength = parseInt(event.req.headers.get('content-length') ?? '0', 10);
-    if (contentLength > MAX_REQUEST_SIZE) {
-      throw new HTTPError({
-        status: 413,
-        statusText: 'Payload Too Large',
-        message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes`
-      });
-    }
-
-    const result = await diagramCraftOpenAPIHandler.handle(event.req, {
-      prefix: '/api',
-      context: { db, event: event as AuthenticatedEvent }
-    });
-    if (result.matched) return result.response;
+  return createOrpcHandler(createDiagramCraftORPCRouter(), {
+    prefix: API_PREFIXES.root,
+    beforeHandle: event => {
+      const contentLength = parseInt(event.req.headers.get('content-length') ?? '0', 10);
+      if (contentLength > MAX_REQUEST_SIZE) {
+        throw new HTTPError({
+          status: 413,
+          statusText: 'Payload Too Large',
+          message: `Request size exceeds limit of ${MAX_REQUEST_SIZE} bytes`
+        });
+      }
+    },
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });
 };

@@ -1,10 +1,9 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import { getWorkspaceAnalytics } from './workspaceAnalyticsOperations';
 
 type ORPCContext = {
@@ -29,21 +28,7 @@ export const workspaceAnalyticsORPCRouter = analyticsRouter.router({
   }
 });
 
-export const workspaceAnalyticsOpenAPIHandler = new OpenAPIHandler(workspaceAnalyticsORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createWorkspaceAnalyticsORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const result = await workspaceAnalyticsOpenAPIHandler.handle(event.req, {
-      prefix: '/api/application/v1',
-      context: {
-        db,
-        event: event as AuthenticatedEvent
-      }
-    });
-
-    if (result.matched) {
-      return result.response;
-    }
+  createOrpcHandler(workspaceAnalyticsORPCRouter, {
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });

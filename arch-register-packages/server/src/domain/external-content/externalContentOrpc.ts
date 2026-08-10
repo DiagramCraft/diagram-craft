@@ -1,10 +1,9 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import { externalContentContract } from '@arch-register/api-types/externalContentContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
+import { createOrpcHandler } from '../../utils/orpcHandler';
 import {
   createExternalContentMount,
   listExternalContentMounts,
@@ -12,7 +11,7 @@ import {
   syncExternalContentMount,
   updateExternalContentMount
 } from './externalContentOperations';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
+import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 
 type Context = { db: DatabaseAdapter; storage: StorageAdapter; event: AuthenticatedEvent };
 const router = implement(externalContentContract).$context<Context>().use(orpcErrorMiddleware);
@@ -49,15 +48,7 @@ const externalContentRouter = router.router({
   }
 });
 
-const handler = new OpenAPIHandler(externalContentRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createExternalContentORPCHandler = (db: DatabaseAdapter, storage: StorageAdapter) =>
-  defineHandler(async event => {
-    const result = await handler.handle(event.req, {
-      prefix: '/api/application/v1',
-      context: { db, storage, event: event as AuthenticatedEvent }
-    });
-    if (result.matched) return result.response;
+  createOrpcHandler(externalContentRouter, {
+    context: event => ({ db, storage, event: event as AuthenticatedEvent })
   });

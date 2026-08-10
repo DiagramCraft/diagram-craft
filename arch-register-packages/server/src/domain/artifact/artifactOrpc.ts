@@ -1,11 +1,11 @@
-import { defineHandler } from 'h3';
 import { implement } from '@orpc/server';
-import { OpenAPIHandler } from '@orpc/openapi/fetch';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { artifactContract } from '@arch-register/api-types/artifactContract';
 import { buildApiEntityAuthCtx } from '../auth/authorization';
-import { orpcErrorInterceptors, orpcErrorMiddleware } from '../../utils/orpcErrors';
+import { createOrpcHandler } from '../../utils/orpcHandler';
+import { API_PREFIXES } from '../../constants';
+import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import { requestForApiSurface } from '../../utils/apiRouteAliases';
 import { resolveWorkspace } from '../workspace/resolveWorkspace';
 import {
@@ -95,22 +95,13 @@ export const artifactORPCRouter = router.router({
   }
 });
 
-export const artifactOpenAPIHandler = new OpenAPIHandler(artifactORPCRouter, {
-  clientInterceptors: orpcErrorInterceptors
-});
-
 export const createArtifactORPCHandler = (db: DatabaseAdapter) =>
-  defineHandler(async event => {
-    const url = new URL(event.req.url);
-    const isApplicationRoute =
-      /^\/api\/application\/v1\/[^/]+\/entities\/[^/]+\/artifacts(?:\/.*)?$/.test(url.pathname);
-    if (!isApplicationRoute) return;
-    const result = await artifactOpenAPIHandler.handle(
-      requestForApiSurface(event, '/api/application/v1', '/api'),
-      {
-        prefix: '/api',
-        context: { db, event: event as AuthenticatedEvent }
-      }
-    );
-    if (result.matched) return result.response;
+  createOrpcHandler(artifactORPCRouter, {
+    prefix: API_PREFIXES.root,
+    shouldHandle: event =>
+      new RegExp(`^${API_PREFIXES.application}/[^/]+/entities/[^/]+/artifacts(?:/.*)?$`).test(
+        new URL(event.req.url).pathname
+      ),
+    request: event => requestForApiSurface(event, API_PREFIXES.application, API_PREFIXES.root),
+    context: event => ({ db, event: event as AuthenticatedEvent })
   });
