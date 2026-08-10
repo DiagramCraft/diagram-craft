@@ -2,6 +2,7 @@ import type { EntitySummary } from '@arch-register/api-types/entityContract';
 
 export type TabId =
   | 'overview'
+  | 'api'
   | 'topology'
   | 'graph'
   | 'relations'
@@ -14,6 +15,7 @@ export type TabId =
 
 // Sidebar groups: each maps to a single sidebar entry whose page shows these as sub-tabs.
 export const HOME_TAB_IDS: readonly TabId[] = ['overview', 'relations', 'changes'];
+export const API_TAB_IDS: readonly TabId[] = ['api'];
 export const CONTEXT_TAB_IDS: readonly TabId[] = [
   'topology',
   'graph',

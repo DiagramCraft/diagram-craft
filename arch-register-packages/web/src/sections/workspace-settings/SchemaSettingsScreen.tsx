@@ -12,6 +12,7 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import type { FieldType } from '../../lib/schemaPresentation';
 import type {
+  ArtifactCapability,
   EntitySchema,
   EntityTemplate,
   SchemaField,
@@ -49,6 +50,7 @@ const deriveKeyPrefix = (value: string) =>
 type EntityEditorExtra = {
   keyPrefix: string;
   templates: EntityTemplate[];
+  artifactCapabilities: ArtifactCapability[];
 };
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
@@ -98,6 +100,7 @@ export const SchemaSettingsScreen = () => {
         description: schema.description,
         fields: schema.fields,
         templates: schema.templates,
+        artifactCapabilities: schema.artifact_capabilities ?? [],
         groups: schema.groups,
         sharedFieldGroupLinks: schema.shared_field_group_links ?? [],
         validationRules: schema.validation_rules ?? [],
@@ -129,6 +132,8 @@ export const SchemaSettingsScreen = () => {
         JSON.stringify(draft.groups) !== JSON.stringify(schema.groups) ||
         JSON.stringify(draft.sharedFieldGroupLinks) !==
           JSON.stringify(schema.shared_field_group_links ?? []) ||
+        JSON.stringify(draft.artifactCapabilities) !==
+          JSON.stringify(schema.artifact_capabilities ?? []) ||
         JSON.stringify(draft.validationRules) !== JSON.stringify(schema.validation_rules ?? []) ||
         draft.color !== schema.color ||
         draft.icon !== schema.icon,
@@ -143,6 +148,7 @@ export const SchemaSettingsScreen = () => {
             templates: draft.templates,
             groups: draft.groups,
             shared_field_group_links: draft.sharedFieldGroupLinks,
+            artifact_capabilities: draft.artifactCapabilities,
             validation_rules: draft.validationRules,
             color: draft.color,
             icon: draft.icon,
@@ -287,6 +293,7 @@ export const SchemaSettingsScreen = () => {
             enums={enums}
             teams={teams}
             templates={draft.templates}
+            artifactCapabilities={draft.artifactCapabilities}
             validationRules={draft.validationRules}
             validationPreviewPending={previewValidationMutation.isPending}
             validationPreviewMessage={validationPreviewMessage}
@@ -336,6 +343,33 @@ export const SchemaSettingsScreen = () => {
               editor.updateDraft(current => ({
                 ...current,
                 templates: current.templates.filter(template => template.id !== templateId)
+              }))
+            }
+            onAddArtifactCapability={type =>
+              editor.updateDraft(current =>
+                current.artifactCapabilities.some(capability => capability.type === type)
+                  ? current
+                  : {
+                      ...current,
+                      artifactCapabilities: [...current.artifactCapabilities, { type }]
+                    }
+              )
+            }
+            onUpdateArtifactCapability={(index, patch) =>
+              editor.updateDraft(current => ({
+                ...current,
+                artifactCapabilities: current.artifactCapabilities.map(
+                  (capability, capabilityIndex) =>
+                    capabilityIndex === index ? { ...capability, ...patch } : capability
+                )
+              }))
+            }
+            onDeleteArtifactCapability={index =>
+              editor.updateDraft(current => ({
+                ...current,
+                artifactCapabilities: current.artifactCapabilities.filter(
+                  (_, capabilityIndex) => capabilityIndex !== index
+                )
               }))
             }
             onPreviewValidation={() => void previewValidation()}

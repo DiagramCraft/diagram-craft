@@ -1,4 +1,5 @@
 import { Button } from '@diagram-craft/app-components/Button';
+import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -109,27 +110,47 @@ export const ValidationRulesEditor = ({
       ) : (
         <div className={styles.templateList}>
           {rules.map((rule, index) => (
-            <div className={styles.templateRow} key={rule.id}>
-              <div style={{ flex: 1, display: 'grid', gap: 8 }}>
-                <TextInput
-                  value={rule.name}
-                  disabled={!canEdit}
-                  onChange={value => onUpdate(index, { name: value ?? '' })}
-                />
-                <TextArea
-                  value={rule.expression}
-                  disabled={!canEdit}
-                  onChange={value => onUpdate(index, { expression: value ?? '' })}
-                  rows={2}
-                  placeholder="entity.status != 'retired'"
-                />
-                <TextInput
-                  value={rule.message}
-                  disabled={!canEdit}
-                  onChange={value => onUpdate(index, { message: value ?? '' })}
-                  placeholder="Message shown when the rule fails"
-                />
-                <div style={{ display: 'flex', gap: 8 }}>
+            <div className={`${styles.templateRow} ${styles.validationRuleRow}`} key={rule.id}>
+              <div className={styles.validationRuleActions}>
+                <Button variant="ghost" disabled={!canEdit} onClick={() => onToggle(index)}>
+                  {rule.active ? 'Deactivate' : 'Activate'}
+                </Button>
+                {canEdit && (
+                  <Button
+                    variant="ghost"
+                    icon={<TbTrash size={12} />}
+                    onClick={() => onDelete(index)}
+                  >
+                    Delete
+                  </Button>
+                )}
+              </div>
+              <div className={styles.validationRuleFields}>
+                <FormElement label="Name">
+                  <TextInput
+                    value={rule.name}
+                    disabled={!canEdit}
+                    onChange={value => onUpdate(index, { name: value ?? '' })}
+                  />
+                </FormElement>
+                <FormElement label="Expression">
+                  <TextArea
+                    value={rule.expression}
+                    disabled={!canEdit}
+                    onChange={value => onUpdate(index, { expression: value ?? '' })}
+                    rows={2}
+                    placeholder="entity.status != 'retired'"
+                  />
+                </FormElement>
+                <FormElement label="Message">
+                  <TextInput
+                    value={rule.message}
+                    disabled={!canEdit}
+                    onChange={value => onUpdate(index, { message: value ?? '' })}
+                    placeholder="Message shown when the rule fails"
+                  />
+                </FormElement>
+                <FormElement label="Severity">
                   <Select.Root
                     value={rule.severity}
                     disabled={!canEdit}
@@ -142,19 +163,7 @@ export const ValidationRulesEditor = ({
                     <Select.Item value="error">Blocking error</Select.Item>
                     <Select.Item value="warning">Warning</Select.Item>
                   </Select.Root>
-                  <Button variant="ghost" disabled={!canEdit} onClick={() => onToggle(index)}>
-                    {rule.active ? 'Deactivate' : 'Activate'}
-                  </Button>
-                  {canEdit && (
-                    <Button
-                      variant="ghost"
-                      icon={<TbTrash size={12} />}
-                      onClick={() => onDelete(index)}
-                    >
-                      Delete
-                    </Button>
-                  )}
-                </div>
+                </FormElement>
               </div>
             </div>
           ))}

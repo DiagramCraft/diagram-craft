@@ -1064,33 +1064,13 @@
                               "type": "string",
                               "maxLength": 100,
                               "pattern": "^[a-z][a-z0-9-]*$",
-                              "description": "Artifact capability/profile identifier"
-                            },
-                            "features": {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                                "maxLength": 100,
-                                "pattern": "^[a-z][a-z0-9-]*$"
-                              },
-                              "default": [],
-                              "description": "Functionality exposed by this artifact capability"
-                            },
-                            "requiredFields": {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 100
-                              },
-                              "default": [],
-                              "description": "Schema field ids required by this capability"
+                              "description": "Artifact integration/profile enabled for this schema"
                             }
                           },
                           "required": [
                             "type"
                           ],
-                          "description": "A typed artifact capability enabled for entities using the schema"
+                          "description": "An artifact integration enabled for entities using the schema"
                         },
                         "description": "Functionality-driving artifact capabilities enabled by this schema"
                       },
@@ -2229,33 +2209,13 @@
                           "type": "string",
                           "maxLength": 100,
                           "pattern": "^[a-z][a-z0-9-]*$",
-                          "description": "Artifact capability/profile identifier"
-                        },
-                        "features": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "maxLength": 100,
-                            "pattern": "^[a-z][a-z0-9-]*$"
-                          },
-                          "default": [],
-                          "description": "Functionality exposed by this artifact capability"
-                        },
-                        "requiredFields": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 100
-                          },
-                          "default": [],
-                          "description": "Schema field ids required by this capability"
+                          "description": "Artifact integration/profile enabled for this schema"
                         }
                       },
                       "required": [
                         "type"
                       ],
-                      "description": "A typed artifact capability enabled for entities using the schema"
+                      "description": "An artifact integration enabled for entities using the schema"
                     },
                     "description": "Functionality-driving artifact capabilities enabled by this schema"
                   },
@@ -3387,33 +3347,13 @@
                             "type": "string",
                             "maxLength": 100,
                             "pattern": "^[a-z][a-z0-9-]*$",
-                            "description": "Artifact capability/profile identifier"
-                          },
-                          "features": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "maxLength": 100,
-                              "pattern": "^[a-z][a-z0-9-]*$"
-                            },
-                            "default": [],
-                            "description": "Functionality exposed by this artifact capability"
-                          },
-                          "requiredFields": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 100
-                            },
-                            "default": [],
-                            "description": "Schema field ids required by this capability"
+                            "description": "Artifact integration/profile enabled for this schema"
                           }
                         },
                         "required": [
                           "type"
                         ],
-                        "description": "A typed artifact capability enabled for entities using the schema"
+                        "description": "An artifact integration enabled for entities using the schema"
                       },
                       "description": "Functionality-driving artifact capabilities enabled by this schema"
                     },
@@ -4614,33 +4554,13 @@
                             "type": "string",
                             "maxLength": 100,
                             "pattern": "^[a-z][a-z0-9-]*$",
-                            "description": "Artifact capability/profile identifier"
-                          },
-                          "features": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "maxLength": 100,
-                              "pattern": "^[a-z][a-z0-9-]*$"
-                            },
-                            "default": [],
-                            "description": "Functionality exposed by this artifact capability"
-                          },
-                          "requiredFields": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 100
-                            },
-                            "default": [],
-                            "description": "Schema field ids required by this capability"
+                            "description": "Artifact integration/profile enabled for this schema"
                           }
                         },
                         "required": [
                           "type"
                         ],
-                        "description": "A typed artifact capability enabled for entities using the schema"
+                        "description": "An artifact integration enabled for entities using the schema"
                       },
                       "description": "Functionality-driving artifact capabilities enabled by this schema"
                     },
@@ -5787,33 +5707,13 @@
                           "type": "string",
                           "maxLength": 100,
                           "pattern": "^[a-z][a-z0-9-]*$",
-                          "description": "Artifact capability/profile identifier"
-                        },
-                        "features": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "maxLength": 100,
-                            "pattern": "^[a-z][a-z0-9-]*$"
-                          },
-                          "default": [],
-                          "description": "Functionality exposed by this artifact capability"
-                        },
-                        "requiredFields": {
-                          "type": "array",
-                          "items": {
-                            "type": "string",
-                            "minLength": 1,
-                            "maxLength": 100
-                          },
-                          "default": [],
-                          "description": "Schema field ids required by this capability"
+                          "description": "Artifact integration/profile enabled for this schema"
                         }
                       },
                       "required": [
                         "type"
                       ],
-                      "description": "A typed artifact capability enabled for entities using the schema"
+                      "description": "An artifact integration enabled for entities using the schema"
                     },
                     "description": "Functionality-driving artifact capabilities enabled by this schema"
                   },
@@ -6974,33 +6874,13 @@
                             "type": "string",
                             "maxLength": 100,
                             "pattern": "^[a-z][a-z0-9-]*$",
-                            "description": "Artifact capability/profile identifier"
-                          },
-                          "features": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "maxLength": 100,
-                              "pattern": "^[a-z][a-z0-9-]*$"
-                            },
-                            "default": [],
-                            "description": "Functionality exposed by this artifact capability"
-                          },
-                          "requiredFields": {
-                            "type": "array",
-                            "items": {
-                              "type": "string",
-                              "minLength": 1,
-                              "maxLength": 100
-                            },
-                            "default": [],
-                            "description": "Schema field ids required by this capability"
+                            "description": "Artifact integration/profile enabled for this schema"
                           }
                         },
                         "required": [
                           "type"
                         ],
-                        "description": "A typed artifact capability enabled for entities using the schema"
+                        "description": "An artifact integration enabled for entities using the schema"
                       },
                       "description": "Functionality-driving artifact capabilities enabled by this schema"
                     },
@@ -8410,33 +8290,13 @@
                               "type": "string",
                               "maxLength": 100,
                               "pattern": "^[a-z][a-z0-9-]*$",
-                              "description": "Artifact capability/profile identifier"
-                            },
-                            "features": {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                                "maxLength": 100,
-                                "pattern": "^[a-z][a-z0-9-]*$"
-                              },
-                              "default": [],
-                              "description": "Functionality exposed by this artifact capability"
-                            },
-                            "requiredFields": {
-                              "type": "array",
-                              "items": {
-                                "type": "string",
-                                "minLength": 1,
-                                "maxLength": 100
-                              },
-                              "default": [],
-                              "description": "Schema field ids required by this capability"
+                              "description": "Artifact integration/profile enabled for this schema"
                             }
                           },
                           "required": [
                             "type"
                           ],
-                          "description": "A typed artifact capability enabled for entities using the schema"
+                          "description": "An artifact integration enabled for entities using the schema"
                         },
                         "description": "Artifact capabilities enabled by this schema at this version"
                       },

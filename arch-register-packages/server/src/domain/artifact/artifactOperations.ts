@@ -7,6 +7,7 @@ import type {
   ArtifactStatus,
   ArtifactType
 } from '@arch-register/api-types/artifactContract';
+import { getArtifactCapabilityDefinition } from '@arch-register/api-types/artifactContract';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { requireEntityAction, requireWorkspaceCapability } from '../auth/authorization';
@@ -55,13 +56,18 @@ const requireArtifactWrite = (authCtx: AuthorizationContext, entity: EntityDbRes
 };
 
 const assertArtifactCapability = (schema: SchemaDbResult, artifactType: ArtifactType) => {
-  const capability = (schema.artifact_capabilities ?? []).find(item => item.type === artifactType);
-  httpAssert.present(capability, {
+  const enabled = (schema.artifact_capabilities ?? []).some(item => item.type === artifactType);
+  httpAssert.true(enabled, {
     status: 409,
     message: `Schema '${schema.name}' does not declare artifact capability '${artifactType}'`
   });
+  const definition = getArtifactCapabilityDefinition(artifactType);
+  httpAssert.present(definition, {
+    status: 409,
+    message: `Artifact capability '${artifactType}' is not available`
+  });
   const fieldIds = new Set(schema.fields.map(field => field.id));
-  const missingFields = capability.requiredFields.filter(fieldId => !fieldIds.has(fieldId));
+  const missingFields = definition.requiredFields.filter(fieldId => !fieldIds.has(fieldId));
   httpAssert.true(missingFields.length === 0, {
     status: 409,
     message: `Schema '${schema.name}' is missing fields required by artifact capability '${artifactType}': ${missingFields.join(', ')}`

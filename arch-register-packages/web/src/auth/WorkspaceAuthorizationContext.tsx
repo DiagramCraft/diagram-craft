@@ -26,6 +26,7 @@ export type WorkspaceAuthorization = {
   canAdministerWorkspace: boolean;
   canManageGlobalRoles: boolean;
   canViewSchemas: boolean;
+  canViewArtifactContent: boolean;
   canEditSchemas: boolean;
   canManageTeams: boolean;
   canViewAudit: boolean;
@@ -163,6 +164,8 @@ export const useWorkspaceAuthorization = (
       context != null && checker.hasGlobalPermission(context, 'manage_workspace_roles');
     const canViewSchemas =
       hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'ws.view');
+    const canViewArtifactContent =
+      hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'artifact.content.view');
     const canEditSchemas =
       hasWorkspaceContext && checker.hasWorkspaceCapability(context, 'schema.edit');
     const canManageTeams =
@@ -196,6 +199,7 @@ export const useWorkspaceAuthorization = (
       canAdministerWorkspace,
       canManageGlobalRoles,
       canViewSchemas,
+      canViewArtifactContent,
       canEditSchemas,
       canManageTeams,
       canViewAudit,

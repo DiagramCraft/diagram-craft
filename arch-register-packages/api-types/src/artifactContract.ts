@@ -10,6 +10,30 @@ export const artifactTypeSchema = z
   .max(100)
   .describe('Artifact capability/profile identifier, such as api-specification');
 
+/** Integration-owned metadata for an artifact profile available to schemas. */
+export const artifactCapabilityDefinitionSchema = z.object({
+  type: artifactTypeSchema,
+  label: z.string().min(1),
+  description: z.string().min(1),
+  features: z.array(z.string().min(1)),
+  requiredFields: z.array(z.string().min(1))
+});
+
+export type ArtifactCapabilityDefinition = z.infer<typeof artifactCapabilityDefinitionSchema>;
+
+export const artifactCapabilityDefinitions: ArtifactCapabilityDefinition[] = [
+  {
+    type: 'api-specification',
+    label: 'API specification',
+    description: 'OpenAPI and AsyncAPI documents with normalized operations or messages.',
+    features: ['operations', 'documentation'],
+    requiredFields: ['api_type', 'api_version']
+  }
+];
+
+export const getArtifactCapabilityDefinition = (type: string) =>
+  artifactCapabilityDefinitions.find(capability => capability.type === type);
+
 export const artifactSourceKindSchema = z
   .enum(['document', 'url', 'repository', 'link'])
   .describe('How an artifact is provided');
@@ -281,6 +305,8 @@ export const artifactContract = oc.tag('Artifacts').router({
 });
 
 export type ArtifactType = z.infer<typeof artifactTypeSchema>;
+export type Artifact = z.infer<typeof artifactSchema>;
+export type ArtifactRevision = z.infer<typeof artifactRevisionSchema>;
 export type ArtifactSourceKind = z.infer<typeof artifactSourceKindSchema>;
 export type ArtifactStatus = z.infer<typeof artifactStatusSchema>;
 export type ArtifactDiagnosticCategory = z.infer<typeof artifactDiagnosticCategorySchema>;

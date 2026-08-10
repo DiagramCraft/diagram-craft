@@ -78,6 +78,112 @@
   flex: 1;
 }
 
+.capabilityDescription {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+}
+
+.capabilityList {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.capabilityCard {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 12px;
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}
+
+.capabilityHeader {
+  display: flex;
+  gap: 12px;
+}
+
+.capabilityIntegration {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 12px;
+  width: 100%;
+}
+
+.capabilityIntegration > :first-child {
+  flex: 1;
+  min-width: 0;
+}
+
+.capabilityMetadata {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 16px;
+  padding-top: 2px;
+}
+
+.capabilitySubheading {
+  color: var(--base-fg-dim);
+  font-size: 11px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.capabilityTags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+  margin-top: 6px;
+}
+
+.capabilityTag {
+  padding: 2px 7px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  color: var(--base-fg-dim);
+  background: var(--panel-bg);
+  font-size: 10px;
+}
+
+.capabilityFieldList {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 6px;
+}
+
+.capabilityFieldOption {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  color: var(--base-fg-dim);
+  font-size: 11px;
+}
+
+.capabilityFieldOption code {
+  color: var(--cmp-fg-disabled);
+  font-size: 10px;
+}
+
+.capabilityUnknownFields {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  color: var(--warning-fg);
+  font-size: 11px;
+}
+
+@media (max-width: 700px) {
+  .capabilityMetadata {
+    grid-template-columns: 1fr;
+  }
+}
+
 .fieldsTable {
   display: flex;
   flex-direction: column;
@@ -204,6 +310,42 @@
 
 .templateRow:last-child {
   border-bottom: 0;
+}
+
+.validationRuleRow {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto;
+  grid-template-areas: "fields actions";
+  align-items: start;
+  gap: 12px;
+  padding: 12px;
+}
+
+.validationRuleActions {
+  grid-area: actions;
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
+.validationRuleFields {
+  grid-area: fields;
+  display: grid;
+  gap: 10px;
+}
+
+@media (max-width: 700px) {
+  .validationRuleRow {
+    grid-template-columns: minmax(0, 1fr);
+    grid-template-areas:
+      "actions"
+      "fields";
+  }
+
+  .validationRuleActions {
+    grid-row: 1;
+    justify-content: flex-start;
+  }
 }
 
 .templateName {

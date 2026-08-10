@@ -25,9 +25,13 @@ const props: ComponentProps<typeof SchemaEditorTabs> = {
   onRemoveGroup: vi.fn(),
   onRemoveSharedGroup: vi.fn(),
   templates: [],
+  artifactCapabilities: [],
   onAddTemplate: vi.fn(),
   onEditTemplate: vi.fn(),
   onDeleteTemplate: vi.fn(),
+  onAddArtifactCapability: vi.fn(),
+  onUpdateArtifactCapability: vi.fn(),
+  onDeleteArtifactCapability: vi.fn(),
   validationRules: [],
   validationPreviewPending: false,
   validationPreviewMessage: null,
@@ -43,6 +47,7 @@ describe('SchemaEditorTabs', () => {
     const markup = renderToStaticMarkup(<SchemaEditorTabs {...props} />);
     expect(markup).toContain('Fields');
     expect(markup).toContain('Templates');
+    expect(markup).toContain('Capabilities');
     expect(markup).toContain('Validation');
   });
 });

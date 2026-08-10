@@ -1,5 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import {
+  artifactCapabilitySchema,
   isReferenceOrContainmentField,
   isRelationLikeField,
   isTypedRelationField,
@@ -12,6 +13,18 @@ const baseField = {
   name: 'Field 1',
   requirementLevel: 'optional' as const
 };
+
+describe('artifact capabilities', () => {
+  it('stores only the integration profile enabled by a schema', () => {
+    const result = artifactCapabilitySchema.parse({
+      type: 'api-specification',
+      features: ['operations'],
+      requiredFields: ['api_type']
+    });
+
+    expect(result).toEqual({ type: 'api-specification' });
+  });
+});
 
 describe('typedRelationFieldSchema', () => {
   it('parses a valid typedRelation field', () => {

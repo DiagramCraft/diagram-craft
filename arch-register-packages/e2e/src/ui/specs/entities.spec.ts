@@ -6,6 +6,7 @@ import {
   authApiEntity,
   customerApiEntity,
   frontendAppEntity,
+  notificationsApiEntity,
   seededApiEntityCount
 } from '../support/entities';
 import { apiSchema } from '../support/schemas';
@@ -120,6 +121,62 @@ test.describe('entities section', () => {
       'aria-selected',
       'true'
     );
+  });
+
+  test('browses normalized OpenAPI operations and keeps API filters shareable', async ({
+    page
+  }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+    await entitiesPage.goto();
+    await entitiesPage.seedApiSpecification(authApiEntity.id, {
+      openapi: '3.1.0',
+      info: { title: 'Auth API', version: 'v1' },
+      paths: {
+        '/pets': {
+          get: {
+            operationId: 'listPets',
+            summary: 'List pets',
+            responses: { '200': { description: 'ok' } }
+          }
+        }
+      }
+    });
+    await entitiesPage.goto();
+    await entitiesPage.openApiCatalog(authApiEntity.name);
+
+    await expect(page.getByText('OpenAPI catalog')).toBeVisible();
+    await expect(page.getByText('listPets')).toBeVisible();
+    await page.getByPlaceholder('Search identifier, summary, path or channel').fill('listPets');
+    await expect(page).toHaveURL(/apiQ=listPets/);
+
+    await page.reload();
+    await expect(page.getByText('listPets')).toBeVisible();
+    await expect(page.getByRole('button', { name: 'View raw source' })).toHaveCount(0);
+    await page.locator('summary').filter({ hasText: 'listPets' }).click();
+    await page.getByRole('button', { name: 'View source' }).click();
+    await expect(page.getByRole('alertdialog', { name: 'Raw API source' })).toBeVisible();
+  });
+
+  test('browses normalized AsyncAPI messages', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+    await entitiesPage.goto();
+    await entitiesPage.seedApiSpecification(notificationsApiEntity.id, {
+      asyncapi: '2.6.0',
+      info: { title: 'Notifications', version: '1.0.0' },
+      channels: {
+        'orders.created': {
+          publish: {
+            message: { payload: { type: 'object' } }
+          }
+        }
+      }
+    });
+    await entitiesPage.goto();
+    await entitiesPage.openApiCatalog(notificationsApiEntity.name);
+
+    await expect(page.getByText('AsyncAPI catalog')).toBeVisible();
+    await expect(page.getByText('orders.created', { exact: true })).toBeVisible();
+    await expect(page.locator('summary').getByText('PUBLISH', { exact: true })).toBeVisible();
   });
 
   test('restores entity filters through reload and browser history', async ({ page }) => {

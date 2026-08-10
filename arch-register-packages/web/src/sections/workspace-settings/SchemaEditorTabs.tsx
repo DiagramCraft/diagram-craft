@@ -2,6 +2,7 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import type {
   EntitySchema,
   EntityTemplate,
+  ArtifactCapability,
   SchemaField,
   SchemaGroup,
   SharedFieldGroupLink,
@@ -13,8 +14,9 @@ import type { FieldType } from '../../lib/schemaPresentation';
 import { SchemaFieldsEditor } from './SchemaFieldsEditor';
 import { SchemaTemplatesEditor } from './SchemaTemplatesEditor';
 import { SchemaValidationEditor } from './SchemaValidationEditor';
+import { SchemaArtifactCapabilitiesEditor } from './SchemaArtifactCapabilitiesEditor';
 
-export type SchemaPanelTab = 'fields' | 'templates' | 'validation';
+export type SchemaPanelTab = 'fields' | 'templates' | 'capabilities' | 'validation';
 
 export const SchemaEditorTabs = ({
   activeTab,
@@ -38,9 +40,13 @@ export const SchemaEditorTabs = ({
   onRemoveGroup,
   onRemoveSharedGroup,
   templates,
+  artifactCapabilities,
   onAddTemplate,
   onEditTemplate,
   onDeleteTemplate,
+  onAddArtifactCapability,
+  onUpdateArtifactCapability,
+  onDeleteArtifactCapability,
   validationRules,
   validationPreviewPending,
   validationPreviewMessage,
@@ -71,9 +77,13 @@ export const SchemaEditorTabs = ({
   onRemoveGroup: (groupId: string) => void;
   onRemoveSharedGroup: (groupId: string) => void;
   templates: EntityTemplate[];
+  artifactCapabilities: ArtifactCapability[];
   onAddTemplate: () => void;
   onEditTemplate: (template: EntityTemplate) => void;
   onDeleteTemplate: (templateId: string) => void;
+  onAddArtifactCapability: (type: string) => void;
+  onUpdateArtifactCapability: (index: number, patch: Partial<ArtifactCapability>) => void;
+  onDeleteArtifactCapability: (index: number) => void;
   validationRules: ValidationRule[];
   validationPreviewPending: boolean;
   validationPreviewMessage: string | null;
@@ -87,6 +97,7 @@ export const SchemaEditorTabs = ({
     <Tabs.List aria-label="Schema editor sections">
       <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
       <Tabs.Trigger value="templates">Templates</Tabs.Trigger>
+      <Tabs.Trigger value="capabilities">Capabilities</Tabs.Trigger>
       <Tabs.Trigger value="validation">Validation</Tabs.Trigger>
     </Tabs.List>
     <Tabs.Content value="fields" style={{ height: 'auto' }}>
@@ -118,6 +129,16 @@ export const SchemaEditorTabs = ({
         onAdd={onAddTemplate}
         onEdit={onEditTemplate}
         onDelete={onDeleteTemplate}
+      />
+    </Tabs.Content>
+    <Tabs.Content value="capabilities" style={{ height: 'auto' }}>
+      <SchemaArtifactCapabilitiesEditor
+        capabilities={artifactCapabilities}
+        fields={fields}
+        canEdit={canEdit}
+        onAdd={onAddArtifactCapability}
+        onUpdate={onUpdateArtifactCapability}
+        onDelete={onDeleteArtifactCapability}
       />
     </Tabs.Content>
     <Tabs.Content value="validation" style={{ height: 'auto' }}>

@@ -45,6 +45,7 @@ import { entityChangeContract } from '@arch-register/api-types/entityChangeContr
 import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
 import { governanceContract } from '@arch-register/api-types/governanceContract';
 import { governanceWorkflowConfigContract } from '@arch-register/api-types/governanceWorkflowConfigContract';
+import { artifactContract } from '@arch-register/api-types/artifactContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { normalizeApiError } from './http';
 
@@ -86,6 +87,7 @@ const applicationContracts = {
   ...entityDeprecationContract,
   ...governanceContract,
   ...governanceWorkflowConfigContract,
+  ...artifactContract,
   ...workspaceEnumContract,
   ...workspaceSchemaContract,
   ...workspaceRelationSchemaContract,
@@ -162,6 +164,7 @@ export const orpcClient = {
   entityDeprecations: applicationClient.entityDeprecations,
   governance: applicationClient.governance,
   governanceWorkflowConfig: applicationClient.governanceWorkflowConfig,
+  artifacts: applicationClient.artifacts,
   enums: applicationClient.enums,
   fieldGroups: applicationClient.fieldGroups,
   schemas: applicationClient.schemas,

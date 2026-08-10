@@ -45,6 +45,7 @@ import { EntityOverviewSection } from './components/EntityOverviewSection';
 import { EntityContextSection } from './components/EntityContextSection';
 import { EntityCollaborationSection } from './components/EntityCollaborationSection';
 import { EntityPlanningReviewSection } from './components/EntityPlanningReviewSection';
+import { EntityApiSection } from './EntityApiSection';
 import { EmptyState } from '../../components/EmptyState';
 import { LoadingState } from '../../components/LoadingState';
 import {
@@ -87,7 +88,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const navigateToEntities = useCallback(() => {
     navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } });
   }, [navigate, workspaceSlug]);
-  const tab = search.tab ?? 'overview';
+  const requestedTab = search.tab ?? 'overview';
   const setTab = useCallback(
     (nextTab: TabId) => {
       const route = contentFolder
@@ -156,6 +157,23 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const [initiationFieldValues, setInitiationFieldValues] = useState<Record<string, unknown>>({});
 
   const schema = schemaEntry?.schema ?? null;
+  const apiCapable =
+    schema?.artifact_capabilities?.some(capability => capability.type === 'api-specification') ??
+    false;
+  const tab = requestedTab === 'api' && !apiCapable ? 'overview' : requestedTab;
+  const updateApiSearch = useCallback(
+    (patch: Partial<EntityDetailSearchParams>, replace = true) => {
+      const route = contentFolder
+        ? entityContentFolderRoute(workspaceSlug, asEntityPublicId(entityId), contentFolder)
+        : entityDetailRoute(workspaceSlug, asEntityPublicId(entityId));
+      navigate({
+        ...route,
+        search: { ...search, ...patch },
+        replace
+      });
+    },
+    [contentFolder, entityId, navigate, search, workspaceSlug]
+  );
   const { fields: entityInitiationFields } = useGovernanceInitiationFields(
     workspaceId,
     'entity.change-case',
@@ -348,6 +366,17 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           workspaceSlug={workspaceSlug}
           entityId={entityId}
           folder={contentFolder}
+        />
+      )}
+
+      {!contentFolder && tab === 'api' && apiCapable && (
+        <EntityApiSection
+          workspaceId={workspaceId}
+          entity={entity}
+          outgoing={outgoing}
+          incoming={incoming}
+          search={search}
+          onSearchChange={updateApiSearch}
         />
       )}
 

@@ -1,6 +1,7 @@
 import type {
   EntitySchema,
   EntityTemplate,
+  ArtifactCapability,
   SchemaField,
   SchemaGroup,
   SharedFieldGroupLink,
@@ -33,6 +34,7 @@ export const SchemaEditorForm = ({
   enums,
   teams,
   templates,
+  artifactCapabilities,
   validationRules,
   validationPreviewPending,
   validationPreviewMessage,
@@ -54,6 +56,9 @@ export const SchemaEditorForm = ({
   onAddTemplate,
   onEditTemplate,
   onDeleteTemplate,
+  onAddArtifactCapability,
+  onUpdateArtifactCapability,
+  onDeleteArtifactCapability,
   onPreviewValidation,
   onAddValidationRule,
   onUpdateValidationRule,
@@ -80,6 +85,7 @@ export const SchemaEditorForm = ({
   enums: WorkspaceEnum[];
   teams: { id: string; name: string }[];
   templates: EntityTemplate[];
+  artifactCapabilities: ArtifactCapability[];
   validationRules: ValidationRule[];
   validationPreviewPending: boolean;
   validationPreviewMessage: string | null;
@@ -101,6 +107,9 @@ export const SchemaEditorForm = ({
   onAddTemplate: () => void;
   onEditTemplate: (template: EntityTemplate) => void;
   onDeleteTemplate: (templateId: string) => void;
+  onAddArtifactCapability: (type: string) => void;
+  onUpdateArtifactCapability: (index: number, patch: Partial<ArtifactCapability>) => void;
+  onDeleteArtifactCapability: (index: number) => void;
   onPreviewValidation: () => void;
   onAddValidationRule: () => void;
   onUpdateValidationRule: (index: number, patch: Partial<ValidationRule>) => void;
@@ -160,9 +169,13 @@ export const SchemaEditorForm = ({
       onRemoveGroup={onRemoveGroup}
       onRemoveSharedGroup={onRemoveSharedGroup}
       templates={templates}
+      artifactCapabilities={artifactCapabilities}
       onAddTemplate={onAddTemplate}
       onEditTemplate={onEditTemplate}
       onDeleteTemplate={onDeleteTemplate}
+      onAddArtifactCapability={onAddArtifactCapability}
+      onUpdateArtifactCapability={onUpdateArtifactCapability}
+      onDeleteArtifactCapability={onDeleteArtifactCapability}
       validationRules={validationRules}
       validationPreviewPending={validationPreviewPending}
       validationPreviewMessage={validationPreviewMessage}

@@ -4,6 +4,7 @@ import { invalidateEntityQueries } from '../queries/entities';
 import { invalidateAuditQueries } from '../queries/audit';
 import { workspaceAnalyticsKeys } from '../queries/workspaceAnalytics';
 import {
+  ArtifactCapability,
   EntityTemplate,
   FieldMigrations,
   SchemaField,
@@ -69,6 +70,7 @@ export const useUpdateSchema = (workspaceId: string) => {
         templates?: EntityTemplate[];
         groups?: SchemaGroup[];
         shared_field_group_links?: SharedFieldGroupLink[];
+        artifact_capabilities?: ArtifactCapability[];
         validation_rules?: ValidationRule[];
         color?: string | null;
         icon?: string | null;
@@ -94,6 +96,8 @@ export const useUpdateSchema = (workspaceId: string) => {
                   groups: variables.data.groups ?? schema.groups,
                   shared_field_group_links:
                     variables.data.shared_field_group_links ?? schema.shared_field_group_links,
+                  artifact_capabilities:
+                    variables.data.artifact_capabilities ?? schema.artifact_capabilities,
                   validation_rules: variables.data.validation_rules ?? schema.validation_rules,
                   color: variables.data.color ?? schema.color,
                   icon: variables.data.icon ?? schema.icon

@@ -7,6 +7,7 @@ import {
   assertRefreshModeRequiresExternalKind,
   namedGroupSchema
 } from '@arch-register/api-types/common';
+import { artifactTypeSchema } from './artifactContract';
 
 const requirementLevelSchema = z
   .enum(['required', 'expected', 'optional'])
@@ -265,26 +266,9 @@ const sharedFieldGroupLinkSchema = z
 
 export const artifactCapabilitySchema = z
   .object({
-    type: z
-      .string()
-      .regex(/^[a-z][a-z0-9-]*$/)
-      .max(100)
-      .describe('Artifact capability/profile identifier'),
-    features: z
-      .array(
-        z
-          .string()
-          .regex(/^[a-z][a-z0-9-]*$/)
-          .max(100)
-      )
-      .default([])
-      .describe('Functionality exposed by this artifact capability'),
-    requiredFields: z
-      .array(z.string().min(1).max(100))
-      .default([])
-      .describe('Schema field ids required by this capability')
+    type: artifactTypeSchema.describe('Artifact integration/profile enabled for this schema')
   })
-  .describe('A typed artifact capability enabled for entities using the schema');
+  .describe('An artifact integration enabled for entities using the schema');
 
 export type ArtifactCapability = z.infer<typeof artifactCapabilitySchema>;
 export type ValidationRule = z.infer<typeof validationRuleSchema>;

@@ -67,7 +67,8 @@
             read-only derived fields calculated using a sandboxed expression over sibling fields and a bounded
             one-hop JSON entity context (`entity`, including direct references, containment, and typed-relation targets), with a
             declared text, number, currency, select, boolean, or rating result type,
-            schema-level Bonsai validation rules with blocking errors or non-blocking warnings, field-specific messages,
+            enable supported artifact integrations from an integration catalog, with each integration declaring its
+            available features and required schema fields; schema-level Bonsai validation rules with blocking errors or non-blocking warnings, field-specific messages,
             activation/deactivation, revision through schema versioning, and preview testing against existing entities;
             relation types use the same Bonsai rule model over a depth-1 relation context (`relation`, including its
             typed fields and `in`/`out` endpoint projections),
@@ -125,13 +126,17 @@
           relation targets.
 
         - @id:ar.entities.artifacts Schemas can opt entities into typed, functionality-driving artifacts such as API
-          specifications or compliance evidence. Authorized users can register artifact sources, retain immutable
-          revisions, inspect processing status and safe diagnostics, and retrieve raw content through a separate
-          permission. Artifact capabilities declare their supported features and required schema fields; the catalog
+          specifications or compliance evidence. Authorized users can upload document-based API specifications from
+          entity details, register artifact sources, retain immutable revisions, inspect processing status and safe
+          diagnostics, and retrieve raw content through a separate permission. Artifact capabilities declare their
+          supported features and required schema fields; the catalog
           does not treat arbitrary binary documents as a generic attachment store. OpenAPI 3.0/3.1 and AsyncAPI 2.x/3.0
           documents can be validated and synchronously projected into queryable operations or messages with stable
           identifiers, source pointers, summaries, filters, pagination, and visible partial/unsupported diagnostics;
-          external references are preserved without network fetching.
+          external references are preserved without network fetching. API-capable entity details include a dedicated
+          API catalog section for browsing normalized operations or messages, inspecting source/revision/status and
+          diagnostics, filtering and paginating results, and opening permitted raw or canonical external sources;
+          stale and failed ingestion is explicitly distinguished from the last successful revision.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can

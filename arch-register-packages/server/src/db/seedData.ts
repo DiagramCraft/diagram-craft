@@ -1096,9 +1096,7 @@ export const seedSchemas: SchemaDbResult[] = (
       ],
       artifact_capabilities: [
         {
-          type: 'api-specification',
-          features: ['operations', 'documentation'],
-          requiredFields: ['api_type', 'api_version']
+          type: 'api-specification'
         }
       ],
       color: AR_COLOR_BLUE,
