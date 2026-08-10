@@ -1094,7 +1094,7 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         { id: 'api_version', name: 'API Version', type: 'text' }
       ],
-      artifact_capabilities: [
+      entity_capabilities: [
         {
           type: 'api-specification'
         }

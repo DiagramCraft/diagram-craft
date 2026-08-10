@@ -1,6 +1,6 @@
 -- #2826: generic functionality-driving artifact lifecycle.
-ALTER TABLE entity_schema ADD COLUMN IF NOT EXISTS artifact_capabilities JSONB NOT NULL DEFAULT '[]';
-ALTER TABLE entity_schema_version ADD COLUMN IF NOT EXISTS artifact_capabilities JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE entity_schema ADD COLUMN IF NOT EXISTS entity_capabilities JSONB NOT NULL DEFAULT '[]';
+ALTER TABLE entity_schema_version ADD COLUMN IF NOT EXISTS entity_capabilities JSONB NOT NULL DEFAULT '[]';
 
 CREATE TABLE catalog_artifact (
   id                    UUID PRIMARY KEY,

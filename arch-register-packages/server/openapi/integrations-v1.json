@@ -1055,7 +1055,7 @@
                         },
                         "description": "Included workspace shared fieldgroups, in display order"
                       },
-                      "artifact_capabilities": {
+                      "entity_capabilities": {
                         "type": "array",
                         "items": {
                           "type": "object",
@@ -1064,15 +1064,15 @@
                               "type": "string",
                               "maxLength": 100,
                               "pattern": "^[a-z][a-z0-9-]*$",
-                              "description": "Artifact integration/profile enabled for this schema"
+                              "description": "Entity capability enabled for this schema"
                             }
                           },
                           "required": [
                             "type"
                           ],
-                          "description": "An artifact integration enabled for entities using the schema"
+                          "description": "An entity capability enabled for entities using the schema"
                         },
-                        "description": "Functionality-driving artifact capabilities enabled by this schema"
+                        "description": "Integration-backed entity capabilities enabled by this schema"
                       },
                       "validation_rules": {
                         "type": "array",

@@ -1055,7 +1055,7 @@
                         },
                         "description": "Included workspace shared fieldgroups, in display order"
                       },
-                      "artifact_capabilities": {
+                      "entity_capabilities": {
                         "type": "array",
                         "items": {
                           "type": "object",
@@ -1064,15 +1064,15 @@
                               "type": "string",
                               "maxLength": 100,
                               "pattern": "^[a-z][a-z0-9-]*$",
-                              "description": "Artifact integration/profile enabled for this schema"
+                              "description": "Entity capability enabled for this schema"
                             }
                           },
                           "required": [
                             "type"
                           ],
-                          "description": "An artifact integration enabled for entities using the schema"
+                          "description": "An entity capability enabled for entities using the schema"
                         },
-                        "description": "Functionality-driving artifact capabilities enabled by this schema"
+                        "description": "Integration-backed entity capabilities enabled by this schema"
                       },
                       "validation_rules": {
                         "type": "array",
@@ -2200,7 +2200,7 @@
                     },
                     "description": "Included workspace shared fieldgroups"
                   },
-                  "artifact_capabilities": {
+                  "entity_capabilities": {
                     "type": "array",
                     "items": {
                       "type": "object",
@@ -2209,15 +2209,15 @@
                           "type": "string",
                           "maxLength": 100,
                           "pattern": "^[a-z][a-z0-9-]*$",
-                          "description": "Artifact integration/profile enabled for this schema"
+                          "description": "Entity capability enabled for this schema"
                         }
                       },
                       "required": [
                         "type"
                       ],
-                      "description": "An artifact integration enabled for entities using the schema"
+                      "description": "An entity capability enabled for entities using the schema"
                     },
-                    "description": "Functionality-driving artifact capabilities enabled by this schema"
+                    "description": "Integration-backed entity capabilities enabled by this schema"
                   },
                   "validation_rules": {
                     "type": "array",
@@ -3338,7 +3338,7 @@
                       },
                       "description": "Included workspace shared fieldgroups, in display order"
                     },
-                    "artifact_capabilities": {
+                    "entity_capabilities": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -3347,15 +3347,15 @@
                             "type": "string",
                             "maxLength": 100,
                             "pattern": "^[a-z][a-z0-9-]*$",
-                            "description": "Artifact integration/profile enabled for this schema"
+                            "description": "Entity capability enabled for this schema"
                           }
                         },
                         "required": [
                           "type"
                         ],
-                        "description": "An artifact integration enabled for entities using the schema"
+                        "description": "An entity capability enabled for entities using the schema"
                       },
-                      "description": "Functionality-driving artifact capabilities enabled by this schema"
+                      "description": "Integration-backed entity capabilities enabled by this schema"
                     },
                     "validation_rules": {
                       "type": "array",
@@ -4545,7 +4545,7 @@
                       },
                       "description": "Included workspace shared fieldgroups, in display order"
                     },
-                    "artifact_capabilities": {
+                    "entity_capabilities": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -4554,15 +4554,15 @@
                             "type": "string",
                             "maxLength": 100,
                             "pattern": "^[a-z][a-z0-9-]*$",
-                            "description": "Artifact integration/profile enabled for this schema"
+                            "description": "Entity capability enabled for this schema"
                           }
                         },
                         "required": [
                           "type"
                         ],
-                        "description": "An artifact integration enabled for entities using the schema"
+                        "description": "An entity capability enabled for entities using the schema"
                       },
-                      "description": "Functionality-driving artifact capabilities enabled by this schema"
+                      "description": "Integration-backed entity capabilities enabled by this schema"
                     },
                     "validation_rules": {
                       "type": "array",
@@ -5698,7 +5698,7 @@
                     },
                     "description": "Included workspace shared fieldgroups"
                   },
-                  "artifact_capabilities": {
+                  "entity_capabilities": {
                     "type": "array",
                     "items": {
                       "type": "object",
@@ -5707,15 +5707,15 @@
                           "type": "string",
                           "maxLength": 100,
                           "pattern": "^[a-z][a-z0-9-]*$",
-                          "description": "Artifact integration/profile enabled for this schema"
+                          "description": "Entity capability enabled for this schema"
                         }
                       },
                       "required": [
                         "type"
                       ],
-                      "description": "An artifact integration enabled for entities using the schema"
+                      "description": "An entity capability enabled for entities using the schema"
                     },
-                    "description": "Functionality-driving artifact capabilities enabled by this schema"
+                    "description": "Integration-backed entity capabilities enabled by this schema"
                   },
                   "validation_rules": {
                     "type": "array",
@@ -6865,7 +6865,7 @@
                       },
                       "description": "Included workspace shared fieldgroups, in display order"
                     },
-                    "artifact_capabilities": {
+                    "entity_capabilities": {
                       "type": "array",
                       "items": {
                         "type": "object",
@@ -6874,15 +6874,15 @@
                             "type": "string",
                             "maxLength": 100,
                             "pattern": "^[a-z][a-z0-9-]*$",
-                            "description": "Artifact integration/profile enabled for this schema"
+                            "description": "Entity capability enabled for this schema"
                           }
                         },
                         "required": [
                           "type"
                         ],
-                        "description": "An artifact integration enabled for entities using the schema"
+                        "description": "An entity capability enabled for entities using the schema"
                       },
-                      "description": "Functionality-driving artifact capabilities enabled by this schema"
+                      "description": "Integration-backed entity capabilities enabled by this schema"
                     },
                     "validation_rules": {
                       "type": "array",
@@ -8281,7 +8281,7 @@
                         },
                         "description": "Included workspace shared fieldgroups at this version"
                       },
-                      "artifact_capabilities": {
+                      "entity_capabilities": {
                         "type": "array",
                         "items": {
                           "type": "object",
@@ -8290,15 +8290,15 @@
                               "type": "string",
                               "maxLength": 100,
                               "pattern": "^[a-z][a-z0-9-]*$",
-                              "description": "Artifact integration/profile enabled for this schema"
+                              "description": "Entity capability enabled for this schema"
                             }
                           },
                           "required": [
                             "type"
                           ],
-                          "description": "An artifact integration enabled for entities using the schema"
+                          "description": "An entity capability enabled for entities using the schema"
                         },
-                        "description": "Artifact capabilities enabled by this schema at this version"
+                        "description": "Entity capabilities enabled by this schema at this version"
                       },
                       "validation_rules": {
                         "type": "array",
@@ -8407,7 +8407,7 @@
                       "fields",
                       "templates",
                       "groups",
-                      "artifact_capabilities",
+                      "entity_capabilities",
                       "color",
                       "icon",
                       "changeSummary",
@@ -119414,7 +119414,7 @@
                             "type": "string",
                             "maxLength": 100,
                             "pattern": "^[a-z][a-z0-9-]*$",
-                            "description": "Artifact capability/profile identifier, such as api-specification"
+                            "description": "Artifact profile identifier, such as api-specification"
                           },
                           "kind": {
                             "enum": [
@@ -119591,7 +119591,7 @@
       "post": {
         "operationId": "artifacts.create",
         "summary": "Register an entity artifact",
-        "description": "Registers a typed artifact capability and its source without accepting arbitrary binary documents.",
+        "description": "Registers a typed artifact profile and its source without accepting arbitrary binary documents.",
         "tags": [
           "Artifacts",
           "Artifacts"
@@ -119625,7 +119625,7 @@
                     "type": "string",
                     "maxLength": 100,
                     "pattern": "^[a-z][a-z0-9-]*$",
-                    "description": "Artifact capability/profile identifier, such as api-specification"
+                    "description": "Artifact profile identifier, such as api-specification"
                   },
                   "kind": {
                     "enum": [
@@ -119692,7 +119692,7 @@
                       "type": "string",
                       "maxLength": 100,
                       "pattern": "^[a-z][a-z0-9-]*$",
-                      "description": "Artifact capability/profile identifier, such as api-specification"
+                      "description": "Artifact profile identifier, such as api-specification"
                     },
                     "kind": {
                       "enum": [
@@ -119973,7 +119973,7 @@
                       "type": "string",
                       "maxLength": 100,
                       "pattern": "^[a-z][a-z0-9-]*$",
-                      "description": "Artifact capability/profile identifier, such as api-specification"
+                      "description": "Artifact profile identifier, such as api-specification"
                     },
                     "kind": {
                       "enum": [
