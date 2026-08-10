@@ -3,6 +3,7 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { LoadingState } from '../components/LoadingState';
+import { Banner } from '../components/Banner';
 import { useRelation, useUpdateRelation } from '../hooks/useRelations';
 import { useRelationSchemas } from '../hooks/useRelationSchemas';
 import { useTeams, useLifecycleStates } from '../hooks/useWorkspaceConfig';
@@ -63,6 +64,7 @@ export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: P
   const [values, setValues] = useState<Record<string, string | string[]>>({});
   const [owner, setOwner] = useState('');
   const [lifecycle, setLifecycle] = useState('');
+  const [error, setError] = useState('');
 
   useEffect(() => {
     if (!open || !record) return;
@@ -72,10 +74,12 @@ export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: P
     setValues(initial);
     setOwner(record._owner?.id ?? '');
     setLifecycle(record._lifecycle?.id ?? '');
+    setError('');
   }, [open, record, relationSchemas]);
 
   const handleSave = async () => {
     if (!record) return;
+    setError('');
     const data: Record<string, unknown> = {};
     for (const field of activeFields) {
       const raw = values[field.id] ?? (field.type === 'entityRelation' ? [] : '');
@@ -91,7 +95,8 @@ export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: P
     if (Object.keys(data).length > 0) {
       try {
         await updateMutation.mutateAsync({ relationId: record._uid, data });
-      } catch {
+      } catch (caught) {
+        setError(caught instanceof Error ? caught.message : 'Unable to save relation');
         return;
       }
     }
@@ -162,6 +167,7 @@ export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: P
               />
             ))
           )}
+          {error && <Banner variant="error">{error}</Banner>}
         </div>
       )}
     </Dialog>
