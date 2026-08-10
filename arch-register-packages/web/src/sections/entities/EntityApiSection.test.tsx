@@ -252,4 +252,30 @@ describe('EntityApiSection', () => {
     expect(notConfiguredMarkup).toContain('No API specification configured');
     expect(notConfiguredMarkup).toContain('Upload API specification');
   });
+
+  it('shows a manual refresh control for URL sources and keeps pending status visible', () => {
+    const currentMarkup = renderApi(
+      makeEntity('openapi'),
+      makeArtifact({
+        kind: 'url',
+        location: 'https://example.com/openapi.yaml'
+      }),
+      makeProjection([makeItem()])
+    );
+    expect(currentMarkup).toContain('Refresh source');
+
+    const pendingMarkup = renderApi(
+      makeEntity('openapi'),
+      makeArtifact({
+        kind: 'url',
+        location: 'https://example.com/openapi.yaml',
+        status: 'pending',
+        currentRevisionId: null,
+        lastSuccessAt: null
+      }),
+      undefined
+    );
+    expect(pendingMarkup).toContain('Pending');
+    expect(pendingMarkup).toContain('The API source is being processed');
+  });
 });
