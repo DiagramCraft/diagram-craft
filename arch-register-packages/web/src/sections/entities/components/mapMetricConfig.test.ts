@@ -159,7 +159,7 @@ describe('getMetricPathOptions', () => {
         name: 'Contracts',
         type: 'typedRelation',
         relationSchemaId: 'system-contract',
-        direction: 'out',
+        direction: 'in',
         requirementLevel: 'optional'
       }
     ]
@@ -188,7 +188,7 @@ describe('getMetricPathOptions', () => {
         kind: 'typedRelation',
         fieldId: 'contracts',
         relationSchemaId: 'system-contract',
-        direction: 'out'
+        direction: 'in'
       },
       label: 'Contracts → System Contract',
       targetSchemaIds: ['contract']

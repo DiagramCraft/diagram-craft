@@ -46,7 +46,7 @@ export const getChildSchemas = (
     schema.fields.flatMap(field => {
       if (field.type !== 'typedRelation') return [];
       const relationSchema = relationSchemaById.get(field.relationSchemaId);
-      const endpoint = field.direction === 'out' ? relationSchema?.out : relationSchema?.in;
+      const endpoint = field.direction === 'in' ? relationSchema?.out : relationSchema?.in;
       return endpoint ? resolveEndpointSchemaIds(endpoint, schemas) : [];
     });
   const parentTypedRelationTargets = parentSchema ? typedRelationTargets(parentSchema) : [];
@@ -134,7 +134,7 @@ const findTraversalStep = (
     if (field.type !== 'typedRelation') return false;
     const relationSchema = relationSchemaById.get(field.relationSchemaId);
     const targetSchemaIds =
-      field.direction === 'out' ? relationSchema?.out.schemaIds : relationSchema?.in.schemaIds;
+      field.direction === 'in' ? relationSchema?.out.schemaIds : relationSchema?.in.schemaIds;
     return targetSchemaIds === 'any' || (targetSchemaIds?.includes(childSchema.id) ?? false);
   });
   if (typedField?.type === 'typedRelation') {
