@@ -6,26 +6,25 @@ import { requireSchemaRead, requireWorkspaceCapability } from '../auth/authoriza
 import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import {
-  classifyFieldChanges,
-  describeHardBlockedChange,
-  findUnresolvedFieldMigrations,
-  hardBlockedFieldChanges,
-  migratableFieldChanges
-} from './schemaHelpers';
-import {
-  asSchemaFields,
   buildCreateRelationSchemaInput,
   buildUpdateRelationSchemaInput,
-  buildRelationSchemaChangeSummary,
   compileRelationSchemaWithSharedGroups,
   toApiRelationSchema,
-  toApiRelationSchemaVersion
+  toApiRelationSchemaVersion,
+  toFieldMigrationFields
 } from './relationSchemaHelpers';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
-import type { FieldMigrations, PendingFieldChange } from '@arch-register/api-types/schemaContract';
+import {
+  buildFieldChangeSummary,
+  describeHardBlockedChange,
+  planFieldMigrations
+} from '../fieldMigration/fieldMigrationPlanning';
+import type { PendingFieldChange } from '@arch-register/api-types/common';
 import type {
+  CreateRelationSchemaRequest,
   RelationSchema,
-  RelationSchemaVersion
+  RelationSchemaVersion,
+  UpdateRelationSchemaRequest
 } from '@arch-register/api-types/relationSchemaContract';
 
 const dbErrorMessages = {
@@ -86,7 +85,7 @@ export const getWorkspaceRelationSchema = async (
 export const createWorkspaceRelationSchema = async (
   db: DatabaseAdapter,
   workspace: string,
-  body: Record<string, unknown>,
+  body: CreateRelationSchemaRequest,
   event: AuthenticatedEvent
 ): Promise<RelationSchema> => {
   return runAuthorizedOperation({
@@ -121,7 +120,7 @@ export const createWorkspaceRelationSchema = async (
         validation_rules: row.validation_rules ?? [],
         color: row.color,
         icon: row.icon,
-        change_summary: buildRelationSchemaChangeSummary(null, row.fields),
+        change_summary: buildFieldChangeSummary(null, toFieldMigrationFields(row.fields)),
         created_by: authCtx.userId,
         created_at: timestamp
       });
@@ -146,7 +145,7 @@ export const updateWorkspaceRelationSchema = async (
   db: DatabaseAdapter,
   workspace: string,
   id: string,
-  body: Record<string, unknown>,
+  body: UpdateRelationSchemaRequest,
   event: AuthenticatedEvent
 ): Promise<RelationSchema> => {
   return runAuthorizedOperation({
@@ -170,36 +169,36 @@ export const updateWorkspaceRelationSchema = async (
         { ...oldRow, ...next, shared_field_group_links: next.shared_field_group_links },
         sharedGroups
       );
-      const fieldMigrations = body.fieldMigrations as FieldMigrations | undefined;
+      const fieldMigrations = body.fieldMigrations;
 
       const relationCount = await db.relation.countRelationsForSchema(ws, id);
 
       const finalFields = [...compiledNext.fields];
-      const dataMigrations: Array<{
-        action: 'rename' | 'remove';
-        oldFieldId: string;
-        newFieldId?: string;
-      }> = [];
+      const fieldMigrationPlan = planFieldMigrations(
+        toFieldMigrationFields(oldRow.fields),
+        toFieldMigrationFields(compiledNext.fields),
+        fieldMigrations,
+        {
+          decisionRequiredFieldIds: relationCount > 0 ? undefined : new Set<string>(),
+          applicableFieldIds: relationCount > 0 ? undefined : new Set<string>()
+        }
+      );
+      const dataMigrations = relationCount > 0 ? fieldMigrationPlan.dataMigrations : [];
 
       if (relationCount > 0) {
-        const fieldChanges = classifyFieldChanges(
-          asSchemaFields(oldRow.fields),
-          asSchemaFields(compiledNext.fields)
-        );
-
-        const blocked = hardBlockedFieldChanges(fieldChanges);
-        httpAssert.true(blocked.length === 0, {
+        httpAssert.true(fieldMigrationPlan.hardBlocked.length === 0, {
           status: 409,
-          message: `Cannot update relation schema: ${blocked.map(describeHardBlockedChange).join('; ')}`
+          message: `Cannot update relation schema: ${fieldMigrationPlan.hardBlocked
+            .map(change => describeHardBlockedChange(change))
+            .join('; ')}`
         });
 
-        const migratable = migratableFieldChanges(fieldChanges);
-        const unresolved = findUnresolvedFieldMigrations(fieldChanges, fieldMigrations);
+        const unresolved = fieldMigrationPlan.unresolved;
         if (unresolved.length > 0) {
           const pendingChanges: PendingFieldChange[] = unresolved.map(change => ({
             fieldId: change.fieldId,
             fieldName: change.fieldName,
-            kind: change.kind as 'removed' | 'renamed',
+            kind: change.kind,
             renamedToId: change.renamedToId,
             entityCount: 0
           }));
@@ -211,35 +210,17 @@ export const updateWorkspaceRelationSchema = async (
         }
 
         const oldFieldsById = new Map(oldRow.fields.map(field => [field.id, field]));
-        for (const change of migratable) {
-          const migration = fieldMigrations?.[change.fieldId];
-          httpAssert.present(migration, {
-            message: `Missing migration decision for field "${change.fieldName}"`
-          });
-          if (migration.action === 'archive') {
-            const oldField = oldFieldsById.get(change.fieldId);
-            if (oldField && !finalFields.some(field => field.id === oldField.id)) {
-              finalFields.push({ ...oldField, archived: true });
-            }
-          } else if (migration.action === 'rename') {
-            const targetId = migration.renameTo ?? change.renamedToId;
-            httpAssert.string(targetId, {
-              message: `renameTo is required to rename field "${change.fieldName}"`
-            });
-            dataMigrations.push({
-              action: 'rename',
-              oldFieldId: change.fieldId,
-              newFieldId: targetId
-            });
-          } else {
-            dataMigrations.push({ action: 'remove', oldFieldId: change.fieldId });
+        for (const fieldId of fieldMigrationPlan.archiveFieldIds) {
+          const oldField = oldFieldsById.get(fieldId);
+          if (oldField && !finalFields.some(field => field.id === oldField.id)) {
+            finalFields.push({ ...oldField, archived: true });
           }
         }
       }
 
-      const changeSummary = buildRelationSchemaChangeSummary(
-        oldRow.fields,
-        finalFields,
+      const changeSummary = buildFieldChangeSummary(
+        toFieldMigrationFields(oldRow.fields),
+        toFieldMigrationFields(finalFields),
         fieldMigrations
       );
 
@@ -250,7 +231,7 @@ export const updateWorkspaceRelationSchema = async (
               ws,
               id,
               migration.oldFieldId,
-              migration.newFieldId!
+              migration.newFieldId
             );
           } else {
             await tx.relation.removeRelationDataField(ws, id, migration.oldFieldId);

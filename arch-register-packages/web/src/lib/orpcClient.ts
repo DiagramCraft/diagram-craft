@@ -2,52 +2,7 @@ import type { AnyContractRouter, ContractRouterClient } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
 import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
-import { aiContract } from '@arch-register/api-types/aiContract';
-import { assessmentContract } from '@arch-register/api-types/assessmentContract';
-import { assessmentResponseContract } from '@arch-register/api-types/assessmentResponseContract';
-import { auditContract } from '@arch-register/api-types/auditContract';
-import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
-import { devContract } from '@arch-register/api-types/devContract';
-import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
-import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
-import { entityVersionContract } from '@arch-register/api-types/entityVersionContract';
-import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
-import { projectContract } from '@arch-register/api-types/projectContract';
-import { milestoneContract } from '@arch-register/api-types/milestoneContract';
-import { changeCaseContract } from '@arch-register/api-types/changeCaseContract';
-import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
-import { workspaceRelationSchemaContract } from '@arch-register/api-types/relationSchemaContract';
-import { workspaceRelationContract } from '@arch-register/api-types/relationContract';
-import { workspaceFieldGroupContract } from '@arch-register/api-types/fieldGroupContract';
-import { searchContract } from '@arch-register/api-types/searchContract';
-import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
-import { workspaceViewContract } from '@arch-register/api-types/viewContract';
-import {
-  workspaceDashboardContract,
-  personalDashboardContract,
-  projectDashboardContract
-} from '@arch-register/api-types/dashboardContract';
-import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
-import { watchContract } from '@arch-register/api-types/watchContract';
-import { notificationPreferencesContract } from '@arch-register/api-types/notificationPreferencesContract';
-import { discussionContract } from '@arch-register/api-types/discussionContract';
-import { wikiCommentContract } from '@arch-register/api-types/wikiCommentContract';
-import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
-import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
-import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
-import { workspaceMetricContract } from '@arch-register/api-types/metricContract';
-import { jobsContract } from '@arch-register/api-types/jobsContract';
-import { externalContentContract } from '@arch-register/api-types/externalContentContract';
-import { webhookContract } from '@arch-register/api-types/webhookContract';
-import { automationRuleContract } from '@arch-register/api-types/automationRuleContract';
-import { documentContract } from '@arch-register/api-types/documentContract';
-import { entityChangeContract } from '@arch-register/api-types/entityChangeContract';
-import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
-import { governanceContract } from '@arch-register/api-types/governanceContract';
-import { governanceWorkflowConfigContract } from '@arch-register/api-types/governanceWorkflowConfigContract';
-import { artifactContract } from '@arch-register/api-types/artifactContract';
-import { baselineContract } from '@arch-register/api-types/baselineContract';
-import { publicCatalogConfigContract } from '@arch-register/api-types/publicCatalogContract';
+import { contractSurfaceManifest } from '@arch-register/api-types/contractSurfaceManifest';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { normalizeApiError } from './http';
 
@@ -69,56 +24,7 @@ const resolveORPCBaseUrl = (apiPath: string) => {
   return `http://localhost${apiPath}`;
 };
 
-const coreContracts = {
-  ...authPublicContract,
-  ...authProtectedContract,
-  ...devContract,
-  ...diagramCraftContract
-};
-
-const applicationContracts = {
-  ...workspaceFieldGroupContract,
-  ...aiContract,
-  ...workspaceAnalyticsContract,
-  ...workspaceMetricContract,
-  ...jobsContract,
-  ...externalContentContract,
-  ...webhookContract,
-  ...automationRuleContract,
-  ...documentContract,
-  ...entityChangeContract,
-  ...entityDeprecationContract,
-  ...governanceContract,
-  ...governanceWorkflowConfigContract,
-  ...artifactContract,
-  ...baselineContract,
-  ...workspaceEnumContract,
-  ...workspaceSchemaContract,
-  ...workspaceRelationSchemaContract,
-  ...workspaceRelationContract,
-  ...workspaceEntityContract,
-  ...entityVersionContract,
-  ...workspaceViewContract,
-  ...workspaceDashboardContract,
-  ...personalDashboardContract,
-  ...projectDashboardContract,
-  ...workspaceCollectionContract,
-  ...workspaceManagementContract,
-  ...workspaceConfigContract,
-  ...projectContract,
-  ...milestoneContract,
-  ...changeCaseContract,
-  ...assessmentContract,
-  ...assessmentResponseContract,
-  ...auditContract,
-  ...watchContract,
-  ...notificationPreferencesContract,
-  ...discussionContract,
-  ...wikiCommentContract,
-  ...searchContract,
-  ...workspaceTemplateContract,
-  ...publicCatalogConfigContract
-};
+const { core, application, diagramCraft } = contractSurfaceManifest.surfaces;
 
 const fetchApiRequest = async (request: Request, init?: RequestInit) => {
   const method = request.method;
@@ -148,8 +54,9 @@ const createApiClient = <T extends AnyContractRouter>(contracts: T, apiPath: str
   return createORPCClient(clientLink) as JsonifiedClient<ContractRouterClient<T>>;
 };
 
-const coreClient = createApiClient(coreContracts, CORE_API_PATH);
-const applicationClient = createApiClient(applicationContracts, APPLICATION_API_PATH);
+const coreClient = createApiClient(core.contracts, CORE_API_PATH);
+const applicationClient = createApiClient(application.contracts, APPLICATION_API_PATH);
+const diagramCraftClient = createApiClient(diagramCraft.contracts, CORE_API_PATH);
 
 export const publicCatalogOpenAPISpecUrl = () => resolveORPCBaseUrl('/api/public/v1/openapi.json');
 
@@ -178,7 +85,7 @@ export const orpcClient = {
   auth: coreClient.auth,
   authProtected: coreClient.authProtected,
   dev: coreClient.dev,
-  diagramCraft: coreClient.diagramCraft,
+  diagramCraft: diagramCraftClient.diagramCraft,
   ai: applicationClient.ai,
   analytics: applicationClient.analytics,
   metrics: applicationClient.metrics,

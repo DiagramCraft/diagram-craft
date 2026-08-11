@@ -2,6 +2,21 @@ import postgres from 'postgres';
 import { DatabaseError } from './database';
 
 export type PostgresSqlClient = ReturnType<typeof postgres>;
+export type PostgresTransactionSql = postgres.TransactionSql;
+export type PostgresQueryClient = PostgresSqlClient | PostgresTransactionSql;
+
+export const withPostgresTransaction = async <T>(
+  sql: PostgresQueryClient,
+  callback: (transaction: PostgresQueryClient) => Promise<T>
+): Promise<T> => {
+  if ('begin' in sql) {
+    const result = await sql.begin(async transaction => ({
+      value: await callback(transaction)
+    }));
+    return result.value;
+  }
+  return callback(sql);
+};
 
 // PostgreSQL error codes
 const POSTGRES_ERROR_CODES = {
@@ -54,7 +69,7 @@ export const normalizePostgresError = (error: unknown): never => {
 };
 
 export class PostgresDatabaseBase {
-  constructor(protected readonly sql: PostgresSqlClient) {}
+  constructor(protected readonly sql: PostgresQueryClient) {}
 
   protected json(value: unknown) {
     return this.sql.json(value as Parameters<PostgresSqlClient['json']>[0]);

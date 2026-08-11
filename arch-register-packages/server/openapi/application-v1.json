@@ -70242,15 +70242,18 @@
                             "remove",
                             "archive"
                           ],
-                          "type": "string"
+                          "type": "string",
+                          "description": "Migration action for this field"
                         },
                         "renameTo": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "New field id when action is \"rename\""
                         }
                       },
                       "required": [
                         "action"
-                      ]
+                      ],
+                      "description": "How to migrate a changed/removed field"
                     },
                     "description": "Field migration decisions applied to every including schema"
                   }
@@ -83728,6 +83731,685 @@
         "tags": [
           "Dashboard",
           "Dashboard"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "success": {
+                      "type": "boolean",
+                      "description": "Whether the deletion was successful"
+                    }
+                  },
+                  "required": [
+                    "success"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/personal-dashboards": {
+      "get": {
+        "operationId": "personalDashboards.list",
+        "summary": "List personal dashboards",
+        "description": "Retrieves the caller’s personal dashboards for the workspace. Returns an empty array if the caller has not created any.",
+        "tags": [
+          "PersonalDashboard",
+          "PersonalDashboard"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Unique dashboard identifier"
+                      },
+                      "workspaceId": {
+                        "type": "string",
+                        "description": "Parent workspace identifier"
+                      },
+                      "name": {
+                        "type": "string",
+                        "description": "Dashboard name"
+                      },
+                      "order": {
+                        "type": "integer",
+                        "minimum": -9007199254740991,
+                        "maximum": 9007199254740991,
+                        "description": "Position among the caller’s personal dashboards, ascending"
+                      },
+                      "widgets": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Unique widget identifier"
+                            },
+                            "x": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Grid column position"
+                            },
+                            "y": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Grid row position"
+                            },
+                            "w": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Grid width in columns"
+                            },
+                            "h": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Grid height in rows"
+                            },
+                            "type": {
+                              "type": "string",
+                              "description": "Extensible widget type identifier"
+                            },
+                            "config": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {},
+                              "description": "Widget-specific configuration; interpreted by the widget implementation"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "x",
+                            "y",
+                            "w",
+                            "h",
+                            "type",
+                            "config"
+                          ]
+                        },
+                        "description": "Dashboard widget layout"
+                      },
+                      "updatedAt": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "ISO 8601 last update timestamp"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "workspaceId",
+                      "name",
+                      "order",
+                      "widgets",
+                      "updatedAt"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "personalDashboards.create",
+        "summary": "Create personal dashboard",
+        "description": "Creates a new, empty personal dashboard for the caller in this workspace.",
+        "tags": [
+          "PersonalDashboard",
+          "PersonalDashboard"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Dashboard name"
+                  }
+                },
+                "required": [
+                  "name"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique dashboard identifier"
+                    },
+                    "workspaceId": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Dashboard name"
+                    },
+                    "order": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Position among the caller’s personal dashboards, ascending"
+                    },
+                    "widgets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Unique widget identifier"
+                          },
+                          "x": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid column position"
+                          },
+                          "y": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid row position"
+                          },
+                          "w": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid width in columns"
+                          },
+                          "h": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid height in rows"
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "Extensible widget type identifier"
+                          },
+                          "config": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {},
+                            "description": "Widget-specific configuration; interpreted by the widget implementation"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "x",
+                          "y",
+                          "w",
+                          "h",
+                          "type",
+                          "config"
+                        ]
+                      },
+                      "description": "Dashboard widget layout"
+                    },
+                    "updatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 last update timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspaceId",
+                    "name",
+                    "order",
+                    "widgets",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/personal-dashboards/{id}": {
+      "get": {
+        "operationId": "personalDashboards.get",
+        "summary": "Get personal dashboard",
+        "description": "Retrieves a single personal dashboard owned by the caller by id.",
+        "tags": [
+          "PersonalDashboard",
+          "PersonalDashboard"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique dashboard identifier"
+                    },
+                    "workspaceId": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Dashboard name"
+                    },
+                    "order": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Position among the caller’s personal dashboards, ascending"
+                    },
+                    "widgets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Unique widget identifier"
+                          },
+                          "x": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid column position"
+                          },
+                          "y": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid row position"
+                          },
+                          "w": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid width in columns"
+                          },
+                          "h": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid height in rows"
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "Extensible widget type identifier"
+                          },
+                          "config": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {},
+                            "description": "Widget-specific configuration; interpreted by the widget implementation"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "x",
+                          "y",
+                          "w",
+                          "h",
+                          "type",
+                          "config"
+                        ]
+                      },
+                      "description": "Dashboard widget layout"
+                    },
+                    "updatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 last update timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspaceId",
+                    "name",
+                    "order",
+                    "widgets",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "personalDashboards.update",
+        "summary": "Update personal dashboard",
+        "description": "Updates an existing personal dashboard owned by the caller. Only provided fields will be updated; widgets, when provided, wholesale replace the existing layout.",
+        "tags": [
+          "PersonalDashboard",
+          "PersonalDashboard"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "name": {
+                    "type": "string",
+                    "description": "Dashboard name"
+                  },
+                  "widgets": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string",
+                          "description": "Unique widget identifier"
+                        },
+                        "x": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Grid column position"
+                        },
+                        "y": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Grid row position"
+                        },
+                        "w": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Grid width in columns"
+                        },
+                        "h": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "description": "Grid height in rows"
+                        },
+                        "type": {
+                          "type": "string",
+                          "description": "Extensible widget type identifier"
+                        },
+                        "config": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string"
+                          },
+                          "additionalProperties": {},
+                          "description": "Widget-specific configuration; interpreted by the widget implementation"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "x",
+                        "y",
+                        "w",
+                        "h",
+                        "type",
+                        "config"
+                      ]
+                    },
+                    "description": "Dashboard widget layout to persist"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Unique dashboard identifier"
+                    },
+                    "workspaceId": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "name": {
+                      "type": "string",
+                      "description": "Dashboard name"
+                    },
+                    "order": {
+                      "type": "integer",
+                      "minimum": -9007199254740991,
+                      "maximum": 9007199254740991,
+                      "description": "Position among the caller’s personal dashboards, ascending"
+                    },
+                    "widgets": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Unique widget identifier"
+                          },
+                          "x": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid column position"
+                          },
+                          "y": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid row position"
+                          },
+                          "w": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid width in columns"
+                          },
+                          "h": {
+                            "type": "integer",
+                            "minimum": -9007199254740991,
+                            "maximum": 9007199254740991,
+                            "description": "Grid height in rows"
+                          },
+                          "type": {
+                            "type": "string",
+                            "description": "Extensible widget type identifier"
+                          },
+                          "config": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {},
+                            "description": "Widget-specific configuration; interpreted by the widget implementation"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "x",
+                          "y",
+                          "w",
+                          "h",
+                          "type",
+                          "config"
+                        ]
+                      },
+                      "description": "Dashboard widget layout"
+                    },
+                    "updatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 last update timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspaceId",
+                    "name",
+                    "order",
+                    "widgets",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "personalDashboards.remove",
+        "summary": "Delete personal dashboard",
+        "description": "Deletes a personal dashboard owned by the caller. Unlike workspace dashboards, deleting the last remaining personal dashboard is allowed.",
+        "tags": [
+          "PersonalDashboard",
+          "PersonalDashboard"
         ],
         "parameters": [
           {

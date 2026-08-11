@@ -23,7 +23,11 @@ import {
   DIAGRAM_ENTITY_FILE_SELECT_SQL,
   projectMappers
 } from './projectDatabase';
-import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
+import {
+  normalizePostgresError,
+  PostgresDatabaseBase,
+  withPostgresTransaction
+} from '../../../db/postgresBase';
 import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
 import { randomUUID } from 'node:crypto';
 import { isUuidLike } from '../../../utils/publicIds';
@@ -522,12 +526,12 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async deleteContentNodeByPath(workspace: string, projectId: string, path: string) {
     try {
-      const [row] = await this.sql<ContentNodeDbResult[]>`
+      const [row] = await this.sql<DatabaseRow[]>`
         DELETE FROM content_node
         WHERE workspace = ${workspace} AND project_id = ${projectId} AND path = ${path}
         RETURNING *
       `;
-      return row ? projectMappers.contentNode(row as unknown as DatabaseRow) : null;
+      return row ? projectMappers.contentNode(row) : null;
     } catch (error) {
       return normalizePostgresError(error);
     }
@@ -846,7 +850,7 @@ export class PostgresProjectDatabase extends PostgresDatabaseBase implements Pro
 
   async syncDiagramEntityRefs(workspace: string, fileId: string, entityIds: string[]) {
     try {
-      await this.sql.begin(async tx => {
+      await withPostgresTransaction(this.sql, async tx => {
         await tx`
           DELETE FROM diagram_entity_ref
           WHERE workspace = ${workspace} AND file_id = ${fileId}

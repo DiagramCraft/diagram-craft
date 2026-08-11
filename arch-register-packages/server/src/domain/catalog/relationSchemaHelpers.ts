@@ -18,20 +18,21 @@ import {
   RelationSchema,
   RelationSchemaVersion
 } from '@arch-register/api-types/relationSchemaContract';
-import {
-  FieldMigrations,
-  SchemaField,
-  SharedFieldGroupLink
-} from '@arch-register/api-types/schemaContract';
+import type { SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
 import { assertValidationRulesValid, normalizeValidationRules } from './entityValidationRules';
+import {
+  normalizeFieldMigrationFields,
+  type FieldMigrationField
+} from '../fieldMigration/fieldMigrationPlanning';
 
-// resolveSelectFieldOptions/classifyFieldChanges (schemaHelpers.ts) are typed against entity
-// SchemaField[] but are fully generic at runtime — they only inspect id/name/type/enumId/
-// resultType/archived/groupId, none of which differ in shape between the two field unions except
-// for the relation-only `entityRelation` variant they never branch on. Safe to reuse via this cast
-// rather than duplicating either helper for relation schemas.
-export const asSchemaFields = (fields: RelationField[]): SchemaField[] =>
-  fields as unknown as SchemaField[];
+export const toFieldMigrationFields = (fields: readonly RelationField[]): FieldMigrationField[] =>
+  normalizeFieldMigrationFields(fields, {
+    getId: field => field.id,
+    getName: field => field.name,
+    getType: field => field.type,
+    isRequired: field => field.requirementLevel === 'required',
+    isArchived: field => field.archived === true
+  });
 
 const normalizeRelationEndpoint = (
   value: unknown,
@@ -275,10 +276,7 @@ export const toApiRelationSchema = (
   relationCount: number,
   enums: InternalWorkspaceEnum[]
 ): RelationSchema => {
-  const fields = resolveSelectFieldOptions(
-    asSchemaFields(schema.fields),
-    enums
-  ) as RelationSchema['fields'];
+  const fields = resolveSelectFieldOptions(schema.fields, enums) as RelationSchema['fields'];
   return {
     id: schema.id,
     workspace: schema.workspace,
@@ -300,48 +298,6 @@ export const toApiRelationSchema = (
   };
 };
 
-/** Reuses the generic (field id/name/archived-based) summary logic from schemaHelpers.ts. */
-export const buildRelationSchemaChangeSummary = (
-  oldFields: RelationField[] | null,
-  newFields: RelationField[],
-  fieldMigrations?: FieldMigrations
-): Record<string, unknown> => {
-  if (!oldFields) return { added: newFields.map(field => field.name) };
-
-  const oldById = new Map(oldFields.map(field => [field.id, field]));
-  const newById = new Map(newFields.map(field => [field.id, field]));
-
-  const added: string[] = [];
-  const removed: string[] = [];
-  const renamed: Array<{ from: string; to: string }> = [];
-  const archived: string[] = [];
-
-  for (const field of newFields) {
-    if (!oldById.has(field.id)) added.push(field.name);
-  }
-  for (const field of oldFields) {
-    if (newById.has(field.id)) continue;
-    const migration = fieldMigrations?.[field.id];
-    if (migration?.action === 'rename' && migration.renameTo) {
-      const target = newById.get(migration.renameTo);
-      renamed.push({ from: field.name, to: target?.name ?? migration.renameTo });
-    } else {
-      removed.push(field.name);
-    }
-  }
-  for (const field of newFields) {
-    const previous = oldById.get(field.id);
-    if (previous && !previous.archived && field.archived) archived.push(field.name);
-  }
-
-  const summary: Record<string, unknown> = {};
-  if (added.length) summary.added = added;
-  if (removed.length) summary.removed = removed;
-  if (renamed.length) summary.renamed = renamed;
-  if (archived.length) summary.archived = archived;
-  return summary;
-};
-
 export const toApiRelationSchemaVersion = (
   row: RelationSchemaVersionDbResult,
   enums: InternalWorkspaceEnum[]
@@ -351,10 +307,7 @@ export const toApiRelationSchemaVersion = (
   description: row.description,
   in: { schemaIds: row.in_schema_ids },
   out: { schemaIds: row.out_schema_ids },
-  fields: resolveSelectFieldOptions(
-    asSchemaFields(row.fields),
-    enums
-  ) as RelationSchemaVersion['fields'],
+  fields: resolveSelectFieldOptions(row.fields, enums) as RelationSchemaVersion['fields'],
   groups: row.groups as RelationSchemaVersion['groups'],
   validation_rules: row.validation_rules ?? [],
   shared_field_group_links: (

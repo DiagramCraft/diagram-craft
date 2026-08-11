@@ -41,11 +41,12 @@ import type {
   RelationSchemaGroupDbShape
 } from '../catalog/db/relationDatabase';
 import {
-  buildSchemaChangeSummary,
   findUnresolvedFieldGroupReferences,
-  assertResolvedFieldGroupReferences
+  assertResolvedFieldGroupReferences,
+  toFieldMigrationFields as toSchemaFieldMigrationFields
 } from '../catalog/schemaHelpers';
-import { buildRelationSchemaChangeSummary } from '../catalog/relationSchemaHelpers';
+import { toFieldMigrationFields as toRelationFieldMigrationFields } from '../catalog/relationSchemaHelpers';
+import { buildFieldChangeSummary } from '../fieldMigration/fieldMigrationPlanning';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 import { getSchemaGovernancePoliciesBySchema } from '../governance/schemaGovernancePolicy';
 import { writeAudit } from '../audit/db/auditLogging';
@@ -1023,7 +1024,7 @@ export const executeDefinitionImport = async (
             entity_capabilities: row.entity_capabilities ?? [],
             color: row.color,
             icon: row.icon,
-            change_summary: buildSchemaChangeSummary(null, fields),
+            change_summary: buildFieldChangeSummary(null, toSchemaFieldMigrationFields(fields)),
             created_by: authCtx.userId,
             created_at: now
           });
@@ -1107,7 +1108,7 @@ export const executeDefinitionImport = async (
             groups,
             color: row.color,
             icon: row.icon,
-            change_summary: buildRelationSchemaChangeSummary(null, fields),
+            change_summary: buildFieldChangeSummary(null, toRelationFieldMigrationFields(fields)),
             created_by: authCtx.userId,
             created_at: now
           });

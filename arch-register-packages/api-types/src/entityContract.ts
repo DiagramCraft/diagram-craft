@@ -193,6 +193,8 @@ export const entityMutationBodySchema = z
   .catchall(z.unknown())
   .describe('Entity mutation data with schema-specific fields');
 
+export type EntityMutationBody = z.infer<typeof entityMutationBodySchema>;
+
 // ── Query / filter input ──────────────────────────────────────
 
 const booleanQuerySchema = z.preprocess(value => {

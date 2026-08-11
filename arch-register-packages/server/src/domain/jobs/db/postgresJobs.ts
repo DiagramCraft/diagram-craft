@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import type { PostgresSqlClient } from '../../../db/postgresBase';
-import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
+import {
+  normalizePostgresError,
+  PostgresDatabaseBase,
+  withPostgresTransaction
+} from '../../../db/postgresBase';
 import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
 import { dueJobOccurrences } from '../jobRecurrence';
 import { nextJobOccurrence } from '../jobRecurrence';
@@ -204,8 +207,7 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
 
   async materializeDueSchedules(now: Date) {
     try {
-      return await this.sql.begin(async transaction => {
-        const sql = transaction as unknown as PostgresSqlClient;
+      return await withPostgresTransaction(this.sql, async sql => {
         const schedules = await sql<DatabaseRow[]>`
           SELECT * FROM job_schedule
           WHERE enabled = TRUE AND next_occurrence_at <= ${now}
@@ -226,7 +228,7 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
               occurrence_at, coalesced_through_at, coalesced_count, planned_at, created_at, status
             ) VALUES (
               ${runId}, ${schedule.id}, ${schedule.workspace}, ${schedule.job_type},
-              ${schedule.system_identity}, ${sql.json(schedule.payload as Parameters<PostgresSqlClient['json']>[0])}, ${schedule.priority},
+              ${schedule.system_identity}, ${this.json(schedule.payload)}, ${schedule.priority},
               ${due.first}, ${due.last}, ${due.count}, ${due.first}, ${now}, 'queued'
             )
             ON CONFLICT (schedule_id, occurrence_at) DO NOTHING
@@ -313,8 +315,7 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
 
   async recoverExpiredRuns(now: Date) {
     try {
-      return await this.sql.begin(async transaction => {
-        const sql = transaction as unknown as PostgresSqlClient;
+      return await withPostgresTransaction(this.sql, async sql => {
         const stale = await sql<
           {
             id: string;
@@ -361,8 +362,7 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
     now: Date
   ): Promise<JobRunClaim | null> {
     try {
-      return await this.sql.begin(async transaction => {
-        const sql = transaction as unknown as PostgresSqlClient;
+      return await withPostgresTransaction(this.sql, async sql => {
         const candidates = await sql<DatabaseRow[]>`
           SELECT r.*
           FROM job_run r
@@ -450,12 +450,11 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
 
   async completeRun(input: JobRunCompletion) {
     try {
-      return await this.sql.begin(async transaction => {
-        const sql = transaction as unknown as PostgresSqlClient;
+      return await withPostgresTransaction(this.sql, async sql => {
         const [row] = await sql<DatabaseRow[]>`
           UPDATE job_run r
           SET status = 'succeeded', completed_at = ${input.completedAt},
-              result = ${input.result == null ? null : sql.json(input.result as Parameters<PostgresSqlClient['json']>[0])}, lease_token = NULL
+              result = ${input.result == null ? null : this.json(input.result)}, lease_token = NULL
           WHERE r.id = ${input.runId}
             AND r.status = 'running'
             AND r.worker_id = ${input.workerId}
@@ -483,8 +482,7 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
 
   async failRun(input: JobRunFailure) {
     try {
-      return await this.sql.begin(async transaction => {
-        const sql = transaction as unknown as PostgresSqlClient;
+      return await withPostgresTransaction(this.sql, async sql => {
         const [row] = await sql<DatabaseRow[]>`
           UPDATE job_run r
           SET status = 'failed', completed_at = ${input.completedAt},
@@ -516,8 +514,7 @@ export class PostgresJobDatabase extends PostgresDatabaseBase implements JobData
 
   async retryRun(input: JobRunRetry) {
     try {
-      return await this.sql.begin(async transaction => {
-        const sql = transaction as unknown as PostgresSqlClient;
+      return await withPostgresTransaction(this.sql, async sql => {
         const [row] = await sql<DatabaseRow[]>`
           UPDATE job_run r
           SET status = 'queued', planned_at = ${input.retryAt}, started_at = NULL,

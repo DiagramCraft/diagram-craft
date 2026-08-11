@@ -15,8 +15,6 @@ import {
   TbFolders,
   TbDatabase,
   TbBuildingCommunity,
-  TbSun,
-  TbMoon,
   TbUser,
   TbBell,
   TbMessageCircle,
@@ -25,7 +23,7 @@ import {
 import { useNavigate } from '@tanstack/react-router';
 import { useAuth } from '../auth/AuthContext';
 import { useTheme } from '../hooks/useTheme';
-import type { Theme } from '../hooks/useTheme';
+import { ThemeToggle } from '../components/ThemeToggle';
 import { resolveAvatarBackground } from '../components/MemberAvatar';
 import { SearchInput } from '../components/SearchInput';
 import {
@@ -785,30 +783,6 @@ const WatchingList = ({
             <TbBell size={12} />
           </button>
         </div>
-      ))}
-    </div>
-  );
-};
-
-const ThemeToggle = ({ theme, onSetTheme }: { theme: Theme; onSetTheme: (t: Theme) => void }) => {
-  const opts = [
-    { value: 'light' as const, label: 'Light', icon: <TbSun size={13} /> },
-    { value: 'dark' as const, label: 'Dark', icon: <TbMoon size={13} /> }
-  ];
-  return (
-    <div className={styles.themeToggle}>
-      {opts.map(o => (
-        <button
-          key={o.value}
-          type="button"
-          aria-pressed={theme === o.value}
-          className={`${styles.themeOpt} ${theme === o.value ? styles.themeOptActive : ''}`}
-          onMouseDown={e => e.stopPropagation()}
-          onClick={() => onSetTheme(o.value)}
-        >
-          {o.icon}
-          <span>{o.label}</span>
-        </button>
       ))}
     </div>
   );

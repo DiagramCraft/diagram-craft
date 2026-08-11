@@ -1,6 +1,9 @@
 import { randomUUID } from 'node:crypto';
-import type { PostgresSqlClient } from '../../../db/postgresBase';
-import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
+import {
+  normalizePostgresError,
+  PostgresDatabaseBase,
+  withPostgresTransaction
+} from '../../../db/postgresBase';
 import type { DatabaseRow } from '../../../db/rowMappers';
 import type {
   NotificationDeliveryClaim,
@@ -44,8 +47,7 @@ export class PostgresNotificationDeliveryDatabase
 
   async claimPending(workspace: string, limit: number, now: Date, leaseDurationMs: number) {
     try {
-      return await this.sql.begin(async transaction => {
-        const sql = transaction as unknown as PostgresSqlClient;
+      return await withPostgresTransaction(this.sql, async sql => {
         const rows = await sql<DatabaseRow[]>`
           SELECT * FROM notification_delivery
           WHERE workspace = ${workspace} AND channel = 'email'

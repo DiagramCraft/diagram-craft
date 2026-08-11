@@ -1,7 +1,11 @@
 import postgres from 'postgres';
 import type { ArtifactProjectionDatabases, DatabaseAdapter } from './database';
 import { runPostgresMigrations } from './migrate';
-import { type PostgresSqlClient } from './postgresBase';
+import {
+  type PostgresQueryClient,
+  type PostgresSqlClient,
+  withPostgresTransaction
+} from './postgresBase';
 import { PostgresAuditDatabase } from '../domain/audit/db/postgresAudit';
 import { PostgresCatalogDatabase } from '../domain/catalog/db/postgresCatalog';
 import { PostgresAuthDatabase } from '../domain/auth/db/postgresAuth';
@@ -93,7 +97,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly publicCatalog: PostgresPublicCatalogDatabase;
   readonly core;
 
-  private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
+  private adapterFor(sql: PostgresQueryClient): DatabaseAdapter {
     const adapter = {
       workspace: new PostgresWorkspaceDatabase(sql),
       catalog: new PostgresCatalogDatabase(sql),
@@ -212,9 +216,7 @@ export class PostgresDatabase implements DatabaseAdapter {
         await this.sql.end();
       },
       transaction: async <T>(callback: (db: DatabaseAdapter) => Promise<T>): Promise<T> =>
-        (await this.sql.begin(async sql =>
-          callback(this.adapterFor(sql as unknown as PostgresSqlClient))
-        )) as unknown as T
+        withPostgresTransaction(this.sql, async sql => callback(this.adapterFor(sql)))
     };
   }
 

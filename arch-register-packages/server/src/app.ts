@@ -10,81 +10,18 @@ import {
   createPublicCatalogOpenAPISpecHandler,
   createUnifiedOpenAPISpecHandler
 } from './openapi';
-import { createOidcCallbackRoute } from './domain/auth/oidcCallbackRoute';
 import { requireAuth } from './middleware/auth';
 import { createDevDelayMiddleware } from './middleware/devDelay';
 import { createSecurityHeadersMiddleware } from './middleware/securityHeaders';
-import { createWorkspaceEnumORPCHandler } from './domain/catalog/enumOrpc';
-import { createWorkspaceFieldGroupORPCHandler } from './domain/catalog/fieldGroupOrpc';
-import { createWorkspaceSchemaORPCHandler } from './domain/catalog/schemaOrpc';
-import { createWorkspaceRelationSchemaORPCHandler } from './domain/catalog/relationSchemaOrpc';
-import {
-  createWorkspaceRelationORPCHandler,
-  createIntegrationRelationORPCHandler
-} from './domain/catalog/relationOrpc';
-import { createWorkspaceEntityORPCHandler } from './domain/catalog/entityOrpc';
-import { createEntitySyncORPCHandler } from './domain/externalIdentity/entitySyncOrpc';
-import { createApiSpecificationSyncORPCHandler } from './domain/artifact/apiSpecificationSyncOrpc';
-import { createRelationSyncORPCHandler } from './domain/catalog/relationSyncOrpc';
-import { createEntityVersionORPCHandler } from './domain/catalog/entityVersionOrpc';
-import { createRelationVersionORPCHandler } from './domain/catalog/relationVersionOrpc';
-import { createEntityChangeORPCHandler } from './domain/catalog/entityChangeOrpc';
-import { createRelationChangeORPCHandler } from './domain/catalog/relationChangeOrpc';
-import { createWorkspaceTemplateORPCHandler } from './domain/catalog/templateOrpc';
-import { createWorkspaceViewORPCHandler } from './domain/catalog/viewOrpc';
-import { createWorkspaceDashboardORPCHandler } from './domain/dashboard/dashboardOrpc';
-import { createPersonalDashboardORPCHandler } from './domain/personalDashboard/personalDashboardOrpc';
-import { createProjectDashboardORPCHandler } from './domain/dashboard/projectDashboardOrpc';
-import { createWorkspaceCollectionORPCHandler } from './domain/catalog/collectionOrpc';
-import { createWorkspaceManagementORPCHandler } from './domain/workspace/workspaceOrpc';
-import { createWorkspaceConfigORPCHandler } from './domain/workspace/workspaceConfigOrpc';
-import { createProjectORPCHandler } from './domain/project/projectOrpc';
-import { createProjectFileRoutesHandler } from './domain/project/projectFileRoutes';
-import { createAssessmentORPCHandler } from './domain/project/assessmentOrpc';
-import { createAssessmentResponseORPCHandler } from './domain/project/assessmentResponseOrpc';
-import { createMilestoneORPCHandler } from './domain/project/projectMilestoneOrpc';
-import { createChangeCaseORPCHandler } from './domain/project/projectChangeCaseOrpc';
-import { createAuditORPCHandler } from './domain/audit/auditOrpc';
-import { createWatchORPCHandler } from './domain/watch/watchOrpc';
-import { createNotificationPreferencesORPCHandler } from './domain/notification/notificationPreferenceOrpc';
-import { createDiscussionORPCHandler } from './domain/discussion/discussionOrpc';
-import { createGovernanceORPCHandler } from './domain/governance/governanceOrpc';
-import { createIntegrationGovernanceORPCHandler } from './domain/governance/integrationGovernanceOrpc';
-import { createGovernanceWorkflowConfigORPCHandler } from './domain/governance/governanceWorkflowConfigOrpc';
-import { createWikiCommentORPCHandler } from './domain/wikiComments/wikiCommentOrpc';
-import { createSearchORPCHandler } from './domain/search/searchOrpc';
-import {
-  createPublicAuthORPCHandler,
-  createProtectedAuthORPCHandler
-} from './domain/auth/authOrpc';
-import { createDevORPCHandler } from './domain/dev/devOrpc';
-import { createAiORPCHandler } from './domain/ai/aiOrpc';
-import { createDiagramCraftORPCHandler } from './domain/diagram/diagramCraftOrpc';
-import { createBaselineORPCHandler } from './domain/baseline/baselineOrpc';
-import { createWorkspaceAnalyticsORPCHandler } from './domain/analytics/workspaceAnalyticsOrpc';
-import { createWorkspaceMetricORPCHandler } from './domain/metrics/metricOrpc';
-import { createJobsORPCHandler } from './domain/jobs/jobsOrpc';
-import { createExternalContentORPCHandler } from './domain/external-content/externalContentOrpc';
-import { createWebhookORPCHandler } from './domain/webhook/webhookOrpc';
-import { createAutomationRuleORPCHandler } from './domain/automation/automationRuleOrpc';
-import { createDocumentORPCHandler } from './domain/document/documentOrpc';
-import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
-import { createArtifactORPCHandler } from './domain/artifact/artifactOrpc';
-import {
-  createPublicCatalogConfigORPCHandler,
-  createPublicCatalogORPCHandler
-} from './domain/publicCatalog/publicCatalogOrpc';
-import { createApplicationGovernanceRegistry } from './domain/governance/governanceRegistryFactory';
 import { getHttpErrorLogLevel } from './utils/errorLogging';
+import { createRouteRegistry, type RouteOverrides } from './routeRegistry';
 
 const openApiSpecUrl = new URL('../openapi.yaml', import.meta.url);
 
 const httpLogger = createLogger('http');
 
 type AppOptions = {
-  routeOverrides?: {
-    aiChat?: Parameters<typeof createAiORPCHandler>[1];
-  };
+  routeOverrides?: RouteOverrides;
 };
 
 export const createApp = (
@@ -156,76 +93,21 @@ export const createApp = (
 
   app.use(createDevDelayMiddleware());
 
-  // Public routes (no auth required)
-  app.use(createPublicAuthORPCHandler(db));
-  // Public catalog is an explicit publication surface and must remain outside auth middleware.
-  app.use(createPublicCatalogORPCHandler(db, storage));
-  // Always mounted: dev.config must be reachable to report enabled/disabled, and
-  // dev.listUsers/dev.switchUser re-check isDevUserSwitcherEnabled() on every call.
-  app.use(createDevORPCHandler(db));
-  const oidcCallbackRoute = createOidcCallbackRoute(db);
-  app.use(oidcCallbackRoute.app);
+  const routeRegistry = createRouteRegistry({
+    db,
+    storage,
+    routeOverrides: options.routeOverrides
+  });
+
+  routeRegistry.mount(app, 'public');
 
   app.use(requireAuth(db.auth));
 
-  // Protected routes (auth required)
-  app.use(createProtectedAuthORPCHandler(db));
-  // workspaceManagement must come before workspace-prefixed handlers to avoid
-  // GET /workspaces/templates being matched as GET /{workspace}/templates
-  app.use(createWorkspaceManagementORPCHandler(db, storage));
-  app.use(createWorkspaceEnumORPCHandler(db));
-  app.use(createWorkspaceFieldGroupORPCHandler(db));
-  app.use(createWorkspaceSchemaORPCHandler(db));
-  app.use(createWorkspaceRelationSchemaORPCHandler(db));
-  app.use(createWorkspaceRelationORPCHandler(db));
-  app.use(createIntegrationRelationORPCHandler(db));
-  app.use(createIntegrationGovernanceORPCHandler(db));
-  app.use(createWorkspaceEntityORPCHandler(db));
-  app.use(createEntitySyncORPCHandler(db));
-  app.use(createApiSpecificationSyncORPCHandler(db));
-  app.use(createRelationSyncORPCHandler(db));
-  app.use(createEntityVersionORPCHandler(db));
-  app.use(createRelationVersionORPCHandler(db));
-  app.use(createEntityChangeORPCHandler(db));
-  app.use(createRelationChangeORPCHandler(db));
-  app.use(createEntityDeprecationORPCHandler(db));
-  app.use(createArtifactORPCHandler(db));
-  app.use(createWorkspaceTemplateORPCHandler(db));
-  app.use(createWorkspaceViewORPCHandler(db));
-  app.use(createWorkspaceDashboardORPCHandler(db));
-  app.use(createPersonalDashboardORPCHandler(db));
-  app.use(createProjectDashboardORPCHandler(db));
-  app.use(createWorkspaceCollectionORPCHandler(db));
-  app.use(createWorkspaceConfigORPCHandler(db));
-  app.use(createPublicCatalogConfigORPCHandler(db));
-  app.use(createWorkspaceAnalyticsORPCHandler(db));
-  app.use(createWorkspaceMetricORPCHandler(db));
-  app.use(createJobsORPCHandler(db));
-  app.use(createExternalContentORPCHandler(db, storage));
-  app.use(createWebhookORPCHandler(db));
-  app.use(createAutomationRuleORPCHandler(db));
-  app.use(createDocumentORPCHandler(db));
-  app.use(createProjectFileRoutesHandler(db, storage));
-  app.use(createProjectORPCHandler(db, storage));
-  app.use(createAssessmentORPCHandler(db));
-  app.use(createAssessmentResponseORPCHandler(db));
-  app.use(createMilestoneORPCHandler(db));
-  app.use(createChangeCaseORPCHandler(db));
-  app.use(createAuditORPCHandler(db));
-  app.use(createWatchORPCHandler(db));
-  app.use(createNotificationPreferencesORPCHandler(db));
-  app.use(createDiscussionORPCHandler(db));
-  const governanceRegistry = createApplicationGovernanceRegistry();
-  app.use(createGovernanceORPCHandler(db, governanceRegistry));
-  app.use(createGovernanceWorkflowConfigORPCHandler(db, governanceRegistry));
-  app.use(createWikiCommentORPCHandler(db));
-  app.use(createSearchORPCHandler(db));
-  app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));
-  app.use(createDiagramCraftORPCHandler(db));
-  app.use(createBaselineORPCHandler(db));
+  routeRegistry.mount(app, 'protected');
+  routeRegistry.assertComplete();
 
   return {
     app,
-    dispose: oidcCallbackRoute.dispose
+    dispose: routeRegistry.dispose
   };
 };

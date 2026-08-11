@@ -3,6 +3,40 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      (() => {
+        try {
+          const readTheme = () => {
+            const state = JSON.parse(localStorage.getItem('diagram-craft.user-state') ?? '{}');
+            if (state.themeMode === 'light' || state.themeMode === 'dark') return state.themeMode;
+            const legacyTheme = localStorage.getItem('ar-theme');
+            if (legacyTheme === 'light' || legacyTheme === 'dark') return legacyTheme;
+            return null;
+          };
+          const isPublicCatalog =
+            window.location.pathname === '/public' || window.location.pathname.startsWith('/public/');
+          const storedTheme = readTheme();
+          const theme =
+            storedTheme ??
+            (isPublicCatalog && window.matchMedia('(prefers-color-scheme: dark)').matches
+              ? 'dark'
+              : isPublicCatalog
+                ? 'light'
+                : 'dark');
+          const root = document.documentElement;
+          root.classList.remove('dark', 'dark-theme', 'light-theme');
+          if (theme === 'light') {
+            root.setAttribute('data-theme', 'light');
+            root.classList.add('light-theme');
+          } else {
+            root.removeAttribute('data-theme');
+            root.classList.add('dark', 'dark-theme');
+          }
+        } catch {
+          /* Keep the static dark fallback when storage or media queries are unavailable. */
+        }
+      })();
+    </script>
     <title>Arch Register</title>
   </head>
   <body>

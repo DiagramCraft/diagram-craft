@@ -5,8 +5,10 @@ import {
   wsAndUUID,
   externalFieldSchema,
   assertRefreshModeRequiresExternalKind,
-  namedGroupSchema
+  namedGroupSchema,
+  fieldMigrationsSchema
 } from '@arch-register/api-types/common';
+import type { PendingFieldChange } from '@arch-register/api-types/common';
 import { entityCapabilitySchema } from './entityCapabilityContract';
 
 const requirementLevelSchema = z
@@ -305,13 +307,6 @@ const entitySchemaSchema = z.object({
   updated_at: z.string().describe('ISO 8601 last update timestamp')
 });
 
-const fieldMigrationActionSchema = z
-  .object({
-    action: z.enum(['rename', 'remove', 'archive']).describe('Migration action for this field'),
-    renameTo: z.string().optional().describe('New field id when action is "rename"')
-  })
-  .describe('How to migrate a changed/removed field');
-
 const schemaVersionSchema = z.object({
   version: z.number().int().min(1).describe('Version number'),
   name: z.string().describe('Schema name at this version'),
@@ -385,8 +380,7 @@ const createSchemaBodySchema = z.object({
 });
 
 const updateSchemaBodySchema = createSchemaBodySchema.extend({
-  fieldMigrations: z
-    .record(z.string(), fieldMigrationActionSchema)
+  fieldMigrations: fieldMigrationsSchema
     .optional()
     .describe(
       'Resolutions for fields being renamed/removed/archived while entities exist, keyed by the old field id'
@@ -551,20 +545,17 @@ export type SchemaGroup = z.infer<typeof schemaGroupSchema>;
 export type FieldGroupAccessControl = z.infer<typeof fieldGroupAccessControlSchema>;
 export type SharedFieldGroupLink = z.infer<typeof sharedFieldGroupLinkSchema>;
 export type SchemaFieldInput = z.infer<typeof schemaFieldInputSchema>;
+export type CreateSchemaRequest = z.infer<typeof createSchemaBodySchema>;
+export type UpdateSchemaRequest = z.infer<typeof updateSchemaBodySchema>;
 
 // ── Schema Versioning & Field Migrations ─────────────────────
 
-export type FieldMigrationAction = z.infer<typeof fieldMigrationActionSchema>;
-export type FieldMigrations = Record<string, FieldMigrationAction>;
+export type {
+  FieldMigrationAction,
+  FieldMigrations,
+  PendingFieldChange
+} from '@arch-register/api-types/common';
 export type SchemaVersion = z.infer<typeof schemaVersionSchema>;
-
-export type PendingFieldChange = {
-  fieldId: string;
-  fieldName: string;
-  kind: 'removed' | 'renamed';
-  renamedToId?: string;
-  entityCount: number;
-};
 
 export type SchemaMigrationRequiredError = {
   code: 'SCHEMA_MIGRATION_REQUIRED';

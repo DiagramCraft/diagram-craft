@@ -1,4 +1,4 @@
-import type { PostgresSqlClient } from '../../../db/postgresBase';
+import type { PostgresQueryClient } from '../../../db/postgresBase';
 import type {
   WebhookDatabase,
   WorkspaceWebhookDbCreate,
@@ -8,7 +8,7 @@ import { webhookMapper } from './webhookDatabase';
 import type { DatabaseRow } from '../../../db/rowMappers';
 
 export class PostgresWebhookDatabase implements WebhookDatabase {
-  constructor(private readonly sql: PostgresSqlClient) {}
+  constructor(private readonly sql: PostgresQueryClient) {}
 
   async listWebhooks(workspace: string) {
     const rows = await this.sql<DatabaseRow[]>`

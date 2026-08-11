@@ -48,6 +48,30 @@ export const namedGroupSchema = z.object({
 
 export type NamedGroup = z.infer<typeof namedGroupSchema>;
 
+// ── Field migrations shared by schema-like domains ────────────
+
+export const fieldMigrationActionSchema = z
+  .object({
+    action: z.enum(['rename', 'remove', 'archive']).describe('Migration action for this field'),
+    renameTo: z.string().optional().describe('New field id when action is "rename"')
+  })
+  .describe('How to migrate a changed/removed field');
+
+export const fieldMigrationsSchema = z
+  .record(z.string(), fieldMigrationActionSchema)
+  .describe('Migration decisions keyed by the old field id');
+
+export type FieldMigrationAction = z.infer<typeof fieldMigrationActionSchema>;
+export type FieldMigrations = z.infer<typeof fieldMigrationsSchema>;
+
+export type PendingFieldChange = {
+  fieldId: string;
+  fieldName: string;
+  kind: 'removed' | 'renamed';
+  renamedToId?: string;
+  entityCount: number;
+};
+
 export const teamRoleSchema = z.enum(['team_admin', 'team_editor', 'team_reviewer']);
 
 export const workspaceCapabilitySchema = z.enum([
