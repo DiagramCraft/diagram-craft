@@ -18,6 +18,46 @@ test.describe('entities section', () => {
 
     await entitiesPage.goto();
     await entitiesPage.expectLoaded();
+    await expect(entitiesPage.homeTab()).toBeVisible();
+    await entitiesPage.baselinesTab().click();
+    await expect(entitiesPage.workspaceBaselinesSection()).toBeVisible();
+  });
+
+  test('opens workspace baseline creation from the entity actions menu', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.goto();
+    await entitiesPage.expectLoaded();
+    await entitiesPage.filterByType(apiSchema.name);
+    await entitiesPage.openCreateBaselineDialog();
+    await expect(page.getByText('Current filters and search', { exact: true })).toBeVisible();
+  });
+
+  test('opens a workspace baseline in the entity context', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+    const baseline = await entitiesPage.createWorkspaceBaseline(`UI workspace ${Date.now()}`);
+
+    await entitiesPage.goto();
+    await entitiesPage.baselinesTab().click();
+    await entitiesPage.page.getByTestId(`workspace-baseline-${baseline.id}`).click();
+
+    await expect(entitiesPage.page).toHaveURL(new RegExp(`baselineId=${baseline.id}`));
+    await expect(entitiesPage.page.getByRole('heading', { name: baseline.name })).toBeVisible();
+    await expect(entitiesPage.page.getByRole('button', { name: 'Export JSON' })).toBeVisible();
+    await entitiesPage.page.getByRole('button', { name: 'Remove', exact: true }).click();
+    const deleteDialog = entitiesPage.page.getByRole('alertdialog', { name: 'Remove baseline?' });
+    await expect(deleteDialog).toBeVisible();
+    await deleteDialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await expect(entitiesPage.page.getByRole('tab', { name: 'Entities' })).toBeVisible();
+    await expect(entitiesPage.page.getByRole('tab', { name: 'Relations' })).toBeVisible();
+    await expect(entitiesPage.page.getByRole('tab', { name: 'Compare' })).toBeVisible();
+    await entitiesPage.page.getByRole('tab', { name: 'Compare' }).click();
+    await expect(
+      entitiesPage.page.getByText('Compare with current state', { exact: true })
+    ).toBeVisible();
+    await expect(
+      entitiesPage.page.getByRole('button', { name: /Back to (Entities|baselines)/ })
+    ).toHaveCount(0);
   });
 
   test('filters entities by type in the sidebar @quick', async ({ page }) => {

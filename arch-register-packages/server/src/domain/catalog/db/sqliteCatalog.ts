@@ -626,9 +626,8 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
         ? input.schema_version_id
         : typeof schemaId !== 'string'
           ? null
-          : (
-              this.get<{ id: string }>(
-                `SELECT id FROM (
+          : (this.get<{ id: string }>(
+              `SELECT id FROM (
                    SELECT v.id, v.created_at, v.version
                    FROM entity_schema_version v
                    JOIN catalog_record r
@@ -643,18 +642,17 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
                  )
                  ORDER BY created_at DESC, version DESC, id DESC
                  LIMIT 1`,
-                [
-                  input.record_id,
-                  input.workspace,
-                  schemaId,
-                  input.created_at.toISOString(),
-                  input.record_id,
-                  input.workspace,
-                  schemaId,
-                  input.created_at.toISOString()
-                ]
-              )?.id ?? null
-            );
+              [
+                input.record_id,
+                input.workspace,
+                schemaId,
+                input.created_at.toISOString(),
+                input.record_id,
+                input.workspace,
+                schemaId,
+                input.created_at.toISOString()
+              ]
+            )?.id ?? null);
     this.run(
       `INSERT INTO record_version
        (id, workspace, record_id, schema_version_id, version_number, kind, commit_message, created_at, created_by, state, applied_case_revision_id)

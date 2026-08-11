@@ -45,7 +45,7 @@ export const parseEntityQuery = (query: EntityListQueryParams): NormalizedEntity
     assessmentId: query.entityQuery?.assessmentId ?? query.assessmentId,
     projectId: query.entityQuery?.projectId ?? query.projectId,
     projectScope: query.entityQuery?.projectScope ?? query.projectScope,
-    collectionId: query.collectionId,
+    collectionId: query.entityQuery?.collectionId ?? query.collectionId,
     view: query.view,
     limit: query.limit,
     offset: query.offset,
@@ -72,6 +72,7 @@ export const findEntityQueryRequestConflicts = (input: EntityListQueryParams): s
   compare('assessmentId', input.assessmentId, entityQuery.assessmentId);
   compare('projectId', input.projectId, entityQuery.projectId);
   compare('projectScope', input.projectScope, entityQuery.projectScope);
+  compare('collectionId', input.collectionId, entityQuery.collectionId);
   compare('asOf', input.asOf, entityQuery.asOf);
   compare('includePlannedChanges', input.includePlannedChanges, entityQuery.includePlannedChanges);
   return conflicts;

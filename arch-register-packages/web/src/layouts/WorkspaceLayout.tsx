@@ -31,8 +31,7 @@ import {
   TbHome,
   TbMessageCircleStar,
   TbSearch,
-  TbClipboardCheck,
-  TbBookmark
+  TbClipboardCheck
 } from 'react-icons/tb';
 import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import { navigateFromRailItem, resolveWorkspaceShellDescriptor } from './workspaceShellDescriptors';
@@ -53,7 +52,6 @@ const ALL_RAIL_ITEMS: NavRailItem[] = [
   { id: 'entities', icon: TbDatabase, tooltip: 'Entities' },
   { id: 'search', icon: TbSearch, tooltip: 'Search' },
   { id: 'governance', icon: TbClipboardCheck, tooltip: 'My work' },
-  { id: 'baselines', icon: TbBookmark, tooltip: 'Architecture baselines' },
   { id: 'assistant', icon: TbMessageCircleStar, tooltip: 'AI Assistant', separator: true },
   { id: 'extract', icon: TbFileAi, tooltip: 'AI Extract' }
 ];

@@ -15132,6 +15132,10 @@
                   "type": "string",
                   "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                 },
+                "collectionId": {
+                  "type": "string",
+                  "description": "Personal collection whose members constrain the entity result"
+                },
                 "asOf": {
                   "type": "string"
                 },
@@ -17151,6 +17155,10 @@
                   ],
                   "type": "string",
                   "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                },
+                "collectionId": {
+                  "type": "string",
+                  "description": "Personal collection whose members constrain the entity result"
                 },
                 "asOf": {
                   "type": "string"
@@ -20780,6 +20788,10 @@
                               "type": "string",
                               "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                             },
+                            "collectionId": {
+                              "type": "string",
+                              "description": "Personal collection whose members constrain the entity result"
+                            },
                             "asOf": {
                               "type": "string"
                             },
@@ -22609,6 +22621,10 @@
                         "type": "string",
                         "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                       },
+                      "collectionId": {
+                        "type": "string",
+                        "description": "Personal collection whose members constrain the entity result"
+                      },
                       "asOf": {
                         "type": "string"
                       },
@@ -24293,6 +24309,10 @@
                   ],
                   "type": "string",
                   "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                },
+                "collectionId": {
+                  "type": "string",
+                  "description": "Personal collection whose members constrain the entity result"
                 },
                 "asOf": {
                   "type": "string"
@@ -27486,6 +27506,10 @@
                   ],
                   "type": "string",
                   "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                },
+                "collectionId": {
+                  "type": "string",
+                  "description": "Personal collection whose members constrain the entity result"
                 },
                 "asOf": {
                   "type": "string"
@@ -32879,6 +32903,10 @@
                   ],
                   "type": "string",
                   "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                },
+                "collectionId": {
+                  "type": "string",
+                  "description": "Personal collection whose members constrain the entity result"
                 },
                 "asOf": {
                   "type": "string"
@@ -39573,6 +39601,10 @@
                   ],
                   "type": "string",
                   "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                },
+                "collectionId": {
+                  "type": "string",
+                  "description": "Personal collection whose members constrain the entity result"
                 },
                 "asOf": {
                   "type": "string"
@@ -71328,6 +71360,10 @@
                             "type": "string",
                             "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                           },
+                          "collectionId": {
+                            "type": "string",
+                            "description": "Personal collection whose members constrain the entity result"
+                          },
                           "asOf": {
                             "type": "string"
                           },
@@ -73738,6 +73774,10 @@
                         "type": "string",
                         "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                       },
+                      "collectionId": {
+                        "type": "string",
+                        "description": "Personal collection whose members constrain the entity result"
+                      },
                       "asOf": {
                         "type": "string"
                       },
@@ -75893,6 +75933,10 @@
                           ],
                           "type": "string",
                           "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                        },
+                        "collectionId": {
+                          "type": "string",
+                          "description": "Personal collection whose members constrain the entity result"
                         },
                         "asOf": {
                           "type": "string"
@@ -78295,6 +78339,10 @@
                         "type": "string",
                         "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                       },
+                      "collectionId": {
+                        "type": "string",
+                        "description": "Personal collection whose members constrain the entity result"
+                      },
                       "asOf": {
                         "type": "string"
                       },
@@ -80445,6 +80493,10 @@
                           ],
                           "type": "string",
                           "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                        },
+                        "collectionId": {
+                          "type": "string",
+                          "description": "Personal collection whose members constrain the entity result"
                         },
                         "asOf": {
                           "type": "string"
@@ -112354,6 +112406,10 @@
                         "type": "string",
                         "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                       },
+                      "collectionId": {
+                        "type": "string",
+                        "description": "Personal collection whose members constrain the entity result"
+                      },
                       "asOf": {
                         "type": "string"
                       },
@@ -122413,6 +122469,10 @@
                                     "type": "string",
                                     "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                                   },
+                                  "collectionId": {
+                                    "type": "string",
+                                    "description": "Personal collection whose members constrain the entity result"
+                                  },
                                   "asOf": {
                                     "type": "string"
                                   },
@@ -123859,6 +123919,1549 @@
                       }
                     ]
                   },
+                  "query": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "root_kind": {
+                            "enum": [
+                              "entity",
+                              "relation"
+                            ],
+                            "type": "string"
+                          },
+                          "schemaId": {
+                            "type": "string"
+                          },
+                          "assessmentId": {
+                            "type": "string"
+                          },
+                          "projectId": {
+                            "type": "string"
+                          },
+                          "projectScope": {
+                            "enum": [
+                              "project",
+                              "all"
+                            ],
+                            "type": "string",
+                            "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                          },
+                          "collectionId": {
+                            "type": "string",
+                            "description": "Personal collection whose members constrain the entity result"
+                          },
+                          "asOf": {
+                            "type": "string"
+                          },
+                          "includePlannedChanges": {
+                            "type": "boolean"
+                          },
+                          "projections": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "path": {
+                                  "type": "array",
+                                  "items": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "forward"
+                                          },
+                                          "fieldId": {
+                                            "type": "string"
+                                          },
+                                          "filter": {
+                                            "anyOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "and"
+                                                  },
+                                                  "children": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "children"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "or"
+                                                  },
+                                                  "children": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "children"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "not"
+                                                  },
+                                                  "child": {}
+                                                },
+                                                "required": [
+                                                  "kind"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "freeText"
+                                                  },
+                                                  "value": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "predicate"
+                                                  },
+                                                  "path": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  },
+                                                  "fieldId": {
+                                                    "type": "string"
+                                                  },
+                                                  "op": {
+                                                    "enum": [
+                                                      "equals",
+                                                      "not_equals",
+                                                      "contains",
+                                                      "starts_with",
+                                                      "ends_with",
+                                                      "empty",
+                                                      "not_empty",
+                                                      "before",
+                                                      "after",
+                                                      "on",
+                                                      "gt",
+                                                      "lt",
+                                                      "gte",
+                                                      "lte"
+                                                    ],
+                                                    "type": "string"
+                                                  },
+                                                  "value": {}
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "path",
+                                                  "fieldId",
+                                                  "op"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationExists"
+                                                  },
+                                                  "path": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "path"
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "fieldId"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "backward"
+                                          },
+                                          "fieldId": {
+                                            "type": "string"
+                                          },
+                                          "ownerSchemaId": {
+                                            "type": "string"
+                                          },
+                                          "filter": {
+                                            "anyOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "and"
+                                                  },
+                                                  "children": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "children"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "or"
+                                                  },
+                                                  "children": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "children"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "not"
+                                                  },
+                                                  "child": {}
+                                                },
+                                                "required": [
+                                                  "kind"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "freeText"
+                                                  },
+                                                  "value": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "predicate"
+                                                  },
+                                                  "path": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  },
+                                                  "fieldId": {
+                                                    "type": "string"
+                                                  },
+                                                  "op": {
+                                                    "enum": [
+                                                      "equals",
+                                                      "not_equals",
+                                                      "contains",
+                                                      "starts_with",
+                                                      "ends_with",
+                                                      "empty",
+                                                      "not_empty",
+                                                      "before",
+                                                      "after",
+                                                      "on",
+                                                      "gt",
+                                                      "lt",
+                                                      "gte",
+                                                      "lte"
+                                                    ],
+                                                    "type": "string"
+                                                  },
+                                                  "value": {}
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "path",
+                                                  "fieldId",
+                                                  "op"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationExists"
+                                                  },
+                                                  "path": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "path"
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "fieldId",
+                                          "ownerSchemaId"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "typedRelation"
+                                          },
+                                          "fieldId": {
+                                            "type": "string"
+                                          },
+                                          "relationSchemaId": {
+                                            "type": "string"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "in",
+                                              "out"
+                                            ],
+                                            "type": "string"
+                                          },
+                                          "ownerSchemaIds": {
+                                            "type": "array",
+                                            "minItems": 1,
+                                            "items": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "filter": {
+                                            "anyOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "and"
+                                                  },
+                                                  "children": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "children"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "or"
+                                                  },
+                                                  "children": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "children"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "not"
+                                                  },
+                                                  "child": {}
+                                                },
+                                                "required": [
+                                                  "kind"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "freeText"
+                                                  },
+                                                  "value": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "predicate"
+                                                  },
+                                                  "path": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  },
+                                                  "fieldId": {
+                                                    "type": "string"
+                                                  },
+                                                  "op": {
+                                                    "enum": [
+                                                      "equals",
+                                                      "not_equals",
+                                                      "contains",
+                                                      "starts_with",
+                                                      "ends_with",
+                                                      "empty",
+                                                      "not_empty",
+                                                      "before",
+                                                      "after",
+                                                      "on",
+                                                      "gt",
+                                                      "lt",
+                                                      "gte",
+                                                      "lte"
+                                                    ],
+                                                    "type": "string"
+                                                  },
+                                                  "value": {}
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "path",
+                                                  "fieldId",
+                                                  "op"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationExists"
+                                                  },
+                                                  "path": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "path"
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "fieldId",
+                                          "relationSchemaId",
+                                          "direction",
+                                          "ownerSchemaIds"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "endpoint"
+                                          },
+                                          "direction": {
+                                            "enum": [
+                                              "in",
+                                              "out"
+                                            ],
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "direction"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "relationForward"
+                                          },
+                                          "fieldId": {
+                                            "type": "string"
+                                          },
+                                          "filter": {
+                                            "anyOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "and"
+                                                  },
+                                                  "children": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "children"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "or"
+                                                  },
+                                                  "children": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "children"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "not"
+                                                  },
+                                                  "child": {}
+                                                },
+                                                "required": [
+                                                  "kind"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "freeText"
+                                                  },
+                                                  "value": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "predicate"
+                                                  },
+                                                  "path": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  },
+                                                  "fieldId": {
+                                                    "type": "string"
+                                                  },
+                                                  "op": {
+                                                    "enum": [
+                                                      "equals",
+                                                      "not_equals",
+                                                      "contains",
+                                                      "starts_with",
+                                                      "ends_with",
+                                                      "empty",
+                                                      "not_empty",
+                                                      "before",
+                                                      "after",
+                                                      "on",
+                                                      "gt",
+                                                      "lt",
+                                                      "gte",
+                                                      "lte"
+                                                    ],
+                                                    "type": "string"
+                                                  },
+                                                  "value": {}
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "path",
+                                                  "fieldId",
+                                                  "op"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationExists"
+                                                  },
+                                                  "path": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "path"
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "fieldId"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "relationBackward"
+                                          },
+                                          "fieldId": {
+                                            "type": "string"
+                                          },
+                                          "relationSchemaId": {
+                                            "type": "string"
+                                          },
+                                          "filter": {
+                                            "anyOf": [
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "and"
+                                                  },
+                                                  "children": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "children"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "or"
+                                                  },
+                                                  "children": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "children"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "not"
+                                                  },
+                                                  "child": {}
+                                                },
+                                                "required": [
+                                                  "kind"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "freeText"
+                                                  },
+                                                  "value": {
+                                                    "type": "string"
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "value"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "predicate"
+                                                  },
+                                                  "path": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  },
+                                                  "fieldId": {
+                                                    "type": "string"
+                                                  },
+                                                  "op": {
+                                                    "enum": [
+                                                      "equals",
+                                                      "not_equals",
+                                                      "contains",
+                                                      "starts_with",
+                                                      "ends_with",
+                                                      "empty",
+                                                      "not_empty",
+                                                      "before",
+                                                      "after",
+                                                      "on",
+                                                      "gt",
+                                                      "lt",
+                                                      "gte",
+                                                      "lte"
+                                                    ],
+                                                    "type": "string"
+                                                  },
+                                                  "value": {}
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "path",
+                                                  "fieldId",
+                                                  "op"
+                                                ]
+                                              },
+                                              {
+                                                "type": "object",
+                                                "properties": {
+                                                  "kind": {
+                                                    "const": "relationExists"
+                                                  },
+                                                  "path": {
+                                                    "type": "array",
+                                                    "items": {}
+                                                  }
+                                                },
+                                                "required": [
+                                                  "kind",
+                                                  "path"
+                                                ]
+                                              }
+                                            ]
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "fieldId",
+                                          "relationSchemaId"
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                },
+                                "fieldId": {
+                                  "type": "string"
+                                },
+                                "source": {
+                                  "enum": [
+                                    "entity",
+                                    "relation"
+                                  ],
+                                  "type": "string"
+                                },
+                                "alias": {
+                                  "type": "string",
+                                  "minLength": 1
+                                }
+                              },
+                              "required": [
+                                "path",
+                                "fieldId"
+                              ]
+                            }
+                          },
+                          "root": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "and"
+                                  },
+                                  "children": {
+                                    "type": "array",
+                                    "items": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "and"
+                                            },
+                                            "children": {
+                                              "type": "array",
+                                              "items": {}
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "children"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "or"
+                                            },
+                                            "children": {
+                                              "type": "array",
+                                              "items": {}
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "children"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "not"
+                                            },
+                                            "child": {}
+                                          },
+                                          "required": [
+                                            "kind"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "freeText"
+                                            },
+                                            "value": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "value"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "predicate"
+                                            },
+                                            "path": {
+                                              "type": "array",
+                                              "items": {}
+                                            },
+                                            "fieldId": {
+                                              "type": "string"
+                                            },
+                                            "op": {
+                                              "enum": [
+                                                "equals",
+                                                "not_equals",
+                                                "contains",
+                                                "starts_with",
+                                                "ends_with",
+                                                "empty",
+                                                "not_empty",
+                                                "before",
+                                                "after",
+                                                "on",
+                                                "gt",
+                                                "lt",
+                                                "gte",
+                                                "lte"
+                                              ],
+                                              "type": "string"
+                                            },
+                                            "value": {}
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "path",
+                                            "fieldId",
+                                            "op"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationExists"
+                                            },
+                                            "path": {
+                                              "type": "array",
+                                              "items": {}
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "path"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "children"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "or"
+                                  },
+                                  "children": {
+                                    "type": "array",
+                                    "items": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "and"
+                                            },
+                                            "children": {
+                                              "type": "array",
+                                              "items": {}
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "children"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "or"
+                                            },
+                                            "children": {
+                                              "type": "array",
+                                              "items": {}
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "children"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "not"
+                                            },
+                                            "child": {}
+                                          },
+                                          "required": [
+                                            "kind"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "freeText"
+                                            },
+                                            "value": {
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "value"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "predicate"
+                                            },
+                                            "path": {
+                                              "type": "array",
+                                              "items": {}
+                                            },
+                                            "fieldId": {
+                                              "type": "string"
+                                            },
+                                            "op": {
+                                              "enum": [
+                                                "equals",
+                                                "not_equals",
+                                                "contains",
+                                                "starts_with",
+                                                "ends_with",
+                                                "empty",
+                                                "not_empty",
+                                                "before",
+                                                "after",
+                                                "on",
+                                                "gt",
+                                                "lt",
+                                                "gte",
+                                                "lte"
+                                              ],
+                                              "type": "string"
+                                            },
+                                            "value": {}
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "path",
+                                            "fieldId",
+                                            "op"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationExists"
+                                            },
+                                            "path": {
+                                              "type": "array",
+                                              "items": {}
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "path"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "children"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "not"
+                                  },
+                                  "child": {
+                                    "anyOf": [
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "and"
+                                          },
+                                          "children": {
+                                            "type": "array",
+                                            "items": {}
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "children"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "or"
+                                          },
+                                          "children": {
+                                            "type": "array",
+                                            "items": {}
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "children"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "not"
+                                          },
+                                          "child": {}
+                                        },
+                                        "required": [
+                                          "kind"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "freeText"
+                                          },
+                                          "value": {
+                                            "type": "string"
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "value"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "predicate"
+                                          },
+                                          "path": {
+                                            "type": "array",
+                                            "items": {}
+                                          },
+                                          "fieldId": {
+                                            "type": "string"
+                                          },
+                                          "op": {
+                                            "enum": [
+                                              "equals",
+                                              "not_equals",
+                                              "contains",
+                                              "starts_with",
+                                              "ends_with",
+                                              "empty",
+                                              "not_empty",
+                                              "before",
+                                              "after",
+                                              "on",
+                                              "gt",
+                                              "lt",
+                                              "gte",
+                                              "lte"
+                                            ],
+                                            "type": "string"
+                                          },
+                                          "value": {}
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "path",
+                                          "fieldId",
+                                          "op"
+                                        ]
+                                      },
+                                      {
+                                        "type": "object",
+                                        "properties": {
+                                          "kind": {
+                                            "const": "relationExists"
+                                          },
+                                          "path": {
+                                            "type": "array",
+                                            "items": {}
+                                          }
+                                        },
+                                        "required": [
+                                          "kind",
+                                          "path"
+                                        ]
+                                      }
+                                    ]
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "child"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "freeText"
+                                  },
+                                  "value": {
+                                    "type": "string"
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "value"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "predicate"
+                                  },
+                                  "path": {
+                                    "type": "array",
+                                    "items": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "forward"
+                                            },
+                                            "fieldId": {
+                                              "type": "string"
+                                            },
+                                            "filter": {}
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "fieldId"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "backward"
+                                            },
+                                            "fieldId": {
+                                              "type": "string"
+                                            },
+                                            "ownerSchemaId": {
+                                              "type": "string"
+                                            },
+                                            "filter": {}
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "fieldId",
+                                            "ownerSchemaId"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "typedRelation"
+                                            },
+                                            "fieldId": {
+                                              "type": "string"
+                                            },
+                                            "relationSchemaId": {
+                                              "type": "string"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "in",
+                                                "out"
+                                              ],
+                                              "type": "string"
+                                            },
+                                            "ownerSchemaIds": {
+                                              "type": "array",
+                                              "minItems": 1,
+                                              "items": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "filter": {}
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "fieldId",
+                                            "relationSchemaId",
+                                            "direction",
+                                            "ownerSchemaIds"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "endpoint"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "in",
+                                                "out"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationForward"
+                                            },
+                                            "fieldId": {
+                                              "type": "string"
+                                            },
+                                            "filter": {}
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "fieldId"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationBackward"
+                                            },
+                                            "fieldId": {
+                                              "type": "string"
+                                            },
+                                            "relationSchemaId": {
+                                              "type": "string"
+                                            },
+                                            "filter": {}
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "fieldId",
+                                            "relationSchemaId"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  },
+                                  "fieldId": {
+                                    "type": "string"
+                                  },
+                                  "op": {
+                                    "enum": [
+                                      "equals",
+                                      "not_equals",
+                                      "contains",
+                                      "starts_with",
+                                      "ends_with",
+                                      "empty",
+                                      "not_empty",
+                                      "before",
+                                      "after",
+                                      "on",
+                                      "gt",
+                                      "lt",
+                                      "gte",
+                                      "lte"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  "value": {}
+                                },
+                                "required": [
+                                  "kind",
+                                  "path",
+                                  "fieldId",
+                                  "op"
+                                ]
+                              },
+                              {
+                                "type": "object",
+                                "properties": {
+                                  "kind": {
+                                    "const": "relationExists"
+                                  },
+                                  "path": {
+                                    "type": "array",
+                                    "items": {
+                                      "anyOf": [
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "forward"
+                                            },
+                                            "fieldId": {
+                                              "type": "string"
+                                            },
+                                            "filter": {}
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "fieldId"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "backward"
+                                            },
+                                            "fieldId": {
+                                              "type": "string"
+                                            },
+                                            "ownerSchemaId": {
+                                              "type": "string"
+                                            },
+                                            "filter": {}
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "fieldId",
+                                            "ownerSchemaId"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "typedRelation"
+                                            },
+                                            "fieldId": {
+                                              "type": "string"
+                                            },
+                                            "relationSchemaId": {
+                                              "type": "string"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "in",
+                                                "out"
+                                              ],
+                                              "type": "string"
+                                            },
+                                            "ownerSchemaIds": {
+                                              "type": "array",
+                                              "minItems": 1,
+                                              "items": {
+                                                "type": "string"
+                                              }
+                                            },
+                                            "filter": {}
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "fieldId",
+                                            "relationSchemaId",
+                                            "direction",
+                                            "ownerSchemaIds"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "endpoint"
+                                            },
+                                            "direction": {
+                                              "enum": [
+                                                "in",
+                                                "out"
+                                              ],
+                                              "type": "string"
+                                            }
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "direction"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationForward"
+                                            },
+                                            "fieldId": {
+                                              "type": "string"
+                                            },
+                                            "filter": {}
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "fieldId"
+                                          ]
+                                        },
+                                        {
+                                          "type": "object",
+                                          "properties": {
+                                            "kind": {
+                                              "const": "relationBackward"
+                                            },
+                                            "fieldId": {
+                                              "type": "string"
+                                            },
+                                            "relationSchemaId": {
+                                              "type": "string"
+                                            },
+                                            "filter": {}
+                                          },
+                                          "required": [
+                                            "kind",
+                                            "fieldId",
+                                            "relationSchemaId"
+                                          ]
+                                        }
+                                      ]
+                                    }
+                                  }
+                                },
+                                "required": [
+                                  "kind",
+                                  "path"
+                                ]
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "root"
+                        ]
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional current entity query to capture alongside the selected scope"
+                  },
                   "includePlannedChanges": {
                     "type": "boolean",
                     "default": true
@@ -124055,6 +125658,10 @@
                                   ],
                                   "type": "string",
                                   "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                                },
+                                "collectionId": {
+                                  "type": "string",
+                                  "description": "Personal collection whose members constrain the entity result"
                                 },
                                 "asOf": {
                                   "type": "string"
@@ -126075,6 +127682,10 @@
                                   ],
                                   "type": "string",
                                   "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                                },
+                                "collectionId": {
+                                  "type": "string",
+                                  "description": "Personal collection whose members constrain the entity result"
                                 },
                                 "asOf": {
                                   "type": "string"
@@ -129074,6 +130685,10 @@
                                   ],
                                   "type": "string",
                                   "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                                },
+                                "collectionId": {
+                                  "type": "string",
+                                  "description": "Personal collection whose members constrain the entity result"
                                 },
                                 "asOf": {
                                   "type": "string"
@@ -134094,6 +135709,10 @@
                                   "type": "string",
                                   "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
                                 },
+                                "collectionId": {
+                                  "type": "string",
+                                  "description": "Personal collection whose members constrain the entity result"
+                                },
                                 "asOf": {
                                   "type": "string"
                                 },
@@ -136113,6 +137732,10 @@
                                   ],
                                   "type": "string",
                                   "description": "Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project"
+                                },
+                                "collectionId": {
+                                  "type": "string",
+                                  "description": "Personal collection whose members constrain the entity result"
                                 },
                                 "asOf": {
                                   "type": "string"

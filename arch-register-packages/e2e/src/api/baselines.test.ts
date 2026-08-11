@@ -1,4 +1,9 @@
-import { seededProjects, seededUsers, seededWorkspaces } from '@arch-register/server/db/seedFixtures';
+import {
+  seededProjects,
+  seededSchemas,
+  seededUsers,
+  seededWorkspaces
+} from '@arch-register/server/db/seedFixtures';
 import { createApiTest, createTestORPCClient, expect } from '../helpers/fixtures';
 import { makeAuthHeader } from '../helpers/seedHelper';
 
@@ -35,6 +40,15 @@ test.describe('architecture baselines', () => {
     });
     expect(detail.entities.length).toBe(created.entityCount);
     expect(detail.relations.length).toBeGreaterThan(0);
+    for (const entity of detail.entities) {
+      expect(entity._schema.name).not.toBe(entity._schema.id);
+    }
+    const entityNames = new Map(detail.entities.map(entity => [entity._uid, entity._name]));
+    for (const relation of detail.relations) {
+      expect(relation._in.name).toBe(entityNames.get(relation._in.id));
+      expect(relation._out.name).toBe(entityNames.get(relation._out.id));
+      expect(relation._schema.name).not.toBe(relation._schema.id);
+    }
 
     const storedRecords = await server.db.baseline.listBaselineRecords(
       seededWorkspaces.default.id,
@@ -43,6 +57,26 @@ test.describe('architecture baselines', () => {
     expect(storedRecords).toHaveLength(created.entityCount + created.relationCount);
     expect(storedRecords.every(record => record.record_version_id != null)).toBe(true);
     expect(storedRecords.every(record => record.state == null)).toBe(true);
+
+    const filtered = await orpc.baselines.create({
+      params: { workspace: 'default' },
+      body: {
+        name: 'API entities only',
+        description: null,
+        ownerTeamId: null,
+        effectiveAt: new Date().toISOString(),
+        scope: { kind: 'workspace' },
+        query: {
+          schemaId: seededSchemas.default.api.id,
+          root_kind: 'entity',
+          root: { kind: 'and', children: [] }
+        },
+        includePlannedChanges: false,
+        includeOverdueChanges: false
+      }
+    });
+    expect(filtered.entityCount).toBeGreaterThan(0);
+    expect(filtered.entityCount).toBeLessThan(created.entityCount);
 
     const link = await orpc.baselines.links.create({
       params: { workspace: 'default', id: created.id },

@@ -47,6 +47,7 @@ import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObject
 import type { AsOfMarker } from '../../components/timeline/TimelineStrip';
 import { formatDate } from '../../utils/dateFormat';
 import { useMilestones } from '../../hooks/useMilestones';
+import { BaselineDetailView } from '../baselines/BaselineDetailView';
 import {
   getSnapshotEffectiveDate,
   getProjectScenarioDate,
@@ -344,6 +345,28 @@ export const ProjectEntities = ({
     () => [...entityMenuItems, ...viewMenuItems],
     [entityMenuItems, viewMenuItems]
   );
+
+  if (search.baselineId) {
+    return (
+      <BaselineDetailView
+        workspaceSlug={workspaceSlug}
+        baselineId={search.baselineId}
+        onDeleted={() =>
+          navigate({
+            ...projectDetailRoute(workspaceSlug, asProjectPublicId(project.id)),
+            search: (previous: Record<string, unknown>) => ({
+              ...previous,
+              section: 'entities',
+              baselineId: undefined,
+              sidebarTab: undefined,
+              asOf: undefined,
+              asOfIncludeProjects: undefined
+            })
+          })
+        }
+      />
+    );
+  }
 
   return (
     <ProjectScreenLayout

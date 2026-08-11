@@ -227,6 +227,9 @@ export const EntityBrowser = ({
   const [tlOpen, setTlOpen] = useState(!!asOf && !collectionId);
   const [includeOverdueChanges, setIncludeOverdueChanges] = useState(false);
   useEffect(() => {
+    if (asOf && !collectionId) setTlOpen(true);
+  }, [asOf, collectionId]);
+  useEffect(() => {
     if (view === 'diff' && !collectionId) setTlOpen(true);
   }, [view, collectionId]);
   const { data: fetchedTimelineMarkers = [] } = useTimelineMarkers(

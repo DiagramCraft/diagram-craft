@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import type { Baseline } from '@arch-register/api-types/baselineContract';
 import { workspaceEntitiesRoute } from '../support/routes';
 import { WorkspacePage } from './WorkspacePage';
 
@@ -49,6 +50,37 @@ export class EntitiesPage extends WorkspacePage {
 
   openExportMenu = async () => {
     await this.page.getByRole('button', { name: 'Entity browser actions' }).click();
+  };
+
+  workspaceBaselinesSection = () => this.page.getByText('Workspace baselines', { exact: true });
+  baselinesTab = () => this.page.getByRole('tab', { name: 'Baselines', exact: true });
+  homeTab = () => this.page.getByRole('tab', { name: 'Home', exact: true });
+
+  createWorkspaceBaseline = async (name: string): Promise<Baseline> => {
+    const response = await this.page.request.post(
+      new URL(`/api/application/v1/${this.workspaceSlug}/baselines`, this.page.url()).toString(),
+      {
+        data: {
+          name,
+          description: null,
+          ownerTeamId: null,
+          effectiveAt: new Date().toISOString(),
+          scope: { kind: 'workspace' },
+          includePlannedChanges: false,
+          includeOverdueChanges: false
+        }
+      }
+    );
+    expect(response.ok()).toBeTruthy();
+    return (await response.json()) as Baseline;
+  };
+
+  openCreateBaselineDialog = async () => {
+    await this.openExportMenu();
+    await this.page.getByRole('menuitem', { name: 'Create baseline' }).click();
+    await expect(
+      this.page.getByRole('alertdialog', { name: 'Create architecture baseline' })
+    ).toBeVisible();
   };
 
   exportCsv = async () => {

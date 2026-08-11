@@ -1,3 +1,5 @@
+export type EntityBrowserSidebarTab = 'home' | 'views' | 'bookmarks' | 'baselines';
+
 export type SharedEntityBrowserSearchParams = {
   type?: string;
   status?: string;
@@ -19,7 +21,8 @@ export type SharedEntityBrowserSearchParams = {
   sort?: string;
   projectScope?: 'project' | 'all';
   viewConfigs?: string;
-  sidebarTab?: 'filters' | 'views' | 'bookmarks';
+  sidebarTab?: EntityBrowserSidebarTab;
+  baselineId?: string;
   collectionId?: string;
   filters?: string; // JSON string of FilterCondition[]
   entityQuery?: string; // JSON string of structured EntityQuery IR
@@ -55,11 +58,17 @@ const validateSharedEntityBrowserSearch = (
     raw.projectScope === 'project' || raw.projectScope === 'all' ? raw.projectScope : undefined,
   viewConfigs: typeof raw.viewConfigs === 'string' ? raw.viewConfigs : undefined,
   sidebarTab:
-    raw.sidebarTab === 'filters' || raw.sidebarTab === 'views' || raw.sidebarTab === 'bookmarks'
+    raw.sidebarTab === 'home' ||
+    raw.sidebarTab === 'views' ||
+    raw.sidebarTab === 'bookmarks' ||
+    raw.sidebarTab === 'baselines'
       ? raw.sidebarTab
-      : raw.sidebarTab === 'pinned' || raw.sidebarTab === 'collections'
-        ? 'bookmarks'
-        : undefined,
+      : raw.sidebarTab === 'filters'
+        ? 'home'
+        : raw.sidebarTab === 'pinned' || raw.sidebarTab === 'collections'
+          ? 'bookmarks'
+          : undefined,
+  baselineId: typeof raw.baselineId === 'string' ? raw.baselineId : undefined,
   collectionId: typeof raw.collectionId === 'string' ? raw.collectionId : undefined,
   filters: typeof raw.filters === 'string' ? raw.filters : undefined,
   entityQuery: typeof raw.entityQuery === 'string' ? raw.entityQuery : undefined,

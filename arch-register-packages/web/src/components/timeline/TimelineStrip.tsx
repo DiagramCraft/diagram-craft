@@ -36,6 +36,10 @@ const markerTypeLabel = (type: AsOfMarker['type']) => {
 };
 
 const toDateOnly = (d: Date) => d.toISOString().slice(0, 10);
+const toTimelineDate = (value: string) => {
+  const parsed = new Date(value);
+  return Number.isNaN(parsed.getTime()) ? value : toDateOnly(parsed);
+};
 
 const useTimelineRange = (markers: AsOfMarker[]) => {
   return useMemo(() => {
@@ -121,7 +125,11 @@ export const TimelineStrip = ({
     setDragging(true);
   };
 
-  const displayDate = dragging ? dragDate : selectedDate;
+  const displayDate = dragging
+    ? dragDate
+    : selectedDate == null
+      ? undefined
+      : toTimelineDate(selectedDate);
   const isFuture = !!displayDate && displayDate > todayIso;
   const todayPos = ((todayMs - startMs) / rangeMs) * 100;
 

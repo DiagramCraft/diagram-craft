@@ -1,4 +1,4 @@
-import { useRef, useState } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import type { SavedView } from '@arch-register/api-types/viewContract';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
@@ -55,9 +55,10 @@ import { toSavedViewSearch } from '../entities/components/entityBrowserState';
 import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 import { AddDiagramDialog } from './AddDiagramDialog';
 import { downloadUrl } from '../../lib/browserDownload';
+import { BaselineSidebarSection } from '../baselines/BaselineSidebarSection';
 
 type ProjectSection = 'home' | 'entities' | 'assessments' | 'milestones';
-type SidebarTab = 'content' | 'views';
+type SidebarTab = 'content' | 'views' | 'baselines';
 
 export const ProjectContentSidebar = ({
   workspaceSlug,
@@ -98,6 +99,9 @@ export const ProjectContentSidebar = ({
   const navigate = useNavigate();
   const params = useParams({ strict: false });
   const search = useSearch({ strict: false }) as ProjectSearchParams;
+  useEffect(() => {
+    setTab(search.baselineId != null ? 'baselines' : 'content');
+  }, [search.baselineId]);
   const section: ProjectSection =
     search.section === 'entities' ||
     search.section === 'assessments' ||
@@ -309,6 +313,7 @@ export const ProjectContentSidebar = ({
           <Tabs.List>
             <Tabs.Trigger value="content">Content</Tabs.Trigger>
             <Tabs.Trigger value="views">Views</Tabs.Trigger>
+            <Tabs.Trigger value="baselines">Baselines</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
       </SidebarHeader>
@@ -330,7 +335,7 @@ export const ProjectContentSidebar = ({
             onCreateDiagram={setDiagramFolder}
             onCreateMarkdown={setMarkdownFolder}
           />
-        ) : (
+        ) : tab === 'views' ? (
           <>
             {renderViews(true, 'Workspace views')}
             {renderViews(false, 'Views')}
@@ -338,6 +343,12 @@ export const ProjectContentSidebar = ({
               <div className={`${styles.emptyState} dim`}>No saved views yet.</div>
             )}
           </>
+        ) : (
+          <BaselineSidebarSection
+            workspaceSlug={workspaceSlug}
+            kind="project"
+            projectId={project?.id}
+          />
         )}
       </div>
       {viewMenu && (

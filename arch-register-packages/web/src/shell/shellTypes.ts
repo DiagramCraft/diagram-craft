@@ -11,6 +11,5 @@ export type WorkspaceRailItemId =
   | 'entities'
   | 'search'
   | 'governance'
-  | 'baselines'
   | 'assistant'
   | 'extract';

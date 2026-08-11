@@ -90,6 +90,41 @@ test.describe('projects section', () => {
     await projectsPage.openMarkdownTemplatesDialog();
   });
 
+  test('opens project baseline creation from the project actions menu', async ({ page }) => {
+    const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
+
+    await projectsPage.gotoProject(authMigrationProject.id);
+    await projectsPage.expectProjectOpened(authMigrationProject.name);
+    await projectsPage.secondaryBaselinesTab().click();
+    await expect(projectsPage.projectBaselinesSection()).toBeVisible();
+    await projectsPage.openCreateBaselineDialog();
+    await expect(page.getByText('Project entities and links', { exact: true })).toBeVisible();
+  });
+
+  test('opens a project baseline in the project entity context', async ({ page }) => {
+    const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
+    const baseline = await projectsPage.createProjectBaseline(
+      authMigrationProject.id,
+      `UI project ${Date.now()}`
+    );
+
+    await projectsPage.gotoProject(authMigrationProject.id);
+    await projectsPage.expectProjectOpened(authMigrationProject.name);
+    await projectsPage.secondaryBaselinesTab().click();
+    await projectsPage.page.getByTestId(`project-baseline-${baseline.id}`).click();
+
+    await expect(projectsPage.page).toHaveURL(new RegExp(`baselineId=${baseline.id}`));
+    await expect(projectsPage.page.getByRole('heading', { name: baseline.name })).toBeVisible();
+    await expect(projectsPage.page.getByRole('button', { name: 'Export JSON' })).toBeVisible();
+    await projectsPage.page.getByRole('button', { name: 'Remove', exact: true }).click();
+    const deleteDialog = projectsPage.page.getByRole('alertdialog', { name: 'Remove baseline?' });
+    await expect(deleteDialog).toBeVisible();
+    await deleteDialog.getByRole('button', { name: 'Cancel', exact: true }).click();
+    await expect(
+      projectsPage.page.getByRole('button', { name: /Back to (Project entities|baselines)/ })
+    ).toHaveCount(0);
+  });
+
   test('opens dashboard editing from the project actions menu', async ({ page }) => {
     const projectsPage = new ProjectsPage(page, defaultWorkspace.slug);
 

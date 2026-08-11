@@ -129,8 +129,7 @@ export const baselineMappers = {
     baseline_id: String(row['baseline_id']),
     record_kind: String(row['record_kind']) as BaselineRecordKind,
     record_id: String(row['record_id']),
-    record_version_id:
-      row['record_version_id'] == null ? null : String(row['record_version_id']),
+    record_version_id: row['record_version_id'] == null ? null : String(row['record_version_id']),
     state:
       row['state_json'] == null
         ? null

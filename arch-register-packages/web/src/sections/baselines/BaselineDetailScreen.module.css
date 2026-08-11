@@ -1,0 +1,83 @@
+.screen {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  height: 100%;
+  min-height: 0;
+  padding: 24px;
+  overflow: auto;
+}
+
+.subtitle {
+  margin: 4px 0 0;
+  color: var(--cmp-fg-secondary);
+  font-size: 13px;
+}
+
+.metadataPanel {
+  padding: 16px;
+  border: 1px solid var(--panel-border);
+  border-radius: 8px;
+  background: var(--panel-bg);
+}
+
+.panel {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.tabContent {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 4px;
+}
+
+.error {
+  color: var(--cmp-fg-danger, #c0392b);
+  font-size: 13px;
+}
+
+.metadata {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+  margin: 0;
+}
+
+.metadata div {
+  padding: 10px;
+  border-radius: 6px;
+  background: var(--cmp-bg-secondary);
+}
+
+.metadata dt {
+  color: var(--cmp-fg-secondary);
+  font-size: 11px;
+  text-transform: uppercase;
+}
+
+.metadata dd {
+  margin: 4px 0 0;
+  color: var(--cmp-fg-primary);
+  font-size: 13px;
+}
+
+.toolbar {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 8px;
+}
+
+.counts {
+  color: var(--cmp-fg-secondary);
+  font-size: 13px;
+}
+
+@media (max-width: 900px) {
+  .metadata {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+}

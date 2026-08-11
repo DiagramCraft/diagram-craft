@@ -11,11 +11,15 @@ import {
   isAssessmentCondition,
   ASSESSMENT_FIELD_PREFIX
 } from '@arch-register/api-types/assessmentFilter';
-import type { EntitySearchParams, ProjectSearchParams } from '../../../routes/searchParams';
+import type {
+  EntityBrowserSidebarTab,
+  EntitySearchParams,
+  ProjectSearchParams
+} from '../../../routes/searchParams';
 
 export type BrowserSearch = EntitySearchParams &
   ProjectSearchParams & {
-    sidebarTab?: 'filters' | 'views' | 'bookmarks';
+    sidebarTab?: EntityBrowserSidebarTab;
     collectionId?: string;
   };
 

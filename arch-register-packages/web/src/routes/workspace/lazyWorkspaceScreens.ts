@@ -56,14 +56,6 @@ export const LazySearchScreen = lazyRouteComponent(
   () => import('../../sections/search/SearchScreen'),
   'SearchScreen'
 );
-export const LazyBaselineListScreen = lazyRouteComponent(
-  () => import('../../sections/baselines/BaselineListScreen'),
-  'BaselineListScreen'
-);
-export const LazyBaselineDetailScreen = lazyRouteComponent(
-  () => import('../../sections/baselines/BaselineDetailScreen'),
-  'BaselineDetailScreen'
-);
 export const LazyWorkspaceSettingsScreen = lazyRouteComponent(
   () => import('../../sections/workspace-settings/WorkspaceSettingsScreen'),
   'WorkspaceSettingsScreen'

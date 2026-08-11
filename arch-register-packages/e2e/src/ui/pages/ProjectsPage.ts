@@ -1,4 +1,5 @@
 import { expect } from '@playwright/test';
+import type { Baseline } from '@arch-register/api-types/baselineContract';
 import { projectDetailRoute, workspaceProjectsRoute } from '../support/routes';
 import { WorkspacePage } from './WorkspacePage';
 
@@ -26,6 +27,36 @@ export class ProjectsPage extends WorkspacePage {
   editProjectButton = () => this.page.getByRole('button', { name: 'Edit', exact: true });
 
   projectActionsButton = () => this.page.getByRole('button', { name: 'Project actions' });
+
+  projectBaselinesSection = () => this.page.getByText('Project baselines', { exact: true });
+  secondaryBaselinesTab = () => this.page.getByRole('tab', { name: 'Baselines', exact: true });
+
+  createProjectBaseline = async (projectIdentifier: string, name: string): Promise<Baseline> => {
+    const projectResponse = await this.page.request.get(
+      new URL(
+        `/api/application/v1/${this.workspaceSlug}/projects/${projectIdentifier}`,
+        this.page.url()
+      ).toString()
+    );
+    expect(projectResponse.ok()).toBeTruthy();
+    const project = (await projectResponse.json()) as { id: string };
+    const response = await this.page.request.post(
+      new URL(`/api/application/v1/${this.workspaceSlug}/baselines`, this.page.url()).toString(),
+      {
+        data: {
+          name,
+          description: null,
+          ownerTeamId: null,
+          effectiveAt: new Date().toISOString(),
+          scope: { kind: 'project', projectId: project.id, projectScope: 'project' },
+          includePlannedChanges: true,
+          includeOverdueChanges: false
+        }
+      }
+    );
+    expect(response.ok()).toBeTruthy();
+    return (await response.json()) as Baseline;
+  };
 
   newProjectButton = () => this.page.locator('button[title="New project"]');
 
@@ -113,6 +144,14 @@ export class ProjectsPage extends WorkspacePage {
     await this.page.getByRole('menuitem', { name: 'Edit Markdown Templates' }).click();
     await expect(
       this.page.getByRole('alertdialog', { name: 'Edit Markdown Templates' })
+    ).toBeVisible();
+  };
+
+  openCreateBaselineDialog = async () => {
+    await this.projectActionsButton().click();
+    await this.page.getByRole('menuitem', { name: 'Create project baseline' }).click();
+    await expect(
+      this.page.getByRole('alertdialog', { name: 'Create architecture baseline' })
     ).toBeVisible();
   };
 

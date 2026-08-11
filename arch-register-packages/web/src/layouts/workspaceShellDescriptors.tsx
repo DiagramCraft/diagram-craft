@@ -1,12 +1,4 @@
-import {
-  TbBookmark,
-  TbDatabase,
-  TbFiles,
-  TbFolders,
-  TbHome,
-  TbSearch,
-  TbSettings
-} from 'react-icons/tb';
+import { TbDatabase, TbFiles, TbFolders, TbHome, TbSearch, TbSettings } from 'react-icons/tb';
 import type { BreadcrumbItem, WorkspaceRailItemId } from '../shell/shellTypes';
 import type { Workspace } from '@arch-register/api-types/workspaceContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -139,23 +131,6 @@ export const buildSearchBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbIt
   }
 ];
 
-export const buildBaselineBreadcrumbs = (
-  ctx: WorkspaceShellContext,
-  detail = false
-): BreadcrumbItem[] => [
-  ...buildHomeBreadcrumbs(ctx),
-  {
-    label: 'Baselines',
-    icon: <TbBookmark size={12} />,
-    onClick: () =>
-      ctx.navigate({
-        to: '/$workspaceSlug/baselines',
-        params: { workspaceSlug: ctx.workspaceSlug }
-      })
-  },
-  ...(detail ? [{ label: 'Detail', onClick: () => {} }] : [])
-];
-
 export const buildSettingsBreadcrumbs = (
   ctx: WorkspaceShellContext,
   label: string,
@@ -195,7 +170,6 @@ export const navigateFromRailItem = (
     entities: '/$workspaceSlug/entities',
     search: '/$workspaceSlug/search',
     governance: '/$workspaceSlug/governance',
-    baselines: '/$workspaceSlug/baselines',
     assistant: '/$workspaceSlug/assistant',
     extract: '/$workspaceSlug/extract'
   };

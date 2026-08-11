@@ -403,8 +403,7 @@ export const catalogMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     record_id: String(row['record_id']),
-    schema_version_id:
-      row['schema_version_id'] == null ? null : String(row['schema_version_id']),
+    schema_version_id: row['schema_version_id'] == null ? null : String(row['schema_version_id']),
     version_number: Number(row['version_number']),
     kind: row['kind'] as EntityVersionKind,
     commit_message: row['commit_message'] == null ? null : String(row['commit_message']),
@@ -419,8 +418,7 @@ export const catalogMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     record_id: String(row['record_id']),
-    schema_version_id:
-      row['schema_version_id'] == null ? null : String(row['schema_version_id']),
+    schema_version_id: row['schema_version_id'] == null ? null : String(row['schema_version_id']),
     version_number: Number(row['version_number']),
     kind: row['kind'] as EntityVersionKind,
     commit_message: row['commit_message'] == null ? null : String(row['commit_message']),

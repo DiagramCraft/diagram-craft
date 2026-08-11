@@ -414,9 +414,7 @@ const storedSnapshot = async (
   const records = await db.baseline.listBaselineRecords(workspace, baselineId);
   const versions = await db.catalog.listEntityVersionsByVersionIds(
     workspace,
-    records
-      .map(record => record.record_version_id)
-      .filter((id): id is string => id != null)
+    records.map(record => record.record_version_id).filter((id): id is string => id != null)
   );
   const versionById = new Map(versions.map(version => [version.id, version]));
   const entityEntries = records
@@ -472,12 +470,26 @@ const storedSnapshot = async (
   }
 
   const allEntities = entityEntries.map(entry => entry.entity);
-  const entities = filterVisibleEntities(authCtx, allEntities);
+  const [owners, lifecycleStates] = await Promise.all([
+    db.workspace.listTeams(workspace),
+    db.workspace.listLifecycleStates(workspace)
+  ]);
+  const ownerNameById = new Map(owners.map(owner => [owner.id, owner.name]));
+  const lifecycleLabelById = new Map(lifecycleStates.map(state => [state.id, state.label]));
+  const entities = filterVisibleEntities(authCtx, allEntities).map(entity => ({
+    ...entity,
+    owner_name: entity.owner ? (ownerNameById.get(entity.owner) ?? entity.owner_name) : null,
+    lifecycle_label: entity.lifecycle
+      ? (lifecycleLabelById.get(entity.lifecycle) ?? entity.lifecycle_label)
+      : null,
+    target_lifecycle_label: entity.target_lifecycle
+      ? (lifecycleLabelById.get(entity.target_lifecycle) ?? entity.target_lifecycle_label)
+      : null,
+    schema_name: entitySchemas.get(entity.schema_id)?.name ?? entity.schema_name
+  }));
   const entityIds = new Set(entities.map(entity => entity.id));
 
-  const relationSchemaIds = [
-    ...new Set(relationEntries.map(entry => entry.relation.schema_id))
-  ];
+  const relationSchemaIds = [...new Set(relationEntries.map(entry => entry.relation.schema_id))];
   const relationSchemasById = new Map(
     (await db.relation.listRelationSchemas(workspace)).map(schema => [schema.id, schema])
   );
@@ -505,13 +517,33 @@ const storedSnapshot = async (
       )
     );
   }
+  const entityById = new Map(entities.map(entity => [entity.id, entity]));
   const relations = relationEntries
-    .map(entry => entry.relation)
+    .map(entry => {
+      const relation = entry.relation;
+      const inEntity = entityById.get(relation.in_entity_id);
+      const outEntity = entityById.get(relation.out_entity_id);
+      const relationSchema = relationSchemas.get(relation.schema_id);
+      return {
+        ...relation,
+        schema_name: relationSchema?.name ?? relation.schema_name,
+        in_entity_name: inEntity?.name ?? relation.in_entity_name,
+        in_entity_schema_id: inEntity?.schema_id ?? relation.in_entity_schema_id,
+        out_entity_name: outEntity?.name ?? relation.out_entity_name,
+        out_entity_schema_id: outEntity?.schema_id ?? relation.out_entity_schema_id,
+        owner_name: relation.owner
+          ? (ownerNameById.get(relation.owner) ?? relation.owner_name)
+          : null,
+        lifecycle_label: relation.lifecycle
+          ? (lifecycleLabelById.get(relation.lifecycle) ?? relation.lifecycle_label)
+          : null
+      };
+    })
     .filter(relation => {
       if (!entityIds.has(relation.in_entity_id) || !entityIds.has(relation.out_entity_id))
         return false;
-      const inEntity = entities.find(entity => entity.id === relation.in_entity_id)!;
-      const outEntity = entities.find(entity => entity.id === relation.out_entity_id)!;
+      const inEntity = entityById.get(relation.in_entity_id)!;
+      const outEntity = entityById.get(relation.out_entity_id)!;
       const inSchema = entitySchemas.get(inEntity.schema_id) ?? null;
       const outSchema = entitySchemas.get(outEntity.schema_id) ?? null;
       return canViewTypedRelation(
@@ -849,13 +881,19 @@ export const createBaseline = async (
   }
   const effectiveAt = new Date(input.effectiveAt);
   const query =
-    input.scope.kind === 'saved_view'
+    input.query != null
       ? {
-          ...(await resolveSavedViewQuery(db, workspace, input.scope))!,
+          ...input.query,
           asOf: effectiveAt.toISOString(),
           includePlannedChanges: input.includePlannedChanges
         }
-      : null;
+      : input.scope.kind === 'saved_view'
+        ? {
+            ...(await resolveSavedViewQuery(db, workspace, input.scope))!,
+            asOf: effectiveAt.toISOString(),
+            includePlannedChanges: input.includePlannedChanges
+          }
+        : null;
   const snapshot = await materialize(db, workspace, authCtx, {
     scope: input.scope,
     query,

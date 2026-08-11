@@ -78,6 +78,10 @@ export const createBaselineBodySchema = z.object({
   ownerTeamId: z.string().nullable().optional(),
   effectiveAt: z.string().refine(value => !Number.isNaN(Date.parse(value)), 'Invalid effectiveAt'),
   scope: baselineScopeSchema,
+  query: entityQuerySchema
+    .nullable()
+    .optional()
+    .describe('Optional current entity query to capture alongside the selected scope'),
   includePlannedChanges: z.boolean().default(true),
   includeOverdueChanges: z.boolean().default(false)
 });
