@@ -12,6 +12,7 @@ const setWindowLocation = (
 ) => {
   vi.stubGlobal('window', {
     location: {
+      origin: 'http://localhost',
       pathname,
       search,
       hash
@@ -39,7 +40,7 @@ describe('authClient', () => {
 
     expect(response.status).toBe(200);
     expect(fetchMock).toHaveBeenCalledTimes(1);
-    expect(fetchMock).toHaveBeenCalledWith('/api/workspaces', {
+    expect(fetchMock).toHaveBeenCalledWith('http://localhost/api/workspaces', {
       credentials: 'include'
     });
   });
@@ -59,9 +60,9 @@ describe('authClient', () => {
 
     expect(response.status).toBe(200);
     expect(fetchMock.mock.calls.map(call => call[0])).toEqual([
-      '/api/workspaces',
-      '/api/auth/refresh',
-      '/api/workspaces'
+      'http://localhost/api/workspaces',
+      'http://localhost/api/auth/refresh',
+      'http://localhost/api/workspaces'
     ]);
     expect(getAccessTokenExpiresAt()).not.toBeNull();
     expect(onExpired).not.toHaveBeenCalled();
@@ -78,7 +79,7 @@ describe('authClient', () => {
     });
 
     const fetchMock = vi.fn().mockImplementation((input: string) => {
-      if (input === '/api/auth/refresh') {
+      if (input === 'http://localhost/api/auth/refresh') {
         return refreshPromise;
       }
 
@@ -100,7 +101,57 @@ describe('authClient', () => {
 
     expect(responseA.status).toBe(200);
     expect(responseB.status).toBe(200);
-    expect(fetchMock.mock.calls.filter(call => call[0] === '/api/auth/refresh')).toHaveLength(1);
+    expect(
+      fetchMock.mock.calls.filter(call => call[0] === 'http://localhost/api/auth/refresh')
+    ).toHaveLength(1);
+  });
+
+  it('forwards an abort signal to the initial request and its retry', async () => {
+    const controller = new AbortController();
+    const fetchMock = vi
+      .fn()
+      .mockResolvedValueOnce(new Response('Unauthorized', { status: 401 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ expires_in: 3600 }), { status: 200 }))
+      .mockResolvedValueOnce(new Response(JSON.stringify({ ok: true }), { status: 200 }));
+    vi.stubGlobal('fetch', fetchMock);
+
+    await fetchWithAuthResponse('/api/workspaces', {
+      method: 'POST',
+      body: 'request body',
+      signal: controller.signal
+    });
+
+    expect(fetchMock.mock.calls[0]?.[1]).toMatchObject({ signal: controller.signal });
+    expect(fetchMock.mock.calls[1]?.[1]).not.toHaveProperty('signal');
+    expect(fetchMock.mock.calls[2]?.[1]).toMatchObject({ signal: controller.signal });
+  });
+
+  it('stops waiting for refresh and does not retry after cancellation', async () => {
+    let releaseRefresh!: () => void;
+    const refreshPromise = new Promise<Response>(resolve => {
+      releaseRefresh = () =>
+        resolve(new Response(JSON.stringify({ expires_in: 3600 }), { status: 200 }));
+    });
+    const fetchMock = vi.fn().mockImplementation((input: string) => {
+      if (input === 'http://localhost/api/auth/refresh') return refreshPromise;
+      return Promise.resolve(new Response('Unauthorized', { status: 401 }));
+    });
+    vi.stubGlobal('fetch', fetchMock);
+
+    const onExpired = vi.fn();
+    registerSessionExpiredHandler(onExpired);
+    const controller = new AbortController();
+    const request = fetchWithAuthResponse('/api/workspaces', { signal: controller.signal });
+
+    await vi.waitFor(() => expect(fetchMock).toHaveBeenCalledTimes(2));
+    controller.abort(new DOMException('Cancelled by test', 'AbortError'));
+
+    await expect(request).rejects.toMatchObject({ name: 'AbortError' });
+    expect(fetchMock).toHaveBeenCalledTimes(2);
+    expect(onExpired).not.toHaveBeenCalled();
+
+    releaseRefresh();
+    await refreshPromise;
   });
 
   it('notifies session expiration when refresh fails', async () => {

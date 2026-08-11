@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import { useChat, fetchServerSentEvents } from '@tanstack/ai-react';
 import type { UIMessage } from '@tanstack/ai-react';
-
-const BASE = import.meta.env.VITE_API_URL ?? '';
+import { resolveApiUrl } from '../lib/apiUrl';
 
 export const useAiChat = (
   workspaceSlug: string,
@@ -10,7 +9,7 @@ export const useAiChat = (
   conversationId?: string,
   initialMessages?: UIMessage[]
 ) => {
-  const url = `${BASE}/api/application/v1/${encodeURIComponent(workspaceSlug)}/ai/chat`;
+  const url = resolveApiUrl(`/api/application/v1/${encodeURIComponent(workspaceSlug)}/ai/chat`);
 
   const connection = useMemo(
     () =>
