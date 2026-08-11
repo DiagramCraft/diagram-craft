@@ -1,6 +1,5 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { milestoneKeys } from '../queries/milestones';
-import { invalidateAuditQueries } from '../queries/audit';
+import { invalidateMilestoneQueries, milestonesQuery } from '../queries/milestones';
 import type {
   CreateMilestoneRequest,
   UpdateMilestoneRequest
@@ -8,15 +7,7 @@ import type {
 import { orpcClient } from '../lib/orpcClient';
 
 export const useMilestones = (workspaceId: string, projectId?: string, enabled = true) => {
-  return useQuery({
-    queryKey: milestoneKeys.list(workspaceId, projectId),
-    queryFn: async () =>
-      await orpcClient.milestones.list({
-        params: { workspace: workspaceId },
-        query: { project_id: projectId }
-      }),
-    enabled: enabled && !!workspaceId
-  });
+  return useQuery(milestonesQuery(workspaceId, projectId, enabled));
 };
 
 export const useCreateMilestone = (workspaceId: string, projectId: string) => {
@@ -28,12 +19,7 @@ export const useCreateMilestone = (workspaceId: string, projectId: string) => {
         params: { workspace: workspaceId },
         body: { ...body, project_id: projectId }
       }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: milestoneKeys.list(workspaceId)
-      });
-      await invalidateAuditQueries(queryClient, workspaceId);
-    }
+    onSuccess: async () => invalidateMilestoneQueries(queryClient, workspaceId)
   });
 };
 
@@ -52,15 +38,8 @@ export const useUpdateMilestone = (workspaceId: string, projectId: string) => {
         params: { workspace: workspaceId, milestoneId },
         body: { ...data, project_id: projectId }
       }),
-    onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: milestoneKeys.detail(workspaceId, variables.milestoneId)
-      });
-      await queryClient.invalidateQueries({
-        queryKey: milestoneKeys.list(workspaceId)
-      });
-      await invalidateAuditQueries(queryClient, workspaceId);
-    }
+    onSuccess: async (_, variables) =>
+      invalidateMilestoneQueries(queryClient, workspaceId, variables.milestoneId)
   });
 };
 
@@ -73,11 +52,6 @@ export const useDeleteMilestone = (workspaceId: string, projectId: string) => {
       orpcClient.milestones.remove({
         params: { workspace: workspaceId, milestoneId }
       }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: milestoneKeys.list(workspaceId)
-      });
-      await invalidateAuditQueries(queryClient, workspaceId);
-    }
+    onSuccess: async () => invalidateMilestoneQueries(queryClient, workspaceId)
   });
 };

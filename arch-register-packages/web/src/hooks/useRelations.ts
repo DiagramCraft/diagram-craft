@@ -1,25 +1,24 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import type { RelationListFilters } from '@arch-register/api-types/relationContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
-import { relationKeys } from '../queries/relations';
-import { entityKeys } from '../queries/entities';
+import {
+  entityTypedRelationsQuery,
+  invalidateRelationEndpoints,
+  relationDetailQuery,
+  relationsQuery,
+  relationsStructuredQuery,
+  removeRelationDetailCache,
+  setRelationDetailCache,
+  type RelationQueryFilters
+} from '../queries/relations';
 import { orpcClient } from '../lib/orpcClient';
 
 // Hook for listing relation instances, optionally filtered by schema/endpoint entity
 export const useRelations = (
   workspaceId: string,
-  filters: RelationListFilters & { limit?: number; offset?: number } = {},
+  filters: RelationQueryFilters = {},
   queryOptions?: { enabled?: boolean }
 ) => {
-  const query = useQuery({
-    queryKey: relationKeys.list(workspaceId, filters),
-    queryFn: () =>
-      orpcClient.relations.list({
-        params: { workspace: workspaceId },
-        query: filters
-      }),
-    enabled: queryOptions?.enabled ?? !!workspaceId
-  });
+  const query = useQuery(relationsQuery(workspaceId, filters, queryOptions?.enabled ?? true));
 
   return {
     ...query,
@@ -37,17 +36,9 @@ export const useRelationsQuery = (
   options: { view?: 'summary' | 'full'; limit?: number; offset?: number } = {},
   queryOptions?: { enabled?: boolean }
 ) => {
-  const query = useQuery({
-    queryKey: relationKeys.list(workspaceId, { relationQuery, ...options }),
-    queryFn: () =>
-      orpcClient.relations.query({
-        params: { workspace: workspaceId },
-        // Serialized to a JSON string, mirroring entityListQuery.ts's toEntityListQuery —
-        // relationQueryListFiltersSchema's preprocess step parses it back out server-side.
-        query: { relationQuery: JSON.stringify(relationQuery!), ...options }
-      }),
-    enabled: (queryOptions?.enabled ?? true) && !!workspaceId && relationQuery != null
-  });
+  const query = useQuery(
+    relationsStructuredQuery(workspaceId, relationQuery, options, queryOptions?.enabled ?? true)
+  );
 
   return {
     ...query,
@@ -58,47 +49,12 @@ export const useRelationsQuery = (
 
 // Hook for fetching a single relation instance
 export const useRelation = (workspaceId: string, relationId: string) => {
-  return useQuery({
-    queryKey: relationKeys.detail(workspaceId, relationId),
-    queryFn: () => orpcClient.relations.get({ params: { workspace: workspaceId, id: relationId } }),
-    enabled: !!workspaceId && !!relationId
-  });
+  return useQuery(relationDetailQuery(workspaceId, relationId));
 };
 
 // Hook for fetching an entity's typed (schema-based) relation instances, grouped by direction
 export const useEntityTypedRelations = (workspaceId: string, entityId: string) => {
-  return useQuery({
-    queryKey: entityKeys.typedRelations(workspaceId, entityId),
-    queryFn: () =>
-      orpcClient.relations.listForEntity({ params: { workspace: workspaceId, id: entityId } }),
-    enabled: !!workspaceId && !!entityId
-  });
-};
-
-const invalidateRelationEndpoints = async (
-  queryClient: ReturnType<typeof useQueryClient>,
-  workspaceId: string,
-  entityIds: string[]
-) => {
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: relationKeys.lists() }),
-    // entityKeys.relations/batchRelations now carry typed relations too (graph/topology/matrix/
-    // explore all read from them), so a typed-relation mutation must invalidate those in addition
-    // to the inline field editor's own entityKeys.typedRelations query.
-    queryClient.invalidateQueries({ queryKey: entityKeys.workspaceBatchRelations(workspaceId) }),
-    ...entityIds.map(entityId =>
-      queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) })
-    ),
-    ...entityIds.map(entityId =>
-      queryClient.invalidateQueries({ queryKey: entityKeys.typedRelations(workspaceId, entityId) })
-    ),
-    ...entityIds.map(entityId =>
-      queryClient.invalidateQueries({ queryKey: entityKeys.relations(workspaceId, entityId) })
-    ),
-    ...entityIds.map(entityId =>
-      queryClient.invalidateQueries({ queryKey: entityKeys.json(workspaceId, entityId, 1) })
-    )
-  ]);
+  return useQuery(entityTypedRelationsQuery(workspaceId, entityId));
 };
 
 // Hook for creating a relation instance
@@ -132,7 +88,7 @@ export const useUpdateRelation = (workspaceId: string) => {
         body: data
       }),
     onSuccess: async updated => {
-      queryClient.setQueryData(relationKeys.detail(workspaceId, updated._uid), updated);
+      setRelationDetailCache(queryClient, workspaceId, updated._uid, updated);
       await invalidateRelationEndpoints(queryClient, workspaceId, [
         updated._in.id,
         updated._out.id
@@ -149,9 +105,7 @@ export const useDeleteRelation = (workspaceId: string) => {
     mutationFn: ({ relationId }: { relationId: string; inEntityId: string; outEntityId: string }) =>
       orpcClient.relations.remove({ params: { workspace: workspaceId, id: relationId } }),
     onSuccess: async (_, variables) => {
-      queryClient.removeQueries({
-        queryKey: relationKeys.detail(workspaceId, variables.relationId)
-      });
+      removeRelationDetailCache(queryClient, workspaceId, variables.relationId);
       await invalidateRelationEndpoints(queryClient, workspaceId, [
         variables.inEntityId,
         variables.outEntityId

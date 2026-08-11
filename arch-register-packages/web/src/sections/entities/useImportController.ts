@@ -5,7 +5,7 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { commitCsvImport, downloadCsvTemplate, parseCsvImport } from '../../lib/entityCsv';
 import { downloadBlob } from '../../lib/browserDownload';
 import { invalidateEntityQueries } from '../../queries/entities';
-import { schemaKeys } from '../../queries/schemas';
+import { invalidateSchemaList } from '../../queries/schemas';
 import {
   buildImportCommitEntities,
   toImportReviewRow,
@@ -93,7 +93,7 @@ export const useImportController = () => {
         }))
       );
       await invalidateEntityQueries(queryClient, workspaceSlug);
-      await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceSlug) });
+      await invalidateSchemaList(queryClient, workspaceSlug);
       setPhase('done');
     } catch (error) {
       console.error('Failed to import entities:', error);

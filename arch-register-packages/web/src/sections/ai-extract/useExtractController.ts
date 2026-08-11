@@ -5,7 +5,7 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { orpcClient } from '../../lib/orpcClient';
 import { createExtractedEntities } from '../../lib/extractOperations';
 import { invalidateEntityQueries } from '../../queries/entities';
-import { schemaKeys } from '../../queries/schemas';
+import { invalidateSchemaList } from '../../queries/schemas';
 import {
   buildExtractCommitInput,
   normalizeExtractedEntities,
@@ -74,7 +74,7 @@ export const useExtractController = () => {
       const created = await createExtractedEntities(workspaceSlug, buildExtractCommitInput(rows));
       setCommitted(toCommittedExtractEntities(created));
       await invalidateEntityQueries(queryClient, workspaceSlug);
-      await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceSlug) });
+      await invalidateSchemaList(queryClient, workspaceSlug);
       setPhase('done');
     } catch (error) {
       console.error('Failed to create entities:', error);

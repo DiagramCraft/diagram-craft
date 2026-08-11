@@ -1,19 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
-import { entityKeys } from '../queries/entities';
 import { invalidateGovernanceQueries } from '../queries/governance';
 import type { EntityChangeBulkApprovalRequestBody } from '@arch-register/api-types/entityChangeContract';
+import {
+  bulkEntityChangeKeys as bulkEntityChangeKeysFromQueries,
+  bulkEntityChangeQuery,
+  entityChangeKeys as entityChangeKeysFromQueries,
+  entityChangeQuery,
+  invalidateBulkEntityChangeMutation,
+  invalidateEntityChangeQueries
+} from '../queries/entityChanges';
 
-export const entityChangeKeys = {
-  current: (workspace: string, entityId: string) => ['entity-change', workspace, entityId] as const
-};
+export const bulkEntityChangeKeys = bulkEntityChangeKeysFromQueries;
+export const entityChangeKeys = entityChangeKeysFromQueries;
 
 export const useEntityChangeApproval = (workspace: string, entityId: string) =>
-  useQuery({
-    queryKey: entityChangeKeys.current(workspace, entityId),
-    queryFn: () => orpcClient.entityChanges.get({ params: { workspace, id: entityId } }),
-    enabled: !!workspace && !!entityId
-  });
+  useQuery(entityChangeQuery(workspace, entityId));
 
 export const useSubmitEntityChangeApproval = (workspace: string, entityId: string) => {
   const queryClient = useQueryClient();
@@ -26,10 +28,7 @@ export const useSubmitEntityChangeApproval = (workspace: string, entityId: strin
       initiationFields?: Record<string, unknown>;
     }) => orpcClient.entityChanges.submit({ params: { workspace, id: entityId }, body }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: entityChangeKeys.current(workspace, entityId)
-      });
-      await queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspace, entityId) });
+      await invalidateEntityChangeQueries(queryClient, workspace, entityId);
     }
   });
 };
@@ -44,28 +43,15 @@ export const useWithdrawEntityChangeApproval = (workspace: string) => {
       }),
     onSuccess: async (_data, input) => {
       await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: entityChangeKeys.current(workspace, input.entityId)
-        }),
-        queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspace, input.entityId) }),
+        invalidateEntityChangeQueries(queryClient, workspace, input.entityId),
         invalidateGovernanceQueries(queryClient, workspace)
       ]);
     }
   });
 };
 
-export const bulkEntityChangeKeys = {
-  detail: (workspace: string, approvalId: string) =>
-    ['entity-change-bulk', workspace, approvalId] as const
-};
-
 export const useBulkEntityChangeApproval = (workspace: string, approvalId: string | null) =>
-  useQuery({
-    queryKey: bulkEntityChangeKeys.detail(workspace, approvalId ?? ''),
-    queryFn: () =>
-      orpcClient.entityChanges.getBulk({ params: { workspace, approvalId: approvalId! } }),
-    enabled: !!workspace && !!approvalId
-  });
+  useQuery(bulkEntityChangeQuery(workspace, approvalId));
 
 export const useSubmitBulkEntityChangeApproval = (workspace: string) => {
   const queryClient = useQueryClient();
@@ -73,10 +59,7 @@ export const useSubmitBulkEntityChangeApproval = (workspace: string) => {
     mutationFn: (body: EntityChangeBulkApprovalRequestBody) =>
       orpcClient.entityChanges.submitBulk({ params: { workspace }, body }),
     onSuccess: async () => {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: entityKeys.workspaceLists(workspace) }),
-        invalidateGovernanceQueries(queryClient, workspace)
-      ]);
+      await invalidateBulkEntityChangeMutation(queryClient, workspace);
     }
   });
 };
@@ -91,10 +74,7 @@ export const useBypassEntityApproval = (workspace: string, entityId: string) => 
     }) => orpcClient.entityChanges.bypass({ params: { workspace, id: entityId }, body }),
     onSuccess: async () => {
       await Promise.all([
-        queryClient.invalidateQueries({
-          queryKey: entityChangeKeys.current(workspace, entityId)
-        }),
-        queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspace, entityId) }),
+        invalidateEntityChangeQueries(queryClient, workspace, entityId),
         invalidateGovernanceQueries(queryClient, workspace)
       ]);
     }

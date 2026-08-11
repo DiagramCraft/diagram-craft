@@ -1,20 +1,12 @@
 import { useQuery } from '@tanstack/react-query';
-import { orpcClient } from '../lib/orpcClient';
+import {
+  documentSearchQuery,
+  searchKeys as searchKeysFromQueries,
+  searchQuery,
+  type SearchTypes
+} from '../queries/search';
 
-// Query keys factory
-export const searchKeys = {
-  all: ['search'] as const,
-  searches: () => [...searchKeys.all, 'query'] as const,
-  workspaceSearches: (workspaceId: string) => [...searchKeys.searches(), workspaceId] as const,
-  search: (
-    workspaceId: string,
-    query: string,
-    options: {
-      limitPerType?: number | null;
-      types?: Array<'projects' | 'files' | 'entities' | 'schemas' | 'relations'> | null;
-    }
-  ) => [...searchKeys.workspaceSearches(workspaceId), query, options] as const
-};
+export const searchKeys = searchKeysFromQueries;
 
 // Hook for searching across the workspace
 export const useSearch = (
@@ -22,38 +14,14 @@ export const useSearch = (
   params: {
     q: string;
     limitPerType?: number | null;
-    types?: Array<'projects' | 'files' | 'entities' | 'schemas' | 'relations'> | null;
+    types?: SearchTypes | null;
   },
   queryOptions?: { enabled?: boolean }
 ) => {
-  return useQuery({
-    queryKey: searchKeys.search(workspaceId, params.q, params),
-    queryFn: () =>
-      orpcClient.search.query({
-        params: { workspace: workspaceId },
-        query: {
-          q: params.q,
-          limitPerType: params.limitPerType ?? undefined,
-          types: params.types?.join(',') === '' ? undefined : params.types?.join(',')
-        }
-      }),
-    enabled: queryOptions?.enabled ?? (!!workspaceId && !!params.q.trim()),
-    // Search results can be cached for a shorter time
-    staleTime: 2 * 60 * 1000 // 2 minutes
-  });
+  return useQuery(searchQuery(workspaceId, params, queryOptions?.enabled ?? true));
 };
 
 // Hook for searching Markdown documents across the workspace (for document-link pickers)
 export const useDocumentSearch = (workspaceId: string, query: string) => {
-  return useQuery({
-    queryKey: [...searchKeys.workspaceSearches(workspaceId), 'documents', query],
-    queryFn: () =>
-      orpcClient.search.query({
-        params: { workspace: workspaceId },
-        query: { q: query, limitPerType: 8, types: 'files' }
-      }),
-    enabled: !!workspaceId && !!query.trim(),
-    staleTime: 2 * 60 * 1000,
-    select: data => data.files.filter(file => file.type === 'markdown')
-  });
+  return useQuery(documentSearchQuery(workspaceId, query));
 };

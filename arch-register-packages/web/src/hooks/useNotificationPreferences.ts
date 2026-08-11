@@ -4,17 +4,16 @@ import type {
   NotificationType
 } from '@arch-register/api-types/notificationPreferencesContract';
 import { orpcClient } from '../lib/orpcClient';
+import {
+  notificationPreferenceKeys as notificationPreferenceKeysFromQueries,
+  notificationPreferencesQuery,
+  setNotificationPreferencesCache
+} from '../queries/notificationPreferences';
 
-export const notificationPreferenceKeys = {
-  all: (workspaceId: string) => ['notification-preferences', workspaceId] as const
-};
+export const notificationPreferenceKeys = notificationPreferenceKeysFromQueries;
 
 export const useNotificationPreferences = (workspaceId: string) =>
-  useQuery({
-    queryKey: notificationPreferenceKeys.all(workspaceId),
-    queryFn: () => orpcClient.notificationPreferences.get({ params: { workspace: workspaceId } }),
-    enabled: !!workspaceId
-  });
+  useQuery(notificationPreferencesQuery(workspaceId));
 
 export const useUpdateNotificationPreferences = (workspaceId: string) => {
   const queryClient = useQueryClient();
@@ -32,7 +31,7 @@ export const useUpdateNotificationPreferences = (workspaceId: string) => {
         body: { preferences }
       }),
     onSuccess: data => {
-      queryClient.setQueryData(notificationPreferenceKeys.all(workspaceId), data);
+      setNotificationPreferencesCache(queryClient, workspaceId, data);
     }
   });
 };

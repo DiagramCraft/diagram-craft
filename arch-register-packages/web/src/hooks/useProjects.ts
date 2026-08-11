@@ -1,18 +1,22 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { projectKeys, projectEntityKeys, invalidateDeletedProject } from '../queries/projects';
-import { invalidateAuditQueries } from '../queries/audit';
-import { invalidateEntityQueries } from '../queries/entities';
-import { Project, ProjectDetail, ProjectEntity } from '@arch-register/api-types/projectContract';
+import {
+  appendProjectEntityToCache,
+  appendProjectToListCache,
+  entityDiagramFilesQuery,
+  entityProjectsQuery,
+  projectDetailQuery,
+  projectEntitiesQuery,
+  projectsQuery,
+  invalidateDeletedProject,
+  invalidateProjectEntityMutation,
+  invalidateProjectUpdateQueries,
+  updateProjectCaches
+} from '../queries/projects';
 import { orpcClient } from '../lib/orpcClient';
-import { fetchEntityProjects } from '../lib/projectOperations';
 
 // Hook for fetching project list
 export const useProjects = (workspaceId: string) => {
-  return useQuery({
-    queryKey: projectKeys.list(workspaceId),
-    queryFn: () => orpcClient.projects.list({ params: { workspace: workspaceId } }),
-    enabled: !!workspaceId
-  });
+  return useQuery(projectsQuery(workspaceId));
 };
 
 // Hook for fetching a single project
@@ -21,11 +25,7 @@ export const useProject = (
   projectId: string,
   options?: { enabled?: boolean }
 ) => {
-  return useQuery({
-    queryKey: projectKeys.detail(workspaceId, projectId),
-    queryFn: () => orpcClient.projects.get({ params: { workspace: workspaceId, id: projectId } }),
-    enabled: (options?.enabled ?? true) && !!workspaceId && !!projectId
-  });
+  return useQuery(projectDetailQuery(workspaceId, projectId, options?.enabled ?? true));
 };
 
 // Hook for creating a project
@@ -43,12 +43,8 @@ export const useCreateProject = (workspaceId: string) => {
       target_date?: string | null;
     }) => orpcClient.projects.create({ params: { workspace: workspaceId }, body }),
     onSuccess: async newProject => {
-      // Update project list cache with the new project
-      queryClient.setQueryData(projectKeys.list(workspaceId), (old: Project[] | undefined) => {
-        if (!old) return [newProject];
-        return [...old, newProject];
-      });
-      await invalidateAuditQueries(queryClient, workspaceId);
+      appendProjectToListCache(queryClient, workspaceId, newProject);
+      await invalidateProjectUpdateQueries(queryClient, workspaceId);
     }
   });
 };
@@ -76,21 +72,8 @@ export const useUpdateProject = (workspaceId: string) => {
     }) =>
       orpcClient.projects.update({ params: { workspace: workspaceId, id: projectId }, body: data }),
     onSuccess: async (updatedProject, variables) => {
-      // Update the project list cache
-      queryClient.setQueryData(projectKeys.list(workspaceId), (old: Project[] | undefined) => {
-        if (!old) return old;
-        return old.map(p =>
-          p.id === variables.projectId || p.public_id === variables.projectId ? updatedProject : p
-        );
-      });
-      queryClient.setQueryData(
-        projectKeys.detail(workspaceId, updatedProject.public_id),
-        (old: ProjectDetail | undefined) => (old ? { ...old, ...updatedProject } : updatedProject)
-      );
-      await queryClient.invalidateQueries({
-        queryKey: projectEntityKeys.entityProjectsAll(workspaceId)
-      });
-      await invalidateAuditQueries(queryClient, workspaceId);
+      updateProjectCaches(queryClient, workspaceId, variables.projectId, updatedProject);
+      await invalidateProjectUpdateQueries(queryClient, workspaceId);
     }
   });
 };
@@ -110,21 +93,12 @@ export const useDeleteProject = (workspaceId: string) => {
 
 // Hook for fetching entities associated with a project
 export const useProjectEntities = (workspaceId: string, projectId: string) => {
-  return useQuery({
-    queryKey: projectEntityKeys.all(workspaceId, projectId),
-    queryFn: () =>
-      orpcClient.projects.listEntities({ params: { workspace: workspaceId, id: projectId } }),
-    enabled: !!workspaceId && !!projectId
-  });
+  return useQuery(projectEntitiesQuery(workspaceId, projectId));
 };
 
 // Hook for fetching projects associated with an entity
 export const useEntityProjects = (workspaceId: string, entityId: string) => {
-  return useQuery({
-    queryKey: projectEntityKeys.entityProjects(workspaceId, entityId),
-    queryFn: () => fetchEntityProjects(workspaceId, entityId),
-    enabled: !!workspaceId && !!entityId
-  });
+  return useQuery(entityProjectsQuery(workspaceId, entityId));
 };
 
 // Hook for adding an entity to a project
@@ -135,21 +109,13 @@ export const useAddProjectEntity = (workspaceId: string, projectId: string) => {
     mutationFn: (body: { entity_id: string; entity_type?: string | null; is_done?: boolean }) =>
       orpcClient.projects.addEntity({ params: { workspace: workspaceId, id: projectId }, body }),
     onSuccess: async (createdProjectEntity, variables) => {
-      queryClient.setQueryData<ProjectEntity[] | undefined>(
-        projectEntityKeys.all(workspaceId, projectId),
-        old => {
-          if (!old) return [createdProjectEntity];
-          if (old.some(entity => entity.entity_id === createdProjectEntity.entity_id)) return old;
-          return [...old, createdProjectEntity];
-        }
+      appendProjectEntityToCache(queryClient, workspaceId, projectId, createdProjectEntity);
+      await invalidateProjectEntityMutation(
+        queryClient,
+        workspaceId,
+        projectId,
+        variables.entity_id
       );
-      await queryClient.invalidateQueries({
-        queryKey: projectEntityKeys.all(workspaceId, projectId)
-      });
-      await queryClient.invalidateQueries({
-        queryKey: projectEntityKeys.entityProjects(workspaceId, variables.entity_id)
-      });
-      await invalidateEntityQueries(queryClient, workspaceId);
     }
   });
 };
@@ -173,13 +139,12 @@ export const useUpdateProjectEntity = (workspaceId: string, projectId: string) =
         body: { entity_type, is_done }
       }),
     onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: projectEntityKeys.all(workspaceId, projectId)
-      });
-      await queryClient.invalidateQueries({
-        queryKey: projectEntityKeys.entityProjects(workspaceId, variables.entityId)
-      });
-      await invalidateEntityQueries(queryClient, workspaceId);
+      await invalidateProjectEntityMutation(
+        queryClient,
+        workspaceId,
+        projectId,
+        variables.entityId
+      );
     }
   });
 };
@@ -194,25 +159,12 @@ export const useRemoveProjectEntity = (workspaceId: string, projectId: string) =
         params: { workspace: workspaceId, id: projectId, entityId }
       }),
     onSuccess: async (_, entityId) => {
-      await queryClient.invalidateQueries({
-        queryKey: projectEntityKeys.all(workspaceId, projectId)
-      });
-      await queryClient.invalidateQueries({
-        queryKey: projectEntityKeys.entityProjects(workspaceId, entityId)
-      });
-      await invalidateEntityQueries(queryClient, workspaceId);
+      await invalidateProjectEntityMutation(queryClient, workspaceId, projectId, entityId);
     }
   });
 };
 
 // Hook for fetching diagram files that reference an entity
 export const useEntityDiagramFiles = (workspaceId: string, entityId: string) => {
-  return useQuery({
-    queryKey: projectEntityKeys.entityDiagramFiles(workspaceId, entityId),
-    queryFn: () =>
-      orpcClient.projects.getEntityDiagramFiles({
-        params: { workspace: workspaceId, entityId }
-      }),
-    enabled: !!workspaceId && !!entityId
-  });
+  return useQuery(entityDiagramFilesQuery(workspaceId, entityId));
 };

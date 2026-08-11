@@ -14,7 +14,7 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { orpcClient } from '../../../lib/orpcClient';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import {
-  definitionImportKeys,
+  definitionImportSourcesQuery,
   invalidateDefinitionImportQueries
 } from '../../../queries/definitionImports';
 import styles from './ExportImportSubSection.module.css';
@@ -81,12 +81,9 @@ export const DefinitionImportSubSection = () => {
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const sourcesQuery = useQuery({
-    queryKey: definitionImportKeys.sources(workspaceSlug),
-    queryFn: () =>
-      orpcClient.workspaces.definitionImportSources({ params: { workspace: workspaceSlug } }),
-    enabled: permissions.canAdministerWorkspace ?? false
-  });
+  const sourcesQuery = useQuery(
+    definitionImportSourcesQuery(workspaceSlug, permissions.canAdministerWorkspace ?? false)
+  );
 
   const source = useMemo(() => {
     return sourcesQuery.data?.find(

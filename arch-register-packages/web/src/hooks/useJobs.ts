@@ -1,36 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type {
-  CreateJobBody,
-  JobRunStatus,
-  JobScheduleUpdate
-} from '@arch-register/api-types/jobsContract';
+import type { CreateJobBody, JobScheduleUpdate } from '@arch-register/api-types/jobsContract';
 import { orpcClient } from '../lib/orpcClient';
-import { invalidateJobQueries, jobKeys } from '../queries/jobs';
+import {
+  invalidateJobQueries,
+  jobRunsQuery,
+  jobSchedulesQuery,
+  jobServersQuery,
+  type JobRunFilters
+} from '../queries/jobs';
 
-export type JobRunFilters = {
-  scheduleId?: string;
-  status?: JobRunStatus;
-  plannedFrom?: string;
-  plannedTo?: string;
-  limit?: number;
-  offset?: number;
-};
+export type { JobRunFilters } from '../queries/jobs';
 
 export const useJobServers = (workspaceSlug: string, enabled = true) =>
-  useQuery({
-    queryKey: jobKeys.servers(workspaceSlug),
-    queryFn: () => orpcClient.jobs.servers.list({ params: { workspace: workspaceSlug } }),
-    enabled: enabled && !!workspaceSlug,
-    refetchInterval: 5000
-  });
+  useQuery(jobServersQuery(workspaceSlug, enabled));
 
 export const useJobSchedules = (workspaceSlug: string, enabled = true) =>
-  useQuery({
-    queryKey: jobKeys.schedules(workspaceSlug),
-    queryFn: () => orpcClient.jobs.schedules.list({ params: { workspace: workspaceSlug } }),
-    enabled: enabled && !!workspaceSlug,
-    refetchInterval: 5000
-  });
+  useQuery(jobSchedulesQuery(workspaceSlug, enabled));
 
 export const useCreateJob = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
@@ -46,23 +31,7 @@ export const useCreateJob = (workspaceSlug: string) => {
 };
 
 export const useJobRuns = (workspaceSlug: string, filters: JobRunFilters, enabled = true) =>
-  useQuery({
-    queryKey: jobKeys.runs(workspaceSlug, filters),
-    queryFn: () =>
-      orpcClient.jobs.runs.list({
-        params: { workspace: workspaceSlug },
-        query: {
-          scheduleId: filters.scheduleId,
-          status: filters.status,
-          plannedFrom: filters.plannedFrom,
-          plannedTo: filters.plannedTo,
-          limit: filters.limit ?? 50,
-          offset: filters.offset ?? 0
-        }
-      }),
-    enabled: enabled && !!workspaceSlug,
-    refetchInterval: 5000
-  });
+  useQuery(jobRunsQuery(workspaceSlug, filters, enabled));
 
 export const useUpdateJobSchedule = (workspaceSlug: string) => {
   const queryClient = useQueryClient();

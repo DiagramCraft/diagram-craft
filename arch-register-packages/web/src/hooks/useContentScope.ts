@@ -1,4 +1,4 @@
-import { useMutation, useQuery, useQueryClient, type QueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import { apiFetchResponse, ApiError } from '../lib/http';
@@ -6,14 +6,20 @@ import { applicationWorkspacePath } from '../lib/applicationApi';
 import { orpcClient } from '../lib/orpcClient';
 import { emptyDiagram, prepareTemplateDiagramDocument } from '../lib/diagramDocuments';
 import { movePath, renamePath } from '../lib/contentPath';
-import { entityContentKeys, projectFileKeys, workspaceContentKeys } from '../queries/content';
-import { invalidateAuditQueries } from '../queries/audit';
-import { invalidateProjectQueries, projectEntityKeys } from '../queries/projects';
+import {
+  contentScopeKey as contentScopeKeyFromQueries,
+  contentScopeReady as contentScopeReadyFromQueries,
+  contentFileContentQuery,
+  contentFileQuery,
+  contentScopeQuery,
+  invalidateContentScope as invalidateContentScopeFromQueries,
+  type ContentScope
+} from '../queries/content';
 
-export type ContentScope =
-  | { kind: 'project'; workspaceId: string; projectId: string }
-  | { kind: 'entity'; workspaceId: string; entityId: string }
-  | { kind: 'workspace'; workspaceId: string };
+export type { ContentScope } from '../queries/content';
+export const contentScopeKey = contentScopeKeyFromQueries;
+export const contentScopeReady = contentScopeReadyFromQueries;
+export const invalidateContentScope = invalidateContentScopeFromQueries;
 
 const noRetryOnClientError = (_: number, error: unknown) => {
   const status = error instanceof ApiError ? error.status : undefined;
@@ -32,21 +38,6 @@ export const uploadContentFile = async (
     body
   });
   return response.json() as Promise<ProjectFile>;
-};
-
-export const contentScopeReady = (scope: ContentScope) =>
-  !!scope.workspaceId &&
-  (scope.kind === 'workspace' || (scope.kind === 'project' ? !!scope.projectId : !!scope.entityId));
-
-export const contentScopeKey = (scope: ContentScope) => {
-  switch (scope.kind) {
-    case 'project':
-      return projectFileKeys.list(scope.workspaceId, scope.projectId);
-    case 'entity':
-      return entityContentKeys.all(scope.workspaceId, scope.entityId);
-    case 'workspace':
-      return workspaceContentKeys.all(scope.workspaceId);
-  }
 };
 
 export const contentUploadUrl = (scope: ContentScope): string => {
@@ -84,44 +75,6 @@ export const contentDownloadUrl = (scope: ContentScope, path: string): string =>
         scope.workspaceId,
         `/content/files/download?path=${encodedPath}`
       );
-  }
-};
-
-export const invalidateContentScope = async (client: QueryClient, scope: ContentScope) => {
-  switch (scope.kind) {
-    case 'project':
-      return invalidateProjectQueries(client, scope.workspaceId, scope.projectId);
-    case 'entity':
-      await Promise.all([
-        client.invalidateQueries({
-          queryKey: entityContentKeys.all(scope.workspaceId, scope.entityId)
-        }),
-        client.invalidateQueries({
-          queryKey: projectEntityKeys.entityDiagramFiles(scope.workspaceId, scope.entityId)
-        }),
-        invalidateAuditQueries(client, scope.workspaceId)
-      ]);
-      return;
-    case 'workspace':
-      await Promise.all([
-        client.invalidateQueries({ queryKey: workspaceContentKeys.all(scope.workspaceId) }),
-        invalidateAuditQueries(client, scope.workspaceId)
-      ]);
-  }
-};
-
-const listContent = (scope: ContentScope) => {
-  switch (scope.kind) {
-    case 'project':
-      return orpcClient.projects.listFiles({
-        params: { workspace: scope.workspaceId, id: scope.projectId }
-      });
-    case 'entity':
-      return orpcClient.projects.listEntityFiles({
-        params: { workspace: scope.workspaceId, entityId: scope.entityId }
-      });
-    case 'workspace':
-      return orpcClient.projects.listWorkspaceFiles({ params: { workspace: scope.workspaceId } });
   }
 };
 
@@ -172,30 +125,13 @@ export const deleteContentFile = (scope: ContentScope, path: string) => {
 };
 
 export const useContentFile = (workspaceId: string, fileId: string) =>
-  useQuery({
-    queryKey: projectFileKeys.detail(workspaceId, fileId),
-    queryFn: () => orpcClient.projects.getFile({ params: { workspace: workspaceId, fileId } }),
-    enabled: !!workspaceId && !!fileId,
-    retry: noRetryOnClientError,
-    refetchOnMount: true
-  });
+  useQuery({ ...contentFileQuery(workspaceId, fileId), retry: noRetryOnClientError });
 
 export const useContentFileContent = (workspaceId: string, fileId: string) =>
-  useQuery({
-    queryKey: projectFileKeys.content(workspaceId, fileId),
-    queryFn: () =>
-      orpcClient.projects.getDiagramContent({ params: { workspace: workspaceId, fileId } }),
-    enabled: !!workspaceId && !!fileId,
-    retry: noRetryOnClientError,
-    refetchOnMount: true
-  });
+  useQuery({ ...contentFileContentQuery(workspaceId, fileId), retry: noRetryOnClientError });
 
 export const useContentTree = (scope: ContentScope, options?: { enabled?: boolean }) =>
-  useQuery({
-    queryKey: contentScopeKey(scope),
-    queryFn: () => listContent(scope),
-    enabled: (options?.enabled ?? true) && contentScopeReady(scope)
-  });
+  useQuery(contentScopeQuery(scope, options?.enabled ?? true));
 
 export const useContentScopeOperations = (scope: ContentScope) => {
   const client = useQueryClient();

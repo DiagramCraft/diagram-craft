@@ -1,21 +1,21 @@
 import { useMutation, useQueries, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
-  ApiSpecificationProjectionQuery,
   ApiSpecificationRevision,
   Artifact,
   ArtifactSourceKind,
   ArtifactStatus
 } from '@arch-register/api-types/artifactContract';
-import { artifactKeys } from '../queries/artifacts';
+import {
+  apiSpecificationQuery,
+  apiSpecificationRevisionListQuery,
+  artifactRevisionContentQuery,
+  entityArtifactsQuery,
+  invalidateArtifactEntity,
+  type ApiSpecificationFilters
+} from '../queries/artifacts';
 import { orpcClient } from '../lib/orpcClient';
 
-export type ApiSpecificationFilters = Pick<
-  ApiSpecificationProjectionQuery,
-  'q' | 'resource' | 'action' | 'kind' | 'tag' | 'deprecated'
-> & {
-  limit: number;
-  offset: number;
-};
+export type { ApiSpecificationFilters } from '../queries/artifacts';
 
 export const selectApiSpecificationArtifacts = (artifacts: Artifact[]) =>
   [...artifacts]
@@ -76,16 +76,7 @@ export const getArtifactStatusLabel = (status: ArtifactStatus) => {
 };
 
 export const useEntityArtifacts = (workspaceId: string, entityId: string, enabled = true) =>
-  useQuery({
-    queryKey: artifactKeys.entity(workspaceId, entityId),
-    queryFn: () =>
-      orpcClient.artifacts.list({
-        params: { workspace: workspaceId, entityId }
-      }),
-    enabled: enabled && !!workspaceId && !!entityId,
-    refetchInterval: query =>
-      query.state.data?.artifacts.some(artifact => artifact.status === 'pending') ? 2_000 : false
-  });
+  useQuery(entityArtifactsQuery(workspaceId, entityId, enabled));
 
 export const useApiSpecificationRevisionLists = (
   workspaceId: string,
@@ -94,14 +85,9 @@ export const useApiSpecificationRevisionLists = (
   enabled = true
 ) =>
   useQueries({
-    queries: artifactIds.map(artifactId => ({
-      queryKey: artifactKeys.apiSpecificationRevisions(workspaceId, entityId, artifactId),
-      queryFn: () =>
-        orpcClient.artifacts.listApiSpecificationRevisions({
-          params: { workspace: workspaceId, entityId, artifactId }
-        }),
-      enabled: enabled && !!workspaceId && !!entityId && !!artifactId
-    }))
+    queries: artifactIds.map(artifactId =>
+      apiSpecificationRevisionListQuery(workspaceId, entityId, artifactId, enabled)
+    )
   });
 
 export type ApiSpecificationSourceInput = {
@@ -122,11 +108,7 @@ export const useCreateApiSpecificationSource = (workspaceId: string, entityId: s
           location
         }
       }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: artifactKeys.entity(workspaceId, entityId)
-      });
-    }
+    onSuccess: async () => invalidateArtifactEntity(queryClient, workspaceId, entityId)
   });
 };
 
@@ -138,11 +120,7 @@ export const useRefreshApiSpecification = (workspaceId: string, entityId: string
       orpcClient.artifacts.refresh({
         params: { workspace: workspaceId, entityId, artifactId }
       }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: artifactKeys.entity(workspaceId, entityId)
-      });
-    }
+    onSuccess: async () => invalidateArtifactEntity(queryClient, workspaceId, entityId)
   });
 };
 
@@ -171,11 +149,7 @@ export const useUploadApiSpecification = (workspaceId: string, entityId: string)
       });
       return { artifact, revision };
     },
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({
-        queryKey: artifactKeys.entity(workspaceId, entityId)
-      });
-    }
+    onSuccess: async () => invalidateArtifactEntity(queryClient, workspaceId, entityId)
   });
 };
 
@@ -186,16 +160,7 @@ export const useApiSpecificationProjection = (
   revisionId: string,
   query: ApiSpecificationFilters,
   enabled = true
-) =>
-  useQuery({
-    queryKey: artifactKeys.apiSpecification(workspaceId, entityId, artifactId, revisionId, query),
-    queryFn: () =>
-      orpcClient.artifacts.listApiSpecification({
-        params: { workspace: workspaceId, entityId, artifactId, revisionId },
-        query
-      }),
-    enabled: enabled && !!workspaceId && !!entityId && !!artifactId && !!revisionId
-  });
+) => useQuery(apiSpecificationQuery(workspaceId, entityId, artifactId, revisionId, query, enabled));
 
 export const useArtifactRevisionContent = (
   workspaceId: string,
@@ -203,12 +168,4 @@ export const useArtifactRevisionContent = (
   artifactId: string,
   revisionId: string,
   enabled = true
-) =>
-  useQuery({
-    queryKey: artifactKeys.revisionContent(workspaceId, entityId, artifactId, revisionId),
-    queryFn: () =>
-      orpcClient.artifacts.getRevisionContent({
-        params: { workspace: workspaceId, entityId, artifactId, revisionId }
-      }),
-    enabled: enabled && !!workspaceId && !!entityId && !!artifactId && !!revisionId
-  });
+) => useQuery(artifactRevisionContentQuery(workspaceId, entityId, artifactId, revisionId, enabled));

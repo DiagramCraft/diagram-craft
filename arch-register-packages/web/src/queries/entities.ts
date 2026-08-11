@@ -1,5 +1,11 @@
-import type { QueryClient } from '@tanstack/react-query';
+import { queryOptions, type QueryClient } from '@tanstack/react-query';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import type { EntityLandscapeDiffState } from '@arch-register/api-types/entityContract';
 import { invalidateAuditQueries } from './audit';
+import { schemaKeys } from './schemaKeys';
+import { invalidateNotificationQueries } from './notifications';
+import { orpcClient } from '../lib/orpcClient';
+import { toEntityListQuery, type EntityListOptions } from '../hooks/entityListQuery';
 
 export const entityKeys = {
   all: ['entities'] as const,
@@ -42,6 +48,185 @@ export const entityKeys = {
     [...entityKeys.all, 'landscapeDiff', workspaceId, from, to] as const
 };
 
+export const entityDetailQuery = (workspaceId: string, entityId: string) =>
+  queryOptions({
+    queryKey: entityKeys.detail(workspaceId, entityId),
+    queryFn: () => orpcClient.entities.get({ params: { workspace: workspaceId, id: entityId } }),
+    enabled: !!workspaceId && !!entityId
+  });
+
+export const entitiesQuery = (
+  workspaceId: string,
+  options: EntityListOptions = {},
+  enabled = true
+) =>
+  queryOptions({
+    queryKey: entityKeys.list(workspaceId, options),
+    queryFn: () =>
+      orpcClient.entities.list({
+        params: { workspace: workspaceId },
+        query: {
+          ...toEntityListQuery(options),
+          view: options.view,
+          limit: options.limit ?? undefined,
+          offset: options.offset ?? undefined
+        }
+      }),
+    enabled: enabled && !!workspaceId
+  });
+
+export const entityJsonQuery = (workspaceId: string, entityId: string, enabled = true) =>
+  queryOptions({
+    queryKey: entityKeys.json(workspaceId, entityId, 1),
+    queryFn: () =>
+      orpcClient.entities.json({
+        params: { workspace: workspaceId, id: entityId },
+        query: { depth: 1 }
+      }),
+    enabled: enabled && !!workspaceId && !!entityId
+  });
+
+export const entityLandscapeDiffQuery = (
+  workspaceId: string,
+  from: EntityLandscapeDiffState | null,
+  to: EntityLandscapeDiffState | null,
+  enabled = true
+) =>
+  queryOptions({
+    queryKey: entityKeys.landscapeDiff(workspaceId, from, to),
+    queryFn: () =>
+      orpcClient.entities.diff({
+        params: { workspace: workspaceId },
+        body: { from: from!, to: to! }
+      }),
+    enabled: enabled && !!workspaceId && !!from && !!to
+  });
+
+export const entityFacetsQuery = (workspaceId: string, enabled = true) =>
+  queryOptions({
+    queryKey: entityKeys.facets(workspaceId),
+    queryFn: () => orpcClient.entities.facets({ params: { workspace: workspaceId } }),
+    enabled: enabled && !!workspaceId
+  });
+
+export const entityTimelineMarkersQuery = (workspaceId: string, enabled = true) =>
+  queryOptions({
+    queryKey: entityKeys.timelineMarkers(workspaceId),
+    queryFn: () => orpcClient.entities.timelineMarkers({ params: { workspace: workspaceId } }),
+    enabled: enabled && !!workspaceId
+  });
+
+export const entityCountQuery = (
+  workspaceId: string,
+  options: EntityListOptions = {},
+  enabled = true
+) =>
+  queryOptions({
+    queryKey: entityKeys.count(workspaceId, options),
+    queryFn: () =>
+      orpcClient.entities.count({
+        params: { workspace: workspaceId },
+        query: toEntityListQuery(options)
+      }),
+    enabled: enabled && !!workspaceId
+  });
+
+export const entityRelationsQuery = (workspaceId: string, entityId: string) =>
+  queryOptions({
+    queryKey: entityKeys.relations(workspaceId, entityId),
+    queryFn: () =>
+      orpcClient.entities.relations({ params: { workspace: workspaceId, id: entityId } }),
+    enabled: !!workspaceId && !!entityId
+  });
+
+export const entityDependentsQuery = (workspaceId: string, entityId: string, transitive: boolean) =>
+  queryOptions({
+    queryKey: entityKeys.dependents(workspaceId, entityId, transitive),
+    queryFn: () =>
+      orpcClient.entities.dependents({
+        params: { workspace: workspaceId, id: entityId },
+        query: { transitive: transitive ? 'true' : 'false' }
+      }),
+    enabled: !!workspaceId && !!entityId
+  });
+
+export const entityTreeQuery = (
+  workspaceId: string,
+  options: EntityListOptions = {},
+  enabled = true
+) =>
+  queryOptions({
+    queryKey: entityKeys.tree(workspaceId, options),
+    queryFn: () =>
+      orpcClient.entities.tree({
+        params: { workspace: workspaceId },
+        query: toEntityListQuery(options)
+      }),
+    enabled: enabled && !!workspaceId
+  });
+
+export const entityBatchRelationsQuery = (workspaceId: string, ids: string[]) =>
+  queryOptions({
+    queryKey: entityKeys.batchRelations(workspaceId, ids),
+    queryFn: () =>
+      orpcClient.entities.batchRelations({
+        params: { workspace: workspaceId },
+        body: { ids }
+      }),
+    enabled: !!workspaceId && ids.length > 0
+  });
+
+export const entitiesBySchemaQuery = (
+  workspaceId: string,
+  schemaId: string,
+  conditions: FilterCondition[] = [],
+  view: 'summary' | 'full' = 'summary',
+  enabled = true
+) =>
+  queryOptions({
+    queryKey: entityKeys.list(workspaceId, { schemaId, view, conditions }),
+    queryFn: async () => {
+      const page = await orpcClient.entities.list({
+        params: { workspace: workspaceId },
+        query: { ...toEntityListQuery({ schemaId, conditions }), view }
+      });
+      return page.items;
+    },
+    enabled: enabled && !!workspaceId && !!schemaId
+  });
+
+export const hydratedEntitiesBySchemaQuery = (
+  workspaceId: string,
+  schemaId: string,
+  enabled = true
+) =>
+  queryOptions({
+    queryKey: entityKeys.list(workspaceId, { schemaId, view: 'full' }),
+    queryFn: async () => {
+      const page = await orpcClient.entities.list({
+        params: { workspace: workspaceId },
+        query: { ...toEntityListQuery({ schemaId }), view: 'full' }
+      });
+      return page.items;
+    },
+    enabled: enabled && !!workspaceId && !!schemaId
+  });
+
+export const entityCountsBySchemaQuery = (
+  workspaceId: string,
+  schemaId: string,
+  conditions: FilterCondition[] = []
+) =>
+  queryOptions({
+    queryKey: entityKeys.count(workspaceId, { schemaId, conditions }),
+    queryFn: () =>
+      orpcClient.entities.count({
+        params: { workspace: workspaceId },
+        query: toEntityListQuery({ schemaId, conditions })
+      }),
+    enabled: !!workspaceId && !!schemaId
+  });
+
 export const invalidateEntityDetails = async (
   queryClient: QueryClient,
   workspaceId: string,
@@ -83,5 +268,17 @@ export const invalidateDeletedEntity = async (
     queryClient.invalidateQueries({ queryKey: entityKeys.workspaceDependents(workspaceId) }),
     queryClient.removeQueries({ queryKey: entityKeys.detail(workspaceId, entityId) }),
     queryClient.removeQueries({ queryKey: entityKeys.relations(workspaceId, entityId) })
+  ]);
+};
+
+export const invalidateEntityDeletion = async (
+  queryClient: QueryClient,
+  workspaceId: string,
+  entityId: string
+) => {
+  await Promise.all([
+    invalidateDeletedEntity(queryClient, workspaceId, entityId),
+    queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) }),
+    invalidateNotificationQueries(queryClient, workspaceId)
   ]);
 };
