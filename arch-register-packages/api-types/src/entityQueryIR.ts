@@ -161,6 +161,10 @@ export const entityQuerySchema = z.object({
     .describe(
       'Project mode includes project-owned or project_entity-linked entities; all mode includes global entities and entities owned by the selected project'
     ),
+  collectionId: z
+    .string()
+    .optional()
+    .describe('Personal collection whose members constrain the entity result'),
   asOf: z
     .string()
     .refine(value => !Number.isNaN(Date.parse(value)), 'Invalid asOf date')

@@ -51,6 +51,7 @@ const expectedPrimaryContractIds = [
   'webhookContract',
   'documentContract',
   'artifactContract',
+  'baselineContract',
   'integrationRelationContract',
   'entitySyncContract',
   'apiSpecificationSyncContract',

@@ -638,12 +638,49 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async createEntityVersion(input: EntityVersionDbCreate) {
+    const schemaId = input.state['schema_id'];
+    let schemaVersionId = input.schema_version_id;
+    if (schemaVersionId === undefined && typeof schemaId === 'string') {
+      const rows = await this.sql<{ id: string }[]>`
+        SELECT id FROM (
+          SELECT v.id, v.created_at, v.version
+          FROM entity_schema_version v
+          JOIN catalog_record r
+            ON r.workspace = v.workspace AND r.id = ${input.record_id} AND r.kind = 'entity'
+          WHERE v.workspace = ${input.workspace}
+            AND v.schema_id = ${schemaId}
+            AND v.created_at <= ${input.created_at}
+          UNION ALL
+          SELECT v.id, v.created_at, v.version
+          FROM relation_schema_version v
+          JOIN catalog_record r
+            ON r.workspace = v.workspace AND r.id = ${input.record_id} AND r.kind = 'relation'
+          WHERE v.workspace = ${input.workspace}
+            AND v.schema_id = ${schemaId}
+            AND v.created_at <= ${input.created_at}
+        ) versions
+        ORDER BY created_at DESC, version DESC, id DESC
+        LIMIT 1
+      `;
+      schemaVersionId = rows[0]?.id ?? null;
+    }
     const [row] = (await this.sql`
-      INSERT INTO record_version (id, workspace, record_id, version_number, kind, commit_message, created_at, created_by, state, applied_case_revision_id)
-      VALUES (${input.id}, ${input.workspace}, ${input.record_id}, ${input.version_number}, ${input.kind}, ${input.commit_message}, ${input.created_at}, ${input.created_by}, ${this.json(input.state)}, ${input.applied_case_revision_id})
+      INSERT INTO record_version (id, workspace, record_id, schema_version_id, version_number, kind, commit_message, created_at, created_by, state, applied_case_revision_id)
+      VALUES (${input.id}, ${input.workspace}, ${input.record_id}, ${schemaVersionId ?? null}, ${input.version_number}, ${input.kind}, ${input.commit_message}, ${input.created_at}, ${input.created_by}, ${this.json(input.state)}, ${input.applied_case_revision_id})
       RETURNING *
     `) as DatabaseRow[];
     return catalogMappers.entityVersion(row!);
+  }
+
+  async listEntityVersionsByVersionIds(workspace: string, versionIds: string[]) {
+    if (versionIds.length === 0) return [];
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT v.*, u.display_name AS created_by_name
+      FROM record_version v LEFT JOIN users u ON u.id = v.created_by
+      WHERE v.workspace = ${workspace} AND v.id = ANY(${versionIds})
+      ORDER BY v.record_id, v.created_at ASC, v.version_number ASC, v.id ASC
+    `;
+    return mapDatabaseRows(rows, catalogMappers.entityVersion);
   }
 
   async listEntityVersions(workspace: string, entityId: string) {
@@ -660,7 +697,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     if (entityIds.length === 0) return [];
     const rows = await this.sql<DatabaseRow[]>`
       SELECT v.id, v.workspace, v.record_id, v.version_number, v.kind, v.commit_message,
-        v.created_at, v.created_by, v.applied_case_revision_id, u.display_name AS created_by_name
+        v.created_at, v.created_by, v.schema_version_id, v.applied_case_revision_id,
+        u.display_name AS created_by_name
       FROM record_version v LEFT JOIN users u ON u.id = v.created_by
       WHERE v.workspace = ${workspace} AND v.record_id = ANY(${entityIds})
       ORDER BY v.record_id, v.created_at DESC
@@ -802,8 +840,20 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   }
 
   async pruneAutosaveVersions(workspace: string, entityId: string, keepCount: number) {
-    await this
-      .sql`DELETE FROM record_version WHERE workspace = ${workspace} AND record_id = ${entityId} AND kind = 'autosave' AND id NOT IN (SELECT id FROM record_version WHERE workspace = ${workspace} AND record_id = ${entityId} AND kind = 'autosave' ORDER BY created_at DESC LIMIT ${keepCount})`;
+    await this.sql`
+      DELETE FROM record_version
+      WHERE workspace = ${workspace} AND record_id = ${entityId} AND kind = 'autosave'
+        AND NOT EXISTS (
+          SELECT 1 FROM architecture_baseline_record br
+          WHERE br.workspace = record_version.workspace::text
+            AND br.record_version_id = record_version.id
+        )
+        AND id NOT IN (
+          SELECT id FROM record_version
+          WHERE workspace = ${workspace} AND record_id = ${entityId} AND kind = 'autosave'
+          ORDER BY created_at DESC LIMIT ${keepCount}
+        )
+    `;
   }
 
   async reassignSnapshotsFromMilestone(

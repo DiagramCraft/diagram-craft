@@ -46,6 +46,8 @@ import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRo
 import { toSavedViewSearch } from './components/entityBrowserState';
 import { toSavedRelationViewSearch } from '../relations/relationBrowserState';
 import type { Collection } from '@arch-register/api-types/collectionContract';
+import { BaselineSidebarSection } from '../baselines/BaselineSidebarSection';
+import type { EntityBrowserSidebarTab } from '../../routes/searchParams';
 
 export const EntitiesSidebar = ({
   schemas,
@@ -66,7 +68,7 @@ export const EntitiesSidebar = ({
   const onRelationsRoute = pathname.includes('/entities/relations');
   const { permissions } = useWorkspaceContext();
   const search = useSearch({ strict: false });
-  const sidebarTab = search.sidebarTab ?? 'filters';
+  const sidebarTab = search.sidebarTab ?? 'home';
 
   // Parse active filters from the filters JSON string
   const activeFilters = useMemo(() => {
@@ -95,7 +97,7 @@ export const EntitiesSidebar = ({
   const statusFilter = activeFilters.status;
   const ownerFilter = activeFilters.owner;
 
-  const { data: facets } = useEntityFacets(workspaceSlug, sidebarTab === 'filters');
+  const { data: facets } = useEntityFacets(workspaceSlug, sidebarTab === 'home');
   const { data: savedViews = [] } = useSavedViews(workspaceSlug, {
     enabled: sidebarTab === 'views'
   });
@@ -156,7 +158,7 @@ export const EntitiesSidebar = ({
     type?: string;
     status?: string;
     owner?: string;
-    sidebarTab?: 'filters' | 'views' | 'bookmarks';
+    sidebarTab?: EntityBrowserSidebarTab;
     collectionId?: string;
   }) => {
     // Start with a clean search object, only preserving sidebarTab if not explicitly set
@@ -250,7 +252,7 @@ export const EntitiesSidebar = ({
                   typeof prev.collectionId === 'string' ? prev.collectionId : undefined;
                 return {
                   ...prev,
-                  sidebarTab: v as 'filters' | 'views' | 'bookmarks',
+                  sidebarTab: v as EntityBrowserSidebarTab,
                   collectionId: v === 'bookmarks' ? collectionId : undefined
                 };
               }
@@ -258,9 +260,10 @@ export const EntitiesSidebar = ({
           }
         >
           <Tabs.List>
-            <Tabs.Trigger value="filters">Filters</Tabs.Trigger>
+            <Tabs.Trigger value="home">Home</Tabs.Trigger>
             <Tabs.Trigger value="views">Views</Tabs.Trigger>
-            <Tabs.Trigger value="bookmarks">Bookmarks</Tabs.Trigger>
+            <Tabs.Trigger value="bookmarks">Pinned</Tabs.Trigger>
+            <Tabs.Trigger value="baselines">Baselines</Tabs.Trigger>
           </Tabs.List>
         </Tabs.Root>
         {(onCollapse || onExpand) && (
@@ -290,7 +293,7 @@ export const EntitiesSidebar = ({
       </div>
 
       <div className={styles.scroll}>
-        {sidebarTab === 'filters' ? (
+        {sidebarTab === 'home' ? (
           <>
             <TreeRow
               icon={<TbDatabase size={12} />}
@@ -429,7 +432,7 @@ export const EntitiesSidebar = ({
                 />
               ))}
           </>
-        ) : (
+        ) : sidebarTab === 'bookmarks' ? (
           <>
             <SidebarGroupLabel>Pinned</SidebarGroupLabel>
             {isPinnedEntitiesLoading && (
@@ -493,6 +496,8 @@ export const EntitiesSidebar = ({
               </>
             )}
           </>
+        ) : (
+          <BaselineSidebarSection workspaceSlug={workspaceSlug} kind="workspace" />
         )}
       </div>
 

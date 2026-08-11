@@ -4,12 +4,14 @@ import styles from './EntityBrowserScreen.module.css';
 import { Title } from '../../components/Title';
 import { Button } from '@diagram-craft/app-components/Button';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
-import { TbPlus, TbDownload, TbUpload, TbDots, TbCheck, TbCopy } from 'react-icons/tb';
+import { TbPlus, TbDownload, TbUpload, TbDots, TbCheck, TbCopy, TbBookmark } from 'react-icons/tb';
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCollections } from '../../hooks/useCollections';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
 import { EntityBrowser, SaveViewDialog } from './components/EntityBrowser';
+import { CreateBaselineDialog } from '../baselines/CreateBaselineDialog';
+import { buildEntityBaselineScope } from '../baselines/baselineScope';
 import {
   buildSavedViewPayload,
   getFilterValue,
@@ -19,6 +21,8 @@ import {
 } from './components/entityBrowserState';
 import { exportEntitiesToCSV } from '../../lib/entityCsv';
 import { downloadBlob } from '../../lib/browserDownload';
+import { baselineContextSearch } from '../baselines/baselineContext';
+import { BaselineDetailView } from '../baselines/BaselineDetailView';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/entities');
 
@@ -28,8 +32,10 @@ export const EntityBrowserScreen = () => {
   const search = routeApi.useSearch();
   const workspaceId = workspaceSlug;
   const collectionId = search.collectionId ?? null;
+  const baselineId = search.baselineId;
   const [count, setCount] = useState(0);
   const [isSavingView, setIsSavingView] = useState(false);
+  const [isCreatingBaseline, setIsCreatingBaseline] = useState(false);
   const { data: savedViews = [] } = useSavedViews(workspaceId, {
     enabled: search.sidebarTab === 'views' || search.viewId != null
   });
@@ -65,6 +71,31 @@ export const EntityBrowserScreen = () => {
     : typeFilter
       ? (schemas.find(schema => schema.id === typeFilter)?.name ?? 'Entities')
       : 'All entities';
+  const baselineScope = useMemo(
+    () =>
+      buildEntityBaselineScope({
+        viewId: search.viewId,
+        viewName: activeSavedView?.name,
+        collectionId,
+        collectionName: collections.find(collection => collection.id === collectionId)?.name,
+        entityQuery,
+        typeFilter,
+        conditions,
+        joinAssessmentId: search.joinAssessmentId,
+        q
+      }),
+    [
+      activeSavedView?.name,
+      collectionId,
+      collections,
+      conditions,
+      entityQuery,
+      q,
+      search.joinAssessmentId,
+      search.viewId,
+      typeFilter
+    ]
+  );
 
   const handleSaveView = async (
     name: string,
@@ -194,6 +225,12 @@ export const EntityBrowserScreen = () => {
     }
 
     items.push({
+      label: 'Create baseline',
+      icon: <TbBookmark size={14} />,
+      onClick: () => setIsCreatingBaseline(true)
+    });
+
+    items.push({
       label: 'Export CSV',
       icon: <TbDownload size={14} />,
       onClick: handleExport
@@ -225,6 +262,28 @@ export const EntityBrowserScreen = () => {
     typeFilter,
     workspaceSlug
   ]);
+
+  if (baselineId) {
+    return (
+      <BaselineDetailView
+        workspaceSlug={workspaceSlug}
+        baselineId={baselineId}
+        onDeleted={() =>
+          navigate({
+            to: '/$workspaceSlug/entities',
+            params: { workspaceSlug },
+            search: (previous: Record<string, unknown>) => ({
+              ...previous,
+              baselineId: undefined,
+              sidebarTab: 'home',
+              asOf: undefined,
+              asOfIncludeProjects: undefined
+            })
+          })
+        }
+      />
+    );
+  }
 
   return (
     <div className={styles.screen}>
@@ -267,6 +326,27 @@ export const EntityBrowserScreen = () => {
         onClose={() => setIsSavingView(false)}
         onSave={handleSaveView}
         showAdminOption={permissions.canManageAdminViews}
+      />
+      <CreateBaselineDialog
+        open={isCreatingBaseline}
+        onClose={() => setIsCreatingBaseline(false)}
+        workspaceSlug={workspaceSlug}
+        scope={baselineScope.scope}
+        query={baselineScope.query}
+        scopeLabel={baselineScope.label}
+        scopeDetail={baselineScope.detail}
+        onCreated={baseline =>
+          navigate({
+            to: '/$workspaceSlug/entities',
+            params: { workspaceSlug },
+            search: (previous: Record<string, unknown>) => ({
+              ...previous,
+              ...baselineContextSearch(baseline),
+              asOf: undefined,
+              asOfIncludeProjects: undefined
+            })
+          })
+        }
       />
     </div>
   );

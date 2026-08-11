@@ -29,6 +29,7 @@ import {
 import { seedSavedViews } from './seedData/views';
 import { seededTestPassword } from './seedFixtures';
 import { hashPassword } from '../utils/password';
+import { randomUUID } from 'node:crypto';
 
 export type WorkspaceSeedOptions = {
   supportedCurrencies?: boolean;
@@ -141,6 +142,25 @@ export const seedCatalogDefinitions = async (
   if (options.schemas ?? true) {
     for (const schema of seedSchemas) {
       const createdSchema = await db.catalog.createSchema(schema);
+      await db.catalog.createSchemaVersion({
+        id: randomUUID(),
+        workspace: createdSchema.workspace,
+        schema_id: createdSchema.id,
+        version: createdSchema.version ?? 1,
+        name: createdSchema.name,
+        description: createdSchema.description,
+        fields: createdSchema.fields,
+        templates: createdSchema.templates ?? [],
+        groups: createdSchema.groups ?? [],
+        shared_field_group_links: createdSchema.shared_field_group_links ?? [],
+        entity_capabilities: createdSchema.entity_capabilities ?? [],
+        validation_rules: createdSchema.validation_rules ?? [],
+        color: createdSchema.color,
+        icon: createdSchema.icon,
+        change_summary: { added: createdSchema.fields.map(field => field.id) },
+        created_by: null,
+        created_at: createdSchema.created_at
+      });
       await db.workspace.registerPublicIdPrefix(
         createdSchema.key_prefix,
         'schema',

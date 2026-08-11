@@ -58,6 +58,7 @@ import { createAutomationRuleORPCHandler } from './domain/automation/automationR
 import { createDocumentORPCHandler } from './domain/document/documentOrpc';
 import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
 import { createArtifactORPCHandler } from './domain/artifact/artifactOrpc';
+import { createBaselineORPCHandler } from './domain/baseline/baselineOrpc';
 import {
   createPublicCatalogConfigORPCHandler,
   createPublicCatalogORPCHandler
@@ -330,6 +331,15 @@ const protectedRouteDefinitions = [
     prefix: API_PREFIXES.root,
     surfaces: [API_PREFIXES.application],
     create: ({ db }) => createArtifactORPCHandler(db)
+  },
+  {
+    id: 'baselines',
+    auth: 'protected',
+    kind: 'orpc',
+    dependencies: ['db'],
+    prefix: API_PREFIXES.application,
+    surfaces: [API_PREFIXES.application],
+    create: ({ db }) => createBaselineORPCHandler(db)
   },
   {
     id: 'workspace-templates',

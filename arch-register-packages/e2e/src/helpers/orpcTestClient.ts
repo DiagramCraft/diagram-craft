@@ -44,6 +44,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     externalContent: applicationClient.externalContent,
     wikiComments: applicationClient.wikiComments,
     artifacts: applicationClient.artifacts,
+    baselines: applicationClient.baselines,
     auth: coreClient.auth,
     authProtected: coreClient.authProtected,
     dev: coreClient.dev,

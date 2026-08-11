@@ -154,8 +154,14 @@ export const useEntityBrowserSearchState = ({
     [setViewConfigs, view, viewConfigs]
   );
 
-  const setAsOf = useCallback((date: string) => navigateBrowser({ asOf: date }), [navigateBrowser]);
-  const clearAsOf = useCallback(() => navigateBrowser({ asOf: undefined }), [navigateBrowser]);
+  const setAsOf = useCallback(
+    (date: string) => navigateBrowser({ asOf: date, baselineId: undefined }),
+    [navigateBrowser]
+  );
+  const clearAsOf = useCallback(
+    () => navigateBrowser({ asOf: undefined, baselineId: undefined }),
+    [navigateBrowser]
+  );
   const setIncludePlannedChanges = useCallback(
     (include: boolean) => navigateBrowser({ asOfIncludeProjects: include ? undefined : 'false' }),
     [navigateBrowser]

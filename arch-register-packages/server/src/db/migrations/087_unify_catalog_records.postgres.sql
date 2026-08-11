@@ -65,6 +65,13 @@ DROP TABLE relation;
 -- record_version (renamed from entity_version): now keyed on any catalog_record, not just entities.
 ALTER TABLE entity_version RENAME TO record_version;
 ALTER TABLE record_version RENAME COLUMN entity_id TO record_id;
+-- Entity and relation schema versions live in separate tables, so this polymorphic reference
+-- is validated by the catalog write paths using the record state's schema_id.
+ALTER TABLE record_version ADD COLUMN schema_version_id UUID;
+
+CREATE INDEX record_version_schema_version_idx
+  ON record_version(workspace, schema_version_id)
+  WHERE schema_version_id IS NOT NULL;
 
 -- record_change_case_record_version (renamed from entity_change_case_entity_version).
 ALTER TABLE entity_change_case_entity_version RENAME TO record_change_case_record_version;

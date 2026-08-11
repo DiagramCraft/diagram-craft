@@ -3,15 +3,18 @@ import { useNavigate } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
-import { TbDots, TbFileText, TbLayoutGrid, TbPencil, TbStar } from 'react-icons/tb';
+import { TbBookmark, TbDots, TbFileText, TbLayoutGrid, TbPencil, TbStar } from 'react-icons/tb';
 import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { CreateBaselineDialog } from '../baselines/CreateBaselineDialog';
 import { MdxContext } from '../markdown/MdxContext';
 import { DashboardGrid } from '../dashboard/DashboardGrid';
 import { useProjectDashboard, useUpdateProjectDashboard } from '../../hooks/useProjectDashboard';
 import { formatDate } from '../../utils/dateFormat';
+import { asProjectPublicId, projectDetailRoute } from '../../routes/publicObjectRoutes';
 import styles from './ProjectDetailScreen.module.css';
+import { baselineContextSearch } from '../baselines/baselineContext';
 
 type Props = {
   project: ProjectDetailData;
@@ -41,6 +44,7 @@ export const ProjectDashboardScreen = ({
   const navigate = useNavigate();
   const { workspaceSlug } = useWorkspaceContext();
   const [isEditing, setIsEditing] = useState(false);
+  const [isCreatingBaseline, setIsCreatingBaseline] = useState(false);
 
   const { data: dashboard, isLoading } = useProjectDashboard(workspaceSlug, project.id);
   const updateDashboard = useUpdateProjectDashboard(workspaceSlug, project.id);
@@ -95,6 +99,12 @@ export const ProjectDashboardScreen = ({
               <Menu.Item leftSlot={<TbFileText size={13} />} onClick={onEditMarkdownTemplates}>
                 Edit Markdown Templates
               </Menu.Item>
+              <Menu.Item
+                leftSlot={<TbBookmark size={13} />}
+                onClick={() => setIsCreatingBaseline(true)}
+              >
+                Create project baseline
+              </Menu.Item>
               <Menu.Item leftSlot={<TbLayoutGrid size={13} />} onClick={() => setIsEditing(true)}>
                 Edit dashboard
               </Menu.Item>
@@ -135,6 +145,23 @@ export const ProjectDashboardScreen = ({
           surface="project"
         />
       </MdxContext.Provider>
+      <CreateBaselineDialog
+        open={isCreatingBaseline}
+        onClose={() => setIsCreatingBaseline(false)}
+        workspaceSlug={workspaceSlug}
+        scope={{ kind: 'project', projectId: project.id, projectScope: 'project' }}
+        scopeLabel="Project entities and links"
+        scopeDetail={`The baseline will capture the current contents of ${project.name} at the selected effective date.`}
+        defaultOwnerTeamId={project.owner?.id}
+        onCreated={baseline =>
+          navigate(
+            projectDetailRoute(workspaceSlug, asProjectPublicId(project.id), {
+              section: 'entities',
+              ...baselineContextSearch(baseline)
+            })
+          )
+        }
+      />
     </ProjectScreenLayout>
   );
 };

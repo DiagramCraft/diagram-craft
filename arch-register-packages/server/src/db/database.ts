@@ -30,6 +30,7 @@ import type { ContentReconciliationDatabase } from '../domain/project/db/content
 import type { ArtifactDatabase } from '../domain/artifact/db/artifactDatabase';
 import type { ApiSpecificationDatabase } from '../domain/artifact/db/apiSpecificationDatabase';
 import type { ArtifactProcessorRegistry } from '../domain/artifact/artifactProcessor';
+import type { BaselineDatabase } from '../domain/baseline/db/baselineDatabase';
 import type { PublicCatalogDatabase } from '../domain/publicCatalog/db/publicCatalogDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
@@ -83,6 +84,7 @@ export type DatabaseAdapter = {
   artifact: ArtifactDatabase;
   artifactProjections: ArtifactProjectionDatabases;
   artifactProcessors: ArtifactProcessorRegistry;
+  baseline: BaselineDatabase;
   publicCatalog: PublicCatalogDatabase;
 };
 
@@ -237,6 +239,16 @@ export type {
   ApiSpecificationRevisionDbCreate,
   ApiSpecificationRevisionDbResult
 } from '../domain/artifact/db/apiSpecificationDatabase';
+export type {
+  BaselineDatabase,
+  BaselineDbCreate,
+  BaselineDbResult,
+  BaselineLinkDbCreate,
+  BaselineLinkDbResult,
+  BaselineLinkTargetType,
+  BaselineRecordDbCreate,
+  BaselineRecordDbResult
+} from '../domain/baseline/db/baselineDatabase';
 export type {
   PublicCatalogDatabase,
   PublicCatalogConfigDbResult,

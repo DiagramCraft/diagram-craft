@@ -497,6 +497,7 @@ describe('restoreWorkspaceRelationVersion', () => {
       id: 'version-1',
       workspace: 'ws-1',
       record_id: existing.id,
+      schema_version_id: null,
       version_number: 1,
       kind: 'autosave',
       commit_message: null,

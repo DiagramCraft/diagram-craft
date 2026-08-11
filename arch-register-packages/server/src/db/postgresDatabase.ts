@@ -39,6 +39,7 @@ import { PostgresCurrencyRatesDatabase } from '../domain/currencyRates/db/postgr
 import { PostgresContentReconciliationDatabase } from '../domain/project/db/postgresContentReconciliation';
 import { PostgresArtifactDatabase } from '../domain/artifact/db/postgresArtifact';
 import { PostgresApiSpecificationDatabase } from '../domain/artifact/db/postgresApiSpecification';
+import { PostgresBaselineDatabase } from '../domain/baseline/db/postgresBaseline';
 import { apiSpecificationArtifactProcessor } from '../domain/artifact/apiSpecificationProcessor';
 import { createArtifactProcessorRegistry } from '../domain/artifact/artifactProcessor';
 import type { ArtifactProcessorRegistry } from '../domain/artifact/artifactProcessor';
@@ -92,6 +93,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly artifact: PostgresArtifactDatabase;
   readonly artifactProjections: ArtifactProjectionDatabases;
   readonly artifactProcessors: ArtifactProcessorRegistry;
+  readonly baseline: PostgresBaselineDatabase;
   readonly publicCatalog: PostgresPublicCatalogDatabase;
   readonly core;
 
@@ -132,6 +134,7 @@ export class PostgresDatabase implements DatabaseAdapter {
         apiSpecification: new PostgresApiSpecificationDatabase(sql)
       },
       artifactProcessors: createArtifactProcessorRegistry([apiSpecificationArtifactProcessor]),
+      baseline: new PostgresBaselineDatabase(sql),
       publicCatalog: new PostgresPublicCatalogDatabase(sql)
     };
     let bound!: DatabaseAdapter;
@@ -199,6 +202,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.currencyRates = new PostgresCurrencyRatesDatabase(this.sql);
     this.contentReconciliation = new PostgresContentReconciliationDatabase(this.sql);
     this.artifact = new PostgresArtifactDatabase(this.sql);
+    this.baseline = new PostgresBaselineDatabase(this.sql);
     this.artifactProjections = {
       apiSpecification: new PostgresApiSpecificationDatabase(this.sql)
     };

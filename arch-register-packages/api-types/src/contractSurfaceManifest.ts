@@ -7,6 +7,7 @@ import { assessmentResponseContract } from './assessmentResponseContract';
 import { auditContract } from './auditContract';
 import { authProtectedContract, authPublicContract } from './authContract';
 import { automationRuleContract } from './automationRuleContract';
+import { baselineContract } from './baselineContract';
 import { changeCaseContract } from './changeCaseContract';
 import { workspaceCollectionContract } from './collectionContract';
 import {
@@ -161,7 +162,8 @@ const applicationEntries = [
   { id: 'jobsContract', contract: jobsContract },
   { id: 'webhookContract', contract: webhookContract },
   { id: 'documentContract', contract: documentContract },
-  { id: 'artifactContract', contract: artifactContract }
+  { id: 'artifactContract', contract: artifactContract },
+  { id: 'baselineContract', contract: baselineContract }
 ] as const satisfies readonly ContractSurfaceEntry[];
 
 const integrationSchemaListProjection = {

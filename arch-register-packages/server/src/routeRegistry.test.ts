@@ -36,6 +36,7 @@ const expectedRouteIds = [
   'relation-changes',
   'entity-deprecation',
   'artifacts',
+  'baselines',
   'workspace-templates',
   'workspace-views',
   'workspace-dashboards',

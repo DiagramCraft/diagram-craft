@@ -114,6 +114,12 @@ describe('validateEntitySearch', () => {
     expect(validateEntitySearch({ entityQuery }).entityQuery).toBe(entityQuery);
   });
 
+  it('maps the former Filters tab to Home and accepts the Baselines tab', () => {
+    expect(validateEntitySearch({ sidebarTab: 'filters' }).sidebarTab).toBe('home');
+    expect(validateEntitySearch({ sidebarTab: 'baselines' }).sidebarTab).toBe('baselines');
+    expect(validateEntitySearch({ baselineId: 'baseline-1' }).baselineId).toBe('baseline-1');
+  });
+
   it('parses entity browser search params used by saved views', () => {
     expect(
       validateEntitySearch({

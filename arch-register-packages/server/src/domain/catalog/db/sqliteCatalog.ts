@@ -620,14 +620,48 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
   }
 
   async createEntityVersion(input: EntityVersionDbCreate) {
+    const schemaId = input.state['schema_id'];
+    const schemaVersionId =
+      input.schema_version_id !== undefined
+        ? input.schema_version_id
+        : typeof schemaId !== 'string'
+          ? null
+          : (this.get<{ id: string }>(
+              `SELECT id FROM (
+                   SELECT v.id, v.created_at, v.version
+                   FROM entity_schema_version v
+                   JOIN catalog_record r
+                     ON r.workspace = v.workspace AND r.id = ? AND r.kind = 'entity'
+                   WHERE v.workspace = ? AND v.schema_id = ? AND v.created_at <= ?
+                   UNION ALL
+                   SELECT v.id, v.created_at, v.version
+                   FROM relation_schema_version v
+                   JOIN catalog_record r
+                     ON r.workspace = v.workspace AND r.id = ? AND r.kind = 'relation'
+                   WHERE v.workspace = ? AND v.schema_id = ? AND v.created_at <= ?
+                 )
+                 ORDER BY created_at DESC, version DESC, id DESC
+                 LIMIT 1`,
+              [
+                input.record_id,
+                input.workspace,
+                schemaId,
+                input.created_at.toISOString(),
+                input.record_id,
+                input.workspace,
+                schemaId,
+                input.created_at.toISOString()
+              ]
+            )?.id ?? null);
     this.run(
       `INSERT INTO record_version
-       (id, workspace, record_id, version_number, kind, commit_message, created_at, created_by, state, applied_case_revision_id)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, workspace, record_id, schema_version_id, version_number, kind, commit_message, created_at, created_by, state, applied_case_revision_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         input.workspace,
         input.record_id,
+        schemaVersionId,
         input.version_number,
         input.kind,
         input.commit_message,
@@ -646,6 +680,18 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     ))!;
   }
 
+  async listEntityVersionsByVersionIds(workspace: string, versionIds: string[]) {
+    if (versionIds.length === 0) return [];
+    return this.all(
+      `SELECT v.*, u.display_name AS created_by_name
+       FROM record_version v LEFT JOIN users u ON u.id = v.created_by
+       WHERE v.workspace = ? AND v.id IN (${versionIds.map(() => '?').join(',')})
+       ORDER BY v.record_id, v.created_at ASC, v.version_number ASC, v.id ASC`,
+      [workspace, ...versionIds],
+      catalogMappers.entityVersion
+    );
+  }
+
   async listEntityVersions(workspace: string, entityId: string) {
     return this.all(
       `SELECT v.*, u.display_name AS created_by_name
@@ -660,7 +706,8 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     if (entityIds.length === 0) return [];
     return this.all(
       `SELECT v.id, v.workspace, v.record_id, v.version_number, v.kind, v.commit_message,
-         v.created_at, v.created_by, v.applied_case_revision_id, u.display_name AS created_by_name
+         v.created_at, v.created_by, v.schema_version_id, v.applied_case_revision_id,
+         u.display_name AS created_by_name
        FROM record_version v LEFT JOIN users u ON u.id = v.created_by
        WHERE v.workspace = ? AND v.record_id IN (${entityIds.map(() => '?').join(',')})
        ORDER BY v.record_id, v.created_at DESC`,
@@ -837,6 +884,11 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     this.run(
       `DELETE FROM record_version
        WHERE workspace = ? AND record_id = ? AND kind = 'autosave'
+         AND NOT EXISTS (
+           SELECT 1 FROM architecture_baseline_record br
+           WHERE br.workspace = record_version.workspace
+             AND br.record_version_id = record_version.id
+         )
          AND id NOT IN (
            SELECT id FROM record_version
            WHERE workspace = ? AND record_id = ? AND kind = 'autosave'

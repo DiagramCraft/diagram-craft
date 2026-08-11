@@ -139,6 +139,7 @@ const makeVersion = (id: string, createdAt: string, value: string): EntityVersio
   id,
   workspace: 'ws-1',
   record_id: relation.id,
+  schema_version_id: null,
   version_number: id === 'version-old' ? 1 : 2,
   kind: 'autosave',
   commit_message: null,

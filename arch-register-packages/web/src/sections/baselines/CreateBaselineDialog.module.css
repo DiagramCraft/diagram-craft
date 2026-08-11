@@ -1,0 +1,47 @@
+.scope {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  padding: 10px 12px;
+  border: 1px solid var(--cmp-border-primary);
+  border-radius: 6px;
+  background: var(--cmp-bg-secondary);
+}
+
+.scopeLabel {
+  color: var(--cmp-fg-primary);
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.scopeDetail {
+  color: var(--cmp-fg-secondary);
+  font-size: 12px;
+  line-height: 1.4;
+}
+
+.fields {
+  display: flex;
+  flex-direction: column;
+  gap: 14px;
+}
+
+.options {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.option {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--cmp-fg-secondary);
+  font-size: 12px;
+  cursor: pointer;
+}
+
+.error {
+  color: var(--cmp-fg-danger, #c0392b);
+  font-size: 12px;
+}
