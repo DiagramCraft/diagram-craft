@@ -845,7 +845,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       WHERE workspace = ${workspace} AND record_id = ${entityId} AND kind = 'autosave'
         AND NOT EXISTS (
           SELECT 1 FROM architecture_baseline_record br
-          WHERE br.workspace = record_version.workspace
+          WHERE br.workspace = record_version.workspace::text
             AND br.record_version_id = record_version.id
         )
         AND id NOT IN (

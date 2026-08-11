@@ -1,3 +1,5 @@
+import { resolveApiUrl } from '../lib/apiUrl';
+
 type RefreshTokenResponse = {
   access_token: string;
   refresh_token: string;
@@ -12,7 +14,7 @@ type AuthFetchOptions = {
   retryOnUnauthorized?: boolean;
 };
 
-const BASE = import.meta.env.VITE_API_URL ?? '';
+type AuthRequestTarget = string | URL;
 
 let refreshInFlight: Promise<boolean> | null = null;
 let accessTokenExpiresAt: number | null = null;
@@ -20,9 +22,12 @@ let sessionExpiredNotified = false;
 
 const sessionExpiredHandlers = new Set<SessionExpiredHandler>();
 
-const toRequestUrl = (path: string) => `${BASE}${path}`;
+const toRequestUrl = (target: AuthRequestTarget) => resolveApiUrl(target);
 
-const isRefreshPath = (path: string) => path === '/api/auth/refresh';
+const isRefreshPath = (target: AuthRequestTarget) => {
+  const path = new URL(resolveApiUrl(target)).pathname.replace(/\/+$/, '');
+  return path.endsWith('/api/auth/refresh');
+};
 
 const notifySessionExpired = () => {
   if (sessionExpiredNotified) return;
@@ -34,8 +39,38 @@ const notifySessionExpired = () => {
   }
 };
 
-const fetchWithCredentials = (path: string, init?: RequestInit) =>
-  fetch(toRequestUrl(path), { ...init, credentials: 'include' });
+const fetchWithCredentials = (target: AuthRequestTarget, init?: RequestInit) =>
+  fetch(toRequestUrl(target), { ...init, credentials: 'include' });
+
+const throwIfAborted = (signal?: AbortSignal) => {
+  if (signal?.aborted) {
+    throw signal.reason ?? new DOMException('The operation was aborted.', 'AbortError');
+  }
+};
+
+const awaitWithAbort = async <T>(promise: Promise<T>, signal?: AbortSignal): Promise<T> => {
+  if (!signal) return promise;
+  throwIfAborted(signal);
+
+  return new Promise<T>((resolve, reject) => {
+    const onAbort = () => {
+      signal.removeEventListener('abort', onAbort);
+      reject(signal.reason ?? new DOMException('The operation was aborted.', 'AbortError'));
+    };
+
+    signal.addEventListener('abort', onAbort, { once: true });
+    promise.then(
+      value => {
+        signal.removeEventListener('abort', onAbort);
+        resolve(value);
+      },
+      error => {
+        signal.removeEventListener('abort', onAbort);
+        reject(error);
+      }
+    );
+  });
+};
 
 export const registerSessionExpiredHandler = (handler: SessionExpiredHandler) => {
   sessionExpiredHandlers.add(handler);
@@ -55,53 +90,55 @@ export const clearAccessTokenExpiry = () => {
 
 export const getAccessTokenExpiresAt = () => accessTokenExpiresAt;
 
-export const refreshAccessToken = async (): Promise<boolean> => {
-  if (refreshInFlight) {
-    return refreshInFlight;
-  }
+export const refreshAccessToken = async (signal?: AbortSignal): Promise<boolean> => {
+  if (!refreshInFlight) {
+    refreshInFlight = (async () => {
+      try {
+        const response = await fetchWithCredentials('/api/auth/refresh', { method: 'POST' });
 
-  refreshInFlight = (async () => {
-    try {
-      const response = await fetchWithCredentials('/api/auth/refresh', { method: 'POST' });
+        if (!response.ok) {
+          clearAccessTokenExpiry();
+          return false;
+        }
 
-      if (!response.ok) {
+        const data = (await response.json()) as RefreshTokenResponse;
+        setAccessTokenExpiryFromSeconds(data.expires_in);
+        return true;
+      } catch {
         clearAccessTokenExpiry();
         return false;
       }
+    })().finally(() => {
+      refreshInFlight = null;
+    });
+  }
 
-      const data = (await response.json()) as RefreshTokenResponse;
-      setAccessTokenExpiryFromSeconds(data.expires_in);
-      return true;
-    } catch {
-      clearAccessTokenExpiry();
-      return false;
-    }
-  })().finally(() => {
-    refreshInFlight = null;
-  });
-
-  return refreshInFlight;
+  return awaitWithAbort(refreshInFlight, signal);
 };
 
 export const fetchWithAuthResponse = async (
-  path: string,
+  target: AuthRequestTarget,
   init?: RequestInit,
   options: AuthFetchOptions = {}
 ): Promise<Response> => {
   const { requiresAuth = true, retryOnUnauthorized = true } = options;
-  const response = await fetchWithCredentials(path, init);
+  const response = await fetchWithCredentials(target, init);
 
-  if (!requiresAuth || !retryOnUnauthorized || response.status !== 401 || isRefreshPath(path)) {
+  if (!requiresAuth || !retryOnUnauthorized || response.status !== 401 || isRefreshPath(target)) {
     return response;
   }
 
-  const refreshed = await refreshAccessToken();
+  const signal = init?.signal ?? undefined;
+  throwIfAborted(signal);
+  const refreshed = await refreshAccessToken(signal);
+  throwIfAborted(signal);
   if (!refreshed) {
     notifySessionExpired();
     return response;
   }
 
-  const retriedResponse = await fetchWithCredentials(path, init);
+  throwIfAborted(signal);
+  const retriedResponse = await fetchWithCredentials(target, init);
   if (retriedResponse.status === 401) {
     clearAccessTokenExpiry();
     notifySessionExpired();
