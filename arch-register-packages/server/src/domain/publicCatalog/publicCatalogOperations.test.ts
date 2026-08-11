@@ -110,6 +110,55 @@ describe('public catalog publication', () => {
     expect(result.fields).not.toHaveProperty('secret');
   });
 
+  it('uses public entity names for reference values and returns field labels', async () => {
+    const source = {
+      ...entity,
+      data: { ...entity.data, dependencies: ['entity-2'] }
+    };
+    const target = {
+      ...entity,
+      id: 'entity-2',
+      public_id: 'SVC-002',
+      slug: 'payments-api',
+      name: 'Payments API',
+      data: { summary: 'payments' }
+    };
+    const referenceSchema = {
+      ...schema,
+      fields: [
+        ...schema.fields,
+        {
+          id: 'dependencies',
+          name: 'Dependencies',
+          type: 'reference',
+          schemaId: 'schema-1',
+          minCount: 0,
+          maxCount: -1
+        }
+      ]
+    } as unknown as SchemaDbResult;
+    const db = makeDb({
+      ...publicConfig,
+      schemas: [{ schemaId: 'schema-1', fieldIds: ['summary', 'dependencies'] }]
+    });
+    db.catalog.listEntities = vi.fn(async () => [source, target]) as never;
+    db.catalog.getEntity = vi.fn(async (_workspace, id) => {
+      if (id === 'SVC-001' || id === 'entity-1') return source;
+      if (id === 'SVC-002' || id === 'entity-2') return target;
+      return null;
+    }) as never;
+    db.catalog.getSchema = vi.fn(async () => referenceSchema) as never;
+
+    const result = await getPublicCatalogEntity(db, 'workspace-slug', 'SVC-001');
+
+    expect(result.schema.fields).toContainEqual({
+      id: 'dependencies',
+      name: 'Dependencies',
+      type: 'reference'
+    });
+    expect(result.fields).toMatchObject({ dependencies: ['Payments API'] });
+  });
+
   it('keeps the manifest deterministic and reports only public entities', async () => {
     const result = await getPublicCatalogManifest(makeDb(), 'workspace-slug');
     expect(result).toMatchObject({

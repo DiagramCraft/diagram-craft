@@ -1,5 +1,6 @@
 import { Outlet, useParams } from '@tanstack/react-router';
 import { usePublicCatalogManifest } from '../hooks/usePublicCatalog';
+import { publicCatalogOpenAPISpecUrl } from '../lib/orpcClient';
 import styles from './publicCatalog.module.css';
 
 export const PublicCatalogLayout = () => {
@@ -27,7 +28,7 @@ export const PublicCatalogLayout = () => {
             </a>
           ))}
         </nav>
-        <a className={styles.apiLink} href="/openapi/public-v1.json">
+        <a className={styles.apiLink} href={publicCatalogOpenAPISpecUrl()}>
           API
         </a>
       </header>

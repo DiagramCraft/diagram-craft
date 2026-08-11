@@ -149,6 +149,8 @@ const createApiClient = <T extends AnyContractRouter>(contracts: T, apiPath: str
 const coreClient = createApiClient(coreContracts, CORE_API_PATH);
 const applicationClient = createApiClient(applicationContracts, APPLICATION_API_PATH);
 
+export const publicCatalogOpenAPISpecUrl = () => resolveORPCBaseUrl('/api/public/v1/openapi.json');
+
 export const publicCatalogRequest = async <T>(path: string, init?: RequestInit): Promise<T> => {
   const response = await fetch(`${resolveORPCBaseUrl(PUBLIC_CATALOG_API_PATH)}${path}`, {
     ...init,

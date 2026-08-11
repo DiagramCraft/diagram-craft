@@ -365,12 +365,38 @@
                               },
                               "keyPrefix": {
                                 "type": "string"
+                              },
+                              "fields": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "type": "string"
+                                    },
+                                    "description": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "name",
+                                    "type"
+                                  ]
+                                }
                               }
                             },
                             "required": [
                               "id",
                               "name",
-                              "keyPrefix"
+                              "keyPrefix",
+                              "fields"
                             ]
                           },
                           "fields": {
@@ -563,12 +589,38 @@
                         },
                         "keyPrefix": {
                           "type": "string"
+                        },
+                        "fields": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "type": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "type"
+                            ]
+                          }
                         }
                       },
                       "required": [
                         "id",
                         "name",
-                        "keyPrefix"
+                        "keyPrefix",
+                        "fields"
                       ]
                     },
                     "fields": {

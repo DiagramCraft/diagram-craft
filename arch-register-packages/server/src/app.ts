@@ -148,6 +148,7 @@ export const createApp = (
   app.use('/openapi.json', createUnifiedOpenAPISpecHandler());
   app.use('/openapi/application-v1.json', createApplicationOpenAPISpecHandler());
   app.use('/openapi/public-v1.json', createPublicCatalogOpenAPISpecHandler());
+  app.use('/api/public/v1/openapi.json', createPublicCatalogOpenAPISpecHandler());
   app.use('/openapi/integrations-v1.json', createIntegrationOpenAPISpecHandler());
   app.use('/openapi/adapters/diagram-craft.json', createDiagramCraftAdapterOpenAPISpecHandler());
 

@@ -3,6 +3,10 @@ import type {
   PublicCatalogEntity
 } from '@arch-register/api-types/publicCatalogContract';
 import { publicCatalogConfigSchema } from '@arch-register/api-types/publicCatalogContract';
+import {
+  isReferenceOrContainmentField,
+  isTypedRelationField
+} from '@arch-register/api-types/schemaContract';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
@@ -17,12 +21,14 @@ import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDataba
 import { isMarkdownNode, readMarkdownBody } from '../project/markdownOperationHelpers';
 import { storageScope } from '../project/projectOperationHelpers';
 import type { StorageAdapter } from '../../storage/storage';
+import { decodeRefs } from '../../types';
 import {
   toApiSpecificationItem,
   toApiSpecificationRevision
 } from '../artifact/apiSpecificationOperations';
 import { toRevision } from '../artifact/artifactOperations';
 import type { ApiSpecificationItemFilters } from '../artifact/db/apiSpecificationDatabase';
+import type { RelationDbResult } from '../catalog/db/relationDatabase';
 
 const DEFAULT_CONFIG: PublicCatalogConfig = {
   enabled: false,
@@ -239,6 +245,9 @@ export const replacePublicCatalogConfig = async (
 
 type PublishedEntity = { entity: EntityDbResult; schema: SchemaDbResult; fieldIds: string[] };
 
+type PublishedEntityLookup = ReadonlyMap<string, EntityDbResult>;
+type RelationRowsBySchema = Map<string, Promise<RelationDbResult[]>>;
+
 const findOverride = (config: PublicCatalogConfig, entity: EntityDbResult) =>
   config.entityOverrides.find(
     item => item.entityId === entity.id || item.entityId === entity.public_id
@@ -266,17 +275,160 @@ const getPublishedEntity = async (
   return { entity, schema, fieldIds };
 };
 
+const publishedEntityLookup = (published: PublishedEntity[]): Map<string, EntityDbResult> =>
+  new Map(
+    published.flatMap(item => [
+      [item.entity.id, item.entity],
+      [item.entity.public_id, item.entity]
+    ])
+  );
+
+const resolvePublishedTarget = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  config: PublicCatalogConfig,
+  identifier: string,
+  publishedByIdentifier: PublishedEntityLookup
+) => {
+  const candidate =
+    publishedByIdentifier.get(identifier) ?? (await db.catalog.getEntity(workspace, identifier));
+  if (!candidate) return null;
+  if (publishedByIdentifier.has(candidate.id)) return candidate;
+  const published = await getPublishedEntity(db, workspace, config, candidate);
+  return published?.entity ?? null;
+};
+
+const loadRelationRows = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  relationSchemaId: string
+): Promise<RelationDbResult[]> => {
+  const rows: RelationDbResult[] = [];
+  let offset = 0;
+  const pageSize = 200;
+  while (true) {
+    const page = await db.relation.listRelations(
+      workspace,
+      { schemaId: relationSchemaId },
+      { limit: pageSize, offset }
+    );
+    rows.push(...page.items);
+    if (page.items.length === 0 || rows.length >= page.total) return rows;
+    offset += page.items.length;
+  }
+};
+
+const getRelationRows = (
+  db: DatabaseAdapter,
+  workspace: string,
+  relationSchemaId: string,
+  cache: RelationRowsBySchema
+) => {
+  const cached = cache.get(relationSchemaId);
+  if (cached) return cached;
+  const promise = loadRelationRows(db, workspace, relationSchemaId);
+  cache.set(relationSchemaId, promise);
+  return promise;
+};
+
+const resolveReferenceLabels = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  config: PublicCatalogConfig,
+  raw: unknown,
+  publishedByIdentifier: PublishedEntityLookup
+) => {
+  const labels: string[] = [];
+  for (const identifier of decodeRefs(raw)) {
+    const target = await resolvePublishedTarget(
+      db,
+      workspace,
+      config,
+      identifier,
+      publishedByIdentifier
+    );
+    if (target) labels.push(target.name);
+  }
+  return labels;
+};
+
+const resolveTypedRelationLabels = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  config: PublicCatalogConfig,
+  entity: EntityDbResult,
+  field: Extract<SchemaDbResult['fields'][number], { type: 'typedRelation' }>,
+  publishedByIdentifier: PublishedEntityLookup,
+  relationRowsBySchema: RelationRowsBySchema
+) => {
+  const relations = await getRelationRows(
+    db,
+    workspace,
+    field.relationSchemaId,
+    relationRowsBySchema
+  );
+  const labels: string[] = [];
+  for (const relation of relations) {
+    const ownerId = field.direction === 'out' ? relation.out_entity_id : relation.in_entity_id;
+    if (ownerId !== entity.id) continue;
+    const targetId = field.direction === 'out' ? relation.in_entity_id : relation.out_entity_id;
+    const target = await resolvePublishedTarget(
+      db,
+      workspace,
+      config,
+      targetId,
+      publishedByIdentifier
+    );
+    if (target) labels.push(target.name);
+  }
+  return labels;
+};
+
 const toPublicEntity = async (
   db: DatabaseAdapter,
   workspace: string,
   config: PublicCatalogConfig,
-  published: PublishedEntity
+  published: PublishedEntity,
+  publishedByIdentifier: PublishedEntityLookup = new Map(),
+  relationRowsBySchema: RelationRowsBySchema = new Map()
 ): Promise<PublicCatalogEntity> => {
   const { entity, schema, fieldIds } = published;
   const safeData = filterKnownAllRestrictedFieldGroups(schema, entity.data);
-  const fields = Object.fromEntries(
-    fieldIds.flatMap(id => (id in safeData ? [[id, safeData[id]]] : []))
+  const selectedFields = schema.fields.filter(field => fieldIds.includes(field.id));
+  const fieldEntries = await Promise.all(
+    selectedFields.map(async field => {
+      if (isTypedRelationField(field)) {
+        return [
+          field.id,
+          await resolveTypedRelationLabels(
+            db,
+            workspace,
+            config,
+            entity,
+            field,
+            publishedByIdentifier,
+            relationRowsBySchema
+          )
+        ] as const;
+      }
+      if (!(field.id in safeData)) return null;
+      if (isReferenceOrContainmentField(field)) {
+        const labels = await resolveReferenceLabels(
+          db,
+          workspace,
+          config,
+          safeData[field.id],
+          publishedByIdentifier
+        );
+        return [
+          field.id,
+          field.type === 'containment' || field.maxCount === 1 ? (labels[0] ?? null) : labels
+        ] as const;
+      }
+      return [field.id, safeData[field.id]] as const;
+    })
   );
+  const fields = Object.fromEntries(fieldEntries.filter(entry => entry !== null));
   const apiArtifacts = await listPublicApiArtifactSummaries(db, workspace, config, entity);
   return {
     publicId: entity.public_id,
@@ -288,7 +440,12 @@ const toPublicEntity = async (
     lifecycle: entity.lifecycle_label,
     tags: entity.tags,
     updatedAt: entity.updated_at.toISOString(),
-    schema: { id: schema.id, name: schema.name, keyPrefix: schema.key_prefix },
+    schema: {
+      id: schema.id,
+      name: schema.name,
+      keyPrefix: schema.key_prefix,
+      fields: selectedFields.map(field => ({ id: field.id, name: field.name, type: field.type }))
+    },
     fields,
     apiArtifacts
   };
@@ -411,8 +568,14 @@ export const listPublicCatalogEntities = async (
       .includes(q);
   });
   const page = filtered.slice(query.offset, query.offset + query.limit);
+  const publishedByIdentifier = publishedEntityLookup(published);
+  const relationRowsBySchema: RelationRowsBySchema = new Map();
   return {
-    items: await Promise.all(page.map(item => toPublicEntity(db, workspace, config, item))),
+    items: await Promise.all(
+      page.map(item =>
+        toPublicEntity(db, workspace, config, item, publishedByIdentifier, relationRowsBySchema)
+      )
+    ),
     total: filtered.length
   };
 };
@@ -431,7 +594,7 @@ export const getPublicCatalogEntity = async (
   });
   const published = await getPublishedEntity(db, workspace, config, entity);
   httpAssert.present(published, { status: 404, message: 'Published entity not found' });
-  return await toPublicEntity(db, workspace, config, published);
+  return await toPublicEntity(db, workspace, config, published, publishedEntityLookup([published]));
 };
 
 const pageMatchesScope = (

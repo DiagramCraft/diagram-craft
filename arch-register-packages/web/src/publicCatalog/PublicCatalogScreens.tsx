@@ -67,7 +67,7 @@ export const PublicCatalogHome = () => {
         </div>
       )}
       <div className={styles.sectionHeading}>
-        <h2>Featured entities</h2>
+        <h2>Published entities</h2>
         <a href={`/public/${encodeURIComponent(workspaceSlug)}/entities`}>Browse all</a>
       </div>
       <div className={styles.entityList}>
@@ -137,6 +137,7 @@ export const PublicCatalogEntityPage = () => {
   const { data, isLoading, isError } = usePublicCatalogEntity(workspaceSlug, entityPublicId);
   if (isLoading) return <ErrorState message="Loading entity…" />;
   if (isError || !data) return <ErrorState message="This published entity is not available." />;
+  const fieldDefinitions = new Map(data.schema.fields.map(field => [field.id, field]));
   return (
     <section>
       <a className={styles.back} href={`/public/${encodeURIComponent(workspaceSlug)}/entities`}>
@@ -167,7 +168,7 @@ export const PublicCatalogEntityPage = () => {
       <div className={styles.fieldTable}>
         {Object.entries(data.fields).map(([fieldId, value]) => (
           <div key={fieldId}>
-            <span>{fieldId}</span>
+            <span>{fieldDefinitions.get(fieldId)?.name ?? fieldId}</span>
             <strong>{formatValue(value)}</strong>
           </div>
         ))}

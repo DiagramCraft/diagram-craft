@@ -115,7 +115,8 @@ export const publicCatalogEntitySchema = z.object({
   schema: z.object({
     id: z.string(),
     name: z.string(),
-    keyPrefix: z.string()
+    keyPrefix: z.string(),
+    fields: z.array(publicCatalogFieldSchema)
   }),
   fields: z.record(z.string(), z.unknown()),
   apiArtifacts: z.array(publicCatalogApiArtifactSummarySchema)
