@@ -6,10 +6,7 @@
  */
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
-import type {
-  RelationSchemaCatalog,
-  SchemaCatalog
-} from './entityQueryIRResolution';
+import type { RelationSchemaCatalog, SchemaCatalog } from './entityQueryIRResolution';
 import type { EntityQueryDialect as EntityQueryDialectType } from './entityQueryIRDialect';
 import {
   compileEntityQueryIR as renderEntityQueryIR,
