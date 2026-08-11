@@ -32,7 +32,7 @@ const toApiSpecificationDiagnostic = (diagnostic: ApiSpecificationDiagnosticDb) 
         }
 });
 
-const toApiSpecificationItem = (item: ApiSpecificationItemDbResult) => ({
+export const toApiSpecificationItem = (item: ApiSpecificationItemDbResult) => ({
   id: item.id,
   itemKey: item.item_key,
   revisionId: item.artifact_revision_id,
@@ -60,7 +60,7 @@ const toApiSpecificationItem = (item: ApiSpecificationItemDbResult) => ({
 
 type RevisionMetadata = ArtifactRevisionDbResult | ArtifactRevisionSummaryDbResult;
 
-const toApiSpecificationRevision = (
+export const toApiSpecificationRevision = (
   revision: RevisionMetadata,
   projection: ApiSpecificationRevisionDbResult,
   isCurrent: boolean

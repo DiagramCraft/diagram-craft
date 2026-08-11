@@ -5,6 +5,7 @@ import {
   getApplicationOpenAPISpec,
   getDiagramCraftAdapterOpenAPISpec,
   getIntegrationOpenAPISpec,
+  getPublicCatalogOpenAPISpec,
   getUnifiedOpenAPISpec
 } from '../openapi';
 
@@ -14,6 +15,7 @@ const outputDir = resolve(scriptDir, '../../openapi');
 const artifacts = [
   { path: resolve(scriptDir, '../../openapi.json'), getSpec: getUnifiedOpenAPISpec },
   { path: resolve(outputDir, 'application-v1.json'), getSpec: getApplicationOpenAPISpec },
+  { path: resolve(outputDir, 'public-v1.json'), getSpec: getPublicCatalogOpenAPISpec },
   { path: resolve(outputDir, 'integrations-v1.json'), getSpec: getIntegrationOpenAPISpec },
   {
     path: resolve(outputDir, 'adapters/diagram-craft.json'),

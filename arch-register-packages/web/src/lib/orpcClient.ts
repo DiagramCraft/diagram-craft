@@ -46,11 +46,13 @@ import { entityDeprecationContract } from '@arch-register/api-types/entityDeprec
 import { governanceContract } from '@arch-register/api-types/governanceContract';
 import { governanceWorkflowConfigContract } from '@arch-register/api-types/governanceWorkflowConfigContract';
 import { artifactContract } from '@arch-register/api-types/artifactContract';
+import { publicCatalogConfigContract } from '@arch-register/api-types/publicCatalogContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { normalizeApiError } from './http';
 
 const CORE_API_PATH = '/api';
 const APPLICATION_API_PATH = '/api/application/v1';
+const PUBLIC_CATALOG_API_PATH = '/api/public/v1';
 
 const resolveORPCBaseUrl = (apiPath: string) => {
   const configuredBase = import.meta.env.VITE_API_URL ?? '';
@@ -112,7 +114,8 @@ const applicationContracts = {
   ...discussionContract,
   ...wikiCommentContract,
   ...searchContract,
-  ...workspaceTemplateContract
+  ...workspaceTemplateContract,
+  ...publicCatalogConfigContract
 };
 
 const fetchApiRequest = async (request: Request, init?: RequestInit) => {
@@ -145,6 +148,29 @@ const createApiClient = <T extends AnyContractRouter>(contracts: T, apiPath: str
 
 const coreClient = createApiClient(coreContracts, CORE_API_PATH);
 const applicationClient = createApiClient(applicationContracts, APPLICATION_API_PATH);
+
+export const publicCatalogOpenAPISpecUrl = () => resolveORPCBaseUrl('/api/public/v1/openapi.json');
+
+export const publicCatalogRequest = async <T>(path: string, init?: RequestInit): Promise<T> => {
+  const response = await fetch(`${resolveORPCBaseUrl(PUBLIC_CATALOG_API_PATH)}${path}`, {
+    ...init,
+    headers: {
+      accept: 'application/json',
+      ...(init?.headers ?? {})
+    }
+  });
+  if (!response.ok) {
+    let message = `Public catalog request failed (${response.status})`;
+    try {
+      const body = (await response.json()) as { message?: string };
+      if (body.message) message = body.message;
+    } catch {
+      // Keep the status-based message when the server did not return JSON.
+    }
+    throw new Error(message);
+  }
+  return (await response.json()) as T;
+};
 
 export const orpcClient = {
   auth: coreClient.auth,
@@ -180,6 +206,7 @@ export const orpcClient = {
   collections: applicationClient.collections,
   workspaces: applicationClient.workspaces,
   config: applicationClient.config,
+  publicCatalogConfig: applicationClient.publicCatalogConfig,
   projects: applicationClient.projects,
   milestones: applicationClient.milestones,
   changeCases: applicationClient.changeCases,

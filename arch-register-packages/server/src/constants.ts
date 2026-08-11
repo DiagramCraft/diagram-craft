@@ -20,6 +20,7 @@ export const API_PREFIXES = {
   root: '/api',
   application: '/api/application/v1',
   integrations: '/api/integrations/v1',
+  publicCatalog: '/api/public/v1',
   diagramCraft: '/api/adapters/diagram-craft'
 } as const;
 
