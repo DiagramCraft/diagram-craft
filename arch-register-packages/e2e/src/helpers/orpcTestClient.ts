@@ -2,48 +2,7 @@ import { createORPCClient } from '@orpc/client';
 import { OpenAPILink } from '@orpc/openapi-client/fetch';
 import type { AnyContractRouter, ContractRouterClient } from '@orpc/contract';
 import type { JsonifiedClient } from '@orpc/openapi-client';
-import { projectContract } from '@arch-register/api-types/projectContract';
-import { authPublicContract, authProtectedContract } from '@arch-register/api-types/authContract';
-import { devContract } from '@arch-register/api-types/devContract';
-import { workspaceEntityContract } from '@arch-register/api-types/entityContract';
-import { workspaceRelationContract } from '@arch-register/api-types/relationContract';
-import { workspaceEnumContract } from '@arch-register/api-types/enumContract';
-import { workspaceFieldGroupContract } from '@arch-register/api-types/fieldGroupContract';
-import { workspaceSchemaContract } from '@arch-register/api-types/schemaContract';
-import { searchContract } from '@arch-register/api-types/searchContract';
-import { workspaceTemplateContract } from '@arch-register/api-types/templateContract';
-import { workspaceViewContract } from '@arch-register/api-types/viewContract';
-import { workspaceCollectionContract } from '@arch-register/api-types/collectionContract';
-import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
-import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
-import { auditContract } from '@arch-register/api-types/auditContract';
-import { watchContract } from '@arch-register/api-types/watchContract';
-import { notificationPreferencesContract } from '@arch-register/api-types/notificationPreferencesContract';
-import { discussionContract } from '@arch-register/api-types/discussionContract';
-import { governanceContract } from '@arch-register/api-types/governanceContract';
-import { governanceWorkflowConfigContract } from '@arch-register/api-types/governanceWorkflowConfigContract';
-import { entityVersionContract } from '@arch-register/api-types/entityVersionContract';
-import { entityChangeContract } from '@arch-register/api-types/entityChangeContract';
-import { entityDeprecationContract } from '@arch-register/api-types/entityDeprecationContract';
-import { assessmentContract } from '@arch-register/api-types/assessmentContract';
-import { assessmentResponseContract } from '@arch-register/api-types/assessmentResponseContract';
-import { milestoneContract } from '@arch-register/api-types/milestoneContract';
-import { automationRuleContract } from '@arch-register/api-types/automationRuleContract';
-import { externalContentContract } from '@arch-register/api-types/externalContentContract';
-import { wikiCommentContract } from '@arch-register/api-types/wikiCommentContract';
-import { aiContract } from '@arch-register/api-types/aiContract';
-import { diagramCraftContract } from '@arch-register/api-types/diagramCraftContract';
-import { jobsContract } from '@arch-register/api-types/jobsContract';
-import { webhookContract } from '@arch-register/api-types/webhookContract';
-import { documentContract } from '@arch-register/api-types/documentContract';
-import { changeCaseContract } from '@arch-register/api-types/changeCaseContract';
-import { workspaceAnalyticsContract } from '@arch-register/api-types/analyticsContract';
-import { workspaceMetricContract } from '@arch-register/api-types/metricContract';
-import {
-  workspaceDashboardContract,
-  projectDashboardContract
-} from '@arch-register/api-types/dashboardContract';
-import { artifactContract } from '@arch-register/api-types/artifactContract';
+import { contractSurfaceManifest } from '@arch-register/api-types/contractSurfaceManifest';
 
 const makeFetch =
   (auth?: string) =>
@@ -67,97 +26,58 @@ const makeClient = <T extends AnyContractRouter>(
   ) as JsonifiedClient<ContractRouterClient<T>>;
 
 export const createTestORPCClient = (baseUrl: string, auth?: string) => {
-  const make = <T extends AnyContractRouter>(contract: T) => makeClient(contract, baseUrl, auth);
-  const makeApplication = <T extends AnyContractRouter>(contract: T) =>
-    makeClient(contract, baseUrl, auth, '/api/application/v1');
-  const documents = makeApplication(documentContract);
-  const applicationEntities = makeApplication(workspaceEntityContract).entities;
-  const applicationRelations = makeApplication(workspaceRelationContract).relations;
-  const applicationSchemas = makeApplication(workspaceSchemaContract).schemas;
-  const applicationProjects = makeApplication(projectContract).projects;
-  const applicationSearch = makeApplication(searchContract).search;
-  const applicationConfig = makeApplication(workspaceConfigContract).config;
-  const applicationAi = makeApplication(aiContract).ai;
-  const applicationEnums = makeApplication(workspaceEnumContract).enums;
-  const applicationFieldGroups = makeApplication(workspaceFieldGroupContract).fieldGroups;
-  const applicationTemplates = makeApplication(workspaceTemplateContract).templates;
-  const applicationViews = makeApplication(workspaceViewContract).views;
-  const applicationCollections = makeApplication(workspaceCollectionContract).collections;
-  const applicationAnalytics = makeApplication(workspaceAnalyticsContract).analytics;
-  const applicationMetrics = makeApplication(workspaceMetricContract).metrics;
-  const applicationDashboard = makeApplication(workspaceDashboardContract).dashboards;
-  const applicationProjectDashboard = makeApplication(projectDashboardContract).projectDashboard;
-  const applicationJobs = makeApplication(jobsContract).jobs;
-  const applicationWebhooks = makeApplication(webhookContract).webhooks;
-  const applicationAudit = makeApplication(auditContract).audit;
-  const applicationWatch = makeApplication(watchContract);
-  const applicationNotificationPreferences = makeApplication(
-    notificationPreferencesContract
-  ).notificationPreferences;
-  const applicationDiscussions = makeApplication(discussionContract).discussions;
-  const applicationGovernance = makeApplication(governanceContract).governance;
-  const applicationGovernanceWorkflowConfig = makeApplication(
-    governanceWorkflowConfigContract
-  ).governanceWorkflowConfig;
-  const applicationEntityVersions = makeApplication(entityVersionContract).entityVersions;
-  const applicationEntityChanges = makeApplication(entityChangeContract).entityChanges;
-  const applicationEntityDeprecations =
-    makeApplication(entityDeprecationContract).entityDeprecations;
-  const applicationAssessments = makeApplication(assessmentContract).assessments;
-  const applicationAssessmentResponses = makeApplication(
-    assessmentResponseContract
-  ).assessmentResponses;
-  const applicationMilestones = makeApplication(milestoneContract).milestones;
-  const applicationChangeCases = makeApplication(changeCaseContract).changeCases;
-  const applicationAutomationRules = makeApplication(automationRuleContract).automationRules;
-  const applicationExternalContent = makeApplication(externalContentContract).externalContent;
-  const applicationWikiComments = makeApplication(wikiCommentContract).wikiComments;
-  const applicationArtifacts = makeApplication(artifactContract).artifacts;
+  const { core, application, diagramCraft } = contractSurfaceManifest.surfaces;
+  const coreClient = makeClient(core.contracts, baseUrl, auth);
+  const applicationClient = makeClient(application.contracts, baseUrl, auth, '/api/application/v1');
+  const diagramCraftClient = makeClient(diagramCraft.contracts, baseUrl, auth);
 
   return {
-    projects: applicationProjects,
-    changeCases: applicationChangeCases,
-    entityVersions: applicationEntityVersions,
-    entityChanges: applicationEntityChanges,
-    entityDeprecations: applicationEntityDeprecations,
-    assessments: applicationAssessments,
-    assessmentResponses: applicationAssessmentResponses,
-    milestones: applicationMilestones,
-    automationRules: applicationAutomationRules,
-    externalContent: applicationExternalContent,
-    wikiComments: applicationWikiComments,
-    artifacts: applicationArtifacts,
-    auth: make(authPublicContract).auth,
-    authProtected: make(authProtectedContract).authProtected,
-    dev: make(devContract).dev,
-    entities: applicationEntities,
-    relations: applicationRelations,
-    entityQueryText: make(workspaceEntityContract).entityQueryText,
-    enums: applicationEnums,
-    fieldGroups: applicationFieldGroups,
-    schemas: applicationSchemas,
-    search: applicationSearch,
-    templates: applicationTemplates,
-    views: applicationViews,
-    collections: applicationCollections,
-    workspaces: makeApplication(workspaceManagementContract).workspaces,
-    config: applicationConfig,
-    analytics: applicationAnalytics,
-    metrics: applicationMetrics,
-    dashboard: applicationDashboard,
-    projectDashboard: applicationProjectDashboard,
-    audit: applicationAudit,
-    watching: applicationWatch.watching,
-    notifications: applicationWatch.notifications,
-    notificationPreferences: applicationNotificationPreferences,
-    discussions: applicationDiscussions,
-    governance: applicationGovernance,
-    governanceWorkflowConfig: applicationGovernanceWorkflowConfig,
-    ai: applicationAi,
-    diagramCraft: make(diagramCraftContract).diagramCraft,
-    jobs: applicationJobs,
-    webhooks: applicationWebhooks,
-    documents
+    projects: applicationClient.projects,
+    changeCases: applicationClient.changeCases,
+    entityVersions: applicationClient.entityVersions,
+    entityChanges: applicationClient.entityChanges,
+    entityDeprecations: applicationClient.entityDeprecations,
+    assessments: applicationClient.assessments,
+    assessmentResponses: applicationClient.assessmentResponses,
+    milestones: applicationClient.milestones,
+    automationRules: applicationClient.automationRules,
+    externalContent: applicationClient.externalContent,
+    wikiComments: applicationClient.wikiComments,
+    artifacts: applicationClient.artifacts,
+    auth: coreClient.auth,
+    authProtected: coreClient.authProtected,
+    dev: coreClient.dev,
+    entities: applicationClient.entities,
+    relations: applicationClient.relations,
+    entityQueryText: applicationClient.entityQueryText,
+    enums: applicationClient.enums,
+    fieldGroups: applicationClient.fieldGroups,
+    schemas: applicationClient.schemas,
+    search: applicationClient.search,
+    templates: applicationClient.templates,
+    views: applicationClient.views,
+    collections: applicationClient.collections,
+    workspaces: applicationClient.workspaces,
+    config: applicationClient.config,
+    analytics: applicationClient.analytics,
+    metrics: applicationClient.metrics,
+    dashboard: applicationClient.dashboards,
+    projectDashboard: applicationClient.projectDashboard,
+    audit: applicationClient.audit,
+    watching: applicationClient.watching,
+    notifications: applicationClient.notifications,
+    notificationPreferences: applicationClient.notificationPreferences,
+    discussions: applicationClient.discussions,
+    governance: applicationClient.governance,
+    governanceWorkflowConfig: applicationClient.governanceWorkflowConfig,
+    ai: applicationClient.ai,
+    diagramCraft: diagramCraftClient.diagramCraft,
+    jobs: applicationClient.jobs,
+    webhooks: applicationClient.webhooks,
+    documents: {
+      documentTypes: applicationClient.documentTypes,
+      documentTemplates: applicationClient.documentTemplates
+    }
   };
 };
 
