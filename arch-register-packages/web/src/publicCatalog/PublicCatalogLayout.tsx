@@ -1,16 +1,29 @@
 import { Outlet, useParams } from '@tanstack/react-router';
 import { usePublicCatalogManifest } from '../hooks/usePublicCatalog';
+import { useTheme } from '../hooks/useTheme';
 import { publicCatalogOpenAPISpecUrl } from '../lib/orpcClient';
+import { ThemeToggle } from '../components/ThemeToggle';
 import styles from './publicCatalog.module.css';
 
 export const PublicCatalogLayout = () => {
   const { workspaceSlug = '' } = useParams({ strict: false }) as { workspaceSlug?: string };
   const manifest = usePublicCatalogManifest(workspaceSlug);
+  const { theme, setTheme } = useTheme({ fallback: 'system' });
   const base = `/public/${encodeURIComponent(workspaceSlug)}`;
 
-  if (manifest.isLoading) return <div className={styles.state}>Loading public catalog…</div>;
+  if (manifest.isLoading) {
+    return (
+      <div className={styles.stateShell}>
+        <div className={styles.state}>Loading public catalog…</div>
+      </div>
+    );
+  }
   if (manifest.isError || !manifest.data) {
-    return <div className={styles.state}>This public catalog is not available.</div>;
+    return (
+      <div className={styles.stateShell}>
+        <div className={styles.state}>This public catalog is not available.</div>
+      </div>
+    );
   }
 
   return (
@@ -28,9 +41,12 @@ export const PublicCatalogLayout = () => {
             </a>
           ))}
         </nav>
-        <a className={styles.apiLink} href={publicCatalogOpenAPISpecUrl()}>
-          API
-        </a>
+        <div className={styles.headerActions}>
+          <a className={styles.apiLink} href={publicCatalogOpenAPISpecUrl()}>
+            API
+          </a>
+          <ThemeToggle theme={theme} onSetTheme={setTheme} />
+        </div>
       </header>
       <main className={styles.main}>
         <Outlet />
