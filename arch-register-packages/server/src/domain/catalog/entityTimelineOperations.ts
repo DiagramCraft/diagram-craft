@@ -4,6 +4,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import type { EntityVersionSummaryDbResult } from './db/catalogDatabase';
 import { runAuthorizedOperation } from '../operation';
 import { PermissionChecker } from '@arch-register/permissions';
+import { canAccessProject } from '../auth/authorization';
 
 const checker = new PermissionChecker();
 
@@ -39,10 +40,16 @@ export const getTimelineViewData = async (
       const entityIds = requestedIds.filter(id => visibleIds.has(id));
       if (entityIds.length === 0) return {};
 
-      const [versions, changes] = await Promise.all([
+      const [versions, changes, projects] = await Promise.all([
         db.catalog.listEntityVersionsByIds(ws, entityIds),
-        db.changeCase.listTimelineMembersByEntities(ws, entityIds)
+        db.changeCase.listTimelineMembersByEntities(ws, entityIds),
+        db.project.listProjects(ws)
       ]);
+      const visibleProjectIds = new Set(
+        projects
+          .filter(project => authCtx == null || canAccessProject(authCtx, project.owner))
+          .map(project => project.id)
+      );
 
       const result: Record<string, TimelineViewData> = {};
       for (const entityId of entityIds) {
@@ -54,6 +61,12 @@ export const getTimelineViewData = async (
       }
 
       for (const change of changes) {
+        if (
+          change.changeCase.project_id != null &&
+          !visibleProjectIds.has(change.changeCase.project_id)
+        ) {
+          continue;
+        }
         const data = result[change.member.entity_id];
         if (!data) continue;
         data.projectChanges.push({

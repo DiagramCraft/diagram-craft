@@ -79,6 +79,34 @@ test.describe('entities section', () => {
     await entitiesPage.expectLoaded();
   });
 
+  test('persists the Capability + Entity + Project roadmap mode and horizon toggle', async ({
+    page
+  }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.goto({ viewMode: 'timeline' });
+    await expect(page.getByText('Group', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Hide horizon bands' })).toBeVisible();
+    const groupSelect = page.getByText('Group', { exact: true }).locator('..').locator('select');
+    await groupSelect.selectOption('owner');
+    await expect(page.getByText('Horizon', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Hide horizon bands' })).toBeVisible();
+    await groupSelect.selectOption('capability');
+
+    await expect(page.getByText('Horizon', { exact: true })).toBeVisible();
+    await expect(page.getByRole('button', { name: 'Hide horizon bands' })).toBeVisible();
+    await expect(page).toHaveURL(/viewConfigs=.*capability/);
+
+    await page.getByRole('button', { name: 'Hide horizon bands' }).click();
+    await expect(page.getByRole('button', { name: 'Show horizon bands' })).toBeVisible();
+
+    await page.reload();
+    await expect(
+      page.getByText('Group', { exact: true }).locator('..').locator('select')
+    ).toHaveValue('capability');
+    await expect(page.getByRole('button', { name: 'Show horizon bands' })).toBeVisible();
+  });
+
   test('loads tree view without the redundant entity list request', async ({ page }) => {
     const entityListRequests: string[] = [];
     page.on('request', request => {

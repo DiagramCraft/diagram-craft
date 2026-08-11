@@ -8,11 +8,23 @@ import {
 export type TimelineConfig = {
   startFieldId: string | null;
   endFieldId: string | null;
-  groupBy: 'owner' | 'type' | 'snapshot' | 'project' | 'containment';
+  groupBy: 'owner' | 'type' | 'snapshot' | 'project' | 'containment' | 'capability';
   zoom: 'month' | 'quarter' | 'year';
   showProjectLanes: boolean;
   showMilestones: boolean;
   showAutosaves: boolean;
+  showHorizonBands: boolean;
+};
+
+export type TimelineHorizonId = 'historical' | 'now' | 'next' | 'later';
+
+export type TimelineHorizonBand = {
+  id: TimelineHorizonId;
+  label: string;
+  start: Date;
+  end: Date;
+  left: number;
+  width: number;
 };
 
 export const TL_LABEL_W = 252;
@@ -29,7 +41,8 @@ export const getTimelineConfigDefaults = (dateFields: FieldOption[]): TimelineCo
   zoom: 'quarter',
   showProjectLanes: true,
   showMilestones: true,
-  showAutosaves: true
+  showAutosaves: true,
+  showHorizonBands: true
 });
 
 export const getDateValue = (entity: EntityRecord, fieldId: string | null): Date | null =>

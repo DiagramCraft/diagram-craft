@@ -72642,7 +72642,8 @@
                                       "type",
                                       "snapshot",
                                       "project",
-                                      "containment"
+                                      "containment",
+                                      "capability"
                                     ],
                                     "type": "string",
                                     "description": "Timeline grouping mode"
@@ -72667,6 +72668,10 @@
                                   "showAutosaves": {
                                     "type": "boolean",
                                     "description": "Whether autosave snapshots are visible"
+                                  },
+                                  "showHorizonBands": {
+                                    "type": "boolean",
+                                    "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
                                   }
                                 },
                                 "required": [
@@ -74823,7 +74828,8 @@
                                   "type",
                                   "snapshot",
                                   "project",
-                                  "containment"
+                                  "containment",
+                                  "capability"
                                 ],
                                 "type": "string",
                                 "description": "Timeline grouping mode"
@@ -74848,6 +74854,10 @@
                               "showAutosaves": {
                                 "type": "boolean",
                                 "description": "Whether autosave snapshots are visible"
+                              },
+                              "showHorizonBands": {
+                                "type": "boolean",
+                                "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
                               }
                             },
                             "required": [
@@ -77198,7 +77208,8 @@
                                     "type",
                                     "snapshot",
                                     "project",
-                                    "containment"
+                                    "containment",
+                                    "capability"
                                   ],
                                   "type": "string",
                                   "description": "Timeline grouping mode"
@@ -77223,6 +77234,10 @@
                                 "showAutosaves": {
                                   "type": "boolean",
                                   "description": "Whether autosave snapshots are visible"
+                                },
+                                "showHorizonBands": {
+                                  "type": "boolean",
+                                  "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
                                 }
                               },
                               "required": [
@@ -79370,7 +79385,8 @@
                                   "type",
                                   "snapshot",
                                   "project",
-                                  "containment"
+                                  "containment",
+                                  "capability"
                                 ],
                                 "type": "string",
                                 "description": "Timeline grouping mode"
@@ -79395,6 +79411,10 @@
                               "showAutosaves": {
                                 "type": "boolean",
                                 "description": "Whether autosave snapshots are visible"
+                              },
+                              "showHorizonBands": {
+                                "type": "boolean",
+                                "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
                               }
                             },
                             "required": [
@@ -81740,7 +81760,8 @@
                                     "type",
                                     "snapshot",
                                     "project",
-                                    "containment"
+                                    "containment",
+                                    "capability"
                                   ],
                                   "type": "string",
                                   "description": "Timeline grouping mode"
@@ -81765,6 +81786,10 @@
                                 "showAutosaves": {
                                   "type": "boolean",
                                   "description": "Whether autosave snapshots are visible"
+                                },
+                                "showHorizonBands": {
+                                  "type": "boolean",
+                                  "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
                                 }
                               },
                               "required": [

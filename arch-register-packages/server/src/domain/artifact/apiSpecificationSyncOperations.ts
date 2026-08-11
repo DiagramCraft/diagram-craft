@@ -22,23 +22,9 @@ import {
 } from './artifactOperations';
 import { createJobSchedule, updateJobSchedule } from '../jobs/jobOperations';
 import { runEntitySyncInTransaction } from '../externalIdentity/entitySyncOperations';
+import { validateExternalIdentity } from '../externalIdentity/externalIdentitySync';
 
 const API_SPECIFICATION_ARTIFACT_TYPE = 'api-specification' as const;
-const MAX_SOURCE_LENGTH = 200;
-const MAX_EXTERNAL_KEY_LENGTH = 500;
-
-const validateExternalIdentity = (source: string, externalKey: string) => {
-  httpAssert.string(source, { status: 400, message: 'source is required' });
-  httpAssert.true(source.length <= MAX_SOURCE_LENGTH, {
-    status: 400,
-    message: `source must be at most ${MAX_SOURCE_LENGTH} characters`
-  });
-  httpAssert.string(externalKey, { status: 400, message: 'externalKey is required' });
-  httpAssert.true(externalKey.length <= MAX_EXTERNAL_KEY_LENGTH, {
-    status: 400,
-    message: `externalKey must be at most ${MAX_EXTERNAL_KEY_LENGTH} characters`
-  });
-};
 
 const initialStatus = (kind: 'document' | 'url' | 'link') =>
   kind === 'link' ? ('link_only' as const) : ('pending' as const);
