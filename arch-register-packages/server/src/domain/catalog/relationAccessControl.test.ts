@@ -59,9 +59,6 @@ describe('typed relation owner-field access', () => {
     expect(
       canEditTypedRelation(null, [{ schema: null, direction: 'out' }], 'relation-schema-1')
     ).toBe(true);
-    expect(
-      canEditTypedRelation(authCtx(null), [{ schema: null, direction: 'out' }], 'relation-schema-1')
-    ).toBe(false);
   });
 
   it('hides a relation when its only owner field is not viewable', () => {

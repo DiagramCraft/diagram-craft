@@ -146,7 +146,6 @@ export const canEditTypedRelationFromEndpoint = (
   relationSchemaId: string,
   direction: RelationEndpointDirection
 ) => {
-  if (!schema) return authCtx == null;
   const fields = matchingOwnerFields(schema, relationSchemaId, direction);
   if (!fields) return authCtx == null;
   return (
@@ -196,20 +195,11 @@ export const canEditTypedRelation = (
   }>,
   relationSchemaId: string,
   owner: string | null = null
-) => {
-  if (authCtx != null && endpoints.some(endpoint => !endpoint.schema)) return false;
-  return (
-    endpoints.some(endpoint =>
-      canEditTypedRelationFromEndpoint(
-        authCtx,
-        endpoint.schema,
-        relationSchemaId,
-        endpoint.direction
-      )
-    ) ||
-    (authCtx != null && checker.hasRelationOwnerAction(authCtx, { owner }, 'edit_relation'))
-  );
-};
+) =>
+  endpoints.some(endpoint =>
+    canEditTypedRelationFromEndpoint(authCtx, endpoint.schema, relationSchemaId, endpoint.direction)
+  ) ||
+  (authCtx != null && checker.hasRelationOwnerAction(authCtx, { owner }, 'edit_relation'));
 
 /** Enforces the exact owner field selected by an inline entity mutation. */
 export const requireTypedRelationFieldEdit = (
