@@ -35,6 +35,7 @@ import { PostgresCurrencyRatesDatabase } from '../domain/currencyRates/db/postgr
 import { PostgresContentReconciliationDatabase } from '../domain/project/db/postgresContentReconciliation';
 import { PostgresArtifactDatabase } from '../domain/artifact/db/postgresArtifact';
 import { PostgresApiSpecificationDatabase } from '../domain/artifact/db/postgresApiSpecification';
+import { PostgresBaselineDatabase } from '../domain/baseline/db/postgresBaseline';
 import { apiSpecificationArtifactProcessor } from '../domain/artifact/apiSpecificationProcessor';
 import { createArtifactProcessorRegistry } from '../domain/artifact/artifactProcessor';
 import type { ArtifactProcessorRegistry } from '../domain/artifact/artifactProcessor';
@@ -87,6 +88,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly artifact: PostgresArtifactDatabase;
   readonly artifactProjections: ArtifactProjectionDatabases;
   readonly artifactProcessors: ArtifactProcessorRegistry;
+  readonly baseline: PostgresBaselineDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -125,7 +127,8 @@ export class PostgresDatabase implements DatabaseAdapter {
       artifactProjections: {
         apiSpecification: new PostgresApiSpecificationDatabase(sql)
       },
-      artifactProcessors: createArtifactProcessorRegistry([apiSpecificationArtifactProcessor])
+      artifactProcessors: createArtifactProcessorRegistry([apiSpecificationArtifactProcessor]),
+      baseline: new PostgresBaselineDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -192,6 +195,7 @@ export class PostgresDatabase implements DatabaseAdapter {
     this.currencyRates = new PostgresCurrencyRatesDatabase(this.sql);
     this.contentReconciliation = new PostgresContentReconciliationDatabase(this.sql);
     this.artifact = new PostgresArtifactDatabase(this.sql);
+    this.baseline = new PostgresBaselineDatabase(this.sql);
     this.artifactProjections = {
       apiSpecification: new PostgresApiSpecificationDatabase(this.sql)
     };

@@ -198,6 +198,13 @@
           from a version's recorded state for viewers without view access to that group, mirroring the redaction
           applied when viewing the entity directly.
 
+        - @id:ar.entities.baselines Users can create named, durable architecture baselines from an accessible
+          workspace, project, saved view, or explicit entity selection. A baseline preserves the reconstructed entity
+          and relation state at its effective date, remains available after live records change or are deleted, and
+          can be browsed, compared with another baseline or the current scope, and exported as permission-aware JSON.
+          Baselines expose Active, Stale, and Superseded lifecycle states; superseding is explicit and deletion is
+          soft-only. Approval decisions remain represented by linked governance cases rather than by baseline status.
+
         - @id:ar.entities.bulk-edit Users can select multiple entities and edit supported fields in bulk. Entities that
           require an approved change proposal are bundled into a single multi-entity proposal case routed through
           governance instead of being skipped.

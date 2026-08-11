@@ -52,6 +52,7 @@ import { milestoneContract } from '@arch-register/api-types/milestoneContract';
 import { wikiCommentContract } from '@arch-register/api-types/wikiCommentContract';
 import { devContract } from '@arch-register/api-types/devContract';
 import { artifactContract } from '@arch-register/api-types/artifactContract';
+import { baselineContract } from '@arch-register/api-types/baselineContract';
 
 export const allContracts = {
   ...workspaceEnumContract,
@@ -100,7 +101,8 @@ export const allContracts = {
   ...milestoneContract,
   ...wikiCommentContract,
   ...devContract,
-  ...artifactContract
+  ...artifactContract,
+  ...baselineContract
 };
 
 const coreContracts = {
@@ -172,7 +174,8 @@ export const getApplicationOpenAPISpec = () => {
       ...jobsContract,
       ...webhookContract,
       ...documentContract,
-      ...artifactContract
+      ...artifactContract,
+      ...baselineContract
     },
     {
       info: {

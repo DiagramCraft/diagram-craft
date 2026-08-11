@@ -46,6 +46,7 @@ import { entityDeprecationContract } from '@arch-register/api-types/entityDeprec
 import { governanceContract } from '@arch-register/api-types/governanceContract';
 import { governanceWorkflowConfigContract } from '@arch-register/api-types/governanceWorkflowConfigContract';
 import { artifactContract } from '@arch-register/api-types/artifactContract';
+import { baselineContract } from '@arch-register/api-types/baselineContract';
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { normalizeApiError } from './http';
 
@@ -88,6 +89,7 @@ const applicationContracts = {
   ...governanceContract,
   ...governanceWorkflowConfigContract,
   ...artifactContract,
+  ...baselineContract,
   ...workspaceEnumContract,
   ...workspaceSchemaContract,
   ...workspaceRelationSchemaContract,
@@ -193,5 +195,6 @@ export const orpcClient = {
   discussions: applicationClient.discussions,
   wikiComments: applicationClient.wikiComments,
   search: applicationClient.search,
-  templates: applicationClient.templates
+  templates: applicationClient.templates,
+  baselines: applicationClient.baselines
 };

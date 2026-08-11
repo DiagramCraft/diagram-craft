@@ -35,6 +35,7 @@ import { SqliteContentReconciliationDatabase } from '../domain/project/db/sqlite
 import { SqliteArtifactDatabase } from '../domain/artifact/db/sqliteArtifact';
 import { SqliteApiSpecificationDatabase } from '../domain/artifact/db/sqliteApiSpecification';
 import { apiSpecificationArtifactProcessor } from '../domain/artifact/apiSpecificationProcessor';
+import { SqliteBaselineDatabase } from '../domain/baseline/db/sqliteBaseline';
 import {
   createArtifactProcessorRegistry,
   type ArtifactProcessorRegistry
@@ -77,6 +78,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly artifact;
   readonly artifactProjections: ArtifactProjectionDatabases;
   readonly artifactProcessors: ArtifactProcessorRegistry;
+  readonly baseline;
   private transactionTail: Promise<void> = Promise.resolve();
 
   constructor(filePath: string) {
@@ -115,6 +117,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     this.currencyRates = new SqliteCurrencyRatesDatabase(() => this.db);
     this.contentReconciliation = new SqliteContentReconciliationDatabase(() => this.db);
     this.artifact = new SqliteArtifactDatabase(() => this.db);
+    this.baseline = new SqliteBaselineDatabase(() => this.db);
     this.artifactProjections = {
       apiSpecification: new SqliteApiSpecificationDatabase(() => this.db)
     };
@@ -194,7 +197,8 @@ export class SqliteDatabase implements DatabaseAdapter {
       contentReconciliation: this.contentReconciliation,
       artifact: this.artifact,
       artifactProjections: this.artifactProjections,
-      artifactProcessors: this.artifactProcessors
+      artifactProcessors: this.artifactProcessors,
+      baseline: this.baseline
     };
   }
 

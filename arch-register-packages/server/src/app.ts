@@ -59,6 +59,7 @@ import {
 import { createDevORPCHandler } from './domain/dev/devOrpc';
 import { createAiORPCHandler } from './domain/ai/aiOrpc';
 import { createDiagramCraftORPCHandler } from './domain/diagram/diagramCraftOrpc';
+import { createBaselineORPCHandler } from './domain/baseline/baselineOrpc';
 import { createWorkspaceAnalyticsORPCHandler } from './domain/analytics/workspaceAnalyticsOrpc';
 import { createWorkspaceMetricORPCHandler } from './domain/metrics/metricOrpc';
 import { createJobsORPCHandler } from './domain/jobs/jobsOrpc';
@@ -211,6 +212,7 @@ export const createApp = (
   app.use(createSearchORPCHandler(db));
   app.use(createAiORPCHandler(db, options.routeOverrides?.aiChat));
   app.use(createDiagramCraftORPCHandler(db));
+  app.use(createBaselineORPCHandler(db));
 
   return {
     app,
