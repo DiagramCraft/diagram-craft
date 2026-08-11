@@ -8,6 +8,10 @@ import type {
 } from './db/catalogDatabase';
 import { httpAssert } from '../../utils/httpAssert';
 import { normalizeSchemaFields } from './schemaHelpers';
+import type {
+  CreateSharedFieldGroupRequest,
+  UpdateSharedFieldGroupRequest
+} from '@arch-register/api-types/fieldGroupContract';
 
 const normalizeGroupFields = (fields: unknown): SchemaField[] => {
   const normalized = normalizeSchemaFields(fields).map(field => {
@@ -29,7 +33,7 @@ const normalizeGroupFields = (fields: unknown): SchemaField[] => {
 
 export const buildCreateSharedFieldGroupInput = (
   workspace: string,
-  body: Record<string, unknown>,
+  body: CreateSharedFieldGroupRequest,
   timestamp: Date
 ): SharedFieldGroupDbCreate => {
   const name = body.name;
@@ -50,7 +54,7 @@ export const buildCreateSharedFieldGroupInput = (
 };
 
 export const buildUpdateSharedFieldGroupInput = (
-  body: Record<string, unknown>,
+  body: UpdateSharedFieldGroupRequest,
   existing: SharedFieldGroupDbResult,
   updatedAt: Date
 ): SharedFieldGroupDbUpdate => {
