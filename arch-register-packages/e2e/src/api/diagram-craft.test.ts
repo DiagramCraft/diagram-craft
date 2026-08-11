@@ -2,7 +2,7 @@ import { createServer } from 'node:http';
 import { createApiTest, expect } from '../helpers/fixtures';
 import { seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 import { NO_AI_WORKSPACE_ID } from '../helpers/testIds';
-import { seedRelationSchemas, seedRelations } from '@arch-register/server/db/seedData';
+import { seedRelationSchemas, seedRelations } from '@arch-register/server/db/seedData/relations';
 
 type MockAIState = {
   baseUrl: string;

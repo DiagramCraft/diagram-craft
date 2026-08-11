@@ -2,6 +2,7 @@ import { createApiTest, expect } from '../helpers/fixtures';
 import { makeAuthHeader, seedCatalogEntities, seedIds } from '../helpers/seedHelper';
 import { TEST_EDITOR_ID } from '../helpers/testIds';
 import { drainAuditFanoutJobs } from '../helpers/auditJobs';
+import { createFixtureUser } from '@arch-register/server/db/testSupport/fixtures';
 
 const componentId = '00000000-0000-0000-0003-000000000002';
 const editorUserId = TEST_EDITOR_ID;
@@ -10,20 +11,15 @@ const test = createApiTest({
   afterSeed: async server => {
     await seedCatalogEntities(server.db);
     const now = new Date();
-    await server.db.auth.createUser({
+    await createFixtureUser(server.db, {
       id: editorUserId,
       user_id: 'test-editor',
       email: 'editor@e2e.test',
       display_name: 'E2E Editor',
-      auth_provider: 'local',
       password_hash: null,
-      oidc_issuer: null,
-      oidc_subject: null,
       is_active: true,
-      color: null,
       created_at: now,
-      updated_at: now,
-      last_login_at: null
+      updated_at: now
     });
     await server.db.workspace.setWorkspaceMemberRole(
       seedIds.workspace.default,

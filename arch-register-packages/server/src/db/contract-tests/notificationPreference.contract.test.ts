@@ -1,7 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFixtureUser } from './authFixtures';
-import { createFixtureWorkspace } from './projectFixtures';
+import { createFixtureUser } from '../testSupport/fixtures';
+import { createFixtureWorkspace } from '../testSupport/fixtures';
 
 runContractSuiteAgainstBothDrivers('NotificationPreferenceDatabase', getDb => {
   describe('notification delivery preferences', () => {

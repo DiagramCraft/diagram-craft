@@ -3,6 +3,7 @@ import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
 import { createTestORPCClient } from '../helpers/fixtures';
 import { makeAuthHeader } from '../helpers/seedHelper';
 import type { TestORPCClient } from '../helpers/orpcTestClient';
+import { createFixtureUser } from '@arch-register/server/db/testSupport/fixtures';
 
 const test = createPermissionApiTest().extend<{
   relationAutomationNote: { noteId: string; auditViewer: TestORPCClient };
@@ -18,20 +19,15 @@ const test = createPermissionApiTest().extend<{
       const relationId = randomUUID();
 
       const auditViewerId = randomUUID();
-      await server.db.auth.createUser({
+      await createFixtureUser(server.db, {
         id: auditViewerId,
         user_id: 'audit-viewer',
         email: 'audit-viewer@e2e.test',
         display_name: 'Audit Viewer',
-        auth_provider: 'local',
         password_hash: null,
-        oidc_issuer: null,
-        oidc_subject: null,
         is_active: true,
-        color: null,
         created_at: now,
-        updated_at: now,
-        last_login_at: null
+        updated_at: now
       });
       const auditViewerRoleId = randomUUID();
       await server.db.workspace.createCustomWorkspaceRole({

@@ -1,21 +1,15 @@
+import { seedCollectionEntities, seedCollections, seedWorkspaceDashboards } from './seedData/views';
+import { seedEntities } from './seedData/entities';
 import {
-  seedEntities,
-  seedCollectionEntities,
-  seedCollections,
   seedAssessments,
-  seedProjectFiles,
-  seedAdrDocuments,
-  seedProjects,
-  seedMilestones,
   seedChangeCases,
+  seedMilestones,
   seedProjectEntities,
-  seedNotificationEvents,
-  seedRelationSchemas,
-  seedRelations,
-  seedUserWatches,
-  seedWikiPageBodies,
-  seedWorkspaceDashboards
-} from './seedData';
+  seedProjects
+} from './seedData/projects';
+import { seedAdrDocuments, seedProjectFiles, seedWikiPageBodies } from './seedData/documents';
+import { seedNotificationEvents, seedUserWatches } from './seedData/notifications';
+import { seedRelationSchemas, seedRelations } from './seedData/relations';
 import { seededWorkspaces } from './seedFixtures';
 import { decodeRefs } from '../types';
 import { ContainmentField, ReferenceField } from '@arch-register/api-types/schemaContract';

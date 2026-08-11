@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFullFixtureSet, createFixtureWorkspace } from './projectFixtures';
+import { createFullFixtureSet, createFixtureWorkspace } from '../testSupport/fixtures';
 import { DatabaseError } from '../database';
 
 runContractSuiteAgainstBothDrivers('CatalogRecordExternalIdentityDatabase', getDb => {

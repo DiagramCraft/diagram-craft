@@ -2,6 +2,9 @@ import { expect, it } from 'vitest';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { seedBootstrapData } from '../bootstrapSeed';
 import { seededEntities, seededProjects, seededWorkspaces } from '../seedFixtures';
+import { seedEntities } from '../seedData/entities';
+import { seedSchemas } from '../seedData/catalog';
+import { seedProjects } from '../seedData/projects';
 import type { StorageAdapter } from '../../storage/storage.types';
 import { runContractSuiteAgainstBothDrivers } from './harness';
 import { listEntitiesWithCount } from '../../domain/catalog/entityQueryOperations';
@@ -29,6 +32,23 @@ runContractSuiteAgainstBothDrivers('seededEntityQuery', getDb => {
     const db = getDb();
     await seedBootstrapData(db, noopStorage);
     const workspace = seededWorkspaces.default.id;
+
+    expect(new Set((await db.workspace.listWorkspaces()).map(row => row.id))).toEqual(
+      new Set(Object.values(seededWorkspaces).map(row => row.id))
+    );
+    expect(new Set((await db.catalog.listSchemas(workspace)).map(row => row.id))).toEqual(
+      new Set(seedSchemas.filter(schema => schema.workspace === workspace).map(schema => schema.id))
+    );
+    expect(new Set((await db.catalog.listEntities(workspace)).map(row => row.id))).toEqual(
+      new Set(
+        seedEntities.filter(entity => entity.workspace === workspace).map(entity => entity.id)
+      )
+    );
+    expect(new Set((await db.project.listProjects(workspace)).map(row => row.id))).toEqual(
+      new Set(
+        seedProjects.filter(project => project.workspace === workspace).map(project => project.id)
+      )
+    );
 
     const eolView = await db.view.getSavedView(workspace, '00000000-0000-0000-0020-000000000007');
     const eolQuery = eolView?.filters;

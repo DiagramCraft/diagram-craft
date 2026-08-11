@@ -12,7 +12,7 @@ vi.mock('./gitUrlSafety', () => ({
 
 import { FilesystemStorage } from '../../storage/fs';
 import { runContractSuiteAgainstBothDrivers } from '../../db/contract-tests/harness';
-import { createFixtureWorkspace } from '../../db/contract-tests/projectFixtures';
+import { createFixtureWorkspace } from '../../db/testSupport/fixtures';
 import type { DatabaseAdapter } from '../../db/database';
 import { syncExternalContentSource } from './externalContentSync';
 

@@ -7,9 +7,9 @@ import {
 } from '@arch-register/permissions';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFixtureSchema, createFixtureWorkspace } from './projectFixtures';
-import { createFixtureUser } from './authFixtures';
-import { createFixtureCatalogEntity } from './catalogFixtures';
+import { createFixtureSchema, createFixtureWorkspace } from '../testSupport/fixtures';
+import { createFixtureUser } from '../testSupport/fixtures';
+import { createFixtureEntity } from '../testSupport/fixtures';
 import { buildEntityViewPermissionScope } from '../../domain/catalog/db/entityPermissionScope';
 import { listEntitiesWithCount } from '../../domain/catalog/entityQueryOperations';
 
@@ -61,26 +61,26 @@ runContractSuiteAgainstBothDrivers('Entity permission scope', getDb => {
       }
     ]);
 
-    const owned = await createFixtureCatalogEntity(db, workspace, schemaId, {
+    const owned = await createFixtureEntity(db, workspace, schemaId, {
       name: '01 owned',
       owner: teamId
     });
-    const parent = await createFixtureCatalogEntity(db, workspace, schemaId, {
+    const parent = await createFixtureEntity(db, workspace, schemaId, {
       name: '02 parent',
       owner: teamId
     });
-    const child = await createFixtureCatalogEntity(db, workspace, schemaId, {
+    const child = await createFixtureEntity(db, workspace, schemaId, {
       name: '03 child',
       data: { parent: [parent.id] }
     });
-    const grantedRoot = await createFixtureCatalogEntity(db, workspace, schemaId, {
+    const grantedRoot = await createFixtureEntity(db, workspace, schemaId, {
       name: '04 granted root'
     });
-    const grantedChild = await createFixtureCatalogEntity(db, workspace, schemaId, {
+    const grantedChild = await createFixtureEntity(db, workspace, schemaId, {
       name: '05 granted child',
       data: { parent: [grantedRoot.id] }
     });
-    const denied = await createFixtureCatalogEntity(db, workspace, schemaId, {
+    const denied = await createFixtureEntity(db, workspace, schemaId, {
       name: '06 denied'
     });
 
@@ -143,10 +143,10 @@ runContractSuiteAgainstBothDrivers('Entity permission scope', getDb => {
     const user = await createFixtureUser(db);
     const schemaId = await createFixtureSchema(db, workspace);
     const schema = (await db.catalog.getSchema(workspace, schemaId))!;
-    const visible = await createFixtureCatalogEntity(db, workspace, schemaId, {
+    const visible = await createFixtureEntity(db, workspace, schemaId, {
       name: '01 visible'
     });
-    await createFixtureCatalogEntity(db, workspace, schemaId, { name: '02 hidden' });
+    await createFixtureEntity(db, workspace, schemaId, { name: '02 hidden' });
     const grants = await db.catalog.replaceEntityGrants(workspace, visible.id, [
       {
         id: randomUUID(),
@@ -184,11 +184,11 @@ runContractSuiteAgainstBothDrivers('Entity permission scope', getDb => {
     const user = await createFixtureUser(db);
     const schemaId = await createFixtureSchema(db, workspace);
     const schema = (await db.catalog.getSchema(workspace, schemaId))!;
-    const visible = await createFixtureCatalogEntity(db, workspace, schemaId, {
+    const visible = await createFixtureEntity(db, workspace, schemaId, {
       name: 'visible'
     });
     for (let index = 0; index < 250; index++) {
-      await createFixtureCatalogEntity(db, workspace, schemaId, { name: `hidden-${index}` });
+      await createFixtureEntity(db, workspace, schemaId, { name: `hidden-${index}` });
     }
     const grants = await db.catalog.replaceEntityGrants(workspace, visible.id, [
       {

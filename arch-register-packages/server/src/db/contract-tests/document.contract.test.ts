@@ -6,8 +6,8 @@ import {
   createFixtureProject,
   createFixtureSchema,
   createFixtureWorkspace
-} from './projectFixtures';
-import { createFixtureUser } from './authFixtures';
+} from '../testSupport/fixtures';
+import { createFixtureUser } from '../testSupport/fixtures';
 import type { DatabaseAdapter } from '../database';
 
 runContractSuiteAgainstBothDrivers('DocumentDatabase', getDb => {

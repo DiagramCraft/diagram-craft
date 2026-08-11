@@ -1,4 +1,4 @@
-import { seedEntities } from '@arch-register/server/db/seedData';
+import { seedEntities } from '@arch-register/server/db/seedData/entities';
 import { seededEntities } from '@arch-register/server/db/seedFixtures';
 import { expect, test as baseTest, createTestORPCClient } from '../helpers/fixtures';
 import { seedCatalogEntities, seedCatalogRelations, seedIds } from '../helpers/seedHelper';
