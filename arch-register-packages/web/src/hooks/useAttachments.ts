@@ -1,24 +1,15 @@
 import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
 import { applicationWorkspacePath } from '../lib/applicationApi';
-import { markdownContentKeys } from './useMarkdownContent';
-import {
-  deleteContentFile,
-  invalidateContentScope,
-  uploadContentFile,
-  type ContentScope
-} from './useContentScope';
+import { invalidateMarkdownNode } from '../queries/markdownContent';
+import { deleteContentFile, uploadContentFile, type ContentScope } from './useContentScope';
 
 const invalidateAttachmentNode = async (
   queryClient: ReturnType<typeof useQueryClient>,
   scope: ContentScope,
   nodeId: string
 ) => {
-  const { workspaceId } = scope;
-  await queryClient.invalidateQueries({
-    queryKey: markdownContentKeys.detail(workspaceId, nodeId)
-  });
-  await invalidateContentScope(queryClient, scope);
+  await invalidateMarkdownNode(queryClient, scope, nodeId);
 };
 
 export const useUploadMarkdownAttachment = (scope: ContentScope, nodeId: string) => {

@@ -4,55 +4,35 @@ import type {
   ListGovernanceTasksQuery
 } from '@arch-register/api-types/governanceContract';
 import { orpcClient } from '../lib/orpcClient';
-import { governanceKeys, invalidateGovernanceQueries } from '../queries/governance';
+import {
+  governanceCaseEventsQuery,
+  governanceSubmissionsQuery,
+  governanceTaskCountQuery,
+  governanceTasksQuery,
+  invalidateGovernanceQueries
+} from '../queries/governance';
 import { invalidateNotificationQueries } from '../queries/notifications';
 
 export const useGovernanceTasks = (
   workspaceId: string,
   query: ListGovernanceTasksQuery = {},
   enabled = true
-) =>
-  useQuery({
-    queryKey: governanceKeys.tasks(workspaceId, query),
-    queryFn: () =>
-      orpcClient.governance.assignments.mine({ params: { workspace: workspaceId }, query }),
-    enabled: enabled && !!workspaceId,
-    staleTime: 15 * 1000
-  });
+) => useQuery(governanceTasksQuery(workspaceId, query, enabled));
 
 export const useGovernanceTaskCount = (workspaceId: string, enabled = true) =>
-  useQuery({
-    queryKey: governanceKeys.count(workspaceId),
-    queryFn: () => orpcClient.governance.assignments.count({ params: { workspace: workspaceId } }),
-    enabled: enabled && !!workspaceId,
-    staleTime: 15 * 1000
-  });
+  useQuery(governanceTaskCountQuery(workspaceId, enabled));
 
 export const useGovernanceCaseEvents = (
   workspaceId: string,
   caseId: string | null,
   enabled = true
-) =>
-  useQuery({
-    queryKey: governanceKeys.events(workspaceId, caseId ?? ''),
-    queryFn: () =>
-      orpcClient.governance.cases.events({ params: { workspace: workspaceId, id: caseId! } }),
-    enabled: enabled && !!workspaceId && !!caseId
-  });
+) => useQuery(governanceCaseEventsQuery(workspaceId, caseId, enabled));
 
 export const useGovernanceSubmissions = (
   workspaceId: string,
   query: ListGovernanceSubmissionsQuery = {},
   enabled = true
-) =>
-  useQuery({
-    queryKey: governanceKeys.submissions(workspaceId, query),
-    queryFn: () =>
-      orpcClient.governance.submissions.mine({ params: { workspace: workspaceId }, query }),
-    enabled: enabled && !!workspaceId,
-    staleTime: 5 * 1000,
-    refetchInterval: 10 * 1000
-  });
+) => useQuery(governanceSubmissionsQuery(workspaceId, query, enabled));
 
 export const useWithdrawGovernanceCase = (workspaceId: string) => {
   const queryClient = useQueryClient();

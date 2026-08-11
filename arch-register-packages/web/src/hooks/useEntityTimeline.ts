@@ -1,7 +1,6 @@
 import { useQueries } from '@tanstack/react-query';
 import type { TimelineViewData } from '@arch-register/api-types/entityContract';
-import { orpcClient } from '../lib/orpcClient';
-import { entityTimelineKeys } from '../queries/entityTimeline';
+import { entityTimelineBatchQuery } from '../queries/entityTimeline';
 
 const TIMELINE_BATCH_SIZE = 200;
 
@@ -17,15 +16,7 @@ export const useEntityTimeline = (workspaceId: string, entityIds: string[], enab
   const sortedIds = [...new Set(entityIds)].sort();
   const batches = chunk(sortedIds, TIMELINE_BATCH_SIZE);
   const queries = useQueries({
-    queries: batches.map(ids => ({
-      queryKey: entityTimelineKeys.batch(workspaceId, ids),
-      queryFn: () =>
-        orpcClient.entities.timelineView({
-          params: { workspace: workspaceId },
-          body: { ids }
-        }),
-      enabled: enabled && !!workspaceId && ids.length > 0
-    }))
+    queries: batches.map(ids => entityTimelineBatchQuery(workspaceId, ids, enabled))
   });
 
   const data: Record<string, TimelineViewData> = {};

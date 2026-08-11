@@ -2,7 +2,7 @@ import { useCallback, useRef } from 'react';
 import { useQueryClient } from '@tanstack/react-query';
 import { newid } from '@diagram-craft/utils/id';
 import { orpcClient } from '../../lib/orpcClient';
-import { projectFileKeys } from '../../queries/content';
+import { invalidateContentFileQueries } from '../../queries/content';
 import {
   clearMarkdownDiagramSession,
   getMarkdownDiagramRollbackRecords,
@@ -89,14 +89,9 @@ export const useMarkdownDiagramSessionTracking = (params: {
   const refreshDiagramPreviewCaches = useCallback(
     async (diagramIds: string[]) => {
       await Promise.all(
-        diagramIds.flatMap(diagramId => [
-          queryClient.invalidateQueries({
-            queryKey: projectFileKeys.detail(workspaceSlug, diagramId)
-          }),
-          queryClient.invalidateQueries({
-            queryKey: projectFileKeys.content(workspaceSlug, diagramId)
-          })
-        ])
+        diagramIds.map(diagramId =>
+          invalidateContentFileQueries(queryClient, workspaceSlug, diagramId)
+        )
       );
     },
     [queryClient, workspaceSlug]

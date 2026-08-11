@@ -1,19 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
+import {
+  invalidateWorkspaceMembers,
+  workspaceMembersKeys as workspaceMembersKeysFromQueries,
+  workspaceMembersQuery,
+  workspaceUsersQuery
+} from '../queries/workspaceMembers';
 
-export const workspaceMembersKeys = {
-  all: ['workspace-members'] as const,
-  list: (workspaceSlug: string) => [...workspaceMembersKeys.all, workspaceSlug] as const,
-  users: (workspaceSlug: string, q?: string, limit?: number) =>
-    [...workspaceMembersKeys.all, workspaceSlug, 'users', q ?? '', limit ?? null] as const
-};
+export const workspaceMembersKeys = workspaceMembersKeysFromQueries;
 
 export const useWorkspaceMembers = (workspaceSlug: string) => {
   return useQuery({
-    queryKey: workspaceMembersKeys.list(workspaceSlug),
-    queryFn: () => orpcClient.config.members.list({ params: { workspace: workspaceSlug } }),
-    enabled: !!workspaceSlug,
-    staleTime: 2 * 60 * 1000
+    ...workspaceMembersQuery(workspaceSlug)
   });
 };
 
@@ -23,14 +21,7 @@ export const useWorkspaceUsers = (
   options: { q?: string; limit?: number } = {}
 ) => {
   return useQuery({
-    queryKey: workspaceMembersKeys.users(workspaceSlug, options.q, options.limit),
-    queryFn: () =>
-      orpcClient.config.users.list({
-        params: { workspace: workspaceSlug },
-        query: { q: options.q, limit: options.limit }
-      }),
-    enabled: enabled && !!workspaceSlug,
-    staleTime: 2 * 60 * 1000
+    ...workspaceUsersQuery(workspaceSlug, options, enabled)
   });
 };
 
@@ -44,7 +35,7 @@ export const useUpdateWorkspaceMemberRole = (workspaceSlug: string) => {
         body: { roleId: role }
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: workspaceMembersKeys.list(workspaceSlug) });
+      invalidateWorkspaceMembers(queryClient, workspaceSlug);
     }
   });
 };

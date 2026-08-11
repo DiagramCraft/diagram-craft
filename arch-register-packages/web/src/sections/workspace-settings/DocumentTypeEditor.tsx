@@ -15,12 +15,12 @@ import type {
   PendingFieldChange
 } from '@arch-register/api-types/documentContract';
 import {
-  getDocumentTypeMigrationRequired,
   useArchiveDocumentType,
   useCreateDocumentType,
   useDeleteDocumentType,
   useUpdateDocumentType
 } from '../../hooks/useDocuments';
+import { getDocumentTypeMigrationRequired } from '../../queries/documents';
 import { useAiStatus } from '../../hooks/useAiConfig';
 
 import { TypeBadge } from '../../components/TypeBadge';

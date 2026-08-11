@@ -10,7 +10,7 @@ import {
   WORKSPACE,
   dashboardWidget
 } from '../StorybookHarness';
-import { documentKeys } from '../../../../../hooks/useDocuments';
+import { documentKeys } from '../../../../../queries/documents';
 
 const documentOptions = {
   q: '',

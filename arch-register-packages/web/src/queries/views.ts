@@ -1,4 +1,5 @@
-import type { QueryClient } from '@tanstack/react-query';
+import { queryOptions, type QueryClient } from '@tanstack/react-query';
+import { orpcClient } from '../lib/orpcClient';
 
 export const viewKeys = {
   all: ['views'] as const,
@@ -7,6 +8,24 @@ export const viewKeys = {
   list: (workspaceId: string, options?: { projectId?: string; includeWorkspace?: boolean }) =>
     [...viewKeys.workspaceLists(workspaceId), options ?? {}] as const
 };
+
+export const savedViewsQuery = (
+  workspaceId: string,
+  options: { projectId?: string; includeWorkspace?: boolean } = {},
+  enabled = true
+) =>
+  queryOptions({
+    queryKey: viewKeys.list(workspaceId, options),
+    queryFn: () =>
+      orpcClient.views.list({
+        params: { workspace: workspaceId },
+        query: {
+          projectId: options.projectId,
+          includeWorkspace: options.includeWorkspace
+        }
+      }),
+    enabled: enabled && !!workspaceId
+  });
 
 export const invalidateSavedViewQueries = (queryClient: QueryClient, workspaceId: string) =>
   queryClient.invalidateQueries({ queryKey: viewKeys.workspaceLists(workspaceId) });

@@ -3,19 +3,15 @@ import type {
   CreateDashboardRequest,
   UpdateDashboardRequest
 } from '@arch-register/api-types/dashboardContract';
-import { dashboardKeys, invalidateDashboardQueries } from '../queries/dashboard';
+import { invalidateDashboardQueries, workspaceDashboardsQuery } from '../queries/dashboard';
 import {
-  personalDashboardKeys,
-  invalidatePersonalDashboardQueries
+  invalidatePersonalDashboardQueries,
+  personalDashboardsQuery
 } from '../queries/personalDashboard';
 import { orpcClient } from '../lib/orpcClient';
 
 export const useWorkspaceDashboards = (workspaceSlug: string) =>
-  useQuery({
-    queryKey: dashboardKeys.list(workspaceSlug),
-    queryFn: () => orpcClient.dashboards.list({ params: { workspace: workspaceSlug } }),
-    enabled: workspaceSlug !== ''
-  });
+  useQuery(workspaceDashboardsQuery(workspaceSlug));
 
 export const useCreateWorkspaceDashboard = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
@@ -48,11 +44,7 @@ export const useDeleteWorkspaceDashboard = (workspaceSlug: string) => {
 };
 
 export const usePersonalDashboards = (workspaceSlug: string) =>
-  useQuery({
-    queryKey: personalDashboardKeys.list(workspaceSlug),
-    queryFn: () => orpcClient.personalDashboards.list({ params: { workspace: workspaceSlug } }),
-    enabled: workspaceSlug !== ''
-  });
+  useQuery(personalDashboardsQuery(workspaceSlug));
 
 export const useCreatePersonalDashboard = (workspaceSlug: string) => {
   const queryClient = useQueryClient();

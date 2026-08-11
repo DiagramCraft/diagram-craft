@@ -3,7 +3,7 @@ import type {
   CreateSavedViewRequest,
   UpdateSavedViewRequest
 } from '@arch-register/api-types/viewContract';
-import { invalidateSavedViewQueries, viewKeys } from '../queries/views';
+import { invalidateSavedViewQueries, savedViewsQuery } from '../queries/views';
 import { orpcClient } from '../lib/orpcClient';
 
 export const useSavedViews = (
@@ -12,18 +12,7 @@ export const useSavedViews = (
 ) => {
   const { enabled = true, ...queryOptions } = options ?? {};
 
-  return useQuery({
-    queryKey: viewKeys.list(workspaceId, queryOptions),
-    queryFn: () =>
-      orpcClient.views.list({
-        params: { workspace: workspaceId },
-        query: {
-          projectId: queryOptions.projectId,
-          includeWorkspace: queryOptions.includeWorkspace
-        }
-      }),
-    enabled: enabled && !!workspaceId
-  });
+  return useQuery(savedViewsQuery(workspaceId, queryOptions, enabled));
 };
 
 export const useCreateSavedView = (workspaceId: string) => {

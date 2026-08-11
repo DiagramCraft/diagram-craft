@@ -10,12 +10,8 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar } from '../../../components/MemberAvatar';
 import { getUserLabel } from '../../../utils/userLabel';
-import {
-  useAuthUsers,
-  useUpdateUserGlobalRoles,
-  globalRolesKeys
-} from '../../../hooks/useGlobalRoles';
-import { orpcClient } from '../../../lib/orpcClient';
+import { useAuthUsers, useUpdateUserGlobalRoles } from '../../../hooks/useGlobalRoles';
+import { userGlobalRolesQuery } from '../../../queries/globalRoles';
 import { Table } from '../../../components/table/Table';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
@@ -96,10 +92,7 @@ export const GlobalPermissionsSubSection = ({
 
   const roleQueries = useQueries({
     queries: sortedUsers.map(sortedUser => ({
-      queryKey: globalRolesKeys.roles(sortedUser.id),
-      queryFn: () => orpcClient.authProtected.getGlobalRoles({ params: { id: sortedUser.id } }),
-      enabled: sortedUsers.length > 0,
-      staleTime: 60 * 1000
+      ...userGlobalRolesQuery(sortedUser.id, sortedUsers.length > 0)
     }))
   });
 

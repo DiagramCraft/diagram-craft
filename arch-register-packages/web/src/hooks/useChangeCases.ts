@@ -1,62 +1,36 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { invalidateEntityQueries } from '../queries/entities';
-import { changeCaseKeys, invalidateChangeCaseQueries } from '../queries/changeCases';
+import {
+  changeCaseApplyConflictsQuery,
+  changeCaseQuery,
+  changeCasesByEntityQuery,
+  changeCasesByProjectQuery,
+  invalidateChangeCaseQueries
+} from '../queries/changeCases';
 import { orpcClient } from '../lib/orpcClient';
 import type { SaveChangeCaseDraftRequest } from '@arch-register/api-types/changeCaseContract';
 
 export const useChangeCasesByProject = (workspaceId: string, projectId: string, enabled = true) =>
-  useQuery({
-    queryKey: changeCaseKeys.byProject(workspaceId, projectId),
-    queryFn: () =>
-      orpcClient.changeCases.listByProject({ params: { workspace: workspaceId, id: projectId } }),
-    enabled: !!workspaceId && !!projectId && enabled
-  });
+  useQuery(changeCasesByProjectQuery(workspaceId, projectId, enabled));
 
 export const useChangeCasesByEntity = (workspaceId: string, entityId: string, enabled = true) =>
-  useQuery(changeCasesByEntityQueryOptions(workspaceId, entityId, enabled));
+  useQuery(changeCasesByEntityQuery(workspaceId, entityId, enabled));
 
-// Query-object form for batching entity-scoped change case lookups via `useQueries` — used by
-// TimelineView's per-entity batch fetch in "group by project" mode.
-export const changeCasesByEntityQueryOptions = (
-  workspaceId: string,
-  entityId: string,
-  enabled = true
-) => ({
-  queryKey: changeCaseKeys.byEntity(workspaceId, entityId),
-  queryFn: () =>
-    orpcClient.changeCases.listByEntity({ params: { workspace: workspaceId, id: entityId } }),
-  enabled: !!workspaceId && !!entityId && enabled
-});
+export const changeCasesByEntityQueryOptions = changeCasesByEntityQuery;
 
 export const useChangeCase = (
   workspaceId: string,
   projectId: string,
   caseId: string,
   enabled = true
-) =>
-  useQuery({
-    queryKey: changeCaseKeys.detail(workspaceId, caseId),
-    queryFn: () =>
-      orpcClient.changeCases.get({
-        params: { workspace: workspaceId, id: projectId, caseId }
-      }),
-    enabled: !!workspaceId && !!projectId && !!caseId && enabled
-  });
+) => useQuery(changeCaseQuery(workspaceId, projectId, caseId, enabled));
 
 export const useChangeCaseApplyConflicts = (
   workspaceId: string,
   projectId: string,
   caseId: string,
   enabled = true
-) =>
-  useQuery({
-    queryKey: changeCaseKeys.applyConflicts(workspaceId, caseId),
-    queryFn: () =>
-      orpcClient.changeCases.checkApplyConflicts({
-        params: { workspace: workspaceId, id: projectId, caseId }
-      }),
-    enabled: !!workspaceId && !!projectId && !!caseId && enabled
-  });
+) => useQuery(changeCaseApplyConflictsQuery(workspaceId, projectId, caseId, enabled));
 
 export const useCreateChangeCase = (workspaceId: string, projectId: string) => {
   const queryClient = useQueryClient();

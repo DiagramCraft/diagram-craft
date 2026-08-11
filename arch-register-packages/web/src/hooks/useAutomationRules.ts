@@ -1,47 +1,23 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type {
-  AutomationAction,
-  AutomationCondition,
-  AutomationRuleTrigger
-} from '@arch-register/api-types/automationRuleContract';
-import type { JobRunStatus } from '@arch-register/api-types/jobsContract';
 import { orpcClient } from '../lib/orpcClient';
+import {
+  automationRuleRunsQuery,
+  automationRulesQuery,
+  invalidateAutomationRuleQueries,
+  type AutomationRuleInput,
+  type AutomationRuleRunFilters
+} from '../queries/automationRules';
 
-const keys = {
-  list: (workspace: string) => ['automation-rules', workspace] as const,
-  runs: (workspace: string, filters: AutomationRuleRunFilters) =>
-    ['automation-rules', workspace, 'runs', filters] as const
-};
-
-export type AutomationRuleInput = {
-  name: string;
-  description?: string | null;
-  resource_type: 'entity' | 'relation';
-  schema_id?: string | null;
-  trigger: AutomationRuleTrigger;
-  conditions: AutomationCondition[];
-  actions: AutomationAction[];
-  enabled: boolean;
-};
-
-export type AutomationRuleRunFilters = {
-  status?: JobRunStatus;
-  plannedFrom?: string;
-  plannedTo?: string;
-  limit?: number;
-  offset?: number;
-};
+export type { AutomationRuleInput, AutomationRuleRunFilters } from '../queries/automationRules';
 
 export const useAutomationRules = (workspace: string) =>
   useQuery({
-    queryKey: keys.list(workspace),
-    queryFn: () => orpcClient.automationRules.list({ params: { workspace } }),
-    enabled: !!workspace
+    ...automationRulesQuery(workspace)
   });
 
 export const useAutomationRuleOperations = (workspace: string) => {
   const queryClient = useQueryClient();
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: keys.list(workspace) });
+  const invalidate = () => invalidateAutomationRuleQueries(queryClient, workspace);
   const create = useMutation({
     mutationFn: (body: AutomationRuleInput) =>
       orpcClient.automationRules.create({ params: { workspace }, body }),
@@ -65,18 +41,5 @@ export const useAutomationRuleRuns = (
   enabled = true
 ) =>
   useQuery({
-    queryKey: keys.runs(workspace, filters),
-    queryFn: () =>
-      orpcClient.automationRules.runs.list({
-        params: { workspace },
-        query: {
-          status: filters.status,
-          plannedFrom: filters.plannedFrom,
-          plannedTo: filters.plannedTo,
-          limit: filters.limit ?? 50,
-          offset: filters.offset ?? 0
-        }
-      }),
-    enabled: enabled && !!workspace,
-    refetchInterval: 5000
+    ...automationRuleRunsQuery(workspace, filters, enabled)
   });

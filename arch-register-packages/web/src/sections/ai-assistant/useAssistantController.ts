@@ -1,12 +1,10 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
-import type { AiConversation } from '@arch-register/api-types/aiContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useAuth } from '../../auth/AuthContext';
 import { useAiChat } from '../../hooks/useAiChat';
 import {
-  aiKeys,
   useAiConversations,
   useConversationMessages,
   useCreateConversation,
@@ -16,6 +14,7 @@ import {
 import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
 import { hasRenderableParts, optimisticConversationTitle } from './assistantViewModel';
 import { formatAiActionSeedMessage, readAndClearAiActionSeed } from '../../lib/aiActionSeed';
+import { invalidateAiConversation, updateAiConversationTitle } from '../../queries/ai';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/assistant');
 
@@ -37,10 +36,7 @@ export const useAssistantController = () => {
 
   useEffect(() => {
     if (wasLoadingRef.current && !chat.isLoading && conversationId) {
-      void queryClient.invalidateQueries({ queryKey: aiKeys.conversations(workspaceSlug) });
-      void queryClient.invalidateQueries({
-        queryKey: aiKeys.messages(workspaceSlug, conversationId)
-      });
+      void invalidateAiConversation(queryClient, workspaceSlug, conversationId);
     }
     wasLoadingRef.current = chat.isLoading;
   });
@@ -118,19 +114,12 @@ export const useAssistantController = () => {
   const sendMessage = useCallback(
     (text: string) => {
       if (!text || chat.isLoading || !conversationId) return;
-      const cached = queryClient.getQueryData<AiConversation[]>(
-        aiKeys.conversations(workspaceSlug)
+      updateAiConversationTitle(
+        queryClient,
+        workspaceSlug,
+        optimisticConversationTitle(text),
+        conversationId
       );
-      if (cached?.find(item => item.id === conversationId)?.title === 'New conversation') {
-        queryClient.setQueryData<AiConversation[]>(
-          aiKeys.conversations(workspaceSlug),
-          cached.map(item =>
-            item.id === conversationId
-              ? { ...item, title: optimisticConversationTitle(text) }
-              : item
-          )
-        );
-      }
       chat.sendMessage(text);
     },
     [chat, conversationId, queryClient, workspaceSlug]

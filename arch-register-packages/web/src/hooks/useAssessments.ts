@@ -1,6 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { assessmentKeys } from '../queries/assessments';
-import { invalidateAuditQueries } from '../queries/audit';
+import { assessmentsQuery, invalidateAssessmentQueries } from '../queries/assessments';
 import type {
   Assessment,
   CreateAssessmentRequest,
@@ -10,11 +9,7 @@ import { orpcClient } from '../lib/orpcClient';
 import { useProject } from './useProjects';
 
 export const useAssessments = (workspaceId: string, enabled = true) =>
-  useQuery({
-    queryKey: assessmentKeys.list(workspaceId),
-    queryFn: () => orpcClient.assessments.list({ params: { workspace: workspaceId } }),
-    enabled: enabled && !!workspaceId
-  });
+  useQuery(assessmentsQuery(workspaceId, enabled));
 
 export const useProjectAssessments = (workspaceId: string, projectId: string) => {
   const projectQuery = useProject(workspaceId, projectId);
@@ -37,8 +32,7 @@ export const useCreateAssessment = (workspaceId: string, projectId: string) => {
         body: { ...body, project_id: projectId }
       }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: assessmentKeys.list(workspaceId) });
-      await invalidateAuditQueries(queryClient, workspaceId);
+      await invalidateAssessmentQueries(queryClient, workspaceId);
     }
   });
 };
@@ -59,11 +53,7 @@ export const useUpdateAssessment = (workspaceId: string, projectId: string) => {
         body: { ...data, project_id: projectId }
       }),
     onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: assessmentKeys.detail(workspaceId, variables.assessmentId)
-      });
-      await queryClient.invalidateQueries({ queryKey: assessmentKeys.list(workspaceId) });
-      await invalidateAuditQueries(queryClient, workspaceId);
+      await invalidateAssessmentQueries(queryClient, workspaceId, variables.assessmentId);
     }
   });
 };
@@ -84,11 +74,7 @@ export const useUpdateAssessmentStatus = (workspaceId: string, _projectId: strin
         body: { status }
       }),
     onSuccess: async (_, variables) => {
-      await queryClient.invalidateQueries({
-        queryKey: assessmentKeys.detail(workspaceId, variables.assessmentId)
-      });
-      await queryClient.invalidateQueries({ queryKey: assessmentKeys.list(workspaceId) });
-      await invalidateAuditQueries(queryClient, workspaceId);
+      await invalidateAssessmentQueries(queryClient, workspaceId, variables.assessmentId);
     }
   });
 };
@@ -100,8 +86,7 @@ export const useDeleteAssessment = (workspaceId: string, _projectId: string) => 
     mutationFn: (assessmentId: string) =>
       orpcClient.assessments.remove({ params: { workspace: workspaceId, assessmentId } }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: assessmentKeys.list(workspaceId) });
-      await invalidateAuditQueries(queryClient, workspaceId);
+      await invalidateAssessmentQueries(queryClient, workspaceId);
     }
   });
 };

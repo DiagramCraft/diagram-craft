@@ -21,18 +21,19 @@ import type {
   GovernanceTask
 } from '@arch-register/api-types/governanceContract';
 import styles from './GovernanceInboxScreen.module.css';
-import { orpcClient } from '../../lib/orpcClient';
 import { entityDetailRoute, asEntityPublicId } from '../../routes/publicObjectRoutes';
 import { workspaceMarkdownRoute } from '../../routes/publicObjectRoutes';
 import { projectDetailRoute, asProjectPublicId } from '../../routes/publicObjectRoutes';
-import { entityKeys } from '../../queries/entities';
-import { governanceKeys } from '../../queries/governance';
-import { projectFileKeys } from '../../queries/content';
+import { entityDetailQuery } from '../../queries/entities';
+import { governanceCaseEventsQuery } from '../../queries/governance';
+import { contentFileQuery } from '../../queries/content';
 import {
-  bulkEntityChangeKeys,
-  entityChangeKeys,
-  useWithdrawEntityChangeApproval
-} from '../../hooks/useEntityChanges';
+  bulkEntityChangeQuery,
+  entityChangeQuery,
+  invalidateBulkEntityChangeQueries,
+  invalidateEntityChangeQueries
+} from '../../queries/entityChanges';
+import { useWithdrawEntityChangeApproval } from '../../hooks/useEntityChanges';
 
 const humanize = (value: string) =>
   value.replace(/[._-]+/g, ' ').replace(/\b\w/g, character => character.toUpperCase());
@@ -146,12 +147,7 @@ export const GovernanceInboxScreen = () => {
     ])
   ];
   const bulkProposalQueries = useQueries({
-    queries: bulkCaseIds.map(caseId => ({
-      queryKey: bulkEntityChangeKeys.detail(workspace, caseId),
-      queryFn: () =>
-        orpcClient.entityChanges.getBulk({ params: { workspace, approvalId: caseId } }),
-      enabled: !!workspace
-    }))
+    queries: bulkCaseIds.map(caseId => bulkEntityChangeQuery(workspace, caseId))
   });
   const bulkProposalsByCaseId = new Map(
     bulkCaseIds.map((caseId, index) => [caseId, bulkProposalQueries[index]?.data])
@@ -166,11 +162,7 @@ export const GovernanceInboxScreen = () => {
     ])
   ];
   const entityQueries = useQueries({
-    queries: entityIds.map(entityId => ({
-      queryKey: entityKeys.detail(workspace, entityId),
-      queryFn: () => orpcClient.entities.get({ params: { workspace, id: entityId } }),
-      enabled: !!workspace
-    }))
+    queries: entityIds.map(entityId => entityDetailQuery(workspace, entityId))
   });
   const entitiesById = new Map(
     entityIds.map((entityId, index) => [entityId, entityQueries[index]?.data])
@@ -186,11 +178,7 @@ export const GovernanceInboxScreen = () => {
     ])
   ];
   const documentQueries = useQueries({
-    queries: documentIds.map(fileId => ({
-      queryKey: projectFileKeys.detail(workspace, fileId),
-      queryFn: () => orpcClient.projects.getFile({ params: { workspace, fileId } }),
-      enabled: !!workspace
-    }))
+    queries: documentIds.map(fileId => contentFileQuery(workspace, fileId))
   });
   const documentsById = new Map(
     documentIds.map((fileId, index) => [fileId, documentQueries[index]?.data])
@@ -211,11 +199,7 @@ export const GovernanceInboxScreen = () => {
     ])
   ];
   const proposalQueries = useQueries({
-    queries: entityChangeIds.map(entityId => ({
-      queryKey: entityChangeKeys.current(workspace, entityId),
-      queryFn: () => orpcClient.entityChanges.get({ params: { workspace, id: entityId } }),
-      enabled: !!workspace
-    }))
+    queries: entityChangeIds.map(entityId => entityChangeQuery(workspace, entityId))
   });
   const proposalsByEntityId = new Map(
     entityChangeIds.map((entityId, index) => [entityId, proposalQueries[index]?.data])
@@ -250,11 +234,9 @@ export const GovernanceInboxScreen = () => {
     )
   ];
   const caseEventsQueries = useQueries({
-    queries: requestChangesCaseIds.map(caseId => ({
-      queryKey: governanceKeys.events(workspace, caseId),
-      queryFn: () => orpcClient.governance.cases.events({ params: { workspace, id: caseId } }),
-      enabled: !!workspace
-    }))
+    queries: requestChangesCaseIds.map(caseId =>
+      governanceCaseEventsQuery(workspace, caseId, !!workspace)
+    )
   });
   const requestChangesReasonByCaseId = new Map(
     requestChangesCaseIds.map((caseId, index) => [
@@ -308,16 +290,17 @@ export const GovernanceInboxScreen = () => {
       {
         onSuccess: async () => {
           if (requestChangesTask.case.caseKind === 'entity.change.bulk') {
-            await queryClient.invalidateQueries({
-              queryKey: bulkEntityChangeKeys.detail(workspace, requestChangesTask.case.subjectId)
-            });
+            await invalidateBulkEntityChangeQueries(
+              queryClient,
+              workspace,
+              requestChangesTask.case.subjectId
+            );
           } else {
-            await queryClient.invalidateQueries({
-              queryKey: entityChangeKeys.current(workspace, requestChangesTask.case.subjectId)
-            });
-            await queryClient.invalidateQueries({
-              queryKey: entityKeys.detail(workspace, requestChangesTask.case.subjectId)
-            });
+            await invalidateEntityChangeQueries(
+              queryClient,
+              workspace,
+              requestChangesTask.case.subjectId
+            );
           }
           setRequestChangesTask(null);
           setRequestChangesReason('');

@@ -7,41 +7,23 @@ import type {
   ProposeDeprecationBody
 } from '@arch-register/api-types/entityDeprecationContract';
 import { orpcClient } from '../lib/orpcClient';
-import { entityKeys } from '../queries/entities';
-import { invalidateGovernanceQueries } from '../queries/governance';
+import {
+  entityDeprecationKeys as entityDeprecationKeysFromQueries,
+  entityDeprecationQuery,
+  invalidateEntityDeprecation
+} from '../queries/entityDeprecations';
 
-export const entityDeprecationKeys = {
-  current: (workspace: string, entityId: string) =>
-    ['entity-deprecation', workspace, entityId] as const
-};
+export const entityDeprecationKeys = entityDeprecationKeysFromQueries;
 
 export const useEntityDeprecation = (workspace: string, entityId: string) =>
-  useQuery({
-    queryKey: entityDeprecationKeys.current(workspace, entityId),
-    queryFn: () => orpcClient.entityDeprecations.get({ params: { workspace, id: entityId } }),
-    enabled: !!workspace && !!entityId
-  });
-
-const invalidateAfterMutation = async (
-  queryClient: ReturnType<typeof useQueryClient>,
-  workspace: string,
-  entityId: string
-) => {
-  await Promise.all([
-    queryClient.invalidateQueries({
-      queryKey: entityDeprecationKeys.current(workspace, entityId)
-    }),
-    queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspace, entityId) }),
-    invalidateGovernanceQueries(queryClient, workspace)
-  ]);
-};
+  useQuery(entityDeprecationQuery(workspace, entityId));
 
 export const useProposeEntityDeprecation = (workspace: string, entityId: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: ProposeDeprecationBody) =>
       orpcClient.entityDeprecations.propose({ params: { workspace, id: entityId }, body }),
-    onSuccess: () => invalidateAfterMutation(queryClient, workspace, entityId)
+    onSuccess: () => invalidateEntityDeprecation(queryClient, workspace, entityId)
   });
 };
 
@@ -53,7 +35,7 @@ export const useAcknowledgeEntityDeprecation = (workspace: string, entityId: str
         params: { workspace, id: entityId, caseId },
         body
       }),
-    onSuccess: () => invalidateAfterMutation(queryClient, workspace, entityId)
+    onSuccess: () => invalidateEntityDeprecation(queryClient, workspace, entityId)
   });
 };
 
@@ -62,7 +44,7 @@ export const useRefreshEntityDeprecationScope = (workspace: string, entityId: st
   return useMutation({
     mutationFn: (caseId: string) =>
       orpcClient.entityDeprecations.refreshScope({ params: { workspace, id: entityId, caseId } }),
-    onSuccess: () => invalidateAfterMutation(queryClient, workspace, entityId)
+    onSuccess: () => invalidateEntityDeprecation(queryClient, workspace, entityId)
   });
 };
 
@@ -71,7 +53,7 @@ export const usePostponeEntityDeprecation = (workspace: string, entityId: string
   return useMutation({
     mutationFn: ({ caseId, ...body }: PostponeDeprecationBody & { caseId: string }) =>
       orpcClient.entityDeprecations.postpone({ params: { workspace, id: entityId, caseId }, body }),
-    onSuccess: () => invalidateAfterMutation(queryClient, workspace, entityId)
+    onSuccess: () => invalidateEntityDeprecation(queryClient, workspace, entityId)
   });
 };
 
@@ -80,7 +62,7 @@ export const useFinalizeEntityDeprecation = (workspace: string, entityId: string
   return useMutation({
     mutationFn: ({ caseId, ...body }: FinalizeDeprecationBody & { caseId: string }) =>
       orpcClient.entityDeprecations.finalize({ params: { workspace, id: entityId, caseId }, body }),
-    onSuccess: () => invalidateAfterMutation(queryClient, workspace, entityId)
+    onSuccess: () => invalidateEntityDeprecation(queryClient, workspace, entityId)
   });
 };
 
@@ -89,6 +71,6 @@ export const useCancelEntityDeprecation = (workspace: string, entityId: string) 
   return useMutation({
     mutationFn: ({ caseId, ...body }: CancelDeprecationBody & { caseId: string }) =>
       orpcClient.entityDeprecations.cancel({ params: { workspace, id: entityId, caseId }, body }),
-    onSuccess: () => invalidateAfterMutation(queryClient, workspace, entityId)
+    onSuccess: () => invalidateEntityDeprecation(queryClient, workspace, entityId)
   });
 };

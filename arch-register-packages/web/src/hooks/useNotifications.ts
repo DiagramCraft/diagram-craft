@@ -1,40 +1,28 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { PinnedEntity } from '@arch-register/api-types/watchContract';
 import { orpcClient } from '../lib/orpcClient';
-import { invalidateNotificationQueries, notificationKeys } from '../queries/notifications';
+import {
+  addPinnedEntityToCache,
+  invalidateNotificationQueries,
+  invalidatePinnedEntities,
+  notificationCountQuery,
+  notificationsQuery,
+  pinnedEntitiesQuery,
+  removePinnedEntityFromCache,
+  restorePinnedEntitiesCache,
+  watchedEntitiesQuery
+} from '../queries/notifications';
 
 export const useWatchedEntities = (workspaceId: string, enabled = true) =>
-  useQuery({
-    queryKey: notificationKeys.watched(workspaceId),
-    queryFn: () => orpcClient.watching.list({ params: { workspace: workspaceId } }),
-    enabled: enabled && !!workspaceId,
-    staleTime: 60 * 1000
-  });
+  useQuery(watchedEntitiesQuery(workspaceId, enabled));
 
 export const usePinnedEntities = (workspaceId: string, enabled = true) =>
-  useQuery({
-    queryKey: notificationKeys.pinned(workspaceId),
-    queryFn: () => orpcClient.pinnedEntities.list({ params: { workspace: workspaceId } }),
-    enabled: enabled && !!workspaceId,
-    staleTime: 60 * 1000
-  });
+  useQuery(pinnedEntitiesQuery(workspaceId, enabled));
 
 export const useNotifications = (workspaceId: string, enabled = true) =>
-  useQuery({
-    queryKey: notificationKeys.list(workspaceId),
-    queryFn: () => orpcClient.notifications.list({ params: { workspace: workspaceId } }),
-    enabled: enabled && !!workspaceId,
-    staleTime: 60 * 1000
-  });
+  useQuery(notificationsQuery(workspaceId, enabled));
 
 export const useNotificationCount = (workspaceId: string, enabled = true) =>
-  useQuery({
-    queryKey: notificationKeys.count(workspaceId),
-    queryFn: () => orpcClient.notifications.count({ params: { workspace: workspaceId } }),
-    enabled: enabled && !!workspaceId,
-    staleTime: 30 * 1000,
-    refetchInterval: 30 * 1000
-  });
+  useQuery(notificationCountQuery(workspaceId, enabled));
 
 export const useCreateWatch = (workspaceId: string) => {
   const queryClient = useQueryClient();
@@ -79,32 +67,20 @@ export const useCreatePinnedEntity = (workspaceId: string) => {
         body: { entity_id: entity.entityId }
       }),
     onMutate: async entity => {
-      await queryClient.cancelQueries({ queryKey: notificationKeys.pinned(workspaceId) });
-      const previousPinned =
-        queryClient.getQueryData<PinnedEntity[]>(notificationKeys.pinned(workspaceId)) ?? [];
-
-      const alreadyPinned = previousPinned.some(item => item.entity_id === entity.entityId);
-      if (!alreadyPinned) {
-        queryClient.setQueryData<PinnedEntity[]>(notificationKeys.pinned(workspaceId), [
-          {
-            entity_id: entity.entityId,
-            entity_public_id: entity.entityPublicId,
-            entity_name: entity.entityName,
-            entity_slug: entity.entitySlug,
-            schema_id: entity.schemaId,
-            created_at: new Date().toISOString()
-          },
-          ...previousPinned
-        ]);
-      }
-
-      return { previousPinned };
+      return addPinnedEntityToCache(queryClient, workspaceId, {
+        entity_id: entity.entityId,
+        entity_public_id: entity.entityPublicId,
+        entity_name: entity.entityName,
+        entity_slug: entity.entitySlug,
+        schema_id: entity.schemaId,
+        created_at: new Date().toISOString()
+      });
     },
     onError: (_error, _entity, context) => {
-      queryClient.setQueryData(notificationKeys.pinned(workspaceId), context?.previousPinned ?? []);
+      restorePinnedEntitiesCache(queryClient, workspaceId, context);
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: notificationKeys.pinned(workspaceId) });
+      await invalidatePinnedEntities(queryClient, workspaceId);
     }
   });
 };
@@ -116,22 +92,13 @@ export const useDeletePinnedEntity = (workspaceId: string) => {
     mutationFn: (entityId: string) =>
       orpcClient.pinnedEntities.remove({ params: { workspace: workspaceId, id: entityId } }),
     onMutate: async entityId => {
-      await queryClient.cancelQueries({ queryKey: notificationKeys.pinned(workspaceId) });
-      const previousPinned =
-        queryClient.getQueryData<PinnedEntity[]>(notificationKeys.pinned(workspaceId)) ?? [];
-
-      queryClient.setQueryData<PinnedEntity[]>(
-        notificationKeys.pinned(workspaceId),
-        previousPinned.filter(item => item.entity_id !== entityId)
-      );
-
-      return { previousPinned };
+      return removePinnedEntityFromCache(queryClient, workspaceId, entityId);
     },
     onError: (_error, _entityId, context) => {
-      queryClient.setQueryData(notificationKeys.pinned(workspaceId), context?.previousPinned ?? []);
+      restorePinnedEntitiesCache(queryClient, workspaceId, context);
     },
     onSettled: async () => {
-      await queryClient.invalidateQueries({ queryKey: notificationKeys.pinned(workspaceId) });
+      await invalidatePinnedEntities(queryClient, workspaceId);
     }
   });
 };

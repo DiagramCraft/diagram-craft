@@ -1,17 +1,51 @@
-import type { QueryClient } from '@tanstack/react-query';
+import { queryOptions, type QueryClient } from '@tanstack/react-query';
+import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import { invalidateAuditQueries } from './audit';
+import { invalidateEntityQueries } from './entities';
+import { schemaKeys as schemaKeysFromQueries } from './schemaKeys';
+import { workspaceAnalyticsKeys } from './workspaceAnalytics';
+import { orpcClient } from '../lib/orpcClient';
 
-export const schemaKeys = {
-  all: ['schemas'] as const,
-  lists: () => [...schemaKeys.all, 'list'] as const,
-  workspaceLists: (workspaceId: string) => [...schemaKeys.lists(), workspaceId] as const,
-  list: (workspaceId: string) => schemaKeys.workspaceLists(workspaceId),
-  details: () => [...schemaKeys.all, 'detail'] as const,
-  workspaceDetails: (workspaceId: string) => [...schemaKeys.details(), workspaceId] as const,
-  detail: (workspaceId: string, schemaId: string) =>
-    [...schemaKeys.workspaceDetails(workspaceId), schemaId] as const,
-  versions: (workspaceId: string, schemaId: string) =>
-    [...schemaKeys.detail(workspaceId, schemaId), 'versions'] as const
-};
+export const schemaKeys = schemaKeysFromQueries;
+
+export const schemasQuery = (workspaceId: string, enabled = true) =>
+  queryOptions({
+    queryKey: schemaKeys.list(workspaceId),
+    queryFn: () => orpcClient.schemas.list({ params: { workspace: workspaceId } }),
+    enabled: enabled && !!workspaceId,
+    staleTime: 5 * 60 * 1000
+  });
+
+export const schemaVersionsQuery = (workspaceId: string, schemaId: string | null) =>
+  queryOptions({
+    queryKey: schemaKeys.versions(workspaceId, schemaId ?? ''),
+    queryFn: () =>
+      orpcClient.schemas.listVersions({ params: { workspace: workspaceId, id: schemaId! } }),
+    enabled: !!workspaceId && !!schemaId
+  });
+
+export const invalidateSchemaList = (queryClient: QueryClient, workspaceId: string) =>
+  queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
+
+export const invalidateSchemaCreate = async (queryClient: QueryClient, workspaceId: string) =>
+  Promise.all([
+    invalidateSchemaList(queryClient, workspaceId),
+    invalidateAuditQueries(queryClient, workspaceId),
+    queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.workspace(workspaceId) })
+  ]);
+
+export const invalidateSchemaUpdate = async (
+  queryClient: QueryClient,
+  workspaceId: string,
+  schemaId: string
+) =>
+  Promise.all([
+    invalidateSchemaList(queryClient, workspaceId),
+    queryClient.invalidateQueries({ queryKey: schemaKeys.detail(workspaceId, schemaId) }),
+    queryClient.invalidateQueries({ queryKey: schemaKeys.versions(workspaceId, schemaId) }),
+    invalidateEntityQueries(queryClient, workspaceId),
+    queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.workspace(workspaceId) })
+  ]);
 
 export const invalidateDeletedSchema = async (
   queryClient: QueryClient,
@@ -20,4 +54,93 @@ export const invalidateDeletedSchema = async (
 ) => {
   await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
   queryClient.removeQueries({ queryKey: schemaKeys.detail(workspaceId, schemaId) });
+};
+
+export const invalidateSchemaDeletion = async (
+  queryClient: QueryClient,
+  workspaceId: string,
+  schemaId: string
+) =>
+  Promise.all([
+    invalidateDeletedSchema(queryClient, workspaceId, schemaId),
+    invalidateEntityQueries(queryClient, workspaceId),
+    queryClient.invalidateQueries({ queryKey: workspaceAnalyticsKeys.workspace(workspaceId) })
+  ]);
+
+export type SchemaUpdateCacheInput = {
+  name: string;
+  key_prefix: string;
+  description?: string;
+  fields: unknown;
+  templates?: unknown;
+  groups?: unknown;
+  shared_field_group_links?: unknown;
+  entity_capabilities?: unknown;
+  validation_rules?: unknown;
+  color?: string | null;
+  icon?: string | null;
+};
+
+export type SchemaCacheContext = { previous?: EntitySchema[] };
+
+export const optimisticallyUpdateSchema = async (
+  queryClient: QueryClient,
+  workspaceId: string,
+  schemaId: string,
+  data: SchemaUpdateCacheInput
+): Promise<SchemaCacheContext> => {
+  await queryClient.cancelQueries({ queryKey: schemaKeys.list(workspaceId) });
+  const previous = queryClient.getQueryData<EntitySchema[]>(schemaKeys.list(workspaceId));
+  queryClient.setQueryData<EntitySchema[]>(
+    schemaKeys.list(workspaceId),
+    current =>
+      current?.map(schema =>
+        schema.id === schemaId
+          ? {
+              ...schema,
+              name: data.name,
+              key_prefix: data.key_prefix,
+              description: data.description ?? schema.description,
+              fields: data.fields as EntitySchema['fields'],
+              templates:
+                (data.templates as EntitySchema['templates'] | undefined) ?? schema.templates,
+              groups: (data.groups as EntitySchema['groups'] | undefined) ?? schema.groups,
+              shared_field_group_links:
+                (data.shared_field_group_links as
+                  | EntitySchema['shared_field_group_links']
+                  | undefined) ?? schema.shared_field_group_links,
+              entity_capabilities:
+                (data.entity_capabilities as EntitySchema['entity_capabilities'] | undefined) ??
+                schema.entity_capabilities,
+              validation_rules:
+                (data.validation_rules as EntitySchema['validation_rules'] | undefined) ??
+                schema.validation_rules,
+              color: data.color ?? schema.color,
+              icon: data.icon ?? schema.icon
+            }
+          : schema
+      ) ?? current
+  );
+  return { previous };
+};
+
+export const restoreSchemaCache = (
+  queryClient: QueryClient,
+  workspaceId: string,
+  context: SchemaCacheContext | undefined
+) => {
+  if (context?.previous) queryClient.setQueryData(schemaKeys.list(workspaceId), context.previous);
+};
+
+export const setSchemaCaches = (
+  queryClient: QueryClient,
+  workspaceId: string,
+  schemaId: string,
+  updated: EntitySchema
+) => {
+  queryClient.setQueryData<EntitySchema[]>(
+    schemaKeys.list(workspaceId),
+    current => current?.map(schema => (schema.id === updated.id ? updated : schema)) ?? current
+  );
+  queryClient.setQueryData(schemaKeys.detail(workspaceId, schemaId), updated);
 };

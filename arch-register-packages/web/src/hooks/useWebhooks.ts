@@ -1,20 +1,17 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { WebhookEventFilter } from '@arch-register/api-types/webhookContract';
 import { orpcClient } from '../lib/orpcClient';
+import { invalidateWebhookQueries, webhooksQuery, type WebhookInput } from '../queries/webhooks';
 
-const keys = { list: (workspace: string) => ['webhooks', workspace] as const };
-export type WebhookInput = { url: string; event_filter: WebhookEventFilter; enabled: boolean };
+export type { WebhookInput } from '../queries/webhooks';
 
 export const useWebhooks = (workspace: string) =>
   useQuery({
-    queryKey: keys.list(workspace),
-    queryFn: () => orpcClient.webhooks.list({ params: { workspace } }),
-    enabled: !!workspace
+    ...webhooksQuery(workspace)
   });
 
 export const useWebhookOperations = (workspace: string) => {
   const queryClient = useQueryClient();
-  const invalidate = () => queryClient.invalidateQueries({ queryKey: keys.list(workspace) });
+  const invalidate = () => invalidateWebhookQueries(queryClient, workspace);
   const create = useMutation({
     mutationFn: (body: WebhookInput) => orpcClient.webhooks.create({ params: { workspace }, body }),
     onSuccess: invalidate

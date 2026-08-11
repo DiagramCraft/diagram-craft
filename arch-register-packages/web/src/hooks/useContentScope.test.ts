@@ -1,11 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
-import {
-  contentDownloadUrl,
-  contentScopeKey,
-  contentScopeReady,
-  contentUploadUrl,
-  invalidateContentScope
-} from './useContentScope';
+import { contentDownloadUrl, contentUploadUrl } from './useContentScope';
+import { contentScopeKey, contentScopeReady, invalidateContentScope } from '../queries/content';
 
 describe('content scope adapter', () => {
   it('uses scope-specific query keys', () => {
