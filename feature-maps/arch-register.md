@@ -202,6 +202,10 @@
           workspace, project, saved view, or explicit entity selection. A baseline preserves the reconstructed entity
           and relation state at its effective date, remains available after live records change or are deleted, and
           can be browsed, compared with another baseline or the current scope, and exported as permission-aware JSON.
+          Workspace baselines are listed in a Baselines tab alongside the entity browser, project baselines are
+          listed in a Baselines tab in the project's secondary sidebar, and selecting one opens its named detail
+          view in the relevant entities or project context, with captured records, JSON export, and comparisons
+          available there. Creation can capture the current entity filters or saved view through a dialog.
           Baselines expose Active, Stale, and Superseded lifecycle states; superseding is explicit and deletion is
           soft-only. Approval decisions remain represented by linked governance cases rather than by baseline status.
 
