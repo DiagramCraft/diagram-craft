@@ -9,6 +9,8 @@ It demonstrates:
 - Backstage-to-Arch Register field mapping
 - schema auto-discovery
 - idempotent sync using external identities
+- API specification synchronization with durable source keys and immutable revisions
+- inline and `$text` / `$json` / `$yaml` API definitions, with link-only fallback
 - dry-run, verbose logging, retries, and per-entity error reporting
 
 ## Scope and limitations
@@ -16,6 +18,12 @@ It demonstrates:
 Supported kinds are `Component`, `API`, `Resource`, `System`, and `Domain`.
 
 The importer currently reads only `catalog-info.yaml` from the repository root. It does not resolve Backstage `Group`, `User`, `Location`, or `Template` entities.
+
+For `API` entities, supported `spec.definition` values are inline YAML/JSON strings and Backstage's
+`$text`, `$json`, and `$yaml` substitutions. Relative substitutions are fetched from the same GitHub
+repository; HTTPS substitutions are fetched by the example and submitted with bounded content and
+source provenance. Unsupported or unavailable definitions are reported as warnings and use the first
+useful HTTPS metadata link as a link-only source when one is available.
 
 The importer synchronizes `system` and `domain` as entity fields, and `providesApis` / `consumesApis` as first-class `Provides API` / `Consumes API` typed relations. Components and Systems are the relation source (`in`) endpoint and APIs are the target (`out`) endpoint; API entities expose the inverse provider and consumer views. It scans all supported entities first, materializes scalar data, then resolves references to Arch Register IDs in a second pass. References may use Backstage's `kind:namespace/name`, `namespace/name`, or `name` forms; the field supplies defaults for omitted kind and namespace.
 
@@ -31,6 +39,7 @@ Owner references are also passed through as Backstage strings; Arch Register res
    - `content.view` to read existing entities during repeat runs
    - `ent.edit` to create entities
    - `ent.external_update` to sync through the integration endpoint
+   - `artifact.manage` to register and refresh API specification sources
 3. Set up a GitHub token when scanning private repositories or when higher rate limits are needed.
 
 ## Setup
@@ -75,6 +84,12 @@ For example, a default-namespace component named `artist-web` uses `default/comp
 
 Each typed API relation uses the source entity key, relation kind, and target API key, for example `default/component/artist-web/typed-relations/provides-api/default/api/artist-api`.
 
+API specification sources use a provider-scoped key of the form
+`github:{organization}:{repository}:{catalog path}:{external entity key}:spec.definition`.
+The key is independent from Arch Register's internal IDs, so repeated scans update the same source;
+unchanged checksums do not create new revisions. A missing definition is marked stale only after a
+complete organization scan; partial GitHub failures never mark unseen sources stale.
+
 ## Field mapping
 
 Common fields map as follows:
@@ -96,6 +111,7 @@ Kind-specific scalar fields are mapped as follows:
 | Component | `spec.type` | `kind` |
 | Component | `backstage.io/techdocs-ref` | `technology` |
 | API | `spec.type` | `api_type` |
+| API | `spec.definition` | API specification source/revision |
 | Resource | `spec.type` | `kind` |
 
 ## Development

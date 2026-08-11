@@ -4,6 +4,13 @@ export interface GitHubRepo {
   defaultBranch: string;
 }
 
+export interface GitHubFile {
+  content: string;
+  path: string;
+  sha: string | null;
+  htmlUrl: string | null;
+}
+
 /**
  * Lists all repositories in a GitHub organization
  */
@@ -75,7 +82,36 @@ export const fetchCatalogInfo = async (
   repo: GitHubRepo,
   token?: string
 ): Promise<string | null> => {
-  const url = `https://api.github.com/repos/${repo.fullName}/contents/catalog-info.yaml?ref=${repo.defaultBranch}`;
+  const file = await fetchCatalogInfoFile(repo, token);
+  return file?.content ?? null;
+};
+
+export const fetchCatalogInfoFile = async (
+  repo: GitHubRepo,
+  token?: string
+): Promise<GitHubFile | null> => {
+  return fetchGitHubFile(repo, 'catalog-info.yaml', token);
+};
+
+/**
+ * Fetches a bounded text file from a repository's default branch.
+ * The returned SHA and HTML URL are retained as source provenance.
+ */
+export const fetchGitHubFile = async (
+  repo: GitHubRepo,
+  path: string,
+  token?: string
+): Promise<GitHubFile | null> => {
+  const normalizedPath = path
+    .split('/')
+    .filter(Boolean)
+    .map(part => part.trim())
+    .join('/');
+  if (!normalizedPath || normalizedPath.split('/').some(part => part === '.' || part === '..')) {
+    throw new Error('GitHub source path is invalid');
+  }
+  const encodedPath = normalizedPath.split('/').map(encodeURIComponent).join('/');
+  const url = `https://api.github.com/repos/${repo.fullName}/contents/${encodedPath}?ref=${encodeURIComponent(repo.defaultBranch)}`;
   const headers: Record<string, string> = {
     'Accept': 'application/vnd.github.v3+json',
     'User-Agent': 'backstage-catalog-sync'
@@ -105,15 +141,26 @@ export const fetchCatalogInfo = async (
     content?: string;
     encoding?: string;
     type?: string;
+    path?: string;
+    sha?: string;
+    html_url?: string;
   };
 
   if (data.type !== 'file' || !data.content || data.encoding !== 'base64') {
-    throw new Error(`Unexpected response format for catalog-info.yaml in ${repo.fullName}`);
+    throw new Error(`Unexpected response format for ${normalizedPath} in ${repo.fullName}`);
   }
 
   // Decode base64 content
   const content = Buffer.from(data.content, 'base64').toString('utf-8');
-  return content;
+  if (Buffer.byteLength(content, 'utf8') > 2_000_000) {
+    throw new Error(`GitHub source ${normalizedPath} exceeds the 2 MB limit`);
+  }
+  return {
+    content,
+    path: data.path ?? normalizedPath,
+    sha: data.sha ?? null,
+    htmlUrl: data.html_url ?? null
+  };
 };
 
 /**

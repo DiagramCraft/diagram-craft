@@ -35,11 +35,12 @@ export type ArtifactRevisionInput = {
   content: string;
 };
 
-const enqueueApiSpecificationUrlRefresh = async (
+export const enqueueApiSpecificationUrlRefresh = async (
   db: DatabaseAdapter,
   workspace: string,
   artifactId: string,
-  now: Date
+  now: Date,
+  requestId?: string
 ) =>
   enqueueOneOffJobRun(
     db,
@@ -47,7 +48,7 @@ const enqueueApiSpecificationUrlRefresh = async (
       workspace,
       jobType: API_SPECIFICATION_URL_REFRESH_JOB_TYPE,
       systemIdentity: API_SPECIFICATION_URL_REFRESH_SYSTEM_IDENTITY,
-      payload: { artifactId },
+      payload: { artifactId, ...(requestId ? { requestId } : {}) },
       priority: 5,
       maxAttempts: API_SPECIFICATION_URL_REFRESH_MAX_ATTEMPTS
     },
@@ -88,7 +89,10 @@ const requireArtifactWrite = (authCtx: AuthorizationContext, entity: EntityDbRes
   );
 };
 
-const assertEntityCapabilityForArtifact = (schema: SchemaDbResult, artifactType: ArtifactType) => {
+export const assertEntityCapabilityForArtifact = (
+  schema: SchemaDbResult,
+  artifactType: ArtifactType
+) => {
   const capability = (schema.entity_capabilities ?? []).find(item => item.type === artifactType);
   httpAssert.present(capability, {
     status: 409,
@@ -107,14 +111,8 @@ const assertEntityCapabilityForArtifact = (schema: SchemaDbResult, artifactType:
   return resolution;
 };
 
-const assertSafeSourceLocation = (kind: ArtifactSourceKind, location: string | null) => {
-  if (kind === 'document') {
-    httpAssert.true(location == null || location.length === 0, {
-      status: 400,
-      message: 'Document artifacts cannot contain a remote location'
-    });
-    return;
-  }
+export const assertSafeSourceLocation = (kind: ArtifactSourceKind, location: string | null) => {
+  if (kind === 'document' && (location == null || location.length === 0)) return;
 
   httpAssert.true(typeof location === 'string' && location.length > 0, {
     status: 400,
@@ -192,12 +190,14 @@ const toDiagnostic = (diagnostic: ArtifactDiagnosticDb | null) =>
       }
     : null;
 
-const toArtifact = (artifact: ArtifactDbResult) => ({
+export const toArtifact = (artifact: ArtifactDbResult) => ({
   id: artifact.id,
   workspace: artifact.workspace,
   entityId: artifact.entity_id,
   artifactType: artifact.artifact_type,
+  sourceKey: artifact.source_key ?? null,
   kind: artifact.kind,
+  refreshScheduleId: artifact.refresh_schedule_id ?? null,
   location: artifact.location,
   mediaType: artifact.media_type,
   status: artifact.status,
@@ -286,7 +286,9 @@ export const createArtifact = async (
       workspace,
       entity_id: entity.id,
       artifact_type: body.artifactType,
+      source_key: null,
       kind: body.kind,
+      refresh_schedule_id: null,
       location,
       media_type: body.mediaType ?? null,
       status: initialStatus(body.kind),
@@ -375,7 +377,7 @@ export const updateArtifact = async (
   );
 };
 
-export const ingestArtifactRevision = async (
+export const ingestArtifactRevisionInTransaction = async (
   db: DatabaseAdapter,
   workspace: string,
   entityId: string,
@@ -411,56 +413,60 @@ export const ingestArtifactRevision = async (
         });
   if (existing) {
     if (processing) {
-      await db.core.transaction(async tx => {
-        await processing.persist(tx, { workspace, revisionId: existing.id, timestamp });
-        await tx.artifact.updateArtifact(workspace, artifact.id, {
-          status: processing.status,
-          media_type: body.mediaType ?? artifact.media_type,
-          current_revision_id:
-            processing.status === 'current' ? existing.id : artifact.current_revision_id,
-          last_attempt_at: timestamp,
-          last_success_at: processing.status === 'current' ? timestamp : artifact.last_success_at,
-          diagnostic: processing.diagnostic,
-          updated_at: timestamp
-        });
+      await processing.persist(db, { workspace, revisionId: existing.id, timestamp });
+      await db.artifact.updateArtifact(workspace, artifact.id, {
+        status: processing.status,
+        media_type: body.mediaType ?? artifact.media_type,
+        current_revision_id:
+          processing.status === 'current' ? existing.id : artifact.current_revision_id,
+        last_attempt_at: timestamp,
+        last_success_at: processing.status === 'current' ? timestamp : artifact.last_success_at,
+        diagnostic: processing.diagnostic,
+        updated_at: timestamp
       });
     }
     return toRevision(existing);
   }
 
-  const revision = await db.core.transaction(async tx => {
-    const created = await tx.artifact.createRevision({
-      id: revisionId,
-      workspace,
-      artifact_id: artifact.id,
-      source_revision: body.sourceRevision ?? null,
-      checksum,
-      media_type: body.mediaType ?? artifact.media_type,
-      content: body.content,
-      created_at: timestamp
-    });
-    if (processing) {
-      await processing.persist(tx, { workspace, revisionId: created.id, timestamp });
-    }
-    await tx.artifact.updateArtifact(workspace, artifact.id, {
-      status: processing?.status ?? 'current',
-      media_type: body.mediaType ?? artifact.media_type,
-      current_revision_id:
-        processing?.status === 'current' || processing == null
-          ? created.id
-          : artifact.current_revision_id,
-      last_attempt_at: timestamp,
-      last_success_at:
-        processing == null || processing.status === 'current'
-          ? timestamp
-          : artifact.last_success_at,
-      diagnostic: processing?.diagnostic ?? null,
-      updated_at: timestamp
-    });
-    return created;
+  const created = await db.artifact.createRevision({
+    id: revisionId,
+    workspace,
+    artifact_id: artifact.id,
+    source_revision: body.sourceRevision ?? null,
+    checksum,
+    media_type: body.mediaType ?? artifact.media_type,
+    content: body.content,
+    created_at: timestamp
   });
-  return toRevision(revision);
+  if (processing) {
+    await processing.persist(db, { workspace, revisionId: created.id, timestamp });
+  }
+  await db.artifact.updateArtifact(workspace, artifact.id, {
+    status: processing?.status ?? 'current',
+    media_type: body.mediaType ?? artifact.media_type,
+    current_revision_id:
+      processing?.status === 'current' || processing == null
+        ? created.id
+        : artifact.current_revision_id,
+    last_attempt_at: timestamp,
+    last_success_at:
+      processing == null || processing.status === 'current' ? timestamp : artifact.last_success_at,
+    diagnostic: processing?.diagnostic ?? null,
+    updated_at: timestamp
+  });
+  return toRevision(created);
 };
+
+export const ingestArtifactRevision = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  entityId: string,
+  artifactId: string,
+  body: ArtifactRevisionInput
+) =>
+  db.core.transaction(tx =>
+    ingestArtifactRevisionInTransaction(tx, workspace, entityId, artifactId, body)
+  );
 
 export const createArtifactRevision = async (
   db: DatabaseAdapter,

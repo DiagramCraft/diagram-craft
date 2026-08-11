@@ -36,7 +36,8 @@ export const artifactDiagnosticCategorySchema = z
     'source_timeout',
     'source_too_large',
     'security_blocked',
-    'normalization_failed'
+    'normalization_failed',
+    'source_disappeared'
   ])
   .describe('Stable artifact processing diagnostic category');
 
@@ -51,7 +52,15 @@ export const artifactSchema = z.object({
   workspace: z.string().describe('Workspace identifier'),
   entityId: z.string().describe('Owning catalog entity identifier'),
   artifactType: artifactTypeSchema,
+  sourceKey: z
+    .string()
+    .nullable()
+    .describe('Stable provider-scoped source identity, when configured'),
   kind: artifactSourceKindSchema,
+  refreshScheduleId: z
+    .string()
+    .nullable()
+    .describe('Internal recurring refresh schedule identifier, when configured'),
   location: z.string().nullable().describe('Source location or null for submitted content'),
   mediaType: z.string().nullable().describe('Declared source media type'),
   status: artifactStatusSchema,
