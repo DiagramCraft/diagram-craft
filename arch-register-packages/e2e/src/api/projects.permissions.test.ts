@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
-import { hashPassword } from '@arch-register/server/utils/password';
 import { createTestORPCClient } from '../helpers/fixtures';
 import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
 import { PERMISSIONS_DESIGN_ONLY_ID } from '../helpers/testIds';
+import { createFixtureUser } from '@arch-register/server/db/testSupport/fixtures';
 
 const teamOnlyUserId = PERMISSIONS_DESIGN_ONLY_ID;
 const now = new Date('2026-02-03T00:00:00.000Z');
@@ -12,22 +12,15 @@ const test = createPermissionApiTest().extend<{
 }>({
   designOnlyAuth: [
     async ({ server, resources }, use) => {
-      const passwordHash = await hashPassword('DesignOnlyPassword123!');
-
-      await server.db.auth.createUser({
+      await createFixtureUser(server.db, {
         id: teamOnlyUserId,
         user_id: 'permissions-design-only',
         email: 'design-only@e2e.test',
         display_name: 'Design Only',
-        auth_provider: 'local',
-        password_hash: passwordHash,
-        oidc_issuer: null,
-        oidc_subject: null,
+        password: 'DesignOnlyPassword123!',
         is_active: true,
-        color: null,
         created_at: now,
-        updated_at: now,
-        last_login_at: null
+        updated_at: now
       });
 
       await server.db.workspace.replaceTeamAssignments(resources.workspaceId, [

@@ -1,11 +1,8 @@
 import type { DatabaseAdapter } from '@arch-register/server/db/database';
-import {
-  seedEntities,
-  seedIds,
-  seedRelationSchemas,
-  seedRelations,
-  seedWorkspaces
-} from '@arch-register/server/db/seedData';
+import { seedEntities } from '@arch-register/server/db/seedData/entities';
+import { seedRelationSchemas, seedRelations } from '@arch-register/server/db/seedData/relations';
+import { seedWorkspaces } from '@arch-register/server/db/seedData/workspace';
+import { seedIds } from '@arch-register/server/db/seedData/constants';
 import {
   seedAiConfiguration,
   seedCatalogDefinitions,

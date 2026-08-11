@@ -1,4 +1,5 @@
-import { seedEntities, seedRelations } from '@arch-register/server/db/seedData';
+import { seedEntities } from '@arch-register/server/db/seedData/entities';
+import { seedRelations } from '@arch-register/server/db/seedData/relations';
 import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
 import { seedIds } from '../helpers/seedHelper';
 

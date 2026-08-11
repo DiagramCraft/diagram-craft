@@ -1,6 +1,6 @@
 import { randomUUID } from 'node:crypto';
-import { hashPassword } from '@arch-register/server/utils/password';
 import { entityToBaseState } from '@arch-register/server/domain/catalog/entityMutations';
+import { createFixtureUser } from '@arch-register/server/db/testSupport/fixtures';
 import { createTestORPCClient } from '../helpers/fixtures';
 import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
 import { makeAuthHeader } from '../helpers/seedHelper';
@@ -16,20 +16,15 @@ const test = createPermissionApiTest().extend<{
   viewOnlyOrpc: [
     async ({ server, resources }, use) => {
       const now = new Date();
-      await server.db.auth.createUser({
+      await createFixtureUser(server.db, {
         id: VIEW_ONLY_USER_ID,
         user_id: 'entity-version-view-only',
         email: 'entity-version-view-only@e2e.test',
         display_name: 'Entity Version View Only',
-        auth_provider: 'local',
-        password_hash: await hashPassword(VIEW_ONLY_PASSWORD),
-        oidc_issuer: null,
-        oidc_subject: null,
+        password: VIEW_ONLY_PASSWORD,
         is_active: true,
-        color: null,
         created_at: now,
-        updated_at: now,
-        last_login_at: null
+        updated_at: now
       });
       await server.db.workspace.setWorkspaceMemberRole(
         resources.workspaceId,

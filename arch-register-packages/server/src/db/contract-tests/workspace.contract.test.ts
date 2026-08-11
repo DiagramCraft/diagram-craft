@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFixtureProject, createFixtureWorkspace } from './projectFixtures';
-import { createFixtureUser } from './authFixtures';
+import { createFixtureProject, createFixtureWorkspace } from '../testSupport/fixtures';
+import { createFixtureUser } from '../testSupport/fixtures';
 
 runContractSuiteAgainstBothDrivers('WorkspaceDatabase', getDb => {
   describe('workspace CRUD', () => {

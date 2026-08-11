@@ -1,4 +1,4 @@
-import { seedEntities } from '@arch-register/server/db/seedData';
+import { seedEntities } from '@arch-register/server/db/seedData/entities';
 import {
   seededEntities,
   seededSchemas,

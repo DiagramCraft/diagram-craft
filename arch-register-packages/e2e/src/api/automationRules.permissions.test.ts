@@ -2,6 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { createTestORPCClient } from '../helpers/fixtures';
 import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
 import { makeAuthHeader } from '../helpers/seedHelper';
+import { createFixtureUser } from '@arch-register/server/db/testSupport/fixtures';
 
 const test = createPermissionApiTest();
 
@@ -62,20 +63,15 @@ test('people-management role cannot read restricted automation-rule literals', a
   });
 
   const userId = randomUUID();
-  await server.db.auth.createUser({
+  await createFixtureUser(server.db, {
     id: userId,
     user_id: 'people-manager',
     email: 'people-manager@e2e.test',
     display_name: 'People Manager',
-    auth_provider: 'local',
     password_hash: null,
-    oidc_issuer: null,
-    oidc_subject: null,
     is_active: true,
-    color: null,
     created_at: now,
-    updated_at: now,
-    last_login_at: null
+    updated_at: now
   });
   const roleId = randomUUID();
   await server.db.workspace.createCustomWorkspaceRole({

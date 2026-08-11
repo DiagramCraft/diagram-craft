@@ -1,13 +1,10 @@
 import { describe, expect, it } from 'vitest';
-import {
-  seedAssessmentTypes,
-  seedAssessments,
-  seedEntities,
-  seedRelationSchemas,
-  seedRelations,
-  seedSchemas,
-  seedWorkspaceDashboards
-} from './seedData';
+import { seedEntities } from './seedData/entities';
+import { seedRelationSchemas, seedRelations } from './seedData/relations';
+import { seedAssessments } from './seedData/projects';
+import { seedSchemas } from './seedData/catalog';
+import { seedAssessmentTypes } from './seedData/workspace';
+import { seedWorkspaceDashboards } from './seedData/views';
 import { materializeDerivedFields } from '../domain/derived/derivedFields';
 
 describe('dashboard assessment seed data', () => {

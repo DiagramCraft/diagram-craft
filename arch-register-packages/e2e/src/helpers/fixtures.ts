@@ -15,7 +15,7 @@ interface Fixtures {
 type CreateApiTestOptions = {
   appOptions?: NonNullable<Parameters<typeof startTestServer>[0]>['appOptions'];
   afterSeed?: (server: TestServer) => Promise<void>;
-  seed?: 'minimal' | 'bootstrap' | ((db: DatabaseAdapter) => Promise<void>);
+  seed?: 'empty' | 'minimal' | 'bootstrap' | ((db: DatabaseAdapter) => Promise<void>);
 };
 
 export const createApiTest = (options: CreateApiTestOptions = {}) =>
@@ -24,7 +24,9 @@ export const createApiTest = (options: CreateApiTestOptions = {}) =>
       // biome-ignore lint/correctness/noEmptyPattern: ok
       async ({}, use) => {
         const server = await startTestServer({ appOptions: options.appOptions });
-        if (typeof options.seed === 'function') {
+        if (options.seed === 'empty') {
+          // Intentionally leave the isolated database empty for fixture-focused tests.
+        } else if (typeof options.seed === 'function') {
           await options.seed(server.db);
         } else if (options.seed === 'bootstrap') {
           await seedBootstrapData(server.db, createStorage());

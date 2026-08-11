@@ -6,9 +6,9 @@ import {
   createFixtureProject,
   createFixtureSchema,
   createFixtureWorkspace
-} from './projectFixtures';
-import { createFixtureUser } from './authFixtures';
-import { createFixtureCatalogEntity } from './catalogFixtures';
+} from '../testSupport/fixtures';
+import { createFixtureUser } from '../testSupport/fixtures';
+import { createFixtureEntity } from '../testSupport/fixtures';
 
 runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
   describe('schemas', () => {
@@ -165,13 +165,13 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const schemaId = await createFixtureSchema(db, workspace);
       const otherSchemaId = await createFixtureSchema(db, workspace);
 
-      const entity1 = await createFixtureCatalogEntity(db, workspace, schemaId, {
+      const entity1 = await createFixtureEntity(db, workspace, schemaId, {
         data: { old_field: 'a', other: 1 }
       });
-      const entity2 = await createFixtureCatalogEntity(db, workspace, schemaId, {
+      const entity2 = await createFixtureEntity(db, workspace, schemaId, {
         data: { other: 2 }
       });
-      const entityOtherSchema = await createFixtureCatalogEntity(db, workspace, otherSchemaId, {
+      const entityOtherSchema = await createFixtureEntity(db, workspace, otherSchemaId, {
         data: { old_field: 'should-not-change' }
       });
 
@@ -198,10 +198,10 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const workspace = await createFixtureWorkspace(db);
       const schemaId = await createFixtureSchema(db, workspace);
 
-      const entity1 = await createFixtureCatalogEntity(db, workspace, schemaId, {
+      const entity1 = await createFixtureEntity(db, workspace, schemaId, {
         data: { doomed: 'x', keep: 1 }
       });
-      const entity2 = await createFixtureCatalogEntity(db, workspace, schemaId, {
+      const entity2 = await createFixtureEntity(db, workspace, schemaId, {
         data: { keep: 2 }
       });
 
@@ -254,7 +254,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
 
-      const created = await createFixtureCatalogEntity(db, workspace, schema, {
+      const created = await createFixtureEntity(db, workspace, schema, {
         tags: ['a', 'b'],
         data: { team: 'payments' }
       });
@@ -277,7 +277,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const created = await createFixtureCatalogEntity(db, workspace, schema);
+      const created = await createFixtureEntity(db, workspace, schema);
 
       const updated = await db.catalog.updateEntity(workspace, created.id, {
         slug: created.slug,
@@ -306,7 +306,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const created = await createFixtureCatalogEntity(db, workspace, schema);
+      const created = await createFixtureEntity(db, workspace, schema);
 
       const deleted = await db.catalog.deleteEntity(workspace, created.id);
       expect(deleted!.id).toBe(created.id);
@@ -321,9 +321,9 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const schemaB = await createFixtureSchema(db, workspace);
 
       for (let i = 0; i < 5; i++) {
-        await createFixtureCatalogEntity(db, workspace, schemaA, { name: `A-entity-${i}` });
+        await createFixtureEntity(db, workspace, schemaA, { name: `A-entity-${i}` });
       }
-      await createFixtureCatalogEntity(db, workspace, schemaB, { name: 'B-entity' });
+      await createFixtureEntity(db, workspace, schemaB, { name: 'B-entity' });
 
       const firstPage = await db.catalog.listEntitiesPaginated(
         workspace,
@@ -374,7 +374,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
     const schema = await createFixtureSchema(db, workspace);
-    await createFixtureCatalogEntity(db, workspace, schema, { name: 'Test Entity' });
+    await createFixtureEntity(db, workspace, schema, { name: 'Test Entity' });
 
     // Test various prototype properties - should not cause SQL errors
     const prototypeProps = ['toString', 'constructor', '__proto__', 'hasOwnProperty', 'valueOf'];
@@ -394,8 +394,8 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
     const schema = await createFixtureSchema(db, workspace);
-    await createFixtureCatalogEntity(db, workspace, schema, { name: 'Match' });
-    await createFixtureCatalogEntity(db, workspace, schema, { name: 'NoMatch' });
+    await createFixtureEntity(db, workspace, schema, { name: 'Match' });
+    await createFixtureEntity(db, workspace, schema, { name: 'NoMatch' });
 
     // Mix valid filter with prototype property - should only apply valid filter
     const result = await db.catalog.listEntitiesPaginated(
@@ -417,15 +417,15 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
     const schema = await createFixtureSchema(db, workspace);
-    await createFixtureCatalogEntity(db, workspace, schema, {
+    await createFixtureEntity(db, workspace, schema, {
       name: 'React entity',
       tags: ['react', 'frontend']
     });
-    await createFixtureCatalogEntity(db, workspace, schema, {
+    await createFixtureEntity(db, workspace, schema, {
       name: 'Vue entity',
       tags: ['vue', 'frontend']
     });
-    await createFixtureCatalogEntity(db, workspace, schema, { name: 'Untagged entity', tags: [] });
+    await createFixtureEntity(db, workspace, schema, { name: 'Untagged entity', tags: [] });
 
     const equalsResult = await db.catalog.listEntitiesPaginated(
       workspace,
@@ -469,8 +469,8 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
       const project = (await createFixtureProject(db, workspace)).id;
-      await createFixtureCatalogEntity(db, workspace, schema, { name: 'Global entity' });
-      await createFixtureCatalogEntity(db, workspace, schema, {
+      await createFixtureEntity(db, workspace, schema, { name: 'Global entity' });
+      await createFixtureEntity(db, workspace, schema, {
         name: 'Project-exclusive entity',
         project_id: project
       });
@@ -489,17 +489,17 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const schema = await createFixtureSchema(db, workspace);
       const project = (await createFixtureProject(db, workspace)).id;
       const otherProject = (await createFixtureProject(db, workspace)).id;
-      const globalEntity = await createFixtureCatalogEntity(db, workspace, schema, {
+      const globalEntity = await createFixtureEntity(db, workspace, schema, {
         name: 'Global entity'
       });
-      const exclusiveEntity = await createFixtureCatalogEntity(db, workspace, schema, {
+      const exclusiveEntity = await createFixtureEntity(db, workspace, schema, {
         name: 'Project-exclusive entity',
         project_id: project
       });
-      const linkedEntity = await createFixtureCatalogEntity(db, workspace, schema, {
+      const linkedEntity = await createFixtureEntity(db, workspace, schema, {
         name: 'Linked entity'
       });
-      await createFixtureCatalogEntity(db, workspace, schema, {
+      await createFixtureEntity(db, workspace, schema, {
         name: 'Other project entity',
         project_id: otherProject
       });
@@ -536,7 +536,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entity = await createFixtureEntity(db, workspace, schema);
       const user = await createFixtureUser(db);
 
       const first = await db.catalog.replaceEntityGrants(workspace, entity.id, [
@@ -564,7 +564,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entity = await createFixtureEntity(db, workspace, schema);
       const user = await createFixtureUser(db);
 
       await db.catalog.createPinnedEntity({
@@ -594,7 +594,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entity = await createFixtureEntity(db, workspace, schema);
       const user = await createFixtureUser(db);
 
       const ids: string[] = [];
@@ -625,8 +625,8 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entityWithHistory = await createFixtureCatalogEntity(db, workspace, schema);
-      const entityFutureOnly = await createFixtureCatalogEntity(db, workspace, schema);
+      const entityWithHistory = await createFixtureEntity(db, workspace, schema);
+      const entityFutureOnly = await createFixtureEntity(db, workspace, schema);
       const project = await createFixtureProject(db, workspace);
       const user = await createFixtureUser(db);
 
@@ -675,7 +675,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entity = await createFixtureEntity(db, workspace, schema);
       const project = await createFixtureProject(db, workspace);
       const user = await createFixtureUser(db);
 
@@ -725,7 +725,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entity = await createFixtureEntity(db, workspace, schema);
       const project = await createFixtureProject(db, workspace);
       const user = await createFixtureUser(db);
       const milestone = await db.project.createMilestone({
@@ -782,7 +782,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entity = await createFixtureEntity(db, workspace, schema);
       const now = new Date();
 
       await db.entityChange.createApproval({
@@ -827,9 +827,9 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
-      const inEntity = await createFixtureCatalogEntity(db, workspace, schema);
-      const outEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entity = await createFixtureEntity(db, workspace, schema);
+      const inEntity = await createFixtureEntity(db, workspace, schema);
+      const outEntity = await createFixtureEntity(db, workspace, schema);
       const project = await createFixtureProject(db, workspace);
       const user = await createFixtureUser(db);
       const now = new Date();
@@ -902,7 +902,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entity = await createFixtureEntity(db, workspace, schema);
       const project = await createFixtureProject(db, workspace);
       const user = await createFixtureUser(db);
 
@@ -933,9 +933,9 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
-      const inEntity = await createFixtureCatalogEntity(db, workspace, schema);
-      const outEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entity = await createFixtureEntity(db, workspace, schema);
+      const inEntity = await createFixtureEntity(db, workspace, schema);
+      const outEntity = await createFixtureEntity(db, workspace, schema);
       const now = new Date();
 
       const relationSchemaId = randomUUID();
@@ -1000,9 +1000,9 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
-      const inEntity = await createFixtureCatalogEntity(db, workspace, schema);
-      const outEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entity = await createFixtureEntity(db, workspace, schema);
+      const inEntity = await createFixtureEntity(db, workspace, schema);
+      const outEntity = await createFixtureEntity(db, workspace, schema);
       const now = new Date();
 
       const relationSchemaId = randomUUID();
@@ -1065,8 +1065,8 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const inEntity = await createFixtureCatalogEntity(db, workspace, schema);
-      const outEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const inEntity = await createFixtureEntity(db, workspace, schema);
+      const outEntity = await createFixtureEntity(db, workspace, schema);
       const project = await createFixtureProject(db, workspace);
       const user = await createFixtureUser(db);
       const now = new Date();
@@ -1132,7 +1132,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entity = await createFixtureEntity(db, workspace, schema);
       const project = await createFixtureProject(db, workspace);
       const user = await createFixtureUser(db);
       const now = new Date();
@@ -1179,8 +1179,8 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
 
   describe('relation version history', () => {
     const setupRelation = async (db: DatabaseAdapter, workspace: string, schema: string) => {
-      const inEntity = await createFixtureCatalogEntity(db, workspace, schema);
-      const outEntity = await createFixtureCatalogEntity(db, workspace, schema);
+      const inEntity = await createFixtureEntity(db, workspace, schema);
+      const outEntity = await createFixtureEntity(db, workspace, schema);
       const now = new Date();
       const relationSchemaId = randomUUID();
       await db.relation.createRelationSchema({
@@ -1216,7 +1216,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entity = await createFixtureEntity(db, workspace, schema);
       const { relation } = await setupRelation(db, workspace, schema);
       const now = new Date();
 
@@ -1253,7 +1253,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entity = await createFixtureEntity(db, workspace, schema);
       const { relation } = await setupRelation(db, workspace, schema);
       const project = await createFixtureProject(db, workspace);
       const user = await createFixtureUser(db);
@@ -1396,7 +1396,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const schema = await createFixtureSchema(db, workspace);
-      const entity = await createFixtureCatalogEntity(db, workspace, schema);
+      const entity = await createFixtureEntity(db, workspace, schema);
       const firstUser = await createFixtureUser(db);
       const secondUser = await createFixtureUser(db);
       const now = new Date();

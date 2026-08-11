@@ -5,7 +5,7 @@ import {
   createFixtureEntity,
   createFixtureSchema,
   createFixtureWorkspace
-} from './projectFixtures';
+} from '../testSupport/fixtures';
 
 runContractSuiteAgainstBothDrivers('ArtifactDatabase', getDb => {
   describe('typed artifacts and revisions', () => {
