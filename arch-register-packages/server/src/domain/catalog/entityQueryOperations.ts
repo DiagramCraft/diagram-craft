@@ -31,8 +31,8 @@ import { reconstructEntitiesAsOf } from './entitySnapshotReconstruction';
 import type { EntityDbResult, EntityQueryDbResult, SchemaDbResult } from './db/catalogDatabase';
 import type { RelationSchemaDbResult } from './db/relationDatabase';
 import {
-  compileEntityQueryIR,
-  compileEntityQueryCountIR,
+  compileEntityQueryPair,
+  type EntityQueryCompilationPair,
   UnsupportedEntityQueryIRError
 } from './entityQueryIRCompiler';
 import { validateEntityQueryIR, type SchemaCatalog } from './entityQueryIRValidator';
@@ -207,8 +207,8 @@ const withQueryProjections = (
   Object.keys(projections).length > 0 ? { ...entity, _projections: projections } : entity;
 
 type EntityQueryCompilation = {
-  rowQuery: ReturnType<typeof compileEntityQueryIR>;
-  countQuery: ReturnType<typeof compileEntityQueryCountIR>;
+  rowQuery: EntityQueryCompilationPair['rowQuery'];
+  countQuery: EntityQueryCompilationPair['countQuery'];
   schemaCatalog: SchemaCatalog;
   historicalSchemas: Awaited<ReturnType<typeof resolveEntitySchemaCatalogAt>> | null;
 };
@@ -262,7 +262,7 @@ const compileEntityQueries = async (
   };
 
   try {
-    const rowQuery = compileEntityQueryIR(
+    const { rowQuery, countQuery } = compileEntityQueryPair(
       query,
       schemaCatalog,
       db.core.driver,
@@ -272,15 +272,6 @@ const compileEntityQueries = async (
         limit: pagination.limit ?? undefined,
         offset: pagination.offset
       },
-      authCtx,
-      relationSchemaCatalog
-    );
-    const countQuery = compileEntityQueryCountIR(
-      query,
-      schemaCatalog,
-      db.core.driver,
-      workspace,
-      scopeOptions,
       authCtx,
       relationSchemaCatalog
     );
@@ -1009,21 +1000,12 @@ const compileRelationQueries = async (
     relationSchemasForPolicy
   );
   try {
-    const rowQuery = compileEntityQueryIR(
+    const { rowQuery, countQuery } = compileEntityQueryPair(
       query,
       schemaCatalog,
       db.core.driver,
       workspace,
       { relationVisibility, limit: limit ?? undefined, offset },
-      authCtx,
-      relationSchemaCatalog
-    );
-    const countQuery = compileEntityQueryCountIR(
-      query,
-      schemaCatalog,
-      db.core.driver,
-      workspace,
-      { relationVisibility },
       authCtx,
       relationSchemaCatalog
     );

@@ -5,17 +5,22 @@ import {
   type PathStep,
   type QueryNode
 } from '@arch-register/api-types/entityQueryIR';
-import type { SchemaField, TypedRelationField } from '@arch-register/api-types/schemaContract';
+import {
+  isReferenceOrContainmentField,
+  type SchemaField,
+  type TypedRelationField
+} from '@arch-register/api-types/schemaContract';
 import type {
   EntityRelationField,
   RelationField
 } from '@arch-register/api-types/relationSchemaContract';
 import { ASSESSMENT_FIELD_PREFIX } from '@arch-register/api-types/assessmentFilter';
 import {
-  isReferenceOrContainmentField,
+  relationFieldById,
+  schemaFieldById,
   type RelationSchemaCatalog,
   type SchemaCatalog
-} from './entityQueryIRValidator';
+} from './entityQueryIRResolution';
 import type { WorkspaceEnumDbResult } from './db/catalogDatabase';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
@@ -288,7 +293,7 @@ const resolveField = (
   ).filter(schema => !isFieldViewRestricted(authCtx, schema, fieldId));
 
   const matches = candidateSchemas
-    .map(schema => schema.fields.find(f => f.id === fieldId))
+    .map(schema => schemaFieldById(schema, fieldId))
     .filter((f): f is SchemaField => f != null);
 
   if (matches.length === 0) {
@@ -328,15 +333,14 @@ const resolveField = (
       );
     }
     const ownerSchemaIds = candidateSchemas
-      .filter(schema =>
-        schema.fields.some(
-          candidate =>
-            candidate.id === fieldId &&
-            candidate.type === 'typedRelation' &&
-            candidate.relationSchemaId === field.relationSchemaId &&
-            candidate.direction === field.direction
-        )
-      )
+      .filter(schema => {
+        const candidate = schemaFieldById(schema, fieldId);
+        return (
+          candidate?.type === 'typedRelation' &&
+          candidate.relationSchemaId === field.relationSchemaId &&
+          candidate.direction === field.direction
+        );
+      })
       .map(schema => schema.id);
     return {
       kind: 'typedRelation',
@@ -380,7 +384,7 @@ const resolveRelationField = (
   authCtx: WorkspaceAuthorizationContext | null
 ): FieldResolution => {
   const relationSchema = relationSchemas.get(relationSchemaId);
-  const field = relationSchema?.fields.find(candidate => candidate.id === fieldId);
+  const field = relationFieldById(relationSchema, fieldId);
   if (!relationSchema) {
     throw new TextCompileError(`Unknown relation schema '${relationSchemaId}'`, offset);
   }
@@ -428,7 +432,7 @@ const resolveBackwardStep = (
     }
     if (relationSchemaId) {
       const relationSchema = relationSchemas.get(relationSchemaId)!;
-      const field = relationSchema.fields.find(f => f.id === fieldId);
+      const field = relationFieldById(relationSchema, fieldId);
       if (
         field?.type !== 'entityRelation' ||
         isFieldViewRestricted(authCtx, relationSchema, fieldId)
@@ -450,7 +454,7 @@ const resolveBackwardStep = (
       throw new TextCompileError(`Unknown schema '${explicitSchemaRef}'`, offset);
     }
     const owner = schemas.get(entitySchemaId)!;
-    const field = owner.fields.find(f => f.id === fieldId);
+    const field = schemaFieldById(owner, fieldId);
     if (
       !field ||
       !isReferenceOrContainmentField(field) ||
@@ -471,13 +475,13 @@ const resolveBackwardStep = (
   }
 
   const entityCandidates = [...schemas.values()].filter(schema => {
-    const field = schema.fields.find(f => f.id === fieldId);
+    const field = schemaFieldById(schema, fieldId);
     if (!field || !isReferenceOrContainmentField(field)) return false;
     if (isFieldViewRestricted(authCtx, schema, fieldId)) return false;
     return currentSchemaId ? field.schemaId === currentSchemaId : true;
   });
   const relationCandidates = [...relationSchemas.values()].filter(schema => {
-    const field = schema.fields.find(f => f.id === fieldId);
+    const field = relationFieldById(schema, fieldId);
     if (field?.type !== 'entityRelation') return false;
     if (isFieldViewRestricted(authCtx, schema, fieldId)) return false;
     return currentSchemaId ? field.schemaId === currentSchemaId : true;
@@ -500,7 +504,7 @@ const resolveBackwardStep = (
     return { kind: 'backward', ownerSchemaId: entityCandidates[0]!.id };
   }
   const relationSchema = relationCandidates[0]!;
-  const field = relationSchema.fields.find(f => f.id === fieldId) as EntityRelationField;
+  const field = relationFieldById(relationSchema, fieldId) as EntityRelationField;
   return { kind: 'relationBackward', relationSchemaId: relationSchema.id, field };
 };
 
@@ -817,7 +821,7 @@ const parseStep = (
       fieldId,
       resolution: {
         kind: 'relation',
-        field: schemas.get(ownerSchemaId)!.fields.find(f => f.id === fieldId) as Extract<
+        field: schemaFieldById(schemas.get(ownerSchemaId), fieldId) as Extract<
           SchemaField,
           { type: 'reference' | 'containment' }
         >
@@ -1259,7 +1263,7 @@ const fieldTypeAt = (
   schemas: SchemaCatalog
 ): SchemaField['type'] | undefined => {
   if (!schemaId) return undefined;
-  return schemas.get(schemaId)?.fields.find(f => f.id === fieldId)?.type;
+  return schemaFieldById(schemas.get(schemaId), fieldId)?.type;
 };
 
 const relationFieldTypeAt = (
@@ -1268,7 +1272,7 @@ const relationFieldTypeAt = (
   relationSchemas: RelationSchemaCatalog
 ): RelationField['type'] | undefined => {
   if (!relationSchemaId) return undefined;
-  return relationSchemas.get(relationSchemaId)?.fields.find(f => f.id === fieldId)?.type;
+  return relationFieldById(relationSchemas.get(relationSchemaId), fieldId)?.type;
 };
 
 const printValueLiteral = (
@@ -1329,7 +1333,7 @@ const printPathSteps = (
   let relationSchemaId = startRelationSchemaId;
   const parts = steps.map(step => {
     if (step.kind === 'forward') {
-      const field = schemas.get(schemaId ?? '')?.fields.find(f => f.id === step.fieldId);
+      const field = schemaFieldById(schemas.get(schemaId ?? ''), step.fieldId);
       if (field && isReferenceOrContainmentField(field)) schemaId = field.schemaId;
       relationSchemaId = undefined;
       const filterText = step.filter
@@ -1358,7 +1362,7 @@ const printPathSteps = (
     }
     if (step.kind === 'relationForward') {
       const relationSchema = relationSchemaId ? relationSchemas.get(relationSchemaId) : undefined;
-      const field = relationSchema?.fields.find(f => f.id === step.fieldId);
+      const field = relationFieldById(relationSchema, step.fieldId);
       schemaId = field && field.type === 'entityRelation' ? field.schemaId : undefined;
       relationSchemaId = undefined;
       const filterText = step.filter

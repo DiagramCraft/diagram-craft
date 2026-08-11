@@ -9,158 +9,53 @@ import {
   type ReferenceField,
   type SchemaField
 } from '@arch-register/api-types/schemaContract';
-import type { RelationField as RelationScalarField } from '@arch-register/api-types/relationSchemaContract';
 import {
   ASSESSMENT_PRESENCE_FIELD_ID,
   ASSESSMENT_FIELD_PREFIX
 } from '@arch-register/api-types/assessmentFilter';
-import type { SchemaDbResult } from './db/catalogDatabase';
-import type { RelationSchemaDbResult } from './db/relationDatabase';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 
-export type SchemaCatalog = Map<string, SchemaDbResult>;
-export type RelationSchemaCatalog = Map<string, RelationSchemaDbResult>;
+import {
+  ENTITY_PSEUDO_FIELD_IDS,
+  RELATION_PSEUDO_FIELD_IDS,
+  kindAfterPath,
+  kindAfterStep,
+  relationFieldById,
+  resolveEntityQueryRootKind,
+  resolveFieldSchemaScope,
+  resolveRelationFieldSchemaScope,
+  resolveTypedRelationOwnerSchemaScope,
+  schemaFieldById,
+  type RelationSchemaCatalog,
+  type SchemaCatalog
+} from './entityQueryIRResolution';
+
+export type {
+  FieldSchemaScope,
+  RelationSchemaCatalog,
+  SchemaCatalog,
+  TypedRelationOwnerSchemaScope
+} from './entityQueryIRResolution';
+export {
+  kindAfterPath,
+  kindAfterStep,
+  resolveFieldSchemaScope,
+  resolveRelationFieldSchemaScope,
+  resolveTypedRelationOwnerSchemaScope
+} from './entityQueryIRResolution';
 
 export type ValidationError = { path: (string | number)[]; message: string };
 
 export type ValidationResult = { ok: true } | { ok: false; errors: ValidationError[] };
-
-// Underscore pseudo-fields matched against the entity row itself, never against schema `fields`.
-const PSEUDO_FIELD_IDS = new Set([
-  '_id',
-  '_schemaId',
-  '_lifecycle',
-  '_owner',
-  '_name',
-  '_slug',
-  '_description',
-  '_namespace',
-  '_completeness',
-  '_updatedAt',
-  '_tags',
-  '_assessment'
-]);
-
-// Underscore pseudo-fields matched against a relation row itself, under a relation-rooted query.
-// Deliberately a much smaller set than the entity one: relations have no slug/namespace/name/
-// lifecycle/tags/description/completeness/owner.
-const RELATION_PSEUDO_FIELD_IDS = new Set([
-  '_id',
-  '_schemaId',
-  '_inEntityId',
-  '_outEntityId',
-  '_createdAt',
-  '_updatedAt'
-]);
-
-// Which schema ids actually grant unrestricted access to a field id, and whether at least one
-// schema in the catalog restricts it. A field id can be defined by multiple schemas (e.g. two
-// unrelated schemas both use `salary`); resolution at the parse/validate layer intentionally
-// collapses this to "is the field id known at all" (matching `isKnownFieldId`'s pre-#2592
-// behavior), but the compiler needs the full granting set to scope compiled SQL to only the rows
-// whose schema actually grants the field — see entityQueryIRCompiler.ts's `schemaScopeClause`.
-export type FieldSchemaScope = { grantedSchemaIds: Set<string>; needsScoping: boolean };
-
-export type TypedRelationOwnerSchemaScope = {
-  matchingSchemaIds: Set<string>;
-  grantedSchemaIds: Set<string>;
-};
-
-export const resolveFieldSchemaScope = (
-  fieldId: string,
-  schemas: SchemaCatalog,
-  authCtx: WorkspaceAuthorizationContext | null
-): FieldSchemaScope => {
-  const grantedSchemaIds = new Set<string>();
-  let needsScoping = false;
-  for (const schema of schemas.values()) {
-    if (!schema.fields.some(f => f.id === fieldId)) continue;
-    if (isFieldViewRestricted(authCtx, schema, fieldId)) needsScoping = true;
-    else grantedSchemaIds.add(schema.id);
-  }
-  return { grantedSchemaIds, needsScoping };
-};
-
-// Relation-schema counterpart to resolveFieldSchemaScope, for relation-rooted queries (#2701) — a
-// relation field id can likewise be defined by multiple relation schemas.
-export const resolveRelationFieldSchemaScope = (
-  fieldId: string,
-  relationSchemas: RelationSchemaCatalog,
-  authCtx: WorkspaceAuthorizationContext | null
-): FieldSchemaScope => {
-  const grantedSchemaIds = new Set<string>();
-  let needsScoping = false;
-  for (const schema of relationSchemas.values()) {
-    if (!schema.fields.some(f => f.id === fieldId)) continue;
-    if (isFieldViewRestricted(authCtx, schema, fieldId)) needsScoping = true;
-    else grantedSchemaIds.add(schema.id);
-  }
-  return { grantedSchemaIds, needsScoping };
-};
-
-export const resolveTypedRelationOwnerSchemaScope = (
-  fieldId: string,
-  relationSchemaId: string,
-  direction: 'in' | 'out',
-  schemas: SchemaCatalog,
-  authCtx: WorkspaceAuthorizationContext | null,
-  currentSchemaId?: string
-): TypedRelationOwnerSchemaScope => {
-  const candidateSchemas = currentSchemaId
-    ? [schemas.get(currentSchemaId)].filter((schema): schema is SchemaDbResult => schema != null)
-    : [...schemas.values()];
-  const matchingSchemaIds = new Set<string>();
-  const grantedSchemaIds = new Set<string>();
-
-  for (const schema of candidateSchemas) {
-    const field = schema.fields.find(
-      candidate =>
-        candidate.id === fieldId &&
-        candidate.type === 'typedRelation' &&
-        candidate.relationSchemaId === relationSchemaId &&
-        candidate.direction === direction
-    );
-    if (!field) continue;
-    matchingSchemaIds.add(schema.id);
-    if (!isFieldViewRestricted(authCtx, schema, field.id)) grantedSchemaIds.add(schema.id);
-  }
-
-  return { matchingSchemaIds, grantedSchemaIds };
-};
 
 const isKnownFieldId = (
   fieldId: string,
   schemas: SchemaCatalog,
   authCtx: WorkspaceAuthorizationContext | null
 ): boolean => {
-  if (PSEUDO_FIELD_IDS.has(fieldId) || fieldId.startsWith('_assessment:')) return true;
+  if (ENTITY_PSEUDO_FIELD_IDS.has(fieldId) || fieldId.startsWith('_assessment:')) return true;
   return resolveFieldSchemaScope(fieldId, schemas, authCtx).grantedSchemaIds.size > 0;
-};
-
-// Resolves the root catalog-record kind a query addresses. When `schemaId` is set, it's looked up
-// against both schema registries (they occupy disjoint id spaces) and that lookup wins; the
-// explicit `root_kind` field is only consulted for the schema-less "browse everything" case, and
-// otherwise only checked for consistency against the schema-derived kind.
-const resolveRootKind = (
-  query: EntityQuery,
-  schemas: SchemaCatalog,
-  relationSchemas: RelationSchemaCatalog,
-  errors: ValidationError[]
-): 'entity' | 'relation' => {
-  let resolvedFromSchema: 'entity' | 'relation' | undefined;
-  if (query.schemaId) {
-    if (schemas.has(query.schemaId)) resolvedFromSchema = 'entity';
-    else if (relationSchemas.has(query.schemaId)) resolvedFromSchema = 'relation';
-    else errors.push({ path: ['schemaId'], message: `Unknown schemaId '${query.schemaId}'` });
-  }
-  if (resolvedFromSchema && query.root_kind && query.root_kind !== resolvedFromSchema) {
-    errors.push({
-      path: ['root_kind'],
-      message: `root_kind '${query.root_kind}' does not match schemaId '${query.schemaId}', which resolves to '${resolvedFromSchema}'`
-    });
-  }
-  return resolvedFromSchema ?? query.root_kind ?? 'entity';
 };
 
 const isKnownRelationFieldId = (
@@ -171,7 +66,7 @@ const isKnownRelationFieldId = (
   if (RELATION_PSEUDO_FIELD_IDS.has(fieldId)) return true;
   for (const schema of relationSchemas.values()) {
     if (
-      schema.fields.some(f => f.id === fieldId) &&
+      relationFieldById(schema, fieldId) != null &&
       !isFieldViewRestricted(authCtx, schema, fieldId)
     ) {
       return true;
@@ -180,20 +75,13 @@ const isKnownRelationFieldId = (
   return false;
 };
 
-const relationFieldById = (
-  relationSchemaId: string,
-  fieldId: string,
-  relationSchemas: RelationSchemaCatalog
-): RelationScalarField | undefined =>
-  relationSchemas.get(relationSchemaId)?.fields.find(f => f.id === fieldId);
-
 const isKnownEntityRelationFieldId = (
   fieldId: string,
   relationSchemas: RelationSchemaCatalog,
   authCtx: WorkspaceAuthorizationContext | null
 ): boolean => {
   for (const schema of relationSchemas.values()) {
-    const field = schema.fields.find(f => f.id === fieldId);
+    const field = relationFieldById(schema, fieldId);
     if (
       field &&
       field.type === 'entityRelation' &&
@@ -204,33 +92,6 @@ const isKnownEntityRelationFieldId = (
   }
   return false;
 };
-
-// What kind of row a path step leaves the traversal on, given the kind it started from. `forward`
-// is the only step whose landing kind depends on its starting kind (it operates however the
-// current position was already typed); every other step kind has a fixed landing kind. Exported
-// for the compiler, which needs the same "what kind does this path land on" resolution to pick
-// entity- vs relation-shaped SQL for a predicate/projection terminal (entityQueryIRCompiler.ts).
-export const kindAfterStep = (
-  step: PathStep,
-  currentKind: 'entity' | 'relation'
-): 'entity' | 'relation' => {
-  switch (step.kind) {
-    case 'forward':
-      return currentKind;
-    case 'backward':
-    case 'endpoint':
-    case 'typedRelation':
-    case 'relationForward':
-      return 'entity';
-    case 'relationBackward':
-      return 'relation';
-  }
-};
-
-export const kindAfterPath = (
-  steps: PathStep[],
-  startKind: 'entity' | 'relation'
-): 'entity' | 'relation' => steps.reduce((kind, step) => kindAfterStep(step, kind), startKind);
 
 /**
  * Validates a query node scoped to a relation instance — either the root of a relation-rooted
@@ -345,7 +206,7 @@ const validateRelationNode = (
         }
         return hopsAfterPath;
       }
-      const field = relationFieldById(relationSchemaId, node.fieldId, relationSchemas);
+      const field = relationFieldById(relationSchemas.get(relationSchemaId), node.fieldId);
       const relationSchema = relationSchemas.get(relationSchemaId);
       if (!relationSchema) {
         errors.push({
@@ -431,7 +292,7 @@ const validatePathSteps = (
           message: `Unknown relation schema '${step.relationSchemaId}'`
         });
       } else {
-        const field = relationSchema.fields.find(f => f.id === step.fieldId);
+        const field = relationFieldById(relationSchema, step.fieldId);
         if (
           field?.type !== 'entityRelation' ||
           isFieldViewRestricted(authCtx, relationSchema, step.fieldId)
@@ -462,7 +323,7 @@ const validatePathSteps = (
           message: `Unknown ownerSchemaId '${step.ownerSchemaId}'`
         });
       } else {
-        const field = ownerSchema.fields.find(f => f.id === step.fieldId);
+        const field = schemaFieldById(ownerSchema, step.fieldId);
         if (
           !field ||
           !isReferenceOrContainmentField(field) ||
@@ -499,19 +360,18 @@ const validatePathSteps = (
 
       for (const ownerSchemaId of uniqueOwnerSchemaIds) {
         const ownerSchema = schemas.get(ownerSchemaId);
-        const ownerField = ownerSchema?.fields.find(
-          field =>
-            field.id === step.fieldId &&
-            field.type === 'typedRelation' &&
-            field.relationSchemaId === step.relationSchemaId &&
-            field.direction === step.direction
-        );
+        const ownerField = schemaFieldById(ownerSchema, step.fieldId);
         if (!ownerSchema) {
           errors.push({
             path: [...stepPath, 'ownerSchemaIds'],
             message: `Unknown owner schema '${ownerSchemaId}'`
           });
-        } else if (!ownerField || isFieldViewRestricted(authCtx, ownerSchema, ownerField.id)) {
+        } else if (
+          ownerField?.type !== 'typedRelation' ||
+          ownerField.relationSchemaId !== step.relationSchemaId ||
+          ownerField.direction !== step.direction ||
+          isFieldViewRestricted(authCtx, ownerSchema, ownerField.id)
+        ) {
           errors.push({
             path: [...stepPath, 'ownerSchemaIds'],
             message: `Owner schema '${ownerSchemaId}' does not grant a viewable typed-relation field '${step.fieldId}'`
@@ -667,8 +527,8 @@ const validateNode = (
       } else if (!isKnownFieldId(node.fieldId, schemas, authCtx)) {
         errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
       } else if (
-        [...schemas.values()].some(schema =>
-          schema.fields.some(field => field.id === node.fieldId && field.type === 'typedRelation')
+        [...schemas.values()].some(
+          schema => schemaFieldById(schema, node.fieldId)?.type === 'typedRelation'
         )
       ) {
         errors.push({
@@ -763,7 +623,24 @@ export const validateEntityQueryIR = (
   relationSchemas: RelationSchemaCatalog = new Map()
 ): ValidationResult => {
   const errors: ValidationError[] = [];
-  const rootKind = resolveRootKind(query, schemas, relationSchemas, errors);
+  const rootResolution = resolveEntityQueryRootKind(query, schemas, relationSchemas);
+  if (rootResolution.unknownSchemaId) {
+    errors.push({
+      path: ['schemaId'],
+      message: `Unknown schemaId '${rootResolution.unknownSchemaId}'`
+    });
+  }
+  if (
+    rootResolution.resolvedFromSchema &&
+    query.root_kind &&
+    query.root_kind !== rootResolution.resolvedFromSchema
+  ) {
+    errors.push({
+      path: ['root_kind'],
+      message: `root_kind '${query.root_kind}' does not match schemaId '${query.schemaId}', which resolves to '${rootResolution.resolvedFromSchema}'`
+    });
+  }
+  const rootKind = rootResolution.rootKind;
   const rootUsesAssessmentField =
     nodeUsesAssessmentField(query.root) ||
     (query.projections ?? []).some(p => projectionUsesAssessmentField(p.fieldId, p.path));
@@ -863,9 +740,8 @@ export const validateEntityQueryIR = (
     } else if (
       relationProjectionStep &&
       (!relationFieldById(
-        relationProjectionStep.relationSchemaId,
-        projection.fieldId,
-        relationSchemas
+        relationSchemas.get(relationProjectionStep.relationSchemaId),
+        projection.fieldId
       ) ||
         isFieldViewRestricted(
           authCtx,
@@ -887,10 +763,8 @@ export const validateEntityQueryIR = (
       });
     } else if (
       projection.source !== 'relation' &&
-      [...schemas.values()].some(schema =>
-        schema.fields.some(
-          field => field.id === projection.fieldId && field.type === 'typedRelation'
-        )
+      [...schemas.values()].some(
+        schema => schemaFieldById(schema, projection.fieldId)?.type === 'typedRelation'
       )
     ) {
       errors.push({
