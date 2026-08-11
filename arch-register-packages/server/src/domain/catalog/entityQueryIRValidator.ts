@@ -27,8 +27,10 @@ import {
   resolveRelationFieldSchemaScope,
   resolveTypedRelationOwnerSchemaScope,
   schemaFieldById,
+  type FieldSchemaScope,
   type RelationSchemaCatalog,
-  type SchemaCatalog
+  type SchemaCatalog,
+  type TypedRelationOwnerSchemaScope
 } from './entityQueryIRResolution';
 
 export type {
@@ -36,14 +38,14 @@ export type {
   RelationSchemaCatalog,
   SchemaCatalog,
   TypedRelationOwnerSchemaScope
-} from './entityQueryIRResolution';
+};
 export {
   kindAfterPath,
   kindAfterStep,
   resolveFieldSchemaScope,
   resolveRelationFieldSchemaScope,
   resolveTypedRelationOwnerSchemaScope
-} from './entityQueryIRResolution';
+};
 
 export type ValidationError = { path: (string | number)[]; message: string };
 

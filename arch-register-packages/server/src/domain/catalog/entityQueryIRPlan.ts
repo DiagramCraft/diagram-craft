@@ -1,8 +1,4 @@
-import type {
-  EntityQuery,
-  PathStep,
-  QueryNode
-} from '@arch-register/api-types/entityQueryIR';
+import type { EntityQuery, PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import {
@@ -46,15 +42,10 @@ export type EntityQuerySemanticPlan = {
 
 export const entityQueryPathKey = (path: PathStep[]): string => JSON.stringify(path);
 
-export const entityQueryPathStartsWith = (
-  path: PathStep[],
-  prefix: PathStep[]
-): boolean => prefix.every((step, index) => JSON.stringify(path[index]) === JSON.stringify(step));
+export const entityQueryPathStartsWith = (path: PathStep[], prefix: PathStep[]): boolean =>
+  prefix.every((step, index) => JSON.stringify(path[index]) === JSON.stringify(step));
 
-export const collectRootPathOccurrences = (
-  node: QueryNode,
-  occurrences: PathStep[][]
-): void => {
+export const collectRootPathOccurrences = (node: QueryNode, occurrences: PathStep[][]): void => {
   switch (node.kind) {
     case 'and':
     case 'or':

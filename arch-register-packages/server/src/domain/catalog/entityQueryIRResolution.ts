@@ -170,10 +170,7 @@ export const resolveEndpointSchemaIds = <T>(
   schemas: ReadonlyMap<string, T>
 ): Iterable<string> => (schemaIds === 'any' ? schemas.keys() : (schemaIds ?? []));
 
-export const kindAfterStep = (
-  step: PathStep,
-  currentKind: QueryRootKind
-): QueryRootKind => {
+export const kindAfterStep = (step: PathStep, currentKind: QueryRootKind): QueryRootKind => {
   switch (step.kind) {
     case 'forward':
       return currentKind;
@@ -187,9 +184,7 @@ export const kindAfterStep = (
   }
 };
 
-export const kindAfterPath = (
-  steps: PathStep[],
-  startKind: QueryRootKind
-): QueryRootKind => steps.reduce((kind, step) => kindAfterStep(step, kind), startKind);
+export const kindAfterPath = (steps: PathStep[], startKind: QueryRootKind): QueryRootKind =>
+  steps.reduce((kind, step) => kindAfterStep(step, kind), startKind);
 
 export { isReferenceOrContainmentField };

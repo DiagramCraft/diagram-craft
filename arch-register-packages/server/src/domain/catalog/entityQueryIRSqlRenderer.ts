@@ -56,8 +56,6 @@ import {
 } from './entityQueryIRDialect';
 import { UnsupportedEntityQueryIRError } from './entityQueryIRErrors';
 
-export type { EntityQueryDialect } from './entityQueryIRDialect';
-
 export type CompiledEntityQuery = { sql: string; params: unknown[] };
 
 export type CompiledEntityQueryOptions = {
@@ -81,8 +79,6 @@ export type CompiledEntityQueryOptions = {
 // builtin column below — it is no longer a case this error covers. `_assessment`/
 // `_assessment:<fieldId>` are likewise fully SQL-native, backed by the normalized, entity_id-keyed
 // `assessment_response` table.
-export { UnsupportedEntityQueryIRError } from './entityQueryIRErrors';
-
 // Every alias (root and every hop) is drawn from this CTE rather than the raw `entity` table, so
 // there is exactly one place that defines "which entities/rows are in scope for this query" —
 // workspace, soft-delete, and (later) project-scoping or asOf point-in-time reconstruction all
@@ -1185,8 +1181,9 @@ const projectionBindingFor = (
   const exact = state.bindingByPath.get(entityQueryPathKey(projection.path));
   if (exact) return exact;
   return (
-    state.projectionBindings.find(binding => entityQueryPathStartsWith(binding.path, projection.path)) ??
-    null
+    state.projectionBindings.find(binding =>
+      entityQueryPathStartsWith(binding.path, projection.path)
+    ) ?? null
   );
 };
 
@@ -2016,9 +2013,7 @@ const renderEntityQueryRows = (fragments: EntityQueryFragments): CompiledEntityQ
   return { sql, params: state.params };
 };
 
-const renderEntityQueryCount = (
-  fragments: EntityQueryFragments
-): CompiledEntityQuery => {
+const renderEntityQueryCount = (fragments: EntityQueryFragments): CompiledEntityQuery => {
   const { rootKind, state, withClause, whereParts } = fragments;
   const sql =
     rootKind === 'relation'
@@ -2056,13 +2051,7 @@ export const compileEntityQueryIR = (
   authCtx: WorkspaceAuthorizationContext | null = null,
   relationSchemas: RelationSchemaCatalog = new Map()
 ): CompiledEntityQuery => {
-  const prepared = buildEntityQueryPlanInputs(
-    query,
-    schemas,
-    relationSchemas,
-    options,
-    authCtx
-  );
+  const prepared = buildEntityQueryPlanInputs(query, schemas, relationSchemas, options, authCtx);
   return renderEntityQueryRows(
     buildQueryFragments(
       query,
@@ -2090,13 +2079,7 @@ export const compileEntityQueryCountIR = (
   authCtx: WorkspaceAuthorizationContext | null = null,
   relationSchemas: RelationSchemaCatalog = new Map()
 ): CompiledEntityQuery => {
-  const prepared = buildEntityQueryPlanInputs(
-    query,
-    schemas,
-    relationSchemas,
-    options,
-    authCtx
-  );
+  const prepared = buildEntityQueryPlanInputs(query, schemas, relationSchemas, options, authCtx);
   return renderEntityQueryCount(
     buildQueryFragments(
       query,
@@ -2130,13 +2113,7 @@ export const compileEntityQueryPair = (
   authCtx: WorkspaceAuthorizationContext | null = null,
   relationSchemas: RelationSchemaCatalog = new Map()
 ): EntityQueryCompilationPair => {
-  const prepared = buildEntityQueryPlanInputs(
-    query,
-    schemas,
-    relationSchemas,
-    options,
-    authCtx
-  );
+  const prepared = buildEntityQueryPlanInputs(query, schemas, relationSchemas, options, authCtx);
   const rowFragments = buildQueryFragments(
     query,
     schemas,

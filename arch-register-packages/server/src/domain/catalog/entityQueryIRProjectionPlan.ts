@@ -1,4 +1,8 @@
-import type { EntityQuery, PathStep, ProjectionField } from '@arch-register/api-types/entityQueryIR';
+import type {
+  EntityQuery,
+  PathStep,
+  ProjectionField
+} from '@arch-register/api-types/entityQueryIR';
 import type { RelationSchemaCatalog, SchemaCatalog } from './entityQueryIRResolution';
 import {
   collectRootPathOccurrences,
@@ -73,7 +77,8 @@ export const buildEntityQueryProjectionPlan = (
         `Projection '${effectiveProjectionAlias(projection)}' is ambiguous because its multi-valued relation path is constrained by multiple independent predicates`
       );
     }
-    if (candidates.length === 0) pathsToBind.set(entityQueryPathKey(projection.path), projection.path);
+    if (candidates.length === 0)
+      pathsToBind.set(entityQueryPathKey(projection.path), projection.path);
   }
 
   const bindings = [...pathsToBind.values()].map((path, index) => ({
