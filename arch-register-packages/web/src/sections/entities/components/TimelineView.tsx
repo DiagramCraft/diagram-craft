@@ -10,8 +10,10 @@ import {
   buildContainmentParentNames,
   collectTimelineDates,
   getDatedTimelineRows,
+  getUndatedTimelineRows,
   groupTimelineRows
 } from './timelineViewState';
+import { buildTimelineHorizonBands, collectTimelineEventDates } from './timelineRoadmapState';
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import type { EntityRecord, TimelineViewData } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -87,12 +89,13 @@ export const TimelineView = ({
       getTimelineConfigDefaults(dateFields)
     );
   }, [config, dateFields]);
-  const isSnapshotMode = cfg.groupBy === 'snapshot' || cfg.groupBy === 'project';
+  const isEventMode =
+    cfg.groupBy === 'snapshot' || cfg.groupBy === 'project' || cfg.groupBy === 'capability';
   const timelineEntityIds = useMemo(
-    () => (isSnapshotMode ? rows.map(entity => entity._uid) : []),
-    [isSnapshotMode, rows]
+    () => (isEventMode ? rows.map(entity => entity._uid) : []),
+    [isEventMode, rows]
   );
-  const { data: timelineData } = useEntityTimeline(workspaceId, timelineEntityIds, isSnapshotMode);
+  const { data: timelineData } = useEntityTimeline(workspaceId, timelineEntityIds, isEventMode);
 
   const [activeEntityId, setActiveEntityId] = useState<string | null>(null);
   const [timelineScrollLeft, setTimelineScrollLeft] = useState(0);
@@ -144,7 +147,7 @@ export const TimelineView = ({
     typeFilter,
     ownerFilter,
     statusFilter,
-    enabled: cfg.groupBy === 'containment'
+    enabled: cfg.groupBy === 'containment' || cfg.groupBy === 'capability'
   });
   const parentNameByUid = useMemo(
     () => buildContainmentParentNames(treeNodes, treeEdges),
@@ -157,13 +160,31 @@ export const TimelineView = ({
     return groupTimelineRows(datedRows, cfg.groupBy, schemaMap, parentNameByUid);
   }, [datedRows, cfg.groupBy, schemaMap, parentNameByUid]);
 
+  const undatedRows = useMemo(
+    () => (cfg.groupBy === 'capability' ? getUndatedTimelineRows(rows, datedRows) : []),
+    [cfg.groupBy, datedRows, rows]
+  );
+  const undatedGroups = useMemo(
+    () =>
+      cfg.groupBy === 'capability'
+        ? groupTimelineRows(undatedRows, 'capability', schemaMap, parentNameByUid)
+        : [],
+    [cfg.groupBy, parentNameByUid, schemaMap, undatedRows]
+  );
+
   // Date range + columns
   const { rangeStart, rangeEnd, columns, totalWidth } = useMemo(() => {
-    const sourceRows = cfg.groupBy === 'snapshot' || cfg.groupBy === 'project' ? rows : datedRows;
-    const fallbackDates =
-      cfg.groupBy === 'snapshot' || cfg.groupBy === 'project'
-        ? [new Date(TODAY.getFullYear() - 1, 0, 1), new Date(TODAY.getFullYear() + 1, 11, 31)]
-        : [];
+    const sourceRows = isEventMode ? rows : datedRows;
+    const fallbackDates = isEventMode
+      ? [new Date(TODAY.getFullYear() - 1, 0, 1), new Date(TODAY.getFullYear() + 1, 11, 31)]
+      : [];
+    const eventDates = isEventMode
+      ? collectTimelineEventDates(
+          timelineData as Record<string, TimelineViewData>,
+          milestones,
+          projects
+        )
+      : [];
     return buildTimelineRange({
       dates: collectTimelineDates(
         sourceRows,
@@ -171,13 +192,24 @@ export const TimelineView = ({
         cfg.endFieldId,
         getDateValue,
         fallbackDates
-      ),
+      ).concat(eventDates),
       zoom: cfg.zoom,
       columnWidths: TL_COL_W,
       today: TODAY,
       fallbackDates
     });
-  }, [datedRows, rows, cfg.startFieldId, cfg.endFieldId, cfg.zoom, cfg.groupBy, TODAY]);
+  }, [
+    datedRows,
+    rows,
+    cfg.startFieldId,
+    cfg.endFieldId,
+    cfg.zoom,
+    isEventMode,
+    TODAY,
+    timelineData,
+    milestones,
+    projects
+  ]);
 
   const todayPx = useMemo(
     () => getTodayTimelinePx(TODAY, rangeStart, rangeEnd, totalWidth),
@@ -185,14 +217,22 @@ export const TimelineView = ({
   );
 
   const milestoneMarkers = useMemo(() => {
-    if (cfg.groupBy !== 'snapshot' && cfg.groupBy !== 'project') return [];
+    if (!isEventMode) return [];
     return [...milestonesById.values()]
       .map(milestone => ({
         milestone,
         px: stringDateToTimelinePx(milestone.target_date, rangeStart, rangeEnd, totalWidth)
       }))
       .filter((m): m is { milestone: Milestone; px: number } => m.px !== null);
-  }, [cfg.groupBy, milestonesById, rangeStart, rangeEnd, totalWidth]);
+  }, [isEventMode, milestonesById, rangeStart, rangeEnd, totalWidth]);
+
+  const horizonBands = useMemo(
+    () =>
+      cfg.showHorizonBands
+        ? buildTimelineHorizonBands({ today: TODAY, rangeStart, rangeEnd, totalWidth })
+        : [],
+    [TODAY, cfg.showHorizonBands, rangeEnd, rangeStart, totalWidth]
+  );
 
   const visibleMilestoneMarkers = useMemo(
     () => milestoneMarkers.filter(({ px }) => px > timelineScrollLeft + 1),
@@ -206,9 +246,9 @@ export const TimelineView = ({
   const activeEntity = useMemo(
     () =>
       activeEntityId
-        ? ((isSnapshotMode ? rows : datedRows).find(e => e._uid === activeEntityId) ?? null)
+        ? ((isEventMode ? rows : datedRows).find(e => e._uid === activeEntityId) ?? null)
         : null,
-    [activeEntityId, datedRows, rows, isSnapshotMode]
+    [activeEntityId, datedRows, rows, isEventMode]
   );
 
   const updateCfg = useCallback(
@@ -253,8 +293,9 @@ export const TimelineView = ({
       .map(project => ({ project, entities: entitiesByProject.get(project.id) ?? [] }))
       .filter(group => group.entities.length > 0);
   }, [cfg.groupBy, projects, rows, timelineData]);
-  const isEmpty = isSnapshotMode ? rows.length === 0 : datedRows.length === 0;
-  const totalDated = isSnapshotMode ? rows.length : datedRows.length;
+  const isEmpty = isEventMode ? rows.length === 0 : datedRows.length === 0;
+  const totalDated =
+    cfg.groupBy === 'capability' ? datedRows.length : isEventMode ? rows.length : datedRows.length;
 
   const handleEntityPanelToggle = useCallback((entityId: string) => {
     setActiveEntityId(previous => (previous === entityId ? null : entityId));
@@ -269,18 +310,16 @@ export const TimelineView = ({
           dateFields={dateFields}
           totalDated={totalDated}
           totalRows={rows.length}
-          isSnapshotMode={isSnapshotMode}
+          isEventMode={isEventMode}
         />
       )}
 
       {isEmpty ? (
         <EmptyState
           icon={<TbCalendarWeek size={26} />}
-          title={
-            isSnapshotMode ? 'No entities in this view' : 'No entities with dates in this view'
-          }
+          title={isEventMode ? 'No entities in this view' : 'No entities with dates in this view'}
           subtitle={
-            isSnapshotMode
+            isEventMode
               ? 'Add entities to see their snapshot history and planned project changes.'
               : 'Select a date field above, or add dates to entities.'
           }
@@ -291,6 +330,8 @@ export const TimelineView = ({
           rows={rows}
           datedRows={datedRows}
           groups={groups}
+          undatedRows={undatedRows}
+          undatedGroups={undatedGroups}
           projectEntityGroups={projectEntityGroups as TimelineProjectEntityGroup[]}
           timelineData={timelineData as Record<string, TimelineViewData>}
           projects={projects}
@@ -305,6 +346,7 @@ export const TimelineView = ({
           visibleTodayPx={visibleTodayPx}
           visibleMilestoneMarkers={visibleMilestoneMarkers}
           milestoneMarkers={milestoneMarkers}
+          horizonBands={horizonBands}
           today={TODAY}
           linkedEntityIds={linkedEntityIds}
           linkedEntityIdSet={linkedEntityIdSet}

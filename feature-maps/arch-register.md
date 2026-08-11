@@ -230,8 +230,11 @@
 
         - @id:ar.entity-views.timeline Users can inspect date-driven entity history and planned change context in a
           condensed Entity + Project timeline, grouping rows by owner, type, or containment parent, with configurable
-          project lanes, milestone guides, and autosave snapshot visibility. When grouped by Project + Entity, a
-          project with both a start and target date set shows a gantt bar spanning that range in its group header.
+          project lanes, milestone guides, autosave snapshot visibility, and continuous Historical, Now, Next, and
+          Later horizon bands. The Capability + Entity + Project strategic roadmap mode aggregates accessible
+          project-linked workspace entities, keeps owners visible, and places undated entities in a separate section.
+          When grouped by Project + Entity, a project with both a start and target date set shows a gantt bar spanning
+          that range in its group header.
 
         - @id:ar.entity-views.diff Users can pick a future date and view a workspace-wide diff of what changes by
           then — entities added, removed, or changed, with all applicable planned changes across projects applied,

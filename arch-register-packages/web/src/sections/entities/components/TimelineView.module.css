@@ -99,6 +99,56 @@
   border-bottom: 1px solid var(--panel-border);
 }
 
+.horizonRow {
+  display: flex;
+  height: 24px;
+  position: sticky;
+  top: 28px;
+  z-index: 3;
+  background: var(--base-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.horizonTrack {
+  position: relative;
+  flex-shrink: 0;
+  background: var(--base-bg);
+}
+
+.horizonBand {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  border-right: 1px solid color-mix(in oklch, var(--panel-border) 75%, transparent);
+  font-size: 9px;
+  font-family: var(--font-mono);
+  text-transform: uppercase;
+  letter-spacing: 0.3px;
+  color: var(--base-fg-dim);
+  overflow: hidden;
+  white-space: nowrap;
+}
+
+.horizonBand[data-horizon="historical"] {
+  background: color-mix(in oklch, var(--base-fg-more-dim) 7%, var(--base-bg));
+}
+
+.horizonBand[data-horizon="now"] {
+  background: color-mix(in oklch, var(--accent-fg) 14%, var(--base-bg));
+  color: var(--accent-fg);
+}
+
+.horizonBand[data-horizon="next"] {
+  background: color-mix(in oklch, var(--accent-fg) 8%, var(--base-bg));
+}
+
+.horizonBand[data-horizon="later"] {
+  background: color-mix(in oklch, var(--base-fg-more-dim) 4%, var(--base-bg));
+}
+
 /* Sticky label column — shared by header and all data rows */
 .labelCol {
   width: 252px;
@@ -229,11 +279,47 @@
   min-width: 0;
 }
 
+.entityOwner {
+  max-width: 86px;
+  flex-shrink: 1;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--base-fg-more-dim);
+  font-size: 9px;
+}
+
 /* Bar track */
 .barCell {
   flex: 1;
   position: relative;
   overflow: visible;
+}
+
+.horizonFill {
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  pointer-events: none;
+  border-right: 1px solid color-mix(in oklch, var(--panel-border) 45%, transparent);
+  opacity: 0.7;
+  z-index: 0;
+}
+
+.horizonFill[data-horizon="historical"] {
+  background: color-mix(in oklch, var(--base-fg-more-dim) 5%, transparent);
+}
+
+.horizonFill[data-horizon="now"] {
+  background: color-mix(in oklch, var(--accent-fg) 9%, transparent);
+}
+
+.horizonFill[data-horizon="next"] {
+  background: color-mix(in oklch, var(--accent-fg) 5%, transparent);
+}
+
+.horizonFill[data-horizon="later"] {
+  background: color-mix(in oklch, var(--base-fg-more-dim) 3%, transparent);
 }
 
 /* Timeline bar */
@@ -343,6 +429,7 @@
 }
 
 .milestoneLaneTrack {
+  position: relative;
   flex-shrink: 0;
 }
 
@@ -384,6 +471,17 @@
   border: 1px solid color-mix(in oklch, var(--warn, orange) 35%, transparent);
   pointer-events: auto;
   z-index: 5;
+}
+
+.undatedSection {
+  border-top: 1px solid var(--panel-border);
+}
+
+.undatedHeader {
+  display: flex;
+  height: 28px;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
 }
 
 /* Milestone line */

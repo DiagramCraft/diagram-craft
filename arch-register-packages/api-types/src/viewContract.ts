@@ -60,7 +60,7 @@ export const timelineViewConfigSchema = z.object({
   startFieldId: z.string().nullable().describe('Field identifier for timeline start date'),
   endFieldId: z.string().nullable().describe('Field identifier for timeline end date'),
   groupBy: z
-    .enum(['owner', 'type', 'snapshot', 'project', 'containment'])
+    .enum(['owner', 'type', 'snapshot', 'project', 'containment', 'capability'])
     .describe('Timeline grouping mode'),
   zoom: z.enum(['month', 'quarter', 'year']).describe('Timeline zoom level'),
   showProjectLanes: z
@@ -68,7 +68,11 @@ export const timelineViewConfigSchema = z.object({
     .optional()
     .describe('Whether Entity + Project renders separate project lanes'),
   showMilestones: z.boolean().optional().describe('Whether timeline milestone guides are visible'),
-  showAutosaves: z.boolean().optional().describe('Whether autosave snapshots are visible')
+  showAutosaves: z.boolean().optional().describe('Whether autosave snapshots are visible'),
+  showHorizonBands: z
+    .boolean()
+    .optional()
+    .describe('Whether Historical, Now, Next, and Later horizon bands are visible')
 });
 
 export const matrixViewConfigSchema = z.object({

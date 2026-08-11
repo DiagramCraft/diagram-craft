@@ -1,4 +1,4 @@
-import { TbBriefcase2, TbFlag, TbGitCommit } from 'react-icons/tb';
+import { TbBriefcase2, TbCalendarWeek, TbFlag, TbGitCommit } from 'react-icons/tb';
 import styles from './TimelineView.module.css';
 import { FilterDropdown } from '../../../components/FilterDropdown';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -13,14 +13,14 @@ export const TimelineConfigBar = ({
   dateFields,
   totalDated,
   totalRows,
-  isSnapshotMode
+  isEventMode
 }: {
   cfg: TimelineConfig;
   onChange: (update: Partial<TimelineConfig>) => void;
   dateFields: FieldOption[];
   totalDated: number;
   totalRows: number;
-  isSnapshotMode: boolean;
+  isEventMode: boolean;
 }) => (
   <div className={styles.configBar}>
     <span className={styles.configMeta}>Date mapping</span>
@@ -58,7 +58,8 @@ export const TimelineConfigBar = ({
         { value: 'type', label: 'By type' },
         { value: 'containment', label: 'By parent' },
         { value: 'project', label: 'Project + Entity' },
-        { value: 'snapshot', label: 'Entity + Project' }
+        { value: 'snapshot', label: 'Entity + Project' },
+        { value: 'capability', label: 'Capability + Entity + Project' }
       ]}
     />
 
@@ -78,10 +79,10 @@ export const TimelineConfigBar = ({
       ))}
     </div>
 
-    {isSnapshotMode && (
+    {isEventMode && (
       <>
         <div className={styles.configSep} />
-        {cfg.groupBy === 'snapshot' && (
+        {(cfg.groupBy === 'snapshot' || cfg.groupBy === 'capability') && (
           <Button
             size="sm"
             variant={cfg.showProjectLanes ? 'primary' : 'secondary'}
@@ -112,6 +113,17 @@ export const TimelineConfigBar = ({
         />
       </>
     )}
+
+    <div className={styles.configSep} />
+    <Button
+      size="sm"
+      variant={cfg.showHorizonBands ? 'primary' : 'secondary'}
+      icon={<TbCalendarWeek size={13} />}
+      title={cfg.showHorizonBands ? 'Hide horizon bands' : 'Show horizon bands'}
+      aria-label={cfg.showHorizonBands ? 'Hide horizon bands' : 'Show horizon bands'}
+      aria-pressed={cfg.showHorizonBands}
+      onClick={() => onChange({ showHorizonBands: !cfg.showHorizonBands })}
+    />
 
     <div style={{ flex: 1 }} />
 
