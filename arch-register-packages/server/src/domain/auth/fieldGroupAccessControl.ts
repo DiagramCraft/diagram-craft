@@ -3,7 +3,7 @@ import {
   type WorkspaceAuthorizationContext,
   type FieldGroupAccess
 } from '@arch-register/permissions';
-import type { SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
+import { schemaFieldInputSchema, type SchemaGroup } from '@arch-register/api-types/schemaContract';
 import { httpAssert } from '../../utils/httpAssert';
 import { getDerivedFieldIdsWithUnresolvedGroups } from '../derived/derivedFields';
 
@@ -34,13 +34,16 @@ const groupAccessByFieldId = (
 };
 
 const unresolvedDerivedFieldIds = (schema: FieldGroupSchemaShape): Set<string> => {
-  try {
-    return getDerivedFieldIdsWithUnresolvedGroups(
-      schema.fields as unknown as SchemaField[],
-      (schema.groups ?? []) as SchemaGroup[]
-    );
-  } catch {
+  const parsedFields = schemaFieldInputSchema.array().safeParse(schema.fields);
+  if (!parsedFields.success) {
     // A malformed legacy derived definition must not make an external serializer fail open.
+    return new Set(schema.fields.filter(field => field.type === 'derived').map(field => field.id));
+  }
+
+  try {
+    return getDerivedFieldIdsWithUnresolvedGroups(parsedFields.data, schema.groups ?? []);
+  } catch {
+    // A malformed derived expression must not make an external serializer fail open.
     return new Set(schema.fields.filter(field => field.type === 'derived').map(field => field.id));
   }
 };

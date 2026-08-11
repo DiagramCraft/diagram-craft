@@ -10,7 +10,52 @@ import {
   resolveWorkspaceRoleDefinitions
 } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
+import type {
+  EntityDbResult,
+  EntityGrantDbResult,
+  SchemaDbResult
+} from '../catalog/db/catalogDatabase';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
+
+const toPermissionEntity = (entity: EntityDbResult): Entity => ({
+  id: entity.id,
+  workspace: entity.workspace,
+  slug: entity.slug,
+  namespace: entity.namespace,
+  name: entity.name,
+  description: entity.description,
+  owner: entity.owner,
+  lifecycle: entity.lifecycle,
+  tags: entity.tags,
+  links: entity.links,
+  schema_id: entity.schema_id,
+  data: entity.data,
+  created_at: entity.created_at,
+  updated_at: entity.updated_at
+});
+
+const toPermissionSchema = (schema: SchemaDbResult): EntitySchema => ({
+  id: schema.id,
+  workspace: schema.workspace,
+  name: schema.name,
+  fields: schema.fields,
+  color: schema.color,
+  icon: schema.icon,
+  default_owner: schema.default_owner,
+  created_at: schema.created_at,
+  updated_at: schema.updated_at
+});
+
+const toPermissionEntityGrant = (grant: EntityGrantDbResult): EntityGrant => ({
+  id: grant.id,
+  workspace: grant.workspace,
+  entity_id: grant.entity_id,
+  principal_type: grant.principal_type,
+  principal_id: grant.principal_id,
+  role: grant.role,
+  applies_to: grant.applies_to,
+  created_at: grant.created_at
+});
 
 /**
  * Server-side data provider that fetches permission data from the database
@@ -19,15 +64,18 @@ export class ServerDataProvider implements PermissionDataProvider {
   constructor(private db: DatabaseAdapter) {}
 
   async getEntities(workspaceId: string): Promise<Entity[]> {
-    return listAllCatalogEntities(this.db, workspaceId);
+    const entities = await listAllCatalogEntities(this.db, workspaceId);
+    return entities.map(toPermissionEntity);
   }
 
   async getSchemas(workspaceId: string): Promise<EntitySchema[]> {
-    return this.db.catalog.listSchemas(workspaceId) as unknown as EntitySchema[];
+    const schemas = await this.db.catalog.listSchemas(workspaceId);
+    return schemas.map(toPermissionSchema);
   }
 
   async getEntityGrants(workspaceId: string): Promise<EntityGrant[]> {
-    return this.db.catalog.listEntityGrants(workspaceId);
+    const grants = await this.db.catalog.listEntityGrants(workspaceId);
+    return grants.map(toPermissionEntityGrant);
   }
 
   async getTeamAssignments(workspaceId: string, userId: string): Promise<TeamAssignment[]> {

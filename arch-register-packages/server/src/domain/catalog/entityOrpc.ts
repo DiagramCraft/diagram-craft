@@ -5,7 +5,7 @@ import type { AuthenticatedEvent } from '../../middleware/auth';
 import { createOrpcHandler } from '../../utils/orpcHandler';
 import { entityScoped, orpcErrorMiddleware, workspaceScoped } from '../../utils/orpcErrors';
 import { httpAssert } from '../../utils/httpAssert';
-import { buildEntityGrantInputs } from './dataHelpers';
+import { buildEntityGrantInputs, parseEntityMutationPayload } from './dataHelpers';
 import { logAudit } from '../audit/db/auditLogging';
 import { importParse, importCommit } from './importOperations';
 import {
@@ -24,9 +24,9 @@ import {
 } from './entityRelationshipOperations';
 import { getEntityJsonProjection } from './entityProjectionOperations';
 import {
-  createEntity,
-  bulkCreateEntities,
-  updateEntity,
+  createEntityWithPayload,
+  bulkCreateEntitiesWithPayloads,
+  updateEntityWithPayload,
   cloneEntity,
   deleteEntity
 } from './entityMutationOperations';
@@ -159,10 +159,10 @@ const entityHandlers = {
   create: entityRouter.entities.create.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
     const auditUser = context.event.context.user;
-    return await createEntity(
+    return await createEntityWithPayload(
       context.db,
       workspace,
-      input.body as Record<string, unknown>,
+      parseEntityMutationPayload(input.body),
       authCtx,
       { id: auditUser.id, displayName: auditUser.display_name }
     );
@@ -171,10 +171,10 @@ const entityHandlers = {
   bulkCreate: entityRouter.entities.bulkCreate.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
     const auditUser = context.event.context.user;
-    return await bulkCreateEntities(
+    return await bulkCreateEntitiesWithPayloads(
       context.db,
       workspace,
-      input.body.entities as Record<string, unknown>[],
+      input.body.entities.map(parseEntityMutationPayload),
       authCtx,
       { id: auditUser.id, displayName: auditUser.display_name }
     );
@@ -183,11 +183,11 @@ const entityHandlers = {
   update: entityRouter.entities.update.handler(async ({ input, context }) => {
     const { workspace, authCtx } = context;
     const auditUser = context.event.context.user;
-    return await updateEntity(
+    return await updateEntityWithPayload(
       context.db,
       workspace,
       input.params.id,
-      input.body as Record<string, unknown>,
+      parseEntityMutationPayload(input.body),
       authCtx,
       { id: auditUser.id, displayName: auditUser.display_name }
     );

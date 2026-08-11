@@ -176,7 +176,7 @@ export const buildDerivedPlan = (
 
 const groupAccessBoundary = (
   field: { groupId?: string },
-  groups: SchemaGroup[]
+  groups: ReadonlyArray<Pick<SchemaGroup, 'id' | 'accessControl'>>
 ): GroupAccessBoundary => {
   if (field.groupId == null) return { kind: 'unrestricted' };
   const group = groups.find(candidate => candidate.id === field.groupId);
@@ -221,7 +221,7 @@ const collectTransitiveDependencies = (
  */
 export const getDerivedFieldIdsWithUnresolvedGroups = (
   fields: Array<SchemaField | AssessmentField>,
-  groups: SchemaGroup[] = []
+  groups: ReadonlyArray<Pick<SchemaGroup, 'id' | 'accessControl'>> = []
 ): Set<string> => {
   const plan = buildDerivedPlan(fields, 'entity');
   const fieldById = new Map(fields.map(field => [field.id, field]));

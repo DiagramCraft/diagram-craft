@@ -7,7 +7,8 @@ import { entityScoped, orpcErrorMiddleware, workspaceScoped } from '../../utils/
 import { entitySyncContract } from '@arch-register/api-types/entitySyncContract';
 import { syncEntityByExternalKey, getEntityByExternalKey } from './entitySyncOperations';
 import { getEntity } from '../catalog/entityQueryOperations';
-import { updateEntity } from '../catalog/entityMutationOperations';
+import { updateEntityWithPayload } from '../catalog/entityMutationOperations';
+import { parseEntityMutationPayload } from '../catalog/dataHelpers';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -29,11 +30,11 @@ export const entitySyncORPCRouter = entitySyncRouter.router({
     updateById: entitySyncRouter.entitySync.updateById.handler(async ({ input, context }) => {
       const { workspace, authCtx } = context;
       const auditUser = context.event.context.user;
-      return await updateEntity(
+      return await updateEntityWithPayload(
         context.db,
         workspace,
         input.params.id,
-        input.body as Record<string, unknown>,
+        parseEntityMutationPayload(input.body),
         authCtx,
         { id: auditUser.id, displayName: auditUser.display_name }
       );
@@ -59,7 +60,7 @@ export const entitySyncORPCRouter = entitySyncRouter.router({
           workspace,
           input.params.source,
           input.params.externalKey,
-          input.body as Record<string, unknown>,
+          input.body,
           authCtx,
           { id: auditUser.id, displayName: auditUser.display_name }
         );

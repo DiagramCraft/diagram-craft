@@ -19,7 +19,11 @@ import type {
 } from './catalogDatabase';
 import { ENTITY_SELECT_SQL, catalogMappers, resolveEntityListPagination } from './catalogDatabase';
 import { compileEntityViewPermissionScope } from './entityPermissionScope';
-import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
+import {
+  normalizePostgresError,
+  PostgresDatabaseBase,
+  withPostgresTransaction
+} from '../../../db/postgresBase';
 import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
 import { isUuidLike } from '../../../utils/publicIds';
 import {
@@ -573,7 +577,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
 
   async replaceEntityGrants(workspace: string, entityId: string, grants: EntityGrantDbCretae[]) {
     try {
-      await this.sql.begin(async tx => {
+      await withPostgresTransaction(this.sql, async tx => {
         await tx`DELETE FROM entity_grant WHERE workspace = ${workspace} AND entity_id = ${entityId}`;
         for (const grant of grants) {
           await tx`

@@ -197,7 +197,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
         requireWorkspaceCapability(authCtx, 'ws.settings');
         let configInput: ReturnType<typeof buildAiConfigInput>;
         try {
-          configInput = buildAiConfigInput(input.body as Record<string, unknown>);
+          configInput = buildAiConfigInput(input.body);
         } catch (error) {
           if (error instanceof AiEncryptionError) {
             throw new ORPCError('INTERNAL_SERVER_ERROR', {

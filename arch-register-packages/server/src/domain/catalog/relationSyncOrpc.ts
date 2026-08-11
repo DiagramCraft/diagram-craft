@@ -41,7 +41,7 @@ export const relationSyncORPCRouter = relationSyncRouter.router({
           workspace,
           input.params.source,
           input.params.externalKey,
-          input.body as Record<string, unknown>,
+          input.body,
           authCtx,
           { id: auditUser.id, displayName: auditUser.display_name }
         );

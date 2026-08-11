@@ -7,6 +7,7 @@ import {
   canViewTypedRelationFromEndpoint,
   buildTypedRelationVisibilityPolicy
 } from './relationAccessControl';
+import type { FieldGroupSchemaShape } from '../auth/fieldGroupAccessControl';
 
 const schema = (groupId?: string): SchemaDbResult => ({
   id: 'schema-1',
@@ -69,6 +70,28 @@ describe('typed relation owner-field access', () => {
         'out'
       )
     ).toBe(false);
+  });
+
+  it('fails closed for malformed typed-relation owner metadata', () => {
+    const malformedSchema: FieldGroupSchemaShape = {
+      fields: [
+        {
+          id: 'malformed-relation',
+          name: 'Malformed relation',
+          type: 'typedRelation',
+          relationSchemaId: 42,
+          direction: 'sideways'
+        }
+      ],
+      groups: []
+    };
+
+    expect(
+      canViewTypedRelationFromEndpoint(authCtx(null), malformedSchema, 'relation-schema-1', 'out')
+    ).toBe(false);
+    expect(
+      canViewTypedRelationFromEndpoint(null, malformedSchema, 'relation-schema-1', 'out')
+    ).toBe(true);
   });
 
   it('allows a reviewer to view and prevents them from editing the owner field', () => {

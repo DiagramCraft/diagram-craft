@@ -1,6 +1,20 @@
 import { readFile } from 'node:fs/promises';
 
 const boundaryFiles = [
+  '../db/postgresBase.ts',
+  '../db/postgresDatabase.ts',
+  '../domain/auth/ServerAuthorizationDataProvider.ts',
+  '../domain/auth/fieldGroupAccessControl.ts',
+  '../domain/auth/db/postgresAuth.ts',
+  '../domain/catalog/entityOrpc.ts',
+  '../domain/catalog/relationAccessControl.ts',
+  '../domain/catalog/relationSyncOrpc.ts',
+  '../domain/catalog/db/postgresCatalog.ts',
+  '../domain/externalIdentity/entitySyncOrpc.ts',
+  '../domain/jobs/db/postgresJobs.ts',
+  '../domain/notification/db/postgresNotificationDelivery.ts',
+  '../domain/project/db/postgresProject.ts',
+  '../domain/workspace/db/postgresWorkspace.ts',
   '../domain/ai/aiOrpc.ts',
   '../domain/ai/tanstackAiAdapter.ts',
   '../domain/workspace/workspaceOrpc.ts',
