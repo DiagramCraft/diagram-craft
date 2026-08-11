@@ -1,10 +1,14 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { ws, wsAndUUID } from '@arch-register/api-types/common';
+import {
+  ws,
+  wsAndUUID,
+  fieldMigrationsSchema,
+  type FieldMigrations
+} from '@arch-register/api-types/common';
 import {
   schemaFieldInputSchema,
-  schemaFieldResponseSchema,
-  FieldMigrations
+  schemaFieldResponseSchema
 } from '@arch-register/api-types/schemaContract';
 
 const sharedFieldGroupSchema = z.object({
@@ -29,14 +33,7 @@ const sharedFieldGroupBodySchema = z.object({
 });
 
 const updateSharedFieldGroupBodySchema = sharedFieldGroupBodySchema.extend({
-  fieldMigrations: z
-    .record(
-      z.string(),
-      z.object({
-        action: z.enum(['rename', 'remove', 'archive']),
-        renameTo: z.string().optional()
-      })
-    )
+  fieldMigrations: fieldMigrationsSchema
     .optional()
     .describe('Field migration decisions applied to every including schema')
 });

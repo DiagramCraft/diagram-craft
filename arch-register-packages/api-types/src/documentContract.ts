@@ -6,8 +6,10 @@ import {
   externalFieldSchema,
   assertRefreshModeRequiresExternalKind,
   externalMetadataResultSchema,
-  externalMetadataSchema
+  externalMetadataSchema,
+  fieldMigrationsSchema
 } from '@arch-register/api-types/common';
+import type { PendingFieldChange } from '@arch-register/api-types/common';
 
 const booleanQuerySchema = z.preprocess(value => {
   if (typeof value === 'boolean') return value;
@@ -188,13 +190,6 @@ export const documentTypeSchema = z.object({
   updated_at: z.string()
 });
 
-const fieldMigrationActionSchema = z
-  .object({
-    action: z.enum(['rename', 'remove', 'archive']).describe('Migration action for this field'),
-    renameTo: z.string().optional().describe('New field id when action is "rename"')
-  })
-  .describe('How to migrate a changed/removed field');
-
 const documentTypeVersionSchema = z.object({
   version: z.number().int().min(1).describe('Version number'),
   name: z.string().describe('Document type name at this version'),
@@ -230,8 +225,7 @@ const documentTypeWriteSchema = z.object({
   color: z.string().nullable().optional(),
   icon: z.string().nullable().optional(),
   aiActions: z.array(documentAiActionSchema).optional(),
-  fieldMigrations: z
-    .record(z.string(), fieldMigrationActionSchema)
+  fieldMigrations: fieldMigrationsSchema
     .optional()
     .describe(
       'Resolutions for fields being renamed/removed/archived while data exists, keyed by the old field id'
@@ -399,17 +393,12 @@ export type DocumentTemplateWrite = z.infer<typeof documentTemplateWriteSchema>;
 
 // ── Document Type Versioning & Field Migrations ──────────────
 
-export type FieldMigrationAction = z.infer<typeof fieldMigrationActionSchema>;
-export type FieldMigrations = Record<string, FieldMigrationAction>;
+export type {
+  FieldMigrationAction,
+  FieldMigrations,
+  PendingFieldChange
+} from '@arch-register/api-types/common';
 export type DocumentTypeVersion = z.infer<typeof documentTypeVersionSchema>;
-
-export type PendingFieldChange = {
-  fieldId: string;
-  fieldName: string;
-  kind: 'removed' | 'renamed';
-  renamedToId?: string;
-  entityCount: number;
-};
 
 export type DocumentTypeMigrationRequiredError = {
   code: 'DOCUMENT_TYPE_MIGRATION_REQUIRED';

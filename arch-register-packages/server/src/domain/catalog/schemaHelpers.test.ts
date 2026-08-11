@@ -2,7 +2,6 @@ import { describe, expect, it } from 'vitest';
 import {
   buildCreateSchemaInput,
   buildUpdateSchemaInput,
-  classifyFieldChanges,
   clearOrphanedGroupIds,
   normalizeEntityTemplates,
   normalizeSchemaGroups,
@@ -343,92 +342,5 @@ describe('normalizeEntityTemplates', () => {
         fields
       )
     ).toThrow("Duplicate template name 'vendor'");
-  });
-});
-
-// ── classifyFieldChanges ────────────────────────────────
-
-describe('classifyFieldChanges', () => {
-  const text = (
-    id: string,
-    name: string,
-    requirementLevel?: SchemaField['requirementLevel']
-  ): SchemaField => ({
-    id,
-    name,
-    type: 'text',
-    requirementLevel
-  });
-
-  it('reports no changes when adding a new optional field', () => {
-    const oldFields = [text('notes', 'Notes')];
-    const newFields = [text('notes', 'Notes'), text('owner', 'Owner', 'optional')];
-    expect(classifyFieldChanges(oldFields, newFields)).toEqual([]);
-  });
-
-  it('flags a newly required field as newly-required', () => {
-    const oldFields = [text('notes', 'Notes')];
-    const newFields = [text('notes', 'Notes'), text('owner', 'Owner', 'required')];
-    expect(classifyFieldChanges(oldFields, newFields)).toEqual([
-      { fieldId: 'owner', fieldName: 'Owner', kind: 'newly-required' }
-    ]);
-  });
-
-  it('flags removing a field as removed', () => {
-    const oldFields = [text('notes', 'Notes'), text('owner', 'Owner')];
-    const newFields = [text('notes', 'Notes')];
-    expect(classifyFieldChanges(oldFields, newFields)).toEqual([
-      { fieldId: 'owner', fieldName: 'Owner', kind: 'removed' }
-    ]);
-  });
-
-  it('flags changing a field id (matched by name) as renamed', () => {
-    const oldFields = [text('notes', 'Notes')];
-    const newFields = [text('note', 'Notes')];
-    expect(classifyFieldChanges(oldFields, newFields)).toEqual([
-      { fieldId: 'notes', fieldName: 'Notes', kind: 'renamed', renamedToId: 'note' }
-    ]);
-  });
-
-  it('flags making an optional field required as newly-required', () => {
-    const oldFields = [text('notes', 'Notes', 'optional')];
-    const newFields = [text('notes', 'Notes', 'required')];
-    expect(classifyFieldChanges(oldFields, newFields)).toEqual([
-      { fieldId: 'notes', fieldName: 'Notes', kind: 'newly-required' }
-    ]);
-  });
-
-  it('flags making an expected field required as newly-required', () => {
-    const oldFields = [text('notes', 'Notes', 'expected')];
-    const newFields = [text('notes', 'Notes', 'required')];
-    expect(classifyFieldChanges(oldFields, newFields)).toEqual([
-      { fieldId: 'notes', fieldName: 'Notes', kind: 'newly-required' }
-    ]);
-  });
-
-  it('reports no changes when a required field stays required', () => {
-    const oldFields = [text('notes', 'Notes', 'required')];
-    const newFields = [text('notes', 'Notes', 'required')];
-    expect(classifyFieldChanges(oldFields, newFields)).toEqual([]);
-  });
-
-  it('flags changing a field type as type-changed', () => {
-    const oldFields = [text('notes', 'Notes')];
-    const newFields: SchemaField[] = [{ id: 'notes', name: 'Notes', type: 'boolean' }];
-    expect(classifyFieldChanges(oldFields, newFields)).toEqual([
-      { fieldId: 'notes', fieldName: 'Notes', kind: 'type-changed' }
-    ]);
-  });
-
-  it('reports no changes when renaming a field name while keeping its id', () => {
-    const oldFields = [text('notes', 'Notes')];
-    const newFields = [text('notes', 'Comments')];
-    expect(classifyFieldChanges(oldFields, newFields)).toEqual([]);
-  });
-
-  it('reports no changes when reordering fields with no other changes', () => {
-    const oldFields = [text('a', 'A'), text('b', 'B')];
-    const newFields = [text('b', 'B'), text('a', 'A')];
-    expect(classifyFieldChanges(oldFields, newFields)).toEqual([]);
   });
 });

@@ -70210,15 +70210,18 @@
                             "remove",
                             "archive"
                           ],
-                          "type": "string"
+                          "type": "string",
+                          "description": "Migration action for this field"
                         },
                         "renameTo": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "New field id when action is \"rename\""
                         }
                       },
                       "required": [
                         "action"
-                      ]
+                      ],
+                      "description": "How to migrate a changed/removed field"
                     },
                     "description": "Field migration decisions applied to every including schema"
                   }

@@ -5,7 +5,8 @@ import {
   wsAndUUID,
   namedGroupSchema,
   externalFieldSchema,
-  assertRefreshModeRequiresExternalKind
+  assertRefreshModeRequiresExternalKind,
+  fieldMigrationsSchema
 } from '@arch-register/api-types/common';
 import { validationRuleSchema } from '@arch-register/api-types/schemaContract';
 
@@ -252,16 +253,8 @@ const createRelationSchemaBodySchema = z.object({
     )
 });
 
-const fieldMigrationActionSchema = z
-  .object({
-    action: z.enum(['rename', 'remove', 'archive']).describe('Migration action for this field'),
-    renameTo: z.string().optional().describe('New field id when action is "rename"')
-  })
-  .describe('How to migrate a changed/removed field');
-
 const updateRelationSchemaBodySchema = createRelationSchemaBodySchema.extend({
-  fieldMigrations: z
-    .record(z.string(), fieldMigrationActionSchema)
+  fieldMigrations: fieldMigrationsSchema
     .optional()
     .describe(
       'Resolutions for fields being renamed/removed/archived while relation instances exist, keyed by the old field id'
@@ -368,7 +361,10 @@ export const isEntityRelationField = (field: RelationField): field is EntityRela
 export type RelationSchema = z.infer<typeof relationSchemaSchema>;
 export type RelationEndpoint = z.infer<typeof relationEndpointSchema>;
 export type RelationSchemaGroup = z.infer<typeof relationSchemaGroupSchema>;
+export type CreateRelationSchemaRequest = z.infer<typeof createRelationSchemaBodySchema>;
+export type UpdateRelationSchemaRequest = z.infer<typeof updateRelationSchemaBodySchema>;
 
 // ── Relation Schema Versioning & Field Migrations ─────────────
 
 export type RelationSchemaVersion = z.infer<typeof relationSchemaVersionSchema>;
+export type { FieldMigrationAction, FieldMigrations } from '@arch-register/api-types/common';
