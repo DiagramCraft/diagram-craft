@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFixtureCatalogEntity } from './catalogFixtures';
-import { createFixtureSchema, createFixtureWorkspace } from './projectFixtures';
+import { createFixtureEntity } from '../testSupport/fixtures';
+import { createFixtureSchema, createFixtureWorkspace } from '../testSupport/fixtures';
 import {
   ENTITY_CHANGE_POLICY_CASE_KIND,
   upsertSchemaGovernancePolicies
@@ -44,7 +44,7 @@ runContractSuiteAgainstBothDrivers('Entity change approval database', getDb => {
       )?.enabled
     ).toBe(true);
 
-    const entity = await createFixtureCatalogEntity(db, workspace, schemaId);
+    const entity = await createFixtureEntity(db, workspace, schemaId);
     expect(entity.version).toBe(1);
     const updated = await db.catalog.updateEntityIfVersion(
       workspace,
@@ -126,8 +126,8 @@ runContractSuiteAgainstBothDrivers('Entity change approval database', getDb => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
     const schemaId = await createFixtureSchema(db, workspace);
-    const entityA = await createFixtureCatalogEntity(db, workspace, schemaId);
-    const entityB = await createFixtureCatalogEntity(db, workspace, schemaId);
+    const entityA = await createFixtureEntity(db, workspace, schemaId);
+    const entityB = await createFixtureEntity(db, workspace, schemaId);
 
     const bulkProposalId = randomUUID();
     const now = new Date();

@@ -62683,6 +62683,532 @@
         }
       }
     },
+    "/{workspace}/config/public-catalog": {
+      "get": {
+        "operationId": "publicCatalogConfig.get",
+        "summary": "Get public catalog configuration",
+        "description": "Returns the workspace public catalog publication allow-list.",
+        "tags": [
+          "Public Catalog Configuration",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "title": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "description": {
+                      "type": "string",
+                      "maxLength": 2000
+                    },
+                    "indexable": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "schemas": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "schemaId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "fieldIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "default": []
+                          }
+                        },
+                        "required": [
+                          "schemaId"
+                        ]
+                      },
+                      "default": []
+                    },
+                    "entityOverrides": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "entityId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "mode": {
+                            "enum": [
+                              "publish",
+                              "exclude"
+                            ],
+                            "type": "string"
+                          },
+                          "fieldIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          }
+                        },
+                        "required": [
+                          "entityId",
+                          "mode"
+                        ]
+                      },
+                      "default": []
+                    },
+                    "pages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "nodeId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "scope": {
+                            "enum": [
+                              "workspace",
+                              "entity"
+                            ],
+                            "type": "string"
+                          },
+                          "entityId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "publicPath": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 200,
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9/_-]*$"
+                          },
+                          "label": {
+                            "type": "string",
+                            "maxLength": 200
+                          },
+                          "order": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                            "default": 0
+                          }
+                        },
+                        "required": [
+                          "nodeId",
+                          "scope",
+                          "publicPath"
+                        ]
+                      },
+                      "default": []
+                    },
+                    "apiArtifacts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "artifactId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "revisionId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "exposeRaw": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        },
+                        "required": [
+                          "artifactId"
+                        ]
+                      },
+                      "default": []
+                    },
+                    "updatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "publicCatalogConfig.replace",
+        "summary": "Replace public catalog configuration",
+        "description": "Replaces the complete public catalog publication allow-list. Publication is disabled by default.",
+        "tags": [
+          "Public Catalog Configuration",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "title": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "indexable": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "schemas": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "schemaId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "fieldIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "default": []
+                        }
+                      },
+                      "required": [
+                        "schemaId"
+                      ]
+                    },
+                    "default": []
+                  },
+                  "entityOverrides": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "entityId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "mode": {
+                          "enum": [
+                            "publish",
+                            "exclude"
+                          ],
+                          "type": "string"
+                        },
+                        "fieldIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      },
+                      "required": [
+                        "entityId",
+                        "mode"
+                      ]
+                    },
+                    "default": []
+                  },
+                  "pages": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "nodeId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "scope": {
+                          "enum": [
+                            "workspace",
+                            "entity"
+                          ],
+                          "type": "string"
+                        },
+                        "entityId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "publicPath": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 200,
+                          "pattern": "^[A-Za-z0-9][A-Za-z0-9/_-]*$"
+                        },
+                        "label": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "order": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "default": 0
+                        }
+                      },
+                      "required": [
+                        "nodeId",
+                        "scope",
+                        "publicPath"
+                      ]
+                    },
+                    "default": []
+                  },
+                  "apiArtifacts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "artifactId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "revisionId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "exposeRaw": {
+                          "type": "boolean",
+                          "default": false
+                        }
+                      },
+                      "required": [
+                        "artifactId"
+                      ]
+                    },
+                    "default": []
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "title": {
+                      "type": "string",
+                      "maxLength": 200
+                    },
+                    "description": {
+                      "type": "string",
+                      "maxLength": 2000
+                    },
+                    "indexable": {
+                      "type": "boolean",
+                      "default": false
+                    },
+                    "schemas": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "schemaId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "fieldIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "default": []
+                          }
+                        },
+                        "required": [
+                          "schemaId"
+                        ]
+                      },
+                      "default": []
+                    },
+                    "entityOverrides": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "entityId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "mode": {
+                            "enum": [
+                              "publish",
+                              "exclude"
+                            ],
+                            "type": "string"
+                          },
+                          "fieldIds": {
+                            "type": "array",
+                            "items": {
+                              "type": "string",
+                              "minLength": 1
+                            }
+                          }
+                        },
+                        "required": [
+                          "entityId",
+                          "mode"
+                        ]
+                      },
+                      "default": []
+                    },
+                    "pages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "nodeId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "scope": {
+                            "enum": [
+                              "workspace",
+                              "entity"
+                            ],
+                            "type": "string"
+                          },
+                          "entityId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "publicPath": {
+                            "type": "string",
+                            "minLength": 1,
+                            "maxLength": 200,
+                            "pattern": "^[A-Za-z0-9][A-Za-z0-9/_-]*$"
+                          },
+                          "label": {
+                            "type": "string",
+                            "maxLength": 200
+                          },
+                          "order": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                            "default": 0
+                          }
+                        },
+                        "required": [
+                          "nodeId",
+                          "scope",
+                          "publicPath"
+                        ]
+                      },
+                      "default": []
+                    },
+                    "apiArtifacts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "artifactId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "revisionId": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "exposeRaw": {
+                            "type": "boolean",
+                            "default": false
+                          }
+                        },
+                        "required": [
+                          "artifactId"
+                        ]
+                      },
+                      "default": []
+                    },
+                    "updatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/search": {
       "get": {
         "operationId": "search.query",

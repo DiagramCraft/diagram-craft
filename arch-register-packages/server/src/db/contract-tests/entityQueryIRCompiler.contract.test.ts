@@ -1,9 +1,9 @@
 import { randomUUID } from 'node:crypto';
 import { expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFixtureWorkspace, createFixtureProject } from './projectFixtures';
-import { createFixtureCatalogEntity } from './catalogFixtures';
-import { createFixtureUser } from './authFixtures';
+import { createFixtureWorkspace, createFixtureProject } from '../testSupport/fixtures';
+import { createFixtureEntity } from '../testSupport/fixtures';
+import { createFixtureUser } from '../testSupport/fixtures';
 import { buildAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter, DbDriver } from '../database';
 import type { SchemaDbResult } from '../../domain/catalog/db/catalogDatabase';
@@ -67,16 +67,16 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const workspace = await createFixtureWorkspace(db);
     const schema = await createSchema(db, workspace, { name: 'Component' });
 
-    const nameMatch = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const nameMatch = await createFixtureEntity(db, workspace, schema.id, {
       name: 'Platform Service'
     });
-    const slugMatch = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const slugMatch = await createFixtureEntity(db, workspace, schema.id, {
       slug: 'platform-api'
     });
-    const descriptionMatch = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const descriptionMatch = await createFixtureEntity(db, workspace, schema.id, {
       description: 'Owned by the platform team'
     });
-    await createFixtureCatalogEntity(db, workspace, schema.id, {
+    await createFixtureEntity(db, workspace, schema.id, {
       name: 'Unrelated Service',
       slug: 'unrelated'
     });
@@ -99,10 +99,10 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const workspace = await createFixtureWorkspace(db);
     const schema = await createSchema(db, workspace, { name: 'Component' });
 
-    const nameMatch = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const nameMatch = await createFixtureEntity(db, workspace, schema.id, {
       name: 'Platform Service'
     });
-    await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'Unrelated Service' });
+    await createFixtureEntity(db, workspace, schema.id, { name: 'Unrelated Service' });
 
     // Simulates the full HTTP request path (entityOrpc.ts): parse -> fold q into the IR root ->
     // execute. Exercises the fix for #2357, where `q` used to be applied as an always-on
@@ -167,15 +167,15 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       }
     ]);
 
-    const match = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const match = await createFixtureEntity(db, workspace, schema.id, {
       owner: platformTeam!.id,
       lifecycle: activeState!.id
     });
-    await createFixtureCatalogEntity(db, workspace, schema.id, {
+    await createFixtureEntity(db, workspace, schema.id, {
       owner: platformTeam!.id,
       lifecycle: deprecatedState!.id
     });
-    await createFixtureCatalogEntity(db, workspace, schema.id, {
+    await createFixtureEntity(db, workspace, schema.id, {
       owner: dataTeam!.id,
       lifecycle: activeState!.id
     });
@@ -204,8 +204,8 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const referencedSchema = await createSchema(db, workspace, { name: 'Referenced' });
     const unreferencedSchema = await createSchema(db, workspace, { name: 'Unreferenced' });
 
-    await createFixtureCatalogEntity(db, workspace, referencedSchema.id);
-    await createFixtureCatalogEntity(db, workspace, referencedSchema.id);
+    await createFixtureEntity(db, workspace, referencedSchema.id);
+    await createFixtureEntity(db, workspace, referencedSchema.id);
 
     // Mirrors schemaOperations.ts's countEntities({ schemaId }) call sites (issue #2356).
     const countFor = async (schemaId: string) => {
@@ -241,16 +241,16 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       ]
     });
 
-    const relEol = await createFixtureCatalogEntity(db, workspace, techReleaseSchema.id, {
+    const relEol = await createFixtureEntity(db, workspace, techReleaseSchema.id, {
       data: { eol_date: '2026-01-01' }
     });
-    const relFresh = await createFixtureCatalogEntity(db, workspace, techReleaseSchema.id, {
+    const relFresh = await createFixtureEntity(db, workspace, techReleaseSchema.id, {
       data: { eol_date: '2030-01-01' }
     });
-    const componentAtRisk = await createFixtureCatalogEntity(db, workspace, componentSchema.id, {
+    const componentAtRisk = await createFixtureEntity(db, workspace, componentSchema.id, {
       data: { technology_releases: [relEol.id] }
     });
-    await createFixtureCatalogEntity(db, workspace, componentSchema.id, {
+    await createFixtureEntity(db, workspace, componentSchema.id, {
       data: { technology_releases: [relFresh.id] }
     });
 
@@ -293,9 +293,9 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       ]
     });
 
-    const domainMatch = await createFixtureCatalogEntity(db, workspace, domainSchema.id);
-    await createFixtureCatalogEntity(db, workspace, domainSchema.id);
-    const systemMatch = await createFixtureCatalogEntity(db, workspace, systemSchema.id, {
+    const domainMatch = await createFixtureEntity(db, workspace, domainSchema.id);
+    await createFixtureEntity(db, workspace, domainSchema.id);
+    const systemMatch = await createFixtureEntity(db, workspace, systemSchema.id, {
       data: { domain: [domainMatch.id] }
     });
 
@@ -352,39 +352,29 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       ]
     });
 
-    const go = await createFixtureCatalogEntity(db, workspace, technologySchema.id, { slug: 'go' });
-    const python = await createFixtureCatalogEntity(db, workspace, technologySchema.id, {
+    const go = await createFixtureEntity(db, workspace, technologySchema.id, { slug: 'go' });
+    const python = await createFixtureEntity(db, workspace, technologySchema.id, {
       slug: 'python'
     });
 
     // A single release satisfying both conditions at once.
-    const relGoOld = await createFixtureCatalogEntity(db, workspace, techReleaseSchema.id, {
+    const relGoOld = await createFixtureEntity(db, workspace, techReleaseSchema.id, {
       data: { release_cycle: '1.5', technology: [go.id] }
     });
     // Two releases that each satisfy exactly one condition, on different technologies.
-    const relGoNew = await createFixtureCatalogEntity(db, workspace, techReleaseSchema.id, {
+    const relGoNew = await createFixtureEntity(db, workspace, techReleaseSchema.id, {
       data: { release_cycle: '4.0', technology: [go.id] }
     });
-    const relPythonOld = await createFixtureCatalogEntity(db, workspace, techReleaseSchema.id, {
+    const relPythonOld = await createFixtureEntity(db, workspace, techReleaseSchema.id, {
       data: { release_cycle: '1.0', technology: [python.id] }
     });
 
-    const singleWitnessComponent = await createFixtureCatalogEntity(
-      db,
-      workspace,
-      componentSchema.id,
-      {
-        data: { technology_releases: [relGoOld.id] }
-      }
-    );
-    const splitWitnessComponent = await createFixtureCatalogEntity(
-      db,
-      workspace,
-      componentSchema.id,
-      {
-        data: { technology_releases: [relGoNew.id, relPythonOld.id] }
-      }
-    );
+    const singleWitnessComponent = await createFixtureEntity(db, workspace, componentSchema.id, {
+      data: { technology_releases: [relGoOld.id] }
+    });
+    const splitWitnessComponent = await createFixtureEntity(db, workspace, componentSchema.id, {
+      data: { technology_releases: [relGoNew.id, relPythonOld.id] }
+    });
 
     const schemas: SchemaCatalog = new Map([
       [technologySchema.id, technologySchema],
@@ -483,10 +473,10 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       fields: [{ id: 'category', name: 'Category', type: 'text' }]
     });
 
-    const matching = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const matching = await createFixtureEntity(db, workspace, schema.id, {
       data: { category: 'framework' }
     });
-    const other = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const other = await createFixtureEntity(db, workspace, schema.id, {
       data: { category: 'library' }
     });
 
@@ -511,10 +501,10 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const workspace = await createFixtureWorkspace(db);
     const schema = await createSchema(db, workspace, { name: 'Technology' });
 
-    const complete = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const complete = await createFixtureEntity(db, workspace, schema.id, {
       completeness: 90
     });
-    const incomplete = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const incomplete = await createFixtureEntity(db, workspace, schema.id, {
       completeness: 30
     });
 
@@ -538,8 +528,8 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const project = await createFixtureProject(db, workspace);
     const schema = await createSchema(db, workspace, { name: 'Technology' });
 
-    const highRisk = await createFixtureCatalogEntity(db, workspace, schema.id);
-    const lowRisk = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const highRisk = await createFixtureEntity(db, workspace, schema.id);
+    const lowRisk = await createFixtureEntity(db, workspace, schema.id);
 
     const assessment = await db.project.createAssessment({
       id: randomUUID(),
@@ -603,9 +593,9 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       fields: [{ id: 'category', name: 'Category', type: 'text' }]
     });
 
-    const highRisk = await createFixtureCatalogEntity(db, workspace, schema.id);
-    const lowRisk = await createFixtureCatalogEntity(db, workspace, schema.id);
-    const noResponse = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const highRisk = await createFixtureEntity(db, workspace, schema.id);
+    const lowRisk = await createFixtureEntity(db, workspace, schema.id);
+    const noResponse = await createFixtureEntity(db, workspace, schema.id);
 
     const assessment = await db.project.createAssessment({
       id: randomUUID(),
@@ -680,11 +670,11 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const workspace = await createFixtureWorkspace(db);
     const project = await createFixtureProject(db, workspace);
     const schema = await createSchema(db, workspace, { name: 'Technology' });
-    const globalEntity = await createFixtureCatalogEntity(db, workspace, schema.id);
-    const projectEntity = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const globalEntity = await createFixtureEntity(db, workspace, schema.id);
+    const projectEntity = await createFixtureEntity(db, workspace, schema.id, {
       project_id: project.id
     });
-    const linkedEntity = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const linkedEntity = await createFixtureEntity(db, workspace, schema.id);
     await db.project.addProjectEntity({
       workspace,
       project_id: project.id,
@@ -693,7 +683,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       created_at: new Date()
     });
     const otherProject = await createFixtureProject(db, workspace);
-    const otherProjectEntity = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const otherProjectEntity = await createFixtureEntity(db, workspace, schema.id, {
       project_id: otherProject.id
     });
     const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
@@ -728,7 +718,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       name: 'Technology',
       fields: [{ id: 'category', name: 'Category', type: 'text' }]
     });
-    const entity = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const entity = await createFixtureEntity(db, workspace, schema.id, {
       name: 'Live name'
     });
     const historicalDate = new Date('2026-01-02T00:00:00.000Z');
@@ -780,7 +770,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
     const schema = await createSchema(db, workspace, { name: 'Technology' });
-    const entity = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const entity = await createFixtureEntity(db, workspace, schema.id);
     const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
     const query: EntityQuery = {
       asOf: '2030-01-01T00:00:00.000Z',
@@ -798,7 +788,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const project = await createFixtureProject(db, workspace);
     const user = await createFixtureUser(db);
     const schema = await createSchema(db, workspace, { name: 'Technology' });
-    const entity = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const entity = await createFixtureEntity(db, workspace, schema.id, {
       name: 'Current name'
     });
     await db.catalog.createEntityVersion({
@@ -892,10 +882,10 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
         }
       ]
     });
-    const release = await createFixtureCatalogEntity(db, workspace, releaseSchema.id, {
+    const release = await createFixtureEntity(db, workspace, releaseSchema.id, {
       data: { eol_date: '2026-01-01', latest_version: '1.2.3' }
     });
-    const component = await createFixtureCatalogEntity(db, workspace, componentSchema.id, {
+    const component = await createFixtureEntity(db, workspace, componentSchema.id, {
       data: { technology_releases: [release.id] }
     });
     const schemas: SchemaCatalog = new Map([
@@ -953,13 +943,13 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
         }
       ]
     });
-    const first = await createFixtureCatalogEntity(db, workspace, releaseSchema.id, {
+    const first = await createFixtureEntity(db, workspace, releaseSchema.id, {
       data: { eol_date: '2026-01-01' }
     });
-    const second = await createFixtureCatalogEntity(db, workspace, releaseSchema.id, {
+    const second = await createFixtureEntity(db, workspace, releaseSchema.id, {
       data: { eol_date: '2027-01-01' }
     });
-    const component = await createFixtureCatalogEntity(db, workspace, componentSchema.id, {
+    const component = await createFixtureEntity(db, workspace, componentSchema.id, {
       data: { technology_releases: [first.id, second.id] }
     });
     const schemas: SchemaCatalog = new Map([
@@ -1029,14 +1019,14 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       ]
     });
 
-    const target = await createFixtureCatalogEntity(db, workspace, targetSchema.id, {
+    const target = await createFixtureEntity(db, workspace, targetSchema.id, {
       data: {
         visible: 'visible value',
         secret: 'stale secret',
         restricted: 'restricted value'
       }
     });
-    const owner = await createFixtureCatalogEntity(db, workspace, ownerSchema.id, {
+    const owner = await createFixtureEntity(db, workspace, ownerSchema.id, {
       data: { target: [target.id] }
     });
     const authCtx = buildAuthorizationContext({
@@ -1157,11 +1147,11 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       [{ id: 'secret', name: 'Secret', type: 'text' }],
       new Date(asOf.getTime() + 24 * 60 * 60 * 1000)
     );
-    const target = await createFixtureCatalogEntity(db, workspace, targetSchema.id, {
+    const target = await createFixtureEntity(db, workspace, targetSchema.id, {
       data: { secret: 'historical secret' },
       created_at: new Date(asOf.getTime() - 60 * 60 * 1000)
     });
-    const owner = await createFixtureCatalogEntity(db, workspace, ownerSchema.id, {
+    const owner = await createFixtureEntity(db, workspace, ownerSchema.id, {
       data: { target: [target.id] },
       created_at: new Date(asOf.getTime() - 60 * 60 * 1000)
     });
@@ -1285,13 +1275,13 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
         }
       ]
     });
-    const go = await createFixtureCatalogEntity(db, workspace, technologySchema.id, {
+    const go = await createFixtureEntity(db, workspace, technologySchema.id, {
       slug: 'go'
     });
-    const release = await createFixtureCatalogEntity(db, workspace, releaseSchema.id, {
+    const release = await createFixtureEntity(db, workspace, releaseSchema.id, {
       data: { eol_date: '2026-01-01', technology: [go.id] }
     });
-    const component = await createFixtureCatalogEntity(db, workspace, componentSchema.id, {
+    const component = await createFixtureEntity(db, workspace, componentSchema.id, {
       data: { technology_releases: [release.id] }
     });
 
@@ -1335,14 +1325,14 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const project = await createFixtureProject(db, workspace);
     const otherProject = await createFixtureProject(db, workspace);
     const schema = await createSchema(db, workspace, { name: 'Component' });
-    const globalEntity = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const globalEntity = await createFixtureEntity(db, workspace, schema.id, {
       name: 'A global'
     });
-    const projectEntity = await createFixtureCatalogEntity(db, workspace, schema.id, {
+    const projectEntity = await createFixtureEntity(db, workspace, schema.id, {
       project_id: project.id,
       name: 'B project'
     });
-    await createFixtureCatalogEntity(db, workspace, schema.id, {
+    await createFixtureEntity(db, workspace, schema.id, {
       project_id: otherProject.id,
       name: 'C other project'
     });
@@ -1371,8 +1361,8 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const workspace = await createFixtureWorkspace(db);
     const schema = await createSchema(db, workspace, { name: 'Component' });
     const user = await createFixtureUser(db);
-    const allowed = await createFixtureCatalogEntity(db, workspace, schema.id);
-    const denied = await createFixtureCatalogEntity(db, workspace, schema.id);
+    const allowed = await createFixtureEntity(db, workspace, schema.id);
+    const denied = await createFixtureEntity(db, workspace, schema.id);
     const grants = await db.catalog.replaceEntityGrants(workspace, allowed.id, [
       {
         id: randomUUID(),
@@ -1426,11 +1416,11 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       fields: [{ id: 'salary', name: 'Salary', type: 'number' }]
     });
 
-    const employeeEntity = await createFixtureCatalogEntity(db, workspace, employee.id, {
+    const employeeEntity = await createFixtureEntity(db, workspace, employee.id, {
       name: 'Restricted Employee',
       data: { salary: 500 }
     });
-    const contractorEntity = await createFixtureCatalogEntity(db, workspace, contractor.id, {
+    const contractorEntity = await createFixtureEntity(db, workspace, contractor.id, {
       name: 'Visible Contractor',
       data: { salary: 200 }
     });
@@ -1521,15 +1511,15 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       fields: [{ id: 'salary', name: 'Salary', type: 'number' }]
     });
 
-    const restrictedEmployee = await createFixtureCatalogEntity(db, workspace, employee.id, {
+    const restrictedEmployee = await createFixtureEntity(db, workspace, employee.id, {
       name: 'Restricted Employee',
       data: { salary: 500 }
     });
-    const highContractor = await createFixtureCatalogEntity(db, workspace, contractor.id, {
+    const highContractor = await createFixtureEntity(db, workspace, contractor.id, {
       name: 'High Contractor',
       data: { salary: 200 }
     });
-    const lowContractor = await createFixtureCatalogEntity(db, workspace, contractor.id, {
+    const lowContractor = await createFixtureEntity(db, workspace, contractor.id, {
       name: 'Low Contractor',
       data: { salary: 50 }
     });
@@ -1675,10 +1665,10 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       created_at: new Date(),
       updated_at: new Date()
     });
-    const left = await createFixtureCatalogEntity(db, workspace, endpointSchema.id, {
+    const left = await createFixtureEntity(db, workspace, endpointSchema.id, {
       name: 'Left'
     });
-    const right = await createFixtureCatalogEntity(db, workspace, endpointSchema.id, {
+    const right = await createFixtureEntity(db, workspace, endpointSchema.id, {
       name: 'Right'
     });
     const restricted = await db.relation.createRelation({
@@ -1838,13 +1828,13 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       updated_at: new Date()
     });
 
-    const target = await createFixtureCatalogEntity(db, workspace, targetSchema.id, {
+    const target = await createFixtureEntity(db, workspace, targetSchema.id, {
       name: 'Target Entity'
     });
-    const openOwner = await createFixtureCatalogEntity(db, workspace, openOwnerSchema.id, {
+    const openOwner = await createFixtureEntity(db, workspace, openOwnerSchema.id, {
       name: 'Open Owner'
     });
-    const lockedOwner = await createFixtureCatalogEntity(db, workspace, lockedOwnerSchema.id, {
+    const lockedOwner = await createFixtureEntity(db, workspace, lockedOwnerSchema.id, {
       name: 'Locked Owner'
     });
     const relationData = { note: 'visible relation note', status: 'active' };
@@ -1996,8 +1986,8 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       created_at: new Date(),
       updated_at: new Date()
     });
-    const entityA = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'A' });
-    const entityB = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'B' });
+    const entityA = await createFixtureEntity(db, workspace, schema.id, { name: 'A' });
+    const entityB = await createFixtureEntity(db, workspace, schema.id, { name: 'B' });
     const relation = await db.relation.createRelation({
       id: randomUUID(),
       workspace,
@@ -2080,10 +2070,10 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       updated_at: new Date()
     });
 
-    const owner = await createFixtureCatalogEntity(db, workspace, ownerSchema.id, {
+    const owner = await createFixtureEntity(db, workspace, ownerSchema.id, {
       name: 'Owner Entity'
     });
-    const target = await createFixtureCatalogEntity(db, workspace, ownerSchema.id, {
+    const target = await createFixtureEntity(db, workspace, ownerSchema.id, {
       name: 'Target Entity'
     });
     // Must postdate both entities' own created_at (set to "now" by the fixture helper above), or
@@ -2196,8 +2186,8 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       created_at: new Date(),
       updated_at: new Date()
     });
-    const entityA = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'A' });
-    const entityB = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'B' });
+    const entityA = await createFixtureEntity(db, workspace, schema.id, { name: 'A' });
+    const entityB = await createFixtureEntity(db, workspace, schema.id, { name: 'B' });
     const relation = await db.relation.createRelation({
       id: randomUUID(),
       workspace,
@@ -2326,12 +2316,12 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       created_at: new Date(),
       updated_at: new Date()
     });
-    const inEntity = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'In' });
-    const outEntity = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'Out' });
-    const otherInEntity = await createFixtureCatalogEntity(db, workspace, otherSchema.id, {
+    const inEntity = await createFixtureEntity(db, workspace, schema.id, { name: 'In' });
+    const outEntity = await createFixtureEntity(db, workspace, schema.id, { name: 'Out' });
+    const otherInEntity = await createFixtureEntity(db, workspace, otherSchema.id, {
       name: 'Other In'
     });
-    const otherOutEntity = await createFixtureCatalogEntity(db, workspace, otherSchema.id, {
+    const otherOutEntity = await createFixtureEntity(db, workspace, otherSchema.id, {
       name: 'Other Out'
     });
     const historicalDate = new Date('2026-01-01T00:00:00.000Z');
@@ -2461,9 +2451,9 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       created_at: new Date(),
       updated_at: new Date()
     });
-    const entityA = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'A' });
-    const entityB = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'B' });
-    const entityC = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'C' });
+    const entityA = await createFixtureEntity(db, workspace, schema.id, { name: 'A' });
+    const entityB = await createFixtureEntity(db, workspace, schema.id, { name: 'B' });
+    const entityC = await createFixtureEntity(db, workspace, schema.id, { name: 'C' });
     const matching = await db.relation.createRelation({
       id: randomUUID(),
       workspace,
@@ -2565,7 +2555,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(gatedRows).toHaveLength(0);
 
     const missingSchema = await createSchema(db, workspace, { name: 'Deleted endpoint schema' });
-    const danglingEndpoint = await createFixtureCatalogEntity(db, workspace, missingSchema.id, {
+    const danglingEndpoint = await createFixtureEntity(db, workspace, missingSchema.id, {
       name: 'Dangling endpoint'
     });
     const danglingRelation = await db.relation.createRelation({
@@ -2624,8 +2614,8 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       created_at: new Date(),
       updated_at: new Date()
     });
-    const entityA = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'A' });
-    const entityB = await createFixtureCatalogEntity(db, workspace, schema.id, { name: 'B' });
+    const entityA = await createFixtureEntity(db, workspace, schema.id, { name: 'A' });
+    const entityB = await createFixtureEntity(db, workspace, schema.id, { name: 'B' });
     await db.relation.createRelation({
       id: randomUUID(),
       workspace,
@@ -2668,7 +2658,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     });
     const entities = await Promise.all(
       Array.from({ length: 6 }, (_, i) =>
-        createFixtureCatalogEntity(db, workspace, schema.id, { name: `E${i}` })
+        createFixtureEntity(db, workspace, schema.id, { name: `E${i}` })
       )
     );
     for (let i = 0; i < 5; i++) {
@@ -2735,7 +2725,7 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     const schema = await createSchema(db, workspace, { name: 'System' });
     const entities = await Promise.all(
       Array.from({ length: 6 }, (_, i) =>
-        createFixtureCatalogEntity(db, workspace, schema.id, { name: `E${i}` })
+        createFixtureEntity(db, workspace, schema.id, { name: `E${i}` })
       )
     );
     const user = await createFixtureUser(db);
@@ -2827,16 +2817,16 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       updated_at: new Date()
     });
 
-    const systemA = await createFixtureCatalogEntity(db, workspace, systemSchema.id, {
+    const systemA = await createFixtureEntity(db, workspace, systemSchema.id, {
       name: 'System A'
     });
-    const systemB = await createFixtureCatalogEntity(db, workspace, systemSchema.id, {
+    const systemB = await createFixtureEntity(db, workspace, systemSchema.id, {
       name: 'System B'
     });
-    const address = await createFixtureCatalogEntity(db, workspace, dataEntitySchema.id, {
+    const address = await createFixtureEntity(db, workspace, dataEntitySchema.id, {
       name: 'Address'
     });
-    const order = await createFixtureCatalogEntity(db, workspace, dataEntitySchema.id, {
+    const order = await createFixtureEntity(db, workspace, dataEntitySchema.id, {
       name: 'Order'
     });
     const dataFlow = await db.relation.createRelation({

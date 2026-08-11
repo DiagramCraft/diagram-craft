@@ -2,7 +2,7 @@ import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
 import { DatabaseError } from '../database';
-import { createFixtureUser } from './authFixtures';
+import { createFixtureUser } from '../testSupport/fixtures';
 import { getSystemUserId } from '../../domain/auth/systemUsers';
 
 runContractSuiteAgainstBothDrivers('AuthDatabase', getDb => {

@@ -1,0 +1,254 @@
+.shell {
+  min-height: 100vh;
+  background: #f8fafc;
+  color: #172033;
+  font-family: Inter, ui-sans-serif, system-ui, sans-serif;
+}
+.header {
+  display: flex;
+  align-items: center;
+  gap: 28px;
+  padding: 18px clamp(20px, 5vw, 72px);
+  border-bottom: 1px solid #e2e8f0;
+  background: rgba(255, 255, 255, 0.92);
+  position: sticky;
+  top: 0;
+  z-index: 2;
+}
+.brand {
+  font-weight: 700;
+  color: #172033;
+  text-decoration: none;
+  white-space: nowrap;
+}
+.nav {
+  display: flex;
+  gap: 18px;
+  flex: 1;
+  overflow: auto;
+}
+.nav a,
+.apiLink,
+.back,
+.sectionHeading a {
+  color: #4f46e5;
+  text-decoration: none;
+  font-size: 13px;
+  white-space: nowrap;
+}
+.apiLink {
+  margin-left: auto;
+}
+.main {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: clamp(32px, 7vw, 80px) clamp(20px, 5vw, 72px);
+}
+.footer {
+  max-width: 1120px;
+  margin: 0 auto;
+  padding: 0 clamp(20px, 5vw, 72px) 36px;
+  color: #64748b;
+  font-size: 12px;
+}
+.hero {
+  max-width: 900px;
+}
+.eyebrow {
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  font-size: 11px;
+  color: #6366f1;
+  font-weight: 700;
+  margin: 0 0 12px;
+}
+h1 {
+  font-size: clamp(32px, 6vw, 58px);
+  letter-spacing: -0.04em;
+  line-height: 1.05;
+  margin: 0 0 18px;
+}
+h2 {
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+.lede {
+  font-size: 18px;
+  color: #475569;
+  line-height: 1.6;
+  max-width: 720px;
+}
+.stats {
+  display: flex;
+  gap: 42px;
+  margin: 42px 0;
+  flex-wrap: wrap;
+}
+.stats div {
+  display: grid;
+  gap: 3px;
+}
+.stats strong {
+  font-size: 28px;
+}
+.stats span,
+.muted {
+  color: #64748b;
+  font-size: 13px;
+}
+.cardGrid,
+.entityList {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(220px, 1fr));
+  gap: 12px;
+}
+.card,
+.entityCard {
+  display: grid;
+  gap: 7px;
+  padding: 18px;
+  border: 1px solid #e2e8f0;
+  border-radius: 12px;
+  background: white;
+  text-decoration: none;
+  color: inherit;
+  box-shadow: 0 5px 18px rgba(15, 23, 42, 0.04);
+}
+.card:hover,
+.entityCard:hover {
+  border-color: #a5b4fc;
+  transform: translateY(-1px);
+}
+.cardKicker {
+  color: #6366f1;
+  font-size: 11px;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+.entityCard p {
+  color: #64748b;
+  font-size: 13px;
+  line-height: 1.5;
+  margin: 2px 0 0;
+}
+.sectionHeading,
+.pageHeading {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 16px;
+  margin: 56px 0 18px;
+}
+.pageHeading {
+  margin-top: 0;
+}
+.search {
+  width: 100%;
+  max-width: 560px;
+  padding: 12px 14px;
+  border: 1px solid #cbd5e1;
+  border-radius: 9px;
+  margin-bottom: 24px;
+  font-size: 14px;
+  background: white;
+}
+.back {
+  display: inline-block;
+  margin-bottom: 34px;
+}
+.detailGrid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+  gap: 12px;
+  margin: 28px 0;
+}
+.detailGrid div,
+.fieldTable div {
+  display: grid;
+  gap: 5px;
+  padding: 14px 0;
+  border-bottom: 1px solid #e2e8f0;
+}
+.detailGrid span,
+.fieldTable span {
+  color: #64748b;
+  font-size: 12px;
+}
+.fieldTable {
+  max-width: 760px;
+  margin-top: 20px;
+}
+.fieldTable div {
+  grid-template-columns: 1fr 2fr;
+}
+.sectionBlock {
+  display: grid;
+  gap: 12px;
+  margin-top: 48px;
+}
+.article {
+  max-width: 820px;
+}
+.markdown {
+  font-size: 16px;
+  line-height: 1.7;
+}
+.markdown pre {
+  overflow: auto;
+  padding: 16px;
+  border-radius: 8px;
+  background: #0f172a;
+  color: #e2e8f0;
+}
+.markdownLink {
+  color: #4f46e5;
+}
+.apiList {
+  display: grid;
+  gap: 10px;
+  margin-top: 28px;
+}
+.apiItem {
+  padding: 16px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: white;
+}
+.apiItem p {
+  line-height: 1.5;
+  margin: 8px 0 0;
+}
+.method {
+  display: inline-block;
+  min-width: 58px;
+  color: #047857;
+  font:
+    11px ui-monospace,
+    SFMono-Regular,
+    monospace;
+  font-weight: 700;
+}
+.state {
+  min-height: 100vh;
+  display: grid;
+  place-items: center;
+  color: #64748b;
+  font:
+    14px ui-sans-serif,
+    system-ui,
+    sans-serif;
+}
+@media (max-width: 680px) {
+  .header {
+    gap: 14px;
+    flex-wrap: wrap;
+  }
+  .nav {
+    order: 3;
+    flex-basis: 100%;
+  }
+  .fieldTable div {
+    grid-template-columns: 1fr;
+    gap: 2px;
+  }
+}

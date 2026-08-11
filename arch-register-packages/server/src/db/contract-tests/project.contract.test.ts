@@ -7,7 +7,7 @@ import {
   createFixtureProject,
   createFixtureWorkspace,
   createFullFixtureSet
-} from './projectFixtures';
+} from '../testSupport/fixtures';
 
 runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
   describe('project CRUD', () => {
@@ -671,8 +671,8 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
       const idB = randomUUID();
 
       await db.core.transaction(async tx => {
-        await createFixtureProject(tx, workspace, idA);
-        await createFixtureProject(tx, workspace, idB);
+        await createFixtureProject(tx, workspace, { id: idA });
+        await createFixtureProject(tx, workspace, { id: idB });
       });
 
       expect(await db.project.getProject(workspace, idA)).not.toBeNull();
@@ -686,10 +686,10 @@ runContractSuiteAgainstBothDrivers('ProjectDatabase', getDb => {
 
       await expect(
         db.core.transaction(async tx => {
-          await createFixtureProject(tx, workspace, survivingId);
+          await createFixtureProject(tx, workspace, { id: survivingId });
           // Duplicate id triggers a unique-constraint violation, which should roll back
           // the entire transaction, including the first (otherwise-valid) insert above.
-          await createFixtureProject(tx, workspace, survivingId);
+          await createFixtureProject(tx, workspace, { id: survivingId });
         })
       ).rejects.toThrow();
 

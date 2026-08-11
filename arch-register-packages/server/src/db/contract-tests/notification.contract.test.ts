@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFixtureUser } from './authFixtures';
-import { createFixtureWorkspace } from './projectFixtures';
+import { createFixtureUser } from '../testSupport/fixtures';
+import { createFixtureWorkspace } from '../testSupport/fixtures';
 import type { DatabaseAdapter } from '../database';
 
 const createFixtureCase = async (db: DatabaseAdapter, workspace: string, userId: string) =>

@@ -5,11 +5,8 @@ import {
   provisionSqliteDatabase,
   type ProvisionedDatabase
 } from '../../db/testSupport/provisionDatabase';
-import {
-  createFixtureWorkspace,
-  createFixtureSchema
-} from '../../db/contract-tests/projectFixtures';
-import { createFixtureUser } from '../../db/contract-tests/authFixtures';
+import { createFixtureWorkspace, createFixtureSchema } from '../../db/testSupport/fixtures';
+import { createFixtureUser } from '../../db/testSupport/fixtures';
 import { syncEntityByExternalKey } from './entitySyncOperations';
 
 const SOURCE = 'backstage';

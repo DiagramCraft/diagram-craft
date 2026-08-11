@@ -7,24 +7,26 @@ import type {
   WorkspaceDbResult
 } from '../domain/workspace/db/workspaceDatabase';
 import type { DatabaseAdapter } from './database';
+import { seedAiConfig } from './seedData/ai';
 import {
-  seedAiConfig,
   seedAssessmentTypes,
-  seedEnums,
-  seedEntities,
   seedGlobalRoleAssignments,
   seedLifecycleStates,
   seedLocalUsers,
   seedOwners,
   seedProjectEntityTypes,
-  seedSavedViews,
-  seedSharedFieldGroups,
-  seedSchemas,
-  seedSupportedCurrencies,
   seedTeamAssignments,
   seedWorkspaceMembers,
   seedWorkspaces
-} from './seedData';
+} from './seedData/workspace';
+import { seedEntities } from './seedData/entities';
+import {
+  seedEnums,
+  seedSchemas,
+  seedSharedFieldGroups,
+  seedSupportedCurrencies
+} from './seedData/catalog';
+import { seedSavedViews } from './seedData/views';
 import { seededTestPassword } from './seedFixtures';
 import { hashPassword } from '../utils/password';
 

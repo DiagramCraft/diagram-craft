@@ -1,6 +1,8 @@
-import { randomUUID } from 'node:crypto';
-import { hashPassword } from '@arch-register/server/utils/password';
 import { seededProjects, seededUsers, seededEntities } from '@arch-register/server/db/seedFixtures';
+import {
+  buildFixtureEntityGrant,
+  createFixtureUser
+} from '@arch-register/server/db/testSupport/fixtures';
 import { createApiTest, createTestORPCClient, expect } from './fixtures';
 import { makeAuthHeader, seedIds } from './seedHelper';
 import type { TestORPCClient } from './orpcTestClient';
@@ -82,54 +84,39 @@ export const createPermissionApiTest = () =>
   createApiTest({
     seed: 'bootstrap',
     afterSeed: async server => {
-      const passwordHash = await hashPassword(password);
-
-      await server.db.auth.createUser({
+      await createFixtureUser(server.db, {
         id: OUTSIDER_USER_ID,
         user_id: OUTSIDER_USER_ID,
         email: 'outsider@e2e.test',
         display_name: 'Permission Outsider',
-        auth_provider: 'local',
-        password_hash: passwordHash,
-        oidc_issuer: null,
-        oidc_subject: null,
+        password,
         is_active: true,
-        color: null,
         created_at: now,
-        updated_at: now,
-        last_login_at: null
+        updated_at: now
       });
 
-      await server.db.auth.createUser({
+      await createFixtureUser(server.db, {
         id: EXPLICIT_GRANT_USER_ID,
         user_id: EXPLICIT_GRANT_USER_ID,
         email: 'explicit-grant@e2e.test',
         display_name: 'Explicit Grant User',
-        auth_provider: 'local',
-        password_hash: passwordHash,
-        oidc_issuer: null,
-        oidc_subject: null,
+        password,
         is_active: true,
-        color: null,
         created_at: now,
-        updated_at: now,
-        last_login_at: null
+        updated_at: now
       });
 
       await server.db.catalog.replaceEntityGrants(
         seedIds.workspace.default,
         seededEntities.default.customerPortal.id,
         [
-          {
-            id: randomUUID(),
-            workspace: seedIds.workspace.default,
-            entity_id: seededEntities.default.customerPortal.id,
-            principal_type: 'user',
-            principal_id: EXPLICIT_GRANT_USER_ID,
-            role: 'editor',
-            applies_to: 'subtree',
-            created_at: now
-          }
+          buildFixtureEntityGrant(
+            seedIds.workspace.default,
+            seededEntities.default.customerPortal.id,
+            'user',
+            EXPLICIT_GRANT_USER_ID,
+            { applies_to: 'subtree', created_at: now }
+          )
         ]
       );
     }

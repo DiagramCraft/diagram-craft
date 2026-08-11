@@ -53,6 +53,10 @@ import { wikiCommentContract } from '@arch-register/api-types/wikiCommentContrac
 import { devContract } from '@arch-register/api-types/devContract';
 import { artifactContract } from '@arch-register/api-types/artifactContract';
 import { baselineContract } from '@arch-register/api-types/baselineContract';
+import {
+  publicCatalogConfigContract,
+  publicCatalogContract
+} from '@arch-register/api-types/publicCatalogContract';
 
 export const allContracts = {
   ...workspaceEnumContract,
@@ -115,6 +119,7 @@ let generatedUnifiedSpec: Promise<object> | null = null;
 let generatedApplicationSpec: Promise<object> | null = null;
 let generatedIntegrationSpec: Promise<object> | null = null;
 let generatedDiagramCraftAdapterSpec: Promise<object> | null = null;
+let generatedPublicCatalogSpec: Promise<object> | null = null;
 
 export const getUnifiedOpenAPISpec = () => {
   generatedUnifiedSpec ??= new OpenAPIGenerator({
@@ -142,6 +147,7 @@ export const getApplicationOpenAPISpec = () => {
       ...workspaceManagementContract,
       ...projectContract,
       ...workspaceConfigContract,
+      ...publicCatalogConfigContract,
       ...searchContract,
       ...aiContract,
       ...workspaceEnumContract,
@@ -187,6 +193,20 @@ export const getApplicationOpenAPISpec = () => {
   );
 
   return generatedApplicationSpec;
+};
+
+export const getPublicCatalogOpenAPISpec = () => {
+  generatedPublicCatalogSpec ??= new OpenAPIGenerator({
+    schemaConverters: [new ZodToJsonSchemaConverter()]
+  }).generate(publicCatalogContract, {
+    info: {
+      title: 'Arch Register Public Catalog API',
+      version: '1.0.0'
+    },
+    servers: [{ url: API_PREFIXES.publicCatalog }]
+  });
+
+  return generatedPublicCatalogSpec;
 };
 
 export const getIntegrationOpenAPISpec = () => {
@@ -264,6 +284,9 @@ export const createUnifiedOpenAPISpecHandler = () =>
 
 export const createApplicationOpenAPISpecHandler = () =>
   createOpenAPISpecHandler(getApplicationOpenAPISpec);
+
+export const createPublicCatalogOpenAPISpecHandler = () =>
+  createOpenAPISpecHandler(getPublicCatalogOpenAPISpec);
 
 export const createIntegrationOpenAPISpecHandler = () =>
   createOpenAPISpecHandler(getIntegrationOpenAPISpec);

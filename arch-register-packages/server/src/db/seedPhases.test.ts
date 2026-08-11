@@ -9,14 +9,9 @@ import {
   seedWorkspaceBase,
   seedWorkspaceConfiguration
 } from './seedPhases';
-import {
-  seedEntities,
-  seedEnums,
-  seedLifecycleStates,
-  seedOwners,
-  seedSchemas,
-  seedWorkspaces
-} from './seedData';
+import { seedEntities } from './seedData/entities';
+import { seedEnums, seedSchemas } from './seedData/catalog';
+import { seedLifecycleStates, seedOwners, seedWorkspaces } from './seedData/workspace';
 import { provisionSqliteDatabase } from './testSupport/provisionDatabase';
 
 describe('composable seed phases', () => {

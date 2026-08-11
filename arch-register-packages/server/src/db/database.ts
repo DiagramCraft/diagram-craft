@@ -31,6 +31,7 @@ import type { ArtifactDatabase } from '../domain/artifact/db/artifactDatabase';
 import type { ApiSpecificationDatabase } from '../domain/artifact/db/apiSpecificationDatabase';
 import type { ArtifactProcessorRegistry } from '../domain/artifact/artifactProcessor';
 import type { BaselineDatabase } from '../domain/baseline/db/baselineDatabase';
+import type { PublicCatalogDatabase } from '../domain/publicCatalog/db/publicCatalogDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -84,6 +85,7 @@ export type DatabaseAdapter = {
   artifactProjections: ArtifactProjectionDatabases;
   artifactProcessors: ArtifactProcessorRegistry;
   baseline: BaselineDatabase;
+  publicCatalog: PublicCatalogDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -247,6 +249,11 @@ export type {
   BaselineRecordDbCreate,
   BaselineRecordDbResult
 } from '../domain/baseline/db/baselineDatabase';
+export type {
+  PublicCatalogDatabase,
+  PublicCatalogConfigDbResult,
+  PublicCatalogConfigDbUpsert
+} from '../domain/publicCatalog/db/publicCatalogDatabase';
 
 // Legacy names for backward compatibility during transition if needed,
 // but we plan to update all usages.

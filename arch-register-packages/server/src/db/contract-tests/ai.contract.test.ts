@@ -1,8 +1,8 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFixtureWorkspace } from './projectFixtures';
-import { createFixtureUser } from './authFixtures';
+import { createFixtureWorkspace } from '../testSupport/fixtures';
+import { createFixtureUser } from '../testSupport/fixtures';
 
 runContractSuiteAgainstBothDrivers('AiDatabase', getDb => {
   describe('ai config', () => {

@@ -40,6 +40,7 @@ import { apiSpecificationArtifactProcessor } from '../domain/artifact/apiSpecifi
 import { createArtifactProcessorRegistry } from '../domain/artifact/artifactProcessor';
 import type { ArtifactProcessorRegistry } from '../domain/artifact/artifactProcessor';
 import { createLogger } from '../utils/logger';
+import { PostgresPublicCatalogDatabase } from '../domain/publicCatalog/db/postgresPublicCatalog';
 
 const PGCRYPTO_EXISTS_NOTICE = 'extension "pgcrypto" already exists, skipping';
 const logger = createLogger('postgres');
@@ -89,6 +90,7 @@ export class PostgresDatabase implements DatabaseAdapter {
   readonly artifactProjections: ArtifactProjectionDatabases;
   readonly artifactProcessors: ArtifactProcessorRegistry;
   readonly baseline: PostgresBaselineDatabase;
+  readonly publicCatalog: PostgresPublicCatalogDatabase;
   readonly core;
 
   private adapterFor(sql: PostgresSqlClient): DatabaseAdapter {
@@ -128,7 +130,8 @@ export class PostgresDatabase implements DatabaseAdapter {
         apiSpecification: new PostgresApiSpecificationDatabase(sql)
       },
       artifactProcessors: createArtifactProcessorRegistry([apiSpecificationArtifactProcessor]),
-      baseline: new PostgresBaselineDatabase(sql)
+      baseline: new PostgresBaselineDatabase(sql),
+      publicCatalog: new PostgresPublicCatalogDatabase(sql)
     };
     let bound!: DatabaseAdapter;
     bound = {
@@ -200,6 +203,7 @@ export class PostgresDatabase implements DatabaseAdapter {
       apiSpecification: new PostgresApiSpecificationDatabase(this.sql)
     };
     this.artifactProcessors = createArtifactProcessorRegistry([apiSpecificationArtifactProcessor]);
+    this.publicCatalog = new PostgresPublicCatalogDatabase(this.sql);
 
     this.core = {
       driver: 'postgres' as const,

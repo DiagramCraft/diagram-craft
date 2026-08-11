@@ -4,11 +4,8 @@ import {
   provisionSqliteDatabase,
   type ProvisionedDatabase
 } from '../../db/testSupport/provisionDatabase';
-import {
-  createFixtureSchema,
-  createFixtureWorkspace
-} from '../../db/contract-tests/projectFixtures';
-import { createFixtureUser } from '../../db/contract-tests/authFixtures';
+import { createFixtureSchema, createFixtureWorkspace } from '../../db/testSupport/fixtures';
+import { createFixtureUser } from '../../db/testSupport/fixtures';
 import { syncApiSpecificationByExternalKey } from './apiSpecificationSyncOperations';
 
 const document = (version: string) => `openapi: 3.0.0

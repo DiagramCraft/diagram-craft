@@ -1,15 +1,15 @@
 import { randomUUID } from 'node:crypto';
 import { expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFixtureSchema, createFixtureWorkspace } from './projectFixtures';
-import { createFixtureCatalogEntity } from './catalogFixtures';
+import { createFixtureSchema, createFixtureWorkspace } from '../testSupport/fixtures';
+import { createFixtureEntity } from '../testSupport/fixtures';
 
 runContractSuiteAgainstBothDrivers('CatalogDatabase entity versions', getDb => {
   const setup = async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
     const schema = await createFixtureSchema(db, workspace);
-    const entity = await createFixtureCatalogEntity(db, workspace, schema);
+    const entity = await createFixtureEntity(db, workspace, schema);
     return { db, workspace, entity };
   };
 
