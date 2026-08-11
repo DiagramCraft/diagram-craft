@@ -89,19 +89,35 @@ export const buildTypedRelationVisibilityPolicy = (
  * own owner-team role grants it.
  */
 
+type TypedRelationOwnerField = {
+  id: string;
+  type: 'typedRelation';
+  relationSchemaId: string;
+  direction: RelationEndpointDirection;
+};
+
+const isTypedRelationOwnerField = (
+  field: FieldGroupSchemaShape['fields'][number]
+): field is FieldGroupSchemaShape['fields'][number] & TypedRelationOwnerField =>
+  field.type === 'typedRelation' &&
+  typeof field.relationSchemaId === 'string' &&
+  (field.direction === 'in' || field.direction === 'out');
+
 const matchingOwnerFields = (
   schema: FieldGroupSchemaShape | null | undefined,
   relationSchemaId: string,
   direction: RelationEndpointDirection
-): TypedRelationField[] =>
-  (schema?.fields ?? []).filter(field => {
-    const candidate = field as unknown as Record<string, unknown>;
-    return (
-      candidate['type'] === 'typedRelation' &&
-      candidate['relationSchemaId'] === relationSchemaId &&
-      candidate['direction'] === direction
-    );
-  }) as unknown as TypedRelationField[];
+): TypedRelationOwnerField[] | null => {
+  const fields = schema?.fields ?? [];
+  if (
+    fields.some(field => field.type === 'typedRelation' && !isTypedRelationOwnerField(field))
+  ) {
+    return null;
+  }
+  return fields
+    .filter(isTypedRelationOwnerField)
+    .filter(field => field.relationSchemaId === relationSchemaId && field.direction === direction);
+};
 
 /**
  * Returns whether a relation can be surfaced through an endpoint. Multiple bindings for the
@@ -119,6 +135,7 @@ export const canViewTypedRelationFromEndpoint = (
   // External callers must fail closed when the endpoint schema has disappeared or is unavailable.
   if (!schema) return authCtx == null;
   const fields = matchingOwnerFields(schema, relationSchemaId, direction);
+  if (!fields) return authCtx == null;
   return (
     fields.length === 0 || fields.some(field => !isFieldViewRestricted(authCtx, schema, field.id))
   );
@@ -131,7 +148,9 @@ export const canEditTypedRelationFromEndpoint = (
   relationSchemaId: string,
   direction: RelationEndpointDirection
 ) => {
+  if (!schema) return authCtx == null;
   const fields = matchingOwnerFields(schema, relationSchemaId, direction);
+  if (!fields) return authCtx == null;
   return (
     fields.length === 0 || fields.some(field => !isFieldEditRestricted(authCtx, schema, field.id))
   );
@@ -179,11 +198,20 @@ export const canEditTypedRelation = (
   }>,
   relationSchemaId: string,
   owner: string | null = null
-) =>
-  endpoints.some(endpoint =>
-    canEditTypedRelationFromEndpoint(authCtx, endpoint.schema, relationSchemaId, endpoint.direction)
-  ) ||
-  (authCtx != null && checker.hasRelationOwnerAction(authCtx, { owner }, 'edit_relation'));
+) => {
+  if (authCtx != null && endpoints.some(endpoint => !endpoint.schema)) return false;
+  return (
+    endpoints.some(endpoint =>
+      canEditTypedRelationFromEndpoint(
+        authCtx,
+        endpoint.schema,
+        relationSchemaId,
+        endpoint.direction
+      )
+    ) ||
+    (authCtx != null && checker.hasRelationOwnerAction(authCtx, { owner }, 'edit_relation'))
+  );
+};
 
 /** Enforces the exact owner field selected by an inline entity mutation. */
 export const requireTypedRelationFieldEdit = (

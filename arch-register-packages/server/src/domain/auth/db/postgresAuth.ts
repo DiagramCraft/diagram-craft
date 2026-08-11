@@ -7,7 +7,11 @@ import type {
   UserListOptions
 } from './authDatabase';
 import { authMappers } from './authDatabase';
-import { normalizePostgresError, PostgresDatabaseBase } from '../../../db/postgresBase';
+import {
+  normalizePostgresError,
+  PostgresDatabaseBase,
+  withPostgresTransaction
+} from '../../../db/postgresBase';
 import { mapDatabaseRows, type DatabaseRow } from '../../../db/rowMappers';
 import { DatabaseError } from '../../../db/database';
 
@@ -365,7 +369,7 @@ export class PostgresAuthDatabase extends PostgresDatabaseBase implements AuthDa
 
   async replaceGlobalRoleAssignments(userId: string, roles: GlobalRole[], createdAt: Date) {
     try {
-      await this.sql.begin(async tx => {
+      await withPostgresTransaction(this.sql, async tx => {
         await tx`DELETE FROM global_role_assignment WHERE user_id = ${userId}`;
         for (const role of roles) {
           await tx`

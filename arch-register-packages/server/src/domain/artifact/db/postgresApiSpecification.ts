@@ -1,7 +1,6 @@
 import type { DatabaseRow } from '../../../db/rowMappers';
-import type postgres from 'postgres';
 import { PostgresDatabaseBase } from '../../../db/postgresBase';
-import type { PostgresSqlClient } from '../../../db/postgresBase';
+import type { PostgresQueryClient } from '../../../db/postgresBase';
 import type {
   ApiSpecificationDatabase,
   ApiSpecificationItemDbCreate,
@@ -9,8 +8,6 @@ import type {
   ApiSpecificationRevisionDbCreate
 } from './apiSpecificationDatabase';
 import { apiSpecificationMappers } from './apiSpecificationDatabase';
-
-type PostgresTransaction = postgres.TransactionSql;
 
 export class PostgresApiSpecificationDatabase
   extends PostgresDatabaseBase
@@ -145,7 +142,7 @@ export class PostgresApiSpecificationDatabase
   }
 
   private async insertItem(
-    transaction: PostgresSqlClient | PostgresTransaction,
+    transaction: PostgresQueryClient,
     input: ApiSpecificationRevisionDbCreate,
     item: ApiSpecificationItemDbCreate
   ) {

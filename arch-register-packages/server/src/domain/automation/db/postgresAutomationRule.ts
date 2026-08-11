@@ -1,4 +1,4 @@
-import type { PostgresSqlClient } from '../../../db/postgresBase';
+import type { PostgresQueryClient } from '../../../db/postgresBase';
 import type {
   AutomationRuleDatabase,
   AutomationRuleDbCreate,
@@ -8,7 +8,7 @@ import { automationRuleMapper } from './automationRuleDatabase';
 import type { DatabaseRow } from '../../../db/rowMappers';
 
 export class PostgresAutomationRuleDatabase implements AutomationRuleDatabase {
-  constructor(private readonly sql: PostgresSqlClient) {}
+  constructor(private readonly sql: PostgresQueryClient) {}
 
   async listRules(workspace: string) {
     const rows = await this.sql<DatabaseRow[]>`
@@ -25,7 +25,7 @@ export class PostgresAutomationRuleDatabase implements AutomationRuleDatabase {
   }
 
   private json(value: unknown) {
-    return this.sql.json(value as Parameters<PostgresSqlClient['json']>[0]);
+    return this.sql.json(value as Parameters<PostgresQueryClient['json']>[0]);
   }
 
   async createRule(input: AutomationRuleDbCreate) {

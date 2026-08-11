@@ -25,6 +25,7 @@ import {
   normalizeEntityRelationFields,
   relationFields
 } from './dataHelpers';
+import type { EntityMutationPayload } from './dataHelpers';
 import { formatPublicId } from '../../utils/publicIds';
 import { computeEntityCompleteness } from '../../utils/completeness';
 
@@ -96,14 +97,13 @@ export const allocateEntityPublicId = async (
   const sequenceNumber = await db.workspace.allocatePublicId(schema.key_prefix, timestamp);
   return formatPublicId(schema.key_prefix, sequenceNumber);
 };
-export const createEntity = async (
+export const createEntityWithPayload = async (
   db: DatabaseAdapter,
   workspace: string,
-  body: Record<string, unknown>,
+  payload: EntityMutationPayload,
   authCtx: AuthorizationContext | null,
   actor: EntityMutationActor
 ): Promise<EntityRecord> => {
-  const payload = parseEntityMutationPayload(body);
   const lifecycleValues = await getLifecycleValues(db, workspace);
   const lifecycle =
     payload.requestedLifecycle && lifecycleValues.has(payload.requestedLifecycle)
@@ -219,6 +219,14 @@ export const createEntity = async (
   }
 };
 
+export const createEntity = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  body: Record<string, unknown>,
+  authCtx: AuthorizationContext | null,
+  actor: EntityMutationActor
+): Promise<EntityRecord> => createEntityWithPayload(db, workspace, parseEntityMutationPayload(body), authCtx, actor);
+
 type BulkEntityDraft = {
   payload: ReturnType<typeof parseEntityMutationPayload>;
   schema: SchemaDbResult;
@@ -308,16 +316,15 @@ const resolveBulkOwners = (
   drafts.forEach(resolveOwner);
 };
 
-export const bulkCreateEntities = async (
+export const bulkCreateEntitiesWithPayloads = async (
   db: DatabaseAdapter,
   workspace: string,
-  bodies: Record<string, unknown>[],
+  payloads: EntityMutationPayload[],
   authCtx: AuthorizationContext | null,
   actor: EntityMutationActor
 ): Promise<EntityRecord[]> => {
   try {
     return await db.core.transaction(async tx => {
-      const payloads = bodies.map(parseEntityMutationPayload);
       const nameToId = new Map<string, string>();
       for (const payload of payloads) {
         const key = payload.name.trim().toLowerCase();
@@ -464,11 +471,26 @@ export const bulkCreateEntities = async (
   }
 };
 
-export const updateEntity = async (
+export const bulkCreateEntities = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  bodies: Record<string, unknown>[],
+  authCtx: AuthorizationContext | null,
+  actor: EntityMutationActor
+): Promise<EntityRecord[]> =>
+  bulkCreateEntitiesWithPayloads(
+    db,
+    workspace,
+    bodies.map(parseEntityMutationPayload),
+    authCtx,
+    actor
+  );
+
+export const updateEntityWithPayload = async (
   db: DatabaseAdapter,
   workspace: string,
   id: string,
-  body: Record<string, unknown>,
+  payload: EntityMutationPayload,
   authCtx: AuthorizationContext | null,
   actor: EntityMutationActor,
   versionOptions?: {
@@ -477,7 +499,6 @@ export const updateEntity = async (
     projectId?: string;
   }
 ): Promise<EntityRecord> => {
-  const payload = parseEntityMutationPayload(body);
   const lifecycleValues = await getLifecycleValues(db, workspace);
   const lifecycle =
     payload.requestedLifecycle && lifecycleValues.has(payload.requestedLifecycle)
@@ -733,6 +754,29 @@ export const updateEntity = async (
     return handleError(error, 'Failed to update data record');
   }
 };
+
+export const updateEntity = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  id: string,
+  body: Record<string, unknown>,
+  authCtx: AuthorizationContext | null,
+  actor: EntityMutationActor,
+  versionOptions?: {
+    versionKind?: EntityVersionKind;
+    appliedCaseRevisionId?: string | null;
+    projectId?: string;
+  }
+): Promise<EntityRecord> =>
+  updateEntityWithPayload(
+    db,
+    workspace,
+    id,
+    parseEntityMutationPayload(body),
+    authCtx,
+    actor,
+    versionOptions
+  );
 
 export const cloneEntity = async (
   db: DatabaseAdapter,
