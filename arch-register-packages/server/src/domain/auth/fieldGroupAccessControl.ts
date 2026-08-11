@@ -3,10 +3,7 @@ import {
   type WorkspaceAuthorizationContext,
   type FieldGroupAccess
 } from '@arch-register/permissions';
-import {
-  schemaFieldInputSchema,
-  type SchemaGroup
-} from '@arch-register/api-types/schemaContract';
+import { schemaFieldInputSchema, type SchemaGroup } from '@arch-register/api-types/schemaContract';
 import { httpAssert } from '../../utils/httpAssert';
 import { getDerivedFieldIdsWithUnresolvedGroups } from '../derived/derivedFields';
 

@@ -225,7 +225,8 @@ export const createEntity = async (
   body: Record<string, unknown>,
   authCtx: AuthorizationContext | null,
   actor: EntityMutationActor
-): Promise<EntityRecord> => createEntityWithPayload(db, workspace, parseEntityMutationPayload(body), authCtx, actor);
+): Promise<EntityRecord> =>
+  createEntityWithPayload(db, workspace, parseEntityMutationPayload(body), authCtx, actor);
 
 type BulkEntityDraft = {
   payload: ReturnType<typeof parseEntityMutationPayload>;

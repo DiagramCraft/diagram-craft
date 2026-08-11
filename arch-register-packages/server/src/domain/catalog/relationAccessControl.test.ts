@@ -90,12 +90,7 @@ describe('typed relation owner-field access', () => {
     };
 
     expect(
-      canViewTypedRelationFromEndpoint(
-        authCtx(null),
-        malformedSchema,
-        'relation-schema-1',
-        'out'
-      )
+      canViewTypedRelationFromEndpoint(authCtx(null), malformedSchema, 'relation-schema-1', 'out')
     ).toBe(false);
     expect(
       canViewTypedRelationFromEndpoint(null, malformedSchema, 'relation-schema-1', 'out')

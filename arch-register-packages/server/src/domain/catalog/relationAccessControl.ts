@@ -109,9 +109,7 @@ const matchingOwnerFields = (
   direction: RelationEndpointDirection
 ): TypedRelationOwnerField[] | null => {
   const fields = schema?.fields ?? [];
-  if (
-    fields.some(field => field.type === 'typedRelation' && !isTypedRelationOwnerField(field))
-  ) {
+  if (fields.some(field => field.type === 'typedRelation' && !isTypedRelationOwnerField(field))) {
     return null;
   }
   return fields

@@ -60,10 +60,7 @@ const makeDatabase = () => {
     grant,
     db: {
       catalog: {
-        listEntitiesPaginated: vi
-          .fn()
-          .mockResolvedValueOnce([entity])
-          .mockResolvedValueOnce([]),
+        listEntitiesPaginated: vi.fn().mockResolvedValueOnce([entity]).mockResolvedValueOnce([]),
         listSchemas: vi.fn().mockResolvedValue([schema]),
         listEntityGrants: vi.fn().mockResolvedValue([grant])
       }
