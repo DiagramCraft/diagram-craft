@@ -13,9 +13,7 @@ import { DiagramDocument } from '@diagram-craft/model/diagramDocument';
 import { AppConfig } from '@diagram-craft/main/appConfig';
 import { useAuth } from '../../auth/AuthContext';
 import { orpcClient } from '../../lib/orpcClient';
-import { entityContentKeys, projectFileKeys, workspaceContentKeys } from '../../queries/content';
-import { projectEntityKeys, projectKeys } from '../../queries/projects';
-import { searchKeys } from '../../hooks/useSearch';
+import { refreshDiagramFileCaches } from '../../queries/content';
 import { stableHue } from '../../components/MemberAvatar';
 import {
   asEntityPublicId,
@@ -127,33 +125,14 @@ export const DiagramScreen = () => {
   }, [workspaceId, projectId, isWorkspaceContent, search.markdownSessionId, diagramId]);
 
   const refreshDiagramCaches = useCallback(async () => {
-    if (isWorkspaceContent) {
-      await queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) });
-    } else if (isEntityDiagram) {
-      await Promise.all([
-        queryClient.invalidateQueries({ queryKey: entityContentKeys.all(workspaceId, projectId) }),
-        queryClient.invalidateQueries({
-          queryKey: projectEntityKeys.entityDiagramFiles(workspaceId, projectId)
-        })
-      ]);
-    } else {
-      await Promise.all([
-        queryClient.refetchQueries({
-          queryKey: projectFileKeys.list(workspaceId, projectId)
-        }),
-        queryClient.refetchQueries({
-          queryKey: projectKeys.detail(workspaceId, projectId)
-        })
-      ]);
-    }
-
-    await queryClient.invalidateQueries({ queryKey: searchKeys.workspaceSearches(workspaceId) });
-    await queryClient.invalidateQueries({
-      queryKey: projectFileKeys.detail(workspaceId, diagramId)
-    });
-    await queryClient.invalidateQueries({
-      queryKey: projectFileKeys.content(workspaceId, diagramId)
-    });
+    await refreshDiagramFileCaches(
+      queryClient,
+      isWorkspaceContent
+        ? { kind: 'workspace', workspaceId, fileId: diagramId }
+        : isEntityDiagram
+          ? { kind: 'entity', workspaceId, entityId: projectId, fileId: diagramId }
+          : { kind: 'project', workspaceId, projectId, fileId: diagramId }
+    );
   }, [isWorkspaceContent, isEntityDiagram, queryClient, workspaceId, projectId, diagramId]);
 
   const handleClose = useCallback(async () => {

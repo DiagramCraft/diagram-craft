@@ -1,35 +1,19 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { orpcClient } from '../lib/orpcClient';
 import type { WorkspaceRoleDefinition } from '@arch-register/api-types/workspaceContract';
+import {
+  invalidateWorkspaceRoles,
+  toWorkspaceRolePayload,
+  workspaceRolesKeys as workspaceRolesKeysFromQueries,
+  workspaceRolesQuery
+} from '../queries/workspaceRoles';
+import { orpcClient } from '../lib/orpcClient';
 
-export const workspaceRolesKeys = {
-  all: ['workspace-roles'] as const,
-  list: (workspaceSlug: string) => [...workspaceRolesKeys.all, workspaceSlug] as const
-};
+export const workspaceRolesKeys = workspaceRolesKeysFromQueries;
 
 export const useWorkspaceRoles = (workspaceSlug: string) =>
   useQuery({
-    queryKey: workspaceRolesKeys.list(workspaceSlug),
-    queryFn: () => orpcClient.config.roles.list({ params: { workspace: workspaceSlug } }),
-    enabled: !!workspaceSlug,
-    staleTime: 2 * 60 * 1000
+    ...workspaceRolesQuery(workspaceSlug)
   });
-
-const invalidateWorkspaceRoles = async (
-  queryClient: ReturnType<typeof useQueryClient>,
-  workspaceSlug: string
-) => {
-  await queryClient.invalidateQueries({ queryKey: workspaceRolesKeys.list(workspaceSlug) });
-};
-
-const toWorkspaceRolePayload = (
-  role: Pick<WorkspaceRoleDefinition, 'name' | 'description' | 'tone' | 'capabilities'>
-) => ({
-  name: role.name,
-  description: role.description ?? '',
-  tone: role.tone ?? '',
-  capabilities: role.capabilities
-});
 
 export const useCreateWorkspaceRole = (workspaceSlug: string) => {
   const queryClient = useQueryClient();

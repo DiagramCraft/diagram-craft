@@ -1,11 +1,12 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ExternalContentMount } from '@arch-register/api-types/externalContentContract';
 import { orpcClient } from '../lib/orpcClient';
-import { workspaceContentKeys } from '../queries/content';
+import {
+  externalContentKeys as externalContentKeysFromQueries,
+  externalContentQuery,
+  invalidateExternalContent
+} from '../queries/externalContent';
 
-export const externalContentKeys = {
-  list: (workspaceId: string) => ['external-content-mounts', workspaceId] as const
-};
+export const externalContentKeys = externalContentKeysFromQueries;
 
 export type CreateExternalContentMountInput = {
   source: { type: 'git'; url: string };
@@ -20,20 +21,11 @@ export type UpdateExternalContentMountInput = Omit<CreateExternalContentMountInp
 };
 
 export const useExternalContentMounts = (workspaceId: string, enabled = true) =>
-  useQuery<ExternalContentMount[]>({
-    queryKey: externalContentKeys.list(workspaceId),
-    queryFn: () => orpcClient.externalContent.list({ params: { workspace: workspaceId } }),
-    enabled: enabled && !!workspaceId
-  });
+  useQuery(externalContentQuery(workspaceId, enabled));
 
 export const useExternalContentOperations = (workspaceId: string) => {
   const queryClient = useQueryClient();
-  const invalidate = async () => {
-    await Promise.all([
-      queryClient.invalidateQueries({ queryKey: externalContentKeys.list(workspaceId) }),
-      queryClient.invalidateQueries({ queryKey: workspaceContentKeys.all(workspaceId) })
-    ]);
-  };
+  const invalidate = async () => invalidateExternalContent(queryClient, workspaceId);
 
   const create = useMutation({
     mutationFn: (body: CreateExternalContentMountInput) =>

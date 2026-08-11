@@ -21,7 +21,7 @@ import {
   type RelationImportRow
 } from '../../lib/relationCsv';
 import { downloadBlob } from '../../lib/browserDownload';
-import { relationKeys } from '../../queries/relations';
+import { invalidateRelationSchemaConsumers } from '../../queries/relations';
 import { useQueryClient } from '@tanstack/react-query';
 import styles from '../entities/ImportScreen.module.css';
 
@@ -187,7 +187,7 @@ export const RelationImportScreen = () => {
         validRows.map(row => row.relation!).filter(Boolean)
       );
       setResult({ created: imported.created, updated: imported.updated });
-      await queryClient.invalidateQueries({ queryKey: relationKeys.all });
+      await invalidateRelationSchemaConsumers(queryClient, workspaceSlug);
       setPhase('done');
     } catch (error) {
       console.error('Failed to import relations:', error);

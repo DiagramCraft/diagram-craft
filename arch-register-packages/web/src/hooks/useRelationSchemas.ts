@@ -1,7 +1,15 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { invalidateDeletedRelationSchema, relationSchemaKeys } from '../queries/relationSchemas';
-import { relationKeys } from '../queries/relations';
-import { invalidateAuditQueries } from '../queries/audit';
+import {
+  invalidateDeletedRelationSchema,
+  invalidateRelationSchemaCreate,
+  invalidateRelationSchemaUpdate,
+  optimisticallyUpdateRelationSchema,
+  restoreRelationSchemaCache,
+  relationSchemaVersionsQuery,
+  relationSchemasQuery,
+  setRelationSchemaCaches,
+  type RelationSchemaUpdateCacheInput
+} from '../queries/relationSchemas';
 import type {
   FieldMigrations,
   SchemaMigrationRequiredError
@@ -9,7 +17,6 @@ import type {
 import type {
   RelationField,
   RelationEndpoint,
-  RelationSchema,
   RelationSchemaGroup
 } from '@arch-register/api-types/relationSchemaContract';
 import type { SharedFieldGroupLink, ValidationRule } from '@arch-register/api-types/schemaContract';
@@ -27,12 +34,7 @@ export const getRelationSchemaMigrationRequired = (
 
 // Hook for fetching relation schemas
 export const useRelationSchemas = (workspaceSlug: string, enabled = true) => {
-  return useQuery({
-    queryKey: relationSchemaKeys.list(workspaceSlug),
-    queryFn: async () => orpcClient.relationSchemas.list({ params: { workspace: workspaceSlug } }),
-    enabled: enabled && !!workspaceSlug,
-    staleTime: 5 * 60 * 1000 // 5 minutes
-  });
+  return useQuery(relationSchemasQuery(workspaceSlug, enabled));
 };
 
 // Hook for creating a relation schema
@@ -53,8 +55,7 @@ export const useCreateRelationSchema = (workspaceId: string) => {
       icon?: string | null;
     }) => orpcClient.relationSchemas.create({ params: { workspace: workspaceId }, body }),
     onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: relationSchemaKeys.list(workspaceId) });
-      await invalidateAuditQueries(queryClient, workspaceId);
+      await invalidateRelationSchemaCreate(queryClient, workspaceId);
     }
   });
 };
@@ -88,77 +89,26 @@ export const useUpdateRelationSchema = (workspaceId: string) => {
         body: data
       }),
     onMutate: async variables => {
-      await queryClient.cancelQueries({ queryKey: relationSchemaKeys.list(workspaceId) });
-      const previous = queryClient.getQueryData<RelationSchema[]>(
-        relationSchemaKeys.list(workspaceId)
+      return optimisticallyUpdateRelationSchema(
+        queryClient,
+        workspaceId,
+        variables.relationSchemaId,
+        variables.data as RelationSchemaUpdateCacheInput
       );
-      queryClient.setQueryData<RelationSchema[]>(
-        relationSchemaKeys.list(workspaceId),
-        current =>
-          current?.map(relationSchema =>
-            relationSchema.id === variables.relationSchemaId
-              ? {
-                  ...relationSchema,
-                  name: variables.data.name,
-                  description: variables.data.description ?? relationSchema.description,
-                  in: variables.data.in,
-                  out: variables.data.out,
-                  fields: (variables.data.fields ??
-                    relationSchema.fields) as RelationSchema['fields'],
-                  groups: variables.data.groups ?? relationSchema.groups,
-                  shared_field_group_links:
-                    variables.data.shared_field_group_links ??
-                    relationSchema.shared_field_group_links,
-                  validation_rules:
-                    variables.data.validation_rules ?? relationSchema.validation_rules,
-                  color: variables.data.color ?? relationSchema.color,
-                  icon: variables.data.icon ?? relationSchema.icon
-                }
-              : relationSchema
-          ) ?? current
-      );
-      return { previous };
     },
     onError: (_error, _variables, context) => {
-      if (context?.previous) {
-        queryClient.setQueryData(relationSchemaKeys.list(workspaceId), context.previous);
-      }
+      restoreRelationSchemaCache(queryClient, workspaceId, context);
     },
     onSuccess: async (updated, variables) => {
-      queryClient.setQueryData<RelationSchema[]>(
-        relationSchemaKeys.list(workspaceId),
-        current =>
-          current?.map(relationSchema =>
-            relationSchema.id === updated.id ? updated : relationSchema
-          ) ?? current
-      );
-      queryClient.setQueryData(
-        relationSchemaKeys.detail(workspaceId, variables.relationSchemaId),
-        updated
-      );
-      await queryClient.invalidateQueries({
-        queryKey: relationSchemaKeys.detail(workspaceId, variables.relationSchemaId)
-      });
-      await queryClient.invalidateQueries({
-        queryKey: relationSchemaKeys.versions(workspaceId, variables.relationSchemaId)
-      });
-      await queryClient.invalidateQueries({ queryKey: relationSchemaKeys.list(workspaceId) });
-      // Relation instances render field values defined by the relation schema
-      await queryClient.invalidateQueries({ queryKey: relationKeys.all });
+      setRelationSchemaCaches(queryClient, workspaceId, variables.relationSchemaId, updated);
+      await invalidateRelationSchemaUpdate(queryClient, workspaceId, variables.relationSchemaId);
     }
   });
 };
 
 // Hook for fetching a relation schema's version history
 export const useRelationSchemaVersions = (workspaceId: string, relationSchemaId: string | null) => {
-  return useQuery({
-    queryKey: relationSchemaKeys.versions(workspaceId, relationSchemaId ?? ''),
-    queryFn: async () =>
-      orpcClient.relationSchemas.listVersions({
-        params: { workspace: workspaceId, id: relationSchemaId! }
-      }),
-    enabled: !!workspaceId && !!relationSchemaId
-  });
+  return useQuery(relationSchemaVersionsQuery(workspaceId, relationSchemaId));
 };
 
 // Hook for deleting a relation schema

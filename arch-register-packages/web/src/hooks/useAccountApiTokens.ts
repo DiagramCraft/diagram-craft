@@ -1,22 +1,15 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
 import type { WorkspaceApiTokenCreate } from '@arch-register/api-types/apiTokenContract';
+import {
+  accountApiTokenKeys as accountApiTokenKeysFromQueries,
+  accountApiTokensQuery,
+  invalidateAccountApiTokens
+} from '../queries/accountApiTokens';
 
-export const accountApiTokenKeys = {
-  all: ['account-api-tokens'] as const,
-  list: () => [...accountApiTokenKeys.all, 'list'] as const
-};
+export const accountApiTokenKeys = accountApiTokenKeysFromQueries;
 
-export const useAccountApiTokens = () =>
-  useQuery({
-    queryKey: accountApiTokenKeys.list(),
-    queryFn: () => orpcClient.authProtected.apiTokens.list(),
-    staleTime: 30 * 1000
-  });
-
-const invalidateAccountApiTokens = async (queryClient: ReturnType<typeof useQueryClient>) => {
-  await queryClient.invalidateQueries({ queryKey: accountApiTokenKeys.list() });
-};
+export const useAccountApiTokens = () => useQuery(accountApiTokensQuery());
 
 export const useCreateAccountApiToken = () => {
   const queryClient = useQueryClient();

@@ -5,16 +5,26 @@ import type {
   EntityLandscapeDiffState,
   EntityRelation
 } from '@arch-register/api-types/entityContract';
-import { toEntityListQuery, type EntityListOptions } from './entityListQuery';
+import type { EntityListOptions } from './entityListQuery';
 import {
-  entityKeys,
+  entitiesBySchemaQuery,
+  entityBatchRelationsQuery,
+  entityCountQuery,
+  entityCountsBySchemaQuery,
+  entityDependentsQuery,
+  entityDetailQuery,
+  entityFacetsQuery,
+  entityJsonQuery,
+  entityLandscapeDiffQuery,
+  entityRelationsQuery,
+  entityTimelineMarkersQuery,
+  entityTreeQuery,
+  entitiesQuery,
   invalidateEntityDetails,
   invalidateEntityQueries,
-  invalidateDeletedEntity
+  invalidateEntityDeletion
 } from '../queries/entities';
-import { schemaKeys } from '../queries/schemas';
 import { invalidateEntityVersionQueries } from '../queries/entityVersions';
-import { invalidateNotificationQueries } from '../queries/notifications';
 import { orpcClient } from '../lib/orpcClient';
 
 export const useEntities = (
@@ -22,20 +32,7 @@ export const useEntities = (
   options: EntityListOptions = {},
   queryOptions?: { enabled?: boolean }
 ) => {
-  const query = useQuery({
-    queryKey: entityKeys.list(workspaceId, options),
-    queryFn: () =>
-      orpcClient.entities.list({
-        params: { workspace: workspaceId },
-        query: {
-          ...toEntityListQuery(options),
-          view: options.view,
-          limit: options.limit ?? undefined,
-          offset: options.offset ?? undefined
-        }
-      }),
-    enabled: queryOptions?.enabled ?? !!workspaceId
-  });
+  const query = useQuery(entitiesQuery(workspaceId, options, queryOptions?.enabled ?? true));
 
   return {
     ...query,
@@ -46,23 +43,11 @@ export const useEntities = (
 
 // Hook for fetching a single entity
 export const useEntity = (workspaceId: string, entityId: string) => {
-  return useQuery({
-    queryKey: entityKeys.detail(workspaceId, entityId),
-    queryFn: () => orpcClient.entities.get({ params: { workspace: workspaceId, id: entityId } }),
-    enabled: !!workspaceId && !!entityId
-  });
+  return useQuery(entityDetailQuery(workspaceId, entityId));
 };
 
 export const useEntityJson = (workspaceId: string, entityId: string, enabled = true) =>
-  useQuery({
-    queryKey: entityKeys.json(workspaceId, entityId, 1),
-    queryFn: () =>
-      orpcClient.entities.json({
-        params: { workspace: workspaceId, id: entityId },
-        query: { depth: 1 }
-      }),
-    enabled: enabled && !!workspaceId && !!entityId
-  });
+  useQuery(entityJsonQuery(workspaceId, entityId, enabled));
 
 // Hook for fetching an entity-landscape diff between two reconstructed states — powers both the
 // project page's "What's changed" tab (from = now, to = project's end state) and the workspace
@@ -73,16 +58,7 @@ export const useEntityLandscapeDiff = (
   from: EntityLandscapeDiffState | null,
   to: EntityLandscapeDiffState | null,
   enabled = true
-) =>
-  useQuery({
-    queryKey: entityKeys.landscapeDiff(workspaceId, from, to),
-    queryFn: () =>
-      orpcClient.entities.diff({
-        params: { workspace: workspaceId },
-        body: { from: from!, to: to! }
-      }),
-    enabled: enabled && !!workspaceId && !!from && !!to
-  });
+) => useQuery(entityLandscapeDiffQuery(workspaceId, from, to, enabled));
 
 // Builds the `from`/`to` states for a project's "what's changed by end of project" diff: now
 // (no planned changes) vs. the project's connected entities with its planned changes applied.
@@ -101,60 +77,29 @@ export const buildProjectLandscapeDiffStates = (
 
 // Hook for fetching entity facets (for filters)
 export const useEntityFacets = (workspaceId: string, enabled = true) => {
-  return useQuery({
-    queryKey: entityKeys.facets(workspaceId),
-    queryFn: () => orpcClient.entities.facets({ params: { workspace: workspaceId } }),
-    enabled: enabled && !!workspaceId
-  });
+  return useQuery(entityFacetsQuery(workspaceId, enabled));
 };
 
 // Hook for fetching timeline markers (future_update target dates, saved_version promotions)
 // used to plot event markers in the "browse as of date" picker.
 export const useTimelineMarkers = (workspaceId: string, enabled = true) => {
-  return useQuery({
-    queryKey: entityKeys.timelineMarkers(workspaceId),
-    queryFn: () => orpcClient.entities.timelineMarkers({ params: { workspace: workspaceId } }),
-    enabled: enabled && !!workspaceId
-  });
+  return useQuery(entityTimelineMarkersQuery(workspaceId, enabled));
 };
 
 export const useEntityCount = (
   workspaceId: string,
   options: EntityListOptions = {},
   queryOptions?: { enabled?: boolean }
-) => {
-  return useQuery({
-    queryKey: entityKeys.count(workspaceId, options),
-    queryFn: () =>
-      orpcClient.entities.count({
-        params: { workspace: workspaceId },
-        query: toEntityListQuery(options)
-      }),
-    enabled: queryOptions?.enabled ?? !!workspaceId
-  });
-};
+) => useQuery(entityCountQuery(workspaceId, options, queryOptions?.enabled ?? true));
 
 // Hook for fetching entity relations
 export const useEntityRelations = (workspaceId: string, entityId: string) => {
-  return useQuery({
-    queryKey: entityKeys.relations(workspaceId, entityId),
-    queryFn: () =>
-      orpcClient.entities.relations({ params: { workspace: workspaceId, id: entityId } }),
-    enabled: !!workspaceId && !!entityId
-  });
+  return useQuery(entityRelationsQuery(workspaceId, entityId));
 };
 
 // Hook for fetching entity dependents (direct or transitive)
 export const useEntityDependents = (workspaceId: string, entityId: string, transitive: boolean) => {
-  return useQuery({
-    queryKey: entityKeys.dependents(workspaceId, entityId, transitive),
-    queryFn: () =>
-      orpcClient.entities.dependents({
-        params: { workspace: workspaceId, id: entityId },
-        query: { transitive: transitive ? 'true' : 'false' }
-      }),
-    enabled: !!workspaceId && !!entityId
-  });
+  return useQuery(entityDependentsQuery(workspaceId, entityId, transitive));
 };
 
 // Hook for fetching entity tree
@@ -162,17 +107,7 @@ export const useEntityTree = (
   workspaceId: string,
   options: EntityListOptions = {},
   enabled = true
-) => {
-  return useQuery({
-    queryKey: entityKeys.tree(workspaceId, options),
-    queryFn: () =>
-      orpcClient.entities.tree({
-        params: { workspace: workspaceId },
-        query: toEntityListQuery(options)
-      }),
-    enabled: enabled && !!workspaceId
-  });
-};
+) => useQuery(entityTreeQuery(workspaceId, options, enabled));
 
 // Hook for deleting an entity
 export const useDeleteEntity = (workspaceId: string) => {
@@ -182,10 +117,7 @@ export const useDeleteEntity = (workspaceId: string) => {
     mutationFn: (entityId: string) =>
       orpcClient.entities.remove({ params: { workspace: workspaceId, id: entityId } }),
     onSuccess: async (_, entityId) => {
-      await invalidateDeletedEntity(queryClient, workspaceId, entityId);
-      // Schema counts change when an entity is removed
-      await queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceId) });
-      await invalidateNotificationQueries(queryClient, workspaceId);
+      await invalidateEntityDeletion(queryClient, workspaceId, entityId);
     }
   });
 };
@@ -235,15 +167,7 @@ export const useMultipleEntityRelations = (
 ): Map<string, EntityRelationData> => {
   const sortedIds = useMemo(() => [...entityIds].sort(), [entityIds]);
 
-  const { data, isLoading } = useQuery({
-    queryKey: entityKeys.batchRelations(workspaceId, sortedIds),
-    queryFn: () =>
-      orpcClient.entities.batchRelations({
-        params: { workspace: workspaceId },
-        body: { ids: sortedIds }
-      }),
-    enabled: !!workspaceId && sortedIds.length > 0
-  });
+  const { data, isLoading } = useQuery(entityBatchRelationsQuery(workspaceId, sortedIds));
 
   return useMemo(() => {
     const map = new Map<string, EntityRelationData>();
@@ -268,11 +192,7 @@ export const useEntitiesByIds = (
   const sortedIds = useMemo(() => [...new Set(ids)].sort(), [ids]);
 
   const results = useQueries({
-    queries: sortedIds.map(id => ({
-      queryKey: entityKeys.detail(workspaceId, id),
-      queryFn: () => orpcClient.entities.get({ params: { workspace: workspaceId, id } }),
-      enabled: !!workspaceId && !!id
-    }))
+    queries: sortedIds.map(id => entityDetailQuery(workspaceId, id))
   });
 
   return useMemo(() => {
@@ -292,17 +212,7 @@ export const useEntitiesBySchema = (
   conditions: FilterCondition[] = []
 ) => {
   return useQueries({
-    queries: schemaIds.map(schemaId => ({
-      queryKey: entityKeys.list(workspaceId, { schemaId, view: 'summary', conditions }),
-      queryFn: async () => {
-        const page = await orpcClient.entities.list({
-          params: { workspace: workspaceId },
-          query: { ...toEntityListQuery({ schemaId, conditions }), view: 'summary' }
-        });
-        return page.items;
-      },
-      enabled: !!workspaceId && !!schemaId
-    }))
+    queries: schemaIds.map(schemaId => entitiesBySchemaQuery(workspaceId, schemaId, conditions))
   });
 };
 
@@ -312,14 +222,6 @@ export const useEntityCountsBySchema = (
   conditions: FilterCondition[] = []
 ) => {
   return useQueries({
-    queries: schemaIds.map(schemaId => ({
-      queryKey: entityKeys.count(workspaceId, { schemaId, conditions }),
-      queryFn: () =>
-        orpcClient.entities.count({
-          params: { workspace: workspaceId },
-          query: toEntityListQuery({ schemaId, conditions })
-        }),
-      enabled: !!workspaceId && !!schemaId
-    }))
+    queries: schemaIds.map(schemaId => entityCountsBySchemaQuery(workspaceId, schemaId, conditions))
   });
 };

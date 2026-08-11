@@ -8,8 +8,9 @@ import { NavRail, type NavRailItem } from '@diagram-craft/app-components/NavRail
 import { AddWorkspaceDialog } from '../dialogs/AddWorkspaceDialog';
 import { AddEntityDialog } from '../dialogs/AddEntityDialog';
 import { AddProjectDialog } from '../dialogs/AddProjectDialog';
-import { useWorkspaces, workspaceKeys } from '../hooks/useWorkspaces';
-import { projectKeys } from '../queries/projects';
+import { useWorkspaces } from '../hooks/useWorkspaces';
+import { invalidateProjectList } from '../queries/projects';
+import { invalidateWorkspaceList } from '../queries/workspaces';
 import { useSchemas } from '../hooks/useSchemas';
 import { useRelationSchemas } from '../hooks/useRelationSchemas';
 import { useEnums } from '../hooks/useEnums';
@@ -387,7 +388,7 @@ export const WorkspaceLayout = () => {
           open={addWsOpen}
           onClose={() => setAddWsOpen(false)}
           onCreated={newWs => {
-            void queryClient.invalidateQueries({ queryKey: workspaceKeys.list() });
+            void invalidateWorkspaceList(queryClient);
             navigate({ to: '/$workspaceSlug', params: { workspaceSlug: newWs.url_slug } });
           }}
         />
@@ -397,7 +398,7 @@ export const WorkspaceLayout = () => {
           open={addProjectOpen}
           onClose={() => setAddProjectOpen(false)}
           onCreated={project => {
-            void queryClient.invalidateQueries({ queryKey: projectKeys.list(workspaceSlug) });
+            void invalidateProjectList(queryClient, workspaceSlug);
             navigate(
               projectDetailRoute(workspaceSlug, asProjectPublicId(project.public_id), {
                 tab:

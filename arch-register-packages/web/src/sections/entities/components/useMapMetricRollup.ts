@@ -1,8 +1,7 @@
 import { useMemo } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import type { MetricConfig, MetricRollupResponse } from '@arch-register/api-types/metricContract';
-import { orpcClient } from '../../../lib/orpcClient';
-import { metricKeys } from '../../../queries/metrics';
+import { metricRollupQuery } from '../../../queries/metrics';
 import type { EntityListOptions } from '../../../hooks/entityListQuery';
 
 type UseMapMetricRollupProps = EntityListOptions & {
@@ -58,15 +57,9 @@ export const useMapMetricRollup = ({
     ]
   );
 
-  const { data, isLoading, error } = useQuery({
-    queryKey: metricKeys.rollup(workspaceId, request),
-    queryFn: () =>
-      orpcClient.metrics.rollup({
-        params: { workspace: workspaceId },
-        body: { ...request, metric: metric! }
-      }),
-    enabled: !!workspaceId && !!metric && sortedIds.length > 0
-  });
+  const { data, isLoading, error } = useQuery(
+    metricRollupQuery(workspaceId, request, sortedIds.length > 0)
+  );
 
   const resultsByBoxId = useMemo(() => {
     const map = new Map<string, MetricRollupResponse['results'][number]>();

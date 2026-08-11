@@ -1,23 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { CreateCollectionRequest } from '@arch-register/api-types/collectionContract';
 import { invalidateEntityQueries } from '../queries/entities';
-import { collectionKeys, invalidateCollectionQueries } from '../queries/collections';
+import { collectionsQuery, invalidateCollectionQueries } from '../queries/collections';
 import { orpcClient } from '../lib/orpcClient';
 
 export const useCollections = (
   workspaceId: string,
   entityId?: string | null,
   options?: { enabled?: boolean }
-) =>
-  useQuery({
-    queryKey: collectionKeys.list(workspaceId, entityId ?? undefined),
-    queryFn: () =>
-      orpcClient.collections.list({
-        params: { workspace: workspaceId },
-        query: entityId ? { entityId } : undefined
-      }),
-    enabled: (options?.enabled ?? true) && !!workspaceId
-  });
+) => useQuery(collectionsQuery(workspaceId, entityId, options?.enabled ?? true));
 
 export const useCreateCollection = (workspaceId: string) => {
   const queryClient = useQueryClient();

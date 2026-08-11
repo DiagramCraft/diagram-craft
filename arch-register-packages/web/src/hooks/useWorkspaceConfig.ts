@@ -7,33 +7,23 @@ import type {
 } from '@arch-register/api-types/workspaceConfigContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { orpcClient } from '../lib/orpcClient';
-import { workspaceAnalyticsKeys } from '../queries/workspaceAnalytics';
+import {
+  assessmentTypesQuery,
+  currenciesQuery,
+  invalidateWorkspaceAnalyticsAfterConfigChange,
+  lifecycleStatesQuery,
+  projectEntityTypesQuery,
+  setWorkspaceConfigCache,
+  teamAssignmentsQuery,
+  teamsQuery,
+  workspaceConfigKeys as workspaceConfigKeysFromQueries
+} from '../queries/workspaceConfig';
 
-// Query keys factory
-export const workspaceConfigKeys = {
-  all: ['workspace-config'] as const,
-  lifecycleStates: (workspaceId: string) =>
-    [...workspaceConfigKeys.all, 'lifecycle-states', workspaceId] as const,
-  teams: (workspaceId: string, q?: string, limit?: number) =>
-    [...workspaceConfigKeys.all, 'teams', workspaceId, q ?? '', limit ?? null] as const,
-  teamAssignments: (workspaceId: string) =>
-    [...workspaceConfigKeys.all, 'team-assignments', workspaceId] as const,
-  projectEntityTypes: (workspaceId: string) =>
-    [...workspaceConfigKeys.all, 'project-entity-types', workspaceId] as const,
-  assessmentTypes: (workspaceId: string) =>
-    [...workspaceConfigKeys.all, 'assessment-types', workspaceId] as const,
-  currencies: (workspaceId: string) =>
-    [...workspaceConfigKeys.all, 'currencies', workspaceId] as const
-};
+export const workspaceConfigKeys = workspaceConfigKeysFromQueries;
 
 // Hook for fetching lifecycle states
 export const useLifecycleStates = (workspaceSlug: string, enabled = true) => {
-  return useQuery({
-    queryKey: workspaceConfigKeys.lifecycleStates(workspaceSlug),
-    queryFn: () => orpcClient.config.lifecycleStates.list({ params: { workspace: workspaceSlug } }),
-    enabled: enabled && !!workspaceSlug,
-    staleTime: 5 * 60 * 1000 // 5 minutes
-  });
+  return useQuery(lifecycleStatesQuery(workspaceSlug, enabled));
 };
 
 export const useTeams = (
@@ -41,25 +31,11 @@ export const useTeams = (
   enabled = true,
   options: { q?: string; limit?: number } = {}
 ) => {
-  return useQuery({
-    queryKey: workspaceConfigKeys.teams(workspaceSlug, options.q, options.limit),
-    queryFn: () =>
-      orpcClient.config.teams.list({
-        params: { workspace: workspaceSlug },
-        query: { q: options.q, limit: options.limit }
-      }),
-    enabled: enabled && !!workspaceSlug,
-    staleTime: 5 * 60 * 1000 // 5 minutes
-  });
+  return useQuery(teamsQuery(workspaceSlug, options, enabled));
 };
 
 export const useTeamAssignments = (workspaceSlug: string, enabled = true) => {
-  return useQuery({
-    queryKey: workspaceConfigKeys.teamAssignments(workspaceSlug),
-    queryFn: () => orpcClient.config.teamAssignments.list({ params: { workspace: workspaceSlug } }),
-    enabled: enabled && !!workspaceSlug,
-    staleTime: 2 * 60 * 1000
-  });
+  return useQuery(teamAssignmentsQuery(workspaceSlug, enabled));
 };
 
 // Hook for updating lifecycle states
@@ -74,10 +50,12 @@ export const useUpdateLifecycleStates = (workspaceId: string) => {
       }),
     onSuccess: updatedStates => {
       // Update the cache with the new states
-      queryClient.setQueryData(workspaceConfigKeys.lifecycleStates(workspaceId), updatedStates);
-      void queryClient.invalidateQueries({
-        queryKey: workspaceAnalyticsKeys.workspace(workspaceId)
-      });
+      setWorkspaceConfigCache(
+        queryClient,
+        workspaceConfigKeys.lifecycleStates(workspaceId),
+        updatedStates
+      );
+      void invalidateWorkspaceAnalyticsAfterConfigChange(queryClient, workspaceId);
     }
   });
 };
@@ -92,10 +70,8 @@ export const useUpdateTeams = (workspaceId: string) => {
         body: { teams }
       }),
     onSuccess: updatedTeams => {
-      queryClient.setQueryData(workspaceConfigKeys.teams(workspaceId), updatedTeams);
-      void queryClient.invalidateQueries({
-        queryKey: workspaceAnalyticsKeys.workspace(workspaceId)
-      });
+      setWorkspaceConfigCache(queryClient, workspaceConfigKeys.teams(workspaceId), updatedTeams);
+      void invalidateWorkspaceAnalyticsAfterConfigChange(queryClient, workspaceId);
     }
   });
 };
@@ -110,7 +86,8 @@ export const useUpdateTeamAssignments = (workspaceId: string) => {
         body: { assignments }
       }),
     onSuccess: updatedAssignments => {
-      queryClient.setQueryData(
+      setWorkspaceConfigCache(
+        queryClient,
         workspaceConfigKeys.teamAssignments(workspaceId),
         updatedAssignments
       );
@@ -119,22 +96,11 @@ export const useUpdateTeamAssignments = (workspaceId: string) => {
 };
 
 export const useProjectEntityTypes = (workspaceSlug: string, enabled = true) => {
-  return useQuery({
-    queryKey: workspaceConfigKeys.projectEntityTypes(workspaceSlug),
-    queryFn: () =>
-      orpcClient.config.projectEntityTypes.list({ params: { workspace: workspaceSlug } }),
-    enabled: enabled && !!workspaceSlug,
-    staleTime: 5 * 60 * 1000
-  });
+  return useQuery(projectEntityTypesQuery(workspaceSlug, enabled));
 };
 
 export const useAssessmentTypes = (workspaceSlug: string, enabled = true) => {
-  return useQuery({
-    queryKey: workspaceConfigKeys.assessmentTypes(workspaceSlug),
-    queryFn: () => orpcClient.config.assessmentTypes.list({ params: { workspace: workspaceSlug } }),
-    enabled: enabled && !!workspaceSlug,
-    staleTime: 5 * 60 * 1000
-  });
+  return useQuery(assessmentTypesQuery(workspaceSlug, enabled));
 };
 
 export const useUpdateAssessmentTypes = (workspaceId: string) => {
@@ -146,18 +112,13 @@ export const useUpdateAssessmentTypes = (workspaceId: string) => {
         body: { types }
       }),
     onSuccess: value => {
-      queryClient.setQueryData(workspaceConfigKeys.assessmentTypes(workspaceId), value);
+      setWorkspaceConfigCache(queryClient, workspaceConfigKeys.assessmentTypes(workspaceId), value);
     }
   });
 };
 
 export const useSupportedCurrencies = (workspaceSlug: string, enabled = true) =>
-  useQuery({
-    queryKey: workspaceConfigKeys.currencies(workspaceSlug),
-    queryFn: () => orpcClient.config.currencies.list({ params: { workspace: workspaceSlug } }),
-    enabled: enabled && !!workspaceSlug,
-    staleTime: 5 * 60 * 1000
-  });
+  useQuery(currenciesQuery(workspaceSlug, enabled));
 
 export const useUpdateSupportedCurrencies = (workspaceId: string) => {
   const queryClient = useQueryClient();
@@ -168,7 +129,7 @@ export const useUpdateSupportedCurrencies = (workspaceId: string) => {
         body: input
       }),
     onSuccess: value => {
-      queryClient.setQueryData(workspaceConfigKeys.currencies(workspaceId), value);
+      setWorkspaceConfigCache(queryClient, workspaceConfigKeys.currencies(workspaceId), value);
     }
   });
 };

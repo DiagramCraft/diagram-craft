@@ -1,13 +1,31 @@
 import { describe, expect, it, vi } from 'vitest';
-import type { QueryClient } from '@tanstack/react-query';
-import { documentKeys } from '../hooks/useDocuments';
+import { QueryClient } from '@tanstack/react-query';
+import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
+import {
+  assessmentResponseKeys,
+  restoreAssessmentResponseCache,
+  updateAssessmentResponseCache
+} from './assessments';
+import { contentScopeKey, contentScopeQuery, invalidateContentScope } from './content';
 import { auditKeys } from './audit';
 import { dashboardKeys } from './dashboard';
 import { definitionImportKeys, invalidateDefinitionImportQueries } from './definitionImports';
-import { invalidateDeletedEntity, invalidateEntityQueries } from './entities';
+import {
+  entityKeys,
+  hydratedEntitiesBySchemaQuery,
+  invalidateDeletedEntity,
+  invalidateEntityQueries
+} from './entities';
 import { jobKeys, invalidateJobQueries } from './jobs';
 import { governanceKeys, invalidateGovernanceQueries } from './governance';
-import { invalidateNotificationQueries, notificationKeys } from './notifications';
+import {
+  addPinnedEntityToCache,
+  invalidateNotificationQueries,
+  notificationKeys,
+  removePinnedEntityFromCache,
+  restorePinnedEntitiesCache
+} from './notifications';
+import { documentKeys, documentTypesQuery } from './documents';
 import { invalidateDeletedProject } from './projects';
 import { fieldGroupKeys } from './fieldGroups';
 import { relationSchemaKeys } from './relationSchemas';
@@ -18,7 +36,8 @@ import {
   workspaceTemplatesQuery
 } from './templates';
 import { enumKeys, invalidateDeletedEnum } from './enums';
-import { invalidateDeletedSchema, schemaKeys } from './schemas';
+import { invalidateDeletedSchema } from './schemas';
+import { schemaKeys } from './schemaKeys';
 import { invalidateSavedViewQueries, viewKeys } from './views';
 
 const queryClientSpy = () => {
@@ -42,6 +61,16 @@ describe('domain query definitions', () => {
       jobKeys.runsWorkspace('ws-1')
     );
     expect(definitionImportKeys.sources('ws-1')).toEqual(['definition-import-sources', 'ws-1']);
+  });
+
+  it('keeps query options and cache keys owned by their feature modules', () => {
+    const entityScope = { kind: 'entity' as const, workspaceId: 'ws-1', entityId: 'entity-1' };
+
+    expect(documentTypesQuery('ws-1').queryKey).toEqual(documentKeys.types('ws-1'));
+    expect(contentScopeQuery(entityScope).queryKey).toEqual(contentScopeKey(entityScope));
+    expect(hydratedEntitiesBySchemaQuery('ws-1', 'schema-1').queryKey).toEqual(
+      entityKeys.list('ws-1', { schemaId: 'schema-1', view: 'full' })
+    );
   });
 });
 
@@ -196,5 +225,98 @@ describe('workspace-scoped invalidation', () => {
     expect(
       invalidateQueries.mock.calls.every(([options]) => !options.queryKey.includes('ws-2'))
     ).toBe(true);
+  });
+
+  it('keeps project content invalidation scoped to the project workspace', async () => {
+    const { client, invalidateQueries } = queryClientSpy();
+
+    await invalidateContentScope(client, {
+      kind: 'project',
+      workspaceId: 'ws-1',
+      projectId: 'project-1'
+    });
+
+    expect(invalidateQueries.mock.calls.map(([options]) => options.queryKey)).toContainEqual([
+      'project-files',
+      'list',
+      'ws-1',
+      'project-1'
+    ]);
+    expect(
+      invalidateQueries.mock.calls.every(([options]) => !options.queryKey.includes('ws-2'))
+    ).toBe(true);
+  });
+});
+
+describe('optimistic cache helpers', () => {
+  it('updates and restores pinned-entity cache through the notification query module', async () => {
+    const queryClient = new QueryClient();
+    const first = {
+      entity_id: 'entity-1',
+      entity_public_id: 'ENT-1',
+      entity_name: 'First entity',
+      entity_slug: 'first-entity',
+      schema_id: 'schema-1',
+      created_at: '2026-08-11T00:00:00.000Z'
+    };
+    const second = { ...first, entity_id: 'entity-2', entity_public_id: 'ENT-2' };
+    queryClient.setQueryData(notificationKeys.pinned('ws-1'), [first]);
+
+    const addContext = await addPinnedEntityToCache(queryClient, 'ws-1', second);
+    expect(queryClient.getQueryData(notificationKeys.pinned('ws-1'))).toEqual([second, first]);
+    restorePinnedEntitiesCache(queryClient, 'ws-1', addContext);
+    expect(queryClient.getQueryData(notificationKeys.pinned('ws-1'))).toEqual([first]);
+
+    const removeContext = await removePinnedEntityFromCache(queryClient, 'ws-1', 'entity-1');
+    expect(queryClient.getQueryData(notificationKeys.pinned('ws-1'))).toEqual([]);
+    restorePinnedEntitiesCache(queryClient, 'ws-1', removeContext);
+    expect(queryClient.getQueryData(notificationKeys.pinned('ws-1'))).toEqual([first]);
+  });
+
+  it('merges assessment response values and restores the previous response cache', async () => {
+    const queryClient = new QueryClient();
+    const fields = [
+      {
+        id: 'rating',
+        label: 'Rating',
+        type: 'rating',
+        requirementLevel: 'required'
+      }
+    ] as AssessmentField[];
+    const key = assessmentResponseKeys.list('ws-1', 'assessment-1');
+    const previous = [
+      {
+        id: 'response-1',
+        entity_id: 'entity-1',
+        values: {},
+        status: 'not_started' as const,
+        updated_at: '2026-08-11T00:00:00.000Z',
+        updated_by: null,
+        updated_by_name: null
+      }
+    ];
+    queryClient.setQueryData(key, previous);
+
+    const context = await updateAssessmentResponseCache(
+      queryClient,
+      'ws-1',
+      'assessment-1',
+      fields,
+      'fields',
+      { id: 'user-1', display_name: 'User One' },
+      'entity-1',
+      { rating: 5 }
+    );
+    expect(queryClient.getQueryData(key)).toMatchObject([
+      {
+        entity_id: 'entity-1',
+        values: { rating: 5 },
+        status: 'complete',
+        updated_by: 'user-1'
+      }
+    ]);
+
+    restoreAssessmentResponseCache(queryClient, 'ws-1', 'assessment-1', context);
+    expect(queryClient.getQueryData(key)).toEqual(previous);
   });
 });

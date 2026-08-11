@@ -11,8 +11,7 @@ import {
   useGovernanceCaseEvents,
   useGovernanceTasks
 } from '../../../hooks/useGovernance';
-import { entityChangeKeys } from '../../../hooks/useEntityChanges';
-import { entityKeys } from '../../../queries/entities';
+import { invalidateEntityChangeQueries } from '../../../queries/entityChanges';
 import { changeApprovalDiffRows, formatChangeApprovalValue } from './entityChangeApprovalHelpers';
 import styles from '../EntityDetailScreen.module.css';
 import type { EntityChangeApprovalRevision } from '@arch-register/api-types/entityChangeContract';
@@ -68,12 +67,7 @@ export const EntityChangeApprovalPanel = ({
     .reverse()
     .find(caseEvent => caseEvent.eventType === 'changes_requested')?.reason;
   const invalidateProposalQueries = () =>
-    Promise.all([
-      queryClient.invalidateQueries({
-        queryKey: entityChangeKeys.current(workspaceId, entityId)
-      }),
-      queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) })
-    ]);
+    invalidateEntityChangeQueries(queryClient, workspaceId, entityId);
   const approve = () => {
     if (!approvalTask) return;
     decide.mutate(

@@ -4,19 +4,17 @@ import type {
   GovernanceWorkflowConfigRow
 } from '@arch-register/api-types/governanceWorkflowConfigContract';
 import { orpcClient } from '../lib/orpcClient';
+import {
+  governanceWorkflowConfigKeys as governanceWorkflowConfigKeysFromQueries,
+  governanceWorkflowConfigQuery,
+  invalidateGovernanceWorkflowConfig,
+  patchGovernanceWorkflowConfigCache
+} from '../queries/governanceWorkflowConfig';
 
-export const governanceWorkflowConfigKeys = {
-  all: ['governance-workflow-config'] as const,
-  detail: (workspace: string) => [...governanceWorkflowConfigKeys.all, workspace] as const
-};
+export const governanceWorkflowConfigKeys = governanceWorkflowConfigKeysFromQueries;
 
 export const useGovernanceWorkflowConfig = (workspaceSlug: string) =>
-  useQuery({
-    queryKey: governanceWorkflowConfigKeys.detail(workspaceSlug),
-    queryFn: () =>
-      orpcClient.governanceWorkflowConfig.list({ params: { workspace: workspaceSlug } }),
-    enabled: !!workspaceSlug
-  });
+  useQuery(governanceWorkflowConfigQuery(workspaceSlug));
 
 export const useUpsertGovernanceWorkflowConfig = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
@@ -27,15 +25,7 @@ export const useUpsertGovernanceWorkflowConfig = (workspaceSlug: string) => {
         body
       }),
     onSuccess: (row: GovernanceWorkflowConfigRow) => {
-      queryClient.setQueryData(
-        governanceWorkflowConfigKeys.detail(workspaceSlug),
-        (
-          current: Awaited<ReturnType<typeof orpcClient.governanceWorkflowConfig.list>> | undefined
-        ) =>
-          current
-            ? { ...current, configs: [...current.configs.filter(item => item.id !== row.id), row] }
-            : current
-      );
+      patchGovernanceWorkflowConfigCache(queryClient, workspaceSlug, row);
     }
   });
 };
@@ -49,9 +39,7 @@ export const useResetGovernanceWorkflowConfig = (workspaceSlug: string) => {
         body
       }),
     onSuccess: () => {
-      void queryClient.invalidateQueries({
-        queryKey: governanceWorkflowConfigKeys.detail(workspaceSlug)
-      });
+      void invalidateGovernanceWorkflowConfig(queryClient, workspaceSlug);
     }
   });
 };

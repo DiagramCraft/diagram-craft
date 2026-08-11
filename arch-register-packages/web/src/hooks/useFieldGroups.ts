@@ -1,23 +1,21 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import { orpcClient } from '../lib/orpcClient';
-import { fieldGroupKeys, invalidateDeletedFieldGroup } from '../queries/fieldGroups';
-import { schemaKeys } from '../queries/schemas';
+import {
+  fieldGroupsQuery,
+  invalidateDeletedFieldGroup,
+  invalidateFieldGroupQueries
+} from '../queries/fieldGroups';
 
 export const useFieldGroups = (workspaceSlug: string, enabled = true) =>
-  useQuery({
-    queryKey: fieldGroupKeys.list(workspaceSlug),
-    queryFn: () => orpcClient.fieldGroups.list({ params: { workspace: workspaceSlug } }),
-    enabled: enabled && !!workspaceSlug,
-    staleTime: 5 * 60 * 1000
-  });
+  useQuery(fieldGroupsQuery(workspaceSlug, enabled));
 
 export const useCreateFieldGroup = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
   return useMutation({
     mutationFn: (body: { name: string; description?: string; fields?: SchemaField[] }) =>
       orpcClient.fieldGroups.create({ params: { workspace: workspaceSlug }, body }),
-    onSuccess: () => queryClient.invalidateQueries({ queryKey: fieldGroupKeys.list(workspaceSlug) })
+    onSuccess: () => invalidateFieldGroupQueries(queryClient, workspaceSlug)
   });
 };
 
@@ -43,13 +41,8 @@ export const useUpdateFieldGroup = (workspaceSlug: string) => {
         params: { workspace: workspaceSlug, id: fieldGroupId },
         body: data
       }),
-    onSuccess: (_, variables) => {
-      queryClient.invalidateQueries({ queryKey: fieldGroupKeys.list(workspaceSlug) });
-      queryClient.invalidateQueries({
-        queryKey: fieldGroupKeys.detail(workspaceSlug, variables.fieldGroupId)
-      });
-      queryClient.invalidateQueries({ queryKey: schemaKeys.list(workspaceSlug) });
-    }
+    onSuccess: (_, variables) =>
+      invalidateFieldGroupQueries(queryClient, workspaceSlug, variables.fieldGroupId)
   });
 };
 

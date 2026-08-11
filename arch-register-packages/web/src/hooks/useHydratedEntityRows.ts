@@ -1,9 +1,7 @@
 import { useMemo } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import { entityKeys } from '../queries/entities';
-import { orpcClient } from '../lib/orpcClient';
-import { toEntityListQuery } from './entityListQuery';
+import { hydratedEntitiesBySchemaQuery } from '../queries/entities';
 
 type SummaryRow = EntityRecord & { _assessment?: unknown };
 
@@ -30,17 +28,9 @@ export const useHydratedEntityRows = <T extends SummaryRow>(
 ) => {
   const schemaIds = useMemo(() => [...new Set(rows.map(row => row._schema.id))], [rows]);
   const results = useQueries({
-    queries: schemaIds.map(schemaId => ({
-      queryKey: entityKeys.list(workspaceId, { schemaId, view: 'full' }),
-      queryFn: async () => {
-        const page = await orpcClient.entities.list({
-          params: { workspace: workspaceId },
-          query: { ...toEntityListQuery({ schemaId }), view: 'full' }
-        });
-        return page.items;
-      },
-      enabled: enabled && !!workspaceId
-    }))
+    queries: schemaIds.map(schemaId =>
+      hydratedEntitiesBySchemaQuery(workspaceId, schemaId, enabled)
+    )
   });
   const fullEntities = results.flatMap(result => result.data ?? []);
   return useMemo(() => mergeHydratedEntityRows(rows, fullEntities), [rows, fullEntities]);

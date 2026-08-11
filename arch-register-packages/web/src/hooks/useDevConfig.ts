@@ -1,22 +1,8 @@
 import { useQuery } from '@tanstack/react-query';
-import { orpcClient } from '../lib/orpcClient';
+import { devConfigQuery, devKeys } from '../queries/dev';
 
-export const devConfigKeys = {
-  detail: ['dev', 'config'] as const
-};
+export const devConfigKeys = devKeys.config;
 
 export const useDevConfig = () => {
-  return useQuery({
-    queryKey: devConfigKeys.detail,
-    queryFn: async () => {
-      try {
-        return await orpcClient.dev.config();
-      } catch {
-        // Router isn't mounted (dev tooling disabled) -> treat as disabled.
-        return { enabled: false };
-      }
-    },
-    staleTime: Infinity,
-    retry: false
-  });
+  return useQuery(devConfigQuery());
 };

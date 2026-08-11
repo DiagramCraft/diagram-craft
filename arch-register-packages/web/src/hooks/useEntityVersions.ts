@@ -1,15 +1,14 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { entityKeys, invalidateEntityDetails } from '../queries/entities';
-import { entityVersionKeys, invalidateEntityVersionQueries } from '../queries/entityVersions';
+import { invalidateEntityDetails } from '../queries/entities';
+import {
+  entityVersionsQuery,
+  invalidateEntityVersionQueries,
+  invalidatePromotedEntityVersion
+} from '../queries/entityVersions';
 import { orpcClient } from '../lib/orpcClient';
 
 export const useEntityVersions = (workspaceId: string, entityId: string, enabled = false) =>
-  useQuery({
-    queryKey: entityVersionKeys.list(workspaceId, entityId),
-    queryFn: () =>
-      orpcClient.entityVersions.list({ params: { workspace: workspaceId, id: entityId } }),
-    enabled: !!workspaceId && !!entityId && enabled
-  });
+  useQuery(entityVersionsQuery(workspaceId, entityId, enabled));
 
 export const usePromoteEntityVersion = (workspaceId: string, entityId: string) => {
   const queryClient = useQueryClient();
@@ -27,8 +26,7 @@ export const usePromoteEntityVersion = (workspaceId: string, entityId: string) =
       });
     },
     onSuccess: () => {
-      invalidateEntityVersionQueries(queryClient, workspaceId, entityId);
-      queryClient.invalidateQueries({ queryKey: entityKeys.detail(workspaceId, entityId) });
+      invalidatePromotedEntityVersion(queryClient, workspaceId, entityId);
     }
   });
 };

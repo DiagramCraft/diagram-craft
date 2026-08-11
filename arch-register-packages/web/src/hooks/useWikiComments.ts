@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { wikiCommentKeys } from '../queries/wikiComments';
+import { invalidateWikiComments, wikiCommentsQuery } from '../queries/wikiComments';
 import type {
   CreateWikiCommentRequest,
   UpdateWikiCommentRequest
@@ -7,15 +7,7 @@ import type {
 import { orpcClient } from '../lib/orpcClient';
 
 export const useWikiComments = (workspaceId: string, nodeId: string, enabled = true) => {
-  return useQuery({
-    queryKey: wikiCommentKeys.list(workspaceId, nodeId),
-    queryFn: async () =>
-      await orpcClient.wikiComments.list({
-        params: { workspace: workspaceId },
-        query: { nodeId }
-      }),
-    enabled: enabled && !!workspaceId && !!nodeId
-  });
+  return useQuery(wikiCommentsQuery(workspaceId, nodeId, enabled));
 };
 
 export const useCreateWikiComment = (workspaceId: string, nodeId: string) => {
@@ -24,9 +16,7 @@ export const useCreateWikiComment = (workspaceId: string, nodeId: string) => {
   return useMutation({
     mutationFn: (body: CreateWikiCommentRequest) =>
       orpcClient.wikiComments.create({ params: { workspace: workspaceId }, body }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: wikiCommentKeys.list(workspaceId, nodeId) });
-    }
+    onSuccess: async () => invalidateWikiComments(queryClient, workspaceId, nodeId)
   });
 };
 
@@ -36,9 +26,7 @@ export const useUpdateWikiComment = (workspaceId: string, nodeId: string) => {
   return useMutation({
     mutationFn: ({ postId, body }: { postId: string; body: UpdateWikiCommentRequest }) =>
       orpcClient.wikiComments.update({ params: { workspace: workspaceId, postId }, body }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: wikiCommentKeys.list(workspaceId, nodeId) });
-    }
+    onSuccess: async () => invalidateWikiComments(queryClient, workspaceId, nodeId)
   });
 };
 
@@ -51,9 +39,7 @@ export const useResolveWikiComment = (workspaceId: string, nodeId: string) => {
         params: { workspace: workspaceId, postId },
         body: { resolved }
       }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: wikiCommentKeys.list(workspaceId, nodeId) });
-    }
+    onSuccess: async () => invalidateWikiComments(queryClient, workspaceId, nodeId)
   });
 };
 
@@ -63,8 +49,6 @@ export const useDeleteWikiComment = (workspaceId: string, nodeId: string) => {
   return useMutation({
     mutationFn: (postId: string) =>
       orpcClient.wikiComments.remove({ params: { workspace: workspaceId, postId } }),
-    onSuccess: async () => {
-      await queryClient.invalidateQueries({ queryKey: wikiCommentKeys.list(workspaceId, nodeId) });
-    }
+    onSuccess: async () => invalidateWikiComments(queryClient, workspaceId, nodeId)
   });
 };

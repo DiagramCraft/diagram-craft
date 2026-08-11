@@ -1,12 +1,10 @@
 import { useQuery } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
+import { devUsersQuery } from '../queries/dev';
 import styles from './DevUserSwitcherPanel.module.css';
 
 export const DevUserSwitcherPanel = () => {
-  const { data: users, isLoading } = useQuery({
-    queryKey: ['dev', 'users'],
-    queryFn: () => orpcClient.dev.listUsers()
-  });
+  const { data: users, isLoading } = useQuery(devUsersQuery());
 
   const switchTo = async (userId: string) => {
     await orpcClient.dev.switchUser({ body: { userId } });

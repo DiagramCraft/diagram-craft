@@ -1,20 +1,16 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
+import {
+  aiConversationsQuery,
+  aiKeys as aiKeysFromQueries,
+  aiMessagesQuery,
+  invalidateAiConversations
+} from '../queries/ai';
 
-export const aiKeys = {
-  all: ['ai'] as const,
-  conversations: (ws: string) => [...aiKeys.all, 'conversations', ws] as const,
-  messages: (ws: string, conversationId: string) =>
-    [...aiKeys.all, 'messages', ws, conversationId] as const
-};
+export const aiKeys = aiKeysFromQueries;
 
 export const useAiConversations = (workspaceSlug: string) => {
-  return useQuery({
-    queryKey: aiKeys.conversations(workspaceSlug),
-    queryFn: () => orpcClient.ai.listConversations({ params: { workspace: workspaceSlug } }),
-    enabled: !!workspaceSlug,
-    staleTime: 30_000
-  });
+  return useQuery(aiConversationsQuery(workspaceSlug));
 };
 
 export const useCreateConversation = (workspaceSlug: string) => {
@@ -26,7 +22,7 @@ export const useCreateConversation = (workspaceSlug: string) => {
         body: { title }
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: aiKeys.conversations(workspaceSlug) });
+      invalidateAiConversations(queryClient, workspaceSlug);
     }
   });
 };
@@ -40,7 +36,7 @@ export const useRenameConversation = (workspaceSlug: string) => {
         body: { title }
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: aiKeys.conversations(workspaceSlug) });
+      invalidateAiConversations(queryClient, workspaceSlug);
     }
   });
 };
@@ -53,7 +49,7 @@ export const useDeleteConversation = (workspaceSlug: string) => {
         params: { workspace: workspaceSlug, id }
       }),
     onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: aiKeys.conversations(workspaceSlug) });
+      invalidateAiConversations(queryClient, workspaceSlug);
     }
   });
 };
@@ -62,12 +58,5 @@ export const useConversationMessages = (
   workspaceSlug: string,
   conversationId: string | undefined
 ) => {
-  return useQuery({
-    queryKey: aiKeys.messages(workspaceSlug, conversationId ?? ''),
-    queryFn: () =>
-      orpcClient.ai.listMessages({
-        params: { workspace: workspaceSlug, id: conversationId! }
-      }),
-    enabled: !!workspaceSlug && !!conversationId
-  });
+  return useQuery(aiMessagesQuery(workspaceSlug, conversationId));
 };

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { documentPickerQueryScopes, mergeDocumentPickerResults } from './useDocuments';
+import { documentPickerQueryScopes, mergeDocumentPickerResults } from '../queries/documents';
 
 describe('document picker search helpers', () => {
   it('uses one unrestricted query when all scopes are allowed', () => {

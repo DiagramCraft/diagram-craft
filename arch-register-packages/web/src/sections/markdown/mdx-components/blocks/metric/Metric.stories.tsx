@@ -8,7 +8,7 @@ import {
   dashboardWidget
 } from '../StorybookHarness';
 import { entityKeys } from '../../../../../queries/entities';
-import { projectKeys } from '../../../../../queries/projects';
+import { projectKeys } from '../../../../../queries/projectKeys';
 
 const meta = {
   title: 'MDX Blocks/Metric',

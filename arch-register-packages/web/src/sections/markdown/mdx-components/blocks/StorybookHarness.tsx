@@ -13,7 +13,7 @@ import { DashboardGrid } from '../../../dashboard/DashboardGrid';
 import { MdxContext } from '../../MdxContext';
 import { WorkspaceContext, type WorkspaceContextType } from '../../../../layouts/WorkspaceContext';
 import { entityKeys } from '../../../../queries/entities';
-import { projectKeys } from '../../../../queries/projects';
+import { projectKeys } from '../../../../queries/projectKeys';
 
 export const WORKSPACE = 'storybook-workspace';
 
