@@ -140,7 +140,10 @@
           sources and immutable versions, explicitly selecting a source/revision, identifying each source's current
           successful version, inspecting source/revision/status and diagnostics, filtering and paginating results, and
           opening permitted raw or canonical external sources; stale and failed ingestion is explicitly distinguished
-          from the last successful revision.
+          from the last successful revision. External catalog integrations can atomically attach an API specification
+          to an entity using a provider-scoped source key, submit bounded documents, register HTTPS or link-only
+          sources, repeat idempotently without duplicate revisions, and preserve the last successful revision when a
+          refresh or completed source scan fails.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can
@@ -227,8 +230,11 @@
 
         - @id:ar.entity-views.timeline Users can inspect date-driven entity history and planned change context in a
           condensed Entity + Project timeline, grouping rows by owner, type, or containment parent, with configurable
-          project lanes, milestone guides, and autosave snapshot visibility. When grouped by Project + Entity, a
-          project with both a start and target date set shows a gantt bar spanning that range in its group header.
+          project lanes, milestone guides, autosave snapshot visibility, and continuous Historical, Now, Next, and
+          Later horizon bands. The Capability + Entity + Project strategic roadmap mode aggregates accessible
+          project-linked workspace entities, keeps owners visible, and places undated entities in a separate section.
+          When grouped by Project + Entity, a project with both a start and target date set shows a gantt bar spanning
+          that range in its group header.
 
         - @id:ar.entity-views.diff Users can pick a future date and view a workspace-wide diff of what changes by
           then — entities added, removed, or changed, with all applicable planned changes across projects applied,
@@ -589,6 +595,16 @@
           idempotently create or update an entity by a durable (source, external key) identity, distinct from the
           entity's internal id, so repeated submissions from a catalog importer converge on the same entity instead
           of creating duplicates.
+
+        - @id:ar.integrations.api-specification-sync External integrations can atomically sync an API entity and
+          its specification source through the versioned integration API. Sources are identified by a stable
+          provider-scoped source key rather than an internal database ID and support bounded submitted documents,
+          secure HTTPS refreshes, and link-only provenance. Repeated content is checksum-deduplicated into immutable
+          revisions; manual and scheduled URL refreshes share the artifact refresh job path, while source failures
+          preserve the last-known-good revision and expose stale/failed diagnostics. The Backstage example resolves
+          inline and supported `$text`, `$json`, and `$yaml` definitions with its GitHub credentials, records source
+          provenance, reports unsupported definitions as warnings, and only marks disappeared sources stale after a
+          complete organization scan.
 
         - @id:ar.integrations.relation-sync External integrations holding the external-update capability can
           idempotently create or update a typed relation instance by a durable (source, external key) identity, the

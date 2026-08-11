@@ -5,7 +5,7 @@ import {
   createFixtureEntity,
   createFixtureSchema,
   createFixtureWorkspace
-} from './projectFixtures';
+} from '../testSupport/fixtures';
 
 runContractSuiteAgainstBothDrivers('ApiSpecificationDatabase', getDb => {
   it('stores, replaces, filters, and paginates normalized revision items', async () => {

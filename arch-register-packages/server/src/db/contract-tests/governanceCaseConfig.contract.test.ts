@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFixtureWorkspace } from './projectFixtures';
+import { createFixtureWorkspace } from '../testSupport/fixtures';
 
 runContractSuiteAgainstBothDrivers('GovernanceCaseConfigDatabase', getDb => {
   describe('workspace-wide config (case_subkind: null)', () => {

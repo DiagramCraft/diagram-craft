@@ -73168,7 +73168,8 @@
                                       "type",
                                       "snapshot",
                                       "project",
-                                      "containment"
+                                      "containment",
+                                      "capability"
                                     ],
                                     "type": "string",
                                     "description": "Timeline grouping mode"
@@ -73193,6 +73194,10 @@
                                   "showAutosaves": {
                                     "type": "boolean",
                                     "description": "Whether autosave snapshots are visible"
+                                  },
+                                  "showHorizonBands": {
+                                    "type": "boolean",
+                                    "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
                                   }
                                 },
                                 "required": [
@@ -75349,7 +75354,8 @@
                                   "type",
                                   "snapshot",
                                   "project",
-                                  "containment"
+                                  "containment",
+                                  "capability"
                                 ],
                                 "type": "string",
                                 "description": "Timeline grouping mode"
@@ -75374,6 +75380,10 @@
                               "showAutosaves": {
                                 "type": "boolean",
                                 "description": "Whether autosave snapshots are visible"
+                              },
+                              "showHorizonBands": {
+                                "type": "boolean",
+                                "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
                               }
                             },
                             "required": [
@@ -77724,7 +77734,8 @@
                                     "type",
                                     "snapshot",
                                     "project",
-                                    "containment"
+                                    "containment",
+                                    "capability"
                                   ],
                                   "type": "string",
                                   "description": "Timeline grouping mode"
@@ -77749,6 +77760,10 @@
                                 "showAutosaves": {
                                   "type": "boolean",
                                   "description": "Whether autosave snapshots are visible"
+                                },
+                                "showHorizonBands": {
+                                  "type": "boolean",
+                                  "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
                                 }
                               },
                               "required": [
@@ -79896,7 +79911,8 @@
                                   "type",
                                   "snapshot",
                                   "project",
-                                  "containment"
+                                  "containment",
+                                  "capability"
                                 ],
                                 "type": "string",
                                 "description": "Timeline grouping mode"
@@ -79921,6 +79937,10 @@
                               "showAutosaves": {
                                 "type": "boolean",
                                 "description": "Whether autosave snapshots are visible"
+                              },
+                              "showHorizonBands": {
+                                "type": "boolean",
+                                "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
                               }
                             },
                             "required": [
@@ -82266,7 +82286,8 @@
                                     "type",
                                     "snapshot",
                                     "project",
-                                    "containment"
+                                    "containment",
+                                    "capability"
                                   ],
                                   "type": "string",
                                   "description": "Timeline grouping mode"
@@ -82291,6 +82312,10 @@
                                 "showAutosaves": {
                                   "type": "boolean",
                                   "description": "Whether autosave snapshots are visible"
+                                },
+                                "showHorizonBands": {
+                                  "type": "boolean",
+                                  "description": "Whether Historical, Now, Next, and Later horizon bands are visible"
                                 }
                               },
                               "required": [
@@ -120026,6 +120051,17 @@
                             "pattern": "^[a-z][a-z0-9-]*$",
                             "description": "Artifact profile identifier, such as api-specification"
                           },
+                          "sourceKey": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Stable provider-scoped source identity, when configured"
+                          },
                           "kind": {
                             "enum": [
                               "document",
@@ -120035,6 +120071,17 @@
                             ],
                             "type": "string",
                             "description": "How an artifact is provided"
+                          },
+                          "refreshScheduleId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Internal recurring refresh schedule identifier, when configured"
                           },
                           "location": {
                             "anyOf": [
@@ -120120,7 +120167,8 @@
                                       "source_timeout",
                                       "source_too_large",
                                       "security_blocked",
-                                      "normalization_failed"
+                                      "normalization_failed",
+                                      "source_disappeared"
                                     ],
                                     "type": "string",
                                     "description": "Stable artifact processing diagnostic category"
@@ -120159,7 +120207,9 @@
                           "workspace",
                           "entityId",
                           "artifactType",
+                          "sourceKey",
                           "kind",
+                          "refreshScheduleId",
                           "location",
                           "mediaType",
                           "status",
@@ -120304,6 +120354,17 @@
                       "pattern": "^[a-z][a-z0-9-]*$",
                       "description": "Artifact profile identifier, such as api-specification"
                     },
+                    "sourceKey": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Stable provider-scoped source identity, when configured"
+                    },
                     "kind": {
                       "enum": [
                         "document",
@@ -120313,6 +120374,17 @@
                       ],
                       "type": "string",
                       "description": "How an artifact is provided"
+                    },
+                    "refreshScheduleId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Internal recurring refresh schedule identifier, when configured"
                     },
                     "location": {
                       "anyOf": [
@@ -120398,7 +120470,8 @@
                                 "source_timeout",
                                 "source_too_large",
                                 "security_blocked",
-                                "normalization_failed"
+                                "normalization_failed",
+                                "source_disappeared"
                               ],
                               "type": "string",
                               "description": "Stable artifact processing diagnostic category"
@@ -120437,7 +120510,9 @@
                     "workspace",
                     "entityId",
                     "artifactType",
+                    "sourceKey",
                     "kind",
+                    "refreshScheduleId",
                     "location",
                     "mediaType",
                     "status",
@@ -120516,6 +120591,17 @@
                       "pattern": "^[a-z][a-z0-9-]*$",
                       "description": "Artifact profile identifier, such as api-specification"
                     },
+                    "sourceKey": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Stable provider-scoped source identity, when configured"
+                    },
                     "kind": {
                       "enum": [
                         "document",
@@ -120525,6 +120611,17 @@
                       ],
                       "type": "string",
                       "description": "How an artifact is provided"
+                    },
+                    "refreshScheduleId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Internal recurring refresh schedule identifier, when configured"
                     },
                     "location": {
                       "anyOf": [
@@ -120610,7 +120707,8 @@
                                 "source_timeout",
                                 "source_too_large",
                                 "security_blocked",
-                                "normalization_failed"
+                                "normalization_failed",
+                                "source_disappeared"
                               ],
                               "type": "string",
                               "description": "Stable artifact processing diagnostic category"
@@ -120649,7 +120747,9 @@
                     "workspace",
                     "entityId",
                     "artifactType",
+                    "sourceKey",
                     "kind",
+                    "refreshScheduleId",
                     "location",
                     "mediaType",
                     "status",
@@ -120738,7 +120838,8 @@
                               "source_timeout",
                               "source_too_large",
                               "security_blocked",
-                              "normalization_failed"
+                              "normalization_failed",
+                              "source_disappeared"
                             ],
                             "type": "string",
                             "description": "Stable artifact processing diagnostic category"
@@ -120797,6 +120898,17 @@
                       "pattern": "^[a-z][a-z0-9-]*$",
                       "description": "Artifact profile identifier, such as api-specification"
                     },
+                    "sourceKey": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Stable provider-scoped source identity, when configured"
+                    },
                     "kind": {
                       "enum": [
                         "document",
@@ -120806,6 +120918,17 @@
                       ],
                       "type": "string",
                       "description": "How an artifact is provided"
+                    },
+                    "refreshScheduleId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Internal recurring refresh schedule identifier, when configured"
                     },
                     "location": {
                       "anyOf": [
@@ -120891,7 +121014,8 @@
                                 "source_timeout",
                                 "source_too_large",
                                 "security_blocked",
-                                "normalization_failed"
+                                "normalization_failed",
+                                "source_disappeared"
                               ],
                               "type": "string",
                               "description": "Stable artifact processing diagnostic category"
@@ -120930,7 +121054,9 @@
                     "workspace",
                     "entityId",
                     "artifactType",
+                    "sourceKey",
                     "kind",
+                    "refreshScheduleId",
                     "location",
                     "mediaType",
                     "status",

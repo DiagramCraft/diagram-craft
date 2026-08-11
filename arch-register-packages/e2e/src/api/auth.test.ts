@@ -1,6 +1,6 @@
 import { test, expect, createTestORPCClient } from '../helpers/fixtures';
 import type { DatabaseAdapter } from '@arch-register/server/db/database';
-import { hashPassword } from '@arch-register/server/utils/password';
+import { createFixtureUser } from '@arch-register/server/db/testSupport/fixtures';
 import { generateTokenPair } from '@arch-register/server/utils/jwt';
 import { seedIds, TEST_ADMIN } from '../helpers/seedHelper';
 import {
@@ -21,24 +21,14 @@ const createLocalUser = async (
     is_active?: boolean;
   }
 ) => {
-  const now = new Date();
   const password = overrides.password ?? 'TestPassword123!';
-  const passwordHash = await hashPassword(password);
-
-  await db.auth.createUser({
+  await createFixtureUser(db, {
     id: overrides.id,
     user_id: overrides.userId,
     email: overrides.email,
     display_name: overrides.display_name ?? overrides.userId ?? overrides.id,
-    auth_provider: 'local',
-    password_hash: passwordHash,
-    oidc_issuer: null,
-    oidc_subject: null,
-    is_active: overrides.is_active ?? true,
-    color: null,
-    created_at: now,
-    updated_at: now,
-    last_login_at: null
+    password,
+    is_active: overrides.is_active ?? true
   });
 
   return { password };

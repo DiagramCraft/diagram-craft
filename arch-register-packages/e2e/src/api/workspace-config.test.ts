@@ -9,43 +9,35 @@ import {
   TEAM_PLATFORM_ID,
   TEAM_DESIGN_ID
 } from '../helpers/testIds';
-import { seedEntities, seedLifecycleStates } from '@arch-register/server/db/seedData';
+import { seedEntities } from '@arch-register/server/db/seedData/entities';
+import { seedLifecycleStates } from '@arch-register/server/db/seedData/workspace';
+import { createFixtureUser } from '@arch-register/server/db/testSupport/fixtures';
 
 const now = new Date('2026-06-06T12:00:00.000Z');
 
 const test = baseTest.extend<{ seededUsers: { configUserId: string; removeUserId: string } }>({
   seededUsers: [
     async ({ server }, use) => {
-      await server.db.auth.createUser({
+      await createFixtureUser(server.db, {
         id: CONFIG_USER_ID,
         user_id: 'config-user',
         email: 'config-user@e2e.test',
         display_name: 'Config User',
-        auth_provider: 'local',
         password_hash: null,
-        oidc_issuer: null,
-        oidc_subject: null,
         is_active: true,
-        color: null,
         created_at: now,
-        updated_at: now,
-        last_login_at: null
+        updated_at: now
       });
 
-      await server.db.auth.createUser({
+      await createFixtureUser(server.db, {
         id: CONFIG_REMOVE_USER_ID,
         user_id: 'config-remove-user',
         email: 'config-remove-user@e2e.test',
         display_name: 'Config Remove User',
-        auth_provider: 'local',
         password_hash: null,
-        oidc_issuer: null,
-        oidc_subject: null,
         is_active: true,
-        color: null,
         created_at: now,
-        updated_at: now,
-        last_login_at: null
+        updated_at: now
       });
 
       await use({

@@ -17,7 +17,9 @@ export type ArtifactDbResult = {
   workspace: string;
   entity_id: string;
   artifact_type: ArtifactType;
+  source_key: string | null;
   kind: ArtifactSourceKind;
+  refresh_schedule_id: string | null;
   location: string | null;
   media_type: string | null;
   status: ArtifactStatus;
@@ -47,12 +49,16 @@ export type ArtifactRevisionSummaryDbResult = Omit<ArtifactRevisionDbResult, 'co
 export type ArtifactDbCreate = Omit<
   ArtifactDbResult,
   | 'current_revision_id'
+  | 'source_key'
+  | 'refresh_schedule_id'
   | 'last_attempt_at'
   | 'last_success_at'
   | 'diagnostic'
   | 'created_at'
   | 'updated_at'
 > & {
+  source_key?: string | null;
+  refresh_schedule_id?: string | null;
   created_at: Date;
   updated_at: Date;
 };
@@ -61,7 +67,11 @@ export type ArtifactDbUpdate = Partial<
   Pick<
     ArtifactDbResult,
     | 'status'
+    | 'source_key'
+    | 'kind'
+    | 'location'
     | 'media_type'
+    | 'refresh_schedule_id'
     | 'current_revision_id'
     | 'last_attempt_at'
     | 'last_success_at'
@@ -85,7 +95,10 @@ export const artifactMappers = {
     workspace: String(row['workspace']),
     entity_id: String(row['entity_id']),
     artifact_type: String(row['artifact_type']) as ArtifactType,
+    source_key: row['source_key'] == null ? null : String(row['source_key']),
     kind: String(row['kind']) as ArtifactSourceKind,
+    refresh_schedule_id:
+      row['refresh_schedule_id'] == null ? null : String(row['refresh_schedule_id']),
     location: row['location'] == null ? null : String(row['location']),
     media_type: row['media_type'] == null ? null : String(row['media_type']),
     status: String(row['status']) as ArtifactStatus,
@@ -129,6 +142,12 @@ export const artifactMappers = {
 export type ArtifactDatabase = {
   listArtifacts(workspace: string, entityId: string): Promise<ArtifactDbResult[]>;
   getArtifact(workspace: string, id: string): Promise<ArtifactDbResult | null>;
+  getArtifactBySourceKey(
+    workspace: string,
+    entityId: string,
+    artifactType: ArtifactType,
+    sourceKey: string
+  ): Promise<ArtifactDbResult | null>;
   createArtifact(input: ArtifactDbCreate): Promise<ArtifactDbResult>;
   updateArtifact(
     workspace: string,

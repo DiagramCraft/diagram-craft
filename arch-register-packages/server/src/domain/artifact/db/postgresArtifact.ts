@@ -22,13 +22,28 @@ export class PostgresArtifactDatabase extends PostgresDatabaseBase implements Ar
     return mapDatabaseRow(rows[0], artifactMappers.artifact);
   }
 
+  async getArtifactBySourceKey(
+    workspace: string,
+    entityId: string,
+    artifactType: string,
+    sourceKey: string
+  ) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM catalog_artifact
+      WHERE workspace = ${workspace} AND entity_id = ${entityId}
+        AND artifact_type = ${artifactType} AND source_key = ${sourceKey}`;
+    return mapDatabaseRow(rows[0], artifactMappers.artifact);
+  }
+
   async createArtifact(input: ArtifactDbCreate) {
     try {
       const rows = await this.sql<DatabaseRow[]>`
         INSERT INTO catalog_artifact
-        (id, workspace, entity_id, artifact_type, kind, location, media_type, status, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.entity_id}, ${input.artifact_type}, ${input.kind}, ${input.location}, ${input.media_type},
-          ${input.status}, ${input.created_at}, ${input.updated_at})
+        (id, workspace, entity_id, artifact_type, source_key, kind, location, media_type, status,
+          refresh_schedule_id, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.entity_id}, ${input.artifact_type}, ${input.source_key ?? null},
+          ${input.kind}, ${input.location}, ${input.media_type}, ${input.status}, ${input.refresh_schedule_id ?? null},
+          ${input.created_at}, ${input.updated_at})
         RETURNING *`;
       return artifactMappers.artifact(rows[0]!);
     } catch (error) {
@@ -43,7 +58,9 @@ export class PostgresArtifactDatabase extends PostgresDatabaseBase implements Ar
     try {
       const rows = await this.sql<DatabaseRow[]>`
         UPDATE catalog_artifact SET
-          status = ${next.status}, media_type = ${next.media_type}, current_revision_id = ${next.current_revision_id},
+          source_key = ${next.source_key ?? null}, kind = ${next.kind}, location = ${next.location},
+          status = ${next.status}, media_type = ${next.media_type},
+          refresh_schedule_id = ${next.refresh_schedule_id ?? null}, current_revision_id = ${next.current_revision_id},
           last_attempt_at = ${next.last_attempt_at}, last_success_at = ${next.last_success_at},
           diagnostic_category = ${next.diagnostic?.category ?? null},
           diagnostic_message = ${next.diagnostic?.message ?? null},

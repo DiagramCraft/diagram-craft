@@ -3,6 +3,7 @@ import { createTestORPCClient } from '../helpers/fixtures';
 import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
 import { makeAuthHeader, seedIds } from '../helpers/seedHelper';
 import type { TestORPCClient } from '../helpers/orpcTestClient';
+import { createFixtureUser } from '@arch-register/server/db/testSupport/fixtures';
 
 const test = createPermissionApiTest().extend<{
   restrictedAnalytics: { schemaId: string; viewer: TestORPCClient };
@@ -15,20 +16,15 @@ const test = createPermissionApiTest().extend<{
       const viewerId = randomUUID();
       const roleId = randomUUID();
 
-      await server.db.auth.createUser({
+      await createFixtureUser(server.db, {
         id: viewerId,
         user_id: 'analytics-field-restricted-viewer',
         email: 'analytics-field-restricted-viewer@e2e.test',
         display_name: 'Analytics Field Restricted Viewer',
-        auth_provider: 'local',
         password_hash: null,
-        oidc_issuer: null,
-        oidc_subject: null,
         is_active: true,
-        color: null,
         created_at: now,
-        updated_at: now,
-        last_login_at: null
+        updated_at: now
       });
       await server.db.workspace.createCustomWorkspaceRole({
         id: roleId,

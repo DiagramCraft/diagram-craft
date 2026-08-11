@@ -2,8 +2,8 @@ import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
 import type { DatabaseAdapter } from '../database';
-import { createFixtureSchema, createFixtureWorkspace } from './projectFixtures';
-import { createFixtureCatalogEntity } from './catalogFixtures';
+import { createFixtureSchema, createFixtureWorkspace } from '../testSupport/fixtures';
+import { createFixtureEntity } from '../testSupport/fixtures';
 
 const createFixtureTeam = async (db: DatabaseAdapter, workspace: string) => {
   const teamId = randomUUID();
@@ -118,10 +118,10 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
         [dbSchemaId]
       );
 
-      const app = await createFixtureCatalogEntity(db, workspace, appSchemaId, {
+      const app = await createFixtureEntity(db, workspace, appSchemaId, {
         name: 'Checkout Service'
       });
-      const database = await createFixtureCatalogEntity(db, workspace, dbSchemaId, {
+      const database = await createFixtureEntity(db, workspace, dbSchemaId, {
         name: 'Orders DB'
       });
 
@@ -190,10 +190,10 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
         [componentSchemaId],
         [apiSchemaId]
       );
-      const component = await createFixtureCatalogEntity(db, workspace, componentSchemaId, {
+      const component = await createFixtureEntity(db, workspace, componentSchemaId, {
         name: 'Catalog Component'
       });
-      const api = await createFixtureCatalogEntity(db, workspace, apiSchemaId, {
+      const api = await createFixtureEntity(db, workspace, apiSchemaId, {
         name: 'Catalog API'
       });
 
@@ -233,10 +233,10 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
       );
       const teamId = await createFixtureTeam(db, workspace);
 
-      const app = await createFixtureCatalogEntity(db, workspace, appSchemaId, {
+      const app = await createFixtureEntity(db, workspace, appSchemaId, {
         owner: teamId
       });
-      const database = await createFixtureCatalogEntity(db, workspace, dbSchemaId);
+      const database = await createFixtureEntity(db, workspace, dbSchemaId);
 
       const now = new Date();
       // Simulates createWorkspaceRelation's default-copy from the "in" entity.
@@ -285,13 +285,13 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
         [dbSchemaId]
       );
 
-      const app = await createFixtureCatalogEntity(db, workspace, appSchemaId, {
+      const app = await createFixtureEntity(db, workspace, appSchemaId, {
         name: 'Checkout Service'
       });
-      const otherApp = await createFixtureCatalogEntity(db, workspace, appSchemaId, {
+      const otherApp = await createFixtureEntity(db, workspace, appSchemaId, {
         name: 'Billing Service'
       });
-      const database = await createFixtureCatalogEntity(db, workspace, dbSchemaId, {
+      const database = await createFixtureEntity(db, workspace, dbSchemaId, {
         name: 'Orders DB'
       });
 
@@ -342,8 +342,8 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
         [appSchemaId],
         [dbSchemaId]
       );
-      const app = await createFixtureCatalogEntity(db, workspace, appSchemaId);
-      const database = await createFixtureCatalogEntity(db, workspace, dbSchemaId);
+      const app = await createFixtureEntity(db, workspace, appSchemaId);
+      const database = await createFixtureEntity(db, workspace, dbSchemaId);
 
       const now = new Date();
       await db.relation.createRelation({

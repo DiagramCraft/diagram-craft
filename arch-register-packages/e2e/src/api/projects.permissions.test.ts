@@ -1,7 +1,8 @@
-import { hashPassword } from '@arch-register/server/utils/password';
+import { randomUUID } from 'node:crypto';
 import { createTestORPCClient } from '../helpers/fixtures';
 import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
 import { PERMISSIONS_DESIGN_ONLY_ID } from '../helpers/testIds';
+import { createFixtureUser } from '@arch-register/server/db/testSupport/fixtures';
 
 const teamOnlyUserId = PERMISSIONS_DESIGN_ONLY_ID;
 const now = new Date('2026-02-03T00:00:00.000Z');
@@ -11,22 +12,15 @@ const test = createPermissionApiTest().extend<{
 }>({
   designOnlyAuth: [
     async ({ server, resources }, use) => {
-      const passwordHash = await hashPassword('DesignOnlyPassword123!');
-
-      await server.db.auth.createUser({
+      await createFixtureUser(server.db, {
         id: teamOnlyUserId,
         user_id: 'permissions-design-only',
         email: 'design-only@e2e.test',
         display_name: 'Design Only',
-        auth_provider: 'local',
-        password_hash: passwordHash,
-        oidc_issuer: null,
-        oidc_subject: null,
+        password: 'DesignOnlyPassword123!',
         is_active: true,
-        color: null,
         created_at: now,
-        updated_at: now,
-        last_login_at: null
+        updated_at: now
       });
 
       await server.db.workspace.replaceTeamAssignments(resources.workspaceId, [
@@ -76,6 +70,46 @@ test.describe('project permission routes', () => {
     });
 
     expect(projects.map(entry => entry.project.id)).toEqual([resources.projectIds.portalRedesign]);
+  });
+
+  test('filtering: entity timeline omits changes from inaccessible projects', async ({
+    server,
+    designOnlyAuth,
+    resources
+  }) => {
+    await server.db.changeCase.createCase({
+      id: randomUUID(),
+      workspace: resources.workspaceId,
+      project_id: resources.projectIds.authMigration,
+      name: 'Restricted timeline change',
+      description: null,
+      effective_date: '2026-12-01',
+      milestone_id: null,
+      message: null,
+      created_by: null,
+      created_at: now,
+      members: [
+        {
+          entity_id: resources.entityIds.customerPortal,
+          base_version: 1,
+          base_state: {},
+          proposed_state: {},
+          diff: {}
+        }
+      ]
+    });
+
+    const designOnlyOrpc = createTestORPCClient(server.baseUrl, designOnlyAuth);
+    const timeline = await designOnlyOrpc.entities.timelineView({
+      params: { workspace: 'default' },
+      body: { ids: [resources.entityIds.customerPortal] }
+    });
+
+    expect(
+      timeline[resources.entityIds.customerPortal]?.projectChanges.map(
+        change => change.changeCase.project_id
+      )
+    ).toEqual([resources.projectIds.portalRedesign]);
   });
 
   test('authorization: direct reads reject users without project access', async ({

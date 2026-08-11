@@ -5,8 +5,8 @@ import {
   createFixtureProject,
   createFixtureSchema,
   createFixtureWorkspace
-} from './projectFixtures';
-import { createFixtureCatalogEntity } from './catalogFixtures';
+} from '../testSupport/fixtures';
+import { createFixtureEntity } from '../testSupport/fixtures';
 
 runContractSuiteAgainstBothDrivers('ChangeCaseDatabase', getDb => {
   const setup = async () => {
@@ -14,8 +14,8 @@ runContractSuiteAgainstBothDrivers('ChangeCaseDatabase', getDb => {
     const workspace = await createFixtureWorkspace(db);
     const schema = await createFixtureSchema(db, workspace);
     const project = await createFixtureProject(db, workspace);
-    const entityA = await createFixtureCatalogEntity(db, workspace, schema);
-    const entityB = await createFixtureCatalogEntity(db, workspace, schema);
+    const entityA = await createFixtureEntity(db, workspace, schema);
+    const entityB = await createFixtureEntity(db, workspace, schema);
     return { db, workspace, project, entityA, entityB };
   };
 

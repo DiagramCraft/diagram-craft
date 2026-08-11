@@ -21,7 +21,7 @@ import {
   getOwnVersionDisplayStatus,
   type TimelineChangeCaseEntry
 } from './timelineViewState';
-import { getDateValue } from './timelineViewTypes';
+import { getDateValue, type TimelineHorizonBand } from './timelineViewTypes';
 
 // ── Timeline dots ─────────────────────────────────────────────────────────────
 //
@@ -74,6 +74,7 @@ type SnapBlockProps = {
   selectedSnapId: string | null;
   showProjectLanes: boolean;
   showAutosaves: boolean;
+  horizonBands?: TimelineHorizonBand[];
   onSnapSelect: (snap: TimelineDot | null, entity: EntityRecord) => void;
   onEntityClick: (entityId: string) => void;
   onBarClick: (entity: EntityRecord) => void;
@@ -97,6 +98,7 @@ export const SnapBlock = ({
   selectedSnapId,
   showProjectLanes,
   showAutosaves,
+  horizonBands,
   onSnapSelect,
   onEntityClick,
   onBarClick
@@ -158,6 +160,15 @@ export const SnapBlock = ({
     barWidth = Math.max(4, endX - barLeft);
   }
   const milestoneX = isMilestone ? toPx(endD) : 0;
+  const renderHorizonFills = () =>
+    horizonBands?.map(band => (
+      <div
+        key={band.id}
+        className={styles.horizonFill}
+        data-horizon={band.id}
+        style={{ left: band.left, width: band.width }}
+      />
+    ));
 
   const condensedDots = !showProjectLanes && projectFilterId == null && (
     <>
@@ -229,11 +240,18 @@ export const SnapBlock = ({
           >
             {entity._name ?? entity._slug}
           </span>
+          <span
+            className={styles.entityOwner}
+            title={`Owner: ${entity._owner?.name ?? 'Unassigned'}`}
+          >
+            {entity._owner?.name ?? 'Unassigned'}
+          </span>
           {entity._lifecycle && (
             <StatusChip value={entity._lifecycle.id} lifecycleStates={lifecycleStates} />
           )}
         </div>
         <div className={styles.barCell} style={{ width: totalWidth }}>
+          {renderHorizonFills()}
           {projectFilterId != null ? (
             <>
               <div className={styles.snapBaseline} />
@@ -298,6 +316,7 @@ export const SnapBlock = ({
             <span>Own history</span>
           </div>
           <div className={`${styles.barCell} ${styles.snapTrack}`} style={{ width: totalWidth }}>
+            {renderHorizonFills()}
             <div className={styles.snapBaseline} />
             {ownDots.map(snap => {
               const px = toPx(new Date(dotCreatedAt(snap)));
@@ -339,6 +358,7 @@ export const SnapBlock = ({
                 className={`${styles.barCell} ${styles.snapTrack}`}
                 style={{ width: totalWidth }}
               >
+                {renderHorizonFills()}
                 <div className={styles.snapBaseline} />
                 {dots.map(snap => {
                   if (snap.source !== 'project') return null;

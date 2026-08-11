@@ -24,6 +24,7 @@ import {
 } from './domain/catalog/relationOrpc';
 import { createWorkspaceEntityORPCHandler } from './domain/catalog/entityOrpc';
 import { createEntitySyncORPCHandler } from './domain/externalIdentity/entitySyncOrpc';
+import { createApiSpecificationSyncORPCHandler } from './domain/artifact/apiSpecificationSyncOrpc';
 import { createRelationSyncORPCHandler } from './domain/catalog/relationSyncOrpc';
 import { createEntityVersionORPCHandler } from './domain/catalog/entityVersionOrpc';
 import { createRelationVersionORPCHandler } from './domain/catalog/relationVersionOrpc';
@@ -180,6 +181,7 @@ export const createApp = (
   app.use(createIntegrationGovernanceORPCHandler(db));
   app.use(createWorkspaceEntityORPCHandler(db));
   app.use(createEntitySyncORPCHandler(db));
+  app.use(createApiSpecificationSyncORPCHandler(db));
   app.use(createRelationSyncORPCHandler(db));
   app.use(createEntityVersionORPCHandler(db));
   app.use(createRelationVersionORPCHandler(db));

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFixtureWorkspace } from './projectFixtures';
+import { createFixtureWorkspace } from '../testSupport/fixtures';
 
 runContractSuiteAgainstBothDrivers('ContentReconciliationDatabase', getDb => {
   describe('content reconciliation', () => {

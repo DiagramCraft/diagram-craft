@@ -5,8 +5,8 @@ import {
   createFixtureEntity,
   createFixtureSchema,
   createFixtureWorkspace
-} from './projectFixtures';
-import { createFixtureUser } from './authFixtures';
+} from '../testSupport/fixtures';
+import { createFixtureUser } from '../testSupport/fixtures';
 
 runContractSuiteAgainstBothDrivers('WatchDatabase', getDb => {
   describe('watches', () => {

@@ -1,7 +1,7 @@
 import { randomUUID } from 'node:crypto';
 import { expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { createFixtureWorkspace } from './projectFixtures';
+import { createFixtureWorkspace } from '../testSupport/fixtures';
 
 runContractSuiteAgainstBothDrivers('WebhookDatabase', getDb => {
   it('creates, updates, lists, and deletes workspace webhooks', async () => {
