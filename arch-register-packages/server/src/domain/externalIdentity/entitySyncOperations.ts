@@ -1,6 +1,5 @@
 import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
-import { DatabaseError } from '../../db/database';
 import type { AuthorizationContext } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
 import {
@@ -32,16 +31,19 @@ import {
 } from '../auth/fieldGroupAccessControl';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import {
+  runExternalIdentitySyncInTransaction,
+  validateExternalIdentity,
+  valuesUnchanged,
+  type ExternalIdentitySyncStatus
+} from './externalIdentitySync';
 
-export type EntitySyncStatus = 'created' | 'updated' | 'unchanged';
+export type EntitySyncStatus = ExternalIdentitySyncStatus;
 
 export type EntitySyncResult = {
   status: EntitySyncStatus;
   entity: EntityRecord;
 };
-
-const MAX_SOURCE_LENGTH = 200;
-const MAX_EXTERNAL_KEY_LENGTH = 500;
 
 const assertKnownFieldIds = (schema: SchemaDbResult, fields: Record<string, unknown>) => {
   const knownFieldIds = new Set(schema.fields.map(field => field.id));
@@ -50,11 +52,6 @@ const assertKnownFieldIds = (schema: SchemaDbResult, fields: Record<string, unkn
     status: 400,
     message: `Unknown field id(s) for schema '${schema.name}': ${unknown.join(', ')}`
   });
-};
-
-const dataUnchanged = (previous: Record<string, unknown>, next: Record<string, unknown>) => {
-  const keys = new Set([...Object.keys(previous), ...Object.keys(next)]);
-  return [...keys].every(key => valueEquals(previous[key] ?? null, next[key] ?? null));
 };
 
 const entityUnchanged = (
@@ -87,10 +84,29 @@ const entityUnchanged = (
   oldRow.project_id === next.project_id &&
   JSON.stringify(oldRow.tags) === JSON.stringify(next.tags) &&
   JSON.stringify(oldRow.links) === JSON.stringify(next.links) &&
-  dataUnchanged(
+  valuesUnchanged(
     filterRestrictedFieldGroups(authCtx, schema, oldRow.data),
     filterRestrictedFieldGroups(authCtx, schema, next.data)
   );
+
+const resolveEntityLifecycles = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  payload: ReturnType<typeof parseEntityMutationPayload>
+) => {
+  const lifecycleValues = await getLifecycleValues(db, workspace);
+  return {
+    lifecycle:
+      payload.requestedLifecycle && lifecycleValues.has(payload.requestedLifecycle)
+        ? payload.requestedLifecycle
+        : null,
+    target_lifecycle:
+      payload.requestedTargetLifecycle && lifecycleValues.has(payload.requestedTargetLifecycle)
+        ? payload.requestedTargetLifecycle
+        : null,
+    target_lifecycle_date: payload.requestedTargetLifecycleDate ?? null
+  };
+};
 
 export const runEntitySyncInTransaction = async (
   db: DatabaseAdapter,
@@ -102,248 +118,255 @@ export const runEntitySyncInTransaction = async (
   actor: EntityMutationActor,
   auditMetadata: Record<string, unknown> = {}
 ): Promise<EntitySyncResult> => {
-  // Capability check happens first, before any other DB reads, so a caller without integration
-  // access can't use this endpoint to probe for entity/schema existence.
-  if (authCtx) {
-    requireWorkspaceCapability(
-      authCtx,
-      'ent.external_update',
-      'You do not have permission to sync entities from this integration source'
-    );
-  }
-
-  const payload = parseEntityMutationPayload(body);
-  const lifecycleValues = await getLifecycleValues(db, workspace);
-  const lifecycle =
-    payload.requestedLifecycle && lifecycleValues.has(payload.requestedLifecycle)
-      ? payload.requestedLifecycle
-      : null;
-  const target_lifecycle =
-    payload.requestedTargetLifecycle && lifecycleValues.has(payload.requestedTargetLifecycle)
-      ? payload.requestedTargetLifecycle
-      : null;
-  const target_lifecycle_date = payload.requestedTargetLifecycleDate ?? null;
-
-  const existingIdentity = await db.externalIdentity.find(workspace, source, externalKey);
-
-  if (existingIdentity) {
-    const [oldRow, schema, entities] = await Promise.all([
-      db.catalog.getEntity(workspace, existingIdentity.record_id),
-      db.catalog.getSchema(workspace, payload.schemaId),
-      listAllCatalogEntities(db, workspace)
-    ]);
-    httpAssert.present(oldRow, {
-      status: 404,
-      message: `Entity for external identity '${source}/${externalKey}' no longer exists`
-    });
-    httpAssert.present(schema, { status: 404, message: `Schema '${payload.schemaId}' not found` });
-    httpAssert.true(payload.schemaId === oldRow.schema_id, {
-      status: 400,
-      message: "Cannot change an entity's schema via sync"
-    });
-    httpAssert.true(!(await entityRequiresApproval(db, workspace, schema, oldRow)), {
-      status: 409,
-      statusText: 'Conflict',
-      message: 'This entity requires an approved change proposal before it can be edited'
-    });
-    if (authCtx) {
-      requireEntityAction(
-        authCtx,
-        oldRow,
-        'view_entity',
-        'You do not have permission to view this entity'
-      );
-    }
-
-    assertKnownFieldIds(schema, payload.fields);
-    const normalizedFields = normalizeEntityRelationFields({
-      schema,
-      fields: payload.fields,
-      entities
-    });
-    assertNoExternalEntityFieldWrites(schema.fields, oldRow.data, normalizedFields);
-    if (authCtx) {
-      const changedFieldIds = Object.keys(normalizedFields).filter(
-        fieldId => !valueEquals(oldRow.data[fieldId] ?? null, normalizedFields[fieldId] ?? null)
-      );
-      requireNoRestrictedFieldWrites(
-        authCtx,
-        schema,
-        changedFieldIds,
-        'You do not have permission to edit one or more restricted fields on this entity'
-      );
-    }
-
-    const teamIds = await getTeamIds(db, workspace);
-    const ownerWasSubmitted = Object.prototype.hasOwnProperty.call(body, '_owner');
-    const owner = !ownerWasSubmitted
-      ? oldRow.owner
-      : payload.requestedOwner && teamIds.has(payload.requestedOwner)
-        ? payload.requestedOwner
-        : null;
-
-    const next = {
-      name: payload.name,
-      slug: payload.slug,
-      namespace: payload.namespace,
-      description: payload.description,
-      owner,
-      lifecycle,
-      target_lifecycle,
-      target_lifecycle_date,
-      tags: payload.tags,
-      links: payload.links,
-      project_id: payload.projectId,
-      data: normalizedFields
-    };
-
-    if (entityUnchanged(oldRow, next, authCtx, schema)) {
-      return { status: 'unchanged', entity: toApiEntity(oldRow, authCtx, schema) };
-    }
-
-    const timestamp = new Date();
-    const row = await updateEntityWithAudit(db, {
-      workspace,
-      entityId: oldRow.id,
-      previous: oldRow,
-      actor,
-      auditMetadata: {
-        sync_source: source,
-        sync_external_key: externalKey,
-        ...auditMetadata
-      },
-      next: {
-        ...next,
-        schema_id: payload.schemaId,
-        updated_at: timestamp,
-        completeness: computeEntityCompleteness(
-          { description: next.description, owner, lifecycle, data: normalizedFields },
-          schema
-        )
-      }
-    });
-    httpAssert.present(row, {
-      status: 404,
-      message: `Entity for external identity '${source}/${externalKey}' no longer exists`
-    });
-
-    return { status: 'updated', entity: toApiEntity(row, authCtx, schema) };
-  }
-
-  // No existing identity — creating a new entity requires the same ownership/parent-tier
-  // permissions as a regular entity creation, in addition to the integration capability already
-  // checked above. Holding `ent.external_update` alone (designed for field-level updates on
-  // entities that already exist) is not sufficient to create arbitrary top-level entities.
-  const [schema, entities] = await Promise.all([
-    db.catalog.getSchema(workspace, payload.schemaId),
-    listAllCatalogEntities(db, workspace)
-  ]);
-  httpAssert.present(schema, { status: 404, message: `Schema '${payload.schemaId}' not found` });
-
-  assertKnownFieldIds(schema, payload.fields);
-  const normalizedFields = normalizeEntityRelationFields({
-    schema,
-    fields: payload.fields,
-    entities
-  });
-  assertNoExternalEntityFieldWrites(schema.fields, {}, normalizedFields);
-  if (authCtx) {
-    requireNoRestrictedFieldWrites(
-      authCtx,
-      schema,
-      Object.keys(normalizedFields),
-      'You do not have permission to set one or more restricted fields on this entity'
-    );
-  }
-
-  const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
-  const parents = getEntityParentsFromPayload(schema, normalizedFields, entityLookup);
-  const teamIds = await getTeamIds(db, workspace);
-  const fallbackOwner = (await db.workspace.listTeams(workspace))[0]?.id ?? null;
-  const owner = resolveCreateOwner(payload.requestedOwner, parents, schema, teamIds, fallbackOwner);
-
-  if (authCtx) {
-    if (parents.length > 0) {
-      parents.forEach(parent =>
-        requireEntityAction(
-          authCtx,
-          parent,
-          'create_child',
-          'You do not have permission to add children under one or more parent entities'
-        )
-      );
-    } else {
-      requireCanCreateTopLevelEntity(
-        authCtx,
-        owner,
-        'Top-level entity creation requires membership in the resolved owner team or a platform admin role'
-      );
-    }
-  }
-
-  const timestamp = new Date();
-  const publicId = await allocateEntityPublicId(db, workspace, payload.schemaId, timestamp);
-  const row = await createEntityWithAudit(db, {
+  const result = await runExternalIdentitySyncInTransaction({
+    db,
     workspace,
+    source,
+    externalKey,
+    body,
+    authCtx,
     actor,
-    entity: {
-      id: randomUUID(),
-      workspace,
-      public_id: publicId,
-      slug: payload.slug,
-      namespace: payload.namespace,
-      name: payload.name,
-      description: payload.description,
-      owner,
-      lifecycle,
-      target_lifecycle,
-      target_lifecycle_date,
-      tags: payload.tags,
-      links: payload.links,
-      schema_id: payload.schemaId,
-      data: normalizedFields,
-      project_id: payload.projectId,
-      created_at: timestamp,
-      updated_at: timestamp,
-      completeness: computeEntityCompleteness(
-        { description: payload.description, owner, lifecycle, data: normalizedFields },
-        schema
-      )
-    },
-    auditMetadata: {
-      sync_source: source,
-      sync_external_key: externalKey,
-      ...auditMetadata
+    auditMetadata,
+    handlers: {
+      authorize: currentAuthCtx => {
+        if (currentAuthCtx) {
+          requireWorkspaceCapability(
+            currentAuthCtx,
+            'ent.external_update',
+            'You do not have permission to sync entities from this integration source'
+          );
+        }
+      },
+      parse: parseEntityMutationPayload,
+      prepareExisting: async ({
+        db: tx,
+        workspace: ws,
+        source: syncSource,
+        externalKey: syncExternalKey,
+        body: syncBody,
+        authCtx: syncAuthCtx,
+        payload,
+        recordId
+      }) => {
+        const [oldRow, schema, entities] = await Promise.all([
+          tx.catalog.getEntity(ws, recordId),
+          tx.catalog.getSchema(ws, payload.schemaId),
+          listAllCatalogEntities(tx, ws)
+        ]);
+        httpAssert.present(oldRow, {
+          status: 404,
+          message: `Entity for external identity '${syncSource}/${syncExternalKey}' no longer exists`
+        });
+        httpAssert.present(schema, {
+          status: 404,
+          message: `Schema '${payload.schemaId}' not found`
+        });
+        httpAssert.true(payload.schemaId === oldRow.schema_id, {
+          status: 400,
+          message: "Cannot change an entity's schema via sync"
+        });
+        httpAssert.true(!(await entityRequiresApproval(tx, ws, schema, oldRow)), {
+          status: 409,
+          statusText: 'Conflict',
+          message: 'This entity requires an approved change proposal before it can be edited'
+        });
+        if (syncAuthCtx) {
+          requireEntityAction(
+            syncAuthCtx,
+            oldRow,
+            'view_entity',
+            'You do not have permission to view this entity'
+          );
+        }
+
+        assertKnownFieldIds(schema, payload.fields);
+        const normalizedFields = normalizeEntityRelationFields({
+          schema,
+          fields: payload.fields,
+          entities
+        });
+        assertNoExternalEntityFieldWrites(schema.fields, oldRow.data, normalizedFields);
+        if (syncAuthCtx) {
+          const changedFieldIds = Object.keys(normalizedFields).filter(
+            fieldId => !valueEquals(oldRow.data[fieldId] ?? null, normalizedFields[fieldId] ?? null)
+          );
+          requireNoRestrictedFieldWrites(
+            syncAuthCtx,
+            schema,
+            changedFieldIds,
+            'You do not have permission to edit one or more restricted fields on this entity'
+          );
+        }
+
+        const lifecycle = await resolveEntityLifecycles(tx, ws, payload);
+        const teamIds = await getTeamIds(tx, ws);
+        const ownerWasSubmitted = Object.hasOwn(syncBody, '_owner');
+        const owner = !ownerWasSubmitted
+          ? oldRow.owner
+          : payload.requestedOwner && teamIds.has(payload.requestedOwner)
+            ? payload.requestedOwner
+            : null;
+        const next = {
+          name: payload.name,
+          slug: payload.slug,
+          namespace: payload.namespace,
+          description: payload.description,
+          owner,
+          ...lifecycle,
+          tags: payload.tags,
+          links: payload.links,
+          project_id: payload.projectId,
+          data: normalizedFields
+        };
+
+        return { record: oldRow, next, state: { schema } };
+      },
+      isUnchanged: ({ record, next, authCtx: syncAuthCtx, state }) =>
+        entityUnchanged(record, next, syncAuthCtx, state.schema),
+      update: async ({ sync, record, next, state }) => {
+        const timestamp = new Date();
+        const row = await updateEntityWithAudit(sync.db, {
+          workspace: sync.workspace,
+          entityId: record.id,
+          previous: record,
+          actor: sync.actor,
+          auditMetadata: sync.auditMetadata,
+          next: {
+            ...next,
+            schema_id: sync.payload.schemaId,
+            updated_at: timestamp,
+            completeness: computeEntityCompleteness(
+              {
+                description: next.description,
+                owner: next.owner,
+                lifecycle: next.lifecycle,
+                data: next.data
+              },
+              state.schema
+            )
+          }
+        });
+        httpAssert.present(row, {
+          status: 404,
+          message: `Entity for external identity '${sync.source}/${sync.externalKey}' no longer exists`
+        });
+        return row;
+      },
+      prepareCreate: async ({ db: tx, workspace: ws, authCtx: syncAuthCtx, payload }) => {
+        // No existing identity — creating a new entity requires the same ownership/parent-tier
+        // permissions as a regular entity creation, in addition to the integration capability.
+        const [schema, entities] = await Promise.all([
+          tx.catalog.getSchema(ws, payload.schemaId),
+          listAllCatalogEntities(tx, ws)
+        ]);
+        httpAssert.present(schema, {
+          status: 404,
+          message: `Schema '${payload.schemaId}' not found`
+        });
+
+        assertKnownFieldIds(schema, payload.fields);
+        const normalizedFields = normalizeEntityRelationFields({
+          schema,
+          fields: payload.fields,
+          entities
+        });
+        assertNoExternalEntityFieldWrites(schema.fields, {}, normalizedFields);
+        if (syncAuthCtx) {
+          requireNoRestrictedFieldWrites(
+            syncAuthCtx,
+            schema,
+            Object.keys(normalizedFields),
+            'You do not have permission to set one or more restricted fields on this entity'
+          );
+        }
+
+        const entityLookup = new Map(entities.map(entity => [entity.id, entity]));
+        const parents = getEntityParentsFromPayload(schema, normalizedFields, entityLookup);
+        const teamIds = await getTeamIds(tx, ws);
+        const fallbackOwner = (await tx.workspace.listTeams(ws))[0]?.id ?? null;
+        const owner = resolveCreateOwner(
+          payload.requestedOwner,
+          parents,
+          schema,
+          teamIds,
+          fallbackOwner
+        );
+
+        if (syncAuthCtx) {
+          if (parents.length > 0) {
+            parents.forEach(parent =>
+              requireEntityAction(
+                syncAuthCtx,
+                parent,
+                'create_child',
+                'You do not have permission to add children under one or more parent entities'
+              )
+            );
+          } else {
+            requireCanCreateTopLevelEntity(
+              syncAuthCtx,
+              owner,
+              'Top-level entity creation requires membership in the resolved owner team or a platform admin role'
+            );
+          }
+        }
+
+        return {
+          schema,
+          normalizedFields,
+          owner,
+          lifecycle: await resolveEntityLifecycles(tx, ws, payload)
+        };
+      },
+      create: async ({ sync, state }) => {
+        const timestamp = new Date();
+        const publicId = await allocateEntityPublicId(
+          sync.db,
+          sync.workspace,
+          sync.payload.schemaId,
+          timestamp
+        );
+        return createEntityWithAudit(sync.db, {
+          workspace: sync.workspace,
+          actor: sync.actor,
+          entity: {
+            id: randomUUID(),
+            workspace: sync.workspace,
+            public_id: publicId,
+            slug: sync.payload.slug,
+            namespace: sync.payload.namespace,
+            name: sync.payload.name,
+            description: sync.payload.description,
+            owner: state.owner,
+            lifecycle: state.lifecycle.lifecycle,
+            target_lifecycle: state.lifecycle.target_lifecycle,
+            target_lifecycle_date: state.lifecycle.target_lifecycle_date,
+            tags: sync.payload.tags,
+            links: sync.payload.links,
+            schema_id: sync.payload.schemaId,
+            data: state.normalizedFields,
+            project_id: sync.payload.projectId,
+            created_at: timestamp,
+            updated_at: timestamp,
+            completeness: computeEntityCompleteness(
+              {
+                description: sync.payload.description,
+                owner: state.owner,
+                lifecycle: state.lifecycle.lifecycle,
+                data: state.normalizedFields
+              },
+              state.schema
+            )
+          },
+          auditMetadata: sync.auditMetadata
+        });
+      },
+      recordId: record => record.id,
+      toResult: (record, syncAuthCtx, state) => toApiEntity(record, syncAuthCtx, state.schema)
     }
   });
 
-  try {
-    await db.externalIdentity.create({
-      workspace,
-      source,
-      external_key: externalKey,
-      record_id: row.id
-    });
-  } catch (error) {
-    if (error instanceof DatabaseError && error.code === 'unique') {
-      // Lost a race against a concurrent first sync for the same key — the other request already
-      // created the entity and recorded the identity, so converge onto it instead of surfacing an
-      // error (and leave the entity we just created; it has no identity row pointing at it).
-      return runEntitySyncInTransaction(
-        db,
-        workspace,
-        source,
-        externalKey,
-        body,
-        authCtx,
-        actor,
-        auditMetadata
-      );
-    }
-    throw error;
-  }
-
-  return { status: 'created', entity: toApiEntity(row, authCtx, schema) };
+  return { status: result.status, entity: result.result };
 };
 
 export const getEntityByExternalKey = async (
@@ -353,16 +376,7 @@ export const getEntityByExternalKey = async (
   externalKey: string,
   authCtx: AuthorizationContext | null
 ): Promise<EntityRecord> => {
-  httpAssert.string(source, { status: 400, message: 'source is required' });
-  httpAssert.true(source.length <= MAX_SOURCE_LENGTH, {
-    status: 400,
-    message: `source must be at most ${MAX_SOURCE_LENGTH} characters`
-  });
-  httpAssert.string(externalKey, { status: 400, message: 'externalKey is required' });
-  httpAssert.true(externalKey.length <= MAX_EXTERNAL_KEY_LENGTH, {
-    status: 400,
-    message: `externalKey must be at most ${MAX_EXTERNAL_KEY_LENGTH} characters`
-  });
+  validateExternalIdentity(source, externalKey);
 
   try {
     if (authCtx) {
@@ -410,16 +424,7 @@ export const syncEntityByExternalKey = async (
   authCtx: AuthorizationContext | null,
   actor: EntityMutationActor
 ): Promise<EntitySyncResult> => {
-  httpAssert.string(source, { status: 400, message: 'source is required' });
-  httpAssert.true(source.length <= MAX_SOURCE_LENGTH, {
-    status: 400,
-    message: `source must be at most ${MAX_SOURCE_LENGTH} characters`
-  });
-  httpAssert.string(externalKey, { status: 400, message: 'externalKey is required' });
-  httpAssert.true(externalKey.length <= MAX_EXTERNAL_KEY_LENGTH, {
-    status: 400,
-    message: `externalKey must be at most ${MAX_EXTERNAL_KEY_LENGTH} characters`
-  });
+  validateExternalIdentity(source, externalKey);
 
   try {
     return await db.core.transaction(tx =>
