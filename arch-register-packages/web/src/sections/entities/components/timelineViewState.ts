@@ -6,7 +6,13 @@ import type {
   TimelineViewData
 } from '@arch-register/api-types/entityContract';
 
-export type TimelineGroupBy = 'owner' | 'type' | 'snapshot' | 'containment';
+export type TimelineGroupBy =
+  | 'owner'
+  | 'type'
+  | 'snapshot'
+  | 'project'
+  | 'containment'
+  | 'capability';
 
 // A single project-scoped change-case entry as returned by the timeline summary endpoint (no
 // entity state blobs — see snapshotDisplay.ts's ChangeCaseMemberEntry for the full-state variant
@@ -77,9 +83,17 @@ export const getDatedTimelineRows = (
 ): EntityRecord[] =>
   rows.filter(entity => getDate(entity, startFieldId) ?? getDate(entity, endFieldId));
 
+export const getUndatedTimelineRows = (
+  rows: EntityRecord[],
+  datedRows: EntityRecord[]
+): EntityRecord[] => {
+  const datedIds = new Set(datedRows.map(entity => entity._uid));
+  return rows.filter(entity => !datedIds.has(entity._uid));
+};
+
 export const groupTimelineRows = (
   rows: EntityRecord[],
-  groupBy: Exclude<TimelineGroupBy, 'snapshot'>,
+  groupBy: Exclude<TimelineGroupBy, 'snapshot' | 'project'>,
   schemaMap: Map<string, TimelineSchemaEntry>,
   parentNameByUid?: Map<string, string>
 ): [string, EntityRecord[]][] => {
@@ -88,7 +102,7 @@ export const groupTimelineRows = (
     const key =
       groupBy === 'type'
         ? (schemaMap.get(entity._schema.id)?.schema.name ?? entity._schema.id)
-        : groupBy === 'containment'
+        : groupBy === 'containment' || groupBy === 'capability'
           ? (parentNameByUid?.get(entity._uid) ?? 'No parent')
           : (entity._owner?.name ?? 'Unassigned');
     (groups[key] ??= []).push(entity);

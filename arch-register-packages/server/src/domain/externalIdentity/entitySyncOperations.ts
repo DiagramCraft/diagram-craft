@@ -175,7 +175,7 @@ export const runEntitySyncInTransaction = async (
     }
 
     const teamIds = await getTeamIds(db, workspace);
-    const ownerWasSubmitted = Object.prototype.hasOwnProperty.call(body, '_owner');
+    const ownerWasSubmitted = Object.hasOwn(body, '_owner');
     const owner = !ownerWasSubmitted
       ? oldRow.owner
       : payload.requestedOwner && teamIds.has(payload.requestedOwner)

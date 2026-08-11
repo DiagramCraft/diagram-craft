@@ -18,6 +18,7 @@ import { SnapBlock, type TimelineDot } from './TimelineSnapshotRows';
 import {
   getDateValue,
   getRawDateValue,
+  type TimelineHorizonBand,
   type TimelineConfig,
   TL_LABEL_W
 } from './timelineViewTypes';
@@ -32,6 +33,8 @@ type TimelineContentProps = {
   rows: EntityRecord[];
   datedRows: EntityRecord[];
   groups: [string, EntityRecord[]][];
+  undatedRows: EntityRecord[];
+  undatedGroups: [string, EntityRecord[]][];
   projectEntityGroups: TimelineProjectEntityGroup[];
   timelineData: Record<string, TimelineViewData>;
   projects: Project[];
@@ -46,6 +49,7 @@ type TimelineContentProps = {
   visibleTodayPx: number | null;
   visibleMilestoneMarkers: Array<{ milestone: Milestone; px: number }>;
   milestoneMarkers: Array<{ milestone: Milestone; px: number }>;
+  horizonBands: TimelineHorizonBand[];
   today: Date;
   linkedEntityIds?: string[];
   linkedEntityIdSet: Set<string>;
@@ -63,6 +67,8 @@ export const TimelineContent = ({
   rows,
   datedRows,
   groups,
+  undatedRows,
+  undatedGroups,
   projectEntityGroups,
   timelineData,
   projects,
@@ -77,6 +83,7 @@ export const TimelineContent = ({
   visibleTodayPx,
   visibleMilestoneMarkers,
   milestoneMarkers,
+  horizonBands,
   today,
   linkedEntityIds,
   linkedEntityIdSet,
@@ -88,7 +95,9 @@ export const TimelineContent = ({
   onBarClick,
   onEntityPanelToggle
 }: TimelineContentProps) => {
-  const isSnapshotMode = cfg.groupBy === 'snapshot' || cfg.groupBy === 'project';
+  const isEventMode =
+    cfg.groupBy === 'snapshot' || cfg.groupBy === 'project' || cfg.groupBy === 'capability';
+  const isCapabilityMode = cfg.groupBy === 'capability';
   const renderSnapBlock = (entity: EntityRecord, projectFilterId?: string) => (
     <SnapBlock
       key={`${projectFilterId ?? 'all'}-${entity._uid}`}
@@ -109,11 +118,38 @@ export const TimelineContent = ({
       selectedSnapId={snapDetail?.snap.id ?? null}
       showProjectLanes={cfg.showProjectLanes}
       showAutosaves={cfg.showAutosaves}
+      horizonBands={horizonBands}
       onSnapSelect={onSnapSelect}
       onEntityClick={onEntityClick}
       onBarClick={onBarClick}
     />
   );
+
+  const renderHorizonFills = () =>
+    horizonBands.map(band => (
+      <div
+        key={band.id}
+        className={styles.horizonFill}
+        data-horizon={band.id}
+        style={{ left: band.left, width: band.width }}
+      />
+    ));
+
+  const renderCapabilityGroups = (groupList: [string, EntityRecord[]][]) =>
+    groupList.map(([groupKey, entities]) => (
+      <div key={groupKey}>
+        <div className={styles.groupRow}>
+          <div className={`${styles.labelCol} ${styles.groupLabelCol}`}>
+            {groupKey}
+            <span className={styles.groupCount}>({entities.length})</span>
+          </div>
+          <div className={styles.groupSpacer} style={{ width: totalWidth }}>
+            {renderHorizonFills()}
+          </div>
+        </div>
+        {entities.map(entity => renderSnapBlock(entity))}
+      </div>
+    ));
 
   return (
     <TimelineScaffold
@@ -124,24 +160,42 @@ export const TimelineContent = ({
       todayPx={todayPx}
       todayScrollAlign={0.38}
       header={
-        <div className={styles.headerRow}>
-          <div className={`${styles.labelCol} ${styles.labelColHeader}`}>
-            <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.6 }}>
-              {isSnapshotMode ? `${rows.length} entities` : `${datedRows.length} entities`}
-            </span>
+        <>
+          <div className={styles.headerRow}>
+            <div className={`${styles.labelCol} ${styles.labelColHeader}`}>
+              <span style={{ fontSize: 10, fontFamily: 'var(--font-mono)', opacity: 0.6 }}>
+                {isEventMode ? `${rows.length} entities` : `${datedRows.length} entities`}
+              </span>
+            </div>
+            <div className={styles.cols}>
+              {columns.map((col, i) => (
+                <div
+                  key={i}
+                  className={`${styles.colHeader} ${col.isCurrent ? styles.colHeaderNow : ''}`}
+                  style={{ width: col.width }}
+                >
+                  {col.label}
+                </div>
+              ))}
+            </div>
           </div>
-          <div className={styles.cols}>
-            {columns.map((col, i) => (
-              <div
-                key={i}
-                className={`${styles.colHeader} ${col.isCurrent ? styles.colHeaderNow : ''}`}
-                style={{ width: col.width }}
-              >
-                {col.label}
+          {horizonBands.length > 0 && (
+            <div className={styles.horizonRow}>
+              <div className={`${styles.labelCol} ${styles.labelColHeader}`}>Horizon</div>
+              <div className={styles.horizonTrack} style={{ width: totalWidth }}>
+                {horizonBands.map(band => (
+                  <div
+                    key={band.id}
+                    className={styles.horizonBand}
+                    style={{ left: band.left, width: band.width }}
+                  >
+                    {band.label}
+                  </div>
+                ))}
               </div>
-            ))}
-          </div>
-        </div>
+            </div>
+          )}
+        </>
       }
       todayLine={
         visibleTodayPx === null ? null : (
@@ -151,7 +205,7 @@ export const TimelineContent = ({
         )
       }
       overlayLines={
-        cfg.showMilestones && cfg.groupBy === 'snapshot'
+        cfg.showMilestones && (cfg.groupBy === 'snapshot' || isCapabilityMode)
           ? visibleMilestoneMarkers.map(({ milestone, px }) => {
               const projectName = projects.find(
                 project => project.id === milestone.project_id
@@ -162,7 +216,10 @@ export const TimelineContent = ({
                   key={milestone.id}
                   role="img"
                   className={styles.milestoneLine}
-                  style={{ left: TL_LABEL_W + px }}
+                  style={{
+                    left: TL_LABEL_W + px,
+                    top: cfg.groupBy === 'snapshot' || isCapabilityMode ? 52 : undefined
+                  }}
                   title={milestoneTitle}
                   aria-label={`Milestone: ${milestoneTitle}`}
                 >
@@ -175,15 +232,19 @@ export const TimelineContent = ({
           : null
       }
     >
-      {cfg.showMilestones && cfg.groupBy === 'snapshot' && milestoneMarkers.length > 0 && (
-        <div className={styles.milestoneLane}>
-          <div className={styles.milestoneLaneCorner}>Milestones</div>
-          <div className={styles.milestoneLaneTrack} style={{ width: totalWidth }} />
-        </div>
-      )}
+      {cfg.showMilestones &&
+        (cfg.groupBy === 'snapshot' || isCapabilityMode) &&
+        milestoneMarkers.length > 0 && (
+          <div className={styles.milestoneLane}>
+            <div className={styles.milestoneLaneCorner}>Milestones</div>
+            <div className={styles.milestoneLaneTrack} style={{ width: totalWidth }}>
+              {renderHorizonFills()}
+            </div>
+          </div>
+        )}
 
       {/* Standard groups (owner / type) */}
-      {!isSnapshotMode &&
+      {!isEventMode &&
         groups.map(([groupKey, entities]) => (
           <div key={groupKey}>
             {/* Group header */}
@@ -192,7 +253,9 @@ export const TimelineContent = ({
                 {groupKey}
                 <span className={styles.groupCount}>({entities.length})</span>
               </div>
-              <div className={styles.groupSpacer} style={{ width: totalWidth }} />
+              <div className={styles.groupSpacer} style={{ width: totalWidth }}>
+                {renderHorizonFills()}
+              </div>
             </div>
 
             {/* Entity rows */}
@@ -258,6 +321,7 @@ export const TimelineContent = ({
 
                   {/* Bar track — click on bar/milestone opens detail panel */}
                   <div className={styles.barCell} style={{ width: totalWidth }}>
+                    {renderHorizonFills()}
                     {!isMilestone && startD && (
                       <div
                         className={`${styles.bar} ${!endD ? styles.barOpen : ''}`}
@@ -289,7 +353,7 @@ export const TimelineContent = ({
           </div>
         ))}
 
-      {/* Snapshot mode: one block per entity, optionally grouped by project */}
+      {/* Project mode: one block per project, with an entity block in each project lane */}
       {cfg.groupBy === 'project'
         ? projectEntityGroups.map(({ project, entities }) => (
             <div key={project.id} className={styles.projectGroup}>
@@ -319,6 +383,7 @@ export const TimelineContent = ({
                   <span className={styles.groupCount}>({entities.length})</span>
                 </div>
                 <div className={styles.groupSpacer} style={{ width: totalWidth }}>
+                  {renderHorizonFills()}
                   {project.start_date && project.target_date
                     ? (() => {
                         const barLeft = stringDateToTimelinePx(
@@ -352,7 +417,29 @@ export const TimelineContent = ({
               {entities.map(entity => renderSnapBlock(entity, project.id))}
             </div>
           ))
-        : isSnapshotMode && rows.map(entity => renderSnapBlock(entity))}
+        : cfg.groupBy === 'snapshot' && rows.map(entity => renderSnapBlock(entity))}
+
+      {/* Capability mode: dated rows are grouped by containment parent, while undated rows stay
+          visible in their own section rather than disappearing from the strategic view. */}
+      {isCapabilityMode && (
+        <>
+          {renderCapabilityGroups(groups)}
+          {undatedRows.length > 0 && (
+            <div className={styles.undatedSection}>
+              <div className={styles.undatedHeader}>
+                <div className={`${styles.labelCol} ${styles.groupLabelCol}`}>
+                  Undated
+                  <span className={styles.groupCount}>({undatedRows.length})</span>
+                </div>
+                <div className={styles.groupSpacer} style={{ width: totalWidth }}>
+                  {renderHorizonFills()}
+                </div>
+              </div>
+              {renderCapabilityGroups(undatedGroups)}
+            </div>
+          )}
+        </>
+      )}
     </TimelineScaffold>
   );
 };

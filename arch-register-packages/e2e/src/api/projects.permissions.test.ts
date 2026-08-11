@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { hashPassword } from '@arch-register/server/utils/password';
 import { createTestORPCClient } from '../helpers/fixtures';
 import { createPermissionApiTest, expect } from '../helpers/permissionFixtures';
@@ -76,6 +77,46 @@ test.describe('project permission routes', () => {
     });
 
     expect(projects.map(entry => entry.project.id)).toEqual([resources.projectIds.portalRedesign]);
+  });
+
+  test('filtering: entity timeline omits changes from inaccessible projects', async ({
+    server,
+    designOnlyAuth,
+    resources
+  }) => {
+    await server.db.changeCase.createCase({
+      id: randomUUID(),
+      workspace: resources.workspaceId,
+      project_id: resources.projectIds.authMigration,
+      name: 'Restricted timeline change',
+      description: null,
+      effective_date: '2026-12-01',
+      milestone_id: null,
+      message: null,
+      created_by: null,
+      created_at: now,
+      members: [
+        {
+          entity_id: resources.entityIds.customerPortal,
+          base_version: 1,
+          base_state: {},
+          proposed_state: {},
+          diff: {}
+        }
+      ]
+    });
+
+    const designOnlyOrpc = createTestORPCClient(server.baseUrl, designOnlyAuth);
+    const timeline = await designOnlyOrpc.entities.timelineView({
+      params: { workspace: 'default' },
+      body: { ids: [resources.entityIds.customerPortal] }
+    });
+
+    expect(
+      timeline[resources.entityIds.customerPortal]?.projectChanges.map(
+        change => change.changeCase.project_id
+      )
+    ).toEqual([resources.projectIds.portalRedesign]);
   });
 
   test('authorization: direct reads reject users without project access', async ({

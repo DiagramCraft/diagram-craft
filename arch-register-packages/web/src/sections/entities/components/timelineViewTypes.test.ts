@@ -15,7 +15,8 @@ describe('timeline view configuration defaults', () => {
       zoom: 'quarter',
       showProjectLanes: true,
       showMilestones: true,
-      showAutosaves: true
+      showAutosaves: true,
+      showHorizonBands: true
     });
   });
 
