@@ -11,7 +11,8 @@ import {
   getDatedTimelineRows,
   getOwnTimelineVersions,
   groupTimelineRows,
-  groupChangeCaseEntriesByProject
+  groupChangeCaseEntriesByProject,
+  getUndatedTimelineRows
 } from './timelineViewState';
 
 const entity = (id: string, start?: Date, end?: Date, owner?: string): EntityRecord =>
@@ -92,6 +93,21 @@ describe('timeline view state', () => {
       ['No parent', [rows[1]]],
       ['Parent Service', [rows[0]]]
     ]);
+  });
+
+  it('separates undated rows without duplicating dated rows', () => {
+    const rows = [entity('dated', new Date('2024-01-01')), entity('undated')];
+    const datedRows = getDatedTimelineRows(rows, 'start', 'end', (row, fieldId) =>
+      fieldId && row[fieldId] instanceof Date ? (row[fieldId] as Date) : null
+    );
+    expect(getUndatedTimelineRows(rows, datedRows).map(row => row._uid)).toEqual(['undated']);
+  });
+
+  it('uses containment parents for capability grouping', () => {
+    const rows = [entity('child')];
+    expect(
+      groupTimelineRows(rows, 'capability', new Map(), new Map([['child', 'Capability']]))
+    ).toEqual([['Capability', rows]]);
   });
 
   it('builds a child-uid to parent-name map from tree nodes and edges', () => {

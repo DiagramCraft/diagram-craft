@@ -14,7 +14,8 @@ const defaults = {
   zoom: 'quarter' as const,
   showProjectLanes: true,
   showMilestones: true,
-  showAutosaves: true
+  showAutosaves: true,
+  showHorizonBands: true
 };
 
 describe('normalizeViewConfig', () => {
@@ -24,7 +25,8 @@ describe('normalizeViewConfig', () => {
       ...raw,
       showProjectLanes: true,
       showMilestones: true,
-      showAutosaves: true
+      showAutosaves: true,
+      showHorizonBands: true
     });
   });
 
@@ -37,7 +39,8 @@ describe('normalizeViewConfig', () => {
       zoom: 'month',
       showProjectLanes: true,
       showMilestones: true,
-      showAutosaves: true
+      showAutosaves: true,
+      showHorizonBands: true
     });
   });
 
@@ -49,6 +52,16 @@ describe('normalizeViewConfig', () => {
       showAutosaves: false
     };
     expect(normalizeViewConfig(timelineViewConfigSchema, raw, defaults)).toEqual(raw);
+  });
+
+  it('accepts the persisted capability roadmap mode and defaults its horizon toggle', () => {
+    expect(
+      normalizeViewConfig(
+        timelineViewConfigSchema,
+        { ...defaults, groupBy: 'capability', showHorizonBands: undefined },
+        defaults
+      )
+    ).toEqual({ ...defaults, groupBy: 'capability' });
   });
 
   it('returns the defaults unchanged when the raw config fails to parse', () => {
