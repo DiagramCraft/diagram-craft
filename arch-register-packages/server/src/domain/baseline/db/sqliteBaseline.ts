@@ -61,7 +61,7 @@ export class SqliteBaselineDatabase extends SqliteDatabaseBase implements Baseli
   async insertBaselineRecords(input: BaselineRecordDbCreate[]) {
     const statement = this.db.prepare(
       `INSERT INTO architecture_baseline_record (
-        id, workspace, baseline_id, record_kind, record_id, state_json, schema_json, state_hash, position
+        id, workspace, baseline_id, record_kind, record_id, record_version_id, state_json, state_hash, position
       ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`
     );
     for (const record of input) {
@@ -71,8 +71,8 @@ export class SqliteBaselineDatabase extends SqliteDatabaseBase implements Baseli
         record.baseline_id,
         record.record_kind,
         record.record_id,
-        JSON.stringify(record.state),
-        record.schema == null ? null : JSON.stringify(record.schema),
+        record.record_version_id,
+        record.state == null ? null : JSON.stringify(record.state),
         record.state_hash,
         record.position
       );

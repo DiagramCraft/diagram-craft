@@ -56,11 +56,11 @@ export class PostgresBaselineDatabase extends PostgresDatabaseBase implements Ba
       for (const record of input) {
         await this.sql`
           INSERT INTO architecture_baseline_record (
-            id, workspace, baseline_id, record_kind, record_id, state_json, schema_json, state_hash, position
+            id, workspace, baseline_id, record_kind, record_id, record_version_id, state_json, state_hash, position
           ) VALUES (
             ${record.id ?? randomUUID()}, ${record.workspace}, ${record.baseline_id}, ${record.record_kind},
-            ${record.record_id}, ${this.json(record.state)},
-            ${record.schema == null ? null : this.json(record.schema)}, ${record.state_hash}, ${record.position}
+            ${record.record_id}, ${record.record_version_id},
+            ${record.state == null ? null : this.json(record.state)}, ${record.state_hash}, ${record.position}
           )
         `;
       }

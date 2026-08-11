@@ -57,8 +57,8 @@ export type BaselineRecordDbResult = {
   baseline_id: string;
   record_kind: BaselineRecordKind;
   record_id: string;
-  state: Record<string, unknown>;
-  schema: Record<string, unknown> | null;
+  record_version_id: string | null;
+  state: Record<string, unknown> | null;
   state_hash: string;
   position: number;
 };
@@ -129,16 +129,16 @@ export const baselineMappers = {
     baseline_id: String(row['baseline_id']),
     record_kind: String(row['record_kind']) as BaselineRecordKind,
     record_id: String(row['record_id']),
-    state: parseDatabaseJson<Record<string, unknown>>(
-      row['state_json'],
-      {},
-      'baseline_record.state_json'
-    ),
-    schema: parseDatabaseJson<Record<string, unknown> | null>(
-      row['schema_json'],
-      null,
-      'baseline_record.schema_json'
-    ),
+    record_version_id:
+      row['record_version_id'] == null ? null : String(row['record_version_id']),
+    state:
+      row['state_json'] == null
+        ? null
+        : parseDatabaseJson<Record<string, unknown>>(
+            row['state_json'],
+            {},
+            'baseline_record.state_json'
+          ),
     state_hash: String(row['state_hash']),
     position: Number(row['position'] ?? 0)
   }),

@@ -16,6 +16,7 @@ import { ContainmentField, ReferenceField } from '@arch-register/api-types/schem
 import { savedViewQuerySchema } from '@arch-register/api-types/viewContract';
 import { listAllCatalogEntities } from '../domain/catalog/entityLoader';
 import { entityToBaseState } from '../domain/catalog/entityMutations';
+import { relationToBaseState } from '../domain/catalog/relationHelpers';
 import type { StorageAdapter } from '../storage/storage.types';
 import { buildDefaultAdrDocuments } from '../domain/document/documentDefaults';
 import { randomUUID } from 'node:crypto';
@@ -211,7 +212,25 @@ export const seedBootstrapData = async (
   }
   await seedCatalogEntities(db, seedEntities);
   for (const relationSchema of seedRelationSchemas) {
-    await db.relation.createRelationSchema(relationSchema);
+    const createdSchema = await db.relation.createRelationSchema(relationSchema);
+    await db.relation.createRelationSchemaVersion({
+      id: randomUUID(),
+      workspace: createdSchema.workspace,
+      schema_id: createdSchema.id,
+      version: createdSchema.version ?? 1,
+      name: createdSchema.name,
+      description: createdSchema.description,
+      in_schema_ids: createdSchema.in_schema_ids,
+      out_schema_ids: createdSchema.out_schema_ids,
+      fields: createdSchema.fields,
+      groups: createdSchema.groups ?? [],
+      validation_rules: createdSchema.validation_rules ?? [],
+      color: createdSchema.color,
+      icon: createdSchema.icon,
+      change_summary: { added: createdSchema.fields.map(field => field.id) },
+      created_by: null,
+      created_at: createdSchema.created_at
+    });
   }
   for (const relation of seedRelations) {
     await db.relation.createRelation(relation);
@@ -365,6 +384,26 @@ export const seedBootstrapData = async (
         created_at: entity.created_at,
         created_by: null,
         state: entityToBaseState(entity),
+        applied_case_revision_id: null
+      });
+    }
+
+    const relations = (
+      await db.relation.listRelations(workspace.id, {}, { limit: null, offset: 0 })
+    ).items;
+    for (const relation of relations) {
+      const versions = await db.catalog.listEntityVersions(workspace.id, relation.id);
+      if (versions.length > 0) continue;
+      await db.catalog.createEntityVersion({
+        id: randomUUID(),
+        workspace: workspace.id,
+        record_id: relation.id,
+        version_number: relation.version,
+        kind: 'autosave',
+        commit_message: null,
+        created_at: relation.created_at,
+        created_by: null,
+        state: relationToBaseState(relation),
         applied_case_revision_id: null
       });
     }

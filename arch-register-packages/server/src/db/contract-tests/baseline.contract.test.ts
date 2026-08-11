@@ -33,8 +33,8 @@ runContractSuiteAgainstBothDrivers('BaselineDatabase', getDb => {
         baseline_id: firstId,
         record_kind: 'entity',
         record_id: 'entity-1',
+        record_version_id: null,
         state: { id: 'entity-1', name: 'Captured' },
-        schema: { id: 'schema-1', name: 'Application' },
         state_hash: 'entity-hash',
         position: 0
       },
@@ -43,8 +43,8 @@ runContractSuiteAgainstBothDrivers('BaselineDatabase', getDb => {
         baseline_id: firstId,
         record_kind: 'relation',
         record_id: 'relation-1',
+        record_version_id: null,
         state: { id: 'relation-1', data: { criticality: 'high' } },
-        schema: { id: 'relation-schema-1', name: 'Depends on' },
         state_hash: 'relation-hash',
         position: 0
       }

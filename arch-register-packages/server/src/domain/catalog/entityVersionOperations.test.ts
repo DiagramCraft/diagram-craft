@@ -38,6 +38,7 @@ const version: EntityVersionDbResult = {
   id: 'v1',
   workspace: 'ws-1',
   record_id: 'e1',
+  schema_version_id: null,
   version_number: 1,
   kind: 'autosave',
   commit_message: null,

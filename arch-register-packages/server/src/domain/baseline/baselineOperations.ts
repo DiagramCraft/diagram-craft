@@ -17,8 +17,17 @@ import type {
   BaselineLinkTargetType,
   BaselineRecordDbCreate
 } from './db/baselineDatabase';
-import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
-import type { RelationDbResult, RelationSchemaDbResult } from '../catalog/db/relationDatabase';
+import type {
+  EntityDbResult,
+  EntityVersionDbResult,
+  SchemaDbResult,
+  SchemaVersionDbResult
+} from '../catalog/db/catalogDatabase';
+import type {
+  RelationDbResult,
+  RelationSchemaDbResult,
+  RelationSchemaVersionDbResult
+} from '../catalog/db/relationDatabase';
 import { httpAssert } from '../../utils/httpAssert';
 import {
   filterVisibleEntities,
@@ -128,11 +137,76 @@ const deserializeRelation = (state: Record<string, unknown>): RelationDbResult =
   return row;
 };
 
-const asSchema = (value: Record<string, unknown> | null): SchemaDbResult | null =>
-  value as SchemaDbResult | null;
+const applyEntitySchemaVersion = (
+  schema: SchemaDbResult | null,
+  version: SchemaVersionDbResult | null
+): SchemaDbResult | null => {
+  if (schema == null || version == null) return schema;
+  return {
+    ...schema,
+    name: version.name,
+    description: version.description,
+    fields: version.fields as SchemaDbResult['fields'],
+    templates: version.templates,
+    groups: version.groups as SchemaDbResult['groups'],
+    shared_field_group_links: version.shared_field_group_links,
+    entity_capabilities: version.entity_capabilities,
+    validation_rules: version.validation_rules,
+    color: version.color,
+    icon: version.icon,
+    version: version.version
+  };
+};
 
-const asRelationSchema = (value: Record<string, unknown> | null): RelationSchemaDbResult | null =>
-  value as RelationSchemaDbResult | null;
+const applyRelationSchemaVersion = (
+  schema: RelationSchemaDbResult | null,
+  version: RelationSchemaVersionDbResult | null
+): RelationSchemaDbResult | null => {
+  if (schema == null || version == null) return schema;
+  return {
+    ...schema,
+    name: version.name,
+    description: version.description,
+    in_schema_ids: version.in_schema_ids,
+    out_schema_ids: version.out_schema_ids,
+    fields: version.fields,
+    groups: version.groups,
+    validation_rules: version.validation_rules,
+    color: version.color,
+    icon: version.icon,
+    version: version.version
+  };
+};
+
+const latestVersionsByRecord = (versions: EntityVersionDbResult[]) => {
+  const result = new Map<string, EntityVersionDbResult>();
+  for (const version of versions) result.set(version.record_id, version);
+  return result;
+};
+
+const listSnapshotVersions = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  effectiveAt: Date,
+  snapshot: Snapshot
+) => {
+  const [entityVersions, relationVersions] = await Promise.all([
+    db.catalog.listEntityVersionsAsOf(
+      workspace,
+      effectiveAt,
+      snapshot.entities.map(entity => entity.id)
+    ),
+    db.catalog.listRelationVersionsAsOf(
+      workspace,
+      effectiveAt,
+      snapshot.relations.map(relation => relation.id)
+    )
+  ]);
+  return new Map([
+    ...latestVersionsByRecord(entityVersions),
+    ...latestVersionsByRecord(relationVersions)
+  ]);
+};
 
 const requireWorkspaceView = (authCtx: AuthorizationContext) =>
   requireWorkspaceCapability(authCtx, 'ws.view');
@@ -338,22 +412,101 @@ const storedSnapshot = async (
   authCtx: AuthorizationContext
 ): Promise<Snapshot> => {
   const records = await db.baseline.listBaselineRecords(workspace, baselineId);
-  const allEntities = records
+  const versions = await db.catalog.listEntityVersionsByVersionIds(
+    workspace,
+    records
+      .map(record => record.record_version_id)
+      .filter((id): id is string => id != null)
+  );
+  const versionById = new Map(versions.map(version => [version.id, version]));
+  const entityEntries = records
     .filter(record => record.record_kind === 'entity')
-    .map(record => deserializeEntity(record.state));
-  const entities = filterVisibleEntities(authCtx, allEntities);
-  const entityIds = new Set(entities.map(entity => entity.id));
+    .map(record => {
+      const version = record.record_version_id
+        ? versionById.get(record.record_version_id)
+        : undefined;
+      const state = record.state ?? version?.state;
+      if (state == null) {
+        throw new Error(`Baseline record '${record.record_id}' has no captured state`);
+      }
+      return { record, version, entity: deserializeEntity(state) };
+    });
+  const relationEntries = records
+    .filter(record => record.record_kind === 'relation')
+    .map(record => {
+      const version = record.record_version_id
+        ? versionById.get(record.record_version_id)
+        : undefined;
+      const state = record.state ?? version?.state;
+      if (state == null) {
+        throw new Error(`Baseline record '${record.record_id}' has no captured state`);
+      }
+      return { record, version, relation: deserializeRelation(state) };
+    });
+
+  const entitySchemaIds = [...new Set(entityEntries.map(entry => entry.entity.schema_id))];
+  const entitySchemasById = new Map(
+    (await db.catalog.listSchemas(workspace)).map(schema => [schema.id, schema])
+  );
+  const entitySchemaVersionsById = new Map(
+    (
+      await Promise.all(
+        entitySchemaIds.map(async schemaId => db.catalog.listSchemaVersions(workspace, schemaId))
+      )
+    )
+      .flat()
+      .map(version => [version.id, version])
+  );
   const entitySchemas = new Map<string, SchemaDbResult | null>();
-  for (const record of records.filter(record => record.record_kind === 'entity')) {
-    const entity = deserializeEntity(record.state);
-    if (!entitySchemas.has(entity.schema_id))
-      entitySchemas.set(entity.schema_id, asSchema(record.schema));
+  for (const entry of entityEntries) {
+    if (entitySchemas.has(entry.entity.schema_id)) continue;
+    entitySchemas.set(
+      entry.entity.schema_id,
+      applyEntitySchemaVersion(
+        entitySchemasById.get(entry.entity.schema_id) ?? null,
+        entry.version?.schema_version_id
+          ? (entitySchemaVersionsById.get(entry.version.schema_version_id) ?? null)
+          : null
+      )
+    );
   }
 
+  const allEntities = entityEntries.map(entry => entry.entity);
+  const entities = filterVisibleEntities(authCtx, allEntities);
+  const entityIds = new Set(entities.map(entity => entity.id));
+
+  const relationSchemaIds = [
+    ...new Set(relationEntries.map(entry => entry.relation.schema_id))
+  ];
+  const relationSchemasById = new Map(
+    (await db.relation.listRelationSchemas(workspace)).map(schema => [schema.id, schema])
+  );
+  const relationSchemaVersionsById = new Map(
+    (
+      await Promise.all(
+        relationSchemaIds.map(async schemaId =>
+          db.relation.listRelationSchemaVersions(workspace, schemaId)
+        )
+      )
+    )
+      .flat()
+      .map(version => [version.id, version])
+  );
   const relationSchemas = new Map<string, RelationSchemaDbResult | null>();
-  const relations = records
-    .filter(record => record.record_kind === 'relation')
-    .map(record => deserializeRelation(record.state))
+  for (const entry of relationEntries) {
+    if (relationSchemas.has(entry.relation.schema_id)) continue;
+    relationSchemas.set(
+      entry.relation.schema_id,
+      applyRelationSchemaVersion(
+        relationSchemasById.get(entry.relation.schema_id) ?? null,
+        entry.version?.schema_version_id
+          ? (relationSchemaVersionsById.get(entry.version.schema_version_id) ?? null)
+          : null
+      )
+    );
+  }
+  const relations = relationEntries
+    .map(entry => entry.relation)
     .filter(relation => {
       if (!entityIds.has(relation.in_entity_id) || !entityIds.has(relation.out_entity_id))
         return false;
@@ -361,11 +514,6 @@ const storedSnapshot = async (
       const outEntity = entities.find(entity => entity.id === relation.out_entity_id)!;
       const inSchema = entitySchemas.get(inEntity.schema_id) ?? null;
       const outSchema = entitySchemas.get(outEntity.schema_id) ?? null;
-      const record = records.find(
-        candidate => candidate.record_kind === 'relation' && candidate.record_id === relation.id
-      );
-      const relationSchema = asRelationSchema(record?.schema ?? null);
-      relationSchemas.set(relation.schema_id, relationSchema);
       return canViewTypedRelation(
         authCtx,
         [
@@ -383,18 +531,21 @@ const storedSnapshot = async (
 const makeRecordInputs = (
   workspace: string,
   baselineId: string,
-  snapshot: Snapshot
+  snapshot: Snapshot,
+  versions: Map<string, EntityVersionDbResult>
 ): BaselineRecordDbCreate[] => [
   ...snapshot.entities.map((entity, position) => ({
     workspace,
     baseline_id: baselineId,
     record_kind: 'entity' as const,
     record_id: entity.id,
-    state: entity as unknown as Record<string, unknown>,
-    schema: snapshot.entitySchemas.get(entity.schema_id) as unknown as Record<
-      string,
-      unknown
-    > | null,
+    record_version_id: versions.get(entity.id)?.id ?? null,
+    state:
+      versions.get(entity.id) == null ||
+      hashState(entityDiffState(entity)) !==
+        hashState(entityDiffState(deserializeEntity(versions.get(entity.id)!.state)))
+        ? (entity as unknown as Record<string, unknown>)
+        : null,
     state_hash: hashState(entityDiffState(entity)),
     position
   })),
@@ -403,11 +554,13 @@ const makeRecordInputs = (
     baseline_id: baselineId,
     record_kind: 'relation' as const,
     record_id: relation.id,
-    state: relation as unknown as Record<string, unknown>,
-    schema: snapshot.relationSchemas.get(relation.schema_id) as unknown as Record<
-      string,
-      unknown
-    > | null,
+    record_version_id: versions.get(relation.id)?.id ?? null,
+    state:
+      versions.get(relation.id) == null ||
+      hashState(relationDiffState(relation)) !==
+        hashState(relationDiffState(deserializeRelation(versions.get(relation.id)!.state)))
+        ? (relation as unknown as Record<string, unknown>)
+        : null,
     state_hash: hashState(relationDiffState(relation)),
     position
   }))
@@ -710,6 +863,7 @@ export const createBaseline = async (
     includePlannedChanges: input.includePlannedChanges,
     includeOverdueChanges: input.includeOverdueChanges
   });
+  const snapshotVersions = await listSnapshotVersions(db, workspace, effectiveAt, snapshot);
   const id = randomUUID();
   const baseline = await db.core.transaction(async tx => {
     const created = await tx.baseline.createBaseline({
@@ -728,7 +882,9 @@ export const createBaseline = async (
       entity_count: snapshot.entities.length,
       relation_count: snapshot.relations.length
     });
-    await tx.baseline.insertBaselineRecords(makeRecordInputs(workspace, id, snapshot));
+    await tx.baseline.insertBaselineRecords(
+      makeRecordInputs(workspace, id, snapshot, snapshotVersions)
+    );
     return created;
   });
   return toSummary(db, workspace, authCtx, baseline);

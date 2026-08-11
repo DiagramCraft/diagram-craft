@@ -24,20 +24,25 @@ CREATE INDEX architecture_baseline_workspace_idx
   ON architecture_baseline(workspace, deleted_at, effective_at DESC, created_at DESC);
 
 CREATE TABLE architecture_baseline_record (
-  id          TEXT PRIMARY KEY,
-  workspace   TEXT NOT NULL,
-  baseline_id TEXT NOT NULL,
-  record_kind TEXT NOT NULL CHECK (record_kind IN ('entity', 'relation')),
-  record_id   TEXT NOT NULL,
-  state_json  TEXT NOT NULL,
-  schema_json TEXT,
-  state_hash  TEXT NOT NULL,
-  position    INTEGER NOT NULL,
+  id                TEXT PRIMARY KEY,
+  workspace         TEXT NOT NULL,
+  baseline_id       TEXT NOT NULL,
+  record_kind       TEXT NOT NULL CHECK (record_kind IN ('entity', 'relation')),
+  record_id         TEXT NOT NULL,
+  record_version_id TEXT REFERENCES record_version(id) ON DELETE RESTRICT,
+  -- Only used for a projected planned-change state or a record without history.
+  state_json        TEXT,
+  state_hash        TEXT NOT NULL,
+  position          INTEGER NOT NULL,
   UNIQUE (workspace, baseline_id, record_kind, record_id)
 );
 
 CREATE INDEX architecture_baseline_record_lookup_idx
   ON architecture_baseline_record(workspace, baseline_id, record_kind, position, record_id);
+
+CREATE INDEX architecture_baseline_record_version_idx
+  ON architecture_baseline_record(workspace, record_version_id)
+  WHERE record_version_id IS NOT NULL;
 
 CREATE TABLE architecture_baseline_link (
   id          TEXT PRIMARY KEY,

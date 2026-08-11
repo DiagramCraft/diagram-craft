@@ -69,6 +69,7 @@ const baseVersion = (overrides: Partial<EntityVersionDbResult>): EntityVersionDb
   id: 'version-1',
   workspace: 'ws-1',
   record_id: 'entity-1',
+  schema_version_id: null,
   version_number: 1,
   kind: 'autosave',
   commit_message: null,

@@ -48,6 +48,84 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase entity versions', getDb => {
     expect(versions[1]!.version_number).toBe(1);
   });
 
+  it('associates a record version with the schema version applicable to its state', async () => {
+    const { db, workspace, entity } = await setup();
+    const schema = (await db.catalog.getSchema(workspace, entity.schema_id))!;
+    const schemaVersionId = randomUUID();
+    await db.catalog.createSchemaVersion({
+      id: schemaVersionId,
+      workspace,
+      schema_id: schema.id,
+      version: 1,
+      name: schema.name,
+      description: schema.description,
+      fields: schema.fields,
+      templates: schema.templates ?? [],
+      groups: schema.groups ?? [],
+      color: schema.color,
+      icon: schema.icon,
+      change_summary: {},
+      created_by: null,
+      created_at: new Date('2020-01-01T00:00:00.000Z')
+    });
+
+    const created = await db.catalog.createEntityVersion({
+      ...version(entity.id),
+      workspace,
+      created_at: new Date('2026-01-01T00:00:00.000Z'),
+      state: { id: entity.id, schema_id: schema.id, name: 'v1' }
+    });
+
+    expect(created.schema_version_id).toBe(schemaVersionId);
+  });
+
+  it('does not prune an autosave referenced by an architecture baseline', async () => {
+    const { db, workspace, entity } = await setup();
+    const pinned = await db.catalog.createEntityVersion({
+      ...version(entity.id, { version_number: 1 }),
+      workspace
+    });
+    const unpinned = await db.catalog.createEntityVersion({
+      ...version(entity.id, { version_number: 2 }),
+      workspace
+    });
+    const baselineId = randomUUID();
+    const now = new Date();
+    await db.baseline.createBaseline({
+      id: baselineId,
+      workspace,
+      name: 'Pinned baseline',
+      description: null,
+      owner_team_id: null,
+      created_by: null,
+      effective_at: now,
+      scope: { kind: 'workspace' },
+      query: null,
+      include_planned_changes: false,
+      include_overdue_changes: false,
+      created_at: now,
+      entity_count: 1,
+      relation_count: 0
+    });
+    await db.baseline.insertBaselineRecords([
+      {
+        workspace,
+        baseline_id: baselineId,
+        record_kind: 'entity',
+        record_id: entity.id,
+        record_version_id: pinned.id,
+        state: null,
+        state_hash: 'pinned',
+        position: 0
+      }
+    ]);
+
+    await db.catalog.pruneAutosaveVersions(workspace, entity.id, 0);
+
+    expect(await db.catalog.getEntityVersionById(workspace, pinned.id)).not.toBeNull();
+    expect(await db.catalog.getEntityVersionById(workspace, unpinned.id)).toBeNull();
+  });
+
   it('gets a single version by id', async () => {
     const { db, workspace, entity } = await setup();
     const created = await db.catalog.createEntityVersion({ ...version(entity.id), workspace });

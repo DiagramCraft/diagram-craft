@@ -1,4 +1,4 @@
-import { seededProjects, seededUsers } from '@arch-register/server/db/seedFixtures';
+import { seededProjects, seededUsers, seededWorkspaces } from '@arch-register/server/db/seedFixtures';
 import { createApiTest, createTestORPCClient, expect } from '../helpers/fixtures';
 import { makeAuthHeader } from '../helpers/seedHelper';
 
@@ -34,6 +34,15 @@ test.describe('architecture baselines', () => {
       params: { workspace: 'default', id: created.id }
     });
     expect(detail.entities.length).toBe(created.entityCount);
+    expect(detail.relations.length).toBeGreaterThan(0);
+
+    const storedRecords = await server.db.baseline.listBaselineRecords(
+      seededWorkspaces.default.id,
+      created.id
+    );
+    expect(storedRecords).toHaveLength(created.entityCount + created.relationCount);
+    expect(storedRecords.every(record => record.record_version_id != null)).toBe(true);
+    expect(storedRecords.every(record => record.state == null)).toBe(true);
 
     const link = await orpc.baselines.links.create({
       params: { workspace: 'default', id: created.id },
