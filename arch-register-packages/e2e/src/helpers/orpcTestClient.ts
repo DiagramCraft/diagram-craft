@@ -49,6 +49,7 @@ export const createTestORPCClient = (baseUrl: string, auth?: string) => {
     dev: coreClient.dev,
     entities: applicationClient.entities,
     relations: applicationClient.relations,
+    relationSchemas: applicationClient.relationSchemas,
     entityQueryText: applicationClient.entityQueryText,
     enums: applicationClient.enums,
     fieldGroups: applicationClient.fieldGroups,

@@ -10,16 +10,14 @@ import {
   compileSchemaWithSharedGroups,
   isSharedFieldGroupReferencedBySchemas
 } from './fieldGroupHelpers';
+import { toApiSharedFieldGroup, toFieldMigrationFields } from './schemaHelpers';
 import {
-  buildSchemaChangeSummary,
-  classifyFieldChanges,
+  buildFieldChangeSummary,
   describeHardBlockedChange,
-  hardBlockedFieldChanges,
-  findUnresolvedFieldMigrations,
-  migratableFieldChanges,
-  toApiSharedFieldGroup
-} from './schemaHelpers';
-import type { FieldMigrations, PendingFieldChange } from '@arch-register/api-types/schemaContract';
+  planFieldMigrations,
+  type FieldMigrationDataOperation
+} from '../fieldMigration/fieldMigrationPlanning';
+import type { PendingFieldChange } from '@arch-register/api-types/common';
 import type {
   CreateSharedFieldGroupRequest,
   SharedFieldGroup,
@@ -102,7 +100,7 @@ export const createWorkspaceSharedFieldGroup = async (
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const row = await db.catalog.createSharedFieldGroup(
-        buildCreateSharedFieldGroupInput(ws, body as Record<string, unknown>, new Date())
+        buildCreateSharedFieldGroupInput(ws, body, new Date())
       );
       return apiGroup(db, ws, row);
     }
@@ -125,12 +123,8 @@ export const updateWorkspaceSharedFieldGroup = async (
       requireWorkspaceCapability(authCtx, 'schema.edit');
       const oldGroup = await db.catalog.getSharedFieldGroup(ws, id);
       httpAssert.present(oldGroup, { status: 404, message: `Shared fieldgroup '${id}' not found` });
-      const next = buildUpdateSharedFieldGroupInput(
-        body as Record<string, unknown>,
-        oldGroup,
-        new Date()
-      );
-      const fieldMigrations = body.fieldMigrations as FieldMigrations | undefined;
+      const next = buildUpdateSharedFieldGroupInput(body, oldGroup, new Date());
+      const fieldMigrations = body.fieldMigrations;
       const [schemas, groups] = await Promise.all([
         db.catalog.listSchemas(ws),
         db.catalog.listSharedFieldGroups(ws)
@@ -141,11 +135,7 @@ export const updateWorkspaceSharedFieldGroup = async (
         {
           old: ReturnType<typeof compileSchemaWithSharedGroups>;
           next: ReturnType<typeof compileSchemaWithSharedGroups>;
-          migrations: Array<{
-            action: 'rename' | 'remove';
-            oldFieldId: string;
-            newFieldId?: string;
-          }>;
+          migrations: FieldMigrationDataOperation[];
           configMigrations: Array<{
             action: 'rename' | 'remove';
             oldFieldId: string;
@@ -159,20 +149,26 @@ export const updateWorkspaceSharedFieldGroup = async (
       )) {
         const oldEffective = compileSchemaWithSharedGroups(schema, groups);
         const nextEffective = compileSchemaWithSharedGroups(schema, nextGroups);
-        const fieldChanges = classifyFieldChanges(oldEffective.fields, nextEffective.fields);
-        const blocked = hardBlockedFieldChanges(fieldChanges);
-        httpAssert.true(blocked.length === 0, {
-          status: 409,
-          message: `Cannot update shared fieldgroup: ${blocked.map(describeHardBlockedChange).join('; ')}`
-        });
-        const unresolved = findUnresolvedFieldMigrations(fieldChanges, fieldMigrations);
         const entities = await listAllCatalogEntities(db, ws, { schemaId: schema.id });
+        const fieldMigrationPlan = planFieldMigrations(
+          toFieldMigrationFields(oldEffective.fields),
+          toFieldMigrationFields(nextEffective.fields),
+          fieldMigrations,
+          { decisionRequiredFieldIds: entities.length > 0 ? undefined : new Set<string>() }
+        );
+        httpAssert.true(fieldMigrationPlan.hardBlocked.length === 0, {
+          status: 409,
+          message: `Cannot update shared fieldgroup: ${fieldMigrationPlan.hardBlocked
+            .map(change => describeHardBlockedChange(change))
+            .join('; ')}`
+        });
+        const unresolved = fieldMigrationPlan.unresolved;
         if (entities.length > 0 && unresolved.length > 0) {
           const oldFieldsById = new Map(oldEffective.fields.map(field => [field.id, field]));
           const pendingChanges: PendingFieldChange[] = unresolved.map(change => ({
             fieldId: change.fieldId,
             fieldName: oldFieldsById.get(change.fieldId)?.name ?? change.fieldName,
-            kind: change.kind as 'removed' | 'renamed',
+            kind: change.kind,
             renamedToId: change.renamedToId,
             entityCount: entities.filter(
               entity =>
@@ -185,27 +181,11 @@ export const updateWorkspaceSharedFieldGroup = async (
             data: { code: 'SCHEMA_MIGRATION_REQUIRED', pendingChanges }
           });
         }
-        const migrations: Array<{
-          action: 'rename' | 'remove';
-          oldFieldId: string;
-          newFieldId?: string;
-        }> = [];
-        for (const change of migratableFieldChanges(fieldChanges)) {
-          const migration = fieldMigrations?.[change.fieldId];
-          if (!migration) continue;
-          if (migration.action === 'rename') {
-            migrations.push({
-              action: 'rename',
-              oldFieldId: change.fieldId,
-              newFieldId: migration.renameTo ?? change.renamedToId
-            });
-          } else if (migration.action === 'remove') {
-            migrations.push({ action: 'remove', oldFieldId: change.fieldId });
-          } else {
-            const oldField = oldEffective.fields.find(field => field.id === change.fieldId);
-            if (oldField && !nextEffective.fields.some(field => field.id === oldField.id)) {
-              nextEffective.fields.push({ ...oldField, archived: true });
-            }
+        const migrations = fieldMigrationPlan.dataMigrations;
+        for (const fieldId of fieldMigrationPlan.archiveFieldIds) {
+          const oldField = oldEffective.fields.find(field => field.id === fieldId);
+          if (oldField && !nextEffective.fields.some(field => field.id === oldField.id)) {
+            nextEffective.fields.push({ ...oldField, archived: true });
           }
         }
         validateDerivedFieldGroupAccess(nextEffective.fields, nextEffective.groups ?? []);
@@ -216,7 +196,9 @@ export const updateWorkspaceSharedFieldGroup = async (
         }> = [];
         for (const oldField of oldEffective.fields) {
           if (oldField.type !== 'date') continue;
-          const change = fieldChanges.find(candidate => candidate.fieldId === oldField.id);
+          const change = fieldMigrationPlan.changes.find(
+            candidate => candidate.fieldId === oldField.id
+          );
           if (change?.kind === 'renamed' && change.renamedToId) {
             configMigrations.push({
               action: 'rename',
@@ -249,7 +231,7 @@ export const updateWorkspaceSharedFieldGroup = async (
                 ws,
                 schemaId,
                 migration.oldFieldId,
-                migration.newFieldId!
+                migration.newFieldId
               );
             else await tx.catalog.removeEntityDataField(ws, schemaId, migration.oldFieldId);
           }
@@ -265,7 +247,7 @@ export const updateWorkspaceSharedFieldGroup = async (
                 await tx.governanceCaseConfig.upsertCaseConfig({
                   workspace: ws,
                   case_kind: config.case_kind,
-                  case_subkind: encodeCaseSubkind(schemaId, migration.newFieldId!),
+                  case_subkind: encodeCaseSubkind(schemaId, migration.newFieldId),
                   enabled: config.enabled,
                   config: config.config,
                   updated_at: now,
@@ -299,9 +281,9 @@ export const updateWorkspaceSharedFieldGroup = async (
             entity_capabilities: row.entity_capabilities ?? [],
             color: row.color,
             icon: row.icon,
-            change_summary: buildSchemaChangeSummary(
-              change.old.fields,
-              row.fields,
+            change_summary: buildFieldChangeSummary(
+              toFieldMigrationFields(change.old.fields),
+              toFieldMigrationFields(row.fields),
               fieldMigrations
             ),
             created_by: authCtx.userId,

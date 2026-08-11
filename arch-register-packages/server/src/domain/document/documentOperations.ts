@@ -13,20 +13,17 @@ import type {
   DocumentTemplateWrite,
   DocumentType,
   DocumentTypeVersion,
-  DocumentTypeWrite,
-  FieldMigrations,
-  PendingFieldChange
+  DocumentTypeWrite
 } from '@arch-register/api-types/documentContract';
+import type { PendingFieldChange } from '@arch-register/api-types/common';
 import type { DocumentTypeDbResult, DocumentTypeVersionDbResult } from './db/documentDatabase';
 import { validateDocumentMetadata, validateDocumentTypeWrite } from './documentValidation';
+import { toFieldMigrationFields } from './documentSchemaHelpers';
 import {
-  buildSchemaChangeSummary,
-  classifyFieldChanges,
+  buildFieldChangeSummary,
   describeHardBlockedChange,
-  findUnresolvedFieldMigrations,
-  hardBlockedFieldChanges,
-  migratableFieldChanges
-} from './documentSchemaHelpers';
+  planFieldMigrations
+} from '../fieldMigration/fieldMigrationPlanning';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 
 const dbErrorMessages = {
@@ -183,7 +180,7 @@ export const createDocumentType = async (
         aiActions: row.aiActions,
         color: row.color,
         icon: row.icon,
-        change_summary: buildSchemaChangeSummary(null, row.fields),
+        change_summary: buildFieldChangeSummary(null, toFieldMigrationFields(row.fields)),
         created_by: authCtx.userId,
         created_at: now
       });
@@ -210,7 +207,7 @@ export const updateDocumentType = async (
       const current = await db.document.getDocumentType(ws, id);
       httpAssert.present(current, { status: 404, message: `Document type '${id}' not found` });
 
-      const fieldMigrations = input.fieldMigrations as FieldMigrations | undefined;
+      const fieldMigrations = input.fieldMigrations;
       const templatesForType = (
         await db.document.listDocumentTemplates(ws, undefined, true)
       ).filter(template => template.document_type_id === id);
@@ -238,28 +235,31 @@ export const updateDocumentType = async (
           if (template.metadata_defaults[field.id] !== undefined) usedFieldIds.add(field.id);
       }
 
-      const fieldChanges = classifyFieldChanges(current.fields, input.fields);
-
       // Unlike entity schemas, document types don't block making a field required while
       // documents of that type exist: metadata is validated (and can block) at the point a
       // document is actually saved or a revision restored, not at the type-definition level.
-      const blocked = hardBlockedFieldChanges(fieldChanges).filter(
+      const fieldMigrationPlan = planFieldMigrations(
+        toFieldMigrationFields(current.fields),
+        toFieldMigrationFields(input.fields),
+        fieldMigrations,
+        { decisionRequiredFieldIds: usedFieldIds, applicableFieldIds: usedFieldIds }
+      );
+      const blocked = fieldMigrationPlan.hardBlocked.filter(
         change => change.kind === 'type-changed' && usedFieldIds.has(change.fieldId)
       );
       httpAssert.true(blocked.length === 0, {
         status: 409,
-        message: `Cannot update document type: ${blocked.map(describeHardBlockedChange).join('; ')}`
+        message: `Cannot update document type: ${blocked
+          .map(change => describeHardBlockedChange(change, 'document data'))
+          .join('; ')}`
       });
 
-      const migratable = migratableFieldChanges(fieldChanges).filter(change =>
-        usedFieldIds.has(change.fieldId)
-      );
-      const unresolved = findUnresolvedFieldMigrations(migratable, fieldMigrations);
+      const unresolved = fieldMigrationPlan.unresolved;
       if (unresolved.length > 0) {
         const pendingChanges: PendingFieldChange[] = unresolved.map(change => ({
           fieldId: change.fieldId,
           fieldName: change.fieldName,
-          kind: change.kind as 'removed' | 'renamed',
+          kind: change.kind,
           renamedToId: change.renamedToId,
           entityCount: currentFieldDataCounts.get(change.fieldId) ?? 0
         }));
@@ -272,37 +272,19 @@ export const updateDocumentType = async (
 
       const oldFieldsById = new Map(current.fields.map(field => [field.id, field]));
       const finalFields = [...input.fields];
-      const dataMigrations: Array<{
-        action: 'rename' | 'remove';
-        oldFieldId: string;
-        newFieldId?: string;
-      }> = [];
-      for (const change of migratable) {
-        const migration = fieldMigrations?.[change.fieldId];
-        httpAssert.present(migration, {
-          message: `Missing migration decision for field "${change.fieldName}"`
-        });
-        if (migration.action === 'archive') {
-          const oldField = oldFieldsById.get(change.fieldId);
-          if (oldField && !finalFields.some(field => field.id === oldField.id)) {
-            finalFields.push({ ...oldField, retired: true });
-          }
-        } else if (migration.action === 'rename') {
-          const targetId = migration.renameTo ?? change.renamedToId;
-          httpAssert.string(targetId, {
-            message: `renameTo is required to rename field "${change.fieldName}"`
-          });
-          dataMigrations.push({
-            action: 'rename',
-            oldFieldId: change.fieldId,
-            newFieldId: targetId
-          });
-        } else {
-          dataMigrations.push({ action: 'remove', oldFieldId: change.fieldId });
+      for (const fieldId of fieldMigrationPlan.archiveFieldIds) {
+        const oldField = oldFieldsById.get(fieldId);
+        if (oldField && !finalFields.some(field => field.id === oldField.id)) {
+          finalFields.push({ ...oldField, retired: true });
         }
       }
+      const dataMigrations = fieldMigrationPlan.dataMigrations;
 
-      const changeSummary = buildSchemaChangeSummary(current.fields, finalFields, fieldMigrations);
+      const changeSummary = buildFieldChangeSummary(
+        toFieldMigrationFields(current.fields),
+        toFieldMigrationFields(finalFields),
+        fieldMigrations
+      );
       const now = new Date();
 
       const row = await db.core.transaction(async tx => {
@@ -312,7 +294,7 @@ export const updateDocumentType = async (
               ws,
               id,
               migration.oldFieldId,
-              migration.newFieldId!
+              migration.newFieldId
             );
             const oldSubkind = encodeCaseSubkind(id, migration.oldFieldId);
             const config = await tx.governanceCaseConfig.getCaseConfig(
@@ -324,7 +306,7 @@ export const updateDocumentType = async (
               await tx.governanceCaseConfig.upsertCaseConfig({
                 workspace: ws,
                 case_kind: config.case_kind,
-                case_subkind: encodeCaseSubkind(id, migration.newFieldId!),
+                case_subkind: encodeCaseSubkind(id, migration.newFieldId),
                 enabled: config.enabled,
                 config: config.config,
                 updated_at: now,
@@ -343,7 +325,7 @@ export const updateDocumentType = async (
             if (template.metadata_defaults[migration.oldFieldId] === undefined) continue;
             const nextDefaults = { ...template.metadata_defaults };
             if (migration.action === 'rename') {
-              nextDefaults[migration.newFieldId!] = nextDefaults[migration.oldFieldId]!;
+              nextDefaults[migration.newFieldId] = nextDefaults[migration.oldFieldId]!;
             }
             delete nextDefaults[migration.oldFieldId];
             await tx.document.updateDocumentTemplate(ws, template.id, {

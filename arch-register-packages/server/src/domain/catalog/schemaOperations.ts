@@ -21,13 +21,13 @@ import {
   toApiSchemaVersion,
   buildCreateSchemaInput,
   buildUpdateSchemaInput,
-  buildSchemaChangeSummary,
-  classifyFieldChanges,
-  hardBlockedFieldChanges,
-  migratableFieldChanges,
-  describeHardBlockedChange,
-  findUnresolvedFieldMigrations
+  toFieldMigrationFields
 } from './schemaHelpers';
+import {
+  buildFieldChangeSummary,
+  describeHardBlockedChange,
+  planFieldMigrations
+} from '../fieldMigration/fieldMigrationPlanning';
 import { remapEntityCapabilityFieldMappings } from '@arch-register/api-types/integrationCatalog';
 import { compileSchemaWithSharedGroups } from './fieldGroupHelpers';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
@@ -43,9 +43,10 @@ import {
 } from '../governance/schemaGovernancePolicy';
 import {
   EntitySchema,
-  FieldMigrations,
+  CreateSchemaRequest,
   PendingFieldChange,
-  SchemaVersion
+  SchemaVersion,
+  UpdateSchemaRequest
 } from '@arch-register/api-types/schemaContract';
 
 const dbErrorMessages = {
@@ -168,7 +169,7 @@ export const getWorkspaceSchema = async (
 export const createWorkspaceSchema = async (
   db: DatabaseAdapter,
   workspace: string,
-  body: Record<string, unknown>,
+  body: CreateSchemaRequest,
   event: AuthenticatedEvent
 ): Promise<EntitySchema> => {
   return runAuthorizedOperation({
@@ -207,7 +208,7 @@ export const createWorkspaceSchema = async (
         validation_rules: row.validation_rules ?? [],
         color: row.color,
         icon: row.icon,
-        change_summary: buildSchemaChangeSummary(null, row.fields),
+        change_summary: buildFieldChangeSummary(null, toFieldMigrationFields(row.fields)),
         created_by: authCtx.userId,
         created_at: timestamp
       });
@@ -232,7 +233,7 @@ export const updateWorkspaceSchema = async (
   db: DatabaseAdapter,
   workspace: string,
   id: string,
-  body: Record<string, unknown>,
+  body: UpdateSchemaRequest,
   event: AuthenticatedEvent
 ): Promise<EntitySchema> => {
   return runAuthorizedOperation({
@@ -253,34 +254,39 @@ export const updateWorkspaceSchema = async (
         { ...oldRow, ...next, shared_field_group_links: next.shared_field_group_links },
         sharedGroups
       );
-      const fieldMigrations = body.fieldMigrations as FieldMigrations | undefined;
+      const fieldMigrations = body.fieldMigrations;
 
       const entityCount = await countEntitiesForSchema(db, ws, id);
 
       const finalFields = [...compiledNext.fields];
-      const fieldChanges = classifyFieldChanges(oldRow.fields, compiledNext.fields);
-      const dataMigrations: Array<{
-        action: 'rename' | 'remove';
-        oldFieldId: string;
-        newFieldId?: string;
-      }> = [];
+      const fieldMigrationPlan = planFieldMigrations(
+        toFieldMigrationFields(oldRow.fields),
+        toFieldMigrationFields(compiledNext.fields),
+        fieldMigrations,
+        {
+          decisionRequiredFieldIds: entityCount > 0 ? undefined : new Set<string>(),
+          applicableFieldIds: entityCount > 0 ? undefined : new Set<string>()
+        }
+      );
+      const fieldChanges = fieldMigrationPlan.changes;
+      const dataMigrations = entityCount > 0 ? fieldMigrationPlan.dataMigrations : [];
 
       if (entityCount > 0) {
-        const blocked = hardBlockedFieldChanges(fieldChanges);
-        httpAssert.true(blocked.length === 0, {
+        httpAssert.true(fieldMigrationPlan.hardBlocked.length === 0, {
           status: 409,
-          message: `Cannot update schema: ${blocked.map(describeHardBlockedChange).join('; ')}`
+          message: `Cannot update schema: ${fieldMigrationPlan.hardBlocked
+            .map(change => describeHardBlockedChange(change))
+            .join('; ')}`
         });
 
-        const migratable = migratableFieldChanges(fieldChanges);
-        const unresolved = findUnresolvedFieldMigrations(fieldChanges, fieldMigrations);
+        const unresolved = fieldMigrationPlan.unresolved;
         if (unresolved.length > 0) {
           const oldFieldsById = new Map(oldRow.fields.map(field => [field.id, field]));
           const entities = await listAllCatalogEntities(db, ws, { schemaId: id });
           const pendingChanges: PendingFieldChange[] = unresolved.map(change => ({
             fieldId: change.fieldId,
             fieldName: oldFieldsById.get(change.fieldId)?.name ?? change.fieldName,
-            kind: change.kind as 'removed' | 'renamed',
+            kind: change.kind,
             renamedToId: change.renamedToId,
             entityCount: entities.filter(
               entity =>
@@ -295,35 +301,21 @@ export const updateWorkspaceSchema = async (
         }
 
         const oldFieldsById = new Map(oldRow.fields.map(field => [field.id, field]));
-        for (const change of migratable) {
-          const migration = fieldMigrations?.[change.fieldId];
-          httpAssert.present(migration, {
-            message: `Missing migration decision for field "${change.fieldName}"`
-          });
-          if (migration.action === 'archive') {
-            const oldField = oldFieldsById.get(change.fieldId);
-            if (oldField && !finalFields.some(field => field.id === oldField.id)) {
-              finalFields.push({ ...oldField, archived: true });
-            }
-          } else if (migration.action === 'rename') {
-            const targetId = migration.renameTo ?? change.renamedToId;
-            httpAssert.string(targetId, {
-              message: `renameTo is required to rename field "${change.fieldName}"`
-            });
-            dataMigrations.push({
-              action: 'rename',
-              oldFieldId: change.fieldId,
-              newFieldId: targetId
-            });
-          } else {
-            dataMigrations.push({ action: 'remove', oldFieldId: change.fieldId });
+        for (const fieldId of fieldMigrationPlan.archiveFieldIds) {
+          const oldField = oldFieldsById.get(fieldId);
+          if (oldField && !finalFields.some(field => field.id === oldField.id)) {
+            finalFields.push({ ...oldField, archived: true });
           }
         }
       }
 
       validateDerivedFieldGroupAccess(finalFields, compiledNext.groups ?? []);
 
-      const changeSummary = buildSchemaChangeSummary(oldRow.fields, finalFields, fieldMigrations);
+      const changeSummary = buildFieldChangeSummary(
+        toFieldMigrationFields(oldRow.fields),
+        toFieldMigrationFields(finalFields),
+        fieldMigrations
+      );
       const entityCapabilityRenames = [
         ...fieldChanges.flatMap(change =>
           change.kind === 'renamed' && change.renamedToId
@@ -331,7 +323,7 @@ export const updateWorkspaceSchema = async (
             : []
         ),
         ...dataMigrations.flatMap(migration =>
-          migration.action === 'rename' && migration.newFieldId
+          migration.action === 'rename'
             ? [{ oldFieldId: migration.oldFieldId, newFieldId: migration.newFieldId }]
             : []
         )
@@ -369,7 +361,7 @@ export const updateWorkspaceSchema = async (
               ws,
               id,
               migration.oldFieldId,
-              migration.newFieldId!
+              migration.newFieldId
             );
           } else {
             await tx.catalog.removeEntityDataField(ws, id, migration.oldFieldId);
@@ -392,7 +384,7 @@ export const updateWorkspaceSchema = async (
               await tx.governanceCaseConfig.upsertCaseConfig({
                 workspace: ws,
                 case_kind: config.case_kind,
-                case_subkind: encodeCaseSubkind(id, migration.newFieldId!),
+                case_subkind: encodeCaseSubkind(id, migration.newFieldId),
                 enabled: config.enabled,
                 config: config.config,
                 updated_at: next.updated_at,
