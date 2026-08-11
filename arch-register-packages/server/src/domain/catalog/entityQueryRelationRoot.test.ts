@@ -3,7 +3,11 @@ import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { RelationSchemaDbResult } from './db/relationDatabase';
 import type { SchemaDbResult } from './db/catalogDatabase';
 import { validateEntityQueryIR } from './entityQueryIRValidator';
-import { compileEntityQueryIR, compileEntityQueryCountIR } from './entityQueryIRCompiler';
+import {
+  compileEntityQueryIR,
+  compileEntityQueryCountIR,
+  compileEntityQueryPair
+} from './entityQueryIRCompiler';
 import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 
 const now = new Date('2026-06-29T12:00:00.000Z');
@@ -502,6 +506,31 @@ describe('relation-rooted query pagination (#2700)', () => {
     expect(countQuery.sql).not.toContain('ORDER BY');
     expect(countQuery.sql).not.toContain('LIMIT');
     expect(countQuery.params).toEqual(rowQuery.params.slice(0, countQuery.params.length));
+  });
+
+  it('compiles row and count output from one shared plan entry point', () => {
+    const filtered: EntityQuery = {
+      schemaId: dataFlow.id,
+      root: { kind: 'predicate', path: [], fieldId: 'status', op: 'equals', value: 'active' }
+    };
+    const pair = compileEntityQueryPair(
+      filtered,
+      schemas,
+      'sqlite',
+      'ws-1',
+      { limit: 10, offset: 2 },
+      null,
+      relationSchemas
+    );
+
+    expect(pair.rowQuery.sql).toContain('SELECT e0.*');
+    expect(pair.rowQuery.sql).toContain('LIMIT ? OFFSET ?');
+    expect(pair.countQuery.sql).toContain('SELECT COUNT(*) AS count');
+    expect(pair.countQuery.sql).not.toContain('ORDER BY');
+    expect(pair.countQuery.sql).not.toContain('LIMIT');
+    expect(pair.countQuery.params).toEqual(
+      pair.rowQuery.params.slice(0, pair.countQuery.params.length)
+    );
   });
 
   it('compiles COUNT(*) queries for entity-rooted queries', () => {
