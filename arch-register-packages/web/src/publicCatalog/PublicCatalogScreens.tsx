@@ -5,6 +5,7 @@ import type {
   PublicCatalogEntity
 } from '@arch-register/api-types/publicCatalogContract';
 import { SafeMarkdown } from '../components/SafeMarkdown';
+import articleTypography from '../sections/markdown/articleTypography.module.css';
 import {
   usePublicCatalogEntities,
   usePublicCatalogEntity,
@@ -223,7 +224,10 @@ export const PublicCatalogWikiPage = () => {
       <h1>{data.label}</h1>
       <SafeMarkdown
         text={data.body}
-        classNames={{ root: styles.markdown, link: styles.markdownLink }}
+        classNames={{
+          root: `${styles.markdown} ${articleTypography.articleTypography}`,
+          link: styles.markdownLink
+        }}
         onEntityLink={entityId => {
           window.location.href = `/public/${encodeURIComponent(workspaceSlug)}/entities/${encodeURIComponent(entityId)}`;
         }}

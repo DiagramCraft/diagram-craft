@@ -3,15 +3,25 @@ import { migrateTheme } from './useTheme';
 
 describe('migrateTheme', () => {
   const storage = new Map<string, string>();
+  let systemDark = false;
 
   beforeEach(() => {
     storage.clear();
+    systemDark = false;
     Object.defineProperty(globalThis, 'localStorage', {
       configurable: true,
       value: {
         getItem: (key: string) => storage.get(key) ?? null,
         setItem: (key: string, value: string) => storage.set(key, value)
       }
+    });
+    Object.defineProperty(globalThis, 'matchMedia', {
+      configurable: true,
+      value: () => ({ matches: systemDark })
+    });
+    Object.defineProperty(globalThis, 'window', {
+      configurable: true,
+      value: { matchMedia: () => ({ matches: systemDark }) }
     });
   });
 
@@ -37,5 +47,26 @@ describe('migrateTheme', () => {
     storage.set('ar-theme', 'blue');
 
     expect(migrateTheme()).toBe('dark');
+  });
+
+  it('uses the system theme for public views without persisting it', () => {
+    systemDark = false;
+
+    expect(migrateTheme({ fallback: 'system' })).toBe('light');
+    expect(storage.has('diagram-craft.user-state')).toBe(false);
+    expect(storage.has('ar-theme')).toBe(false);
+  });
+
+  it('resolves a dark system theme for public views', () => {
+    systemDark = true;
+
+    expect(migrateTheme({ fallback: 'system' })).toBe('dark');
+  });
+
+  it('still prefers an explicit theme over the system fallback', () => {
+    systemDark = true;
+    storage.set('diagram-craft.user-state', JSON.stringify({ themeMode: 'light' }));
+
+    expect(migrateTheme({ fallback: 'system' })).toBe('light');
   });
 });

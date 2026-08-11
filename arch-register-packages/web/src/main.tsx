@@ -4,7 +4,9 @@ import { applyTheme, migrateTheme } from './hooks/useTheme';
 // Apply saved theme immediately to avoid flash of wrong theme
 (() => {
   try {
-    applyTheme(migrateTheme());
+    const isPublicCatalog =
+      window.location.pathname === '/public' || window.location.pathname.startsWith('/public/');
+    applyTheme(migrateTheme({ fallback: isPublicCatalog ? 'system' : 'dark' }));
   } catch {
     /* ignore */
   }

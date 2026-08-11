@@ -17,6 +17,10 @@
         - @id:ar.access.workspaces Users can enter a workspace and work within the workspace’s data, projects,
           permissions, and settings boundary.
 
+        - @id:ar.access.public-catalog Workspace administrators can publish an allow-listed, read-only catalog for
+          unauthenticated external readers, including entities, Markdown pages, and API specifications; readers can
+          browse the catalog in an accessible light or dark presentation.
+
         - @id:ar.access.dev-switcher @status:experimental Development-mode deployments can optionally expose a
           user-switcher toolbar that instantly assumes the identity of any user in the database, bypassing login, for
           local testing only.
