@@ -23,6 +23,7 @@ import { AutomationRulesSubSection } from './sub-sections/AutomationRulesSubSect
 import { CreateJobDialog } from '../../components/jobs/CreateJobDialog';
 import { WorkspaceApiTokensSubSection } from './sub-sections/WorkspaceApiTokensSubSection';
 import { AssessmentTypesSubSection } from './sub-sections/AssessmentTypesSubSection';
+import { PublicCatalogSubSection } from './sub-sections/PublicCatalogSubSection';
 
 const WorkspaceAnalyticsScreen = lazy(() =>
   import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
@@ -103,6 +104,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'danger': {
     title: 'Danger zone',
     sub: "Operations that can't be undone. Read carefully before clicking."
+  },
+  'public-catalog': {
+    title: 'Public catalog',
+    sub: 'Configure the read-only entities, wiki pages, and API specifications exposed to external consumers.'
   }
 };
 
@@ -316,6 +321,9 @@ export const WorkspaceSettingsScreen = () => {
         />
       )}
       {section === 'danger' && <DangerZoneSubSection workspace={workspace} />}
+      {section === 'public-catalog' && (
+        <PublicCatalogSubSection workspaceSlug={workspaceSlug} schemas={ctx.schemas} />
+      )}
     </div>
   );
 };

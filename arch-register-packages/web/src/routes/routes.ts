@@ -6,6 +6,7 @@ import { workspacesQueryOptions } from '../hooks/useWorkspaces';
 import { RootLayout } from '../layouts/RootLayout';
 import { RouteErrorComponent } from './RouteErrorComponent';
 import { createWorkspaceRouteEntries } from './workspace/createWorkspaceRouteEntries';
+import { createPublicCatalogRoutes } from './publicCatalogRoutes';
 
 // ─── Root Route ───────────────────────────────────────────────
 const rootRoute = createRootRouteWithContext<RouterContext>()({
@@ -87,5 +88,6 @@ const workspaceRouteEntries = createWorkspaceRouteEntries(workspaceRoute);
 export const routeTree = rootRoute.addChildren([
   loginRoute,
   indexRoute,
+  createPublicCatalogRoutes(rootRoute),
   authenticatedRoute.addChildren([workspaceRoute.addChildren(workspaceRouteEntries)])
 ]);

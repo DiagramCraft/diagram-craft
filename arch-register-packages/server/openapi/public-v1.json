@@ -1,0 +1,1728 @@
+{
+  "info": {
+    "title": "Arch Register Public Catalog API",
+    "version": "1.0.0"
+  },
+  "servers": [
+    {
+      "url": "/api/public/v1"
+    }
+  ],
+  "openapi": "3.1.1",
+  "paths": {
+    "/{workspace}/manifest": {
+      "get": {
+        "operationId": "manifest.get",
+        "summary": "Get the public catalog manifest",
+        "description": "Returns the deterministic, cacheable entry point for a workspace public catalog.",
+        "tags": [
+          "Public Catalog",
+          "Public Catalog"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "workspace": {
+                      "type": "string"
+                    },
+                    "title": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "indexable": {
+                      "type": "boolean"
+                    },
+                    "schemas": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "keyPrefix": {
+                            "type": "string"
+                          },
+                          "fields": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "description",
+                          "keyPrefix",
+                          "fields"
+                        ]
+                      }
+                    },
+                    "pages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "path": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "scope": {
+                            "enum": [
+                              "workspace",
+                              "entity"
+                            ],
+                            "type": "string"
+                          },
+                          "entityPublicId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          }
+                        },
+                        "required": [
+                          "path",
+                          "label",
+                          "scope",
+                          "entityPublicId"
+                        ]
+                      }
+                    },
+                    "apiArtifacts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "artifactId": {
+                            "type": "string"
+                          },
+                          "entityPublicId": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "protocol": {
+                            "anyOf": [
+                              {
+                                "enum": [
+                                  "openapi",
+                                  "asyncapi"
+                                ],
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "currentRevisionId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "rawAvailable": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "artifactId",
+                          "entityPublicId",
+                          "title",
+                          "protocol",
+                          "currentRevisionId",
+                          "rawAvailable"
+                        ]
+                      }
+                    },
+                    "entityCount": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "endpoints": {
+                      "type": "object",
+                      "properties": {
+                        "entities": {
+                          "type": "string"
+                        },
+                        "wiki": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "entities",
+                        "wiki"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "workspace",
+                    "title",
+                    "description",
+                    "indexable",
+                    "schemas",
+                    "pages",
+                    "apiArtifacts",
+                    "entityCount",
+                    "endpoints"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/entities": {
+      "get": {
+        "operationId": "entities.list",
+        "summary": "List published entities",
+        "description": "Lists only entities and fields explicitly published by the workspace.",
+        "tags": [
+          "Public Catalog",
+          "Public Catalog"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "schema",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "default": 0
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "publicId": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "namespace": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "owner": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "lifecycle": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "updatedAt": {
+                            "type": "string"
+                          },
+                          "schema": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "keyPrefix": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "keyPrefix"
+                            ]
+                          },
+                          "fields": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {}
+                          },
+                          "apiArtifacts": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "artifactId": {
+                                  "type": "string"
+                                },
+                                "entityPublicId": {
+                                  "type": "string"
+                                },
+                                "title": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "protocol": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "openapi",
+                                        "asyncapi"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "currentRevisionId": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "rawAvailable": {
+                                  "type": "boolean"
+                                }
+                              },
+                              "required": [
+                                "artifactId",
+                                "entityPublicId",
+                                "title",
+                                "protocol",
+                                "currentRevisionId",
+                                "rawAvailable"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "publicId",
+                          "slug",
+                          "name",
+                          "namespace",
+                          "description",
+                          "owner",
+                          "lifecycle",
+                          "tags",
+                          "updatedAt",
+                          "schema",
+                          "fields",
+                          "apiArtifacts"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "total"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/entities/{entityPublicId}": {
+      "get": {
+        "operationId": "entities.get",
+        "summary": "Get a published entity",
+        "description": "Returns an allow-listed public entity projection.",
+        "tags": [
+          "Public Catalog",
+          "Public Catalog"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityPublicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "publicId": {
+                      "type": "string"
+                    },
+                    "slug": {
+                      "type": "string"
+                    },
+                    "name": {
+                      "type": "string"
+                    },
+                    "namespace": {
+                      "type": "string"
+                    },
+                    "description": {
+                      "type": "string"
+                    },
+                    "owner": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "lifecycle": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "tags": {
+                      "type": "array",
+                      "items": {
+                        "type": "string"
+                      }
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    },
+                    "schema": {
+                      "type": "object",
+                      "properties": {
+                        "id": {
+                          "type": "string"
+                        },
+                        "name": {
+                          "type": "string"
+                        },
+                        "keyPrefix": {
+                          "type": "string"
+                        }
+                      },
+                      "required": [
+                        "id",
+                        "name",
+                        "keyPrefix"
+                      ]
+                    },
+                    "fields": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {}
+                    },
+                    "apiArtifacts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "artifactId": {
+                            "type": "string"
+                          },
+                          "entityPublicId": {
+                            "type": "string"
+                          },
+                          "title": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "protocol": {
+                            "anyOf": [
+                              {
+                                "enum": [
+                                  "openapi",
+                                  "asyncapi"
+                                ],
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "currentRevisionId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "rawAvailable": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "artifactId",
+                          "entityPublicId",
+                          "title",
+                          "protocol",
+                          "currentRevisionId",
+                          "rawAvailable"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "publicId",
+                    "slug",
+                    "name",
+                    "namespace",
+                    "description",
+                    "owner",
+                    "lifecycle",
+                    "tags",
+                    "updatedAt",
+                    "schema",
+                    "fields",
+                    "apiArtifacts"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/wiki": {
+      "get": {
+        "operationId": "wiki.get",
+        "summary": "Get a published wiki page",
+        "description": "Returns workspace- or entity-scoped Markdown explicitly published by admins.",
+        "tags": [
+          "Public Catalog",
+          "Public Catalog"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "path",
+            "in": "query",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "minLength": 1
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "path": {
+                      "type": "string"
+                    },
+                    "label": {
+                      "type": "string"
+                    },
+                    "scope": {
+                      "enum": [
+                        "workspace",
+                        "entity"
+                      ],
+                      "type": "string"
+                    },
+                    "entityPublicId": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "body": {
+                      "type": "string"
+                    },
+                    "updatedAt": {
+                      "type": "string"
+                    }
+                  },
+                  "required": [
+                    "path",
+                    "label",
+                    "scope",
+                    "entityPublicId",
+                    "body",
+                    "updatedAt"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/entities/{entityPublicId}/api-specifications/{artifactId}/revisions": {
+      "get": {
+        "operationId": "apiSpecifications.revisions",
+        "summary": "List published API specification revisions",
+        "description": "Returns normalized API specification revision metadata.",
+        "tags": [
+          "Public Catalog",
+          "Public Catalog"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityPublicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "artifactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "revision": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string",
+                            "description": "Immutable artifact revision identifier"
+                          },
+                          "artifactId": {
+                            "type": "string",
+                            "description": "Owning artifact identifier"
+                          },
+                          "sourceRevision": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Provider or repository revision identifier"
+                          },
+                          "checksum": {
+                            "type": "string",
+                            "description": "SHA-256 checksum of the accepted artifact document"
+                          },
+                          "mediaType": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Source media type"
+                          },
+                          "contentSize": {
+                            "type": "integer",
+                            "minimum": 0,
+                            "maximum": 9007199254740991,
+                            "description": "Stored source size in bytes"
+                          },
+                          "createdAt": {
+                            "type": "string",
+                            "description": "ISO 8601 acceptance timestamp"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "artifactId",
+                          "sourceRevision",
+                          "checksum",
+                          "mediaType",
+                          "contentSize",
+                          "createdAt"
+                        ]
+                      },
+                      "protocol": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "openapi",
+                              "asyncapi"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "specificationVersion": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "title": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "description": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "status": {
+                        "enum": [
+                          "current",
+                          "invalid",
+                          "unsupported"
+                        ],
+                        "type": "string"
+                      },
+                      "isCurrent": {
+                        "type": "boolean",
+                        "description": "Whether this is the artifact's current successful revision"
+                      },
+                      "itemCount": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991
+                      },
+                      "diagnostics": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "severity": {
+                              "enum": [
+                                "error",
+                                "warning"
+                              ],
+                              "type": "string"
+                            },
+                            "category": {
+                              "enum": [
+                                "parse_error",
+                                "validation_error",
+                                "unsupported_media_type",
+                                "unsupported_version",
+                                "unsupported_construct",
+                                "unresolved_reference",
+                                "duplicate_identifier",
+                                "missing_identifier",
+                                "resource_limit",
+                                "normalization_error"
+                              ],
+                              "type": "string"
+                            },
+                            "code": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            },
+                            "source": {
+                              "anyOf": [
+                                {
+                                  "type": "object",
+                                  "properties": {
+                                    "pointer": {
+                                      "type": "string",
+                                      "description": "JSON Pointer into the source document"
+                                    },
+                                    "line": {
+                                      "anyOf": [
+                                        {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 9007199254740991
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "1-based source line when available"
+                                    },
+                                    "column": {
+                                      "anyOf": [
+                                        {
+                                          "type": "integer",
+                                          "minimum": 1,
+                                          "maximum": 9007199254740991
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "1-based source column when available"
+                                    }
+                                  },
+                                  "required": [
+                                    "pointer",
+                                    "line",
+                                    "column"
+                                  ]
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "severity",
+                            "category",
+                            "code",
+                            "message",
+                            "source"
+                          ]
+                        }
+                      }
+                    },
+                    "required": [
+                      "revision",
+                      "protocol",
+                      "specificationVersion",
+                      "title",
+                      "description",
+                      "status",
+                      "isCurrent",
+                      "itemCount",
+                      "diagnostics"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/entities/{entityPublicId}/api-specifications/{artifactId}/revisions/{revisionId}": {
+      "get": {
+        "operationId": "apiSpecifications.items",
+        "summary": "Browse a published API specification",
+        "description": "Returns normalized OpenAPI operations or AsyncAPI messages.",
+        "tags": [
+          "Public Catalog",
+          "Public Catalog"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityPublicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "artifactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "revisionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "q",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "resource",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "action",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "kind",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "operation",
+                "message"
+              ],
+              "type": "string"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "tag",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "deprecated",
+            "in": "query",
+            "schema": {
+              "type": "boolean"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "default": 50
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "default": 0
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "revision": {
+                      "type": "object",
+                      "properties": {
+                        "revision": {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string",
+                              "description": "Immutable artifact revision identifier"
+                            },
+                            "artifactId": {
+                              "type": "string",
+                              "description": "Owning artifact identifier"
+                            },
+                            "sourceRevision": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Provider or repository revision identifier"
+                            },
+                            "checksum": {
+                              "type": "string",
+                              "description": "SHA-256 checksum of the accepted artifact document"
+                            },
+                            "mediaType": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Source media type"
+                            },
+                            "contentSize": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                              "description": "Stored source size in bytes"
+                            },
+                            "createdAt": {
+                              "type": "string",
+                              "description": "ISO 8601 acceptance timestamp"
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "artifactId",
+                            "sourceRevision",
+                            "checksum",
+                            "mediaType",
+                            "contentSize",
+                            "createdAt"
+                          ]
+                        },
+                        "protocol": {
+                          "anyOf": [
+                            {
+                              "enum": [
+                                "openapi",
+                                "asyncapi"
+                              ],
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "specificationVersion": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "title": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "description": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ]
+                        },
+                        "status": {
+                          "enum": [
+                            "current",
+                            "invalid",
+                            "unsupported"
+                          ],
+                          "type": "string"
+                        },
+                        "isCurrent": {
+                          "type": "boolean",
+                          "description": "Whether this is the artifact's current successful revision"
+                        },
+                        "itemCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "diagnostics": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "severity": {
+                                "enum": [
+                                  "error",
+                                  "warning"
+                                ],
+                                "type": "string"
+                              },
+                              "category": {
+                                "enum": [
+                                  "parse_error",
+                                  "validation_error",
+                                  "unsupported_media_type",
+                                  "unsupported_version",
+                                  "unsupported_construct",
+                                  "unresolved_reference",
+                                  "duplicate_identifier",
+                                  "missing_identifier",
+                                  "resource_limit",
+                                  "normalization_error"
+                                ],
+                                "type": "string"
+                              },
+                              "code": {
+                                "type": "string"
+                              },
+                              "message": {
+                                "type": "string"
+                              },
+                              "source": {
+                                "anyOf": [
+                                  {
+                                    "type": "object",
+                                    "properties": {
+                                      "pointer": {
+                                        "type": "string",
+                                        "description": "JSON Pointer into the source document"
+                                      },
+                                      "line": {
+                                        "anyOf": [
+                                          {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 9007199254740991
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "1-based source line when available"
+                                      },
+                                      "column": {
+                                        "anyOf": [
+                                          {
+                                            "type": "integer",
+                                            "minimum": 1,
+                                            "maximum": 9007199254740991
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "1-based source column when available"
+                                      }
+                                    },
+                                    "required": [
+                                      "pointer",
+                                      "line",
+                                      "column"
+                                    ]
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "severity",
+                              "category",
+                              "code",
+                              "message",
+                              "source"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "revision",
+                        "protocol",
+                        "specificationVersion",
+                        "title",
+                        "description",
+                        "status",
+                        "isCurrent",
+                        "itemCount",
+                        "diagnostics"
+                      ]
+                    },
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "itemKey": {
+                            "type": "string",
+                            "description": "Stable source-relative item key"
+                          },
+                          "revisionId": {
+                            "type": "string"
+                          },
+                          "protocol": {
+                            "enum": [
+                              "openapi",
+                              "asyncapi"
+                            ],
+                            "type": "string"
+                          },
+                          "itemKind": {
+                            "enum": [
+                              "operation",
+                              "message"
+                            ],
+                            "type": "string"
+                          },
+                          "path": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "channel": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "action": {
+                            "type": "string"
+                          },
+                          "identifier": {
+                            "type": "string"
+                          },
+                          "declaredIdentifier": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "summary": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "description": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "tags": {
+                            "type": "array",
+                            "items": {
+                              "type": "string"
+                            }
+                          },
+                          "deprecated": {
+                            "type": "boolean"
+                          },
+                          "parameters": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string"
+                              },
+                              "additionalProperties": {}
+                            }
+                          },
+                          "input": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {}
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "output": {
+                            "anyOf": [
+                              {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {}
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "metadata": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string"
+                            },
+                            "additionalProperties": {}
+                          },
+                          "source": {
+                            "type": "object",
+                            "properties": {
+                              "pointer": {
+                                "type": "string",
+                                "description": "JSON Pointer into the source document"
+                              },
+                              "line": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 9007199254740991
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "1-based source line when available"
+                              },
+                              "column": {
+                                "anyOf": [
+                                  {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 9007199254740991
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "1-based source column when available"
+                              }
+                            },
+                            "required": [
+                              "pointer",
+                              "line",
+                              "column"
+                            ]
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "itemKey",
+                          "revisionId",
+                          "protocol",
+                          "itemKind",
+                          "path",
+                          "channel",
+                          "action",
+                          "identifier",
+                          "declaredIdentifier",
+                          "summary",
+                          "description",
+                          "tags",
+                          "deprecated",
+                          "parameters",
+                          "input",
+                          "output",
+                          "metadata",
+                          "source"
+                        ]
+                      }
+                    },
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "limit": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    },
+                    "offset": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991
+                    }
+                  },
+                  "required": [
+                    "revision",
+                    "items",
+                    "total",
+                    "limit",
+                    "offset"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/entities/{entityPublicId}/api-specifications/{artifactId}/revisions/{revisionId}/content": {
+      "get": {
+        "operationId": "apiSpecifications.raw",
+        "summary": "Get an explicitly published raw API specification",
+        "description": "Returns raw source only when the workspace has enabled raw exposure for this artifact.",
+        "tags": [
+          "Public Catalog",
+          "Public Catalog"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityPublicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "artifactId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "revisionId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Immutable artifact revision identifier"
+                    },
+                    "artifactId": {
+                      "type": "string",
+                      "description": "Owning artifact identifier"
+                    },
+                    "sourceRevision": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Provider or repository revision identifier"
+                    },
+                    "checksum": {
+                      "type": "string",
+                      "description": "SHA-256 checksum of the accepted artifact document"
+                    },
+                    "mediaType": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Source media type"
+                    },
+                    "contentSize": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "Stored source size in bytes"
+                    },
+                    "createdAt": {
+                      "type": "string",
+                      "description": "ISO 8601 acceptance timestamp"
+                    },
+                    "content": {
+                      "type": "string",
+                      "description": "Raw artifact content; only returned by the explicit content endpoint"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "artifactId",
+                    "sourceRevision",
+                    "checksum",
+                    "mediaType",
+                    "contentSize",
+                    "createdAt",
+                    "content"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

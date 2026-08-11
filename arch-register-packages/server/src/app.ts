@@ -7,6 +7,7 @@ import {
   createApplicationOpenAPISpecHandler,
   createDiagramCraftAdapterOpenAPISpecHandler,
   createIntegrationOpenAPISpecHandler,
+  createPublicCatalogOpenAPISpecHandler,
   createUnifiedOpenAPISpecHandler
 } from './openapi';
 import { createOidcCallbackRoute } from './domain/auth/oidcCallbackRoute';
@@ -67,6 +68,10 @@ import { createAutomationRuleORPCHandler } from './domain/automation/automationR
 import { createDocumentORPCHandler } from './domain/document/documentOrpc';
 import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
 import { createArtifactORPCHandler } from './domain/artifact/artifactOrpc';
+import {
+  createPublicCatalogConfigORPCHandler,
+  createPublicCatalogORPCHandler
+} from './domain/publicCatalog/publicCatalogOrpc';
 import { createApplicationGovernanceRegistry } from './domain/governance/governanceRegistryFactory';
 import { getHttpErrorLogLevel } from './utils/errorLogging';
 
@@ -142,6 +147,7 @@ export const createApp = (
 
   app.use('/openapi.json', createUnifiedOpenAPISpecHandler());
   app.use('/openapi/application-v1.json', createApplicationOpenAPISpecHandler());
+  app.use('/openapi/public-v1.json', createPublicCatalogOpenAPISpecHandler());
   app.use('/openapi/integrations-v1.json', createIntegrationOpenAPISpecHandler());
   app.use('/openapi/adapters/diagram-craft.json', createDiagramCraftAdapterOpenAPISpecHandler());
 
@@ -149,6 +155,8 @@ export const createApp = (
 
   // Public routes (no auth required)
   app.use(createPublicAuthORPCHandler(db));
+  // Public catalog is an explicit publication surface and must remain outside auth middleware.
+  app.use(createPublicCatalogORPCHandler(db, storage));
   // Always mounted: dev.config must be reachable to report enabled/disabled, and
   // dev.listUsers/dev.switchUser re-check isDevUserSwitcherEnabled() on every call.
   app.use(createDevORPCHandler(db));
@@ -185,6 +193,7 @@ export const createApp = (
   app.use(createProjectDashboardORPCHandler(db));
   app.use(createWorkspaceCollectionORPCHandler(db));
   app.use(createWorkspaceConfigORPCHandler(db));
+  app.use(createPublicCatalogConfigORPCHandler(db));
   app.use(createWorkspaceAnalyticsORPCHandler(db));
   app.use(createWorkspaceMetricORPCHandler(db));
   app.use(createJobsORPCHandler(db));

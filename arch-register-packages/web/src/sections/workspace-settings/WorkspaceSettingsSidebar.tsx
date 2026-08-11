@@ -18,7 +18,8 @@ import {
   TbFileDescription,
   TbBolt,
   TbKey,
-  TbClipboardCheck
+  TbClipboardCheck,
+  TbWorld
 } from 'react-icons/tb';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TreeRow } from '../../components/TreeRow';
@@ -82,6 +83,12 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'automation', label: 'Automation rules', icon: <TbBolt size={12} />, group: 'Workspace' },
   { id: 'api-tokens', label: 'API Tokens', icon: <TbKey size={12} />, group: 'Administration' },
   { id: 'webhooks', label: 'Webhooks', icon: <TbWebhook size={12} />, group: 'Administration' },
+  {
+    id: 'public-catalog',
+    label: 'Public catalog',
+    icon: <TbWorld size={12} />,
+    group: 'Administration'
+  },
   { id: 'jobs', label: 'Job monitoring', icon: <TbActivity size={12} />, group: 'Administration' },
   {
     id: 'danger',
