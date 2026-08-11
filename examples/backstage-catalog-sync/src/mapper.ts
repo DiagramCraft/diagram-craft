@@ -195,9 +195,14 @@ const mapApiFields = (
     links.find(link => {
       if (!/^https:\/\//i.test(link.url)) return false;
       const text = `${link.title} ${link.type ?? ''}`.toLowerCase();
-      return ['definition', 'specification', 'openapi', 'asyncapi', 'documentation', 'repository'].some(
-        marker => text.includes(marker)
-      );
+      return [
+        'definition',
+        'specification',
+        'openapi',
+        'asyncapi',
+        'documentation',
+        'repository'
+      ].some(marker => text.includes(marker));
     }) ?? links.find(link => /^https:\/\//i.test(link.url));
 
   return {

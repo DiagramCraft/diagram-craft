@@ -91,7 +91,8 @@ describe('Backstage API specification sources', () => {
   });
 
   it('classifies a deleted GitHub definition as missing', async () => {
-    globalThis.fetch = async () => new Response(JSON.stringify({ message: 'Not Found' }), { status: 404 });
+    globalThis.fetch = async () =>
+      new Response(JSON.stringify({ message: 'Not Found' }), { status: 404 });
 
     await assert.rejects(
       resolveBackstageSpecification(

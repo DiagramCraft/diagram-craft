@@ -163,7 +163,10 @@ const upsertArtifactSource = async (
         created_at: now,
         updated_at: now
       });
-  httpAssert.present(artifact, { status: 500, message: 'Failed to persist API specification source' });
+  httpAssert.present(artifact, {
+    status: 500,
+    message: 'Failed to persist API specification source'
+  });
 
   if (source.kind === 'url') {
     artifact = await ensureUrlSchedule(
@@ -254,12 +257,11 @@ const upsertArtifactSource = async (
   });
   return {
     artifact: updatedArtifact,
-    sourceStatus:
-      !existing
-        ? ('created' as const)
-        : previousRevisionId === revision.id || (previousRevisionId == null && existingRevision)
-          ? ('unchanged' as const)
-          : ('updated' as const),
+    sourceStatus: !existing
+      ? ('created' as const)
+      : previousRevisionId === revision.id || (previousRevisionId == null && existingRevision)
+        ? ('unchanged' as const)
+        : ('updated' as const),
     revision,
     jobRunId: null,
     created: !existing,
@@ -339,7 +341,9 @@ export const syncApiSpecificationByExternalKey = async (
         actor,
         {
           api_specification_source_key:
-            body.source?.state === 'present' ? body.source.source.sourceKey : body.source?.sourceKey,
+            body.source?.state === 'present'
+              ? body.source.source.sourceKey
+              : body.source?.sourceKey,
           request_id: requestId
         }
       );
@@ -436,7 +440,13 @@ export const refreshApiSpecificationByExternalKey = async (
           jobRunId: null
         };
       }
-      const job = await enqueueApiSpecificationUrlRefresh(tx, workspace, artifact.id, now, requestId);
+      const job = await enqueueApiSpecificationUrlRefresh(
+        tx,
+        workspace,
+        artifact.id,
+        now,
+        requestId
+      );
       return {
         status: 'queued' as const,
         artifact: toArtifact(attempt.artifact),

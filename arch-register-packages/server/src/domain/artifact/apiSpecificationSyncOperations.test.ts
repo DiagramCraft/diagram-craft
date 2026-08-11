@@ -99,9 +99,7 @@ describe('syncApiSpecificationByExternalKey', () => {
     expect(second.sourceStatus).toBe('unchanged');
     expect(second.revision?.id).toBe(first.revision?.id);
     expect(await db.artifact.listArtifacts(workspace, first.entity._uid as string)).toHaveLength(1);
-    expect(
-      await db.artifact.listRevisionSummaries(workspace, first.artifact!.id)
-    ).toHaveLength(1);
+    expect(await db.artifact.listRevisionSummaries(workspace, first.artifact!.id)).toHaveLength(1);
   });
 
   it('creates a new immutable revision when the document changes and marks missing sources stale', async () => {
@@ -140,11 +138,12 @@ describe('syncApiSpecificationByExternalKey', () => {
 
     expect(second.sourceStatus).toBe('updated');
     expect(second.revision?.id).not.toBe(first.revision?.id);
-    expect(
-      await db.artifact.listRevisionSummaries(workspace, second.artifact!.id)
-    ).toHaveLength(2);
+    expect(await db.artifact.listRevisionSummaries(workspace, second.artifact!.id)).toHaveLength(2);
     expect(missing.sourceStatus).toBe('missing');
-    expect(missing.artifact).toMatchObject({ status: 'stale', currentRevisionId: second.revision?.id });
+    expect(missing.artifact).toMatchObject({
+      status: 'stale',
+      currentRevisionId: second.revision?.id
+    });
   });
 
   it('queues URL sources and configures their recurring refresh schedule', async () => {
@@ -176,9 +175,7 @@ describe('syncApiSpecificationByExternalKey', () => {
     expect(result.jobRunId).toBeTruthy();
     expect(result.artifact).toMatchObject({ status: 'pending' });
     expect(result.artifact?.refreshScheduleId).toBeTruthy();
-    expect(
-      (await db.jobs.listRuns(workspace, { limit: 10, offset: 0 })).items
-    ).toHaveLength(2);
+    expect((await db.jobs.listRuns(workspace, { limit: 10, offset: 0 })).items).toHaveLength(2);
     expect(await db.jobs.listSchedules(workspace)).toHaveLength(1);
   });
 });

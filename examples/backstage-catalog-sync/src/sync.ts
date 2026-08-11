@@ -85,7 +85,7 @@ const referenceDisplay = (reference: unknown): string => {
     const [operator, value] = Object.entries(reference)[0] ?? [];
     return operator && typeof value === 'string'
       ? `${operator}: ${value.slice(0, 200)}`
-      : operator ?? '<structured definition>';
+      : (operator ?? '<structured definition>');
   }
   return String(reference);
 };
@@ -450,7 +450,11 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
               location: fallback,
               mediaType: null
             });
-          } else if (scanComplete && error instanceof SpecificationResolutionError && error.category === 'missing') {
+          } else if (
+            scanComplete &&
+            error instanceof SpecificationResolutionError &&
+            error.category === 'missing'
+          ) {
             specification = { state: 'missing', sourceKey };
           }
           report.warnings.push({
@@ -464,24 +468,25 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
         }
       }
 
-      const result = item.entity.kind === 'API'
-        ? await syncApiSpecification(
-            config.archRegisterWorkspace,
-            source,
-            item.externalKey,
-            materialized,
-            specification,
-            config.archRegisterToken,
-            config.archRegisterUrl
-          )
-        : await syncEntity(
-            config.archRegisterWorkspace,
-            source,
-            item.externalKey,
-            materialized,
-            config.archRegisterToken,
-            config.archRegisterUrl
-          );
+      const result =
+        item.entity.kind === 'API'
+          ? await syncApiSpecification(
+              config.archRegisterWorkspace,
+              source,
+              item.externalKey,
+              materialized,
+              specification,
+              config.archRegisterToken,
+              config.archRegisterUrl
+            )
+          : await syncEntity(
+              config.archRegisterWorkspace,
+              source,
+              item.externalKey,
+              materialized,
+              config.archRegisterToken,
+              config.archRegisterUrl
+            );
       syncResults.set(item.externalKey, result);
       idsByReference.set(
         canonicalReferenceKey({

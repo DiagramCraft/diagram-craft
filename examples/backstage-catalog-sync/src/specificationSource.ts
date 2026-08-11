@@ -45,7 +45,9 @@ const githubFileLocation = (repo: GitHubRepo, file: GitHubFile): string =>
 const resolveRepositoryPath = (catalogPath: string, reference: string): string => {
   const path = posix.normalize(posix.join(posix.dirname(catalogPath), reference));
   if (path.startsWith('../') || path === '..' || path.includes('/../')) {
-    throw new SpecificationResolutionError('Referenced Backstage source path escapes the repository');
+    throw new SpecificationResolutionError(
+      'Referenced Backstage source path escapes the repository'
+    );
   }
   return path;
 };
@@ -58,7 +60,9 @@ const fetchRemoteSource = async (reference: string) => {
     throw new SpecificationResolutionError('Referenced Backstage source is not a valid URL');
   }
   if (url.protocol !== 'https:' || url.username || url.password) {
-    throw new SpecificationResolutionError('Referenced Backstage source must use HTTPS without credentials');
+    throw new SpecificationResolutionError(
+      'Referenced Backstage source must use HTTPS without credentials'
+    );
   }
 
   let response: Response;
@@ -74,7 +78,9 @@ const fetchRemoteSource = async (reference: string) => {
     throw new SpecificationResolutionError('Referenced HTTPS source returned an invalid URL');
   }
   if (finalUrl.protocol !== 'https:' || finalUrl.username || finalUrl.password) {
-    throw new SpecificationResolutionError('Referenced HTTPS source redirected to an unsafe protocol');
+    throw new SpecificationResolutionError(
+      'Referenced HTTPS source redirected to an unsafe protocol'
+    );
   }
   if (!response.ok) {
     throw new SpecificationResolutionError(
@@ -93,7 +99,9 @@ const fetchRemoteSource = async (reference: string) => {
   return {
     content,
     location: finalUrl.toString(),
-    mediaType: response.headers.get('content-type')?.split(';')[0]?.trim() || mediaTypeForPath(finalUrl.pathname),
+    mediaType:
+      response.headers.get('content-type')?.split(';')[0]?.trim() ||
+      mediaTypeForPath(finalUrl.pathname),
     sourceRevision: response.headers.get('etag') ?? response.headers.get('last-modified') ?? null
   };
 };
@@ -113,7 +121,10 @@ const fetchReference = async (
     token
   );
   if (!file) {
-    throw new SpecificationResolutionError('Referenced GitHub source file was not found', 'missing');
+    throw new SpecificationResolutionError(
+      'Referenced GitHub source file was not found',
+      'missing'
+    );
   }
   return {
     content: file.content,
@@ -129,7 +140,9 @@ const substituteContent = (operator: '$text' | '$json' | '$yaml', content: strin
     const parsed = operator === '$json' ? JSON.parse(content) : YAML.parse(content);
     return operator === '$json' ? JSON.stringify(parsed, null, 2) : YAML.stringify(parsed);
   } catch {
-    throw new SpecificationResolutionError(`Backstage ${operator} substitution is not valid structured content`);
+    throw new SpecificationResolutionError(
+      `Backstage ${operator} substitution is not valid structured content`
+    );
   }
 };
 
@@ -149,7 +162,9 @@ export const resolveBackstageSpecification = async (
 
   if (typeof definition === 'string') {
     if (Buffer.byteLength(definition, 'utf8') > MAX_SPECIFICATION_BYTES) {
-      throw new SpecificationResolutionError('Inline Backstage API definition exceeds the 2 MB limit');
+      throw new SpecificationResolutionError(
+        'Inline Backstage API definition exceeds the 2 MB limit'
+      );
     }
     return {
       kind: 'document',
@@ -162,21 +177,29 @@ export const resolveBackstageSpecification = async (
   }
 
   if (typeof definition !== 'object' || Array.isArray(definition)) {
-    throw new SpecificationResolutionError('Backstage spec.definition must be text or a supported substitution');
+    throw new SpecificationResolutionError(
+      'Backstage spec.definition must be text or a supported substitution'
+    );
   }
   const entries = Object.entries(definition);
   if (entries.length !== 1 || !['$text', '$json', '$yaml'].includes(entries[0]?.[0] ?? '')) {
-    throw new SpecificationResolutionError('Backstage spec.definition uses an unsupported substitution');
+    throw new SpecificationResolutionError(
+      'Backstage spec.definition uses an unsupported substitution'
+    );
   }
   const operator = entries[0]![0] as '$text' | '$json' | '$yaml';
   const reference = entries[0]![1];
   if (typeof reference !== 'string' || reference.trim().length === 0) {
-    throw new SpecificationResolutionError(`Backstage ${operator} substitution must name a source file or URL`);
+    throw new SpecificationResolutionError(
+      `Backstage ${operator} substitution must name a source file or URL`
+    );
   }
   const fetched = await fetchReference(reference.trim(), repo, catalogFile, token);
   const content = substituteContent(operator, fetched.content);
   if (Buffer.byteLength(content, 'utf8') > MAX_SPECIFICATION_BYTES) {
-    throw new SpecificationResolutionError('Resolved Backstage API definition exceeds the 2 MB limit');
+    throw new SpecificationResolutionError(
+      'Resolved Backstage API definition exceeds the 2 MB limit'
+    );
   }
   return {
     kind: 'document',

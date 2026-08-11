@@ -2,10 +2,7 @@ import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws } from '@arch-register/api-types/common';
 import { entityMutationBodySchema, entityRecordSchema } from './entityContract';
-import {
-  artifactRevisionSchema,
-  artifactSchema
-} from './artifactContract';
+import { artifactRevisionSchema, artifactSchema } from './artifactContract';
 
 const externalIdentityParamsSchema = ws.extend({
   source: z.string().min(1).max(200),
@@ -41,7 +38,11 @@ export const apiSpecificationSyncSourceSchema = z.discriminatedUnion('kind', [
         z.object({ mode: z.literal('manual') }),
         z.object({
           mode: z.literal('scheduled'),
-          intervalHours: z.number().int().min(1).max(24 * 365)
+          intervalHours: z
+            .number()
+            .int()
+            .min(1)
+            .max(24 * 365)
         })
       ])
       .optional()

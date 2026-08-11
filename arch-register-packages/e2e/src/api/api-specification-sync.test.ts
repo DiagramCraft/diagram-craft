@@ -40,7 +40,8 @@ test('atomically syncs API entities and provider-scoped specification sources', 
 }) => {
   const source = 'backstage-github-example';
   const externalKey = 'default/api/integration-api';
-  const sourceKey = 'github:example/catalog:catalog-info.yaml:default/api/integration-api:spec.definition';
+  const sourceKey =
+    'github:example/catalog:catalog-info.yaml:default/api/integration-api:spec.definition';
   const endpoint = `${server.baseUrl}/api/integrations/v1/default/api-specifications/byExternalKey/${encodeURIComponent(source)}/${encodeURIComponent(externalKey)}`;
   const refreshEndpoint = `${endpoint}/refresh`;
   const document = (version: string) => `openapi: 3.0.0
@@ -62,7 +63,9 @@ paths:
       body: JSON.stringify(body)
     });
     if (response.status !== 200) {
-      throw new Error(`API specification sync returned ${response.status}: ${await response.text()}`);
+      throw new Error(
+        `API specification sync returned ${response.status}: ${await response.text()}`
+      );
     }
     return (await response.json()) as {
       status: string;
@@ -97,7 +100,8 @@ paths:
     entity: { _schemaId: '00000000-0000-0000-0000-e2e000000111', _name: 'Integration API' },
     source: { state: 'missing', sourceKey }
   });
-  const urlSourceKey = 'github:example/catalog:catalog-info.yaml:default/api/integration-api:remote';
+  const urlSourceKey =
+    'github:example/catalog:catalog-info.yaml:default/api/integration-api:remote';
   const url = await sync({
     entity: { _schemaId: '00000000-0000-0000-0000-e2e000000111', _name: 'Integration API' },
     source: {

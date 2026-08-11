@@ -89,7 +89,10 @@ const requireArtifactWrite = (authCtx: AuthorizationContext, entity: EntityDbRes
   );
 };
 
-export const assertEntityCapabilityForArtifact = (schema: SchemaDbResult, artifactType: ArtifactType) => {
+export const assertEntityCapabilityForArtifact = (
+  schema: SchemaDbResult,
+  artifactType: ArtifactType
+) => {
   const capability = (schema.entity_capabilities ?? []).find(item => item.type === artifactType);
   httpAssert.present(capability, {
     status: 409,

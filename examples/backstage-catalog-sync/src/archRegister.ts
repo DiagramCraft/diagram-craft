@@ -43,7 +43,15 @@ export type ApiSpecificationSourcePayload =
   | { state: 'missing'; sourceKey: string };
 
 export interface ApiSpecificationSyncResult extends SyncResult {
-  sourceStatus: 'created' | 'updated' | 'unchanged' | 'queued' | 'link_only' | 'missing' | 'failed' | null;
+  sourceStatus:
+    | 'created'
+    | 'updated'
+    | 'unchanged'
+    | 'queued'
+    | 'link_only'
+    | 'missing'
+    | 'failed'
+    | null;
   artifact: Record<string, unknown> | null;
   revision: Record<string, unknown> | null;
   requestId: string;
@@ -384,7 +392,11 @@ export const syncApiSpecification = async (
       errorDetails = errorText;
     }
     if (response.status === 401) {
-      throw createSyncError('Authentication failed. Check your ARCH_REGISTER_TOKEN.', response.status, errorDetails);
+      throw createSyncError(
+        'Authentication failed. Check your ARCH_REGISTER_TOKEN.',
+        response.status,
+        errorDetails
+      );
     }
     if (response.status === 403) {
       throw createSyncError(

@@ -41,7 +41,8 @@ runContractSuiteAgainstBothDrivers('ArtifactDatabase', getDb => {
       const schema = await createFixtureSchema(db, workspace);
       const entity = await createFixtureEntity(db, workspace, schema);
       const now = new Date();
-      const sourceKey = 'github:example/catalog:catalog-info.yaml:default/api/example:spec.definition';
+      const sourceKey =
+        'github:example/catalog:catalog-info.yaml:default/api/example:spec.definition';
       const source = await db.artifact.createArtifact({
         id: randomUUID(),
         workspace,
