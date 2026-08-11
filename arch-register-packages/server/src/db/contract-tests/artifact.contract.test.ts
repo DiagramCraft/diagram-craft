@@ -35,6 +35,45 @@ runContractSuiteAgainstBothDrivers('ArtifactDatabase', getDb => {
       expect(await db.artifact.listRevisionSummaries(workspace, source.id)).toEqual([]);
     });
 
+    it('finds a provider-scoped source and enforces source identity uniqueness', async () => {
+      const db = getDb();
+      const workspace = await createFixtureWorkspace(db);
+      const schema = await createFixtureSchema(db, workspace);
+      const entity = await createFixtureEntity(db, workspace, schema);
+      const now = new Date();
+      const sourceKey = 'github:example/catalog:catalog-info.yaml:default/api/example:spec.definition';
+      const source = await db.artifact.createArtifact({
+        id: randomUUID(),
+        workspace,
+        entity_id: entity.id,
+        artifact_type: 'api-specification',
+        source_key: sourceKey,
+        kind: 'document',
+        location: null,
+        media_type: 'application/yaml',
+        status: 'pending',
+        created_at: now,
+        updated_at: now
+      });
+
+      expect(
+        await db.artifact.getArtifactBySourceKey(
+          workspace,
+          entity.id,
+          'api-specification',
+          sourceKey
+        )
+      ).toEqual(source);
+      await expect(
+        db.artifact.createArtifact({
+          ...source,
+          id: randomUUID(),
+          created_at: now,
+          updated_at: now
+        })
+      ).rejects.toThrow();
+    });
+
     it('deduplicates revisions by source and checksum and retains failure diagnostics', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);

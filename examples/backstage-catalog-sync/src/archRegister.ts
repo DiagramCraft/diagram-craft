@@ -21,6 +21,36 @@ export interface SyncResult {
   };
 }
 
+export type ApiSpecificationSourcePayload =
+  | {
+      state: 'present';
+      source:
+        | {
+            kind: 'document';
+            sourceKey: string;
+            content: string;
+            location?: string | null;
+            mediaType?: string | null;
+            sourceRevision?: string | null;
+          }
+        | {
+            kind: 'link';
+            sourceKey: string;
+            location: string;
+            mediaType?: string | null;
+          };
+    }
+  | { state: 'missing'; sourceKey: string };
+
+export interface ApiSpecificationSyncResult extends SyncResult {
+  sourceStatus: 'created' | 'updated' | 'unchanged' | 'queued' | 'link_only' | 'missing' | 'failed' | null;
+  artifact: Record<string, unknown> | null;
+  revision: Record<string, unknown> | null;
+  requestId: string;
+  jobRunId: string | null;
+  warnings: string[];
+}
+
 export interface RelationSyncResult {
   status: 'created' | 'updated' | 'unchanged';
   relation: {
@@ -313,6 +343,64 @@ export const syncEntity = async (
 
   const result = (await response.json()) as SyncResult;
   return result;
+};
+
+/**
+ * Atomically syncs an API entity and its external specification source.
+ */
+export const syncApiSpecification = async (
+  workspace: string,
+  source: string,
+  externalKey: string,
+  entity: ArchRegisterEntity,
+  specification: ApiSpecificationSourcePayload | undefined,
+  token: string,
+  baseUrl: string
+): Promise<ApiSpecificationSyncResult> => {
+  const encodedSource = encodeURIComponent(source);
+  const encodedKey = encodeURIComponent(externalKey);
+  const url = `${baseUrl}/api/integrations/v1/${workspace}/api-specifications/byExternalKey/${encodedSource}/${encodedKey}`;
+
+  let response: Response;
+  try {
+    response = await fetch(url, {
+      method: 'PUT',
+      headers: {
+        'Authorization': `Bearer ${token}`,
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({ entity, ...(specification ? { source: specification } : {}) })
+    });
+  } catch (error) {
+    throw createSyncError(requestFailure(url, error).message, undefined, error);
+  }
+
+  if (!response.ok) {
+    const errorText = await response.text();
+    let errorDetails: unknown;
+    try {
+      errorDetails = JSON.parse(errorText);
+    } catch {
+      errorDetails = errorText;
+    }
+    if (response.status === 401) {
+      throw createSyncError('Authentication failed. Check your ARCH_REGISTER_TOKEN.', response.status, errorDetails);
+    }
+    if (response.status === 403) {
+      throw createSyncError(
+        'Permission denied. Ensure the token has ent.external_update and artifact.manage permissions.',
+        response.status,
+        errorDetails
+      );
+    }
+    throw createSyncError(
+      `API specification sync failed: ${response.status} ${response.statusText}`,
+      response.status,
+      errorDetails
+    );
+  }
+
+  return (await response.json()) as ApiSpecificationSyncResult;
 };
 
 /**

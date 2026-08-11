@@ -14,6 +14,8 @@ New consumers should choose the surface that matches their role:
   existing `/api/*` routes remain available for compatibility.
 - `/api/integrations/v1/*` is the stable REST surface for supported third-party integrations. The entity sync routes
   use `/entities/{id}` for internal IDs and `/entities/byExternalKey/{source}/{externalKey}` for external identities.
+  API catalog integrations use `/api-specifications/byExternalKey/{source}/{externalKey}` to atomically sync an
+  API entity and a provider-scoped specification source, with `/refresh` for URL-backed refreshes.
 - `/api/adapters/diagram-craft/*` is the Diagram Craft-specific adapter surface. The existing `/api/public/*` paths are
   authenticated compatibility aliases; `public` is not a security boundary.
 - `/mcp` is a separate MCP protocol endpoint, documented under [MCP Server](mcp-server), rather than a REST path.
@@ -30,7 +32,7 @@ served by the application; “target” means the path is the destination for a 
 | --- | --- | --- | --- |
 | Legacy application API | `/api/workspaces`, `/api/:workspace/*` for catalog, projects, configuration, governance, search, audit, jobs, documents, webhooks, and related domains | Live canonical routes | Keep compatible while domains move to the application surface; inventory changes belong in #2448 |
 | Application v1 | `/api/application/v1/:workspace/schemas/*` and `/api/application/v1/:workspace/data/*` | Live aliases for catalog schemas and entities | Extend domain by domain in #2446 |
-| Integration v1 | `GET /api/integrations/v1/:workspace/schemas`, `/relation-schemas`, `/relations`, `/data/:id/typed-relations`, and `/entities/*` | Live schema, typed-relation, and entity-sync routes | Productize the supported contract and migrate remaining examples in #2449 |
+| Integration v1 | `GET /api/integrations/v1/:workspace/schemas`, `/relation-schemas`, `/relations`, `/data/:id/typed-relations`, `/entities/*`, and `/api-specifications/byExternalKey/*` | Live schema, typed-relation, entity-sync, and API-specification sync routes | Productize the supported contract and migrate remaining examples in #2449 |
 | Diagram Craft adapter | `/api/adapters/diagram-craft/:workspace/schemas` and `/api/adapters/diagram-craft/:workspace/data` | Live aliases for the authenticated `/api/public/*` adapter routes | Expand and document adapter-specific behavior in #2451 |
 | Legacy adapter name | `/api/public/:workspace/*` | Live compatibility alias; the name does not make the route public | Retain until all Diagram Craft consumers use the adapter surface |
 | Authentication infrastructure | `/api/auth/*`, `/api/auth/oidc/callback` | Live special-purpose browser and session/token endpoints | Remains outside application/integration versioning; token audience enforcement is deferred to #2383 |
@@ -115,6 +117,15 @@ Besides the HTTP API:
   systems
 - the [External Integration Example](external-integrations) demonstrates a complete webhook-to-API
   write-back service
+
+### API specification synchronization
+
+The API specification sync contract accepts a complete entity mutation together with one source state. A source has a
+provider-scoped `sourceKey`, independent of internal Arch Register IDs, and can be a bounded submitted document, a
+secure HTTPS URL, or a link-only source. Submitted documents and URL fetches use SHA-256 checksums to avoid duplicate
+immutable revisions. URL refreshes run through the existing job worker; scheduled URL policies use the same handler as
+manual refreshes. A missing source state preserves the entity and last successful revision while exposing a stale or
+failed diagnostic, and raw specification content remains protected by `artifact.content.view`.
 
 ## Related Pages
 

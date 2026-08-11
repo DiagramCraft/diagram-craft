@@ -20,8 +20,14 @@ export interface ArchRegisterEntity {
 export interface MappingResult {
   entity: ArchRegisterEntity | null;
   relationships: RelationshipMapping[];
+  apiSpecification?: ApiSpecificationMapping;
   errors: string[];
   warnings: string[];
+}
+
+export interface ApiSpecificationMapping {
+  definition: unknown;
+  fallbackLink: string | null;
 }
 
 export interface RelationshipMapping {
@@ -42,6 +48,7 @@ export const mapBackstageToArchRegister = (
   const errors: string[] = [];
   const warnings: string[] = [];
   const relationships: RelationshipMapping[] = [];
+  let apiSpecification: ApiSpecificationMapping | undefined;
 
   // Determine schema ID based on entity kind
   const schemaId = getSchemaIdForKind(entity.kind, schemaMapping);
@@ -90,7 +97,7 @@ export const mapBackstageToArchRegister = (
       mapComponentFields(entity, archEntity, relationships, warnings);
       break;
     case 'API':
-      mapApiFields(entity, archEntity, relationships, warnings);
+      apiSpecification = mapApiFields(entity, archEntity, relationships);
       break;
     case 'Resource':
       mapResourceFields(entity, archEntity, relationships, warnings);
@@ -105,7 +112,7 @@ export const mapBackstageToArchRegister = (
       warnings.push(`Unknown entity kind '${entity.kind}' - using base mapping only`);
   }
 
-  return { entity: archEntity, relationships, errors, warnings };
+  return { entity: archEntity, relationships, apiSpecification, errors, warnings };
 };
 
 const retainRelationship = (
@@ -170,9 +177,8 @@ const mapComponentFields = (
 const mapApiFields = (
   entity: BackstageEntity,
   archEntity: ArchRegisterEntity,
-  relationships: RelationshipMapping[],
-  warnings: string[]
-): void => {
+  relationships: RelationshipMapping[]
+): ApiSpecificationMapping => {
   // Map spec.type to 'api_type' field (enum: openapi, grpc, graphql, asyncapi)
   if (entity.spec.type && typeof entity.spec.type === 'string') {
     archEntity.api_type = entity.spec.type;
@@ -184,13 +190,20 @@ const mapApiFields = (
 
   retainRelationship(entity, 'system', 'system', relationships);
 
-  // Note: spec.definition is not stored in the template by default
-  // It could be added as a link or external reference
-  if (entity.spec.definition) {
-    warnings.push(
-      'Field spec.definition is present but not stored in the current Backstage template schema. Consider adding it as a link.'
-    );
-  }
+  const links = entity.metadata.links ?? [];
+  const preferredLink =
+    links.find(link => {
+      if (!/^https:\/\//i.test(link.url)) return false;
+      const text = `${link.title} ${link.type ?? ''}`.toLowerCase();
+      return ['definition', 'specification', 'openapi', 'asyncapi', 'documentation', 'repository'].some(
+        marker => text.includes(marker)
+      );
+    }) ?? links.find(link => /^https:\/\//i.test(link.url));
+
+  return {
+    definition: entity.spec.definition,
+    fallbackLink: preferredLink?.url ?? null
+  };
 };
 
 /**

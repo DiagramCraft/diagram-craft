@@ -26,22 +26,38 @@ export class SqliteArtifactDatabase extends SqliteDatabaseBase implements Artifa
     );
   }
 
+  async getArtifactBySourceKey(
+    workspace: string,
+    entityId: string,
+    artifactType: string,
+    sourceKey: string
+  ) {
+    return this.get(
+      `SELECT * FROM catalog_artifact
+       WHERE workspace = ? AND entity_id = ? AND artifact_type = ? AND source_key = ?`,
+      [workspace, entityId, artifactType, sourceKey],
+      artifactMappers.artifact
+    );
+  }
+
   async createArtifact(input: ArtifactDbCreate) {
     this.run(
       `INSERT INTO catalog_artifact
-       (id, workspace, entity_id, artifact_type, kind, location, media_type, status, current_revision_id,
-        last_attempt_at, last_success_at, diagnostic_category, diagnostic_message, diagnostic_timestamp,
-        created_at, updated_at)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+       (id, workspace, entity_id, artifact_type, source_key, kind, location, media_type, status,
+        refresh_schedule_id, current_revision_id, last_attempt_at, last_success_at,
+        diagnostic_category, diagnostic_message, diagnostic_timestamp, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         input.id,
         input.workspace,
         input.entity_id,
         input.artifact_type,
+        input.source_key ?? null,
         input.kind,
         input.location,
         input.media_type,
         input.status,
+        input.refresh_schedule_id ?? null,
         null,
         null,
         null,
@@ -60,12 +76,17 @@ export class SqliteArtifactDatabase extends SqliteDatabaseBase implements Artifa
     if (!existing) return null;
     const next = { ...existing, ...input };
     this.run(
-      `UPDATE catalog_artifact SET status = ?, media_type = ?, current_revision_id = ?, last_attempt_at = ?,
-       last_success_at = ?, diagnostic_category = ?, diagnostic_message = ?, diagnostic_timestamp = ?, updated_at = ?
+      `UPDATE catalog_artifact SET source_key = ?, kind = ?, location = ?, status = ?, media_type = ?,
+       refresh_schedule_id = ?, current_revision_id = ?, last_attempt_at = ?, last_success_at = ?,
+       diagnostic_category = ?, diagnostic_message = ?, diagnostic_timestamp = ?, updated_at = ?
        WHERE workspace = ? AND id = ?`,
       [
+        next.source_key ?? null,
+        next.kind,
+        next.location,
         next.status,
         next.media_type,
+        next.refresh_schedule_id ?? null,
         next.current_revision_id,
         iso(next.last_attempt_at),
         iso(next.last_success_at),

@@ -92,14 +92,15 @@ const entityUnchanged = (
     filterRestrictedFieldGroups(authCtx, schema, next.data)
   );
 
-const runSync = async (
+export const runEntitySyncInTransaction = async (
   db: DatabaseAdapter,
   workspace: string,
   source: string,
   externalKey: string,
   body: Record<string, unknown>,
   authCtx: AuthorizationContext | null,
-  actor: EntityMutationActor
+  actor: EntityMutationActor,
+  auditMetadata: Record<string, unknown> = {}
 ): Promise<EntitySyncResult> => {
   // Capability check happens first, before any other DB reads, so a caller without integration
   // access can't use this endpoint to probe for entity/schema existence.
@@ -174,8 +175,13 @@ const runSync = async (
     }
 
     const teamIds = await getTeamIds(db, workspace);
+    const ownerWasSubmitted = Object.prototype.hasOwnProperty.call(body, '_owner');
     const owner =
-      payload.requestedOwner && teamIds.has(payload.requestedOwner) ? payload.requestedOwner : null;
+      !ownerWasSubmitted
+        ? oldRow.owner
+        : payload.requestedOwner && teamIds.has(payload.requestedOwner)
+          ? payload.requestedOwner
+          : null;
 
     const next = {
       name: payload.name,
@@ -202,7 +208,11 @@ const runSync = async (
       entityId: oldRow.id,
       previous: oldRow,
       actor,
-      auditMetadata: { sync_source: source, sync_external_key: externalKey },
+      auditMetadata: {
+        sync_source: source,
+        sync_external_key: externalKey,
+        ...auditMetadata
+      },
       next: {
         ...next,
         schema_id: payload.schemaId,
@@ -300,6 +310,11 @@ const runSync = async (
         { description: payload.description, owner, lifecycle, data: normalizedFields },
         schema
       )
+    },
+    auditMetadata: {
+      sync_source: source,
+      sync_external_key: externalKey,
+      ...auditMetadata
     }
   });
 
@@ -315,7 +330,16 @@ const runSync = async (
       // Lost a race against a concurrent first sync for the same key — the other request already
       // created the entity and recorded the identity, so converge onto it instead of surfacing an
       // error (and leave the entity we just created; it has no identity row pointing at it).
-      return runSync(db, workspace, source, externalKey, body, authCtx, actor);
+      return runEntitySyncInTransaction(
+        db,
+        workspace,
+        source,
+        externalKey,
+        body,
+        authCtx,
+        actor,
+        auditMetadata
+      );
     }
     throw error;
   }
@@ -400,7 +424,7 @@ export const syncEntityByExternalKey = async (
 
   try {
     return await db.core.transaction(tx =>
-      runSync(tx, workspace, source, externalKey, body, authCtx, actor)
+      runEntitySyncInTransaction(tx, workspace, source, externalKey, body, authCtx, actor)
     );
   } catch (error) {
     return handleError(error, 'Failed to sync entity');

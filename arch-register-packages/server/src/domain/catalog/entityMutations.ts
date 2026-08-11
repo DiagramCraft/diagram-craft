@@ -44,6 +44,7 @@ type CreateEntityWithAuditParams = {
   workspace: string;
   entity: EntityDbCreate;
   actor: EntityMutationActor;
+  auditMetadata?: Record<string, unknown>;
 };
 
 type UpdateEntityWithAuditParams = {
@@ -97,7 +98,8 @@ export const createEntityWithAudit = async (
     schemaId: row.schema_id,
     changes: {
       new: flattenEntityAuditFields(row)
-    }
+    },
+    metadata: params.auditMetadata
   });
 
   await db.catalog.createEntityVersion({

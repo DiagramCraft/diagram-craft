@@ -1,5 +1,6 @@
+import { createHash } from 'node:crypto';
 import type { Config } from './config.js';
-import { listRepos, fetchCatalogInfo, type GitHubRepo } from './github.js';
+import { listRepos, fetchCatalogInfoFile, type GitHubFile, type GitHubRepo } from './github.js';
 import {
   parseBackstageYaml,
   validateEntity,
@@ -9,15 +10,21 @@ import {
   canonicalReferenceKey,
   type BackstageEntity
 } from './backstage.js';
-import { mapBackstageToArchRegister } from './mapper.js';
+import { mapBackstageToArchRegister, type ApiSpecificationMapping } from './mapper.js';
 import {
   syncEntity,
+  syncApiSpecification,
   getEntityByExternalKey,
   discoverSchemas,
   discoverRelationSchemas,
   syncRelation,
   type SyncResult
 } from './archRegister.js';
+import {
+  resolveBackstageSpecification,
+  type ResolvedSpecificationSource,
+  SpecificationResolutionError
+} from './specificationSource.js';
 
 export interface SyncReport {
   totalRepos: number;
@@ -46,11 +53,13 @@ export interface SyncReport {
 
 interface ScannedEntity {
   repo: GitHubRepo;
+  catalogFile: GitHubFile;
   entity: BackstageEntity;
   entityRef: string;
   externalKey: string;
   mapped: NonNullable<ReturnType<typeof mapBackstageToArchRegister>['entity']>;
   relationships: ReturnType<typeof mapBackstageToArchRegister>['relationships'];
+  apiSpecification?: ApiSpecificationMapping;
 }
 
 const relationFieldsForKind = (kind: string): string[] => {
@@ -67,8 +76,54 @@ const relationFieldsForKind = (kind: string): string[] => {
   }
 };
 
-const referenceDisplay = (reference: unknown): string =>
-  typeof reference === 'string' ? reference : (JSON.stringify(reference) ?? String(reference));
+const referenceDisplay = (reference: unknown): string => {
+  if (typeof reference === 'string') {
+    const trimmed = reference.trim();
+    return /^https:\/\//i.test(trimmed) ? trimmed.slice(0, 200) : '<inline definition>';
+  }
+  if (typeof reference === 'object' && reference !== null) {
+    const [operator, value] = Object.entries(reference)[0] ?? [];
+    return operator && typeof value === 'string'
+      ? `${operator}: ${value.slice(0, 200)}`
+      : operator ?? '<structured definition>';
+  }
+  return String(reference);
+};
+
+const specificationSourceKey = (
+  org: string,
+  item: Pick<ScannedEntity, 'repo' | 'catalogFile' | 'externalKey'>
+) => {
+  const key = `github:${org}:${item.repo.fullName}:${item.catalogFile.path}:${item.externalKey}:spec.definition`;
+  return key.length <= 1000
+    ? key
+    : `github:sha256:${createHash('sha256').update(key, 'utf8').digest('hex')}:spec.definition`;
+};
+
+const toIntegrationSource = (
+  source: ResolvedSpecificationSource
+): Parameters<typeof syncApiSpecification>[4] => {
+  if (source.kind === 'missing') return { state: 'missing', sourceKey: source.sourceKey };
+  return {
+    state: 'present',
+    source:
+      source.kind === 'document'
+        ? {
+            kind: source.kind,
+            sourceKey: source.sourceKey,
+            content: source.content,
+            location: source.location,
+            mediaType: source.mediaType,
+            sourceRevision: source.sourceRevision
+          }
+        : {
+            kind: source.kind,
+            sourceKey: source.sourceKey,
+            location: source.location,
+            mediaType: source.mediaType
+          }
+  };
+};
 
 /**
  * Syncs all Backstage catalog-info.yaml files from a GitHub organization
@@ -184,6 +239,7 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
   }
 
   const scanned: ScannedEntity[] = [];
+  let scanComplete = true;
 
   // Scan every repository and entity before making any writes. This makes references independent
   // of GitHub's repository/entity ordering.
@@ -195,17 +251,18 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     }
 
     // Fetch catalog-info.yaml
-    let catalogContent: string | null;
+    let catalogFile: GitHubFile | null;
     try {
-      catalogContent = await fetchCatalogInfo(repo, config.githubToken);
+      catalogFile = await fetchCatalogInfoFile(repo, config.githubToken);
 
-      if (!catalogContent) {
+      if (!catalogFile) {
         if (config.verbose) {
           console.log(`   ⊘ No catalog-info.yaml found`);
         }
         continue;
       }
     } catch (error) {
+      scanComplete = false;
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.error(`   ✗ Failed to fetch catalog-info.yaml: ${errorMsg}`);
       report.errors.push({
@@ -218,7 +275,7 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     // Parse YAML
     let entities: BackstageEntity[];
     try {
-      entities = parseBackstageYaml(catalogContent);
+      entities = parseBackstageYaml(catalogFile.content);
 
       if (entities.length === 0) {
         if (config.verbose) {
@@ -227,6 +284,7 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
         continue;
       }
     } catch (error) {
+      scanComplete = false;
       const errorMsg = error instanceof Error ? error.message : String(error);
       console.error(`   ✗ Failed to parse YAML: ${errorMsg}`);
       report.errors.push({
@@ -248,6 +306,7 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
       // Validate entity
       const validation = validateEntity(entity);
       if (!validation.valid) {
+        scanComplete = false;
         console.error(`   ✗ Validation failed: ${validation.errors.join(', ')}`);
         report.failed++;
         report.errors.push({
@@ -271,6 +330,7 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
       const mappingResult = mapBackstageToArchRegister(entity, schemaMapping);
 
       if (mappingResult.errors.length > 0) {
+        scanComplete = false;
         console.error(`   ✗ Mapping failed: ${mappingResult.errors.join(', ')}`);
         report.failed++;
         report.errors.push({
@@ -307,7 +367,9 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
         entityRef,
         externalKey,
         mapped: mappingResult.entity,
-        relationships: mappingResult.relationships
+        relationships: mappingResult.relationships,
+        catalogFile,
+        apiSpecification: mappingResult.apiSpecification
       });
     }
   }
@@ -358,14 +420,68 @@ export const syncOrganization = async (org: string, config: Config): Promise<Syn
     }
 
     try {
-      const result = await syncEntity(
-        config.archRegisterWorkspace,
-        source,
-        item.externalKey,
-        materialized,
-        config.archRegisterToken,
-        config.archRegisterUrl
-      );
+      let specification: Parameters<typeof syncApiSpecification>[4] | undefined;
+      if (item.apiSpecification) {
+        const sourceKey = specificationSourceKey(org, item);
+        try {
+          const resolved = await resolveBackstageSpecification(
+            item.apiSpecification.definition,
+            sourceKey,
+            item.repo,
+            item.catalogFile,
+            config.githubToken,
+            item.apiSpecification.fallbackLink
+          );
+          if (resolved.kind !== 'missing' || scanComplete) {
+            specification = toIntegrationSource(resolved);
+          }
+        } catch (error) {
+          const errorMsg =
+            error instanceof SpecificationResolutionError
+              ? error.message
+              : error instanceof Error
+                ? error.message
+                : String(error);
+          const fallback = item.apiSpecification.fallbackLink;
+          if (fallback) {
+            specification = toIntegrationSource({
+              kind: 'link',
+              sourceKey,
+              location: fallback,
+              mediaType: null
+            });
+          } else if (scanComplete && error instanceof SpecificationResolutionError && error.category === 'missing') {
+            specification = { state: 'missing', sourceKey };
+          }
+          report.warnings.push({
+            repo: item.repo.fullName,
+            entity: item.entityRef,
+            field: 'spec.definition',
+            reference: referenceDisplay(item.apiSpecification.definition),
+            warning: `API specification source was not imported: ${errorMsg}`
+          });
+          if (config.verbose) console.log(`   ⚠️  API specification: ${errorMsg}`);
+        }
+      }
+
+      const result = item.entity.kind === 'API'
+        ? await syncApiSpecification(
+            config.archRegisterWorkspace,
+            source,
+            item.externalKey,
+            materialized,
+            specification,
+            config.archRegisterToken,
+            config.archRegisterUrl
+          )
+        : await syncEntity(
+            config.archRegisterWorkspace,
+            source,
+            item.externalKey,
+            materialized,
+            config.archRegisterToken,
+            config.archRegisterUrl
+          );
       syncResults.set(item.externalKey, result);
       idsByReference.set(
         canonicalReferenceKey({
@@ -605,7 +721,7 @@ export const printReport = (report: SyncReport): void => {
   console.log(`  ✗ Failed: ${report.failed}`);
 
   if (report.warnings.length > 0) {
-    console.log('\n⚠️  Relationship warnings:');
+    console.log('\n⚠️  Warnings:');
     for (const warning of report.warnings)
       console.log(`  • ${warning.repo} / ${warning.entity}\n    ${warning.warning}`);
   }
