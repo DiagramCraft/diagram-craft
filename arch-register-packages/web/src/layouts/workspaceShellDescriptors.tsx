@@ -1,4 +1,12 @@
-import { TbBookmark, TbDatabase, TbFiles, TbFolders, TbHome, TbSearch, TbSettings } from 'react-icons/tb';
+import {
+  TbBookmark,
+  TbDatabase,
+  TbFiles,
+  TbFolders,
+  TbHome,
+  TbSearch,
+  TbSettings
+} from 'react-icons/tb';
 import type { BreadcrumbItem, WorkspaceRailItemId } from '../shell/shellTypes';
 import type { Workspace } from '@arch-register/api-types/workspaceContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';

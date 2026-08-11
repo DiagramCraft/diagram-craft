@@ -91,7 +91,9 @@ const canonicalize = (value: unknown): unknown => {
 };
 
 const hashState = (state: Record<string, unknown>) =>
-  createHash('sha256').update(JSON.stringify(canonicalize(state))).digest('hex');
+  createHash('sha256')
+    .update(JSON.stringify(canonicalize(state)))
+    .digest('hex');
 
 const dateValue = (value: unknown, fallback = new Date()) =>
   value instanceof Date ? value : new Date(String(value ?? fallback.toISOString()));
@@ -129,9 +131,8 @@ const deserializeRelation = (state: Record<string, unknown>): RelationDbResult =
 const asSchema = (value: Record<string, unknown> | null): SchemaDbResult | null =>
   value as SchemaDbResult | null;
 
-const asRelationSchema = (
-  value: Record<string, unknown> | null
-): RelationSchemaDbResult | null => value as RelationSchemaDbResult | null;
+const asRelationSchema = (value: Record<string, unknown> | null): RelationSchemaDbResult | null =>
+  value as RelationSchemaDbResult | null;
 
 const requireWorkspaceView = (authCtx: AuthorizationContext) =>
   requireWorkspaceCapability(authCtx, 'ws.view');
@@ -236,7 +237,12 @@ const materialize = async (
     spec.scope.kind === 'selection'
       ? spec.scope.entityIds
       : spec.scope.kind === 'project'
-        ? await resolveProjectCandidates(db, workspace, spec.scope.projectId, spec.scope.projectScope)
+        ? await resolveProjectCandidates(
+            db,
+            workspace,
+            spec.scope.projectId,
+            spec.scope.projectScope
+          )
         : query
           ? await resolveSavedViewCandidates(
               db,
@@ -300,7 +306,8 @@ const materialize = async (
   );
   const entityById = new Map(entities.map(entity => [entity.id, entity]));
   const relations = allRelations.filter(relation => {
-    if (!entityIds.has(relation.in_entity_id) || !entityIds.has(relation.out_entity_id)) return false;
+    if (!entityIds.has(relation.in_entity_id) || !entityIds.has(relation.out_entity_id))
+      return false;
     const inEntity = entityById.get(relation.in_entity_id)!;
     const outEntity = entityById.get(relation.out_entity_id)!;
     const inSchema = entitySchemas.get(inEntity.schema_id) ?? null;
@@ -339,7 +346,8 @@ const storedSnapshot = async (
   const entitySchemas = new Map<string, SchemaDbResult | null>();
   for (const record of records.filter(record => record.record_kind === 'entity')) {
     const entity = deserializeEntity(record.state);
-    if (!entitySchemas.has(entity.schema_id)) entitySchemas.set(entity.schema_id, asSchema(record.schema));
+    if (!entitySchemas.has(entity.schema_id))
+      entitySchemas.set(entity.schema_id, asSchema(record.schema));
   }
 
   const relationSchemas = new Map<string, RelationSchemaDbResult | null>();
@@ -347,7 +355,8 @@ const storedSnapshot = async (
     .filter(record => record.record_kind === 'relation')
     .map(record => deserializeRelation(record.state))
     .filter(relation => {
-      if (!entityIds.has(relation.in_entity_id) || !entityIds.has(relation.out_entity_id)) return false;
+      if (!entityIds.has(relation.in_entity_id) || !entityIds.has(relation.out_entity_id))
+        return false;
       const inEntity = entities.find(entity => entity.id === relation.in_entity_id)!;
       const outEntity = entities.find(entity => entity.id === relation.out_entity_id)!;
       const inSchema = entitySchemas.get(inEntity.schema_id) ?? null;
@@ -382,7 +391,10 @@ const makeRecordInputs = (
     record_kind: 'entity' as const,
     record_id: entity.id,
     state: entity as unknown as Record<string, unknown>,
-    schema: snapshot.entitySchemas.get(entity.schema_id) as unknown as Record<string, unknown> | null,
+    schema: snapshot.entitySchemas.get(entity.schema_id) as unknown as Record<
+      string,
+      unknown
+    > | null,
     state_hash: hashState(entityDiffState(entity)),
     position
   })),
@@ -392,7 +404,10 @@ const makeRecordInputs = (
     record_kind: 'relation' as const,
     record_id: relation.id,
     state: relation as unknown as Record<string, unknown>,
-    schema: snapshot.relationSchemas.get(relation.schema_id) as unknown as Record<string, unknown> | null,
+    schema: snapshot.relationSchemas.get(relation.schema_id) as unknown as Record<
+      string,
+      unknown
+    > | null,
     state_hash: hashState(relationDiffState(relation)),
     position
   }))
@@ -620,21 +635,13 @@ const snapshotDiff = (
     .filter(relation => !fromRelations.has(relation.id))
     .sort((left, right) => left.id.localeCompare(right.id))
     .map(relation =>
-      toRedactedApiRelation(
-        relation,
-        authCtx,
-        to.relationSchemas.get(relation.schema_id) ?? null
-      )
+      toRedactedApiRelation(relation, authCtx, to.relationSchemas.get(relation.schema_id) ?? null)
     );
   const relationsRemoved = [...fromRelations.values()]
     .filter(relation => !toRelations.has(relation.id))
     .sort((left, right) => left.id.localeCompare(right.id))
     .map(relation =>
-      toRedactedApiRelation(
-        relation,
-        authCtx,
-        from.relationSchemas.get(relation.schema_id) ?? null
-      )
+      toRedactedApiRelation(relation, authCtx, from.relationSchemas.get(relation.schema_id) ?? null)
     );
   const relationsChanged = [...toRelations.values()]
     .filter(relation => fromRelations.has(relation.id))
@@ -651,12 +658,7 @@ const snapshotDiff = (
     .sort((left, right) => left.relation.id.localeCompare(right.relation.id))
     .map(entry => ({
       relation: toRedactedApiRelation(entry.relation, authCtx, entry.afterSchema),
-      diff: redactKnownDataDiff(
-        entry.diff,
-        authCtx,
-        entry.beforeSchema,
-        entry.afterSchema
-      )
+      diff: redactKnownDataDiff(entry.diff, authCtx, entry.beforeSchema, entry.afterSchema)
     }));
 
   return {
@@ -804,7 +806,10 @@ export const supersedeBaseline = async (
   replacementId: string,
   userId: string
 ) => {
-  httpAssert.true(id !== replacementId, { status: 400, message: 'A baseline cannot supersede itself' });
+  httpAssert.true(id !== replacementId, {
+    status: 400,
+    message: 'A baseline cannot supersede itself'
+  });
   const baseline = await getBaseline(db, workspace, authCtx, id);
   const replacement = await getBaseline(db, workspace, authCtx, replacementId);
   managerRequired(authCtx, baseline, userId);

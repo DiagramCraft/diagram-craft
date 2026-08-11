@@ -84,8 +84,17 @@ export type BaselineDatabase = {
     baselineId: string,
     linkId: string
   ): Promise<BaselineLinkDbResult | null>;
-  setSupersededBy(workspace: string, id: string, replacementId: string): Promise<BaselineDbResult | null>;
-  softDelete(workspace: string, id: string, deletedBy: string, deletedAt: Date): Promise<BaselineDbResult | null>;
+  setSupersededBy(
+    workspace: string,
+    id: string,
+    replacementId: string
+  ): Promise<BaselineDbResult | null>;
+  softDelete(
+    workspace: string,
+    id: string,
+    deletedBy: string,
+    deletedAt: Date
+  ): Promise<BaselineDbResult | null>;
 };
 
 const booleanValue = (value: unknown) => value === true || value === 1 || value === '1';
@@ -99,7 +108,11 @@ export const baselineMappers = {
     owner_team_id: row['owner_team_id'] == null ? null : String(row['owner_team_id']),
     created_by: row['created_by'] == null ? null : String(row['created_by']),
     effective_at: databaseDate(row['effective_at']),
-    scope: parseDatabaseJson<BaselineScope>(row['scope_json'], { kind: 'workspace' }, 'baseline.scope_json'),
+    scope: parseDatabaseJson<BaselineScope>(
+      row['scope_json'],
+      { kind: 'workspace' },
+      'baseline.scope_json'
+    ),
     query: parseDatabaseJson<EntityQuery | null>(row['query_json'], null, 'baseline.query_json'),
     include_planned_changes: booleanValue(row['include_planned_changes']),
     include_overdue_changes: booleanValue(row['include_overdue_changes']),
@@ -116,7 +129,11 @@ export const baselineMappers = {
     baseline_id: String(row['baseline_id']),
     record_kind: String(row['record_kind']) as BaselineRecordKind,
     record_id: String(row['record_id']),
-    state: parseDatabaseJson<Record<string, unknown>>(row['state_json'], {}, 'baseline_record.state_json'),
+    state: parseDatabaseJson<Record<string, unknown>>(
+      row['state_json'],
+      {},
+      'baseline_record.state_json'
+    ),
     schema: parseDatabaseJson<Record<string, unknown> | null>(
       row['schema_json'],
       null,

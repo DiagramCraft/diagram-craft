@@ -53,7 +53,7 @@ runContractSuiteAgainstBothDrivers('BaselineDatabase', getDb => {
     const records = await db.baseline.listBaselineRecords(workspace, firstId);
     expect(records.map(record => record.record_kind)).toEqual(['entity', 'relation']);
     expect(records[0]!.state).toEqual({ id: 'entity-1', name: 'Captured' });
-    expect((await db.baseline.listBaselines(workspace))).toHaveLength(1);
+    expect(await db.baseline.listBaselines(workspace)).toHaveLength(1);
 
     const link = await db.baseline.createBaselineLink({
       workspace,

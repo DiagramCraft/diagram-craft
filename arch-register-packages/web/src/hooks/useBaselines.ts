@@ -38,8 +38,7 @@ export const useBaselineDiff = (workspaceId: string) =>
     mutationFn: (body: {
       from: { kind: 'baseline'; id: string } | { kind: 'current' };
       to: { kind: 'baseline'; id: string } | { kind: 'current' };
-    }) =>
-      orpcClient.baselines.diff({ params: { workspace: workspaceId }, body })
+    }) => orpcClient.baselines.diff({ params: { workspace: workspaceId }, body })
   });
 
 export const useSupersedeBaseline = (workspaceId: string) => {

@@ -115,13 +115,11 @@ export class SqliteBaselineDatabase extends SqliteDatabaseBase implements Baseli
         input.created_at.toISOString()
       ]
     );
-    return (
-      await this.get(
-        'SELECT * FROM architecture_baseline_link WHERE workspace = ? AND id = ?',
-        [input.workspace, id],
-        baselineMappers.link
-      )
-    )!;
+    return (await this.get(
+      'SELECT * FROM architecture_baseline_link WHERE workspace = ? AND id = ?',
+      [input.workspace, id],
+      baselineMappers.link
+    ))!;
   }
 
   async deleteBaselineLink(workspace: string, baselineId: string, linkId: string) {

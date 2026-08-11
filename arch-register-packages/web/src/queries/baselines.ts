@@ -6,8 +6,7 @@ export const baselineKeys = {
   list: (workspaceId: string, includeDeleted = false) =>
     [...baselineKeys.lists(), workspaceId, includeDeleted] as const,
   details: () => [...baselineKeys.all, 'detail'] as const,
-  detail: (workspaceId: string, id: string) =>
-    [...baselineKeys.details(), workspaceId, id] as const
+  detail: (workspaceId: string, id: string) => [...baselineKeys.details(), workspaceId, id] as const
 };
 
 export const invalidateBaselineQueries = (queryClient: QueryClient, workspaceId: string) =>

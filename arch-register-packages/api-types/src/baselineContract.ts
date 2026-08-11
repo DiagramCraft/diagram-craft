@@ -93,11 +93,14 @@ export const baselineDiffSchema = z.object({
   changed: z.array(
     z.object({
       entity: entityRecordSchema,
-      diff: z.record(z.string(), z.object({
-        current: z.unknown().nullable().optional(),
-        before: z.unknown().nullable(),
-        after: z.unknown().nullable()
-      }))
+      diff: z.record(
+        z.string(),
+        z.object({
+          current: z.unknown().nullable().optional(),
+          before: z.unknown().nullable(),
+          after: z.unknown().nullable()
+        })
+      )
     })
   ),
   relations: z.object({
@@ -106,11 +109,14 @@ export const baselineDiffSchema = z.object({
     changed: z.array(
       z.object({
         relation: relationRecordSchema,
-        diff: z.record(z.string(), z.object({
-          current: z.unknown().nullable().optional(),
-          before: z.unknown().nullable(),
-          after: z.unknown().nullable()
-        }))
+        diff: z.record(
+          z.string(),
+          z.object({
+            current: z.unknown().nullable().optional(),
+            before: z.unknown().nullable(),
+            after: z.unknown().nullable()
+          })
+        )
       })
     )
   })
@@ -127,7 +133,9 @@ export const baselineContract = oc.tag('Baselines').router({
         description: 'Lists named architecture baselines visible in the workspace.',
         tags: ['Baselines']
       })
-      .input(z.object({ params: ws, query: z.object({ includeDeleted: z.coerce.boolean().optional() }) }))
+      .input(
+        z.object({ params: ws, query: z.object({ includeDeleted: z.coerce.boolean().optional() }) })
+      )
       .output(z.array(baselineSummarySchema)),
     create: oc
       .route({
@@ -210,7 +218,8 @@ export const baselineContract = oc.tag('Baselines').router({
           path: '/{workspace}/baselines/{id}/links',
           inputStructure: 'detailed',
           summary: 'List baseline references',
-          description: 'Lists project, document, milestone, planned-change, and governance references.',
+          description:
+            'Lists project, document, milestone, planned-change, and governance references.',
           tags: ['Baselines']
         })
         .input(z.object({ params: wsAndId }))
@@ -243,7 +252,11 @@ export const baselineContract = oc.tag('Baselines').router({
           description: 'Removes a reference without changing the baseline snapshot.',
           tags: ['Baselines']
         })
-        .input(z.object({ params: z.object({ workspace: z.string(), id: z.string(), linkId: z.string() }) }))
+        .input(
+          z.object({
+            params: z.object({ workspace: z.string(), id: z.string(), linkId: z.string() })
+          })
+        )
         .output(baselineLinkSchema)
     }
   }
