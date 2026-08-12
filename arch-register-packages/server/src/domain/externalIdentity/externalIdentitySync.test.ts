@@ -45,6 +45,7 @@ const makeHarness = (
   options: {
     identity?: string | null;
     records?: SyncRecord[];
+    createError?: DatabaseError;
     onIdentityCreate?: (
       row: CatalogRecordExternalIdentityDbCreate,
       setIdentity: (recordId: string) => void
@@ -98,6 +99,7 @@ const makeHarness = (
     },
     create: async context => {
       calls.push('create');
+      if (options.createError) throw options.createError;
       mutationAuditMetadata.push(context.sync.auditMetadata);
       const created = { id: 'record-created', value: context.sync.payload.value };
       records.set(created.id, created);
@@ -108,7 +110,25 @@ const makeHarness = (
   };
 
   const identityCreate = options.onIdentityCreate ?? defaultIdentityCreate;
-  const db = {
+  const savepoint = async <T>(callback: (db: DatabaseAdapter) => Promise<T>) => {
+    const recordsBeforeSavepoint = new Map(records);
+    try {
+      return await callback(db);
+    } catch (error) {
+      records.clear();
+      recordsBeforeSavepoint.forEach((record, id) => records.set(id, record));
+      throw error;
+    }
+  };
+  let db!: DatabaseAdapter;
+  db = {
+    core: {
+      driver: 'sqlite',
+      isTransaction: true,
+      close: vi.fn(),
+      transaction: vi.fn(async callback => callback(db)),
+      savepoint: vi.fn(savepoint)
+    },
     externalIdentity: {
       find: vi.fn(async () => (identity == null ? null : identityFor(identity))),
       create: vi.fn((row: CatalogRecordExternalIdentityDbCreate) =>
@@ -243,6 +263,7 @@ describe('external identity sync primitives', () => {
     expect(identityCreateAttempts).toBe(1);
     expect(harness.calls.filter(call => call === 'create')).toHaveLength(1);
     expect(harness.calls.filter(call => call === 'prepareExisting')).toHaveLength(1);
+    expect([...harness.records.keys()]).toEqual(['record-winner']);
   });
 
   it('does not treat unrelated database errors as identity races', async () => {
@@ -264,6 +285,27 @@ describe('external identity sync primitives', () => {
         handlers: harness.handlers
       })
     ).rejects.toMatchObject({ code: 'foreign' });
+    expect(harness.calls).not.toContain('prepareExisting');
+  });
+
+  it('does not treat a unique error from record creation as an identity race', async () => {
+    const harness = makeHarness({
+      createError: new DatabaseError('unique', 'duplicate record')
+    });
+
+    await expect(
+      runExternalIdentitySyncInTransaction({
+        db: harness.db,
+        workspace: 'ws-1',
+        source: 'source-1',
+        externalKey: 'key-1',
+        body: { value: 'created' },
+        authCtx: null,
+        actor: { id: 'actor-1' },
+        handlers: harness.handlers
+      })
+    ).rejects.toMatchObject({ code: 'unique' });
+    expect(harness.calls.filter(call => call === 'create')).toHaveLength(1);
     expect(harness.calls).not.toContain('prepareExisting');
   });
 

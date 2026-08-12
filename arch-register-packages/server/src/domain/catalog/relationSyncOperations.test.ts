@@ -152,6 +152,9 @@ const makeDb = (existingRow?: RelationDbResult | null) => {
     core: {
       transaction: vi.fn(async (fn: (db: DatabaseAdapter) => unknown) =>
         fn(db as unknown as DatabaseAdapter)
+      ),
+      savepoint: vi.fn(async (fn: (db: DatabaseAdapter) => unknown) =>
+        fn(db as unknown as DatabaseAdapter)
       )
     },
     externalIdentity: {

@@ -47,6 +47,7 @@ export type CoreDatabase = {
   isTransaction?: boolean;
   close(): Promise<void>;
   transaction<T>(callback: (db: DatabaseAdapter) => Promise<T>): Promise<T>;
+  savepoint<T>(callback: (db: DatabaseAdapter) => Promise<T>): Promise<T>;
 };
 
 export type DatabaseAdapter = {

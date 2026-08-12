@@ -4,6 +4,7 @@ import { runPostgresMigrations } from './migrate';
 import {
   type PostgresQueryClient,
   type PostgresSqlClient,
+  withPostgresSavepoint,
   withPostgresTransaction
 } from './postgresBase';
 import { PostgresAuditDatabase } from '../domain/audit/db/postgresAudit';
@@ -146,7 +147,9 @@ export class PostgresDatabase implements DatabaseAdapter {
         close: async () => {
           throw new Error('Cannot close a transaction-bound database adapter');
         },
-        transaction: async callback => callback(bound)
+        transaction: async callback => callback(bound),
+        savepoint: async callback =>
+          withPostgresSavepoint(sql, async nestedSql => callback(this.adapterFor(nestedSql)))
       }
     };
     return bound;
@@ -216,7 +219,10 @@ export class PostgresDatabase implements DatabaseAdapter {
         await this.sql.end();
       },
       transaction: async <T>(callback: (db: DatabaseAdapter) => Promise<T>): Promise<T> =>
-        withPostgresTransaction(this.sql, async sql => callback(this.adapterFor(sql)))
+        withPostgresTransaction(this.sql, async sql => callback(this.adapterFor(sql))),
+      savepoint: async () => {
+        throw new Error('PostgreSQL savepoints require a transaction-bound database adapter');
+      }
     };
   }
 
