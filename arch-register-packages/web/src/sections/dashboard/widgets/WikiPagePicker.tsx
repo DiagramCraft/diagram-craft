@@ -1,5 +1,5 @@
 import { useMemo } from 'react';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { useContentTree, type ContentScope } from '../../../hooks/useContentScope';
 import type { WidgetSurface } from '../dashboardWidgetDefaults';
 import styles from '../WidgetConfigDialog.module.css';

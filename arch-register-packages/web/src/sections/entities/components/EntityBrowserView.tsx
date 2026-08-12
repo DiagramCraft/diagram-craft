@@ -1,6 +1,6 @@
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import type { Project } from '@arch-register/api-types/projectContract';
+import type { Project } from '@arch-register/api-types/projectCrudContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';

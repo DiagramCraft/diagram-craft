@@ -1,7 +1,7 @@
 import { DiagramPicker } from '../../../../../components/DiagramPicker';
 import { DialogSection } from '../../../editor/BlockDialog';
 import { useContentTree, type ContentScope } from '../../../../../hooks/useContentScope';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import type { DiagramEmbedWidgetConfig } from './types';
 import styles from '../../../../dashboard/WidgetConfigDialog.module.css';
 

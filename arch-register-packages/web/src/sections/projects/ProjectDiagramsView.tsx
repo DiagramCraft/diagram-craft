@@ -3,8 +3,8 @@ import {
   DiagramBrowserFolderLabel,
   DiagramBrowserView
 } from '../../components/diagram-browser/DiagramBrowserView';
-import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { fileMenuTargetType, type MenuTarget } from '../../lib/contentNode';
 
 export type { MenuTarget as ProjectMenuTarget };

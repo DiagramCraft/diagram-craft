@@ -1,5 +1,5 @@
 import { useRef, useState } from 'react';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';

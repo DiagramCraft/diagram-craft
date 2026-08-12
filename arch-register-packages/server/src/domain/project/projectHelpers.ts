@@ -5,11 +5,10 @@ import { fileNameFromPath, isMarkdownPath, stripMarkdownExtension } from './cont
 import {
   ContentMetadata,
   FileTree,
-  Project,
-  ProjectDetail,
-  ProjectEntity,
   ProjectFile
-} from '@arch-register/api-types/projectContract';
+} from '@arch-register/api-types/projectContentContract';
+import { Project, ProjectDetail } from '@arch-register/api-types/projectCrudContract';
+import { ProjectEntity } from '@arch-register/api-types/projectEntityContract';
 
 const getProjectCapabilities = (
   context: WorkspaceAuthorizationContext | null,

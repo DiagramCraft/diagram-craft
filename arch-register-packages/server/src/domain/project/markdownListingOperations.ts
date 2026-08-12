@@ -9,9 +9,9 @@ import type { ContentNodeDbResult } from './db/projectDatabase';
 
 import { httpAssert } from '../../utils/httpAssert';
 
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 
-import type { DocumentListItem } from '@arch-register/api-types/projectContract';
+import type { DocumentListItem } from '@arch-register/api-types/projectDocumentDiscoveryContract';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 
 import {

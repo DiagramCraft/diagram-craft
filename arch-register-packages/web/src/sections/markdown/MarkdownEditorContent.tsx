@@ -8,7 +8,7 @@ import { AiActionResultPanel } from './AiActionResultPanel';
 import type { MarkdownEditorController } from './useMarkdownEditorController';
 import styles from './MarkdownEditorScreen.module.css';
 import type { CommentsDisplayMode } from '../wikiComments/commentsDisplayMode';
-import type { MarkdownRevisionSummary } from '@arch-register/api-types/projectContract';
+import type { MarkdownRevisionSummary } from '@arch-register/api-types/projectMarkdownContract';
 
 export type MarkdownEditorContentProps = {
   workspaceSlug: string;

@@ -1,5 +1,5 @@
 import { TbCheck, TbFolder, TbFileText, TbMessageCircle, TbStar } from 'react-icons/tb';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import styles from '../sections/projects/ProjectDetailScreen.module.css';
 import { DiagramMetadataPopover } from './DiagramMetadataPopover';
 import { formatDate } from '../utils/dateFormat';

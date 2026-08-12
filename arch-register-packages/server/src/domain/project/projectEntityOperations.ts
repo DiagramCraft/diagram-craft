@@ -14,7 +14,7 @@ import type {
   DiagramEntityFile,
   EntityProject,
   ProjectEntity
-} from '@arch-register/api-types/projectContract';
+} from '@arch-register/api-types/projectEntityContract';
 
 export const listProjectEntities = async (
   db: DatabaseAdapter,

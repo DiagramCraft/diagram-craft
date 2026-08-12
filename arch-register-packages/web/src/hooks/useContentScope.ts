@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import { apiFetchResponse, ApiError } from '../lib/http';
 import { applicationWorkspacePath } from '../lib/applicationApi';

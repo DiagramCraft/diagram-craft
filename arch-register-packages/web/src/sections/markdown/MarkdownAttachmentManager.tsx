@@ -1,5 +1,5 @@
 import { TbTrash } from 'react-icons/tb';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { getFileNodeIcon } from '../../lib/contentNode';
 import styles from './MarkdownEditorScreen.module.css';
 

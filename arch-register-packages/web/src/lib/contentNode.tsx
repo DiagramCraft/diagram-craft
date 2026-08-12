@@ -1,6 +1,6 @@
 import type React from 'react';
 import { TbFile, TbFileText } from 'react-icons/tb';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 
 export type ContentNodeType = ProjectFile['type']; // 'diagram' | 'folder' | 'markdown' | 'file'
 

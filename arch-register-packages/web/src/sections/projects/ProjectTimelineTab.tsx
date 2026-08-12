@@ -1,10 +1,8 @@
 import { useState, useMemo } from 'react';
 import { TbChevronDown, TbChevronRight, TbPencil, TbTrash, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import type {
-  ProjectDetail as ProjectDetailData,
-  ProjectEntity
-} from '@arch-register/api-types/projectContract';
+import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
+import type { ProjectEntity } from '@arch-register/api-types/projectEntityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';

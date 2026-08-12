@@ -1,7 +1,7 @@
 import { useCallback, useMemo } from 'react';
 import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import type { MarkdownSearchParams } from '../../routes/searchParams';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import type { ContentScope } from '../../hooks/useContentScope';
 import { useMarkdownContent, useMarkdownRevisions } from '../../hooks/useMarkdownContent';
 import { useDocumentTemplates, useDocumentTypes } from '../../hooks/useDocuments';

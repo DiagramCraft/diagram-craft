@@ -7,7 +7,7 @@ import type {
 import { Workspace, WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
-import { Project } from '@arch-register/api-types/projectContract';
+import { Project } from '@arch-register/api-types/projectCrudContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { SharedFieldGroup } from '@arch-register/api-types/fieldGroupContract';
 export type ProjectEntityType = { id: string; label: string; sort_order: number };

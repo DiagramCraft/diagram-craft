@@ -1,7 +1,7 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, foreignKeySchema } from '@arch-register/api-types/common';
-import { contentMetadataSchema } from '@arch-register/api-types/projectContract';
+import { contentMetadataSchema } from '@arch-register/api-types/projectContentContract';
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
