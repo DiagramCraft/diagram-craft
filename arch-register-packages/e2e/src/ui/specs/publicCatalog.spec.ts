@@ -174,9 +174,14 @@ test.describe('public catalog themes', () => {
   test('follows the system theme until an explicit choice is made', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'light' });
     await mockPublicCatalog(page);
+    const documentRequests: string[] = [];
+    page.on('request', request => {
+      if (request.resourceType() === 'document') documentRequests.push(request.url());
+    });
     await page.goto(`/public/${defaultWorkspace.slug}`);
 
     await expect(page.getByRole('heading', { name: 'Platform Catalog' })).toBeVisible();
+    expect(documentRequests).toHaveLength(1);
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
     await expect(page.getByRole('button', { name: 'Light' })).toHaveAttribute(
       'aria-pressed',
@@ -203,16 +208,18 @@ test.describe('public catalog themes', () => {
       .toBe('dark');
 
     await page.getByRole('link', { name: 'Entities' }).click();
-    await page.waitForURL(`**/public/${defaultWorkspace.slug}/entities`);
+    await expect(page).toHaveURL(new RegExp(`/public/${defaultWorkspace.slug}/entities$`));
     await expect(page.getByRole('heading', { name: 'Entities' })).toBeVisible();
+    expect(documentRequests).toHaveLength(1);
     await expect(page.locator('html')).toHaveClass(/dark/);
 
     await page.getByRole('link', { name: 'Getting started' }).click();
-    await page.waitForURL(`**/public/${defaultWorkspace.slug}/wiki?path=guide`);
+    await expect(page).toHaveURL(new RegExp(`/public/${defaultWorkspace.slug}/wiki\\?path=guide$`));
     await expect(
       page.locator('main').getByRole('heading', { name: 'Getting started' }).last()
     ).toBeVisible();
     await expect(page.locator('pre')).toContainText("const theme = 'dark'");
+    expect(documentRequests).toHaveLength(1);
     await expect(page).toHaveScreenshot('public-catalog-dark-wiki.png', { fullPage: true });
 
     await page.goto(
@@ -239,12 +246,18 @@ test.describe('public catalog themes', () => {
 
   test('opens the publication-safe topology picker and accessible graph view', async ({ page }) => {
     await mockPublicCatalog(page);
+    const documentRequests: string[] = [];
+    page.on('request', request => {
+      if (request.resourceType() === 'document') documentRequests.push(request.url());
+    });
     await page.goto(`/public/${defaultWorkspace.slug}/topology`);
 
     await expect(page.getByRole('heading', { name: 'Topology' })).toBeVisible();
+    expect(documentRequests).toHaveLength(1);
     await page.getByRole('link', { name: /Public API/ }).click();
-    await page.waitForURL(`**/public/${defaultWorkspace.slug}/topology/API-1`);
+    await expect(page).toHaveURL(new RegExp(`/public/${defaultWorkspace.slug}/topology/API-1$`));
     await expect(page.getByRole('img', { name: 'Topology graph' })).toBeVisible();
+    expect(documentRequests).toHaveLength(1);
     await expect(
       page.getByRole('table', { name: 'Published entities in this topology' })
     ).toBeVisible();

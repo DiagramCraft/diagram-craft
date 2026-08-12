@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { useParams, useSearch } from '@tanstack/react-router';
+import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import type {
   PublicCatalogApiSpecificationPage,
   PublicCatalogEntity
@@ -55,21 +55,25 @@ export const PublicCatalogHome = () => {
       {manifest.pages.length > 0 && (
         <div className={styles.cardGrid}>
           {manifest.pages.map(page => (
-            <a
+            <Link
               className={styles.card}
               key={page.path}
-              href={`/public/${encodeURIComponent(workspaceSlug)}/wiki?path=${encodeURIComponent(page.path)}`}
+              to="/public/$workspaceSlug/wiki"
+              params={{ workspaceSlug }}
+              search={{ path: page.path }}
             >
               <span className={styles.cardKicker}>{page.scope}</span>
               <strong>{page.label}</strong>
               <span>/{page.path}</span>
-            </a>
+            </Link>
           ))}
         </div>
       )}
       <div className={styles.sectionHeading}>
         <h2>Published entities</h2>
-        <a href={`/public/${encodeURIComponent(workspaceSlug)}/entities`}>Browse all</a>
+        <Link to="/public/$workspaceSlug/entities" params={{ workspaceSlug }}>
+          Browse all
+        </Link>
       </div>
       <div className={styles.entityList}>
         {(entities?.items ?? []).slice(0, 8).map(entity => (
@@ -87,15 +91,16 @@ const EntityCard = ({
   entity: PublicCatalogEntity;
   workspaceSlug: string;
 }) => (
-  <a
+  <Link
     className={styles.entityCard}
-    href={`/public/${encodeURIComponent(workspaceSlug)}/entities/${encodeURIComponent(entity.publicId)}`}
+    to="/public/$workspaceSlug/entities/$entityPublicId"
+    params={{ workspaceSlug, entityPublicId: entity.publicId }}
   >
     <span className={styles.cardKicker}>{entity.schema.name}</span>
     <strong>{entity.name}</strong>
     <span>{entity.publicId}</span>
     {entity.description && <p>{entity.description}</p>}
-  </a>
+  </Link>
 );
 
 export const PublicCatalogEntities = () => {
@@ -141,9 +146,9 @@ export const PublicCatalogEntityPage = () => {
   const fieldDefinitions = new Map(data.schema.fields.map(field => [field.id, field]));
   return (
     <section>
-      <a className={styles.back} href={`/public/${encodeURIComponent(workspaceSlug)}/entities`}>
+      <Link className={styles.back} to="/public/$workspaceSlug/entities" params={{ workspaceSlug }}>
         ← All entities
-      </a>
+      </Link>
       <div className={styles.pageHeading}>
         <div>
           <p className={styles.eyebrow}>{data.schema.name}</p>
@@ -177,23 +182,35 @@ export const PublicCatalogEntityPage = () => {
       {data.apiArtifacts.length > 0 && (
         <div className={styles.sectionBlock}>
           <h2>API specifications</h2>
-          {data.apiArtifacts.map(api => (
-            <a
-              className={styles.card}
-              key={api.artifactId}
-              href={
-                api.currentRevisionId
-                  ? `/public/${encodeURIComponent(workspaceSlug)}/api/${encodeURIComponent(data.publicId)}/${encodeURIComponent(api.artifactId)}/${encodeURIComponent(api.currentRevisionId)}`
-                  : '#'
-              }
-            >
-              <strong>{api.title ?? 'API specification'}</strong>
-              <span>
-                {api.protocol ?? 'Unknown protocol'} ·{' '}
-                {api.rawAvailable ? 'raw source available' : 'normalized browse only'}
-              </span>
-            </a>
-          ))}
+          {data.apiArtifacts.map(api =>
+            api.currentRevisionId ? (
+              <Link
+                className={styles.card}
+                key={api.artifactId}
+                to="/public/$workspaceSlug/api/$entityPublicId/$artifactId/$revisionId"
+                params={{
+                  workspaceSlug,
+                  entityPublicId: data.publicId,
+                  artifactId: api.artifactId,
+                  revisionId: api.currentRevisionId
+                }}
+              >
+                <strong>{api.title ?? 'API specification'}</strong>
+                <span>
+                  {api.protocol ?? 'Unknown protocol'} ·{' '}
+                  {api.rawAvailable ? 'raw source available' : 'normalized browse only'}
+                </span>
+              </Link>
+            ) : (
+              <div className={styles.card} key={api.artifactId}>
+                <strong>{api.title ?? 'API specification'}</strong>
+                <span>
+                  {api.protocol ?? 'Unknown protocol'} ·{' '}
+                  {api.rawAvailable ? 'raw source available' : 'normalized browse only'}
+                </span>
+              </div>
+            )
+          )}
         </div>
       )}
     </section>
@@ -210,6 +227,7 @@ const formatValue = (value: unknown) => {
 export const PublicCatalogWikiPage = () => {
   const { workspaceSlug = '' } = routeParams();
   const search = useSearch({ strict: false }) as { path?: string };
+  const navigate = useNavigate();
   const path = search.path ?? '';
   const { data, isLoading, isError } = usePublicCatalogWikiPage(workspaceSlug, path);
   if (!path) return <ErrorState message="Choose a published wiki page." />;
@@ -217,9 +235,9 @@ export const PublicCatalogWikiPage = () => {
   if (isError || !data) return <ErrorState message="This published wiki page is not available." />;
   return (
     <article className={styles.article}>
-      <a className={styles.back} href={`/public/${encodeURIComponent(workspaceSlug)}`}>
+      <Link className={styles.back} to="/public/$workspaceSlug" params={{ workspaceSlug }}>
         ← Catalog home
-      </a>
+      </Link>
       <p className={styles.eyebrow}>{data.scope} wiki</p>
       <h1>{data.label}</h1>
       <SafeMarkdown
@@ -229,7 +247,10 @@ export const PublicCatalogWikiPage = () => {
           link: styles.markdownLink
         }}
         onEntityLink={entityId => {
-          window.location.href = `/public/${encodeURIComponent(workspaceSlug)}/entities/${encodeURIComponent(entityId)}`;
+          void navigate({
+            to: '/public/$workspaceSlug/entities/$entityPublicId',
+            params: { workspaceSlug, entityPublicId: entityId }
+          });
         }}
       />
     </article>
@@ -258,12 +279,13 @@ export const PublicCatalogApiPage = () => {
   const { revision, items } = query.data;
   return (
     <section>
-      <a
+      <Link
         className={styles.back}
-        href={`/public/${encodeURIComponent(workspaceSlug)}/entities/${encodeURIComponent(entityPublicId)}`}
+        to="/public/$workspaceSlug/entities/$entityPublicId"
+        params={{ workspaceSlug, entityPublicId }}
       >
         ← Entity
-      </a>
+      </Link>
       <p className={styles.eyebrow}>{revision.protocol ?? 'API'} specification</p>
       <h1>{revision.title ?? 'API specification'}</h1>
       {revision.description && <p className={styles.lede}>{revision.description}</p>}

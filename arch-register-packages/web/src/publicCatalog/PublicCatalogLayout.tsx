@@ -1,4 +1,4 @@
-import { Outlet, useParams } from '@tanstack/react-router';
+import { Link, Outlet, useParams } from '@tanstack/react-router';
 import { usePublicCatalogManifest } from '../hooks/usePublicCatalog';
 import { useTheme } from '../hooks/useTheme';
 import { publicCatalogOpenAPISpecUrl } from '../lib/orpcClient';
@@ -9,7 +9,6 @@ export const PublicCatalogLayout = () => {
   const { workspaceSlug = '' } = useParams({ strict: false }) as { workspaceSlug?: string };
   const manifest = usePublicCatalogManifest(workspaceSlug);
   const { theme, setTheme } = useTheme({ fallback: 'system' });
-  const base = `/public/${encodeURIComponent(workspaceSlug)}`;
 
   if (manifest.isLoading) {
     return (
@@ -30,16 +29,25 @@ export const PublicCatalogLayout = () => {
     <div className={styles.shell}>
       {!manifest.data.indexable && <meta name="robots" content="noindex,nofollow" />}
       <header className={styles.header}>
-        <a className={styles.brand} href={base}>
+        <Link className={styles.brand} to="/public/$workspaceSlug" params={{ workspaceSlug }}>
           {manifest.data.title}
-        </a>
+        </Link>
         <nav className={styles.nav} aria-label="Public catalog">
-          <a href={`${base}/entities`}>Entities</a>
-          <a href={`${base}/topology`}>Topology</a>
+          <Link to="/public/$workspaceSlug/entities" params={{ workspaceSlug }}>
+            Entities
+          </Link>
+          <Link to="/public/$workspaceSlug/topology" params={{ workspaceSlug }}>
+            Topology
+          </Link>
           {manifest.data.pages.slice(0, 5).map(page => (
-            <a key={page.path} href={`${base}/wiki?path=${encodeURIComponent(page.path)}`}>
+            <Link
+              key={page.path}
+              to="/public/$workspaceSlug/wiki"
+              params={{ workspaceSlug }}
+              search={{ path: page.path }}
+            >
               {page.label}
-            </a>
+            </Link>
           ))}
         </nav>
         <div className={styles.headerActions}>

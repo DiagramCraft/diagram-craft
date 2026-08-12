@@ -12,13 +12,25 @@ import {
   PublicCatalogTopologyPicker
 } from '../publicCatalog/PublicCatalogTopology';
 
-const parseTopologyDepth = (value: unknown) => {
+const parseTopologyDepth = (value: unknown): number | undefined => {
   const parsed = typeof value === 'number' ? value : Number(value);
-  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 3 ? parsed : 2;
+  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 3 ? parsed : undefined;
 };
 
 const parseTopologyDirection = (value: unknown) =>
-  value === 'incoming' || value === 'outgoing' || value === 'both' ? value : 'both';
+  value === 'incoming' || value === 'outgoing' || value === 'both' ? value : undefined;
+
+type PublicCatalogTopologySearch = {
+  depth?: number;
+  direction?: 'incoming' | 'outgoing' | 'both';
+  q?: string;
+  schema?: string;
+  relation?: string;
+};
+
+type PublicCatalogTopologyPickerSearch = {
+  q?: string;
+};
 
 export const createPublicCatalogRoutes = <TParentRoute extends AnyRoute>(
   rootRoute: TParentRoute
@@ -47,20 +59,20 @@ export const createPublicCatalogRoutes = <TParentRoute extends AnyRoute>(
     getParentRoute: () => route,
     path: 'topology',
     component: PublicCatalogTopologyPicker,
-    validateSearch: (search: Record<string, unknown>) => ({
-      q: typeof search.q === 'string' ? search.q : ''
+    validateSearch: (search: Record<string, unknown>): PublicCatalogTopologyPickerSearch => ({
+      q: typeof search.q === 'string' ? search.q : undefined
     })
   });
   const topology = createRoute({
     getParentRoute: () => route,
     path: 'topology/$entityPublicId',
     component: PublicCatalogTopology,
-    validateSearch: (search: Record<string, unknown>) => ({
+    validateSearch: (search: Record<string, unknown>): PublicCatalogTopologySearch => ({
       depth: parseTopologyDepth(search.depth),
       direction: parseTopologyDirection(search.direction),
-      q: typeof search.q === 'string' ? search.q : '',
-      schema: typeof search.schema === 'string' ? search.schema : '',
-      relation: typeof search.relation === 'string' ? search.relation : ''
+      q: typeof search.q === 'string' ? search.q : undefined,
+      schema: typeof search.schema === 'string' ? search.schema : undefined,
+      relation: typeof search.relation === 'string' ? search.relation : undefined
     })
   });
   const wiki = createRoute({
