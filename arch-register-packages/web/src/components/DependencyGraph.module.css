@@ -32,6 +32,13 @@
       stroke: var(--accent-fg);
       stroke-width: 2.5;
     }
+
+    &[data-node-kind="relation"] {
+      fill: color-mix(in oklch, var(--accent-fg) 8%, var(--panel-bg));
+      stroke: var(--accent-fg);
+      stroke-width: 2;
+      stroke-dasharray: 6 3;
+    }
   }
 
   .eNodeContent {

@@ -14,13 +14,12 @@ import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TbFileExport, TbVectorTriangle } from 'react-icons/tb';
 import styles from './SchemaGraphView.module.css';
-import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { SaveDiagramFromGraphDialog } from '../entities/components/SaveDiagramFromGraphDialog';
 import { createDiagramFromGraph } from '../../lib/diagramFromGraph';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import type { ProjectFile } from '@arch-register/api-types/projectContract';
 import type { ModelOverviewSearchParams } from '../../routes/searchParams';
-import { buildSchemaGraphEdges } from './schemaGraphState';
+import { buildSchemaGraphData, type SchemaGraphNodeData } from './schemaGraphState';
 
 const DEFAULT_LAYOUT: LayoutAlgorithm = 'hierarchy';
 
@@ -154,22 +153,35 @@ export const SchemaGraphView = () => {
     });
   }, [layout, search]);
 
-  const nodes = useMemo(() => schemas.map(s => ({ id: s.id, data: s })), [schemas]);
-
-  const edges = useMemo(
-    () => buildSchemaGraphEdges(schemas, relationSchemas),
+  const graph = useMemo(
+    () => buildSchemaGraphData(schemas, relationSchemas),
     [schemas, relationSchemas]
   );
+  const { nodes, edges } = graph;
+
+  const nodeById = useMemo(() => new Map(nodes.map(node => [node.id, node])), [nodes]);
 
   const handleNodeClick = useCallback(
-    (schemaId: string) => {
+    (nodeId: string) => {
+      const node = nodeById.get(nodeId);
+      if (!node) return;
+
+      if (node.data.kind === 'relation') {
+        navigate({
+          to: '/$workspaceSlug/settings/schemas',
+          params: { workspaceSlug },
+          search: { tab: 'relation-types', relationSchema: node.data.relationSchema.id }
+        });
+        return;
+      }
+
       navigate({
         to: '/$workspaceSlug/settings/schemas',
         params: { workspaceSlug },
-        search: { tab: 'types', schema: schemaId }
+        search: { tab: 'types', schema: node.data.schema.id }
       });
     },
-    [navigate, workspaceSlug]
+    [navigate, nodeById, workspaceSlug]
   );
 
   const handleEdgeClick = useCallback(
@@ -224,6 +236,10 @@ export const SchemaGraphView = () => {
   );
 
   const schemaIndexMap = useMemo(() => new Map(schemas.map((s, i) => [s.id, i])), [schemas]);
+  const relationSchemaIndexMap = useMemo(
+    () => new Map(relationSchemas.map((schema, i) => [schema.id, i])),
+    [relationSchemas]
+  );
 
   if (schemas.length === 0) {
     return (
@@ -342,7 +358,11 @@ export const SchemaGraphView = () => {
         <Button
           size={'sm'}
           onClick={() => {
-            const graphNodes = schemas.map(s => ({ id: s.id, label: s.name }));
+            const graphNodes = nodes.map(node => ({
+              id: node.id,
+              label:
+                node.data.kind === 'entity' ? node.data.schema.name : node.data.relationSchema.name
+            }));
             const graphEdges = edges.map(e => ({
               id: e.id,
               from: e.from,
@@ -366,20 +386,39 @@ export const SchemaGraphView = () => {
         </Button>
       </div>
       <div className={styles.eCanvas}>
-        <DependencyGraph<EntitySchema>
+        <DependencyGraph<SchemaGraphNodeData>
           nodes={nodes}
           edges={edges}
           layout={layout}
           layoutOptions={layoutOptions}
           nodeWidth={170}
           nodeHeight={48}
+          nodeKind={node => node.data.kind}
           renderNode={node => {
-            const idx = schemaIndexMap.get(node.id) ?? 0;
-            const color = resolveSchemaColor(node.data, idx);
+            if (node.data.kind === 'relation') {
+              const relationSchema = node.data.relationSchema;
+              const idx = relationSchemaIndexMap.get(relationSchema.id) ?? 0;
+              const color = resolveSchemaColor(relationSchema, idx);
+              return (
+                <>
+                  <TypeBadge
+                    color={color}
+                    name={relationSchema.name}
+                    icon={relationSchema.icon}
+                    size={20}
+                  />
+                  <span className={styles.eNodeLabel}>{relationSchema.name}</span>
+                </>
+              );
+            }
+
+            const schema = node.data.schema;
+            const idx = schemaIndexMap.get(schema.id) ?? 0;
+            const color = resolveSchemaColor(schema, idx);
             return (
               <>
-                <TypeBadge color={color} name={node.data.name} icon={node.data.icon} size={20} />
-                <span className={styles.eNodeLabel}>{node.data.name}</span>
+                <TypeBadge color={color} name={schema.name} icon={schema.icon} size={20} />
+                <span className={styles.eNodeLabel}>{schema.name}</span>
               </>
             );
           }}

@@ -21,7 +21,9 @@ import {
   listPublicCatalogEntities,
   getPublicCatalogTopology,
   readPublicCatalogConfig,
-  replacePublicCatalogConfig
+  readPublicCatalogSelectorOptions,
+  replacePublicCatalogConfig,
+  previewPublicCatalogConfig
 } from './publicCatalogOperations';
 
 type PublicCatalogContext = {
@@ -111,6 +113,12 @@ export const publicCatalogConfigORPCRouter = configRouter.router({
   publicCatalogConfig: {
     get: configRouter.publicCatalogConfig.get.handler(({ input, context }) =>
       readPublicCatalogConfig(context.db, input.params.workspace, context.event)
+    ),
+    options: configRouter.publicCatalogConfig.options.handler(({ input, context }) =>
+      readPublicCatalogSelectorOptions(context.db, input.params.workspace, context.event)
+    ),
+    preview: configRouter.publicCatalogConfig.preview.handler(({ input, context }) =>
+      previewPublicCatalogConfig(context.db, input.params.workspace, input.body, context.event)
     ),
     replace: configRouter.publicCatalogConfig.replace.handler(({ input, context }) =>
       replacePublicCatalogConfig(context.db, input.params.workspace, input.body, context.event)

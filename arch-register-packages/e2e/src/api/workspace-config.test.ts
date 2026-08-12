@@ -57,6 +57,34 @@ const createCustomRole = async (
 };
 
 test.describe('workspace config routes', () => {
+  test('returns guided public catalog selectors and previews an unsaved configuration', async ({
+    orpc,
+    seededUsers: _
+  }) => {
+    const options = await orpc.publicCatalogConfig.options({
+      params: { workspace: 'default' }
+    });
+    expect(options.schemas).toEqual(expect.any(Array));
+    expect(options.entities).toEqual(expect.any(Array));
+    expect(options.pages).toEqual(expect.any(Array));
+    expect(options.apiArtifacts).toEqual(expect.any(Array));
+
+    const current = await orpc.publicCatalogConfig.get({
+      params: { workspace: 'default' }
+    });
+    const { updatedAt: _updatedAt, ...draft } = current;
+    const preview = await orpc.publicCatalogConfig.preview({
+      params: { workspace: 'default' },
+      body: draft
+    });
+
+    expect(preview.enabled).toBe(current.enabled);
+    expect(preview.manifest).toMatchObject({
+      workspace: 'default',
+      entityCount: expect.any(Number)
+    });
+  });
+
   test('replaces workspace assessment types and removes omitted types', async ({
     orpc,
     seededUsers: _

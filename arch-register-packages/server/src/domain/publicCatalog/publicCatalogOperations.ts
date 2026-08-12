@@ -21,6 +21,7 @@ import {
 } from '../auth/fieldGroupAccessControl';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import { isMarkdownNode, readMarkdownBody } from '../project/markdownOperationHelpers';
+import { stripMarkdownExtension } from '../project/contentFileHelpers';
 import { storageScope } from '../project/projectOperationHelpers';
 import type { StorageAdapter } from '../../storage/storage';
 import { decodeRefs } from '../../types';
@@ -68,6 +69,17 @@ const sanitizePublicMarkdown = (body: string) =>
 
 const assertUnique = (values: string[], message: string) => {
   httpAssert.true(new Set(values).size === values.length, { status: 400, message });
+};
+
+const isConfiguredPublicEntity = (input: PublicCatalogConfig, entity: EntityDbResult) => {
+  if (entity.project_id != null) return false;
+  const override = input.entityOverrides.find(
+    item => item.entityId === entity.id || item.entityId === entity.public_id
+  );
+  if (override?.mode === 'exclude') return false;
+  return (
+    override?.mode === 'publish' || input.schemas.some(item => item.schemaId === entity.schema_id)
+  );
 };
 
 const assertPublicFieldIds = (schema: SchemaDbResult, fieldIds: string[]) => {
@@ -158,6 +170,10 @@ const validateConfig = async (
         status: 400,
         message: 'Entity page node does not belong to the selected global entity'
       });
+      httpAssert.true(isConfiguredPublicEntity(input, entity), {
+        status: 400,
+        message: 'Entity wiki pages require a published entity'
+      });
     }
   }
 
@@ -184,22 +200,33 @@ const validateConfig = async (
       status: 400,
       message: 'Project-only entity API artifacts cannot be published'
     });
-    if (publication.revisionId) {
-      const revision = await db.artifact.getRevision(workspace, publication.revisionId);
-      httpAssert.present(revision, { status: 400, message: 'Public API revision was not found' });
-      httpAssert.true(revision.artifact_id === artifact.id, {
-        status: 400,
-        message: 'Public API revision does not belong to the selected artifact'
-      });
-      const projection = await db.artifactProjections.apiSpecification.getRevision(
-        workspace,
-        revision.id
-      );
-      httpAssert.present(projection, {
-        status: 400,
-        message: 'Public API revision has not been normalized'
-      });
-    }
+    httpAssert.true(isConfiguredPublicEntity(input, entity), {
+      status: 400,
+      message: 'Public API artifacts require a published entity'
+    });
+    const revisionId = publication.revisionId ?? artifact.current_revision_id;
+    httpAssert.present(revisionId, {
+      status: 400,
+      message: 'Public API artifact does not have a normalized revision selected'
+    });
+    const revision = await db.artifact.getRevision(workspace, revisionId);
+    httpAssert.present(revision, { status: 400, message: 'Public API revision was not found' });
+    httpAssert.true(revision.artifact_id === artifact.id, {
+      status: 400,
+      message: 'Public API revision does not belong to the selected artifact'
+    });
+    const projection = await db.artifactProjections.apiSpecification.getRevision(
+      workspace,
+      revision.id
+    );
+    httpAssert.present(projection, {
+      status: 400,
+      message: 'Public API revision has not been normalized'
+    });
+    httpAssert.true(projection.status === 'current', {
+      status: 400,
+      message: 'Only successfully normalized API revisions can be published'
+    });
   }
 
   return input;
@@ -242,6 +269,207 @@ export const replacePublicCatalogConfig = async (
         updated_by: event.context.user.id
       });
       return { ...config, updatedAt: row.updated_at.toISOString() };
+    }
+  });
+
+export const getPublicCatalogSelectorOptions = async (db: DatabaseAdapter, workspace: string) => {
+  const [schemas, entities, workspaceNodes] = await Promise.all([
+    db.catalog.listSchemas(workspace),
+    db.catalog.listEntities(workspace),
+    db.project.listWorkspaceContentNodes(workspace)
+  ]);
+  const schemasById = new Map(schemas.map(schema => [schema.id, schema]));
+
+  const selectorSchemas = schemas
+    .map(schema => ({
+      id: schema.id,
+      name: schema.name,
+      description: schema.description,
+      keyPrefix: schema.key_prefix,
+      fields: schema.fields.map(field => {
+        const selectable = !isFieldGroupAccessControlled(schema, field.id);
+        return {
+          id: field.id,
+          name: field.name,
+          type: field.type,
+          selectable,
+          ...(selectable ? {} : { reason: 'Restricted field groups cannot be published' })
+        };
+      })
+    }))
+    .sort((left, right) => left.name.localeCompare(right.name) || left.id.localeCompare(right.id));
+
+  const selectorEntities = entities
+    .map(entity => {
+      const projectOnly = entity.project_id != null;
+      return {
+        id: entity.id,
+        publicId: entity.public_id,
+        slug: entity.slug,
+        name: entity.name,
+        schemaId: entity.schema_id,
+        schemaName: schemasById.get(entity.schema_id)?.name ?? entity.schema_name,
+        projectOnly,
+        selectable: !projectOnly,
+        ...(projectOnly ? { reason: 'Project-only entities cannot be published' } : {})
+      };
+    })
+    .sort((left, right) => left.name.localeCompare(right.name) || left.id.localeCompare(right.id));
+
+  const workspacePages = workspaceNodes
+    .filter(node => isMarkdownNode(node) && node.project_id == null && node.entity_id == null)
+    .map(node => ({
+      nodeId: node.id,
+      scope: 'workspace' as const,
+      entityId: null,
+      entityPublicId: null,
+      entityName: null,
+      path: stripMarkdownExtension(node.path),
+      name: node.name,
+      selectable: true
+    }));
+
+  const entityPages = (
+    await Promise.all(
+      entities.map(async entity => {
+        const nodes = await db.project.listEntityContentNodes(workspace, entity.id);
+        const projectOnly = entity.project_id != null;
+        return nodes
+          .filter(
+            node => isMarkdownNode(node) && node.project_id == null && node.entity_id === entity.id
+          )
+          .map(node => ({
+            nodeId: node.id,
+            scope: 'entity' as const,
+            entityId: entity.id,
+            entityPublicId: entity.public_id,
+            entityName: entity.name,
+            path: stripMarkdownExtension(node.path),
+            name: node.name,
+            selectable: !projectOnly,
+            ...(projectOnly ? { reason: 'Project-only entity pages cannot be published' } : {})
+          }));
+      })
+    )
+  ).flat();
+
+  const apiArtifacts = (
+    await Promise.all(
+      entities.map(async entity => {
+        const artifacts = await db.artifact.listArtifacts(workspace, entity.id);
+        return Promise.all(
+          artifacts
+            .filter(artifact => artifact.artifact_type === 'api-specification')
+            .map(async artifact => {
+              const revisionSummaries = await db.artifact.listRevisionSummaries(
+                workspace,
+                artifact.id
+              );
+              const revisions = (
+                await Promise.all(
+                  revisionSummaries.map(async revision => {
+                    const projection = await db.artifactProjections.apiSpecification.getRevision(
+                      workspace,
+                      revision.id
+                    );
+                    if (!projection) return null;
+                    const selectable = projection.status === 'current';
+                    return {
+                      ...toApiSpecificationRevision(
+                        revision,
+                        projection,
+                        artifact.current_revision_id === revision.id
+                      ),
+                      selectable,
+                      ...(selectable
+                        ? {}
+                        : { reason: 'Only successfully normalized revisions can be published' })
+                    };
+                  })
+                )
+              ).filter((revision): revision is NonNullable<typeof revision> => revision !== null);
+              const projectOnly = entity.project_id != null;
+              const selectable = !projectOnly && revisions.some(revision => revision.selectable);
+              const reason = projectOnly
+                ? 'Project-only entity API artifacts cannot be published'
+                : revisions.length === 0
+                  ? 'No normalized API revision is available'
+                  : selectable
+                    ? undefined
+                    : 'No successfully normalized API revision is available';
+              return {
+                artifactId: artifact.id,
+                entityId: entity.id,
+                entityPublicId: entity.public_id,
+                entityName: entity.name,
+                label:
+                  artifact.location?.trim() ||
+                  artifact.source_key?.trim() ||
+                  `API specification ${artifact.id.slice(0, 8)}`,
+                status: artifact.status,
+                currentRevisionId: artifact.current_revision_id,
+                revisions,
+                selectable,
+                ...(reason ? { reason } : {})
+              };
+            })
+        );
+      })
+    )
+  ).flat();
+
+  return {
+    schemas: selectorSchemas,
+    entities: selectorEntities,
+    pages: [...workspacePages, ...entityPages].sort(
+      (left, right) =>
+        left.scope.localeCompare(right.scope) ||
+        (left.entityName ?? '').localeCompare(right.entityName ?? '') ||
+        left.path.localeCompare(right.path) ||
+        left.nodeId.localeCompare(right.nodeId)
+    ),
+    apiArtifacts: apiArtifacts.sort(
+      (left, right) =>
+        left.entityName.localeCompare(right.entityName) ||
+        left.label.localeCompare(right.label) ||
+        left.artifactId.localeCompare(right.artifactId)
+    )
+  };
+};
+
+export const readPublicCatalogSelectorOptions = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent
+) =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.settings');
+      return getPublicCatalogSelectorOptions(db, ws);
+    }
+  });
+
+export const previewPublicCatalogConfig = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  input: PublicCatalogConfig,
+  event: AuthenticatedEvent
+) =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.settings');
+      const config = await validateConfig(db, ws, input);
+      const manifestConfig = config.enabled ? config : { ...config, enabled: true };
+      return {
+        enabled: config.enabled,
+        manifest: await buildPublicCatalogManifest(db, workspace, ws, manifestConfig)
+      };
     }
   });
 
@@ -695,8 +923,12 @@ const requirePublicCatalog = async (db: DatabaseAdapter, workspaceSlug: string) 
   return { workspace, config };
 };
 
-export const getPublicCatalogManifest = async (db: DatabaseAdapter, workspaceSlug: string) => {
-  const { workspace, config } = await requirePublicCatalog(db, workspaceSlug);
+const buildPublicCatalogManifest = async (
+  db: DatabaseAdapter,
+  workspaceSlug: string,
+  workspace: string,
+  config: PublicCatalogConfig
+) => {
   const published = await listPublishedEntities(db, workspace, config);
   const schemaIds = new Set([
     ...config.schemas.map(publication => publication.schemaId),
@@ -767,6 +999,11 @@ export const getPublicCatalogManifest = async (db: DatabaseAdapter, workspaceSlu
       wiki: `/api/public/v1/${encodeURIComponent(workspaceSlug)}/wiki`
     }
   };
+};
+
+export const getPublicCatalogManifest = async (db: DatabaseAdapter, workspaceSlug: string) => {
+  const { workspace, config } = await requirePublicCatalog(db, workspaceSlug);
+  return buildPublicCatalogManifest(db, workspaceSlug, workspace, config);
 };
 
 export const listPublicCatalogEntities = async (
