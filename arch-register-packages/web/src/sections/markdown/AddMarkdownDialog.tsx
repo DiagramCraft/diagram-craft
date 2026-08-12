@@ -5,7 +5,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { ApiError } from '../../lib/http';
 import styles from '../../dialogs/AddEntityDialog.module.css';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { useDocumentTemplates, useDocumentTypes } from '../../hooks/useDocuments';
 import { useAutoFocus } from '../../hooks/useAutoFocus';
 

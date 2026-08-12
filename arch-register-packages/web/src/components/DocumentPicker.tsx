@@ -1,5 +1,6 @@
 import { useMemo, useState } from 'react';
-import type { DocumentListItem, ProjectFile } from '@arch-register/api-types/projectContract';
+import type { DocumentListItem } from '@arch-register/api-types/projectDocumentDiscoveryContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { Autocomplete } from '@diagram-craft/app-components/Autocomplete';
 import { TbFileText, TbFolder, TbFolderOpen } from 'react-icons/tb';

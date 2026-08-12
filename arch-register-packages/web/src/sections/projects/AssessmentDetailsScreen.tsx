@@ -6,7 +6,7 @@ import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteCo
 import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import { Tooltip } from '@diagram-craft/app-components/Tooltip';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
-import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
+import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import type { AssessmentEntityStatus } from '@arch-register/api-types/assessmentStatus';
 import type {
   Assessment,

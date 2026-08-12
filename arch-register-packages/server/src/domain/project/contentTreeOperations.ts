@@ -8,7 +8,7 @@ import { collectHiddenAttachmentNodeIds } from './contentNodeRoleUtils';
 import { toApiProjectFile } from './projectHelpers';
 import type { ContentNodeDbResult } from './db/projectDatabase';
 import type { ContentScopeResolver } from './contentScope';
-import { FileTree } from '@arch-register/api-types/projectContract';
+import { FileTree } from '@arch-register/api-types/projectContentContract';
 import { coordinateContentWrite } from './contentWriteCoordinator';
 import {
   collectDescendantNodes,

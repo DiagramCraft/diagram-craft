@@ -9,7 +9,7 @@ import {
 } from 'react';
 import { TbMessage, TbMessageCirclePlus, TbSparkles } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import type { DocumentAiAction } from '@arch-register/api-types/documentContract';
 import { createTextAnchor, reanchorText } from '@arch-register/api-types/textAnchor';
 import { PlateMarkdownEditor } from './editor/PlateMarkdownEditor';

@@ -30,7 +30,7 @@ import {
   WORKSPACE_SCOPE
 } from './contentScope';
 import type { ContentScopeResolver } from './contentScope';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import { coordinateContentWrite } from './contentWriteCoordinator';
 import {

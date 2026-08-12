@@ -8,7 +8,7 @@ import { useContentScopeOperations, type ContentScope } from '../../hooks/useCon
 import { useProjectTemplates, useWorkspaceOnlyTemplates } from '../../hooks/useTemplates';
 import styles from './AddDiagramDialog.module.css';
 import { useAutoFocus } from '../../hooks/useAutoFocus';
-import { ProjectFile } from '@arch-register/api-types/projectContract';
+import { ProjectFile } from '@arch-register/api-types/projectContentContract';
 
 type AddDiagramDialogProps = {
   open: boolean;

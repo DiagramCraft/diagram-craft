@@ -16,7 +16,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import type {
   MarkdownRevisionDetail,
   MarkdownRevisionSummary
-} from '@arch-register/api-types/projectContract';
+} from '@arch-register/api-types/projectMarkdownContract';
 
 import type {
   DocumentGeneratedMetadata,

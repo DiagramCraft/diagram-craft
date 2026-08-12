@@ -7,7 +7,10 @@ import { buildApiEntityAuthCtx, requireWorkspaceCapability } from '../auth/autho
 
 import { httpAssert } from '../../utils/httpAssert';
 
-import type { AiActionTestEvent, RunAiActionEvent } from '@arch-register/api-types/projectContract';
+import type {
+  AiActionTestEvent,
+  RunAiActionEvent
+} from '@arch-register/api-types/projectDocumentAiContract';
 import type { DocumentAiAction } from '@arch-register/api-types/documentContract';
 import { chat } from '@tanstack/ai';
 import { resolveAiConfig, createAiTextAdapter } from '../ai/tanstackAiAdapter';

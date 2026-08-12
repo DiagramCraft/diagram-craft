@@ -1,6 +1,6 @@
 import { useMemo } from 'react';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
-import type { Project } from '@arch-register/api-types/projectContract';
+import type { Project } from '@arch-register/api-types/projectCrudContract';
 import { useAssessments } from '../../../hooks/useAssessments';
 import { useAssessmentResponses } from '../../../hooks/useAssessmentResponses';
 

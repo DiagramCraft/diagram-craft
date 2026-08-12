@@ -6,7 +6,7 @@ import { TbTrash } from 'react-icons/tb';
 import { ColorPicker } from '../../../components/ColorPicker';
 import { useUpdateProject, useDeleteProject } from '../../../hooks/useProjects';
 import { ApiError } from '../../../lib/http';
-import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
+import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import styles from './ProjectSettingsForm.module.css';
 

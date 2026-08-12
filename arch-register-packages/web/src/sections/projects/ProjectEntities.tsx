@@ -16,10 +16,8 @@ import {
   TbUsers
 } from 'react-icons/tb';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
-import type {
-  ProjectDetail as ProjectDetailData,
-  ProjectEntity
-} from '@arch-register/api-types/projectContract';
+import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
+import type { ProjectEntity } from '@arch-register/api-types/projectEntityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';

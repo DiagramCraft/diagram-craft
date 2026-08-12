@@ -11,7 +11,7 @@ import { toApiProjectFile } from './projectHelpers';
 import { httpAssert } from '../../utils/httpAssert';
 import { buildFileTree } from './contentTreeOperations';
 
-import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
+import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContentContract';
 
 import { fileNameFromPath } from './contentFileHelpers';
 import {

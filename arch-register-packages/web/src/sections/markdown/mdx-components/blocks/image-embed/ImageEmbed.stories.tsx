@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { ImageEmbed } from './ImageEmbed';
 import { createStoryQueryClient, StoryProviders, WORKSPACE } from '../StorybookHarness';
 import { projectFileKeys } from '../../../../../queries/content';

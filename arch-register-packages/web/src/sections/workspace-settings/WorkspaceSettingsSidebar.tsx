@@ -26,7 +26,7 @@ import { TreeRow } from '../../components/TreeRow';
 import styles from '../../shell/SidePanel.module.css';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
-import { Project } from '@arch-register/api-types/projectContract';
+import { Project } from '@arch-register/api-types/projectCrudContract';
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
 import { settingsSectionTarget } from '../../routes/settingsNavigation';
 

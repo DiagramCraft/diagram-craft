@@ -24,11 +24,11 @@ import type {
   WorkspaceTeam
 } from '@arch-register/api-types/workspaceConfigContract';
 import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
+import type { Project } from '@arch-register/api-types/projectCrudContract';
 import type {
-  Project,
   ProjectEntity,
   DiagramEntityFile
-} from '@arch-register/api-types/projectContract';
+} from '@arch-register/api-types/projectEntityContract';
 import type { RefLookup } from '../types/entityDetailTypes';
 import styles from './EntityOverviewTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';

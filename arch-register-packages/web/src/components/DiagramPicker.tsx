@@ -1,6 +1,6 @@
 import { useState } from 'react';
 import { TbChartLine, TbChevronDown, TbChevronRight, TbFolder } from 'react-icons/tb';
-import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
+import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContentContract';
 import styles from './DiagramPicker.module.css';
 import { EmptyState } from './EmptyState';
 import { LoadingState } from './LoadingState';

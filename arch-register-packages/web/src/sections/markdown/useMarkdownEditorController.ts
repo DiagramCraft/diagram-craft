@@ -19,10 +19,10 @@ import type { GovernanceWorkflowConfigRow } from '@arch-register/api-types/gover
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type {
   MarkdownContent,
-  MarkdownRevisionSummary,
-  ProjectFile,
-  RunAiActionResponse
-} from '@arch-register/api-types/projectContract';
+  MarkdownRevisionSummary
+} from '@arch-register/api-types/projectMarkdownContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
+import type { RunAiActionResponse } from '@arch-register/api-types/projectDocumentAiContract';
 import { useCreateConversation } from '../../hooks/useAiConversations';
 import { useAiStatus } from '../../hooks/useAiConfig';
 import {

@@ -12,7 +12,7 @@ import type {
 } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { Project } from '@arch-register/api-types/projectContract';
+import type { Project } from '@arch-register/api-types/projectCrudContract';
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
 import { getSnapshotDateLabel, getSnapshotEffectiveDate } from './snapshotDisplay';
 import {

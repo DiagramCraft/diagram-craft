@@ -2,7 +2,7 @@ import type React from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { TbFolder, TbLayoutGrid, TbList, TbPlus } from 'react-icons/tb';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { DiagramCard, DiagramRow } from '../DiagramCard';
 import { EmptyState } from '../EmptyState';
 import styles from '../../sections/projects/ProjectDetailScreen.module.css';

@@ -2,7 +2,7 @@ import { useMemo } from 'react';
 import { TbChevronLeft, TbChevronRight, TbRestore, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { useMarkdownRevision } from '../../hooks/useMarkdownContent';
-import type { MarkdownRevisionSummary } from '@arch-register/api-types/projectContract';
+import type { MarkdownRevisionSummary } from '@arch-register/api-types/projectMarkdownContract';
 import type { DocumentMetadata, DocumentType } from '@arch-register/api-types/documentContract';
 import { useDocumentTypes } from '../../hooks/useDocuments';
 import { MdxPreview } from './preview/MdxPreview';

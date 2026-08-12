@@ -6,10 +6,8 @@ import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { Button } from '@diagram-craft/app-components/Button';
-import type {
-  AiActionTestResult,
-  DocumentListItem
-} from '@arch-register/api-types/projectContract';
+import type { AiActionTestResult } from '@arch-register/api-types/projectDocumentAiContract';
+import type { DocumentListItem } from '@arch-register/api-types/projectDocumentDiscoveryContract';
 import {
   DOCUMENT_AI_READ_ONLY_TOOLS,
   type DocumentAiAction,

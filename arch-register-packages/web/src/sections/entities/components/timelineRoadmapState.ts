@@ -1,5 +1,5 @@
 import type { Milestone } from '@arch-register/api-types/milestoneContract';
-import type { Project } from '@arch-register/api-types/projectContract';
+import type { Project } from '@arch-register/api-types/projectCrudContract';
 import type { TimelineViewData } from '@arch-register/api-types/entityContract';
 import { dateToTimelinePx, parseTimelineDate } from '../../../components/timeline/timelineUtils';
 import type { TimelineHorizonBand, TimelineHorizonId } from './timelineViewTypes';

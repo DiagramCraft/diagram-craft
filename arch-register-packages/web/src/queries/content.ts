@@ -1,6 +1,6 @@
 import type { QueryClient } from '@tanstack/react-query';
 import { queryOptions } from '@tanstack/react-query';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { orpcClient } from '../lib/orpcClient';
 import { invalidateAuditQueries } from './audit';
 import { projectEntityKeys, projectKeys } from './projectKeys';

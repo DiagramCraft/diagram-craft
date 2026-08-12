@@ -2,7 +2,7 @@ import { useState } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TbPlus } from 'react-icons/tb';
-import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
+import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import type { Assessment } from '@arch-register/api-types/assessmentContract';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import {

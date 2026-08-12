@@ -1,5 +1,5 @@
 import { type ReactNode } from 'react';
-import type { ContentMetadata } from '@arch-register/api-types/projectContract';
+import type { ContentMetadata } from '@arch-register/api-types/projectContentContract';
 import { HoverCard } from './HoverCard';
 import hoverCardStyles from './HoverCard.module.css';
 import {

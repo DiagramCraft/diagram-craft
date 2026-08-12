@@ -18,7 +18,7 @@ import {
 import { ApiError } from '../../lib/http';
 import { applicationWorkspacePath } from '../../lib/applicationApi';
 import { downloadUrl } from '../../lib/browserDownload';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import {
   asProjectPublicId,
   projectContentFolderRoute,

@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import {
   getMarkdownAttachmentDownloadUrl,
   isEmbeddableImageAttachment,

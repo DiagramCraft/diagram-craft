@@ -6,7 +6,8 @@ import type {
 } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import type { ProjectDetail, ProjectEntity } from '@arch-register/api-types/projectContract';
+import type { ProjectDetail } from '@arch-register/api-types/projectCrudContract';
+import type { ProjectEntity } from '@arch-register/api-types/projectEntityContract';
 import {
   isAssessmentCondition,
   ASSESSMENT_FIELD_PREFIX
