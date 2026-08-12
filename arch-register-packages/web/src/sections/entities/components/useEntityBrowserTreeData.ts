@@ -1,10 +1,12 @@
 import { useEntityTree } from '../../../hooks/useEntities';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 
 type UseEntityBrowserTreeDataProps = {
   workspaceId: string;
   projectId?: string;
   projectScope: 'project' | 'all';
   q: string;
+  entityQuery?: EntityQuery | null;
   typeFilter: string | null;
   ownerFilter: string | null;
   statusFilter: string | null;
@@ -18,6 +20,7 @@ export const useEntityBrowserTreeData = ({
   projectId,
   projectScope,
   q,
+  entityQuery,
   typeFilter,
   ownerFilter,
   statusFilter,
@@ -28,12 +31,13 @@ export const useEntityBrowserTreeData = ({
   const { data: treeData } = useEntityTree(
     workspaceId,
     {
-      schemaId: typeFilter,
-      schemaIds,
-      owner: ownerFilter,
-      lifecycle: statusFilter,
-      q,
-      assessmentId: joinAssessmentId,
+      schemaId: entityQuery ? undefined : typeFilter,
+      schemaIds: entityQuery ? undefined : schemaIds,
+      owner: entityQuery ? undefined : ownerFilter,
+      lifecycle: entityQuery ? undefined : statusFilter,
+      q: entityQuery ? undefined : q,
+      entityQuery,
+      assessmentId: entityQuery?.assessmentId ?? joinAssessmentId,
       projectId: projectId ?? undefined,
       projectScope: projectId ? projectScope : undefined
     },

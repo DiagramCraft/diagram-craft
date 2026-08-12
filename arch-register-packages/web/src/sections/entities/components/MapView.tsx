@@ -35,6 +35,7 @@ import { MapTreeContent } from './MapTreeContent';
 import { isRelationMapNode, useMapTraversal, type RenderTreeNode } from './mapViewTraversal';
 import { getMapBoxHandlers, getMapDetailClick } from './mapInteractions';
 import { normalizeMapConfig, type MapConfig } from './mapViewConfig';
+import { addSchemaIdsConstraint } from './entityBrowserState';
 export type { MapConfig } from './mapViewConfig';
 import type { JoinedAssessmentContext } from './entityFieldSources';
 import type { EntityHoverCardRow } from '../../../components/EntityHoverCardBody';
@@ -103,15 +104,20 @@ export const MapView = ({
       }),
     [cfg, relationSchemas, schemas]
   );
+  const mapEntityQuery = useMemo(
+    () => addSchemaIdsConstraint(entityQuery ?? null, schemaIds),
+    [entityQuery, schemaIds]
+  );
   const { treeNodes: nodes, treeEdges: edges } = useEntityBrowserTreeData({
     workspaceId,
     projectId,
     projectScope,
     q,
+    entityQuery: mapEntityQuery,
     typeFilter,
     ownerFilter,
     statusFilter,
-    schemaIds
+    schemaIds: mapEntityQuery ? undefined : schemaIds
   });
   const nodeIds = useMemo(() => nodes.map(node => node._uid), [nodes]);
   const entityRelations = useMultipleEntityRelations(workspaceId, nodeIds);

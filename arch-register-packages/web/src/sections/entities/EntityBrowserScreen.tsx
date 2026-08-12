@@ -13,8 +13,10 @@ import { EntityBrowser, SaveViewDialog } from './components/EntityBrowser';
 import { CreateBaselineDialog } from '../baselines/CreateBaselineDialog';
 import { buildEntityBaselineScope } from '../baselines/baselineScope';
 import {
+  buildEntityQueryFromBrowserFilters,
   buildSavedViewPayload,
-  getFilterValue,
+  getSingleFacetValue,
+  hasFacetConditions,
   parseEntityQueryFromSearch,
   parseConditionsFromSearch,
   parseViewConfigs
@@ -47,11 +49,11 @@ export const EntityBrowserScreen = () => {
   const conditions = useMemo(() => parseConditionsFromSearch(search), [search]);
   const entityQuery = useMemo(() => parseEntityQueryFromSearch(search), [search]);
   const typeFilter = useMemo(
-    () => entityQuery?.schemaId ?? getFilterValue(conditions, '_schemaId'),
+    () => entityQuery?.schemaId ?? getSingleFacetValue(conditions, '_schemaId'),
     [conditions, entityQuery]
   );
-  const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);
-  const ownerFilter = useMemo(() => getFilterValue(conditions, '_owner'), [conditions]);
+  const statusFilter = useMemo(() => getSingleFacetValue(conditions, '_lifecycle'), [conditions]);
+  const ownerFilter = useMemo(() => getSingleFacetValue(conditions, '_owner'), [conditions]);
   const requestedView = search.viewMode ?? 'table';
   const view =
     collectionId && requestedView !== 'table' && requestedView !== 'cards'
@@ -70,7 +72,9 @@ export const EntityBrowserScreen = () => {
     ? (collections.find(collection => collection.id === collectionId)?.name ?? 'Collection')
     : typeFilter
       ? (schemas.find(schema => schema.id === typeFilter)?.name ?? 'Entities')
-      : 'All entities';
+      : hasFacetConditions(conditions)
+        ? 'Filtered entities'
+        : 'All entities';
   const baselineScope = useMemo(
     () =>
       buildEntityBaselineScope({
@@ -177,13 +181,20 @@ export const EntityBrowserScreen = () => {
 
   const handleExport = useCallback(async () => {
     try {
+      const exportQuery = entityQuery
+        ? { ...entityQuery }
+        : hasFacetConditions(conditions)
+          ? buildEntityQueryFromBrowserFilters({
+              typeFilter,
+              conditions,
+              joinAssessmentId: search.joinAssessmentId,
+              q
+            })
+          : null;
       const blob = await exportEntitiesToCSV(workspaceId, {
-        schemaId: typeFilter,
-        owner: ownerFilter,
-        lifecycle: statusFilter,
-        q,
-        conditions,
-        entityQuery,
+        ...(exportQuery
+          ? { entityQuery: exportQuery }
+          : { schemaId: typeFilter, owner: ownerFilter, lifecycle: statusFilter, q, conditions }),
         collectionId,
         asOf
       });
@@ -198,6 +209,7 @@ export const EntityBrowserScreen = () => {
     collectionId,
     conditions,
     entityQuery,
+    search.joinAssessmentId,
     ownerFilter,
     q,
     statusFilter,

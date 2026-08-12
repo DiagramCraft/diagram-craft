@@ -15,7 +15,10 @@ import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
 import { BulkEditToolbar } from './BulkEditToolbar';
 import {
+  buildEntityQueryFromBrowserFilters,
+  hasFacetConditions,
   isEntityInProject,
+  withLiveSearchText,
   type BrowserEntityRecord,
   type ProjectBrowserContext
 } from './entityBrowserState';
@@ -212,6 +215,17 @@ export const EntityBrowser = ({
     projectId
   );
 
+  const baseEntityQuery =
+    entityQuery ??
+    (hasFacetConditions(conditions)
+      ? buildEntityQueryFromBrowserFilters({
+          typeFilter,
+          conditions,
+          joinAssessmentId: effectiveJoinAssessmentId
+        })
+      : null);
+  const executionEntityQuery = baseEntityQuery ? withLiveSearchText(baseEntityQuery, q) : null;
+
   useEffect(() => {
     if (projectId && assessmentsReady && joinAssessmentId && !effectiveJoinAssessmentId) {
       setJoinAssessmentId(null);
@@ -269,7 +283,7 @@ export const EntityBrowser = ({
     schemas,
     q,
     conditions,
-    entityQuery,
+    entityQuery: executionEntityQuery,
     joinAssessmentId: effectiveJoinAssessmentId,
     typeFilter,
     ownerFilter,
@@ -493,6 +507,7 @@ export const EntityBrowser = ({
             statusFilter={statusFilter}
             conditions={conditions}
             entityQuery={entityQuery ?? null}
+            executionEntityQuery={executionEntityQuery}
             activeViewConfig={activeViewConfig}
             displayFields={displayFields}
             projectContext={projectContext}

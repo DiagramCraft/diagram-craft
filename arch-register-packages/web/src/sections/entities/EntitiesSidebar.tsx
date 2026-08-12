@@ -1,4 +1,4 @@
-import { useState, useMemo } from 'react';
+import { useState, useMemo, type ReactNode } from 'react';
 import { useNavigate, useParams, useSearch, useLocation } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
@@ -25,7 +25,6 @@ import {
 } from 'react-icons/tb';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import type { SavedView } from '@arch-register/api-types/viewContract';
-import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { usePinnedEntities } from '../../hooks/useNotifications';
 import { useEntityFacets } from '../../hooks/useEntities';
@@ -43,11 +42,61 @@ import styles from '../../shell/SidePanel.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
-import { toSavedViewSearch } from './components/entityBrowserState';
+import {
+  hasFacetSelection,
+  parseConditionsFromSearch,
+  parseFacetSelectionFromSearch,
+  replaceFacetConditions,
+  toSavedViewSearch,
+  type BrowserSearch,
+  type EntityFacetSelection
+} from './components/entityBrowserState';
 import { toSavedRelationViewSearch } from '../relations/relationBrowserState';
 import type { Collection } from '@arch-register/api-types/collectionContract';
 import { BaselineSidebarSection } from '../baselines/BaselineSidebarSection';
 import type { EntityBrowserSidebarTab } from '../../routes/searchParams';
+
+const FacetRow = ({
+  icon,
+  label,
+  testId,
+  checked,
+  onToggle,
+  trailing,
+  tagColor,
+  iconOffset = false
+}: {
+  icon: ReactNode;
+  label: string;
+  testId: string;
+  checked: boolean;
+  onToggle: () => void;
+  trailing?: ReactNode;
+  tagColor?: string;
+  iconOffset?: boolean;
+}) => (
+  <TreeRow
+    icon={iconOffset ? <span style={{ transform: 'translateY(-0.5px)' }}>{icon}</span> : icon}
+    testId={testId}
+    label={
+      <span style={{ display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+        <input
+          type="checkbox"
+          checked={checked}
+          aria-label={`Filter by ${label}`}
+          onChange={onToggle}
+          onClick={event => event.stopPropagation()}
+          style={{ margin: 0 }}
+        />
+        <span>{label}</span>
+      </span>
+    }
+    active={checked}
+    onClick={onToggle}
+    trailing={trailing}
+    tagColor={tagColor}
+  />
+);
 
 export const EntitiesSidebar = ({
   schemas,
@@ -70,32 +119,10 @@ export const EntitiesSidebar = ({
   const search = useSearch({ strict: false });
   const sidebarTab = search.sidebarTab ?? 'home';
 
-  // Parse active filters from the filters JSON string
-  const activeFilters = useMemo(() => {
-    if (!search.filters) return { type: null, status: null, owner: null };
-    try {
-      const conditions = JSON.parse(search.filters) as FilterCondition[];
-      const result = {
-        type: null as string | null,
-        status: null as string | null,
-        owner: null as string | null
-      };
-      for (const cond of conditions) {
-        if (cond.fieldId === '_schemaId' && cond.op === 'equals')
-          result.type = cond.value as string;
-        if (cond.fieldId === '_lifecycle' && cond.op === 'equals')
-          result.status = cond.value as string;
-        if (cond.fieldId === '_owner' && cond.op === 'equals') result.owner = cond.value as string;
-      }
-      return result;
-    } catch {
-      return { type: null, status: null, owner: null };
-    }
-  }, [search.filters]);
-
-  const typeFilter = activeFilters.type;
-  const statusFilter = activeFilters.status;
-  const ownerFilter = activeFilters.owner;
+  const activeFacets = useMemo(
+    () => parseFacetSelectionFromSearch(search as BrowserSearch),
+    [search]
+  );
 
   const { data: facets } = useEntityFacets(workspaceSlug, sidebarTab === 'home');
   const { data: savedViews = [] } = useSavedViews(workspaceSlug, {
@@ -125,14 +152,26 @@ export const EntitiesSidebar = ({
   const [renameCollectionTarget, setRenameCollectionTarget] = useState<Collection | null>(null);
   const [deleteCollectionTarget, setDeleteCollectionTarget] = useState<Collection | null>(null);
 
-  const statusCounts = useMemo(() => {
-    const counts: Record<string, number> = {};
-    (facets?.lifecycle ?? []).forEach(bucket => {
-      const key = bucket.value ?? 'none';
-      counts[key] = bucket.count;
-    });
-    return counts;
-  }, [facets]);
+  const statuses = useMemo(() => {
+    const configured = lifecycleStates
+      .map(state => ({
+        id: state.id as string | null,
+        label: state.label,
+        color: state.color,
+        count: facets?.lifecycle.find(bucket => bucket.value === state.id)?.count ?? 0
+      }))
+      .filter(state => state.count > 0);
+    const unassigned = facets?.lifecycle.find(bucket => bucket.value == null);
+    if (unassigned && unassigned.count > 0) {
+      configured.push({
+        id: null,
+        label: 'Unassigned',
+        color: 'var(--text-muted)',
+        count: unassigned.count
+      });
+    }
+    return configured;
+  }, [facets, lifecycleStates]);
 
   const owners = useMemo(() => {
     return (facets?.owner ?? [])
@@ -145,52 +184,58 @@ export const EntitiesSidebar = ({
   }, [facets]);
 
   const totalEntities = facets?.total ?? schemas.reduce((sum, s) => sum + s.entity_count, 0);
-  const activeFilterKind =
-    typeFilter != null
-      ? 'type'
-      : statusFilter != null
-        ? 'status'
-        : ownerFilter != null
-          ? 'owner'
-          : 'all';
-
-  const navigateEntities = (params: {
-    type?: string;
-    status?: string;
-    owner?: string;
-    sidebarTab?: EntityBrowserSidebarTab;
-    collectionId?: string;
-  }) => {
-    // Start with a clean search object, only preserving sidebarTab if not explicitly set
-    const nextSearch: Record<string, unknown> = {
-      sidebarTab: params.sidebarTab ?? sidebarTab
-    };
-    if (params.collectionId !== undefined) nextSearch.collectionId = params.collectionId;
-
-    // If any filter is being set, reset to default list view and clear all other filters
-    if (params.type !== undefined || params.status !== undefined || params.owner !== undefined) {
-      // Set default list view
-      nextSearch.viewMode = 'table';
-
-      // Build filter conditions for only the clicked filter
-      const conditions: FilterCondition[] = [];
-      if (params.type) conditions.push({ fieldId: '_schemaId', op: 'equals', value: params.type });
-      if (params.status)
-        conditions.push({ fieldId: '_lifecycle', op: 'equals', value: params.status });
-      if (params.owner) conditions.push({ fieldId: '_owner', op: 'equals', value: params.owner });
-
-      if (conditions.length > 0) {
-        nextSearch.filters = JSON.stringify(conditions);
-      }
-      // Don't set type, status, owner in search params - they're in filters
-    }
-
+  const navigateFacetSelection = (selection: EntityFacetSelection) => {
+    const conditions = replaceFacetConditions(
+      parseConditionsFromSearch(search as BrowserSearch),
+      selection
+    );
     navigate({
       to: '/$workspaceSlug/entities',
       params: { workspaceSlug },
-      search: nextSearch
+      search: (previous: Record<string, unknown>) => ({
+        ...previous,
+        sidebarTab,
+        viewMode: 'table' as const,
+        filters: conditions.length > 0 ? JSON.stringify(conditions) : undefined,
+        entityQuery: undefined,
+        type: undefined,
+        status: undefined,
+        owner: undefined,
+        viewId: undefined
+      })
     });
   };
+
+  const toggleFacet = (kind: 'type' | 'status' | 'owner', value: string | null) => {
+    const next: EntityFacetSelection = {
+      schemaIds: [...activeFacets.schemaIds],
+      lifecycleValues: [...activeFacets.lifecycleValues],
+      ownerIds: [...activeFacets.ownerIds]
+    };
+    if (kind === 'type' && value !== null) {
+      next.schemaIds = next.schemaIds.includes(value)
+        ? next.schemaIds.filter(item => item !== value)
+        : [...next.schemaIds, value];
+    }
+    if (kind === 'status') {
+      next.lifecycleValues = next.lifecycleValues.includes(value)
+        ? next.lifecycleValues.filter(item => item !== value)
+        : [...next.lifecycleValues, value];
+    }
+    if (kind === 'owner') {
+      next.ownerIds = next.ownerIds.includes(value)
+        ? next.ownerIds.filter(item => item !== value)
+        : [...next.ownerIds, value];
+    }
+    navigateFacetSelection(next);
+  };
+
+  const clearFacetSelection = () =>
+    navigateFacetSelection({
+      schemaIds: [],
+      lifecycleValues: [],
+      ownerIds: []
+    });
 
   const applySavedView = (view: SavedView) => {
     const isRelationView = view.filters.root_kind === 'relation';
@@ -299,10 +344,8 @@ export const EntitiesSidebar = ({
               icon={<TbDatabase size={12} />}
               label="All entities"
               testId="entity-filter-all"
-              active={activeFilterKind === 'all' && !onRelationsRoute}
-              onClick={() =>
-                navigateEntities({ type: undefined, status: undefined, owner: undefined })
-              }
+              active={!hasFacetSelection(activeFacets) && !onRelationsRoute}
+              onClick={clearFacetSelection}
               trailing={<span className="dim mono">{totalEntities}</span>}
             />
             <TreeRow
@@ -319,7 +362,7 @@ export const EntitiesSidebar = ({
             />
             <SidebarGroupLabel>By type</SidebarGroupLabel>
             {schemas.map((s, i) => (
-              <TreeRow
+              <FacetRow
                 key={s.id}
                 testId={`entity-type-filter-${s.name}`}
                 icon={
@@ -331,21 +374,18 @@ export const EntitiesSidebar = ({
                   />
                 }
                 label={s.name}
-                active={activeFilterKind === 'type' && typeFilter === s.id}
-                onClick={() =>
-                  navigateEntities({ type: s.id, status: undefined, owner: undefined })
-                }
+                checked={activeFacets.schemaIds.includes(s.id)}
+                onToggle={() => toggleFacet('type', s.id)}
                 trailing={<span className="dim mono">{s.entity_count}</span>}
                 tagColor={resolveSchemaColor(s, i)}
+                iconOffset
               />
             ))}
             <SidebarGroupLabel>By status</SidebarGroupLabel>
-            {lifecycleStates.map(s => {
-              const count = statusCounts[s.id] ?? 0;
-              if (!count) return null;
+            {statuses.map(s => {
               return (
-                <TreeRow
-                  key={s.id}
+                <FacetRow
+                  key={s.id ?? 'unassigned'}
                   testId={`entity-status-filter-${s.label}`}
                   icon={
                     <span
@@ -359,29 +399,26 @@ export const EntitiesSidebar = ({
                     />
                   }
                   label={s.label}
-                  active={activeFilterKind === 'status' && statusFilter === s.id}
-                  onClick={() =>
-                    navigateEntities({ type: undefined, status: s.id, owner: undefined })
-                  }
-                  trailing={<span className="dim mono">{count}</span>}
+                  checked={activeFacets.lifecycleValues.includes(s.id)}
+                  onToggle={() => toggleFacet('status', s.id)}
+                  trailing={<span className="dim mono">{s.count}</span>}
+                  iconOffset
                 />
               );
             })}
             <SidebarGroupLabel>By owner</SidebarGroupLabel>
             {owners.map(([ownerId, ownerName, count]) => (
-              <TreeRow
+              <FacetRow
                 key={ownerId ?? 'unassigned'}
                 testId={`entity-owner-filter-${ownerName}`}
-                icon={<TbUsers size={12} />}
-                label={ownerName}
-                active={activeFilterKind === 'owner' && ownerFilter === ownerId}
-                onClick={() =>
-                  navigateEntities({
-                    type: undefined,
-                    status: undefined,
-                    owner: ownerId ?? undefined
-                  })
+                icon={
+                  <div style={{ marginTop: '2px' }}>
+                    <TbUsers size={12} />
+                  </div>
                 }
+                label={ownerName}
+                checked={activeFacets.ownerIds.includes(ownerId)}
+                onToggle={() => toggleFacet('owner', ownerId)}
                 trailing={<span className="dim mono">{count}</span>}
               />
             ))}
@@ -602,7 +639,11 @@ export const EntitiesSidebar = ({
           if (deleteCollectionTarget) {
             deleteCollectionMutation.mutate(deleteCollectionTarget.id);
             if (search.collectionId === deleteCollectionTarget.id) {
-              navigateEntities({ sidebarTab: 'bookmarks', collectionId: undefined });
+              navigate({
+                to: '/$workspaceSlug/entities',
+                params: { workspaceSlug },
+                search: { sidebarTab: 'bookmarks', viewMode: 'table' }
+              });
             }
             setDeleteCollectionTarget(null);
           }

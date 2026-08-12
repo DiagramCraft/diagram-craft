@@ -38,7 +38,7 @@ import { useEntityLandscapeDiff, buildProjectLandscapeDiffStates } from '../../h
 import { EntityBrowser, SaveViewDialog } from '../entities/components/EntityBrowser';
 import {
   buildSavedViewPayload,
-  getFilterValue,
+  getSingleFacetValue,
   parseConditionsFromSearch,
   parseEntityQueryFromSearch,
   parseViewConfigs
@@ -187,11 +187,11 @@ export const ProjectEntities = ({
   const conditions = useMemo(() => parseConditionsFromSearch(search), [search]);
   const entityQuery = useMemo(() => parseEntityQueryFromSearch(search), [search]);
   const typeFilter = useMemo(
-    () => entityQuery?.schemaId ?? getFilterValue(conditions, '_schemaId'),
+    () => entityQuery?.schemaId ?? getSingleFacetValue(conditions, '_schemaId'),
     [conditions, entityQuery]
   );
-  const statusFilter = useMemo(() => getFilterValue(conditions, '_lifecycle'), [conditions]);
-  const ownerFilter = useMemo(() => getFilterValue(conditions, '_owner'), [conditions]);
+  const statusFilter = useMemo(() => getSingleFacetValue(conditions, '_lifecycle'), [conditions]);
+  const ownerFilter = useMemo(() => getSingleFacetValue(conditions, '_owner'), [conditions]);
   const view = (search.viewMode ?? 'table') as BrowserView;
   const q = search.q ?? '';
   const sort = search.sort ?? 'name';

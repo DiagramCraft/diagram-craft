@@ -9,8 +9,10 @@ import {
   isEntityInProject,
   parseJsonConfig,
   parseEntityQueryFromSearch,
+  parseFacetSelectionFromConditions,
   parseViewConfigs,
   pruneAssessmentReferences,
+  replaceFacetConditions,
   serializeViewConfigs,
   toSavedViewConfig,
   toSavedViewSearch,
@@ -355,6 +357,75 @@ describe('structured entity query view persistence', () => {
     });
   });
 
+  it('groups multiple facet values with OR and different facets with AND', () => {
+    expect(
+      buildEntityQueryFromBrowserFilters({
+        typeFilter: null,
+        conditions: [
+          { fieldId: '_schemaId', op: 'equals', value: 'component' },
+          { fieldId: '_schemaId', op: 'equals', value: 'service' },
+          { fieldId: '_lifecycle', op: 'equals', value: 'active' },
+          { fieldId: '_lifecycle', op: 'empty', value: '' },
+          { fieldId: '_owner', op: 'equals', value: 'team-a' },
+          { fieldId: '_owner', op: 'empty', value: '' }
+        ]
+      })
+    ).toEqual({
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'or',
+            children: [
+              {
+                kind: 'predicate',
+                path: [],
+                fieldId: '_schemaId',
+                op: 'equals',
+                value: 'component'
+              },
+              { kind: 'predicate', path: [], fieldId: '_schemaId', op: 'equals', value: 'service' }
+            ]
+          },
+          {
+            kind: 'or',
+            children: [
+              { kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'equals', value: 'active' },
+              { kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'empty', value: '' }
+            ]
+          },
+          {
+            kind: 'or',
+            children: [
+              { kind: 'predicate', path: [], fieldId: '_owner', op: 'equals', value: 'team-a' },
+              { kind: 'predicate', path: [], fieldId: '_owner', op: 'empty', value: '' }
+            ]
+          }
+        ]
+      }
+    });
+  });
+
+  it('round trips facet selections while preserving non-facet conditions', () => {
+    const conditions = [
+      { fieldId: '_schemaId', op: 'equals' as const, value: 'component' },
+      { fieldId: '_schemaId', op: 'equals' as const, value: 'service' },
+      { fieldId: '_owner', op: 'empty' as const, value: '' },
+      { fieldId: 'criticality', op: 'gte' as const, value: 3 }
+    ];
+    const selection = parseFacetSelectionFromConditions(conditions);
+    expect(selection).toEqual({
+      schemaIds: ['component', 'service'],
+      lifecycleValues: [],
+      ownerIds: [null]
+    });
+    expect(replaceFacetConditions(conditions, { ...selection, schemaIds: ['service'] })).toEqual([
+      { fieldId: 'criticality', op: 'gte', value: 3 },
+      { fieldId: '_schemaId', op: 'equals', value: 'service' },
+      { fieldId: '_owner', op: 'empty', value: '' }
+    ]);
+  });
+
   it('stores completeness predicates directly in the canonical query', () => {
     const conditions = [{ fieldId: '_completeness', op: 'lt' as const, value: 50 }];
     const payload = buildSavedViewPayload({
@@ -441,13 +512,31 @@ describe('Basic/Advanced query mode representability', () => {
     });
   });
 
-  it('rejects OR grouping', () => {
+  it('accepts OR grouping for one facet', () => {
     const query: EntityQuery = {
       root: {
         kind: 'or',
         children: [
           { kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'equals', value: 'active' },
           { kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'equals', value: 'deprecated' }
+        ]
+      }
+    };
+
+    expect(isBasicRepresentable(query)).toBe(true);
+    expect(entityQueryToBrowserFilters(query).conditions).toEqual([
+      { fieldId: '_lifecycle', op: 'equals', value: 'active' },
+      { fieldId: '_lifecycle', op: 'equals', value: 'deprecated' }
+    ]);
+  });
+
+  it('rejects arbitrary OR grouping', () => {
+    const query: EntityQuery = {
+      root: {
+        kind: 'or',
+        children: [
+          { kind: 'predicate', path: [], fieldId: '_name', op: 'equals', value: 'A' },
+          { kind: 'predicate', path: [], fieldId: '_owner', op: 'equals', value: 'team-a' }
         ]
       }
     };

@@ -9,7 +9,7 @@ import {
   notificationsApiEntity,
   seededApiEntityCount
 } from '../support/entities';
-import { apiSchema } from '../support/schemas';
+import { apiSchema, componentSchema } from '../support/schemas';
 import { defaultWorkspace } from '../support/workspaces';
 
 test.describe('entities section', () => {
@@ -67,6 +67,54 @@ test.describe('entities section', () => {
     await entitiesPage.expectLoaded();
     await entitiesPage.filterByType(apiSchema.name);
     await entitiesPage.expectFilteredResultCount(seededApiEntityCount);
+  });
+
+  test('combines, restores, and clears multiple sidebar facets', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.goto();
+    await entitiesPage.expectLoaded();
+    await entitiesPage.typeFilter(apiSchema.name).click();
+    await entitiesPage.typeFilter(componentSchema.name).click();
+
+    await expect(entitiesPage.facetCheckbox(apiSchema.name)).toBeChecked();
+    await expect(entitiesPage.facetCheckbox(componentSchema.name)).toBeChecked();
+    const combinedCount = Number(await entitiesPage.browserCount().textContent());
+    expect(combinedCount).toBeGreaterThan(seededApiEntityCount);
+
+    const readFilters = () => {
+      const parsed: unknown = JSON.parse(new URL(page.url()).searchParams.get('filters') ?? '[]');
+      return (typeof parsed === 'string' ? JSON.parse(parsed) : parsed) as Array<{
+        fieldId: string;
+        op: string;
+        value?: unknown;
+      }>;
+    };
+    const selectedTypes = readFilters().filter(
+      (condition: { fieldId: string }) => condition.fieldId === '_schemaId'
+    );
+    expect(selectedTypes).toHaveLength(2);
+
+    await page.reload();
+    await expect(entitiesPage.facetCheckbox(apiSchema.name)).toBeChecked();
+    await expect(entitiesPage.facetCheckbox(componentSchema.name)).toBeChecked();
+
+    await page.getByTestId('entity-status-filter-Production').click();
+    const combinedFilters = readFilters();
+    expect(combinedFilters.filter(condition => condition.fieldId === '_schemaId')).toHaveLength(2);
+    expect(combinedFilters).toContainEqual({
+      fieldId: '_lifecycle',
+      op: 'equals',
+      value: expect.any(String)
+    });
+
+    await entitiesPage.typeFilter(apiSchema.name).click();
+    await expect(entitiesPage.facetCheckbox(apiSchema.name)).not.toBeChecked();
+    await expect(entitiesPage.facetCheckbox(componentSchema.name)).toBeChecked();
+
+    await page.getByTestId('entity-filter-all').click();
+    await expect(entitiesPage.browserTitle()).toHaveText('All entities');
+    await expect(entitiesPage.facetCheckbox(componentSchema.name)).not.toBeChecked();
   });
 
   test('opens an entity detail from the browser @quick', async ({ page }) => {
