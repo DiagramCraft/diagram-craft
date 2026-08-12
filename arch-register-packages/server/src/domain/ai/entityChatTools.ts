@@ -12,6 +12,7 @@ import type { Entity, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import { equalEntityValue } from '../catalog/entityDiff';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { entityRequiresApproval } from '../catalog/entityChangeOperations';
+import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { formatPublicId } from '../../utils/publicIds';
 import { filterRelationFieldData } from '../catalog/relationHelpers';
@@ -524,6 +525,16 @@ const createCreateEntityTool = (context: AiChatToolContext) =>
       typeof args.lifecycle === 'string' && lifecycleValues.has(args.lifecycle)
         ? args.lifecycle
         : null;
+    const currencyConfig = await context.db.workspace.getSupportedCurrencies?.(
+      context.workspaceId
+    );
+    const normalizedFields = normalizeEntityScalarFields({
+      schemaFields: schema.fields,
+      fields: args.fields ?? {},
+      supportedCurrencies: currencyConfig
+        ? new Set(currencyConfig.currencies.map(currency => currency.code))
+        : undefined
+    });
 
     if (context.authCtx !== null) {
       requireNoRestrictedFieldWrites(
@@ -565,7 +576,7 @@ const createCreateEntityTool = (context: AiChatToolContext) =>
           tags: filterStringArray(args.tags),
           links: [],
           schema_id: schema.id,
-          data: args.fields ?? {},
+          data: normalizedFields,
           project_id: null,
           created_at: timestamp,
           updated_at: timestamp,
@@ -574,7 +585,7 @@ const createCreateEntityTool = (context: AiChatToolContext) =>
               description: typeof args.description === 'string' ? args.description : '',
               owner,
               lifecycle,
-              data: args.fields ?? {}
+              data: normalizedFields
             },
             schema
           )
@@ -641,10 +652,22 @@ const createUpdateEntityTool = (context: AiChatToolContext) =>
       ...current.data,
       ...(args.fields ?? {})
     };
+    const currencyConfig = schema
+      ? await context.db.workspace.getSupportedCurrencies?.(context.workspaceId)
+      : null;
+    const normalizedNextData = schema
+      ? normalizeEntityScalarFields({
+          schemaFields: schema.fields,
+          fields: nextData,
+          supportedCurrencies: currencyConfig
+            ? new Set(currencyConfig.currencies.map(currency => currency.code))
+            : undefined
+        })
+      : nextData;
 
     if (context.authCtx !== null && schema) {
       const changedFieldIds = Object.keys(args.fields ?? {}).filter(
-        fieldId => !equalEntityValue(current.data[fieldId], nextData[fieldId])
+        fieldId => !equalEntityValue(current.data[fieldId], normalizedNextData[fieldId])
       );
       requireNoRestrictedFieldWrites(
         context.authCtx,
@@ -681,7 +704,7 @@ const createUpdateEntityTool = (context: AiChatToolContext) =>
           tags: args.tags === undefined ? current.tags : filterStringArray(args.tags),
           links: current.links,
           schema_id: current.schema_id,
-          data: nextData,
+          data: normalizedNextData,
           project_id: current.project_id,
           updated_at: new Date(),
           completeness: schema
@@ -690,7 +713,7 @@ const createUpdateEntityTool = (context: AiChatToolContext) =>
                   description: nextDescription,
                   owner: nextOwner,
                   lifecycle: nextLifecycle,
-                  data: nextData
+                  data: normalizedNextData
                 },
                 schema
               )

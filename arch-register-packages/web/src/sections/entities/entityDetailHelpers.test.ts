@@ -1,5 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import { buildEntityRefLookup } from './entityDetailHelpers';
+import { buildEntityRefLookup, resolveEntityReference } from './entityDetailHelpers';
 import type { EntityRelations } from '@arch-register/api-types/entityContract';
 
 const relation = (entityId: string, entityName: string, entitySchemaId = 'service') => ({
@@ -53,5 +53,26 @@ describe('buildEntityRefLookup', () => {
     expect(
       buildEntityRefLookup({ outgoing: [], incoming: [relation('incoming', 'Incoming')] })
     ).toEqual(new Map());
+  });
+});
+
+describe('resolveEntityReference', () => {
+  it('falls back to schema reference options when the relation lookup has no entry', () => {
+    const candidate = {
+      ...buildEntityRefLookup({ outgoing: [relation('other', 'Other')], incoming: [] }).get(
+        'other'
+      )!,
+      _uid: 'parent-1',
+      _publicId: 'PARENT-1',
+      _name: 'Parent One',
+      _slug: 'parent-one'
+    };
+
+    const resolved = resolveEntityReference('parent-1', 'domain', new Map(), {
+      domain: [candidate]
+    });
+
+    expect(resolved?._name).toBe('Parent One');
+    expect(resolved?._publicId).toBe('PARENT-1');
   });
 });

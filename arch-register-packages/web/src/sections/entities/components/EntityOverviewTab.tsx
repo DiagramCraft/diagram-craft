@@ -50,6 +50,7 @@ import { RelationRecordList } from './RelationRecordList';
 import { TypedRelationFieldEditor } from './TypedRelationFieldEditor';
 import { MultiValueEditor } from '../../../components/MultiValueEditor';
 import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
+import { resolveEntityReference } from '../entityDetailHelpers';
 
 type EntityProjectAssoc = { project: Project; entity_type: ProjectEntity['entity_type'] };
 
@@ -944,6 +945,26 @@ const PropertyRow = ({
         />
       );
     }
+    if (field.type === 'reference' || field.type === 'containment') {
+      const ids = relationIds(value);
+      if (ids.length === 0) return <span className={sharedStyles.dim}>—</span>;
+      return (
+        <>
+          {ids.map((id, index) => {
+            const ref = resolveEntityReference(id, field.schemaId, refLookup, referenceOptions);
+            const label = ref?._name ?? ref?._slug ?? id;
+            return (
+              <span key={id}>
+                {index > 0 && ', '}
+                <EntityNavigationLink publicId={ref?._publicId ?? id} className={styles.propLink}>
+                  {label}
+                </EntityNavigationLink>
+              </span>
+            );
+          })}
+        </>
+      );
+    }
     if (Array.isArray(value)) {
       if (value.length === 0) return <span className={sharedStyles.dim}>—</span>;
       if (field.type === 'select') {
@@ -985,26 +1006,6 @@ const PropertyRow = ({
     if (field.type === 'select') {
       const opt = field.options.find(o => o.value === value);
       return <Chip tone="ghost">{opt?.label ?? String(value)}</Chip>;
-    }
-    if (field.type === 'reference' || field.type === 'containment') {
-      const ids = relationIds(value);
-      if (ids.length === 0) return <span className={sharedStyles.dim}>—</span>;
-      return (
-        <>
-          {ids.map((id, index) => {
-            const ref = refLookup.get(id);
-            const label = ref?._name ?? ref?._slug ?? id;
-            return (
-              <span key={id}>
-                {index > 0 && ', '}
-                <EntityNavigationLink publicId={ref?._publicId ?? id} className={styles.propLink}>
-                  {label}
-                </EntityNavigationLink>
-              </span>
-            );
-          })}
-        </>
-      );
     }
     if (field.type === 'date') return <span>{formatDate(value)}</span>;
     if (field.type === 'currency') return <span>{formatCurrencyValue(value)}</span>;
