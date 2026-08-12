@@ -63241,6 +63241,910 @@
         }
       }
     },
+    "/{workspace}/config/public-catalog/options": {
+      "get": {
+        "operationId": "publicCatalogConfig.options",
+        "summary": "Get public catalog selector options",
+        "description": "Returns labeled, eligibility-aware entities, Markdown pages, API artifacts, revisions, and fields for guided publication settings.",
+        "tags": [
+          "Public Catalog Configuration",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "schemas": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "description": {
+                            "type": "string"
+                          },
+                          "keyPrefix": {
+                            "type": "string"
+                          },
+                          "fields": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string"
+                                },
+                                "name": {
+                                  "type": "string"
+                                },
+                                "type": {
+                                  "type": "string"
+                                },
+                                "description": {
+                                  "type": "string"
+                                },
+                                "selectable": {
+                                  "type": "boolean"
+                                },
+                                "reason": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type",
+                                "selectable"
+                              ]
+                            }
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "name",
+                          "description",
+                          "keyPrefix",
+                          "fields"
+                        ]
+                      }
+                    },
+                    "entities": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "publicId": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "schemaId": {
+                            "type": "string"
+                          },
+                          "schemaName": {
+                            "type": "string"
+                          },
+                          "projectOnly": {
+                            "type": "boolean"
+                          },
+                          "selectable": {
+                            "type": "boolean"
+                          },
+                          "reason": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "publicId",
+                          "slug",
+                          "name",
+                          "schemaId",
+                          "schemaName",
+                          "projectOnly",
+                          "selectable"
+                        ]
+                      }
+                    },
+                    "pages": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "nodeId": {
+                            "type": "string"
+                          },
+                          "scope": {
+                            "enum": [
+                              "workspace",
+                              "entity"
+                            ],
+                            "type": "string"
+                          },
+                          "entityId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "entityPublicId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "entityName": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "path": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "selectable": {
+                            "type": "boolean"
+                          },
+                          "reason": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "nodeId",
+                          "scope",
+                          "entityId",
+                          "entityPublicId",
+                          "entityName",
+                          "path",
+                          "name",
+                          "selectable"
+                        ]
+                      }
+                    },
+                    "apiArtifacts": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "artifactId": {
+                            "type": "string"
+                          },
+                          "entityId": {
+                            "type": "string"
+                          },
+                          "entityPublicId": {
+                            "type": "string"
+                          },
+                          "entityName": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "status": {
+                            "enum": [
+                              "not_configured",
+                              "link_only",
+                              "pending",
+                              "current",
+                              "stale",
+                              "failed",
+                              "invalid",
+                              "unsupported"
+                            ],
+                            "type": "string",
+                            "description": "Current artifact processing status"
+                          },
+                          "currentRevisionId": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ]
+                          },
+                          "revisions": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "revision": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "description": "Immutable artifact revision identifier"
+                                    },
+                                    "artifactId": {
+                                      "type": "string",
+                                      "description": "Owning artifact identifier"
+                                    },
+                                    "sourceRevision": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Provider or repository revision identifier"
+                                    },
+                                    "checksum": {
+                                      "type": "string",
+                                      "description": "SHA-256 checksum of the accepted artifact document"
+                                    },
+                                    "mediaType": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Source media type"
+                                    },
+                                    "contentSize": {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991,
+                                      "description": "Stored source size in bytes"
+                                    },
+                                    "createdAt": {
+                                      "type": "string",
+                                      "description": "ISO 8601 acceptance timestamp"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "artifactId",
+                                    "sourceRevision",
+                                    "checksum",
+                                    "mediaType",
+                                    "contentSize",
+                                    "createdAt"
+                                  ]
+                                },
+                                "protocol": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "openapi",
+                                        "asyncapi"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "specificationVersion": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "title": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "description": {
+                                  "anyOf": [
+                                    {
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ]
+                                },
+                                "status": {
+                                  "enum": [
+                                    "current",
+                                    "invalid",
+                                    "unsupported"
+                                  ],
+                                  "type": "string"
+                                },
+                                "isCurrent": {
+                                  "type": "boolean",
+                                  "description": "Whether this is the artifact's current successful revision"
+                                },
+                                "itemCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                },
+                                "diagnostics": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "severity": {
+                                        "enum": [
+                                          "error",
+                                          "warning"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "category": {
+                                        "enum": [
+                                          "parse_error",
+                                          "validation_error",
+                                          "unsupported_media_type",
+                                          "unsupported_version",
+                                          "unsupported_construct",
+                                          "unresolved_reference",
+                                          "duplicate_identifier",
+                                          "missing_identifier",
+                                          "resource_limit",
+                                          "normalization_error"
+                                        ],
+                                        "type": "string"
+                                      },
+                                      "code": {
+                                        "type": "string"
+                                      },
+                                      "message": {
+                                        "type": "string"
+                                      },
+                                      "source": {
+                                        "anyOf": [
+                                          {
+                                            "type": "object",
+                                            "properties": {
+                                              "pointer": {
+                                                "type": "string",
+                                                "description": "JSON Pointer into the source document"
+                                              },
+                                              "line": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "integer",
+                                                    "minimum": 1,
+                                                    "maximum": 9007199254740991
+                                                  },
+                                                  {
+                                                    "type": "null"
+                                                  }
+                                                ],
+                                                "description": "1-based source line when available"
+                                              },
+                                              "column": {
+                                                "anyOf": [
+                                                  {
+                                                    "type": "integer",
+                                                    "minimum": 1,
+                                                    "maximum": 9007199254740991
+                                                  },
+                                                  {
+                                                    "type": "null"
+                                                  }
+                                                ],
+                                                "description": "1-based source column when available"
+                                              }
+                                            },
+                                            "required": [
+                                              "pointer",
+                                              "line",
+                                              "column"
+                                            ]
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ]
+                                      }
+                                    },
+                                    "required": [
+                                      "severity",
+                                      "category",
+                                      "code",
+                                      "message",
+                                      "source"
+                                    ]
+                                  }
+                                },
+                                "selectable": {
+                                  "type": "boolean"
+                                },
+                                "reason": {
+                                  "type": "string"
+                                }
+                              },
+                              "required": [
+                                "revision",
+                                "protocol",
+                                "specificationVersion",
+                                "title",
+                                "description",
+                                "status",
+                                "isCurrent",
+                                "itemCount",
+                                "diagnostics",
+                                "selectable"
+                              ]
+                            }
+                          },
+                          "selectable": {
+                            "type": "boolean"
+                          },
+                          "reason": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "artifactId",
+                          "entityId",
+                          "entityPublicId",
+                          "entityName",
+                          "label",
+                          "status",
+                          "currentRevisionId",
+                          "revisions",
+                          "selectable"
+                        ]
+                      }
+                    }
+                  },
+                  "required": [
+                    "schemas",
+                    "entities",
+                    "pages",
+                    "apiArtifacts"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/config/public-catalog/preview": {
+      "post": {
+        "operationId": "publicCatalogConfig.preview",
+        "summary": "Preview public catalog configuration",
+        "description": "Validates an unsaved public catalog configuration and returns the manifest it would produce without persisting changes.",
+        "tags": [
+          "Public Catalog Configuration",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "enabled": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "title": {
+                    "type": "string",
+                    "maxLength": 200
+                  },
+                  "description": {
+                    "type": "string",
+                    "maxLength": 2000
+                  },
+                  "indexable": {
+                    "type": "boolean",
+                    "default": false
+                  },
+                  "schemas": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "schemaId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "fieldIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "default": []
+                        }
+                      },
+                      "required": [
+                        "schemaId"
+                      ]
+                    },
+                    "default": []
+                  },
+                  "entityOverrides": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "entityId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "mode": {
+                          "enum": [
+                            "publish",
+                            "exclude"
+                          ],
+                          "type": "string"
+                        },
+                        "fieldIds": {
+                          "type": "array",
+                          "items": {
+                            "type": "string",
+                            "minLength": 1
+                          }
+                        }
+                      },
+                      "required": [
+                        "entityId",
+                        "mode"
+                      ]
+                    },
+                    "default": []
+                  },
+                  "pages": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "nodeId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "scope": {
+                          "enum": [
+                            "workspace",
+                            "entity"
+                          ],
+                          "type": "string"
+                        },
+                        "entityId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "publicPath": {
+                          "type": "string",
+                          "minLength": 1,
+                          "maxLength": 200,
+                          "pattern": "^[A-Za-z0-9][A-Za-z0-9/_-]*$"
+                        },
+                        "label": {
+                          "type": "string",
+                          "maxLength": 200
+                        },
+                        "order": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991,
+                          "default": 0
+                        }
+                      },
+                      "required": [
+                        "nodeId",
+                        "scope",
+                        "publicPath"
+                      ]
+                    },
+                    "default": []
+                  },
+                  "apiArtifacts": {
+                    "type": "array",
+                    "items": {
+                      "type": "object",
+                      "properties": {
+                        "artifactId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "revisionId": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "exposeRaw": {
+                          "type": "boolean",
+                          "default": false
+                        }
+                      },
+                      "required": [
+                        "artifactId"
+                      ]
+                    },
+                    "default": []
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "enabled": {
+                      "type": "boolean"
+                    },
+                    "manifest": {
+                      "type": "object",
+                      "properties": {
+                        "workspace": {
+                          "type": "string"
+                        },
+                        "title": {
+                          "type": "string"
+                        },
+                        "description": {
+                          "type": "string"
+                        },
+                        "indexable": {
+                          "type": "boolean"
+                        },
+                        "schemas": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string"
+                              },
+                              "name": {
+                                "type": "string"
+                              },
+                              "description": {
+                                "type": "string"
+                              },
+                              "keyPrefix": {
+                                "type": "string"
+                              },
+                              "fields": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "name": {
+                                      "type": "string"
+                                    },
+                                    "type": {
+                                      "type": "string"
+                                    },
+                                    "description": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "name",
+                                    "type"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "description",
+                              "keyPrefix",
+                              "fields"
+                            ]
+                          }
+                        },
+                        "pages": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "path": {
+                                "type": "string"
+                              },
+                              "label": {
+                                "type": "string"
+                              },
+                              "scope": {
+                                "enum": [
+                                  "workspace",
+                                  "entity"
+                                ],
+                                "type": "string"
+                              },
+                              "entityPublicId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              }
+                            },
+                            "required": [
+                              "path",
+                              "label",
+                              "scope",
+                              "entityPublicId"
+                            ]
+                          }
+                        },
+                        "apiArtifacts": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "artifactId": {
+                                "type": "string"
+                              },
+                              "entityPublicId": {
+                                "type": "string"
+                              },
+                              "title": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "protocol": {
+                                "anyOf": [
+                                  {
+                                    "enum": [
+                                      "openapi",
+                                      "asyncapi"
+                                    ],
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "currentRevisionId": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "rawAvailable": {
+                                "type": "boolean"
+                              }
+                            },
+                            "required": [
+                              "artifactId",
+                              "entityPublicId",
+                              "title",
+                              "protocol",
+                              "currentRevisionId",
+                              "rawAvailable"
+                            ]
+                          }
+                        },
+                        "entityCount": {
+                          "type": "integer",
+                          "minimum": 0,
+                          "maximum": 9007199254740991
+                        },
+                        "endpoints": {
+                          "type": "object",
+                          "properties": {
+                            "entities": {
+                              "type": "string"
+                            },
+                            "wiki": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "entities",
+                            "wiki"
+                          ]
+                        }
+                      },
+                      "required": [
+                        "workspace",
+                        "title",
+                        "description",
+                        "indexable",
+                        "schemas",
+                        "pages",
+                        "apiArtifacts",
+                        "entityCount",
+                        "endpoints"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "enabled",
+                    "manifest"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/search": {
       "get": {
         "operationId": "search.query",
