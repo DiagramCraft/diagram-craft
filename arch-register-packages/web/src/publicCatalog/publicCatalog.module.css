@@ -279,6 +279,137 @@ button.markdownLink {
   margin: 8px 0 0;
 }
 
+.topologyToolbar {
+  display: flex;
+  align-items: end;
+  gap: 12px;
+  flex-wrap: wrap;
+  margin: 28px 0 14px;
+  padding: 14px;
+  border: 1px solid var(--panel-border);
+  border-radius: 10px;
+  background: var(--panel-bg);
+}
+
+.topologyToolbar legend {
+  padding: 0 6px;
+  color: var(--base-fg-dim);
+  font-size: 12px;
+}
+
+.topologyControl,
+.topologyControlWide {
+  display: grid;
+  gap: 5px;
+  color: var(--base-fg-dim);
+  font-size: 12px;
+}
+
+.topologyControl select,
+.topologyControlWide input,
+.topologyControlWide select {
+  min-width: 110px;
+  padding: 8px 9px;
+  border: 1px solid var(--cmp-border);
+  border-radius: 7px;
+  background: var(--cmp-bg);
+  color: var(--cmp-fg);
+  font: inherit;
+}
+
+.topologyControlWide input,
+.topologyControlWide select {
+  min-width: 180px;
+}
+
+.topologyCanvas {
+  height: min(620px, 65vh);
+  min-height: 360px;
+  margin-top: 12px;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: 12px;
+  background: var(--panel-bg);
+}
+
+.topologyNodeSchema {
+  flex: none;
+  max-width: 92px;
+  overflow: hidden;
+  color: var(--accent-fg);
+  font-size: 10px;
+  letter-spacing: 0.04em;
+  text-overflow: ellipsis;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.topologyNodeName {
+  overflow: hidden;
+  font-weight: 600;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.topologyWarning {
+  margin: 14px 0;
+  padding: 10px 12px;
+  border: 1px solid var(--accent-border);
+  border-radius: 8px;
+  background: var(--cmp-bg-hover);
+  color: var(--base-fg);
+  font-size: 13px;
+}
+
+.topologyTableBlock {
+  display: grid;
+  gap: 14px;
+  margin-top: 34px;
+}
+
+.topologyTableBlock h2 {
+  margin-top: 0;
+  font-size: 20px;
+}
+
+.topologyTable {
+  width: 100%;
+  border-collapse: collapse;
+  font-size: 13px;
+  text-align: left;
+}
+
+.topologyTable caption {
+  padding-bottom: 8px;
+  color: var(--base-fg-dim);
+  font-size: 12px;
+  text-align: left;
+}
+
+.topologyTable th,
+.topologyTable td {
+  padding: 10px 12px;
+  border-bottom: 1px solid var(--panel-border);
+  vertical-align: top;
+}
+
+.topologyTable th {
+  color: var(--base-fg-dim);
+  font-weight: 600;
+}
+
+.topologyTable a {
+  color: var(--accent-fg);
+}
+
+.topologyRootLabel,
+.topologyKind {
+  margin-left: 7px;
+  color: var(--base-fg-dim);
+  font-size: 11px;
+  font-weight: 400;
+}
+
 .method {
   display: inline-block;
   min-width: 58px;
@@ -334,5 +465,14 @@ button.markdownLink {
   .fieldTable div {
     grid-template-columns: 1fr;
     gap: 2px;
+  }
+
+  .topologyCanvas {
+    min-height: 300px;
+  }
+
+  .topologyTable {
+    display: block;
+    overflow-x: auto;
   }
 }

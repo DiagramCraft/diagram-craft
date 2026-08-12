@@ -19,6 +19,7 @@ import {
   listPublicApiSpecificationRevisions,
   getPublicApiSpecificationRaw,
   listPublicCatalogEntities,
+  getPublicCatalogTopology,
   readPublicCatalogConfig,
   readPublicCatalogSelectorOptions,
   replacePublicCatalogConfig,
@@ -55,6 +56,16 @@ export const publicCatalogORPCRouter = publicRouter.router({
     ),
     get: publicRouter.entities.get.handler(({ input, context }) =>
       getPublicCatalogEntity(context.db, input.params.workspace, input.params.entityPublicId)
+    )
+  },
+  topology: {
+    get: publicRouter.topology.get.handler(({ input, context }) =>
+      getPublicCatalogTopology(
+        context.db,
+        input.params.workspace,
+        input.params.entityPublicId,
+        input.query
+      )
     )
   },
   wiki: {

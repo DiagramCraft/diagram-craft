@@ -99,6 +99,7 @@ export const publicCatalogManifestSchema = z.object({
   entityCount: z.number().int().min(0),
   endpoints: z.object({
     entities: z.string(),
+    topology: z.string(),
     wiki: z.string()
   })
 });
@@ -195,6 +196,38 @@ export const publicCatalogEntityListSchema = z.object({
   total: z.number().int().min(0)
 });
 
+export const publicCatalogTopologyNodeSchema = z.object({
+  publicId: z.string(),
+  slug: z.string(),
+  name: z.string(),
+  schema: z.object({
+    name: z.string(),
+    keyPrefix: z.string()
+  }),
+  isRoot: z.boolean()
+});
+
+export const publicCatalogTopologyEdgeSchema = z.object({
+  id: z.string(),
+  from: z.string(),
+  to: z.string(),
+  label: z.string(),
+  kind: z.enum(['reference', 'containment', 'typed'])
+});
+
+export const publicCatalogTopologySchema = z.object({
+  rootPublicId: z.string(),
+  nodes: z.array(publicCatalogTopologyNodeSchema),
+  edges: z.array(publicCatalogTopologyEdgeSchema),
+  depth: z.number().int().min(1).max(3),
+  direction: z.enum(['both', 'incoming', 'outgoing']),
+  truncated: z.boolean(),
+  limits: z.object({
+    nodes: z.number().int().positive(),
+    edges: z.number().int().positive()
+  })
+});
+
 export const publicCatalogWikiPageSchema = z.object({
   path: z.string(),
   label: z.string(),
@@ -237,6 +270,11 @@ const publicCatalogProjectionQuerySchema = z.object({
   ),
   limit: z.coerce.number().int().min(1).max(200).default(50),
   offset: z.coerce.number().int().min(0).default(0)
+});
+
+const publicCatalogTopologyQuerySchema = z.object({
+  depth: z.coerce.number().int().min(1).max(3).default(2),
+  direction: z.enum(['both', 'incoming', 'outgoing']).default('both')
 });
 
 export const publicCatalogContract = oc.tag('Public Catalog').router({
@@ -287,6 +325,25 @@ export const publicCatalogContract = oc.tag('Public Catalog').router({
       })
       .input(z.object({ params: publicCatalogEntityParamsSchema }))
       .output(publicCatalogEntitySchema)
+  },
+  topology: {
+    get: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/topology/{entityPublicId}',
+        inputStructure: 'detailed',
+        summary: 'Get a published entity topology',
+        description:
+          'Returns a bounded, publication-safe graph around a published entity. Only explicitly published relationships and published endpoints are included.',
+        tags: ['Public Catalog']
+      })
+      .input(
+        z.object({
+          params: publicCatalogEntityParamsSchema,
+          query: publicCatalogTopologyQuerySchema
+        })
+      )
+      .output(publicCatalogTopologySchema)
   },
   wiki: {
     get: oc
@@ -406,6 +463,9 @@ export type PublicCatalogPreview = z.infer<typeof publicCatalogPreviewSchema>;
 export type PublicCatalogEntity = z.infer<typeof publicCatalogEntitySchema>;
 export type PublicCatalogManifest = z.infer<typeof publicCatalogManifestSchema>;
 export type PublicCatalogEntityList = z.infer<typeof publicCatalogEntityListSchema>;
+export type PublicCatalogTopologyNode = z.infer<typeof publicCatalogTopologyNodeSchema>;
+export type PublicCatalogTopologyEdge = z.infer<typeof publicCatalogTopologyEdgeSchema>;
+export type PublicCatalogTopology = z.infer<typeof publicCatalogTopologySchema>;
 export type PublicCatalogWikiPage = z.infer<typeof publicCatalogWikiPageSchema>;
 export type PublicCatalogApiSpecificationPage = z.infer<
   typeof publicCatalogApiSpecificationPageSchema

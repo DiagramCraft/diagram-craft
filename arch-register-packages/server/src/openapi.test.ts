@@ -68,7 +68,8 @@ describe('public catalog OpenAPI spec', () => {
 
     expect(spec.paths).toMatchObject({
       '/{workspace}/manifest': expect.any(Object),
-      '/{workspace}/entities': expect.any(Object)
+      '/{workspace}/entities': expect.any(Object),
+      '/{workspace}/topology/{entityPublicId}': expect.any(Object)
     });
     expect(spec.paths?.['/auth/me']).toBeUndefined();
     expect(spec.paths?.['/{workspace}/personal-dashboards']).toBeUndefined();

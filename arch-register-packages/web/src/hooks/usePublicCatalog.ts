@@ -3,6 +3,7 @@ import type {
   PublicCatalogEntity,
   PublicCatalogEntityList,
   PublicCatalogManifest,
+  PublicCatalogTopology,
   PublicCatalogWikiPage
 } from '@arch-register/api-types/publicCatalogContract';
 import { publicCatalogRequest } from '../lib/orpcClient';
@@ -13,10 +14,27 @@ export const publicCatalogKeys = {
   all: ['public-catalog'] as const,
   manifest: (workspaceSlug: string) =>
     [...publicCatalogKeys.all, 'manifest', workspaceSlug] as const,
-  entities: (workspaceSlug: string, q?: string, schema?: string) =>
-    [...publicCatalogKeys.all, 'entities', workspaceSlug, q ?? '', schema ?? ''] as const,
+  entities: (workspaceSlug: string, q?: string, schema?: string, limit?: number, offset?: number) =>
+    [
+      ...publicCatalogKeys.all,
+      'entities',
+      workspaceSlug,
+      q ?? '',
+      schema ?? '',
+      limit ?? 50,
+      offset ?? 0
+    ] as const,
   entity: (workspaceSlug: string, entityPublicId: string) =>
     [...publicCatalogKeys.all, 'entity', workspaceSlug, entityPublicId] as const,
+  topology: (workspaceSlug: string, entityPublicId: string, depth: number, direction: string) =>
+    [
+      ...publicCatalogKeys.all,
+      'topology',
+      workspaceSlug,
+      entityPublicId,
+      depth,
+      direction
+    ] as const,
   wiki: (workspaceSlug: string, path: string) =>
     [...publicCatalogKeys.all, 'wiki', workspaceSlug, path] as const
 };
@@ -32,14 +50,22 @@ export const usePublicCatalogManifest = (workspaceSlug: string) =>
 
 export const usePublicCatalogEntities = (
   workspaceSlug: string,
-  options: { q?: string; schema?: string } = {}
+  options: { q?: string; schema?: string; limit?: number; offset?: number } = {}
 ) =>
   useQuery({
-    queryKey: publicCatalogKeys.entities(workspaceSlug, options.q, options.schema),
+    queryKey: publicCatalogKeys.entities(
+      workspaceSlug,
+      options.q,
+      options.schema,
+      options.limit,
+      options.offset
+    ),
     queryFn: () => {
       const query = new URLSearchParams();
       if (options.q) query.set('q', options.q);
       if (options.schema) query.set('schema', options.schema);
+      if (options.limit) query.set('limit', String(options.limit));
+      if (options.offset) query.set('offset', String(options.offset));
       return publicCatalogRequest<PublicCatalogEntityList>(
         `/${publicPath(workspaceSlug)}/entities${query.size ? `?${query}` : ''}`
       );
@@ -54,6 +80,26 @@ export const usePublicCatalogEntity = (workspaceSlug: string, entityPublicId: st
     queryFn: () =>
       publicCatalogRequest<PublicCatalogEntity>(
         `/${publicPath(workspaceSlug)}/entities/${encodeURIComponent(entityPublicId)}`
+      ),
+    enabled: Boolean(workspaceSlug && entityPublicId),
+    staleTime: 30_000
+  });
+
+export const usePublicCatalogTopology = (
+  workspaceSlug: string,
+  entityPublicId: string,
+  options: { depth: number; direction: 'both' | 'incoming' | 'outgoing' }
+) =>
+  useQuery({
+    queryKey: publicCatalogKeys.topology(
+      workspaceSlug,
+      entityPublicId,
+      options.depth,
+      options.direction
+    ),
+    queryFn: () =>
+      publicCatalogRequest<PublicCatalogTopology>(
+        `/${publicPath(workspaceSlug)}/topology/${encodeURIComponent(entityPublicId)}?depth=${options.depth}&direction=${options.direction}`
       ),
     enabled: Boolean(workspaceSlug && entityPublicId),
     staleTime: 30_000

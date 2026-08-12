@@ -208,12 +208,16 @@
                         "entities": {
                           "type": "string"
                         },
+                        "topology": {
+                          "type": "string"
+                        },
                         "wiki": {
                           "type": "string"
                         }
                       },
                       "required": [
                         "entities",
+                        "topology",
                         "wiki"
                       ]
                     }
@@ -703,6 +707,202 @@
                     "schema",
                     "fields",
                     "apiArtifacts"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/topology/{entityPublicId}": {
+      "get": {
+        "operationId": "topology.get",
+        "summary": "Get a published entity topology",
+        "description": "Returns a bounded, publication-safe graph around a published entity. Only explicitly published relationships and published endpoints are included.",
+        "tags": [
+          "Public Catalog",
+          "Public Catalog"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "entityPublicId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "depth",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 3,
+              "default": 2
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "direction",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "both",
+                "incoming",
+                "outgoing"
+              ],
+              "type": "string",
+              "default": "both"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "rootPublicId": {
+                      "type": "string"
+                    },
+                    "nodes": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "publicId": {
+                            "type": "string"
+                          },
+                          "slug": {
+                            "type": "string"
+                          },
+                          "name": {
+                            "type": "string"
+                          },
+                          "schema": {
+                            "type": "object",
+                            "properties": {
+                              "name": {
+                                "type": "string"
+                              },
+                              "keyPrefix": {
+                                "type": "string"
+                              }
+                            },
+                            "required": [
+                              "name",
+                              "keyPrefix"
+                            ]
+                          },
+                          "isRoot": {
+                            "type": "boolean"
+                          }
+                        },
+                        "required": [
+                          "publicId",
+                          "slug",
+                          "name",
+                          "schema",
+                          "isRoot"
+                        ]
+                      }
+                    },
+                    "edges": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "id": {
+                            "type": "string"
+                          },
+                          "from": {
+                            "type": "string"
+                          },
+                          "to": {
+                            "type": "string"
+                          },
+                          "label": {
+                            "type": "string"
+                          },
+                          "kind": {
+                            "enum": [
+                              "reference",
+                              "containment",
+                              "typed"
+                            ],
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "id",
+                          "from",
+                          "to",
+                          "label",
+                          "kind"
+                        ]
+                      }
+                    },
+                    "depth": {
+                      "type": "integer",
+                      "minimum": 1,
+                      "maximum": 3
+                    },
+                    "direction": {
+                      "enum": [
+                        "both",
+                        "incoming",
+                        "outgoing"
+                      ],
+                      "type": "string"
+                    },
+                    "truncated": {
+                      "type": "boolean"
+                    },
+                    "limits": {
+                      "type": "object",
+                      "properties": {
+                        "nodes": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "exclusiveMinimum": 0
+                        },
+                        "edges": {
+                          "type": "integer",
+                          "minimum": -9007199254740991,
+                          "maximum": 9007199254740991,
+                          "exclusiveMinimum": 0
+                        }
+                      },
+                      "required": [
+                        "nodes",
+                        "edges"
+                      ]
+                    }
+                  },
+                  "required": [
+                    "rootPublicId",
+                    "nodes",
+                    "edges",
+                    "depth",
+                    "direction",
+                    "truncated",
+                    "limits"
                   ]
                 }
               }
