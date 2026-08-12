@@ -43,6 +43,7 @@ type EntityBrowserViewData = {
   statusFilter: string | null;
   conditions?: FilterCondition[];
   entityQuery?: EntityQuery | null;
+  executionEntityQuery?: EntityQuery | null;
   activeViewConfig: unknown;
   displayFields: EntityDisplayField[];
   projectContext?: ProjectBrowserContext;
@@ -106,6 +107,7 @@ export const EntityBrowserView = ({
   statusFilter,
   conditions,
   entityQuery,
+  executionEntityQuery,
   activeViewConfig,
   displayFields,
   projectContext,
@@ -161,7 +163,7 @@ export const EntityBrowserView = ({
           ownerFilter={ownerFilter}
           statusFilter={statusFilter}
           conditions={conditions}
-          entityQuery={entityQuery}
+          entityQuery={executionEntityQuery}
           onEntityClick={onEntityClick}
           config={activeViewConfig}
           onConfigChange={onConfigChange}
@@ -213,6 +215,7 @@ export const EntityBrowserView = ({
           projectId={projectId}
           projectScope={projectScope}
           q={q}
+          entityQuery={executionEntityQuery}
           typeFilter={typeFilter}
           ownerFilter={ownerFilter}
           statusFilter={statusFilter}
@@ -263,6 +266,7 @@ export const EntityBrowserView = ({
           projectId={projectId}
           projectScope={projectScope}
           q={q}
+          entityQuery={executionEntityQuery}
           typeFilter={typeFilter}
           ownerFilter={ownerFilter}
           statusFilter={statusFilter}

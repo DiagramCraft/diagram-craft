@@ -85,14 +85,133 @@ export const parseEntityQueryFromSearch = (search: BrowserSearch): EntityQuery |
 const rootChildren = (query: EntityQuery): EntityQuery['root'][] =>
   query.root.kind === 'and' ? query.root.children : [query.root];
 
+export type EntityFacetSelection = {
+  schemaIds: string[];
+  lifecycleValues: Array<string | null>;
+  ownerIds: Array<string | null>;
+};
+
+const emptyFacetSelection = (): EntityFacetSelection => ({
+  schemaIds: [],
+  lifecycleValues: [],
+  ownerIds: []
+});
+
+const facetFieldIds = new Set(['_schemaId', '_lifecycle', '_owner']);
+
+export const isEntityFacetCondition = (condition: FilterCondition): boolean =>
+  facetFieldIds.has(condition.fieldId) &&
+  (condition.fieldId === '_schemaId'
+    ? condition.op === 'equals' && typeof condition.value === 'string'
+    : condition.op === 'equals' || condition.op === 'empty');
+
+const addFacetValue = (values: Array<string | null>, condition: FilterCondition) => {
+  const value = condition.op === 'empty' ? null : condition.value;
+  if (value !== null && typeof value !== 'string') return;
+  if (!values.includes(value)) values.push(value);
+};
+
+export const parseFacetSelectionFromConditions = (
+  conditions: FilterCondition[]
+): EntityFacetSelection => {
+  const selection = emptyFacetSelection();
+  for (const condition of conditions) {
+    if (!isEntityFacetCondition(condition)) continue;
+    if (condition.fieldId === '_schemaId') addFacetValue(selection.schemaIds, condition);
+    if (condition.fieldId === '_lifecycle') addFacetValue(selection.lifecycleValues, condition);
+    if (condition.fieldId === '_owner') addFacetValue(selection.ownerIds, condition);
+  }
+  return selection;
+};
+
+export const parseFacetSelectionFromSearch = (search: BrowserSearch): EntityFacetSelection => {
+  const query = parseEntityQueryFromSearch(search);
+  const selection = parseFacetSelectionFromConditions(
+    query == null ? parseConditionsFromSearch(search) : filterConditionsFromEntityQuery(query)
+  );
+  if (query?.schemaId && !selection.schemaIds.includes(query.schemaId)) {
+    selection.schemaIds.unshift(query.schemaId);
+  }
+  return selection;
+};
+
+export const hasFacetSelection = (selection: EntityFacetSelection): boolean =>
+  selection.schemaIds.length > 0 ||
+  selection.lifecycleValues.length > 0 ||
+  selection.ownerIds.length > 0;
+
+export const hasFacetConditions = (conditions: FilterCondition[]): boolean =>
+  hasFacetSelection(parseFacetSelectionFromConditions(conditions));
+
+export const getSingleFacetValue = (
+  conditions: FilterCondition[],
+  fieldId: '_schemaId' | '_lifecycle' | '_owner'
+): string | null => {
+  const selection = parseFacetSelectionFromConditions(conditions);
+  const values =
+    fieldId === '_schemaId'
+      ? selection.schemaIds
+      : fieldId === '_lifecycle'
+        ? selection.lifecycleValues
+        : selection.ownerIds;
+  return values.length === 1 && typeof values[0] === 'string' ? values[0] : null;
+};
+
+const facetConditionsFromSelection = (selection: EntityFacetSelection): FilterCondition[] => {
+  const conditions: FilterCondition[] = [];
+  for (const value of selection.schemaIds) {
+    conditions.push({ fieldId: '_schemaId', op: 'equals', value });
+  }
+  for (const value of selection.lifecycleValues) {
+    conditions.push(
+      value === null
+        ? { fieldId: '_lifecycle', op: 'empty', value: '' }
+        : { fieldId: '_lifecycle', op: 'equals', value }
+    );
+  }
+  for (const value of selection.ownerIds) {
+    conditions.push(
+      value === null
+        ? { fieldId: '_owner', op: 'empty', value: '' }
+        : { fieldId: '_owner', op: 'equals', value }
+    );
+  }
+  return conditions;
+};
+
+export const replaceFacetConditions = (
+  conditions: FilterCondition[],
+  selection: EntityFacetSelection
+): FilterCondition[] => [
+  ...conditions.filter(condition => !isEntityFacetCondition(condition)),
+  ...facetConditionsFromSelection(selection)
+];
+
+const isFacetPredicate = (
+  node: EntityQuery['root']
+): node is Extract<EntityQuery['root'], { kind: 'predicate' }> =>
+  node.kind === 'predicate' && node.path.length === 0 && isEntityFacetCondition(node);
+
+const isFacetOrNode = (node: EntityQuery['root']): boolean => {
+  if (node.kind !== 'or' || node.children.length === 0) return false;
+  return (
+    node.children.every(child => isFacetPredicate(child)) &&
+    new Set(node.children.map(child => child.fieldId)).size === 1
+  );
+};
+
+const flattenBasicQueryNode = (node: EntityQuery['root']): FilterCondition[] => {
+  if (node.kind === 'predicate' && node.path.length === 0) {
+    return [{ fieldId: node.fieldId, op: node.op, value: node.value }];
+  }
+  if (node.kind === 'or' && isFacetOrNode(node)) {
+    return node.children.flatMap(child => flattenBasicQueryNode(child));
+  }
+  return [];
+};
+
 const filterConditionsFromEntityQuery = (query: EntityQuery): FilterCondition[] =>
-  rootChildren(query)
-    .filter(
-      (node): node is Extract<EntityQuery['root'], { kind: 'predicate' }> =>
-        node.kind === 'predicate' && node.path.length === 0
-    )
-    .filter(condition => condition.fieldId !== '_schemaId')
-    .map(({ fieldId, op, value }) => ({ fieldId, op, value }));
+  rootChildren(query).flatMap(flattenBasicQueryNode);
 
 const freeTextQueryNode = (value: string): EntityQuery['root'] => ({
   kind: 'freeText',
@@ -201,7 +320,10 @@ export const withSchemaIdAsPredicate = (query: EntityQuery): EntityQuery => {
 export const isBasicRepresentable = (query: EntityQuery): boolean =>
   !query.projections?.length &&
   rootChildren(query).every(
-    node => isFreeTextQueryNode(node) || (node.kind === 'predicate' && node.path.length === 0)
+    node =>
+      isFreeTextQueryNode(node) ||
+      (node.kind === 'predicate' && node.path.length === 0) ||
+      isFacetOrNode(node)
   );
 
 /**
@@ -215,12 +337,7 @@ export const isBasicRepresentable = (query: EntityQuery): boolean =>
 export const entityQueryToBrowserFilters = (
   query: EntityQuery
 ): { conditions: FilterCondition[]; q: string } => {
-  const conditions: FilterCondition[] = rootChildren(query)
-    .filter(
-      (node): node is Extract<EntityQuery['root'], { kind: 'predicate' }> =>
-        node.kind === 'predicate' && node.path.length === 0
-    )
-    .map(({ fieldId, op, value }) => ({ fieldId, op, value }));
+  const conditions: FilterCondition[] = rootChildren(query).flatMap(flattenBasicQueryNode);
   if (query.schemaId && !conditions.some(c => c.fieldId === '_schemaId')) {
     conditions.push({ fieldId: '_schemaId', op: 'equals', value: query.schemaId });
   }
@@ -357,23 +474,71 @@ export const buildEntityQueryFromBrowserFilters = ({
   joinAssessmentId?: string | null;
   q?: string;
 }): EntityQuery => {
+  const selection = parseFacetSelectionFromConditions(conditions);
+  const schemaIds = [...selection.schemaIds];
+  if (typeFilter && !schemaIds.includes(typeFilter)) schemaIds.unshift(typeFilter);
+  const facetNodes: EntityQuery['root'][] = [];
+  const addFacetGroup = (
+    fieldId: '_schemaId' | '_lifecycle' | '_owner',
+    values: Array<string | null>
+  ) => {
+    const predicates = values.map(value => ({
+      kind: 'predicate' as const,
+      path: [],
+      fieldId,
+      op: value === null ? ('empty' as const) : ('equals' as const),
+      value: value === null ? '' : value
+    }));
+    if (predicates.length === 0) return;
+    if (fieldId === '_schemaId' && predicates.length === 1) return;
+    if (predicates.length === 1) facetNodes.push(predicates[0]!);
+    if (predicates.length > 1) facetNodes.push({ kind: 'or', children: predicates });
+  };
+
+  addFacetGroup('_schemaId', schemaIds);
+  addFacetGroup('_lifecycle', selection.lifecycleValues);
+  addFacetGroup('_owner', selection.ownerIds);
+
+  const otherConditions = conditions.filter(condition => !isEntityFacetCondition(condition));
   const query: EntityQuery = {
-    ...(typeFilter ? { schemaId: typeFilter } : {}),
+    ...(schemaIds.length === 1 ? { schemaId: schemaIds[0] } : {}),
     ...(joinAssessmentId ? { assessmentId: joinAssessmentId } : {}),
     root: {
       kind: 'and',
-      children: conditions
-        .filter(condition => condition.fieldId !== '_schemaId')
-        .map(condition => ({
+      children: [
+        ...facetNodes,
+        ...otherConditions.map(condition => ({
           kind: 'predicate' as const,
           path: [],
           fieldId: condition.fieldId,
           op: condition.op,
           value: condition.value
         }))
+      ]
     }
   };
   return addFreeTextQuery(query, q);
+};
+
+export const addSchemaIdsConstraint = (
+  query: EntityQuery | null,
+  schemaIds: string[]
+): EntityQuery | null => {
+  if (!query || schemaIds.length === 0) return query;
+  const predicates = schemaIds.map(schemaId => ({
+    kind: 'predicate' as const,
+    path: [],
+    fieldId: '_schemaId',
+    op: 'equals' as const,
+    value: schemaId
+  }));
+  const schemaConstraint: EntityQuery['root'] =
+    predicates.length === 1 ? predicates[0]! : { kind: 'or', children: predicates };
+  const children = query.root.kind === 'and' ? query.root.children : [query.root];
+  return {
+    ...query,
+    root: { kind: 'and', children: [...children, schemaConstraint] }
+  };
 };
 
 export const toSavedViewConfig = (

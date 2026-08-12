@@ -8,6 +8,7 @@ import type { TreeNode } from '@arch-register/api-types/entityContract';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { entityMenuItems, projectEntityMenuItems } from './entityBrowserViewShared';
 import {
   isEntityInProject,
@@ -30,6 +31,7 @@ export type TreeViewProps = {
   projectId?: string;
   projectScope: 'project' | 'all';
   q: string;
+  entityQuery?: EntityQuery | null;
   typeFilter: string | null;
   ownerFilter: string | null;
   statusFilter: string | null;
@@ -59,6 +61,7 @@ export const TreeView = ({
   projectId,
   projectScope,
   q,
+  entityQuery,
   typeFilter,
   ownerFilter,
   statusFilter,
@@ -80,6 +83,7 @@ export const TreeView = ({
     projectId,
     projectScope,
     q,
+    entityQuery,
     typeFilter,
     ownerFilter,
     statusFilter,

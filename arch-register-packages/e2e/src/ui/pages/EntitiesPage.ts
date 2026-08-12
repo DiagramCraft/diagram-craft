@@ -23,6 +23,8 @@ export class EntitiesPage extends WorkspacePage {
   };
 
   typeFilter = (name: string) => this.page.getByTestId(`entity-type-filter-${name}`);
+  facetCheckbox = (label: string) =>
+    this.page.getByRole('checkbox', { name: `Filter by ${label}` });
   browserTitle = () => this.page.getByTestId('entity-browser-title');
   browserCount = () => this.page.getByTestId('entity-browser-count');
   entityRow = (name: string) => this.page.getByRole('row', { name: `Entity row: ${name}` });

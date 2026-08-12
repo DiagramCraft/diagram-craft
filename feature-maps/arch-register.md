@@ -222,7 +222,10 @@
           recurring entity structures.
 
     - @id:ar.entity-views Users can browse, filter, search, and analyze entity collections through configurable views,
-      including free-text search across entity names, slugs, and descriptions.
+      including free-text search across entity names, slugs, and descriptions. The entity sidebar provides familiar
+      facet navigation for selecting multiple schemas, lifecycle states, and owners at once; values within a facet
+      are combined as alternatives while different facets narrow the result together; checked rows can be adjusted
+      directly, and the All entities row resets the facet selections.
 
         - @id:ar.entity-views.table Users can inspect entities in a tabular browser with configurable fields, sorting,
           filtering, selection, and bulk actions.
@@ -316,7 +319,7 @@
           content.
 
         - @id:ar.search.filters Users can combine search terms and structured filters to narrow results. Entity
-          browser views offer Basic (free-text search plus a visual filter popover) and Advanced (a single text
+          browser views offer Basic (free-text search plus a visual filter popover and multi-select sidebar facets) and Advanced (a single text
           query parsed against the entity query language) modes, switchable without losing the underlying query;
           switching from Advanced to Basic warns first if the query uses grouping, negation, or relation traversal
           that Basic mode can't represent. A field in a schema group the user cannot view is offered nowhere as a

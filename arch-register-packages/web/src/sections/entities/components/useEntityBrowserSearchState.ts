@@ -5,7 +5,7 @@ import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { asProjectPublicId, projectDetailRoute } from '../../../routes/publicObjectRoutes';
 import type { BrowserSearch, BrowserViewConfigMap } from './entityBrowserState';
 import {
-  getFilterValue,
+  getSingleFacetValue,
   parseConditionsFromSearch,
   parseEntityQueryFromSearch,
   parseViewConfigs,
@@ -193,7 +193,7 @@ export const useEntityBrowserSearchState = ({
     entityQuery,
     joinAssessmentId: search.joinAssessmentId ?? null,
     collectionId,
-    ownerFilter: getFilterValue(conditions, '_owner'),
+    ownerFilter: getSingleFacetValue(conditions, '_owner'),
     projectScope,
     q,
     search,
@@ -206,8 +206,8 @@ export const useEntityBrowserSearchState = ({
     setSort,
     setView,
     sort,
-    statusFilter: getFilterValue(conditions, '_lifecycle'),
-    typeFilter: entityQuery?.schemaId ?? getFilterValue(conditions, '_schemaId'),
+    statusFilter: getSingleFacetValue(conditions, '_lifecycle'),
+    typeFilter: entityQuery?.schemaId ?? getSingleFacetValue(conditions, '_schemaId'),
     view,
     viewConfigs
   };
