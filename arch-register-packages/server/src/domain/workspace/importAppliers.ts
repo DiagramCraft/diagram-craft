@@ -577,8 +577,10 @@ export const importEntities = async (
   idMapping: IdMapping
 ): Promise<{ created: number; updated: number; skipped: number }> => {
   const now = new Date();
-  const currencyConfig = await db.workspace.getSupportedCurrencies(workspace);
-  const supportedCurrencies = new Set(currencyConfig.currencies.map(currency => currency.code));
+  const currencyConfig = await db.workspace?.getSupportedCurrencies?.(workspace);
+  const supportedCurrencies = currencyConfig
+    ? new Set(currencyConfig.currencies.map(currency => currency.code))
+    : undefined;
   const existingEntities = new Map(
     (await db.catalog.listEntities(workspace)).map(entity => [entity.id, entity])
   );

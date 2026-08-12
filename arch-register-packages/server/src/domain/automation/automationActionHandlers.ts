@@ -298,11 +298,13 @@ const handleSetFieldValue: AutomationActionHandler = async context => {
     const entities = await db.catalog.listEntities(event.workspace);
     nextData = normalizeEntityRelationFields({ schema, fields: nextData, entities });
   }
-  const currencyConfig = await db.workspace.getSupportedCurrencies(event.workspace);
+  const currencyConfig = await db.workspace?.getSupportedCurrencies?.(event.workspace);
   nextData = normalizeEntityScalarFields({
     schemaFields: schema.fields,
     fields: nextData,
-    supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code))
+    supportedCurrencies: currencyConfig
+      ? new Set(currencyConfig.currencies.map(currency => currency.code))
+      : undefined
   });
 
   // Threading `automationRuleChain` through `auditMetadata` is what lets `writeAudit` (re-entered

@@ -173,7 +173,7 @@ test.describe('data routes', () => {
     expect(res.status).toBe(200);
     expect(res.headers.get('content-type')).toContain('text/csv');
     const body = await res.text();
-    expect(body).toContain('Schema Type;Type;System');
+    expect(body).toContain('Schema Type;Type;Protocols;System');
     expect(body).toContain('Customer API');
     expect(body).toContain('openapi');
   });
@@ -230,6 +230,7 @@ test.describe('data routes', () => {
       _lifecycle: seedIds.lifecycle.production,
       _tags: ['rest'],
       api_type: 'openapi',
+      protocols: ['https-rest'],
       system: [systemId]
     });
 
@@ -659,6 +660,7 @@ test.describe('data routes', () => {
       _schemaId: apiSchemaId,
       _name: 'Delete Me API',
       api_type: 'graphql',
+      protocols: ['https-rest'],
       system: [systemId]
     });
 
@@ -688,6 +690,7 @@ test.describe('data routes', () => {
       _targetLifecycle: seedIds.lifecycle.deprecated,
       _targetLifecycleDate: '2026-12-31',
       api_type: 'openapi',
+      protocols: ['https-rest'],
       system: [systemId]
     });
 
@@ -705,6 +708,7 @@ test.describe('data routes', () => {
       _name: 'Future API',
       _lifecycle: seedIds.lifecycle.experimental,
       api_type: 'openapi',
+      protocols: ['https-rest'],
       system: [systemId]
     });
 
@@ -720,6 +724,7 @@ test.describe('data routes', () => {
         _targetLifecycle: seedIds.lifecycle.production,
         _targetLifecycleDate: '2026-09-30',
         api_type: 'openapi',
+        protocols: ['https-rest'],
         system: [systemId]
       } as never
     });
@@ -741,6 +746,7 @@ test.describe('data routes', () => {
       _lifecycle: seedIds.lifecycle.production,
       _targetLifecycle: 'nonexistent-state',
       api_type: 'openapi',
+      protocols: ['https-rest'],
       system: [systemId]
     });
 
