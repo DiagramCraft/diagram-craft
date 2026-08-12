@@ -16,7 +16,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import { buildFileTree } from './contentTreeOperations';
 import { toApiProject, toApiProjectDetail } from './projectHelpers';
 import { formatPublicId } from '../../utils/publicIds';
-import type { Project, ProjectDetail } from '@arch-register/api-types/projectContract';
+import type { Project, ProjectDetail } from '@arch-register/api-types/projectCrudContract';
 import { createLogger } from '../../utils/logger';
 
 const PROJECT_STATUSES = ['draft', 'active', 'complete', 'cancelled'] as const;

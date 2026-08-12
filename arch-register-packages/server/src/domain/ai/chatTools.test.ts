@@ -430,6 +430,82 @@ const financeCallerAuthCtx = buildAuthorizationContext({
 });
 
 describe('createAiChatTools', () => {
+  it('assembles the complete registry with preserved approval and schema contracts', () => {
+    const tools = createAiChatTools(db, 'ws-1', null, actor);
+
+    expect(tools.map(tool => tool.name)).toEqual([
+      'query_entities',
+      'get_entity_details',
+      'create_entity',
+      'update_entity',
+      'traverse_relations',
+      'list_relation_schemas',
+      'list_relations',
+      'get_relation',
+      'create_relation',
+      'update_relation',
+      'delete_relation'
+    ]);
+
+    expect(Object.fromEntries(tools.map(tool => [tool.name, tool.needsApproval ?? false]))).toEqual(
+      {
+        query_entities: false,
+        get_entity_details: false,
+        create_entity: true,
+        update_entity: true,
+        traverse_relations: false,
+        list_relation_schemas: false,
+        list_relations: false,
+        get_relation: false,
+        create_relation: true,
+        update_relation: true,
+        delete_relation: true
+      }
+    );
+
+    const findTool = (name: string) => tools.find(tool => tool.name === name);
+    const inputRequired = {
+      create_entity: ['schemaId'],
+      update_entity: ['entityId'],
+      traverse_relations: ['entityId'],
+      get_relation: ['relationId'],
+      create_relation: ['schemaId', 'inEntityId', 'outEntityId'],
+      update_relation: ['relationId', 'fields'],
+      delete_relation: ['relationId']
+    } satisfies Record<string, string[]>;
+
+    for (const [name, required] of Object.entries(inputRequired)) {
+      expect(findTool(name)?.inputSchema).toMatchObject({ required });
+    }
+
+    for (const name of [
+      'query_entities',
+      'get_entity_details',
+      'list_relation_schemas',
+      'list_relations'
+    ]) {
+      expect(findTool(name)?.inputSchema).not.toHaveProperty('required');
+    }
+
+    const outputRequired = {
+      query_entities: ['total', 'entities'],
+      get_entity_details: ['found', 'message', 'entity'],
+      create_entity: ['entity', 'message'],
+      update_entity: ['entity', 'message'],
+      traverse_relations: ['entityId', 'nodes', 'edges', 'truncated'],
+      list_relations: ['items', 'total'],
+      delete_relation: ['success']
+    } satisfies Record<string, string[]>;
+
+    for (const [name, required] of Object.entries(outputRequired)) {
+      expect(findTool(name)?.outputSchema).toMatchObject({ required });
+    }
+
+    for (const name of ['list_relation_schemas', 'get_relation']) {
+      expect(findTool(name)?.outputSchema).not.toHaveProperty('required');
+    }
+  });
+
   it('exposes the standard read-only set when no selection is provided', () => {
     const tools = createAiChatTools(db, 'ws-1', null, actor, { readOnly: true });
     expect(tools.map(tool => tool.name)).toEqual([

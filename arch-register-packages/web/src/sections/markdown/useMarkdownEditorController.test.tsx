@@ -3,11 +3,9 @@ import { act, type ChangeEvent } from 'react';
 import { createRoot, type Root } from 'react-dom/client';
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DocumentAiAction, DocumentType } from '@arch-register/api-types/documentContract';
-import type {
-  MarkdownContent,
-  ProjectFile,
-  RunAiActionResponse
-} from '@arch-register/api-types/projectContract';
+import type { MarkdownContent } from '@arch-register/api-types/projectMarkdownContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
+import type { RunAiActionResponse } from '@arch-register/api-types/projectDocumentAiContract';
 import {
   useMarkdownEditorController,
   type MarkdownEditorController,

@@ -1,5 +1,5 @@
 import type { Meta, StoryObj } from '@storybook/react-vite';
-import type { DocumentListItem } from '@arch-register/api-types/projectContract';
+import type { DocumentListItem } from '@arch-register/api-types/projectDocumentDiscoveryContract';
 import { DocumentBrowserEmbed } from './DocumentBrowserEmbed';
 import { encodeDocumentBrowserEmbedConfig } from './DocumentBrowserEmbedCodec';
 import { DOCUMENT_BROWSER_BASE_COLUMN_IDS } from './types';

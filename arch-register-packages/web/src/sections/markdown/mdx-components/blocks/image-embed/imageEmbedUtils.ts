@@ -1,4 +1,4 @@
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { applicationWorkspacePath } from '../../../../../lib/applicationApi';
 
 export const isImageMimeType = (mimeType: string | null | undefined) =>

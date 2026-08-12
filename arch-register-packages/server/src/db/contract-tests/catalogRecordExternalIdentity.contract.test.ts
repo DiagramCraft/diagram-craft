@@ -46,14 +46,18 @@ runContractSuiteAgainstBothDrivers('CatalogRecordExternalIdentityDatabase', getD
         record_id: entity
       });
 
-      await expect(
-        db.externalIdentity.create({
+      try {
+        await db.externalIdentity.create({
           workspace,
           source: 'backstage',
           external_key: 'component:default/foo',
           record_id: entity
-        })
-      ).rejects.toThrow(DatabaseError);
+        });
+        expect.unreachable('duplicate external identity should fail');
+      } catch (error) {
+        expect(error).toBeInstanceOf(DatabaseError);
+        expect((error as DatabaseError).code).toBe('unique');
+      }
     });
 
     it('keeps identities independent across workspaces', async () => {

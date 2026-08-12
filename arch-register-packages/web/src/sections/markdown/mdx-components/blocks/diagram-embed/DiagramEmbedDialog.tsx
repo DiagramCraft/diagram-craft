@@ -9,7 +9,7 @@ import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useContentTree, type ContentScope } from '../../../../../hooks/useContentScope';
 import { useCreateMarkdownDiagramAttachment } from '../../../../../hooks/useAttachments';
 import { emptyDiagram } from '../../../../../lib/diagramDocuments';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { DiagramPicker } from '../../../../../components/DiagramPicker';
 import { useMarkdownDiagramSession } from '../../../MarkdownDiagramSessionContext';
 import type { DiagramEmbedSlateElement } from './types';

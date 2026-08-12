@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { TbFolder, TbFolderOpen, TbHome } from 'react-icons/tb';
 import { TreeRow } from './TreeRow';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { buildFolderTree, type FolderTreeNode } from '../lib/folderTree';
 
 type FolderPickerTreeProps = {

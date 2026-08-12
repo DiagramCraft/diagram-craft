@@ -7,7 +7,7 @@ import {
   TbLayoutSidebarLeftExpand,
   TbPlus
 } from 'react-icons/tb';
-import { Project } from '@arch-register/api-types/projectContract';
+import { Project } from '@arch-register/api-types/projectCrudContract';
 import { TreeRow } from '../../components/TreeRow';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import styles from '../../shell/SidePanel.module.css';

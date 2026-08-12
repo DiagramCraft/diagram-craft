@@ -14,7 +14,7 @@ import styles from './EntityGraphView.module.css';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { SaveDiagramFromGraphDialog } from './SaveDiagramFromGraphDialog';
 import { RelationDetailPopover } from './RelationDetailPopover';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { type EntityGraphDirection, type EntityNodeData } from './entityGraphState';
 import { useEntityGraphController } from './useEntityGraphController';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';

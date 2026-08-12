@@ -19,7 +19,7 @@ import type { EntityRecord, TimelineViewData } from '@arch-register/api-types/en
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
-import type { Project } from '@arch-register/api-types/projectContract';
+import type { Project } from '@arch-register/api-types/projectCrudContract';
 import { timelineViewConfigSchema } from '@arch-register/api-types/viewContract';
 import { useEntityTimeline } from '../../../hooks/useEntityTimeline';
 import { useMilestones } from '../../../hooks/useMilestones';

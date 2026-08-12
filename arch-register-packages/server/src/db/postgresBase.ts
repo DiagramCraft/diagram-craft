@@ -18,6 +18,16 @@ export const withPostgresTransaction = async <T>(
   return callback(sql);
 };
 
+export const withPostgresSavepoint = async <T>(
+  sql: PostgresQueryClient,
+  callback: (savepoint: PostgresTransactionSql) => Promise<T>
+): Promise<T> => {
+  if (!('savepoint' in sql)) {
+    throw new Error('PostgreSQL savepoints require a transaction-bound SQL client');
+  }
+  return (await sql.savepoint(callback)) as T;
+};
+
 // PostgreSQL error codes
 const POSTGRES_ERROR_CODES = {
   UNIQUE: '23505',

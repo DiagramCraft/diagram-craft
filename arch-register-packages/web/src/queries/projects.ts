@@ -1,9 +1,6 @@
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
-import type {
-  Project,
-  ProjectDetail,
-  ProjectEntity
-} from '@arch-register/api-types/projectContract';
+import type { Project, ProjectDetail } from '@arch-register/api-types/projectCrudContract';
+import type { ProjectEntity } from '@arch-register/api-types/projectEntityContract';
 import { invalidateAuditQueries } from './audit';
 import { projectFileKeys } from './content';
 import { invalidateEntityQueries } from './entities';

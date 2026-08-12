@@ -7,7 +7,7 @@ import {
 import { useProject } from '../../hooks/useProjects';
 import { useEntity } from '../../hooks/useEntities';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
-import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContract';
+import type { FileTree, ProjectFile } from '@arch-register/api-types/projectContentContract';
 
 const findFileById = (tree: FileTree | undefined, nodeId: string): ProjectFile | undefined => {
   if (!tree) return undefined;

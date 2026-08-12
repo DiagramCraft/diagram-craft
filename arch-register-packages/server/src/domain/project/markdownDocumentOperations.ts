@@ -21,9 +21,9 @@ import {
 import type {
   MarkdownContent,
   MarkdownRevisionDetail,
-  MarkdownRevisionSummary,
-  ProjectFile
-} from '@arch-register/api-types/projectContract';
+  MarkdownRevisionSummary
+} from '@arch-register/api-types/projectMarkdownContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 
 const EMPTY_MARKDOWN_BODY = JSON.stringify({ body: '' });
 

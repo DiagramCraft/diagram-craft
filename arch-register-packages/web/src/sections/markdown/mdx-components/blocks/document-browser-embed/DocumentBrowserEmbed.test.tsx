@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it, vi } from 'vitest';
-import type { Project } from '@arch-register/api-types/projectContract';
-import type { DocumentListItem } from '@arch-register/api-types/projectContract';
+import type { Project } from '@arch-register/api-types/projectCrudContract';
+import type { DocumentListItem } from '@arch-register/api-types/projectDocumentDiscoveryContract';
 import type { WorkspaceContextType } from '../../../../../layouts/WorkspaceContext';
 import { WorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { MdxContext } from '../../../MdxContext';

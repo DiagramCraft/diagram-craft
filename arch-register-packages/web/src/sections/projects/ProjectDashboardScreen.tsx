@@ -4,7 +4,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { TbBookmark, TbDots, TbFileText, TbLayoutGrid, TbPencil, TbStar } from 'react-icons/tb';
-import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
+import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import { ProjectMetaItem, ProjectScreenLayout } from './ProjectScreenLayout';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { CreateBaselineDialog } from '../baselines/CreateBaselineDialog';

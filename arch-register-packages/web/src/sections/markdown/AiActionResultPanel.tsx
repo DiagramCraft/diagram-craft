@@ -1,6 +1,6 @@
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { SafeMarkdown } from '../../components/SafeMarkdown';
-import type { RunAiActionResponse } from '@arch-register/api-types/projectContract';
+import type { RunAiActionResponse } from '@arch-register/api-types/projectDocumentAiContract';
 import styles from './AiActionResultPanel.module.css';
 
 export const AiActionResultPanel = ({

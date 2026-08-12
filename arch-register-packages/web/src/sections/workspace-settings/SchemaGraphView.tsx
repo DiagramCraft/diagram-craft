@@ -17,7 +17,7 @@ import styles from './SchemaGraphView.module.css';
 import { SaveDiagramFromGraphDialog } from '../entities/components/SaveDiagramFromGraphDialog';
 import { createDiagramFromGraph } from '../../lib/diagramFromGraph';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import type { ModelOverviewSearchParams } from '../../routes/searchParams';
 import { buildSchemaGraphData, type SchemaGraphNodeData } from './schemaGraphState';
 

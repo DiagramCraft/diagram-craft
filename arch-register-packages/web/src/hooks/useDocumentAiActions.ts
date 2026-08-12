@@ -3,7 +3,7 @@ import type {
   AiActionTestEvent,
   AiActionTestResult,
   RunAiActionResponse
-} from '@arch-register/api-types/projectContract';
+} from '@arch-register/api-types/projectDocumentAiContract';
 import type { DocumentAiAction } from '@arch-register/api-types/documentContract';
 
 export const runDocumentAiAction = async (

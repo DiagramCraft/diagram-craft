@@ -11,7 +11,7 @@ import { useWorkspaceAuthorization } from '../auth/WorkspaceAuthorizationContext
 import { ColorPicker } from '../components/ColorPicker';
 import { useCreateProject } from '../hooks/useProjects';
 import styles from './AddEntityDialog.module.css';
-import { Project } from '@arch-register/api-types/projectContract';
+import { Project } from '@arch-register/api-types/projectCrudContract';
 import { useAutoFocus } from '../hooks/useAutoFocus';
 
 const PROJECT_STATUSES = [

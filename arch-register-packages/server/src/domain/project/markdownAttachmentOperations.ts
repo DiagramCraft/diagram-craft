@@ -12,7 +12,7 @@ import type { ContentNodeDbResult } from './db/projectDatabase';
 
 import { httpAssert } from '../../utils/httpAssert';
 
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 
 import { coordinateContentWrite } from './contentWriteCoordinator';
 

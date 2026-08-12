@@ -16,7 +16,7 @@ import {
   type ContentScopeResolver
 } from './contentScope';
 import { coordinateContentWrite } from './contentWriteCoordinator';
-import type { ProjectFile } from '@arch-register/api-types/projectContract';
+import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import {
   projectDbErrorMessages,
   requireNonProjectContentAccess,

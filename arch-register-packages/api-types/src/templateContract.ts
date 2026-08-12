@@ -1,6 +1,6 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
-import { projectFileSchema, ProjectFile } from '@arch-register/api-types/projectContract';
+import { projectFileSchema, ProjectFile } from '@arch-register/api-types/projectContentContract';
 import { ws, wsAndId } from '@arch-register/api-types/common';
 
 // ── Shared sub-schemas ────────────────────────────────────────

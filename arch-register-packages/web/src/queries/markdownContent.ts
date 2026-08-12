@@ -3,7 +3,7 @@ import type {
   MarkdownContent,
   MarkdownRevisionDetail,
   MarkdownRevisionSummary
-} from '@arch-register/api-types/projectContract';
+} from '@arch-register/api-types/projectMarkdownContract';
 import { orpcClient } from '../lib/orpcClient';
 import { invalidateContentScope, type ContentScope } from './content';
 

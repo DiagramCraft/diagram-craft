@@ -2,7 +2,7 @@ import { useCallback, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
 import { TbFileText } from 'react-icons/tb';
 import type { DocumentField, DocumentType } from '@arch-register/api-types/documentContract';
-import type { DocumentListItem } from '@arch-register/api-types/projectContract';
+import type { DocumentListItem } from '@arch-register/api-types/projectDocumentDiscoveryContract';
 import { useWorkspaceContext } from '../../../../../layouts/WorkspaceContext';
 import { useMdxContext } from '../../../MdxContext';
 import { useDocumentList, useDocumentTypes } from '../../../../../hooks/useDocuments';

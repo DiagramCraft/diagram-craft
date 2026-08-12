@@ -5,7 +5,7 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { TbPlus, TbTrash, TbFlag, TbCalendarWeek, TbDots, TbPencil } from 'react-icons/tb';
-import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
+import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import type { Milestone, CreateMilestoneRequest } from '@arch-register/api-types/milestoneContract';
 import { getRouteApi } from '@tanstack/react-router';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';

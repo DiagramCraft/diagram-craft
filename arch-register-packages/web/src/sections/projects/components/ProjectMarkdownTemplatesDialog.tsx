@@ -10,7 +10,7 @@ import {
   useUpdateDocumentTemplate
 } from '../../../hooks/useDocuments';
 import type { DocumentMetadata } from '@arch-register/api-types/documentContract';
-import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectContract';
+import type { ProjectDetail as ProjectDetailData } from '@arch-register/api-types/projectCrudContract';
 import styles from './ProjectMarkdownTemplatesDialog.module.css';
 
 type Props = {
