@@ -92,8 +92,9 @@
             refresh mode of on-change or scheduled, as entity schemas, but only text, long text, boolean, date,
             number, currency, and select field types (no reference, containment, or derived fields, and no templates or
             approval/deprecation policy).
-            The model overview visualizes both generic schema references and typed relation-schema edges, with typed
-            edges showing the relation type and linking to its definition.
+            The model overview visualizes entity schemas and typed relation schemas as graph nodes, showing generic
+            references, relation endpoints, and relation-owned entity links; relation nodes and typed edges link to
+            their definitions.
 
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates, fields,
               versions, validation rules, and AI actions for structured content, including marking a field as externally

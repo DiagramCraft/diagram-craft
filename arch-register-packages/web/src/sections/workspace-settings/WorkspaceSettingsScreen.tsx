@@ -47,7 +47,7 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   },
   'model-overview': {
     title: 'Model Overview',
-    sub: 'Visualize relationships between entity types in your data model.'
+    sub: 'Visualize relationships between entity and relation types in your data model.'
   },
   'schemas': {
     title: 'Schemas',

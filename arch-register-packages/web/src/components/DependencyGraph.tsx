@@ -47,6 +47,7 @@ type Props<T> = {
   nodeWidth?: number;
   nodeHeight?: number;
   renderNode: (node: DependencyGraphNode<T>) => React.ReactNode;
+  nodeKind?: (node: DependencyGraphNode<T>) => string | undefined;
   onNodeClick?: (id: string) => void;
   onNodeContextMenu?: (id: string, event: React.MouseEvent) => void;
   onEdgeClick?: (edge: DependencyGraphEdge, event: React.MouseEvent) => void;
@@ -148,6 +149,7 @@ export const DependencyGraph = <T,>({
   nodeWidth = 160,
   nodeHeight = 48,
   renderNode,
+  nodeKind,
   onNodeClick,
   onNodeContextMenu,
   onEdgeClick,
@@ -456,6 +458,7 @@ export const DependencyGraph = <T,>({
         {nodes.map(node => {
           const pos = positions.get(node.id);
           if (!pos) return null;
+          const kind = nodeKind?.(node);
 
           return (
             <g
@@ -482,6 +485,7 @@ export const DependencyGraph = <T,>({
                 height={nodeHeight}
                 rx={6}
                 className={styles.eNodeRect}
+                data-node-kind={kind}
                 data-selected={highlightedIds?.has(node.id) || undefined}
               />
               <foreignObject
