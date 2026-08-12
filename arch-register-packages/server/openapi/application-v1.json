@@ -64111,12 +64111,16 @@
                             "entities": {
                               "type": "string"
                             },
+                            "topology": {
+                              "type": "string"
+                            },
                             "wiki": {
                               "type": "string"
                             }
                           },
                           "required": [
                             "entities",
+                            "topology",
                             "wiki"
                           ]
                         }
