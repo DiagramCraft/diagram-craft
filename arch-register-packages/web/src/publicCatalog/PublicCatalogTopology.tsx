@@ -1,5 +1,5 @@
 import { useMemo, useCallback, useState } from 'react';
-import { useParams, useSearch } from '@tanstack/react-router';
+import { Link, useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import type {
   PublicCatalogTopology as PublicCatalogTopologyData,
   PublicCatalogTopologyEdge,
@@ -28,16 +28,17 @@ const routeParams = () =>
 
 const topologySearch = () => useSearch({ strict: false }) as TopologySearch;
 
-const topologyHref = (workspaceSlug: string, entityPublicId: string, search: TopologySearch) => {
-  const query = new URLSearchParams();
-  if (search.depth && search.depth !== 2) query.set('depth', String(search.depth));
-  if (search.direction && search.direction !== 'both') query.set('direction', search.direction);
-  if (search.q) query.set('q', search.q);
-  if (search.schema) query.set('schema', search.schema);
-  if (search.relation) query.set('relation', search.relation);
-  const suffix = query.size > 0 ? `?${query.toString()}` : '';
-  return `/public/${encodeURIComponent(workspaceSlug)}/topology/${encodeURIComponent(entityPublicId)}${suffix}`;
-};
+const topologyRoute = (workspaceSlug: string, entityPublicId: string, search: TopologySearch) => ({
+  to: '/public/$workspaceSlug/topology/$entityPublicId' as const,
+  params: { workspaceSlug, entityPublicId },
+  search: {
+    depth: search.depth === 2 ? undefined : search.depth,
+    direction: search.direction === 'both' ? undefined : search.direction,
+    q: search.q === '' ? undefined : search.q,
+    schema: search.schema === '' ? undefined : search.schema,
+    relation: search.relation === '' ? undefined : search.relation
+  }
+});
 
 const formatCount = (value: number, singular: string, plural = `${singular}s`) =>
   `${value} ${value === 1 ? singular : plural}`;
@@ -57,9 +58,9 @@ export const PublicCatalogTopologyPicker = () => {
 
   return (
     <section>
-      <a className={styles.back} href={`/public/${encodeURIComponent(workspaceSlug)}`}>
+      <Link className={styles.back} to="/public/$workspaceSlug" params={{ workspaceSlug }}>
         ← Catalog home
-      </a>
+      </Link>
       <div className={styles.pageHeading}>
         <div>
           <p className={styles.eyebrow}>PUBLIC CATALOG</p>
@@ -84,15 +85,15 @@ export const PublicCatalogTopologyPicker = () => {
       )}
       <div className={styles.entityList}>
         {data.items.map(entity => (
-          <a
+          <Link
             className={styles.entityCard}
             key={entity.publicId}
-            href={`/public/${encodeURIComponent(workspaceSlug)}/topology/${encodeURIComponent(entity.publicId)}`}
+            {...topologyRoute(workspaceSlug, entity.publicId, {})}
           >
             <span className={styles.cardKicker}>{entity.schema.name}</span>
             <strong>{entity.name}</strong>
             <span>{entity.publicId}</span>
-          </a>
+          </Link>
         ))}
       </div>
       {data.items.length === 0 && (
@@ -105,6 +106,7 @@ export const PublicCatalogTopologyPicker = () => {
 export const PublicCatalogTopology = () => {
   const { workspaceSlug = '', entityPublicId = '' } = routeParams();
   const search = topologySearch();
+  const navigate = useNavigate();
   const depth = search.depth ?? 2;
   const direction = search.direction ?? 'both';
   const { data, isLoading, isError } = usePublicCatalogTopology(workspaceSlug, entityPublicId, {
@@ -112,15 +114,12 @@ export const PublicCatalogTopology = () => {
     direction
   });
 
-  const updateSearch = useCallback((changes: Partial<TopologySearch>) => {
-    const query = new URLSearchParams(window.location.search);
-    for (const [key, value] of Object.entries(changes)) {
-      if (value == null || value === '') query.delete(key);
-      else query.set(key, String(value));
-    }
-    const queryString = query.toString();
-    window.location.href = `${window.location.pathname}${queryString ? `?${queryString}` : ''}`;
-  }, []);
+  const updateSearch = useCallback(
+    (changes: Partial<TopologySearch>) => {
+      void navigate(topologyRoute(workspaceSlug, entityPublicId, { ...search, ...changes }));
+    },
+    [entityPublicId, navigate, search, workspaceSlug]
+  );
 
   if (isLoading) return <div className={styles.state}>Loading topology…</div>;
   if (isError || !data)
@@ -147,6 +146,7 @@ const TopologyContent = ({
   search: TopologySearch;
   onSearchChange: (changes: Partial<TopologySearch>) => void;
 }) => {
+  const navigate = useNavigate();
   const root = data.nodes.find(node => node.isRoot) ?? data.nodes[0];
   const schemaOptions = useMemo(
     () => [...new Set(data.nodes.map(node => node.schema.name))].sort(),
@@ -210,28 +210,29 @@ const TopologyContent = ({
 
   const navigateToNode = useCallback(
     (publicId: string) => {
-      window.location.href = topologyHref(workspaceSlug, publicId, search);
+      void navigate(topologyRoute(workspaceSlug, publicId, search));
     },
-    [workspaceSlug, search]
+    [navigate, search, workspaceSlug]
   );
 
   return (
     <section>
-      <a className={styles.back} href={`/public/${encodeURIComponent(workspaceSlug)}/topology`}>
+      <Link className={styles.back} to="/public/$workspaceSlug/topology" params={{ workspaceSlug }}>
         ← Choose another entity
-      </a>
+      </Link>
       <div className={styles.pageHeading}>
         <div>
           <p className={styles.eyebrow}>{root?.schema.name ?? 'PUBLIC CATALOG'}</p>
           <h1>{root?.name ?? data.rootPublicId}</h1>
           <p className={styles.muted}>{data.rootPublicId}</p>
         </div>
-        <a
+        <Link
           className={styles.apiLink}
-          href={`/public/${encodeURIComponent(workspaceSlug)}/entities/${encodeURIComponent(data.rootPublicId)}`}
+          to="/public/$workspaceSlug/entities/$entityPublicId"
+          params={{ workspaceSlug, entityPublicId: data.rootPublicId }}
         >
           View entity
-        </a>
+        </Link>
       </div>
       <fieldset className={styles.topologyToolbar}>
         <legend>Topology controls</legend>
@@ -356,7 +357,7 @@ const TopologyTable = ({
         {nodes.map(node => (
           <tr key={node.publicId}>
             <th scope="row">
-              <a href={topologyHref(workspaceSlug, node.publicId, search)}>{node.name}</a>
+              <Link {...topologyRoute(workspaceSlug, node.publicId, search)}>{node.name}</Link>
               {node.isRoot && <span className={styles.topologyRootLabel}>Root</span>}
             </th>
             <td>{node.schema.name}</td>
@@ -379,13 +380,13 @@ const TopologyTable = ({
           {edges.map(edge => (
             <tr key={edge.id}>
               <td>
-                <a href={topologyHref(workspaceSlug, edge.from, search)}>{edge.from}</a>
+                <Link {...topologyRoute(workspaceSlug, edge.from, search)}>{edge.from}</Link>
               </td>
               <td>
                 {edge.label} <span className={styles.topologyKind}>({edge.kind})</span>
               </td>
               <td>
-                <a href={topologyHref(workspaceSlug, edge.to, search)}>{edge.to}</a>
+                <Link {...topologyRoute(workspaceSlug, edge.to, search)}>{edge.to}</Link>
               </td>
             </tr>
           ))}
