@@ -122,6 +122,7 @@ const exportSchemaSchema = z
   .object({
     id: z.string(),
     name: z.string(),
+    category: z.string().nullable().optional(),
     fields: z.array(z.unknown()),
     entity_capabilities: z.array(entityCapabilitySchema).optional(),
     groups: z.array(z.unknown()).optional(),
@@ -144,6 +145,7 @@ const exportRelationSchemaSchema = z
   .object({
     id: z.string(),
     name: z.string(),
+    category: z.string().nullable().optional(),
     description: z.string(),
     in_schema_ids: z.union([z.array(z.string()), z.literal('any')]),
     out_schema_ids: z.union([z.array(z.string()), z.literal('any')]),

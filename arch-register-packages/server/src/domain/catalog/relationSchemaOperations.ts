@@ -112,6 +112,7 @@ export const createWorkspaceRelationSchema = async (
         schema_id: row.id,
         version: row.version ?? 1,
         name: row.name,
+        category: row.category ?? null,
         description: row.description,
         in_schema_ids: row.in_schema_ids,
         out_schema_ids: row.out_schema_ids,
@@ -244,6 +245,7 @@ export const updateWorkspaceRelationSchema = async (
 
         const updated = await tx.relation.updateRelationSchema(ws, id, {
           name: next.name,
+          category: next.category,
           description: next.description,
           in_schema_ids: next.in_schema_ids,
           out_schema_ids: next.out_schema_ids,
@@ -265,6 +267,7 @@ export const updateWorkspaceRelationSchema = async (
           schema_id: id,
           version: updated.version ?? 1,
           name: updated.name,
+          category: updated.category ?? null,
           description: updated.description,
           in_schema_ids: updated.in_schema_ids,
           out_schema_ids: updated.out_schema_ids,

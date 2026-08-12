@@ -50,6 +50,7 @@ const deriveKeyPrefix = (value: string) =>
 
 type EntityEditorExtra = {
   keyPrefix: string;
+  category: string;
   templates: EntityTemplate[];
   entityCapabilities: EntityCapability[];
 };
@@ -98,6 +99,7 @@ export const SchemaSettingsScreen = () => {
       createDraft: schema => ({
         name: schema.name,
         keyPrefix: schema.key_prefix,
+        category: schema.category ?? '',
         description: schema.description,
         fields: schema.fields,
         templates: schema.templates,
@@ -132,6 +134,7 @@ export const SchemaSettingsScreen = () => {
       hasChanges: (draft, schema) =>
         draft.keyPrefix !== schema.key_prefix ||
         draft.name !== schema.name ||
+        draft.category !== (schema.category ?? '') ||
         draft.description !== schema.description ||
         JSON.stringify(draft.fields) !== JSON.stringify(schema.fields) ||
         JSON.stringify(draft.templates) !== JSON.stringify(schema.templates) ||
@@ -149,6 +152,7 @@ export const SchemaSettingsScreen = () => {
           data: {
             name: draft.name,
             key_prefix: draft.keyPrefix,
+            category: draft.category,
             description: draft.description,
             fields: draft.fields,
             templates: draft.templates,
@@ -283,6 +287,7 @@ export const SchemaSettingsScreen = () => {
           <SchemaEditorForm
             name={draft.name}
             keyPrefix={draft.keyPrefix}
+            category={draft.category}
             description={draft.description}
             color={draft.color}
             icon={draft.icon}
@@ -315,6 +320,9 @@ export const SchemaSettingsScreen = () => {
             }
             onKeyPrefixChange={value =>
               editor.updateDraft(current => ({ ...current, keyPrefix: value.toUpperCase() }))
+            }
+            onCategoryChange={value =>
+              editor.updateDraft(current => ({ ...current, category: value }))
             }
             onDescriptionChange={value =>
               editor.updateDraft(current => ({ ...current, description: value }))

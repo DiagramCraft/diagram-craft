@@ -22,6 +22,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
 
       const updated = await db.catalog.updateSchema(workspace, id, {
         name: 'renamed schema',
+        category: 'Architecture',
         description: 'updated',
         fields: [],
         templates: [
@@ -38,6 +39,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         updated_at: new Date()
       });
       expect(updated!.name).toBe('renamed schema');
+      expect(updated!.category).toBe('Architecture');
       expect(updated!.templates).toEqual([
         {
           id: 'vendor',
@@ -126,6 +128,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         schema_id: id,
         version: 1,
         name: 'Component',
+        category: 'Core',
         description: '',
         fields: [],
         templates: [],
@@ -142,6 +145,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         schema_id: id,
         version: 2,
         name: 'Component',
+        category: null,
         description: '',
         fields: [{ id: 'owner', name: 'Owner', type: 'text' }],
         templates: [],
@@ -156,6 +160,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const versions = await db.catalog.listSchemaVersions(workspace, id);
       expect(versions.map(v => v.version)).toEqual([2, 1]);
       expect(versions[0]!.change_summary).toEqual({ added: ['owner'] });
+      expect(versions.map(version => version.category)).toEqual([null, 'Core']);
       expect(versions[0]!.created_by).toBe(user.id);
     });
 

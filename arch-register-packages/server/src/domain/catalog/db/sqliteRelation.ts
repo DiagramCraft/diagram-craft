@@ -31,11 +31,12 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async createRelationSchema(input: RelationSchemaDbCreate) {
     this.run(
-      'INSERT INTO relation_schema (id, workspace, name, description, in_schema_ids, out_schema_ids, fields, groups, shared_field_group_links, validation_rules, color, icon, relation_approval_policy, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO relation_schema (id, workspace, name, category, description, in_schema_ids, out_schema_ids, fields, groups, shared_field_group_links, validation_rules, color, icon, relation_approval_policy, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
         input.name,
+        input.category ?? null,
         input.description,
         JSON.stringify(input.in_schema_ids),
         JSON.stringify(input.out_schema_ids),
@@ -56,9 +57,11 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async updateRelationSchema(workspace: string, id: string, input: RelationSchemaDbUpdate) {
     this.run(
-      'UPDATE relation_schema SET name = ?, description = ?, in_schema_ids = ?, out_schema_ids = ?, fields = ?, groups = ?, shared_field_group_links = ?, validation_rules = ?, color = ?, icon = ?, relation_approval_policy = COALESCE(?, relation_approval_policy), version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE relation_schema SET name = ?, category = CASE WHEN ? THEN category ELSE ? END, description = ?, in_schema_ids = ?, out_schema_ids = ?, fields = ?, groups = ?, shared_field_group_links = ?, validation_rules = ?, color = ?, icon = ?, relation_approval_policy = COALESCE(?, relation_approval_policy), version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
+        input.category === undefined ? 1 : 0,
+        input.category ?? null,
         input.description,
         JSON.stringify(input.in_schema_ids),
         JSON.stringify(input.out_schema_ids),
@@ -95,13 +98,14 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async createRelationSchemaVersion(input: RelationSchemaVersionDbCreate) {
     this.run(
-      'INSERT INTO relation_schema_version (id, workspace, schema_id, version, name, description, in_schema_ids, out_schema_ids, fields, groups, validation_rules, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO relation_schema_version (id, workspace, schema_id, version, name, category, description, in_schema_ids, out_schema_ids, fields, groups, validation_rules, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
         input.schema_id,
         input.version,
         input.name,
+        input.category ?? null,
         input.description,
         JSON.stringify(input.in_schema_ids),
         JSON.stringify(input.out_schema_ids),

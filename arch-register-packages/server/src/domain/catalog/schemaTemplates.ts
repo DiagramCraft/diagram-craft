@@ -1898,6 +1898,7 @@ export const instantiateTemplateDefinitions = (
       id: idMap.get(schema.symId)!,
       workspace: workspaceId,
       name: schema.name,
+      category: null,
       description: schema.description,
       key_prefix: normalizePublicIdPrefix(
         generateTemplateSchemaKeyPrefix(workspaceId, schema.symId)
@@ -1920,6 +1921,7 @@ export const instantiateTemplateDefinitions = (
       id: relationSchemaIdMap.get(relationSchema.symId)!,
       workspace: workspaceId,
       name: relationSchema.name,
+      category: null,
       description: relationSchema.description,
       in_schema_ids: relationSchema.inSymSchemaIds.map(symId => idMap.get(symId) ?? symId),
       out_schema_ids: relationSchema.outSymSchemaIds.map(symId => idMap.get(symId) ?? symId),

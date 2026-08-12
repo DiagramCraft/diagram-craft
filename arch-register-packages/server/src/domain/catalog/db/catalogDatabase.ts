@@ -83,6 +83,7 @@ export type SchemaDbResult = {
   id: string;
   workspace: string;
   name: string;
+  category?: string | null;
   description: string;
   fields: SchemaField[];
   templates?: EntityTemplate[];
@@ -116,6 +117,7 @@ export type SchemaVersionDbResult = {
   schema_id: string;
   version: number;
   name: string;
+  category?: string | null;
   description: string;
   fields: SchemaField[];
   templates: EntityTemplate[];
@@ -438,6 +440,7 @@ export const catalogMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
+    category: row['category'] == null ? null : String(row['category']),
     description: String(row['description'] ?? ''),
     fields: parseDatabaseJson(row['fields'], [], 'entity_schema.fields'),
     templates: parseDatabaseJson(row['templates'], [], 'entity_schema.templates'),
@@ -473,6 +476,7 @@ export const catalogMappers = {
     schema_id: String(row['schema_id']),
     version: Number(row['version']),
     name: String(row['name']),
+    category: row['category'] == null ? null : String(row['category']),
     description: String(row['description'] ?? ''),
     fields: parseDatabaseJson(row['fields'], [], 'entity_schema_version.fields'),
     templates: parseDatabaseJson(row['templates'], [], 'entity_schema_version.templates'),

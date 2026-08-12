@@ -9,6 +9,7 @@ import { httpAssert } from '../../utils/httpAssert';
 import {
   clearOrphanedGroupIds,
   normalizeSchemaGroups,
+  normalizeSchemaCategory,
   normalizeSharedFieldGroupLinks,
   resolveSelectFieldOptions
 } from './schemaHelpers';
@@ -83,6 +84,7 @@ export const buildCreateRelationSchemaInput = (
 ) => {
   const {
     name,
+    category,
     description = '',
     in: inEndpoint,
     out: outEndpoint,
@@ -110,6 +112,7 @@ export const buildCreateRelationSchemaInput = (
     id: idFactory(),
     workspace,
     name,
+    category: normalizeSchemaCategory(category),
     description: typeof description === 'string' ? description : '',
     in_schema_ids: normalizeRelationEndpoint(inEndpoint, 'in', knownEntitySchemaIds).schemaIds,
     out_schema_ids: normalizeRelationEndpoint(outEndpoint, 'out', knownEntitySchemaIds).schemaIds,
@@ -133,6 +136,7 @@ export const buildUpdateRelationSchemaInput = (
 ) => {
   const {
     name,
+    category,
     description,
     in: inEndpoint,
     out: outEndpoint,
@@ -165,6 +169,8 @@ export const buildUpdateRelationSchemaInput = (
 
   return {
     name,
+    category:
+      category !== undefined ? normalizeSchemaCategory(category) : (current.category ?? null),
     description:
       description !== undefined
         ? typeof description === 'string'
@@ -281,6 +287,7 @@ export const toApiRelationSchema = (
     id: schema.id,
     workspace: schema.workspace,
     name: schema.name,
+    category: schema.category ?? null,
     description: schema.description,
     in: { schemaIds: schema.in_schema_ids },
     out: { schemaIds: schema.out_schema_ids },
@@ -304,6 +311,7 @@ export const toApiRelationSchemaVersion = (
 ): RelationSchemaVersion => ({
   version: row.version,
   name: row.name,
+  category: row.category ?? null,
   description: row.description,
   in: { schemaIds: row.in_schema_ids },
   out: { schemaIds: row.out_schema_ids },

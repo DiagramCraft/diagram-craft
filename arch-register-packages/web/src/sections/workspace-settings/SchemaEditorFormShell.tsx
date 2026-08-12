@@ -10,6 +10,7 @@ import styles from './SchemaSettingsScreen.module.css';
 
 export const SchemaEditorFormShell = ({
   name,
+  category,
   description,
   color,
   icon,
@@ -21,6 +22,7 @@ export const SchemaEditorFormShell = ({
   afterDescription,
   children,
   onNameChange,
+  onCategoryChange,
   onDescriptionChange,
   onColorChange,
   onIconChange,
@@ -28,6 +30,7 @@ export const SchemaEditorFormShell = ({
   onSave
 }: {
   name: string;
+  category: string;
   description: string;
   color: string | null;
   icon: string | null;
@@ -39,6 +42,7 @@ export const SchemaEditorFormShell = ({
   afterDescription?: ReactNode;
   children: ReactNode;
   onNameChange: (value: string) => void;
+  onCategoryChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onColorChange: (value: string) => void;
   onIconChange: (value: string) => void;
@@ -58,6 +62,18 @@ export const SchemaEditorFormShell = ({
       </div>
     </div>
     {beforeDescription}
+    <div className={styles.formRow}>
+      <div>
+        <div className={styles.formLabel}>Category</div>
+        <TextInput
+          value={category}
+          disabled={!canEdit}
+          placeholder="Optional presentation category"
+          onChange={value => onCategoryChange(value ?? '')}
+          style={{ width: '100%' }}
+        />
+      </div>
+    </div>
     <div className={styles.formRow}>
       <div>
         <div className={styles.formLabel}>Description</div>

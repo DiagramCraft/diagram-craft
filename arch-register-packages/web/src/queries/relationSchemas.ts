@@ -73,6 +73,7 @@ export const invalidateRelationSchemaUpdate = async (
 
 export type RelationSchemaUpdateCacheInput = {
   name: string;
+  category?: string | null;
   description?: string;
   in: unknown;
   out: unknown;
@@ -102,6 +103,7 @@ export const optimisticallyUpdateRelationSchema = async (
           ? {
               ...relationSchema,
               name: data.name,
+              category: data.category === undefined ? relationSchema.category : data.category,
               description: data.description ?? relationSchema.description,
               in: data.in as RelationSchema['in'],
               out: data.out as RelationSchema['out'],

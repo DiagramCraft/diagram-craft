@@ -52,6 +52,7 @@ describe('toApiSchema', () => {
     id: 'schema-1',
     workspace: 'ws-1',
     name: 'Application',
+    category: 'Architecture',
     description: 'desc',
     fields: [
       { id: 'env', name: 'Env', type: 'select', enumId: 'enum-env' },
@@ -72,6 +73,7 @@ describe('toApiSchema', () => {
 
   it('resolves options for select fields', () => {
     const result = toApiSchema(schema, 5, [baseEnum]);
+    expect(result.category).toBe('Architecture');
     const envField = result.fields.find(f => f.id === 'env') as Record<string, unknown>;
     expect(envField?.options).toEqual([{ value: 'prod', label: 'Production' }]);
   });
@@ -127,6 +129,24 @@ describe('toApiSchema', () => {
 // ── buildCreateSchemaInput (number field validation) ────────────
 
 describe('buildCreateSchemaInput', () => {
+  it('trims category values and normalizes blank or omitted values to null', () => {
+    expect(
+      buildCreateSchemaInput(
+        'ws-1',
+        { name: 'Application', category: '  Architecture  ' },
+        new Set(),
+        now
+      ).category
+    ).toBe('Architecture');
+    expect(
+      buildCreateSchemaInput('ws-1', { name: 'Application', category: '  ' }, new Set(), now)
+        .category
+    ).toBeNull();
+    expect(
+      buildCreateSchemaInput('ws-1', { name: 'Application' }, new Set(), now).category
+    ).toBeNull();
+  });
+
   it('accepts a number field with min <= max', () => {
     const result = buildCreateSchemaInput(
       'ws-1',
@@ -192,6 +212,7 @@ describe('buildUpdateSchemaInput', () => {
     id: 'schema-1',
     workspace: 'ws-1',
     name: 'Application',
+    category: 'Architecture',
     description: '',
     fields: [{ id: 'notes', name: 'Notes', type: 'text', groupId: 'g1' }],
     templates: [],
@@ -208,6 +229,22 @@ describe('buildUpdateSchemaInput', () => {
   it('falls back to the current groups when omitted', () => {
     const result = buildUpdateSchemaInput({ name: 'Application' }, current, new Set(), now);
     expect(result.groups).toEqual([{ id: 'g1', name: 'Basics' }]);
+    expect(result.category).toBe('Architecture');
+  });
+
+  it('trims a changed category and clears whitespace-only values', () => {
+    expect(
+      buildUpdateSchemaInput(
+        { name: 'Application', category: '  Portfolio  ' },
+        current,
+        new Set(),
+        now
+      ).category
+    ).toBe('Portfolio');
+    expect(
+      buildUpdateSchemaInput({ name: 'Application', category: '   ' }, current, new Set(), now)
+        .category
+    ).toBeNull();
   });
 
   it('replaces groups when provided', () => {

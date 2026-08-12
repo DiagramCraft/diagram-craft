@@ -296,6 +296,7 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
   return schemas.map(schema => ({
     id: schema.id,
     name: schema.name,
+    category: schema.category ?? null,
     fields: schema.fields,
     entity_capabilities: schema.entity_capabilities ?? [],
     groups: schema.groups ?? [],
@@ -328,6 +329,7 @@ const exportRelationSchemas = async (
   return schemas.map(schema => ({
     id: schema.id,
     name: schema.name,
+    category: schema.category ?? null,
     description: schema.description,
     in_schema_ids: schema.in_schema_ids,
     out_schema_ids: schema.out_schema_ids,

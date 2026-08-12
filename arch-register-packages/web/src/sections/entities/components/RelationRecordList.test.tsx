@@ -32,6 +32,7 @@ const relationSchema: RelationSchema = {
   id: 'rel-schema-1',
   workspace: 'ws-1',
   name: 'Depends on',
+  category: null,
   description: '',
   in: { schemaIds: ['schema-2'] },
   out: { schemaIds: ['schema-1'] },

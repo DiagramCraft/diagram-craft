@@ -33,6 +33,7 @@ const EMPTY_ENDPOINT: RelationEndpoint = { schemaIds: [] };
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
 type RelationEditorExtra = {
+  category: string;
   inEndpoint: RelationEndpoint;
   outEndpoint: RelationEndpoint;
 };
@@ -81,6 +82,7 @@ export const RelationSchemaSettingsScreen = () => {
     () => ({
       createDraft: schema => ({
         name: schema.name,
+        category: schema.category ?? '',
         description: schema.description,
         inEndpoint: schema.in,
         outEndpoint: schema.out,
@@ -97,6 +99,7 @@ export const RelationSchemaSettingsScreen = () => {
         createRelationFieldForType(field, newType, firstEnumId),
       hasChanges: (draft, schema) =>
         draft.name !== schema.name ||
+        draft.category !== (schema.category ?? '') ||
         draft.description !== schema.description ||
         JSON.stringify(draft.inEndpoint) !== JSON.stringify(schema.in) ||
         JSON.stringify(draft.outEndpoint) !== JSON.stringify(schema.out) ||
@@ -112,6 +115,7 @@ export const RelationSchemaSettingsScreen = () => {
           relationSchemaId: schema.id,
           data: {
             name: draft.name,
+            category: draft.category,
             description: draft.description,
             in: draft.inEndpoint,
             out: draft.outEndpoint,
@@ -210,6 +214,7 @@ export const RelationSchemaSettingsScreen = () => {
         selected && draft ? (
           <RelationEditorForm
             name={draft.name}
+            category={draft.category}
             description={draft.description}
             inEndpoint={draft.inEndpoint}
             outEndpoint={draft.outEndpoint}
@@ -227,6 +232,9 @@ export const RelationSchemaSettingsScreen = () => {
             teams={teams}
             validationRules={draft.validationRules}
             onNameChange={value => editor.updateDraft(current => ({ ...current, name: value }))}
+            onCategoryChange={value =>
+              editor.updateDraft(current => ({ ...current, category: value }))
+            }
             onDescriptionChange={value =>
               editor.updateDraft(current => ({ ...current, description: value }))
             }
