@@ -4,7 +4,8 @@ import { ws } from '@arch-register/api-types/common';
 import {
   apiSpecificationItemSchema,
   apiSpecificationRevisionSchema,
-  artifactRevisionContentSchema
+  artifactRevisionContentSchema,
+  artifactStatusSchema
 } from '@arch-register/api-types/artifactContract';
 
 /**
@@ -100,6 +101,73 @@ export const publicCatalogManifestSchema = z.object({
     entities: z.string(),
     wiki: z.string()
   })
+});
+
+const selectorEligibilitySchema = z.object({
+  selectable: z.boolean(),
+  reason: z.string().optional()
+});
+
+export const publicCatalogSelectorFieldSchema = publicCatalogFieldSchema.extend(
+  selectorEligibilitySchema.shape
+);
+
+export const publicCatalogSelectorSchemaSchema = z.object({
+  id: z.string(),
+  name: z.string(),
+  description: z.string(),
+  keyPrefix: z.string(),
+  fields: z.array(publicCatalogSelectorFieldSchema)
+});
+
+export const publicCatalogSelectorEntitySchema = z.object({
+  id: z.string(),
+  publicId: z.string(),
+  slug: z.string(),
+  name: z.string(),
+  schemaId: z.string(),
+  schemaName: z.string(),
+  projectOnly: z.boolean(),
+  ...selectorEligibilitySchema.shape
+});
+
+export const publicCatalogSelectorPageSchema = z.object({
+  nodeId: z.string(),
+  scope: z.enum(['workspace', 'entity']),
+  entityId: z.string().nullable(),
+  entityPublicId: z.string().nullable(),
+  entityName: z.string().nullable(),
+  path: z.string(),
+  name: z.string(),
+  ...selectorEligibilitySchema.shape
+});
+
+export const publicCatalogSelectorRevisionSchema = apiSpecificationRevisionSchema.extend(
+  selectorEligibilitySchema.shape
+);
+
+export const publicCatalogSelectorApiArtifactSchema = z.object({
+  artifactId: z.string(),
+  entityId: z.string(),
+  entityPublicId: z.string(),
+  entityName: z.string(),
+  label: z.string(),
+  status: artifactStatusSchema,
+  currentRevisionId: z.string().nullable(),
+  revisions: z.array(publicCatalogSelectorRevisionSchema),
+  ...selectorEligibilitySchema.shape
+});
+
+export const publicCatalogSelectorOptionsSchema = z.object({
+  schemas: z.array(publicCatalogSelectorSchemaSchema),
+  entities: z.array(publicCatalogSelectorEntitySchema),
+  pages: z.array(publicCatalogSelectorPageSchema),
+  apiArtifacts: z.array(publicCatalogSelectorApiArtifactSchema)
+});
+
+export const publicCatalogPreviewSchema = z.object({
+  enabled: z.boolean(),
+  manifest: publicCatalogManifestSchema
 });
 
 export const publicCatalogEntitySchema = z.object({
@@ -289,6 +357,30 @@ export const publicCatalogConfigContract = oc.tag('Public Catalog Configuration'
       })
       .input(z.object({ params: ws }))
       .output(publicCatalogConfigOutputSchema),
+    options: oc
+      .route({
+        method: 'GET',
+        path: '/{workspace}/config/public-catalog/options',
+        inputStructure: 'detailed',
+        summary: 'Get public catalog selector options',
+        description:
+          'Returns labeled, eligibility-aware entities, Markdown pages, API artifacts, revisions, and fields for guided publication settings.',
+        tags: ['Workspace Config']
+      })
+      .input(z.object({ params: ws }))
+      .output(publicCatalogSelectorOptionsSchema),
+    preview: oc
+      .route({
+        method: 'POST',
+        path: '/{workspace}/config/public-catalog/preview',
+        inputStructure: 'detailed',
+        summary: 'Preview public catalog configuration',
+        description:
+          'Validates an unsaved public catalog configuration and returns the manifest it would produce without persisting changes.',
+        tags: ['Workspace Config']
+      })
+      .input(z.object({ params: ws, body: publicCatalogConfigSchema }))
+      .output(publicCatalogPreviewSchema),
     replace: oc
       .route({
         method: 'PUT',
@@ -309,6 +401,8 @@ export type PublicCatalogSchemaPublication = z.infer<typeof publicCatalogSchemaP
 export type PublicCatalogEntityOverride = z.infer<typeof publicCatalogEntityOverrideSchema>;
 export type PublicCatalogPage = z.infer<typeof publicCatalogPageSchema>;
 export type PublicCatalogApiArtifact = z.infer<typeof publicCatalogApiArtifactSchema>;
+export type PublicCatalogSelectorOptions = z.infer<typeof publicCatalogSelectorOptionsSchema>;
+export type PublicCatalogPreview = z.infer<typeof publicCatalogPreviewSchema>;
 export type PublicCatalogEntity = z.infer<typeof publicCatalogEntitySchema>;
 export type PublicCatalogManifest = z.infer<typeof publicCatalogManifestSchema>;
 export type PublicCatalogEntityList = z.infer<typeof publicCatalogEntityListSchema>;

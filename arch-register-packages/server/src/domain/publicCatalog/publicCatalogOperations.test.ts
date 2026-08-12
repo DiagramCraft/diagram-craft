@@ -5,7 +5,8 @@ import {
   getPublicCatalogConfig,
   getPublicCatalogEntity,
   getPublicCatalogManifest,
-  getPublicCatalogWikiPage
+  getPublicCatalogWikiPage,
+  getPublicCatalogSelectorOptions
 } from './publicCatalogOperations';
 
 const now = new Date('2026-08-11T10:00:00.000Z');
@@ -80,15 +81,20 @@ const makeDb = (storedConfig: Record<string, unknown> | null = publicConfig) =>
     },
     catalog: {
       resolveWorkspaceSlug: vi.fn(async () => 'workspace-1'),
+      listSchemas: vi.fn(async () => [schema]),
       listEntities: vi.fn(async () => [entity]),
       getEntity: vi.fn(async () => entity),
       getSchema: vi.fn(async () => schema)
     },
     project: {
-      getAnyContentNodeById: vi.fn(async () => null)
+      getAnyContentNodeById: vi.fn(async () => null),
+      listWorkspaceContentNodes: vi.fn(async () => []),
+      listEntityContentNodes: vi.fn(async () => [])
     },
     artifact: {
-      getArtifact: vi.fn(async () => null)
+      getArtifact: vi.fn(async () => null),
+      listArtifacts: vi.fn(async () => []),
+      listRevisionSummaries: vi.fn(async () => [])
     },
     artifactProjections: {
       apiSpecification: {
@@ -102,6 +108,60 @@ describe('public catalog publication', () => {
     const result = await getPublicCatalogConfig(makeDb(null), 'workspace-1');
     expect(result.config.enabled).toBe(false);
     expect(result.config.schemas).toEqual([]);
+  });
+
+  it('returns labeled selector options and marks restricted/project-only content unavailable', async () => {
+    const projectEntity = {
+      ...entity,
+      id: 'entity-project',
+      public_id: 'SVC-002',
+      project_id: 'project-1'
+    };
+    const workspacePage = {
+      id: 'workspace-page',
+      project_id: null,
+      entity_id: null,
+      type: 'markdown',
+      path: 'guides/overview.md',
+      name: 'Overview'
+    };
+    const entityPage = {
+      id: 'entity-page',
+      project_id: null,
+      entity_id: 'entity-1',
+      type: 'markdown',
+      path: 'catalog.md',
+      name: 'Catalog'
+    };
+    const db = makeDb();
+    db.catalog.listEntities = vi.fn(async () => [entity, projectEntity]) as never;
+    db.project.listWorkspaceContentNodes = vi.fn(async () => [workspacePage]) as never;
+    db.project.listEntityContentNodes = vi.fn(async (_workspace, entityId) =>
+      entityId === entity.id ? [entityPage] : []
+    ) as never;
+
+    const result = await getPublicCatalogSelectorOptions(db, 'workspace-1');
+
+    expect(result.schemas[0]?.fields).toEqual([
+      expect.objectContaining({ id: 'summary', selectable: true }),
+      expect.objectContaining({
+        id: 'secret',
+        selectable: false,
+        reason: 'Restricted field groups cannot be published'
+      })
+    ]);
+    expect(result.entities.find(item => item.id === 'entity-project')).toMatchObject({
+      projectOnly: true,
+      selectable: false
+    });
+    expect(result.pages).toEqual([
+      expect.objectContaining({ nodeId: 'entity-page', path: 'catalog', selectable: true }),
+      expect.objectContaining({
+        nodeId: 'workspace-page',
+        path: 'guides/overview',
+        selectable: true
+      })
+    ]);
   });
 
   it('redacts restricted fields even when an administrator selected them', async () => {
