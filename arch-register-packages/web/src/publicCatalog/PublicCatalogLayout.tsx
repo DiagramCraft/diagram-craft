@@ -35,6 +35,7 @@ export const PublicCatalogLayout = () => {
         </a>
         <nav className={styles.nav} aria-label="Public catalog">
           <a href={`${base}/entities`}>Entities</a>
+          <a href={`${base}/topology`}>Topology</a>
           {manifest.data.pages.slice(0, 5).map(page => (
             <a key={page.path} href={`${base}/wiki?path=${encodeURIComponent(page.path)}`}>
               {page.label}

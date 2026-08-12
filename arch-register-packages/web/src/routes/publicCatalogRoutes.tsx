@@ -7,6 +7,18 @@ import {
   PublicCatalogHome,
   PublicCatalogWikiPage
 } from '../publicCatalog/PublicCatalogScreens';
+import {
+  PublicCatalogTopology,
+  PublicCatalogTopologyPicker
+} from '../publicCatalog/PublicCatalogTopology';
+
+const parseTopologyDepth = (value: unknown) => {
+  const parsed = typeof value === 'number' ? value : Number(value);
+  return Number.isInteger(parsed) && parsed >= 1 && parsed <= 3 ? parsed : 2;
+};
+
+const parseTopologyDirection = (value: unknown) =>
+  value === 'incoming' || value === 'outgoing' || value === 'both' ? value : 'both';
 
 export const createPublicCatalogRoutes = <TParentRoute extends AnyRoute>(
   rootRoute: TParentRoute
@@ -31,6 +43,26 @@ export const createPublicCatalogRoutes = <TParentRoute extends AnyRoute>(
     path: 'entities/$entityPublicId',
     component: PublicCatalogEntityPage
   });
+  const topologyPicker = createRoute({
+    getParentRoute: () => route,
+    path: 'topology',
+    component: PublicCatalogTopologyPicker,
+    validateSearch: (search: Record<string, unknown>) => ({
+      q: typeof search.q === 'string' ? search.q : ''
+    })
+  });
+  const topology = createRoute({
+    getParentRoute: () => route,
+    path: 'topology/$entityPublicId',
+    component: PublicCatalogTopology,
+    validateSearch: (search: Record<string, unknown>) => ({
+      depth: parseTopologyDepth(search.depth),
+      direction: parseTopologyDirection(search.direction),
+      q: typeof search.q === 'string' ? search.q : '',
+      schema: typeof search.schema === 'string' ? search.schema : '',
+      relation: typeof search.relation === 'string' ? search.relation : ''
+    })
+  });
   const wiki = createRoute({
     getParentRoute: () => route,
     path: 'wiki',
@@ -44,5 +76,5 @@ export const createPublicCatalogRoutes = <TParentRoute extends AnyRoute>(
     path: 'api/$entityPublicId/$artifactId/$revisionId',
     component: PublicCatalogApiPage
   });
-  return route.addChildren([home, entities, entity, wiki, api]);
+  return route.addChildren([home, entities, entity, topologyPicker, topology, wiki, api]);
 };

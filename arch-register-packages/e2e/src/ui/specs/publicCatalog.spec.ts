@@ -66,7 +66,25 @@ const manifest = {
     }
   ],
   entityCount: 1,
-  endpoints: { entities: '/entities', wiki: '/wiki' }
+  endpoints: { entities: '/entities', topology: '/topology', wiki: '/wiki' }
+};
+
+const topology = {
+  rootPublicId: 'API-1',
+  nodes: [
+    {
+      publicId: 'API-1',
+      slug: 'public-api',
+      name: 'Public API',
+      schema: { name: 'API', keyPrefix: 'API' },
+      isRoot: true
+    }
+  ],
+  edges: [],
+  depth: 2,
+  direction: 'both',
+  truncated: false,
+  limits: { nodes: 200, edges: 500 }
 };
 
 const wiki = {
@@ -133,6 +151,10 @@ const mockPublicCatalog = async (page: Page) => {
     }
     if (path === `/entities/${entity.publicId}`) {
       await route.fulfill({ json: entity });
+      return;
+    }
+    if (path === `/topology/${entity.publicId}`) {
+      await route.fulfill({ json: topology });
       return;
     }
     if (path === '/wiki') {
@@ -213,6 +235,21 @@ test.describe('public catalog themes', () => {
     await page.keyboard.press('Enter');
     await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
     await expect(lightButton).toHaveAttribute('aria-pressed', 'true');
+  });
+
+  test('opens the publication-safe topology picker and accessible graph view', async ({ page }) => {
+    await mockPublicCatalog(page);
+    await page.goto(`/public/${defaultWorkspace.slug}/topology`);
+
+    await expect(page.getByRole('heading', { name: 'Topology' })).toBeVisible();
+    await page.getByRole('link', { name: /Public API/ }).click();
+    await page.waitForURL(`**/public/${defaultWorkspace.slug}/topology/API-1`);
+    await expect(page.getByRole('img', { name: 'Topology graph' })).toBeVisible();
+    await expect(
+      page.getByRole('table', { name: 'Published entities in this topology' })
+    ).toBeVisible();
+    await expect(page.getByLabel('Depth')).toHaveValue('2');
+    await expect(page.getByLabel('Direction')).toHaveValue('both');
   });
 
   test('renders a themed error state when the catalog is unavailable', async ({ page }) => {

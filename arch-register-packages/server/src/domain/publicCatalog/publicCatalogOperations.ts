@@ -1,6 +1,8 @@
 import type {
   PublicCatalogConfig,
-  PublicCatalogEntity
+  PublicCatalogEntity,
+  PublicCatalogTopology,
+  PublicCatalogTopologyEdge
 } from '@arch-register/api-types/publicCatalogContract';
 import { publicCatalogConfigSchema } from '@arch-register/api-types/publicCatalogContract';
 import {
@@ -247,6 +249,17 @@ type PublishedEntity = { entity: EntityDbResult; schema: SchemaDbResult; fieldId
 
 type PublishedEntityLookup = ReadonlyMap<string, EntityDbResult>;
 type RelationRowsBySchema = Map<string, Promise<RelationDbResult[]>>;
+type PublicTopologyDirection = 'both' | 'incoming' | 'outgoing';
+type PublicTopologyEdgeKind = PublicCatalogTopologyEdge['kind'];
+type PublicTopologyCandidateEdge = {
+  from: PublishedEntity;
+  to: PublishedEntity;
+  kind: PublicTopologyEdgeKind;
+  label: string;
+};
+
+const PUBLIC_TOPOLOGY_NODE_LIMIT = 200;
+const PUBLIC_TOPOLOGY_EDGE_LIMIT = 500;
 
 const findOverride = (config: PublicCatalogConfig, entity: EntityDbResult) =>
   config.entityOverrides.find(
@@ -465,6 +478,216 @@ const listPublishedEntities = async (
   return published;
 };
 
+const comparePublicTopologyEdges = (
+  left: PublicTopologyCandidateEdge,
+  right: PublicTopologyCandidateEdge
+) => {
+  const leftKey = [
+    left.from.entity.public_id,
+    left.to.entity.public_id,
+    left.kind,
+    left.label
+  ].join('\u0000');
+  const rightKey = [
+    right.from.entity.public_id,
+    right.to.entity.public_id,
+    right.kind,
+    right.label
+  ].join('\u0000');
+  return leftKey < rightKey ? -1 : leftKey > rightKey ? 1 : 0;
+};
+
+const publicTopologyRelationLabel = (field: SchemaDbResult['fields'][number]) => {
+  if ('predicate' in field && typeof field.predicate === 'string' && field.predicate.trim()) {
+    return field.predicate.trim();
+  }
+  return field.name;
+};
+
+const buildPublicTopologyEdges = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  published: PublishedEntity[]
+) => {
+  const publishedByIdentifier = publishedEntityLookup(published);
+  const publishedById = new Map(published.map(item => [item.entity.id, item]));
+  const candidates: PublicTopologyCandidateEdge[] = [];
+  const typedFieldsByRelationSchema = new Map<
+    string,
+    Array<{
+      source: PublishedEntity;
+      field: Extract<SchemaDbResult['fields'][number], { type: 'typedRelation' }>;
+    }>
+  >();
+
+  for (const source of published) {
+    for (const field of source.schema.fields) {
+      if (!source.fieldIds.includes(field.id)) continue;
+      if (isReferenceOrContainmentField(field)) {
+        for (const identifier of decodeRefs(source.entity.data[field.id])) {
+          const targetEntity = publishedByIdentifier.get(identifier);
+          const target = targetEntity ? publishedById.get(targetEntity.id) : undefined;
+          if (!target) continue;
+          candidates.push({
+            from: source,
+            to: target,
+            kind: field.type,
+            label: publicTopologyRelationLabel(field)
+          });
+        }
+        continue;
+      }
+      if (!isTypedRelationField(field)) continue;
+      const relationFields = typedFieldsByRelationSchema.get(field.relationSchemaId) ?? [];
+      relationFields.push({ source, field });
+      typedFieldsByRelationSchema.set(field.relationSchemaId, relationFields);
+    }
+  }
+
+  const relationRowsBySchema: RelationRowsBySchema = new Map();
+  for (const [relationSchemaId, relationFields] of [...typedFieldsByRelationSchema.entries()].sort(
+    ([left], [right]) => (left < right ? -1 : left > right ? 1 : 0)
+  )) {
+    const relations = await getRelationRows(db, workspace, relationSchemaId, relationRowsBySchema);
+    for (const { source, field } of relationFields) {
+      for (const relation of relations) {
+        const ownerId = field.direction === 'out' ? relation.out_entity_id : relation.in_entity_id;
+        if (ownerId !== source.entity.id) continue;
+        const targetId = field.direction === 'out' ? relation.in_entity_id : relation.out_entity_id;
+        const target = publishedById.get(targetId);
+        if (!target) continue;
+        candidates.push({
+          from: source,
+          to: target,
+          kind: 'typed',
+          label: publicTopologyRelationLabel(field)
+        });
+      }
+    }
+  }
+
+  const unique = new Map<string, PublicTopologyCandidateEdge>();
+  for (const candidate of candidates) {
+    const key = [
+      candidate.from.entity.public_id,
+      candidate.to.entity.public_id,
+      candidate.kind,
+      candidate.label
+    ].join('\u0000');
+    if (!unique.has(key)) unique.set(key, candidate);
+  }
+  return [...unique.values()].sort(comparePublicTopologyEdges);
+};
+
+const publicTopologyEdgeKey = (edge: PublicTopologyCandidateEdge) =>
+  [edge.from.entity.public_id, edge.to.entity.public_id, edge.kind, edge.label].join('\u0000');
+
+const toPublicTopologyNode = (published: PublishedEntity, isRoot: boolean) => ({
+  publicId: published.entity.public_id,
+  slug: published.entity.slug,
+  name: published.entity.name,
+  schema: {
+    name: published.schema.name,
+    keyPrefix: published.schema.key_prefix
+  },
+  isRoot
+});
+
+const toPublicTopologyEdge = (edge: PublicTopologyCandidateEdge): PublicCatalogTopologyEdge => ({
+  id: `edge:${edge.kind}:${edge.from.entity.public_id}:${edge.to.entity.public_id}:${edge.label}`,
+  from: edge.from.entity.public_id,
+  to: edge.to.entity.public_id,
+  label: edge.label,
+  kind: edge.kind
+});
+
+export const getPublicCatalogTopology = async (
+  db: DatabaseAdapter,
+  workspaceSlug: string,
+  entityPublicId: string,
+  query: { depth: number; direction: PublicTopologyDirection }
+): Promise<PublicCatalogTopology> => {
+  const { workspace, config } = await requirePublicCatalog(db, workspaceSlug);
+  const published = await listPublishedEntities(db, workspace, config);
+  const root = published.find(item => item.entity.public_id === entityPublicId);
+  httpAssert.present(root, { status: 404, message: 'Published entity not found' });
+
+  const edges = await buildPublicTopologyEdges(db, workspace, published);
+  const outgoing = new Map<string, PublicTopologyCandidateEdge[]>();
+  const incoming = new Map<string, PublicTopologyCandidateEdge[]>();
+  for (const edge of edges) {
+    const outgoingEdges = outgoing.get(edge.from.entity.id) ?? [];
+    outgoingEdges.push(edge);
+    outgoing.set(edge.from.entity.id, outgoingEdges);
+    const incomingEdges = incoming.get(edge.to.entity.id) ?? [];
+    incomingEdges.push(edge);
+    incoming.set(edge.to.entity.id, incomingEdges);
+  }
+
+  const nodeDepth = new Map<string, number>([[root.entity.id, 0]]);
+  const nodeOrder: PublishedEntity[] = [root];
+  const queue: PublishedEntity[] = [root];
+  const selectedEdges = new Map<string, PublicTopologyCandidateEdge>();
+  let truncated = false;
+
+  while (queue.length > 0) {
+    const current = queue.shift()!;
+    const currentDepth = nodeDepth.get(current.entity.id)!;
+    if (currentDepth >= query.depth) continue;
+
+    const adjacent = new Map<string, PublicTopologyCandidateEdge>();
+    if (query.direction === 'both' || query.direction === 'outgoing') {
+      for (const edge of outgoing.get(current.entity.id) ?? []) {
+        adjacent.set(publicTopologyEdgeKey(edge), edge);
+      }
+    }
+    if (query.direction === 'both' || query.direction === 'incoming') {
+      for (const edge of incoming.get(current.entity.id) ?? []) {
+        adjacent.set(publicTopologyEdgeKey(edge), edge);
+      }
+    }
+
+    for (const edge of [...adjacent.values()].sort(comparePublicTopologyEdges)) {
+      const neighbor =
+        query.direction === 'incoming' && edge.to.entity.id === current.entity.id
+          ? edge.from
+          : query.direction === 'outgoing' && edge.from.entity.id === current.entity.id
+            ? edge.to
+            : edge.from.entity.id === current.entity.id
+              ? edge.to
+              : edge.from;
+      const edgeKey = publicTopologyEdgeKey(edge);
+      const hasNode = nodeDepth.has(neighbor.entity.id);
+      if (!selectedEdges.has(edgeKey) && selectedEdges.size >= PUBLIC_TOPOLOGY_EDGE_LIMIT) {
+        truncated = true;
+        continue;
+      }
+      if (!hasNode && nodeOrder.length >= PUBLIC_TOPOLOGY_NODE_LIMIT) {
+        truncated = true;
+        continue;
+      }
+      if (!selectedEdges.has(edgeKey)) selectedEdges.set(edgeKey, edge);
+      if (hasNode) continue;
+      nodeDepth.set(neighbor.entity.id, currentDepth + 1);
+      nodeOrder.push(neighbor);
+      queue.push(neighbor);
+    }
+  }
+
+  return {
+    rootPublicId: root.entity.public_id,
+    nodes: nodeOrder.map(item => toPublicTopologyNode(item, item.entity.id === root.entity.id)),
+    edges: [...selectedEdges.values()].sort(comparePublicTopologyEdges).map(toPublicTopologyEdge),
+    depth: query.depth,
+    direction: query.direction,
+    truncated,
+    limits: {
+      nodes: PUBLIC_TOPOLOGY_NODE_LIMIT,
+      edges: PUBLIC_TOPOLOGY_EDGE_LIMIT
+    }
+  };
+};
+
 const requirePublicCatalog = async (db: DatabaseAdapter, workspaceSlug: string) => {
   const workspace = await resolveWorkspace(db.catalog, workspaceSlug);
   const { config } = await getPublicCatalogConfig(db, workspace);
@@ -540,6 +763,7 @@ export const getPublicCatalogManifest = async (db: DatabaseAdapter, workspaceSlu
     entityCount: published.length,
     endpoints: {
       entities: `/api/public/v1/${encodeURIComponent(workspaceSlug)}/entities`,
+      topology: `/api/public/v1/${encodeURIComponent(workspaceSlug)}/topology`,
       wiki: `/api/public/v1/${encodeURIComponent(workspaceSlug)}/wiki`
     }
   };

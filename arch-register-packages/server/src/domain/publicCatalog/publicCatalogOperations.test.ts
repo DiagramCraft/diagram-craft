@@ -5,6 +5,7 @@ import {
   getPublicCatalogConfig,
   getPublicCatalogEntity,
   getPublicCatalogManifest,
+  getPublicCatalogTopology,
   getPublicCatalogWikiPage
 } from './publicCatalogOperations';
 
@@ -94,6 +95,9 @@ const makeDb = (storedConfig: Record<string, unknown> | null = publicConfig) =>
       apiSpecification: {
         getRevision: vi.fn(async () => null)
       }
+    },
+    relation: {
+      listRelations: vi.fn(async () => ({ items: [], total: 0 }))
     }
   }) as unknown as DatabaseAdapter;
 
@@ -169,6 +173,177 @@ describe('public catalog publication', () => {
     });
     expect(result.pages).toEqual([]);
     expect(result.endpoints.entities).toContain('/api/public/v1/workspace-slug/entities');
+    expect(result.endpoints.topology).toContain('/api/public/v1/workspace-slug/topology');
+  });
+
+  it('builds a bounded publication-safe topology in the requested direction', async () => {
+    const source = {
+      ...entity,
+      id: 'entity-source',
+      public_id: 'SVC-001',
+      name: 'Catalog API',
+      schema_id: 'schema-source',
+      data: {
+        dependencies: ['entity-target'],
+        restrictedDependencies: ['entity-hidden'],
+        typedLinks: []
+      }
+    };
+    const target = {
+      ...entity,
+      id: 'entity-target',
+      public_id: 'SVC-002',
+      slug: 'payments-api',
+      name: 'Payments API',
+      schema_id: 'schema-target',
+      data: { next: ['entity-hidden'] }
+    };
+    const hiddenTarget = {
+      ...entity,
+      id: 'entity-hidden',
+      public_id: 'SVC-003',
+      slug: 'internal-api',
+      name: 'Internal API',
+      schema_id: 'schema-target',
+      data: { next: [] }
+    };
+    const sourceSchema = {
+      ...schema,
+      id: 'schema-source',
+      name: 'Service',
+      fields: [
+        {
+          id: 'dependencies',
+          name: 'Dependencies',
+          type: 'reference',
+          predicate: 'depends on',
+          schemaId: 'schema-target',
+          minCount: 0,
+          maxCount: -1
+        },
+        {
+          id: 'restrictedDependencies',
+          name: 'Restricted dependencies',
+          type: 'reference',
+          schemaId: 'schema-target',
+          minCount: 0,
+          maxCount: -1,
+          groupId: 'restricted'
+        },
+        {
+          id: 'typedLinks',
+          name: 'Typed links',
+          type: 'typedRelation',
+          relationSchemaId: 'relation-schema-1',
+          direction: 'out'
+        }
+      ]
+    } as unknown as SchemaDbResult;
+    const targetSchema = {
+      ...schema,
+      id: 'schema-target',
+      name: 'System',
+      key_prefix: 'SYS',
+      fields: [
+        {
+          id: 'next',
+          name: 'Next',
+          type: 'reference',
+          schemaId: 'schema-target',
+          minCount: 0,
+          maxCount: -1
+        }
+      ]
+    } as unknown as SchemaDbResult;
+    const db = makeDb({
+      ...publicConfig,
+      schemas: [
+        {
+          schemaId: 'schema-source',
+          fieldIds: ['dependencies', 'restrictedDependencies', 'typedLinks']
+        },
+        { schemaId: 'schema-target', fieldIds: ['next'] }
+      ]
+    });
+    db.catalog.listEntities = vi.fn(async () => [source, target, hiddenTarget]) as never;
+    db.catalog.getSchema = vi.fn(async (_workspace, schemaId) => {
+      if (schemaId === 'schema-source') return sourceSchema;
+      if (schemaId === 'schema-target') return targetSchema;
+      return null;
+    }) as never;
+    db.relation.listRelations = vi.fn(async () => ({
+      items: [
+        {
+          id: 'relation-internal-1',
+          workspace: 'workspace-1',
+          schema_id: 'relation-schema-1',
+          schema_name: 'Internal relation schema name',
+          in_entity_id: target.id,
+          in_entity_name: target.name,
+          out_entity_id: source.id,
+          out_entity_name: source.name,
+          data: {},
+          owner: null,
+          owner_name: null,
+          lifecycle: null,
+          lifecycle_label: null,
+          version: 1,
+          approval_policy_override: null,
+          created_at: now,
+          updated_at: now
+        }
+      ],
+      total: 1
+    })) as never;
+
+    const result = await getPublicCatalogTopology(db, 'workspace-slug', 'SVC-001', {
+      depth: 2,
+      direction: 'outgoing'
+    });
+
+    expect(result).toMatchObject({
+      depth: 2,
+      direction: 'outgoing',
+      truncated: false,
+      limits: { nodes: 200, edges: 500 }
+    });
+    expect(result.nodes.map(node => node.publicId)).toEqual(['SVC-001', 'SVC-002', 'SVC-003']);
+    expect(result.edges).toEqual([
+      {
+        id: 'edge:reference:SVC-001:SVC-002:depends on',
+        from: 'SVC-001',
+        to: 'SVC-002',
+        label: 'depends on',
+        kind: 'reference'
+      },
+      {
+        id: 'edge:typed:SVC-001:SVC-002:Typed links',
+        from: 'SVC-001',
+        to: 'SVC-002',
+        label: 'Typed links',
+        kind: 'typed'
+      },
+      {
+        id: 'edge:reference:SVC-002:SVC-003:Next',
+        from: 'SVC-002',
+        to: 'SVC-003',
+        label: 'Next',
+        kind: 'reference'
+      }
+    ]);
+    expect(JSON.stringify(result)).not.toContain('relation-internal-1');
+    expect(JSON.stringify(result)).not.toContain('relation-schema-1');
+    expect(JSON.stringify(result)).not.toContain('restrictedDependencies');
+
+    const incoming = await getPublicCatalogTopology(db, 'workspace-slug', 'SVC-002', {
+      depth: 1,
+      direction: 'incoming'
+    });
+    expect(incoming.nodes.map(node => node.publicId)).toEqual(['SVC-002', 'SVC-001']);
+    expect(incoming.edges.map(edge => edge.kind)).toEqual(['reference', 'typed']);
+    expect(incoming.edges.every(edge => edge.from === 'SVC-001' && edge.to === 'SVC-002')).toBe(
+      true
+    );
   });
 
   it('returns 404 for a disabled catalog', async () => {
