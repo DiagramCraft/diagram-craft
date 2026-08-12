@@ -1,5 +1,27 @@
 import { describe, expect, it } from 'vitest';
-import { bubbleViewConfigSchema, savedViewQuerySchema } from './viewContract';
+import {
+  bubbleViewConfigSchema,
+  graphViewConfigSchema,
+  savedViewQuerySchema
+} from './viewContract';
+
+describe('graph view configuration', () => {
+  it('accepts entity graph traversal settings and relation graph settings together', () => {
+    expect(
+      graphViewConfigSchema.safeParse({
+        maxDepth: 3,
+        direction: 'upstream',
+        relationSchemaIds: ['relation-schema'],
+        edgeLabelFieldId: null,
+        edgeColorFieldId: 'status'
+      }).success
+    ).toBe(true);
+  });
+
+  it('rejects traversal depths outside the supported range', () => {
+    expect(graphViewConfigSchema.safeParse({ maxDepth: 6 }).success).toBe(false);
+  });
+});
 
 describe('bubble view configuration', () => {
   it('accepts legacy configs without quadrant settings', () => {

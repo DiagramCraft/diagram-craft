@@ -130,6 +130,37 @@ describe('collectEntityGraphIds', () => {
     ).toEqual(['root', 'flow-target']);
   });
 
+  it('traverses from every filtered entity root and marks each root', () => {
+    const relations = new Map([
+      ['root', data({ outgoing: [relation('linked-from-root')] })],
+      ['second-root', data({ incoming: [relation('linked-from-second-root')] })],
+      ['linked-from-root', data()],
+      ['linked-from-second-root', data()]
+    ]);
+
+    const result = buildEntityGraphData({
+      rootEntities: [
+        { entityId: 'root', entityName: 'Root', entitySchemaId: 'application' },
+        { entityId: 'second-root', entityName: 'Second root', entitySchemaId: 'service' }
+      ],
+      relationsData: relations,
+      maxDepth: 1,
+      excludedIds: new Set(),
+      manuallyExpanded: new Set()
+    });
+
+    expect(result.nodes.map(node => node.id)).toEqual([
+      'root',
+      'second-root',
+      'linked-from-root',
+      'linked-from-second-root'
+    ]);
+    expect(result.nodes.filter(node => node.data.isRoot).map(node => node.id)).toEqual([
+      'root',
+      'second-root'
+    ]);
+  });
+
   it('stops traversal at max depth while still exposing relations on the boundary node', () => {
     const relations = new Map([
       ['root', data({ outgoing: [relation('child')] })],

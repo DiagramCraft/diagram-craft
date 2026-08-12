@@ -13,8 +13,6 @@ import {
   serializeViewConfigs
 } from './entityBrowserState';
 
-type EntityBrowserView = Exclude<BrowserView, 'graph'>;
-
 type UseEntityBrowserSearchStateProps = {
   workspaceSlug: string;
   projectId?: string;
@@ -48,8 +46,7 @@ export const useEntityBrowserSearchState = ({
   const q = search.q ?? '';
   const sort = search.sort ?? 'name';
   const collectionId = search.collectionId ?? null;
-  const requestedView: EntityBrowserView =
-    search.viewMode === 'graph' ? 'table' : (search.viewMode ?? 'table');
+  const requestedView: BrowserView = search.viewMode ?? 'table';
   const view =
     collectionId && requestedView !== 'table' && requestedView !== 'cards'
       ? 'table'
@@ -130,10 +127,9 @@ export const useEntityBrowserSearchState = ({
   );
   const setView = useCallback(
     (next: BrowserView) => {
-      const entityView: EntityBrowserView = next === 'graph' ? 'table' : next;
       if (collectionId && next !== 'table' && next !== 'cards') return;
       navigateBrowser({
-        viewMode: entityView === 'table' ? undefined : entityView,
+        viewMode: next === 'table' ? undefined : next,
         viewId: undefined
       });
     },

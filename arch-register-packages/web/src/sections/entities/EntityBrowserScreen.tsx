@@ -298,7 +298,7 @@ export const EntityBrowserScreen = () => {
   }
 
   return (
-    <div className={styles.screen}>
+    <div className={`${styles.screen} ${view === 'graph' ? styles.graphMode : ''}`}>
       <div className={styles.header}>
         <Title
           breadcrumb={[

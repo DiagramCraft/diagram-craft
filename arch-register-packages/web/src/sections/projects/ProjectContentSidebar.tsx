@@ -20,6 +20,7 @@ import {
   TbLayoutGrid,
   TbList,
   TbMap,
+  TbVectorTriangle,
   TbPencil,
   TbPlus,
   TbTrash,
@@ -163,6 +164,8 @@ export const ProjectContentSidebar = ({
         return <TbColumns3 size={12} />;
       case 'map':
         return <TbMap size={12} />;
+      case 'graph':
+        return <TbVectorTriangle size={12} />;
       default:
         return <TbHome size={12} />;
     }

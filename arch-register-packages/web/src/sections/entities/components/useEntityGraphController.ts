@@ -6,7 +6,8 @@ import type { SerializedDiagramDocument } from '@diagram-craft/model/serializati
 import {
   buildEntityGraphData,
   collectEntityGraphIds,
-  type EntityGraphDirection
+  type EntityGraphDirection,
+  type EntityGraphRoot
 } from './entityGraphState';
 
 const defaultLayoutOptions: LayoutOptions = {
@@ -21,11 +22,14 @@ const defaultLayoutOptions: LayoutOptions = {
 
 type UseEntityGraphControllerOptions = {
   workspaceId: string;
-  rootEntityId: string;
-  rootEntityName: string;
-  rootEntitySchemaId: string;
+  rootEntityId?: string;
+  rootEntityName?: string;
+  rootEntitySchemaId?: string;
+  rootEntities?: readonly EntityGraphRoot[];
+  graphName?: string;
   maxDepth?: number;
   direction?: EntityGraphDirection;
+  relationSchemaIds?: readonly string[];
 };
 
 export const useEntityGraphController = ({
@@ -33,14 +37,34 @@ export const useEntityGraphController = ({
   rootEntityId,
   rootEntityName,
   rootEntitySchemaId,
+  rootEntities: configuredRoots,
+  graphName,
   maxDepth: configuredMaxDepth,
-  direction: configuredDirection
+  direction: configuredDirection,
+  relationSchemaIds: configuredRelationSchemaIds
 }: UseEntityGraphControllerOptions) => {
+  const rootEntities = useMemo(() => {
+    if (configuredRoots && configuredRoots.length > 0) {
+      return Array.from(new Map(configuredRoots.map(root => [root.entityId, root])).values());
+    }
+    return rootEntityId
+      ? [
+          {
+            entityId: rootEntityId,
+            entityName: rootEntityName ?? '',
+            entitySchemaId: rootEntitySchemaId ?? ''
+          }
+        ]
+      : [];
+  }, [configuredRoots, rootEntityId, rootEntityName, rootEntitySchemaId]);
+  const rootIds = useMemo(() => rootEntities.map(root => root.entityId), [rootEntities]);
   const [layout, setLayout] = useState<LayoutAlgorithm>('hierarchy');
   const [layoutOptions, setLayoutOptions] = useState<LayoutOptions>(defaultLayoutOptions);
   const [maxDepth, setMaxDepth] = useState(configuredMaxDepth ?? 2);
   const [direction, setDirection] = useState<EntityGraphDirection>(configuredDirection ?? 'both');
-  const [relationSchemaFilter, setRelationSchemaFilter] = useState<Set<string>>(new Set());
+  const [relationSchemaFilter, setRelationSchemaFilter] = useState<Set<string>>(
+    () => new Set(configuredRelationSchemaIds ?? [])
+  );
   const [excludedIds, setExcludedIds] = useState<Set<string>>(new Set());
   const [manuallyExpanded, setManuallyExpanded] = useState<Set<string>>(new Set());
   const [contextMenu, setContextMenu] = useState<{
@@ -48,16 +72,16 @@ export const useEntityGraphController = ({
     x: number;
     y: number;
   } | null>(null);
-  const [fetchIds, setFetchIds] = useState<string[]>(() => [rootEntityId]);
+  const [fetchIds, setFetchIds] = useState<string[]>(rootIds);
   const [saveDiagramOpen, setSaveDiagramOpen] = useState(false);
   const [pendingDiagramContent, setPendingDiagramContent] =
     useState<SerializedDiagramDocument | null>(null);
 
   useEffect(() => {
-    setFetchIds([rootEntityId]);
+    setFetchIds(rootIds);
     setExcludedIds(new Set());
     setManuallyExpanded(new Set());
-  }, [rootEntityId]);
+  }, [rootIds]);
 
   useEffect(() => {
     if (configuredMaxDepth !== undefined) setMaxDepth(configuredMaxDepth);
@@ -67,11 +91,17 @@ export const useEntityGraphController = ({
     if (configuredDirection !== undefined) setDirection(configuredDirection);
   }, [configuredDirection]);
 
+  useEffect(() => {
+    if (configuredRelationSchemaIds !== undefined) {
+      setRelationSchemaFilter(new Set(configuredRelationSchemaIds));
+    }
+  }, [configuredRelationSchemaIds]);
+
   const relationsData = useMultipleEntityRelations(workspaceId, fetchIds);
 
   useEffect(() => {
     const next = collectEntityGraphIds({
-      rootEntityId,
+      rootEntities,
       relationsData,
       maxDepth,
       excludedIds,
@@ -84,7 +114,7 @@ export const useEntityGraphController = ({
       return next.some(id => !previousIds.has(id)) ? next : previous;
     });
   }, [
-    rootEntityId,
+    rootEntities,
     relationsData,
     maxDepth,
     excludedIds,
@@ -96,9 +126,7 @@ export const useEntityGraphController = ({
   const { nodes, edges, hiddenCountMap } = useMemo(
     () =>
       buildEntityGraphData({
-        rootEntityId,
-        rootEntityName,
-        rootEntitySchemaId,
+        rootEntities,
         relationsData,
         maxDepth,
         excludedIds,
@@ -107,9 +135,7 @@ export const useEntityGraphController = ({
         relationSchemaIds: relationSchemaFilter
       }),
     [
-      rootEntityId,
-      rootEntityName,
-      rootEntitySchemaId,
+      rootEntities,
       relationsData,
       maxDepth,
       excludedIds,
@@ -166,15 +192,20 @@ export const useEntityGraphController = ({
       kind: edge.kind
     }));
     setPendingDiagramContent(
-      createDiagramFromGraph(rootEntityName, graphNodes, graphEdges, {
-        layout,
-        ...layoutOptions,
-        nodeWidth: 200,
-        nodeHeight: 52
-      })
+      createDiagramFromGraph(
+        graphName ?? rootEntityName ?? 'Entity graph',
+        graphNodes,
+        graphEdges,
+        {
+          layout,
+          ...layoutOptions,
+          nodeWidth: 200,
+          nodeHeight: 52
+        }
+      )
     );
     setSaveDiagramOpen(true);
-  }, [edges, layout, layoutOptions, nodes, rootEntityName]);
+  }, [edges, graphName, layout, layoutOptions, nodes, rootEntityName]);
 
   return {
     layout,
@@ -194,6 +225,7 @@ export const useEntityGraphController = ({
     saveDiagramOpen,
     setSaveDiagramOpen,
     pendingDiagramContent,
+    rootEntityIds: new Set(rootIds),
     nodes,
     edges,
     hiddenCountMap,

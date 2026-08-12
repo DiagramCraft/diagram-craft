@@ -51,7 +51,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
     {
       entityQuery,
       view: 'full',
-      limit: 100
+      limit: savedView?.viewMode === 'graph' ? undefined : 100
     },
     { enabled: !!workspaceSlug && !!savedView && !isTreeBased }
   );
@@ -125,6 +125,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
         statusFilter={statusFilter}
         activeViewConfig={viewConfig}
         displayFields={displayFields}
+        isLoading={entitiesLoading}
         mode={{ kind: 'published', onEntityClick }}
         unsupportedView={
           <div className={styles.container}>

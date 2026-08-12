@@ -217,6 +217,21 @@ export const exploreViewConfigSchema = z.object({
 });
 
 export const graphViewConfigSchema = z.object({
+  maxDepth: z
+    .number()
+    .int()
+    .min(1)
+    .max(5)
+    .optional()
+    .describe('Maximum relationship traversal depth for entity graph view'),
+  direction: z
+    .enum(['upstream', 'downstream', 'both'])
+    .optional()
+    .describe('Relationship direction followed by entity graph view'),
+  relationSchemaIds: z
+    .array(z.string())
+    .optional()
+    .describe('Relation schema identifiers included by entity graph view'),
   edgeLabelFieldId: z
     .string()
     .nullable()
@@ -242,7 +257,9 @@ const viewConfigSchema = z
     bubble: bubbleViewConfigSchema.optional().describe('Configuration for bubble view'),
     heatmap: heatmapViewConfigSchema.optional().describe('Configuration for heat-map view'),
     map: mapViewConfigSchema.optional().describe('Configuration for map view'),
-    graph: graphViewConfigSchema.optional().describe('Configuration for relation graph view')
+    graph: graphViewConfigSchema
+      .optional()
+      .describe('Configuration for entity and relation graph views')
   })
   .nullable()
   .describe('View-specific configuration (only one view type should be configured)');

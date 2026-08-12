@@ -272,6 +272,7 @@ export const EntityBrowser = ({
     entities,
     filtered,
     filteredCount,
+    isLoading,
     owners,
     schemaMap,
     sortOptions
@@ -486,57 +487,60 @@ export const EntityBrowser = ({
               onConfirm={handleConfirm}
             />
           )}
-          <EntityBrowserView
-            view={view}
-            rows={joinedRows}
-            schemaMap={schemaMap}
-            schemas={schemas}
-            lifecycleStates={lifecycleStates}
-            teams={teams as WorkspaceTeam[]}
-            projects={projects}
-            workspaceId={workspaceId}
-            projectId={projectId}
-            projectScope={projectScope}
-            collectionId={collectionId}
-            diffTargetDate={asOf}
-            diffIncludePlannedChanges={includePlannedChanges}
-            diffIncludeOverdueChanges={includeOverdueChanges}
-            q={q}
-            typeFilter={typeFilter}
-            ownerFilter={ownerFilter}
-            statusFilter={statusFilter}
-            conditions={conditions}
-            entityQuery={entityQuery ?? null}
-            executionEntityQuery={executionEntityQuery}
-            activeViewConfig={activeViewConfig}
-            displayFields={displayFields}
-            projectContext={projectContext}
-            linkedEntityIds={linkedEntityIds}
-            activeDateField={dateBrowserEnabled ? activeDateField : null}
-            joinAssessmentId={effectiveJoinAssessmentId}
-            joinedAssessment={joinedAssessmentContext}
-            responsesByEntity={responsesByEntity}
-            onCountChange={onCountChange}
-            mode={
-              readOnly
-                ? {
-                    kind: 'snapshot',
-                    onConfigChange: setActiveViewConfig,
-                    onEntityClick: navigateToEntity
-                  }
-                : {
-                    kind: 'interactive',
-                    onConfigChange: setActiveViewConfig,
-                    onEntityClick: navigateToEntity,
-                    onDelete: handleDeleteEntity,
-                    onClone: handleCloneEntity,
-                    onManageCollections: entity => setCollectionTarget(entity),
-                    selectedIds,
-                    onSelectAll: handleSelectAll,
-                    onSelectRow: handleSelectRow
-                  }
-            }
-          />
+          <div className={view === 'graph' ? styles.graphView : undefined}>
+            <EntityBrowserView
+              view={view}
+              rows={joinedRows}
+              schemaMap={schemaMap}
+              schemas={schemas}
+              lifecycleStates={lifecycleStates}
+              teams={teams as WorkspaceTeam[]}
+              projects={projects}
+              workspaceId={workspaceId}
+              projectId={projectId}
+              projectScope={projectScope}
+              collectionId={collectionId}
+              diffTargetDate={asOf}
+              diffIncludePlannedChanges={includePlannedChanges}
+              diffIncludeOverdueChanges={includeOverdueChanges}
+              q={q}
+              typeFilter={typeFilter}
+              ownerFilter={ownerFilter}
+              statusFilter={statusFilter}
+              conditions={conditions}
+              entityQuery={entityQuery ?? null}
+              executionEntityQuery={executionEntityQuery}
+              activeViewConfig={activeViewConfig}
+              displayFields={displayFields}
+              projectContext={projectContext}
+              linkedEntityIds={linkedEntityIds}
+              activeDateField={dateBrowserEnabled ? activeDateField : null}
+              joinAssessmentId={effectiveJoinAssessmentId}
+              joinedAssessment={joinedAssessmentContext}
+              responsesByEntity={responsesByEntity}
+              onCountChange={onCountChange}
+              isLoading={isLoading}
+              mode={
+                readOnly
+                  ? {
+                      kind: 'snapshot',
+                      onConfigChange: setActiveViewConfig,
+                      onEntityClick: navigateToEntity
+                    }
+                  : {
+                      kind: 'interactive',
+                      onConfigChange: setActiveViewConfig,
+                      onEntityClick: navigateToEntity,
+                      onDelete: handleDeleteEntity,
+                      onClone: handleCloneEntity,
+                      onManageCollections: entity => setCollectionTarget(entity),
+                      selectedIds,
+                      onSelectAll: handleSelectAll,
+                      onSelectRow: handleSelectRow
+                    }
+              }
+            />
+          </div>
         </>
       )}
       {isPagedBrowse && (

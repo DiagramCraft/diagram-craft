@@ -17,6 +17,7 @@ import {
   TbTable,
   TbColumns3,
   TbMap,
+  TbVectorTriangle,
   TbPinned,
   TbBookmark,
   TbLayoutSidebarLeftCollapse,
@@ -278,6 +279,8 @@ export const EntitiesSidebar = ({
         return <TbColumns3 size={12} />;
       case 'map':
         return <TbMap size={12} />;
+      case 'graph':
+        return <TbVectorTriangle size={12} />;
       default:
         return <TbTable size={12} />;
     }

@@ -11,6 +11,10 @@
   margin-bottom: 16px;
 }
 
+.screen.graphMode {
+  overflow: hidden;
+}
+
 .count {
   color: var(--base-fg-more-dim);
   font-family: var(--font-mono);

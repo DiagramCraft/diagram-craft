@@ -82,21 +82,22 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
       projectScope
     });
 
-  const { filtered, filteredCount, owners, schemaMap, sortOptions } = useEntityBrowserData({
-    workspaceId: workspaceSlug,
-    projectId,
-    projectScope,
-    schemas,
-    q,
-    conditions,
-    typeFilter,
-    ownerFilter,
-    statusFilter,
-    sort,
-    view,
-    pageIndex,
-    pageSize
-  });
+  const { filtered, filteredCount, isLoading, owners, schemaMap, sortOptions } =
+    useEntityBrowserData({
+      workspaceId: workspaceSlug,
+      projectId,
+      projectScope,
+      schemas,
+      q,
+      conditions,
+      typeFilter,
+      ownerFilter,
+      statusFilter,
+      sort,
+      view,
+      pageIndex,
+      pageSize
+    });
 
   return (
     <div className={styles.body}>
@@ -151,6 +152,7 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
           statusFilter={statusFilter}
           activeViewConfig={activeViewConfig}
           displayFields={displayFields}
+          isLoading={isLoading}
           mode={{ kind: 'configure', onConfigChange: setActiveViewConfig }}
         />
       </div>

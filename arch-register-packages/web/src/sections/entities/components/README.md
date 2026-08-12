@@ -18,7 +18,9 @@ MDX block so wiki pages can show a live (or static, published) snapshot of a sav
 ## View modes
 
 Views live directly in this folder: `TableView`, `CardsView`, `TreeView`, `RadarView`,
-`TimelineView`, `MatrixView`, `HierarchyView`, `ExploreView`. There are two prop shapes:
+`TimelineView`, `MatrixView`, `ExploreView`, and `EntityBrowserGraphView`. The graph view starts
+with every filtered entity as a highlighted root and lazily traverses linked entities using the
+same relation data and depth/direction controls as the entity detail graph. There are two prop shapes:
 
 - `EntityBrowserBaseViewProps` (`entityBrowserViewShared.tsx`) — used by `TableView`/`CardsView`
   (and, with its own local prop type, `TreeView`). Includes `onDelete`/`onClone`/row menu support.
@@ -65,7 +67,7 @@ survives that filter.
 - **`readOnly` (Table/Cards/Tree only)**: if your view exposes row selection or a "..." row menu,
   respect a `readOnly?: boolean` prop and drop the checkbox column / menu column entirely — don't
   just disable them, since a visibly-dead control is worse than no control in the published embed.
-- **`hideToolbar` (Radar/Timeline/Matrix/Hierarchy/Explore only)**: if your view has its own inline
+- **`hideToolbar` (Radar/Timeline/Matrix/Explore/Graph only)**: if your view has its own inline
   settings/search bar, gate it behind `hideToolbar?: boolean`. `EntityBrowserEmbed.tsx` passes this;
   `EntityBrowser.tsx` and `EntityBrowserEmbedConfigForm.tsx` don't.
 - **Wire it into all three consumers**: `EntityBrowser.tsx`'s view switch, the embed dialog's

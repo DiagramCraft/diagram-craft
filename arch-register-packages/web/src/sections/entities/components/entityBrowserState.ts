@@ -444,6 +444,7 @@ export const getSavedViewConfig = (view: SavedView): unknown | null => {
   if (view.viewMode === 'table') return view.config.table ?? null;
   if (view.viewMode === 'cards') return view.config.cards ?? null;
   if (view.viewMode === 'tree') return view.config.tree ?? null;
+  if (view.viewMode === 'graph') return view.config.graph ?? null;
   return null;
 };
 
@@ -453,7 +454,7 @@ export const toSavedViewSearch = (view: SavedView): Partial<BrowserSearch> => ({
   owner: getFilterValue(filterConditionsFromEntityQuery(view.filters), '_owner') ?? undefined,
   q: freeTextFromEntityQuery(view.filters),
   viewId: view.id,
-  viewMode: view.viewMode === 'graph' ? 'table' : view.viewMode,
+  viewMode: view.viewMode,
   sort: view.config?.sort ?? undefined,
   projectScope: view.projectScope ?? undefined,
   viewConfigs: serializeViewConfigs(
@@ -563,6 +564,7 @@ export const toSavedViewConfig = (
     if (view === 'table') result.table = config;
     if (view === 'cards') result.cards = config;
     if (view === 'tree') result.tree = config;
+    if (view === 'graph') result.graph = config;
   }
   return Object.keys(result).length > 0 ? (result as CreateSavedViewRequest['config']) : null;
 };
