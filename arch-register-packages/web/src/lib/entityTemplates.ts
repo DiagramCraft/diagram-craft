@@ -126,8 +126,7 @@ export const toEntityTemplateValues = (
           ? value.filter((item): item is boolean => typeof item === 'boolean')
           : [value === true || value === 'true']
         : value === true || value === 'true';
-    }
-    else if (field.type === 'number') {
+    } else if (field.type === 'number') {
       if (isMultiValuedScalarField(field) && Array.isArray(value)) {
         const numbers = value.map(Number);
         if (numbers.every(Number.isInteger)) result.fields[field.id] = numbers;

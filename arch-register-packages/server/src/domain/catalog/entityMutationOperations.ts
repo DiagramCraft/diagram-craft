@@ -815,7 +815,7 @@ export const cloneEntity = async (
       const normalizedData = normalizeEntityScalarFields({
         schemaFields: schema.fields,
         fields: source.data,
-        supportedCurrencies: await getSupportedCurrencyCodes(tx, workspace) ?? undefined
+        supportedCurrencies: (await getSupportedCurrencyCodes(tx, workspace)) ?? undefined
       });
 
       const baseName = source.name ? `${source.name} (copy)` : source.slug;

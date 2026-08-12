@@ -17,7 +17,8 @@ export const MultiValueEditor = ({
 
   const updateAt = (index: number, next: unknown) =>
     onChange(values.map((item, itemIndex) => (itemIndex === index ? next : item)));
-  const removeAt = (index: number) => onChange(values.filter((_, itemIndex) => itemIndex !== index));
+  const removeAt = (index: number) =>
+    onChange(values.filter((_, itemIndex) => itemIndex !== index));
   const move = (index: number, offset: -1 | 1) => {
     const nextIndex = index + offset;
     if (nextIndex < 0 || nextIndex >= values.length) return;
@@ -30,9 +31,7 @@ export const MultiValueEditor = ({
     <div style={{ display: 'grid', gap: 6, width: '100%' }}>
       {values.map((item, index) => (
         <div key={index} style={{ display: 'flex', alignItems: 'center', gap: 5 }}>
-          <div style={{ flex: 1 }}>
-            {renderItem(item, index, next => updateAt(index, next))}
-          </div>
+          <div style={{ flex: 1 }}>{renderItem(item, index, next => updateAt(index, next))}</div>
           <button type="button" disabled={index === 0} onClick={() => move(index, -1)}>
             ↑
           </button>

@@ -49,7 +49,9 @@ const scalarCardinalitySchema = {
 
 const textFieldSchema = baseFieldSchema.extend({
   ...scalarCardinalitySchema,
-  type: z.literal('text').describe('Text scalar field; cardinality controls whether it accepts one or many values')
+  type: z
+    .literal('text')
+    .describe('Text scalar field; cardinality controls whether it accepts one or many values')
 });
 
 const longtextFieldSchema = baseFieldSchema.extend({
@@ -81,7 +83,9 @@ const numberFieldSchema = baseFieldSchema.extend({
 
 const selectFieldInputSchema = baseFieldSchema.extend({
   ...scalarCardinalitySchema,
-  type: z.literal('select').describe('Select scalar field; cardinality controls whether it accepts one or many values'),
+  type: z
+    .literal('select')
+    .describe('Select scalar field; cardinality controls whether it accepts one or many values'),
   enumId: z.string().describe('Enumeration identifier for dropdown options')
 });
 

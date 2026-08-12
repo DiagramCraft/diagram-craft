@@ -322,9 +322,7 @@ describe('filterBuilder', () => {
             'sqlite',
             'currency'
           )
-        ).toBe(
-          "CAST(json_extract(e.data, '$.cost.amount') AS NUMERIC) > CAST($100 AS NUMERIC)"
-        );
+        ).toBe("CAST(json_extract(e.data, '$.cost.amount') AS NUMERIC) > CAST($100 AS NUMERIC)");
       });
     });
   });

@@ -211,10 +211,7 @@ export const formatEntityDisplayValue = (
     if (field.schemaField?.type === 'select') {
       const options = 'options' in field.schemaField ? field.schemaField.options : [];
       return value
-        .map(
-          item =>
-            options.find(option => option.value === String(item))?.label ?? String(item)
-        )
+        .map(item => options.find(option => option.value === String(item))?.label ?? String(item))
         .join(', ');
     }
     if (field.schemaField?.type === 'boolean') {

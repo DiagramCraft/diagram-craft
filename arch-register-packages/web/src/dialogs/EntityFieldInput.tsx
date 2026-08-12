@@ -70,11 +70,7 @@ export const EntityFieldInput = ({
   }
 
   if (isMultiValuedScalarField(field)) {
-    const renderItem = (
-      item: unknown,
-      _index: number,
-      update: (value: unknown) => void
-    ) => {
+    const renderItem = (item: unknown, _index: number, update: (value: unknown) => void) => {
       if (field.type === 'select') {
         return (
           <select

@@ -504,13 +504,7 @@ const compilePredicateTerminal =
           ),
           kind: 'scalar' as const
         }
-      : resolveColumn(
-          alias,
-          fieldId,
-          dialect,
-          fieldKind,
-          currencyAmount
-        );
+      : resolveColumn(alias, fieldId, dialect, fieldKind, currencyAmount);
     if (!resolved) {
       throw new UnsupportedEntityQueryIRError(`Field '${fieldId}' has no SQL translation`);
     }

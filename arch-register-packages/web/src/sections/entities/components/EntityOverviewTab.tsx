@@ -711,11 +711,7 @@ const PropertyRow = ({
       );
     }
     if (isMultiValuedScalarField(field)) {
-      const renderItem = (
-        item: unknown,
-        _index: number,
-        update: (value: unknown) => void
-      ) => {
+      const renderItem = (item: unknown, _index: number, update: (value: unknown) => void) => {
         if (field.type === 'select') {
           return (
             <select
@@ -742,7 +738,13 @@ const PropertyRow = ({
           );
         }
         if (field.type === 'boolean') {
-          return <input type="checkbox" checked={item === true} onChange={e => update(e.target.checked)} />;
+          return (
+            <input
+              type="checkbox"
+              checked={item === true}
+              onChange={e => update(e.target.checked)}
+            />
+          );
         }
         if (field.type === 'date') {
           return (

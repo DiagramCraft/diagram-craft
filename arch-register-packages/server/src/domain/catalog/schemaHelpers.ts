@@ -121,10 +121,9 @@ export const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fi
         });
       }
       if (field.minCardinality !== undefined) {
-        httpAssert.true(
-          Number.isInteger(field.minCardinality) && field.minCardinality >= 0,
-          { message: `${field.name} minCardinality must be a non-negative integer` }
-        );
+        httpAssert.true(Number.isInteger(field.minCardinality) && field.minCardinality >= 0, {
+          message: `${field.name} minCardinality must be a non-negative integer`
+        });
       }
       if (field.requirementLevel === 'required' && isMultiValuedScalarField(field)) {
         httpAssert.true(min >= 1, {
@@ -144,9 +143,7 @@ const normalizeScalarCardinalityForApi = (field: SchemaField): SchemaField => {
 
   const explicitMin = field.minCardinality ?? 0;
   const requirementLevel =
-    explicitMin > 0 || field.requirementLevel === 'required'
-      ? 'required'
-      : field.requirementLevel;
+    explicitMin > 0 || field.requirementLevel === 'required' ? 'required' : field.requirementLevel;
   if (requirementLevel !== 'required') return field;
 
   const minCardinality = Math.max(explicitMin, 1);

@@ -541,11 +541,7 @@ const collectEntities = async (
           : 'scalar';
       const existingKind = customFieldKinds.get(field.id);
       const kindRank = (value: typeof kind): number =>
-        value === 'currency-array' || value === 'array'
-          ? 3
-          : value === 'currency'
-            ? 2
-            : 1;
+        value === 'currency-array' || value === 'array' ? 3 : value === 'currency' ? 2 : 1;
       if (existingKind == null || kindRank(kind) > kindRank(existingKind)) {
         customFieldKinds.set(field.id, kind);
       }

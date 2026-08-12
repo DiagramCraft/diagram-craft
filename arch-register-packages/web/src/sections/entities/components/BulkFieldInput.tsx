@@ -100,11 +100,7 @@ export const BulkFieldInput = ({
       }
     }
 
-    const renderItem = (
-      item: unknown,
-      _index: number,
-      update: (value: unknown) => void
-    ) => {
+    const renderItem = (item: unknown, _index: number, update: (value: unknown) => void) => {
       if (schemaField.type === 'select') {
         return (
           <select
@@ -133,7 +129,9 @@ export const BulkFieldInput = ({
         );
       }
       if (schemaField.type === 'date') {
-        return <DateInput value={typeof item === 'string' ? item : ''} onChange={v => update(v ?? '')} />;
+        return (
+          <DateInput value={typeof item === 'string' ? item : ''} onChange={v => update(v ?? '')} />
+        );
       }
       if (schemaField.type === 'number') {
         return (
@@ -186,9 +184,13 @@ export const BulkFieldInput = ({
         );
       }
       if (schemaField.type === 'longtext') {
-        return <TextArea value={typeof item === 'string' ? item : ''} onChange={v => update(v ?? '')} />;
+        return (
+          <TextArea value={typeof item === 'string' ? item : ''} onChange={v => update(v ?? '')} />
+        );
       }
-      return <TextInput value={typeof item === 'string' ? item : ''} onChange={v => update(v ?? '')} />;
+      return (
+        <TextInput value={typeof item === 'string' ? item : ''} onChange={v => update(v ?? '')} />
+      );
     };
 
     return (

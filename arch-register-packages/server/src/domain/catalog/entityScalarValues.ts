@@ -65,8 +65,8 @@ const validateDate = (field: ScalarSchemaField, value: unknown): string => {
   httpAssert.true(
     !Number.isNaN(parsed.getTime()) && parsed.toISOString().slice(0, 10) === dateValue,
     {
-    status: 400,
-    message: `${field.name} contains an invalid date`
+      status: 400,
+      message: `${field.name} contains an invalid date`
     }
   );
   return dateValue;
@@ -99,13 +99,10 @@ const validateCurrency = (
     status: 400,
     message: `${field.name} must contain an amount and three-letter currency code`
   });
-  httpAssert.true(
-    supportedCurrencies === undefined || supportedCurrencies.has(parsed.currency),
-    {
-      status: 400,
-      message: `${field.name} uses unsupported currency '${parsed.currency}'`
-    }
-  );
+  httpAssert.true(supportedCurrencies === undefined || supportedCurrencies.has(parsed.currency), {
+    status: 400,
+    message: `${field.name} uses unsupported currency '${parsed.currency}'`
+  });
   return parsed;
 };
 
@@ -181,7 +178,9 @@ export const normalizeEntityScalarFields = ({
 } & EntityScalarValueOptions): Record<string, unknown> => {
   const normalized = { ...fields };
   for (const field of schemaFields) {
-    if (!['text', 'longtext', 'boolean', 'date', 'currency', 'number', 'select'].includes(field.type))
+    if (
+      !['text', 'longtext', 'boolean', 'date', 'currency', 'number', 'select'].includes(field.type)
+    )
       continue;
     if (!Object.hasOwn(normalized, field.id)) {
       if (validateMissing) {

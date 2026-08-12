@@ -1,9 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
-import {
-  convertScalarFieldCardinality,
-  normalizeEntityScalarFields
-} from './entityScalarValues';
+import { convertScalarFieldCardinality, normalizeEntityScalarFields } from './entityScalarValues';
 
 describe('entity scalar values', () => {
   it('wraps legacy scalar values when a field becomes multi-valued', () => {
@@ -14,8 +11,9 @@ describe('entity scalar values', () => {
       maxCardinality: -1
     };
 
-    expect(normalizeEntityScalarFields({ schemaFields: [field], fields: { labels: 'legacy' } }))
-      .toEqual({ labels: ['legacy'] });
+    expect(
+      normalizeEntityScalarFields({ schemaFields: [field], fields: { labels: 'legacy' } })
+    ).toEqual({ labels: ['legacy'] });
   });
 
   it('preserves ordered multi-valued items and removes blank items', () => {

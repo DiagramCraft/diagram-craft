@@ -525,9 +525,7 @@ const createCreateEntityTool = (context: AiChatToolContext) =>
       typeof args.lifecycle === 'string' && lifecycleValues.has(args.lifecycle)
         ? args.lifecycle
         : null;
-    const currencyConfig = await context.db.workspace.getSupportedCurrencies?.(
-      context.workspaceId
-    );
+    const currencyConfig = await context.db.workspace.getSupportedCurrencies?.(context.workspaceId);
     const normalizedFields = normalizeEntityScalarFields({
       schemaFields: schema.fields,
       fields: args.fields ?? {},

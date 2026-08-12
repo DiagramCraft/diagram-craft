@@ -1,10 +1,7 @@
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
-import {
-  isScalarCardinalityField,
-  scalarCardinalityPatchForMin
-} from './scalarCardinality';
+import { isScalarCardinalityField, scalarCardinalityPatchForMin } from './scalarCardinality';
 
 export const ScalarCardinalityControls = ({
   field,
@@ -24,8 +21,7 @@ export const ScalarCardinalityControls = ({
       return;
     }
     const next = Number(raw);
-    if (Number.isInteger(next) && next >= 0)
-      onUpdate(scalarCardinalityPatchForMin(field, next));
+    if (Number.isInteger(next) && next >= 0) onUpdate(scalarCardinalityPatchForMin(field, next));
   };
 
   const updateMax = (value: string | undefined) => {

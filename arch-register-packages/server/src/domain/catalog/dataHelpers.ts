@@ -55,10 +55,7 @@ const comparableFilterValue = (value: unknown): unknown => {
   return value;
 };
 
-const matchesScalarFilterCondition = (
-  value: unknown,
-  condition: FilterCondition
-): boolean => {
+const matchesScalarFilterCondition = (value: unknown, condition: FilterCondition): boolean => {
   const comparable = comparableFilterValue(value);
   const expected = condition.value;
   switch (condition.op) {

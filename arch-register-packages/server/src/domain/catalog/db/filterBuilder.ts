@@ -84,21 +84,13 @@ const buildArrayConditionClause = (
     case 'ends_with':
       return exists(ilike(addParam(`%${escapeLike(String(cond.value ?? ''))}`)));
     case 'gt':
-      return exists(
-        `CAST(${element} AS NUMERIC) > CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`
-      );
+      return exists(`CAST(${element} AS NUMERIC) > CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`);
     case 'lt':
-      return exists(
-        `CAST(${element} AS NUMERIC) < CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`
-      );
+      return exists(`CAST(${element} AS NUMERIC) < CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`);
     case 'gte':
-      return exists(
-        `CAST(${element} AS NUMERIC) >= CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`
-      );
+      return exists(`CAST(${element} AS NUMERIC) >= CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`);
     case 'lte':
-      return exists(
-        `CAST(${element} AS NUMERIC) <= CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`
-      );
+      return exists(`CAST(${element} AS NUMERIC) <= CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`);
     case 'before':
       return exists(`${element} < ${addParam(String(cond.value ?? ''))}`);
     case 'after':

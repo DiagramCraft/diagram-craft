@@ -339,7 +339,11 @@ describe('data route helpers', () => {
       matchesFilterCondition(entity, { fieldId: 'labels', op: 'not_equals', value: 'first' }, null)
     ).toBe(false);
     expect(
-      matchesFilterCondition(entity, { fieldId: 'labels', op: 'not_equals', value: 'missing' }, null)
+      matchesFilterCondition(
+        entity,
+        { fieldId: 'labels', op: 'not_equals', value: 'missing' },
+        null
+      )
     ).toBe(true);
     expect(
       matchesFilterCondition(

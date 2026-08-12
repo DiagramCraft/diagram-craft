@@ -216,9 +216,13 @@ export const importCommit = async (
     'You do not have permission to create entities of this type'
   );
 
-  const currencyLookup = (db.workspace as {
-    getSupportedCurrencies?: (workspace: string) => Promise<{ currencies: Array<{ code: string }> }>;
-  }).getSupportedCurrencies;
+  const currencyLookup = (
+    db.workspace as {
+      getSupportedCurrencies?: (
+        workspace: string
+      ) => Promise<{ currencies: Array<{ code: string }> }>;
+    }
+  ).getSupportedCurrencies;
   const currencyConfigPromise = currencyLookup
     ? currencyLookup.call(db.workspace, workspace)
     : Promise.resolve({ currencies: [] });

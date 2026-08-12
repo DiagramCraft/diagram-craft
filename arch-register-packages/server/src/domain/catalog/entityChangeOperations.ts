@@ -1120,9 +1120,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
             const normalizedNextData = normalizeEntityScalarFields({
               schemaFields: nextSchema.fields,
               fields: nextData,
-              supportedCurrencies: new Set(
-                currencyConfig.currencies.map(currency => currency.code)
-              )
+              supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code))
             });
             const updated = await updateEntityWithAuditIfVersion(tx, {
               workspace: caseRow.workspace,

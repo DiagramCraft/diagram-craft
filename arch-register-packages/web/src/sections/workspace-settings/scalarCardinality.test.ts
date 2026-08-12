@@ -6,16 +6,14 @@ import {
 } from './scalarCardinality';
 
 const field = (patch: Partial<Extract<SchemaField, { type: 'text' }>> = {}) =>
-  ({ id: 'name', name: 'Name', type: 'text', ...patch }) as Extract<
-    SchemaField,
-    { type: 'text' }
-  >;
+  ({ id: 'name', name: 'Name', type: 'text', ...patch }) as Extract<SchemaField, { type: 'text' }>;
 
 describe('scalar cardinality editor helpers', () => {
   it('raises the minimum when completeness is changed to required', () => {
-    expect(
-      scalarCardinalityPatchForRequirement(field({ minCardinality: 0 }), 'required')
-    ).toEqual({ requirementLevel: 'required', minCardinality: 1 });
+    expect(scalarCardinalityPatchForRequirement(field({ minCardinality: 0 }), 'required')).toEqual({
+      requirementLevel: 'required',
+      minCardinality: 1
+    });
   });
 
   it('clears the minimum when required completeness is changed away', () => {
