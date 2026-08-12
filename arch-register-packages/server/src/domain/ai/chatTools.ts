@@ -24,6 +24,7 @@ import {
 import { formatPublicId } from '../../utils/publicIds';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { entityRequiresApproval } from '../catalog/entityChangeOperations';
+import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { logAudit, computeChanges } from '../audit/db/auditLogging';
 import type { DocumentAiToolId } from '@arch-register/api-types/documentContract';
@@ -1032,6 +1033,12 @@ export const createAiChatTools = (
       typeof args.lifecycle === 'string' && lifecycleValues.has(args.lifecycle)
         ? args.lifecycle
         : null;
+    const currencyConfig = await db.workspace.getSupportedCurrencies(workspaceId);
+    const normalizedFields = normalizeEntityScalarFields({
+      schemaFields: schema.fields,
+      fields: args.fields ?? {},
+      supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code))
+    });
 
     if (authCtx !== null) {
       requireNoRestrictedFieldWrites(
@@ -1073,7 +1080,7 @@ export const createAiChatTools = (
           tags: filterStringArray(args.tags),
           links: [],
           schema_id: schema.id,
-          data: args.fields ?? {},
+          data: normalizedFields,
           project_id: null,
           created_at: timestamp,
           updated_at: timestamp,
@@ -1082,7 +1089,7 @@ export const createAiChatTools = (
               description: typeof args.description === 'string' ? args.description : '',
               owner,
               lifecycle,
-              data: args.fields ?? {}
+              data: normalizedFields
             },
             schema
           )
@@ -1143,10 +1150,20 @@ export const createAiChatTools = (
       ...current.data,
       ...(args.fields ?? {})
     };
+    const currencyConfig = schema
+      ? await db.workspace.getSupportedCurrencies(workspaceId)
+      : null;
+    const normalizedNextData = schema
+      ? normalizeEntityScalarFields({
+          schemaFields: schema.fields,
+          fields: nextData,
+          supportedCurrencies: new Set(currencyConfig!.currencies.map(currency => currency.code))
+        })
+      : nextData;
 
     if (authCtx !== null && schema) {
       const changedFieldIds = Object.keys(args.fields ?? {}).filter(
-        fieldId => !equalEntityValue(current.data[fieldId], nextData[fieldId])
+        fieldId => !equalEntityValue(current.data[fieldId], normalizedNextData[fieldId])
       );
       requireNoRestrictedFieldWrites(
         authCtx,
@@ -1183,7 +1200,7 @@ export const createAiChatTools = (
           tags: args.tags === undefined ? current.tags : filterStringArray(args.tags),
           links: current.links,
           schema_id: current.schema_id,
-          data: nextData,
+          data: normalizedNextData,
           project_id: current.project_id,
           updated_at: new Date(),
           completeness: schema
@@ -1192,7 +1209,7 @@ export const createAiChatTools = (
                   description: nextDescription,
                   owner: nextOwner,
                   lifecycle: nextLifecycle,
-                  data: nextData
+                  data: normalizedNextData
                 },
                 schema
               )

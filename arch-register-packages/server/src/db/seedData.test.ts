@@ -142,4 +142,114 @@ describe('API participation seed data', () => {
       )
     ).toHaveLength(16);
   });
+
+  it('seeds a required ordered multi-valued protocol field on APIs', () => {
+    const api = seedSchemas.find(schema => schema.name === 'API');
+    const protocolField = api?.fields.find(field => field.id === 'protocols');
+    const notificationsApi = seedEntities.find(entity => entity.public_id === 'API-5');
+
+    expect(protocolField).toEqual(
+      expect.objectContaining({
+        type: 'select',
+        requirementLevel: 'required',
+        minCardinality: 1,
+        maxCardinality: -1
+      })
+    );
+    expect(notificationsApi?.data.protocols).toEqual(['kafka', 'https-rest']);
+  });
+
+  it('seeds fields and values on risk and compliance typed relations', () => {
+    const riskMitigation = seedRelationSchemas.find(schema => schema.name === 'Risk Mitigation');
+    const controlCompliance = seedRelationSchemas.find(
+      schema => schema.name === 'Control Compliance'
+    );
+    const riskRelation = seedRelations.find(relation => relation.schema_id === riskMitigation?.id);
+    const complianceRelation = seedRelations.find(
+      relation => relation.schema_id === controlCompliance?.id
+    );
+
+    expect(riskMitigation?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'effectiveness', type: 'select' }),
+        expect.objectContaining({ id: 'coverage', type: 'number' }),
+        expect.objectContaining({ id: 'reviewed_on', type: 'date' })
+      ])
+    );
+    expect(controlCompliance?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'status', type: 'select' }),
+        expect.objectContaining({ id: 'evidence', type: 'text' }),
+        expect.objectContaining({ id: 'verified_on', type: 'date' })
+      ])
+    );
+    const risk = seedSchemas.find(schema => schema.name === 'Risk');
+    const control = seedSchemas.find(schema => schema.name === 'Control');
+    const complianceRequirement = seedSchemas.find(
+      schema => schema.name === 'Compliance Requirement'
+    );
+    expect(risk?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'mitigating_controls',
+        type: 'typedRelation',
+        relationSchemaId: riskMitigation?.id,
+        direction: 'in'
+      })
+    );
+    expect(control?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'mitigated_risks',
+        type: 'typedRelation',
+        relationSchemaId: riskMitigation?.id,
+        direction: 'out'
+      })
+    );
+    expect(control?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'satisfied_requirements',
+        type: 'typedRelation',
+        relationSchemaId: controlCompliance?.id,
+        direction: 'in'
+      })
+    );
+    expect(complianceRequirement?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'satisfying_controls',
+        type: 'typedRelation',
+        relationSchemaId: controlCompliance?.id,
+        direction: 'out'
+      })
+    );
+    expect(riskRelation?.data).toMatchObject({ effectiveness: 'substantial', coverage: 90 });
+    expect(complianceRelation?.data).toMatchObject({ status: 'met' });
+  });
+
+  it('binds every seeded typed relation to both endpoint schemas', () => {
+    const schemasById = new Map(seedSchemas.map(schema => [schema.id, schema]));
+
+    for (const relation of seedRelationSchemas) {
+      for (const [direction, schemaIds] of [
+        ['in', relation.in_schema_ids],
+        ['out', relation.out_schema_ids]
+      ] as const) {
+        if (schemaIds === 'any') continue;
+        for (const schemaId of schemaIds) {
+          const schema = schemasById.get(schemaId);
+          expect(schema, `${relation.name} ${direction} endpoint schema`).toBeDefined();
+          expect(
+            schema?.fields,
+            `${relation.name} ${direction} binding on ${schema?.name ?? schemaId}`
+          ).toEqual(
+            expect.arrayContaining([
+              expect.objectContaining({
+                type: 'typedRelation',
+                relationSchemaId: relation.id,
+                direction
+              })
+            ])
+          );
+        }
+      }
+    }
+  });
 });

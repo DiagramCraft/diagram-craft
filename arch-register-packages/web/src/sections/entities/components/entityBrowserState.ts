@@ -6,6 +6,7 @@ import type {
 } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import { firstScalarValue } from '../../../lib/scalarFieldValues';
 import type { ProjectDetail, ProjectEntity } from '@arch-register/api-types/projectContract';
 import {
   isAssessmentCondition,
@@ -51,6 +52,7 @@ export type ProjectBrowserContext = {
 export type BrowserViewConfigMap = Partial<Record<BrowserView, unknown>>;
 
 export const parseDateValue = (value: unknown) => {
+  value = firstScalarValue(value);
   if (typeof value !== 'string' || value === '') return null;
   return /^\d{4}-\d{2}-\d{2}$/.test(value) ? value : null;
 };

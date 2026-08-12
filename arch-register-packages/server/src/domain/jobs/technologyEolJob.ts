@@ -14,6 +14,7 @@ import { getSystemUserId } from '../auth/systemUsers';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { assertTechnologyEolMapping, isTechnologyEolMapping } from './technologyEolMapping';
 import { withCatalogMutationTransaction } from '../catalog/mutationTransaction';
+import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
 
 export const TECHNOLOGY_EOL_JOB_TYPE = 'technology-eol';
 export const TECHNOLOGY_EOL_SYSTEM_IDENTITY = 'technology-eol';
@@ -149,6 +150,11 @@ const applyRelease = async (
       setFieldValue(schema, destination.fieldId, destination.value, nextData);
     }
   }
+  const normalizedData = normalizeEntityScalarFields({
+    schemaFields: schema.fields,
+    fields: nextData,
+    validateMissing: false
+  });
 
   let remainingFields: Array<{ id: string; external_kind?: 'ai' | 'automation' | 'integration' }> =
     schema.fields;
@@ -167,7 +173,7 @@ const applyRelease = async (
       remainingFields,
       envelope,
       entity.data,
-      nextData
+      normalizedData
     );
     generatedMetadata[destination.fieldId] = applyExternalFieldUpdate(
       destination.fieldId,
@@ -175,7 +181,7 @@ const applyRelease = async (
       now
     );
   }
-  assertNoExternalFieldWrites(remainingFields, entity.data, nextData);
+  assertNoExternalFieldWrites(remainingFields, entity.data, normalizedData);
 
   await withCatalogMutationTransaction(db, tx =>
     updateEntityWithAudit(tx, {
@@ -184,7 +190,7 @@ const applyRelease = async (
       previous: entity,
       actor: { id: TECHNOLOGY_EOL_SYSTEM_USER_ID, displayName: 'Technology EOL job' },
       next: {
-        data: nextData,
+        data: normalizedData,
         generated_metadata: generatedMetadata,
         updated_at: now,
         name: entity.name,
@@ -205,7 +211,7 @@ const applyRelease = async (
             description: entity.description,
             owner: entity.owner,
             lifecycle: entity.lifecycle,
-            data: nextData
+            data: normalizedData
           },
           schema
         )

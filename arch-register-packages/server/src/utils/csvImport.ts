@@ -3,6 +3,7 @@
  */
 import { SchemaField } from '@arch-register/api-types/schemaContract';
 import { parseCurrencyValue } from './currencyValue';
+import { isMultiValuedScalarField } from '../domain/catalog/entityScalarValues';
 
 const ISO_DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
 
@@ -185,6 +186,17 @@ export const validateCsvData = (rows: ParsedCsvRow[], fields: SchemaField[]): Pa
 
       // Validate field types
       if (value && value.trim() !== '') {
+        if (isMultiValuedScalarField(field)) {
+          try {
+            const parsed: unknown = JSON.parse(value);
+            if (!Array.isArray(parsed)) {
+              errors.push(`${field.name} must be a JSON array`);
+            }
+          } catch {
+            errors.push(`${field.name} must be a JSON array`);
+          }
+          continue;
+        }
         switch (field.type) {
           case 'boolean':
             if (!['true', 'false', 'yes', 'no', '1', '0'].includes(value.toLowerCase())) {
@@ -277,17 +289,37 @@ export const csvRowToEntity = (
 
     // Handle custom fields
     const field = fieldMap.get(key);
-    if (!field || !trimmedValue) continue;
+    if (!field) continue;
+
+    const multiValue = isMultiValuedScalarField(field);
+    if (!trimmedValue && !multiValue) continue;
+
+    let parsedMultiValue: unknown[] | undefined;
+    if (multiValue) {
+      if (!trimmedValue) {
+        parsedMultiValue = [];
+      } else {
+        try {
+          const parsed: unknown = JSON.parse(trimmedValue);
+          parsedMultiValue = Array.isArray(parsed) ? parsed : [];
+        } catch {
+          parsedMultiValue = [];
+        }
+      }
+    }
 
     switch (field.type) {
       case 'boolean':
-        entity[field.id] = ['true', 'yes', '1'].includes(trimmedValue.toLowerCase());
+        entity[field.id] = multiValue
+          ? (parsedMultiValue ?? []).map(value =>
+              ['true', 'yes', '1'].includes(String(value).toLowerCase())
+            )
+          : ['true', 'yes', '1'].includes(trimmedValue.toLowerCase());
         break;
       case 'select':
-        entity[field.id] = trimmedValue
-          .split(',')
-          .map(v => v.trim())
-          .filter(Boolean);
+        entity[field.id] = multiValue
+          ? (parsedMultiValue ?? []).filter((value): value is string => typeof value === 'string')
+          : trimmedValue;
         break;
       case 'reference':
       case 'containment':
@@ -297,14 +329,24 @@ export const csvRowToEntity = (
       case 'date':
       case 'text':
       case 'longtext':
-        entity[field.id] = trimmedValue;
+        entity[field.id] = multiValue
+          ? (parsedMultiValue ?? []).filter((value): value is string => typeof value === 'string')
+          : trimmedValue;
         break;
       case 'number':
-        entity[field.id] = Number(trimmedValue);
+        entity[field.id] = multiValue
+          ? (parsedMultiValue ?? []).map(value => Number(value))
+          : Number(trimmedValue);
         break;
       case 'currency': {
-        const currency = parseCurrencyValue(trimmedValue);
-        if (currency) entity[field.id] = currency;
+        if (multiValue) {
+          entity[field.id] = (parsedMultiValue ?? [])
+            .map(value => parseCurrencyValue(value))
+            .filter(value => value != null);
+        } else {
+          const currency = parseCurrencyValue(trimmedValue);
+          if (currency) entity[field.id] = currency;
+        }
         break;
       }
       case 'typedRelation':

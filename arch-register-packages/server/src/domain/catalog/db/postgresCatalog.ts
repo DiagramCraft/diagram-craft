@@ -332,22 +332,49 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     }
     if (filters?.q?.trim()) {
       const pat = `%${escapeLike(filters.q.trim())}%`;
-      whereParts.push(
-        `(e.name ILIKE ${addParam(pat)} OR e.slug ILIKE ${addParam(pat)} OR e.description ILIKE ${addParam(pat)})`
-      );
+      const qParts = [
+        `e.name ILIKE ${addParam(pat)}`,
+        `e.slug ILIKE ${addParam(pat)}`,
+        `e.description ILIKE ${addParam(pat)}`
+      ];
+      for (const [fieldId, kind] of filters.customFieldKinds ?? []) {
+        const col =
+          kind === 'currency'
+            ? `(e.data->'${fieldId}'->>'amount')`
+            : kind === 'scalar'
+              ? `(e.data->>'${fieldId}')`
+              : `(e.data->'${fieldId}')`;
+        const clause = buildConditionClause(
+          col,
+          { fieldId, op: 'contains', value: filters.q.trim() },
+          addParam,
+          'postgres',
+          kind
+        );
+        if (clause) qParts.push(clause);
+      }
+      whereParts.push(`(${qParts.join(' OR ')})`);
     }
     for (const cond of filters?.conditions ?? []) {
       // Guard against prototype pollution: only accept own properties from ENTITY_BUILTIN_COLUMNS
       // For custom fields, also verify they don't match Object.prototype property names
       let col: string | null = null;
-      let kind: 'scalar' | 'array' = 'scalar';
+      let kind: 'scalar' | 'currency' | 'array' | 'currency-array' =
+        filters?.customFieldKinds?.get(cond.fieldId) ?? 'scalar';
       if (Object.hasOwn(ENTITY_BUILTIN_COLUMNS, cond.fieldId)) {
         col = ENTITY_BUILTIN_COLUMNS[cond.fieldId] ?? null;
       } else if (Object.hasOwn(ENTITY_ARRAY_COLUMNS, cond.fieldId)) {
         col = ENTITY_ARRAY_COLUMNS[cond.fieldId] ?? null;
         kind = 'array';
+      } else if (filters?.customFieldKinds && !filters.customFieldKinds.has(cond.fieldId)) {
+        continue;
       } else if (isValidFieldId(cond.fieldId) && !Object.hasOwn(Object.prototype, cond.fieldId)) {
-        col = `(e.data->>'${cond.fieldId}')`;
+        col =
+          kind === 'scalar'
+            ? `(e.data->>'${cond.fieldId}')`
+            : kind === 'currency'
+              ? `(e.data->'${cond.fieldId}'->>'amount')`
+              : `(e.data->'${cond.fieldId}')`;
       }
       if (!col) continue;
       const clause = buildConditionClause(col, cond, addParam, 'postgres', kind);

@@ -18,6 +18,11 @@ import type {
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import styles from './SchemaSettingsScreen.module.css';
+import { ScalarCardinalityControls } from './ScalarCardinalityControls';
+import {
+  isScalarCardinalityField,
+  scalarCardinalityPatchForRequirement
+} from './scalarCardinality';
 
 const NOT_EXTERNAL = '__not_external__';
 const NO_GROUP = '__no_group__';
@@ -51,20 +56,23 @@ export const SchemaFieldRow = ({
   const optionsDisplay = () => {
     if (field.type === 'select') {
       return (
-        <FormElement label="Enum">
-          <Select.Root
-            value={field.enumId ?? undefined}
-            disabled={!canEdit}
-            onChange={value => onUpdate({ enumId: value ?? '' } as Partial<SchemaField>)}
-            placeholder="Select enum..."
-          >
-            {enums.map(e => (
-              <Select.Item key={e.id} value={e.id}>
-                {e.name}
-              </Select.Item>
-            ))}
-          </Select.Root>
-        </FormElement>
+        <>
+          <ScalarCardinalityControls field={field} onUpdate={onUpdate} disabled={!canEdit} />
+          <FormElement label="Enum">
+            <Select.Root
+              value={field.enumId ?? undefined}
+              disabled={!canEdit}
+              onChange={value => onUpdate({ enumId: value ?? '' } as Partial<SchemaField>)}
+              placeholder="Select enum..."
+            >
+              {enums.map(e => (
+                <Select.Item key={e.id} value={e.id}>
+                  {e.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </FormElement>
+        </>
       );
     }
     if (field.type === 'reference' || field.type === 'containment') {
@@ -172,6 +180,7 @@ export const SchemaFieldRow = ({
     if (field.type === 'number') {
       return (
         <>
+          <ScalarCardinalityControls field={field} onUpdate={onUpdate} disabled={!canEdit} />
           <FormElement label="Min">
             <TextInput
               value={field.min === undefined ? '' : String(field.min)}
@@ -208,6 +217,15 @@ export const SchemaFieldRow = ({
           </FormElement>
         </>
       );
+    }
+    if (
+      field.type === 'text' ||
+      field.type === 'longtext' ||
+      field.type === 'boolean' ||
+      field.type === 'date' ||
+      field.type === 'currency'
+    ) {
+      return <ScalarCardinalityControls field={field} onUpdate={onUpdate} disabled={!canEdit} />;
     }
     if (field.type === 'derived') {
       return (
@@ -357,7 +375,9 @@ export const SchemaFieldRow = ({
             onChange={value => {
               const requirementLevel = (value ?? 'optional') as SchemaField['requirementLevel'];
               onUpdate({
-                requirementLevel,
+                ...(isScalarCardinalityField(field)
+                  ? scalarCardinalityPatchForRequirement(field, requirementLevel ?? 'optional')
+                  : { requirementLevel }),
                 ...(field.type === 'containment'
                   ? { minCount: requirementLevel === 'required' ? 1 : 0 }
                   : {})

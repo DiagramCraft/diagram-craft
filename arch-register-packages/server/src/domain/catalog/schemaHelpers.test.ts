@@ -4,6 +4,7 @@ import {
   buildUpdateSchemaInput,
   clearOrphanedGroupIds,
   normalizeEntityTemplates,
+  normalizeSchemaFields,
   normalizeSchemaGroups,
   toApiEnum,
   toApiSchema
@@ -159,6 +160,53 @@ describe('buildCreateSchemaInput', () => {
     );
     expect(result.fields).toEqual([
       { id: 'headcount', name: 'Headcount', type: 'number', min: 0, max: 100 }
+    ]);
+  });
+
+  it('keeps scalar completeness and minimum cardinality synchronized', () => {
+    const fields = normalizeSchemaFields([
+      {
+        id: 'required',
+        name: 'Required',
+        type: 'text',
+        requirementLevel: 'required',
+        minCardinality: 0
+      },
+      {
+        id: 'multi',
+        name: 'Multi',
+        type: 'select',
+        requirementLevel: 'optional',
+        minCardinality: 2,
+        maxCardinality: 3,
+        enumId: 'status'
+      },
+      {
+        id: 'expected',
+        name: 'Expected',
+        type: 'text',
+        requirementLevel: 'expected',
+        minCardinality: 0
+      }
+    ]);
+
+    expect(fields).toEqual([
+      expect.objectContaining({
+        id: 'required',
+        requirementLevel: 'required',
+        minCardinality: 1
+      }),
+      expect.objectContaining({
+        id: 'multi',
+        requirementLevel: 'required',
+        minCardinality: 2,
+        maxCardinality: 3
+      }),
+      expect.objectContaining({
+        id: 'expected',
+        requirementLevel: 'expected',
+        minCardinality: 0
+      })
     ]);
   });
 

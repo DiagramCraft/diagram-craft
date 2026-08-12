@@ -10,6 +10,7 @@ import {
   normalizeEntityRelationFields,
   parseEntityMutationPayload
 } from './dataHelpers';
+import { normalizeEntityScalarFields } from './entityScalarValues';
 import { listAllCatalogEntities } from './entityLoader';
 import { updateEntityWithAuditIfVersion } from './entityMutations';
 import { computeEntityCompleteness } from '../../utils/completeness';
@@ -250,9 +251,15 @@ const buildProposedEntity = async (
     fields: payload.fields,
     entities
   });
+  const currencyConfig = await db.workspace.getSupportedCurrencies(workspace);
+  const normalizedData = normalizeEntityScalarFields({
+    schemaFields: schema.fields,
+    fields: data,
+    supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code))
+  });
   if (authCtx) {
-    const changedFieldIds = Object.keys(data).filter(
-      fieldId => !equalEntityValue(entity.data[fieldId], data[fieldId])
+    const changedFieldIds = Object.keys(normalizedData).filter(
+      fieldId => !equalEntityValue(entity.data[fieldId], normalizedData[fieldId])
     );
     requireNoRestrictedFieldWrites(
       authCtx,
@@ -273,7 +280,7 @@ const buildProposedEntity = async (
     tags: payload.tags,
     links: payload.links,
     schema_id: payload.schemaId,
-    data,
+    data: normalizedData,
     project_id: payload.projectId,
     updated_at: new Date(),
     completeness: computeEntityCompleteness(
@@ -281,7 +288,7 @@ const buildProposedEntity = async (
         description: payload.description,
         owner: payload.requestedOwner,
         lifecycle: payload.requestedLifecycle,
-        data
+        data: normalizedData
       },
       schema
     )
@@ -1109,6 +1116,14 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
             const nextLifecycle = (next['lifecycle'] as string | null) ?? null;
             const nextData = (next['data'] as Record<string, unknown>) ?? {};
             const nextSchemaId = String(next['schema_id']);
+            const currencyConfig = await tx.workspace.getSupportedCurrencies(caseRow.workspace);
+            const normalizedNextData = normalizeEntityScalarFields({
+              schemaFields: nextSchema.fields,
+              fields: nextData,
+              supportedCurrencies: new Set(
+                currencyConfig.currencies.map(currency => currency.code)
+              )
+            });
             const updated = await updateEntityWithAuditIfVersion(tx, {
               workspace: caseRow.workspace,
               entityId: entity.id,
@@ -1127,7 +1142,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
                   : [],
                 links: Array.isArray(next['links']) ? next['links'] : [],
                 schema_id: nextSchemaId,
-                data: nextData,
+                data: normalizedNextData,
                 project_id: (next['project_id'] as string | null) ?? null,
                 updated_at: new Date(),
                 completeness: computeEntityCompleteness(
@@ -1135,7 +1150,7 @@ export const createEntityGovernanceRegistry = (): GovernanceRegistry =>
                     description: nextDescription,
                     owner: nextOwner,
                     lifecycle: nextLifecycle,
-                    data: nextData
+                    data: normalizedNextData
                   },
                   nextSchema
                 )

@@ -19,6 +19,13 @@ import { normalizePublicIdPrefix, validatePublicIdPrefix } from '../../utils/pub
 import { buildDerivedPlan } from '../derived/derivedFields';
 import { assertValidationRulesValid, normalizeValidationRules } from './entityValidationRules';
 import {
+  isMultiValuedScalarField,
+  isScalarSchemaField,
+  normalizeEntityScalarFields,
+  scalarFieldMaxCardinality,
+  scalarFieldMinCardinality
+} from './entityScalarValues';
+import {
   normalizeFieldMigrationFields,
   type FieldMigrationField
 } from '../fieldMigration/fieldMigrationPlanning';
@@ -84,10 +91,78 @@ export const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fi
       });
     }
 
+    if (isScalarSchemaField(field)) {
+      const explicitMin = field.minCardinality ?? 0;
+      if (explicitMin > 0 && field.requirementLevel !== 'required') {
+        field.requirementLevel = 'required';
+      }
+      if (field.requirementLevel === 'required') {
+        field.minCardinality = Math.max(explicitMin, 1);
+        if (
+          field.maxCardinality !== undefined &&
+          field.maxCardinality !== -1 &&
+          field.maxCardinality < field.minCardinality
+        ) {
+          field.maxCardinality = field.minCardinality;
+        }
+      }
+
+      const min = scalarFieldMinCardinality(field);
+      const max = scalarFieldMaxCardinality(field);
+      httpAssert.true(max === -1 || min <= max, {
+        message: `${field.name} minCardinality must be less than or equal to maxCardinality`
+      });
+      httpAssert.true(max === -1 || max >= 0, {
+        message: `${field.name} maxCardinality must be non-negative or -1`
+      });
+      if (field.maxCardinality !== undefined && field.maxCardinality !== -1) {
+        httpAssert.true(Number.isInteger(field.maxCardinality), {
+          message: `${field.name} maxCardinality must be an integer`
+        });
+      }
+      if (field.minCardinality !== undefined) {
+        httpAssert.true(
+          Number.isInteger(field.minCardinality) && field.minCardinality >= 0,
+          { message: `${field.name} minCardinality must be a non-negative integer` }
+        );
+      }
+      if (field.requirementLevel === 'required' && isMultiValuedScalarField(field)) {
+        httpAssert.true(min >= 1, {
+          message: `${field.name} required fields must allow at least one value`
+        });
+      }
+    }
+
     return field as InternalEntitySchema['fields'][number];
   });
   buildDerivedPlan(normalized);
   return normalized;
+};
+
+const normalizeScalarCardinalityForApi = (field: SchemaField): SchemaField => {
+  if (!isScalarSchemaField(field)) return field;
+
+  const explicitMin = field.minCardinality ?? 0;
+  const requirementLevel =
+    explicitMin > 0 || field.requirementLevel === 'required'
+      ? 'required'
+      : field.requirementLevel;
+  if (requirementLevel !== 'required') return field;
+
+  const minCardinality = Math.max(explicitMin, 1);
+  const maxCardinality =
+    field.maxCardinality !== undefined &&
+    field.maxCardinality !== -1 &&
+    field.maxCardinality < minCardinality
+      ? minCardinality
+      : field.maxCardinality;
+
+  return {
+    ...field,
+    requirementLevel,
+    minCardinality,
+    ...(maxCardinality !== field.maxCardinality ? { maxCardinality } : {})
+  };
 };
 
 const normalizeTemplateFieldValue = (
@@ -121,31 +196,15 @@ const normalizeTemplateFieldValue = (
     return value as EntityTemplate['values']['fields'][string];
   }
 
-  if (field.type === 'boolean') {
-    httpAssert.true(typeof value === 'boolean', {
-      message: `Template value for "${field.name}" must be a boolean`
+  if (isScalarSchemaField(field)) {
+    const normalized = normalizeEntityScalarFields({
+      schemaFields: [field],
+      fields: { [field.id]: value }
     });
-    return value as boolean;
+    return normalized[field.id] as EntityTemplate['values']['fields'][string];
   }
 
-  if (field.type === 'number') {
-    httpAssert.true(typeof value === 'number' && Number.isInteger(value), {
-      message: `Template value for "${field.name}" must be an integer`
-    });
-    const numberValue = value as number;
-    httpAssert.true(field.min === undefined || numberValue >= field.min, {
-      message: `Template value for "${field.name}" must be at least ${field.min}`
-    });
-    httpAssert.true(field.max === undefined || numberValue <= field.max, {
-      message: `Template value for "${field.name}" must be at most ${field.max}`
-    });
-    return numberValue;
-  }
-
-  httpAssert.true(typeof value === 'string', {
-    message: `Template value for "${field.name}" must be a string`
-  });
-  return value as string;
+  return undefined;
 };
 
 export const normalizeEntityTemplates = (
@@ -402,7 +461,8 @@ export const buildUpdateSchemaInput = (
   httpAssert.string(name, { message: 'name is required and must be a string' });
   const normalizedGroups =
     groups !== undefined ? normalizeSchemaGroups(groups) : (current.groups ?? []);
-  const rawFields = fields !== undefined ? normalizeSchemaFields(fields) : current.fields;
+  const rawFields =
+    fields !== undefined ? normalizeSchemaFields(fields) : normalizeSchemaFields(current.fields);
   const normalizedFields = rawFields;
   const normalizedValidationRules =
     validation_rules !== undefined
@@ -490,21 +550,24 @@ export const resolveSelectFieldOptions = <TField extends SelectOptionField>(
 ): ResolvedField<TField>[] => {
   const enumMap = new Map(enums.map(e => [e.id, e]));
   return fields.map(field => {
+    const normalizedField = normalizeScalarCardinalityForApi(
+      field as unknown as SchemaField
+    ) as unknown as TField;
     if (field.type === 'select') {
       const enumDef = field.enumId ? enumMap.get(field.enumId) : undefined;
       return {
-        ...field,
+        ...normalizedField,
         options: enumDef?.options ?? []
       } as ResolvedField<TField>;
     }
     if (field.type === 'derived' && field.resultType === 'select') {
       const enumDef = field.enumId ? enumMap.get(field.enumId) : undefined;
       return {
-        ...field,
+        ...normalizedField,
         options: enumDef?.options ?? []
       } as ResolvedField<TField>;
     }
-    return field as ResolvedField<TField>;
+    return normalizedField as ResolvedField<TField>;
   });
 };
 

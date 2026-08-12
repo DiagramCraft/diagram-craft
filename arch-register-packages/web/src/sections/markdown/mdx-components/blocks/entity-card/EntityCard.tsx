@@ -35,6 +35,10 @@ export const renderSchemaFieldValue = (
   value: unknown
 ): string | null => {
   if (value == null || value === '') return null;
+  if (Array.isArray(value)) {
+    if (value.length === 0) return null;
+    return value.map(item => renderSchemaFieldValue(field, item) ?? String(item)).join(', ');
+  }
   if (field.type === 'boolean') return value ? 'Yes' : 'No';
   if (field.type === 'select') {
     const selectField = field as ApiSelectField;

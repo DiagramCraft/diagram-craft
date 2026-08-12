@@ -21,6 +21,7 @@ export const FIELD_DATE_REMINDER_SYSTEM_IDENTITY = 'field-date-reminder';
 const FIELD_DATE_REMINDER_SYSTEM_USER_ID = getSystemUserId('governance-deadline-scan-job');
 
 const parseDateValue = (value: unknown): { value: string; dueAt: Date } | null => {
+  value = Array.isArray(value) ? value[0] : value;
   if (typeof value !== 'string' || !/^\d{4}-\d{2}-\d{2}$/.test(value)) return null;
   const dueAt = new Date(`${value}T00:00:00.000Z`);
   return Number.isNaN(dueAt.getTime()) || dueAt.toISOString().slice(0, 10) !== value

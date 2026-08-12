@@ -195,7 +195,7 @@ describe('filterBuilder', () => {
           'array'
         );
         expect(result).toBe(
-          'EXISTS (SELECT 1 FROM jsonb_array_elements_text(e.tags) t WHERE t = $react)'
+          "EXISTS (SELECT 1 FROM jsonb_array_elements_text(CASE WHEN jsonb_typeof(e.tags) = 'array' THEN e.tags ELSE '[]'::jsonb END) t WHERE t = $react)"
         );
       });
 
@@ -208,7 +208,7 @@ describe('filterBuilder', () => {
           'array'
         );
         expect(result).toBe(
-          'NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text(e.tags) t WHERE t = $react)'
+          "NOT EXISTS (SELECT 1 FROM jsonb_array_elements_text(CASE WHEN jsonb_typeof(e.tags) = 'array' THEN e.tags ELSE '[]'::jsonb END) t WHERE t = $react)"
         );
       });
 
@@ -221,7 +221,7 @@ describe('filterBuilder', () => {
           'array'
         );
         expect(result).toBe(
-          'EXISTS (SELECT 1 FROM jsonb_array_elements_text(e.tags) t WHERE t ILIKE $%rea%)'
+          "EXISTS (SELECT 1 FROM jsonb_array_elements_text(CASE WHEN jsonb_typeof(e.tags) = 'array' THEN e.tags ELSE '[]'::jsonb END) t WHERE t ILIKE $%rea%)"
         );
       });
 
@@ -234,7 +234,9 @@ describe('filterBuilder', () => {
             'postgres',
             'array'
           )
-        ).toBe('jsonb_array_length(e.tags) = 0');
+        ).toBe(
+          "(e.tags IS NULL OR jsonb_array_length(CASE WHEN jsonb_typeof(e.tags) = 'array' THEN e.tags ELSE '[]'::jsonb END) = 0)"
+        );
         expect(
           buildConditionClause(
             'e.tags',
@@ -243,7 +245,9 @@ describe('filterBuilder', () => {
             'postgres',
             'array'
           )
-        ).toBe('jsonb_array_length(e.tags) > 0');
+        ).toBe(
+          "(e.tags IS NOT NULL AND jsonb_array_length(CASE WHEN jsonb_typeof(e.tags) = 'array' THEN e.tags ELSE '[]'::jsonb END) > 0)"
+        );
       });
 
       it('should build equals condition with json_each on sqlite', () => {
@@ -254,7 +258,9 @@ describe('filterBuilder', () => {
           'sqlite',
           'array'
         );
-        expect(result).toBe('EXISTS (SELECT 1 FROM json_each(e.tags) WHERE value = $react)');
+        expect(result).toBe(
+          "EXISTS (SELECT 1 FROM json_each(CASE WHEN json_type(e.tags) = 'array' THEN e.tags ELSE json('[]') END) WHERE value = $react)"
+        );
       });
 
       it('should build contains condition with LOWER/LIKE on sqlite', () => {
@@ -266,7 +272,7 @@ describe('filterBuilder', () => {
           'array'
         );
         expect(result).toBe(
-          'EXISTS (SELECT 1 FROM json_each(e.tags) WHERE LOWER(value) LIKE LOWER($%rea%))'
+          "EXISTS (SELECT 1 FROM json_each(CASE WHEN json_type(e.tags) = 'array' THEN e.tags ELSE json('[]') END) WHERE LOWER(value) LIKE LOWER($%rea%))"
         );
       });
 
@@ -279,7 +285,9 @@ describe('filterBuilder', () => {
             'sqlite',
             'array'
           )
-        ).toBe('json_array_length(e.tags) = 0');
+        ).toBe(
+          "(e.tags IS NULL OR json_array_length(CASE WHEN json_type(e.tags) = 'array' THEN e.tags ELSE json('[]') END) = 0)"
+        );
         expect(
           buildConditionClause(
             'e.tags',
@@ -288,19 +296,35 @@ describe('filterBuilder', () => {
             'sqlite',
             'array'
           )
-        ).toBe('json_array_length(e.tags) > 0');
+        ).toBe(
+          "(e.tags IS NOT NULL AND json_array_length(CASE WHEN json_type(e.tags) = 'array' THEN e.tags ELSE json('[]') END) > 0)"
+        );
       });
 
-      it('should return null for unsupported operators on array columns', () => {
+      it('should return null for unknown operators on array columns', () => {
         expect(
           buildConditionClause(
             'e.tags',
-            { fieldId: '_tags', op: 'starts_with', value: 'rea' },
+            { fieldId: '_tags', op: 'unsupported' as any, value: 'rea' },
             mockAddParam,
             'postgres',
             'array'
           )
         ).toBeNull();
+      });
+
+      it('projects scalar currency objects to amount before comparison', () => {
+        expect(
+          buildConditionClause(
+            "json_extract(e.data, '$.cost.amount')",
+            { fieldId: 'cost', op: 'gt', value: 100 },
+            mockAddParam,
+            'sqlite',
+            'currency'
+          )
+        ).toBe(
+          "CAST(json_extract(e.data, '$.cost.amount') AS NUMERIC) > CAST($100 AS NUMERIC)"
+        );
       });
     });
   });

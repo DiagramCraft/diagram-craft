@@ -18,6 +18,11 @@ import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import { FIELD_TYPES, type FieldType } from '../../lib/schemaPresentation';
 import { toFieldId } from '../../utils/fieldId';
 import styles from './SchemaSettingsScreen.module.css';
+import { ScalarCardinalityControls } from './ScalarCardinalityControls';
+import {
+  isScalarCardinalityField,
+  scalarCardinalityPatchForRequirement
+} from './scalarCardinality';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
@@ -47,20 +52,23 @@ const SharedFieldRow = ({
   const options = () => {
     if (field.type === 'select') {
       return (
-        <FormElement label="Enum">
-          <Select.Root
-            value={field.enumId ?? undefined}
-            disabled={!canEdit}
-            onChange={value => onUpdate({ enumId: value ?? '' } as Partial<SchemaField>)}
-            placeholder="Select enum..."
-          >
-            {enums.map(item => (
-              <Select.Item key={item.id} value={item.id}>
-                {item.name}
-              </Select.Item>
-            ))}
-          </Select.Root>
-        </FormElement>
+        <>
+          <ScalarCardinalityControls field={field} onUpdate={onUpdate} disabled={!canEdit} />
+          <FormElement label="Enum">
+            <Select.Root
+              value={field.enumId ?? undefined}
+              disabled={!canEdit}
+              onChange={value => onUpdate({ enumId: value ?? '' } as Partial<SchemaField>)}
+              placeholder="Select enum..."
+            >
+              {enums.map(item => (
+                <Select.Item key={item.id} value={item.id}>
+                  {item.name}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </FormElement>
+        </>
       );
     }
     if (field.type === 'reference' || field.type === 'containment') {
@@ -114,6 +122,16 @@ const SharedFieldRow = ({
           </FormElement>
         </>
       );
+    }
+    if (
+      field.type === 'text' ||
+      field.type === 'longtext' ||
+      field.type === 'boolean' ||
+      field.type === 'date' ||
+      field.type === 'currency' ||
+      field.type === 'number'
+    ) {
+      return <ScalarCardinalityControls field={field} onUpdate={onUpdate} disabled={!canEdit} />;
     }
     if (field.type === 'derived') {
       return (
@@ -179,9 +197,14 @@ const SharedFieldRow = ({
         <Select.Root
           value={field.requirementLevel ?? 'optional'}
           disabled={!canEdit || field.type === 'derived'}
-          onChange={value =>
-            onUpdate({ requirementLevel: (value ?? 'optional') as SchemaField['requirementLevel'] })
-          }
+          onChange={value => {
+            const requirementLevel = (value ?? 'optional') as SchemaField['requirementLevel'];
+            onUpdate(
+              isScalarCardinalityField(field)
+                ? scalarCardinalityPatchForRequirement(field, requirementLevel ?? 'optional')
+                : { requirementLevel }
+            );
+          }}
           style={{ width: '100%' }}
         >
           <Select.Item value="optional">Optional</Select.Item>

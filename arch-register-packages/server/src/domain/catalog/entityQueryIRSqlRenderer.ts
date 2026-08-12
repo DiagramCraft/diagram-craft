@@ -1,5 +1,6 @@
 // Internal SQL renderer for the entity-query compilation plan.
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import { isMultiValuedScalarField } from './entityScalarValues';
 import type {
   EntityQuery,
   PathStep,
@@ -291,8 +292,9 @@ const resolveColumn = (
   alias: string,
   fieldId: string,
   dialect: EntityQueryDialect,
+  kind: 'scalar' | 'array' | 'currency-array' = 'scalar',
   currencyAmount = false
-): { col: string; kind: 'scalar' | 'array' } | null => {
+): { col: string; kind: 'scalar' | 'array' | 'currency-array' } | null => {
   if (fieldId === '_id') return { col: `${alias}.id`, kind: 'scalar' };
   if (Object.hasOwn(ENTITY_BUILTIN_COLUMNS, fieldId)) {
     return {
@@ -304,6 +306,12 @@ const resolveColumn = (
     return { col: `${alias}.${ENTITY_ARRAY_COLUMNS[fieldId]!.slice('e.'.length)}`, kind: 'array' };
   }
   if (!isValidFieldId(fieldId)) return null;
+  if (kind === 'array' || kind === 'currency-array') {
+    return {
+      col: createEntityQueryDialectAdapter(dialect).jsonFieldValue(`${alias}.data`, fieldId),
+      kind
+    };
+  }
   if (currencyAmount) {
     return {
       col:
@@ -475,6 +483,17 @@ const compilePredicateTerminal =
       return compileAssessmentPresence(alias, op, state);
     }
 
+    const scalarFields = [...schemas.values()]
+      .map(schema => schemaFieldById(schema, fieldId))
+      .filter((field): field is NonNullable<typeof field> => field != null);
+    const multiField = scalarFields.find(field => isMultiValuedScalarField(field));
+    const fieldKind = multiField
+      ? multiField.type === 'currency'
+        ? ('currency-array' as const)
+        : ('array' as const)
+      : ('scalar' as const);
+    const currencyAmount =
+      fieldKind === 'scalar' && scalarFields.some(field => field.type === 'currency');
     const resolved = fieldId.startsWith(ASSESSMENT_FIELD_PREFIX)
       ? {
           col: assessmentFieldColumn(
@@ -489,9 +508,8 @@ const compilePredicateTerminal =
           alias,
           fieldId,
           dialect,
-          [...schemas.values()].some(
-            schema => schemaFieldById(schema, fieldId)?.type === 'currency'
-          )
+          fieldKind,
+          currencyAmount
         );
     if (!resolved) {
       throw new UnsupportedEntityQueryIRError(`Field '${fieldId}' has no SQL translation`);
@@ -519,12 +537,26 @@ const compileFreeTextTerminal = (
   value: string,
   schemas: SchemaCatalog,
   state: CompileState
-): string =>
-  `(${['_name', '_slug', '_description']
+): string => {
+  const scalarFieldIds = [
+    ...new Set(
+      [...schemas.values()].flatMap(schema =>
+        schema.fields
+          .filter(field =>
+            ['text', 'longtext', 'boolean', 'date', 'currency', 'number', 'select'].includes(
+              field.type
+            )
+          )
+          .map(field => field.id)
+      )
+    )
+  ];
+  return `(${['_name', '_slug', '_description', ...scalarFieldIds]
     .map(fieldId =>
       compilePredicateTerminal(fieldId, 'contains', value, schemas, state.dialect, state)(alias)
     )
     .join(' OR ')})`;
+};
 
 // Mirrors ENTITY_BUILTIN_COLUMNS for relation rows. Kept local (not filterBuilder.ts) since these
 // pseudo-fields only exist for relation-rooted queries/projections.

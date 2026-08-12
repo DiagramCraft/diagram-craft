@@ -115,10 +115,11 @@ const extractValue = (
     return null;
   }
 
-  const raw =
+  const rawValue =
     source.kind === 'assessmentRating'
       ? (responsesByEntity?.get(entity.id)?.[source.fieldId] ?? null)
       : (entity.data[source.fieldId] ?? null);
+  const raw = Array.isArray(rawValue) ? (rawValue[0] ?? null) : rawValue;
   if (raw == null || raw === '') return null;
   const field =
     source.kind === 'field'
@@ -177,10 +178,11 @@ const extractEnumValue = (
     return null;
   }
 
-  const raw =
+  const rawValue =
     source.kind === 'assessmentEnum'
       ? (responsesByEntity?.get(entity.id)?.[source.fieldId] ?? null)
       : (entity.data[source.fieldId] ?? null);
+  const raw = Array.isArray(rawValue) ? (rawValue[0] ?? null) : rawValue;
   if (raw == null || raw === '') return null;
   return String(raw);
 };

@@ -327,7 +327,7 @@ describe('instantiateTemplate', () => {
         id: 'mitigating_controls',
         type: 'typedRelation',
         relationSchemaId: riskControl?.id,
-        direction: 'out'
+        direction: 'in'
       })
     );
     expect(control?.fields).toContainEqual(
@@ -335,7 +335,23 @@ describe('instantiateTemplate', () => {
         id: 'mitigated_risks',
         type: 'typedRelation',
         relationSchemaId: riskControl?.id,
+        direction: 'out'
+      })
+    );
+    expect(control?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'satisfied_requirements',
+        type: 'typedRelation',
+        relationSchemaId: controlRequirement?.id,
         direction: 'in'
+      })
+    );
+    expect(complianceRequirement?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'satisfying_controls',
+        type: 'typedRelation',
+        relationSchemaId: controlRequirement?.id,
+        direction: 'out'
       })
     );
   });

@@ -3,6 +3,7 @@ import { z } from 'zod';
 import {
   ws,
   wsAndUUID,
+  currencyValueSchema,
   externalFieldSchema,
   assertRefreshModeRequiresExternalKind,
   namedGroupSchema,
@@ -33,34 +34,54 @@ const baseFieldSchema = z.object({
   ...externalFieldSchema.shape
 });
 
+const scalarCardinalitySchema = {
+  minCardinality: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe('Minimum number of scalar values required'),
+  maxCardinality: z
+    .union([z.literal(-1), z.number().int().min(0)])
+    .optional()
+    .describe('Maximum number of scalar values (-1 for unlimited; omitted means one)')
+};
+
 const textFieldSchema = baseFieldSchema.extend({
-  type: z.literal('text').describe('Single-line text field')
+  ...scalarCardinalitySchema,
+  type: z.literal('text').describe('Text scalar field; cardinality controls whether it accepts one or many values')
 });
 
 const longtextFieldSchema = baseFieldSchema.extend({
+  ...scalarCardinalitySchema,
   type: z.literal('longtext').describe('Multi-line text field')
 });
 
 const booleanFieldSchema = baseFieldSchema.extend({
+  ...scalarCardinalitySchema,
   type: z.literal('boolean').describe('Boolean (true/false) field')
 });
 
 const dateFieldSchema = baseFieldSchema.extend({
+  ...scalarCardinalitySchema,
   type: z.literal('date').describe('Date field')
 });
 
 const currencyFieldSchema = baseFieldSchema.extend({
+  ...scalarCardinalitySchema,
   type: z.literal('currency').describe('Currency amount and currency code field')
 });
 
 const numberFieldSchema = baseFieldSchema.extend({
+  ...scalarCardinalitySchema,
   type: z.literal('number').describe('Integer number field'),
   min: z.number().int().optional().describe('Minimum allowed value'),
   max: z.number().int().optional().describe('Maximum allowed value')
 });
 
 const selectFieldInputSchema = baseFieldSchema.extend({
-  type: z.literal('select').describe('Single-select dropdown field'),
+  ...scalarCardinalitySchema,
+  type: z.literal('select').describe('Select scalar field; cardinality controls whether it accepts one or many values'),
   enumId: z.string().describe('Enumeration identifier for dropdown options')
 });
 
@@ -160,6 +181,20 @@ export const schemaFieldInputSchema = z
   .superRefine((field, ctx) => {
     const issue = assertRefreshModeRequiresExternalKind(field);
     if (issue) ctx.addIssue({ code: z.ZodIssueCode.custom, ...issue });
+    if (
+      'minCardinality' in field &&
+      'maxCardinality' in field &&
+      field.minCardinality !== undefined &&
+      field.maxCardinality !== undefined &&
+      field.maxCardinality !== -1 &&
+      field.minCardinality > field.maxCardinality
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['minCardinality'],
+        message: 'minCardinality must be less than or equal to maxCardinality'
+      });
+    }
   })
   .describe('Schema field definition');
 
@@ -225,7 +260,11 @@ const entityTemplateFieldValueSchema = z.union([
   z.string(),
   z.number(),
   z.boolean(),
+  currencyValueSchema,
   z.array(z.string()),
+  z.array(z.number()),
+  z.array(z.boolean()),
+  z.array(currencyValueSchema),
   z.array(typedRelationTemplateDraftSchema)
 ]);
 

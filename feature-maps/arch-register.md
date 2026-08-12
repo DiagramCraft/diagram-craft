@@ -66,6 +66,8 @@
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
             reusable shared fieldgroups, relationships, and schema-specific behavior, including currency fields and
+            ordered multi-valued scalar fields (text, long text, boolean, date, number, currency, and select) with
+            minimum/maximum cardinality,
             date fields that can generate schema-field-scoped approaching and overdue governance reminders,
             the built-in Vendor/Contract model where Contract records contain exactly one Vendor,
             read-only derived fields calculated using a sandboxed expression over sibling fields and a bounded
@@ -117,7 +119,7 @@
           descendants and related records.
 
         - @id:ar.entities.fields Users can view and edit standard and schema-defined fields, including owners,
-          lifecycle, links, references, typed relations, currency values, and custom values. A schema field marked as externally
+          lifecycle, links, references, typed relations, currency values, ordered multi-valued scalar values, and custom values. A schema field marked as externally
           managed (by AI, an integration, or an internal automation) is read-only to users; its current value stays
           visible alongside the latest update's source, timestamp, status, and any explanation or findings. A user
           edit to any other field on the entity marks that entity's external field results outdated. Fields belonging
@@ -214,12 +216,13 @@
           Baselines expose Active, Stale, and Superseded lifecycle states; superseding is explicit and deletion is
           soft-only. Approval decisions remain represented by linked governance cases rather than by baseline status.
 
-        - @id:ar.entities.bulk-edit Users can select multiple entities and edit supported fields in bulk. Entities that
+        - @id:ar.entities.bulk-edit Users can select multiple entities and edit supported fields in bulk, including
+          replacing, appending, removing, reordering, or clearing ordered multi-valued scalar lists. Entities that
           require an approved change proposal are bundled into a single multi-entity proposal case routed through
           governance instead of being skipped.
 
         - @id:ar.entities.templates Users can create entities from configured templates and use templates to standardize
-          recurring entity structures.
+          recurring entity structures, including ordered defaults for multi-valued scalar fields.
 
     - @id:ar.entity-views Users can browse, filter, search, and analyze entity collections through configurable views,
       including free-text search across entity names, slugs, and descriptions. The entity sidebar provides familiar
@@ -228,7 +231,8 @@
       directly, and the All entities row resets the facet selections.
 
         - @id:ar.entity-views.table Users can inspect entities in a tabular browser with configurable fields, sorting,
-          filtering, selection, and bulk actions.
+          filtering, selection, and bulk actions. Scalar-array filters use any-element matching for positive operators,
+          while emptiness checks the list and sorting/chart metrics use its first value.
 
         - @id:ar.entity-views.cards Users can inspect entities as cards for quick scanning of record summaries.
 
@@ -590,7 +594,8 @@
           Columns for fields in access-restricted field groups are omitted from exported CSVs and import templates
           for viewers without view access to that group, mirroring the redaction applied elsewhere. Field values
           from access-restricted field groups are scrubbed from import previews, and CSV updates cannot write or
-          clear fields in field groups the importer lacks edit access to.
+          clear fields in field groups the importer lacks edit access to. Multi-valued scalar fields are exported and
+          imported as ordered JSON arrays.
 
         - @id:ar.import-export.relation-csv Users can import and export typed relation instances through CSV
           workflows. Exports include relation-schema and endpoint entity IDs plus fields when all rows share one

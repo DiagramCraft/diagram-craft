@@ -11,6 +11,7 @@ import { getAssessmentEnumOptions } from '@arch-register/api-types/assessmentFie
 import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import { parseTimelineDate } from '../../../components/timeline/timelineUtils';
+import { firstScalarValue } from '../../../lib/scalarFieldValues';
 
 export const LIFECYCLE_FIELD_ID = '_lifecycle';
 export const OWNER_FIELD_ID = '_owner';
@@ -157,7 +158,7 @@ export const getCategoricalValue = (entity: EntityRecord, fieldId: string): stri
     const value = resolveAssessmentValue(entity as BrowserEntityRecord, fieldId);
     return value == null ? null : String(value);
   }
-  const val = entity[fieldId];
+  const val = firstScalarValue(entity[fieldId]);
   return typeof val === 'string' ? val : null;
 };
 
@@ -166,7 +167,7 @@ export const getNumericValue = (entity: EntityRecord, fieldId: string): number |
     const value = resolveAssessmentValue(entity as BrowserEntityRecord, fieldId);
     return typeof value === 'number' ? value : value != null ? Number(value) : null;
   }
-  const val = entity[fieldId];
+  const val = firstScalarValue(entity[fieldId]);
   return typeof val === 'number' ? val : null;
 };
 
@@ -192,7 +193,8 @@ export const getDateFields = (
   return [...dateFields, ...extraFields];
 };
 
-export const getRawDateValue = (entity: EntityRecord, fieldId: string): unknown => entity[fieldId];
+export const getRawDateValue = (entity: EntityRecord, fieldId: string): unknown =>
+  firstScalarValue(entity[fieldId]);
 
 export const getDateValue = (entity: EntityRecord, fieldId: string): Date | null =>
   parseTimelineDate(getRawDateValue(entity, fieldId));

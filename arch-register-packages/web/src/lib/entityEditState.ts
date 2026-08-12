@@ -9,6 +9,7 @@ import {
   isTypedRelationField,
   type EntitySchema
 } from '@arch-register/api-types/schemaContract';
+import { isMultiValuedScalarField, scalarValues } from './scalarFieldValues';
 
 export type EntityEditState = Record<string, unknown>;
 export type EntityUpdateBody = Record<string, unknown>;
@@ -78,7 +79,9 @@ export const createEntityEditState = (
     if (isTypedRelationField(field) || field.type === 'derived') continue;
     state[field.id] = isReferenceOrContainmentField(field)
       ? relationIds(entity[field.id])
-      : (entity[field.id] ?? '');
+      : isMultiValuedScalarField(field)
+        ? scalarValues(entity[field.id])
+        : (entity[field.id] ?? '');
   }
   return state;
 };
@@ -114,7 +117,9 @@ export const createEntityUpdateBody = (
     if (isTypedRelationField(field) || field.type === 'derived') continue;
     dataFields[field.id] = isReferenceOrContainmentField(field)
       ? relationIds(editState[field.id])
-      : (editState[field.id] ?? '');
+      : isMultiValuedScalarField(field)
+        ? scalarValues(editState[field.id])
+        : (editState[field.id] ?? '');
   }
   const tags = ((editState._tags as string) ?? '')
     .split(',')

@@ -327,6 +327,36 @@ describe('data route helpers', () => {
     ).toBe(true);
   });
 
+  it('matches multi-valued scalar fields by any element', () => {
+    const entity = { ...component, data: { labels: ['first', 'second'] } };
+    expect(
+      matchesFilterCondition(entity, { fieldId: 'labels', op: 'equals', value: 'second' }, null)
+    ).toBe(true);
+    expect(
+      matchesFilterCondition(entity, { fieldId: 'labels', op: 'contains', value: 'fir' }, null)
+    ).toBe(true);
+    expect(
+      matchesFilterCondition(entity, { fieldId: 'labels', op: 'not_equals', value: 'first' }, null)
+    ).toBe(false);
+    expect(
+      matchesFilterCondition(entity, { fieldId: 'labels', op: 'not_equals', value: 'missing' }, null)
+    ).toBe(true);
+    expect(
+      matchesFilterCondition(
+        { ...entity, data: { labels: [] } },
+        { fieldId: 'labels', op: 'empty', value: '' },
+        null
+      )
+    ).toBe(true);
+  });
+
+  it('includes scalar arrays in free-text search', () => {
+    const entity = { ...component, data: { labels: ['first', 'second'] } };
+    expect(
+      filterEntities([entity], { schemaId: null, owner: null, lifecycle: null, q: 'second' })
+    ).toEqual([entity]);
+  });
+
   it('builds incoming and outgoing relations for an entity', () => {
     const relations = buildEntityRelations(
       component,

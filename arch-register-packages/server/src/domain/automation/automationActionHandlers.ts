@@ -10,6 +10,7 @@ import { buildUserAuthCtx } from '../auth/authorization';
 import { isChannelEnabled } from '../notification/notificationPreferences';
 import { assertNoExternalEntityFieldWrites } from '../catalog/entityValidation';
 import { normalizeEntityRelationFields, relationFields } from '../catalog/dataHelpers';
+import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
 import { updateEntityWithAudit, type EntityMutationActor } from '../catalog/entityMutations';
 import { RetryableJobError } from '../jobs/jobRetry';
 import { computeEntityCompleteness } from '../../utils/completeness';
@@ -297,6 +298,12 @@ const handleSetFieldValue: AutomationActionHandler = async context => {
     const entities = await db.catalog.listEntities(event.workspace);
     nextData = normalizeEntityRelationFields({ schema, fields: nextData, entities });
   }
+  const currencyConfig = await db.workspace.getSupportedCurrencies(event.workspace);
+  nextData = normalizeEntityScalarFields({
+    schemaFields: schema.fields,
+    fields: nextData,
+    supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code))
+  });
 
   // Threading `automationRuleChain` through `auditMetadata` is what lets `writeAudit` (re-entered
   // by `updateEntityWithAudit` below) know this update is itself the result of a rule firing, so

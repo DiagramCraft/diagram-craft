@@ -37,6 +37,7 @@ import {
 } from './entityQueryIRCompiler';
 import { validateEntityQueryIR, type SchemaCatalog } from './entityQueryIRValidator';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
+import { isMultiValuedScalarField } from './entityScalarValues';
 import {
   availableRelationSchemaCatalog,
   availableSchemaCatalog,
@@ -516,6 +517,41 @@ const collectEntities = async (
     );
   }
   const collectionEntityIdSet = collectionEntityIds == null ? null : new Set(collectionEntityIds);
+  const customFieldKinds = new Map<string, 'scalar' | 'currency' | 'array' | 'currency-array'>();
+  const restrictedCustomFieldIds = new Set<string>();
+  for (const schema of schemas) {
+    for (const field of schema.fields) {
+      if (
+        !['text', 'longtext', 'boolean', 'date', 'currency', 'number', 'select'].includes(
+          field.type
+        )
+      ) {
+        continue;
+      }
+      if (isFieldViewRestricted(authCtx, schema, field.id)) {
+        restrictedCustomFieldIds.add(field.id);
+        continue;
+      }
+      const kind = isMultiValuedScalarField(field)
+        ? field.type === 'currency'
+          ? 'currency-array'
+          : 'array'
+        : field.type === 'currency'
+          ? 'currency'
+          : 'scalar';
+      const existingKind = customFieldKinds.get(field.id);
+      const kindRank = (value: typeof kind): number =>
+        value === 'currency-array' || value === 'array'
+          ? 3
+          : value === 'currency'
+            ? 2
+            : 1;
+      if (existingKind == null || kindRank(kind) > kindRank(existingKind)) {
+        customFieldKinds.set(field.id, kind);
+      }
+    }
+  }
+  for (const fieldId of restrictedCustomFieldIds) customFieldKinds.delete(fieldId);
   const projectEntityMap = new Map(projectEntities.map(entity => [entity.entity_id, entity]));
   const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
   const historicalSchemas = asOf
@@ -643,6 +679,7 @@ const collectEntities = async (
         lifecycle,
         q: q ?? '',
         conditions: otherConditions,
+        customFieldKinds,
         projectId,
         projectScope,
         ...(permissionScope ? { permissionScope } : {})

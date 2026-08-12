@@ -41,6 +41,7 @@ import {
   assertResolvedFieldGroupReferences,
   normalizeSchemaCategory
 } from '../catalog/schemaHelpers';
+import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 
@@ -576,6 +577,8 @@ export const importEntities = async (
   idMapping: IdMapping
 ): Promise<{ created: number; updated: number; skipped: number }> => {
   const now = new Date();
+  const currencyConfig = await db.workspace.getSupportedCurrencies(workspace);
+  const supportedCurrencies = new Set(currencyConfig.currencies.map(currency => currency.code));
   const existingEntities = new Map(
     (await db.catalog.listEntities(workspace)).map(entity => [entity.id, entity])
   );
@@ -599,6 +602,7 @@ export const importEntities = async (
     string,
     NonNullable<Awaited<ReturnType<typeof db.catalog.getSchema>>>
   >();
+  const normalizedDataByEntityId = new Map<string, Record<string, unknown>>();
 
   for (const { entity, nextId } of mappedEntities) {
     const existing = existingEntities.get(nextId);
@@ -609,10 +613,16 @@ export const importEntities = async (
       message: `Schema '${schemaId}' is unavailable while importing entity '${entity.id}'`
     });
     schemasById.set(schema.id, schema);
+    const normalizedData = normalizeEntityScalarFields({
+      schemaFields: schema.fields,
+      fields: entity.data,
+      supportedCurrencies
+    });
+    normalizedDataByEntityId.set(nextId, normalizedData);
     requireNoRestrictedFieldWrites(
       authCtx,
       schema,
-      Object.keys(entity.data),
+      Object.keys(normalizedData),
       'You do not have permission to import one or more restricted fields on this entity'
     );
     if (!existing) continue;
@@ -627,6 +637,7 @@ export const importEntities = async (
     const existing = existingEntities.get(nextId);
     const schemaId = resolveMappedId(idMapping.schemas, entity.schema_id) ?? entity.schema_id;
     const schema = schemasById.get(schemaId)!;
+    const normalizedData = normalizedDataByEntityId.get(nextId) ?? entity.data;
     let publicId = preserveIds ? (entity.public_id ?? nextId) : null;
     if (!publicId || usedPublicIds.has(publicId)) {
       do {
@@ -646,7 +657,7 @@ export const importEntities = async (
             description: entity.description,
             owner: mappedOwner,
             lifecycle: mappedLifecycle,
-            data: entity.data
+            data: normalizedData
           },
           schema
         )
@@ -669,7 +680,7 @@ export const importEntities = async (
       target_lifecycle_date: entity.target_lifecycle_date,
       tags: entity.tags,
       links: entity.links,
-      data: entity.data,
+      data: normalizedData,
       project_id: entity.project_id,
       created_at: existing?.created_at ?? now,
       updated_at: now,

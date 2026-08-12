@@ -16,6 +16,7 @@ import { listEntities, type EntityQueryOptions } from './entityQueryOperations';
 import { ENTITY_DEFAULTS } from '../../constants';
 import type { EntityDbResult, SchemaDbResult } from './db/catalogDatabase';
 import { buildEntityViewPermissionScope } from './db/entityPermissionScope';
+import { isMultiValuedScalarField } from './entityScalarValues';
 
 /** Fetches every relation instance for a relation schema, following pagination to completion. */
 const listAllRelationsForSchema = async (
@@ -197,6 +198,9 @@ export const exportEntitiesCsv = async (
           row[field.name] = formatArrayForCsv(
             typedRelationLookups.get(field.id)?.get(entity._uid as string) ?? []
           );
+        } else if (isMultiValuedScalarField(field)) {
+          const values = Array.isArray(value) ? value : value == null ? [] : [value];
+          row[field.name] = JSON.stringify(values);
         } else if (field.type === 'boolean') {
           row[field.name] = value === true ? 'true' : value === false ? 'false' : '';
         } else if (Array.isArray(value)) {

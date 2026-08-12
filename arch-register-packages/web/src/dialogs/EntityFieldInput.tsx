@@ -4,6 +4,8 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
+import { MultiValueEditor } from '../components/MultiValueEditor';
+import { isMultiValuedScalarField } from '../lib/scalarFieldValues';
 
 export const EntityFieldInput = ({
   field,
@@ -63,6 +65,149 @@ export const EntityFieldInput = ({
             </Select.Item>
           ))}
         </Select.Root>
+      </FormElement>
+    );
+  }
+
+  if (isMultiValuedScalarField(field)) {
+    const renderItem = (
+      item: unknown,
+      _index: number,
+      update: (value: unknown) => void
+    ) => {
+      if (field.type === 'select') {
+        return (
+          <select
+            value={typeof item === 'string' ? item : ''}
+            disabled={disabled}
+            onChange={event => update(event.target.value)}
+            style={{ width: '100%' }}
+          >
+            <option value="">—</option>
+            {field.options.map(option => (
+              <option key={option.value} value={option.value}>
+                {option.label}
+              </option>
+            ))}
+          </select>
+        );
+      }
+      if (field.type === 'longtext') {
+        return (
+          <TextArea
+            value={typeof item === 'string' ? item : ''}
+            disabled={disabled}
+            onChange={next => update(next ?? '')}
+            rows={2}
+            style={{ width: '100%' }}
+          />
+        );
+      }
+      if (field.type === 'boolean') {
+        return (
+          <select
+            value={item === true ? 'true' : item === false ? 'false' : ''}
+            disabled={disabled}
+            onChange={event => update(event.target.value === 'true')}
+            style={{ width: '100%' }}
+          >
+            <option value="">Not set</option>
+            <option value="true">True</option>
+            <option value="false">False</option>
+          </select>
+        );
+      }
+      if (field.type === 'date') {
+        return (
+          <input
+            type="date"
+            disabled={disabled}
+            value={typeof item === 'string' ? item : ''}
+            onChange={event => update(event.target.value)}
+            style={{ width: '100%' }}
+          />
+        );
+      }
+      if (field.type === 'currency') {
+        const currencyValue =
+          typeof item === 'object' && item !== null && !Array.isArray(item)
+            ? (item as { amount?: number; currency?: string })
+            : {};
+        return (
+          <div style={{ display: 'flex', gap: 6 }}>
+            <input
+              type="number"
+              step="0.01"
+              disabled={disabled}
+              value={currencyValue.amount ?? ''}
+              onChange={event =>
+                update({
+                  amount: event.target.value === '' ? undefined : Number(event.target.value),
+                  currency: currencyValue.currency ?? defaultCurrency ?? 'USD'
+                })
+              }
+              style={{ width: '100%' }}
+            />
+            <Select.Root
+              value={currencyValue.currency ?? defaultCurrency ?? ''}
+              disabled={disabled}
+              onChange={next =>
+                update({ amount: currencyValue.amount, currency: (next ?? '').toUpperCase() })
+              }
+              placeholder="Currency"
+              style={{ width: 110 }}
+            >
+              {(currencyOptions ?? []).map(currency => (
+                <Select.Item key={currency.code} value={currency.code}>
+                  {currency.code} — {currency.label}
+                </Select.Item>
+              ))}
+            </Select.Root>
+          </div>
+        );
+      }
+      if (field.type === 'number') {
+        return (
+          <input
+            type="number"
+            step="1"
+            min={field.min}
+            max={field.max}
+            disabled={disabled}
+            value={typeof item === 'number' ? item : ''}
+            onChange={event =>
+              update(event.target.value === '' ? '' : Math.trunc(event.target.valueAsNumber))
+            }
+            style={{ width: '100%' }}
+          />
+        );
+      }
+      return (
+        <TextInput
+          value={typeof item === 'string' ? item : ''}
+          disabled={disabled}
+          onChange={next => update(next ?? '')}
+          style={{ width: '100%' }}
+        />
+      );
+    };
+
+    return (
+      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+        <MultiValueEditor
+          value={value}
+          onChange={onChange}
+          createValue={() =>
+            field.type === 'boolean'
+              ? false
+              : field.type === 'currency'
+                ? { amount: undefined, currency: defaultCurrency ?? 'USD' }
+                : field.type === 'number'
+                  ? ''
+                  : ''
+          }
+          renderItem={renderItem}
+        />
       </FormElement>
     );
   }
