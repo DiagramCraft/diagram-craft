@@ -10,6 +10,7 @@ const schema: EntitySchema = {
   id: 'service',
   workspace: 'workspace',
   name: 'Service',
+  category: null,
   description: '',
   key_prefix: 'SVC',
   fields: [

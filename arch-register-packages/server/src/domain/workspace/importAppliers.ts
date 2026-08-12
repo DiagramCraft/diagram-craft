@@ -37,7 +37,10 @@ import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import { validateRelationEndpoints } from '../catalog/relationHelpers';
 import { requireTypedRelationEdit } from '../catalog/relationAccessControl';
 import { listAllRelations } from '../catalog/relationOperations';
-import { assertResolvedFieldGroupReferences } from '../catalog/schemaHelpers';
+import {
+  assertResolvedFieldGroupReferences,
+  normalizeSchemaCategory
+} from '../catalog/schemaHelpers';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 
@@ -359,6 +362,10 @@ export const importSchemas = async (
       id: nextId,
       workspace,
       name: schema.name,
+      category:
+        schema.category !== undefined
+          ? normalizeSchemaCategory(schema.category)
+          : (existing?.category ?? null),
       description: existing?.description ?? '',
       fields,
       ...(schema.entity_capabilities !== undefined && {
@@ -392,6 +399,7 @@ export const importSchemas = async (
       const previousKeyPrefix = existing.key_prefix;
       const row = await db.catalog.updateSchema(workspace, nextId, {
         name: input.name,
+        category: input.category,
         description: input.description,
         fields: input.fields,
         ...(input.entity_capabilities !== undefined && {
@@ -496,6 +504,10 @@ export const importRelationSchemas = async (
       id: nextId,
       workspace,
       name: source.name,
+      category:
+        source.category !== undefined
+          ? normalizeSchemaCategory(source.category)
+          : (existing?.category ?? null),
       description: source.description,
       in_schema_ids:
         source.in_schema_ids === 'any'
@@ -531,6 +543,7 @@ export const importRelationSchemas = async (
     if (existing) {
       await db.relation.updateRelationSchema(workspace, nextId, {
         name: input.name,
+        category: input.category,
         description: input.description,
         in_schema_ids: input.in_schema_ids,
         out_schema_ids: input.out_schema_ids,

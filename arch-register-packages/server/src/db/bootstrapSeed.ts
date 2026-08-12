@@ -219,6 +219,7 @@ export const seedBootstrapData = async (
       schema_id: createdSchema.id,
       version: createdSchema.version ?? 1,
       name: createdSchema.name,
+      category: createdSchema.category ?? null,
       description: createdSchema.description,
       in_schema_ids: createdSchema.in_schema_ids,
       out_schema_ids: createdSchema.out_schema_ids,

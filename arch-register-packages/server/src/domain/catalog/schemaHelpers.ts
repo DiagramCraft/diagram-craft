@@ -25,6 +25,7 @@ import {
 import type { SchemaGovernancePolicies } from '../governance/schemaGovernancePolicy';
 type SchemaMutationPayload = {
   name: string;
+  category: string | null;
   key_prefix: string;
   description: string;
   fields: InternalEntitySchema['fields'];
@@ -49,6 +50,12 @@ export const resolveSchemaDefaultOwner = (
 
 const defaultKeyPrefixFromName = (name: string) =>
   normalizePublicIdPrefix(name.replace(/[^a-z]/gi, '').slice(0, 5) ?? name.slice(0, 5));
+
+export const normalizeSchemaCategory = (value: unknown): string | null => {
+  if (typeof value !== 'string') return null;
+  const normalized = value.trim();
+  return normalized.length > 0 ? normalized : null;
+};
 
 export const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fields'] => {
   if (!Array.isArray(fields)) return [];
@@ -327,6 +334,7 @@ export const buildCreateSchemaInput = (
 ) => {
   const {
     name,
+    category,
     key_prefix,
     description = '',
     fields = [],
@@ -350,6 +358,7 @@ export const buildCreateSchemaInput = (
     id: idFactory(),
     workspace,
     name,
+    category: normalizeSchemaCategory(category),
     key_prefix:
       key_prefix !== undefined
         ? validatePublicIdPrefix(key_prefix, 'key_prefix')!
@@ -377,6 +386,7 @@ export const buildUpdateSchemaInput = (
 ): SchemaMutationPayload & { updated_at: Date } => {
   const {
     name,
+    category,
     key_prefix,
     description,
     fields,
@@ -403,6 +413,8 @@ export const buildUpdateSchemaInput = (
 
   return {
     name,
+    category:
+      category !== undefined ? normalizeSchemaCategory(category) : (current.category ?? null),
     key_prefix:
       key_prefix !== undefined
         ? validatePublicIdPrefix(key_prefix, 'key_prefix')!
@@ -533,6 +545,7 @@ export const toApiSchema = (
     id: schema.id,
     workspace: schema.workspace,
     name: schema.name,
+    category: schema.category ?? null,
     description: schema.description,
     key_prefix: schema.key_prefix,
     fields,
@@ -556,6 +569,7 @@ export const toApiSchemaVersion = (
   row: {
     version: number;
     name: string;
+    category?: string | null;
     description: string;
     fields: SchemaField[];
     templates: EntityTemplate[];
@@ -573,6 +587,7 @@ export const toApiSchemaVersion = (
 ): SchemaVersion => ({
   version: row.version,
   name: row.name,
+  category: row.category ?? null,
   description: row.description,
   fields: resolveSelectFieldOptions(row.fields, enums),
   templates: row.templates,

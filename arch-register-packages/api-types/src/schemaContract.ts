@@ -272,6 +272,10 @@ const entitySchemaSchema = z.object({
   id: z.string().describe('Unique schema identifier'),
   workspace: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Schema name'),
+  category: z
+    .string()
+    .nullable()
+    .describe('Optional free-text presentation category for organizing schemas'),
   description: z.string().describe('Schema description'),
   key_prefix: z.string().describe('Prefix for entity public IDs (e.g., "APP" for APP-001)'),
   fields: z.array(schemaFieldResponseSchema).describe('Schema field definitions'),
@@ -310,6 +314,7 @@ const entitySchemaSchema = z.object({
 const schemaVersionSchema = z.object({
   version: z.number().int().min(1).describe('Version number'),
   name: z.string().describe('Schema name at this version'),
+  category: z.string().nullable().describe('Schema category at this version'),
   description: z.string().describe('Schema description at this version'),
   fields: z.array(schemaFieldResponseSchema).describe('Field definitions at this version'),
   templates: z.array(entityTemplateSchema).describe('Templates at this version'),
@@ -336,6 +341,11 @@ const schemaVersionSchema = z.object({
 
 const createSchemaBodySchema = z.object({
   name: z.string().describe('Schema name'),
+  category: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Optional free-text presentation category; blank values are stored as null'),
   key_prefix: z
     .string()
     .optional()

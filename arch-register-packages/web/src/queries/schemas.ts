@@ -70,6 +70,7 @@ export const invalidateSchemaDeletion = async (
 export type SchemaUpdateCacheInput = {
   name: string;
   key_prefix: string;
+  category?: string | null;
   description?: string;
   fields: unknown;
   templates?: unknown;
@@ -100,6 +101,7 @@ export const optimisticallyUpdateSchema = async (
               ...schema,
               name: data.name,
               key_prefix: data.key_prefix,
+              category: data.category === undefined ? schema.category : data.category,
               description: data.description ?? schema.description,
               fields: data.fields as EntitySchema['fields'],
               templates:

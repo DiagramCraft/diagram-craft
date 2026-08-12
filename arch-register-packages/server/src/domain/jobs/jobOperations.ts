@@ -355,6 +355,7 @@ const createTechnologyEolJob = async (
       });
       const updatedSchema = await tx.catalog.updateSchema(ws, targetSchema.id, {
         name: targetSchema.name,
+        category: targetSchema.category ?? null,
         key_prefix: targetSchema.key_prefix,
         description: targetSchema.description,
         fields: nextFields,
@@ -374,6 +375,7 @@ const createTechnologyEolJob = async (
         schema_id: targetSchema.id,
         version: updatedSchema.version ?? 1,
         name: updatedSchema.name,
+        category: updatedSchema.category ?? null,
         description: updatedSchema.description,
         fields: updatedSchema.fields,
         templates: updatedSchema.templates ?? [],

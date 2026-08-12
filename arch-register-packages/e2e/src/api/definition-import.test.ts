@@ -2,6 +2,76 @@ import { randomUUID } from 'node:crypto';
 import { test, expect } from '../helpers/fixtures';
 
 test.describe('definition import', () => {
+  test('preserves entity and relation schema categories copied from another workspace', async ({
+    orpc,
+    server
+  }) => {
+    const suffix = randomUUID();
+    const source = await orpc.workspaces.create({
+      body: { name: `Categorized definitions source ${suffix}`, badge: 'CIS' }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Categorized definitions target ${suffix}`, badge: 'CIT' }
+    });
+    const entitySchema = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: { name: `Categorized entity ${suffix}`, category: 'Architecture' }
+    });
+    const relationSchema = await orpc.relationSchemas.create({
+      params: { workspace: source.url_slug },
+      body: {
+        name: `Categorized relation ${suffix}`,
+        category: 'Connectivity',
+        in: { schemaIds: [entitySchema.id] },
+        out: { schemaIds: [entitySchema.id] }
+      }
+    });
+
+    const preview = await orpc.workspaces.definitionImportPreview({
+      params: { workspace: target.url_slug },
+      body: {
+        source: { kind: 'workspace', id: source.url_slug },
+        selection: {
+          schemas: [entitySchema.id],
+          enums: [],
+          documentTypes: [],
+          relationSchemas: [relationSchema.id],
+          fieldGroups: [],
+          dashboard: false
+        }
+      }
+    });
+    expect(preview.errors).toEqual([]);
+
+    await orpc.workspaces.definitionImportExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        source: preview.source,
+        selection: preview.selection,
+        schemas: preview.schemas,
+        enums: preview.enums,
+        documentTypes: preview.documentTypes,
+        relationSchemas: preview.relationSchemas,
+        fieldGroups: preview.fieldGroups,
+        dashboardWidgets: preview.dashboardWidgets,
+        keyPrefixRemaps: preview.keyPrefixRemaps,
+        fingerprint: preview.fingerprint,
+        confirmed: true
+      }
+    });
+
+    expect(
+      (await server.db.catalog.listSchemas(target.id)).find(
+        schema => schema.name === entitySchema.name
+      )?.category
+    ).toBe('Architecture');
+    expect(
+      (await server.db.relation.listRelationSchemas(target.id)).find(
+        schema => schema.name === relationSchema.name
+      )?.category
+    ).toBe('Connectivity');
+  });
+
   test('previews and imports selected built-in definitions with dependencies', async ({
     orpc,
     server

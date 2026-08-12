@@ -273,6 +273,7 @@ export const updateWorkspaceSharedFieldGroup = async (
             schema_id: schemaId,
             version: row.version ?? 1,
             name: row.name,
+            category: row.category ?? null,
             description: row.description,
             fields: row.fields,
             templates: row.templates ?? [],

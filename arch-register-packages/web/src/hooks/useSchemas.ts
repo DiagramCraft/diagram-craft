@@ -41,8 +41,12 @@ export const useCreateSchema = (workspaceId: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: { name: string; key_prefix: string; fields: SchemaField[] }) =>
-      orpcClient.schemas.create({ params: { workspace: workspaceId }, body }),
+    mutationFn: (body: {
+      name: string;
+      key_prefix: string;
+      category?: string | null;
+      fields: SchemaField[];
+    }) => orpcClient.schemas.create({ params: { workspace: workspaceId }, body }),
     onSuccess: async () => {
       await invalidateSchemaCreate(queryClient, workspaceId);
     }
@@ -62,6 +66,7 @@ export const useUpdateSchema = (workspaceId: string) => {
       data: {
         name: string;
         key_prefix: string;
+        category?: string | null;
         description?: string;
         fields: SchemaField[];
         templates?: EntityTemplate[];

@@ -82,6 +82,88 @@ test.describe('schema routes', () => {
     });
   });
 
+  test('categories round-trip, normalize, version, clear, and appear in audit changes for both schema kinds', async ({
+    orpc,
+    server
+  }) => {
+    const entitySchema = await orpc.schemas.create({
+      params: { workspace: 'default' },
+      body: { name: 'Categorized entity schema', category: '  Architecture  ' }
+    });
+    expect(entitySchema.category).toBe('Architecture');
+
+    const preservedEntitySchema = await orpc.schemas.update({
+      params: { workspace: 'default', id: entitySchema.id },
+      body: { name: entitySchema.name }
+    });
+    expect(preservedEntitySchema.category).toBe('Architecture');
+
+    const clearedEntitySchema = await orpc.schemas.update({
+      params: { workspace: 'default', id: entitySchema.id },
+      body: { name: entitySchema.name, category: '   ' }
+    });
+    expect(clearedEntitySchema.category).toBeNull();
+    await expect(
+      orpc.schemas.get({ params: { workspace: 'default', id: entitySchema.id } })
+    ).resolves.toMatchObject({ category: null });
+
+    const entityVersions = await orpc.schemas.listVersions({
+      params: { workspace: 'default', id: entitySchema.id }
+    });
+    expect(entityVersions.slice(0, 3).map(version => version.category)).toEqual([
+      null,
+      'Architecture',
+      'Architecture'
+    ]);
+
+    const relationSchema = await orpc.relationSchemas.create({
+      params: { workspace: 'default' },
+      body: {
+        name: 'Categorized relation schema',
+        category: '  Connectivity  ',
+        in: { schemaIds: [apiSchemaId] },
+        out: { schemaIds: [apiSchemaId] }
+      }
+    });
+    expect(relationSchema.category).toBe('Connectivity');
+
+    const clearedRelationSchema = await orpc.relationSchemas.update({
+      params: { workspace: 'default', id: relationSchema.id },
+      body: {
+        name: relationSchema.name,
+        category: null,
+        in: relationSchema.in,
+        out: relationSchema.out
+      }
+    });
+    expect(clearedRelationSchema.category).toBeNull();
+    const relationVersions = await orpc.relationSchemas.listVersions({
+      params: { workspace: 'default', id: relationSchema.id }
+    });
+    expect(relationVersions.slice(0, 2).map(version => version.category)).toEqual([
+      null,
+      'Connectivity'
+    ]);
+
+    const auditLogs = await server.db.audit.listAuditLogs(seedIds.workspace.default);
+    expect(
+      auditLogs.find(
+        log =>
+          log.entity_id === entitySchema.id &&
+          log.operation === 'update' &&
+          log.changes.new?.['category'] === null
+      )
+    ).toBeDefined();
+    expect(
+      auditLogs.find(
+        log =>
+          log.entity_id === relationSchema.id &&
+          log.operation === 'update' &&
+          log.changes.new?.['category'] === null
+      )
+    ).toBeDefined();
+  });
+
   test('POST /api/:workspace/schemas creates a schema with explicit fields and default owner', async ({
     orpc
   }) => {

@@ -199,6 +199,7 @@ export const createWorkspaceSchema = async (
         schema_id: row.id,
         version: row.version ?? 1,
         name: row.name,
+        category: row.category ?? null,
         description: row.description,
         fields: row.fields,
         templates: row.templates ?? [],
@@ -397,6 +398,7 @@ export const updateWorkspaceSchema = async (
 
         const updated = await tx.catalog.updateSchema(ws, id, {
           name: next.name,
+          category: next.category,
           key_prefix: next.key_prefix,
           description: next.description,
           fields: finalFields,
@@ -435,6 +437,7 @@ export const updateWorkspaceSchema = async (
           schema_id: id,
           version: updated.version ?? 1,
           name: updated.name,
+          category: updated.category ?? null,
           description: updated.description,
           fields: updated.fields,
           templates: updated.templates ?? [],

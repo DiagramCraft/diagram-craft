@@ -18,6 +18,7 @@ const schema: EntitySchema = {
   id: 'application',
   workspace: 'workspace-1',
   name: 'Application',
+  category: null,
   description: '',
   key_prefix: 'APP',
   color: '#4c8',

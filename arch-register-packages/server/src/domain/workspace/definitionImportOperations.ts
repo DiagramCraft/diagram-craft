@@ -55,6 +55,7 @@ import { replaceDefaultWorkspaceDashboardLayout } from '../dashboard/dashboardOp
 type ImportableSchema = {
   id: string;
   name: string;
+  category: string | null;
   description: string;
   key_prefix: string;
   fields: SchemaField[];
@@ -95,6 +96,7 @@ type ImportableDocumentType = {
 type ImportableRelationSchema = {
   id: string;
   name: string;
+  category: string | null;
   description: string;
   in_schema_ids: string[] | 'any';
   out_schema_ids: string[] | 'any';
@@ -209,6 +211,7 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
   schemas: template.schemas.map(schema => ({
     id: schema.symId,
     name: schema.name,
+    category: null,
     description: schema.description,
     key_prefix: schema.symId
       .replace(/[^a-z]/gi, '')
@@ -243,6 +246,7 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
   relationSchemas: (template.relationSchemas ?? []).map(relationSchema => ({
     id: relationSchema.symId,
     name: relationSchema.name,
+    category: null,
     description: relationSchema.description,
     in_schema_ids: relationSchema.inSymSchemaIds,
     out_schema_ids: relationSchema.outSymSchemaIds,
@@ -307,6 +311,7 @@ const sourceFromWorkspace = async (
     schemas: schemas.map(schema => ({
       id: schema.id,
       name: schema.name,
+      category: schema.category ?? null,
       description: schema.description,
       key_prefix: schema.key_prefix,
       fields: schema.fields,
@@ -345,6 +350,7 @@ const sourceFromWorkspace = async (
     relationSchemas: relationSchemas.map(schema => ({
       id: schema.id,
       name: schema.name,
+      category: schema.category ?? null,
       description: schema.description,
       in_schema_ids: schema.in_schema_ids,
       out_schema_ids: schema.out_schema_ids,
@@ -988,6 +994,7 @@ export const executeDefinitionImport = async (
             id: schemaIdMap.get(schema.id)!,
             workspace: ws,
             name: schema.name,
+            category: schema.category,
             description: schema.description,
             key_prefix: schema.key_prefix,
             fields,
@@ -1017,6 +1024,7 @@ export const executeDefinitionImport = async (
             schema_id: row.id,
             version: 1,
             name: row.name,
+            category: row.category ?? null,
             description: row.description,
             fields,
             templates: [],
@@ -1072,6 +1080,7 @@ export const executeDefinitionImport = async (
             id: relationSchemaIdMap.get(relationSchema.id)!,
             workspace: ws,
             name: relationSchema.name,
+            category: relationSchema.category,
             description: relationSchema.description,
             in_schema_ids:
               relationSchema.in_schema_ids === 'any'
@@ -1101,6 +1110,7 @@ export const executeDefinitionImport = async (
             schema_id: row.id,
             version: 1,
             name: row.name,
+            category: row.category ?? null,
             description: row.description,
             in_schema_ids: row.in_schema_ids,
             out_schema_ids: row.out_schema_ids,

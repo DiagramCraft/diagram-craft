@@ -434,6 +434,7 @@ describe('workspace export/import guards', () => {
     const existingSchema = {
       id: 'existing-schema',
       name: 'Service',
+      category: 'Existing category',
       description: '',
       fields: [],
       groups: [],
@@ -488,6 +489,7 @@ describe('workspace export/import guards', () => {
       'workspace-1',
       existingSchema.id,
       expect.objectContaining({
+        category: 'Existing category',
         groups: [
           {
             id: 'target-group',

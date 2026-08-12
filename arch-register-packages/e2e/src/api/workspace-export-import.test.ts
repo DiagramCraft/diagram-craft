@@ -85,7 +85,7 @@ test.describe('workspace export/import', () => {
     });
     const schema = await orpc.schemas.create({
       params: { workspace: source.url_slug },
-      body: { name: `Relation entity schema ${suffix}` }
+      body: { name: `Relation entity schema ${suffix}`, category: 'Architecture' }
     });
     const inEntity = await orpc.entities.create({
       params: { workspace: source.url_slug },
@@ -102,6 +102,7 @@ test.describe('workspace export/import', () => {
       id: relationSchemaId,
       workspace: source.id,
       name: `Relation schema ${suffix}`,
+      category: 'Connectivity',
       description: 'Exported relation schema',
       in_schema_ids: [schema.id],
       out_schema_ids: [schema.id],
@@ -161,6 +162,15 @@ test.describe('workspace export/import', () => {
     });
     expect(execute.success).toBe(true);
     expect(execute.imported.relations).toEqual({ created: 1, updated: 0, skipped: 0 });
+
+    const importedEntitySchema = (await server.db.catalog.listSchemas(target.id)).find(
+      item => item.name === schema.name
+    );
+    const importedRelationSchema = (await server.db.relation.listRelationSchemas(target.id)).find(
+      item => item.name === `Relation schema ${suffix}`
+    );
+    expect(importedEntitySchema?.category).toBe('Architecture');
+    expect(importedRelationSchema?.category).toBe('Connectivity');
 
     const targetEntities = await server.db.catalog.listEntities(target.id);
     const targetIn = targetEntities.find(entity => entity.name === inEntity._name);

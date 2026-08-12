@@ -148,6 +148,7 @@ export const seedCatalogDefinitions = async (
         schema_id: createdSchema.id,
         version: createdSchema.version ?? 1,
         name: createdSchema.name,
+        category: createdSchema.category ?? null,
         description: createdSchema.description,
         fields: createdSchema.fields,
         templates: createdSchema.templates ?? [],

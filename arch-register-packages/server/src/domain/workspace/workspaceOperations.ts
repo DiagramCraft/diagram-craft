@@ -626,6 +626,7 @@ export const createWorkspace = async (
                 id: schemaMap.get(schema.id)!,
                 workspace: row.id,
                 name: schema.name,
+                category: schema.category ?? null,
                 description: schema.description,
                 key_prefix: keyPrefix,
                 color: schema.color,

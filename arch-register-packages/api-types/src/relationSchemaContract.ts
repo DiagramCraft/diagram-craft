@@ -155,6 +155,10 @@ export const relationSchemaSchema = z.object({
   id: z.string().describe('Unique relation schema identifier'),
   workspace: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Relation schema name'),
+  category: z
+    .string()
+    .nullable()
+    .describe('Optional free-text presentation category for organizing relation schemas'),
   description: z.string().describe('Relation schema description'),
   in: relationEndpointSchema.describe('Allowed entity schemas for the "in" endpoint'),
   out: relationEndpointSchema.describe('Allowed entity schemas for the "out" endpoint'),
@@ -191,6 +195,7 @@ export const relationSchemaSchema = z.object({
 const relationSchemaVersionSchema = z.object({
   version: z.number().int().min(1).describe('Version number'),
   name: z.string().describe('Relation schema name at this version'),
+  category: z.string().nullable().describe('Relation schema category at this version'),
   description: z.string().describe('Relation schema description at this version'),
   in: relationEndpointSchema.describe('"in" endpoint constraint at this version'),
   out: relationEndpointSchema.describe('"out" endpoint constraint at this version'),
@@ -215,6 +220,11 @@ const relationSchemaVersionSchema = z.object({
 
 const createRelationSchemaBodySchema = z.object({
   name: z.string().describe('Relation schema name'),
+  category: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Optional free-text presentation category; blank values are stored as null'),
   description: z.preprocess(
     v => (v === undefined ? undefined : typeof v === 'string' ? v : ''),
     z.string().optional().describe('Relation schema description')

@@ -51,6 +51,17 @@
                         "type": "string",
                         "description": "Schema name"
                       },
+                      "category": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Optional free-text presentation category for organizing schemas"
+                      },
                       "description": {
                         "type": "string",
                         "description": "Schema description"
@@ -1203,6 +1214,7 @@
                       "id",
                       "workspace",
                       "name",
+                      "category",
                       "description",
                       "key_prefix",
                       "fields",
@@ -1250,6 +1262,17 @@
                   "name": {
                     "type": "string",
                     "description": "Schema name"
+                  },
+                  "category": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional free-text presentation category; blank values are stored as null"
                   },
                   "key_prefix": {
                     "type": "string",
@@ -2358,6 +2381,17 @@
                       "type": "string",
                       "description": "Schema name"
                     },
+                    "category": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional free-text presentation category for organizing schemas"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Schema description"
@@ -3510,6 +3544,7 @@
                     "id",
                     "workspace",
                     "name",
+                    "category",
                     "description",
                     "key_prefix",
                     "fields",
@@ -3577,6 +3612,17 @@
                       "type": "string",
                       "description": "Schema name"
                     },
+                    "category": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional free-text presentation category for organizing schemas"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Schema description"
@@ -4729,6 +4775,7 @@
                     "id",
                     "workspace",
                     "name",
+                    "category",
                     "description",
                     "key_prefix",
                     "fields",
@@ -4784,6 +4831,17 @@
                   "name": {
                     "type": "string",
                     "description": "Schema name"
+                  },
+                  "category": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional free-text presentation category; blank values are stored as null"
                   },
                   "key_prefix": {
                     "type": "string",
@@ -5921,6 +5979,17 @@
                       "type": "string",
                       "description": "Schema name"
                     },
+                    "category": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional free-text presentation category for organizing schemas"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Schema description"
@@ -7073,6 +7142,7 @@
                     "id",
                     "workspace",
                     "name",
+                    "category",
                     "description",
                     "key_prefix",
                     "fields",
@@ -7352,6 +7422,17 @@
                       "name": {
                         "type": "string",
                         "description": "Schema name at this version"
+                      },
+                      "category": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Schema category at this version"
                       },
                       "description": {
                         "type": "string",
@@ -8487,6 +8568,7 @@
                     "required": [
                       "version",
                       "name",
+                      "category",
                       "description",
                       "fields",
                       "templates",
@@ -8546,6 +8628,17 @@
                       "name": {
                         "type": "string",
                         "description": "Relation schema name"
+                      },
+                      "category": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Optional free-text presentation category for organizing relation schemas"
                       },
                       "description": {
                         "type": "string",
@@ -9296,6 +9389,7 @@
                       "id",
                       "workspace",
                       "name",
+                      "category",
                       "description",
                       "in",
                       "out",
@@ -9343,6 +9437,17 @@
                   "name": {
                     "type": "string",
                     "description": "Relation schema name"
+                  },
+                  "category": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional free-text presentation category; blank values are stored as null"
                   },
                   "description": {
                     "type": "string",
@@ -10076,6 +10181,17 @@
                       "type": "string",
                       "description": "Relation schema name"
                     },
+                    "category": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional free-text presentation category for organizing relation schemas"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Relation schema description"
@@ -10825,6 +10941,7 @@
                     "id",
                     "workspace",
                     "name",
+                    "category",
                     "description",
                     "in",
                     "out",
@@ -10892,6 +11009,17 @@
                       "type": "string",
                       "description": "Relation schema name"
                     },
+                    "category": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional free-text presentation category for organizing relation schemas"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Relation schema description"
@@ -11641,6 +11769,7 @@
                     "id",
                     "workspace",
                     "name",
+                    "category",
                     "description",
                     "in",
                     "out",
@@ -11696,6 +11825,17 @@
                   "name": {
                     "type": "string",
                     "description": "Relation schema name"
+                  },
+                  "category": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional free-text presentation category; blank values are stored as null"
                   },
                   "description": {
                     "type": "string",
@@ -12458,6 +12598,17 @@
                       "type": "string",
                       "description": "Relation schema name"
                     },
+                    "category": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional free-text presentation category for organizing relation schemas"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Relation schema description"
@@ -13207,6 +13358,7 @@
                     "id",
                     "workspace",
                     "name",
+                    "category",
                     "description",
                     "in",
                     "out",
@@ -13327,6 +13479,17 @@
                       "name": {
                         "type": "string",
                         "description": "Relation schema name at this version"
+                      },
+                      "category": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Relation schema category at this version"
                       },
                       "description": {
                         "type": "string",
@@ -14071,6 +14234,7 @@
                     "required": [
                       "version",
                       "name",
+                      "category",
                       "description",
                       "in",
                       "out",

@@ -17,6 +17,7 @@ import styles from './SchemaSettingsScreen.module.css';
 
 export const RelationEditorForm = ({
   name,
+  category,
   description,
   inEndpoint,
   outEndpoint,
@@ -34,6 +35,7 @@ export const RelationEditorForm = ({
   teams,
   validationRules,
   onNameChange,
+  onCategoryChange,
   onDescriptionChange,
   onInEndpointChange,
   onOutEndpointChange,
@@ -56,6 +58,7 @@ export const RelationEditorForm = ({
   onSave
 }: {
   name: string;
+  category: string;
   description: string;
   inEndpoint: RelationEndpoint;
   outEndpoint: RelationEndpoint;
@@ -73,6 +76,7 @@ export const RelationEditorForm = ({
   teams: { id: string; name: string }[];
   validationRules: ValidationRule[];
   onNameChange: (value: string) => void;
+  onCategoryChange: (value: string) => void;
   onDescriptionChange: (value: string) => void;
   onInEndpointChange: (endpoint: RelationEndpoint) => void;
   onOutEndpointChange: (endpoint: RelationEndpoint) => void;
@@ -96,6 +100,7 @@ export const RelationEditorForm = ({
 }) => (
   <SchemaEditorFormShell
     name={name}
+    category={category}
     description={description}
     color={color}
     icon={icon}
@@ -124,6 +129,7 @@ export const RelationEditorForm = ({
       </div>
     }
     onNameChange={onNameChange}
+    onCategoryChange={onCategoryChange}
     onDescriptionChange={onDescriptionChange}
     onColorChange={onColorChange}
     onIconChange={onIconChange}

@@ -99,6 +99,7 @@ export type ExportConfig = {
 export type ExportSchema = {
   id: string;
   name: string;
+  category?: string | null;
   fields: SchemaField[];
   entity_capabilities?: EntityCapability[];
   groups?: SchemaGroup[];
@@ -121,6 +122,7 @@ export type ExportSchema = {
 export type ExportRelationSchema = {
   id: string;
   name: string;
+  category?: string | null;
   description: string;
   in_schema_ids: string[] | 'any';
   out_schema_ids: string[] | 'any';

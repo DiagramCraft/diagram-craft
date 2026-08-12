@@ -64,6 +64,7 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
 
       const updated = await db.relation.updateRelationSchema(workspace, id, {
         name: 'renamed relation schema',
+        category: 'Connectivity',
         description: 'updated',
         in_schema_ids: [appSchema],
         out_schema_ids: [dbSchema],
@@ -76,6 +77,7 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
         updated_at: new Date()
       });
       expect(updated!.name).toBe('renamed relation schema');
+      expect(updated!.category).toBe('Connectivity');
       expect(updated!.version).toBe(2);
 
       await db.relation.createRelationSchemaVersion({
@@ -84,6 +86,7 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
         schema_id: id,
         version: 2,
         name: updated!.name,
+        category: updated!.category,
         description: updated!.description,
         in_schema_ids: updated!.in_schema_ids,
         out_schema_ids: updated!.out_schema_ids,
@@ -98,6 +101,7 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
       const versions = await db.relation.listRelationSchemaVersions(workspace, id);
       expect(versions).toHaveLength(1);
       expect(versions[0]!.version).toBe(2);
+      expect(versions[0]!.category).toBe('Connectivity');
 
       const deleted = await db.relation.deleteRelationSchema(workspace, id);
       expect(deleted!.id).toBe(id);
