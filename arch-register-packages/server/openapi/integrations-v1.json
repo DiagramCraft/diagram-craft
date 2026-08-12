@@ -126,9 +126,28 @@
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
                                 },
+                                "minCardinality": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of scalar values required"
+                                },
+                                "maxCardinality": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of scalar values (-1 for unlimited; omitted means one)"
+                                },
                                 "type": {
                                   "const": "text",
-                                  "description": "Single-line text field"
+                                  "description": "Text scalar field; cardinality controls whether it accepts one or many values"
                                 }
                               },
                               "required": [
@@ -188,6 +207,25 @@
                                   ],
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
+                                },
+                                "minCardinality": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of scalar values required"
+                                },
+                                "maxCardinality": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of scalar values (-1 for unlimited; omitted means one)"
                                 },
                                 "type": {
                                   "const": "longtext",
@@ -252,6 +290,25 @@
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
                                 },
+                                "minCardinality": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of scalar values required"
+                                },
+                                "maxCardinality": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of scalar values (-1 for unlimited; omitted means one)"
+                                },
                                 "type": {
                                   "const": "boolean",
                                   "description": "Boolean (true/false) field"
@@ -314,6 +371,25 @@
                                   ],
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
+                                },
+                                "minCardinality": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of scalar values required"
+                                },
+                                "maxCardinality": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of scalar values (-1 for unlimited; omitted means one)"
                                 },
                                 "type": {
                                   "const": "date",
@@ -378,6 +454,25 @@
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
                                 },
+                                "minCardinality": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of scalar values required"
+                                },
+                                "maxCardinality": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of scalar values (-1 for unlimited; omitted means one)"
+                                },
                                 "type": {
                                   "const": "currency",
                                   "description": "Currency amount and currency code field"
@@ -440,6 +535,25 @@
                                   ],
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
+                                },
+                                "minCardinality": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of scalar values required"
+                                },
+                                "maxCardinality": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of scalar values (-1 for unlimited; omitted means one)"
                                 },
                                 "type": {
                                   "const": "number",
@@ -516,9 +630,28 @@
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
                                 },
+                                "minCardinality": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of scalar values required"
+                                },
+                                "maxCardinality": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of scalar values (-1 for unlimited; omitted means one)"
+                                },
                                 "type": {
                                   "const": "select",
-                                  "description": "Single-select dropdown field"
+                                  "description": "Select scalar field; cardinality controls whether it accepts one or many values"
                                 },
                                 "enumId": {
                                   "type": "string",
@@ -965,9 +1098,56 @@
                                         "type": "boolean"
                                       },
                                       {
+                                        "type": "object",
+                                        "properties": {
+                                          "amount": {
+                                            "type": "number"
+                                          },
+                                          "currency": {
+                                            "type": "string",
+                                            "pattern": "^[A-Z]{3}$"
+                                          }
+                                        },
+                                        "required": [
+                                          "amount",
+                                          "currency"
+                                        ]
+                                      },
+                                      {
                                         "type": "array",
                                         "items": {
                                           "type": "string"
+                                        }
+                                      },
+                                      {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "number"
+                                        }
+                                      },
+                                      {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "boolean"
+                                        }
+                                      },
+                                      {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "amount": {
+                                              "type": "number"
+                                            },
+                                            "currency": {
+                                              "type": "string",
+                                              "pattern": "^[A-Z]{3}$"
+                                            }
+                                          },
+                                          "required": [
+                                            "amount",
+                                            "currency"
+                                          ]
                                         }
                                       },
                                       {
