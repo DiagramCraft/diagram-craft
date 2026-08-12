@@ -1,5 +1,6 @@
 import { describe, expect, it, vi } from 'vitest';
 import {
+  withPostgresSavepoint,
   withPostgresTransaction,
   type PostgresSqlClient,
   type PostgresTransactionSql
@@ -32,5 +33,22 @@ describe('withPostgresTransaction', () => {
     });
 
     expect(result).toBe('reused');
+  });
+
+  it('runs callbacks through an already-bound transaction savepoint', async () => {
+    const nested = vi.fn() as unknown as PostgresTransactionSql;
+    const savepoint = vi.fn(
+      async (callback: (transaction: PostgresTransactionSql) => Promise<unknown>) =>
+        callback(nested)
+    );
+    const transaction = Object.assign(vi.fn(), { savepoint }) as unknown as PostgresTransactionSql;
+
+    const result = await withPostgresSavepoint(transaction, async current => {
+      expect(current).toBe(nested);
+      return 'isolated';
+    });
+
+    expect(savepoint).toHaveBeenCalledOnce();
+    expect(result).toBe('isolated');
   });
 });

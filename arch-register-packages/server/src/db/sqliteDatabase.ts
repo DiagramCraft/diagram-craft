@@ -82,6 +82,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly baseline;
   readonly publicCatalog: SqlitePublicCatalogDatabase;
   private transactionTail: Promise<void> = Promise.resolve();
+  private savepointCounter = 0;
 
   constructor(filePath: string) {
     this.db = new Database(filePath);
@@ -134,6 +135,9 @@ export class SqliteDatabase implements DatabaseAdapter {
       close: async () => {
         this.db.close();
       },
+      savepoint: async () => {
+        throw new Error('SQLite savepoints require a transaction-bound database adapter');
+      },
       transaction: async <T>(callback: (db: DatabaseAdapter) => Promise<T>): Promise<T> => {
         const previous = this.transactionTail;
         let release!: () => void;
@@ -166,7 +170,23 @@ export class SqliteDatabase implements DatabaseAdapter {
         close: async () => {
           throw new Error('Cannot close a transaction-bound database adapter');
         },
-        transaction: async callback => callback(this.transactionAdapter())
+        transaction: async callback => callback(this.transactionAdapter()),
+        savepoint: async callback => {
+          const name = `ar_savepoint_${this.savepointCounter++}`;
+          this.db.exec(`SAVEPOINT ${name}`);
+          try {
+            const result = await callback(this.transactionAdapter());
+            this.db.exec(`RELEASE SAVEPOINT ${name}`);
+            return result;
+          } catch (error) {
+            try {
+              this.db.exec(`ROLLBACK TO SAVEPOINT ${name}`);
+            } finally {
+              this.db.exec(`RELEASE SAVEPOINT ${name}`);
+            }
+            throw error;
+          }
+        }
       },
       workspace: this.workspace,
       catalog: this.catalog,

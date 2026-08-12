@@ -147,7 +147,8 @@ const makeDatabase = (options: { failAudit?: boolean; failOutbox?: boolean } = {
         driver: 'sqlite' as const,
         isTransaction: true,
         close: async () => {},
-        transaction: async <R>(nested: (db: DatabaseAdapter) => Promise<R>) => nested(tx)
+        transaction: async <R>(nested: (db: DatabaseAdapter) => Promise<R>) => nested(tx),
+        savepoint: async <R>(nested: (db: DatabaseAdapter) => Promise<R>) => nested(tx)
       }
     } as unknown as DatabaseAdapter;
     try {
@@ -166,7 +167,10 @@ const makeDatabase = (options: { failAudit?: boolean; failOutbox?: boolean } = {
     driver: 'sqlite',
     isTransaction: false,
     close: async () => {},
-    transaction
+    transaction,
+    savepoint: async <R>(_nested: (db: DatabaseAdapter) => Promise<R>) => {
+      throw new Error('Savepoints require a transaction-bound database adapter');
+    }
   };
 
   return { db: root, state };

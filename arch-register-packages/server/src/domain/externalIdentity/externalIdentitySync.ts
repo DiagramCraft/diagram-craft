@@ -13,6 +13,13 @@ export type ExternalIdentitySyncResult<TResult> = {
   result: TResult;
 };
 
+class ExternalIdentityRaceError extends Error {
+  constructor(readonly databaseError: DatabaseError) {
+    super('External identity unique race');
+    this.name = 'ExternalIdentityRaceError';
+  }
+}
+
 export const validateExternalIdentity = (
   source: unknown,
   externalKey: unknown
@@ -222,19 +229,34 @@ export const runExternalIdentitySyncInTransaction = async <
   }
 
   const createState = await handlers.prepareCreate(syncContext);
-  const created = await handlers.create({ sync: syncContext, state: createState });
+  let created: TRecord;
 
   try {
-    await db.externalIdentity.create({
-      workspace,
-      source,
-      external_key: externalKey,
-      record_id: handlers.recordId(created)
+    created = await db.core.savepoint(async savepointDb => {
+      const savepointContext = { ...syncContext, db: savepointDb };
+      const savepointCreated = await handlers.create({
+        sync: savepointContext,
+        state: createState
+      });
+      try {
+        await savepointDb.externalIdentity.create({
+          workspace,
+          source,
+          external_key: externalKey,
+          record_id: handlers.recordId(savepointCreated)
+        });
+      } catch (error) {
+        if (error instanceof DatabaseError && error.code === 'unique') {
+          throw new ExternalIdentityRaceError(error);
+        }
+        throw error;
+      }
+      return savepointCreated;
     });
   } catch (error) {
-    if (error instanceof DatabaseError && error.code === 'unique') {
-      // Another first sync won the identity race. Re-run the same workflow so the caller converges
-      // on the winner and receives the normal unchanged/updated result for that record.
+    if (error instanceof ExternalIdentityRaceError) {
+      // The savepoint rolled back this candidate record and its side effects. The outer transaction
+      // is still usable, so re-run the workflow and converge on the winning identity.
       return runExternalIdentitySyncInTransaction({
         db,
         workspace,
