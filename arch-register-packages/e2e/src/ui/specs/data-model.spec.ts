@@ -34,6 +34,19 @@ test.describe('data model section', () => {
     }
   });
 
+  test('shows typed relations as nodes and opens their definition', async ({ page }) => {
+    const route = workspaceModelOverviewRoute(defaultWorkspace.slug);
+    await page.goto(route);
+
+    const dataFlowNode = page.locator('[data-node]').filter({ hasText: 'Data Flow' });
+    await expect(dataFlowNode).toHaveCount(1);
+    await expect(dataFlowNode.locator('rect[data-node-kind="relation"]')).toHaveCount(1);
+    await expect(page.locator('[data-node]').filter({ hasText: 'Data Entity' })).toHaveCount(1);
+
+    await dataFlowNode.click();
+    await expect(page.getByTestId('relation-schema-editor-title')).toContainText('Data Flow');
+  });
+
   test('restores model overview layout state through reload and browser history', async ({
     page
   }) => {
