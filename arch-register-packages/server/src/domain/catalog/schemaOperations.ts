@@ -37,6 +37,7 @@ import {
 } from '../derived/derivedFields';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
 import { previewEntityValidation } from './entityValidationRules';
+import { normalizeEntityScalarFields } from './entityScalarValues';
 import {
   getSchemaGovernancePolicies,
   getSchemaGovernancePoliciesBySchema
@@ -454,13 +455,22 @@ export const updateWorkspaceSchema = async (
 
         if (entityCount > 0) {
           const entities = await listAllCatalogEntities(tx, ws, { schemaId: id });
+          const currencyConfig = await tx.workspace.getSupportedCurrencies(ws);
+          const supportedCurrencies = new Set(
+            currencyConfig.currencies.map(currency => currency.code)
+          );
           for (const entity of entities) {
+            const normalizedData = normalizeEntityScalarFields({
+              schemaFields: finalFields,
+              fields: entity.data,
+              supportedCurrencies
+            });
             await tx.catalog.updateEntityDerivedFields(
               ws,
               entity.id,
               materializeDerivedFields(
                 finalFields,
-                entity.data,
+                normalizedData,
                 {
                   objectType: 'entity',
                   objectId: entity.id

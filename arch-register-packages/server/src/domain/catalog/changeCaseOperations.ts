@@ -28,6 +28,7 @@ import {
   normalizeEntityRelationFields,
   resolveCreateOwner
 } from './dataHelpers';
+import { normalizeEntityScalarFields } from './entityScalarValues';
 import { listAllCatalogEntities } from './entityLoader';
 import type {
   ChangeCaseDbResult,
@@ -374,10 +375,17 @@ const normalizeCaseMemberState = async (
     fields: data,
     entities: allEntities
   });
+  const currencyConfig = await db.workspace.getSupportedCurrencies(workspace);
+  const normalizedScalarData = normalizeEntityScalarFields({
+    schemaFields: schema.fields,
+    fields: normalizedData,
+    supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code)),
+    validateMissing: false
+  });
   return {
     ...state,
     schema_id: schemaId,
-    data: normalizedData,
+    data: normalizedScalarData,
     project_id: entity.project_id === projectId ? null : (state['project_id'] ?? null)
   };
 };
@@ -506,13 +514,20 @@ const createProjectScopedDraftEntities = async (
   const lifecycleValues = await getLifecycleValues(tx, workspace);
   const teamIds = await getTeamIds(tx, workspace);
   const fallbackOwner = (await tx.workspace.listTeams(workspace))[0]?.id ?? null;
+  const currencyConfig = await tx.workspace.getSupportedCurrencies(workspace);
+  const supportedCurrencies = new Set(currencyConfig.currencies.map(currency => currency.code));
 
   for (const [draftId, entity] of draftEntities) {
     const schema = schemaById.get(entity.schema_id)!;
-    entity.data = normalizeEntityRelationFields({
+    const normalizedRelationData = normalizeEntityRelationFields({
       schema,
       fields: resolveDraftRelationIds(schema, { data: entity.data }, draftEntities),
       entities: allEntities
+    });
+    entity.data = normalizeEntityScalarFields({
+      schemaFields: schema.fields,
+      fields: normalizedRelationData,
+      supportedCurrencies
     });
     const parents = getEntityParentsFromPayload(schema, entity.data, entityLookup);
     entity.owner = resolveCreateOwner(entity.owner, parents, schema, teamIds, fallbackOwner);

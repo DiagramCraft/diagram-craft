@@ -145,10 +145,28 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     id: '00000000-0000-0000-0000-000000000032',
     workspace: WORKSPACE_ID,
     name: 'Risk Mitigation',
-    description: 'Associates a Risk with the Controls that mitigate it.',
+    description:
+      'Associates a Risk with the Controls that mitigate it and records the control coverage.',
     in_schema_ids: ['00000000-0000-0000-0000-000000000013'],
     out_schema_ids: ['00000000-0000-0000-0000-000000000014'],
-    fields: [],
+    fields: [
+      {
+        id: 'effectiveness',
+        name: 'Effectiveness',
+        type: 'select',
+        enumId: '00000000-0000-0000-0000-e0000000000a',
+        requirementLevel: 'required'
+      },
+      {
+        id: 'coverage',
+        name: 'Coverage',
+        type: 'number',
+        min: 0,
+        max: 100,
+        requirementLevel: 'required'
+      },
+      { id: 'reviewed_on', name: 'Reviewed On', type: 'date' }
+    ],
     groups: [],
     shared_field_group_links: [],
     color: AR_COLOR_RED,
@@ -161,10 +179,21 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     id: '00000000-0000-0000-0000-000000000033',
     workspace: WORKSPACE_ID,
     name: 'Control Compliance',
-    description: 'Records that a Control satisfies a ComplianceRequirement.',
+    description:
+      'Records that a Control satisfies a ComplianceRequirement and captures the verification evidence.',
     in_schema_ids: ['00000000-0000-0000-0000-000000000014'],
     out_schema_ids: ['00000000-0000-0000-0000-000000000016'],
-    fields: [],
+    fields: [
+      {
+        id: 'status',
+        name: 'Status',
+        type: 'select',
+        enumId: '00000000-0000-0000-0000-e0000000000e',
+        requirementLevel: 'required'
+      },
+      { id: 'evidence', name: 'Evidence', type: 'text' },
+      { id: 'verified_on', name: 'Verified On', type: 'date' }
+    ],
     groups: [],
     shared_field_group_links: [],
     color: AR_COLOR_GREEN,
@@ -309,7 +338,11 @@ export const seedRelations: RelationDbCreate[] = [
     // Unauthorized Production Access <- MFA Enforcement.
     in_entity_id: '00000000-0000-0000-000c-000000000001',
     out_entity_id: '00000000-0000-0000-000d-000000000001',
-    data: {},
+    data: {
+      effectiveness: 'substantial',
+      coverage: 90,
+      reviewed_on: '2026-01-01'
+    },
     created_at: now,
     updated_at: now
   },
@@ -320,7 +353,11 @@ export const seedRelations: RelationDbCreate[] = [
     // Undetected Data Exfiltration <- SIEM Alerting.
     in_entity_id: '00000000-0000-0000-000c-000000000002',
     out_entity_id: '00000000-0000-0000-000d-000000000002',
-    data: {},
+    data: {
+      effectiveness: 'partial',
+      coverage: 70,
+      reviewed_on: '2025-11-15'
+    },
     created_at: now,
     updated_at: now
   },
@@ -331,7 +368,11 @@ export const seedRelations: RelationDbCreate[] = [
     // Plaintext Data at Rest <- Encryption at Rest.
     in_entity_id: '00000000-0000-0000-000c-000000000003',
     out_entity_id: '00000000-0000-0000-000d-000000000003',
-    data: {},
+    data: {
+      effectiveness: 'substantial',
+      coverage: 95,
+      reviewed_on: '2025-09-01'
+    },
     created_at: now,
     updated_at: now
   },
@@ -342,7 +383,11 @@ export const seedRelations: RelationDbCreate[] = [
     // MFA Enforcement -> CC6.1 Logical Access Controls.
     in_entity_id: '00000000-0000-0000-000d-000000000001',
     out_entity_id: '00000000-0000-0000-000f-000000000001',
-    data: {},
+    data: {
+      status: 'met',
+      evidence: 'MFA policy and production access logs',
+      verified_on: '2026-01-01'
+    },
     created_at: now,
     updated_at: now
   },
@@ -353,7 +398,11 @@ export const seedRelations: RelationDbCreate[] = [
     // SIEM Alerting -> CC7.2 System Monitoring.
     in_entity_id: '00000000-0000-0000-000d-000000000002',
     out_entity_id: '00000000-0000-0000-000f-000000000002',
-    data: {},
+    data: {
+      status: 'in-progress',
+      evidence: 'SIEM alerting coverage is being extended to all production workloads',
+      verified_on: '2025-11-15'
+    },
     created_at: now,
     updated_at: now
   },
@@ -364,7 +413,11 @@ export const seedRelations: RelationDbCreate[] = [
     // Encryption at Rest -> A.8.24 Use of Cryptography.
     in_entity_id: '00000000-0000-0000-000d-000000000003',
     out_entity_id: '00000000-0000-0000-000f-000000000003',
-    data: {},
+    data: {
+      status: 'met',
+      evidence: 'Encryption standards and storage configuration review',
+      verified_on: '2025-09-01'
+    },
     created_at: now,
     updated_at: now
   }

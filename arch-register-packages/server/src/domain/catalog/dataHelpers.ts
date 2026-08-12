@@ -44,9 +44,61 @@ export const getTeamIds = async (db: DatabaseAdapter, workspace: string): Promis
   new Set((await db.workspace.listTeams(workspace)).map(r => r.id));
 
 const includesQuery = (value: unknown, query: string) =>
-  String(value ?? '')
+  (value != null && typeof value === 'object' ? JSON.stringify(value) : String(value ?? ''))
     .toLowerCase()
     .includes(query);
+
+const comparableFilterValue = (value: unknown): unknown => {
+  if (value != null && typeof value === 'object' && !Array.isArray(value) && 'amount' in value) {
+    return (value as Record<string, unknown>).amount;
+  }
+  return value;
+};
+
+const matchesScalarFilterCondition = (value: unknown, condition: FilterCondition): boolean => {
+  const comparable = comparableFilterValue(value);
+  const expected = condition.value;
+  switch (condition.op) {
+    case 'equals':
+      return String(comparable) === String(expected);
+    case 'not_equals':
+      return String(comparable) !== String(expected);
+    case 'contains':
+      return String(comparable).toLowerCase().includes(String(expected).toLowerCase());
+    case 'starts_with':
+      return String(comparable).toLowerCase().startsWith(String(expected).toLowerCase());
+    case 'ends_with':
+      return String(comparable).toLowerCase().endsWith(String(expected).toLowerCase());
+    case 'gt':
+      return Number(comparable) > Number(expected);
+    case 'lt':
+      return Number(comparable) < Number(expected);
+    case 'gte':
+      return Number(comparable) >= Number(expected);
+    case 'lte':
+      return Number(comparable) <= Number(expected);
+    case 'before': {
+      const valueTime =
+        comparable instanceof Date ? comparable.getTime() : new Date(String(comparable)).getTime();
+      const expectedTime = new Date(String(expected)).getTime();
+      return !Number.isNaN(valueTime) && !Number.isNaN(expectedTime) && valueTime < expectedTime;
+    }
+    case 'after': {
+      const valueTime =
+        comparable instanceof Date ? comparable.getTime() : new Date(String(comparable)).getTime();
+      const expectedTime = new Date(String(expected)).getTime();
+      return !Number.isNaN(valueTime) && !Number.isNaN(expectedTime) && valueTime > expectedTime;
+    }
+    case 'on': {
+      const valueTime =
+        comparable instanceof Date ? comparable.getTime() : new Date(String(comparable)).getTime();
+      const expectedTime = new Date(String(expected)).getTime();
+      return !Number.isNaN(valueTime) && !Number.isNaN(expectedTime) && valueTime === expectedTime;
+    }
+    default:
+      return true;
+  }
+};
 
 const entityMatchesPattern = (entity: Entity, pattern: string) => {
   const query = pattern.toLowerCase();
@@ -55,7 +107,8 @@ const entityMatchesPattern = (entity: Entity, pattern: string) => {
     includesQuery(entity.slug, query) ||
     includesQuery(entity.description, query) ||
     includesQuery(entity.owner, query) ||
-    entity.tags.some(tag => includesQuery(tag, query))
+    entity.tags.some(tag => includesQuery(tag, query)) ||
+    Object.values(entity.data).some(value => includesQuery(value, query))
   );
 };
 
@@ -122,38 +175,23 @@ export const matchesFilterCondition = (
       value = entity.data[condition.fieldId];
   }
 
-  if (condition.op === 'empty') return value == null || value === '';
-  if (condition.op === 'not_empty') return value != null && value !== '';
+  if (condition.op === 'empty') {
+    return Array.isArray(value) ? value.length === 0 : value == null || value === '';
+  }
+  if (condition.op === 'not_empty') {
+    return Array.isArray(value) ? value.length > 0 : value != null && value !== '';
+  }
   if (value == null) return false;
 
-  const expected = condition.value;
-  switch (condition.op) {
-    case 'equals':
-      return String(value) === String(expected);
-    case 'not_equals':
-      return String(value) !== String(expected);
-    case 'contains':
-      return String(value).toLowerCase().includes(String(expected).toLowerCase());
-    case 'starts_with':
-      return String(value).toLowerCase().startsWith(String(expected).toLowerCase());
-    case 'ends_with':
-      return String(value).toLowerCase().endsWith(String(expected).toLowerCase());
-    case 'gt':
-      return Number(value) > Number(expected);
-    case 'lt':
-      return Number(value) < Number(expected);
-    case 'gte':
-      return Number(value) >= Number(expected);
-    case 'lte':
-      return Number(value) <= Number(expected);
-    case 'before': {
-      const valueTime = value instanceof Date ? value.getTime() : new Date(String(value)).getTime();
-      const expectedTime = new Date(String(expected)).getTime();
-      return !Number.isNaN(valueTime) && !Number.isNaN(expectedTime) && valueTime < expectedTime;
-    }
-    default:
-      return true;
+  if (Array.isArray(value)) {
+    // Array-valued scalar fields use existential matching. `not_equals` intentionally means
+    // that no element equals the requested value, so an empty list also matches it.
+    return condition.op === 'not_equals'
+      ? value.every(item => matchesScalarFilterCondition(item, condition))
+      : value.some(item => matchesScalarFilterCondition(item, condition));
   }
+
+  return matchesScalarFilterCondition(value, condition);
 };
 
 export const filterEntities = (

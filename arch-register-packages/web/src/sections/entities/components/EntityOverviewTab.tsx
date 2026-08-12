@@ -48,6 +48,9 @@ import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { RelationRecordDraft } from '@arch-register/api-types/entityContract';
 import { RelationRecordList } from './RelationRecordList';
 import { TypedRelationFieldEditor } from './TypedRelationFieldEditor';
+import { MultiValueEditor } from '../../../components/MultiValueEditor';
+import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
+import { resolveEntityReference } from '../entityDetailHelpers';
 
 type EntityProjectAssoc = { project: Project; entity_type: ProjectEntity['entity_type'] };
 
@@ -707,6 +710,128 @@ const PropertyRow = ({
         </select>
       );
     }
+    if (isMultiValuedScalarField(field)) {
+      const renderItem = (item: unknown, _index: number, update: (value: unknown) => void) => {
+        if (field.type === 'select') {
+          return (
+            <select
+              className={styles.selectInline}
+              value={typeof item === 'string' ? item : ''}
+              onChange={event => update(event.target.value)}
+            >
+              <option value="">—</option>
+              {field.options.map(option => (
+                <option key={option.value} value={option.value}>
+                  {option.label}
+                </option>
+              ))}
+            </select>
+          );
+        }
+        if (field.type === 'longtext') {
+          return (
+            <textarea
+              className={styles.textareaInline}
+              value={typeof item === 'string' ? item : ''}
+              onChange={event => update(event.target.value)}
+            />
+          );
+        }
+        if (field.type === 'boolean') {
+          return (
+            <input
+              type="checkbox"
+              checked={item === true}
+              onChange={e => update(e.target.checked)}
+            />
+          );
+        }
+        if (field.type === 'date') {
+          return (
+            <input
+              className={styles.inputInline}
+              type="date"
+              value={typeof item === 'string' ? item : ''}
+              onChange={event => update(event.target.value)}
+            />
+          );
+        }
+        if (field.type === 'currency') {
+          const currencyValue =
+            typeof item === 'object' && item !== null && !Array.isArray(item)
+              ? (item as { amount?: number; currency?: string })
+              : {};
+          return (
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input
+                className={styles.inputInline}
+                type="number"
+                step="0.01"
+                value={currencyValue.amount ?? ''}
+                onChange={event =>
+                  update({
+                    amount: event.target.value === '' ? undefined : Number(event.target.value),
+                    currency: currencyValue.currency ?? defaultCurrency
+                  })
+                }
+              />
+              <Select.Root
+                value={currencyValue.currency ?? defaultCurrency}
+                onChange={next =>
+                  update({ amount: currencyValue.amount, currency: (next ?? '').toUpperCase() })
+                }
+                placeholder="Currency"
+                style={{ width: 130 }}
+              >
+                {currencyOptions.map(currency => (
+                  <Select.Item key={currency.code} value={currency.code}>
+                    {currency.code} — {currency.label}
+                  </Select.Item>
+                ))}
+              </Select.Root>
+            </div>
+          );
+        }
+        if (field.type === 'number') {
+          return (
+            <input
+              className={styles.inputInline}
+              type="number"
+              step="1"
+              min={field.min}
+              max={field.max}
+              value={typeof item === 'number' ? item : ''}
+              onChange={event =>
+                update(event.target.value === '' ? '' : Math.trunc(event.target.valueAsNumber))
+              }
+            />
+          );
+        }
+        return (
+          <input
+            className={styles.inputInline}
+            value={typeof item === 'string' ? item : ''}
+            onChange={event => update(event.target.value)}
+          />
+        );
+      };
+      return (
+        <MultiValueEditor
+          value={editValue}
+          onChange={onChange}
+          createValue={() =>
+            field.type === 'boolean'
+              ? false
+              : field.type === 'currency'
+                ? { amount: undefined, currency: defaultCurrency }
+                : field.type === 'number'
+                  ? ''
+                  : ''
+          }
+          renderItem={renderItem}
+        />
+      );
+    }
     if (field.type === 'select') {
       return (
         <select
@@ -822,6 +947,53 @@ const PropertyRow = ({
         />
       );
     }
+    if (field.type === 'reference' || field.type === 'containment') {
+      const ids = relationIds(value);
+      if (ids.length === 0) return <span className={sharedStyles.dim}>—</span>;
+      return (
+        <>
+          {ids.map((id, index) => {
+            const ref = resolveEntityReference(id, field.schemaId, refLookup, referenceOptions);
+            const label = ref?._name ?? ref?._slug ?? id;
+            return (
+              <span key={id}>
+                {index > 0 && ', '}
+                <EntityNavigationLink publicId={ref?._publicId ?? id} className={styles.propLink}>
+                  {label}
+                </EntityNavigationLink>
+              </span>
+            );
+          })}
+        </>
+      );
+    }
+    if (Array.isArray(value)) {
+      if (value.length === 0) return <span className={sharedStyles.dim}>—</span>;
+      if (field.type === 'select') {
+        return (
+          <span style={{ display: 'inline-flex', gap: 4, flexWrap: 'wrap' }}>
+            {value.map((item, index) => {
+              const option = field.options.find(candidate => candidate.value === item);
+              return (
+                <Chip key={`${String(item)}-${index}`} tone="ghost">
+                  {option?.label ?? String(item)}
+                </Chip>
+              );
+            })}
+          </span>
+        );
+      }
+      if (field.type === 'boolean') {
+        return <span>{value.map(item => (item ? 'Yes' : 'No')).join(', ')}</span>;
+      }
+      if (field.type === 'date') {
+        return <span>{value.map(item => formatDate(item)).join(', ')}</span>;
+      }
+      if (field.type === 'currency') {
+        return <span>{value.map(item => formatCurrencyValue(item)).join(', ')}</span>;
+      }
+      return <span>{value.map(item => String(item)).join(', ')}</span>;
+    }
     if (value == null || value === '') return <span className={sharedStyles.dim}>—</span>;
     if (field.type === 'derived') {
       if (field.resultType === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
@@ -836,26 +1008,6 @@ const PropertyRow = ({
     if (field.type === 'select') {
       const opt = field.options.find(o => o.value === value);
       return <Chip tone="ghost">{opt?.label ?? String(value)}</Chip>;
-    }
-    if (field.type === 'reference' || field.type === 'containment') {
-      const ids = relationIds(value);
-      if (ids.length === 0) return <span className={sharedStyles.dim}>—</span>;
-      return (
-        <>
-          {ids.map((id, index) => {
-            const ref = refLookup.get(id);
-            const label = ref?._name ?? ref?._slug ?? id;
-            return (
-              <span key={id}>
-                {index > 0 && ', '}
-                <EntityNavigationLink publicId={ref?._publicId ?? id} className={styles.propLink}>
-                  {label}
-                </EntityNavigationLink>
-              </span>
-            );
-          })}
-        </>
-      );
     }
     if (field.type === 'date') return <span>{formatDate(value)}</span>;
     if (field.type === 'currency') return <span>{formatCurrencyValue(value)}</span>;

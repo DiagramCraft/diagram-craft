@@ -37,6 +37,10 @@ type AnyField = EntitySchema['fields'][number];
 
 export function resolveFieldVal(field: AnyField | undefined, value: unknown): string {
   if (value == null || value === '') return '—';
+  if (Array.isArray(value)) {
+    if (value.length === 0) return '—';
+    return value.map(item => resolveFieldVal(field, item)).join(', ');
+  }
   if (field?.type === 'select') {
     const opt = (field as Extract<AnyField, { type: 'select' }>).options.find(
       o => o.value === String(value)

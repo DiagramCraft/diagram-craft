@@ -41,10 +41,8 @@ import type {
   SchemaDbResult
 } from './db/catalogDatabase';
 import { entityRequiresApproval } from './entityChangeOperations';
-import {
-  assertNoExternalEntityFieldWrites,
-  normalizeEntityCurrencyFields
-} from './entityValidation';
+import { assertNoExternalEntityFieldWrites } from './entityValidation';
+import { normalizeEntityScalarFields } from './entityScalarValues';
 import { equalEntityValue } from './entityDiff';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import type { ExternalMetadata } from '@arch-register/api-types/common';
@@ -126,14 +124,16 @@ export const createEntityWithPayload = async (
       status: 404,
       message: `Schema '${payload.schemaId}' not found`
     });
-    const normalizedFields = normalizeEntityRelationFields({
+    let normalizedFields = normalizeEntityRelationFields({
       schema,
       fields: payload.fields,
       entities
     });
-    if (currencyConfig) {
-      normalizeEntityCurrencyFields(schema.fields, normalizedFields, currencyConfig);
-    }
+    normalizedFields = normalizeEntityScalarFields({
+      schemaFields: schema.fields,
+      fields: normalizedFields,
+      supportedCurrencies: currencyConfig ?? undefined
+    });
     assertNoDerivedFieldWrites(schema.fields, normalizedFields);
     assertNoExternalEntityFieldWrites(schema.fields, {}, normalizedFields);
     if (authCtx) {
@@ -337,12 +337,14 @@ export const bulkCreateEntitiesWithPayloads = async (
         nameToId.set(key, randomUUID());
       }
 
-      const [schemas, existingEntities, lifecycleValues, teamRows] = await Promise.all([
-        tx.catalog.listSchemas(workspace),
-        listAllCatalogEntities(tx, workspace),
-        getLifecycleValues(tx, workspace),
-        tx.workspace.listTeams(workspace)
-      ]);
+      const [schemas, existingEntities, lifecycleValues, teamRows, currencyConfig] =
+        await Promise.all([
+          tx.catalog.listSchemas(workspace),
+          listAllCatalogEntities(tx, workspace),
+          getLifecycleValues(tx, workspace),
+          tx.workspace.listTeams(workspace),
+          getSupportedCurrencyCodes(tx, workspace)
+        ]);
       const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
       const teamIds = new Set(teamRows.map(team => team.id));
       const fallbackOwner = teamRows[0]?.id ?? null;
@@ -400,6 +402,11 @@ export const bulkCreateEntitiesWithPayloads = async (
           schema: draft.schema,
           fields: draft.entity.data,
           entities: allEntities
+        });
+        draft.entity.data = normalizeEntityScalarFields({
+          schemaFields: draft.schema.fields,
+          fields: draft.entity.data,
+          supportedCurrencies: currencyConfig ?? undefined
         });
         assertNoDerivedFieldWrites(draft.schema.fields, draft.entity.data);
         assertNoExternalEntityFieldWrites(draft.schema.fields, {}, draft.entity.data);
@@ -581,15 +588,17 @@ export const updateEntityWithPayload = async (
         );
       }
 
-      const normalizedFields = normalizeEntityRelationFields({
+      let normalizedFields = normalizeEntityRelationFields({
         schema,
-        fields: payload.fields,
+        fields: { ...oldRow.data, ...payload.fields },
         entities
       });
       const currencyConfig = await getSupportedCurrencyCodes(tx, workspace);
-      if (currencyConfig) {
-        normalizeEntityCurrencyFields(schema.fields, normalizedFields, currencyConfig);
-      }
+      normalizedFields = normalizeEntityScalarFields({
+        schemaFields: schema.fields,
+        fields: normalizedFields,
+        supportedCurrencies: currencyConfig ?? undefined
+      });
       assertNoDerivedFieldWrites(schema.fields, normalizedFields);
       if (authCtx) {
         const changedFieldIds = Object.keys(normalizedFields).filter(
@@ -803,6 +812,12 @@ export const cloneEntity = async (
           'You do not have permission to clone this entity'
         );
 
+      const normalizedData = normalizeEntityScalarFields({
+        schemaFields: schema.fields,
+        fields: source.data,
+        supportedCurrencies: (await getSupportedCurrencyCodes(tx, workspace)) ?? undefined
+      });
+
       const baseName = source.name ? `${source.name} (copy)` : source.slug;
       const baseSlug = slugify(baseName);
       const timestamp = new Date();
@@ -825,11 +840,19 @@ export const cloneEntity = async (
           tags: source.tags,
           links: source.links,
           schema_id: source.schema_id,
-          data: source.data,
+          data: normalizedData,
           project_id: source.project_id,
           created_at: timestamp,
           updated_at: timestamp,
-          completeness: source.completeness
+          completeness: computeEntityCompleteness(
+            {
+              description: source.description,
+              owner: source.owner,
+              lifecycle: source.lifecycle,
+              data: normalizedData
+            },
+            schema
+          )
         }
       });
 

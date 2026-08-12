@@ -25,6 +25,7 @@ import { equalEntityValue } from './entityDiff';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { createEntityWithAudit, updateEntityWithAudit } from './entityMutations';
 import { withCatalogMutationTransaction } from './mutationTransaction';
+import { normalizeEntityScalarFields } from './entityScalarValues';
 
 const checker = new PermissionChecker();
 
@@ -215,11 +216,23 @@ export const importCommit = async (
     'You do not have permission to create entities of this type'
   );
 
-  const [lifecycleValues, teamIds, allEntities] = await Promise.all([
+  const currencyLookup = (
+    db.workspace as {
+      getSupportedCurrencies?: (
+        workspace: string
+      ) => Promise<{ currencies: Array<{ code: string }> }>;
+    }
+  ).getSupportedCurrencies;
+  const currencyConfigPromise = currencyLookup
+    ? currencyLookup.call(db.workspace, workspace)
+    : Promise.resolve({ currencies: [] });
+  const [lifecycleValues, teamIds, allEntities, currencyConfig] = await Promise.all([
     getLifecycleValues(db, workspace),
     getTeamIds(db, workspace),
-    listAllCatalogEntities(db, workspace)
+    listAllCatalogEntities(db, workspace),
+    currencyConfigPromise
   ]);
+  const supportedCurrencies = new Set(currencyConfig.currencies.map(currency => currency.code));
 
   const nameToId = new Map(allEntities.map(e => [e.name.toLowerCase(), e.id]));
   const entitiesById = new Map(allEntities.map(e => [e.id, e]));
@@ -310,14 +323,20 @@ export const importCommit = async (
         fields: Object.fromEntries(dataFieldEntries),
         entities: allEntities
       });
+      const normalizedScalarFields = normalizeEntityScalarFields({
+        schemaFields: schema.fields,
+        fields: normalizedRelationFields,
+        supportedCurrencies,
+        validateMissing: !isUpdate
+      });
 
       const changedFieldIds =
         isUpdate && existingEntity
           ? [...presentFieldIds].filter(
               fieldId =>
-                !equalEntityValue(existingEntity.data[fieldId], normalizedRelationFields[fieldId])
+                !equalEntityValue(existingEntity.data[fieldId], normalizedScalarFields[fieldId])
             )
-          : Object.keys(normalizedRelationFields);
+          : Object.keys(normalizedScalarFields);
       requireNoRestrictedFieldWrites(
         authCtx,
         schema,
@@ -330,10 +349,10 @@ export const importCommit = async (
           ? extractEntityFields({
               ...existingEntity.data,
               ...Object.fromEntries(
-                [...presentFieldIds].map(id => [id, normalizedRelationFields[id]])
+                [...presentFieldIds].map(id => [id, normalizedScalarFields[id]])
               )
             })
-          : extractEntityFields(normalizedRelationFields);
+          : extractEntityFields(normalizedScalarFields);
 
       if (isUpdate && existingId && existingEntity) {
         requireEntityAction(

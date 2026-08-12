@@ -92,7 +92,13 @@ export const isEmptyImportValue = (value: unknown) =>
   value === undefined || value === null || value === '';
 
 export const formatImportValue = (value: unknown) =>
-  Array.isArray(value) ? value.join(', ') : String(value);
+  Array.isArray(value)
+    ? value
+        .map(item =>
+          typeof item === 'object' && item !== null ? JSON.stringify(item) : String(item)
+        )
+        .join(', ')
+    : String(value);
 
 export const toImportReviewRow = (input: ImportParseEntity): ImportReviewRow => {
   const matchType = input.matchType ?? 'none';

@@ -29,3 +29,11 @@ export const buildEntityRefLookup = (relations: EntityRelations): RefLookup => {
   }
   return lookup;
 };
+
+export const resolveEntityReference = (
+  entityId: string,
+  schemaId: string,
+  refLookup: RefLookup,
+  referenceOptions: Record<string, EntitySummary[]>
+): EntitySummary | undefined =>
+  refLookup.get(entityId) ?? referenceOptions[schemaId]?.find(entity => entity._uid === entityId);

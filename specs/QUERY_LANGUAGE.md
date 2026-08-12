@@ -191,6 +191,24 @@ schema_ref      := identifier | quoted_string            (* bare identifier only
     - Only `equals`/`not_equals` make sense against either form — enum options aren't ordered, so `enumValue(...)`/
       `enumLabel(...)` combined with `<`/`>`/`<=`/`>=` has no defined meaning and should be rejected at compile time.
 
+### 4.1.1 Scalar field cardinality
+
+Text, long text, boolean, date, number, currency, and select fields may declare `minCardinality` and
+`maxCardinality`. An omitted maximum preserves the legacy single-valued shape; `-1` means unlimited. Multi-valued
+scalar fields are stored as ordered arrays without deduplication, while single-valued fields remain primitive (or a
+currency object). A schema change from single to multi wraps an existing value; changing multi to single is rejected
+when more than one value would be discarded.
+
+For scalar fields, `Completeness = Required` is kept in sync with a minimum cardinality of at least one; choosing
+optional or expected completeness clears the minimum back to zero, and entering any positive minimum promotes the
+field to required completeness. A minimum greater than one remains valid and still uses required completeness.
+
+Predicates over a multi-valued scalar field use existential element matching: positive operators such as `equals`,
+`contains`, numeric comparisons, and date comparisons match when any element matches. `not_equals` matches only when
+no element equals the requested value. `empty` and `not_empty` inspect the list itself. There is no all-elements query
+mode. Free-text search scans scalar values, while sorting, charts, and metrics use the first value; displays and CSV
+exports retain the complete ordered list (CSV uses a JSON array).
+
 ### 4.2 Traversal segments in detail
 
 - **Forward, single hop** — `field_id` where the field is `reference` or `containment` on the current schema. Moves to

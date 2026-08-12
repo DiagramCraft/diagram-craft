@@ -19,6 +19,7 @@ import { ensureNotificationDeliverySchedule } from '../notification/emailDeliver
 import { ensureGovernanceDeadlineScanSchedule } from '../governance/governanceDeadlineScanJob';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
+import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
 import { DOCUMENT_STATUS_CASE_KIND } from '../document/documentWorkflowOperations';
 import { FIELD_DATE_REMINDER_CASE_KIND } from '../catalog/fieldDateReminderJob';
 import {
@@ -709,6 +710,10 @@ export const createWorkspace = async (
             }
             const entityMap = new Map<string, string>();
             if (includeSet.has('entities') && includeSet.has('schemas')) {
+              const currencyConfig = await db.workspace.getSupportedCurrencies(row.id);
+              const supportedCurrencies = new Set(
+                currencyConfig.currencies.map(currency => currency.code)
+              );
               const sourceEntities = await db.catalog.listEntities(replicate_from);
               for (const entity of sourceEntities) {
                 const schemaId = schemaMap.get(entity.schema_id);
@@ -732,6 +737,11 @@ export const createWorkspace = async (
                     .filter((targetId): targetId is string => !!targetId);
                   data[field.id] = Array.isArray(raw) ? mapped : (mapped[0] ?? null);
                 }
+                const normalizedData = normalizeEntityScalarFields({
+                  schemaFields: targetSchema.fields,
+                  fields: data,
+                  supportedCurrencies
+                });
                 const mappedOwner = entity.owner ? (teamMap.get(entity.owner) ?? null) : null;
                 const mappedLifecycle = entity.lifecycle
                   ? (lifecycleMap.get(entity.lifecycle) ?? null)
@@ -751,7 +761,7 @@ export const createWorkspace = async (
                   target_lifecycle: entity.target_lifecycle
                     ? (lifecycleMap.get(entity.target_lifecycle) ?? null)
                     : null,
-                  data,
+                  data: normalizedData,
                   created_at: timestamp,
                   updated_at: timestamp,
                   // Owner/lifecycle mapping can drop a value to null if the target workspace has no
@@ -761,7 +771,7 @@ export const createWorkspace = async (
                       description: entity.description,
                       owner: mappedOwner,
                       lifecycle: mappedLifecycle,
-                      data
+                      data: normalizedData
                     },
                     targetSchema
                   )

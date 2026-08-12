@@ -83,6 +83,9 @@ export const TableView = ({
       <Table.Body>
         {rows.map(entity => {
           const schemaEntry = schemaMap.get(entity._schema.id);
+          const activeDateValue = activeDateField
+            ? (entity as unknown as Record<string, unknown>)[activeDateField.id]
+            : undefined;
           const menuItems = readOnly
             ? []
             : [
@@ -141,7 +144,13 @@ export const TableView = ({
                 })}
               {activeDateField && !fieldIds.includes(activeDateField.id) && (
                 <Table.Cell>
-                  <span className="dim">{formatDate(entity[activeDateField.id])}</span>
+                  <span className="dim">
+                    {formatDate(
+                      Array.isArray(activeDateValue)
+                        ? (activeDateValue[0] as string | undefined)
+                        : (activeDateValue as string | undefined)
+                    )}
+                  </span>
                 </Table.Cell>
               )}
               {!readOnly && (

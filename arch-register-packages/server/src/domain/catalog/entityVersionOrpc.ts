@@ -17,6 +17,7 @@ import {
 import { entityVersionContract } from '@arch-register/api-types/entityVersionContract';
 import type { SchemaDbResult, SchemaVersionDbResult } from './db/catalogDatabase';
 import { withCatalogMutationTransaction } from './mutationTransaction';
+import { normalizeEntityScalarFields } from './entityScalarValues';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -230,12 +231,18 @@ const entityVersionHandlers = {
       status: 400,
       message: 'Entity version does not contain a valid data state'
     });
+    const currencyConfig = await context.db.workspace.getSupportedCurrencies(workspace);
+    const normalizedRestoredData = normalizeEntityScalarFields({
+      schemaFields: schema.fields,
+      fields: restoredData as Record<string, unknown>,
+      supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code))
+    });
     assertVersionDataCanBeRestored(
       authCtx,
       schema,
       historicalSchema,
       entity.data,
-      restoredData as Record<string, unknown>,
+      normalizedRestoredData,
       { failClosedWhenHistoricalSchemaMissing: true }
     );
 
@@ -247,6 +254,7 @@ const entityVersionHandlers = {
         previous: entity,
         next: {
           ...version.state,
+          data: normalizedRestoredData,
           // Older versions predating #2346 have no frozen completeness in state; fall back to the
           // entity's current value rather than writing an undefined column.
           completeness:

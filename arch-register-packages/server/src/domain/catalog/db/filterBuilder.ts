@@ -39,27 +39,64 @@ const buildArrayConditionClause = (
   col: string,
   cond: FilterCondition,
   addParam: (v: unknown) => string,
-  dialect: 'postgres' | 'sqlite'
+  dialect: 'postgres' | 'sqlite',
+  currencyValues = false
 ): string | null => {
-  const from = dialect === 'postgres' ? `jsonb_array_elements_text(${col}) t` : `json_each(${col})`;
-  const element = dialect === 'postgres' ? 't' : 'value';
+  const safeArray =
+    dialect === 'postgres'
+      ? `CASE WHEN jsonb_typeof(${col}) = 'array' THEN ${col} ELSE '[]'::jsonb END`
+      : `CASE WHEN json_type(${col}) = 'array' THEN ${col} ELSE json('[]') END`;
+  const from = currencyValues
+    ? dialect === 'postgres'
+      ? `jsonb_array_elements(${safeArray}) item`
+      : `json_each(${safeArray})`
+    : dialect === 'postgres'
+      ? `jsonb_array_elements_text(${safeArray}) t`
+      : `json_each(${safeArray})`;
+  const element = currencyValues
+    ? dialect === 'postgres'
+      ? "item->>'amount'"
+      : "json_extract(value, '$.amount')"
+    : dialect === 'postgres'
+      ? 't'
+      : 'value';
   const exists = (predicate: string) => `EXISTS (SELECT 1 FROM ${from} WHERE ${predicate})`;
   const ilike = (ph: string) =>
     dialect === 'postgres' ? `${element} ILIKE ${ph}` : `LOWER(${element}) LIKE LOWER(${ph})`;
   const arrayLength =
-    dialect === 'postgres' ? `jsonb_array_length(${col})` : `json_array_length(${col})`;
+    dialect === 'postgres'
+      ? `jsonb_array_length(CASE WHEN jsonb_typeof(${col}) = 'array' THEN ${col} ELSE '[]'::jsonb END)`
+      : `json_array_length(CASE WHEN json_type(${col}) = 'array' THEN ${col} ELSE json('[]') END)`;
 
   switch (cond.op) {
     case 'empty':
-      return `${arrayLength} = 0`;
+      return `(${col} IS NULL OR ${arrayLength} = 0)`;
     case 'not_empty':
-      return `${arrayLength} > 0`;
+      return `(${col} IS NOT NULL AND ${arrayLength} > 0)`;
     case 'equals':
-      return exists(`${element} = ${addParam(cond.value ?? '')}`);
+      return exists(`${element} = ${addParam(String(cond.value ?? ''))}`);
     case 'not_equals':
-      return `NOT ${exists(`${element} = ${addParam(cond.value ?? '')}`)}`;
+      return `NOT ${exists(`${element} = ${addParam(String(cond.value ?? ''))}`)}`;
     case 'contains':
       return exists(ilike(addParam(`%${escapeLike(String(cond.value ?? ''))}%`)));
+    case 'starts_with':
+      return exists(ilike(addParam(`${escapeLike(String(cond.value ?? ''))}%`)));
+    case 'ends_with':
+      return exists(ilike(addParam(`%${escapeLike(String(cond.value ?? ''))}`)));
+    case 'gt':
+      return exists(`CAST(${element} AS NUMERIC) > CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`);
+    case 'lt':
+      return exists(`CAST(${element} AS NUMERIC) < CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`);
+    case 'gte':
+      return exists(`CAST(${element} AS NUMERIC) >= CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`);
+    case 'lte':
+      return exists(`CAST(${element} AS NUMERIC) <= CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`);
+    case 'before':
+      return exists(`${element} < ${addParam(String(cond.value ?? ''))}`);
+    case 'after':
+      return exists(`${element} > ${addParam(String(cond.value ?? ''))}`);
+    case 'on':
+      return exists(`${element} = ${addParam(String(cond.value ?? ''))}`);
     default:
       return null;
   }
@@ -73,7 +110,9 @@ const buildArrayConditionClause = (
  * @param addParam - dialect-specific function that appends `v` to the param list
  *                   and returns the placeholder string ('?' for SQLite, '$N' for Postgres)
  * @param dialect  - controls ILIKE vs LOWER(…) LIKE LOWER(…)
- * @param kind     - 'array' matches against any element of a JSON array column
+ * @param kind     - 'currency' is a scalar currency object projected to its amount;
+ *                   'array' matches against any element of a JSON array column;
+ *                   'currency-array' matches against each element's amount
  *                   (see ENTITY_ARRAY_COLUMNS); defaults to 'scalar'
  */
 export const buildConditionClause = (
@@ -81,9 +120,11 @@ export const buildConditionClause = (
   cond: FilterCondition,
   addParam: (v: unknown) => string,
   dialect: 'postgres' | 'sqlite',
-  kind: 'scalar' | 'array' = 'scalar'
+  kind: 'scalar' | 'currency' | 'array' | 'currency-array' = 'scalar'
 ): string | null => {
-  if (kind === 'array') return buildArrayConditionClause(col, cond, addParam, dialect);
+  if (kind === 'array' || kind === 'currency-array') {
+    return buildArrayConditionClause(col, cond, addParam, dialect, kind === 'currency-array');
+  }
 
   const ilike = (ph: string) =>
     dialect === 'postgres' ? `${col} ILIKE ${ph}` : `LOWER(${col}) LIKE LOWER(${ph})`;
@@ -114,6 +155,14 @@ export const buildConditionClause = (
       return `CAST(${col} AS NUMERIC) < CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`;
     case 'before':
       return `${col} < ${addParam(cond.value ?? '')}`;
+    case 'after':
+      return `${col} > ${addParam(cond.value ?? '')}`;
+    case 'on':
+      return `${col} = ${addParam(cond.value ?? '')}`;
+    case 'gte':
+      return `CAST(${col} AS NUMERIC) >= CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`;
+    case 'lte':
+      return `CAST(${col} AS NUMERIC) <= CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`;
     default:
       return null;
   }

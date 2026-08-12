@@ -3,6 +3,7 @@ import { useNavigate } from '@tanstack/react-router';
 import { useEntities } from '../../../hooks/useEntities';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
+import { firstScalarValue } from '../../../lib/scalarFieldValues';
 import styles from './WidgetRowList.module.css';
 
 const FETCH_LIMIT = 500;
@@ -42,7 +43,7 @@ export const TopEntitiesWidget = ({ config }: Props) => {
 
   const ranked = useMemo(() => {
     const withValue = entities
-      .map(entity => ({ entity, value: entity[config.fieldId] }))
+      .map(entity => ({ entity, value: firstScalarValue(entity[config.fieldId]) }))
       .filter(
         (item): item is { entity: (typeof entities)[number]; value: number } =>
           typeof item.value === 'number'

@@ -43,6 +43,8 @@ export const formatMetricSourceValue = (
 ): string | null => {
   if (metric.source.kind !== 'field') return null;
   if (raw == null || raw === '') return '—';
+  raw = Array.isArray(raw) ? (raw[0] ?? null) : raw;
+  if (raw == null || raw === '') return '—';
 
   const fieldId = metric.source.fieldId;
   const field = sourceSchema?.fields.find(candidate => candidate.id === fieldId);

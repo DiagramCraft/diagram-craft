@@ -255,9 +255,21 @@ describe('csvRowToEntity', () => {
     expect(csvRowToEntity({ Name: 'X', Active: 'no' }, [boolField]).active).toBe(false);
   });
 
-  it('converts select fields as array', () => {
+  it('converts scalar select fields as strings', () => {
     const selectField: SchemaField = { id: 'env', name: 'Env', type: 'select', enumId: 'e1' };
     const result = csvRowToEntity({ Name: 'X', Env: 'prod, staging' }, [selectField]);
+    expect(result.env).toBe('prod, staging');
+  });
+
+  it('converts multi-valued select fields from JSON arrays', () => {
+    const selectField: SchemaField = {
+      id: 'env',
+      name: 'Env',
+      type: 'select',
+      enumId: 'e1',
+      maxCardinality: -1
+    };
+    const result = csvRowToEntity({ Name: 'X', Env: '["prod", "staging"]' }, [selectField]);
     expect(result.env).toEqual(['prod', 'staging']);
   });
 

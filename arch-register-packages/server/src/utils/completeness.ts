@@ -5,6 +5,7 @@ import { restrictedFieldIds } from '../domain/auth/fieldGroupAccessControl';
 const isNonEmpty = (value: unknown): boolean => {
   if (value == null) return false;
   if (typeof value === 'string') return value.trim() !== '';
+  if (Array.isArray(value)) return value.length > 0;
   return true;
 };
 

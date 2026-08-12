@@ -8,6 +8,7 @@ import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaCo
 import { canClearBulkField, getBulkEditableFields, type BulkEditableField } from './bulkEditFields';
 import { useCancellableTimeout } from '../../../hooks/useCancellableTimeout';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
+import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
 
 export type BulkFieldRow = {
   rowId: string;
@@ -85,6 +86,19 @@ const applyFieldRowToBody = (
   }
   if (field.field.type === 'reference') {
     body[field.id] = row.clearing ? [] : [row.value];
+    return;
+  }
+  if (isMultiValuedScalarField(field.field)) {
+    if (row.clearing) {
+      body[field.id] = [];
+      return;
+    }
+    try {
+      const parsed: unknown = JSON.parse(row.value);
+      body[field.id] = Array.isArray(parsed) ? parsed : [];
+    } catch {
+      body[field.id] = [];
+    }
     return;
   }
   if (field.field.type === 'boolean') {

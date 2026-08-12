@@ -343,22 +343,45 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     }
     if (filters?.q?.trim()) {
       const pat = `%${escapeLike(filters.q.trim())}%`;
-      whereParts.push(
-        `(LOWER(e.name) LIKE LOWER(${addParam(pat)}) OR LOWER(e.slug) LIKE LOWER(${addParam(pat)}) OR LOWER(e.description) LIKE LOWER(${addParam(pat)}))`
-      );
+      const qParts = [
+        `LOWER(e.name) LIKE LOWER(${addParam(pat)})`,
+        `LOWER(e.slug) LIKE LOWER(${addParam(pat)})`,
+        `LOWER(e.description) LIKE LOWER(${addParam(pat)})`
+      ];
+      for (const [fieldId, kind] of filters.customFieldKinds ?? []) {
+        const col =
+          kind === 'currency'
+            ? `json_extract(e.data, '$.${fieldId}.amount')`
+            : `json_extract(e.data, '$.${fieldId}')`;
+        const clause = buildConditionClause(
+          col,
+          { fieldId, op: 'contains', value: filters.q.trim() },
+          addParam,
+          'sqlite',
+          kind
+        );
+        if (clause) qParts.push(clause);
+      }
+      whereParts.push(`(${qParts.join(' OR ')})`);
     }
     for (const cond of filters?.conditions ?? []) {
       // Guard against prototype pollution: only accept own properties from ENTITY_BUILTIN_COLUMNS
       // For custom fields, also verify they don't match Object.prototype property names
       let col: string | null = null;
-      let kind: 'scalar' | 'array' = 'scalar';
+      let kind: 'scalar' | 'currency' | 'array' | 'currency-array' =
+        filters?.customFieldKinds?.get(cond.fieldId) ?? 'scalar';
       if (Object.hasOwn(ENTITY_BUILTIN_COLUMNS, cond.fieldId)) {
         col = ENTITY_BUILTIN_COLUMNS[cond.fieldId] ?? null;
       } else if (Object.hasOwn(ENTITY_ARRAY_COLUMNS, cond.fieldId)) {
         col = ENTITY_ARRAY_COLUMNS[cond.fieldId] ?? null;
         kind = 'array';
+      } else if (filters?.customFieldKinds && !filters.customFieldKinds.has(cond.fieldId)) {
+        continue;
       } else if (isValidFieldId(cond.fieldId) && !Object.hasOwn(Object.prototype, cond.fieldId)) {
-        col = `json_extract(e.data, '$.${cond.fieldId}')`;
+        col =
+          kind === 'currency'
+            ? `json_extract(e.data, '$.${cond.fieldId}.amount')`
+            : `json_extract(e.data, '$.${cond.fieldId}')`;
       }
       if (!col) continue;
       const clause = buildConditionClause(col, cond, addParam, 'sqlite', kind);

@@ -1564,7 +1564,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             name: 'Mitigating Controls',
             type: 'typedRelation',
             symRelationSchemaId: 'risk-control',
-            direction: 'out'
+            direction: 'in'
           }
         ]
       },
@@ -1594,14 +1594,14 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             name: 'Mitigated Risks',
             type: 'typedRelation',
             symRelationSchemaId: 'risk-control',
-            direction: 'in'
+            direction: 'out'
           },
           {
             id: 'satisfied_requirements',
             name: 'Satisfied Requirements',
             type: 'typedRelation',
             symRelationSchemaId: 'control-requirement',
-            direction: 'out'
+            direction: 'in'
           }
         ]
       },
@@ -1641,7 +1641,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             name: 'Satisfying Controls',
             type: 'typedRelation',
             symRelationSchemaId: 'control-requirement',
-            direction: 'in'
+            direction: 'out'
           }
         ]
       }

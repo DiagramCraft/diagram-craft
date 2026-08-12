@@ -4,6 +4,7 @@ import {
   type EntityTemplate,
   type EntityTemplateValues
 } from '@arch-register/api-types/schemaContract';
+import { isMultiValuedScalarField } from './scalarFieldValues';
 
 export type EntityFormMeta = {
   description: string;
@@ -56,10 +57,22 @@ export const applyEntityTemplate = ({
     }
 
     if (field.type === 'select') {
-      if (typeof value !== 'string' || !field.options.some(option => option.value === value)) {
+      const values = isMultiValuedScalarField(field)
+        ? Array.isArray(value)
+          ? value
+          : [value]
+        : [value];
+      if (
+        !values.every(
+          (item): item is string =>
+            typeof item === 'string' && field.options.some(option => option.value === item)
+        )
+      ) {
         warnings.push(`${field.name} is no longer available`);
         continue;
       }
+      fields[field.id] = isMultiValuedScalarField(field) ? values : values[0];
+      continue;
     }
 
     if (isReferenceOrContainmentField(field)) {
@@ -107,11 +120,21 @@ export const toEntityTemplateValues = (
     const empty =
       value === undefined || value === '' || (Array.isArray(value) && value.length === 0);
     if (empty) continue;
-    if (field.type === 'boolean') result.fields[field.id] = value === true || value === 'true';
-    else if (field.type === 'number') {
-      const numberValue = Number(value);
-      if (Number.isInteger(numberValue)) result.fields[field.id] = numberValue;
-    } else result.fields[field.id] = value as string | string[];
+    if (field.type === 'boolean') {
+      result.fields[field.id] = isMultiValuedScalarField(field)
+        ? Array.isArray(value)
+          ? value.filter((item): item is boolean => typeof item === 'boolean')
+          : [value === true || value === 'true']
+        : value === true || value === 'true';
+    } else if (field.type === 'number') {
+      if (isMultiValuedScalarField(field) && Array.isArray(value)) {
+        const numbers = value.map(Number);
+        if (numbers.every(Number.isInteger)) result.fields[field.id] = numbers;
+      } else {
+        const numberValue = Number(value);
+        if (Number.isInteger(numberValue)) result.fields[field.id] = numberValue;
+      }
+    } else result.fields[field.id] = value as EntityTemplateValues['fields'][string];
   }
 
   const description = meta.description.trim();

@@ -742,6 +742,7 @@ entityTest.describe('entity content routes', () => {
         _name: 'Entity Content Host',
         _namespace: 'default',
         api_type: 'openapi',
+        protocols: ['https-rest'],
         system: [systemId]
       } as never
     });
@@ -800,6 +801,7 @@ entityTest.describe('entity content routes', () => {
         _name: 'Entity Revision Host',
         _namespace: 'default',
         api_type: 'openapi',
+        protocols: ['https-rest'],
         system: [systemId]
       } as never
     });

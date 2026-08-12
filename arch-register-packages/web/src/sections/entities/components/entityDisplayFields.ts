@@ -206,6 +206,25 @@ export const formatEntityDisplayValue = (
   }
   const value = entity[field.id];
   if (value == null || value === '') return null;
+  if (Array.isArray(value)) {
+    if (value.length === 0) return null;
+    if (field.schemaField?.type === 'select') {
+      const options = 'options' in field.schemaField ? field.schemaField.options : [];
+      return value
+        .map(item => options.find(option => option.value === String(item))?.label ?? String(item))
+        .join(', ');
+    }
+    if (field.schemaField?.type === 'boolean') {
+      return value.map(item => (item ? 'Yes' : 'No')).join(', ');
+    }
+    if (field.schemaField?.type === 'date') {
+      return value.map(item => formatDate(item, String(item))).join(', ');
+    }
+    if (field.schemaField?.type === 'currency') {
+      return value.map(item => formatCurrencyValue(item)).join(', ');
+    }
+    return value.map(item => String(item)).join(', ');
+  }
   if (
     field.schemaField?.type === 'boolean' ||
     (field.schemaField?.type === 'derived' && field.schemaField.resultType === 'boolean')

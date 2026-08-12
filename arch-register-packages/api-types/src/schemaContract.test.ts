@@ -90,6 +90,31 @@ describe('currency fields', () => {
   });
 });
 
+describe('scalar field cardinality', () => {
+  it('accepts ordered multi-valued scalar definitions', () => {
+    const result = schemaFieldInputSchema.safeParse({
+      ...baseField,
+      type: 'select',
+      enumId: 'enum-1',
+      minCardinality: 1,
+      maxCardinality: -1
+    });
+
+    expect(result.success).toBe(true);
+  });
+
+  it('rejects a scalar cardinality range where min exceeds max', () => {
+    const result = schemaFieldInputSchema.safeParse({
+      ...baseField,
+      type: 'text',
+      minCardinality: 3,
+      maxCardinality: 2
+    });
+
+    expect(result.success).toBe(false);
+  });
+});
+
 describe('date fields', () => {
   it('parses date fields without embedded reminder configuration', () => {
     const result = schemaFieldInputSchema.safeParse({ ...baseField, type: 'date' });

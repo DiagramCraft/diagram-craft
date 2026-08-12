@@ -483,6 +483,15 @@ export const seedSchemas: SchemaDbResult[] = (
           enumId: '00000000-0000-0000-0000-e00000000001'
         },
         {
+          id: 'protocols',
+          name: 'Protocols',
+          type: 'select',
+          enumId: '00000000-0000-0000-0000-e00000000007',
+          requirementLevel: 'required',
+          minCardinality: 1,
+          maxCardinality: -1
+        },
+        {
           id: 'system',
           name: 'System',
           type: 'containment',
@@ -724,7 +733,7 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000032',
-          direction: 'out'
+          direction: 'in'
         }
       ],
       color: AR_COLOR_RED,
@@ -765,7 +774,7 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000032',
-          direction: 'in'
+          direction: 'out'
         },
         {
           id: 'satisfied_requirements',
@@ -773,7 +782,7 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000033',
-          direction: 'out'
+          direction: 'in'
         }
       ],
       color: AR_COLOR_GREEN,
@@ -834,7 +843,7 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000033',
-          direction: 'in'
+          direction: 'out'
         }
       ],
       color: AR_COLOR_PURPLE,

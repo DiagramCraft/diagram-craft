@@ -1145,7 +1145,11 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
     tags: ['rest', 'public'],
     links: [{ url: 'https://api.example.com/docs/customer', title: 'API Docs', type: 'docs' }],
     schema_id: '00000000-0000-0000-0000-000000000004',
-    data: { api_type: 'openapi', system: ['00000000-0000-0000-0002-000000000001'] },
+    data: {
+      api_type: 'openapi',
+      protocols: ['https-rest'],
+      system: ['00000000-0000-0000-0002-000000000001']
+    },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1165,7 +1169,11 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
     tags: ['grpc', 'internal'],
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000004',
-    data: { api_type: 'grpc', system: ['00000000-0000-0000-0002-000000000002'] },
+    data: {
+      api_type: 'grpc',
+      protocols: ['grpc'],
+      system: ['00000000-0000-0000-0002-000000000002']
+    },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1412,7 +1420,11 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
     tags: ['rest', 'internal'],
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000004',
-    data: { api_type: 'openapi', system: ['00000000-0000-0000-0002-000000000003'] },
+    data: {
+      api_type: 'openapi',
+      protocols: ['https-rest'],
+      system: ['00000000-0000-0000-0002-000000000003']
+    },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1432,7 +1444,11 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
     tags: ['graphql', 'internal'],
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000004',
-    data: { api_type: 'graphql', system: ['00000000-0000-0000-0002-000000000004'] },
+    data: {
+      api_type: 'graphql',
+      protocols: ['https-rest'],
+      system: ['00000000-0000-0000-0002-000000000004']
+    },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1452,7 +1468,11 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
     tags: ['asyncapi', 'messaging'],
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000004',
-    data: { api_type: 'asyncapi', system: ['00000000-0000-0000-0002-000000000005'] },
+    data: {
+      api_type: 'asyncapi',
+      protocols: ['kafka', 'https-rest'],
+      system: ['00000000-0000-0000-0002-000000000005']
+    },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1472,7 +1492,11 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
     tags: ['rest', 'search'],
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000004',
-    data: { api_type: 'openapi', system: ['00000000-0000-0000-0002-000000000006'] },
+    data: {
+      api_type: 'openapi',
+      protocols: ['https-rest'],
+      system: ['00000000-0000-0000-0002-000000000006']
+    },
     project_id: null,
     created_at: now,
     updated_at: now

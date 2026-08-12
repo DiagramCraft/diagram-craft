@@ -105,6 +105,7 @@ describe('listEntities', () => {
         lifecycle: null,
         q: '',
         conditions: [],
+        customFieldKinds: new Map(),
         projectId: null,
         projectScope: 'all'
       },
@@ -122,6 +123,7 @@ describe('listEntities', () => {
         lifecycle: null,
         q: '',
         conditions: [],
+        customFieldKinds: new Map(),
         projectId: null,
         projectScope: 'all'
       },
@@ -151,6 +153,7 @@ describe('listEntities', () => {
         lifecycle: null,
         q: '',
         conditions: [],
+        customFieldKinds: new Map(),
         projectId: null,
         projectScope: 'all'
       },
@@ -168,6 +171,7 @@ describe('listEntities', () => {
         lifecycle: null,
         q: '',
         conditions: [],
+        customFieldKinds: new Map(),
         projectId: null,
         projectScope: 'all'
       },
