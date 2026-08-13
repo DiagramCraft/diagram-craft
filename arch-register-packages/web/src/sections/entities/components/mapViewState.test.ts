@@ -51,7 +51,9 @@ describe('map view state', () => {
           name: 'Contracts',
           type: 'typedRelation',
           relationSchemaId: 'system-contract',
-          direction: 'in'
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
         }
       ]
     } as unknown as EntitySchema;
@@ -75,7 +77,9 @@ describe('map view state', () => {
           name: 'Contracts',
           type: 'typedRelation',
           relationSchemaId: 'system-contract',
-          direction: 'in'
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
         }
       ]
     } as unknown as EntitySchema;
@@ -111,7 +115,9 @@ describe('map view state', () => {
           name: 'Contracts',
           type: 'typedRelation',
           relationSchemaId: 'system-contract',
-          direction: 'in'
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
         }
       ]
     } as unknown as EntitySchema;
@@ -141,7 +147,9 @@ describe('map view state', () => {
           name: 'Contracts',
           type: 'typedRelation',
           relationSchemaId: 'system-contract',
-          direction: 'in'
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
         }
       ]
     } as unknown as EntitySchema;

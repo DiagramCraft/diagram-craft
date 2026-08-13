@@ -22,6 +22,8 @@ const schema = (groupId?: string): SchemaDbResult => ({
       relationSchemaId: 'relation-schema-1',
       direction: 'out',
       requirementLevel: null,
+      minCount: 0,
+      maxCount: -1,
       ...(groupId ? { groupId } : {})
     }
   ],

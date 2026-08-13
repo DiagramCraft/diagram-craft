@@ -41,6 +41,8 @@ const test = createPermissionApiTest().extend<{
             requirementLevel: null,
             relationSchemaId: gatedRelationSchemaId,
             direction: 'out',
+            minCount: 0,
+            maxCount: -1,
             groupId: restrictedEndpointGroupId
           },
           {
@@ -50,6 +52,8 @@ const test = createPermissionApiTest().extend<{
             requirementLevel: null,
             relationSchemaId: gatedRelationSchemaId,
             direction: 'in',
+            minCount: 0,
+            maxCount: -1,
             groupId: restrictedEndpointGroupId
           },
           {
@@ -58,7 +62,9 @@ const test = createPermissionApiTest().extend<{
             type: 'typedRelation',
             requirementLevel: null,
             relationSchemaId: historicalRelationSchemaId,
-            direction: 'out'
+            direction: 'out',
+            minCount: 0,
+            maxCount: -1
           }
         ],
         templates: [],

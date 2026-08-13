@@ -11,7 +11,15 @@ const typedRelation = (
   relationSchemaId: string,
   direction: 'in' | 'out'
 ): SchemaField =>
-  ({ id, name: id, type: 'typedRelation', relationSchemaId, direction }) as SchemaField;
+  ({
+    id,
+    name: id,
+    type: 'typedRelation',
+    relationSchemaId,
+    direction,
+    minCount: 0,
+    maxCount: -1
+  }) as SchemaField;
 
 const entityRelation = (
   id: string,

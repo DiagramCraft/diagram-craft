@@ -30,6 +30,8 @@ const ownerSchema = (groupId?: string, createdAt = '2026-01-01T00:00:00.000Z') =
     relationSchemaId: 'relation-schema-1',
     direction,
     requirementLevel: null,
+    minCount: 0,
+    maxCount: -1,
     ...(groupId ? { groupId } : {})
   })),
   groups: groupId

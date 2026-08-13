@@ -192,7 +192,9 @@ describe('relation-rooted query compilation', () => {
           name: 'Data flows out',
           type: 'typedRelation',
           relationSchemaId: dataFlow.id,
-          direction: 'out'
+          direction: 'out',
+          minCount: 0,
+          maxCount: -1
         }
       ]
     };

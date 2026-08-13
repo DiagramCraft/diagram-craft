@@ -36,6 +36,8 @@ const schemas: SchemaDbResult[] = [
         type: 'typedRelation',
         relationSchemaId: 'rel-1',
         direction: 'in',
+        minCount: 0,
+        maxCount: -1,
         groupId: 'finance'
       } as never
     ],
@@ -68,6 +70,8 @@ const schemas: SchemaDbResult[] = [
         type: 'typedRelation',
         relationSchemaId: 'rel-1',
         direction: 'out',
+        minCount: 0,
+        maxCount: -1,
         groupId: 'finance'
       }
     ],

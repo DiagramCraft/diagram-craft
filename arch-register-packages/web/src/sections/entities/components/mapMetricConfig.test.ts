@@ -160,6 +160,8 @@ describe('getMetricPathOptions', () => {
         type: 'typedRelation',
         relationSchemaId: 'system-contract',
         direction: 'in',
+        minCount: 0,
+        maxCount: -1,
         requirementLevel: 'optional'
       }
     ]

@@ -6,7 +6,8 @@ import { logAudit, computeChanges } from '../audit/db/auditLogging';
 import {
   flattenRelationAuditFields,
   relationAuditContext,
-  relationToBaseState
+  relationToBaseState,
+  assertTypedRelationCardinality
 } from './relationHelpers';
 import { assertCatalogMutationTransaction } from './mutationTransaction';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
@@ -24,6 +25,7 @@ type CreateRelationWithAuditParams = {
   relation: RelationDbCreate;
   actor: RelationMutationActor;
   auditMetadata?: Record<string, unknown>;
+  skipTypedRelationCardinalityValidation?: boolean;
 };
 
 type UpdateRelationWithAuditParams = {
@@ -44,6 +46,7 @@ type DeleteRelationWithAuditParams = {
   actor: RelationMutationActor;
   versionNumber: number;
   auditMetadata?: Record<string, unknown>;
+  skipTypedRelationCardinalityValidation?: boolean;
 };
 
 /**
@@ -56,6 +59,16 @@ export const createRelationWithAudit = async (
   params: CreateRelationWithAuditParams
 ): Promise<RelationDbResult> => {
   assertCatalogMutationTransaction(db);
+  if (!params.skipTypedRelationCardinalityValidation) {
+    await assertTypedRelationCardinality(db, params.workspace, [
+      {
+        relationSchemaId: params.relation.schema_id,
+        inEntityId: params.relation.in_entity_id,
+        outEntityId: params.relation.out_entity_id,
+        delta: 1
+      }
+    ]);
+  }
   const row = await db.relation.createRelation(params.relation);
 
   await logAudit(db, {
@@ -104,6 +117,16 @@ export const deleteRelationWithAudit = async (
   params: DeleteRelationWithAuditParams
 ): Promise<RelationDbResult | null> => {
   assertCatalogMutationTransaction(db);
+  if (!params.skipTypedRelationCardinalityValidation) {
+    await assertTypedRelationCardinality(db, params.workspace, [
+      {
+        relationSchemaId: params.relation.schema_id,
+        inEntityId: params.relation.in_entity_id,
+        outEntityId: params.relation.out_entity_id,
+        delta: -1
+      }
+    ]);
+  }
   const deleted = await db.relation.deleteRelation(params.workspace, params.relation.id);
   if (deleted == null) return null;
 

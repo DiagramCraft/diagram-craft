@@ -174,6 +174,36 @@ export const SchemaFieldRow = ({
               <Select.Item value="in">In (this entity is the "in" endpoint)</Select.Item>
             </Select.Root>
           </FormElement>
+          <FormElement label="Min">
+            <TextInput
+              value={String(field.minCount)}
+              disabled={!canEdit}
+              onChange={value => {
+                const next = Number(value ?? 0);
+                onUpdate({
+                  minCount: Number.isNaN(next) ? 0 : Math.max(0, Math.trunc(next))
+                } as Partial<SchemaField>);
+              }}
+            />
+          </FormElement>
+          <FormElement label="Max">
+            <TextInput
+              value={field.maxCount === -1 ? '' : String(field.maxCount)}
+              disabled={!canEdit}
+              onChange={value => {
+                const raw = value ?? '';
+                if (raw.trim() === '') {
+                  onUpdate({ maxCount: -1 } as Partial<SchemaField>);
+                  return;
+                }
+                const next = Number(raw);
+                onUpdate({
+                  maxCount: Number.isNaN(next) ? -1 : Math.max(0, Math.trunc(next))
+                } as Partial<SchemaField>);
+              }}
+              placeholder="Unbounded"
+            />
+          </FormElement>
         </>
       );
     }

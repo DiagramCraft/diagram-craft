@@ -134,6 +134,8 @@ describe('collectMetricTerminals', () => {
         type: 'typedRelation',
         relationSchemaId: relationSchema.id,
         direction: 'in',
+        minCount: 0,
+        maxCount: -1,
         requirementLevel: 'optional'
       }
     ]),

@@ -11,7 +11,9 @@ const outField: TypedRelationField = {
   requirementLevel: null,
   type: 'typedRelation',
   relationSchemaId: 'rel-schema-1',
-  direction: 'out'
+  direction: 'out',
+  minCount: 0,
+  maxCount: -1
 };
 
 const ownerSchema = {

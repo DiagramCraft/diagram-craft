@@ -7,7 +7,9 @@ import {
   extractRelationOwnerOrLifecycleId,
   assertRelationMutationsSupported,
   toRedactedApiRelation,
-  validateRelationEndpoints
+  validateRelationEndpoints,
+  assertTypedRelationCardinality,
+  type TypedRelationCardinalityChange
 } from './relationHelpers';
 import { requireTypedRelationFieldEdit } from './relationAccessControl';
 import {
@@ -19,10 +21,81 @@ import type { TypedRelationField } from '@arch-register/api-types/schemaContract
 import type { RelationFieldDelta } from '@arch-register/api-types/entityContract';
 import type { RelationRecord } from '@arch-register/api-types/relationContract';
 import type { SchemaDbResult } from './db/catalogDatabase';
+import type { RelationSchemaDbResult } from './db/relationDatabase';
 
 export type RelationMutationActor = { id: string; displayName: string | null };
 
 const checker = new PermissionChecker();
+
+type RelationFieldCardinalityParams = {
+  workspace: string;
+  ownerEntityId: string;
+  field: TypedRelationField;
+  delta: RelationFieldDelta;
+};
+
+const resolveRelationFieldCardinalityChangesWithSchema = async (
+  db: DatabaseAdapter,
+  params: RelationFieldCardinalityParams,
+  schema: RelationSchemaDbResult
+): Promise<TypedRelationCardinalityChange[]> => {
+  const { workspace, ownerEntityId, field, delta } = params;
+  const changes: TypedRelationCardinalityChange[] = [];
+
+  for (const draft of delta.create ?? []) {
+    const inEntityId = field.direction === 'in' ? ownerEntityId : draft.otherEntityId;
+    const outEntityId = field.direction === 'out' ? ownerEntityId : draft.otherEntityId;
+    const [inEntity, outEntity] = await Promise.all([
+      db.catalog.getEntity(workspace, inEntityId),
+      db.catalog.getEntity(workspace, outEntityId)
+    ]);
+    validateRelationEndpoints(schema, inEntity, outEntity);
+    changes.push({
+      relationSchemaId: field.relationSchemaId,
+      inEntityId,
+      outEntityId,
+      delta: 1
+    });
+  }
+
+  for (const id of delta.delete ?? []) {
+    const oldRow = await db.relation.getRelation(workspace, id);
+    httpAssert.present(oldRow, { status: 404, message: `Relation '${id}' not found` });
+    httpAssert.true(oldRow.schema_id === field.relationSchemaId, {
+      status: 400,
+      message: `Relation '${id}' does not belong to relation schema '${field.relationSchemaId}'`
+    });
+    const ownerEndpointId = field.direction === 'in' ? oldRow.in_entity_id : oldRow.out_entity_id;
+    httpAssert.true(ownerEndpointId === ownerEntityId, {
+      status: 400,
+      message: `Relation '${id}' is not connected to this entity`
+    });
+    changes.push({
+      relationSchemaId: oldRow.schema_id,
+      inEntityId: oldRow.in_entity_id,
+      outEntityId: oldRow.out_entity_id,
+      delta: -1
+    });
+  }
+
+  return changes;
+};
+
+/** Resolves the endpoint deltas for one typedRelation field before any rows are written. */
+export const resolveTypedRelationFieldCardinalityChanges = async (
+  db: DatabaseAdapter,
+  params: RelationFieldCardinalityParams
+): Promise<TypedRelationCardinalityChange[]> => {
+  const schema = await db.relation.getRelationSchema(
+    params.workspace,
+    params.field.relationSchemaId
+  );
+  httpAssert.present(schema, {
+    status: 404,
+    message: `Relation schema '${params.field.relationSchemaId}' not found`
+  });
+  return resolveRelationFieldCardinalityChangesWithSchema(db, params, schema);
+};
 
 /**
  * Applies one typedRelation field's create/update/delete delta as part of the owning entity's
@@ -39,15 +112,34 @@ export const applyRelationFieldDelta = async (
     delta: RelationFieldDelta;
     authCtx: AuthorizationContext | null;
     actor: RelationMutationActor;
+    skipTypedRelationCardinalityValidation?: boolean;
   }
 ): Promise<RelationRecord[]> => {
-  const { workspace, ownerEntityId, ownerSchema, field, delta, authCtx, actor } = params;
+  const {
+    workspace,
+    ownerEntityId,
+    ownerSchema,
+    field,
+    delta,
+    authCtx,
+    actor,
+    skipTypedRelationCardinalityValidation = false
+  } = params;
   requireTypedRelationFieldEdit(authCtx, ownerSchema, field);
   const schema = await db.relation.getRelationSchema(workspace, field.relationSchemaId);
   httpAssert.present(schema, {
     status: 404,
     message: `Relation schema '${field.relationSchemaId}' not found`
   });
+
+  if (!skipTypedRelationCardinalityValidation) {
+    const changes = await resolveRelationFieldCardinalityChangesWithSchema(
+      db,
+      { workspace, ownerEntityId, field, delta },
+      schema
+    );
+    await assertTypedRelationCardinality(db, workspace, changes);
+  }
   // Only updates to an *existing* relation are gated on approval policy, mirroring the standalone
   // /relations endpoints (relationOperations.ts) — create/delete are never gated.
 
@@ -104,7 +196,8 @@ export const applyRelationFieldDelta = async (
         lifecycle,
         created_at: timestamp,
         updated_at: timestamp
-      }
+      },
+      skipTypedRelationCardinalityValidation: true
     });
 
     results.push(toRedactedApiRelation(row, authCtx, schema));
@@ -185,7 +278,8 @@ export const applyRelationFieldDelta = async (
       workspace,
       relation: oldRow,
       actor,
-      versionNumber: nextVersionNumber
+      versionNumber: nextVersionNumber,
+      skipTypedRelationCardinalityValidation: true
     });
   }
 

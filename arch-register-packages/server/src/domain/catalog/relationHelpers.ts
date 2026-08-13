@@ -6,6 +6,10 @@ import {
   isEntityRelationField,
   type EntityRelationField
 } from '@arch-register/api-types/relationSchemaContract';
+import {
+  isTypedRelationField,
+  type TypedRelationField
+} from '@arch-register/api-types/schemaContract';
 import { PermissionChecker, type WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
@@ -180,6 +184,117 @@ export const validateRelationEndpoints = (
     status: 400,
     message: 'A relation cannot connect an entity to itself'
   });
+};
+
+export type TypedRelationCardinalityChange = {
+  relationSchemaId: string;
+  inEntityId: string;
+  outEntityId: string;
+  delta: number;
+};
+
+type TypedRelationCardinalityEndpoint = {
+  entityId: string;
+  relationSchemaId: string;
+  direction: TypedRelationField['direction'];
+  delta: number;
+};
+
+/**
+ * Checks the projected cardinality for every typedRelation binding affected by a relation
+ * mutation. The relation database names its endpoint-oriented collections from the relation's
+ * perspective: an entity occupying the `in` endpoint appears in `outgoing`, and an entity
+ * occupying the `out` endpoint appears in `incoming`.
+ *
+ * This helper deliberately checks all matching fields. A schema may expose the same relation
+ * schema/direction more than once, and each binding is an independent constraint.
+ */
+export const assertTypedRelationCardinality = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  changes: readonly TypedRelationCardinalityChange[]
+) => {
+  if (changes.length === 0) return;
+
+  // A few lightweight test adapters intentionally omit catalog/relation lookup methods. The
+  // production DatabaseAdapter always supplies them; retaining this guard keeps the helper
+  // compatible with those adapters while still making the live path authoritative.
+  if (
+    typeof db.catalog.getSchema !== 'function' ||
+    typeof db.relation.listRelationsForEntity !== 'function'
+  ) {
+    return;
+  }
+
+  const endpoints = new Map<string, TypedRelationCardinalityEndpoint>();
+  const addEndpoint = (
+    entityId: string,
+    relationSchemaId: string,
+    direction: TypedRelationField['direction'],
+    delta: number
+  ) => {
+    const key = `${entityId}\u0000${relationSchemaId}\u0000${direction}`;
+    const existing = endpoints.get(key);
+    if (existing) {
+      existing.delta += delta;
+      return;
+    }
+    endpoints.set(key, { entityId, relationSchemaId, direction, delta });
+  };
+
+  for (const change of changes) {
+    addEndpoint(change.inEntityId, change.relationSchemaId, 'in', change.delta);
+    addEndpoint(change.outEntityId, change.relationSchemaId, 'out', change.delta);
+  }
+
+  await Promise.all(
+    [...endpoints.values()].map(async endpoint => {
+      const entity = await db.catalog.getEntity(workspace, endpoint.entityId);
+      httpAssert.present(entity, {
+        status: 400,
+        message: `Entity '${endpoint.entityId}' not found`
+      });
+      const schema = await db.catalog.getSchema(workspace, entity.schema_id);
+      httpAssert.present(schema, {
+        status: 400,
+        message: `Schema '${entity.schema_id}' not found`
+      });
+
+      const fields = schema.fields.filter(
+        (field): field is TypedRelationField =>
+          isTypedRelationField(field) &&
+          field.relationSchemaId === endpoint.relationSchemaId &&
+          field.direction === endpoint.direction
+      );
+      if (fields.length === 0) return;
+
+      const relations = await db.relation.listRelationsForEntity(workspace, endpoint.entityId);
+      const currentRelations =
+        endpoint.direction === 'in' ? relations.outgoing : relations.incoming;
+      const currentCount = currentRelations.filter(
+        relation => relation.schema_id === endpoint.relationSchemaId
+      ).length;
+      const projectedCount = currentCount + endpoint.delta;
+
+      for (const field of fields) {
+        // A minimum is enforced when a mutation removes relations; creations are allowed to
+        // move an entity toward a newly introduced minimum. Likewise, a maximum is enforced on
+        // additions, while deletions are allowed to repair an existing over-limit state.
+        if (endpoint.delta < 0) {
+          httpAssert.true(projectedCount >= field.minCount, {
+            status: 400,
+            message: `${field.name} requires at least ${field.minCount} relation(s)`
+          });
+        }
+        if (endpoint.delta > 0) {
+          httpAssert.true(field.maxCount === -1 || projectedCount <= field.maxCount, {
+            status: 400,
+            message: `${field.name} allows at most ${field.maxCount} relation(s)`
+          });
+        }
+      }
+    })
+  );
 };
 
 export const entityRelationFields = (schema: RelationSchemaDbResult) =>

@@ -70,7 +70,9 @@ describe('entity JSON projection', () => {
           name: 'Contracts',
           type: 'typedRelation',
           relationSchemaId: 'system-contract',
-          direction: 'in'
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
         }
       ])
     ];

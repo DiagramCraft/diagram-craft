@@ -51,7 +51,9 @@ describe('typedRelationFieldSchema', () => {
       ...baseField,
       type: 'typedRelation',
       relationSchemaId: 'rel-schema-1',
-      direction: 'out'
+      direction: 'out',
+      minCount: 0,
+      maxCount: -1
     });
 
     expect(result.success).toBe(true);
@@ -73,6 +75,19 @@ describe('typedRelationFieldSchema', () => {
       type: 'typedRelation',
       relationSchemaId: 'rel-schema-1',
       direction: 'sideways'
+    });
+
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a typedRelation field whose minimum exceeds its finite maximum', () => {
+    const result = schemaFieldInputSchema.safeParse({
+      ...baseField,
+      type: 'typedRelation',
+      relationSchemaId: 'rel-schema-1',
+      direction: 'out',
+      minCount: 2,
+      maxCount: 1
     });
 
     expect(result.success).toBe(false);
@@ -153,7 +168,9 @@ describe('relation-like field predicates', () => {
     ...baseField,
     type: 'typedRelation',
     relationSchemaId: 'rel-schema-1',
-    direction: 'in'
+    direction: 'in',
+    minCount: 0,
+    maxCount: -1
   };
   const textField: SchemaField = { ...baseField, type: 'text' };
 

@@ -156,7 +156,9 @@ const TYPED_SYSTEM = makeSchema('typed-system-id', 'Typed System', [
     name: 'Data flows out',
     type: 'typedRelation',
     relationSchemaId: DATA_FLOW.id,
-    direction: 'out'
+    direction: 'out',
+    minCount: 0,
+    maxCount: -1
   }
 ]);
 const LOCKED_TYPED_SYSTEM = makeSchema('locked-typed-system-id', 'Locked Typed System', [
@@ -166,6 +168,8 @@ const LOCKED_TYPED_SYSTEM = makeSchema('locked-typed-system-id', 'Locked Typed S
     type: 'typedRelation',
     relationSchemaId: DATA_FLOW.id,
     direction: 'out',
+    minCount: 0,
+    maxCount: -1,
     groupId: 'typed-restricted'
   }
 ]);
