@@ -115,7 +115,7 @@ export const WorkspaceLayout = () => {
         ? ['general', 'currencies', 'assessment-types', 'danger', 'export-import', 'documents']
         : []),
       ...(canManageTeams ? ['lifecycle-owners', 'teams'] : []),
-      ...(canViewSchemas ? ['model-overview', 'schemas'] : []),
+      ...(canViewSchemas ? ['model-overview', 'schemas', 'schema-validation'] : []),
       ...(canManageMembers ? ['roles', 'members'] : []),
       ...(canAdministerWorkspace ? ['api-tokens'] : []),
       ...(canManageWorkspaces ? ['ai', 'workflows', 'public-catalog'] : []),
