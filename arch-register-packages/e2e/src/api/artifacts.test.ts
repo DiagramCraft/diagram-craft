@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { createApiTest, expect } from '../helpers/fixtures';
 import { seedIds } from '../helpers/seedHelper';
 
@@ -368,15 +369,17 @@ test('artifact registration resolves capability mappings instead of standard fie
         { id: 'protocol_kind', name: 'Protocol kind', type: 'text' },
         { id: 'contract_version', name: 'Contract version', type: 'text' }
       ],
-      entity_capabilities: [
-        {
-          type: 'api-specification',
-          fieldMappings: {
-            api_type: 'protocol_kind',
-            api_version: 'contract_version'
-          }
+    }
+  });
+  await orpc.config.capabilityConfigurations.upsert({
+    params: { workspace: 'default', type: 'api-specification' },
+    body: {
+      bindings: {
+        api: {
+          target: { kind: 'entity_schema', id: schema.id },
+          fieldMappings: { api_type: 'protocol_kind', api_version: 'contract_version' }
         }
-      ]
+      }
     }
   });
   const entityId = '00000000-0000-0000-0000-e2e000000102';
@@ -423,13 +426,20 @@ test('artifact registration resolves capability mappings instead of standard fie
     body: {
       name: 'Invalid Mapped API Schema',
       fields: [{ id: 'contract_version', name: 'Contract version', type: 'text' }],
-      entity_capabilities: [
-        {
-          type: 'api-specification',
-          fieldMappings: { api_type: 'missing_protocol', api_version: 'contract_version' }
-        }
-      ]
     }
+  });
+  await server.db.workspace.upsertWorkspaceCapabilityConfiguration({
+    id: '00000000-0000-0000-0000-c000000000102',
+    workspace: seedIds.workspace.default,
+    type: 'api-specification',
+    bindings: {
+      api: {
+        target: { kind: 'entity_schema', id: invalidSchema.id },
+        fieldMappings: { api_type: 'missing_protocol', api_version: 'contract_version' }
+      }
+    },
+    created_at: now,
+    updated_at: now
   });
   const invalidEntityId = '00000000-0000-0000-0000-e2e000000103';
   await server.db.catalog.createEntity({
@@ -462,4 +472,46 @@ test('artifact registration resolves capability mappings instead of standard fie
     code: 'CONFLICT',
     message: expect.stringContaining('missing_protocol')
   });
+});
+
+test('artifact registration resolves a workspace capability binding', async ({ orpc }) => {
+  const workspace = await orpc.workspaces.create({
+    body: { name: `Workspace-bound artifacts ${randomUUID()}`, badge: 'WBA' }
+  });
+  const schema = await orpc.schemas.create({
+    params: { workspace: workspace.url_slug },
+    body: {
+      name: 'Workspace API Schema',
+      fields: [
+        { id: 'protocol_kind', name: 'Protocol kind', type: 'text' },
+        { id: 'contract_version', name: 'Contract version', type: 'text' }
+      ]
+    }
+  });
+  await orpc.config.capabilityConfigurations.upsert({
+    params: { workspace: workspace.url_slug, type: 'api-specification' },
+    body: {
+      bindings: {
+        api: {
+          target: { kind: 'entity_schema', id: schema.id },
+          fieldMappings: { api_type: 'protocol_kind', api_version: 'contract_version' }
+        }
+      }
+    }
+  });
+  const entity = await orpc.entities.create({
+    params: { workspace: workspace.url_slug },
+    body: {
+      _schemaId: schema.id,
+      _name: 'Workspace-bound API',
+      protocol_kind: 'openapi',
+      contract_version: '3.1.0'
+    } as never
+  });
+
+  const artifact = await orpc.artifacts.create({
+    params: { workspace: workspace.url_slug, entityId: entity._uid },
+    body: { artifactType: 'api-specification', kind: 'document', mediaType: 'application/json' }
+  });
+  expect(artifact).toMatchObject({ artifactType: 'api-specification', status: 'pending' });
 });

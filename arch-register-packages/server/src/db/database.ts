@@ -138,7 +138,9 @@ export type {
   WorkspaceDbCreate,
   WorkspaceDbUpdate,
   SupportedCurrencyDbResult,
-  SupportedCurrencyConfigDbResult
+  SupportedCurrencyConfigDbResult,
+  WorkspaceCapabilityConfigurationDbResult,
+  WorkspaceCapabilityConfigurationDbCreate
 } from '../domain/workspace/db/workspaceDatabase';
 export type {
   JobDatabase,

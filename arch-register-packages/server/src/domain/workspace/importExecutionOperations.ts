@@ -22,6 +22,7 @@ import type {
 import { buildImportPlan, applyConflictRenames } from './importPlanningOperations';
 import {
   importConfig,
+  importWorkspaceCapabilityConfigurations,
   importSchemas,
   importRelationSchemas,
   importEntities,
@@ -181,6 +182,19 @@ export const executeImport = async (
             idMapping,
             resolvedData.entities
           );
+        if (options.include.includes('config') && resolvedData.config?.capability_configurations) {
+          result.imported.config = {
+            ...(result.imported.config ?? { lifecycle_states: 0, teams: 0, roles: 0 }),
+            capability_configurations: await importWorkspaceCapabilityConfigurations(
+              transactionDb,
+              workspace,
+              resolvedData.config.capability_configurations,
+              options.preserve_ids ?? false,
+              options.conflict_resolutions,
+              idMapping
+            )
+          };
+        }
       }
     });
   } catch (error) {

@@ -76,7 +76,6 @@ export type SchemaUpdateCacheInput = {
   templates?: unknown;
   groups?: unknown;
   shared_field_group_links?: unknown;
-  entity_capabilities?: unknown;
   validation_rules?: unknown;
   color?: string | null;
   icon?: string | null;
@@ -111,9 +110,6 @@ export const optimisticallyUpdateSchema = async (
                 (data.shared_field_group_links as
                   | EntitySchema['shared_field_group_links']
                   | undefined) ?? schema.shared_field_group_links,
-              entity_capabilities:
-                (data.entity_capabilities as EntitySchema['entity_capabilities'] | undefined) ??
-                schema.entity_capabilities,
               validation_rules:
                 (data.validation_rules as EntitySchema['validation_rules'] | undefined) ??
                 schema.validation_rules,

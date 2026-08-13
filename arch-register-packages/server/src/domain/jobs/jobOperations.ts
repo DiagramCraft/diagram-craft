@@ -380,7 +380,6 @@ const createTechnologyEolJob = async (
         fields: updatedSchema.fields,
         templates: updatedSchema.templates ?? [],
         groups: updatedSchema.groups ?? [],
-        entity_capabilities: updatedSchema.entity_capabilities ?? [],
         color: updatedSchema.color,
         icon: updatedSchema.icon,
         change_summary: { source: TECHNOLOGY_EOL_JOB_TYPE, externalFields: [...destinationIds] },

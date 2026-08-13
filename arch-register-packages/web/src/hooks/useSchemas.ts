@@ -19,7 +19,6 @@ import {
   SharedFieldGroupLink,
   ValidationRule
 } from '@arch-register/api-types/schemaContract';
-import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import { orpcClient } from '../lib/orpcClient';
 import { normalizeApiError } from '../lib/http';
@@ -72,7 +71,6 @@ export const useUpdateSchema = (workspaceId: string) => {
         templates?: EntityTemplate[];
         groups?: SchemaGroup[];
         shared_field_group_links?: SharedFieldGroupLink[];
-        entity_capabilities?: EntityCapability[];
         validation_rules?: ValidationRule[];
         color?: string | null;
         icon?: string | null;

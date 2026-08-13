@@ -12,12 +12,12 @@ import type {
   SchemaGroup,
   SharedFieldGroupLink
 } from '@arch-register/api-types/schemaContract';
-import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import { isEntityRelationField } from '@arch-register/api-types/relationSchemaContract';
 import type { DocumentAiAction, DocumentField } from '@arch-register/api-types/documentContract';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
+import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { buildApiAuthCtx, requireWorkspaceAdmin } from '../auth/authorization';
@@ -59,7 +59,6 @@ type ImportableSchema = {
   description: string;
   key_prefix: string;
   fields: SchemaField[];
-  entity_capabilities?: EntityCapability[];
   groups: SchemaGroup[];
   shared_field_group_links: SharedFieldGroupLink[];
   shared_field_groups: Array<{
@@ -123,6 +122,12 @@ type ImportableFieldGroup = {
   sort_order: number;
 };
 
+type ImportableCapabilityConfiguration = {
+  id: string;
+  type: string;
+  bindings: WorkspaceCapabilityBindings;
+};
+
 type DefinitionSource = {
   kind: DefinitionImportSource['kind'];
   id: string;
@@ -133,6 +138,7 @@ type DefinitionSource = {
   documentTypes: ImportableDocumentType[];
   relationSchemas: ImportableRelationSchema[];
   fieldGroups: ImportableFieldGroup[];
+  capabilityConfigurations: ImportableCapabilityConfiguration[];
   dashboardWidgets: DashboardWidget[];
   teamNames: Record<string, string>;
 };
@@ -146,6 +152,7 @@ type DefinitionImportPlan = {
   documentTypes: ImportableDocumentType[];
   relationSchemas: ImportableRelationSchema[];
   fieldGroups: ImportableFieldGroup[];
+  capabilityConfigurations: ImportableCapabilityConfiguration[];
   dashboardWidgets: DashboardWidget[];
   conflicts: Array<{
     kind: 'schema' | 'enum' | 'documentType' | 'relationSchema' | 'fieldGroup';
@@ -218,7 +225,6 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
       .slice(0, 5)
       .toUpperCase(),
     fields: schema.fields.map(toCanonicalField),
-    entity_capabilities: schema.entityCapabilities ?? [],
     groups: [],
     shared_field_group_links: [],
     shared_field_groups: [],
@@ -274,6 +280,21 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
     fields: fieldGroup.fields.map(toCanonicalField),
     sort_order: index
   })),
+  capabilityConfigurations: (template.capabilityConfigurations ?? []).map(
+    (configuration, index) => ({
+      id: `${template.id}:${configuration.type}:${index}`,
+      type: configuration.type,
+      bindings: Object.fromEntries(
+        Object.entries(configuration.bindings).map(([bindingId, binding]) => [
+          bindingId,
+          {
+            ...binding,
+            target: { kind: binding.target.kind, id: binding.target.symId }
+          }
+        ])
+      ) as WorkspaceCapabilityBindings
+    })
+  ),
   dashboardWidgets: template.dashboardWidgets ?? [],
   teamNames: {}
 });
@@ -291,7 +312,8 @@ const sourceFromWorkspace = async (
     teams,
     sharedFieldGroups,
     policiesBySchema,
-    relationSchemas
+    relationSchemas,
+    capabilityConfigurations
   ] = await Promise.all([
     db.catalog.listSchemas(workspace),
     db.catalog.listEnums(workspace),
@@ -299,7 +321,8 @@ const sourceFromWorkspace = async (
     db.workspace.listTeams(workspace),
     db.catalog.listSharedFieldGroups(workspace),
     getSchemaGovernancePoliciesBySchema(db, workspace),
-    db.relation.listRelationSchemas(workspace)
+    db.relation.listRelationSchemas(workspace),
+    db.workspace.listWorkspaceCapabilityConfigurations(workspace)
   ]);
   const teamNames = new Map(teams.map(team => [team.id, team.name]));
 
@@ -315,7 +338,6 @@ const sourceFromWorkspace = async (
       description: schema.description,
       key_prefix: schema.key_prefix,
       fields: schema.fields,
-      entity_capabilities: schema.entity_capabilities ?? [],
       groups: schema.groups ?? [],
       shared_field_group_links: schema.shared_field_group_links ?? [],
       shared_field_groups: (schema.shared_field_group_links ?? []).flatMap(link => {
@@ -371,6 +393,11 @@ const sourceFromWorkspace = async (
       description: group.description,
       fields: group.fields,
       sort_order: group.sort_order
+    })),
+    capabilityConfigurations: capabilityConfigurations.map(configuration => ({
+      id: configuration.id,
+      type: configuration.type,
+      bindings: configuration.bindings
     })),
     dashboardWidgets: [],
     teamNames: Object.fromEntries(teamNames)
@@ -579,6 +606,18 @@ const buildPlan = async (
   const fieldGroups = [...fieldGroupById.values()].filter(group =>
     selectedFieldGroupIds.has(group.id)
   );
+  const capabilityConfigurations = sourceData.capabilityConfigurations.filter(configuration =>
+    Object.values(configuration.bindings).every(binding => {
+      switch (binding.target.kind) {
+        case 'entity_schema':
+          return resolvedSchemaIds.has(binding.target.id);
+        case 'relation_schema':
+          return resolvedRelationSchemaIds.has(binding.target.id);
+        case 'document_type':
+          return selectedDocumentTypeIds.has(binding.target.id);
+      }
+    })
+  );
 
   for (const schema of schemas) {
     const unresolved = findUnresolvedFieldGroupReferences(schema.fields, schema.groups);
@@ -710,6 +749,7 @@ const buildPlan = async (
       dependency: false,
       definition: group
     })),
+    capabilityConfigurations,
     dashboardWidgets: selection.dashboard ? sourceData.dashboardWidgets : [],
     keyPrefixRemaps,
     errors,
@@ -724,6 +764,7 @@ const buildPlan = async (
     documentTypes,
     relationSchemas,
     fieldGroups,
+    capabilityConfigurations,
     dashboardWidgets: selection.dashboard ? sourceData.dashboardWidgets : [],
     conflicts,
     keyPrefixRemaps,
@@ -899,6 +940,9 @@ export const executeDefinitionImport = async (
       const relationSchemaIdMap = new Map(
         plan.relationSchemas.map(schema => [schema.id, randomUUID()])
       );
+      const documentTypeIdMap = new Map(
+        plan.documentTypes.map(documentType => [documentType.id, randomUUID()])
+      );
       const sharedGroupSources = new Map<string, ImportableFieldGroup>();
       for (const schema of plan.schemas) {
         for (const group of schema.shared_field_groups) sharedGroupSources.set(group.id, group);
@@ -998,7 +1042,6 @@ export const executeDefinitionImport = async (
             description: schema.description,
             key_prefix: schema.key_prefix,
             fields,
-            entity_capabilities: schema.entity_capabilities,
             groups,
             shared_field_group_links: schema.shared_field_group_links.map(link => ({
               ...link,
@@ -1029,7 +1072,6 @@ export const executeDefinitionImport = async (
             fields,
             templates: [],
             groups,
-            entity_capabilities: row.entity_capabilities ?? [],
             color: row.color,
             icon: row.icon,
             change_summary: buildFieldChangeSummary(null, toSchemaFieldMigrationFields(fields)),
@@ -1137,7 +1179,7 @@ export const executeDefinitionImport = async (
         }
 
         for (const documentType of plan.documentTypes) {
-          const id = randomUUID();
+          const id = documentTypeIdMap.get(documentType.id)!;
           await tx.document.createDocumentType({
             id,
             workspace: ws,
@@ -1164,6 +1206,34 @@ export const executeDefinitionImport = async (
             change_summary: { imported: true },
             created_by: authCtx.userId,
             created_at: now
+          });
+        }
+
+        for (const configuration of plan.capabilityConfigurations) {
+          const bindings = Object.fromEntries(
+            Object.entries(configuration.bindings).map(([bindingId, binding]) => {
+              const targetId =
+                binding.target.kind === 'entity_schema'
+                  ? schemaIdMap.get(binding.target.id)
+                  : binding.target.kind === 'relation_schema'
+                    ? relationSchemaIdMap.get(binding.target.id)
+                    : documentTypeIdMap.get(binding.target.id);
+              return [
+                bindingId,
+                {
+                  ...binding,
+                  target: { ...binding.target, id: targetId ?? binding.target.id }
+                }
+              ];
+            })
+          ) as WorkspaceCapabilityBindings;
+          await tx.workspace.upsertWorkspaceCapabilityConfiguration({
+            id: randomUUID(),
+            workspace: ws,
+            type: configuration.type,
+            bindings,
+            created_at: now,
+            updated_at: now
           });
         }
 

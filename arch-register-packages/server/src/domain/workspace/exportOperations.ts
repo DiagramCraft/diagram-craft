@@ -237,10 +237,11 @@ export const exportWorkspace = async (
 };
 
 const exportConfig = async (db: DatabaseAdapter, workspace: string): Promise<ExportConfig> => {
-  const [lifecycleStates, teams, customRoles] = await Promise.all([
+  const [lifecycleStates, teams, customRoles, capabilityConfigurations] = await Promise.all([
     db.workspace.listLifecycleStates(workspace),
     db.workspace.listTeams(workspace),
-    db.workspace.listCustomWorkspaceRoles(workspace)
+    db.workspace.listCustomWorkspaceRoles(workspace),
+    db.workspace.listWorkspaceCapabilityConfigurations(workspace)
   ]);
 
   return {
@@ -263,7 +264,14 @@ const exportConfig = async (db: DatabaseAdapter, workspace: string): Promise<Exp
       description: role.description,
       tone: role.tone,
       capabilities: role.capabilities
-    }))
+    })),
+    ...(capabilityConfigurations.length > 0 && {
+      capability_configurations: capabilityConfigurations.map(configuration => ({
+        id: configuration.id,
+        type: configuration.type,
+        bindings: configuration.bindings
+      }))
+    })
   };
 };
 
@@ -298,7 +306,6 @@ const exportSchemas = async (db: DatabaseAdapter, workspace: string): Promise<Ex
     name: schema.name,
     category: schema.category ?? null,
     fields: schema.fields,
-    entity_capabilities: schema.entity_capabilities ?? [],
     groups: schema.groups ?? [],
     shared_field_group_links: schema.shared_field_group_links ?? [],
     shared_field_groups: resolveSharedFieldGroups(

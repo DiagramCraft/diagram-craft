@@ -4,10 +4,12 @@ import {
   type WorkspaceCapability
 } from '@arch-register/permissions';
 import type { ImportCacheEntry } from '../importCache';
+import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
 import {
   databaseEnum,
   databaseBoolean,
   databaseDate,
+  parseDatabaseJson,
   parseDatabaseJsonWithGuard,
   type DatabaseRow
 } from '../../../db/rowMappers';
@@ -80,6 +82,17 @@ export type SupportedCurrencyConfigDbResult = {
   currencies: SupportedCurrencyDbResult[];
   default_currency: string;
 };
+
+export type WorkspaceCapabilityConfigurationDbResult = {
+  id: string;
+  workspace: string;
+  type: string;
+  bindings: WorkspaceCapabilityBindings;
+  created_at: Date;
+  updated_at: Date;
+};
+
+export type WorkspaceCapabilityConfigurationDbCreate = WorkspaceCapabilityConfigurationDbResult;
 
 export const DEFAULT_SUPPORTED_CURRENCIES = [
   { code: 'USD', label: 'US Dollar', sort_order: 0 },
@@ -178,6 +191,16 @@ export const workspaceMappers = {
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])
   }),
+  workspaceCapabilityConfiguration: (
+    row: DatabaseRow
+  ): WorkspaceCapabilityConfigurationDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    type: String(row['type']),
+    bindings: parseDatabaseJson(row['bindings'], {}, 'workspace_capability_configuration.bindings'),
+    created_at: databaseDate(row['created_at']),
+    updated_at: databaseDate(row['updated_at'])
+  }),
   supportedCurrency: (row: DatabaseRow): SupportedCurrencyDbResult => ({
     workspace: String(row['workspace']),
     code: String(row['code']),
@@ -233,6 +256,21 @@ export type WorkspaceDatabase = {
   deleteWorkspace(
     id: string
   ): Promise<{ workspace: WorkspaceDbResult | null; projectIds: string[] }>;
+
+  listWorkspaceCapabilityConfigurations(
+    ws: string
+  ): Promise<WorkspaceCapabilityConfigurationDbResult[]>;
+  getWorkspaceCapabilityConfiguration(
+    ws: string,
+    type: string
+  ): Promise<WorkspaceCapabilityConfigurationDbResult | null>;
+  upsertWorkspaceCapabilityConfiguration(
+    input: WorkspaceCapabilityConfigurationDbCreate
+  ): Promise<WorkspaceCapabilityConfigurationDbResult>;
+  deleteWorkspaceCapabilityConfiguration(
+    ws: string,
+    type: string
+  ): Promise<WorkspaceCapabilityConfigurationDbResult | null>;
 
   listLifecycleStates(ws: string): Promise<LifecycleStateDbResult[]>;
   replaceLifecycleStates(

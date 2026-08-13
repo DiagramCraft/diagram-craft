@@ -28,7 +28,6 @@ import {
   describeHardBlockedChange,
   planFieldMigrations
 } from '../fieldMigration/fieldMigrationPlanning';
-import { remapEntityCapabilityFieldMappings } from '@arch-register/api-types/integrationCatalog';
 import { compileSchemaWithSharedGroups } from './fieldGroupHelpers';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import {
@@ -38,6 +37,7 @@ import {
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
 import { previewEntityValidation } from './entityValidationRules';
 import { normalizeEntityScalarFields } from './entityScalarValues';
+import { remapWorkspaceCapabilityFieldMappings } from '../workspace/workspaceCapabilityOperations';
 import {
   getSchemaGovernancePolicies,
   getSchemaGovernancePoliciesBySchema
@@ -206,7 +206,6 @@ export const createWorkspaceSchema = async (
         templates: row.templates ?? [],
         groups: row.groups ?? [],
         shared_field_group_links: row.shared_field_group_links ?? [],
-        entity_capabilities: row.entity_capabilities ?? [],
         validation_rules: row.validation_rules ?? [],
         color: row.color,
         icon: row.icon,
@@ -318,7 +317,7 @@ export const updateWorkspaceSchema = async (
         toFieldMigrationFields(finalFields),
         fieldMigrations
       );
-      const entityCapabilityRenames = [
+      const capabilityFieldRenames = [
         ...fieldChanges.flatMap(change =>
           change.kind === 'renamed' && change.renamedToId
             ? [{ oldFieldId: change.fieldId, newFieldId: change.renamedToId }]
@@ -330,10 +329,6 @@ export const updateWorkspaceSchema = async (
             : []
         )
       ];
-      const entityCapabilities = next.entity_capabilities
-        ? remapEntityCapabilityFieldMappings(next.entity_capabilities, entityCapabilityRenames)
-        : undefined;
-
       const configMigrations: Array<{
         action: 'rename' | 'remove';
         oldFieldId: string;
@@ -397,6 +392,14 @@ export const updateWorkspaceSchema = async (
           await tx.governanceCaseConfig.deleteCaseConfigForSubkindOrDescendants(ws, oldSubkind);
         }
 
+        await remapWorkspaceCapabilityFieldMappings(
+          tx,
+          ws,
+          { kind: 'entity_schema', id },
+          capabilityFieldRenames,
+          next.updated_at
+        );
+
         const updated = await tx.catalog.updateSchema(ws, id, {
           name: next.name,
           category: next.category,
@@ -406,7 +409,6 @@ export const updateWorkspaceSchema = async (
           templates: next.templates,
           groups: compiledNext.groups,
           shared_field_group_links: compiledNext.shared_field_group_links ?? [],
-          entity_capabilities: entityCapabilities,
           validation_rules: next.validation_rules,
           color: next.color,
           icon: next.icon,
@@ -444,7 +446,6 @@ export const updateWorkspaceSchema = async (
           templates: updated.templates ?? [],
           groups: updated.groups ?? [],
           shared_field_group_links: updated.shared_field_group_links ?? [],
-          entity_capabilities: updated.entity_capabilities ?? [],
           color: updated.color,
           icon: updated.icon,
           validation_rules: updated.validation_rules ?? [],

@@ -5,6 +5,10 @@ import type {
   SupportedCurrency,
   AssessmentType
 } from '@arch-register/api-types/workspaceConfigContract';
+import type {
+  WorkspaceCapabilityConfiguration,
+  WorkspaceCapabilityConfigurationInput
+} from '@arch-register/api-types/workspaceCapabilityContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { orpcClient } from '../lib/orpcClient';
 import { workspaceAnalyticsKeys } from './workspaceAnalytics';
@@ -22,7 +26,9 @@ export const workspaceConfigKeys = {
   assessmentTypes: (workspaceId: string) =>
     [...workspaceConfigKeys.all, 'assessment-types', workspaceId] as const,
   currencies: (workspaceId: string) =>
-    [...workspaceConfigKeys.all, 'currencies', workspaceId] as const
+    [...workspaceConfigKeys.all, 'currencies', workspaceId] as const,
+  capabilityConfigurations: (workspaceId: string) =>
+    [...workspaceConfigKeys.all, 'capability-configurations', workspaceId] as const
 };
 
 export const lifecycleStatesQuery = (workspaceId: string, enabled = true) =>
@@ -82,6 +88,15 @@ export const currenciesQuery = (workspaceId: string, enabled = true) =>
     staleTime: 5 * 60 * 1000
   });
 
+export const workspaceCapabilityConfigurationsQuery = (workspaceId: string, enabled = true) =>
+  queryOptions({
+    queryKey: workspaceConfigKeys.capabilityConfigurations(workspaceId),
+    queryFn: () =>
+      orpcClient.config.capabilityConfigurations.list({ params: { workspace: workspaceId } }),
+    enabled: enabled && !!workspaceId,
+    staleTime: 5 * 60 * 1000
+  });
+
 export const setWorkspaceConfigCache = (
   queryClient: QueryClient,
   key: readonly unknown[],
@@ -98,4 +113,7 @@ export type WorkspaceConfigMutation =
   | WorkspaceTeamInput[]
   | Array<Pick<TeamAssignmentInfo, 'team_id' | 'user_id' | 'role'>>
   | Array<Pick<AssessmentType, 'id' | 'name'> & { sort_order?: number }>
-  | { currencies: SupportedCurrency[]; default_currency: string };
+  | { currencies: SupportedCurrency[]; default_currency: string }
+  | WorkspaceCapabilityConfigurationInput;
+
+export type WorkspaceCapabilityConfigurationResult = WorkspaceCapabilityConfiguration;

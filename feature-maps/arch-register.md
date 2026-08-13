@@ -73,8 +73,9 @@
             read-only derived fields calculated using a sandboxed expression over sibling fields and a bounded
             one-hop JSON entity context (`entity`, including direct references, containment, and typed-relation targets), with a
             declared text, number, currency, select, boolean, or rating result type,
-            enable supported entity capabilities from a dedicated integration catalog, with each capability declaring its
-            available features and required schema fields; schema-level Bonsai validation rules with blocking errors or non-blocking warnings, field-specific messages,
+            configure workspace-scoped integration capabilities from a dedicated integration catalog, with each capability
+            binding semantic roles to entity schemas, typed relation schemas, or document types and declaring its available
+            features and required fields; schema-level Bonsai validation rules with blocking errors or non-blocking warnings, field-specific messages,
             activation/deactivation, revision through schema versioning, and preview testing against existing entities;
             relation types use the same Bonsai rule model over a depth-1 relation context (`relation`, including its
             typed fields and `in`/`out` endpoint projections),
@@ -132,22 +133,25 @@
           depth-1 JSON projection used by entity derived fields, including metadata, direct references, and typed
           relation targets.
 
-        - @id:ar.entities.artifacts Schemas can opt entities into typed, functionality-driving artifacts such as API
-          specifications or compliance evidence. Authorized users can upload document-based API specifications from
+        - @id:ar.entities.artifacts Workspace administrators can bind typed, functionality-driving artifacts such as API
+          specifications or compliance evidence to workspace model objects. Authorized users can upload document-based API specifications from
           entity details, register link-only or HTTPS URL sources, manually refresh URL sources, retain immutable
           revisions, inspect asynchronous processing status and safe diagnostics, and retrieve raw content through a
-          separate permission. Entity capabilities declare which integration-backed behavior is enabled for a
-          schema; capability metadata, supported features, and required schema fields are owned by the integration
+          separate permission. Capability metadata, supported features, and required fields are owned by the integration
           catalog. The catalog
           does not treat arbitrary binary documents as a generic attachment store. OpenAPI 3.0/3.1 and AsyncAPI 2.x/3.0
           documents can be validated and synchronously projected into queryable operations or messages with stable
           identifiers, source pointers, summaries, filters, pagination, and visible partial/unsupported diagnostics;
-          external references are preserved without network fetching. API-capable entity details include a dedicated
+          external references are preserved without network fetching. Entities whose schema matches the valid workspace
+          API binding include a dedicated
           API catalog section for browsing normalized operations or messages, inspecting separately grouped API
           sources and immutable versions, explicitly selecting a source/revision, identifying each source's current
           successful version, inspecting source/revision/status and diagnostics, filtering and paginating results, and
           opening permitted raw or canonical external sources; stale and failed ingestion is explicitly distinguished
-          from the last successful revision. External catalog integrations can atomically attach an API specification
+          from the last successful revision. Capability configuration is managed only from workspace settings and is
+          included in workspace export/import and replication; this supports multi-schema and future relation/document
+          bindings without making the contract entity-schema-owned. External
+          catalog integrations can atomically attach an API specification
           to an entity using a provider-scoped source key, submit bounded documents, register HTTPS or link-only
           sources, repeat idempotently without duplicate revisions, and preserve the last successful revision when a
           refresh or completed source scan fails.
@@ -573,18 +577,19 @@
       and out of Arch Register.
 
         - @id:ar.import-export.workspace-export Authorized users can export selected or complete workspace data,
-          including supported content, configuration, typed relation schemas, and typed relation instances. Exported
+          including supported content, workspace capability configuration, typed relation schemas, and typed relation instances. Exported
           entity and relation data is scrubbed of access-restricted field groups per exporting user, mirroring the
           redaction applied when viewing those records directly. Filtered exports omit relations whose endpoint
           entities are not included and record the omission in archive diagnostics.
 
         - @id:ar.import-export.workspace-import Authorized users can validate, preview, and execute supported workspace
-          imports. Entity and relation schema groups, field-group access controls, reusable shared fieldgroups, and
-          their links are preserved with remapped references; relation endpoints follow remapped entity IDs; imports
+          imports. Entity and relation schema groups, field-group access controls, reusable shared fieldgroups, workspace
+          capability bindings, and their links are preserved with remapped references; relation endpoints follow remapped entity IDs; imports
           reject restricted values the importing caller cannot edit and report missing relation dependencies.
 
         - @id:ar.import-export.workspace-replication Workspace copies preserve schema field groups, shared fieldgroup
-          links, and field-group access-control semantics while remapping workspace-local identifiers.
+          links, field-group access-control semantics, and workspace capability bindings while remapping
+          workspace-local identifiers.
 
         - @id:ar.import-export.definition-import Workspace administrators can preview and atomically import selected
           schemas, reusable enums, and active document types from built-in templates or another administered workspace,

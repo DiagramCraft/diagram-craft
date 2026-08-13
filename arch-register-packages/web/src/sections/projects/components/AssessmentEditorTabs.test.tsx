@@ -27,7 +27,6 @@ const schema: EntitySchema = {
   templates: [],
   groups: [],
   shared_field_group_links: [],
-  entity_capabilities: [],
   validation_rules: [],
   entity_count: 0,
   version: 1,

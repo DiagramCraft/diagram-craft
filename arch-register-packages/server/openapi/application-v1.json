@@ -1246,37 +1246,6 @@
                         },
                         "description": "Included workspace shared fieldgroups, in display order"
                       },
-                      "entity_capabilities": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "type": "string",
-                              "maxLength": 100,
-                              "pattern": "^[a-z][a-z0-9-]*$",
-                              "description": "Entity capability enabled for this schema"
-                            },
-                            "fieldMappings": {
-                              "type": "object",
-                              "propertyNames": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "additionalProperties": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "description": "Integration semantic role IDs mapped to local schema field IDs"
-                            }
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "description": "An entity capability enabled for entities using the schema"
-                        },
-                        "description": "Integration-backed entity capabilities enabled by this schema"
-                      },
                       "validation_rules": {
                         "type": "array",
                         "items": {
@@ -2595,37 +2564,6 @@
                     },
                     "description": "Included workspace shared fieldgroups"
                   },
-                  "entity_capabilities": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "maxLength": 100,
-                          "pattern": "^[a-z][a-z0-9-]*$",
-                          "description": "Entity capability enabled for this schema"
-                        },
-                        "fieldMappings": {
-                          "type": "object",
-                          "propertyNames": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "additionalProperties": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "description": "Integration semantic role IDs mapped to local schema field IDs"
-                        }
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "description": "An entity capability enabled for entities using the schema"
-                    },
-                    "description": "Integration-backed entity capabilities enabled by this schema"
-                  },
                   "validation_rules": {
                     "type": "array",
                     "items": {
@@ -3935,37 +3873,6 @@
                         "description": "A schema-local inclusion of a workspace shared fieldgroup"
                       },
                       "description": "Included workspace shared fieldgroups, in display order"
-                    },
-                    "entity_capabilities": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "maxLength": 100,
-                            "pattern": "^[a-z][a-z0-9-]*$",
-                            "description": "Entity capability enabled for this schema"
-                          },
-                          "fieldMappings": {
-                            "type": "object",
-                            "propertyNames": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "additionalProperties": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "description": "Integration semantic role IDs mapped to local schema field IDs"
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "description": "An entity capability enabled for entities using the schema"
-                      },
-                      "description": "Integration-backed entity capabilities enabled by this schema"
                     },
                     "validation_rules": {
                       "type": "array",
@@ -5347,37 +5254,6 @@
                       },
                       "description": "Included workspace shared fieldgroups, in display order"
                     },
-                    "entity_capabilities": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "maxLength": 100,
-                            "pattern": "^[a-z][a-z0-9-]*$",
-                            "description": "Entity capability enabled for this schema"
-                          },
-                          "fieldMappings": {
-                            "type": "object",
-                            "propertyNames": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "additionalProperties": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "description": "Integration semantic role IDs mapped to local schema field IDs"
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "description": "An entity capability enabled for entities using the schema"
-                      },
-                      "description": "Integration-backed entity capabilities enabled by this schema"
-                    },
                     "validation_rules": {
                       "type": "array",
                       "items": {
@@ -6703,37 +6579,6 @@
                       "description": "A schema-local inclusion of a workspace shared fieldgroup"
                     },
                     "description": "Included workspace shared fieldgroups"
-                  },
-                  "entity_capabilities": {
-                    "type": "array",
-                    "items": {
-                      "type": "object",
-                      "properties": {
-                        "type": {
-                          "type": "string",
-                          "maxLength": 100,
-                          "pattern": "^[a-z][a-z0-9-]*$",
-                          "description": "Entity capability enabled for this schema"
-                        },
-                        "fieldMappings": {
-                          "type": "object",
-                          "propertyNames": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "additionalProperties": {
-                            "type": "string",
-                            "minLength": 1
-                          },
-                          "description": "Integration semantic role IDs mapped to local schema field IDs"
-                        }
-                      },
-                      "required": [
-                        "type"
-                      ],
-                      "description": "An entity capability enabled for entities using the schema"
-                    },
-                    "description": "Integration-backed entity capabilities enabled by this schema"
                   },
                   "validation_rules": {
                     "type": "array",
@@ -8073,37 +7918,6 @@
                         "description": "A schema-local inclusion of a workspace shared fieldgroup"
                       },
                       "description": "Included workspace shared fieldgroups, in display order"
-                    },
-                    "entity_capabilities": {
-                      "type": "array",
-                      "items": {
-                        "type": "object",
-                        "properties": {
-                          "type": {
-                            "type": "string",
-                            "maxLength": 100,
-                            "pattern": "^[a-z][a-z0-9-]*$",
-                            "description": "Entity capability enabled for this schema"
-                          },
-                          "fieldMappings": {
-                            "type": "object",
-                            "propertyNames": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "additionalProperties": {
-                              "type": "string",
-                              "minLength": 1
-                            },
-                            "description": "Integration semantic role IDs mapped to local schema field IDs"
-                          }
-                        },
-                        "required": [
-                          "type"
-                        ],
-                        "description": "An entity capability enabled for entities using the schema"
-                      },
-                      "description": "Integration-backed entity capabilities enabled by this schema"
                     },
                     "validation_rules": {
                       "type": "array",
@@ -9694,37 +9508,6 @@
                         },
                         "description": "Included workspace shared fieldgroups at this version"
                       },
-                      "entity_capabilities": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "type": "string",
-                              "maxLength": 100,
-                              "pattern": "^[a-z][a-z0-9-]*$",
-                              "description": "Entity capability enabled for this schema"
-                            },
-                            "fieldMappings": {
-                              "type": "object",
-                              "propertyNames": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "additionalProperties": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "description": "Integration semantic role IDs mapped to local schema field IDs"
-                            }
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "description": "An entity capability enabled for entities using the schema"
-                        },
-                        "description": "Entity capabilities enabled by this schema at this version"
-                      },
                       "validation_rules": {
                         "type": "array",
                         "items": {
@@ -9833,7 +9616,6 @@
                       "fields",
                       "templates",
                       "groups",
-                      "entity_capabilities",
                       "color",
                       "icon",
                       "changeSummary",
@@ -44506,6 +44288,12 @@
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991,
                               "description": "Number of roles"
+                            },
+                            "capability_configurations": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Number of workspace capability configurations"
                             }
                           },
                           "required": [
@@ -44970,6 +44758,12 @@
                               "minimum": -9007199254740991,
                               "maximum": 9007199254740991,
                               "description": "Number of roles imported"
+                            },
+                            "capability_configurations": {
+                              "type": "integer",
+                              "minimum": -9007199254740991,
+                              "maximum": 9007199254740991,
+                              "description": "Number of workspace capability configurations imported"
                             }
                           },
                           "required": [
@@ -61667,6 +61461,712 @@
                       "metadata"
                     ]
                   }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/config/capability-configurations": {
+      "get": {
+        "operationId": "config.capabilityConfigurations.list",
+        "summary": "List workspace capability configurations",
+        "description": "Lists integration-backed capability configurations that bind functionality to workspace model objects.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string",
+                        "description": "Stable workspace capability configuration identifier"
+                      },
+                      "workspace": {
+                        "type": "string",
+                        "description": "Parent workspace identifier"
+                      },
+                      "type": {
+                        "type": "string",
+                        "maxLength": 100,
+                        "pattern": "^[a-z][a-z0-9-]*$",
+                        "description": "Integration-backed capability identifier"
+                      },
+                      "bindings": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string",
+                          "minLength": 1
+                        },
+                        "additionalProperties": {
+                          "type": "object",
+                          "properties": {
+                            "target": {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "enum": [
+                                    "entity_schema",
+                                    "relation_schema",
+                                    "document_type"
+                                  ],
+                                  "type": "string",
+                                  "description": "Kind of workspace model object"
+                                },
+                                "id": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "description": "Identifier of the referenced workspace model object"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "id"
+                              ]
+                            },
+                            "fieldMappings": {
+                              "type": "object",
+                              "propertyNames": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "additionalProperties": {
+                                "type": "string",
+                                "minLength": 1
+                              },
+                              "description": "Integration semantic role IDs mapped to fields on the target"
+                            }
+                          },
+                          "required": [
+                            "target"
+                          ]
+                        },
+                        "description": "Capability-specific semantic roles bound to workspace model objects"
+                      },
+                      "valid": {
+                        "type": "boolean",
+                        "description": "Whether all configured targets and field mappings are valid"
+                      },
+                      "diagnostics": {
+                        "type": "array",
+                        "items": {
+                          "type": "object",
+                          "properties": {
+                            "code": {
+                              "enum": [
+                                "unknown_capability",
+                                "missing_binding",
+                                "unknown_binding",
+                                "unknown_target",
+                                "wrong_target_kind",
+                                "invalid_field_mapping"
+                              ],
+                              "type": "string"
+                            },
+                            "bindingId": {
+                              "type": "string"
+                            },
+                            "message": {
+                              "type": "string"
+                            }
+                          },
+                          "required": [
+                            "code",
+                            "message"
+                          ]
+                        },
+                        "description": "Configuration diagnostics; empty when the configuration is valid"
+                      },
+                      "created_at": {
+                        "type": "string",
+                        "description": "ISO 8601 creation timestamp"
+                      },
+                      "updated_at": {
+                        "type": "string",
+                        "description": "ISO 8601 last update timestamp"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "workspace",
+                      "type",
+                      "bindings",
+                      "valid",
+                      "diagnostics",
+                      "created_at",
+                      "updated_at"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/config/capability-configurations/{type}": {
+      "get": {
+        "operationId": "config.capabilityConfigurations.get",
+        "summary": "Get a workspace capability configuration",
+        "description": "Retrieves one capability configuration by its integration type.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "description": "Workspace capability identifier, such as api-specification"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Stable workspace capability configuration identifier"
+                    },
+                    "workspace": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "type": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "pattern": "^[a-z][a-z0-9-]*$",
+                      "description": "Integration-backed capability identifier"
+                    },
+                    "bindings": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "target": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "enum": [
+                                  "entity_schema",
+                                  "relation_schema",
+                                  "document_type"
+                                ],
+                                "type": "string",
+                                "description": "Kind of workspace model object"
+                              },
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "Identifier of the referenced workspace model object"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "id"
+                            ]
+                          },
+                          "fieldMappings": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "additionalProperties": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "description": "Integration semantic role IDs mapped to fields on the target"
+                          }
+                        },
+                        "required": [
+                          "target"
+                        ]
+                      },
+                      "description": "Capability-specific semantic roles bound to workspace model objects"
+                    },
+                    "valid": {
+                      "type": "boolean",
+                      "description": "Whether all configured targets and field mappings are valid"
+                    },
+                    "diagnostics": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "enum": [
+                              "unknown_capability",
+                              "missing_binding",
+                              "unknown_binding",
+                              "unknown_target",
+                              "wrong_target_kind",
+                              "invalid_field_mapping"
+                            ],
+                            "type": "string"
+                          },
+                          "bindingId": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "message"
+                        ]
+                      },
+                      "description": "Configuration diagnostics; empty when the configuration is valid"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "type",
+                    "bindings",
+                    "valid",
+                    "diagnostics",
+                    "created_at",
+                    "updated_at"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "put": {
+        "operationId": "config.capabilityConfigurations.upsert",
+        "summary": "Save a workspace capability configuration",
+        "description": "Creates or replaces one integration-backed capability configuration for the workspace.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "description": "Workspace capability identifier, such as api-specification"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "bindings": {
+                    "type": "object",
+                    "propertyNames": {
+                      "type": "string",
+                      "minLength": 1
+                    },
+                    "additionalProperties": {
+                      "type": "object",
+                      "properties": {
+                        "target": {
+                          "type": "object",
+                          "properties": {
+                            "kind": {
+                              "enum": [
+                                "entity_schema",
+                                "relation_schema",
+                                "document_type"
+                              ],
+                              "type": "string",
+                              "description": "Kind of workspace model object"
+                            },
+                            "id": {
+                              "type": "string",
+                              "minLength": 1,
+                              "description": "Identifier of the referenced workspace model object"
+                            }
+                          },
+                          "required": [
+                            "kind",
+                            "id"
+                          ]
+                        },
+                        "fieldMappings": {
+                          "type": "object",
+                          "propertyNames": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "additionalProperties": {
+                            "type": "string",
+                            "minLength": 1
+                          },
+                          "description": "Integration semantic role IDs mapped to fields on the target"
+                        }
+                      },
+                      "required": [
+                        "target"
+                      ]
+                    },
+                    "description": "Capability-specific semantic roles bound to workspace model objects"
+                  }
+                },
+                "required": [
+                  "bindings"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Stable workspace capability configuration identifier"
+                    },
+                    "workspace": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "type": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "pattern": "^[a-z][a-z0-9-]*$",
+                      "description": "Integration-backed capability identifier"
+                    },
+                    "bindings": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "target": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "enum": [
+                                  "entity_schema",
+                                  "relation_schema",
+                                  "document_type"
+                                ],
+                                "type": "string",
+                                "description": "Kind of workspace model object"
+                              },
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "Identifier of the referenced workspace model object"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "id"
+                            ]
+                          },
+                          "fieldMappings": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "additionalProperties": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "description": "Integration semantic role IDs mapped to fields on the target"
+                          }
+                        },
+                        "required": [
+                          "target"
+                        ]
+                      },
+                      "description": "Capability-specific semantic roles bound to workspace model objects"
+                    },
+                    "valid": {
+                      "type": "boolean",
+                      "description": "Whether all configured targets and field mappings are valid"
+                    },
+                    "diagnostics": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "enum": [
+                              "unknown_capability",
+                              "missing_binding",
+                              "unknown_binding",
+                              "unknown_target",
+                              "wrong_target_kind",
+                              "invalid_field_mapping"
+                            ],
+                            "type": "string"
+                          },
+                          "bindingId": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "message"
+                        ]
+                      },
+                      "description": "Configuration diagnostics; empty when the configuration is valid"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "type",
+                    "bindings",
+                    "valid",
+                    "diagnostics",
+                    "created_at",
+                    "updated_at"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "config.capabilityConfigurations.remove",
+        "summary": "Delete a workspace capability configuration",
+        "description": "Removes one integration-backed capability configuration.",
+        "tags": [
+          "Workspace Config",
+          "Workspace Config"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "type",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "maxLength": 100,
+              "pattern": "^[a-z][a-z0-9-]*$",
+              "description": "Workspace capability identifier, such as api-specification"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "Stable workspace capability configuration identifier"
+                    },
+                    "workspace": {
+                      "type": "string",
+                      "description": "Parent workspace identifier"
+                    },
+                    "type": {
+                      "type": "string",
+                      "maxLength": 100,
+                      "pattern": "^[a-z][a-z0-9-]*$",
+                      "description": "Integration-backed capability identifier"
+                    },
+                    "bindings": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string",
+                        "minLength": 1
+                      },
+                      "additionalProperties": {
+                        "type": "object",
+                        "properties": {
+                          "target": {
+                            "type": "object",
+                            "properties": {
+                              "kind": {
+                                "enum": [
+                                  "entity_schema",
+                                  "relation_schema",
+                                  "document_type"
+                                ],
+                                "type": "string",
+                                "description": "Kind of workspace model object"
+                              },
+                              "id": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "Identifier of the referenced workspace model object"
+                              }
+                            },
+                            "required": [
+                              "kind",
+                              "id"
+                            ]
+                          },
+                          "fieldMappings": {
+                            "type": "object",
+                            "propertyNames": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "additionalProperties": {
+                              "type": "string",
+                              "minLength": 1
+                            },
+                            "description": "Integration semantic role IDs mapped to fields on the target"
+                          }
+                        },
+                        "required": [
+                          "target"
+                        ]
+                      },
+                      "description": "Capability-specific semantic roles bound to workspace model objects"
+                    },
+                    "valid": {
+                      "type": "boolean",
+                      "description": "Whether all configured targets and field mappings are valid"
+                    },
+                    "diagnostics": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "code": {
+                            "enum": [
+                              "unknown_capability",
+                              "missing_binding",
+                              "unknown_binding",
+                              "unknown_target",
+                              "wrong_target_kind",
+                              "invalid_field_mapping"
+                            ],
+                            "type": "string"
+                          },
+                          "bindingId": {
+                            "type": "string"
+                          },
+                          "message": {
+                            "type": "string"
+                          }
+                        },
+                        "required": [
+                          "code",
+                          "message"
+                        ]
+                      },
+                      "description": "Configuration diagnostics; empty when the configuration is valid"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "ISO 8601 creation timestamp"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "type",
+                    "bindings",
+                    "valid",
+                    "diagnostics",
+                    "created_at",
+                    "updated_at"
+                  ]
                 }
               }
             }

@@ -1246,37 +1246,6 @@
                         },
                         "description": "Included workspace shared fieldgroups, in display order"
                       },
-                      "entity_capabilities": {
-                        "type": "array",
-                        "items": {
-                          "type": "object",
-                          "properties": {
-                            "type": {
-                              "type": "string",
-                              "maxLength": 100,
-                              "pattern": "^[a-z][a-z0-9-]*$",
-                              "description": "Entity capability enabled for this schema"
-                            },
-                            "fieldMappings": {
-                              "type": "object",
-                              "propertyNames": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "additionalProperties": {
-                                "type": "string",
-                                "minLength": 1
-                              },
-                              "description": "Integration semantic role IDs mapped to local schema field IDs"
-                            }
-                          },
-                          "required": [
-                            "type"
-                          ],
-                          "description": "An entity capability enabled for entities using the schema"
-                        },
-                        "description": "Integration-backed entity capabilities enabled by this schema"
-                      },
                       "validation_rules": {
                         "type": "array",
                         "items": {

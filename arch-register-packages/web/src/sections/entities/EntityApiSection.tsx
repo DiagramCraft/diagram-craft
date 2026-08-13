@@ -1,6 +1,6 @@
 import { useEffect, useMemo, useState } from 'react';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
+import type { WorkspaceCapabilityBinding } from '@arch-register/api-types/workspaceCapabilityContract';
 import type {
   ApiSpecificationItem,
   ApiSpecificationRevision,
@@ -9,8 +9,8 @@ import type {
   ArtifactStatus
 } from '@arch-register/api-types/artifactContract';
 import {
-  getEntityCapabilityDefinition,
-  resolveEntityCapabilityFieldId
+  getWorkspaceCapabilityDefinition,
+  resolveCapabilityFieldId
 } from '@arch-register/api-types/integrationCatalog';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
@@ -54,7 +54,7 @@ const PAGE_SIZE = 50;
 type Props = {
   workspaceId: string;
   entity: EntityRecord;
-  entityCapability?: EntityCapability;
+  capabilityBinding?: WorkspaceCapabilityBinding;
   outgoing: Relation[];
   incoming: Relation[];
   search: EntityDetailSearchParams;
@@ -68,12 +68,14 @@ const readStringField = (entity: EntityRecord, fieldId: string) => {
 
 const readMappedStringField = (
   entity: EntityRecord,
-  capability: EntityCapability,
+  binding: WorkspaceCapabilityBinding,
   roleId: string
 ) => {
-  const definition = getEntityCapabilityDefinition(capability.type);
-  const role = definition?.fieldRoles.find(candidate => candidate.id === roleId);
-  return readStringField(entity, role ? resolveEntityCapabilityFieldId(capability, role) : roleId);
+  const definition = getWorkspaceCapabilityDefinition('api-specification');
+  const role = definition?.bindingRoles
+    .find(candidate => candidate.id === 'api')
+    ?.fieldRoles.find(candidate => candidate.id === roleId);
+  return readStringField(entity, role ? resolveCapabilityFieldId(binding, role) : roleId);
 };
 
 const formatDate = (value: string | null | undefined) => {
@@ -157,7 +159,7 @@ const ApiContext = ({
 
 const ApiMetadata = ({
   entity,
-  capability,
+  capabilityBinding,
   artifact,
   revision,
   protocol,
@@ -167,7 +169,7 @@ const ApiMetadata = ({
   onRefresh
 }: {
   entity: EntityRecord;
-  capability: EntityCapability;
+  capabilityBinding: WorkspaceCapabilityBinding;
   artifact: Artifact | undefined;
   revision: ApiSpecificationRevision | undefined;
   protocol: ApiSpecificationProtocol | null | undefined;
@@ -176,8 +178,8 @@ const ApiMetadata = ({
   isRefreshing: boolean;
   onRefresh: () => void;
 }) => {
-  const declaredType = readMappedStringField(entity, capability, 'api_type');
-  const declaredVersion = readMappedStringField(entity, capability, 'api_version');
+  const declaredType = readMappedStringField(entity, capabilityBinding, 'api_type');
+  const declaredVersion = readMappedStringField(entity, capabilityBinding, 'api_version');
   const statusLabel = selectionRequired
     ? 'Select source'
     : getArtifactStatusLabel(artifact?.status ?? 'not_configured');
@@ -617,13 +619,15 @@ const StatusNotice = ({
 export const EntityApiSection = ({
   workspaceId,
   entity,
-  entityCapability,
+  capabilityBinding,
   outgoing,
   incoming,
   search,
   onSearchChange
 }: Props) => {
-  const capability = entityCapability ?? { type: 'api-specification' };
+  const binding = capabilityBinding ?? {
+    target: { kind: 'entity_schema' as const, id: entity._schema.id }
+  };
   const { canManageArtifacts, canViewArtifactContent } = useWorkspaceAuthorization(workspaceId);
   const canManageApiArtifacts = canManageArtifacts && entity.canEdit;
   const artifactsQuery = useEntityArtifacts(workspaceId, entity._uid);
@@ -662,7 +666,7 @@ export const EntityApiSection = ({
   const revision = selection.revision;
   const revisionId = revision?.revision.id ?? '';
   const protocol = revision?.protocol;
-  const declaredType = readMappedStringField(entity, capability, 'api_type');
+  const declaredType = readMappedStringField(entity, binding, 'api_type');
   const kind =
     protocol === 'openapi' || (protocol == null && declaredType === 'openapi')
       ? ('operation' as const)
@@ -767,7 +771,7 @@ export const EntityApiSection = ({
     <main className={styles.page}>
       <ApiMetadata
         entity={entity}
-        capability={capability}
+        capabilityBinding={binding}
         artifact={artifact}
         revision={revision}
         protocol={selectedProtocol}

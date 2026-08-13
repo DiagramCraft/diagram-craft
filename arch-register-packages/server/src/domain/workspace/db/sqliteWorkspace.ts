@@ -12,6 +12,7 @@ import {
   SupportedCurrencyDbResult,
   SupportedCurrencyConfigDbResult,
   AssessmentTypeDbCreate,
+  WorkspaceCapabilityConfigurationDbCreate,
   DEFAULT_SUPPORTED_CURRENCIES
 } from './workspaceDatabase';
 import { workspaceMappers } from './workspaceDatabase';
@@ -109,6 +110,7 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       this.run('DELETE FROM entity_schema WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_member WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_role WHERE workspace = ?', [workspaceId]);
+      this.run('DELETE FROM workspace_capability_configuration WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM team_membership WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_lifecycle_state WHERE workspace = ?', [workspaceId]);
       this.run('DELETE FROM workspace_assessment_type WHERE workspace = ?', [workspaceId]);
@@ -128,6 +130,57 @@ export class SqliteWorkspaceDatabase extends SqliteDatabaseBase implements Works
       [workspace],
       workspaceMappers.lifecycleState
     );
+  }
+
+  async listWorkspaceCapabilityConfigurations(workspace: string) {
+    return this.all(
+      `SELECT id, workspace, type, bindings, created_at, updated_at
+       FROM workspace_capability_configuration
+       WHERE workspace = ?
+       ORDER BY type, id`,
+      [workspace],
+      workspaceMappers.workspaceCapabilityConfiguration
+    );
+  }
+
+  async getWorkspaceCapabilityConfiguration(workspace: string, type: string) {
+    return this.get(
+      `SELECT id, workspace, type, bindings, created_at, updated_at
+       FROM workspace_capability_configuration
+       WHERE workspace = ? AND type = ?`,
+      [workspace, type],
+      workspaceMappers.workspaceCapabilityConfiguration
+    );
+  }
+
+  async upsertWorkspaceCapabilityConfiguration(input: WorkspaceCapabilityConfigurationDbCreate) {
+    this.run(
+      `INSERT INTO workspace_capability_configuration
+         (id, workspace, type, bindings, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?)
+       ON CONFLICT(workspace, type) DO UPDATE SET
+         bindings = excluded.bindings,
+         updated_at = excluded.updated_at`,
+      [
+        input.id,
+        input.workspace,
+        input.type,
+        JSON.stringify(input.bindings),
+        input.created_at.toISOString(),
+        input.updated_at.toISOString()
+      ]
+    );
+    return (await this.getWorkspaceCapabilityConfiguration(input.workspace, input.type))!;
+  }
+
+  async deleteWorkspaceCapabilityConfiguration(workspace: string, type: string) {
+    const existing = await this.getWorkspaceCapabilityConfiguration(workspace, type);
+    if (!existing) return null;
+    this.run('DELETE FROM workspace_capability_configuration WHERE workspace = ? AND type = ?', [
+      workspace,
+      type
+    ]);
+    return existing;
   }
 
   async replaceLifecycleStates(workspace: string, states: LifecycleStateDbCreate[]) {

@@ -44,6 +44,7 @@ import {
 import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 import { coordinateContentWrite } from '../project/contentWriteCoordinator';
+import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
 
 type ImportResolution = { action: string; new_name?: string };
 
@@ -196,7 +197,12 @@ export const importConfig = async (
   preserveIds: boolean,
   resolutions: Record<string, ImportResolution>,
   idMapping: IdMapping
-): Promise<{ lifecycle_states: number; teams: number; roles: number }> => {
+): Promise<{
+  lifecycle_states: number;
+  teams: number;
+  roles: number;
+  capability_configurations: number;
+}> => {
   const now = new Date();
   const lifecycleStates = config.lifecycle_states.flatMap(state => {
     if (hasSkipResolution(resolutions, state.id) || resolutions[state.id]?.action === 'merge')
@@ -278,7 +284,78 @@ export const importConfig = async (
     roleCount++;
   }
 
-  return { lifecycle_states: lifecycleStates.length, teams: teams.length, roles: roleCount };
+  return {
+    lifecycle_states: lifecycleStates.length,
+    teams: teams.length,
+    roles: roleCount,
+    capability_configurations: 0
+  };
+};
+
+export const importWorkspaceCapabilityConfigurations = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  configurations: NonNullable<ExportConfig['capability_configurations']>,
+  preserveIds: boolean,
+  resolutions: Record<string, ImportResolution>,
+  idMapping: IdMapping
+) => {
+  let imported = 0;
+  for (const configuration of configurations) {
+    if (hasSkipResolution(resolutions, configuration.id)) continue;
+
+    const bindings = Object.fromEntries(
+      await Promise.all(
+        Object.entries(configuration.bindings).map(async ([bindingId, binding]) => {
+          let targetId =
+            binding.target.kind === 'entity_schema'
+              ? idMapping.schemas.get(binding.target.id)
+              : binding.target.kind === 'relation_schema'
+                ? idMapping.relation_schemas.get(binding.target.id)
+                : idMapping.document_types?.get(binding.target.id);
+          if (!targetId && preserveIds) {
+            const existingTarget =
+              binding.target.kind === 'entity_schema'
+                ? await db.catalog.getSchema(workspace, binding.target.id)
+                : binding.target.kind === 'relation_schema'
+                  ? await db.relation.getRelationSchema(workspace, binding.target.id)
+                  : await db.document.getDocumentType(workspace, binding.target.id);
+            if (existingTarget) targetId = binding.target.id;
+          }
+          httpAssert.present(targetId, {
+            status: 400,
+            message: `Capability configuration '${configuration.type}' references ${binding.target.kind} '${binding.target.id}', which is not present in the import target.`
+          });
+          return [
+            bindingId,
+            {
+              ...binding,
+              target: {
+                ...binding.target,
+                ...(targetId ? { id: targetId } : {})
+              }
+            }
+          ];
+        })
+      )
+    ) as WorkspaceCapabilityBindings;
+    const existing = await db.workspace.getWorkspaceCapabilityConfiguration(
+      workspace,
+      configuration.type
+    );
+    const now = new Date();
+    const importedId = preserveIds ? configuration.id : randomUUID();
+    await db.workspace.upsertWorkspaceCapabilityConfiguration({
+      id: existing?.id ?? importedId,
+      workspace,
+      type: configuration.type,
+      bindings,
+      created_at: existing?.created_at ?? now,
+      updated_at: now
+    });
+    imported++;
+  }
+  return imported;
 };
 
 export const importSchemas = async (
@@ -369,9 +446,6 @@ export const importSchemas = async (
           : (existing?.category ?? null),
       description: existing?.description ?? '',
       fields,
-      ...(schema.entity_capabilities !== undefined && {
-        entity_capabilities: schema.entity_capabilities
-      }),
       groups: (schema.groups ?? []).map(group => ({
         ...group,
         id: idMapping.shared_field_groups.get(group.id) ?? group.id,
@@ -403,9 +477,6 @@ export const importSchemas = async (
         category: input.category,
         description: input.description,
         fields: input.fields,
-        ...(input.entity_capabilities !== undefined && {
-          entity_capabilities: input.entity_capabilities
-        }),
         templates: input.templates,
         groups: input.groups,
         shared_field_group_links: input.shared_field_group_links,
@@ -1125,6 +1196,7 @@ export const importDocuments = async (
     const reuseExisting = existing != null && resolution?.action !== 'rename';
     const nextId = reuseExisting ? existing.id : preserveIds && !existing ? type.id : randomUUID();
     typeMapping.set(type.id, nextId);
+    (idMapping.document_types ??= new Map()).set(type.id, nextId);
     const now = new Date();
     const input = {
       name: type.name,

@@ -10,7 +10,6 @@ import {
   fieldMigrationsSchema
 } from '@arch-register/api-types/common';
 import type { PendingFieldChange } from '@arch-register/api-types/common';
-import { entityCapabilitySchema } from './entityCapabilityContract';
 
 const requirementLevelSchema = z
   .enum(['required', 'expected', 'optional'])
@@ -330,10 +329,6 @@ const entitySchemaSchema = z.object({
     .array(sharedFieldGroupLinkSchema)
     .optional()
     .describe('Included workspace shared fieldgroups, in display order'),
-  entity_capabilities: z
-    .array(entityCapabilitySchema)
-    .optional()
-    .describe('Integration-backed entity capabilities enabled by this schema'),
   validation_rules: z
     .array(validationRuleSchema)
     .optional()
@@ -366,9 +361,6 @@ const schemaVersionSchema = z.object({
     .array(sharedFieldGroupLinkSchema)
     .optional()
     .describe('Included workspace shared fieldgroups at this version'),
-  entity_capabilities: z
-    .array(entityCapabilitySchema)
-    .describe('Entity capabilities enabled by this schema at this version'),
   validation_rules: z
     .array(validationRuleSchema)
     .optional()
@@ -413,10 +405,6 @@ const createSchemaBodySchema = z.object({
     v => (v === undefined ? undefined : Array.isArray(v) ? v : []),
     z.array(sharedFieldGroupLinkSchema).optional().describe('Included workspace shared fieldgroups')
   ),
-  entity_capabilities: z
-    .array(entityCapabilitySchema)
-    .optional()
-    .describe('Integration-backed entity capabilities enabled by this schema'),
   validation_rules: z
     .array(validationRuleSchema)
     .optional()

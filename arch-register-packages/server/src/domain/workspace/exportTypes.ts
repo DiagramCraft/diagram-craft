@@ -7,7 +7,7 @@ import type {
   DocumentMetadata
 } from '@arch-register/api-types/documentContract';
 import type { GovernanceWorkflowConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
-import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
+import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
 import type {
   EntityTemplate,
   SchemaField,
@@ -94,6 +94,11 @@ export type ExportConfig = {
     label: string;
     sort_order: number;
   }>;
+  capability_configurations?: Array<{
+    id: string;
+    type: string;
+    bindings: WorkspaceCapabilityBindings;
+  }>;
 };
 
 export type ExportSchema = {
@@ -101,7 +106,6 @@ export type ExportSchema = {
   name: string;
   category?: string | null;
   fields: SchemaField[];
-  entity_capabilities?: EntityCapability[];
   groups?: SchemaGroup[];
   shared_field_group_links?: SharedFieldGroupLink[];
   shared_field_groups?: ExportSharedFieldGroup[];
@@ -334,6 +338,7 @@ export type ImportParseResult = {
       lifecycle_states: number;
       teams: number;
       roles: number;
+      capability_configurations?: number;
     };
     schemas?: {
       count: number;
@@ -392,6 +397,7 @@ export type ImportExecuteResult = {
       lifecycle_states: number;
       teams: number;
       roles: number;
+      capability_configurations?: number;
     };
     schemas?: {
       created: number;
@@ -441,11 +447,14 @@ export type IdMapping = {
   lifecycle_states: Map<string, string>;
   projects: Map<string, string>;
   content_nodes: Map<string, string>;
+  document_types?: Map<string, string>;
 };
 
 export type WorkspaceImportPlan = {
   include: ExportDataType[];
-  id_mapping: Record<keyof IdMapping, Record<string, string>>;
+  id_mapping: Omit<Record<keyof IdMapping, Record<string, string>>, 'document_types'> & {
+    document_types?: Record<string, string>;
+  };
   storage_writes: Array<{
     workspace: string;
     storage_id: string;

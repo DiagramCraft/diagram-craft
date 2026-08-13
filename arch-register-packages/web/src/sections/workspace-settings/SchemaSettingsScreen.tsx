@@ -17,7 +17,6 @@ import type {
   SchemaField,
   SchemaGroup
 } from '@arch-register/api-types/schemaContract';
-import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import {
   useCreateSchema,
   useDeleteSchema,
@@ -29,7 +28,6 @@ import {
 import {
   createSchemaFieldForType,
   removeTemplateField,
-  updateCapabilityFieldMappingId,
   updateTemplateFieldId
 } from './schemaSettingsHelpers';
 import { SchemaEditorForm } from './SchemaEditorForm';
@@ -52,7 +50,6 @@ type EntityEditorExtra = {
   keyPrefix: string;
   category: string;
   templates: EntityTemplate[];
-  entityCapabilities: EntityCapability[];
 };
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
@@ -103,7 +100,6 @@ export const SchemaSettingsScreen = () => {
         description: schema.description,
         fields: schema.fields,
         templates: schema.templates,
-        entityCapabilities: schema.entity_capabilities ?? [],
         groups: schema.groups,
         sharedFieldGroupLinks: schema.shared_field_group_links ?? [],
         validationRules: schema.validation_rules ?? [],
@@ -116,12 +112,7 @@ export const SchemaSettingsScreen = () => {
         createSchemaFieldForType(field, newType, fields, firstEnumId),
       onFieldIdChange: (draft, previousFieldId, nextFieldId) => ({
         ...draft,
-        templates: updateTemplateFieldId(draft.templates, previousFieldId, nextFieldId),
-        entityCapabilities: updateCapabilityFieldMappingId(
-          draft.entityCapabilities,
-          previousFieldId,
-          nextFieldId
-        )
+        templates: updateTemplateFieldId(draft.templates, previousFieldId, nextFieldId)
       }),
       onFieldRemoved: (draft, fieldId) => ({
         ...draft,
@@ -141,8 +132,6 @@ export const SchemaSettingsScreen = () => {
         JSON.stringify(draft.groups) !== JSON.stringify(schema.groups) ||
         JSON.stringify(draft.sharedFieldGroupLinks) !==
           JSON.stringify(schema.shared_field_group_links ?? []) ||
-        JSON.stringify(draft.entityCapabilities) !==
-          JSON.stringify(schema.entity_capabilities ?? []) ||
         JSON.stringify(draft.validationRules) !== JSON.stringify(schema.validation_rules ?? []) ||
         draft.color !== schema.color ||
         draft.icon !== schema.icon,
@@ -158,7 +147,6 @@ export const SchemaSettingsScreen = () => {
             templates: draft.templates,
             groups: draft.groups,
             shared_field_group_links: draft.sharedFieldGroupLinks,
-            entity_capabilities: draft.entityCapabilities,
             validation_rules: draft.validationRules,
             color: draft.color,
             icon: draft.icon,
@@ -304,7 +292,6 @@ export const SchemaSettingsScreen = () => {
             enums={enums}
             teams={teams}
             templates={draft.templates}
-            entityCapabilities={draft.entityCapabilities}
             validationRules={draft.validationRules}
             validationPreviewPending={previewValidationMutation.isPending}
             validationPreviewMessage={validationPreviewMessage}
@@ -357,32 +344,6 @@ export const SchemaSettingsScreen = () => {
               editor.updateDraft(current => ({
                 ...current,
                 templates: current.templates.filter(template => template.id !== templateId)
-              }))
-            }
-            onAddEntityCapability={type =>
-              editor.updateDraft(current =>
-                current.entityCapabilities.some(capability => capability.type === type)
-                  ? current
-                  : {
-                      ...current,
-                      entityCapabilities: [...current.entityCapabilities, { type }]
-                    }
-              )
-            }
-            onUpdateEntityCapability={(index, patch) =>
-              editor.updateDraft(current => ({
-                ...current,
-                entityCapabilities: current.entityCapabilities.map((capability, capabilityIndex) =>
-                  capabilityIndex === index ? { ...capability, ...patch } : capability
-                )
-              }))
-            }
-            onDeleteEntityCapability={index =>
-              editor.updateDraft(current => ({
-                ...current,
-                entityCapabilities: current.entityCapabilities.filter(
-                  (_, capabilityIndex) => capabilityIndex !== index
-                )
               }))
             }
             onPreviewValidation={() => void previewValidation()}

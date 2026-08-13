@@ -22,6 +22,13 @@ import type {
 } from './db/workspaceDatabase';
 import type { SupportedCurrencyConfigDbResult } from './db/workspaceDatabase';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
+import type { WorkspaceCapabilityConfigurationInput } from '@arch-register/api-types/workspaceCapabilityContract';
+import {
+  deleteWorkspaceCapabilityConfiguration as deleteCapabilityConfiguration,
+  getWorkspaceCapabilityConfiguration as getCapabilityConfiguration,
+  listWorkspaceCapabilityConfigurations as listCapabilityConfigurations,
+  upsertWorkspaceCapabilityConfiguration as upsertCapabilityConfiguration
+} from './workspaceCapabilityOperations';
 
 const VALID_TEAM_ROLES: TeamRole[] = ['team_admin', 'team_editor', 'team_reviewer'];
 const VALID_WORKSPACE_CAPABILITIES = WORKSPACE_CAPABILITY_GROUPS.flatMap(group =>
@@ -60,6 +67,57 @@ export const listLifecycleStates = async (
     return await db.workspace.listLifecycleStates(ws);
   });
 };
+
+// ── Workspace capability configurations ──────────────────────
+
+export const listWorkspaceCapabilityConfigurations = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent
+) =>
+  runWorkspaceConfigOperation(db, workspace, event, async (ws, authCtx) => {
+    requireWorkspaceCapability(authCtx, 'ws.view');
+    return await listCapabilityConfigurations(db, ws);
+  });
+
+export const getWorkspaceCapabilityConfiguration = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  type: string,
+  event: AuthenticatedEvent
+) =>
+  runWorkspaceConfigOperation(db, workspace, event, async (ws, authCtx) => {
+    requireWorkspaceCapability(authCtx, 'ws.view');
+    const configuration = await getCapabilityConfiguration(db, ws, type);
+    httpAssert.present(configuration, {
+      status: 404,
+      message: `Capability configuration '${type}' not found`
+    });
+    return configuration!;
+  });
+
+export const upsertWorkspaceCapabilityConfiguration = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  type: string,
+  input: WorkspaceCapabilityConfigurationInput,
+  event: AuthenticatedEvent
+) =>
+  runWorkspaceConfigOperation(db, workspace, event, async (ws, authCtx) => {
+    requireWorkspaceCapability(authCtx, 'ws.settings');
+    return await upsertCapabilityConfiguration(db, ws, type, input);
+  });
+
+export const deleteWorkspaceCapabilityConfiguration = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  type: string,
+  event: AuthenticatedEvent
+) =>
+  runWorkspaceConfigOperation(db, workspace, event, async (ws, authCtx) => {
+    requireWorkspaceCapability(authCtx, 'ws.settings');
+    return await deleteCapabilityConfiguration(db, ws, type);
+  });
 
 export const replaceLifecycleStates = async (
   db: DatabaseAdapter,

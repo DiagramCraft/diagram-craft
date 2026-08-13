@@ -188,7 +188,12 @@ const importParseResponseSchema = z.object({
         .object({
           lifecycle_states: z.number().int().describe('Number of lifecycle states'),
           teams: z.number().int().describe('Number of teams'),
-          roles: z.number().int().describe('Number of roles')
+          roles: z.number().int().describe('Number of roles'),
+          capability_configurations: z
+            .number()
+            .int()
+            .optional()
+            .describe('Number of workspace capability configurations')
         })
         .optional()
         .describe('Configuration summary'),
@@ -319,7 +324,12 @@ const importExecuteResponseSchema = z.object({
         .object({
           lifecycle_states: z.number().int().describe('Number of lifecycle states imported'),
           teams: z.number().int().describe('Number of teams imported'),
-          roles: z.number().int().describe('Number of roles imported')
+          roles: z.number().int().describe('Number of roles imported'),
+          capability_configurations: z
+            .number()
+            .int()
+            .optional()
+            .describe('Number of workspace capability configurations imported')
         })
         .optional()
         .describe('Configuration import results'),

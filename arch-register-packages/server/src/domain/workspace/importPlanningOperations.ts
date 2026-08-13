@@ -35,7 +35,8 @@ const createIdMapping = (): IdMapping => ({
   teams: new Map(),
   lifecycle_states: new Map(),
   projects: new Map(),
-  content_nodes: new Map()
+  content_nodes: new Map(),
+  document_types: new Map()
 });
 
 const toSerializableMapping = (mapping: IdMapping): WorkspaceImportPlan['id_mapping'] => ({
@@ -47,7 +48,10 @@ const toSerializableMapping = (mapping: IdMapping): WorkspaceImportPlan['id_mapp
   teams: Object.fromEntries(mapping.teams),
   lifecycle_states: Object.fromEntries(mapping.lifecycle_states),
   projects: Object.fromEntries(mapping.projects),
-  content_nodes: Object.fromEntries(mapping.content_nodes)
+  content_nodes: Object.fromEntries(mapping.content_nodes),
+  ...(mapping.document_types && {
+    document_types: Object.fromEntries(mapping.document_types)
+  })
 });
 
 export const buildImportPlan = async (

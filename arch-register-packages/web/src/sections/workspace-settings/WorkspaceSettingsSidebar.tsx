@@ -50,6 +50,12 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
   { id: 'model-overview', label: 'Overview', icon: <TbCode size={12} />, group: 'Model' },
   { id: 'schemas', label: 'Entity Schema', icon: <TbCode size={12} />, group: 'Model' },
   {
+    id: 'capabilities',
+    label: 'Capability Binding',
+    icon: <TbBolt size={12} />,
+    group: 'Model'
+  },
+  {
     id: 'documents',
     label: 'Document Schema',
     icon: <TbFileDescription size={12} />,

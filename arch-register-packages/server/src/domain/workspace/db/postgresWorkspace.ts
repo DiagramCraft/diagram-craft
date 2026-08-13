@@ -12,6 +12,7 @@ import {
   SupportedCurrencyDbResult,
   SupportedCurrencyConfigDbResult,
   AssessmentTypeDbCreate,
+  WorkspaceCapabilityConfigurationDbCreate,
   DEFAULT_SUPPORTED_CURRENCIES
 } from './workspaceDatabase';
 import { workspaceMappers } from './workspaceDatabase';
@@ -106,6 +107,7 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
         await tx`DELETE FROM entity_schema WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_member WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_role WHERE workspace = ${id}`;
+        await tx`DELETE FROM workspace_capability_configuration WHERE workspace = ${id}`;
         await tx`DELETE FROM team_membership WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_lifecycle_state WHERE workspace = ${id}`;
         await tx`DELETE FROM workspace_currency WHERE workspace = ${id}`;
@@ -131,6 +133,51 @@ export class PostgresWorkspaceDatabase extends PostgresDatabaseBase implements W
       ORDER BY sort_order, id
     `;
     return mapDatabaseRows(rows, workspaceMappers.lifecycleState);
+  }
+
+  async listWorkspaceCapabilityConfigurations(workspace: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT id, workspace, type, bindings, created_at, updated_at
+      FROM workspace_capability_configuration
+      WHERE workspace = ${workspace}
+      ORDER BY type, id
+    `;
+    return mapDatabaseRows(rows, workspaceMappers.workspaceCapabilityConfiguration);
+  }
+
+  async getWorkspaceCapabilityConfiguration(workspace: string, type: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT id, workspace, type, bindings, created_at, updated_at
+      FROM workspace_capability_configuration
+      WHERE workspace = ${workspace} AND type = ${type}
+    `;
+    return row ? workspaceMappers.workspaceCapabilityConfiguration(row) : null;
+  }
+
+  async upsertWorkspaceCapabilityConfiguration(input: WorkspaceCapabilityConfigurationDbCreate) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        INSERT INTO workspace_capability_configuration
+          (id, workspace, type, bindings, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.type}, ${this.json(input.bindings)}, ${input.created_at}, ${input.updated_at})
+        ON CONFLICT (workspace, type) DO UPDATE SET
+          bindings = EXCLUDED.bindings,
+          updated_at = EXCLUDED.updated_at
+        RETURNING id, workspace, type, bindings, created_at, updated_at
+      `;
+      return workspaceMappers.workspaceCapabilityConfiguration(row!);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteWorkspaceCapabilityConfiguration(workspace: string, type: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      DELETE FROM workspace_capability_configuration
+      WHERE workspace = ${workspace} AND type = ${type}
+      RETURNING id, workspace, type, bindings, created_at, updated_at
+    `;
+    return row ? workspaceMappers.workspaceCapabilityConfiguration(row) : null;
   }
 
   async replaceLifecycleStates(workspace: string, states: LifecycleStateDbCreate[]) {

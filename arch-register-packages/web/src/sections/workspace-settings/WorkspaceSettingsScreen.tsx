@@ -1,4 +1,4 @@
-import { lazy, Suspense, useState, useEffect } from 'react';
+import { lazy, Suspense, useState, useEffect, type ReactNode } from 'react';
 import styles from './WorkspaceSettingsScreen.module.css';
 import { Button } from '@diagram-craft/app-components/Button';
 import { getRouteApi } from '@tanstack/react-router';
@@ -24,6 +24,7 @@ import { CreateJobDialog } from '../../components/jobs/CreateJobDialog';
 import { WorkspaceApiTokensSubSection } from './sub-sections/WorkspaceApiTokensSubSection';
 import { AssessmentTypesSubSection } from './sub-sections/AssessmentTypesSubSection';
 import { PublicCatalogSubSection } from './sub-sections/PublicCatalogSubSection';
+import { WorkspaceCapabilitiesSubSection } from './sub-sections/WorkspaceCapabilitiesSubSection';
 
 const WorkspaceAnalyticsScreen = lazy(() =>
   import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
@@ -44,6 +45,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'assessment-types': {
     title: 'Assessment types',
     sub: 'Configure categories used to organize workspace assessments and dashboard views.'
+  },
+  'capabilities': {
+    title: 'Capability Binding',
+    sub: 'Bind capability roles to the schemas and fields used by this workspace.'
   },
   'model-overview': {
     title: 'Model Overview',
@@ -130,6 +135,7 @@ export const WorkspaceSettingsScreen = () => {
   const [workflowAddDialogOpen, setWorkflowAddDialogOpen] = useState(false);
   const [jobAddDialogOpen, setJobAddDialogOpen] = useState(false);
   const [apiTokenAddDialogOpen, setApiTokenAddDialogOpen] = useState(false);
+  const [capabilityActions, setCapabilityActions] = useState<ReactNode>();
 
   useEffect(() => {
     if (sectionIsValid || !ctx.defaultSettingsSection) return;
@@ -169,7 +175,9 @@ export const WorkspaceSettingsScreen = () => {
   }
 
   const sectionButton =
-    section === 'members' ? (
+    section === 'capabilities' ? (
+      capabilityActions
+    ) : section === 'members' ? (
       <Button
         variant="primary"
         icon={<TbPlus size={12} />}
@@ -245,6 +253,13 @@ export const WorkspaceSettingsScreen = () => {
         <AssessmentTypesSubSection
           workspaceId={workspace.id}
           assessmentTypes={ctx.assessmentTypes}
+        />
+      )}
+      {section === 'capabilities' && (
+        <WorkspaceCapabilitiesSubSection
+          workspaceSlug={workspaceSlug}
+          schemas={ctx.schemas}
+          onActionsChange={setCapabilityActions}
         />
       )}
       {section === 'roles' && (

@@ -150,7 +150,6 @@ const applyEntitySchemaVersion = (
     templates: version.templates,
     groups: version.groups as SchemaDbResult['groups'],
     shared_field_group_links: version.shared_field_group_links,
-    entity_capabilities: version.entity_capabilities,
     validation_rules: version.validation_rules,
     color: version.color,
     icon: version.icon,

@@ -30,6 +30,8 @@ import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import { replaceDefaultWorkspaceDashboardLayout } from '../dashboard/dashboardOperations';
 import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 import { createLogger } from '../../utils/logger';
+import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
+import { listWorkspaceCapabilityConfigurations } from './workspaceCapabilityOperations';
 
 const shortCodeFrom = (name: string): string =>
   name
@@ -504,14 +506,16 @@ export const createWorkspace = async (
             srcRoles,
             srcSchemas,
             srcSharedFieldGroups,
-            srcGovernanceConfigs
+            srcGovernanceConfigs,
+            srcCapabilityConfigurations
           ] = await Promise.all([
             db.workspace.listLifecycleStates(replicate_from),
             db.workspace.listTeams(replicate_from),
             db.workspace.listCustomWorkspaceRoles(replicate_from),
             db.catalog.listSchemas(replicate_from),
             db.catalog.listSharedFieldGroups(replicate_from),
-            db.governanceCaseConfig.listCaseConfig(replicate_from)
+            db.governanceCaseConfig.listCaseConfig(replicate_from),
+            listWorkspaceCapabilityConfigurations(db, replicate_from)
           ]);
 
           const lifecycleMap = new Map<string, string>();
@@ -561,6 +565,7 @@ export const createWorkspace = async (
           }
 
           const schemaMap = new Map<string, string>();
+          const documentTypeMap = new Map<string, string>();
           if (includeSet.has('schemas')) {
             for (const schema of srcSchemas) schemaMap.set(schema.id, randomUUID());
             const sharedFieldGroupMap = new Map<string, string>();
@@ -781,7 +786,8 @@ export const createWorkspace = async (
 
             if (includeSet.has('documents')) {
               const sourceTypes = await db.document.listDocumentTypes(replicate_from, true);
-              const typeMap = new Map(sourceTypes.map(type => [type.id, randomUUID()]));
+              for (const type of sourceTypes) documentTypeMap.set(type.id, randomUUID());
+              const typeMap = documentTypeMap;
               for (const type of sourceTypes) {
                 await db.document.createDocumentType({
                   ...type,
@@ -867,6 +873,42 @@ export const createWorkspace = async (
               }
             }
           }
+
+          if (includeSet.has('settings')) {
+            for (const configuration of srcCapabilityConfigurations) {
+              const remappedEntries = Object.entries(configuration.bindings).flatMap(
+                ([bindingId, binding]) => {
+                  const targetMap =
+                    binding.target.kind === 'entity_schema'
+                      ? schemaMap
+                      : binding.target.kind === 'document_type'
+                        ? documentTypeMap
+                        : null;
+                  const targetId = targetMap?.get(binding.target.id);
+                  return targetId
+                    ? [
+                        [
+                          bindingId,
+                          {
+                            ...binding,
+                            target: { ...binding.target, id: targetId }
+                          }
+                        ] as const
+                      ]
+                    : [];
+                }
+              );
+              if (remappedEntries.length !== Object.keys(configuration.bindings).length) continue;
+              await db.workspace.upsertWorkspaceCapabilityConfiguration({
+                id: randomUUID(),
+                workspace: row.id,
+                type: configuration.type,
+                bindings: Object.fromEntries(remappedEntries) as WorkspaceCapabilityBindings,
+                created_at: timestamp,
+                updated_at: timestamp
+              });
+            }
+          }
         } else {
           await db.workspace.replaceLifecycleStates(
             row.id,
@@ -905,6 +947,16 @@ export const createWorkspace = async (
             }
             for (const documentTemplate of definitions.documentTemplates) {
               await db.document.createDocumentTemplate(documentTemplate);
+            }
+            for (const configuration of definitions.capabilityConfigurations) {
+              await db.workspace.upsertWorkspaceCapabilityConfiguration({
+                id: randomUUID(),
+                workspace: row.id,
+                type: configuration.type,
+                bindings: configuration.bindings,
+                created_at: timestamp,
+                updated_at: timestamp
+              });
             }
             if (definitions.dashboardWidgets.length > 0) {
               await replaceDefaultWorkspaceDashboardLayout(

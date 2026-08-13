@@ -43,8 +43,15 @@ describe('syncApiSpecificationByExternalKey', () => {
       fields: [
         { id: 'api_type', name: 'API type', type: 'text' },
         { id: 'api_version', name: 'API version', type: 'text' }
-      ],
-      entity_capabilities: [{ type: 'api-specification' }]
+      ]
+    });
+    await db.workspace.upsertWorkspaceCapabilityConfiguration({
+      id: '00000000-0000-0000-0000-c000000000111',
+      workspace,
+      type: 'api-specification',
+      bindings: { api: { target: { kind: 'entity_schema', id: schemaId } } },
+      created_at: new Date(),
+      updated_at: new Date()
     });
     await db.workspace.registerPublicIdPrefix(schema!.key_prefix, 'schema', schemaId, new Date());
     return schemaId;

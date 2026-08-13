@@ -1,33 +1,49 @@
-import { entityCapabilityTypeSchema, type EntityCapabilityType } from './entityCapabilityContract';
-import type { EntityCapability } from './entityCapabilityContract';
-import type { SchemaField } from './schemaContract';
+import {
+  workspaceCapabilityTargetKindSchema,
+  workspaceCapabilityTypeSchema,
+  type WorkspaceCapabilityBinding,
+  type WorkspaceCapabilityType
+} from './workspaceCapabilityContract';
 import { z } from 'zod';
 
-const entityCapabilityFieldTypeSchema = z.enum(['text', 'longtext', 'select']);
+const capabilityFieldTypeSchema = z.enum(['text', 'longtext', 'select']);
 
 /** Integration-owned semantic field role metadata. */
-export const entityCapabilityFieldRoleSchema = z.object({
+export const capabilityFieldRoleSchema = z.object({
   id: z.string().min(1),
   label: z.string().min(1),
   description: z.string().min(1),
   required: z.boolean(),
   defaultFieldId: z.string().min(1),
-  allowedTypes: z.array(entityCapabilityFieldTypeSchema)
+  allowedTypes: z.array(capabilityFieldTypeSchema)
 });
 
-/** Integration-owned metadata for a capability available to entity schemas. */
-export const entityCapabilityDefinitionSchema = z.object({
-  type: entityCapabilityTypeSchema,
+export type CapabilityFieldRole = z.infer<typeof capabilityFieldRoleSchema>;
+
+/** Integration-owned semantic role for a workspace capability binding. */
+export const workspaceCapabilityBindingRoleSchema = z.object({
+  id: z.string().min(1),
+  label: z.string().min(1),
+  description: z.string().min(1),
+  required: z.boolean(),
+  targetKind: workspaceCapabilityTargetKindSchema.describe(
+    'Required workspace model object kind for this role'
+  ),
+  fieldRoles: z.array(capabilityFieldRoleSchema)
+});
+
+export const workspaceCapabilityDefinitionSchema = z.object({
+  type: workspaceCapabilityTypeSchema,
   label: z.string().min(1),
   description: z.string().min(1),
   features: z.array(z.string().min(1)),
-  fieldRoles: z.array(entityCapabilityFieldRoleSchema)
+  bindingRoles: z.array(workspaceCapabilityBindingRoleSchema)
 });
 
-export type EntityCapabilityDefinition = z.infer<typeof entityCapabilityDefinitionSchema>;
-export type EntityCapabilityFieldRole = z.infer<typeof entityCapabilityFieldRoleSchema>;
+export type WorkspaceCapabilityBindingRole = z.infer<typeof workspaceCapabilityBindingRoleSchema>;
+export type WorkspaceCapabilityDefinition = z.infer<typeof workspaceCapabilityDefinitionSchema>;
 
-export type EntityCapabilityFieldMappingIssue = {
+export type CapabilityFieldMappingIssue = {
   code:
     | 'unknown_role'
     | 'missing_target'
@@ -40,104 +56,120 @@ export type EntityCapabilityFieldMappingIssue = {
   message: string;
 };
 
-export type EntityCapabilityFieldMappingResolution = {
+export type CapabilityFieldMappingResolution = {
   mappings: Record<string, string>;
-  issues: EntityCapabilityFieldMappingIssue[];
+  issues: CapabilityFieldMappingIssue[];
 };
 
-export const entityCapabilityDefinitions: EntityCapabilityDefinition[] = [
+export type CapabilityField = {
+  id: string;
+  type: string;
+  archived?: boolean;
+};
+
+const apiSpecificationFieldRoles: CapabilityFieldRole[] = [
+  {
+    id: 'api_type',
+    label: 'API type',
+    description: 'The declared API document protocol, such as OpenAPI or AsyncAPI.',
+    required: true,
+    defaultFieldId: 'api_type',
+    allowedTypes: ['text', 'longtext', 'select']
+  },
+  {
+    id: 'api_version',
+    label: 'API version',
+    description: 'The declared version of the API document.',
+    required: true,
+    defaultFieldId: 'api_version',
+    allowedTypes: ['text', 'longtext', 'select']
+  }
+];
+
+/** Integration-owned capabilities that can be configured at workspace scope. */
+export const workspaceCapabilityDefinitions: WorkspaceCapabilityDefinition[] = [
   {
     type: 'api-specification',
     label: 'API specification',
     description: 'OpenAPI and AsyncAPI documents with normalized operations or messages.',
     features: ['operations', 'documentation'],
-    fieldRoles: [
+    bindingRoles: [
       {
-        id: 'api_type',
-        label: 'API type',
-        description: 'The declared API document protocol, such as OpenAPI or AsyncAPI.',
+        id: 'api',
+        label: 'API entity schema',
+        description: 'The entity schema used for API specification records.',
         required: true,
-        defaultFieldId: 'api_type',
-        allowedTypes: ['text', 'longtext', 'select']
-      },
-      {
-        id: 'api_version',
-        label: 'API version',
-        description: 'The declared version of the API document.',
-        required: true,
-        defaultFieldId: 'api_version',
-        allowedTypes: ['text', 'longtext', 'select']
+        targetKind: 'entity_schema',
+        fieldRoles: apiSpecificationFieldRoles
       }
     ]
   }
 ];
 
-export const getEntityCapabilityDefinition = (type: EntityCapabilityType | string) =>
-  entityCapabilityDefinitions.find(capability => capability.type === type);
+export const getWorkspaceCapabilityDefinition = (type: WorkspaceCapabilityType | string) =>
+  workspaceCapabilityDefinitions.find(capability => capability.type === type);
 
-export const resolveEntityCapabilityFieldId = (
-  capability: EntityCapability,
-  role: EntityCapabilityFieldRole
-) => capability.fieldMappings?.[role.id] ?? role.defaultFieldId;
+export const resolveCapabilityFieldId = (
+  binding: WorkspaceCapabilityBinding,
+  role: CapabilityFieldRole
+) => binding.fieldMappings?.[role.id] ?? role.defaultFieldId;
 
-export const remapEntityCapabilityFieldMappings = (
-  capabilities: EntityCapability[],
+export const remapCapabilityFieldMappings = (
+  binding: WorkspaceCapabilityBinding,
+  roles: ReadonlyArray<CapabilityFieldRole>,
   renames: ReadonlyArray<{ oldFieldId: string; newFieldId: string }>
-): EntityCapability[] => {
+): WorkspaceCapabilityBinding => {
   const renameByFieldId = new Map(renames.map(rename => [rename.oldFieldId, rename.newFieldId]));
-  if (renameByFieldId.size === 0) return capabilities;
+  if (renameByFieldId.size === 0) return binding;
 
-  return capabilities.map(capability => {
-    const definition = getEntityCapabilityDefinition(capability.type);
-    const nextMappings = { ...(capability.fieldMappings ?? {}) };
-    let changed = false;
+  const nextMappings = { ...(binding.fieldMappings ?? {}) };
+  let changed = false;
 
-    for (const [roleId, fieldId] of Object.entries(nextMappings)) {
-      const nextFieldId = renameByFieldId.get(fieldId);
-      if (nextFieldId !== undefined) {
-        nextMappings[roleId] = nextFieldId;
-        changed = true;
-      }
+  for (const [roleId, fieldId] of Object.entries(nextMappings)) {
+    const nextFieldId = renameByFieldId.get(fieldId);
+    if (nextFieldId !== undefined) {
+      nextMappings[roleId] = nextFieldId;
+      changed = true;
     }
+  }
 
-    for (const role of definition?.fieldRoles ?? []) {
-      const currentFieldId = resolveEntityCapabilityFieldId(capability, role);
-      const nextFieldId = renameByFieldId.get(currentFieldId);
-      if (nextFieldId !== undefined) {
-        nextMappings[role.id] = nextFieldId;
-        changed = true;
-      }
+  for (const role of roles) {
+    const currentFieldId = resolveCapabilityFieldId(binding, role);
+    const nextFieldId = renameByFieldId.get(currentFieldId);
+    if (nextFieldId !== undefined) {
+      nextMappings[role.id] = nextFieldId;
+      changed = true;
     }
+  }
 
-    return changed ? { ...capability, fieldMappings: nextMappings } : capability;
-  });
+  return changed ? { ...binding, fieldMappings: nextMappings } : binding;
 };
 
-export const resolveEntityCapabilityFieldMappings = (
-  capability: EntityCapability,
-  definition: EntityCapabilityDefinition,
-  fields: ReadonlyArray<Pick<SchemaField, 'id' | 'type' | 'archived'>>
-): EntityCapabilityFieldMappingResolution => {
-  const rolesById = new Map(definition.fieldRoles.map(role => [role.id, role]));
+export const resolveCapabilityFieldMappings = (
+  binding: WorkspaceCapabilityBinding,
+  roles: ReadonlyArray<CapabilityFieldRole>,
+  fields: ReadonlyArray<CapabilityField>
+): CapabilityFieldMappingResolution => {
+  const rolesById = new Map(roles.map(role => [role.id, role]));
   const mappings: Record<string, string> = {};
-  const issues: EntityCapabilityFieldMappingIssue[] = [];
+  const issues: CapabilityFieldMappingIssue[] = [];
   const fieldById = new Map(fields.map(field => [field.id, field]));
   const targets = new Map<string, string>();
 
-  for (const roleId of Object.keys(capability.fieldMappings ?? {})) {
+  for (const roleId of Object.keys(binding.fieldMappings ?? {})) {
     if (!rolesById.has(roleId)) {
       issues.push({
         code: 'unknown_role',
         roleId,
-        fieldId: capability.fieldMappings?.[roleId],
+        fieldId: binding.fieldMappings?.[roleId],
         message: `Capability mapping refers to unknown role '${roleId}'.`
       });
     }
   }
 
-  for (const role of definition.fieldRoles) {
-    const explicitFieldId = capability.fieldMappings?.[role.id];
-    const fieldId = resolveEntityCapabilityFieldId(capability, role);
+  for (const role of roles) {
+    const explicitFieldId = binding.fieldMappings?.[role.id];
+    const fieldId = resolveCapabilityFieldId(binding, role);
     mappings[role.id] = fieldId;
 
     const previousRoleId = targets.get(fieldId);
@@ -164,7 +196,7 @@ export const resolveEntityCapabilityFieldMappings = (
       }
       continue;
     }
-    if (field.archived) {
+    if (field.archived === true) {
       issues.push({
         code: 'archived_target',
         roleId: role.id,

@@ -2,10 +2,10 @@ import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws } from '@arch-register/api-types/common';
 import { entityRecordSchema } from '@arch-register/api-types/entityContract';
-import { entityCapabilityTypeSchema } from './entityCapabilityContract';
+import { workspaceCapabilityTypeSchema } from './workspaceCapabilityContract';
 
 /** A functionality-driving artifact profile, not an arbitrary file extension. */
-export const artifactTypeSchema = entityCapabilityTypeSchema.describe(
+export const artifactTypeSchema = workspaceCapabilityTypeSchema.describe(
   'Artifact profile identifier, such as api-specification'
 );
 

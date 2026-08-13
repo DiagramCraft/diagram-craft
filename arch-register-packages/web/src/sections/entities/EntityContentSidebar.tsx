@@ -34,6 +34,7 @@ import {
   type ContentScope
 } from '../../hooks/useContentScope';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useWorkspaceCapabilityConfigurations } from '../../hooks/useWorkspaceConfig';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import {
   asEntityPublicId,
@@ -65,11 +66,18 @@ export const EntityContentSidebar = ({
   const operations = useContentScopeOperations(scope);
   const { data: entity } = useEntity(workspaceSlug, entityId);
   const context = useWorkspaceContext();
+  const { data: workspaceCapabilityConfigurations = [] } =
+    useWorkspaceCapabilityConfigurations(workspaceSlug);
   const schemaIndex = context.schemas.findIndex(schema => schema.id === entity?._schema?.id);
   const schema = schemaIndex >= 0 ? context.schemas[schemaIndex] : undefined;
+  const workspaceApiConfiguration = workspaceCapabilityConfigurations.find(
+    configuration => configuration.type === 'api-specification'
+  );
+  const workspaceApiBinding = workspaceApiConfiguration?.bindings.api;
   const apiCapable =
-    schema?.entity_capabilities?.some(capability => capability.type === 'api-specification') ??
-    false;
+    workspaceApiConfiguration?.valid === true &&
+    workspaceApiBinding?.target.kind === 'entity_schema' &&
+    workspaceApiBinding.target.id === schema?.id;
   const accentColor = schema ? resolveSchemaColor(schema, schemaIndex) : 'var(--accent-fg)';
   const treeRef = useRef<ContentTreeHandle>(null);
   const [folderDialog, setFolderDialog] = useState<{ open: boolean; parent: string | null }>({
