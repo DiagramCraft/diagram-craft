@@ -1,14 +1,16 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import { buildAuthorizationContext, type TeamRole } from '@arch-register/permissions';
 import {
   filterRelationFieldData,
   normalizeRelationEntityFields,
   toApiRelation,
   toRedactedApiRelation,
-  validateRelationEndpoints
+  validateRelationEndpoints,
+  assertTypedRelationCardinality
 } from './relationHelpers';
+import type { DatabaseAdapter } from '../../db/database';
 import type { RelationDbResult, RelationSchemaDbResult } from './db/relationDatabase';
-import type { Entity } from './db/catalogDatabase';
+import type { Entity, SchemaDbResult } from './db/catalogDatabase';
 
 const authCtxWithTeamRoles = (roles: Record<string, TeamRole[]>) =>
   buildAuthorizationContext({
@@ -264,6 +266,120 @@ describe('normalizeRelationEntityFields', () => {
         entities: [wrongSchemaTarget]
       })
     ).toThrow();
+  });
+});
+
+describe('assertTypedRelationCardinality', () => {
+  const typedField = {
+    id: 'dependencies',
+    name: 'Dependencies',
+    type: 'typedRelation' as const,
+    relationSchemaId: 'relation-schema-1',
+    direction: 'out' as const,
+    minCount: 0,
+    maxCount: 1
+  };
+  const ownerSchema: SchemaDbResult = {
+    id: 'owner-schema',
+    workspace: 'workspace-1',
+    name: 'Owner',
+    description: '',
+    fields: [typedField],
+    groups: [],
+    color: null,
+    icon: null,
+    default_owner: null,
+    key_prefix: 'OWN',
+    created_at: now,
+    updated_at: now
+  };
+  const targetSchema: SchemaDbResult = { ...ownerSchema, id: 'target-schema', fields: [] };
+  const owner = makeEntity({ id: 'owner', schema_id: 'owner-schema' });
+  const target = makeEntity({ id: 'target', schema_id: 'target-schema' });
+  const existingRelation = {
+    ...relation,
+    id: 'existing-relation',
+    in_entity_id: 'target',
+    out_entity_id: 'owner',
+    schema_id: 'relation-schema-1'
+  };
+
+  const makeCardinalityDb = (rows: RelationDbResult[] = []): DatabaseAdapter =>
+    ({
+      catalog: {
+        getEntity: vi.fn(async (_workspace: string, id: string) =>
+          id === owner.id ? owner : id === target.id ? target : null
+        ),
+        getSchema: vi.fn(async (_workspace: string, id: string) =>
+          id === ownerSchema.id ? ownerSchema : id === targetSchema.id ? targetSchema : null
+        )
+      },
+      relation: {
+        listRelationsForEntity: vi.fn(async (_workspace: string, entityId: string) => ({
+          outgoing: entityId === target.id ? rows : [],
+          incoming: entityId === owner.id ? rows : []
+        }))
+      }
+    }) as unknown as DatabaseAdapter;
+
+  it('uses incoming relations for an out-endpoint binding and rejects a projected maximum', async () => {
+    const db = makeCardinalityDb([existingRelation]);
+
+    await expect(
+      assertTypedRelationCardinality(db, 'workspace-1', [
+        {
+          relationSchemaId: 'relation-schema-1',
+          inEntityId: 'target',
+          outEntityId: 'owner',
+          delta: 1
+        }
+      ])
+    ).rejects.toThrow('allows at most 1 relation');
+  });
+
+  it('checks every duplicate binding on the endpoint schema', async () => {
+    const duplicateField = {
+      ...typedField,
+      id: 'single-dependency',
+      name: 'Single dependency',
+      maxCount: 0
+    };
+    const db = makeCardinalityDb();
+    (db.catalog.getSchema as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ...ownerSchema,
+      fields: [typedField, duplicateField]
+    });
+
+    await expect(
+      assertTypedRelationCardinality(db, 'workspace-1', [
+        {
+          relationSchemaId: 'relation-schema-1',
+          inEntityId: 'target',
+          outEntityId: 'owner',
+          delta: 1
+        }
+      ])
+    ).rejects.toThrow('Single dependency allows at most 0 relation');
+  });
+
+  it('rejects deleting the last relation when the binding has a minimum', async () => {
+    const requiredField = { ...typedField, minCount: 1 };
+    const db = makeCardinalityDb([existingRelation]);
+    (db.catalog.getSchema as ReturnType<typeof vi.fn>).mockResolvedValue({
+      ...ownerSchema,
+      fields: [requiredField]
+    });
+
+    await expect(
+      assertTypedRelationCardinality(db, 'workspace-1', [
+        {
+          relationSchemaId: 'relation-schema-1',
+          inEntityId: 'target',
+          outEntityId: 'owner',
+          delta: -1
+        }
+      ])
+    ).rejects.toThrow('requires at least 1 relation');
   });
 });
 

@@ -5,6 +5,7 @@ import { requireWorkspaceCapability } from '../auth/authorization';
 import { logAudit, computeChanges } from '../audit/db/auditLogging';
 import {
   assertRelationMutationsSupported,
+  assertTypedRelationCardinality,
   flattenRelationAuditFields,
   validateRelationEndpoints
 } from '../catalog/relationHelpers';
@@ -222,6 +223,14 @@ const createCreateRelationTool = (context: AiChatToolContext) =>
     if (context.authCtx)
       requireNoRestrictedFieldWrites(context.authCtx, schema, Object.keys(fields));
     const now = new Date();
+    await assertTypedRelationCardinality(context.db, context.workspaceId, [
+      {
+        relationSchemaId: schema.id,
+        inEntityId: endpointAccess.inEntity!.id,
+        outEntityId: endpointAccess.outEntity!.id,
+        delta: 1
+      }
+    ]);
     const row = await context.db.relation.createRelation({
       id: randomUUID(),
       workspace: context.workspaceId,
@@ -308,6 +317,14 @@ const createDeleteRelationTool = (context: AiChatToolContext) =>
     );
     if (context.authCtx)
       requireTypedRelationEdit(context.authCtx, endpointAccess.endpoints, row.schema_id);
+    await assertTypedRelationCardinality(context.db, context.workspaceId, [
+      {
+        relationSchemaId: row.schema_id,
+        inEntityId: row.in_entity_id,
+        outEntityId: row.out_entity_id,
+        delta: -1
+      }
+    ]);
     await context.db.relation.deleteRelation(context.workspaceId, row.id);
     await logAudit(context.db, {
       userId: context.actor.id,

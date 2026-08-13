@@ -68,6 +68,10 @@ export const LazySchemaGraphView = lazyRouteComponent(
   () => import('../../sections/workspace-settings/SchemaGraphView'),
   'SchemaGraphView'
 );
+export const LazySchemaValidationScreen = lazyRouteComponent(
+  () => import('../../sections/workspace-settings/SchemaValidationScreen'),
+  'SchemaValidationScreen'
+);
 export const LazyDocumentSettingsScreen = lazyRouteComponent(
   () => import('../../sections/workspace-settings/DocumentSettingsScreen'),
   'DocumentSettingsScreen'

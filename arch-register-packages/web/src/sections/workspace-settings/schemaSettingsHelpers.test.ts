@@ -33,6 +33,15 @@ describe('schema settings helpers', () => {
       minCount: 0,
       maxCount: -1
     });
+    expect(createSchemaFieldForType(original, 'typedRelation', input)).toEqual({
+      id: 'title',
+      name: 'title',
+      type: 'typedRelation',
+      relationSchemaId: '',
+      direction: 'out',
+      minCount: 0,
+      maxCount: -1
+    });
     expect(createSchemaFieldForType(original, 'derived', input)).toMatchObject({
       type: 'derived',
       requirementLevel: 'optional',

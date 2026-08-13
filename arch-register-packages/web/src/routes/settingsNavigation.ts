@@ -1,4 +1,4 @@
-// `schemas`, `documents`, and `model-overview` have dedicated static routes
+// `schemas`, `documents`, `model-overview`, and `schema-validation` have dedicated static routes
 // (settings/schemas, settings/documents, settings/model-overview) that TanStack Router
 // matches in preference to the dynamic settings/$section route. Navigating to those
 // sections must use their own route template, or TanStack Router warns that the
@@ -12,6 +12,9 @@ export const settingsSectionTarget = (workspaceSlug: string, section: string) =>
   }
   if (section === 'model-overview') {
     return { to: '/$workspaceSlug/settings/model-overview', params: { workspaceSlug } };
+  }
+  if (section === 'schema-validation') {
+    return { to: '/$workspaceSlug/settings/schema-validation', params: { workspaceSlug } };
   }
   return { to: '/$workspaceSlug/settings/$section', params: { workspaceSlug, section } };
 };

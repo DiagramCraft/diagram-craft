@@ -214,6 +214,8 @@ const typedRelationSchema: SchemaDbResult = {
       type: 'typedRelation',
       relationSchemaId: 'rel-schema-1',
       direction: 'out',
+      minCount: 0,
+      maxCount: 1,
       groupId: 'restricted'
     } as never
   ]
@@ -262,6 +264,13 @@ const makeTypedRelationDb = (entity: EntityDbResult) => {
         return row;
       }),
       getRelation: vi.fn(async (_ws: string, id: string) => relationRows.get(id) ?? null),
+      listRelationsForEntity: vi.fn(async (_ws: string, entityId: string) => {
+        const rows = [...relationRows.values()];
+        return {
+          outgoing: rows.filter(row => row.in_entity_id === entityId),
+          incoming: rows.filter(row => row.out_entity_id === entityId)
+        };
+      }),
       updateRelation: vi.fn(async (_ws: string, id: string, input: Record<string, unknown>) => {
         const existing = relationRows.get(id);
         const row = { ...existing, ...input };
@@ -368,6 +377,37 @@ describe('updateEntity — typed relation deltas', () => {
     ).rejects.toThrow();
 
     expect(db.catalog.updateEntity).not.toHaveBeenCalled();
+  });
+
+  it('enforces the typed relation maximum against the projected endpoint count', async () => {
+    const db = makeTypedRelationDb(baseEntity({ name_field: 'x' }));
+    const authCtx = authCtxWithTeamRole('team_editor');
+    const relationDelta = {
+      deps: { create: [{ otherEntityId: 'entity-2', data: {} }] }
+    };
+
+    await updateEntity(
+      db,
+      'ws-1',
+      'entity-1',
+      { ...updatePayload({ name_field: 'first' }), _relations: relationDelta },
+      authCtx,
+      { id: 'user-1', displayName: 'User' }
+    );
+
+    await expect(
+      updateEntity(
+        db,
+        'ws-1',
+        'entity-1',
+        { ...updatePayload({ name_field: 'second' }), _relations: relationDelta },
+        authCtx,
+        { id: 'user-1', displayName: 'User' }
+      )
+    ).rejects.toThrow('allows at most 1 relation');
+
+    expect(db.relation.createRelation).toHaveBeenCalledTimes(1);
+    expect(db.catalog.updateEntity).toHaveBeenCalledTimes(1);
   });
 
   it('rejects a relation delta when the field is in an entity-schema group the caller cannot edit, even though the relation schema itself is unrestricted', async () => {

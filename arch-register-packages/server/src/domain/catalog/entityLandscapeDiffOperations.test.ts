@@ -833,6 +833,8 @@ describe('diffEntityLandscapes', () => {
         type: 'typedRelation',
         relationSchemaId: 'rel-schema-1',
         direction: 'in' as const,
+        minCount: 0,
+        maxCount: -1,
         ...(groupId ? { groupId } : {})
       };
       const outField = {
@@ -842,6 +844,8 @@ describe('diffEntityLandscapes', () => {
         type: 'typedRelation',
         relationSchemaId: 'rel-schema-1',
         direction: 'out' as const,
+        minCount: 0,
+        maxCount: -1,
         ...(groupId ? { groupId } : {})
       };
       return {
@@ -953,6 +957,8 @@ describe('diffEntityLandscapes', () => {
             type: 'typedRelation',
             relationSchemaId: 'rel-schema-1',
             direction: 'in',
+            minCount: 0,
+            maxCount: -1,
             groupId: 'restricted'
           },
           {
@@ -962,6 +968,8 @@ describe('diffEntityLandscapes', () => {
             type: 'typedRelation',
             relationSchemaId: 'rel-schema-1',
             direction: 'out',
+            minCount: 0,
+            maxCount: -1,
             groupId: 'restricted'
           }
         ],

@@ -63,6 +63,8 @@ test.describe('diagram craft permission routes', () => {
           requirementLevel: null,
           relationSchemaId: DATA_FLOW_SCHEMA_ID,
           direction: 'in',
+          minCount: 0,
+          maxCount: -1,
           groupId: RESTRICTED_GROUP_ID
         }
       ],

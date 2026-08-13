@@ -34,7 +34,10 @@ import type {
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
 import { DOCUMENT_STATUS_CASE_KIND } from '../document/documentWorkflowOperations';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
-import { validateRelationEndpoints } from '../catalog/relationHelpers';
+import {
+  assertTypedRelationCardinality,
+  validateRelationEndpoints
+} from '../catalog/relationHelpers';
 import { requireTypedRelationEdit } from '../catalog/relationAccessControl';
 import { listAllRelations } from '../catalog/relationOperations';
 import {
@@ -835,6 +838,13 @@ export const importRelations = async (
   let updated = 0;
   const skipped = relations.length - mappedRelations.length;
 
+  const preparedRelations: Array<{
+    relation: ExportRelation;
+    nextId: string;
+    existing: RelationIdentityRecord | undefined;
+    input: Parameters<DatabaseAdapter['relation']['createRelation']>[0];
+  }> = [];
+
   for (const { relation, nextId } of mappedRelations) {
     const schemaId = resolveMappedId(idMapping.relation_schemas, relation.schema_id);
     const schema = await db.relation.getRelationSchema(workspace, schemaId!);
@@ -890,12 +900,66 @@ export const importRelations = async (
       in_entity_id: mappedInEntityId,
       out_entity_id: mappedOutEntityId,
       data: relation.data,
-      version: relation.version,
+      version: relation.version ?? 1,
       approval_policy_override: relation.approval_policy_override,
       created_at: Number.isNaN(createdAt.getTime()) ? now : createdAt,
       updated_at: Number.isNaN(updatedAt.getTime()) ? now : updatedAt
     };
 
+    preparedRelations.push({ relation, nextId, existing, input });
+    // Keep identity resolution consistent for duplicate rows in the same import batch. The
+    // original one-pass importer updated these indexes immediately after each write; doing the
+    // same during preparation lets the cardinality check remain a separate preflight phase.
+    const stored: RelationIdentityRecord = {
+      id: existing?.id ?? input.id,
+      schema_id: input.schema_id,
+      in_entity_id: input.in_entity_id,
+      out_entity_id: input.out_entity_id
+    };
+    existingById.set(stored.id, stored);
+    existingByIdentity.set(
+      relationIdentity(stored.schema_id, stored.in_entity_id, stored.out_entity_id),
+      stored
+    );
+  }
+
+  const cardinalityChanges = preparedRelations.flatMap(({ existing, input }) => {
+    const endpointChanged =
+      existing != null &&
+      (existing.schema_id !== input.schema_id ||
+        existing.in_entity_id !== input.in_entity_id ||
+        existing.out_entity_id !== input.out_entity_id);
+    if (endpointChanged) {
+      return [
+        {
+          relationSchemaId: existing.schema_id,
+          inEntityId: existing.in_entity_id,
+          outEntityId: existing.out_entity_id,
+          delta: -1
+        },
+        {
+          relationSchemaId: input.schema_id,
+          inEntityId: input.in_entity_id,
+          outEntityId: input.out_entity_id,
+          delta: 1
+        }
+      ];
+    }
+    if (!existing) {
+      return [
+        {
+          relationSchemaId: input.schema_id,
+          inEntityId: input.in_entity_id,
+          outEntityId: input.out_entity_id,
+          delta: 1
+        }
+      ];
+    }
+    return [];
+  });
+  await assertTypedRelationCardinality(db, workspace, cardinalityChanges);
+
+  for (const { existing, input } of preparedRelations) {
     if (existing) {
       if (
         existing.schema_id !== input.schema_id ||
@@ -907,7 +971,7 @@ export const importRelations = async (
       } else {
         await db.relation.updateRelation(workspace, existing.id, {
           data: input.data,
-          version: input.version,
+          version: input.version ?? 1,
           approval_policy_override: input.approval_policy_override,
           updated_at: input.updated_at
         });

@@ -374,6 +374,8 @@ const schemasWithTypedRelation = [
         type: 'typedRelation',
         relationSchemaId: 'rel-data-flow',
         direction: 'out',
+        minCount: 0,
+        maxCount: -1,
         requirementLevel: null
       }
     ],

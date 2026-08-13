@@ -155,7 +155,9 @@ describe('entity-valued relation field traversal (#2670)', () => {
           name: 'Flows in',
           type: 'typedRelation',
           relationSchemaId: dataFlow.id,
-          direction: 'in'
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
         }
       ]
     };

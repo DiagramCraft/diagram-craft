@@ -49,7 +49,9 @@ const COMPONENT = makeSchema('component-schema', [
     name: 'Depends on',
     type: 'typedRelation',
     relationSchemaId: 'rel-1',
-    direction: 'out'
+    direction: 'out',
+    minCount: 0,
+    maxCount: -1
   } as never
 ]);
 

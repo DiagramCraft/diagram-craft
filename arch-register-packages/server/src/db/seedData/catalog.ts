@@ -296,7 +296,9 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000030',
-          direction: 'out'
+          direction: 'out',
+          minCount: 0,
+          maxCount: -1
         },
         {
           id: 'data_flows_in',
@@ -304,7 +306,9 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000030',
-          direction: 'in'
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
         },
         {
           id: 'provides_apis',
@@ -312,7 +316,9 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000034',
-          direction: 'in'
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
         },
         {
           id: 'consumes_apis',
@@ -320,7 +326,9 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000035',
-          direction: 'in'
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
         },
         {
           id: 'contracts',
@@ -328,7 +336,9 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000031',
-          direction: 'in'
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
         },
         {
           id: 'budget',
@@ -376,7 +386,9 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000034',
-          direction: 'in'
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
         },
         {
           id: 'consumes_apis',
@@ -384,7 +396,9 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000035',
-          direction: 'in'
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
         },
         {
           id: 'depends_on',
@@ -436,7 +450,9 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000031',
-          direction: 'out'
+          direction: 'out',
+          minCount: 0,
+          maxCount: -1
         }
       ],
       validation_rules: [
@@ -507,7 +523,9 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000034',
-          direction: 'out'
+          direction: 'out',
+          minCount: 0,
+          maxCount: -1
         },
         {
           id: 'consumers',
@@ -515,7 +533,9 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000035',
-          direction: 'out'
+          direction: 'out',
+          minCount: 0,
+          maxCount: -1
         }
       ],
       color: AR_COLOR_BLUE,
@@ -728,7 +748,9 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000032',
-          direction: 'in'
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
         }
       ],
       color: AR_COLOR_RED,
@@ -769,7 +791,9 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000032',
-          direction: 'out'
+          direction: 'out',
+          minCount: 0,
+          maxCount: -1
         },
         {
           id: 'satisfied_requirements',
@@ -777,7 +801,9 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000033',
-          direction: 'in'
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
         }
       ],
       color: AR_COLOR_GREEN,
@@ -838,7 +864,9 @@ export const seedSchemas: SchemaDbResult[] = (
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000033',
-          direction: 'out'
+          direction: 'out',
+          minCount: 0,
+          maxCount: -1
         }
       ],
       color: AR_COLOR_PURPLE,

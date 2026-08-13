@@ -56,6 +56,12 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
     group: 'Model'
   },
   {
+    id: 'schema-validation',
+    label: 'Schema Validation',
+    icon: <TbClipboardCheck size={12} />,
+    group: 'Model'
+  },
+  {
     id: 'documents',
     label: 'Document Schema',
     icon: <TbFileDescription size={12} />,

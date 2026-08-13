@@ -47,7 +47,9 @@ const openOwner = makeSchema('open-owner', {
   name: 'Depends On',
   type: 'typedRelation',
   relationSchemaId: relationSchema.id,
-  direction: 'out'
+  direction: 'out',
+  minCount: 0,
+  maxCount: -1
 });
 const lockedOwner = makeSchema(
   'locked-owner',
@@ -57,6 +59,8 @@ const lockedOwner = makeSchema(
     type: 'typedRelation',
     relationSchemaId: relationSchema.id,
     direction: 'out',
+    minCount: 0,
+    maxCount: -1,
     groupId: 'locked'
   },
   [{ id: 'locked', name: 'Locked', accessControl: { teamIds: ['team-locked'] } }]

@@ -579,6 +579,8 @@ describe('data route helpers', () => {
           relationSchemaId: 'relschema-dataflow',
           direction: 'in',
           requirementLevel: null,
+          minCount: 0,
+          maxCount: -1,
           groupId: 'restricted'
         }
       ]
@@ -749,6 +751,8 @@ describe('data route helpers', () => {
           relationSchemaId: 'relschema-dataflow',
           direction: 'in',
           requirementLevel: null,
+          minCount: 0,
+          maxCount: -1,
           groupId: 'restricted'
         },
         {
@@ -758,6 +762,8 @@ describe('data route helpers', () => {
           relationSchemaId: 'relschema-dataflow',
           direction: 'out',
           requirementLevel: null,
+          minCount: 0,
+          maxCount: -1,
           groupId: 'restricted'
         }
       ]
