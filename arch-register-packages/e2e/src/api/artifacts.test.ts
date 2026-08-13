@@ -368,7 +368,7 @@ test('artifact registration resolves capability mappings instead of standard fie
       fields: [
         { id: 'protocol_kind', name: 'Protocol kind', type: 'text' },
         { id: 'contract_version', name: 'Contract version', type: 'text' }
-      ],
+      ]
     }
   });
   await orpc.config.capabilityConfigurations.upsert({
@@ -425,7 +425,7 @@ test('artifact registration resolves capability mappings instead of standard fie
     params: { workspace: 'default' },
     body: {
       name: 'Invalid Mapped API Schema',
-      fields: [{ id: 'contract_version', name: 'Contract version', type: 'text' }],
+      fields: [{ id: 'contract_version', name: 'Contract version', type: 'text' }]
     }
   });
   await server.db.workspace.upsertWorkspaceCapabilityConfiguration({
