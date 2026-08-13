@@ -70,6 +70,14 @@
   padding: 10px 0 0 0;
 }
 
+.graphView {
+  flex: 1;
+  min-height: 0;
+  overflow: hidden;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}
+
 /* Filter popup override — removes default popover padding and enforces correct width.
    position + z-index are set above Dialog's cDialogViewport (z-index: 1000) because both
    portal into the same container div: the toolbar is also used inside EntityBrowserEmbedConfigForm,

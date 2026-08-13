@@ -238,10 +238,11 @@
 
         - @id:ar.entity-views.tree Users can inspect hierarchical entity structure in a tree-oriented view.
 
-        - @id:ar.entity-views.graph Users can explore entity relationships and dependencies through a graph view,
-          including typed relationship instances alongside generic reference/containment relations, each rendered
-          with its relation schema's color; clicking a typed relation edge opens a popup with its field values,
-          links to both endpoint entities, and access to its audit history.
+- @id:ar.entity-views.graph Users can explore the entities matching the current browser filter as highlighted
+  roots, together with linked entities traversed up to a configurable number of relationship levels; the
+  graph includes typed relationship instances alongside generic reference/containment relations, each
+  rendered with its relation schema's color, and clicking a typed relation edge opens a popup with its
+  field values, links to both endpoint entities, and access to its audit history.
 
         - @id:ar.entity-views.topology Users can inspect entity relationships and dependencies in a topology view,
           including a dedicated section grouping typed relation instances by relation schema alongside the

@@ -105,6 +105,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
         statusFilter={statusFilter}
         activeViewConfig={viewConfig}
         displayFields={displayFields}
+        isLoading={isLoading}
         mode={{ kind: 'published', onEntityClick }}
         unsupportedView={
           <div className={styles.container}>

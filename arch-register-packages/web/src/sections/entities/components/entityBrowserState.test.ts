@@ -66,6 +66,41 @@ describe('entity browser view field persistence', () => {
     expect(parseViewConfigs(serializeViewConfigs({ map: mapConfig }))).toEqual({ map: mapConfig });
   });
 
+  it('persists entity graph traversal settings in URL and saved-view configuration', () => {
+    const graphConfig = {
+      maxDepth: 3,
+      direction: 'downstream' as const,
+      relationSchemaIds: ['relation-schema']
+    };
+    const configs = { graph: graphConfig };
+
+    expect(parseViewConfigs(serializeViewConfigs(configs))).toEqual(configs);
+    expect(toSavedViewConfig('graph', configs)).toEqual({ graph: graphConfig });
+  });
+
+  it('restores graph mode and traversal settings from a saved view', () => {
+    const search = toSavedViewSearch({
+      id: 'graph-view',
+      workspaceId: 'workspace-1',
+      scope: 'workspace',
+      projectId: null,
+      projectScope: null,
+      name: 'Dependencies',
+      description: null,
+      isAdminView: false,
+      viewMode: 'graph',
+      filters: { root: { kind: 'and', children: [] } },
+      config: { graph: { maxDepth: 3, direction: 'upstream', relationSchemaIds: ['r'] } },
+      createdAt: '2026-01-01T00:00:00.000Z',
+      updatedAt: '2026-01-01T00:00:00.000Z'
+    });
+
+    expect(search.viewMode).toBe('graph');
+    expect(parseViewConfigs(search.viewConfigs)).toEqual({
+      graph: { maxDepth: 3, direction: 'upstream', relationSchemaIds: ['r'] }
+    });
+  });
+
   it('round trips bubble quadrant configuration through browser and saved-view state', () => {
     const bubbleConfig = {
       xFieldId: 'technical-fit',

@@ -41,10 +41,13 @@ export class EntitiesPage extends WorkspacePage {
     await expect(this.browserTitle()).toHaveText(name);
   };
 
-  switchView = async (view: 'table' | 'cards' | 'tree') => {
+  switchView = async (view: 'table' | 'cards' | 'tree' | 'graph') => {
     await this.goto({ viewMode: view });
     await expect(this.browserTitle()).toBeVisible();
   };
+
+  graphNodes = () => this.page.locator('[data-node]');
+  graphRootNodes = () => this.page.locator('[data-node] rect[data-selected]');
 
   expectFilteredResultCount = async (count: number) => {
     await expect(this.browserCount()).toHaveText(String(count));

@@ -128,7 +128,7 @@ describe('validateEntitySearch', () => {
         owner: 'Platform Engineering',
         q: 'auth',
         viewId: 'view-123',
-        viewMode: 'explore',
+        viewMode: 'graph',
         sort: 'owner',
         projectScope: 'all',
         viewConfigs:
@@ -141,7 +141,7 @@ describe('validateEntitySearch', () => {
       owner: 'Platform Engineering',
       q: 'auth',
       viewId: 'view-123',
-      viewMode: 'explore',
+      viewMode: 'graph',
       sort: 'owner',
       projectScope: 'all',
       viewConfigs:

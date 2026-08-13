@@ -167,6 +167,15 @@ test.describe('entities section', () => {
     await entitiesPage.expectLoaded();
   });
 
+  test('shows filtered entities as graph roots and loads linked entities', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.goto({ viewMode: 'graph', q: frontendAppEntity.name });
+    await expect(page).toHaveURL(/viewMode=graph/);
+    await expect(entitiesPage.graphRootNodes()).toHaveCount(1);
+    await expect.poll(async () => entitiesPage.graphNodes().count()).toBeGreaterThan(1);
+  });
+
   test('persists the Capability + Entity + Project roadmap mode and horizon toggle', async ({
     page
   }) => {

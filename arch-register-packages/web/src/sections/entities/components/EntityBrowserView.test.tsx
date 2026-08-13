@@ -16,6 +16,7 @@ const renderLeaf = (name: string) => (props: Record<string, unknown>) => (
 
 vi.mock('./BubbleView', () => ({ BubbleView: renderLeaf('bubble') }));
 vi.mock('./CardsView', () => ({ CardsView: renderLeaf('cards') }));
+vi.mock('./EntityBrowserGraphView', () => ({ EntityBrowserGraphView: renderLeaf('graph') }));
 vi.mock('./ExploreView', () => ({ ExploreView: renderLeaf('explore') }));
 vi.mock('./MapView', () => ({ MapView: renderLeaf('map') }));
 vi.mock('./MatrixView', () => ({ MatrixView: renderLeaf('matrix') }));
@@ -98,10 +99,19 @@ const views = [
   'matrix',
   'timeline',
   'radar',
-  'bubble'
+  'bubble',
+  'graph'
 ] as const;
 const entityListViews = new Set(['table', 'cards', 'tree']);
-const configurableViews = new Set(['map', 'explore', 'matrix', 'timeline', 'radar', 'bubble']);
+const configurableViews = new Set([
+  'map',
+  'explore',
+  'matrix',
+  'timeline',
+  'radar',
+  'bubble',
+  'graph'
+]);
 
 describe('EntityBrowserView', () => {
   it.each(modes.flatMap(mode => views.map(view => ({ ...mode, view }))))(

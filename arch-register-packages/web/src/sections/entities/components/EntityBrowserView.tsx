@@ -8,6 +8,7 @@ import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigCont
 import type { ReactNode } from 'react';
 import { BubbleView } from './BubbleView';
 import { CardsView } from './CardsView';
+import { EntityBrowserGraphView } from './EntityBrowserGraphView';
 import { EntityDiffView } from './EntityDiffView';
 import { ExploreView } from './ExploreView';
 import { HeatmapView } from './HeatmapView';
@@ -57,6 +58,7 @@ type EntityBrowserViewData = {
   diffTargetDate?: string;
   diffIncludePlannedChanges?: boolean;
   diffIncludeOverdueChanges?: boolean;
+  isLoading?: boolean;
 };
 
 type EntityBrowserViewMode =
@@ -121,6 +123,7 @@ export const EntityBrowserView = ({
   diffTargetDate,
   diffIncludePlannedChanges,
   diffIncludeOverdueChanges,
+  isLoading = false,
   mode
 }: EntityBrowserViewProps) => {
   const readOnly = mode.kind !== 'interactive';
@@ -134,6 +137,20 @@ export const EntityBrowserView = ({
   const onSelectAll = mode.kind === 'interactive' ? mode.onSelectAll : undefined;
   const onSelectRow = mode.kind === 'interactive' ? mode.onSelectRow : undefined;
   switch (view) {
+    case 'graph':
+      return (
+        <EntityBrowserGraphView
+          workspaceId={workspaceId}
+          rows={rows}
+          schemas={schemas}
+          activeViewConfig={activeViewConfig}
+          onConfigChange={onConfigChange}
+          onEntityClick={onEntityClick}
+          isLoading={isLoading}
+          hideToolbar={hideToolbar}
+          allowActions={mode.kind === 'interactive'}
+        />
+      );
     case 'diff':
       return (
         <EntityDiffView

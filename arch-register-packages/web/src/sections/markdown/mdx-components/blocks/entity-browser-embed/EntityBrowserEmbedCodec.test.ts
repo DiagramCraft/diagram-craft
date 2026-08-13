@@ -46,6 +46,11 @@ const fullConfig: EntityBrowserEmbedConfig = {
         source: { kind: 'field', fieldId: 'score' },
         aggregation: 'average'
       }
+    },
+    graph: {
+      maxDepth: 3,
+      direction: 'upstream',
+      relationSchemaIds: ['relation-schema']
     }
   },
   projectScope: 'project'

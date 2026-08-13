@@ -11,20 +11,44 @@ export type EntityNodeData = {
 
 export type EntityGraphDirection = 'upstream' | 'downstream' | 'both';
 
+export type EntityGraphRoot = {
+  entityId: string;
+  entityName: string;
+  entitySchemaId: string;
+};
+
 type DirectedRelation = {
   from: string;
   to: string;
   relation: EntityRelationData['outgoing'][number];
 };
 
-type GraphTraversalOptions = {
-  rootEntityId: string;
+export type GraphTraversalOptions = {
+  rootEntityId?: string;
+  rootEntityName?: string;
+  rootEntitySchemaId?: string;
+  rootEntities?: readonly EntityGraphRoot[];
   relationsData: Map<string, EntityRelationData>;
   maxDepth: number;
   excludedIds: ReadonlySet<string>;
   manuallyExpanded: ReadonlySet<string>;
   direction?: EntityGraphDirection;
   relationSchemaIds?: ReadonlySet<string>;
+};
+
+const resolveRoots = (options: GraphTraversalOptions): EntityGraphRoot[] => {
+  const roots = options.rootEntities ?? [];
+  if (roots.length > 0) {
+    return Array.from(new Map(roots.map(root => [root.entityId, root])).values());
+  }
+  if (!options.rootEntityId) return [];
+  return [
+    {
+      entityId: options.rootEntityId,
+      entityName: options.rootEntityName ?? '',
+      entitySchemaId: options.rootEntitySchemaId ?? ''
+    }
+  ];
 };
 
 const matchesRelationSchemaFilter = (
@@ -65,29 +89,38 @@ const getDirectedRelations = (
 };
 
 const collectVisibleNodes = ({
-  rootEntityId,
-  rootEntityName,
-  rootEntitySchemaId,
   relationsData,
   maxDepth,
   excludedIds,
   manuallyExpanded,
   direction = 'both',
-  relationSchemaIds
-}: GraphTraversalOptions & {
-  rootEntityName: string;
-  rootEntitySchemaId: string;
-}): Map<string, EntityNodeData> => {
-  const visibleNodes = new Map<string, EntityNodeData>();
-  const queue: Array<{ id: string; depth: number }> = [{ id: rootEntityId, depth: 0 }];
-  const visited = new Set<string>([rootEntityId]);
-
-  visibleNodes.set(rootEntityId, {
-    entityId: rootEntityId,
-    entityName: rootEntityName,
-    entitySchemaId: rootEntitySchemaId,
-    isRoot: true
+  relationSchemaIds,
+  ...rootOptions
+}: GraphTraversalOptions): Map<string, EntityNodeData> => {
+  const roots = resolveRoots({
+    ...rootOptions,
+    relationsData,
+    maxDepth,
+    excludedIds,
+    manuallyExpanded,
+    direction,
+    relationSchemaIds
   });
+  const visibleNodes = new Map<string, EntityNodeData>();
+  const queue: Array<{ id: string; depth: number }> = [];
+  const visited = new Set<string>();
+
+  for (const root of roots) {
+    if (visited.has(root.entityId)) continue;
+    visited.add(root.entityId);
+    visibleNodes.set(root.entityId, {
+      entityId: root.entityId,
+      entityName: root.entityName,
+      entitySchemaId: root.entitySchemaId,
+      isRoot: true
+    });
+    queue.push({ id: root.entityId, depth: 0 });
+  }
 
   while (queue.length > 0) {
     const { id, depth } = queue.shift()!;
@@ -115,36 +148,23 @@ const collectVisibleNodes = ({
 };
 
 export const collectEntityGraphIds = (options: GraphTraversalOptions): string[] =>
-  Array.from(
-    collectVisibleNodes({
-      ...options,
-      rootEntityName: '',
-      rootEntitySchemaId: ''
-    }).keys()
-  );
+  Array.from(collectVisibleNodes(options).keys());
 
 export const buildEntityGraphData = ({
-  rootEntityId,
-  rootEntityName,
-  rootEntitySchemaId,
   relationsData,
   maxDepth,
   excludedIds,
   manuallyExpanded,
   direction = 'both',
-  relationSchemaIds
-}: GraphTraversalOptions & {
-  rootEntityName: string;
-  rootEntitySchemaId: string;
-}): {
+  relationSchemaIds,
+  ...rootOptions
+}: GraphTraversalOptions): {
   nodes: DependencyGraphNode<EntityNodeData>[];
   edges: DependencyGraphEdge[];
   hiddenCountMap: Map<string, number>;
 } => {
   const visibleNodes = collectVisibleNodes({
-    rootEntityId,
-    rootEntityName,
-    rootEntitySchemaId,
+    ...rootOptions,
     relationsData,
     maxDepth,
     excludedIds,

@@ -76720,6 +76720,28 @@
                               "graph": {
                                 "type": "object",
                                 "properties": {
+                                  "maxDepth": {
+                                    "type": "integer",
+                                    "minimum": 1,
+                                    "maximum": 5,
+                                    "description": "Maximum relationship traversal depth for entity graph view"
+                                  },
+                                  "direction": {
+                                    "enum": [
+                                      "upstream",
+                                      "downstream",
+                                      "both"
+                                    ],
+                                    "type": "string",
+                                    "description": "Relationship direction followed by entity graph view"
+                                  },
+                                  "relationSchemaIds": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Relation schema identifiers included by entity graph view"
+                                  },
                                   "edgeLabelFieldId": {
                                     "anyOf": [
                                       {
@@ -76743,7 +76765,7 @@
                                     "description": "Relation field identifier used for graph edge colors"
                                   }
                                 },
-                                "description": "Configuration for relation graph view"
+                                "description": "Configuration for entity and relation graph views"
                               }
                             }
                           },
@@ -78910,6 +78932,28 @@
                           "graph": {
                             "type": "object",
                             "properties": {
+                              "maxDepth": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "description": "Maximum relationship traversal depth for entity graph view"
+                              },
+                              "direction": {
+                                "enum": [
+                                  "upstream",
+                                  "downstream",
+                                  "both"
+                                ],
+                                "type": "string",
+                                "description": "Relationship direction followed by entity graph view"
+                              },
+                              "relationSchemaIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Relation schema identifiers included by entity graph view"
+                              },
                               "edgeLabelFieldId": {
                                 "anyOf": [
                                   {
@@ -78933,7 +78977,7 @@
                                 "description": "Relation field identifier used for graph edge colors"
                               }
                             },
-                            "description": "Configuration for relation graph view"
+                            "description": "Configuration for entity and relation graph views"
                           }
                         }
                       },
@@ -81294,6 +81338,28 @@
                             "graph": {
                               "type": "object",
                               "properties": {
+                                "maxDepth": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 5,
+                                  "description": "Maximum relationship traversal depth for entity graph view"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "upstream",
+                                    "downstream",
+                                    "both"
+                                  ],
+                                  "type": "string",
+                                  "description": "Relationship direction followed by entity graph view"
+                                },
+                                "relationSchemaIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Relation schema identifiers included by entity graph view"
+                                },
                                 "edgeLabelFieldId": {
                                   "anyOf": [
                                     {
@@ -81317,7 +81383,7 @@
                                   "description": "Relation field identifier used for graph edge colors"
                                 }
                               },
-                              "description": "Configuration for relation graph view"
+                              "description": "Configuration for entity and relation graph views"
                             }
                           }
                         },
@@ -83475,6 +83541,28 @@
                           "graph": {
                             "type": "object",
                             "properties": {
+                              "maxDepth": {
+                                "type": "integer",
+                                "minimum": 1,
+                                "maximum": 5,
+                                "description": "Maximum relationship traversal depth for entity graph view"
+                              },
+                              "direction": {
+                                "enum": [
+                                  "upstream",
+                                  "downstream",
+                                  "both"
+                                ],
+                                "type": "string",
+                                "description": "Relationship direction followed by entity graph view"
+                              },
+                              "relationSchemaIds": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Relation schema identifiers included by entity graph view"
+                              },
                               "edgeLabelFieldId": {
                                 "anyOf": [
                                   {
@@ -83498,7 +83586,7 @@
                                 "description": "Relation field identifier used for graph edge colors"
                               }
                             },
-                            "description": "Configuration for relation graph view"
+                            "description": "Configuration for entity and relation graph views"
                           }
                         }
                       },
@@ -85854,6 +85942,28 @@
                             "graph": {
                               "type": "object",
                               "properties": {
+                                "maxDepth": {
+                                  "type": "integer",
+                                  "minimum": 1,
+                                  "maximum": 5,
+                                  "description": "Maximum relationship traversal depth for entity graph view"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "upstream",
+                                    "downstream",
+                                    "both"
+                                  ],
+                                  "type": "string",
+                                  "description": "Relationship direction followed by entity graph view"
+                                },
+                                "relationSchemaIds": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Relation schema identifiers included by entity graph view"
+                                },
                                 "edgeLabelFieldId": {
                                   "anyOf": [
                                     {
@@ -85877,7 +85987,7 @@
                                   "description": "Relation field identifier used for graph edge colors"
                                 }
                               },
-                              "description": "Configuration for relation graph view"
+                              "description": "Configuration for entity and relation graph views"
                             }
                           }
                         },
