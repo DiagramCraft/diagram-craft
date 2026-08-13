@@ -96,8 +96,7 @@ export const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fi
         message: `${field.name} minCount must be a non-negative integer`
       });
       httpAssert.true(
-        field.maxCount === -1 ||
-          (Number.isInteger(field.maxCount) && field.maxCount >= 0),
+        field.maxCount === -1 || (Number.isInteger(field.maxCount) && field.maxCount >= 0),
         {
           message: `${field.name} maxCount must be a non-negative integer or -1`
         }

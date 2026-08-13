@@ -166,11 +166,11 @@ describe('relation-like field predicates', () => {
   };
   const typedRelationField: SchemaField = {
     ...baseField,
-      type: 'typedRelation',
-      relationSchemaId: 'rel-schema-1',
-      direction: 'in',
-      minCount: 0,
-      maxCount: -1
+    type: 'typedRelation',
+    relationSchemaId: 'rel-schema-1',
+    direction: 'in',
+    minCount: 0,
+    maxCount: -1
   };
   const textField: SchemaField = { ...baseField, type: 'text' };
 

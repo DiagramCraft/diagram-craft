@@ -6,7 +6,10 @@ import {
   isEntityRelationField,
   type EntityRelationField
 } from '@arch-register/api-types/relationSchemaContract';
-import { isTypedRelationField, type TypedRelationField } from '@arch-register/api-types/schemaContract';
+import {
+  isTypedRelationField,
+  type TypedRelationField
+} from '@arch-register/api-types/schemaContract';
 import { PermissionChecker, type WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
