@@ -34,9 +34,10 @@ import {
   entityDetailRoute
 } from '../../routes/publicObjectRoutes';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
+import { useWorkspaceCapabilityConfigurations } from '../../hooks/useWorkspaceConfig';
 import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
 import { EntitySummary } from '@arch-register/api-types/entityContract';
-import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
+import type { WorkspaceCapabilityBinding } from '@arch-register/api-types/workspaceCapabilityContract';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { EntityContentView } from './EntityContentView';
 import { EntityChangeApprovalPanel } from './components/EntityChangeApprovalPanel';
@@ -76,6 +77,8 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const { canOverrideEntityApproval } = useWorkspaceAuthorization(workspaceId);
+  const { data: workspaceCapabilityConfigurations = [] } =
+    useWorkspaceCapabilityConfigurations(workspaceId);
   const canViewAudit = permissions.canViewAudit;
   const contentFolder = folder ?? null;
 
@@ -158,9 +161,17 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const [initiationFieldValues, setInitiationFieldValues] = useState<Record<string, unknown>>({});
 
   const schema = schemaEntry?.schema ?? null;
-  const apiCapability: EntityCapability | undefined = schema?.entity_capabilities?.find(
-    capability => capability.type === 'api-specification'
+  const workspaceApiConfiguration = workspaceCapabilityConfigurations.find(
+    configuration => configuration.type === 'api-specification'
   );
+  const workspaceApiBinding = workspaceApiConfiguration?.bindings.api;
+  const workspaceApiTargetMatches =
+    workspaceApiConfiguration?.valid === true &&
+    workspaceApiBinding?.target.kind === 'entity_schema' &&
+    workspaceApiBinding.target.id === schema?.id;
+  const apiCapability: WorkspaceCapabilityBinding | undefined = workspaceApiTargetMatches
+    ? workspaceApiBinding
+    : undefined;
   const apiCapable = apiCapability !== undefined;
   const tab = requestedTab === 'api' && !apiCapable ? 'overview' : requestedTab;
   const updateApiSearch = useCallback(
@@ -375,7 +386,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
         <EntityApiSection
           workspaceId={workspaceId}
           entity={entity}
-          entityCapability={apiCapability}
+          capabilityBinding={apiCapability}
           outgoing={outgoing}
           incoming={incoming}
           search={search}

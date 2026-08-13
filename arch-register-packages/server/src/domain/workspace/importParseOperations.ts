@@ -84,7 +84,8 @@ export const parseImport = async (
       summary.config = {
         lifecycle_states: data.config.lifecycle_states.length,
         teams: data.config.teams.length,
-        roles: data.config.roles.length
+        roles: data.config.roles.length,
+        capability_configurations: data.config.capability_configurations?.length ?? 0
       };
       conflicts.push(...configResult.conflicts);
       warnings.push(...configResult.warnings);

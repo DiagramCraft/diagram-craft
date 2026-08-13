@@ -26,6 +26,22 @@
   border-bottom: 1px solid var(--panel-border);
 }
 
+.capabilityHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+}
+
+.capabilityToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: var(--base-fg-dim);
+  font-size: 11px;
+  white-space: nowrap;
+}
+
 .sectionTitle {
   color: var(--base-fg);
   font-size: 13.5px;
@@ -58,4 +74,12 @@
 
 .fieldRight {
   min-width: 0;
+}
+
+.capabilityUnknownFields {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--warning-fg);
+  font-size: 11px;
 }

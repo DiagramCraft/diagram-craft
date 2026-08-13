@@ -23,7 +23,11 @@ import {
   listAssessmentTypes,
   replaceAssessmentTypes,
   listSupportedCurrencies,
-  replaceSupportedCurrencies
+  replaceSupportedCurrencies,
+  listWorkspaceCapabilityConfigurations,
+  getWorkspaceCapabilityConfiguration,
+  upsertWorkspaceCapabilityConfiguration,
+  deleteWorkspaceCapabilityConfiguration
 } from './workspaceConfigOperations';
 import { workspaceConfigContract } from '@arch-register/api-types/workspaceConfigContract';
 import { createApiToken, listApiTokens, revokeApiToken } from '../auth/apiTokenOperations';
@@ -39,6 +43,46 @@ const configRouter = implement(workspaceConfigContract)
 
 export const workspaceConfigORPCRouter = configRouter.router({
   config: {
+    capabilityConfigurations: {
+      list: configRouter.config.capabilityConfigurations.list.handler(
+        async ({ input, context }) => {
+          return await listWorkspaceCapabilityConfigurations(
+            context.db,
+            input.params.workspace,
+            context.event
+          );
+        }
+      ),
+      get: configRouter.config.capabilityConfigurations.get.handler(async ({ input, context }) => {
+        return await getWorkspaceCapabilityConfiguration(
+          context.db,
+          input.params.workspace,
+          input.params.type,
+          context.event
+        );
+      }),
+      upsert: configRouter.config.capabilityConfigurations.upsert.handler(
+        async ({ input, context }) => {
+          return await upsertWorkspaceCapabilityConfiguration(
+            context.db,
+            input.params.workspace,
+            input.params.type,
+            input.body,
+            context.event
+          );
+        }
+      ),
+      remove: configRouter.config.capabilityConfigurations.remove.handler(
+        async ({ input, context }) => {
+          return await deleteWorkspaceCapabilityConfiguration(
+            context.db,
+            input.params.workspace,
+            input.params.type,
+            context.event
+          );
+        }
+      )
+    },
     lifecycleStates: {
       list: configRouter.config.lifecycleStates.list.handler(async ({ input, context }) => {
         return await listLifecycleStates(context.db, input.params.workspace, context.event);

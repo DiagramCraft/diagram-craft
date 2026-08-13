@@ -538,11 +538,6 @@ export const seedSchemas: SchemaDbResult[] = (
           maxCount: -1
         }
       ],
-      entity_capabilities: [
-        {
-          type: 'api-specification'
-        }
-      ],
       color: AR_COLOR_BLUE,
       icon: 'api',
       default_owner: null,

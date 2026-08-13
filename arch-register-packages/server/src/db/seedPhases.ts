@@ -4,7 +4,8 @@ import type { GlobalRoleAssignmentDbResult, UserDbCreate } from '../domain/auth/
 import type {
   MemberDbResult,
   TeamMembershipDbResult,
-  WorkspaceDbResult
+  WorkspaceDbResult,
+  WorkspaceCapabilityConfigurationDbCreate
 } from '../domain/workspace/db/workspaceDatabase';
 import type { DatabaseAdapter } from './database';
 import { seedAiConfig } from './seedData/ai';
@@ -26,6 +27,7 @@ import {
   seedSharedFieldGroups,
   seedSupportedCurrencies
 } from './seedData/catalog';
+import { WORKSPACE_ID } from './seedData/constants';
 import { seedSavedViews } from './seedData/views';
 import { seededTestPassword } from './seedFixtures';
 import { hashPassword } from '../utils/password';
@@ -154,7 +156,6 @@ export const seedCatalogDefinitions = async (
         templates: createdSchema.templates ?? [],
         groups: createdSchema.groups ?? [],
         shared_field_group_links: createdSchema.shared_field_group_links ?? [],
-        entity_capabilities: createdSchema.entity_capabilities ?? [],
         validation_rules: createdSchema.validation_rules ?? [],
         color: createdSchema.color,
         icon: createdSchema.icon,
@@ -168,6 +169,26 @@ export const seedCatalogDefinitions = async (
         createdSchema.id,
         createdSchema.created_at
       );
+    }
+
+    const apiSchema = await db.catalog.getSchema(
+      WORKSPACE_ID,
+      '00000000-0000-0000-0000-000000000004'
+    );
+    if (apiSchema) {
+      const capabilityConfiguration: WorkspaceCapabilityConfigurationDbCreate = {
+        id: '00000000-0000-0000-0000-000000000007',
+        workspace: WORKSPACE_ID,
+        type: 'api-specification',
+        bindings: {
+          api: {
+            target: { kind: 'entity_schema', id: apiSchema.id }
+          }
+        },
+        created_at: apiSchema.created_at,
+        updated_at: apiSchema.updated_at
+      };
+      await db.workspace.upsertWorkspaceCapabilityConfiguration(capabilityConfiguration);
     }
   }
 };

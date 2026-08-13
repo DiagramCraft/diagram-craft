@@ -19,15 +19,11 @@ const suggestedResolutions = (parseResult: {
   );
 
 test.describe('workspace export/import', () => {
-  test('exports and imports schema capability field mappings', async ({ orpc, server }) => {
+  test('exports and imports workspace capability field mappings', async ({ orpc, server }) => {
     const suffix = randomUUID();
     const source = await orpc.workspaces.create({
       body: { name: `Capability mapping source ${suffix}`, badge: 'CMS' }
     });
-    const mapping = {
-      type: 'api-specification' as const,
-      fieldMappings: { api_type: 'protocol_kind', api_version: 'contract_version' }
-    };
     const schema = await orpc.schemas.create({
       params: { workspace: source.url_slug },
       body: {
@@ -35,13 +31,23 @@ test.describe('workspace export/import', () => {
         fields: [
           { id: 'protocol_kind', name: 'Protocol kind', type: 'text' },
           { id: 'contract_version', name: 'Contract version', type: 'text' }
-        ],
-        entity_capabilities: [mapping]
+        ]
+      }
+    });
+    await orpc.config.capabilityConfigurations.upsert({
+      params: { workspace: source.url_slug, type: 'api-specification' },
+      body: {
+        bindings: {
+          api: {
+            target: { kind: 'entity_schema', id: schema.id },
+            fieldMappings: { api_type: 'protocol_kind', api_version: 'contract_version' }
+          }
+        }
       }
     });
     const archive = await orpc.workspaces.export({
       params: { workspace: source.url_slug },
-      body: { include: ['schemas'], options: { include_content: false } }
+      body: { include: ['config', 'schemas'], options: { include_content: false } }
     });
     const target = await orpc.workspaces.create({
       body: { name: `Capability mapping target ${suffix}`, badge: 'CMT' }
@@ -59,7 +65,7 @@ test.describe('workspace export/import', () => {
       params: { workspace: target.url_slug },
       body: {
         import_id: (parsed as any).import_id,
-        include: ['schemas'],
+        include: ['config', 'schemas'],
         conflict_resolutions: suggestedResolutions(parsed as any),
         options: { preserve_ids: false, update_references: true }
       }
@@ -69,7 +75,156 @@ test.describe('workspace export/import', () => {
     const imported = (await server.db.catalog.listSchemas(target.id)).find(
       item => item.name === schema.name
     );
-    expect(imported?.entity_capabilities).toEqual([mapping]);
+    expect(imported).toBeDefined();
+    await expect(
+      server.db.workspace.getWorkspaceCapabilityConfiguration(target.id, 'api-specification')
+    ).resolves.toMatchObject({
+      bindings: {
+        api: {
+          target: { kind: 'entity_schema', id: imported?.id },
+          fieldMappings: { api_type: 'protocol_kind', api_version: 'contract_version' }
+        }
+      }
+    });
+  });
+
+  test('exports and imports workspace capability bindings with remapped targets', async ({
+    orpc,
+    server
+  }) => {
+    const suffix = randomUUID();
+    const source = await orpc.workspaces.create({
+      body: { name: `Workspace capability source ${suffix}`, badge: 'WCS' }
+    });
+    const schema = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: {
+        name: `Workspace API schema ${suffix}`,
+        fields: [
+          { id: 'protocol_kind', name: 'Protocol kind', type: 'text' },
+          { id: 'contract_version', name: 'Contract version', type: 'text' }
+        ]
+      }
+    });
+    await orpc.config.capabilityConfigurations.upsert({
+      params: { workspace: source.url_slug, type: 'api-specification' },
+      body: {
+        bindings: {
+          api: {
+            target: { kind: 'entity_schema', id: schema.id },
+            fieldMappings: {
+              api_type: 'protocol_kind',
+              api_version: 'contract_version'
+            }
+          }
+        }
+      }
+    });
+
+    const archive = await orpc.workspaces.export({
+      params: { workspace: source.url_slug },
+      body: {
+        include: ['config', 'schemas'],
+        options: { include_content: false }
+      }
+    });
+    const target = await orpc.workspaces.create({
+      body: { name: `Workspace capability target ${suffix}`, badge: 'WCT' }
+    });
+    const parsed = await orpc.workspaces.importParse({
+      params: { workspace: target.url_slug },
+      body: {
+        file: new File([archive.body as Blob], 'workspace-capability-export.zip', {
+          type: 'application/zip'
+        })
+      }
+    });
+    expect(parsed.valid).toBe(true);
+    expect(parsed.summary.config).toMatchObject({ capability_configurations: 1 });
+
+    const execute = await orpc.workspaces.importExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        import_id: (parsed as any).import_id,
+        include: ['config', 'schemas'],
+        conflict_resolutions: suggestedResolutions(parsed as any),
+        options: { preserve_ids: false, update_references: true }
+      }
+    });
+    expect(execute.success).toBe(true);
+    expect(execute.imported.config).toMatchObject({ capability_configurations: 1 });
+
+    const importedSchema = (await server.db.catalog.listSchemas(target.id)).find(
+      item => item.name === schema.name
+    );
+    const importedConfiguration = await server.db.workspace.getWorkspaceCapabilityConfiguration(
+      target.id,
+      'api-specification'
+    );
+    expect(importedConfiguration).toMatchObject({
+      bindings: {
+        api: {
+          target: { kind: 'entity_schema', id: importedSchema?.id },
+          fieldMappings: { api_type: 'protocol_kind', api_version: 'contract_version' }
+        }
+      }
+    });
+  });
+
+  test('replicates workspace capability bindings with remapped schema targets', async ({
+    orpc,
+    server
+  }) => {
+    const suffix = randomUUID();
+    const source = await orpc.workspaces.create({
+      body: { name: `Workspace capability replication source ${suffix}`, badge: 'WRS' }
+    });
+    const schema = await orpc.schemas.create({
+      params: { workspace: source.url_slug },
+      body: {
+        name: `Replicated API schema ${suffix}`,
+        fields: [
+          { id: 'protocol_kind', name: 'Protocol kind', type: 'text' },
+          { id: 'contract_version', name: 'Contract version', type: 'text' }
+        ]
+      }
+    });
+    await orpc.config.capabilityConfigurations.upsert({
+      params: { workspace: source.url_slug, type: 'api-specification' },
+      body: {
+        bindings: {
+          api: {
+            target: { kind: 'entity_schema', id: schema.id },
+            fieldMappings: { api_type: 'protocol_kind', api_version: 'contract_version' }
+          }
+        }
+      }
+    });
+
+    const target = await orpc.workspaces.create({
+      body: {
+        name: `Workspace capability replication target ${suffix}`,
+        badge: 'WRT',
+        replicate_from: source.id,
+        include: ['schemas', 'settings']
+      }
+    });
+    const targetSchema = (await server.db.catalog.listSchemas(target.id)).find(
+      item => item.name === schema.name
+    );
+    const targetConfiguration = await server.db.workspace.getWorkspaceCapabilityConfiguration(
+      target.id,
+      'api-specification'
+    );
+
+    expect(targetConfiguration).toMatchObject({
+      bindings: {
+        api: {
+          target: { kind: 'entity_schema', id: targetSchema?.id },
+          fieldMappings: { api_type: 'protocol_kind', api_version: 'contract_version' }
+        }
+      }
+    });
   });
 
   test('exports and imports typed relation schemas and remapped relation endpoints', async ({

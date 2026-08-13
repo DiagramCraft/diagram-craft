@@ -10,7 +10,7 @@ import type {
   ExportRelationSchema,
   ExportSchema
 } from './exportTypes';
-import { entityCapabilitySchema } from '@arch-register/api-types/entityCapabilityContract';
+import { workspaceCapabilityBindingsSchema } from '@arch-register/api-types/workspaceCapabilityContract';
 
 const exportDataTypeSchema = z.enum([
   'config',
@@ -105,6 +105,15 @@ const exportConfigSchema = z.object({
   ),
   project_entity_types: z
     .array(z.object({ id: z.string(), label: z.string(), sort_order: z.number().int() }))
+    .optional(),
+  capability_configurations: z
+    .array(
+      z.object({
+        id: z.string(),
+        type: z.string(),
+        bindings: workspaceCapabilityBindingsSchema
+      })
+    )
     .optional()
 });
 
@@ -124,7 +133,6 @@ const exportSchemaSchema = z
     name: z.string(),
     category: z.string().nullable().optional(),
     fields: z.array(z.unknown()),
-    entity_capabilities: z.array(entityCapabilitySchema).optional(),
     groups: z.array(z.unknown()).optional(),
     shared_field_group_links: z.array(z.unknown()).optional(),
     shared_field_groups: z.array(sharedFieldGroupSchema).optional(),

@@ -100,6 +100,27 @@ test.describe('workspace routes', () => {
     );
   });
 
+  test('POST /api/workspaces materializes template capability configurations', async ({
+    server,
+    orpc
+  }) => {
+    const created = await orpc.workspaces.create({
+      body: { name: 'Default Capability Template Workspace', template: 'default' }
+    });
+    const schemas = await server.db.catalog.listSchemas(created.id);
+    const api = schemas.find(schema => schema.name === 'API');
+    const configuration = await server.db.workspace.getWorkspaceCapabilityConfiguration(
+      created.id,
+      'api-specification'
+    );
+
+    expect(configuration).toMatchObject({
+      workspace: created.id,
+      type: 'api-specification',
+      bindings: { api: { target: { kind: 'entity_schema', id: api?.id } } }
+    });
+  });
+
   test('POST /api/workspaces applies a template dashboard layout', async ({ server, orpc }) => {
     const created = await orpc.workspaces.create({
       body: { name: 'Risk Dashboard Workspace', template: 'risk-compliance' }

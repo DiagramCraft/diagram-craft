@@ -1,6 +1,4 @@
 -- #2826: generic functionality-driving artifact lifecycle.
-ALTER TABLE entity_schema ADD COLUMN entity_capabilities TEXT NOT NULL DEFAULT '[]';
-ALTER TABLE entity_schema_version ADD COLUMN entity_capabilities TEXT NOT NULL DEFAULT '[]';
 
 CREATE TABLE catalog_artifact (
   id                    TEXT PRIMARY KEY,

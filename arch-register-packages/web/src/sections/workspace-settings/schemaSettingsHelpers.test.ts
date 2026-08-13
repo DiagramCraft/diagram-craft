@@ -1,10 +1,8 @@
 import { describe, expect, it } from 'vitest';
-import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import type { EntityTemplate, SchemaField } from '@arch-register/api-types/schemaContract';
 import {
   createSchemaFieldForType,
   removeTemplateField,
-  updateCapabilityFieldMappingId,
   updateTemplateFieldId
 } from './schemaSettingsHelpers';
 import { buildFieldMigrations, firstRemainingId } from './schemaEditorState';
@@ -67,18 +65,6 @@ describe('schema settings helpers', () => {
     ]);
     expect(removeTemplateField(original, 'old_id')).toEqual([template({ keep: 'other' })]);
     expect(original).toEqual([template({ old_id: 'value', keep: 'other' })]);
-  });
-
-  it('keeps capability mappings aligned when a default field is renamed', () => {
-    const capabilities: EntityCapability[] = [{ type: 'api-specification' }];
-
-    expect(updateCapabilityFieldMappingId(capabilities, 'api_type', 'protocol_kind')).toEqual([
-      {
-        type: 'api-specification',
-        fieldMappings: { api_type: 'protocol_kind' }
-      }
-    ]);
-    expect(capabilities).toEqual([{ type: 'api-specification' }]);
   });
 
   it('serializes remove, rename, and archive migration choices', () => {

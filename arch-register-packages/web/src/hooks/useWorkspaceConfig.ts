@@ -5,6 +5,7 @@ import type {
   SupportedCurrency,
   AssessmentType
 } from '@arch-register/api-types/workspaceConfigContract';
+import type { WorkspaceCapabilityConfigurationInput } from '@arch-register/api-types/workspaceCapabilityContract';
 import { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import { orpcClient } from '../lib/orpcClient';
 import {
@@ -16,6 +17,7 @@ import {
   setWorkspaceConfigCache,
   teamAssignmentsQuery,
   teamsQuery,
+  workspaceCapabilityConfigurationsQuery,
   workspaceConfigKeys as workspaceConfigKeysFromQueries
 } from '../queries/workspaceConfig';
 
@@ -119,6 +121,50 @@ export const useUpdateAssessmentTypes = (workspaceId: string) => {
 
 export const useSupportedCurrencies = (workspaceSlug: string, enabled = true) =>
   useQuery(currenciesQuery(workspaceSlug, enabled));
+
+export const useWorkspaceCapabilityConfigurations = (workspaceSlug: string, enabled = true) =>
+  useQuery(workspaceCapabilityConfigurationsQuery(workspaceSlug, enabled));
+
+export const useUpdateWorkspaceCapabilityConfiguration = (workspaceId: string, type: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: WorkspaceCapabilityConfigurationInput) =>
+      orpcClient.config.capabilityConfigurations.upsert({
+        params: { workspace: workspaceId, type },
+        body: input
+      }),
+    onSuccess: value => {
+      const current = queryClient.getQueryData(
+        workspaceConfigKeys.capabilityConfigurations(workspaceId)
+      ) as (typeof value)[] | undefined;
+      setWorkspaceConfigCache(
+        queryClient,
+        workspaceConfigKeys.capabilityConfigurations(workspaceId),
+        [...(current ?? []).filter(configuration => configuration.type !== value.type), value]
+      );
+    }
+  });
+};
+
+export const useDeleteWorkspaceCapabilityConfiguration = (workspaceId: string, type: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: () =>
+      orpcClient.config.capabilityConfigurations.remove({
+        params: { workspace: workspaceId, type }
+      }),
+    onSuccess: () => {
+      const current = queryClient.getQueryData(
+        workspaceConfigKeys.capabilityConfigurations(workspaceId)
+      ) as Array<{ type: string }> | undefined;
+      setWorkspaceConfigCache(
+        queryClient,
+        workspaceConfigKeys.capabilityConfigurations(workspaceId),
+        (current ?? []).filter(configuration => configuration.type !== type)
+      );
+    }
+  });
+};
 
 export const useUpdateSupportedCurrencies = (workspaceId: string) => {
   const queryClient = useQueryClient();

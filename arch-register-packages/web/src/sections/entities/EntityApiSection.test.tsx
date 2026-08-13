@@ -1,7 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
-import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
+import type { WorkspaceCapabilityBinding } from '@arch-register/api-types/workspaceCapabilityContract';
 import type { ApiSpecificationItem, Artifact } from '@arch-register/api-types/artifactContract';
 
 const mocks = vi.hoisted(() => ({
@@ -187,7 +187,7 @@ const renderApi = (
   entity: EntityRecord,
   artifact: Artifact | undefined,
   projection: ReturnType<typeof makeProjection> | undefined,
-  entityCapability?: EntityCapability
+  capabilityBinding?: WorkspaceCapabilityBinding
 ) => {
   mocks.artifacts.mockReturnValue({
     data: { artifacts: artifact ? [artifact] : [], status: artifact?.status ?? 'not_configured' },
@@ -218,7 +218,7 @@ const renderApi = (
     <EntityApiSection
       workspaceId="workspace-1"
       entity={entity}
-      entityCapability={entityCapability}
+      capabilityBinding={capabilityBinding}
       outgoing={[]}
       incoming={[]}
       search={{ tab: 'api' }}
@@ -359,8 +359,8 @@ describe('EntityApiSection', () => {
   });
 
   it('reads metadata and chooses the projection kind from mapped fields', () => {
-    const capability: EntityCapability = {
-      type: 'api-specification',
+    const capabilityBinding: WorkspaceCapabilityBinding = {
+      target: { kind: 'entity_schema', id: 'schema-1' },
       fieldMappings: {
         api_type: 'protocol_kind',
         api_version: 'contract_version'
@@ -377,7 +377,7 @@ describe('EntityApiSection', () => {
           action: 'publish'
         })
       ]),
-      capability
+      capabilityBinding
     );
 
     expect(markup).toContain('asyncapi');

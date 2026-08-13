@@ -203,6 +203,20 @@ describe('instantiateTemplate', () => {
     );
   });
 
+  it('materializes the API capability as a workspace configuration', () => {
+    const definitions = instantiateTemplateDefinitions('ws-1', 'default');
+    const api = definitions.schemas.find(schema => schema.name === 'API');
+
+    expect(definitions.capabilityConfigurations).toEqual([
+      {
+        type: 'api-specification',
+        bindings: {
+          api: { target: { kind: 'entity_schema', id: api?.id } }
+        }
+      }
+    ]);
+  });
+
   it('seeds the reusable PII classification fieldgroup for the default catalog', () => {
     const definitions = instantiateTemplateDefinitions('ws-1', 'default');
     const fieldGroup = definitions.fieldGroups.find(group => group.name === 'PII Classification');

@@ -11,6 +11,11 @@ import {
   apiTokenCreateSchema,
   apiTokenCreatedSchema
 } from '@arch-register/api-types/apiTokenContract';
+import {
+  workspaceCapabilityConfigurationInputSchema,
+  workspaceCapabilityConfigurationSchema,
+  workspaceCapabilityTypeSchema
+} from '@arch-register/api-types/workspaceCapabilityContract';
 
 const timestampOutputSchema = z
   .union([z.string(), z.date()])
@@ -186,6 +191,67 @@ const pickerSearchQuerySchema = z.object({
 
 export const workspaceConfigContract = oc.tag('Workspace Config').router({
   config: {
+    capabilityConfigurations: {
+      list: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/capability-configurations',
+          inputStructure: 'detailed',
+          summary: 'List workspace capability configurations',
+          description:
+            'Lists integration-backed capability configurations that bind functionality to workspace model objects.',
+          tags: ['Workspace Config']
+        })
+        .input(z.object({ params: ws }))
+        .output(z.array(workspaceCapabilityConfigurationSchema)),
+      get: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/config/capability-configurations/{type}',
+          inputStructure: 'detailed',
+          summary: 'Get a workspace capability configuration',
+          description: 'Retrieves one capability configuration by its integration type.',
+          tags: ['Workspace Config']
+        })
+        .input(
+          z.object({
+            params: ws.extend({ type: workspaceCapabilityTypeSchema })
+          })
+        )
+        .output(workspaceCapabilityConfigurationSchema),
+      upsert: oc
+        .route({
+          method: 'PUT',
+          path: '/{workspace}/config/capability-configurations/{type}',
+          inputStructure: 'detailed',
+          summary: 'Save a workspace capability configuration',
+          description:
+            'Creates or replaces one integration-backed capability configuration for the workspace.',
+          tags: ['Workspace Config']
+        })
+        .input(
+          z.object({
+            params: ws.extend({ type: workspaceCapabilityTypeSchema }),
+            body: workspaceCapabilityConfigurationInputSchema
+          })
+        )
+        .output(workspaceCapabilityConfigurationSchema),
+      remove: oc
+        .route({
+          method: 'DELETE',
+          path: '/{workspace}/config/capability-configurations/{type}',
+          inputStructure: 'detailed',
+          summary: 'Delete a workspace capability configuration',
+          description: 'Removes one integration-backed capability configuration.',
+          tags: ['Workspace Config']
+        })
+        .input(
+          z.object({
+            params: ws.extend({ type: workspaceCapabilityTypeSchema })
+          })
+        )
+        .output(workspaceCapabilityConfigurationSchema)
+    },
     lifecycleStates: {
       list: oc
         .route({

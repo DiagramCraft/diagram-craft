@@ -13,8 +13,11 @@ import type {
   WorkspaceEnumDbCreate
 } from '../../db/database';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
-import type { EntityCapability } from '@arch-register/api-types/entityCapabilityContract';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
+import type {
+  WorkspaceCapabilityBindings,
+  WorkspaceCapabilityTargetKind
+} from '@arch-register/api-types/workspaceCapabilityContract';
 import type {
   DocumentTemplateDbCreate,
   DocumentTypeDbCreate
@@ -72,7 +75,6 @@ export type TemplateSchema = {
   icon: string;
   fields: SymbolicField[];
   sharedFieldGroupIds?: string[];
-  entityCapabilities?: EntityCapability[];
 };
 
 export type SymbolicEnum = {
@@ -130,6 +132,20 @@ export type SchemaTemplate = {
   documentTypes: SymbolicDocumentType[];
   documentTemplates: SymbolicDocumentTemplate[];
   dashboardWidgets?: SymbolicDashboardWidget[];
+  capabilityConfigurations?: SymbolicCapabilityConfiguration[];
+};
+
+export type SymbolicCapabilityConfiguration = {
+  type: string;
+  bindings: Record<string, SymbolicCapabilityBinding>;
+};
+
+export type SymbolicCapabilityBinding = {
+  target: {
+    kind: WorkspaceCapabilityTargetKind;
+    symId: string;
+  };
+  fieldMappings?: Record<string, string>;
 };
 
 export type SymbolicFieldGroup = {
@@ -673,11 +689,6 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           apiParticipationField('providers', 'Providers', 'provides-api', 'out'),
           apiParticipationField('consumers', 'Consumers', 'consumes-api', 'out')
         ],
-        entityCapabilities: [
-          {
-            type: 'api-specification'
-          }
-        ],
         sharedFieldGroupIds: ['pii-classification']
       },
       {
@@ -768,7 +779,17 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       }
     ],
     documentTypes: commonDocumentTypes,
-    documentTemplates: commonDocumentTemplates
+    documentTemplates: commonDocumentTemplates,
+    capabilityConfigurations: [
+      {
+        type: 'api-specification',
+        bindings: {
+          api: {
+            target: { kind: 'entity_schema', symId: 'api' }
+          }
+        }
+      }
+    ]
   },
   {
     id: 'backstage',
@@ -824,11 +845,6 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           { id: 'api_version', name: 'API Version', type: 'text' },
           apiParticipationField('providers', 'Providers', 'provides-api', 'out'),
           apiParticipationField('consumers', 'Consumers', 'consumes-api', 'out')
-        ],
-        entityCapabilities: [
-          {
-            type: 'api-specification'
-          }
         ]
       },
       {
@@ -879,7 +895,17 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     enums: backstageEnums,
     relationSchemas: apiParticipationRelationSchemas,
     documentTypes: commonDocumentTypes,
-    documentTemplates: commonDocumentTemplates
+    documentTemplates: commonDocumentTemplates,
+    capabilityConfigurations: [
+      {
+        type: 'api-specification',
+        bindings: {
+          api: {
+            target: { kind: 'entity_schema', symId: 'api' }
+          }
+        }
+      }
+    ]
   },
   {
     id: 'c4',
@@ -1788,6 +1814,10 @@ export type InstantiatedTemplate = {
   documentTypes: DocumentTypeDbCreate[];
   documentTemplates: DocumentTemplateDbCreate[];
   dashboardWidgets: DashboardWidget[];
+  capabilityConfigurations: Array<{
+    type: string;
+    bindings: WorkspaceCapabilityBindings;
+  }>;
 };
 
 export const instantiateTemplateDefinitions = (
@@ -1804,7 +1834,8 @@ export const instantiateTemplateDefinitions = (
       relationSchemas: [],
       documentTypes: [],
       documentTemplates: [],
-      dashboardWidgets: []
+      dashboardWidgets: [],
+      capabilityConfigurations: []
     };
   }
 
@@ -1820,6 +1851,20 @@ export const instantiateTemplateDefinitions = (
   for (const documentType of template.documentTypes) {
     documentTypeIdMap.set(documentType.id, randomUUID());
   }
+
+  const resolveCapabilityTargetId = (target: {
+    kind: WorkspaceCapabilityTargetKind;
+    symId: string;
+  }) => {
+    switch (target.kind) {
+      case 'entity_schema':
+        return idMap.get(target.symId);
+      case 'relation_schema':
+        return relationSchemaIdMap.get(target.symId);
+      case 'document_type':
+        return documentTypeIdMap.get(target.symId);
+    }
+  };
 
   const fieldGroupIdMap = new Map<string, string>();
   for (const fieldGroup of template.fieldGroups ?? []) {
@@ -1927,7 +1972,6 @@ export const instantiateTemplateDefinitions = (
       shared_field_group_links: (schema.sharedFieldGroupIds ?? []).map(id => ({
         groupId: fieldGroupIdMap.get(id) ?? id
       })),
-      entity_capabilities: schema.entityCapabilities ?? [],
       default_owner: null,
       created_at: now,
       updated_at: now
@@ -1999,6 +2043,22 @@ export const instantiateTemplateDefinitions = (
     })
   );
 
+  const capabilityConfigurations = (template.capabilityConfigurations ?? []).map(configuration => {
+    const bindings = Object.fromEntries(
+      Object.entries(configuration.bindings).map(([bindingId, binding]) => [
+        bindingId,
+        {
+          ...binding,
+          target: {
+            kind: binding.target.kind,
+            id: resolveCapabilityTargetId(binding.target) ?? binding.target.symId
+          }
+        }
+      ])
+    ) as WorkspaceCapabilityBindings;
+    return { type: configuration.type, bindings };
+  });
+
   return {
     schemas,
     enums,
@@ -2006,7 +2066,8 @@ export const instantiateTemplateDefinitions = (
     relationSchemas,
     documentTypes,
     documentTemplates,
-    dashboardWidgets: resolveTemplateDashboardWidgets(template.dashboardWidgets ?? [], idMap)
+    dashboardWidgets: resolveTemplateDashboardWidgets(template.dashboardWidgets ?? [], idMap),
+    capabilityConfigurations
   };
 };
 

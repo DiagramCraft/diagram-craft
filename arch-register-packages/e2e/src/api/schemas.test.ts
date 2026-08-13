@@ -380,41 +380,6 @@ test.describe('schema routes', () => {
     });
   });
 
-  test('schema capability field mappings round-trip and are stored in version history', async ({
-    orpc
-  }) => {
-    const mapping = {
-      type: 'api-specification' as const,
-      fieldMappings: { api_type: 'protocol_kind', api_version: 'contract_version' }
-    };
-    const created = await orpc.schemas.create({
-      params: { workspace: 'default' },
-      body: {
-        name: 'Mapped Capability Schema',
-        fields: [
-          { id: 'protocol_kind', name: 'Protocol kind', type: 'text' },
-          { id: 'contract_version', name: 'Contract version', type: 'text' }
-        ],
-        entity_capabilities: [mapping]
-      }
-    });
-    expect(created.entity_capabilities).toEqual([mapping]);
-
-    const updated = await orpc.schemas.update({
-      params: { workspace: 'default', id: created.id },
-      body: { name: 'Mapped Capability Schema Updated' }
-    });
-    expect(updated.entity_capabilities).toEqual([mapping]);
-
-    const versions = await orpc.schemas.listVersions({
-      params: { workspace: 'default', id: created.id }
-    });
-    expect(versions[0]).toMatchObject({
-      version: 2,
-      entity_capabilities: [mapping]
-    });
-  });
-
   test('PUT /api/:workspace/schemas/:id returns 404 for an unknown schema id', async ({ orpc }) => {
     await expect(
       orpc.schemas.update({

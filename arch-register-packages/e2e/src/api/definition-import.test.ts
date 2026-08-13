@@ -242,6 +242,65 @@ test.describe('definition import', () => {
     );
   });
 
+  test('imports a built-in API capability with its API schema binding', async ({
+    orpc,
+    server
+  }) => {
+    const target = await orpc.workspaces.create({ body: { name: 'API Capability Import Target' } });
+    const sources = await orpc.workspaces.definitionImportSources({
+      params: { workspace: target.url_slug }
+    });
+    const builtin = sources.find(source => source.kind === 'builtin' && source.id === 'default')!;
+    const apiSchema = builtin.schemas.find(schema => schema.name === 'API')!;
+    const selection = {
+      schemas: [apiSchema.id],
+      enums: [],
+      documentTypes: [],
+      relationSchemas: [],
+      fieldGroups: [],
+      dashboard: false
+    };
+
+    const preview = await orpc.workspaces.definitionImportPreview({
+      params: { workspace: target.url_slug },
+      body: { source: { kind: 'builtin', id: builtin.id }, selection }
+    });
+
+    await orpc.workspaces.definitionImportExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        source: preview.source,
+        selection: preview.selection,
+        schemas: preview.schemas,
+        enums: preview.enums,
+        documentTypes: preview.documentTypes,
+        relationSchemas: preview.relationSchemas,
+        fieldGroups: preview.fieldGroups,
+        dashboardWidgets: preview.dashboardWidgets,
+        keyPrefixRemaps: preview.keyPrefixRemaps,
+        fingerprint: preview.fingerprint,
+        confirmed: true
+      }
+    });
+
+    const importedApi = (await server.db.catalog.listSchemas(target.id)).find(
+      schema => schema.name === 'API'
+    );
+    const configurations = await server.db.workspace.listWorkspaceCapabilityConfigurations(
+      target.id
+    );
+    expect(configurations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          type: 'api-specification',
+          bindings: {
+            api: { target: { kind: 'entity_schema', id: importedApi?.id } }
+          }
+        })
+      ])
+    );
+  });
+
   test('imports a relation schema and field group with their dependencies', async ({
     orpc,
     server

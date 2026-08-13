@@ -279,7 +279,6 @@ export const updateWorkspaceSharedFieldGroup = async (
             templates: row.templates ?? [],
             groups: row.groups ?? [],
             shared_field_group_links: row.shared_field_group_links ?? [],
-            entity_capabilities: row.entity_capabilities ?? [],
             color: row.color,
             icon: row.icon,
             change_summary: buildFieldChangeSummary(

@@ -133,6 +133,75 @@ test.describe('workspace config routes', () => {
     );
   });
 
+  test('configures a workspace capability against a schema and reports invalid bindings', async ({
+    orpc,
+    seededUsers: _
+  }) => {
+    const schema = await orpc.schemas.create({
+      params: { workspace: 'default' },
+      body: {
+        name: `Workspace API schema ${crypto.randomUUID()}`,
+        fields: [
+          { id: 'protocol_kind', name: 'Protocol kind', type: 'text' },
+          { id: 'contract_version', name: 'Contract version', type: 'text' }
+        ]
+      }
+    });
+
+    const configured = await orpc.config.capabilityConfigurations.upsert({
+      params: { workspace: 'default', type: 'api-specification' },
+      body: {
+        bindings: {
+          api: {
+            target: { kind: 'entity_schema', id: schema.id },
+            fieldMappings: {
+              api_type: 'protocol_kind',
+              api_version: 'contract_version'
+            }
+          }
+        }
+      }
+    });
+
+    expect(configured).toMatchObject({
+      type: 'api-specification',
+      valid: true,
+      bindings: {
+        api: {
+          target: { kind: 'entity_schema', id: schema.id },
+          fieldMappings: { api_type: 'protocol_kind', api_version: 'contract_version' }
+        }
+      },
+      diagnostics: []
+    });
+
+    const listed = await orpc.config.capabilityConfigurations.list({
+      params: { workspace: 'default' }
+    });
+    expect(listed).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: configured.id })])
+    );
+
+    await expect(
+      orpc.config.capabilityConfigurations.upsert({
+        params: { workspace: 'default', type: 'api-specification' },
+        body: {
+          bindings: {
+            api: {
+              target: { kind: 'entity_schema', id: schema.id },
+              fieldMappings: { api_type: 'missing_field', api_version: 'contract_version' }
+            }
+          }
+        }
+      })
+    ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+
+    const removed = await orpc.config.capabilityConfigurations.remove({
+      params: { workspace: 'default', type: 'api-specification' }
+    });
+    expect(removed.id).toBe(configured.id);
+  });
+
   test('PUT /api/:workspace/config/lifecycle-states replaces states and normalizes order', async ({
     orpc,
     seededUsers: _

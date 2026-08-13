@@ -16,7 +16,6 @@ const test = createApiTest({
       templates: [],
       groups: [],
       shared_field_group_links: [],
-      entity_capabilities: [{ type: 'api-specification' }],
       validation_rules: [],
       color: null,
       icon: null,
@@ -31,6 +30,16 @@ const test = createApiTest({
       '00000000-0000-0000-0000-e2e000000111',
       now
     );
+    await server.db.workspace.upsertWorkspaceCapabilityConfiguration({
+      id: '00000000-0000-0000-0000-c000000000111',
+      workspace: seedIds.workspace.default,
+      type: 'api-specification',
+      bindings: {
+        api: { target: { kind: 'entity_schema', id: '00000000-0000-0000-0000-e2e000000111' } }
+      },
+      created_at: now,
+      updated_at: now
+    });
   }
 });
 

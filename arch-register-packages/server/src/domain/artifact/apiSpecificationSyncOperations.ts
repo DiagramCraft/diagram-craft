@@ -13,7 +13,7 @@ import { requireEntityAction, requireWorkspaceCapability } from '../auth/authori
 import {
   API_SPECIFICATION_URL_REFRESH_JOB_TYPE,
   API_SPECIFICATION_URL_REFRESH_SYSTEM_IDENTITY,
-  assertEntityCapabilityForArtifact,
+  assertWorkspaceCapabilityForArtifact,
   assertSafeSourceLocation,
   enqueueApiSpecificationUrlRefresh,
   getEntityAndSchema,
@@ -116,7 +116,12 @@ const upsertArtifactSource = async (
   requestId?: string
 ) => {
   const { schema } = await getEntityAndSchema(db, workspace, entityId);
-  assertEntityCapabilityForArtifact(schema, API_SPECIFICATION_ARTIFACT_TYPE);
+  await assertWorkspaceCapabilityForArtifact(
+    db,
+    workspace,
+    schema,
+    API_SPECIFICATION_ARTIFACT_TYPE
+  );
   const location = source.location ?? null;
   assertSafeSourceLocation(source.kind, location);
   const existing = await db.artifact.getArtifactBySourceKey(

@@ -7,16 +7,14 @@ import type {
   ArtifactStatus,
   ArtifactType
 } from '@arch-register/api-types/artifactContract';
-import {
-  getEntityCapabilityDefinition,
-  resolveEntityCapabilityFieldMappings
-} from '@arch-register/api-types/integrationCatalog';
+import { resolveCapabilityFieldMappings } from '@arch-register/api-types/integrationCatalog';
 import type { DatabaseAdapter } from '../../db/database';
 import { httpAssert } from '../../utils/httpAssert';
 import { requireEntityAction, requireWorkspaceCapability } from '../auth/authorization';
 import { toApiEntity } from '../catalog/entityHelpers';
 import { enqueueOneOffJobRun } from '../jobs/jobOperations';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
+import { resolveWorkspaceCapabilityBinding } from '../workspace/workspaceCapabilityOperations';
 import type {
   ArtifactDbResult,
   ArtifactDiagnosticDb,
@@ -89,24 +87,33 @@ const requireArtifactWrite = (authCtx: AuthorizationContext, entity: EntityDbRes
   );
 };
 
-export const assertEntityCapabilityForArtifact = (
+/** Resolve and validate the workspace capability binding for an entity artifact target. */
+export const assertWorkspaceCapabilityForArtifact = async (
+  db: DatabaseAdapter,
+  workspace: string,
   schema: SchemaDbResult,
   artifactType: ArtifactType
 ) => {
-  const capability = (schema.entity_capabilities ?? []).find(item => item.type === artifactType);
-  httpAssert.present(capability, {
-    status: 409,
-    message: `Schema '${schema.name}' does not declare entity capability '${artifactType}'`
+  const resolved = await resolveWorkspaceCapabilityBinding(db, workspace, artifactType, {
+    kind: 'entity_schema',
+    id: schema.id
   });
-  const definition = getEntityCapabilityDefinition(artifactType);
-  httpAssert.present(definition, {
+  httpAssert.present(resolved, {
     status: 409,
-    message: `Entity capability '${artifactType}' is not available`
+    message: `Workspace is not configured for capability '${artifactType}' on schema '${schema.name}'`
   });
-  const resolution = resolveEntityCapabilityFieldMappings(capability, definition, schema.fields);
+  httpAssert.true(resolved!.configuration.valid, {
+    status: 409,
+    message: `Workspace capability '${artifactType}' has invalid configuration for schema '${schema.name}': ${resolved!.configuration.diagnostics.map(diagnostic => diagnostic.message).join(' ')}`
+  });
+  const resolution = resolveCapabilityFieldMappings(
+    resolved!.binding,
+    resolved!.role.fieldRoles,
+    schema.fields
+  );
   httpAssert.true(resolution.issues.length === 0, {
     status: 409,
-    message: `Schema '${schema.name}' has invalid field mappings for entity capability '${artifactType}': ${resolution.issues.map(issue => issue.message).join(' ')}`
+    message: `Workspace capability '${artifactType}' has invalid field mappings for schema '${schema.name}': ${resolution.issues.map(issue => issue.message).join(' ')}`
   });
   return resolution;
 };
@@ -276,7 +283,7 @@ export const createArtifact = async (
 ) => {
   const { entity, schema } = await getEntityAndSchema(db, workspace, entityId);
   requireArtifactWrite(authCtx, entity);
-  assertEntityCapabilityForArtifact(schema, body.artifactType);
+  await assertWorkspaceCapabilityForArtifact(db, workspace, schema, body.artifactType);
   const location = body.location ?? null;
   assertSafeSourceLocation(body.kind, location);
   const timestamp = new Date();
@@ -396,7 +403,7 @@ export const ingestArtifactRevisionInTransaction = async (
     status: 413,
     message: 'Artifact content exceeds the 2 MB limit'
   });
-  assertEntityCapabilityForArtifact(schema, artifact.artifact_type);
+  await assertWorkspaceCapabilityForArtifact(db, workspace, schema, artifact.artifact_type);
   const checksum = createHash('sha256').update(body.content, 'utf8').digest('hex');
   const existing = await db.artifact.getRevisionByChecksum(workspace, artifact.id, checksum);
   const revisionId = existing?.id ?? randomUUID();
