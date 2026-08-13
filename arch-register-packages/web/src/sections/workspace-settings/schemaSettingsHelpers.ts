@@ -83,6 +83,13 @@ export const createSchemaFieldForType = (
       };
     }
     case 'typedRelation':
-      return { ...base, type: 'typedRelation', relationSchemaId: '', direction: 'out' };
+      return {
+        ...base,
+        type: 'typedRelation',
+        relationSchemaId: '',
+        direction: 'out',
+        minCount: 0,
+        maxCount: -1
+      };
   }
 };

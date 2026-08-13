@@ -18,7 +18,9 @@ const schema = {
       type: 'typedRelation',
       requirementLevel: null,
       relationSchemaId: 'rel-1',
-      direction: 'out'
+      direction: 'out',
+      minCount: 0,
+      maxCount: -1
     },
     {
       id: 'computedValue',

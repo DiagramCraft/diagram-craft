@@ -224,6 +224,45 @@ describe('buildCreateSchemaInput', () => {
     ).toThrow('Number field min must be less than or equal to max');
   });
 
+  it('validates typed-relation cardinality without changing requirement level', () => {
+    const fields = normalizeSchemaFields([
+      {
+        id: 'dependencies',
+        name: 'Dependencies',
+        type: 'typedRelation',
+        relationSchemaId: 'relation-schema-1',
+        direction: 'out',
+        requirementLevel: 'optional',
+        minCount: 2,
+        maxCount: 3
+      }
+    ]);
+
+    expect(fields[0]).toEqual(
+      expect.objectContaining({
+        requirementLevel: 'optional',
+        minCount: 2,
+        maxCount: 3
+      })
+    );
+  });
+
+  it('rejects an invalid typed-relation cardinality range', () => {
+    expect(() =>
+      normalizeSchemaFields([
+        {
+          id: 'dependencies',
+          name: 'Dependencies',
+          type: 'typedRelation',
+          relationSchemaId: 'relation-schema-1',
+          direction: 'out',
+          minCount: 3,
+          maxCount: 2
+        }
+      ])
+    ).toThrow('minCount must be less than or equal to maxCount');
+  });
+
   it('defaults groups to an empty array when omitted', () => {
     const result = buildCreateSchemaInput('ws-1', { name: 'Application' }, new Set(), now);
     expect(result.groups).toEqual([]);
@@ -385,6 +424,15 @@ describe('normalizeEntityTemplates', () => {
       schemaId: 'parent-schema',
       minCount: 0,
       maxCount: 1
+    },
+    {
+      id: 'dependencies',
+      name: 'Dependencies',
+      type: 'typedRelation',
+      relationSchemaId: 'relation-schema-1',
+      direction: 'out',
+      minCount: 0,
+      maxCount: 1
     }
   ];
 
@@ -398,7 +446,13 @@ describe('normalizeEntityTemplates', () => {
             values: {
               owner: 'team-1',
               tags: [' vendor ', 'vendor'],
-              fields: { enabled: false, score: 4, parent: ['entity-1'], removed: 'ignored' }
+              fields: {
+                enabled: false,
+                score: 4,
+                parent: ['entity-1'],
+                dependencies: [{ note: 'prefill' }],
+                removed: 'ignored'
+              }
             }
           }
         ],
@@ -411,7 +465,12 @@ describe('normalizeEntityTemplates', () => {
         values: {
           owner: 'team-1',
           tags: ['vendor'],
-          fields: { enabled: false, score: 4, parent: ['entity-1'] }
+          fields: {
+            enabled: false,
+            score: 4,
+            parent: ['entity-1'],
+            dependencies: [{ note: 'prefill' }]
+          }
         }
       }
     ]);
@@ -427,5 +486,20 @@ describe('normalizeEntityTemplates', () => {
         fields
       )
     ).toThrow("Duplicate template name 'vendor'");
+  });
+
+  it('rejects too many typed-relation template drafts', () => {
+    expect(() =>
+      normalizeEntityTemplates(
+        [
+          {
+            id: 'default',
+            name: 'Default',
+            values: { fields: { dependencies: [{}, {}] } }
+          }
+        ],
+        fields
+      )
+    ).toThrow('allows at most 1 relation');
   });
 });

@@ -1790,7 +1790,9 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
           name: 'Depends on',
           type: 'typedRelation',
           relationSchemaId,
-          direction: 'out'
+          direction: 'out',
+          minCount: 0,
+          maxCount: -1
         }
       ]
     });
@@ -1803,6 +1805,8 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
           type: 'typedRelation',
           relationSchemaId,
           direction: 'out',
+          minCount: 0,
+          maxCount: -1,
           groupId: 'locked'
         }
       ],
@@ -2049,7 +2053,9 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
           name: 'Depends on',
           type: 'typedRelation',
           relationSchemaId,
-          direction: 'out'
+          direction: 'out',
+          minCount: 0,
+          maxCount: -1
         }
       ]
     });

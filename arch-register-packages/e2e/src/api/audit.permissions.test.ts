@@ -61,6 +61,8 @@ const test = createPermissionApiTest().extend<{
             requirementLevel: null,
             relationSchemaId,
             direction: 'in',
+            minCount: 0,
+            maxCount: -1,
             groupId: restrictedGroupId
           },
           {
@@ -70,6 +72,8 @@ const test = createPermissionApiTest().extend<{
             requirementLevel: null,
             relationSchemaId,
             direction: 'out',
+            minCount: 0,
+            maxCount: -1,
             groupId: restrictedGroupId
           }
         ],

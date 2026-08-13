@@ -940,6 +940,25 @@
                                   ],
                                   "type": "string",
                                   "description": "Which endpoint of the relation schema this entity schema occupies"
+                                },
+                                "minCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of typed relations required"
+                                },
+                                "maxCount": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of typed relations (-1 for unlimited)"
                                 }
                               },
                               "required": [
@@ -947,7 +966,9 @@
                                 "name",
                                 "type",
                                 "relationSchemaId",
-                                "direction"
+                                "direction",
+                                "minCount",
+                                "maxCount"
                               ]
                             },
                             {
@@ -2310,6 +2331,25 @@
                               ],
                               "type": "string",
                               "description": "Which endpoint of the relation schema this entity schema occupies"
+                            },
+                            "minCount": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                              "description": "Minimum number of typed relations required"
+                            },
+                            "maxCount": {
+                              "anyOf": [
+                                {
+                                  "const": -1
+                                },
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                }
+                              ],
+                              "description": "Maximum number of typed relations (-1 for unlimited)"
                             }
                           },
                           "required": [
@@ -2317,7 +2357,9 @@
                             "name",
                             "type",
                             "relationSchemaId",
-                            "direction"
+                            "direction",
+                            "minCount",
+                            "maxCount"
                           ]
                         },
                         {
@@ -3630,6 +3672,25 @@
                                 ],
                                 "type": "string",
                                 "description": "Which endpoint of the relation schema this entity schema occupies"
+                              },
+                              "minCount": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991,
+                                "description": "Minimum number of typed relations required"
+                              },
+                              "maxCount": {
+                                "anyOf": [
+                                  {
+                                    "const": -1
+                                  },
+                                  {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  }
+                                ],
+                                "description": "Maximum number of typed relations (-1 for unlimited)"
                               }
                             },
                             "required": [
@@ -3637,7 +3698,9 @@
                               "name",
                               "type",
                               "relationSchemaId",
-                              "direction"
+                              "direction",
+                              "minCount",
+                              "maxCount"
                             ]
                           },
                           {
@@ -5041,6 +5104,25 @@
                                 ],
                                 "type": "string",
                                 "description": "Which endpoint of the relation schema this entity schema occupies"
+                              },
+                              "minCount": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991,
+                                "description": "Minimum number of typed relations required"
+                              },
+                              "maxCount": {
+                                "anyOf": [
+                                  {
+                                    "const": -1
+                                  },
+                                  {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  }
+                                ],
+                                "description": "Maximum number of typed relations (-1 for unlimited)"
                               }
                             },
                             "required": [
@@ -5048,7 +5130,9 @@
                               "name",
                               "type",
                               "relationSchemaId",
-                              "direction"
+                              "direction",
+                              "minCount",
+                              "maxCount"
                             ]
                           },
                           {
@@ -6419,6 +6503,25 @@
                               ],
                               "type": "string",
                               "description": "Which endpoint of the relation schema this entity schema occupies"
+                            },
+                            "minCount": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                              "description": "Minimum number of typed relations required"
+                            },
+                            "maxCount": {
+                              "anyOf": [
+                                {
+                                  "const": -1
+                                },
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                }
+                              ],
+                              "description": "Maximum number of typed relations (-1 for unlimited)"
                             }
                           },
                           "required": [
@@ -6426,7 +6529,9 @@
                             "name",
                             "type",
                             "relationSchemaId",
-                            "direction"
+                            "direction",
+                            "minCount",
+                            "maxCount"
                           ]
                         },
                         {
@@ -7768,6 +7873,25 @@
                                 ],
                                 "type": "string",
                                 "description": "Which endpoint of the relation schema this entity schema occupies"
+                              },
+                              "minCount": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991,
+                                "description": "Minimum number of typed relations required"
+                              },
+                              "maxCount": {
+                                "anyOf": [
+                                  {
+                                    "const": -1
+                                  },
+                                  {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  }
+                                ],
+                                "description": "Maximum number of typed relations (-1 for unlimited)"
                               }
                             },
                             "required": [
@@ -7775,7 +7899,9 @@
                               "name",
                               "type",
                               "relationSchemaId",
-                              "direction"
+                              "direction",
+                              "minCount",
+                              "maxCount"
                             ]
                           },
                           {
@@ -9388,6 +9514,25 @@
                                   ],
                                   "type": "string",
                                   "description": "Which endpoint of the relation schema this entity schema occupies"
+                                },
+                                "minCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of typed relations required"
+                                },
+                                "maxCount": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of typed relations (-1 for unlimited)"
                                 }
                               },
                               "required": [
@@ -9395,7 +9540,9 @@
                                 "name",
                                 "type",
                                 "relationSchemaId",
-                                "direction"
+                                "direction",
+                                "minCount",
+                                "maxCount"
                               ]
                             },
                             {
@@ -69071,6 +69218,25 @@
                                   ],
                                   "type": "string",
                                   "description": "Which endpoint of the relation schema this entity schema occupies"
+                                },
+                                "minCount": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of typed relations required"
+                                },
+                                "maxCount": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of typed relations (-1 for unlimited)"
                                 }
                               },
                               "required": [
@@ -69078,7 +69244,9 @@
                                 "name",
                                 "type",
                                 "relationSchemaId",
-                                "direction"
+                                "direction",
+                                "minCount",
+                                "maxCount"
                               ]
                             },
                             {
@@ -70082,6 +70250,25 @@
                               ],
                               "type": "string",
                               "description": "Which endpoint of the relation schema this entity schema occupies"
+                            },
+                            "minCount": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                              "description": "Minimum number of typed relations required"
+                            },
+                            "maxCount": {
+                              "anyOf": [
+                                {
+                                  "const": -1
+                                },
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                }
+                              ],
+                              "description": "Maximum number of typed relations (-1 for unlimited)"
                             }
                           },
                           "required": [
@@ -70089,7 +70276,9 @@
                             "name",
                             "type",
                             "relationSchemaId",
-                            "direction"
+                            "direction",
+                            "minCount",
+                            "maxCount"
                           ]
                         },
                         {
@@ -71069,6 +71258,25 @@
                                 ],
                                 "type": "string",
                                 "description": "Which endpoint of the relation schema this entity schema occupies"
+                              },
+                              "minCount": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991,
+                                "description": "Minimum number of typed relations required"
+                              },
+                              "maxCount": {
+                                "anyOf": [
+                                  {
+                                    "const": -1
+                                  },
+                                  {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  }
+                                ],
+                                "description": "Maximum number of typed relations (-1 for unlimited)"
                               }
                             },
                             "required": [
@@ -71076,7 +71284,9 @@
                               "name",
                               "type",
                               "relationSchemaId",
-                              "direction"
+                              "direction",
+                              "minCount",
+                              "maxCount"
                             ]
                           },
                           {
@@ -72121,6 +72331,25 @@
                                 ],
                                 "type": "string",
                                 "description": "Which endpoint of the relation schema this entity schema occupies"
+                              },
+                              "minCount": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991,
+                                "description": "Minimum number of typed relations required"
+                              },
+                              "maxCount": {
+                                "anyOf": [
+                                  {
+                                    "const": -1
+                                  },
+                                  {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  }
+                                ],
+                                "description": "Maximum number of typed relations (-1 for unlimited)"
                               }
                             },
                             "required": [
@@ -72128,7 +72357,9 @@
                               "name",
                               "type",
                               "relationSchemaId",
-                              "direction"
+                              "direction",
+                              "minCount",
+                              "maxCount"
                             ]
                           },
                           {
@@ -73140,6 +73371,25 @@
                               ],
                               "type": "string",
                               "description": "Which endpoint of the relation schema this entity schema occupies"
+                            },
+                            "minCount": {
+                              "type": "integer",
+                              "minimum": 0,
+                              "maximum": 9007199254740991,
+                              "description": "Minimum number of typed relations required"
+                            },
+                            "maxCount": {
+                              "anyOf": [
+                                {
+                                  "const": -1
+                                },
+                                {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991
+                                }
+                              ],
+                              "description": "Maximum number of typed relations (-1 for unlimited)"
                             }
                           },
                           "required": [
@@ -73147,7 +73397,9 @@
                             "name",
                             "type",
                             "relationSchemaId",
-                            "direction"
+                            "direction",
+                            "minCount",
+                            "maxCount"
                           ]
                         },
                         {
@@ -74156,6 +74408,25 @@
                                 ],
                                 "type": "string",
                                 "description": "Which endpoint of the relation schema this entity schema occupies"
+                              },
+                              "minCount": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991,
+                                "description": "Minimum number of typed relations required"
+                              },
+                              "maxCount": {
+                                "anyOf": [
+                                  {
+                                    "const": -1
+                                  },
+                                  {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  }
+                                ],
+                                "description": "Maximum number of typed relations (-1 for unlimited)"
                               }
                             },
                             "required": [
@@ -74163,7 +74434,9 @@
                               "name",
                               "type",
                               "relationSchemaId",
-                              "direction"
+                              "direction",
+                              "minCount",
+                              "maxCount"
                             ]
                           },
                           {

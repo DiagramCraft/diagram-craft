@@ -83,7 +83,9 @@ describe('derived fields', () => {
         name: 'Contracts',
         type: 'typedRelation',
         relationSchemaId: 'system-contract',
-        direction: 'in'
+        direction: 'in',
+        minCount: 0,
+        maxCount: -1
       },
       {
         id: 'total_cost',

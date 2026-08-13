@@ -60,6 +60,8 @@ export type SymbolicField =
       type: 'typedRelation';
       symRelationSchemaId: string;
       direction: 'in' | 'out';
+      minCount: number;
+      maxCount: number;
     };
 
 export type TemplateSchema = {
@@ -171,7 +173,9 @@ const apiParticipationField = (
   name,
   type: 'typedRelation',
   symRelationSchemaId: relationSchemaId,
-  direction
+  direction,
+  minCount: 0,
+  maxCount: -1
 });
 
 const enumDefinition = (
@@ -610,7 +614,9 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             name: 'Contracts',
             type: 'typedRelation',
             symRelationSchemaId: 'system-contract',
-            direction: 'out'
+            direction: 'out',
+            minCount: 0,
+            maxCount: -1
           }
         ],
         sharedFieldGroupIds: ['pii-classification']
@@ -720,7 +726,9 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             name: 'System',
             type: 'typedRelation',
             symRelationSchemaId: 'system-contract',
-            direction: 'in'
+            direction: 'in',
+            minCount: 0,
+            maxCount: -1
           }
         ]
       },
@@ -1564,7 +1572,9 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             name: 'Mitigating Controls',
             type: 'typedRelation',
             symRelationSchemaId: 'risk-control',
-            direction: 'in'
+            direction: 'in',
+            minCount: 0,
+            maxCount: -1
           }
         ]
       },
@@ -1594,14 +1604,18 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             name: 'Mitigated Risks',
             type: 'typedRelation',
             symRelationSchemaId: 'risk-control',
-            direction: 'out'
+            direction: 'out',
+            minCount: 0,
+            maxCount: -1
           },
           {
             id: 'satisfied_requirements',
             name: 'Satisfied Requirements',
             type: 'typedRelation',
             symRelationSchemaId: 'control-requirement',
-            direction: 'in'
+            direction: 'in',
+            minCount: 0,
+            maxCount: -1
           }
         ]
       },
@@ -1641,7 +1655,9 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             name: 'Satisfying Controls',
             type: 'typedRelation',
             symRelationSchemaId: 'control-requirement',
-            direction: 'out'
+            direction: 'out',
+            minCount: 0,
+            maxCount: -1
           }
         ]
       }
@@ -1857,7 +1873,9 @@ export const instantiateTemplateDefinitions = (
         type: field.type,
         relationSchemaId:
           relationSchemaIdMap.get(field.symRelationSchemaId) ?? field.symRelationSchemaId,
-        direction: field.direction
+        direction: field.direction,
+        minCount: field.minCount,
+        maxCount: field.maxCount
       };
     }
     if (field.type === 'number') {

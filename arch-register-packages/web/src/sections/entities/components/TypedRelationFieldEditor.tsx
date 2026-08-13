@@ -85,12 +85,22 @@ export const TypedRelationFieldEditor = ({
   );
 
   const activeFields = (relationSchema?.fields ?? []).filter(f => !f.archived);
+  const activeExistingCount = existingRecords.filter(
+    record => !fieldState.remove.has(record._uid)
+  ).length;
+  const currentCount = activeExistingCount + fieldState.create.length;
+  const atMinimum = currentCount <= field.minCount;
+  const atMaximum = field.maxCount !== -1 && currentCount >= field.maxCount;
 
   return (
     // The parent .propValue is a flex row (`align-items: center`, no stretch), so without an
     // explicit width this whole editor — and each record's card border below — shrinks to fit
     // its content instead of filling the available row width.
     <div style={{ width: '100%' }}>
+      <div className={sharedStyles.dim} style={{ marginBottom: 8 }}>
+        {currentCount} relation{currentCount === 1 ? '' : 's'} · minimum {field.minCount} · maximum{' '}
+        {field.maxCount === -1 ? 'unlimited' : field.maxCount}
+      </div>
       {existingRecords.map(record => {
         const removed = fieldState.remove.has(record._uid);
         const otherEndpointInfo = direction === 'outgoing' ? record._out : record._in;
@@ -157,7 +167,11 @@ export const TypedRelationFieldEditor = ({
                 </span>
               </button>
               {!disabled && (
-                <Button variant="ghost" onClick={() => onToggleRemove(record._uid)}>
+                <Button
+                  variant="ghost"
+                  disabled={!removed && atMinimum}
+                  onClick={() => onToggleRemove(record._uid)}
+                >
                   {removed ? 'Undo' : <TbTrash size={12} />}
                 </Button>
               )}
@@ -255,7 +269,11 @@ export const TypedRelationFieldEditor = ({
             </span>
           </span>
           {!disabled && (
-            <Button variant="ghost" onClick={() => onRemoveDraft(index)}>
+            <Button
+              variant="ghost"
+              disabled={currentCount <= field.minCount}
+              onClick={() => onRemoveDraft(index)}
+            >
               <TbTrash size={12} />
             </Button>
           )}
@@ -284,7 +302,12 @@ export const TypedRelationFieldEditor = ({
             }}
           />
         ) : (
-          <Button variant="ghost" icon={<TbPlus size={11} />} onClick={() => setAdding(true)}>
+          <Button
+            variant="ghost"
+            icon={<TbPlus size={11} />}
+            disabled={atMaximum}
+            onClick={() => setAdding(true)}
+          >
             Add
           </Button>
         ))}

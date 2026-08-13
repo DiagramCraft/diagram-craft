@@ -17,7 +17,9 @@ const system: SchemaDbResult = {
       name: 'Data flows out',
       type: 'typedRelation',
       relationSchemaId: 'data-flow',
-      direction: 'out'
+      direction: 'out',
+      minCount: 0,
+      maxCount: -1
     }
   ],
   color: null,

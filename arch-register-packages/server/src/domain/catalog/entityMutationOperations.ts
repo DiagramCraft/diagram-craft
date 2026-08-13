@@ -53,7 +53,12 @@ import {
 } from '../externalMetadata/externalMetadataHelpers';
 import { assertNoDerivedFieldWrites } from '../derived/derivedFields';
 import { isTypedRelationField } from '@arch-register/api-types/schemaContract';
-import { applyRelationFieldDelta } from './relationFieldMutations';
+import {
+  applyRelationFieldDelta,
+  resolveTypedRelationFieldCardinalityChanges
+} from './relationFieldMutations';
+import { requireTypedRelationFieldEdit } from './relationAccessControl';
+import { assertTypedRelationCardinality } from './relationHelpers';
 import { withCatalogMutationTransaction } from './mutationTransaction';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
 import { assertEntityGraphValid, validateEntityGraph } from './entityValidationRules';
@@ -700,12 +705,35 @@ export const updateEntityWithPayload = async (
         const typedRelationFieldById = new Map(
           schema.fields.filter(isTypedRelationField).map(field => [field.id, field])
         );
+        const fieldDeltas: Array<{
+          field: Extract<SchemaDbResult['fields'][number], { type: 'typedRelation' }>;
+          delta: (typeof payload.relations)[string];
+        }> = [];
         for (const [fieldId, delta] of Object.entries(payload.relations)) {
           const field = typedRelationFieldById.get(fieldId);
           httpAssert.present(field, {
             status: 400,
             message: `'${fieldId}' is not a typedRelation field on schema '${schema.name}'`
           });
+          requireTypedRelationFieldEdit(authCtx, schema, field);
+          fieldDeltas.push({ field, delta });
+        }
+
+        const cardinalityChanges = (
+          await Promise.all(
+            fieldDeltas.map(({ field, delta }) =>
+              resolveTypedRelationFieldCardinalityChanges(tx, {
+                workspace,
+                ownerEntityId: oldRow.id,
+                field,
+                delta
+              })
+            )
+          )
+        ).flat();
+        await assertTypedRelationCardinality(tx, workspace, cardinalityChanges);
+
+        for (const { field, delta } of fieldDeltas) {
           await applyRelationFieldDelta(tx, {
             workspace,
             ownerEntityId: oldRow.id,
@@ -713,7 +741,8 @@ export const updateEntityWithPayload = async (
             field,
             delta,
             authCtx,
-            actor
+            actor,
+            skipTypedRelationCardinalityValidation: true
           });
         }
       }

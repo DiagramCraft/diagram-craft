@@ -122,7 +122,11 @@ const typedRelationFieldSchema = baseFieldSchema.extend({
   relationSchemaId: z.string().describe('Relation schema identifier this field surfaces'),
   direction: z
     .enum(['in', 'out'])
-    .describe('Which endpoint of the relation schema this entity schema occupies')
+    .describe('Which endpoint of the relation schema this entity schema occupies'),
+  minCount: z.number().int().min(0).describe('Minimum number of typed relations required'),
+  maxCount: z
+    .union([z.literal(-1), z.number().int().min(0)])
+    .describe('Maximum number of typed relations (-1 for unlimited)')
 });
 
 const derivedResultTypeSchema = z.enum([
@@ -199,6 +203,17 @@ export const schemaFieldInputSchema = z
         message: 'minCardinality must be less than or equal to maxCardinality'
       });
     }
+    if (
+      field.type === 'typedRelation' &&
+      field.maxCount !== -1 &&
+      field.minCount > field.maxCount
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['minCount'],
+        message: 'minCount must be less than or equal to maxCount'
+      });
+    }
   })
   .describe('Schema field definition');
 
@@ -252,6 +267,17 @@ export const schemaFieldResponseSchema = z
   .superRefine((field, ctx) => {
     const issue = assertRefreshModeRequiresExternalKind(field);
     if (issue) ctx.addIssue({ code: z.ZodIssueCode.custom, ...issue });
+    if (
+      field.type === 'typedRelation' &&
+      field.maxCount !== -1 &&
+      field.minCount > field.maxCount
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['minCount'],
+        message: 'minCount must be less than or equal to maxCount'
+      });
+    }
   })
   .describe('Schema field with resolved options');
 

@@ -49,6 +49,8 @@ const makeOwnerSchema = (restricted: boolean, createdAt: string): SchemaDbResult
     relationSchemaId: 'relation-schema-1',
     direction,
     requirementLevel: null,
+    minCount: 0,
+    maxCount: -1,
     ...(restricted ? { groupId: 'restricted' } : {})
   })) as never,
   groups: restricted

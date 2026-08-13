@@ -91,6 +91,22 @@ export const normalizeSchemaFields = (fields: unknown): InternalEntitySchema['fi
       });
     }
 
+    if (field.type === 'typedRelation') {
+      httpAssert.true(Number.isInteger(field.minCount) && field.minCount >= 0, {
+        message: `${field.name} minCount must be a non-negative integer`
+      });
+      httpAssert.true(
+        field.maxCount === -1 ||
+          (Number.isInteger(field.maxCount) && field.maxCount >= 0),
+        {
+          message: `${field.name} maxCount must be a non-negative integer or -1`
+        }
+      );
+      httpAssert.true(field.maxCount === -1 || field.minCount <= field.maxCount, {
+        message: `${field.name} minCount must be less than or equal to maxCount`
+      });
+    }
+
     if (isScalarSchemaField(field)) {
       const explicitMin = field.minCardinality ?? 0;
       if (explicitMin > 0 && field.requirementLevel !== 'required') {
@@ -185,12 +201,16 @@ const normalizeTemplateFieldValue = (
   if (isTypedRelationField(field)) {
     // No target entity ids here (unknowable ahead of instantiation) — just an array of
     // relation-instance field-value drafts to prefill once a target is chosen.
+    const drafts = Array.isArray(value) ? value : [];
     httpAssert.true(
       Array.isArray(value) &&
         value.every(item => typeof item === 'object' && item !== null && !Array.isArray(item)),
       { message: `Template value for "${field.name}" must be an array of field-value objects` }
     );
-    return value as EntityTemplate['values']['fields'][string];
+    httpAssert.true(field.maxCount === -1 || drafts.length <= field.maxCount, {
+      message: `Template value for "${field.name}" allows at most ${field.maxCount} relation(s)`
+    });
+    return drafts as EntityTemplate['values']['fields'][string];
   }
 
   if (isScalarSchemaField(field)) {
