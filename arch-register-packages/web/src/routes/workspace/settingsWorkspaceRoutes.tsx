@@ -22,6 +22,7 @@ import {
   LazyDocumentSettingsScreen,
   LazyGlobalSettingsScreen,
   LazySchemaGraphView,
+  LazySchemaValidationScreen,
   LazySchemaSettingsScreen,
   LazyWorkspaceSettingsScreen
 } from './lazyWorkspaceScreens';
@@ -227,6 +228,28 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     })
   );
 
+  const schemaValidationRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'settings/schema-validation',
+      component: LazySchemaValidationScreen
+    }),
+    ctx => ({
+      variant: 'standard',
+      activeRailItem: null,
+      breadcrumbs: buildSettingsBreadcrumbs(ctx, 'Settings', '/$workspaceSlug/settings'),
+      primarySidebar: (
+        <WorkspaceSettingsSidebar
+          workspaceSlug={ctx.workspaceSlug}
+          workspace={ctx.workspace}
+          schemas={ctx.schemas}
+          projects={ctx.projects}
+          availableSections={ctx.availableSettingsSections}
+        />
+      )
+    })
+  );
+
   const accountSettingsRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -261,6 +284,7 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     schemaSettingsRoute,
     documentSettingsRoute,
     modelOverviewRoute,
+    schemaValidationRoute,
     globalSettingsRoute,
     accountSettingsRoute,
     accountSectionRoute

@@ -16,6 +16,9 @@ export const workspaceModelRoute = (workspaceSlug: string) => `/${workspaceSlug}
 export const workspaceModelOverviewRoute = (workspaceSlug: string) =>
   `/${workspaceSlug}/settings/model-overview`;
 
+export const workspaceSchemaValidationRoute = (workspaceSlug: string) =>
+  `/${workspaceSlug}/settings/schema-validation`;
+
 export const workspaceSearchRoute = (workspaceSlug: string) => `/${workspaceSlug}/search`;
 
 export const workspaceSettingsRoute = (workspaceSlug: string, section?: string) =>
