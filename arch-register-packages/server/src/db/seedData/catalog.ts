@@ -15,7 +15,14 @@ import type {
   WorkspaceEnumDbResult
 } from '../../domain/catalog/db/catalogDatabase';
 import type { SupportedCurrencyDbResult } from '../../domain/workspace/db/workspaceDatabase';
-import { PII_FIELD_GROUP_ID, WORKSPACE2_ID, WORKSPACE_ID, now } from './constants';
+import {
+  PII_FIELD_GROUP_ID,
+  RISK_AFFECTS_RELATION_SCHEMA_ID,
+  RISK_AFFECTS_TARGET_SCHEMA_IDS,
+  WORKSPACE2_ID,
+  WORKSPACE_ID,
+  now
+} from './constants';
 
 export const seedEnums: WorkspaceEnumDbResult[] = [
   {
@@ -743,6 +750,16 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         { id: 'treatment_target_date', name: 'Treatment Target Date', type: 'date' },
         {
+          id: 'affected_entities',
+          name: 'Affected Entities',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: RISK_AFFECTS_RELATION_SCHEMA_ID,
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
+        },
+        {
           id: 'mitigating_controls',
           name: 'Mitigating Controls',
           type: 'typedRelation',
@@ -912,14 +929,36 @@ export const seedSchemas: SchemaDbResult[] = (
     }
   ] as SchemaDbResult[]
 ).map((schema): SchemaDbResult => {
-  if (schema.workspace !== WORKSPACE_ID || !['API', 'Component', 'System'].includes(schema.name)) {
-    return schema;
+  const schemaWithRiskProjection = RISK_AFFECTS_TARGET_SCHEMA_IDS.includes(schema.id)
+    ? {
+        ...schema,
+        fields: [
+          ...schema.fields,
+          {
+            id: 'affected_by_risks',
+            name: 'Affected By Risks',
+            type: 'typedRelation' as const,
+            requirementLevel: null,
+            relationSchemaId: RISK_AFFECTS_RELATION_SCHEMA_ID,
+            direction: 'out' as const,
+            minCount: 0,
+            maxCount: -1
+          }
+        ]
+      }
+    : schema;
+
+  if (
+    schemaWithRiskProjection.workspace !== WORKSPACE_ID ||
+    !['API', 'Component', 'System'].includes(schemaWithRiskProjection.name)
+  ) {
+    return schemaWithRiskProjection;
   }
   return {
-    ...schema,
-    fields: [...schema.fields, ...PII_FIELDS],
+    ...schemaWithRiskProjection,
+    fields: [...schemaWithRiskProjection.fields, ...PII_FIELDS],
     groups: [
-      ...(schema.groups ?? []),
+      ...(schemaWithRiskProjection.groups ?? []),
       {
         id: PII_FIELD_GROUP_ID,
         name: 'PII Classification',

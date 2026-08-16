@@ -207,6 +207,17 @@ const toCanonicalField = (field: SymbolicField): SchemaField => {
       maxCount: field.maxCount
     };
   }
+  if (field.type === 'typedRelation') {
+    return {
+      id: field.id,
+      name: field.name,
+      type: 'typedRelation',
+      relationSchemaId: field.symRelationSchemaId,
+      direction: field.direction,
+      minCount: field.minCount,
+      maxCount: field.maxCount
+    };
+  }
   return field as SchemaField;
 };
 
@@ -529,6 +540,14 @@ const buildPlan = async (
             errors.push(`Schema '${schema.name}' references missing schema '${field.schemaId}'`);
           } else {
             schemaQueue.push(field.schemaId);
+          }
+        } else if (field.type === 'typedRelation') {
+          if (!relationSchemaById.has(field.relationSchemaId)) {
+            errors.push(
+              `Schema '${schema.name}' references missing relation schema '${field.relationSchemaId}'`
+            );
+          } else {
+            relationSchemaQueue.push(field.relationSchemaId);
           }
         } else if (field.type === 'select') {
           if (!enumById.has(field.enumId)) {
@@ -1011,16 +1030,27 @@ export const executeDefinitionImport = async (
 
         for (const schema of plan.schemas) {
           const fields = schema.fields.map(field => {
-            if (field.groupId && sharedFieldGroupMap.has(field.groupId)) {
-              return { ...field, groupId: sharedFieldGroupMap.get(field.groupId)! };
-            }
+            const resolvedField =
+              field.groupId && sharedFieldGroupMap.has(field.groupId)
+                ? { ...field, groupId: sharedFieldGroupMap.get(field.groupId)! }
+                : field;
             if (isReferenceOrContainmentField(field)) {
-              return { ...field, schemaId: schemaIdMap.get(field.schemaId) ?? field.schemaId };
+              return {
+                ...resolvedField,
+                schemaId: schemaIdMap.get(field.schemaId) ?? field.schemaId
+              };
+            }
+            if (field.type === 'typedRelation') {
+              return {
+                ...resolvedField,
+                relationSchemaId:
+                  relationSchemaIdMap.get(field.relationSchemaId) ?? field.relationSchemaId
+              };
             }
             if (field.type === 'select') {
-              return { ...field, enumId: enumIdMap.get(field.enumId) ?? field.enumId };
+              return { ...resolvedField, enumId: enumIdMap.get(field.enumId) ?? field.enumId };
             }
-            return field;
+            return resolvedField;
           });
           const groups = schema.groups.map(group => ({
             ...group,

@@ -15,6 +15,8 @@ import {
   API_PROVIDER_RELATION_SCHEMA_ID,
   CONTROL_REQUIREMENT_SCHEMA_ID,
   DATA_FLOW_SCHEMA_ID,
+  RISK_AFFECTS_RELATION_SCHEMA_ID,
+  RISK_AFFECTS_TARGET_SCHEMA_IDS,
   RISK_CONTROL_SCHEMA_ID,
   WORKSPACE_ID,
   now
@@ -137,6 +139,22 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     shared_field_group_links: [],
     color: AR_COLOR_TEAL,
     icon: 'network',
+    relation_approval_policy: 'disabled',
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    workspace: WORKSPACE_ID,
+    name: 'Risk Affects',
+    description: 'Associates a Risk with an architecture entity affected by it.',
+    in_schema_ids: ['00000000-0000-0000-0000-000000000013'],
+    out_schema_ids: RISK_AFFECTS_TARGET_SCHEMA_IDS,
+    fields: [],
+    groups: [],
+    shared_field_group_links: [],
+    color: AR_COLOR_RED,
+    icon: 'alert-triangle',
     relation_approval_policy: 'disabled',
     created_at: now,
     updated_at: now
@@ -328,6 +346,83 @@ export const seedRelations: RelationDbCreate[] = [
       protocol: 'kafka',
       data_entities: ['00000000-0000-0000-0008-000000000003']
     },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0014-000000000001',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Unauthorized Production Access -> Identity Platform.
+    in_entity_id: '00000000-0000-0000-000c-000000000001',
+    out_entity_id: '00000000-0000-0000-0002-000000000002',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0014-000000000002',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Unauthorized Production Access -> Auth Service.
+    in_entity_id: '00000000-0000-0000-000c-000000000001',
+    out_entity_id: '00000000-0000-0000-0003-000000000003',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0014-000000000003',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Undetected Data Exfiltration -> Analytics Platform.
+    in_entity_id: '00000000-0000-0000-000c-000000000002',
+    out_entity_id: '00000000-0000-0000-0002-000000000004',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0014-000000000004',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Undetected Data Exfiltration -> Clickstream Events.
+    in_entity_id: '00000000-0000-0000-000c-000000000002',
+    out_entity_id: '00000000-0000-0000-0008-000000000003',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0014-000000000005',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Plaintext Data at Rest -> Customer Portal.
+    in_entity_id: '00000000-0000-0000-000c-000000000003',
+    out_entity_id: '00000000-0000-0000-0002-000000000001',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0014-000000000006',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Plaintext Data at Rest -> Postgres Main.
+    in_entity_id: '00000000-0000-0000-000c-000000000003',
+    out_entity_id: '00000000-0000-0000-0005-000000000001',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0014-000000000007',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Plaintext Data at Rest -> Customer Credentials.
+    in_entity_id: '00000000-0000-0000-000c-000000000003',
+    out_entity_id: '00000000-0000-0000-0008-000000000001',
+    data: {},
     created_at: now,
     updated_at: now
   },

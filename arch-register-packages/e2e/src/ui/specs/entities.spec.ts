@@ -133,6 +133,17 @@ test.describe('entities section', () => {
     await entitiesPage.startEditingEntity();
   });
 
+  test('shows seeded risk affected entities in the risk editor', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.goto();
+    await entitiesPage.openEntity('Unauthorized Production Access');
+    await entitiesPage.startEditingEntity();
+    await expect(page.getByText('Affected Entities', { exact: false }).first()).toBeVisible();
+    await expect(page.getByText('Identity Platform', { exact: true })).toBeVisible();
+    await expect(page.getByText('Auth Service', { exact: true })).toBeVisible();
+  });
+
   test('opens entity actions and detail dialogs', async ({ page }) => {
     const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
 
