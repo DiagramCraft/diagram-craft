@@ -822,7 +822,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'contract',
         name: 'Contract',
         description: 'A commercial agreement with a vendor supporting a System.',
-        category: 'Architecture',
+        category: 'Vendor',
         color: AR_COLOR_ORANGE,
         icon: 'certificate',
         fields: [

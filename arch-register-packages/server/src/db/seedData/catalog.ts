@@ -445,7 +445,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000009',
       workspace: WORKSPACE_ID,
       name: 'Contract',
-      category: 'Architecture',
+      category: 'Vendor',
       description: 'A commercial agreement with a vendor supporting a System.',
       fields: [
         {
