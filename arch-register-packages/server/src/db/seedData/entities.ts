@@ -891,7 +891,7 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
 
 // Strategy model examples (see #3020): Objective, Outcome, Initiative, Measure linked with
 // reference fields rather than containment, and with wildcard typed relations to whatever
-// capability or entity a workspace happens to have (see seedRelations for Objective Supports
+// entity a workspace happens to have (see seedRelations for Objective Supports
 // Capability / Objective Affects Entity instances).
 const seedStrategyEntities: SeedEntityInput[] = [
   {

@@ -107,7 +107,7 @@ describe('instantiateTemplate', () => {
     expect(measure).toBeDefined();
 
     const relationNames = definitions.relationSchemas.map(schema => schema.name);
-    expect(relationNames).toContain('Objective Supports Capability');
+    expect(relationNames).toContain('Objective Supports Entity');
     expect(relationNames).toContain('Objective Affects Entity');
     for (const relationSchema of definitions.relationSchemas) {
       expect(relationSchema.in_schema_ids).toEqual([objective?.id]);

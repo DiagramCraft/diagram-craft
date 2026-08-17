@@ -173,8 +173,8 @@
         - @id:ar.entities.strategy-model Workspaces can optionally enable a strategy model — Objective, Outcome,
           Initiative, and Measure entity schemas with no fixed taxonomy or hierarchy — bound to the workspace via a
           `strategy-model` capability so other features (traceability views, roll-ups) can discover it. Two wildcard
-          typed relations, Objective Supports Capability and Objective Affects Entity, link objectives to any
-          capability or architecture entity in the workspace.
+          typed relations, Objective Supports Entity and Objective Affects Entity, link objectives to any entity in
+          the workspace with distinct supporting and impact semantics.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can

@@ -711,9 +711,9 @@ const strategySchemas: TemplateSchema[] = [
 
 const strategyRelationSchemas: SymbolicRelationSchema[] = [
   {
-    symId: 'objective-affects-capability',
-    name: 'Objective Supports Capability',
-    description: 'Associates an Objective with a capability it depends on or is realized by.',
+    symId: 'objective-supports-entity',
+    name: 'Objective Supports Entity',
+    description: 'Associates an Objective with an entity that supports or enables it.',
     category: 'Strategy',
     inSymSchemaIds: ['objective'],
     outSymSchemaIds: 'any',
@@ -2126,7 +2126,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     category: 'cross-cutting',
     name: 'Strategy',
     description:
-      'Strategic objectives, outcomes, initiatives, and measures, linked to capabilities and entities.',
+      'Strategic objectives, outcomes, initiatives, and measures, linked to supporting and affected entities.',
     schemas: strategySchemas,
     enums: [strategyStatusEnum],
     relationSchemas: strategyRelationSchemas,

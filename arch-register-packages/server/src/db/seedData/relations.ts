@@ -16,7 +16,7 @@ import {
   API_PROVIDER_RELATION_SCHEMA_ID,
   CONTROL_REQUIREMENT_SCHEMA_ID,
   DATA_FLOW_SCHEMA_ID,
-  OBJECTIVE_AFFECTS_CAPABILITY_RELATION_SCHEMA_ID,
+  OBJECTIVE_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
   OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
   RISK_AFFECTS_RELATION_SCHEMA_ID,
   RISK_AFFECTS_TARGET_SCHEMA_IDS,
@@ -232,11 +232,11 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     updated_at: now
   },
   {
-    id: OBJECTIVE_AFFECTS_CAPABILITY_RELATION_SCHEMA_ID,
+    id: OBJECTIVE_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
     workspace: WORKSPACE_ID,
-    name: 'Objective Supports Capability',
+    name: 'Objective Supports Entity',
     category: 'Strategy',
-    description: 'Associates an Objective with a capability it depends on or is realized by.',
+    description: 'Associates an Objective with an entity that supports or enables it.',
     in_schema_ids: [STRATEGY_IDS.objectiveSchema],
     out_schema_ids: 'any',
     fields: [],
@@ -564,7 +564,7 @@ export const seedRelations: RelationDbCreate[] = [
   {
     id: '00000000-0000-0000-001d-000000000001',
     workspace: WORKSPACE_ID,
-    schema_id: OBJECTIVE_AFFECTS_CAPABILITY_RELATION_SCHEMA_ID,
+    schema_id: OBJECTIVE_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
     // Improve Customer Retention -> Customer Portal (System).
     in_entity_id: STRATEGY_IDS.objectives.improveCustomerRetention,
     out_entity_id: '00000000-0000-0000-0002-000000000001',
@@ -575,7 +575,7 @@ export const seedRelations: RelationDbCreate[] = [
   {
     id: '00000000-0000-0000-001d-000000000002',
     workspace: WORKSPACE_ID,
-    schema_id: OBJECTIVE_AFFECTS_CAPABILITY_RELATION_SCHEMA_ID,
+    schema_id: OBJECTIVE_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
     // Strengthen Platform Reliability -> Search Platform (System).
     in_entity_id: STRATEGY_IDS.objectives.strengthenPlatformReliability,
     out_entity_id: '00000000-0000-0000-0002-000000000006',

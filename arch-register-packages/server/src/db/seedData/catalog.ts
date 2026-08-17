@@ -17,7 +17,7 @@ import type {
 import type { SupportedCurrencyDbResult } from '../../domain/workspace/db/workspaceDatabase';
 import {
   GLOSSARY_IDS,
-  OBJECTIVE_AFFECTS_CAPABILITY_RELATION_SCHEMA_ID,
+  OBJECTIVE_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
   OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
   PII_FIELD_GROUP_ID,
   RISK_AFFECTS_RELATION_SCHEMA_ID,
@@ -1005,11 +1005,11 @@ export const seedSchemas: SchemaDbResult[] = (
         { id: 'status', name: 'Status', type: 'select', enumId: STRATEGY_IDS.statusEnum },
         { id: 'target_date', name: 'Target Date', type: 'date' },
         {
-          id: 'supported_capabilities',
-          name: 'Supported Capabilities',
+          id: 'supported_entities',
+          name: 'Supported Entities',
           type: 'typedRelation',
           requirementLevel: null,
-          relationSchemaId: OBJECTIVE_AFFECTS_CAPABILITY_RELATION_SCHEMA_ID,
+          relationSchemaId: OBJECTIVE_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
           direction: 'in',
           minCount: 0,
           maxCount: -1
