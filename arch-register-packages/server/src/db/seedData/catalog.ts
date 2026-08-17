@@ -331,7 +331,7 @@ export const seedSchemas: SchemaDbResult[] = (
         // schema field.
         {
           id: 'data_flows_out',
-          name: 'Data Flows Out',
+          name: 'Sends data to',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000030',
@@ -341,7 +341,7 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         {
           id: 'data_flows_in',
-          name: 'Data Flows In',
+          name: 'Receives data from',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000030',
@@ -351,7 +351,7 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         {
           id: 'provides_apis',
-          name: 'Provided APIs',
+          name: 'Provides APIs',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000034',
@@ -361,7 +361,7 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         {
           id: 'consumes_apis',
-          name: 'Consumed APIs',
+          name: 'Consumes APIs',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000035',
@@ -371,7 +371,7 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         {
           id: 'contracts',
-          name: 'Contracts',
+          name: 'Uses',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000031',
@@ -422,7 +422,7 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         {
           id: 'provides_apis',
-          name: 'Provided APIs',
+          name: 'Provides APIs',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000034',
@@ -432,7 +432,7 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         {
           id: 'consumes_apis',
-          name: 'Consumed APIs',
+          name: 'Consumes APIs',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000035',
@@ -487,7 +487,7 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         {
           id: 'system',
-          name: 'System',
+          name: 'Used by',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000031',
@@ -562,7 +562,7 @@ export const seedSchemas: SchemaDbResult[] = (
         { id: 'api_version', name: 'API Version', type: 'text' },
         {
           id: 'providers',
-          name: 'Providers',
+          name: 'Provided by',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000034',
@@ -572,7 +572,7 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         {
           id: 'consumers',
-          name: 'Consumers',
+          name: 'Consumed by',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000035',
@@ -792,7 +792,7 @@ export const seedSchemas: SchemaDbResult[] = (
         { id: 'treatment_target_date', name: 'Treatment Target Date', type: 'date' },
         {
           id: 'affected_entities',
-          name: 'Affected Entities',
+          name: 'Affects',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: RISK_AFFECTS_RELATION_SCHEMA_ID,
@@ -802,7 +802,7 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         {
           id: 'mitigating_controls',
-          name: 'Mitigating Controls',
+          name: 'Mitigated by',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000032',
@@ -846,7 +846,7 @@ export const seedSchemas: SchemaDbResult[] = (
         { id: 'last_verified', name: 'Last Verified', type: 'date' },
         {
           id: 'mitigated_risks',
-          name: 'Mitigated Risks',
+          name: 'Mitigates',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000032',
@@ -856,7 +856,7 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         {
           id: 'satisfied_requirements',
-          name: 'Satisfied Requirements',
+          name: 'Satisfies',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000033',
@@ -921,7 +921,7 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         {
           id: 'satisfying_controls',
-          name: 'Satisfying Controls',
+          name: 'Satisfied by',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: '00000000-0000-0000-0000-000000000033',
@@ -1005,7 +1005,7 @@ export const seedSchemas: SchemaDbResult[] = (
         { id: 'target_date', name: 'Target Date', type: 'date' },
         {
           id: 'supported_entities',
-          name: 'Supported Entities',
+          name: 'Supports',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: OBJECTIVE_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
@@ -1015,7 +1015,7 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         {
           id: 'affected_entities',
-          name: 'Affected Entities',
+          name: 'Affects',
           type: 'typedRelation',
           requirementLevel: null,
           relationSchemaId: OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,

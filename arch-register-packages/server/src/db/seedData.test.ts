@@ -179,11 +179,15 @@ describe('API participation seed data', () => {
       '00000000-0000-0000-0000-000000000002'
     ]);
     expect(provides?.out_schema_ids).toEqual([api?.id]);
+    expect(provides?.in_label).toBe('Provides APIs');
+    expect(provides?.out_label).toBe('Provided by Component or System');
     expect(consumes?.in_schema_ids).toEqual([
       component?.id,
       '00000000-0000-0000-0000-000000000002'
     ]);
     expect(consumes?.out_schema_ids).toEqual([api?.id]);
+    expect(consumes?.in_label).toBe('Consumes APIs');
+    expect(consumes?.out_label).toBe('Consumed by Component or System');
     expect(component?.fields).toContainEqual(
       expect.objectContaining({
         id: 'provides_apis',
@@ -252,6 +256,12 @@ describe('API participation seed data', () => {
     );
     expect(riskAffects?.in_schema_ids).toEqual([risk?.id]);
     expect(riskAffects?.out_schema_ids).toBe('any');
+    expect(riskAffects?.in_label).toBe('Affects Entities');
+    expect(riskAffects?.out_label).toBe('Affected by Risk');
+    expect(riskMitigation?.in_label).toBe('Mitigated by Control');
+    expect(riskMitigation?.out_label).toBe('Mitigates Risk');
+    expect(controlCompliance?.in_label).toBe('Satisfies Compliance Requirements');
+    expect(controlCompliance?.out_label).toBe('Satisfied by Control');
     for (const schemaId of RISK_AFFECTS_TARGET_SCHEMA_IDS) {
       const schema = seedSchemas.find(candidate => candidate.id === schemaId);
       expect(schema?.fields).not.toContainEqual(

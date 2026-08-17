@@ -35,6 +35,8 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     name: 'Provides API',
     category: 'Architecture',
     description: 'Associates a Component or System with an API it provides.',
+    in_label: 'Provides APIs',
+    out_label: 'Provided by Component or System',
     in_schema_ids: ['00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000002'],
     out_schema_ids: ['00000000-0000-0000-0000-000000000004'],
     fields: [],
@@ -52,6 +54,8 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     name: 'Consumes API',
     category: 'Architecture',
     description: 'Associates a Component or System with an API it consumes.',
+    in_label: 'Consumes APIs',
+    out_label: 'Consumed by Component or System',
     in_schema_ids: ['00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000002'],
     out_schema_ids: ['00000000-0000-0000-0000-000000000004'],
     fields: [],
@@ -70,6 +74,8 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     category: 'Architecture',
     description:
       'Associates a System with a vendor Contract and records the purpose of the agreement.',
+    in_label: 'Uses Contract',
+    out_label: 'Used by System',
     in_schema_ids: ['00000000-0000-0000-0000-000000000002'],
     out_schema_ids: ['00000000-0000-0000-0000-000000000009'],
     fields: [
@@ -105,6 +111,8 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     description:
       'Models data moving from one System to another: its direction, the sensitivity of the ' +
       'data carried, and the protocol used to move it.',
+    in_label: 'Sends data to System',
+    out_label: 'Receives data from System',
     in_schema_ids: ['00000000-0000-0000-0000-000000000002'],
     out_schema_ids: ['00000000-0000-0000-0000-000000000002'],
     fields: [
@@ -156,6 +164,8 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     name: 'Risk Affects',
     category: 'Governance',
     description: 'Associates a Risk with an architecture entity affected by it.',
+    in_label: 'Affects Entities',
+    out_label: 'Affected by Risk',
     in_schema_ids: ['00000000-0000-0000-0000-000000000013'],
     out_schema_ids: 'any',
     fields: [],
@@ -174,6 +184,8 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     category: 'Governance',
     description:
       'Associates a Risk with the Controls that mitigate it and records the control coverage.',
+    in_label: 'Mitigated by Control',
+    out_label: 'Mitigates Risk',
     in_schema_ids: ['00000000-0000-0000-0000-000000000013'],
     out_schema_ids: ['00000000-0000-0000-0000-000000000014'],
     fields: [
@@ -209,6 +221,8 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     category: 'Governance',
     description:
       'Records that a Control satisfies a ComplianceRequirement and captures the verification evidence.',
+    in_label: 'Satisfies Compliance Requirements',
+    out_label: 'Satisfied by Control',
     in_schema_ids: ['00000000-0000-0000-0000-000000000014'],
     out_schema_ids: ['00000000-0000-0000-0000-000000000016'],
     fields: [
@@ -236,6 +250,8 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     name: 'Objective Supports Entity',
     category: 'Strategy',
     description: 'Associates an Objective with an entity that supports or enables it.',
+    in_label: 'Supports Entities',
+    out_label: 'Supported by Objective',
     in_schema_ids: [STRATEGY_IDS.objectiveSchema],
     out_schema_ids: 'any',
     fields: [],
@@ -253,6 +269,8 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     name: 'Objective Affects Entity',
     category: 'Strategy',
     description: 'Associates an Objective with an architecture entity it affects.',
+    in_label: 'Affects Entities',
+    out_label: 'Affected by Objective',
     in_schema_ids: [STRATEGY_IDS.objectiveSchema],
     out_schema_ids: 'any',
     fields: [],

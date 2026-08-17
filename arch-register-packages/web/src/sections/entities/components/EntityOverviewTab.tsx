@@ -206,7 +206,15 @@ export const EntityOverviewTab = ({
         ? typedRelationsOutgoing
         : typedRelationsIncoming
       ).filter(record => record._schema.id === relationSchema.id);
-      return [{ direction: displayDirection, records }];
+      return [
+        {
+          direction: displayDirection,
+          label:
+            endpoint.label ??
+            (displayDirection === 'outgoing' ? `Outgoing ${relationSchema.name}` : `Incoming ${relationSchema.name}`),
+          records
+        }
+      ];
     });
 
     if (endpoints.length === 0) return [];
@@ -433,14 +441,11 @@ export const EntityOverviewTab = ({
             <EntityDetailAccordion.Section
               key={relationSchema.id}
               value={`typed-relation-${relationSchema.id}`}
-              title={relationSchema.name}
+              title={[...new Set(endpoints.map(endpoint => endpoint.label))].join(' / ')}
               count={recordCount}
             >
               {endpoints.map(({ direction, records }) => (
                 <div key={direction} className={styles.unboundRelationGroup}>
-                  <div className={styles.unboundRelationTitle}>
-                    <span>{direction === 'outgoing' ? 'Outgoing' : 'Incoming'}</span>
-                  </div>
                   {records.length > 0 ? (
                     <RelationRecordList
                       records={records}

@@ -195,9 +195,10 @@
           The built-in Default and Backstage templates provide first-class "Provides API" and "Consumes API"
           relation schemas, allowing Components and Systems to point to APIs while API entities expose inverse
           provider and consumer views; these relations are available to the same graph, topology, search, and
-          permission surfaces as other typed relations.
+          permission surfaces as other typed relations. Endpoint labels are contextual to the entity at each side,
+          so inverse relation views remain understandable without relying on the relation schema name.
           The seeded architecture catalog provides a `Risk Affects` relation from each Risk to any entity schema,
-          with an inline `Affected Entities` field on Risk; target schemas do not need inverse projection fields
+          with an inline `Affects` field on Risk; target schemas do not need inverse projection fields
           because the relation endpoint definition is sufficient.
           While editing the entity, users can add, edit, and remove relation instances directly inline — adding
           picks another entity from schemas the relation type allows and fills in the relation's own fields (subject
@@ -294,7 +295,8 @@
 
         - @id:ar.entity-views.entity-detail Entity detail screens present metadata, project membership, and diagram
           membership in an accordion, with metadata open initially and project/diagram counts visible while their
-          sections are collapsed. Planned changes are available in a dedicated Future plans tab beside Change history.
+          sections are collapsed. Valid typed relation schemas without projected fields have their own accordion
+          sections, and planned changes are available in a dedicated Future plans tab beside Change history.
 
         - @id:ar.entity-views.diff Users can pick a future date and view a workspace-wide diff of what changes by
           then — entities added, removed, or changed, with all applicable planned changes across projects applied,

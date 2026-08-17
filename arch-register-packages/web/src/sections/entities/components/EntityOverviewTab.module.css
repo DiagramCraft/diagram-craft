@@ -149,18 +149,6 @@
   border-top: 1px solid var(--panel-border);
 }
 
-.unboundRelationTitle {
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  gap: 8px;
-  margin-bottom: 6px;
-  color: var(--base-fg);
-  font-size: 12px;
-  font-weight: 500;
-}
-
-.unboundRelationDirection,
 .unboundRelationEmpty {
   color: var(--base-fg-more-dim);
   font-size: 11px;

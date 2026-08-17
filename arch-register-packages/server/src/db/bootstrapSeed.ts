@@ -223,6 +223,8 @@ export const seedBootstrapData = async (
       description: createdSchema.description,
       in_schema_ids: createdSchema.in_schema_ids,
       out_schema_ids: createdSchema.out_schema_ids,
+      in_label: createdSchema.in_label,
+      out_label: createdSchema.out_label,
       fields: createdSchema.fields,
       groups: createdSchema.groups ?? [],
       validation_rules: createdSchema.validation_rules ?? [],

@@ -102,6 +102,8 @@ type ImportableRelationSchema = {
   description: string;
   in_schema_ids: string[] | 'any';
   out_schema_ids: string[] | 'any';
+  in_label?: string | null;
+  out_label?: string | null;
   fields: RelationField[];
   groups: RelationSchemaGroupDbShape[];
   shared_field_group_links: SharedFieldGroupLink[];
@@ -272,6 +274,8 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
     description: relationSchema.description,
     in_schema_ids: relationSchema.inSymSchemaIds,
     out_schema_ids: relationSchema.outSymSchemaIds,
+    in_label: relationSchema.inLabel,
+    out_label: relationSchema.outLabel,
     fields: relationSchema.fields.map(
       field =>
         ({
@@ -392,6 +396,8 @@ const sourceFromWorkspace = async (
       description: schema.description,
       in_schema_ids: schema.in_schema_ids,
       out_schema_ids: schema.out_schema_ids,
+      in_label: schema.in_label ?? null,
+      out_label: schema.out_label ?? null,
       fields: schema.fields,
       groups: schema.groups ?? [],
       shared_field_group_links: schema.shared_field_group_links ?? [],
@@ -1169,6 +1175,8 @@ export const executeDefinitionImport = async (
               relationSchema.out_schema_ids === 'any'
                 ? ('any' as const)
                 : relationSchema.out_schema_ids.map(id => schemaIdMap.get(id) ?? id),
+            in_label: relationSchema.in_label ?? null,
+            out_label: relationSchema.out_label ?? null,
             fields,
             groups,
             shared_field_group_links: relationSchema.shared_field_group_links.map(link => ({
@@ -1193,6 +1201,8 @@ export const executeDefinitionImport = async (
             description: row.description,
             in_schema_ids: row.in_schema_ids,
             out_schema_ids: row.out_schema_ids,
+            in_label: row.in_label,
+            out_label: row.out_label,
             fields,
             groups,
             color: row.color,

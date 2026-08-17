@@ -340,6 +340,8 @@ const exportRelationSchemas = async (
     description: schema.description,
     in_schema_ids: schema.in_schema_ids,
     out_schema_ids: schema.out_schema_ids,
+    in_label: schema.in_label ?? null,
+    out_label: schema.out_label ?? null,
     fields: schema.fields,
     groups: schema.groups ?? [],
     shared_field_group_links: schema.shared_field_group_links ?? [],
