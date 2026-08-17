@@ -746,9 +746,9 @@ export const validateEntityQueryIR = (
     }
     const relationProjectionStep =
       projection.source === 'relation'
-        ? [...projection.path].reverse().find(
-            step => step.kind === 'typedRelation' || step.kind === 'unboundTypedRelation'
-          )
+        ? [...projection.path]
+            .reverse()
+            .find(step => step.kind === 'typedRelation' || step.kind === 'unboundTypedRelation')
         : undefined;
     if (
       projection.source === 'relation' &&

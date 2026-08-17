@@ -563,9 +563,7 @@ describe('parseEntityQueryText — typed scalar relation fields', () => {
   });
 
   it('parses a quoted unbound incoming typed relation as relationExists', () => {
-    expect(
-      parseEntityQueryText('<-"Data Flow"', schemas, enums, null, relationSchemas)
-    ).toEqual({
+    expect(parseEntityQueryText('<-"Data Flow"', schemas, enums, null, relationSchemas)).toEqual({
       ok: true,
       query: {
         root: {

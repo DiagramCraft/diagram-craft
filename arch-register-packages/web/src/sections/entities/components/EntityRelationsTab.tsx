@@ -55,7 +55,10 @@ export const EntityRelationsTab = ({
   } | null>(null);
   const deleteMutation = useDeleteRelation(workspaceId);
   const typedRecords = useMemo(
-    () => new Map([...typedRelationsOutgoing, ...typedRelationsIncoming].map(record => [record._uid, record])),
+    () =>
+      new Map(
+        [...typedRelationsOutgoing, ...typedRelationsIncoming].map(record => [record._uid, record])
+      ),
     [typedRelationsIncoming, typedRelationsOutgoing]
   );
   const relationCount = outgoing.length + incoming.length;

@@ -739,8 +739,8 @@ const strategyRelationSchemas: SymbolicRelationSchema[] = [
     name: 'Objective Supports Entity',
     description: 'Associates an Objective with an entity that supports or enables it.',
     category: 'Strategy',
-        inLabel: 'Supports Entities',
-        outLabel: 'Supported by Objective',
+    inLabel: 'Supports Entities',
+    outLabel: 'Supported by Objective',
     inSymSchemaIds: ['objective'],
     outSymSchemaIds: 'any',
     fields: [],
@@ -925,8 +925,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 1,
             maxCount: 1
           },
-            apiParticipationField('provides_apis', 'Provides APIs', 'provides-api', 'in'),
-            apiParticipationField('consumes_apis', 'Consumes APIs', 'consumes-api', 'in'),
+          apiParticipationField('provides_apis', 'Provides APIs', 'provides-api', 'in'),
+          apiParticipationField('consumes_apis', 'Consumes APIs', 'consumes-api', 'in'),
           {
             id: 'depends_on',
             name: 'Depends On',
@@ -1102,8 +1102,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 0,
             maxCount: 1
           },
-            apiParticipationField('provides_apis', 'Provides APIs', 'provides-api', 'in'),
-            apiParticipationField('consumes_apis', 'Consumes APIs', 'consumes-api', 'in')
+          apiParticipationField('provides_apis', 'Provides APIs', 'provides-api', 'in'),
+          apiParticipationField('consumes_apis', 'Consumes APIs', 'consumes-api', 'in')
         ]
       },
       {
@@ -1149,8 +1149,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 0,
             maxCount: 1
           },
-            apiParticipationField('provides_apis', 'Provides APIs', 'provides-api', 'in'),
-            apiParticipationField('consumes_apis', 'Consumes APIs', 'consumes-api', 'in')
+          apiParticipationField('provides_apis', 'Provides APIs', 'provides-api', 'in'),
+          apiParticipationField('consumes_apis', 'Consumes APIs', 'consumes-api', 'in')
         ]
       },
       {

@@ -737,19 +737,12 @@ export const updateEntityWithPayload = async (
           });
           const endpointSchemaIds =
             direction === 'in' ? relationSchema.in_schema_ids : relationSchema.out_schema_ids;
-          httpAssert.true(
-            endpointSchemaIds === 'any' || endpointSchemaIds.includes(schema.id),
-            {
-              status: 400,
-              message: `Entity schema '${schema.name}' is not an allowed ${direction} endpoint for relation schema '${relationSchema.name}'`
-            }
-          );
+          httpAssert.true(endpointSchemaIds === 'any' || endpointSchemaIds.includes(schema.id), {
+            status: 400,
+            message: `Entity schema '${schema.name}' is not an allowed ${direction} endpoint for relation schema '${relationSchema.name}'`
+          });
           if (authCtx) {
-            requireTypedRelationEdit(
-              authCtx,
-              [{ schema, direction }],
-              relationSchema.id
-            );
+            requireTypedRelationEdit(authCtx, [{ schema, direction }], relationSchema.id);
           }
           const field: TypedRelationField = {
             id: fieldId,

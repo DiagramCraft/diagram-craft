@@ -196,7 +196,7 @@ export const entityMutationBodySchema = z
       .optional()
       .describe(
         'Typed-relation instance deltas to apply atomically with this entity update. Projected ' +
-          "fields are keyed by typedRelation field id; unprojected endpoints include relationSchemaId " +
+          'fields are keyed by typedRelation field id; unprojected endpoints include relationSchemaId ' +
           'and direction in the delta. Each create/update/delete entry is applied in the same ' +
           'transaction as the rest of this mutation.'
       )

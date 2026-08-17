@@ -122,16 +122,8 @@ export const buildCreateRelationSchemaInput = (
   const normalizedFields = clearOrphanedGroupIds(normalizeRelationFields(fields), normalizedGroups);
   const validationRules = normalizeValidationRules(validation_rules, normalizedFields);
   assertValidationRulesValid(validationRules, 'relation');
-  const normalizedInEndpoint = normalizeRelationEndpoint(
-    inEndpoint,
-    'in',
-    knownEntitySchemaIds
-  );
-  const normalizedOutEndpoint = normalizeRelationEndpoint(
-    outEndpoint,
-    'out',
-    knownEntitySchemaIds
-  );
+  const normalizedInEndpoint = normalizeRelationEndpoint(inEndpoint, 'in', knownEntitySchemaIds);
+  const normalizedOutEndpoint = normalizeRelationEndpoint(outEndpoint, 'out', knownEntitySchemaIds);
 
   return {
     id: idFactory(),

@@ -13,9 +13,7 @@ export type SchemaValidationNavigationTarget =
   | { kind: 'relation-schema'; id: string };
 
 export type SchemaValidationIssue = {
-  code:
-    | 'TYPED_RELATION_PROJECTION_DANGLING'
-    | 'TYPED_RELATION_PROJECTION_NOT_ALLOWED';
+  code: 'TYPED_RELATION_PROJECTION_DANGLING' | 'TYPED_RELATION_PROJECTION_NOT_ALLOWED';
   severity: SchemaValidationSeverity;
   relationSchemaId: string | null;
   entitySchemaId: string;

@@ -50,8 +50,7 @@ export const RelationCreateDialog = ({
   const availableRelations = useMemo(
     () =>
       relationSchemas.filter(
-        relation =>
-          allowed(relation.in, currentSchemaId) || allowed(relation.out, currentSchemaId)
+        relation => allowed(relation.in, currentSchemaId) || allowed(relation.out, currentSchemaId)
       ),
     [currentSchemaId, relationSchemas]
   );
@@ -116,11 +115,13 @@ export const RelationCreateDialog = ({
 
     setError('');
     try {
-      await createMutation.mutateAsync(data as {
-        _schemaId: string;
-        _inEntityId: string;
-        _outEntityId: string;
-      });
+      await createMutation.mutateAsync(
+        data as {
+          _schemaId: string;
+          _inEntityId: string;
+          _outEntityId: string;
+        }
+      );
       onClose();
     } catch (caught) {
       setError(caught instanceof Error ? caught.message : 'Unable to create relation');

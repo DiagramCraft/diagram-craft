@@ -11,7 +11,8 @@ const AccordionContext = createContext<AccordionContextValue | null>(null);
 
 const useAccordionContext = (): AccordionContextValue => {
   const context = useContext(AccordionContext);
-  if (!context) throw new Error('EntityDetailAccordion.Section must be used inside EntityDetailAccordion');
+  if (!context)
+    throw new Error('EntityDetailAccordion.Section must be used inside EntityDetailAccordion');
   return context;
 };
 

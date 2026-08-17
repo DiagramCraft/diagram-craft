@@ -129,7 +129,11 @@ export const applyRelationFieldDelta = async (
   } = params;
   if (unbound) {
     if (authCtx) {
-      requireTypedRelationEdit(authCtx, [{ schema: ownerSchema, direction: field.direction }], field.relationSchemaId);
+      requireTypedRelationEdit(
+        authCtx,
+        [{ schema: ownerSchema, direction: field.direction }],
+        field.relationSchemaId
+      );
     }
   } else {
     requireTypedRelationFieldEdit(authCtx, ownerSchema, field);

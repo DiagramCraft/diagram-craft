@@ -134,11 +134,10 @@ export const EntityOverviewTab = ({
     direction: 'in' | 'out',
     updater: (state: ReturnType<typeof getTypedRelationFieldState>) => void
   ) =>
-    updateTypedRelationFieldState(
-      unboundRelationFieldId(relationSchema.id, direction),
-      updater,
-      { relationSchemaId: relationSchema.id, direction }
-    );
+    updateTypedRelationFieldState(unboundRelationFieldId(relationSchema.id, direction), updater, {
+      relationSchemaId: relationSchema.id,
+      direction
+    });
 
   const renderPropertyRow = (
     f: EntitySchema['fields'][number],
@@ -211,8 +210,7 @@ export const EntityOverviewTab = ({
     const endpoints = (['in', 'out'] as const).flatMap(direction => {
       const endpoint = relationSchema[direction];
       const endpointAllowsEntity =
-        schema != null &&
-        (endpoint.schemaIds === 'any' || endpoint.schemaIds.includes(schema.id));
+        schema != null && (endpoint.schemaIds === 'any' || endpoint.schemaIds.includes(schema.id));
       const hasProjection = activeTypedRelationFields.some(
         field =>
           field.type === 'typedRelation' &&
@@ -222,9 +220,8 @@ export const EntityOverviewTab = ({
       if (!endpointAllowsEntity || hasProjection) return [];
 
       const displayDirection = direction === 'in' ? ('outgoing' as const) : ('incoming' as const);
-      const records = (displayDirection === 'outgoing'
-        ? typedRelationsOutgoing
-        : typedRelationsIncoming
+      const records = (
+        displayDirection === 'outgoing' ? typedRelationsOutgoing : typedRelationsIncoming
       ).filter(record => record._schema.id === relationSchema.id);
       return [
         {
@@ -232,7 +229,9 @@ export const EntityOverviewTab = ({
           direction: displayDirection,
           label:
             endpoint.label ??
-            (displayDirection === 'outgoing' ? `Outgoing ${relationSchema.name}` : `Incoming ${relationSchema.name}`),
+            (displayDirection === 'outgoing'
+              ? `Outgoing ${relationSchema.name}`
+              : `Incoming ${relationSchema.name}`),
           records
         }
       ];
@@ -255,9 +254,7 @@ export const EntityOverviewTab = ({
           <>
             {ungroupedFields.length > 0 && (
               <>
-                <div className={styles.sectionLabel}>
-                  Properties
-                </div>
+                <div className={styles.sectionLabel}>Properties</div>
                 <div className={styles.propList}>
                   {ungroupedFields.map(f => renderPropertyRow(f))}
                 </div>
@@ -282,113 +279,115 @@ export const EntityOverviewTab = ({
       <div className={styles.sidePanel}>
         <EntityDetailAccordion defaultOpen={['metadata']}>
           <EntityDetailAccordion.Section value="metadata" title="Metadata">
-              {schema && <MetaPropRow label="Schema" value={schema.name} />}
-              <MetaPropRow label="Public ID" value={entity._publicId} />
-              <MetaPropRow label="Namespace" value={entity._namespace} />
+            {schema && <MetaPropRow label="Schema" value={schema.name} />}
+            <MetaPropRow label="Public ID" value={entity._publicId} />
+            <MetaPropRow label="Namespace" value={entity._namespace} />
 
-              <hr className={styles.divider} />
+            <hr className={styles.divider} />
 
-        <MetaPropRow
-          label="Name"
-          value={entity._name ?? '—'}
-          editing={editing}
-          editValue={editState['_name'] as string}
-          onChange={v => setEditState(s => ({ ...s, _name: v, _slug: slugifyEntityName(v) }))}
-        />
-        <MetaPropRow
-          label="Slug"
-          value={entity._slug}
-          editing={editing}
-          editValue={editState['_slug'] as string}
-          onChange={v => setEditState(s => ({ ...s, _slug: v }))}
-        />
-        {((entity._description != null && entity._description !== '') || editing) && (
-          <div className={styles.metaPropRow}>
-            <span className={styles.metaPropLabel}>Description</span>
-            <span className={styles.metaPropValue}>
-              {editing ? (
-                <textarea
-                  className={styles.textareaInline}
-                  value={editState['_description'] as string}
-                  onChange={e => setEditState(s => ({ ...s, _description: e.target.value }))}
-                />
-              ) : (
-                entity._description
-              )}
-            </span>
-          </div>
-        )}
-        <MetaPropRow
-          label="Owner"
-          value={entity._owner?.name ?? '—'}
-          editing={editing}
-          editValue={editState['_owner'] as string}
-          onChange={v => setEditState(s => ({ ...s, _owner: v }))}
-          selectOptions={[
-            { value: '', label: '—' },
-            ...teams.map(team => ({ value: team.id, label: team.name }))
-          ]}
-        />
-        <MetaPropRow
-          label="Lifecycle"
-          value={entity._lifecycle?.name ?? '—'}
-          editing={editing}
-          editValue={editState['_lifecycle'] as string}
-          onChange={v => setEditState(s => ({ ...s, _lifecycle: v }))}
-          selectOptions={[
-            { value: '', label: '—' },
-            ...lifecycleStates.map(state => ({ value: state.id, label: state.label }))
-          ]}
-        />
-        <MetaPropRow
-          label="Target Lifecycle"
-          value={entity._targetLifecycle?.name ?? '—'}
-          editing={editing}
-          editValue={editState['_targetLifecycle'] as string}
-          onChange={v => setEditState(s => ({ ...s, _targetLifecycle: v }))}
-          selectOptions={[
-            { value: '', label: '—' },
-            ...lifecycleStates.map(state => ({ value: state.id, label: state.label }))
-          ]}
-        />
-        <MetaPropRow
-          label="Target Date"
-          value={entity._targetLifecycleDate ?? '—'}
-          editing={editing}
-          editValue={editState['_targetLifecycleDate'] as string}
-          onChange={v => setEditState(s => ({ ...s, _targetLifecycleDate: v }))}
-          type="date"
-        />
-        {(entity._tags.length > 0 || editing) && (
-          <div className={styles.metaPropRow}>
-            <span className={styles.metaPropLabel}>Tags</span>
-            <span className={styles.metaPropValue}>
-              {editing ? (
-                <input
-                  className={styles.inputInline}
-                  value={editState['_tags'] as string}
-                  onChange={e => setEditState(s => ({ ...s, _tags: e.target.value }))}
-                  placeholder="comma-separated"
-                />
-              ) : (
-                <span className={styles.tags}>
-                  {entity._tags.map(t => (
-                    <Chip key={t} tone="ghost">
-                      {t}
-                    </Chip>
-                  ))}
+            <MetaPropRow
+              label="Name"
+              value={entity._name ?? '—'}
+              editing={editing}
+              editValue={editState['_name'] as string}
+              onChange={v => setEditState(s => ({ ...s, _name: v, _slug: slugifyEntityName(v) }))}
+            />
+            <MetaPropRow
+              label="Slug"
+              value={entity._slug}
+              editing={editing}
+              editValue={editState['_slug'] as string}
+              onChange={v => setEditState(s => ({ ...s, _slug: v }))}
+            />
+            {((entity._description != null && entity._description !== '') || editing) && (
+              <div className={styles.metaPropRow}>
+                <span className={styles.metaPropLabel}>Description</span>
+                <span className={styles.metaPropValue}>
+                  {editing ? (
+                    <textarea
+                      className={styles.textareaInline}
+                      value={editState['_description'] as string}
+                      onChange={e => setEditState(s => ({ ...s, _description: e.target.value }))}
+                    />
+                  ) : (
+                    entity._description
+                  )}
                 </span>
-              )}
-            </span>
-          </div>
-        )}
+              </div>
+            )}
+            <MetaPropRow
+              label="Owner"
+              value={entity._owner?.name ?? '—'}
+              editing={editing}
+              editValue={editState['_owner'] as string}
+              onChange={v => setEditState(s => ({ ...s, _owner: v }))}
+              selectOptions={[
+                { value: '', label: '—' },
+                ...teams.map(team => ({ value: team.id, label: team.name }))
+              ]}
+            />
+            <MetaPropRow
+              label="Lifecycle"
+              value={entity._lifecycle?.name ?? '—'}
+              editing={editing}
+              editValue={editState['_lifecycle'] as string}
+              onChange={v => setEditState(s => ({ ...s, _lifecycle: v }))}
+              selectOptions={[
+                { value: '', label: '—' },
+                ...lifecycleStates.map(state => ({ value: state.id, label: state.label }))
+              ]}
+            />
+            <MetaPropRow
+              label="Target Lifecycle"
+              value={entity._targetLifecycle?.name ?? '—'}
+              editing={editing}
+              editValue={editState['_targetLifecycle'] as string}
+              onChange={v => setEditState(s => ({ ...s, _targetLifecycle: v }))}
+              selectOptions={[
+                { value: '', label: '—' },
+                ...lifecycleStates.map(state => ({ value: state.id, label: state.label }))
+              ]}
+            />
+            <MetaPropRow
+              label="Target Date"
+              value={entity._targetLifecycleDate ?? '—'}
+              editing={editing}
+              editValue={editState['_targetLifecycleDate'] as string}
+              onChange={v => setEditState(s => ({ ...s, _targetLifecycleDate: v }))}
+              type="date"
+            />
+            {(entity._tags.length > 0 || editing) && (
+              <div className={styles.metaPropRow}>
+                <span className={styles.metaPropLabel}>Tags</span>
+                <span className={styles.metaPropValue}>
+                  {editing ? (
+                    <input
+                      className={styles.inputInline}
+                      value={editState['_tags'] as string}
+                      onChange={e => setEditState(s => ({ ...s, _tags: e.target.value }))}
+                      placeholder="comma-separated"
+                    />
+                  ) : (
+                    <span className={styles.tags}>
+                      {entity._tags.map(t => (
+                        <Chip key={t} tone="ghost">
+                          {t}
+                        </Chip>
+                      ))}
+                    </span>
+                  )}
+                </span>
+              </div>
+            )}
           </EntityDetailAccordion.Section>
 
           <EntityDetailAccordion.Section
             value="links"
             title="Links"
             count={
-              editing ? editLinks.filter(link => link.url.trim() !== '').length : entity._links.length
+              editing
+                ? editLinks.filter(link => link.url.trim() !== '').length
+                : entity._links.length
             }
           >
             {editing ? (
@@ -537,26 +536,26 @@ export const EntityOverviewTab = ({
             title="Projects"
             count={entityProjects.length}
           >
-              {entityProjects.length === 0 ? (
-                <div className={styles.metaPropRow}>
-                  <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
-                    Not in any project
+            {entityProjects.length === 0 ? (
+              <div className={styles.metaPropRow}>
+                <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
+                  Not in any project
+                </span>
+              </div>
+            ) : (
+              entityProjects.map(({ project, entity_type }) => (
+                <div key={project.id} className={styles.metaPropRow}>
+                  <span className={styles.metaPropLabel}>{project.name}</span>
+                  <span className={styles.metaPropValue}>
+                    {entity_type ? (
+                      entity_type.name
+                    ) : (
+                      <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>
+                    )}
                   </span>
                 </div>
-              ) : (
-                entityProjects.map(({ project, entity_type }) => (
-                  <div key={project.id} className={styles.metaPropRow}>
-                    <span className={styles.metaPropLabel}>{project.name}</span>
-                    <span className={styles.metaPropValue}>
-                      {entity_type ? (
-                        entity_type.name
-                      ) : (
-                        <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>
-                      )}
-                    </span>
-                  </div>
-                ))
-              )}
+              ))
+            )}
           </EntityDetailAccordion.Section>
 
           <EntityDetailAccordion.Section
@@ -564,104 +563,104 @@ export const EntityOverviewTab = ({
             title="Diagrams"
             count={entityDiagramFiles.length}
           >
-              {entityDiagramFiles.length === 0 ? (
-                <div className={styles.metaPropRow}>
-                  <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
-                    Not in any diagram
-                  </span>
-                </div>
-              ) : (
-                <div className={styles.miniDiagramList}>
-                  {entityDiagramFiles.map(({ file, project }) => (
-                    <DiagramMetadataPopover
-                      key={file.id}
-                      type={file.type}
-                      fallbackTitle={file.name}
-                      contentMetadata={file.content_metadata}
-                      commentCount={file.comment_count}
-                      unresolvedCommentCount={file.unresolved_comment_count}
+            {entityDiagramFiles.length === 0 ? (
+              <div className={styles.metaPropRow}>
+                <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
+                  Not in any diagram
+                </span>
+              </div>
+            ) : (
+              <div className={styles.miniDiagramList}>
+                {entityDiagramFiles.map(({ file, project }) => (
+                  <DiagramMetadataPopover
+                    key={file.id}
+                    type={file.type}
+                    fallbackTitle={file.name}
+                    contentMetadata={file.content_metadata}
+                    commentCount={file.comment_count}
+                    unresolvedCommentCount={file.unresolved_comment_count}
+                  >
+                    <a
+                      className={styles.miniDiagramRow}
+                      href={projectDiagramHref(
+                        workspaceSlug,
+                        asProjectPublicId(project.public_id),
+                        file.id
+                      )}
                     >
-                      <a
-                        className={styles.miniDiagramRow}
-                        href={projectDiagramHref(
-                          workspaceSlug,
-                          asProjectPublicId(project.public_id),
-                          file.id
-                        )}
-                      >
-                        <div className={styles.miniDiagramThumb}>
-                          <div className={styles.miniDiagramThumbGrid} />
-                          {file.preview_svg ? (
-                            <div
-                              className={styles.miniDiagramThumbPreview}
-                              dangerouslySetInnerHTML={{ __html: file.preview_svg }}
+                      <div className={styles.miniDiagramThumb}>
+                        <div className={styles.miniDiagramThumbGrid} />
+                        {file.preview_svg ? (
+                          <div
+                            className={styles.miniDiagramThumbPreview}
+                            dangerouslySetInnerHTML={{ __html: file.preview_svg }}
+                          />
+                        ) : (
+                          <svg
+                            className={styles.miniDiagramThumbSvg}
+                            viewBox="0 0 60 30"
+                            preserveAspectRatio="none"
+                          >
+                            <rect
+                              x="3"
+                              y="7"
+                              width="12"
+                              height="7"
+                              rx="1"
+                              fill="var(--cmp-bg)"
+                              stroke="var(--base-fg-more-dim)"
+                              strokeWidth="0.7"
                             />
-                          ) : (
-                            <svg
-                              className={styles.miniDiagramThumbSvg}
-                              viewBox="0 0 60 30"
-                              preserveAspectRatio="none"
-                            >
-                              <rect
-                                x="3"
-                                y="7"
-                                width="12"
-                                height="7"
-                                rx="1"
-                                fill="var(--cmp-bg)"
-                                stroke="var(--base-fg-more-dim)"
-                                strokeWidth="0.7"
-                              />
-                              <rect
-                                x="23"
-                                y="3"
-                                width="12"
-                                height="7"
-                                rx="1"
-                                fill="var(--cmp-bg)"
-                                stroke="var(--base-fg-more-dim)"
-                                strokeWidth="0.7"
-                              />
-                              <rect
-                                x="23"
-                                y="20"
-                                width="12"
-                                height="7"
-                                rx="1"
-                                fill="var(--cmp-bg)"
-                                stroke="var(--base-fg-more-dim)"
-                                strokeWidth="0.7"
-                              />
-                              <rect
-                                x="43"
-                                y="10"
-                                width="12"
-                                height="7"
-                                rx="1"
-                                fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))"
-                                stroke="var(--tag-component)"
-                                strokeWidth="0.7"
-                              />
-                              <path
-                                d="M15 10 L23 6 M15 11 L23 23 M35 6 L43 14 M35 23 L43 14"
-                                stroke="var(--cmp-fg-disabled)"
-                                fill="none"
-                                strokeWidth="0.7"
-                              />
-                            </svg>
-                          )}
+                            <rect
+                              x="23"
+                              y="3"
+                              width="12"
+                              height="7"
+                              rx="1"
+                              fill="var(--cmp-bg)"
+                              stroke="var(--base-fg-more-dim)"
+                              strokeWidth="0.7"
+                            />
+                            <rect
+                              x="23"
+                              y="20"
+                              width="12"
+                              height="7"
+                              rx="1"
+                              fill="var(--cmp-bg)"
+                              stroke="var(--base-fg-more-dim)"
+                              strokeWidth="0.7"
+                            />
+                            <rect
+                              x="43"
+                              y="10"
+                              width="12"
+                              height="7"
+                              rx="1"
+                              fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))"
+                              stroke="var(--tag-component)"
+                              strokeWidth="0.7"
+                            />
+                            <path
+                              d="M15 10 L23 6 M15 11 L23 23 M35 6 L43 14 M35 23 L43 14"
+                              stroke="var(--cmp-fg-disabled)"
+                              fill="none"
+                              strokeWidth="0.7"
+                            />
+                          </svg>
+                        )}
+                      </div>
+                      <div className={styles.miniDiagramBody}>
+                        <div className={styles.miniDiagramName}>
+                          {file.content_metadata?.title ?? file.name}
                         </div>
-                        <div className={styles.miniDiagramBody}>
-                          <div className={styles.miniDiagramName}>
-                            {file.content_metadata?.title ?? file.name}
-                          </div>
-                          <div className={styles.miniDiagramSub}>{project.name}</div>
-                        </div>
-                      </a>
-                    </DiagramMetadataPopover>
-                  ))}
-                </div>
-              )}
+                        <div className={styles.miniDiagramSub}>{project.name}</div>
+                      </div>
+                    </a>
+                  </DiagramMetadataPopover>
+                ))}
+              </div>
+            )}
           </EntityDetailAccordion.Section>
         </EntityDetailAccordion>
       </div>
