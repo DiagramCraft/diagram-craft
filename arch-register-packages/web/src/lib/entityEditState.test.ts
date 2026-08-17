@@ -144,6 +144,34 @@ describe('entity detail edit state', () => {
       }
     });
   });
+
+  it('carries relation schema metadata for an unprojected endpoint delta', () => {
+    const typedRelationEditState = {
+      unboundRelation: {
+        relationSchemaId: 'relation-schema-1',
+        direction: 'out' as const,
+        create: [{ otherEntityId: 'entity-9', data: {} }],
+        update: new Map<string, Record<string, unknown>>(),
+        remove: new Set<string>()
+      }
+    };
+
+    const body = createEntityUpdateBody(
+      entity,
+      schema,
+      createEntityEditState(entity, schema),
+      links,
+      typedRelationEditState
+    );
+
+    expect(body._relations).toEqual({
+      unboundRelation: {
+        relationSchemaId: 'relation-schema-1',
+        direction: 'out',
+        create: [{ otherEntityId: 'entity-9', data: {} }]
+      }
+    });
+  });
 });
 
 describe('typedRelationEditStateToDeltas', () => {

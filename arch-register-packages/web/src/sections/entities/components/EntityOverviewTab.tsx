@@ -16,7 +16,7 @@ import {
   type TypedRelationFieldEditState
 } from '../../../lib/entityEditState';
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
-import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { EntitySchema, TypedRelationField } from '@arch-register/api-types/schemaContract';
 import type { ExternalMetadataResult } from '@arch-register/api-types/common';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type {
@@ -106,19 +106,39 @@ export const EntityOverviewTab = ({
 
   const updateTypedRelationFieldState = (
     fieldId: string,
-    updater: (state: ReturnType<typeof getTypedRelationFieldState>) => void
+    updater: (state: ReturnType<typeof getTypedRelationFieldState>) => void,
+    unboundRelation?: Pick<TypedRelationField, 'relationSchemaId' | 'direction'>
   ) => {
     setTypedRelationEditState(prev => {
       const current = prev[fieldId] ?? emptyTypedRelationFieldState();
       const next = {
         create: [...current.create],
         update: new Map(current.update),
-        remove: new Set(current.remove)
+        remove: new Set(current.remove),
+        ...(current.relationSchemaId !== undefined
+          ? { relationSchemaId: current.relationSchemaId }
+          : {}),
+        ...(current.direction !== undefined ? { direction: current.direction } : {})
       };
+      if (unboundRelation) Object.assign(next, unboundRelation);
       updater(next);
       return { ...prev, [fieldId]: next };
     });
   };
+
+  const unboundRelationFieldId = (relationSchemaId: string, direction: 'in' | 'out') =>
+    `unbound:${relationSchemaId}:${direction}`;
+
+  const updateUnboundTypedRelation = (
+    relationSchema: RelationSchema,
+    direction: 'in' | 'out',
+    updater: (state: ReturnType<typeof getTypedRelationFieldState>) => void
+  ) =>
+    updateTypedRelationFieldState(
+      unboundRelationFieldId(relationSchema.id, direction),
+      updater,
+      { relationSchemaId: relationSchema.id, direction }
+    );
 
   const renderPropertyRow = (
     f: EntitySchema['fields'][number],
@@ -208,6 +228,7 @@ export const EntityOverviewTab = ({
       ).filter(record => record._schema.id === relationSchema.id);
       return [
         {
+          endpointDirection: direction,
           direction: displayDirection,
           label:
             endpoint.label ??
@@ -361,80 +382,86 @@ export const EntityOverviewTab = ({
             </span>
           </div>
         )}
-        {editing ? (
-          <div className={styles.linksEdit}>
-            <div className={styles.metaPropLabel}>Links</div>
-            {editLinks.map((l, i) => (
-              <div key={i} className={styles.linkRow}>
-                <input
-                  className={styles.inputInline}
-                  value={l.type ?? ''}
-                  onChange={e =>
-                    setEditLinks(ls =>
-                      ls.map((x, j) => (j === i ? { ...x, type: e.target.value } : x))
-                    )
-                  }
-                  placeholder="Type"
-                  style={{ width: 70, flex: 'none' }}
-                />
-                <input
-                  className={styles.inputInline}
-                  value={l.title}
-                  onChange={e =>
-                    setEditLinks(ls =>
-                      ls.map((x, j) => (j === i ? { ...x, title: e.target.value } : x))
-                    )
-                  }
-                  placeholder="Title"
-                />
-                <input
-                  className={styles.inputInline}
-                  value={l.url}
-                  onChange={e =>
-                    setEditLinks(ls =>
-                      ls.map((x, j) => (j === i ? { ...x, url: e.target.value } : x))
-                    )
-                  }
-                  placeholder="URL"
-                />
+          </EntityDetailAccordion.Section>
+
+          <EntityDetailAccordion.Section
+            value="links"
+            title="Links"
+            count={
+              editing ? editLinks.filter(link => link.url.trim() !== '').length : entity._links.length
+            }
+          >
+            {editing ? (
+              <div className={styles.linksEdit}>
+                {editLinks.map((l, i) => (
+                  <div key={i} className={styles.linkRow}>
+                    <input
+                      className={styles.inputInline}
+                      value={l.type ?? ''}
+                      onChange={e =>
+                        setEditLinks(ls =>
+                          ls.map((x, j) => (j === i ? { ...x, type: e.target.value } : x))
+                        )
+                      }
+                      placeholder="Type"
+                      style={{ width: 70, flex: 'none' }}
+                    />
+                    <input
+                      className={styles.inputInline}
+                      value={l.title}
+                      onChange={e =>
+                        setEditLinks(ls =>
+                          ls.map((x, j) => (j === i ? { ...x, title: e.target.value } : x))
+                        )
+                      }
+                      placeholder="Title"
+                    />
+                    <input
+                      className={styles.inputInline}
+                      value={l.url}
+                      onChange={e =>
+                        setEditLinks(ls =>
+                          ls.map((x, j) => (j === i ? { ...x, url: e.target.value } : x))
+                        )
+                      }
+                      placeholder="URL"
+                    />
+                    <button
+                      type="button"
+                      className={styles.iconBtn}
+                      onClick={() => setEditLinks(ls => ls.filter((_, j) => j !== i))}
+                    >
+                      <TbX size={12} />
+                    </button>
+                  </div>
+                ))}
                 <button
                   type="button"
-                  className={styles.iconBtn}
-                  onClick={() => setEditLinks(ls => ls.filter((_, j) => j !== i))}
+                  className={styles.addLinkBtn}
+                  onClick={() => setEditLinks(ls => [...ls, { url: '', title: '', type: '' }])}
                 >
-                  <TbX size={12} />
+                  <TbPlus size={11} /> Add link
                 </button>
               </div>
-            ))}
-            <button
-              type="button"
-              className={styles.addLinkBtn}
-              onClick={() => setEditLinks(ls => [...ls, { url: '', title: '', type: '' }])}
-            >
-              <TbPlus size={11} /> Add link
-            </button>
-          </div>
-        ) : (
-          entity._links.length > 0 &&
-          entity._links.map((l, i) => (
-            <div key={i} className={styles.metaPropRow}>
-              <span className={styles.metaPropLabel}>
-                {l.type ? l.type.charAt(0).toUpperCase() + l.type.slice(1) : 'Link'}
-              </span>
-              <span className={styles.metaPropValue}>
-                <a
-                  className={styles.propLink}
-                  href={l.url.startsWith('http') ? l.url : `https://${l.url}`}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                >
-                  <TbExternalLink size={11} /> {l.title ?? l.url}
-                </a>
-              </span>
-            </div>
-          ))
-        )}
-
+            ) : (
+              entity._links.map((l, i) => (
+                <div key={i} className={styles.metaPropRow}>
+                  <span className={styles.metaPropLabel}>
+                    {l.type ? l.type.charAt(0).toUpperCase() + l.type.slice(1) : 'Link'}
+                  </span>
+                  <span className={styles.metaPropValue}>
+                    <a
+                      className={styles.propLink}
+                      href={l.url.startsWith('http') ? l.url : `https://${l.url}`}
+                      target="_blank"
+                      rel="noopener noreferrer"
+                    >
+                      <TbExternalLink size={11} /> {l.title ?? l.url}
+                    </a>
+                  </span>
+                </div>
+              ))
+            )}
           </EntityDetailAccordion.Section>
 
           {unboundTypedRelationSections.map(({ relationSchema, endpoints, recordCount }) => (
@@ -444,20 +471,64 @@ export const EntityOverviewTab = ({
               title={[...new Set(endpoints.map(endpoint => endpoint.label))].join(' / ')}
               count={recordCount}
             >
-              {endpoints.map(({ direction, records }) => (
-                <div key={direction} className={styles.unboundRelationGroup}>
-                  {records.length > 0 ? (
-                    <RelationRecordList
-                      records={records}
-                      direction={direction}
-                      relationSchema={relationSchema}
-                      workspaceId={workspaceSlug}
-                    />
-                  ) : (
-                    <div className={styles.unboundRelationEmpty}>No relation instances</div>
-                  )}
-                </div>
-              ))}
+              {endpoints.map(({ endpointDirection, direction, label, records }) => {
+                const field: TypedRelationField = {
+                  id: unboundRelationFieldId(relationSchema.id, endpointDirection),
+                  name: label,
+                  requirementLevel: null,
+                  type: 'typedRelation',
+                  relationSchemaId: relationSchema.id,
+                  direction: endpointDirection,
+                  minCount: 0,
+                  maxCount: -1
+                };
+                const fieldState = getTypedRelationFieldState(field.id);
+
+                return (
+                  <div key={endpointDirection} className={styles.unboundRelationGroup}>
+                    {editing ? (
+                      <TypedRelationFieldEditor
+                        workspaceId={workspaceSlug}
+                        field={field}
+                        relationSchema={relationSchema}
+                        existingRecords={records}
+                        fieldState={fieldState}
+                        onCreate={draft =>
+                          updateUnboundTypedRelation(relationSchema, endpointDirection, state => {
+                            state.create.push(draft);
+                          })
+                        }
+                        onRemoveDraft={index =>
+                          updateUnboundTypedRelation(relationSchema, endpointDirection, state => {
+                            state.create.splice(index, 1);
+                          })
+                        }
+                        onUpdateField={(relationUid, fieldId, value) =>
+                          updateUnboundTypedRelation(relationSchema, endpointDirection, state => {
+                            const existing = state.update.get(relationUid) ?? {};
+                            state.update.set(relationUid, { ...existing, [fieldId]: value });
+                          })
+                        }
+                        onToggleRemove={relationUid =>
+                          updateUnboundTypedRelation(relationSchema, endpointDirection, state => {
+                            if (state.remove.has(relationUid)) state.remove.delete(relationUid);
+                            else state.remove.add(relationUid);
+                          })
+                        }
+                      />
+                    ) : records.length > 0 ? (
+                      <RelationRecordList
+                        records={records}
+                        direction={direction}
+                        relationSchema={relationSchema}
+                        workspaceId={workspaceSlug}
+                      />
+                    ) : (
+                      <div className={styles.unboundRelationEmpty}>No relation instances</div>
+                    )}
+                  </div>
+                );
+              })}
             </EntityDetailAccordion.Section>
           ))}
 

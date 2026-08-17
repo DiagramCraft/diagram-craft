@@ -141,6 +141,14 @@ const relationRecordUpdateDraftSchema = z.object({
 });
 
 const relationFieldDeltaSchema = z.object({
+  relationSchemaId: z
+    .string()
+    .optional()
+    .describe('Relation schema identifier when editing an unprojected endpoint'),
+  direction: z
+    .enum(['in', 'out'])
+    .optional()
+    .describe('Entity endpoint direction when editing an unprojected relation'),
   create: z.array(relationRecordDraftSchema).optional().describe('New relation instances to add'),
   update: z
     .array(relationRecordUpdateDraftSchema)
@@ -151,7 +159,9 @@ const relationFieldDeltaSchema = z.object({
 
 export const relationDeltasSchema = z
   .record(z.string(), relationFieldDeltaSchema)
-  .describe('Typed-relation instance deltas, keyed by typedRelation field id');
+  .describe(
+    'Typed-relation instance deltas, keyed by typedRelation field id; unprojected endpoints carry relationSchemaId and direction in the delta'
+  );
 
 export const entityMutationBodySchema = z
   .object({
@@ -185,9 +195,10 @@ export const entityMutationBodySchema = z
     _relations: relationDeltasSchema
       .optional()
       .describe(
-        'Typed-relation instance deltas to apply atomically with this entity update, keyed by ' +
-          "typedRelation field id. Each field's create/update/delete entries are applied in the " +
-          'same transaction as the rest of this mutation.'
+        'Typed-relation instance deltas to apply atomically with this entity update. Projected ' +
+          "fields are keyed by typedRelation field id; unprojected endpoints include relationSchemaId " +
+          'and direction in the delta. Each create/update/delete entry is applied in the same ' +
+          'transaction as the rest of this mutation.'
       )
   })
   .catchall(z.unknown())

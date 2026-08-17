@@ -11,7 +11,7 @@ import {
   assertTypedRelationCardinality,
   type TypedRelationCardinalityChange
 } from './relationHelpers';
-import { requireTypedRelationFieldEdit } from './relationAccessControl';
+import { requireTypedRelationEdit, requireTypedRelationFieldEdit } from './relationAccessControl';
 import {
   createRelationWithAudit,
   deleteRelationWithAudit,
@@ -112,6 +112,7 @@ export const applyRelationFieldDelta = async (
     delta: RelationFieldDelta;
     authCtx: AuthorizationContext | null;
     actor: RelationMutationActor;
+    unbound?: boolean;
     skipTypedRelationCardinalityValidation?: boolean;
   }
 ): Promise<RelationRecord[]> => {
@@ -123,9 +124,16 @@ export const applyRelationFieldDelta = async (
     delta,
     authCtx,
     actor,
+    unbound = false,
     skipTypedRelationCardinalityValidation = false
   } = params;
-  requireTypedRelationFieldEdit(authCtx, ownerSchema, field);
+  if (unbound) {
+    if (authCtx) {
+      requireTypedRelationEdit(authCtx, [{ schema: ownerSchema, direction: field.direction }], field.relationSchemaId);
+    }
+  } else {
+    requireTypedRelationFieldEdit(authCtx, ownerSchema, field);
+  }
   const schema = await db.relation.getRelationSchema(workspace, field.relationSchemaId);
   httpAssert.present(schema, {
     status: 404,

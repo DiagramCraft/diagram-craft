@@ -199,7 +199,9 @@
           so inverse relation views remain understandable without relying on the relation schema name.
           The seeded architecture catalog provides a `Risk Affects` relation from each Risk to any entity schema,
           with an inline `Affects` field on Risk; target schemas do not need inverse projection fields
-          because the relation endpoint definition is sufficient.
+          because the relation endpoint definition is sufficient. On the entity Overview page, valid
+          unprojected endpoints appear in contextual-label accordions and support the same add, edit, and remove
+          lifecycle as projected typed-relation fields.
           While editing the entity, users can add, edit, and remove relation instances directly inline — adding
           picks another entity from schemas the relation type allows and fills in the relation's own fields (subject
           to field-group access control); these changes are saved together with the rest of the entity's edits in one

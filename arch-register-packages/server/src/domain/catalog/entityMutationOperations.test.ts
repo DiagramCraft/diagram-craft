@@ -331,6 +331,41 @@ describe('updateEntity — typed relation deltas', () => {
     expect(db.catalog.updateEntity).toHaveBeenCalled();
   });
 
+  it('creates a relation instance for an unprojected endpoint', async () => {
+    const db = makeTypedRelationDb(baseEntity({ name_field: 'x' }));
+    const unprojectedSchema = {
+      ...typedRelationSchema,
+      fields: typedRelationSchema.fields.filter(field => field.type !== 'typedRelation')
+    };
+    vi.spyOn(db.catalog, 'getSchema').mockResolvedValue(unprojectedSchema);
+
+    await updateEntity(
+      db,
+      'ws-1',
+      'entity-1',
+      {
+        ...updatePayload({ name_field: 'y' }),
+        _relations: {
+          unbound: {
+            relationSchemaId: 'rel-schema-1',
+            direction: 'out',
+            create: [{ otherEntityId: 'entity-2', data: {} }]
+          }
+        }
+      },
+      authCtxWithTeamRole('team_editor'),
+      { id: 'user-1', displayName: 'User' }
+    );
+
+    expect(db.relation.createRelation).toHaveBeenCalledWith(
+      expect.objectContaining({
+        schema_id: 'rel-schema-1',
+        in_entity_id: 'entity-2',
+        out_entity_id: 'entity-1'
+      })
+    );
+  });
+
   it('rolls back the whole mutation when a relation delta fails endpoint validation', async () => {
     const db = makeTypedRelationDb(baseEntity({ name_field: 'x' }));
     const authCtx = authCtxWithTeamRole('team_editor');
