@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntityRelationData } from '../../../hooks/useEntities';
 import {
+  buildExploreRelationOptions,
   buildDefaultRelationFieldNames,
   buildExploreGraph,
+  buildRelationKey,
   buildRelationFieldOptions,
   normalizeExploreConfig,
   parseExploreConfigValue
@@ -65,6 +67,35 @@ describe('buildExploreGraph', () => {
     expect(
       graph.columns.find(column => column.index === 0)?.entities.map(entity => entity.entityId)
     ).toEqual(['a', 'b']);
+  });
+
+  it('excludes entities from every explore column and connector', () => {
+    const graph = buildExploreGraph({
+      centerEntities: [entity('a', 'App A'), entity('b', 'App B')],
+      relationsMap: relationMap({
+        a: {
+          outgoing: [
+            {
+              entityId: 'related',
+              publicId: 'RELATED',
+              entitySlug: 'related',
+              entityName: 'Related',
+              entitySchemaId: 'service',
+              fieldName: 'Depends On',
+              kind: 'reference'
+            }
+          ]
+        }
+      }),
+      config: { leftDepth: 0, rightDepth: 1, relationFieldNames: [] },
+      excludedEntityIds: new Set(['a', 'related'])
+    });
+
+    expect(graph.columns.find(column => column.index === 0)?.entities.map(e => e.entityId)).toEqual(
+      ['b']
+    );
+    expect(graph.columns.find(column => column.index === 1)?.entities).toEqual([]);
+    expect(graph.connectors).toHaveLength(0);
   });
 
   it('uses incoming relations on the left and outgoing relations on the right', () => {
@@ -242,7 +273,41 @@ describe('buildExploreGraph', () => {
     );
   });
 
-  it('excludes containment relations by default when no field filter is selected', () => {
+  it('filters traversal by schema-level relation', () => {
+    const keep = {
+      entityId: 'keep-me',
+      publicId: 'KEEP1',
+      entitySlug: 'keep-me',
+      entityName: 'Keep Me',
+      entitySchemaId: 'service',
+      fieldName: 'Depends On',
+      kind: 'reference' as const
+    };
+    const drop = {
+      ...keep,
+      entityId: 'drop-me',
+      publicId: 'DROP1',
+      entitySlug: 'drop-me',
+      entityName: 'Drop Me'
+    };
+    const graph = buildExploreGraph({
+      centerEntities: [entity('a', 'App A')],
+      relationsMap: relationMap({ a: { outgoing: [keep, drop] } }),
+      config: {
+        leftDepth: 0,
+        rightDepth: 1,
+        relationFieldNames: [],
+        relationKeys: [buildRelationKey('application', 'service', keep)]
+      }
+    });
+
+    expect(
+      graph.columns.find(column => column.index === 1)?.entities.map(item => item.entityId)
+    ).toEqual(['keep-me', 'drop-me']);
+    expect(graph.connectors).toHaveLength(2);
+  });
+
+  it('includes containment relations by default when no field filter is selected', () => {
     const graph = buildExploreGraph({
       centerEntities: [entity('a', 'App A')],
       relationsMap: relationMap({
@@ -275,11 +340,49 @@ describe('buildExploreGraph', () => {
 
     expect(
       graph.columns.find(column => column.index === 1)?.entities.map(entity => entity.entityId)
-    ).toEqual(['reference-1']);
-    expect(graph.connectors).toHaveLength(1);
-    expect(graph.connectors[0]).toEqual(
-      expect.objectContaining({ toEntityId: 'reference-1', kind: 'reference' })
+    ).toEqual(['reference-1', 'containment-1']);
+    expect(graph.connectors).toHaveLength(2);
+    expect(graph.connectors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ toEntityId: 'reference-1', kind: 'reference' }),
+        expect.objectContaining({ toEntityId: 'containment-1', kind: 'containment' })
+      ])
     );
+  });
+
+  it('includes incoming containment relations for filtered entities', () => {
+    const graph = buildExploreGraph({
+      centerEntities: [entity('vendor', 'Acme Cloud', 'vendor')],
+      relationsMap: relationMap({
+        vendor: {
+          incoming: [
+            {
+              entityId: 'contract',
+              publicId: 'CON-1',
+              entitySlug: 'acme-cloud-contract',
+              entityName: 'Acme Cloud Contract',
+              entitySchemaId: 'contract',
+              fieldName: 'Vendor',
+              fieldPredicate: 'provided by',
+              kind: 'containment'
+            }
+          ]
+        }
+      }),
+      config: { leftDepth: 1, rightDepth: 1, relationFieldNames: [] }
+    });
+
+    expect(graph.columns.find(column => column.index === -1)?.entities).toEqual([
+      expect.objectContaining({ entityId: 'contract', schemaId: 'contract' })
+    ]);
+    expect(graph.connectors).toEqual([
+      expect.objectContaining({
+        fromEntityId: 'contract',
+        toEntityId: 'vendor',
+        fieldLabel: 'provided by',
+        kind: 'containment'
+      })
+    ]);
   });
 
   it('marks entities that appear in multiple columns as duplicates', () => {
@@ -315,6 +418,47 @@ describe('buildExploreGraph', () => {
     });
 
     expect(graph.duplicateIds.has('dup')).toBe(true);
+  });
+});
+
+describe('buildExploreRelationOptions', () => {
+  it('deduplicates schema relationships and keeps the full relation wording', () => {
+    const relationKey = buildRelationKey('system-schema', 'api-schema', {
+      fieldName: 'dependsOn',
+      fieldPredicate: 'depends on'
+    });
+    const connector = {
+      fromColumn: 0,
+      fromEntityId: 'system',
+      fromEntityName: 'System',
+      fromEntitySchemaId: 'system-schema',
+      toColumn: 1,
+      toEntityId: 'api',
+      toEntityName: 'API',
+      toEntitySchemaId: 'api-schema',
+      fieldName: 'dependsOn',
+      fieldLabel: 'depends on',
+      kind: 'reference' as const,
+      relationKey
+    };
+    const duplicateWithDifferentFieldName = {
+      ...connector,
+      fieldName: 'consumesApi',
+      relationKey: buildRelationKey('system-schema', 'api-schema', {
+        fieldName: 'consumesApi',
+        fieldPredicate: 'depends on'
+      })
+    };
+
+    expect(buildExploreRelationOptions([connector, duplicateWithDifferentFieldName])).toEqual([
+      {
+        relationKey,
+        sourceEntitySchemaId: 'system-schema',
+        targetEntitySchemaId: 'api-schema',
+        fieldLabel: 'depends on',
+        kind: 'reference'
+      }
+    ]);
   });
 });
 
@@ -388,10 +532,11 @@ const schemasWithTypedRelation = [
 ] as EntitySchema[];
 
 describe('buildDefaultRelationFieldNames', () => {
-  it('includes reference and typed-relation fields, excludes containment fields', () => {
+  it('includes reference, containment, and typed-relation fields', () => {
     expect(buildDefaultRelationFieldNames(schemasWithTypedRelation)).toEqual([
       'Data Flow',
-      'Depends On'
+      'Depends On',
+      'Parent'
     ]);
   });
 });

@@ -119,7 +119,8 @@
     - @id:ar.entities Users can maintain a structured catalog of architectural entities and their relationships.
 
         - @id:ar.entities.create-edit Users can create, view, edit, move, organize, and delete entities subject to their
-          permissions.
+          permissions. From the entities view, creating a new entity preselects the schema of the first filtered entity
+          when one is available.
 
         - @id:ar.entities.hierarchy Users can organize entities into hierarchical scopes and navigate from parents to
           descendants and related records.
@@ -252,7 +253,8 @@
       directly, and the All entities row resets the facet selections.
 
         - @id:ar.entity-views.table Users can inspect entities in a tabular browser with configurable fields, sorting,
-          filtering, selection, and bulk actions. Scalar-array filters use any-element matching for positive operators,
+          filtering, selection, and bulk actions. Project-only fields such as project role and project status are shown
+          when the browser is in project context. Scalar-array filters use any-element matching for positive operators,
           while emptiness checks the list and sorting/chart metrics use its first value.
 
         - @id:ar.entity-views.cards Users can inspect entities as cards for quick scanning of record summaries.
@@ -328,8 +330,10 @@
           detail.
 
         - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view,
-          toggling which relation fields draw connections; typed relation instances are included by default
-          alongside generic reference relations and their toggle is marked with the relation schema's colour/icon.
+          using a scoped relation filter popup grouped by source entity schema and labelled with source schema,
+          predicate, and target schema; selected schema relationships apply across matching entities, while typed
+          relation instances remain included alongside generic reference and containment relations by default. Entity cards provide
+          context-menu actions to exclude an entity from the exploration or focus the entity filter on that entity.
 
         - @id:ar.entity-views.saved-configuration Users can configure and reuse entity view fields, filters, sorting,
           display modes, and joined data such as assessment fields. Saved views may also use relationship-aware

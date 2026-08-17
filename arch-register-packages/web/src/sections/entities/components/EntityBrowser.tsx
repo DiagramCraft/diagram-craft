@@ -36,6 +36,7 @@ import styles from './EntityBrowser.module.css';
 import {
   buildEntityDisplayFields,
   DISPLAY_FIELD_VIEWS,
+  filterDisplayFieldIdsForContext,
   getDisplayFieldIds,
   withDisplayFieldIds,
   withoutDisplayFieldIds
@@ -47,6 +48,7 @@ type EntityBrowserProps = {
   projectContext?: ProjectBrowserContext;
   onCountChange?: (count: number) => void;
   timelineMarkers?: AsOfMarker[];
+  onFirstFilteredSchemaIdChange?: (schemaId: string | null) => void;
 };
 
 export const SaveViewDialog = ({
@@ -158,7 +160,8 @@ export const SaveViewDialog = ({
 export const EntityBrowser = ({
   projectContext,
   onCountChange,
-  timelineMarkers
+  timelineMarkers,
+  onFirstFilteredSchemaIdChange
 }: EntityBrowserProps) => {
   const navigate = useNavigate();
   const { workspaceSlug, schemas, enums, lifecycleStates, teams, currencies, projects } =
@@ -298,11 +301,36 @@ export const EntityBrowser = ({
     onCountChange
   });
 
+  useEffect(() => {
+    onFirstFilteredSchemaIdChange?.(filtered[0]?._schema.id ?? null);
+  }, [filtered, onFirstFilteredSchemaIdChange]);
+
   const navigateToEntity = useCallback(
     (entityId: string) => {
       navigate(entityDetailRoute(workspaceSlug, asEntityPublicId(entityId)));
     },
     [navigate, workspaceSlug]
+  );
+
+  const focusEntity = useCallback(
+    (entityId: string) => {
+      const baseQuery = executionEntityQuery ?? {
+        root: { kind: 'and' as const, children: [] }
+      };
+      setEntityQuery({
+        ...baseQuery,
+        root_kind: 'entity',
+        schemaId: undefined,
+        root: {
+          kind: 'predicate',
+          path: [],
+          fieldId: '_id',
+          op: 'equals',
+          value: entityId
+        }
+      });
+    },
+    [executionEntityQuery, setEntityQuery]
   );
 
   const {
@@ -385,7 +413,10 @@ export const EntityBrowser = ({
     ? (view as 'table' | 'cards' | 'tree' | 'explore' | 'map')
     : null;
   const selectedDisplayFieldIds = displayView
-    ? getDisplayFieldIds(displayView, activeViewConfig)
+    ? filterDisplayFieldIdsForContext(
+        getDisplayFieldIds(displayView, activeViewConfig),
+        projectContext != null
+      )
     : undefined;
   const joinedRows = useMemo<BrowserEntityRecord[]>(() => {
     if (!joined) return filtered;
@@ -514,6 +545,7 @@ export const EntityBrowser = ({
               displayFields={displayFields}
               projectContext={projectContext}
               linkedEntityIds={linkedEntityIds}
+              onFocusEntity={focusEntity}
               activeDateField={dateBrowserEnabled ? activeDateField : null}
               joinAssessmentId={effectiveJoinAssessmentId}
               joinedAssessment={joinedAssessmentContext}

@@ -67,7 +67,6 @@ export const SchemaSettingsSidebar = ({
       </SidebarHeader>
       {activeTab === 'types' ? (
         <div className={styles.scroll}>
-          <SidebarGroupLabel>Entity types</SidebarGroupLabel>
           {schemaGroups.map(group => (
             <div key={group.category}>
               <SidebarGroupLabel>{group.category}</SidebarGroupLabel>

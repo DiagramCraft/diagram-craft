@@ -49,6 +49,7 @@ type EntityBrowserViewData = {
   displayFields: EntityDisplayField[];
   projectContext?: ProjectBrowserContext;
   linkedEntityIds?: string[];
+  onFocusEntity?: (entityId: string) => void;
   activeDateField?: TableViewProps['activeDateField'];
   unsupportedView?: ReactNode;
   joinAssessmentId?: string | null;
@@ -114,6 +115,7 @@ export const EntityBrowserView = ({
   displayFields,
   projectContext,
   linkedEntityIds,
+  onFocusEntity,
   activeDateField,
   unsupportedView = null,
   joinAssessmentId,
@@ -130,6 +132,7 @@ export const EntityBrowserView = ({
   const hideToolbar = mode.kind === 'published';
   const onConfigChange = mode.kind === 'published' ? noopConfigChange : mode.onConfigChange;
   const onEntityClick = mode.kind === 'configure' ? noopEntityClick : mode.onEntityClick;
+  const focusEntity = mode.kind === 'interactive' ? onFocusEntity : undefined;
   const onDelete = mode.kind === 'interactive' ? mode.onDelete : noopEntityAction;
   const onClone = mode.kind === 'interactive' ? mode.onClone : noopEntityAction;
   const onManageCollections = mode.kind === 'interactive' ? mode.onManageCollections : undefined;
@@ -201,6 +204,7 @@ export const EntityBrowserView = ({
           config={activeViewConfig}
           onConfigChange={onConfigChange}
           linkedEntityIds={linkedEntityIds}
+          onFocusEntity={focusEntity}
           hideToolbar={hideToolbar}
           displayFields={displayFields}
         />

@@ -5,6 +5,7 @@ import {
   buildSavedViewPayload,
   buildEntityQueryFromBrowserFilters,
   entityQueryToBrowserFilters,
+  getFirstFilteredSchemaId,
   isBasicRepresentable,
   isEntityInProject,
   parseJsonConfig,
@@ -13,6 +14,7 @@ import {
   parseViewConfigs,
   pruneAssessmentReferences,
   replaceFacetConditions,
+  resetExploreRelationFilter,
   serializeViewConfigs,
   toSavedViewConfig,
   toSavedViewSearch,
@@ -32,6 +34,18 @@ describe('project entity membership highlighting', () => {
 
   it.each(cases)('recognizes project membership for %j', (entity, expected) => {
     expect(isEntityInProject(entity, 'project-1')).toBe(expected);
+  });
+});
+
+describe('filtered entity defaults', () => {
+  it('uses the first filtered entity schema for new entity creation', () => {
+    expect(
+      getFirstFilteredSchemaId([
+        { _schema: { id: 'vendor', name: 'Vendor' } },
+        { _schema: { id: 'contract', name: 'Contract' } }
+      ])
+    ).toBe('vendor');
+    expect(getFirstFilteredSchemaId([])).toBeNull();
   });
 });
 
@@ -128,6 +142,27 @@ describe('entity browser view field persistence', () => {
     expect(parseViewConfigs('[]')).toEqual({});
     expect(parseViewConfigs('null')).toEqual({});
     expect(serializeViewConfigs({})).toBeUndefined();
+  });
+
+  it('resets Explore relation filters while preserving other view settings', () => {
+    const configs = {
+      explore: {
+        leftDepth: 2,
+        rightDepth: 3,
+        relationKeys: ['service->api'],
+        relationFieldNames: ['depends on']
+      },
+      table: { fieldIds: ['_owner'] }
+    };
+
+    expect(resetExploreRelationFilter(configs)).toEqual({
+      explore: {
+        leftDepth: 2,
+        rightDepth: 3,
+        relationFieldNames: []
+      },
+      table: { fieldIds: ['_owner'] }
+    });
   });
 
   it('returns null for missing or malformed individual JSON configs', () => {

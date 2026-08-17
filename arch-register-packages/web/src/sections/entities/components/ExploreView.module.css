@@ -11,9 +11,14 @@
 .toolbar {
   display: flex;
   align-items: flex-start;
+  flex-wrap: wrap;
   gap: 12px;
   padding: 10px 12px;
   border-bottom: 1px solid var(--panel-border);
+}
+
+.toolbarActions {
+  margin-left: auto;
 }
 
 .toolbarBlock {
@@ -40,6 +45,94 @@
   display: flex;
   flex-wrap: wrap;
   gap: 6px;
+}
+
+.filterCount {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 16px;
+  height: 16px;
+  padding: 0 4px;
+  border-radius: 999px;
+  background: color-mix(in oklch, var(--cmp-fg) 16%, transparent);
+  font-size: 10px;
+  line-height: 1;
+}
+
+.relationFilterPopover {
+  width: min(440px, calc(100vw - 32px));
+  max-height: min(560px, calc(100vh - 32px));
+  overflow: auto;
+}
+
+.relationFilterHeader {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding-bottom: 10px;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.relationFilterTitle {
+  color: var(--base-fg);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.relationFilterHint,
+.relationFilterEmpty {
+  color: var(--base-fg-more-dim);
+  font-size: 11px;
+}
+
+.relationFilterGroups {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding-top: 12px;
+}
+
+.relationFilterGroup {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.relationFilterGroupTitle {
+  padding-bottom: 2px;
+  color: var(--base-fg-more-dim);
+  font-size: 10px;
+  font-weight: 600;
+  letter-spacing: 0.6px;
+  text-transform: uppercase;
+}
+
+.relationFilterOption {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  padding: 5px 4px;
+  border-radius: var(--cmp-radius);
+  color: var(--base-fg);
+  font-size: 12px;
+  line-height: 1.35;
+  cursor: pointer;
+
+  &:hover {
+    background: color-mix(in oklab, var(--accent-chroma) 10%, var(--cmp-bg));
+  }
+
+  input {
+    flex: 0 0 auto;
+    margin-top: 2px;
+    accent-color: var(--accent-fg);
+  }
+}
+
+.relationFilterPredicate {
+  color: var(--accent-fg-hover);
 }
 
 .toggleButton {
