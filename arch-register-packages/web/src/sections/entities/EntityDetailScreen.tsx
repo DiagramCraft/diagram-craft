@@ -427,7 +427,18 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             typedRelationsIncoming: typedRelations.incoming,
             relationSchemas
           }}
-          relationsProps={{ workspaceId, outgoing, incoming, schemas }}
+          relationsProps={{
+            workspaceId,
+            outgoing,
+            incoming,
+            schemas,
+            relationSchemas,
+            typedRelationsOutgoing: typedRelations.outgoing,
+            typedRelationsIncoming: typedRelations.incoming,
+            entityId: entity._uid,
+            entitySchemaId: schema?.id ?? '',
+            entityName: entity._name
+          }}
           changeHistoryProps={{
             workspaceId,
             entityId,

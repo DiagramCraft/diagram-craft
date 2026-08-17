@@ -105,6 +105,22 @@ describe('instantiateTemplate', () => {
     expect(outcome).toBeDefined();
     expect(initiative).toBeDefined();
     expect(measure).toBeDefined();
+    expect(objective?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'supported_entities',
+          name: 'Supported Entities',
+          type: 'typedRelation',
+          direction: 'in'
+        }),
+        expect.objectContaining({
+          id: 'affected_entities',
+          name: 'Affected Entities',
+          type: 'typedRelation',
+          direction: 'in'
+        })
+      ])
+    );
 
     const relationNames = definitions.relationSchemas.map(schema => schema.name);
     expect(relationNames).toContain('Objective Supports Entity');

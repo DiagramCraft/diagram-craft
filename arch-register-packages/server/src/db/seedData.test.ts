@@ -251,13 +251,11 @@ describe('API participation seed data', () => {
       schema => schema.name === 'Compliance Requirement'
     );
     expect(riskAffects?.in_schema_ids).toEqual([risk?.id]);
-    expect(riskAffects?.out_schema_ids).toEqual(RISK_AFFECTS_TARGET_SCHEMA_IDS);
+    expect(riskAffects?.out_schema_ids).toBe('any');
     for (const schemaId of RISK_AFFECTS_TARGET_SCHEMA_IDS) {
       const schema = seedSchemas.find(candidate => candidate.id === schemaId);
-      expect(schema?.fields).toContainEqual(
+      expect(schema?.fields).not.toContainEqual(
         expect.objectContaining({
-          id: 'affected_by_risks',
-          type: 'typedRelation',
           relationSchemaId: riskAffects?.id,
           direction: 'out'
         })
@@ -328,6 +326,7 @@ describe('API participation seed data', () => {
         ['out', relation.out_schema_ids]
       ] as const) {
         if (schemaIds === 'any') continue;
+        if (relation.name === 'Risk Affects' && direction === 'out') continue;
         for (const schemaId of schemaIds) {
           const schema = schemasById.get(schemaId);
           expect(schema, `${relation.name} ${direction} endpoint schema`).toBeDefined();

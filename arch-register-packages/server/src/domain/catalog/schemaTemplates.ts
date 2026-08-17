@@ -632,7 +632,25 @@ const strategySchemas: TemplateSchema[] = [
     fields: [
       { id: 'description', name: 'Description', type: 'longtext' },
       { id: 'status', name: 'Status', type: 'select', enumId: 'strategy-status' },
-      { id: 'target_date', name: 'Target Date', type: 'date' }
+      { id: 'target_date', name: 'Target Date', type: 'date' },
+      {
+        id: 'supported_entities',
+        name: 'Supported Entities',
+        type: 'typedRelation',
+        symRelationSchemaId: 'objective-supports-entity',
+        direction: 'in',
+        minCount: 0,
+        maxCount: -1
+      },
+      {
+        id: 'affected_entities',
+        name: 'Affected Entities',
+        type: 'typedRelation',
+        symRelationSchemaId: 'objective-affects-entity',
+        direction: 'in',
+        minCount: 0,
+        maxCount: -1
+      }
     ]
   },
   {
@@ -2209,6 +2227,14 @@ const resolvePathStepSchemaIds = (
         ...step,
         relationSchemaId: relationSchemaIdMap.get(step.relationSchemaId) ?? step.relationSchemaId,
         ownerSchemaIds: step.ownerSchemaIds.map(symId => idMap.get(symId) ?? symId),
+        ...(step.filter && {
+          filter: resolveEntityQueryNodeSchemaIds(step.filter, idMap, relationSchemaIdMap)
+        })
+      };
+    case 'unboundTypedRelation':
+      return {
+        ...step,
+        relationSchemaId: relationSchemaIdMap.get(step.relationSchemaId) ?? step.relationSchemaId,
         ...(step.filter && {
           filter: resolveEntityQueryNodeSchemaIds(step.filter, idMap, relationSchemaIdMap)
         })

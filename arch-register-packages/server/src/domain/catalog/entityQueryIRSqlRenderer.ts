@@ -20,6 +20,7 @@ import {
 import {
   kindAfterPath,
   relationFieldById,
+  resolveEndpointSchemaIds,
   resolveFieldSchemaScope,
   resolveRelationFieldSchemaScope,
   schemaFieldById,
@@ -426,6 +427,23 @@ const typedRelationOwnerSchemaClause = (
   return `${alias}.schema_id IN (${ownerSchemaIds.map(id => addParam(state, id)).join(', ')})`;
 };
 
+const unboundTypedRelationOwnerSchemaClause = (
+  alias: string,
+  relationSchemaId: string,
+  direction: 'in' | 'out',
+  schemas: SchemaCatalog,
+  relationSchemas: RelationSchemaCatalog,
+  state: CompileState
+): string => {
+  const relationSchema = relationSchemas.get(relationSchemaId);
+  const endpointSchemaIds =
+    direction === 'in' ? relationSchema?.in_schema_ids : relationSchema?.out_schema_ids;
+  const ownerSchemaIds = [...resolveEndpointSchemaIds(endpointSchemaIds, schemas)].filter(id =>
+    schemas.has(id)
+  );
+  return typedRelationOwnerSchemaClause(alias, ownerSchemaIds, state);
+};
+
 const requireAssessmentId = (state: CompileState): void => {
   if (!state.assessmentId) {
     throw new UnsupportedEntityQueryIRError(
@@ -820,7 +838,7 @@ const compilePathSteps = (
       `WHERE ${relationAlias}.schema_id = ${relationSchemaParam} AND ${joinClause}${filterClause} AND ${rest})`
     );
   }
-  if (step.kind === 'typedRelation') {
+  if (step.kind === 'typedRelation' || step.kind === 'unboundTypedRelation') {
     const relationAlias = nextRelationAlias(state);
     const targetAlias = nextAlias(state);
     const ownerId =
@@ -828,7 +846,17 @@ const compilePathSteps = (
     const targetId =
       step.direction === 'in' ? `${relationAlias}.out_record_id` : `${relationAlias}.in_record_id`;
     const relationSchemaParam = addParam(state, step.relationSchemaId);
-    const ownerSchemaClause = typedRelationOwnerSchemaClause(curAlias, step.ownerSchemaIds, state);
+    const ownerSchemaClause =
+      step.kind === 'typedRelation'
+        ? typedRelationOwnerSchemaClause(curAlias, step.ownerSchemaIds, state)
+        : unboundTypedRelationOwnerSchemaClause(
+            curAlias,
+            step.relationSchemaId,
+            step.direction,
+            schemas,
+            relationSchemas,
+            state
+          );
     const filterClause = step.filter
       ? ` AND ${compileRelationNode(
           step.filter,
@@ -1061,7 +1089,7 @@ const buildProjectionBindings = (
         currentAlias = targetAlias;
         return;
       }
-      if (step.kind === 'typedRelation') {
+      if (step.kind === 'typedRelation' || step.kind === 'unboundTypedRelation') {
         const relationAlias = `pb_rel_${binding.name}_${stepIndex + 1}`;
         const targetAlias = `pb_${binding.name}_${stepIndex + 1}`;
         const ownerId =
@@ -1073,11 +1101,17 @@ const buildProjectionBindings = (
             ? `${relationAlias}.out_record_id`
             : `${relationAlias}.in_record_id`;
         const relationSchema = addParam(state, step.relationSchemaId);
-        const ownerSchemaClause = typedRelationOwnerSchemaClause(
-          currentAlias,
-          step.ownerSchemaIds,
-          state
-        );
+        const ownerSchemaClause =
+          step.kind === 'typedRelation'
+            ? typedRelationOwnerSchemaClause(currentAlias, step.ownerSchemaIds, state)
+            : unboundTypedRelationOwnerSchemaClause(
+                currentAlias,
+                step.relationSchemaId,
+                step.direction,
+                schemas,
+                relationSchemas,
+                state
+              );
         const filter = step.filter
           ? ` AND ${compileRelationNode(
               step.filter,
@@ -1284,7 +1318,11 @@ const projectionValue = (
 
   const bindingAlias = `pv_${binding.name}`;
   const terminalStep = projection.path[projection.path.length - 1];
-  if (projection.source === 'relation' && terminalStep?.kind !== 'typedRelation') {
+  if (
+    projection.source === 'relation' &&
+    terminalStep?.kind !== 'typedRelation' &&
+    terminalStep?.kind !== 'unboundTypedRelation'
+  ) {
     throw new UnsupportedEntityQueryIRError(
       'Relation projections must terminate at a typed relation hop'
     );

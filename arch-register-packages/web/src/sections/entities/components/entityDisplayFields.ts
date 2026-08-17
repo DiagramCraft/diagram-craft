@@ -116,7 +116,11 @@ export const buildEntityDisplayFields = (
       projection.alias ??
       [
         ...projection.path.map(step =>
-          step.kind === 'endpoint' ? `endpoint(${step.direction})` : step.fieldId
+          step.kind === 'endpoint'
+            ? `endpoint(${step.direction})`
+            : step.kind === 'unboundTypedRelation'
+              ? `${step.direction === 'in' ? '->' : '<-'}${step.relationSchemaId}`
+              : step.fieldId
         ),
         projection.fieldId
       ].join('.');

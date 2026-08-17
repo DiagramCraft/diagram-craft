@@ -87,10 +87,12 @@ free_text       := "text" ( ":" | "=" ) quoted_string       (* starting entity l
 path            := segment ( "." segment )*
 segment         := step [ "[" or_expr "]" ]                  (* optional scoped sub-condition, see 4.3 *)
 step            := field_id
-                 | "<-" [ schema_ref "." ] field_id            (* reverse traversal; schema_ref required if ambiguous, see 4.2 *)
+                 | "<-" [ schema_ref "." ] field_id            (* reverse entity-field traversal *)
+                 | "->" relation_ref                            (* outgoing typed relation *)
+                 | "<-" relation_ref                            (* incoming typed relation *)
 
-(* A field_id whose schema type is `typedRelation` is compiled to a typedRelation PathStep. Its relation schema and
-   endpoint direction come from schema metadata; they are not repeated in the text syntax. *)
+(* A field_id whose schema type is `typedRelation` is compiled to a typedRelation PathStep. The explicit arrows below
+   compile to an unboundTypedRelation PathStep and do not require a projection field. *)
 
 field_id        := identifier                                (* schema field id, e.g. eol_date, technology_releases *)
                  | "_assessment"
@@ -114,6 +116,9 @@ quoted_string   := '"' ( any character except unescaped " or \ ) * '"'
                                                              open question this line used to flag, see §10 *)
 schema_ref      := identifier | quoted_string            (* bare identifier only when the schema name has no
                                                              spaces or other identifier-breaking characters *)
+relation_ref    := identifier | quoted_string            (* typed relation schema name or id; quoted form is
+                                                             required after `<-` to avoid field ambiguity *)
+relation_ref    := identifier | quoted_string            (* typed relation schema name or id *)
 ```
 
 - `path` resolves left-to-right: every segment except the last is a traversal step; the last segment is the field the
@@ -228,6 +233,20 @@ exports retain the complete ordered list (CSV uses a JSON array).
   <-Component.technology_releases[...]
   <-Resource.technology_releases[...]
   ```
+
+- **Typed relation, single hop** — `->relation_ref` moves from the relation's `in` endpoint to its `out` endpoint;
+  `<-"relation_ref"` moves from `out` to `in`. The relation reference may be a relation-schema id, an
+  identifier-like name, or a quoted display name:
+
+  ```text
+  ->"Objective Supports Entity"[status = "active"]._name = "Billing API"
+  <-"Objective Affects Entity"
+  ```
+
+  These hops are valid even when neither endpoint schema declares a typed-relation field. Relation endpoint
+  constraints are authoritative; a typed-relation field is an optional projection for entity forms and inline
+  editing. A scoped condition in `[...]` is evaluated against the relation instance, just as it is for a bound
+  typed-relation field.
 
   Two consequences worth calling out:
     - There's no way to write "either Component or Resource, whichever" as a single backward step; it has to be an
@@ -438,6 +457,12 @@ type PathStep =
       direction: 'in' | 'out';
       ownerSchemaIds: string[]; // owner schemas whose typed-relation field is viewable
       filter?: QueryNode;
+    }
+  | {
+      kind: 'unboundTypedRelation';
+      relationSchemaId: string;
+      direction: 'in' | 'out';
+      filter?: QueryNode;
     };
 
 // No recursive step kind (no 'ancestors'/'descendants', no generic undirected walk) — every PathStep is a single
@@ -452,11 +477,9 @@ type PathStep =
 // visual filter builder always has this available directly (the author picks a relation from a concrete schema's
 // field list), so it never faces the ambiguity the text form has to resolve.
 
-// `ownerSchemaIds` is the corresponding provenance for a typed-relation step. It contains only owner schemas
-// whose matching typed-relation field is viewable to the caller. A valid IR never omits it, leaves it empty, or
-// includes an unknown/restricted owner schema; the SQL compiler applies it to the current entity before joining
-// the relation row. This preserves the field-group boundary when multiple owner schemas bind the same field id,
-// relation schema, and direction.
+// `ownerSchemaIds` is the corresponding provenance for a bound typed-relation step. It contains only owner schemas
+// whose matching typed-relation field is viewable to the caller. An unboundTypedRelation has no owner field, so its
+// owner scope is derived from the relation schema's endpoint definition during validation and SQL planning.
 
 // `filter`, when present, is evaluated against the entity reached by an ordinary step, or against the relation
 // instance reached by a `typedRelation` step, and must hold for the SAME existential witness that satisfies the rest

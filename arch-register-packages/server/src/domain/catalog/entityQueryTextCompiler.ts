@@ -135,6 +135,11 @@ const tokenize = (input: string): Token[] => {
       i += 2;
       continue;
     }
+    if (ch === '-' && input[i + 1] === '>') {
+      tokens.push({ kind: 'ARROW', text: '->', offset });
+      i += 2;
+      continue;
+    }
     if (ch === '"') {
       const { value, end } = readQuotedString(input, i);
       tokens.push({ kind: 'STRING', text: input.slice(i, end), value, offset });
@@ -251,6 +256,7 @@ type FieldResolution =
       relationSchemaId: string;
       ownerSchemaIds: string[];
     }
+  | { kind: 'unboundTypedRelation'; relationSchemaId: string; direction: 'in' | 'out' }
   | { kind: 'relationScalar'; field: RelationField; relationSchemaId: string }
   // Relation -> entity via an entityRelation field (#2670) — used both for a bracket-scoped
   // forward hop off a relation's own field namespace (`flows_in[data._name = ...]`) and for the
@@ -269,6 +275,17 @@ const relationSchemaNameMap = (relationSchemas: RelationSchemaCatalog): Map<stri
   const byName = new Map<string, string>();
   for (const schema of relationSchemas.values()) byName.set(schema.name, schema.id);
   return byName;
+};
+
+const resolveRelationSchemaRef = (
+  relationSchemas: RelationSchemaCatalog,
+  ref: string,
+  offset: number
+): string => {
+  if (relationSchemas.has(ref)) return ref;
+  const id = relationSchemaNameMap(relationSchemas).get(ref);
+  if (!id) throw new TextCompileError(`Unknown relation schema '${ref}'`, offset);
+  return id;
 };
 
 // Resolves a plain (non-`<-`) field id against the known current schema, or — when the current
@@ -729,13 +746,102 @@ const parseStep = (
 
   if (token.kind === 'ARROW') {
     advance(state);
+    if (token.text === '->') {
+      const relationRefToken = peek(state);
+      if (relationRefToken.kind !== 'STRING' && relationRefToken.kind !== 'IDENT') {
+        throw new TextCompileError('Expected a relation schema after ->', relationRefToken.offset);
+      }
+      advance(state);
+      const relationRef = (relationRefToken.value ?? relationRefToken.text).toString();
+      const relationSchemaId = resolveRelationSchemaRef(
+        relationSchemas,
+        relationRef,
+        relationRefToken.offset
+      );
+      const relationSchema = relationSchemas.get(relationSchemaId);
+      const targetSchemaIds = relationSchema?.out_schema_ids;
+      state.hopsUsed += 1;
+      if (state.hopsUsed > MAX_PATH_HOPS) {
+        throw new TextCompileError(`Path exceeds MAX_PATH_HOPS (${MAX_PATH_HOPS})`, token.offset);
+      }
+      let filter: QueryNode | undefined;
+      if (peek(state).kind === 'LBRACKET') {
+        advance(state);
+        filter = parseOrExpr(
+          state,
+          undefined,
+          relationSchemaId,
+          schemas,
+          relationSchemas,
+          enums,
+          false
+        );
+        expect(state, 'RBRACKET');
+      }
+      return {
+        step: {
+          kind: 'unboundTypedRelation',
+          relationSchemaId,
+          direction: 'in',
+          ...(filter ? { filter } : {})
+        },
+        fieldId: `->${relationRef}`,
+        resolution: { kind: 'unboundTypedRelation', relationSchemaId, direction: 'in' },
+        nextSchemaId:
+          Array.isArray(targetSchemaIds) && targetSchemaIds.length === 1
+            ? targetSchemaIds[0]
+            : undefined,
+        nextRelationSchemaId: undefined
+      };
+    }
     backward = true;
     if (peek(state).kind === 'STRING') {
-      // `<-"Schema Name".field_id` — a quoted schema_ref is unambiguous (field ids are never
-      // quoted), so it always requires an explicit '.field_id' to follow. Needed for relation
-      // schema names, which commonly contain spaces (e.g. "Data Flow", #2670).
       const schemaRefToken = advance(state);
       explicitSchemaRef = schemaRefToken.value as string;
+      if (peek(state).kind !== 'DOT') {
+        const relationSchemaId = resolveRelationSchemaRef(
+          relationSchemas,
+          explicitSchemaRef,
+          schemaRefToken.offset
+        );
+        const relationSchema = relationSchemas.get(relationSchemaId);
+        const targetSchemaIds = relationSchema?.in_schema_ids;
+        state.hopsUsed += 1;
+        if (state.hopsUsed > MAX_PATH_HOPS) {
+          throw new TextCompileError(`Path exceeds MAX_PATH_HOPS (${MAX_PATH_HOPS})`, token.offset);
+        }
+        let filter: QueryNode | undefined;
+        if (peek(state).kind === 'LBRACKET') {
+          advance(state);
+          filter = parseOrExpr(
+            state,
+            undefined,
+            relationSchemaId,
+            schemas,
+            relationSchemas,
+            enums,
+            false
+          );
+          expect(state, 'RBRACKET');
+        }
+        return {
+          step: {
+            kind: 'unboundTypedRelation',
+            relationSchemaId,
+            direction: 'out',
+            ...(filter ? { filter } : {})
+          },
+          fieldId: `<-${explicitSchemaRef}`,
+          resolution: { kind: 'unboundTypedRelation', relationSchemaId, direction: 'out' },
+          nextSchemaId:
+            Array.isArray(targetSchemaIds) && targetSchemaIds.length === 1
+              ? targetSchemaIds[0]
+              : undefined,
+          nextRelationSchemaId: undefined
+        };
+      }
+      // A quoted entity schema reference still uses the existing `<-"Schema Name".field_id`
+      // backward-reference form.
       expect(state, 'DOT');
       fieldId = expect(state, 'IDENT').text;
     } else {
@@ -1002,6 +1108,7 @@ const parsePredicate = (
   const isRelationLikeTerminal =
     last.resolution.kind === 'relation' ||
     last.resolution.kind === 'typedRelation' ||
+    last.resolution.kind === 'unboundTypedRelation' ||
     last.resolution.kind === 'relationEntityRelation' ||
     last.resolution.kind === 'endpointPseudo';
 
@@ -1380,6 +1487,23 @@ const printPathSteps = (
         ? `[${printNode(step.filter, undefined, schemas, relationSchemas, step.relationSchemaId)}]`
         : '';
       return `<-${relationName}.${step.fieldId}${filterText}`;
+    }
+    if (step.kind === 'unboundTypedRelation') {
+      const relationName = printSchemaRef(
+        relationSchemaNameById(relationSchemas, step.relationSchemaId)
+      );
+      const relationSchema = relationSchemas.get(step.relationSchemaId);
+      const targetSchemaIds =
+        step.direction === 'in' ? relationSchema?.out_schema_ids : relationSchema?.in_schema_ids;
+      schemaId =
+        Array.isArray(targetSchemaIds) && targetSchemaIds.length === 1
+          ? targetSchemaIds[0]
+          : undefined;
+      relationSchemaId = undefined;
+      const filterText = step.filter
+        ? `[${printNode(step.filter, undefined, schemas, relationSchemas, step.relationSchemaId)}]`
+        : '';
+      return `${step.direction === 'in' ? '->' : '<-'}${relationName}${filterText}`;
     }
     const relationSchema = relationSchemas.get(step.relationSchemaId);
     const targetSchemaIds =

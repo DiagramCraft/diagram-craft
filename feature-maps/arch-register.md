@@ -174,7 +174,9 @@
           Initiative, and Measure entity schemas with no fixed taxonomy or hierarchy — bound to the workspace via a
           `strategy-model` capability so other features (traceability views, roll-ups) can discover it. Two wildcard
           typed relations, Objective Supports Entity and Objective Affects Entity, link objectives to any entity in
-          the workspace with distinct supporting and impact semantics.
+          the workspace with distinct supporting and impact semantics. Relation endpoint constraints are authoritative
+          while typed-relation fields are optional projections, so these relations can be browsed, edited, and queried
+          even when target schemas do not add inverse fields.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can
@@ -194,9 +196,9 @@
           relation schemas, allowing Components and Systems to point to APIs while API entities expose inverse
           provider and consumer views; these relations are available to the same graph, topology, search, and
           permission surfaces as other typed relations.
-          The seeded architecture catalog provides a `Risk Affects` relation from each Risk to selected
-          architecture entity schemas, with an inline `Affected Entities` field on Risk and inverse
-          `Affected By Risks` fields on those target schemas.
+          The seeded architecture catalog provides a `Risk Affects` relation from each Risk to any entity schema,
+          with an inline `Affected Entities` field on Risk; target schemas do not need inverse projection fields
+          because the relation endpoint definition is sufficient.
           While editing the entity, users can add, edit, and remove relation instances directly inline — adding
           picks another entity from schemas the relation type allows and fills in the relation's own fields (subject
           to field-group access control); these changes are saved together with the rest of the entity's edits in one

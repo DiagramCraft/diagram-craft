@@ -21,7 +21,6 @@ import {
   OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
   PII_FIELD_GROUP_ID,
   RISK_AFFECTS_RELATION_SCHEMA_ID,
-  RISK_AFFECTS_TARGET_SCHEMA_IDS,
   STRATEGY_IDS,
   WORKSPACE2_ID,
   WORKSPACE_ID,
@@ -1157,36 +1156,14 @@ export const seedSchemas: SchemaDbResult[] = (
     }
   ] as SchemaDbResult[]
 ).map((schema): SchemaDbResult => {
-  const schemaWithRiskProjection = RISK_AFFECTS_TARGET_SCHEMA_IDS.includes(schema.id)
-    ? {
-        ...schema,
-        fields: [
-          ...schema.fields,
-          {
-            id: 'affected_by_risks',
-            name: 'Affected By Risks',
-            type: 'typedRelation' as const,
-            requirementLevel: null,
-            relationSchemaId: RISK_AFFECTS_RELATION_SCHEMA_ID,
-            direction: 'out' as const,
-            minCount: 0,
-            maxCount: -1
-          }
-        ]
-      }
-    : schema;
-
-  if (
-    schemaWithRiskProjection.workspace !== WORKSPACE_ID ||
-    !['API', 'Component', 'System'].includes(schemaWithRiskProjection.name)
-  ) {
-    return schemaWithRiskProjection;
+  if (schema.workspace !== WORKSPACE_ID || !['API', 'Component', 'System'].includes(schema.name)) {
+    return schema;
   }
   return {
-    ...schemaWithRiskProjection,
-    fields: [...schemaWithRiskProjection.fields, ...PII_FIELDS],
+    ...schema,
+    fields: [...schema.fields, ...PII_FIELDS],
     groups: [
-      ...(schemaWithRiskProjection.groups ?? []),
+      ...(schema.groups ?? []),
       {
         id: PII_FIELD_GROUP_ID,
         name: 'PII Classification',

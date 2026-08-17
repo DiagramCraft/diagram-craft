@@ -1,5 +1,7 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { TbChevronRight } from 'react-icons/tb';
+import { Button } from '@diagram-craft/app-components/Button';
+import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { Chip } from '../../../components/Chip';
 import { getRelationDisplayLabel } from '../../../lib/entityRelations';
@@ -10,20 +12,60 @@ import styles from './EntityRelationsTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import { EmptyState } from '../../../components/EmptyState';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
-import { useRelation } from '../../../hooks/useRelations';
-import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
+import { useRelation, useDeleteRelation } from '../../../hooks/useRelations';
 import { RelationRecordCard } from './RelationRecordList';
 import { RelationAuditLogDialog } from '../../../dialogs/RelationAuditLogDialog';
+import { RelationCreateDialog } from '../../../dialogs/RelationCreateDialog';
+import { RelationEditDialog } from '../../../dialogs/RelationEditDialog';
+import type { RelationRecord } from '@arch-register/api-types/relationContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 
 type Props = {
   workspaceId: string;
   outgoing: Relation[];
   incoming: Relation[];
   schemas: EntitySchema[];
+  relationSchemas: RelationSchema[];
+  typedRelationsOutgoing: RelationRecord[];
+  typedRelationsIncoming: RelationRecord[];
+  entityId: string;
+  entitySchemaId: string;
+  entityName: string;
 };
 
-export const EntityRelationsTab = ({ workspaceId, outgoing, incoming, schemas }: Props) => {
+export const EntityRelationsTab = ({
+  workspaceId,
+  outgoing,
+  incoming,
+  schemas,
+  relationSchemas,
+  typedRelationsOutgoing,
+  typedRelationsIncoming,
+  entityId,
+  entitySchemaId,
+  entityName
+}: Props) => {
+  const [createOpen, setCreateOpen] = useState(false);
+  const [editRelationId, setEditRelationId] = useState<string | null>(null);
+  const [deleteTarget, setDeleteTarget] = useState<{
+    relationId: string;
+    inEntityId: string;
+    outEntityId: string;
+    label: string;
+  } | null>(null);
+  const deleteMutation = useDeleteRelation(workspaceId);
+  const typedRecords = useMemo(
+    () => new Map([...typedRelationsOutgoing, ...typedRelationsIncoming].map(record => [record._uid, record])),
+    [typedRelationsIncoming, typedRelationsOutgoing]
+  );
   const relationCount = outgoing.length + incoming.length;
+  const canCreateTypedRelation = relationSchemas.some(
+    relation =>
+      relation.in.schemaIds === 'any' ||
+      relation.in.schemaIds.includes(entitySchemaId) ||
+      relation.out.schemaIds === 'any' ||
+      relation.out.schemaIds.includes(entitySchemaId)
+  );
 
   if (relationCount === 0) {
     return (
@@ -31,6 +73,21 @@ export const EntityRelationsTab = ({ workspaceId, outgoing, incoming, schemas }:
         <EmptyState
           title="No relationships"
           subtitle="Add reference or containment fields to connect entities."
+        />
+        {canCreateTypedRelation && (
+          <Button onClick={() => setCreateOpen(true)} style={{ marginTop: 12 }}>
+            Add typed relation
+          </Button>
+        )}
+        <RelationCreateDialog
+          open={createOpen}
+          onClose={() => setCreateOpen(false)}
+          workspaceId={workspaceId}
+          currentEntityId={entityId}
+          currentSchemaId={entitySchemaId}
+          currentEntityName={entityName}
+          relationSchemas={relationSchemas}
+          schemas={schemas}
         />
       </div>
     );
@@ -48,6 +105,10 @@ export const EntityRelationsTab = ({ workspaceId, outgoing, incoming, schemas }:
               direction="outgoing"
               workspaceId={workspaceId}
               schemas={schemas}
+              relationSchemas={relationSchemas}
+              initialRecord={typedRecords.get(r.relationId ?? '')}
+              onEdit={setEditRelationId}
+              onDelete={setDeleteTarget}
             />
           ) : (
             <RelationRow key={`o-${i}`} relation={r} direction="outgoing" schemas={schemas} />
@@ -69,6 +130,10 @@ export const EntityRelationsTab = ({ workspaceId, outgoing, incoming, schemas }:
               direction="incoming"
               workspaceId={workspaceId}
               schemas={schemas}
+              relationSchemas={relationSchemas}
+              initialRecord={typedRecords.get(r.relationId ?? '')}
+              onEdit={setEditRelationId}
+              onDelete={setDeleteTarget}
             />
           ) : (
             <RelationRow key={`i-${i}`} relation={r} direction="incoming" schemas={schemas} />
@@ -80,6 +145,49 @@ export const EntityRelationsTab = ({ workspaceId, outgoing, incoming, schemas }:
           </div>
         )}
       </div>
+      {canCreateTypedRelation && (
+        <Button onClick={() => setCreateOpen(true)} style={{ marginTop: 12 }}>
+          Add typed relation
+        </Button>
+      )}
+      <RelationCreateDialog
+        open={createOpen}
+        onClose={() => setCreateOpen(false)}
+        workspaceId={workspaceId}
+        currentEntityId={entityId}
+        currentSchemaId={entitySchemaId}
+        currentEntityName={entityName}
+        relationSchemas={relationSchemas}
+        schemas={schemas}
+      />
+      <RelationEditDialog
+        open={editRelationId !== null}
+        onClose={() => setEditRelationId(null)}
+        workspaceId={workspaceId}
+        relationId={editRelationId}
+      />
+      <DeleteConfirmationDialog
+        open={deleteTarget !== null}
+        title="Delete relation?"
+        message={
+          <>
+            The relation <b>{deleteTarget?.label}</b> will be permanently deleted.
+          </>
+        }
+        detail="This can't be undone."
+        confirmLabel="Delete relation"
+        onConfirm={() => {
+          if (deleteTarget) {
+            deleteMutation.mutate({
+              relationId: deleteTarget.relationId,
+              inEntityId: deleteTarget.inEntityId,
+              outEntityId: deleteTarget.outEntityId
+            });
+            setDeleteTarget(null);
+          }
+        }}
+        onCancel={() => setDeleteTarget(null)}
+      />
     </div>
   );
 };
@@ -88,17 +196,33 @@ const TypedRelationRow = ({
   relation,
   direction,
   workspaceId,
-  schemas
+  schemas,
+  relationSchemas,
+  initialRecord,
+  onEdit,
+  onDelete
 }: {
   relation: Relation;
   direction: 'outgoing' | 'incoming';
   workspaceId: string;
   schemas: EntitySchema[];
+  relationSchemas: RelationSchema[];
+  initialRecord?: RelationRecord;
+  onEdit: (relationId: string) => void;
+  onDelete: (target: {
+    relationId: string;
+    inEntityId: string;
+    outEntityId: string;
+    label: string;
+  }) => void;
 }) => {
   const [expanded, setExpanded] = useState(false);
   const [showHistory, setShowHistory] = useState(false);
-  const { data: record } = useRelation(workspaceId, expanded ? (relation.relationId ?? '') : '');
-  const { data: relationSchemas } = useRelationSchemas(workspaceId, expanded);
+  const { data: fetchedRecord } = useRelation(
+    workspaceId,
+    expanded && !initialRecord ? (relation.relationId ?? '') : ''
+  );
+  const record = initialRecord ?? fetchedRecord;
   const relationSchema = relationSchemas?.find(s => s.id === record?._schema.id);
 
   const targetSchemaId = relation.entitySchemaId;
@@ -153,6 +277,18 @@ const TypedRelationRow = ({
         expanded={expanded}
         onToggleExpand={() => setExpanded(v => !v)}
         onViewHistory={() => setShowHistory(true)}
+        onEdit={record?.canEdit ? () => onEdit(record._uid) : undefined}
+        onDelete={
+          record?.canDelete
+            ? () =>
+                onDelete({
+                  relationId: record._uid,
+                  inEntityId: record._in.id,
+                  outEntityId: record._out.id,
+                  label: relationSchema?.name ?? getRelationDisplayLabel(relation)
+                })
+            : undefined
+        }
       />
       <RelationAuditLogDialog
         open={showHistory}

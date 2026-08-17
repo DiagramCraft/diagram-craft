@@ -24,6 +24,15 @@ export type PathStep =
       filter?: QueryNode;
     }
   | {
+      // Entity -> relation -> entity without requiring a typedRelation projection field on the
+      // current entity schema. The relation endpoint definition supplies both endpoint scopes;
+      // `direction` identifies the endpoint occupied by the current entity.
+      kind: 'unboundTypedRelation';
+      relationSchemaId: string;
+      direction: 'in' | 'out';
+      filter?: QueryNode;
+    }
+  | {
       // Relation -> its `in`/`out` entity endpoint. Only legal at a position in the path that is
       // currently on a relation row: `path[0]` of a relation-rooted query/`relationExists` path,
       // `path[0]` inside a `typedRelation`/`relationBackward` step's `filter`, or immediately
@@ -86,6 +95,12 @@ export const pathStepSchema: z.ZodType<PathStep> = z.lazy(() =>
       relationSchemaId: z.string(),
       direction: z.enum(['in', 'out']),
       ownerSchemaIds: z.array(z.string()).min(1),
+      filter: queryNodeSchema.optional()
+    }),
+    z.object({
+      kind: z.literal('unboundTypedRelation'),
+      relationSchemaId: z.string(),
+      direction: z.enum(['in', 'out']),
       filter: queryNodeSchema.optional()
     }),
     z.object({

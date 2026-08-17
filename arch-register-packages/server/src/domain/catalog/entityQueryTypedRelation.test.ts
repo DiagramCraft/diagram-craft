@@ -51,6 +51,46 @@ const schemas = new Map([[system.id, system]]);
 const relationSchemas = new Map([[relation.id, relation]]);
 
 describe('typed scalar relation query compilation', () => {
+  it('compiles an unbound typed relation using the relation endpoint scope', () => {
+    const query: EntityQuery = {
+      root: {
+        kind: 'predicate',
+        path: [
+          {
+            kind: 'unboundTypedRelation',
+            relationSchemaId: relation.id,
+            direction: 'in',
+            filter: {
+              kind: 'predicate',
+              path: [],
+              fieldId: 'status',
+              op: 'equals',
+              value: 'active'
+            }
+          }
+        ],
+        fieldId: '_name',
+        op: 'equals',
+        value: 'System B'
+      }
+    };
+    expect(validateEntityQueryIR(query, schemas, null, relationSchemas)).toEqual({ ok: true });
+
+    const compiled = compileEntityQueryIR(
+      query,
+      schemas,
+      'sqlite',
+      'ws-1',
+      {},
+      null,
+      relationSchemas
+    );
+    expect(compiled.sql).toContain('JOIN scoped_relation pb_rel_query_path_0_1');
+    expect(compiled.sql).toContain('pb_root_query_path_0.schema_id IN (?)');
+    expect(compiled.params).toContain(relation.id);
+    expect(compiled.params).toContain('active');
+  });
+
   it('compiles a direction-aware relation hop and same-relation scalar filter', () => {
     const query: EntityQuery = {
       root: {
