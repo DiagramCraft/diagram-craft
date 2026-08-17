@@ -54,6 +54,11 @@ describe('validateEntityDetailSearch', () => {
       contentQuery: undefined,
       contentView: undefined
     });
+    expect(validateEntityDetailSearch({ tab: 'future-plans' })).toEqual({
+      tab: 'future-plans',
+      contentQuery: undefined,
+      contentView: undefined
+    });
   });
 
   it('accepts API catalog filters and validates its page number', () => {

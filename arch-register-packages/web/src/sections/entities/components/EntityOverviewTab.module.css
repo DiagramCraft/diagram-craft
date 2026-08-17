@@ -14,6 +14,13 @@
   padding: 12px 14px 16px;
 }
 
+.sectionLabel {
+  margin: 0 0 8px;
+  color: var(--base-fg);
+  font-size: 12px;
+  font-weight: 500;
+}
+
 /* Property rows */
 .propList {
   display: flex;
@@ -134,6 +141,30 @@
   display: flex;
   align-items: center;
   gap: 4px;
+}
+
+.unboundRelationGroup + .unboundRelationGroup {
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.unboundRelationTitle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  margin-bottom: 6px;
+  color: var(--base-fg);
+  font-size: 12px;
+  font-weight: 500;
+}
+
+.unboundRelationDirection,
+.unboundRelationEmpty {
+  color: var(--base-fg-more-dim);
+  font-size: 11px;
+  font-weight: 400;
 }
 
 /* Mini diagram list (entity detail "Diagrams" section) */

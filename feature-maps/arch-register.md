@@ -292,6 +292,10 @@
           When grouped by Project + Entity, a project with both a start and target date set shows a gantt bar spanning
           that range in its group header.
 
+        - @id:ar.entity-views.entity-detail Entity detail screens present metadata, project membership, and diagram
+          membership in an accordion, with metadata open initially and project/diagram counts visible while their
+          sections are collapsed. Planned changes are available in a dedicated Future plans tab beside Change history.
+
         - @id:ar.entity-views.diff Users can pick a future date and view a workspace-wide diff of what changes by
           then — entities added, removed, or changed, with all applicable planned changes across projects applied,
           scoped to the browser's current search/filter/project-scope selection, with a field-level diff on

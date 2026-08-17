@@ -60,6 +60,7 @@ import {
 } from './types/entityDetailTypes';
 import type { EntityDetailSearchParams } from '../../routes/searchParams';
 import { buildEntityRefLookup } from './entityDetailHelpers';
+import { flattenChangeCaseMembers } from './components/snapshotDisplay';
 
 export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const navigate = useNavigate();
@@ -234,6 +235,9 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const outgoing: Relation[] = relations.outgoing;
   const incoming: Relation[] = relations.incoming;
   const relationCount = outgoing.length + incoming.length;
+  const futurePlansCount = flattenChangeCaseMembers(entityChangeCases).filter(
+    entry => entry.changeCase.status === 'planned'
+  ).length;
 
   const {
     editing,
@@ -400,6 +404,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           tab={tab}
           setTab={setTab}
           relationCount={relationCount}
+          futurePlansCount={futurePlansCount}
           canViewAudit={canViewAudit}
           overviewProps={{
             workspaceSlug,
@@ -421,7 +426,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             currencies: currencies.currencies,
             defaultCurrency: currencies.default_currency,
             entityProjects,
-            changeCases: entityChangeCases,
             entityDiagramFiles,
             typedRelationsOutgoing: typedRelations.outgoing,
             typedRelationsIncoming: typedRelations.incoming,
@@ -448,6 +452,11 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             lifecycleStates,
             teams,
             canViewAudit
+          }}
+          futurePlansProps={{
+            workspaceId,
+            entityProjects,
+            changeCases: entityChangeCases
           }}
         />
       )}

@@ -23,7 +23,6 @@ import type {
   SupportedCurrency,
   WorkspaceTeam
 } from '@arch-register/api-types/workspaceConfigContract';
-import type { ChangeCase } from '@arch-register/api-types/changeCaseContract';
 import type { Project } from '@arch-register/api-types/projectCrudContract';
 import type {
   ProjectEntity,
@@ -33,12 +32,6 @@ import type { RefLookup } from '../types/entityDetailTypes';
 import styles from './EntityOverviewTab.module.css';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
-import { useMilestones } from '../../../hooks/useMilestones';
-import {
-  getSnapshotDateLabel,
-  toMilestonesById,
-  flattenChangeCaseMembers
-} from './snapshotDisplay';
 import { ExternalMetadataIndicator } from '../../../components/ExternalMetadataIndicator';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { resolveGroupAccessControl } from '../../../lib/fieldGroupAccess';
@@ -51,6 +44,7 @@ import { TypedRelationFieldEditor } from './TypedRelationFieldEditor';
 import { MultiValueEditor } from '../../../components/MultiValueEditor';
 import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
 import { resolveEntityReference } from '../entityDetailHelpers';
+import { EntityDetailAccordion } from './EntityDetailAccordion';
 
 type EntityProjectAssoc = { project: Project; entity_type: ProjectEntity['entity_type'] };
 
@@ -74,7 +68,6 @@ type Props = {
   currencies: SupportedCurrency[];
   defaultCurrency: string;
   entityProjects: EntityProjectAssoc[];
-  changeCases: ChangeCase[];
   entityDiagramFiles: DiagramEntityFile[];
   typedRelationsOutgoing: RelationRecord[];
   typedRelationsIncoming: RelationRecord[];
@@ -101,27 +94,11 @@ export const EntityOverviewTab = ({
   currencies,
   defaultCurrency,
   entityProjects,
-  changeCases,
   entityDiagramFiles,
   typedRelationsOutgoing,
   typedRelationsIncoming,
   relationSchemas
 }: Props) => {
-  const futureEntries = flattenChangeCaseMembers(changeCases).filter(
-    entry => entry.changeCase.status === 'planned'
-  );
-  const futureSnapshotProjectIds = [
-    ...new Set(
-      futureEntries
-        .map(entry => entry.changeCase.project_id)
-        .filter((id): id is string => id != null)
-    )
-  ];
-  const { data: milestones = [] } = useMilestones(workspaceSlug);
-  const milestonesById = toMilestonesById(
-    milestones.filter(milestone => futureSnapshotProjectIds.includes(milestone.project_id))
-  );
-
   const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceSlug);
 
   const getTypedRelationFieldState = (fieldId: string) =>
@@ -208,6 +185,39 @@ export const EntityOverviewTab = ({
       )
     }))
     .filter(section => section.fields.length > 0 && section.access !== 'none');
+  const activeTypedRelationFields =
+    schema?.fields.filter(field => field.type === 'typedRelation' && !field.archived) ?? [];
+  const unboundTypedRelationSections = relationSchemas.flatMap(relationSchema => {
+    const endpoints = (['in', 'out'] as const).flatMap(direction => {
+      const endpoint = relationSchema[direction];
+      const endpointAllowsEntity =
+        schema != null &&
+        (endpoint.schemaIds === 'any' || endpoint.schemaIds.includes(schema.id));
+      const hasProjection = activeTypedRelationFields.some(
+        field =>
+          field.type === 'typedRelation' &&
+          field.relationSchemaId === relationSchema.id &&
+          field.direction === direction
+      );
+      if (!endpointAllowsEntity || hasProjection) return [];
+
+      const displayDirection = direction === 'in' ? ('outgoing' as const) : ('incoming' as const);
+      const records = (displayDirection === 'outgoing'
+        ? typedRelationsOutgoing
+        : typedRelationsIncoming
+      ).filter(record => record._schema.id === relationSchema.id);
+      return [{ direction: displayDirection, records }];
+    });
+
+    if (endpoints.length === 0) return [];
+    return [
+      {
+        relationSchema,
+        endpoints,
+        recordCount: endpoints.reduce((count, endpoint) => count + endpoint.records.length, 0)
+      }
+    ];
+  });
 
   return (
     <div className={styles.overviewGrid}>
@@ -216,7 +226,7 @@ export const EntityOverviewTab = ({
           <>
             {ungroupedFields.length > 0 && (
               <>
-                <div className={styles.sectionLabel} style={{ marginTop: 0 }}>
+                <div className={styles.sectionLabel}>
                   Properties
                 </div>
                 <div className={styles.propList}>
@@ -241,14 +251,13 @@ export const EntityOverviewTab = ({
       </div>
 
       <div className={styles.sidePanel}>
-        <div className={styles.sectionLabel} style={{ marginTop: 0 }}>
-          Metadata
-        </div>
-        {schema && <MetaPropRow label="Schema" value={schema.name} />}
-        <MetaPropRow label="Public ID" value={entity._publicId} />
-        <MetaPropRow label="Namespace" value={entity._namespace} />
+        <EntityDetailAccordion defaultOpen={['metadata']}>
+          <EntityDetailAccordion.Section value="metadata" title="Metadata">
+              {schema && <MetaPropRow label="Schema" value={schema.name} />}
+              <MetaPropRow label="Public ID" value={entity._publicId} />
+              <MetaPropRow label="Namespace" value={entity._namespace} />
 
-        <hr className={styles.divider} />
+              <hr className={styles.divider} />
 
         <MetaPropRow
           label="Name"
@@ -418,159 +427,167 @@ export const EntityOverviewTab = ({
           ))
         )}
 
-        <hr className={styles.divider} />
+          </EntityDetailAccordion.Section>
 
-        <div className={styles.sectionLabel}>Projects</div>
-        {entityProjects.length === 0 ? (
-          <div className={styles.metaPropRow}>
-            <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
-              Not in any project
-            </span>
-          </div>
-        ) : (
-          entityProjects.map(({ project, entity_type }) => (
-            <div key={project.id} className={styles.metaPropRow}>
-              <span className={styles.metaPropLabel}>{project.name}</span>
-              <span className={styles.metaPropValue}>
-                {entity_type ? (
-                  entity_type.name
-                ) : (
-                  <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>
-                )}
-              </span>
-            </div>
-          ))
-        )}
-
-        {futureEntries.length > 0 && (
-          <>
-            <hr className={styles.divider} />
-            <div className={styles.sectionLabel}>Future plans</div>
-            {futureEntries.map(entry => {
-              const projectName =
-                entityProjects.find(ep => ep.project.id === entry.changeCase.project_id)?.project
-                  .name ?? entry.changeCase.project_id;
-              const dateLabel = entry.changeCase.milestone_id
-                ? getSnapshotDateLabel(entry.changeCase, milestonesById)
-                : entry.changeCase.target_date
-                  ? formatDate(entry.changeCase.target_date)
-                  : null;
-              return (
-                <div key={entry.member.id} className={styles.futurePlan}>
-                  <div className={styles.futurePlanMeta}>
-                    <span className={styles.futurePlanProject}>{projectName}</span>
-                    {dateLabel && <span className={styles.futurePlanDate}>{dateLabel}</span>}
+          {unboundTypedRelationSections.map(({ relationSchema, endpoints, recordCount }) => (
+            <EntityDetailAccordion.Section
+              key={relationSchema.id}
+              value={`typed-relation-${relationSchema.id}`}
+              title={relationSchema.name}
+              count={recordCount}
+            >
+              {endpoints.map(({ direction, records }) => (
+                <div key={direction} className={styles.unboundRelationGroup}>
+                  <div className={styles.unboundRelationTitle}>
+                    <span>{direction === 'outgoing' ? 'Outgoing' : 'Incoming'}</span>
                   </div>
-                  {entry.changeCase.commit_message && (
-                    <div className={styles.futurePlanNote}>{entry.changeCase.commit_message}</div>
+                  {records.length > 0 ? (
+                    <RelationRecordList
+                      records={records}
+                      direction={direction}
+                      relationSchema={relationSchema}
+                      workspaceId={workspaceSlug}
+                    />
+                  ) : (
+                    <div className={styles.unboundRelationEmpty}>No relation instances</div>
                   )}
                 </div>
-              );
-            })}
-          </>
-        )}
+              ))}
+            </EntityDetailAccordion.Section>
+          ))}
 
-        <hr className={styles.divider} />
+          <EntityDetailAccordion.Section
+            value="projects"
+            title="Projects"
+            count={entityProjects.length}
+          >
+              {entityProjects.length === 0 ? (
+                <div className={styles.metaPropRow}>
+                  <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
+                    Not in any project
+                  </span>
+                </div>
+              ) : (
+                entityProjects.map(({ project, entity_type }) => (
+                  <div key={project.id} className={styles.metaPropRow}>
+                    <span className={styles.metaPropLabel}>{project.name}</span>
+                    <span className={styles.metaPropValue}>
+                      {entity_type ? (
+                        entity_type.name
+                      ) : (
+                        <span style={{ color: 'var(--base-fg-more-dim)' }}>—</span>
+                      )}
+                    </span>
+                  </div>
+                ))
+              )}
+          </EntityDetailAccordion.Section>
 
-        <div className={styles.sectionLabel}>Diagrams</div>
-        {entityDiagramFiles.length === 0 ? (
-          <div className={styles.metaPropRow}>
-            <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
-              Not in any diagram
-            </span>
-          </div>
-        ) : (
-          <div className={styles.miniDiagramList}>
-            {entityDiagramFiles.map(({ file, project }) => (
-              <DiagramMetadataPopover
-                key={file.id}
-                type={file.type}
-                fallbackTitle={file.name}
-                contentMetadata={file.content_metadata}
-                commentCount={file.comment_count}
-                unresolvedCommentCount={file.unresolved_comment_count}
-              >
-                <a
-                  className={styles.miniDiagramRow}
-                  href={projectDiagramHref(
-                    workspaceSlug,
-                    asProjectPublicId(project.public_id),
-                    file.id
-                  )}
-                >
-                  <div className={styles.miniDiagramThumb}>
-                    <div className={styles.miniDiagramThumbGrid} />
-                    {file.preview_svg ? (
-                      <div
-                        className={styles.miniDiagramThumbPreview}
-                        dangerouslySetInnerHTML={{ __html: file.preview_svg }}
-                      />
-                    ) : (
-                      <svg
-                        className={styles.miniDiagramThumbSvg}
-                        viewBox="0 0 60 30"
-                        preserveAspectRatio="none"
+          <EntityDetailAccordion.Section
+            value="diagrams"
+            title="Diagrams"
+            count={entityDiagramFiles.length}
+          >
+              {entityDiagramFiles.length === 0 ? (
+                <div className={styles.metaPropRow}>
+                  <span className={styles.metaPropValue} style={{ color: 'var(--base-fg-more-dim)' }}>
+                    Not in any diagram
+                  </span>
+                </div>
+              ) : (
+                <div className={styles.miniDiagramList}>
+                  {entityDiagramFiles.map(({ file, project }) => (
+                    <DiagramMetadataPopover
+                      key={file.id}
+                      type={file.type}
+                      fallbackTitle={file.name}
+                      contentMetadata={file.content_metadata}
+                      commentCount={file.comment_count}
+                      unresolvedCommentCount={file.unresolved_comment_count}
+                    >
+                      <a
+                        className={styles.miniDiagramRow}
+                        href={projectDiagramHref(
+                          workspaceSlug,
+                          asProjectPublicId(project.public_id),
+                          file.id
+                        )}
                       >
-                        <rect
-                          x="3"
-                          y="7"
-                          width="12"
-                          height="7"
-                          rx="1"
-                          fill="var(--cmp-bg)"
-                          stroke="var(--base-fg-more-dim)"
-                          strokeWidth="0.7"
-                        />
-                        <rect
-                          x="23"
-                          y="3"
-                          width="12"
-                          height="7"
-                          rx="1"
-                          fill="var(--cmp-bg)"
-                          stroke="var(--base-fg-more-dim)"
-                          strokeWidth="0.7"
-                        />
-                        <rect
-                          x="23"
-                          y="20"
-                          width="12"
-                          height="7"
-                          rx="1"
-                          fill="var(--cmp-bg)"
-                          stroke="var(--base-fg-more-dim)"
-                          strokeWidth="0.7"
-                        />
-                        <rect
-                          x="43"
-                          y="10"
-                          width="12"
-                          height="7"
-                          rx="1"
-                          fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))"
-                          stroke="var(--tag-component)"
-                          strokeWidth="0.7"
-                        />
-                        <path
-                          d="M15 10 L23 6 M15 11 L23 23 M35 6 L43 14 M35 23 L43 14"
-                          stroke="var(--cmp-fg-disabled)"
-                          fill="none"
-                          strokeWidth="0.7"
-                        />
-                      </svg>
-                    )}
-                  </div>
-                  <div className={styles.miniDiagramBody}>
-                    <div className={styles.miniDiagramName}>
-                      {file.content_metadata?.title ?? file.name}
-                    </div>
-                    <div className={styles.miniDiagramSub}>{project.name}</div>
-                  </div>
-                </a>
-              </DiagramMetadataPopover>
-            ))}
-          </div>
-        )}
+                        <div className={styles.miniDiagramThumb}>
+                          <div className={styles.miniDiagramThumbGrid} />
+                          {file.preview_svg ? (
+                            <div
+                              className={styles.miniDiagramThumbPreview}
+                              dangerouslySetInnerHTML={{ __html: file.preview_svg }}
+                            />
+                          ) : (
+                            <svg
+                              className={styles.miniDiagramThumbSvg}
+                              viewBox="0 0 60 30"
+                              preserveAspectRatio="none"
+                            >
+                              <rect
+                                x="3"
+                                y="7"
+                                width="12"
+                                height="7"
+                                rx="1"
+                                fill="var(--cmp-bg)"
+                                stroke="var(--base-fg-more-dim)"
+                                strokeWidth="0.7"
+                              />
+                              <rect
+                                x="23"
+                                y="3"
+                                width="12"
+                                height="7"
+                                rx="1"
+                                fill="var(--cmp-bg)"
+                                stroke="var(--base-fg-more-dim)"
+                                strokeWidth="0.7"
+                              />
+                              <rect
+                                x="23"
+                                y="20"
+                                width="12"
+                                height="7"
+                                rx="1"
+                                fill="var(--cmp-bg)"
+                                stroke="var(--base-fg-more-dim)"
+                                strokeWidth="0.7"
+                              />
+                              <rect
+                                x="43"
+                                y="10"
+                                width="12"
+                                height="7"
+                                rx="1"
+                                fill="color-mix(in oklch, var(--tag-component) 28%, var(--cmp-bg))"
+                                stroke="var(--tag-component)"
+                                strokeWidth="0.7"
+                              />
+                              <path
+                                d="M15 10 L23 6 M15 11 L23 23 M35 6 L43 14 M35 23 L43 14"
+                                stroke="var(--cmp-fg-disabled)"
+                                fill="none"
+                                strokeWidth="0.7"
+                              />
+                            </svg>
+                          )}
+                        </div>
+                        <div className={styles.miniDiagramBody}>
+                          <div className={styles.miniDiagramName}>
+                            {file.content_metadata?.title ?? file.name}
+                          </div>
+                          <div className={styles.miniDiagramSub}>{project.name}</div>
+                        </div>
+                      </a>
+                    </DiagramMetadataPopover>
+                  ))}
+                </div>
+              )}
+          </EntityDetailAccordion.Section>
+        </EntityDetailAccordion>
       </div>
     </div>
   );
