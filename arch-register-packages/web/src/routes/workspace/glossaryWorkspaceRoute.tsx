@@ -3,7 +3,7 @@ import { buildGlossaryBreadcrumbs } from '../../layouts/workspaceShellDescriptor
 import { withWorkspaceShell } from './workspaceShellRoute';
 import { validateGlossarySearch } from '../searchParams';
 import { GlossarySidebar } from '../../sections/glossary/GlossarySidebar';
-import { LazyGlossaryScreen, LazyGlossaryTermScreen } from './lazyWorkspaceScreens';
+import { LazyGlossaryScreen } from './lazyWorkspaceScreens';
 
 export const createGlossaryWorkspaceRoutes = <TParentRoute extends AnyRoute>(
   workspaceRoute: TParentRoute
@@ -26,7 +26,11 @@ export const createGlossaryWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     createRoute({
       getParentRoute: () => workspaceRoute,
       path: 'glossary/$termId',
-      component: LazyGlossaryTermScreen
+      validateSearch: validateGlossarySearch,
+      // Renders the same GlossaryScreen (list) with the term opened as a slide-over drawer on
+      // top, rather than a separate page — keeps the deep-linkable /glossary/$termId URL while
+      // matching the Claude Design mockup's drawer interaction.
+      component: LazyGlossaryScreen
     }),
     ctx => ({
       variant: 'standard',

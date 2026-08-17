@@ -1,5 +1,5 @@
 import { useMemo, useRef } from 'react';
-import { getRouteApi } from '@tanstack/react-router';
+import { useNavigate, useParams, useSearch } from '@tanstack/react-router';
 import { useQuery } from '@tanstack/react-query';
 import { TbFilter, TbX } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -16,11 +16,11 @@ import { useTeams, useLifecycleStates } from '../../hooks/useWorkspaceConfig';
 import { glossaryConfigQuery, glossaryTermsQuery } from '../../queries/glossary';
 import { entitiesQuery } from '../../queries/entities';
 import type { GlossaryTerm } from '@arch-register/api-types/glossaryContract';
+import type { GlossarySearchParams } from '../../routes/searchParams';
 import { GlossaryQualityBadges } from './GlossaryQualityBadges';
+import { GlossaryTermDrawer } from './GlossaryTermDrawer';
 import filterStyles from '../entities/components/EntityBrowser.module.css';
 import styles from './GlossaryScreen.module.css';
-
-const routeApi = getRouteApi('/authenticated/$workspaceSlug/glossary');
 
 type SortKey = 'name' | 'usage' | 'status';
 
@@ -32,9 +32,12 @@ const compareNullable = (a: string | null | undefined, b: string | null | undefi
 };
 
 export const GlossaryScreen = () => {
-  const { workspaceSlug } = routeApi.useParams();
-  const navigate = routeApi.useNavigate();
-  const search = routeApi.useSearch();
+  const { workspaceSlug, termId } = useParams({ strict: false }) as {
+    workspaceSlug: string;
+    termId?: string;
+  };
+  const navigate = useNavigate();
+  const search = useSearch({ strict: false }) as GlossarySearchParams;
   const q = search.q ?? '';
   const categoryIds = useMemo(
     () => (search.categoryIds ?? '').split(',').filter(Boolean),
@@ -82,14 +85,29 @@ export const GlossaryScreen = () => {
     dir: 'asc'
   });
 
+  const currentRoute = termId
+    ? { to: '/$workspaceSlug/glossary/$termId' as const, params: { workspaceSlug, termId } }
+    : { to: '/$workspaceSlug/glossary' as const, params: { workspaceSlug } };
+
   const patchSearch = (patch: Record<string, unknown>) =>
-    navigate({ search: previous => ({ ...previous, ...patch }) });
+    navigate({ ...currentRoute, search: (previous: Record<string, unknown>) => ({ ...previous, ...patch }) });
 
   const activeOwnerLifecycleCount = (search.owner ? 1 : 0) + (search.lifecycle ? 1 : 0);
 
-  const clearAll = () =>
+  const clearAll = () => navigate({ ...currentRoute, search: () => ({}) });
+
+  const openTerm = (id: string) =>
     navigate({
-      search: () => ({})
+      to: '/$workspaceSlug/glossary/$termId',
+      params: { workspaceSlug, termId: id },
+      search: (previous: Record<string, unknown>) => previous
+    });
+
+  const closeTerm = () =>
+    navigate({
+      to: '/$workspaceSlug/glossary',
+      params: { workspaceSlug },
+      search: (previous: Record<string, unknown>) => previous
     });
 
   const removeCategory = (id: string) =>
@@ -285,12 +303,7 @@ export const GlossaryScreen = () => {
             sorted.map(term => (
               <Table.Row
                 key={term.entity._uid}
-                onClick={() =>
-                  navigate({
-                    to: '/$workspaceSlug/glossary/$termId',
-                    params: { workspaceSlug, termId: term.entity._publicId }
-                  })
-                }
+                onClick={() => openTerm(term.entity._publicId)}
               >
                 <Table.NameCell title={term.canonicalName} subtitle={term.entity._publicId} />
                 <Table.Cell>
@@ -342,6 +355,10 @@ export const GlossaryScreen = () => {
           )}
         </Table.Body>
       </Table.Root>
+
+      {termId && (
+        <GlossaryTermDrawer workspaceSlug={workspaceSlug} termId={termId} onClose={closeTerm} />
+      )}
     </main>
   );
 };
