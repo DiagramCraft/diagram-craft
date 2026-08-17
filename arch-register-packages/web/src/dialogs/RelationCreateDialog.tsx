@@ -71,7 +71,7 @@ export const RelationCreateDialog = ({
         ? schemas.map(schema => schema.id)
         : selectedRelation[otherEndpoint].schemaIds
       : [];
-  }, [currentEndpoint, currentSchemaId, direction, otherEndpoint, schemas, selectedRelation]);
+  }, [currentEndpoint, currentSchemaId, otherEndpoint, schemas, selectedRelation]);
   const targetQuery = useEntities(
     workspaceId,
     { schemaIds: targetSchemaIds, q: search, view: 'summary', limit: 20 },
@@ -89,11 +89,6 @@ export const RelationCreateDialog = ({
     setValues({});
     setError('');
   }, [availableRelations, currentSchemaId, open]);
-
-  useEffect(() => {
-    setTarget(null);
-    setSearch('');
-  }, [direction, relationSchemaId]);
 
   const handleSave = async () => {
     if (!selectedRelation || !target) {
@@ -158,6 +153,8 @@ export const RelationCreateDialog = ({
                 setDirection(
                   nextRelation && allowed(nextRelation.in, currentSchemaId) ? 'in' : 'out'
                 );
+                setTarget(null);
+                setSearch('');
               }}
               placeholder="Choose a relation"
               style={{ width: '100%' }}
@@ -172,7 +169,11 @@ export const RelationCreateDialog = ({
           <FormElement label="Direction">
             <Select.Root
               value={direction}
-              onChange={next => setDirection((next ?? 'in') as 'in' | 'out')}
+              onChange={next => {
+                setDirection((next ?? 'in') as 'in' | 'out');
+                setTarget(null);
+                setSearch('');
+              }}
               style={{ width: '100%' }}
             >
               {selectedRelation && allowed(selectedRelation.in, currentSchemaId) && (

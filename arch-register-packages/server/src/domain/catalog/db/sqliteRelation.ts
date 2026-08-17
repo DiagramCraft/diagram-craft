@@ -31,7 +31,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async createRelationSchema(input: RelationSchemaDbCreate) {
     this.run(
-      'INSERT INTO relation_schema (id, workspace, name, category, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, shared_field_group_links, validation_rules, color, icon, relation_approval_policy, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO relation_schema (id, workspace, name, category, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, shared_field_group_links, validation_rules, color, icon, relation_approval_policy, version, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
@@ -102,7 +102,7 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
 
   async createRelationSchemaVersion(input: RelationSchemaVersionDbCreate) {
     this.run(
-      'INSERT INTO relation_schema_version (id, workspace, schema_id, version, name, category, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, validation_rules, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO relation_schema_version (id, workspace, schema_id, version, name, category, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, validation_rules, color, icon, change_summary, created_by, created_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
