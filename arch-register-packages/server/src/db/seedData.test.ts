@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { seedEntities } from './seedData/entities';
 import { seedRelationSchemas, seedRelations } from './seedData/relations';
-import { seedAssessments } from './seedData/projects';
+import { seedAssessments, seedProjectEntities } from './seedData/projects';
 import { seedEnums, seedSchemas } from './seedData/catalog';
-import { GLOSSARY_IDS } from './seedData/constants';
+import { GLOSSARY_IDS, STRATEGY_IDS } from './seedData/constants';
+import { seededProjects } from './seedFixtures';
 import { seedAssessmentTypes } from './seedData/workspace';
 import { seedWorkspaceDashboards } from './seedData/views';
 import { materializeDerivedFields } from '../domain/derived/derivedFields';
@@ -345,5 +346,34 @@ describe('API participation seed data', () => {
         }
       }
     }
+  });
+});
+
+describe('strategy project context seed data', () => {
+  it('associates strategy examples with projects through project entities', () => {
+    expect(seedProjectEntities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          project_id: seededProjects.portalRedesign.id,
+          entity_id: STRATEGY_IDS.objectives.improveCustomerRetention,
+          entity_type_id: null
+        }),
+        expect.objectContaining({
+          project_id: seededProjects.authMigration.id,
+          entity_id: STRATEGY_IDS.objectives.strengthenPlatformReliability,
+          entity_type_id: null
+        }),
+        expect.objectContaining({
+          project_id: seededProjects.portalRedesign.id,
+          entity_id: STRATEGY_IDS.initiatives.portalRedesign,
+          entity_type_id: null
+        }),
+        expect.objectContaining({
+          project_id: seededProjects.checkoutRevamp.id,
+          entity_id: STRATEGY_IDS.initiatives.observabilityUplift,
+          entity_type_id: null
+        })
+      ])
+    );
   });
 });

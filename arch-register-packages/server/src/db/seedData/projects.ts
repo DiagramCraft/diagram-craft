@@ -15,6 +15,7 @@ import { seededAssessments, seededProjects, seededSchemas } from '../seedFixture
 import {
   MILESTONE_IDS,
   PROJECT_ENTITY_TYPE_IDS,
+  STRATEGY_IDS,
   TEAM_IDS,
   USER_IDS,
   WORKSPACE_ID,
@@ -450,6 +451,39 @@ export const seedChangeCases: ChangeCaseDbCreate[] = [
 ];
 
 export const seedProjectEntities: ProjectEntityDbCreate[] = [
+  // Strategy context
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.portalRedesign.id,
+    entity_id: STRATEGY_IDS.objectives.improveCustomerRetention,
+    entity_type_id: null,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.authMigration.id,
+    entity_id: STRATEGY_IDS.objectives.strengthenPlatformReliability,
+    entity_type_id: null,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.portalRedesign.id,
+    entity_id: STRATEGY_IDS.initiatives.portalRedesign,
+    entity_type_id: null,
+    is_done: false,
+    created_at: now
+  },
+  {
+    workspace: WORKSPACE_ID,
+    project_id: seededProjects.checkoutRevamp.id,
+    entity_id: STRATEGY_IDS.initiatives.observabilityUplift,
+    entity_type_id: null,
+    is_done: false,
+    created_at: now
+  },
   // Portal Redesign
   {
     workspace: WORKSPACE_ID,

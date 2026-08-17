@@ -378,7 +378,9 @@
       milestones, and assessments.
 
         - @id:ar.projects.lifecycle Users can create, edit, view, and delete projects and manage their project-level
-          metadata, including optional start and target dates shown on the project home screen.
+          metadata, including optional start and target dates shown on the project home screen. Entities can be linked
+          to one or more projects, making the project's milestones, assessments, and planned changes available as
+          project context for that entity.
 
         - @id:ar.projects.dashboard The project home screen shows a composable dashboard of widgets scoped to that
           project, built from the same widget catalog as the workspace dashboard (stat metrics, saved-view embeds,
