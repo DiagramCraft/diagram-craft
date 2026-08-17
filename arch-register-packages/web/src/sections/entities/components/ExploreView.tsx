@@ -175,6 +175,22 @@ export const ExploreView = ({
     [selectedRelationKeys, updateConfig]
   );
 
+  const updateColumnSchema = useCallback(
+    (columnIndex: number, schemaId: string) => {
+      const nextColumnSchemaIds = { ...(normalizedConfig.columnSchemaIds ?? {}) };
+      if (schemaId.length === 0) {
+        delete nextColumnSchemaIds[String(columnIndex)];
+      } else {
+        nextColumnSchemaIds[String(columnIndex)] = schemaId;
+      }
+      updateConfig({
+        columnSchemaIds:
+          Object.keys(nextColumnSchemaIds).length > 0 ? nextColumnSchemaIds : undefined
+      });
+    },
+    [normalizedConfig.columnSchemaIds, updateConfig]
+  );
+
   const handleEntityContextMenu = useCallback(
     (event: MouseEvent<HTMLButtonElement>, entity: ExploreEntity) => {
       if (onFocusEntity == null) return;
@@ -486,17 +502,41 @@ export const ExploreView = ({
           )}
 
           <div className={styles.columns}>
-            {graph.columns.map(column => (
-              <section key={column.index} className={styles.column}>
+            {graph.columns.map(column => {
+              const columnLabel =
+                column.direction === 'center'
+                  ? 'Filtered entities'
+                  : column.direction === 'left'
+                    ? `Incoming hop ${column.hop}`
+                    : `Outgoing hop ${column.hop}`;
+              const selectedSchemaId = normalizedConfig.columnSchemaIds?.[String(column.index)];
+              const availableSchemaIds = new Set(column.availableSchemaIds);
+              const schemaOptions = column.availableSchemaIds
+                .map(schemaId => ({
+                  schemaId,
+                  name: schemaMap.get(schemaId)?.name ?? schemaId
+                }))
+                .concat(
+                  selectedSchemaId != null && !availableSchemaIds.has(selectedSchemaId)
+                    ? [
+                        {
+                          schemaId: selectedSchemaId,
+                          name: schemaMap.get(selectedSchemaId)?.name ?? selectedSchemaId
+                        }
+                      ]
+                    : []
+                )
+                .sort((a, b) => a.name.localeCompare(b.name));
+
+              return (
+              <section
+                key={column.index}
+                className={styles.column}
+                data-testid={`explore-column-${column.index}`}
+              >
                 <header className={styles.columnHeader}>
                   <div>
-                    <div className={styles.columnLabel}>
-                      {column.direction === 'center'
-                        ? 'Filtered entities'
-                        : column.direction === 'left'
-                          ? `Incoming hop ${column.hop}`
-                          : `Outgoing hop ${column.hop}`}
-                    </div>
+                    <div className={styles.columnLabel}>{columnLabel}</div>
                     <div className={styles.columnMeta}>
                       {column.entities.length}{' '}
                       {column.entities.length === 1 ? 'entity' : 'entities'}
@@ -504,6 +544,33 @@ export const ExploreView = ({
                   </div>
 
                   <div className={styles.columnActions}>
+                    {!hideToolbar &&
+                      column.direction !== 'center' &&
+                      schemaOptions.length > 0 && (
+                        <label className={styles.columnSchemaFilter}>
+                          <span className={styles.columnSchemaFilterLabel}>Schema</span>
+                          <select
+                            className={styles.columnSchemaSelect}
+                            value={selectedSchemaId ?? ''}
+                            aria-label={`Filter ${columnLabel} by schema`}
+                            data-testid={`explore-column-schema-filter-${column.index}`}
+                            onChange={event =>
+                              updateColumnSchema(column.index, event.target.value)
+                            }
+                          >
+                            <option value="">All schemas</option>
+                            {schemaOptions.map(option => (
+                              <option key={option.schemaId} value={option.schemaId}>
+                                {option.name}
+                                {option.schemaId === selectedSchemaId &&
+                                !availableSchemaIds.has(option.schemaId)
+                                  ? ' (unavailable)'
+                                  : ''}
+                              </option>
+                            ))}
+                          </select>
+                        </label>
+                      )}
                     {column.direction === 'center' && normalizedConfig.leftDepth === 0 && (
                       <Button
                         size={'xs'}
@@ -657,7 +724,8 @@ export const ExploreView = ({
                   )}
                 </div>
               </section>
-            ))}
+              );
+            })}
           </div>
         </div>
       </div>

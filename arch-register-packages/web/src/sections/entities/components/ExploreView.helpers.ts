@@ -29,6 +29,7 @@ export type ExploreColumn = {
   direction: 'left' | 'center' | 'right';
   hop: number;
   entities: ExploreEntity[];
+  availableSchemaIds: string[];
 };
 
 export type ExploreConnector = {
@@ -77,15 +78,24 @@ export const DEFAULT_EXPLORE_CONFIG: ExploreViewConfig = {
 
 export const normalizeExploreConfig = (
   config: Partial<ExploreViewConfig> | null | undefined
-): ExploreViewConfig => ({
-  leftDepth: Math.max(0, Math.trunc(config?.leftDepth ?? DEFAULT_EXPLORE_CONFIG.leftDepth)),
-  rightDepth: Math.max(0, Math.trunc(config?.rightDepth ?? DEFAULT_EXPLORE_CONFIG.rightDepth)),
-  relationFieldNames: [
-    ...new Set(config?.relationFieldNames ?? DEFAULT_EXPLORE_CONFIG.relationFieldNames)
-  ],
-  relationKeys: config?.relationKeys == null ? undefined : [...new Set(config.relationKeys)],
-  fieldIds: config?.fieldIds
-});
+): ExploreViewConfig => {
+  const columnSchemaIds = Object.fromEntries(
+    Object.entries(config?.columnSchemaIds ?? {}).filter(
+      ([columnIndex, schemaId]) => /^-?[1-9]\d*$/.test(columnIndex) && schemaId.length > 0
+    )
+  );
+
+  return {
+    leftDepth: Math.max(0, Math.trunc(config?.leftDepth ?? DEFAULT_EXPLORE_CONFIG.leftDepth)),
+    rightDepth: Math.max(0, Math.trunc(config?.rightDepth ?? DEFAULT_EXPLORE_CONFIG.rightDepth)),
+    relationFieldNames: [
+      ...new Set(config?.relationFieldNames ?? DEFAULT_EXPLORE_CONFIG.relationFieldNames)
+    ],
+    relationKeys: config?.relationKeys == null ? undefined : [...new Set(config.relationKeys)],
+    columnSchemaIds: Object.keys(columnSchemaIds).length > 0 ? columnSchemaIds : undefined,
+    fieldIds: config?.fieldIds
+  };
+};
 
 export const parseExploreConfigValue = (raw: string | undefined): ExploreViewConfig | null => {
   if (raw == null) return null;
@@ -275,13 +285,16 @@ export const buildExploreGraph = ({
     hop: 0,
     entities: dedupeColumn(centerEntities.map(toCenterEntity)).filter(
       entity => !excludedEntityIds.has(entity.entityId)
-    )
+    ),
+    availableSchemaIds: []
   };
   columns.set(0, centerColumn);
 
   let currentLeft = centerColumn.entities;
   for (let hop = 1; hop <= normalizedConfig.leftDepth; hop++) {
     const nextEntities: ExploreEntity[] = [];
+    const availableSchemaIds = new Set<string>();
+    const selectedSchemaId = normalizedConfig.columnSchemaIds?.[String(-hop)];
 
     for (const entity of currentLeft) {
       const relationData = relationsMap.get(entity.entityId);
@@ -299,6 +312,8 @@ export const buildExploreGraph = ({
           )
         )
           continue;
+        availableSchemaIds.add(relation.entitySchemaId);
+        if (selectedSchemaId != null && relation.entitySchemaId !== selectedSchemaId) continue;
         nextEntities.push(toRelatedEntity(relation));
         connectors.push(
           toExploreConnector({
@@ -317,13 +332,21 @@ export const buildExploreGraph = ({
     }
 
     const entities = dedupeColumn(nextEntities);
-    columns.set(-hop, { index: -hop, direction: 'left', hop, entities });
+    columns.set(-hop, {
+      index: -hop,
+      direction: 'left',
+      hop,
+      entities,
+      availableSchemaIds: [...availableSchemaIds]
+    });
     currentLeft = entities;
   }
 
   let currentRight = centerColumn.entities;
   for (let hop = 1; hop <= normalizedConfig.rightDepth; hop++) {
     const nextEntities: ExploreEntity[] = [];
+    const availableSchemaIds = new Set<string>();
+    const selectedSchemaId = normalizedConfig.columnSchemaIds?.[String(hop)];
 
     for (const entity of currentRight) {
       const relationData = relationsMap.get(entity.entityId);
@@ -341,6 +364,8 @@ export const buildExploreGraph = ({
           )
         )
           continue;
+        availableSchemaIds.add(relation.entitySchemaId);
+        if (selectedSchemaId != null && relation.entitySchemaId !== selectedSchemaId) continue;
         nextEntities.push(toRelatedEntity(relation));
         connectors.push(
           toExploreConnector({
@@ -359,7 +384,13 @@ export const buildExploreGraph = ({
     }
 
     const entities = dedupeColumn(nextEntities);
-    columns.set(hop, { index: hop, direction: 'right', hop, entities });
+    columns.set(hop, {
+      index: hop,
+      direction: 'right',
+      hop,
+      entities,
+      availableSchemaIds: [...availableSchemaIds]
+    });
     currentRight = entities;
   }
 

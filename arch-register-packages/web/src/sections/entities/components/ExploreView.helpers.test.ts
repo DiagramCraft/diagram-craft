@@ -307,6 +307,178 @@ describe('buildExploreGraph', () => {
     expect(graph.connectors).toHaveLength(2);
   });
 
+  it('filters each side by its selected target schema and exposes candidate schemas', () => {
+    const graph = buildExploreGraph({
+      centerEntities: [entity('a', 'App A')],
+      relationsMap: relationMap({
+        a: {
+          incoming: [
+            {
+              entityId: 'left-service',
+              publicId: 'LEFT-SERVICE',
+              entitySlug: 'left-service',
+              entityName: 'Left Service',
+              entitySchemaId: 'service',
+              fieldName: 'Used By',
+              kind: 'reference'
+            },
+            {
+              entityId: 'left-database',
+              publicId: 'LEFT-DATABASE',
+              entitySlug: 'left-database',
+              entityName: 'Left Database',
+              entitySchemaId: 'database',
+              fieldName: 'Used By',
+              kind: 'reference'
+            }
+          ],
+          outgoing: [
+            {
+              entityId: 'right-service',
+              publicId: 'RIGHT-SERVICE',
+              entitySlug: 'right-service',
+              entityName: 'Right Service',
+              entitySchemaId: 'service',
+              fieldName: 'Depends On',
+              kind: 'reference'
+            },
+            {
+              entityId: 'right-database',
+              publicId: 'RIGHT-DATABASE',
+              entitySlug: 'right-database',
+              entityName: 'Right Database',
+              entitySchemaId: 'database',
+              fieldName: 'Depends On',
+              kind: 'reference'
+            }
+          ]
+        }
+      }),
+      config: {
+        leftDepth: 1,
+        rightDepth: 1,
+        relationFieldNames: [],
+        columnSchemaIds: { '-1': 'service', '1': 'database' }
+      }
+    });
+
+    expect(graph.columns.find(column => column.index === -1)?.entities).toEqual([
+      expect.objectContaining({ entityId: 'left-service' })
+    ]);
+    expect(graph.columns.find(column => column.index === -1)?.availableSchemaIds).toEqual([
+      'service',
+      'database'
+    ]);
+    expect(graph.columns.find(column => column.index === 1)?.entities).toEqual([
+      expect.objectContaining({ entityId: 'right-database' })
+    ]);
+    expect(graph.connectors).toHaveLength(2);
+  });
+
+  it('uses schema-filtered entities as the input to later hops', () => {
+    const graph = buildExploreGraph({
+      centerEntities: [entity('a', 'App A')],
+      relationsMap: relationMap({
+        a: {
+          outgoing: [
+            {
+              entityId: 'service',
+              publicId: 'SERVICE',
+              entitySlug: 'service',
+              entityName: 'Service',
+              entitySchemaId: 'service',
+              fieldName: 'Depends On',
+              kind: 'reference'
+            },
+            {
+              entityId: 'database',
+              publicId: 'DATABASE',
+              entitySlug: 'database',
+              entityName: 'Database',
+              entitySchemaId: 'database',
+              fieldName: 'Depends On',
+              kind: 'reference'
+            }
+          ]
+        },
+        service: {
+          outgoing: [
+            {
+              entityId: 'service-child',
+              publicId: 'SERVICE-CHILD',
+              entitySlug: 'service-child',
+              entityName: 'Service Child',
+              entitySchemaId: 'service',
+              fieldName: 'Depends On',
+              kind: 'reference'
+            }
+          ]
+        },
+        database: {
+          outgoing: [
+            {
+              entityId: 'database-child',
+              publicId: 'DATABASE-CHILD',
+              entitySlug: 'database-child',
+              entityName: 'Database Child',
+              entitySchemaId: 'database',
+              fieldName: 'Depends On',
+              kind: 'reference'
+            }
+          ]
+        }
+      }),
+      config: {
+        leftDepth: 0,
+        rightDepth: 2,
+        relationFieldNames: [],
+        columnSchemaIds: { '1': 'service' }
+      }
+    });
+
+    expect(graph.columns.find(column => column.index === 1)?.entities).toEqual([
+      expect.objectContaining({ entityId: 'service' })
+    ]);
+    expect(graph.columns.find(column => column.index === 2)?.entities).toEqual([
+      expect.objectContaining({ entityId: 'service-child' })
+    ]);
+    expect(graph.columns.find(column => column.index === 2)?.availableSchemaIds).toEqual([
+      'service'
+    ]);
+  });
+
+  it('retains an unreachable schema selection in the column candidates', () => {
+    const graph = buildExploreGraph({
+      centerEntities: [entity('a', 'App A')],
+      relationsMap: relationMap({
+        a: {
+          outgoing: [
+            {
+              entityId: 'service',
+              publicId: 'SERVICE',
+              entitySlug: 'service',
+              entityName: 'Service',
+              entitySchemaId: 'service',
+              fieldName: 'Depends On',
+              kind: 'reference'
+            }
+          ]
+        }
+      }),
+      config: {
+        leftDepth: 0,
+        rightDepth: 1,
+        relationFieldNames: [],
+        columnSchemaIds: { '1': 'database' }
+      }
+    });
+
+    expect(graph.columns.find(column => column.index === 1)?.entities).toEqual([]);
+    expect(graph.columns.find(column => column.index === 1)?.availableSchemaIds).toEqual([
+      'service'
+    ]);
+  });
+
   it('includes containment relations by default when no field filter is selected', () => {
     const graph = buildExploreGraph({
       centerEntities: [entity('a', 'App A')],
@@ -483,6 +655,14 @@ describe('normalizeExploreConfig', () => {
       normalizeExploreConfig({ relationFieldNames: ['dependsOn', 'ownedBy', 'dependsOn'] })
         .relationFieldNames
     ).toEqual(['dependsOn', 'ownedBy']);
+  });
+
+  it('keeps valid per-column schema selections and drops the center column', () => {
+    expect(
+      normalizeExploreConfig({
+        columnSchemaIds: { '-1': 'service', '0': 'application', '1': 'database', bad: 'ignored' }
+      }).columnSchemaIds
+    ).toEqual({ '-1': 'service', '1': 'database' });
   });
 });
 

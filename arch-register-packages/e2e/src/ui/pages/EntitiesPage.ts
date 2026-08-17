@@ -41,10 +41,14 @@ export class EntitiesPage extends WorkspacePage {
     await expect(this.browserTitle()).toHaveText(name);
   };
 
-  switchView = async (view: 'table' | 'cards' | 'tree' | 'graph') => {
+  switchView = async (view: 'table' | 'cards' | 'tree' | 'graph' | 'explore') => {
     await this.goto({ viewMode: view });
     await expect(this.browserTitle()).toBeVisible();
   };
+
+  exploreColumn = (index: number) => this.page.getByTestId(`explore-column-${index}`);
+  exploreColumnSchemaFilter = (index: number) =>
+    this.page.getByTestId(`explore-column-schema-filter-${index}`);
 
   graphNodes = () => this.page.locator('[data-node]');
   graphRootNodes = () => this.page.locator('[data-node] rect[data-selected]');

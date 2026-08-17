@@ -217,7 +217,11 @@ export const exploreViewConfigSchema = z.object({
   relationKeys: z
     .array(z.string())
     .optional()
-    .describe('Specific relationship instances to include')
+    .describe('Specific relationship instances to include'),
+  columnSchemaIds: z
+    .record(z.string(), z.string())
+    .optional()
+    .describe('Schema identifier selected for each non-center explore column')
 });
 
 export const graphViewConfigSchema = z.object({

@@ -2,8 +2,22 @@ import { describe, expect, it } from 'vitest';
 import {
   bubbleViewConfigSchema,
   graphViewConfigSchema,
+  exploreViewConfigSchema,
   savedViewQuerySchema
 } from './viewContract';
+
+describe('explore view configuration', () => {
+  it('accepts schema filters keyed by non-center column', () => {
+    expect(
+      exploreViewConfigSchema.safeParse({
+        leftDepth: 1,
+        rightDepth: 2,
+        relationFieldNames: [],
+        columnSchemaIds: { '-1': 'service', '1': 'database' }
+      }).success
+    ).toBe(true);
+  });
+});
 
 describe('graph view configuration', () => {
   it('accepts entity graph traversal settings and relation graph settings together', () => {

@@ -79553,6 +79553,16 @@
                                       "type": "string"
                                     },
                                     "description": "Specific relationship instances to include"
+                                  },
+                                  "columnSchemaIds": {
+                                    "type": "object",
+                                    "propertyNames": {
+                                      "type": "string"
+                                    },
+                                    "additionalProperties": {
+                                      "type": "string"
+                                    },
+                                    "description": "Schema identifier selected for each non-center explore column"
                                   }
                                 },
                                 "description": "Configuration for explore view"
@@ -81772,6 +81782,16 @@
                                   "type": "string"
                                 },
                                 "description": "Specific relationship instances to include"
+                              },
+                              "columnSchemaIds": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {
+                                  "type": "string"
+                                },
+                                "description": "Schema identifier selected for each non-center explore column"
                               }
                             },
                             "description": "Configuration for explore view"
@@ -84185,6 +84205,16 @@
                                     "type": "string"
                                   },
                                   "description": "Specific relationship instances to include"
+                                },
+                                "columnSchemaIds": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "description": "Schema identifier selected for each non-center explore column"
                                 }
                               },
                               "description": "Configuration for explore view"
@@ -86395,6 +86425,16 @@
                                   "type": "string"
                                 },
                                 "description": "Specific relationship instances to include"
+                              },
+                              "columnSchemaIds": {
+                                "type": "object",
+                                "propertyNames": {
+                                  "type": "string"
+                                },
+                                "additionalProperties": {
+                                  "type": "string"
+                                },
+                                "description": "Schema identifier selected for each non-center explore column"
                               }
                             },
                             "description": "Configuration for explore view"
@@ -88803,6 +88843,16 @@
                                     "type": "string"
                                   },
                                   "description": "Specific relationship instances to include"
+                                },
+                                "columnSchemaIds": {
+                                  "type": "object",
+                                  "propertyNames": {
+                                    "type": "string"
+                                  },
+                                  "additionalProperties": {
+                                    "type": "string"
+                                  },
+                                  "description": "Schema identifier selected for each non-center explore column"
                                 }
                               },
                               "description": "Configuration for explore view"
