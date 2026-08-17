@@ -367,7 +367,7 @@ test.describe('data routes', () => {
         }),
         expect.objectContaining({
           entityId: apiId,
-          fieldName: 'Consumed APIs',
+          fieldName: 'Consumes APIs',
           kind: 'typed',
           relationSchemaId: consumesApiRelationSchemaId
         })
@@ -400,7 +400,7 @@ test.describe('data routes', () => {
         }),
         expect.objectContaining({
           entityId: apiId,
-          fieldName: 'Consumed APIs',
+          fieldName: 'Consumes APIs',
           kind: 'typed',
           relationSchemaId: consumesApiRelationSchemaId
         })
@@ -420,7 +420,7 @@ test.describe('data routes', () => {
       incoming: expect.arrayContaining([
         expect.objectContaining({
           entityId: componentId,
-          fieldName: 'Consumers',
+          fieldName: 'Consumed by',
           kind: 'typed',
           relationSchemaId: consumesApiRelationSchemaId
         })

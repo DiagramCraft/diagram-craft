@@ -142,7 +142,7 @@ test.describe('entities section', () => {
     await entitiesPage.goto();
     await entitiesPage.openEntity('Unauthorized Production Access');
     await entitiesPage.startEditingEntity();
-    await expect(page.getByText('Affected Entities', { exact: false }).first()).toBeVisible();
+    await expect(page.getByText('Affects', { exact: false }).first()).toBeVisible();
     await expect(page.getByText('Identity Platform', { exact: true })).toBeVisible();
     await expect(page.getByText('Auth Service', { exact: true })).toBeVisible();
   });
