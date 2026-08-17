@@ -24,7 +24,10 @@ import type {
 } from '../document/db/documentDatabase';
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import type { DashboardWidget } from '@arch-register/api-types/dashboardContract';
+import type { BrowserView } from '@arch-register/api-types/viewContract';
+import type { EntityQuery, PathStep, QueryNode } from '@arch-register/api-types/entityQueryIR';
 import type { RelationSchemaDbCreate } from './db/relationDatabase';
+import type { SavedViewDbCreate } from './db/catalogDatabase';
 import { normalizePublicIdPrefix } from '../../utils/publicIds';
 
 export type SymbolicField =
@@ -126,6 +129,21 @@ export type SymbolicDashboardWidget = Omit<DashboardWidget, 'config'> & {
   config: Record<string, unknown>;
 };
 
+// A saved view seeded from a template. `filters`/`config` reuse the real EntityQuery/view-config
+// shapes, but wherever they carry a schema/relation-schema id (root schemaId, PathStep
+// ownerSchemaId/relationSchemaId/ownerSchemaIds, per-mode config schema-id keys), the value is a
+// symbolic id (symId-space) resolved against a workspace's idMap at instantiation time. Field ids
+// are never symbolic — they pass through unchanged, same as dashboard widget config field ids.
+export type SymbolicSavedView = {
+  id: string;
+  name: string;
+  description?: string | null;
+  isAdminView?: boolean;
+  viewMode: BrowserView;
+  filters: EntityQuery;
+  config: Record<string, unknown> | null;
+};
+
 export type SymbolicRelationSchema = {
   symId: string;
   name: string;
@@ -157,6 +175,7 @@ export type SchemaTemplate = {
   documentTemplates: SymbolicDocumentTemplate[];
   dashboardWidgets?: SymbolicDashboardWidget[];
   capabilityConfigurations?: SymbolicCapabilityConfiguration[];
+  views?: SymbolicSavedView[];
 };
 
 export type SymbolicCapabilityConfiguration = {
@@ -2067,6 +2086,39 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         h: 2
       },
       { id: 'default-activity-feed', type: 'activity-feed', config: {}, x: 0, y: 4, w: 12, h: 6 }
+    ],
+    views: [
+      {
+        id: 'risk-compliance-open-risks-table',
+        name: 'Open Risks',
+        viewMode: 'table',
+        filters: {
+          schemaId: 'risk',
+          root: { kind: 'predicate', path: [], fieldId: 'status', op: 'equals', value: 'open' }
+        },
+        config: { table: { fieldIds: ['likelihood', 'impact', 'inherent_risk_score', 'status'] } }
+      },
+      {
+        id: 'risk-compliance-risks-with-controls-table',
+        name: 'Risks With Mitigating Controls',
+        viewMode: 'table',
+        filters: {
+          schemaId: 'risk',
+          root: {
+            kind: 'relationExists',
+            path: [
+              {
+                kind: 'typedRelation',
+                fieldId: 'mitigating_controls',
+                relationSchemaId: 'risk-control',
+                direction: 'in',
+                ownerSchemaIds: ['control']
+              }
+            ]
+          }
+        },
+        config: { table: { fieldIds: ['likelihood', 'impact', 'mitigating_controls'] } }
+      }
     ]
   },
   {
@@ -2090,6 +2142,28 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           measure: { target: { kind: 'entity_schema', symId: 'measure' } }
         }
       }
+    ],
+    views: [
+      {
+        id: 'strategy-objectives-table',
+        name: 'Objectives',
+        viewMode: 'table',
+        filters: {
+          schemaId: 'objective',
+          root: { kind: 'and', children: [] }
+        },
+        config: { table: { fieldIds: ['status', 'target_date'] } }
+      },
+      {
+        id: 'strategy-initiatives-table',
+        name: 'Initiatives',
+        viewMode: 'table',
+        filters: {
+          schemaId: 'initiative',
+          root: { kind: 'and', children: [] }
+        },
+        config: { table: { fieldIds: ['status', 'objectives', 'outcomes'] } }
+      }
     ]
   }
 ];
@@ -2108,6 +2182,205 @@ export const resolveTemplateDashboardWidgets = (
     }
   }));
 
+const resolvePathStepSchemaIds = (
+  step: PathStep,
+  idMap: ReadonlyMap<string, string>,
+  relationSchemaIdMap: ReadonlyMap<string, string>
+): PathStep => {
+  switch (step.kind) {
+    case 'forward':
+    case 'relationForward':
+      return step.filter
+        ? {
+            ...step,
+            filter: resolveEntityQueryNodeSchemaIds(step.filter, idMap, relationSchemaIdMap)
+          }
+        : step;
+    case 'backward':
+      return {
+        ...step,
+        ownerSchemaId: idMap.get(step.ownerSchemaId) ?? step.ownerSchemaId,
+        ...(step.filter && {
+          filter: resolveEntityQueryNodeSchemaIds(step.filter, idMap, relationSchemaIdMap)
+        })
+      };
+    case 'typedRelation':
+      return {
+        ...step,
+        relationSchemaId: relationSchemaIdMap.get(step.relationSchemaId) ?? step.relationSchemaId,
+        ownerSchemaIds: step.ownerSchemaIds.map(symId => idMap.get(symId) ?? symId),
+        ...(step.filter && {
+          filter: resolveEntityQueryNodeSchemaIds(step.filter, idMap, relationSchemaIdMap)
+        })
+      };
+    case 'relationBackward':
+      return {
+        ...step,
+        relationSchemaId: relationSchemaIdMap.get(step.relationSchemaId) ?? step.relationSchemaId,
+        ...(step.filter && {
+          filter: resolveEntityQueryNodeSchemaIds(step.filter, idMap, relationSchemaIdMap)
+        })
+      };
+    case 'endpoint':
+      return step;
+  }
+};
+
+const resolveEntityQueryNodeSchemaIds = (
+  node: QueryNode,
+  idMap: ReadonlyMap<string, string>,
+  relationSchemaIdMap: ReadonlyMap<string, string>
+): QueryNode => {
+  switch (node.kind) {
+    case 'and':
+    case 'or':
+      return {
+        ...node,
+        children: node.children.map(child =>
+          resolveEntityQueryNodeSchemaIds(child, idMap, relationSchemaIdMap)
+        )
+      };
+    case 'not':
+      return {
+        ...node,
+        child: resolveEntityQueryNodeSchemaIds(node.child, idMap, relationSchemaIdMap)
+      };
+    case 'freeText':
+      return node;
+    case 'predicate':
+      return {
+        ...node,
+        path: node.path.map(step => resolvePathStepSchemaIds(step, idMap, relationSchemaIdMap))
+      };
+    case 'relationExists':
+      return {
+        ...node,
+        path: node.path.map(step => resolvePathStepSchemaIds(step, idMap, relationSchemaIdMap))
+      };
+  }
+};
+
+const resolveEntityQuerySchemaIds = (
+  query: EntityQuery,
+  idMap: ReadonlyMap<string, string>,
+  relationSchemaIdMap: ReadonlyMap<string, string>
+): EntityQuery => ({
+  ...query,
+  ...(query.schemaId && { schemaId: idMap.get(query.schemaId) ?? query.schemaId }),
+  root: resolveEntityQueryNodeSchemaIds(query.root, idMap, relationSchemaIdMap)
+});
+
+const resolveViewModeConfigSchemaIds = (
+  mode: string,
+  config: Record<string, unknown>,
+  idMap: ReadonlyMap<string, string>,
+  relationSchemaIdMap: ReadonlyMap<string, string>
+): Record<string, unknown> => {
+  switch (mode) {
+    case 'radar':
+      return {
+        ...config,
+        ...(typeof config.schemaId === 'string' && {
+          schemaId: idMap.get(config.schemaId) ?? config.schemaId
+        })
+      };
+    case 'matrix':
+      return {
+        ...config,
+        ...(typeof config.colSchemaId === 'string' && {
+          colSchemaId: idMap.get(config.colSchemaId) ?? config.colSchemaId
+        })
+      };
+    case 'map': {
+      const resolved: Record<string, unknown> = { ...config };
+      for (const key of ['level1SchemaId', 'level2SchemaId', 'level3SchemaId']) {
+        if (typeof config[key] === 'string') {
+          resolved[key] = idMap.get(config[key] as string) ?? config[key];
+        }
+      }
+      if (Array.isArray(config.levelConfigs)) {
+        resolved.levelConfigs = (config.levelConfigs as Array<Record<string, unknown>>).map(
+          level =>
+            typeof level.schemaId === 'string'
+              ? { ...level, schemaId: idMap.get(level.schemaId) ?? level.schemaId }
+              : level
+        );
+      }
+      return resolved;
+    }
+    case 'explore':
+      return {
+        ...config,
+        ...(typeof config.columnSchemaIds === 'object' &&
+          config.columnSchemaIds !== null && {
+            columnSchemaIds: Object.fromEntries(
+              Object.entries(config.columnSchemaIds as Record<string, string>).map(
+                ([key, symId]) => [key, idMap.get(symId) ?? symId]
+              )
+            )
+          })
+      };
+    case 'graph':
+      return {
+        ...config,
+        ...(Array.isArray(config.relationSchemaIds) && {
+          relationSchemaIds: (config.relationSchemaIds as string[]).map(
+            symId => relationSchemaIdMap.get(symId) ?? symId
+          )
+        })
+      };
+    default:
+      return config;
+  }
+};
+
+const resolveViewConfigSchemaIds = (
+  config: Record<string, unknown> | null,
+  idMap: ReadonlyMap<string, string>,
+  relationSchemaIdMap: ReadonlyMap<string, string>
+): Record<string, unknown> | null => {
+  if (!config) return config;
+  const resolved: Record<string, unknown> = { ...config };
+  for (const mode of ['radar', 'matrix', 'map', 'explore', 'graph']) {
+    const modeConfig = config[mode];
+    if (modeConfig && typeof modeConfig === 'object') {
+      resolved[mode] = resolveViewModeConfigSchemaIds(
+        mode,
+        modeConfig as Record<string, unknown>,
+        idMap,
+        relationSchemaIdMap
+      );
+    }
+  }
+  return resolved;
+};
+
+export const resolveTemplateSavedViews = (
+  views: readonly SymbolicSavedView[],
+  workspaceId: string,
+  idMap: ReadonlyMap<string, string>,
+  relationSchemaIdMap: ReadonlyMap<string, string>,
+  now: Date
+): SavedViewDbCreate[] =>
+  views.map(view => ({
+    id: randomUUID(),
+    workspace: workspaceId,
+    project_id: null,
+    project_scope: null,
+    name: view.name,
+    description: view.description ?? null,
+    is_admin_view: view.isAdminView ?? false,
+    view_mode: view.viewMode,
+    filters: resolveEntityQuerySchemaIds(view.filters, idMap, relationSchemaIdMap),
+    config: resolveViewConfigSchemaIds(
+      view.config,
+      idMap,
+      relationSchemaIdMap
+    ) as SavedViewDbCreate['config'],
+    created_at: now,
+    updated_at: now
+  }));
+
 export type InstantiatedTemplate = {
   schemas: SchemaDbCreate[];
   enums: WorkspaceEnumDbCreate[];
@@ -2121,6 +2394,7 @@ export type InstantiatedTemplate = {
     bindings: WorkspaceCapabilityBindings;
   }>;
   dashboardGroups: Array<{ name: string; widgets: DashboardWidget[] }>;
+  views: SavedViewDbCreate[];
 };
 
 export const instantiateTemplateDefinitions = (
@@ -2139,7 +2413,8 @@ export const instantiateTemplateDefinitions = (
       documentTemplates: [],
       dashboardWidgets: [],
       capabilityConfigurations: [],
-      dashboardGroups: []
+      dashboardGroups: [],
+      views: []
     };
   }
 
@@ -2398,7 +2673,14 @@ export const instantiateTemplateDefinitions = (
               widgets: resolveTemplateDashboardWidgets(template.dashboardWidgets, idMap)
             }
           ]
-        : []
+        : [],
+    views: resolveTemplateSavedViews(
+      template.views ?? [],
+      workspaceId,
+      idMap,
+      relationSchemaIdMap,
+      now
+    )
   };
 };
 
@@ -2474,6 +2756,7 @@ export const instantiateTemplateComposition = (
     dashboardWidgets: [],
     capabilityConfigurations: [],
     dashboardGroups: [],
+    views: [],
     selectedTemplates: selected.map(({ id, name, category }) => ({ id, name, category }))
   };
   const usedNames = new Map<string, Set<string>>();
@@ -2552,6 +2835,12 @@ export const instantiateTemplateComposition = (
       const groupName = template.category === 'full' ? 'Overview' : template.name;
       result.dashboardGroups.push({ name: groupName, widgets: module.dashboardWidgets });
       result.dashboardWidgets.push(...module.dashboardWidgets);
+    }
+    for (const view of module.views) {
+      result.views.push({
+        ...view,
+        name: uniqueDefinitionName(namesFor('savedView'), view.name, template.name)
+      });
     }
   }
 

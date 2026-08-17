@@ -3,7 +3,9 @@ import {
   instantiateTemplate,
   instantiateTemplateDefinitions,
   instantiateTemplateComposition,
-  SCHEMA_TEMPLATES
+  resolveTemplateSavedViews,
+  SCHEMA_TEMPLATES,
+  type SymbolicSavedView
 } from './schemaTemplates';
 import { buildDerivedPlan, evaluateDerivedFields } from '../derived/derivedFields';
 
@@ -512,5 +514,183 @@ describe('instantiateTemplate', () => {
         }
       }
     }
+  });
+
+  describe('template saved views', () => {
+    it('resolves a schema-scoped strategy view to real schema ids and passes field ids through', () => {
+      const definitions = instantiateTemplateDefinitions('ws-1', 'strategy');
+      const objective = definitions.schemas.find(schema => schema.name === 'Objective');
+      const initiative = definitions.schemas.find(schema => schema.name === 'Initiative');
+      const objectivesView = definitions.views.find(view => view.name === 'Objectives');
+      const initiativesView = definitions.views.find(view => view.name === 'Initiatives');
+
+      expect(objectivesView).toMatchObject({
+        workspace: 'ws-1',
+        project_id: null,
+        project_scope: null,
+        view_mode: 'table',
+        filters: { schemaId: objective?.id },
+        config: { table: { fieldIds: ['status', 'target_date'] } }
+      });
+      expect(initiativesView).toMatchObject({
+        filters: { schemaId: initiative?.id },
+        config: { table: { fieldIds: ['status', 'objectives', 'outcomes'] } }
+      });
+    });
+
+    it('resolves a typedRelation PathStep inside a saved view filter to real ids', () => {
+      const definitions = instantiateTemplateDefinitions('ws-1', 'risk-compliance');
+      const risk = definitions.schemas.find(schema => schema.name === 'Risk');
+      const control = definitions.schemas.find(schema => schema.name === 'Control');
+      const riskControl = definitions.relationSchemas.find(
+        schema => schema.name === 'Risk Mitigation'
+      );
+      const view = definitions.views.find(item => item.name === 'Risks With Mitigating Controls');
+
+      expect(view?.filters).toMatchObject({
+        schemaId: risk?.id,
+        root: {
+          kind: 'relationExists',
+          path: [
+            {
+              kind: 'typedRelation',
+              fieldId: 'mitigating_controls',
+              relationSchemaId: riskControl?.id,
+              direction: 'in',
+              ownerSchemaIds: [control?.id]
+            }
+          ]
+        }
+      });
+    });
+
+    it('resolves nested filter and backward-step schema ids via a synthetic query', () => {
+      const idMap = new Map([
+        ['schema-a', 'real-a'],
+        ['schema-b', 'real-b']
+      ]);
+      const relationSchemaIdMap = new Map([['rel-a', 'real-rel-a']]);
+      const views: SymbolicSavedView[] = [
+        {
+          id: 'synthetic',
+          name: 'Synthetic',
+          viewMode: 'table',
+          filters: {
+            schemaId: 'schema-a',
+            root: {
+              kind: 'predicate',
+              path: [
+                {
+                  kind: 'backward',
+                  fieldId: 'owner',
+                  ownerSchemaId: 'schema-b',
+                  filter: {
+                    kind: 'predicate',
+                    path: [
+                      {
+                        kind: 'typedRelation',
+                        fieldId: 'related',
+                        relationSchemaId: 'rel-a',
+                        direction: 'out',
+                        ownerSchemaIds: ['schema-a', 'schema-b']
+                      }
+                    ],
+                    fieldId: 'name',
+                    op: 'equals',
+                    value: 'x'
+                  }
+                }
+              ],
+              fieldId: 'status',
+              op: 'equals',
+              value: 'active'
+            }
+          },
+          config: null
+        }
+      ];
+
+      const [resolved] = resolveTemplateSavedViews(
+        views,
+        'ws-1',
+        idMap,
+        relationSchemaIdMap,
+        new Date('2026-01-01T00:00:00.000Z')
+      );
+
+      expect(resolved!.filters).toMatchObject({
+        schemaId: 'real-a',
+        root: {
+          kind: 'predicate',
+          path: [
+            {
+              kind: 'backward',
+              ownerSchemaId: 'real-b',
+              filter: {
+                kind: 'predicate',
+                path: [
+                  {
+                    kind: 'typedRelation',
+                    relationSchemaId: 'real-rel-a',
+                    ownerSchemaIds: ['real-a', 'real-b']
+                  }
+                ]
+              }
+            }
+          ]
+        }
+      });
+    });
+
+    it('composes saved views from multiple cross-cutting templates into a flat list', () => {
+      const definitions = instantiateTemplateComposition('ws-1', 'default', [
+        'strategy',
+        'risk-compliance'
+      ]);
+      const names = definitions.views.map(view => view.name);
+
+      expect(names).toEqual(
+        expect.arrayContaining([
+          'Objectives',
+          'Initiatives',
+          'Open Risks',
+          'Risks With Mitigating Controls'
+        ])
+      );
+    });
+
+    it('resolves every declared template saved-view schema reference to a real id', () => {
+      for (const template of SCHEMA_TEMPLATES) {
+        if (!template.views || template.views.length === 0) continue;
+
+        const definitions = instantiateTemplateDefinitions('ws-1', template.id);
+        const symIds = new Set([
+          ...template.schemas.map(schema => schema.symId),
+          ...(template.relationSchemas ?? []).map(schema => schema.symId)
+        ]);
+        const resolvedIds = new Set([
+          ...definitions.schemas.map(schema => schema.id),
+          ...definitions.relationSchemas.map(schema => schema.id)
+        ]);
+
+        for (const view of definitions.views) {
+          const collectIds = (value: unknown): string[] => {
+            if (typeof value === 'string') return [value];
+            if (Array.isArray(value)) return value.flatMap(collectIds);
+            if (value && typeof value === 'object') {
+              return Object.values(value as Record<string, unknown>).flatMap(collectIds);
+            }
+            return [];
+          };
+
+          for (const id of collectIds(view.filters)) {
+            expect(symIds.has(id)).toBe(false);
+          }
+          if (view.filters.schemaId) {
+            expect(resolvedIds.has(view.filters.schemaId)).toBe(true);
+          }
+        }
+      }
+    });
   });
 });
