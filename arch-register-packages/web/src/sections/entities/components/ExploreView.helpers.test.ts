@@ -307,7 +307,7 @@ describe('buildExploreGraph', () => {
     expect(graph.connectors).toHaveLength(2);
   });
 
-  it('excludes containment relations by default when no field filter is selected', () => {
+  it('includes containment relations by default when no field filter is selected', () => {
     const graph = buildExploreGraph({
       centerEntities: [entity('a', 'App A')],
       relationsMap: relationMap({
@@ -340,11 +340,49 @@ describe('buildExploreGraph', () => {
 
     expect(
       graph.columns.find(column => column.index === 1)?.entities.map(entity => entity.entityId)
-    ).toEqual(['reference-1']);
-    expect(graph.connectors).toHaveLength(1);
-    expect(graph.connectors[0]).toEqual(
-      expect.objectContaining({ toEntityId: 'reference-1', kind: 'reference' })
+    ).toEqual(['reference-1', 'containment-1']);
+    expect(graph.connectors).toHaveLength(2);
+    expect(graph.connectors).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ toEntityId: 'reference-1', kind: 'reference' }),
+        expect.objectContaining({ toEntityId: 'containment-1', kind: 'containment' })
+      ])
     );
+  });
+
+  it('includes incoming containment relations for filtered entities', () => {
+    const graph = buildExploreGraph({
+      centerEntities: [entity('vendor', 'Acme Cloud', 'vendor')],
+      relationsMap: relationMap({
+        vendor: {
+          incoming: [
+            {
+              entityId: 'contract',
+              publicId: 'CON-1',
+              entitySlug: 'acme-cloud-contract',
+              entityName: 'Acme Cloud Contract',
+              entitySchemaId: 'contract',
+              fieldName: 'Vendor',
+              fieldPredicate: 'provided by',
+              kind: 'containment'
+            }
+          ]
+        }
+      }),
+      config: { leftDepth: 1, rightDepth: 1, relationFieldNames: [] }
+    });
+
+    expect(graph.columns.find(column => column.index === -1)?.entities).toEqual([
+      expect.objectContaining({ entityId: 'contract', schemaId: 'contract' })
+    ]);
+    expect(graph.connectors).toEqual([
+      expect.objectContaining({
+        fromEntityId: 'contract',
+        toEntityId: 'vendor',
+        fieldLabel: 'provided by',
+        kind: 'containment'
+      })
+    ]);
   });
 
   it('marks entities that appear in multiple columns as duplicates', () => {
@@ -494,10 +532,11 @@ const schemasWithTypedRelation = [
 ] as EntitySchema[];
 
 describe('buildDefaultRelationFieldNames', () => {
-  it('includes reference and typed-relation fields, excludes containment fields', () => {
+  it('includes reference, containment, and typed-relation fields', () => {
     expect(buildDefaultRelationFieldNames(schemasWithTypedRelation)).toEqual([
       'Data Flow',
-      'Depends On'
+      'Depends On',
+      'Parent'
     ]);
   });
 });

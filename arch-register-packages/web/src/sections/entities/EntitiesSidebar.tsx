@@ -48,7 +48,10 @@ import {
   hasFacetSelection,
   parseConditionsFromSearch,
   parseFacetSelectionFromSearch,
+  parseViewConfigs,
   replaceFacetConditions,
+  resetExploreRelationFilter,
+  serializeViewConfigs,
   toSavedViewSearch,
   type BrowserSearch,
   type EntityFacetSelection
@@ -201,12 +204,14 @@ export const EntitiesSidebar = ({
       search: (previous: Record<string, unknown>) => ({
         ...previous,
         sidebarTab,
-        viewMode: 'table' as const,
         filters: conditions.length > 0 ? JSON.stringify(conditions) : undefined,
         entityQuery: undefined,
         type: undefined,
         status: undefined,
         owner: undefined,
+        viewConfigs: serializeViewConfigs(
+          resetExploreRelationFilter(parseViewConfigs(search.viewConfigs))
+        ),
         viewId: undefined
       })
     });

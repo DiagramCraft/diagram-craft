@@ -36,6 +36,10 @@ export type BrowserEntityRecord = EntityRecord & {
   _assessment?: Record<string, string | number | boolean> | null;
 };
 
+export const getFirstFilteredSchemaId = (
+  entities: Array<Pick<BrowserEntityRecord, '_schema'>>
+): string | null => entities[0]?._schema.id ?? null;
+
 export const isEntityInProject = (
   entity: Pick<BrowserEntityRecord, '_projectId' | '_projectLink'>,
   projectId: string
@@ -373,6 +377,28 @@ export const serializeViewConfigs = (value: BrowserViewConfigMap): string | unde
   const entries = Object.entries(value).filter(([, config]) => config != null);
   if (entries.length === 0) return undefined;
   return JSON.stringify(Object.fromEntries(entries));
+};
+
+export const resetExploreRelationFilter = (
+  viewConfigs: BrowserViewConfigMap
+): BrowserViewConfigMap => {
+  const exploreConfig = viewConfigs.explore;
+  if (exploreConfig == null || typeof exploreConfig !== 'object') return viewConfigs;
+
+  const config = exploreConfig as {
+    relationKeys?: unknown;
+    relationFieldNames?: unknown;
+  };
+  const hasRelationKeys = Array.isArray(config.relationKeys) && config.relationKeys.length > 0;
+  const hasRelationFieldNames =
+    Array.isArray(config.relationFieldNames) && config.relationFieldNames.length > 0;
+  if (!hasRelationKeys && !hasRelationFieldNames) return viewConfigs;
+
+  const { relationKeys: _relationKeys, ...rest } = exploreConfig as Record<string, unknown>;
+  return {
+    ...viewConfigs,
+    explore: { ...rest, relationFieldNames: [] }
+  };
 };
 
 const isAssessmentFieldId = (value: unknown): value is string =>

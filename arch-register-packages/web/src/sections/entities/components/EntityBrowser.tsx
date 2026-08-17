@@ -48,6 +48,7 @@ type EntityBrowserProps = {
   projectContext?: ProjectBrowserContext;
   onCountChange?: (count: number) => void;
   timelineMarkers?: AsOfMarker[];
+  onFirstFilteredSchemaIdChange?: (schemaId: string | null) => void;
 };
 
 export const SaveViewDialog = ({
@@ -159,7 +160,8 @@ export const SaveViewDialog = ({
 export const EntityBrowser = ({
   projectContext,
   onCountChange,
-  timelineMarkers
+  timelineMarkers,
+  onFirstFilteredSchemaIdChange
 }: EntityBrowserProps) => {
   const navigate = useNavigate();
   const { workspaceSlug, schemas, enums, lifecycleStates, teams, currencies, projects } =
@@ -298,6 +300,10 @@ export const EntityBrowser = ({
     includePlannedChanges: projectId ? true : includePlannedChanges,
     onCountChange
   });
+
+  useEffect(() => {
+    onFirstFilteredSchemaIdChange?.(filtered[0]?._schema.id ?? null);
+  }, [filtered, onFirstFilteredSchemaIdChange]);
 
   const navigateToEntity = useCallback(
     (entityId: string) => {

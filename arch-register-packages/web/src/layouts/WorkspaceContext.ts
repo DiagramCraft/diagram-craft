@@ -43,7 +43,7 @@ export type WorkspaceContextType = {
   availableSettingsSections: string[];
   defaultSettingsSection: string | null;
   openAddProjectDialog: () => void;
-  openAddEntityDialog: () => void;
+  openAddEntityDialog: (preselectedSchemaId?: string | null) => void;
 };
 
 export const WorkspaceContext = createContext<WorkspaceContextType>(null!);

@@ -72,7 +72,13 @@ export const WorkspaceLayout = () => {
   const [query, setQuery] = useState('');
   const [addWsOpen, setAddWsOpen] = useState(false);
   const [addEntityOpen, setAddEntityOpen] = useState(false);
+  const [addEntitySchemaId, setAddEntitySchemaId] = useState<string | null>(null);
   const [addProjectOpen, setAddProjectOpen] = useState(false);
+
+  const openAddEntityDialog = useCallback((preselectedSchemaId: string | null = null) => {
+    setAddEntitySchemaId(preselectedSchemaId);
+    setAddEntityOpen(true);
+  }, []);
 
   const {
     data: workspaces = [],
@@ -243,7 +249,7 @@ export const WorkspaceLayout = () => {
       availableSettingsSections,
       defaultSettingsSection,
       openAddProjectDialog: () => setAddProjectOpen(true),
-      openAddEntityDialog: () => setAddEntityOpen(true)
+      openAddEntityDialog
     }),
     [
       ws,
@@ -272,7 +278,8 @@ export const WorkspaceLayout = () => {
       canManageDashboard,
       canManageAdminViews,
       availableSettingsSections,
-      defaultSettingsSection
+      defaultSettingsSection,
+      openAddEntityDialog
     ]
   );
 
@@ -365,7 +372,7 @@ export const WorkspaceLayout = () => {
             onOpenGlobalSettings={handleOpenGlobalSettings}
             onAddWorkspace={() => setAddWsOpen(true)}
             onNewProject={() => setAddProjectOpen(true)}
-            onNewEntity={() => setAddEntityOpen(true)}
+            onNewEntity={openAddEntityDialog}
             canOpenSettings={availableSettingsSections.length > 0}
             canOpenGlobalSettings={canManageGlobalRoles}
             canAddWorkspace={canManageWorkspaces}
@@ -439,7 +446,7 @@ export const WorkspaceLayout = () => {
           schemas={schemas}
           lifecycleStates={lifecycleStates}
           teams={teams}
-          preselectedSchemaId={null}
+          preselectedSchemaId={addEntitySchemaId}
         />
       )}
     </WorkspaceContext.Provider>

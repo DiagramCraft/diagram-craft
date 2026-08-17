@@ -36,6 +36,7 @@ export const EntityBrowserScreen = () => {
   const collectionId = search.collectionId ?? null;
   const baselineId = search.baselineId;
   const [count, setCount] = useState(0);
+  const [firstFilteredSchemaId, setFirstFilteredSchemaId] = useState<string | null>(null);
   const [isSavingView, setIsSavingView] = useState(false);
   const [isCreatingBaseline, setIsCreatingBaseline] = useState(false);
   const { data: savedViews = [] } = useSavedViews(workspaceId, {
@@ -317,7 +318,11 @@ export const EntityBrowserScreen = () => {
           description="Search, filter, and inspect everything in the IT landscape."
           buttons={
             !readOnly && permissions.canCreateEntities ? (
-              <Button variant="primary" icon={<TbPlus size={12} />} onClick={openAddEntityDialog}>
+              <Button
+                variant="primary"
+                icon={<TbPlus size={12} />}
+                onClick={() => openAddEntityDialog(firstFilteredSchemaId)}
+              >
                 New entity
               </Button>
             ) : undefined
@@ -331,7 +336,10 @@ export const EntityBrowserScreen = () => {
         />
       </div>
 
-      <EntityBrowser onCountChange={setCount} />
+      <EntityBrowser
+        onCountChange={setCount}
+        onFirstFilteredSchemaIdChange={setFirstFilteredSchemaId}
+      />
 
       <SaveViewDialog
         open={isSavingView}
