@@ -7,7 +7,8 @@ export const workspaceKeys = {
   lists: () => [...workspaceKeys.all, 'list'] as const,
   list: () => workspaceKeys.lists(),
   details: () => [...workspaceKeys.all, 'detail'] as const,
-  detail: (workspaceId: string) => [...workspaceKeys.details(), workspaceId] as const
+  detail: (workspaceId: string) => [...workspaceKeys.details(), workspaceId] as const,
+  templates: () => [...workspaceKeys.all, 'templates'] as const
 };
 
 export const workspacesQuery = () =>
@@ -15,6 +16,13 @@ export const workspacesQuery = () =>
     queryKey: workspaceKeys.list(),
     queryFn: () => orpcClient.workspaces.list({}),
     staleTime: 5 * 60 * 1000
+  });
+
+export const workspaceTemplateCatalogQuery = () =>
+  queryOptions({
+    queryKey: workspaceKeys.templates(),
+    queryFn: () => orpcClient.workspaces.templates(undefined),
+    staleTime: 30 * 60 * 1000
   });
 
 export const setWorkspaceDetailCache = (

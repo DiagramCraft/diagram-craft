@@ -57,8 +57,11 @@
           membership is required. A personal dashboard is always fully editable by its owner (add, remove, resize,
           and reposition widgets from the same widget catalog as the shared dashboard) — there is no read-only mode.
 
-        - @id:ar.workspace.templates Administrators can create a workspace from a built-in architecture template,
-          including its entity schemas, select-option enums, and document types and associated templates.
+        - @id:ar.workspace.templates Administrators can create a workspace from no model, one full architecture
+          template, or one full template combined with multiple cross-cutting concerns such as Business Glossary,
+          Security / Threat Model, and Risk & Compliance. Each selected template contributes its entity schemas,
+          select-option enums, document types and associated templates; conflicting later definition names are
+          qualified, and concern dashboards are kept separate from the full template's Overview dashboard.
 
         - @id:ar.workspace.configuration Administrators can configure workspace lifecycle states, assessment types, teams, roles, members,
           supported currencies and the workspace's default currency, document types, templates, AI, analytics, audit,

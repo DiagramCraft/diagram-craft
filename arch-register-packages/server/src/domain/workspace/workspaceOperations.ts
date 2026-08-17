@@ -9,7 +9,7 @@ import { HTTPError } from 'h3';
 import { handleDbError, slugify } from '../../utils/http';
 import { AR_COLOR_BLUE, AR_COLOR_GREEN, AR_COLOR_YELLOW } from '@arch-register/api-types/colors';
 import { toApiWorkspace } from './workspaceHelpers';
-import { instantiateTemplateDefinitions } from '../catalog/schemaTemplates';
+import { instantiateTemplateComposition } from '../catalog/schemaTemplates';
 import type { WorkspaceDbResult } from './db/workspaceDatabase';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
@@ -27,7 +27,10 @@ import {
   ENTITY_DEPRECATION_POLICY_CASE_KIND
 } from '../governance/schemaGovernancePolicy';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
-import { replaceDefaultWorkspaceDashboardLayout } from '../dashboard/dashboardOperations';
+import {
+  appendWorkspaceDashboardLayout,
+  replaceDefaultWorkspaceDashboardLayout
+} from '../dashboard/dashboardOperations';
 import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 import { createLogger } from '../../utils/logger';
 import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
@@ -474,6 +477,7 @@ export const createWorkspace = async (
     slug?: string;
     badge?: string;
     template?: string;
+    cross_cutting_templates?: string[];
     replicate_from?: string;
     include?: string[];
   },
@@ -495,7 +499,7 @@ export const createWorkspace = async (
         await ensureGovernanceDeadlineScanSchedule(db, row.id, timestamp);
         await db.workspace.registerPublicIdPrefix(row.short_code, 'workspace', row.id, timestamp);
 
-        const { template, replicate_from, include } = input;
+        const { template, cross_cutting_templates, replicate_from, include } = input;
 
         if (typeof replicate_from === 'string' && replicate_from) {
           const includeSet = normalizeInclude(include);
@@ -920,8 +924,16 @@ export const createWorkspace = async (
           );
           await db.workspace.replaceTeams(row.id, buildDefaultWorkspaceTeams(row.id, timestamp));
 
-          if (typeof template === 'string' && template && template !== 'blank') {
-            const definitions = instantiateTemplateDefinitions(row.id, template, timestamp);
+          if (
+            (typeof template === 'string' && template && template !== 'blank') ||
+            (cross_cutting_templates?.length ?? 0) > 0
+          ) {
+            const definitions = instantiateTemplateComposition(
+              row.id,
+              template,
+              cross_cutting_templates,
+              timestamp
+            );
             for (const enumeration of definitions.enums) {
               await db.catalog.createEnum(enumeration);
             }
@@ -958,13 +970,23 @@ export const createWorkspace = async (
                 updated_at: timestamp
               });
             }
-            if (definitions.dashboardWidgets.length > 0) {
-              await replaceDefaultWorkspaceDashboardLayout(
-                db,
-                row.id,
-                definitions.dashboardWidgets,
-                authCtx.userId
-              );
+            for (const dashboard of definitions.dashboardGroups) {
+              if (dashboard.name === 'Overview') {
+                await replaceDefaultWorkspaceDashboardLayout(
+                  db,
+                  row.id,
+                  dashboard.widgets,
+                  authCtx.userId
+                );
+              } else {
+                await appendWorkspaceDashboardLayout(
+                  db,
+                  row.id,
+                  dashboard.name,
+                  dashboard.widgets,
+                  authCtx.userId
+                );
+              }
             }
           }
         }

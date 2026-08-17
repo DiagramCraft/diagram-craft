@@ -26,9 +26,14 @@ test.describe('workspace routes', () => {
       expect.objectContaining({
         id: expect.any(String),
         name: expect.any(String),
-        description: expect.any(String)
+        description: expect.any(String),
+        category: expect.stringMatching(/^(full|cross-cutting)$/),
+        entity_types: expect.any(Array)
       })
     );
+    expect(
+      templates.filter(template => template.category === 'cross-cutting').map(t => t.id)
+    ).toEqual(expect.arrayContaining(['glossary', 'security', 'risk-compliance']));
   });
 
   test('GET /api/workspaces returns 401 without token', async ({ server }) => {
@@ -121,6 +126,45 @@ test.describe('workspace routes', () => {
     });
   });
 
+  test('POST /api/workspaces composes a full template with cross-cutting concerns', async ({
+    server,
+    orpc
+  }) => {
+    const created = await orpc.workspaces.create({
+      body: {
+        name: 'Composed Architecture Workspace',
+        template: 'default',
+        cross_cutting_templates: ['glossary', 'security', 'risk-compliance']
+      }
+    });
+    const schemas = await server.db.catalog.listSchemas(created.id);
+
+    expect(schemas.map(schema => schema.name)).toEqual(
+      expect.arrayContaining([
+        'Term',
+        'Risk',
+        'Control',
+        'Risk & Compliance — Risk',
+        'Risk & Compliance — Control'
+      ])
+    );
+    const dashboards = await orpc.dashboard.list({ params: { workspace: created.url_slug } });
+    expect(dashboards.map(dashboard => dashboard.name)).toEqual(['Overview', 'Risk & Compliance']);
+  });
+
+  test('POST /api/workspaces adds concerns to an otherwise blank workspace', async ({
+    server,
+    orpc
+  }) => {
+    const created = await orpc.workspaces.create({
+      body: { name: 'Blank With Glossary', cross_cutting_templates: ['glossary'] }
+    });
+    const schemas = await server.db.catalog.listSchemas(created.id);
+    expect(schemas.map(schema => schema.name)).toEqual(
+      expect.arrayContaining(['Term', 'Term Category'])
+    );
+  });
+
   test('POST /api/workspaces applies a template dashboard layout', async ({ server, orpc }) => {
     const created = await orpc.workspaces.create({
       body: { name: 'Risk Dashboard Workspace', template: 'risk-compliance' }
@@ -133,15 +177,17 @@ test.describe('workspace routes', () => {
     const risk = schemas.find(schema => schema.name === 'Risk');
     const complianceRequirement = schemas.find(schema => schema.name === 'Compliance Requirement');
 
-    expect(dashboards).toHaveLength(1);
-    expect(dashboards[0]!.widgets).toHaveLength(8);
-    expect(dashboards[0]!.widgets).toContainEqual(
+    expect(dashboards).toHaveLength(2);
+    expect(dashboards.find(dashboard => dashboard.name === 'Overview')!.widgets).toHaveLength(0);
+    const riskDashboard = dashboards.find(dashboard => dashboard.name === 'Risk & Compliance')!;
+    expect(riskDashboard.widgets).toHaveLength(8);
+    expect(riskDashboard.widgets).toContainEqual(
       expect.objectContaining({
         id: 'top-risks-by-score',
         config: expect.objectContaining({ schema: risk?.id })
       })
     );
-    expect(dashboards[0]!.widgets).toContainEqual(
+    expect(riskDashboard.widgets).toContainEqual(
       expect.objectContaining({
         id: 'compliance-coverage',
         config: expect.objectContaining({ schema: complianceRequirement?.id })

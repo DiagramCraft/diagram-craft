@@ -68,7 +68,13 @@ export const workspaceManagementORPCRouter = wsRouter.router({
       );
     }),
     templates: wsRouter.workspaces.templates.handler(async () => {
-      return SCHEMA_TEMPLATES.map(({ id, name, description }) => ({ id, name, description }));
+      return SCHEMA_TEMPLATES.map(template => ({
+        id: template.id,
+        name: template.name,
+        description: template.description,
+        category: template.category,
+        entity_types: template.schemas.map(schema => schema.name)
+      }));
     }),
     definitionImportSources: workspaceScopedRouter.workspaces.definitionImportSources.handler(
       async ({ input, context }) =>

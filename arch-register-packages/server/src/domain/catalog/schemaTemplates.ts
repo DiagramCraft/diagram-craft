@@ -146,6 +146,7 @@ export type SchemaTemplate = {
   id: string;
   name: string;
   description: string;
+  category: 'full' | 'cross-cutting';
   schemas: TemplateSchema[];
   enums: SymbolicEnum[];
   fieldGroups?: SymbolicFieldGroup[];
@@ -666,6 +667,7 @@ const riskComplianceEnums = [
 export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   {
     id: 'glossary',
+    category: 'cross-cutting',
     name: 'Business Glossary',
     description: 'Business terms, aliases, categories, and governance-ready definitions.',
     schemas: businessGlossarySchemas,
@@ -684,6 +686,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   },
   {
     id: 'default',
+    category: 'full',
     name: 'Default',
     description:
       'Diagram Craft default catalog — Domain, System, Component, API, Resource, Technology, and Technology Release.',
@@ -883,6 +886,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   },
   {
     id: 'backstage',
+    category: 'full',
     name: 'Backstage',
     description: 'CNCF Backstage Software Catalog — Domain, System, Component, API, Resource',
     schemas: [
@@ -999,6 +1003,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   },
   {
     id: 'c4',
+    category: 'full',
     name: 'C4 Model',
     description: 'C4 Model by Simon Brown — Person, Software System, Container, Component',
     schemas: [
@@ -1074,6 +1079,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   },
   {
     id: 'itil',
+    category: 'full',
     name: 'CMDB / ITIL',
     description:
       'IT Service Management — Organization, Business Service, Application, Database, Host',
@@ -1177,6 +1183,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   },
   {
     id: 'ddd',
+    category: 'full',
     name: 'Domain-Driven',
     description: 'Simple DDD-inspired model — Domain, Team, Service, Event',
     schemas: [
@@ -1257,6 +1264,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   },
   {
     id: 'team-topologies',
+    category: 'full',
     name: 'Team Topologies',
     description: "Conway's Law model — Team, System, API (interaction modes)",
     schemas: [
@@ -1325,6 +1333,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   },
   {
     id: 'data-mesh',
+    category: 'full',
     name: 'Data Mesh',
     description:
       'Data Mesh by Zhamak Dehghani — Domain, Data Product, Dataset, Pipeline, Source System',
@@ -1436,6 +1445,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   },
   {
     id: 'archimate',
+    category: 'full',
     name: 'ArchiMate / TOGAF',
     description: 'The Open Group EA framework — Business, Application, and Technology layers',
     schemas: [
@@ -1539,6 +1549,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   },
   {
     id: 'security',
+    category: 'cross-cutting',
     name: 'Security / Threat Model',
     description: 'STRIDE-adjacent model — Asset, Control, Threat, Risk',
     schemas: [
@@ -1647,6 +1658,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   },
   {
     id: 'risk-compliance',
+    category: 'cross-cutting',
     name: 'Risk & Compliance',
     description: 'Risk register with control mitigation and compliance-framework traceability.',
     schemas: [
@@ -1908,6 +1920,7 @@ export type InstantiatedTemplate = {
     type: string;
     bindings: WorkspaceCapabilityBindings;
   }>;
+  dashboardGroups: Array<{ name: string; widgets: DashboardWidget[] }>;
 };
 
 export const instantiateTemplateDefinitions = (
@@ -1925,7 +1938,8 @@ export const instantiateTemplateDefinitions = (
       documentTypes: [],
       documentTemplates: [],
       dashboardWidgets: [],
-      capabilityConfigurations: []
+      capabilityConfigurations: [],
+      dashboardGroups: []
     };
   }
 
@@ -2175,8 +2189,173 @@ export const instantiateTemplateDefinitions = (
     documentTypes,
     documentTemplates,
     dashboardWidgets: resolveTemplateDashboardWidgets(template.dashboardWidgets ?? [], idMap),
-    capabilityConfigurations
+    capabilityConfigurations,
+    dashboardGroups:
+      template.dashboardWidgets && template.dashboardWidgets.length > 0
+        ? [
+            {
+              name: template.category === 'full' ? 'Overview' : template.name,
+              widgets: resolveTemplateDashboardWidgets(template.dashboardWidgets, idMap)
+            }
+          ]
+        : []
   };
+};
+
+export type InstantiatedTemplateComposition = InstantiatedTemplate & {
+  selectedTemplates: Array<Pick<SchemaTemplate, 'id' | 'name' | 'category'>>;
+};
+
+const uniqueDefinitionName = (
+  usedNames: Set<string>,
+  name: string,
+  templateName: string
+): string => {
+  const normalized = name.toLocaleLowerCase();
+  if (!usedNames.has(normalized)) {
+    usedNames.add(normalized);
+    return name;
+  }
+
+  const qualifiedBase = `${templateName} — ${name}`;
+  let qualified = qualifiedBase;
+  let suffix = 2;
+  while (usedNames.has(qualified.toLocaleLowerCase())) {
+    qualified = `${qualifiedBase} (${suffix})`;
+    suffix += 1;
+  }
+  usedNames.add(qualified.toLocaleLowerCase());
+  return qualified;
+};
+
+/**
+ * Instantiates one full template and any number of cross-cutting templates.
+ * Definitions from later modules are qualified only when their names collide
+ * with an earlier module, keeping the first module's names and references intact.
+ */
+export const instantiateTemplateComposition = (
+  workspaceId: string,
+  fullTemplateId: string | undefined,
+  crossCuttingTemplateIds: readonly string[] = [],
+  now = new Date()
+): InstantiatedTemplateComposition => {
+  const requested = new Set<string>();
+  const selected: SchemaTemplate[] = [];
+  const full =
+    fullTemplateId && fullTemplateId !== 'blank'
+      ? SCHEMA_TEMPLATES.find(template => template.id === fullTemplateId)
+      : undefined;
+  if (full?.category === 'full') {
+    selected.push(full);
+    requested.add(full.id);
+  } else if (full?.category === 'cross-cutting') {
+    // Preserve the legacy API where a cross-cutting template was sent in `template`.
+    selected.push(full);
+    requested.add(full.id);
+  }
+  for (const template of SCHEMA_TEMPLATES) {
+    if (
+      template.category === 'cross-cutting' &&
+      crossCuttingTemplateIds.includes(template.id) &&
+      !requested.has(template.id)
+    ) {
+      selected.push(template);
+      requested.add(template.id);
+    }
+  }
+
+  const result: InstantiatedTemplateComposition = {
+    schemas: [],
+    enums: [],
+    fieldGroups: [],
+    relationSchemas: [],
+    documentTypes: [],
+    documentTemplates: [],
+    dashboardWidgets: [],
+    capabilityConfigurations: [],
+    dashboardGroups: [],
+    selectedTemplates: selected.map(({ id, name, category }) => ({ id, name, category }))
+  };
+  const usedNames = new Map<string, Set<string>>();
+  const namesFor = (kind: string) => {
+    const names = usedNames.get(kind) ?? new Set<string>();
+    usedNames.set(kind, names);
+    return names;
+  };
+  const usedPrefixes = new Set<string>();
+  const documentTypeByName = new Map<string, string>();
+
+  for (const template of selected) {
+    const module = instantiateTemplateDefinitions(workspaceId, template.id, now);
+    for (const enumeration of module.enums) {
+      result.enums.push({
+        ...enumeration,
+        name: uniqueDefinitionName(namesFor('enum'), enumeration.name, template.name)
+      });
+    }
+    for (const fieldGroup of module.fieldGroups) {
+      result.fieldGroups.push({
+        ...fieldGroup,
+        name: uniqueDefinitionName(namesFor('fieldGroup'), fieldGroup.name, template.name)
+      });
+    }
+    for (const schema of module.schemas) {
+      let keyPrefix = schema.key_prefix;
+      let prefixSeed = 0;
+      while (usedPrefixes.has(keyPrefix)) {
+        prefixSeed += 1;
+        keyPrefix = normalizePublicIdPrefix(
+          generateTemplateSchemaKeyPrefix(`${workspaceId}:${template.id}:${prefixSeed}`, schema.id)
+        );
+      }
+      usedPrefixes.add(keyPrefix);
+      result.schemas.push({
+        ...schema,
+        name: uniqueDefinitionName(namesFor('schema'), schema.name, template.name),
+        key_prefix: keyPrefix
+      });
+    }
+    for (const relationSchema of module.relationSchemas) {
+      result.relationSchemas.push({
+        ...relationSchema,
+        name: uniqueDefinitionName(namesFor('relationSchema'), relationSchema.name, template.name)
+      });
+    }
+
+    const documentTypeIdMap = new Map<string, string>();
+    for (const documentType of module.documentTypes) {
+      const existingId = documentTypeByName.get(documentType.name.toLocaleLowerCase());
+      if (existingId) {
+        documentTypeIdMap.set(documentType.id, existingId);
+        continue;
+      }
+      const name = uniqueDefinitionName(namesFor('documentType'), documentType.name, template.name);
+      documentTypeByName.set(documentType.name.toLocaleLowerCase(), documentType.id);
+      documentTypeIdMap.set(documentType.id, documentType.id);
+      result.documentTypes.push({ ...documentType, name });
+    }
+    for (const documentTemplate of module.documentTemplates) {
+      const documentTypeId = documentTypeIdMap.get(documentTemplate.document_type_id);
+      if (!documentTypeId) continue;
+      result.documentTemplates.push({
+        ...documentTemplate,
+        document_type_id: documentTypeId,
+        name: uniqueDefinitionName(
+          namesFor('documentTemplate'),
+          documentTemplate.name,
+          template.name
+        )
+      });
+    }
+    result.capabilityConfigurations.push(...module.capabilityConfigurations);
+    if (module.dashboardWidgets.length > 0) {
+      const groupName = template.category === 'full' ? 'Overview' : template.name;
+      result.dashboardGroups.push({ name: groupName, widgets: module.dashboardWidgets });
+      result.dashboardWidgets.push(...module.dashboardWidgets);
+    }
+  }
+
+  return result;
 };
 
 export const instantiateTemplateDocuments = (

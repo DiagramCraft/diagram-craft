@@ -14,6 +14,9 @@ import { ColorPicker } from '../components/ColorPicker';
 import styles from './AddWorkspaceDialog.module.css';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { useAutoFocus } from '../hooks/useAutoFocus';
+import { useQuery } from '@tanstack/react-query';
+import { workspaceTemplateCatalogQuery } from '../queries/workspaces';
+import type { WorkspaceTemplate } from '@arch-register/api-types/workspaceContract';
 
 type ApiWorkspace = {
   id: string;
@@ -29,75 +32,6 @@ type AddWorkspaceDialogProps = {
   onClose: () => void;
   onCreated: (ws: ApiWorkspace) => void;
 };
-
-const TEMPLATES = [
-  {
-    id: 'glossary',
-    name: 'Business Glossary',
-    desc: 'Business terms, aliases, categories, and governance.',
-    types: ['Term', 'Term Category']
-  },
-  {
-    id: 'backstage',
-    name: 'Backstage',
-    desc: 'CNCF Software Catalog model.',
-    types: ['Domain', 'System', 'Component', 'API', 'Resource']
-  },
-  {
-    id: 'c4',
-    name: 'C4 Model',
-    desc: 'C4 Model by Simon Brown.',
-    types: ['Person', 'Software System', 'Container', 'Component']
-  },
-  {
-    id: 'itil',
-    name: 'CMDB / ITIL',
-    desc: 'IT Service Management.',
-    types: ['Organization', 'Business Service', 'Application', 'Database', 'Host']
-  },
-  {
-    id: 'ddd',
-    name: 'Domain-Driven',
-    desc: 'Simple DDD-inspired model.',
-    types: ['Domain', 'Team', 'Service', 'Event']
-  },
-  {
-    id: 'team-topologies',
-    name: 'Team Topologies',
-    desc: "Conway's Law model.",
-    types: ['Team', 'System', 'Team Interaction']
-  },
-  {
-    id: 'data-mesh',
-    name: 'Data Mesh',
-    desc: 'Data Mesh by Zhamak Dehghani.',
-    types: ['Domain', 'Data Product', 'Dataset', 'Pipeline', 'Source System']
-  },
-  {
-    id: 'archimate',
-    name: 'ArchiMate / TOGAF',
-    desc: 'The Open Group EA framework.',
-    types: [
-      'Business Capability',
-      'Business Process',
-      'Application Component',
-      'Application Service',
-      'Technology Component'
-    ]
-  },
-  {
-    id: 'security',
-    name: 'Security / Threat Model',
-    desc: 'STRIDE-adjacent model.',
-    types: ['Asset', 'Control', 'Threat', 'Risk']
-  },
-  {
-    id: 'risk-compliance',
-    name: 'Risk & Compliance',
-    desc: 'Risk register with compliance traceability.',
-    types: ['Risk', 'Control', 'Framework', 'Compliance Requirement']
-  }
-];
 
 const COPY_PARTS = [
   { id: 'schemas', label: 'Data model', default: true },
@@ -127,6 +61,51 @@ function initialsOf(s: string) {
   return s.trim().slice(0, 2).toUpperCase();
 }
 
+const CrossCuttingTemplateSection = ({
+  templates,
+  selected,
+  onToggle
+}: {
+  templates: WorkspaceTemplate[];
+  selected: string[];
+  onToggle: (id: string, checked: boolean) => void;
+}) => (
+  <div className={styles.crossCuttingSection}>
+    <div className={styles.sectionLabel}>Cross-cutting concerns</div>
+    <div className={styles.sectionHint}>
+      Add reusable concerns to this workspace. You can select more than one.
+    </div>
+    {templates.length === 0 ? (
+      <div className={styles.note}>Loading available concerns…</div>
+    ) : (
+      <div className={styles.templateGrid}>
+        {templates.map(template => {
+          const checked = selected.includes(template.id);
+          return (
+            <label
+              key={template.id}
+              className={`${styles.templateCard} ${checked ? styles.templateCardActive : ''}`}
+            >
+              <div className={styles.templateCardHead}>
+                <span className={styles.templateCardName}>{template.name}</span>
+                <input
+                  type="checkbox"
+                  checked={checked}
+                  onChange={event => onToggle(template.id, event.target.checked)}
+                />
+              </div>
+              <div className={styles.templateCardDesc}>{template.description}</div>
+              <div className={`${styles.templateCardMeta} ${styles.mono}`}>
+                {template.entity_types.length} entity types
+              </div>
+            </label>
+          );
+        })}
+      </div>
+    )}
+  </div>
+);
+
 export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDialogProps) => {
   const [name, setName] = useState('');
   const [slug, setSlug] = useState('');
@@ -135,7 +114,8 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
   const [color, setColor] = useState(SCHEMA_COLORS[0]!);
   const [description, setDescription] = useState('');
   const [mode, setMode] = useState<Mode>('blank');
-  const [templateId, setTemplateId] = useState(TEMPLATES[0]!.id);
+  const [templateId, setTemplateId] = useState('default');
+  const [crossCuttingTemplateIds, setCrossCuttingTemplateIds] = useState<string[]>([]);
   const [workspaces, setWorkspaces] = useState<Workspace[]>([]);
   const [copyFrom, setCopyFrom] = useState('');
   const [copyParts, setCopyParts] = useState<Record<string, boolean>>(() =>
@@ -145,6 +125,18 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
   const [submitting, setSubmitting] = useState(false);
   const nameRef = useRef<HTMLInputElement>(null);
   useAutoFocus(nameRef, { enabled: open, delay: 30 });
+  const templatesQuery = useQuery(workspaceTemplateCatalogQuery());
+  const templates = (templatesQuery.data ?? []) as WorkspaceTemplate[];
+  const fullTemplates = templates.filter(template => template.category === 'full');
+  const crossCuttingTemplates = templates.filter(template => template.category === 'cross-cutting');
+
+  useEffect(() => {
+    if (fullTemplates.length > 0 && !fullTemplates.some(template => template.id === templateId)) {
+      setTemplateId(
+        fullTemplates.find(template => template.id === 'default')?.id ?? fullTemplates[0]!.id
+      );
+    }
+  }, [fullTemplates, templateId]);
 
   useEffect(() => {
     if (!open) return;
@@ -155,7 +147,8 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
     setBadgeDirty(false);
     setColor(SCHEMA_COLORS[0]!);
     setMode('blank');
-    setTemplateId(TEMPLATES[0]!.id);
+    setTemplateId('default');
+    setCrossCuttingTemplateIds([]);
     setWorkspaces([]);
     setCopyFrom('');
     setCopyParts(Object.fromEntries(COPY_PARTS.map(p => [p.id, p.default])));
@@ -193,6 +186,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
         color?: string;
         description?: string;
         template?: string;
+        cross_cutting_templates?: string[];
         replicate_from?: string;
         include?: string[];
       } = {
@@ -203,6 +197,9 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
         description: description.trim()
       };
       if (mode === 'template') body.template = templateId;
+      if (crossCuttingTemplateIds.length > 0) {
+        body.cross_cutting_templates = crossCuttingTemplateIds;
+      }
       if (mode === 'copy') {
         body.replicate_from = copyFrom;
         body.include = Object.keys(copyParts).filter(k => copyParts[k]);
@@ -228,14 +225,21 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
     description,
     mode,
     templateId,
+    crossCuttingTemplateIds,
     copyFrom,
     copyParts,
     onCreated,
     onClose
   ]);
 
-  const activeTemplate = TEMPLATES.find(t => t.id === templateId);
+  const activeTemplate = templates.find(t => t.id === templateId);
   const fromWs = workspaces.find(w => w.id === copyFrom);
+  const toggleCrossCutting = (id: string, checked: boolean) =>
+    setCrossCuttingTemplateIds(previous =>
+      checked
+        ? [...previous, id].filter((value, index, values) => values.indexOf(value) === index)
+        : previous.filter(value => value !== id)
+    );
 
   return (
     <Dialog
@@ -337,16 +341,23 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
           />
 
           {mode === 'blank' && (
-            <div className={styles.note}>
-              Starts with no entity types. You'll define your own data model from scratch in the
-              Data model editor.
-            </div>
+            <>
+              <div className={styles.note}>
+                Starts with no full model. You can still add cross-cutting concerns below.
+              </div>
+              <CrossCuttingTemplateSection
+                templates={crossCuttingTemplates}
+                selected={crossCuttingTemplateIds}
+                onToggle={toggleCrossCutting}
+              />
+            </>
           )}
 
           {mode === 'template' && (
             <>
               <div className={styles.templateGrid}>
-                {TEMPLATES.map(t => (
+                {templatesQuery.isPending && <div className={styles.note}>Loading templates…</div>}
+                {fullTemplates.map(t => (
                   <button
                     key={t.id}
                     type="button"
@@ -357,18 +368,24 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                       <span className={styles.templateCardName}>{t.name}</span>
                       {templateId === t.id && <span className={styles.templateCardCheck}>✓</span>}
                     </div>
-                    <div className={styles.templateCardDesc}>{t.desc}</div>
+                    <div className={styles.templateCardDesc}>{t.description}</div>
                     <div className={`${styles.templateCardMeta} ${styles.mono}`}>
-                      {t.types.length} entity types
+                      {t.entity_types.length} entity types
                     </div>
                   </button>
                 ))}
               </div>
               {activeTemplate && (
                 <div className={styles.note}>
-                  <strong>{activeTemplate.name}</strong> seeds: {activeTemplate.types.join(', ')}.
+                  <strong>{activeTemplate.name}</strong> seeds:{' '}
+                  {activeTemplate.entity_types.join(', ')}.
                 </div>
               )}
+              <CrossCuttingTemplateSection
+                templates={crossCuttingTemplates}
+                selected={crossCuttingTemplateIds}
+                onToggle={toggleCrossCutting}
+              />
             </>
           )}
 

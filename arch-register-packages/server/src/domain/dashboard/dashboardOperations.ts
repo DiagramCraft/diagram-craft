@@ -44,6 +44,45 @@ export const replaceDefaultWorkspaceDashboardLayout = async (
   }))!;
 };
 
+export const appendWorkspaceDashboardLayout = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  name: string,
+  widgets: DashboardWidget[],
+  updatedBy: string | null
+): Promise<WorkspaceDashboardDbResult> => {
+  const existing = await db.dashboard.list(workspace);
+  if (!existing.some(row => row.name.toLocaleLowerCase() === 'overview')) {
+    await db.dashboard.create({
+      id: randomUUID(),
+      workspace,
+      name: 'Overview',
+      sort_order: existing.length === 0 ? 0 : nextSortOrder(existing),
+      updated_by: updatedBy
+    });
+  }
+  const refreshed = await db.dashboard.list(workspace);
+  const names = new Set(refreshed.map(row => row.name.toLocaleLowerCase()));
+  const baseName = name.trim() || 'Dashboard';
+  let dashboardName = baseName;
+  let suffix = 2;
+  while (names.has(dashboardName.toLocaleLowerCase())) {
+    dashboardName = `${baseName} (${suffix})`;
+    suffix += 1;
+  }
+  const created = await db.dashboard.create({
+    id: randomUUID(),
+    workspace,
+    name: dashboardName,
+    sort_order: nextSortOrder(refreshed),
+    updated_by: updatedBy
+  });
+  return (await db.dashboard.update(workspace, created.id, {
+    layout: widgets,
+    updated_by: updatedBy
+  }))!;
+};
+
 export const listWorkspaceDashboards = async (
   db: DatabaseAdapter,
   workspace: string
