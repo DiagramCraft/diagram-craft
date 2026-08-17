@@ -346,6 +346,7 @@ test.describe('definition import', () => {
     );
     // The relation schema's "in"/"out" endpoints (system, contract) must be pulled in as
     // dependency schemas, and its 'select' field's enum (contract-purpose) as a dependency enum.
+    // Typed-relation fields on those schemas may pull in additional relation-schema dependencies.
     const dependencySchemaNames = preview.schemas
       .filter(schema => schema.dependency)
       .map(schema => schema.name);
@@ -373,7 +374,7 @@ test.describe('definition import', () => {
       schemas: preview.schemas.length,
       enums: preview.enums.length,
       documentTypes: preview.documentTypes.length,
-      relationSchemas: 1,
+      relationSchemas: preview.relationSchemas.length,
       fieldGroups: 1,
       dashboardWidgets: preview.dashboardWidgets.length
     });
@@ -386,11 +387,13 @@ test.describe('definition import', () => {
         server.db.catalog.listSharedFieldGroups(target.id)
       ]);
 
-    expect(createdRelationSchemas).toHaveLength(1);
+    expect(createdRelationSchemas).toHaveLength(preview.relationSchemas.length);
     expect(createdFieldGroups).toHaveLength(1);
     expect(createdFieldGroups[0]!.name).toBe('PII Classification');
 
-    const createdRelationSchema = createdRelationSchemas[0]!;
+    const createdRelationSchema = createdRelationSchemas.find(
+      schema => schema.name === 'System Contract'
+    )!;
     expect(createdRelationSchema.name).toBe('System Contract');
     const schemaIds = new Set(createdSchemas.map(schema => schema.id));
     const enumIds = new Set(createdEnums.map(enumeration => enumeration.id));
@@ -485,7 +488,7 @@ test.describe('definition import', () => {
       }
     });
 
-    expect(result.relationSchemas).toBe(1);
+    expect(result.relationSchemas).toBe(preview.relationSchemas.length);
 
     const [createdSchemas, dashboards] = await Promise.all([
       server.db.catalog.listSchemas(target.id),

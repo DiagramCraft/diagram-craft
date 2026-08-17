@@ -6,6 +6,7 @@ import { seedSchemas } from './seedData/catalog';
 import { seedAssessmentTypes } from './seedData/workspace';
 import { seedWorkspaceDashboards } from './seedData/views';
 import { materializeDerivedFields } from '../domain/derived/derivedFields';
+import { RISK_AFFECTS_TARGET_SCHEMA_IDS } from './seedData/constants';
 
 describe('dashboard assessment seed data', () => {
   it('seeds the standard assessment types in display order', () => {
@@ -160,9 +161,13 @@ describe('API participation seed data', () => {
   });
 
   it('seeds fields and values on risk and compliance typed relations', () => {
+    const riskAffects = seedRelationSchemas.find(schema => schema.name === 'Risk Affects');
     const riskMitigation = seedRelationSchemas.find(schema => schema.name === 'Risk Mitigation');
     const controlCompliance = seedRelationSchemas.find(
       schema => schema.name === 'Control Compliance'
+    );
+    const riskAffectsRelations = seedRelations.filter(
+      relation => relation.schema_id === riskAffects?.id
     );
     const riskRelation = seedRelations.find(relation => relation.schema_id === riskMitigation?.id);
     const complianceRelation = seedRelations.find(
@@ -187,6 +192,39 @@ describe('API participation seed data', () => {
     const control = seedSchemas.find(schema => schema.name === 'Control');
     const complianceRequirement = seedSchemas.find(
       schema => schema.name === 'Compliance Requirement'
+    );
+    expect(riskAffects?.in_schema_ids).toEqual([risk?.id]);
+    expect(riskAffects?.out_schema_ids).toEqual(RISK_AFFECTS_TARGET_SCHEMA_IDS);
+    for (const schemaId of RISK_AFFECTS_TARGET_SCHEMA_IDS) {
+      const schema = seedSchemas.find(candidate => candidate.id === schemaId);
+      expect(schema?.fields).toContainEqual(
+        expect.objectContaining({
+          id: 'affected_by_risks',
+          type: 'typedRelation',
+          relationSchemaId: riskAffects?.id,
+          direction: 'out'
+        })
+      );
+    }
+    expect(riskAffectsRelations).toHaveLength(7);
+    expect(riskAffectsRelations.map(relation => relation.out_entity_id)).toEqual(
+      expect.arrayContaining([
+        '00000000-0000-0000-0002-000000000001',
+        '00000000-0000-0000-0002-000000000002',
+        '00000000-0000-0000-0002-000000000004',
+        '00000000-0000-0000-0003-000000000003',
+        '00000000-0000-0000-0005-000000000001',
+        '00000000-0000-0000-0008-000000000001',
+        '00000000-0000-0000-0008-000000000003'
+      ])
+    );
+    expect(risk?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'affected_entities',
+        type: 'typedRelation',
+        relationSchemaId: riskAffects?.id,
+        direction: 'in'
+      })
     );
     expect(risk?.fields).toContainEqual(
       expect.objectContaining({
