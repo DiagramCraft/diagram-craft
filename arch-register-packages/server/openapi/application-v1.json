@@ -79546,6 +79546,13 @@
                                     },
                                     "default": [],
                                     "description": "Relationship field names to include"
+                                  },
+                                  "relationKeys": {
+                                    "type": "array",
+                                    "items": {
+                                      "type": "string"
+                                    },
+                                    "description": "Specific relationship instances to include"
                                   }
                                 },
                                 "description": "Configuration for explore view"
@@ -81758,6 +81765,13 @@
                                 },
                                 "default": [],
                                 "description": "Relationship field names to include"
+                              },
+                              "relationKeys": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Specific relationship instances to include"
                               }
                             },
                             "description": "Configuration for explore view"
@@ -84164,6 +84178,13 @@
                                   },
                                   "default": [],
                                   "description": "Relationship field names to include"
+                                },
+                                "relationKeys": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Specific relationship instances to include"
                                 }
                               },
                               "description": "Configuration for explore view"
@@ -86367,6 +86388,13 @@
                                 },
                                 "default": [],
                                 "description": "Relationship field names to include"
+                              },
+                              "relationKeys": {
+                                "type": "array",
+                                "items": {
+                                  "type": "string"
+                                },
+                                "description": "Specific relationship instances to include"
                               }
                             },
                             "description": "Configuration for explore view"
@@ -88768,6 +88796,13 @@
                                   },
                                   "default": [],
                                   "description": "Relationship field names to include"
+                                },
+                                "relationKeys": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "string"
+                                  },
+                                  "description": "Specific relationship instances to include"
                                 }
                               },
                               "description": "Configuration for explore view"
