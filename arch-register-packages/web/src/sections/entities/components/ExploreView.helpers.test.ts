@@ -69,6 +69,35 @@ describe('buildExploreGraph', () => {
     ).toEqual(['a', 'b']);
   });
 
+  it('excludes entities from every explore column and connector', () => {
+    const graph = buildExploreGraph({
+      centerEntities: [entity('a', 'App A'), entity('b', 'App B')],
+      relationsMap: relationMap({
+        a: {
+          outgoing: [
+            {
+              entityId: 'related',
+              publicId: 'RELATED',
+              entitySlug: 'related',
+              entityName: 'Related',
+              entitySchemaId: 'service',
+              fieldName: 'Depends On',
+              kind: 'reference'
+            }
+          ]
+        }
+      }),
+      config: { leftDepth: 0, rightDepth: 1, relationFieldNames: [] },
+      excludedEntityIds: new Set(['a', 'related'])
+    });
+
+    expect(graph.columns.find(column => column.index === 0)?.entities.map(e => e.entityId)).toEqual(
+      ['b']
+    );
+    expect(graph.columns.find(column => column.index === 1)?.entities).toEqual([]);
+    expect(graph.connectors).toHaveLength(0);
+  });
+
   it('uses incoming relations on the left and outgoing relations on the right', () => {
     const graph = buildExploreGraph({
       centerEntities: [entity('a', 'App A')],

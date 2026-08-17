@@ -253,11 +253,13 @@ const dedupeColumn = (entities: ExploreEntity[]) => {
 export const buildExploreGraph = ({
   centerEntities,
   relationsMap,
-  config
+  config,
+  excludedEntityIds = new Set<string>()
 }: {
   centerEntities: EntityRecord[];
   relationsMap: Map<string, EntityRelationData>;
   config: ExploreViewConfig;
+  excludedEntityIds?: ReadonlySet<string>;
 }): ExploreGraph => {
   const normalizedConfig = normalizeExploreConfig(config);
   const selectedFieldNames = new Set(normalizedConfig.relationFieldNames);
@@ -269,7 +271,9 @@ export const buildExploreGraph = ({
     index: 0,
     direction: 'center',
     hop: 0,
-    entities: dedupeColumn(centerEntities.map(toCenterEntity))
+    entities: dedupeColumn(centerEntities.map(toCenterEntity)).filter(
+      entity => !excludedEntityIds.has(entity.entityId)
+    )
   };
   columns.set(0, centerColumn);
 
@@ -282,6 +286,7 @@ export const buildExploreGraph = ({
       if (!relationData) continue;
 
       for (const relation of relationData.incoming) {
+        if (excludedEntityIds.has(relation.entityId)) continue;
         if (
           !shouldIncludeRelation(
             selectedFieldNames,
@@ -323,6 +328,7 @@ export const buildExploreGraph = ({
       if (!relationData) continue;
 
       for (const relation of relationData.outgoing) {
+        if (excludedEntityIds.has(relation.entityId)) continue;
         if (
           !shouldIncludeRelation(
             selectedFieldNames,

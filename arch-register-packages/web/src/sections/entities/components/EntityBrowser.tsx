@@ -305,6 +305,27 @@ export const EntityBrowser = ({
     [navigate, workspaceSlug]
   );
 
+  const focusEntity = useCallback(
+    (entityId: string) => {
+      const baseQuery = executionEntityQuery ?? {
+        root: { kind: 'and' as const, children: [] }
+      };
+      setEntityQuery({
+        ...baseQuery,
+        root_kind: 'entity',
+        schemaId: undefined,
+        root: {
+          kind: 'predicate',
+          path: [],
+          fieldId: '_id',
+          op: 'equals',
+          value: entityId
+        }
+      });
+    },
+    [executionEntityQuery, setEntityQuery]
+  );
+
   const {
     confirmDeleteEntity,
     deleteTarget: hookDeleteTarget,
@@ -514,6 +535,7 @@ export const EntityBrowser = ({
               displayFields={displayFields}
               projectContext={projectContext}
               linkedEntityIds={linkedEntityIds}
+              onFocusEntity={focusEntity}
               activeDateField={dateBrowserEnabled ? activeDateField : null}
               joinAssessmentId={effectiveJoinAssessmentId}
               joinedAssessment={joinedAssessmentContext}

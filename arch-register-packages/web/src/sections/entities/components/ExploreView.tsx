@@ -1,5 +1,7 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
-import { TbFilter, TbMinus, TbPlus } from 'react-icons/tb';
+import { TbEyeOff, TbFilter, TbFocus2, TbMinus, TbPlus } from 'react-icons/tb';
+import { ContextMenu } from '@diagram-craft/app-components/src/ContextMenu';
+import { Menu } from '@diagram-craft/app-components/src/Menu';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { Chip } from '../../../components/Chip';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
@@ -15,7 +17,8 @@ import {
   buildExploreGraph,
   buildExploreRelationOptions,
   DEFAULT_EXPLORE_CONFIG,
-  normalizeExploreConfig
+  normalizeExploreConfig,
+  type ExploreEntity
 } from './ExploreView.helpers';
 import { connectorDistance, type ExploreConnectorLine } from './exploreGeometry';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -51,6 +54,7 @@ export const ExploreView = ({
   config,
   onConfigChange,
   linkedEntityIds,
+  onFocusEntity,
   hideToolbar,
   displayFields
 }: ExploreViewProps) => {
@@ -85,6 +89,12 @@ export const ExploreView = ({
   const selectedDisplayFields = getDisplayFieldIds('explore', normalizedConfig);
   const linkedEntityIdSet = useMemo(() => new Set(linkedEntityIds ?? []), [linkedEntityIds]);
   const [connectorTooltip, setConnectorTooltip] = useState<ConnectorTooltip>(null);
+  const [excludedEntityIds, setExcludedEntityIds] = useState<Set<string>>(new Set());
+  const [contextMenu, setContextMenu] = useState<{
+    entity: ExploreEntity;
+    x: number;
+    y: number;
+  } | null>(null);
 
   useEffect(() => {
     if (parsedConfig == null) return;
@@ -101,11 +111,17 @@ export const ExploreView = ({
   );
 
   const centerIds = useMemo(() => rows.map(row => row._uid).sort(), [rows]);
+  const centerIdKey = centerIds.join('|');
   const [fetchIds, setFetchIds] = useState<string[]>(centerIds);
+  const previousCenterIdKey = useRef(centerIdKey);
 
   useEffect(() => {
     setFetchIds(centerIds);
-  }, [centerIds]);
+    if (previousCenterIdKey.current !== centerIdKey) {
+      setExcludedEntityIds(new Set());
+      previousCenterIdKey.current = centerIdKey;
+    }
+  }, [centerIdKey, centerIds]);
 
   const relationsMap = useMultipleEntityRelations(workspaceSlug, fetchIds);
   const graph = useMemo(
@@ -113,9 +129,10 @@ export const ExploreView = ({
       buildExploreGraph({
         centerEntities: rows,
         relationsMap,
-        config: normalizedConfig
+        config: normalizedConfig,
+        excludedEntityIds
       }),
-    [rows, relationsMap, normalizedConfig]
+    [excludedEntityIds, normalizedConfig, relationsMap, rows]
   );
 
   const relationOptionGraph = useMemo(
@@ -157,6 +174,29 @@ export const ExploreView = ({
     },
     [selectedRelationKeys, updateConfig]
   );
+
+  const handleEntityContextMenu = useCallback(
+    (event: MouseEvent<HTMLButtonElement>, entity: ExploreEntity) => {
+      if (onFocusEntity == null) return;
+      event.preventDefault();
+      event.stopPropagation();
+      setContextMenu({ entity, x: event.clientX, y: event.clientY });
+    },
+    [onFocusEntity]
+  );
+
+  const excludeEntity = useCallback(() => {
+    if (!contextMenu) return;
+    setExcludedEntityIds(previous => new Set([...previous, contextMenu.entity.entityId]));
+    setContextMenu(null);
+  }, [contextMenu]);
+
+  const focusEntity = useCallback(() => {
+    if (!contextMenu || onFocusEntity == null) return;
+    setExcludedEntityIds(new Set());
+    onFocusEntity(contextMenu.entity.entityId);
+    setContextMenu(null);
+  }, [contextMenu, onFocusEntity]);
 
   useEffect(() => {
     const nextIds = [...new Set([...centerIds, ...graph.visibleEntityIds])].sort();
@@ -554,6 +594,7 @@ export const ExploreView = ({
                           type="button"
                           className={styles.entityCard}
                           onClick={() => onEntityClick(entity.publicId)}
+                          onContextMenu={event => handleEntityContextMenu(event, entity)}
                         >
                           <div className={styles.entityTop}>
                             <div className={styles.entityIdentity}>
@@ -620,6 +661,21 @@ export const ExploreView = ({
           </div>
         </div>
       </div>
+
+      {contextMenu && (
+        <ContextMenu.Imperative
+          x={contextMenu.x}
+          y={contextMenu.y}
+          onClose={() => setContextMenu(null)}
+        >
+          <Menu.Item leftSlot={<TbEyeOff size={13} />} onClick={excludeEntity}>
+            Exclude
+          </Menu.Item>
+          <Menu.Item leftSlot={<TbFocus2 size={13} />} onClick={focusEntity}>
+            Focus
+          </Menu.Item>
+        </ContextMenu.Imperative>
+      )}
     </div>
   );
 };

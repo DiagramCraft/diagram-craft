@@ -4,4 +4,5 @@ export type EntityBrowserRowViewProps = {
   rows: EntityRecord[];
   linkedEntityIds?: string[];
   onEntityClick: (entityId: string) => void;
+  onFocusEntity?: (entityId: string) => void;
 };
