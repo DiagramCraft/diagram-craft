@@ -595,6 +595,126 @@ const businessGlossarySchemas: TemplateSchema[] = [
   }
 ];
 
+const strategyStatusEnum = enumDefinition('strategy-status', 'Strategy Status', [
+  { value: 'draft', label: 'Draft' },
+  { value: 'active', label: 'Active' },
+  { value: 'achieved', label: 'Achieved' },
+  { value: 'abandoned', label: 'Abandoned' }
+]);
+
+const strategySchemas: TemplateSchema[] = [
+  {
+    symId: 'objective',
+    name: 'Objective',
+    description: 'A strategic objective the organization is pursuing.',
+    category: 'Strategy',
+    color: AR_COLOR_PURPLE,
+    icon: 'target',
+    fields: [
+      { id: 'description', name: 'Description', type: 'longtext' },
+      { id: 'status', name: 'Status', type: 'select', enumId: 'strategy-status' },
+      { id: 'target_date', name: 'Target Date', type: 'date' }
+    ]
+  },
+  {
+    symId: 'outcome',
+    name: 'Outcome',
+    description: 'A measurable outcome that indicates progress toward one or more Objectives.',
+    category: 'Strategy',
+    color: AR_COLOR_BLUE,
+    icon: 'flag',
+    fields: [
+      { id: 'description', name: 'Description', type: 'longtext' },
+      {
+        id: 'objectives',
+        name: 'Objectives',
+        predicate: 'supports',
+        type: 'reference',
+        symSchemaId: 'objective',
+        minCount: 0,
+        maxCount: -1
+      }
+    ]
+  },
+  {
+    symId: 'initiative',
+    name: 'Initiative',
+    description: 'A body of work undertaken to pursue an Objective or Outcome.',
+    category: 'Strategy',
+    color: AR_COLOR_GREEN,
+    icon: 'rocket',
+    fields: [
+      { id: 'description', name: 'Description', type: 'longtext' },
+      { id: 'status', name: 'Status', type: 'select', enumId: 'strategy-status' },
+      {
+        id: 'objectives',
+        name: 'Objectives',
+        predicate: 'pursues',
+        type: 'reference',
+        symSchemaId: 'objective',
+        minCount: 0,
+        maxCount: -1
+      },
+      {
+        id: 'outcomes',
+        name: 'Outcomes',
+        predicate: 'pursues',
+        type: 'reference',
+        symSchemaId: 'outcome',
+        minCount: 0,
+        maxCount: -1
+      }
+    ]
+  },
+  {
+    symId: 'measure',
+    name: 'Measure',
+    description: 'A metric or KPI used to track progress on an Outcome.',
+    category: 'Strategy',
+    color: AR_COLOR_ORANGE,
+    icon: 'chart-bar',
+    fields: [
+      { id: 'description', name: 'Description', type: 'longtext' },
+      { id: 'unit', name: 'Unit', type: 'text' },
+      { id: 'target_value', name: 'Target Value', type: 'number' },
+      {
+        id: 'outcomes',
+        name: 'Outcomes',
+        predicate: 'measures',
+        type: 'reference',
+        symSchemaId: 'outcome',
+        minCount: 0,
+        maxCount: -1
+      }
+    ]
+  }
+];
+
+const strategyRelationSchemas: SymbolicRelationSchema[] = [
+  {
+    symId: 'objective-affects-capability',
+    name: 'Objective Supports Capability',
+    description: 'Associates an Objective with a capability it depends on or is realized by.',
+    category: 'Strategy',
+    inSymSchemaIds: ['objective'],
+    outSymSchemaIds: 'any',
+    fields: [],
+    color: AR_COLOR_PURPLE,
+    icon: 'target'
+  },
+  {
+    symId: 'objective-affects-entity',
+    name: 'Objective Affects Entity',
+    description: 'Associates an Objective with an architecture entity it affects.',
+    category: 'Strategy',
+    inSymSchemaIds: ['objective'],
+    outSymSchemaIds: 'any',
+    fields: [],
+    color: AR_COLOR_BLUE,
+    icon: 'target'
+  }
+];
+
 const securityEnums = [
   enumDefinition('classification', 'Classification', [
     { value: 'public', label: 'Public' },
@@ -1947,6 +2067,29 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         h: 2
       },
       { id: 'default-activity-feed', type: 'activity-feed', config: {}, x: 0, y: 4, w: 12, h: 6 }
+    ]
+  },
+  {
+    id: 'strategy',
+    category: 'cross-cutting',
+    name: 'Strategy',
+    description:
+      'Strategic objectives, outcomes, initiatives, and measures, linked to capabilities and entities.',
+    schemas: strategySchemas,
+    enums: [strategyStatusEnum],
+    relationSchemas: strategyRelationSchemas,
+    documentTypes: commonDocumentTypes,
+    documentTemplates: commonDocumentTemplates,
+    capabilityConfigurations: [
+      {
+        type: 'strategy-model',
+        bindings: {
+          objective: { target: { kind: 'entity_schema', symId: 'objective' } },
+          outcome: { target: { kind: 'entity_schema', symId: 'outcome' } },
+          initiative: { target: { kind: 'entity_schema', symId: 'initiative' } },
+          measure: { target: { kind: 'entity_schema', symId: 'measure' } }
+        }
+      }
     ]
   }
 ];

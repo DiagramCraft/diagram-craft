@@ -7,6 +7,7 @@ import {
   GLOSSARY_IDS,
   LIFECYCLE2_IDS,
   LIFECYCLE_IDS,
+  STRATEGY_IDS,
   TEAM2_IDS,
   TEAM_IDS,
   TECHNOLOGY_IDS,
@@ -888,10 +889,213 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
   }
 ];
 
+// Strategy model examples (see #3020): Objective, Outcome, Initiative, Measure linked with
+// reference fields rather than containment, and with wildcard typed relations to whatever
+// capability or entity a workspace happens to have (see seedRelations for Objective Supports
+// Capability / Objective Affects Entity instances).
+const seedStrategyEntities: SeedEntityInput[] = [
+  {
+    id: STRATEGY_IDS.objectives.improveCustomerRetention,
+    workspace: WORKSPACE_ID,
+    public_id: 'OBJ-1',
+    slug: 'improve-customer-retention',
+    namespace: 'default',
+    name: 'Improve Customer Retention',
+    description:
+      'Reduce customer churn by making the self-service portal faster and more reliable.',
+    owner: TEAM_IDS.design,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['customer', 'retention'],
+    links: [],
+    schema_id: STRATEGY_IDS.objectiveSchema,
+    data: {
+      description: 'Improve retention by addressing the top causes of customer churn.',
+      status: 'active',
+      target_date: '2026-12-31'
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: STRATEGY_IDS.objectives.strengthenPlatformReliability,
+    workspace: WORKSPACE_ID,
+    public_id: 'OBJ-2',
+    slug: 'strengthen-platform-reliability',
+    namespace: 'default',
+    name: 'Strengthen Platform Reliability',
+    description: 'Raise platform uptime and reduce incident response time across core systems.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['reliability', 'platform'],
+    links: [],
+    schema_id: STRATEGY_IDS.objectiveSchema,
+    data: {
+      description: 'Reduce unplanned downtime through better observability and incident response.',
+      status: 'active',
+      target_date: '2026-09-30'
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: STRATEGY_IDS.outcomes.reduceChurnRate,
+    workspace: WORKSPACE_ID,
+    public_id: 'OUTC-1',
+    slug: 'reduce-monthly-churn-rate',
+    namespace: 'default',
+    name: 'Reduce Monthly Churn Rate',
+    description: 'Monthly customer churn trends downward quarter over quarter.',
+    owner: TEAM_IDS.design,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['customer', 'retention'],
+    links: [],
+    schema_id: STRATEGY_IDS.outcomeSchema,
+    data: {
+      description: 'Monthly churn rate declines as portal reliability and usability improve.',
+      objectives: [STRATEGY_IDS.objectives.improveCustomerRetention]
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: STRATEGY_IDS.outcomes.increasePlatformUptime,
+    workspace: WORKSPACE_ID,
+    public_id: 'OUTC-2',
+    slug: 'increase-platform-uptime',
+    namespace: 'default',
+    name: 'Increase Platform Uptime',
+    description: 'Core systems consistently meet their uptime targets.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['reliability', 'platform'],
+    links: [],
+    schema_id: STRATEGY_IDS.outcomeSchema,
+    data: {
+      description: 'Uptime across core systems improves as observability gaps are closed.',
+      objectives: [STRATEGY_IDS.objectives.strengthenPlatformReliability]
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: STRATEGY_IDS.initiatives.portalRedesign,
+    workspace: WORKSPACE_ID,
+    public_id: 'INIT-1',
+    slug: 'customer-portal-redesign',
+    namespace: 'default',
+    name: 'Customer Portal Redesign',
+    description: 'Rebuild the customer portal frontend for speed and accessibility.',
+    owner: TEAM_IDS.design,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['customer', 'portal'],
+    links: [],
+    schema_id: STRATEGY_IDS.initiativeSchema,
+    data: {
+      description: 'A ground-up rebuild of the customer portal frontend.',
+      status: 'active',
+      objectives: [STRATEGY_IDS.objectives.improveCustomerRetention],
+      outcomes: [STRATEGY_IDS.outcomes.reduceChurnRate]
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: STRATEGY_IDS.initiatives.observabilityUplift,
+    workspace: WORKSPACE_ID,
+    public_id: 'INIT-2',
+    slug: 'observability-uplift',
+    namespace: 'default',
+    name: 'Observability Uplift',
+    description: 'Extend monitoring, alerting, and tracing coverage across core systems.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['reliability', 'observability'],
+    links: [],
+    schema_id: STRATEGY_IDS.initiativeSchema,
+    data: {
+      description: 'Close monitoring gaps identified during recent incident reviews.',
+      status: 'active',
+      objectives: [STRATEGY_IDS.objectives.strengthenPlatformReliability],
+      outcomes: [STRATEGY_IDS.outcomes.increasePlatformUptime]
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: STRATEGY_IDS.measures.monthlyChurnRate,
+    workspace: WORKSPACE_ID,
+    public_id: 'MEAS-1',
+    slug: 'monthly-churn-rate',
+    namespace: 'default',
+    name: 'Monthly Churn Rate',
+    description: 'Percentage of customers lost per month.',
+    owner: TEAM_IDS.design,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['customer', 'kpi'],
+    links: [],
+    schema_id: STRATEGY_IDS.measureSchema,
+    data: {
+      description: 'Tracked monthly from billing and account cancellation data.',
+      unit: '%',
+      target_value: 3,
+      outcomes: [STRATEGY_IDS.outcomes.reduceChurnRate]
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: STRATEGY_IDS.measures.platformUptimePercent,
+    workspace: WORKSPACE_ID,
+    public_id: 'MEAS-2',
+    slug: 'platform-uptime-percent',
+    namespace: 'default',
+    name: 'Platform Uptime %',
+    description: 'Rolling 30-day uptime across core production systems.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['reliability', 'kpi'],
+    links: [],
+    schema_id: STRATEGY_IDS.measureSchema,
+    data: {
+      description: 'Tracked from uptime monitoring across production systems.',
+      unit: '%',
+      target_value: 99.9,
+      outcomes: [STRATEGY_IDS.outcomes.increasePlatformUptime]
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  }
+];
+
 export const seedEntitiesRaw: SeedEntityInput[] = [
   ...seedTechnologies,
   ...seedTechnologyReleases,
   ...seedRiskComplianceEntities,
+  ...seedStrategyEntities,
   {
     id: '00000000-0000-0000-0001-000000000001',
     workspace: WORKSPACE_ID,

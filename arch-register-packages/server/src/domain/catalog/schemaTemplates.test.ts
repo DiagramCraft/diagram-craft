@@ -40,7 +40,7 @@ describe('instantiateTemplate', () => {
     ]);
     expect(
       SCHEMA_TEMPLATES.filter(template => template.category === 'cross-cutting').map(t => t.id)
-    ).toEqual(['glossary', 'security', 'risk-compliance']);
+    ).toEqual(['glossary', 'security', 'risk-compliance', 'strategy']);
 
     const definitions = instantiateTemplateComposition('ws-1', 'default', [
       'glossary',
@@ -87,6 +87,39 @@ describe('instantiateTemplate', () => {
         bindings: expect.objectContaining({
           term: { target: { kind: 'entity_schema', id: term?.id } },
           category: { target: { kind: 'entity_schema', id: category?.id } }
+        })
+      })
+    ]);
+  });
+
+  it('materializes the optional strategy template with wildcard relations', () => {
+    const definitions = instantiateTemplateDefinitions('ws-1', 'strategy');
+    const objective = definitions.schemas.find(schema => schema.name === 'Objective');
+    const outcome = definitions.schemas.find(schema => schema.name === 'Outcome');
+    const initiative = definitions.schemas.find(schema => schema.name === 'Initiative');
+    const measure = definitions.schemas.find(schema => schema.name === 'Measure');
+
+    expect(objective).toBeDefined();
+    expect(outcome).toBeDefined();
+    expect(initiative).toBeDefined();
+    expect(measure).toBeDefined();
+
+    const relationNames = definitions.relationSchemas.map(schema => schema.name);
+    expect(relationNames).toContain('Objective Supports Capability');
+    expect(relationNames).toContain('Objective Affects Entity');
+    for (const relationSchema of definitions.relationSchemas) {
+      expect(relationSchema.in_schema_ids).toEqual([objective?.id]);
+      expect(relationSchema.out_schema_ids).toBe('any');
+    }
+
+    expect(definitions.capabilityConfigurations).toEqual([
+      expect.objectContaining({
+        type: 'strategy-model',
+        bindings: expect.objectContaining({
+          objective: { target: { kind: 'entity_schema', id: objective?.id } },
+          outcome: { target: { kind: 'entity_schema', id: outcome?.id } },
+          initiative: { target: { kind: 'entity_schema', id: initiative?.id } },
+          measure: { target: { kind: 'entity_schema', id: measure?.id } }
         })
       })
     ]);

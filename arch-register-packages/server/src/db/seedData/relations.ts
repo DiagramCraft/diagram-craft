@@ -2,6 +2,7 @@ import {
   AR_COLOR_BLUE,
   AR_COLOR_GREEN,
   AR_COLOR_ORANGE,
+  AR_COLOR_PURPLE,
   AR_COLOR_RED,
   AR_COLOR_TEAL
 } from '@arch-register/api-types/colors';
@@ -15,9 +16,12 @@ import {
   API_PROVIDER_RELATION_SCHEMA_ID,
   CONTROL_REQUIREMENT_SCHEMA_ID,
   DATA_FLOW_SCHEMA_ID,
+  OBJECTIVE_AFFECTS_CAPABILITY_RELATION_SCHEMA_ID,
+  OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
   RISK_AFFECTS_RELATION_SCHEMA_ID,
   RISK_AFFECTS_TARGET_SCHEMA_IDS,
   RISK_CONTROL_SCHEMA_ID,
+  STRATEGY_IDS,
   WORKSPACE_ID,
   now
 } from './constants';
@@ -223,6 +227,40 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     shared_field_group_links: [],
     color: AR_COLOR_GREEN,
     icon: 'check-circle',
+    relation_approval_policy: 'disabled',
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: OBJECTIVE_AFFECTS_CAPABILITY_RELATION_SCHEMA_ID,
+    workspace: WORKSPACE_ID,
+    name: 'Objective Supports Capability',
+    category: 'Strategy',
+    description: 'Associates an Objective with a capability it depends on or is realized by.',
+    in_schema_ids: [STRATEGY_IDS.objectiveSchema],
+    out_schema_ids: 'any',
+    fields: [],
+    groups: [],
+    shared_field_group_links: [],
+    color: AR_COLOR_PURPLE,
+    icon: 'target',
+    relation_approval_policy: 'disabled',
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
+    workspace: WORKSPACE_ID,
+    name: 'Objective Affects Entity',
+    category: 'Strategy',
+    description: 'Associates an Objective with an architecture entity it affects.',
+    in_schema_ids: [STRATEGY_IDS.objectiveSchema],
+    out_schema_ids: 'any',
+    fields: [],
+    groups: [],
+    shared_field_group_links: [],
+    color: AR_COLOR_BLUE,
+    icon: 'target',
     relation_approval_policy: 'disabled',
     created_at: now,
     updated_at: now
@@ -520,6 +558,50 @@ export const seedRelations: RelationDbCreate[] = [
       evidence: 'Encryption standards and storage configuration review',
       verified_on: '2025-09-01'
     },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-001d-000000000001',
+    workspace: WORKSPACE_ID,
+    schema_id: OBJECTIVE_AFFECTS_CAPABILITY_RELATION_SCHEMA_ID,
+    // Improve Customer Retention -> Customer Portal (System).
+    in_entity_id: STRATEGY_IDS.objectives.improveCustomerRetention,
+    out_entity_id: '00000000-0000-0000-0002-000000000001',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-001d-000000000002',
+    workspace: WORKSPACE_ID,
+    schema_id: OBJECTIVE_AFFECTS_CAPABILITY_RELATION_SCHEMA_ID,
+    // Strengthen Platform Reliability -> Search Platform (System).
+    in_entity_id: STRATEGY_IDS.objectives.strengthenPlatformReliability,
+    out_entity_id: '00000000-0000-0000-0002-000000000006',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-001e-000000000001',
+    workspace: WORKSPACE_ID,
+    schema_id: OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
+    // Improve Customer Retention -> Customer API.
+    in_entity_id: STRATEGY_IDS.objectives.improveCustomerRetention,
+    out_entity_id: '00000000-0000-0000-0004-000000000001',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-001e-000000000002',
+    workspace: WORKSPACE_ID,
+    schema_id: OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
+    // Strengthen Platform Reliability -> Redis Cache.
+    in_entity_id: STRATEGY_IDS.objectives.strengthenPlatformReliability,
+    out_entity_id: '00000000-0000-0000-0005-000000000002',
+    data: {},
     created_at: now,
     updated_at: now
   }

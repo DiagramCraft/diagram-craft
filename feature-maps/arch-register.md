@@ -60,7 +60,7 @@
 
         - @id:ar.workspace.templates Administrators can create a workspace from no model, one full architecture
           template, or one full template combined with multiple cross-cutting concerns such as Business Glossary,
-          Security / Threat Model, and Risk & Compliance. Each selected template contributes its entity schemas,
+          Security / Threat Model, Risk & Compliance, and Strategy. Each selected template contributes its entity schemas,
           select-option enums, document types and associated templates; conflicting later definition names are
           qualified, and concern dashboards are kept separate from the full template's Overview dashboard.
 
@@ -168,6 +168,12 @@
           typed relations, Markdown, projects, and diagrams, and review unused, conflicting, deprecated, and ownerless
           quality reports. Term definitions, aliases, category changes, ownership, lifecycle, and status continue to
           use the existing entity permissions, history, and approval mechanisms; generic entity behavior is unchanged.
+
+        - @id:ar.entities.strategy-model Workspaces can optionally enable a strategy model — Objective, Outcome,
+          Initiative, and Measure entity schemas with no fixed taxonomy or hierarchy — bound to the workspace via a
+          `strategy-model` capability so other features (traceability views, roll-ups) can discover it. Two wildcard
+          typed relations, Objective Supports Capability and Objective Affects Entity, link objectives to any
+          capability or architecture entity in the workspace.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can
