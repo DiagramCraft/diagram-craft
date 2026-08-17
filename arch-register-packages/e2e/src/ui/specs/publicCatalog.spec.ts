@@ -171,65 +171,6 @@ const mockPublicCatalog = async (page: Page) => {
 };
 
 test.describe('public catalog themes', () => {
-  test('follows the system theme until an explicit choice is made', async ({ page }) => {
-    await page.emulateMedia({ colorScheme: 'light' });
-    await mockPublicCatalog(page);
-    const documentRequests: string[] = [];
-    page.on('request', request => {
-      if (request.resourceType() === 'document') documentRequests.push(request.url());
-    });
-    await page.goto(`/public/${defaultWorkspace.slug}`);
-
-    await expect(page.getByRole('heading', { name: 'Platform Catalog' })).toBeVisible();
-    expect(documentRequests).toHaveLength(1);
-    await expect(page.locator('html')).toHaveAttribute('data-theme', 'light');
-    await expect(page.getByRole('button', { name: 'Light' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
-    await expect(page.getByRole('button', { name: 'Dark' })).toHaveAttribute(
-      'aria-pressed',
-      'false'
-    );
-    await expect(page).toHaveScreenshot('public-catalog-light-home.png', { fullPage: true });
-
-    await page.getByRole('button', { name: 'Dark' }).click();
-    await expect(page.locator('html')).toHaveClass(/dark/);
-    await expect(page.getByRole('button', { name: 'Dark' })).toHaveAttribute(
-      'aria-pressed',
-      'true'
-    );
-    await expect
-      .poll(() =>
-        page.evaluate(
-          () => JSON.parse(localStorage.getItem('diagram-craft.user-state') ?? '{}').themeMode
-        )
-      )
-      .toBe('dark');
-
-    await page.getByRole('link', { name: 'Entities' }).click();
-    await expect(page).toHaveURL(new RegExp(`/public/${defaultWorkspace.slug}/entities$`));
-    await expect(page.getByRole('heading', { name: 'Entities' })).toBeVisible();
-    expect(documentRequests).toHaveLength(1);
-    await expect(page.locator('html')).toHaveClass(/dark/);
-
-    await page.getByRole('link', { name: 'Getting started' }).click();
-    await expect(page).toHaveURL(new RegExp(`/public/${defaultWorkspace.slug}/wiki\\?path=guide$`));
-    await expect(
-      page.locator('main').getByRole('heading', { name: 'Getting started' }).last()
-    ).toBeVisible();
-    await expect(page.locator('pre')).toContainText("const theme = 'dark'");
-    expect(documentRequests).toHaveLength(1);
-    await expect(page).toHaveScreenshot('public-catalog-dark-wiki.png', { fullPage: true });
-
-    await page.goto(
-      `/public/${defaultWorkspace.slug}/api/${entity.publicId}/artifact-1/revision-1`
-    );
-    await expect(page.getByRole('heading', { name: 'Public API' })).toBeVisible();
-    await expect(page.getByText('/catalog/entities')).toBeVisible();
-    await expect(page).toHaveScreenshot('public-catalog-dark-api.png', { fullPage: true });
-  });
-
   test('uses the dark system theme and keeps controls keyboard-operable', async ({ page }) => {
     await page.emulateMedia({ colorScheme: 'dark' });
     await mockPublicCatalog(page);

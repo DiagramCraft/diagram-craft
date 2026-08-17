@@ -4,7 +4,7 @@ import { WorkspacePage } from './WorkspacePage';
 
 export class HomePage extends WorkspacePage {
   goto = async () => {
-    await this.page.goto(workspaceHomeRoute(this.workspaceSlug));
+    await this.gotoAuthenticated(workspaceHomeRoute(this.workspaceSlug));
   };
 
   expectLoaded = async (workspaceName: string) => {

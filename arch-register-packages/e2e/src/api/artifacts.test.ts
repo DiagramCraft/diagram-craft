@@ -429,7 +429,7 @@ test('artifact registration resolves capability mappings instead of standard fie
     }
   });
   await server.db.workspace.upsertWorkspaceCapabilityConfiguration({
-    id: '00000000-0000-0000-0000-c000000000102',
+    id: '00000000-0000-0000-0000-c00000000102',
     workspace: seedIds.workspace.default,
     type: 'api-specification',
     bindings: {

@@ -29,7 +29,7 @@ test.describe('settings section', () => {
     const settingsPage = new SettingsPage(page, defaultWorkspace.slug);
 
     await settingsPage.goto('capabilities');
-    await expect(page.getByRole('tab', { name: 'API Specification', exact: true })).toBeVisible();
+    await expect(page.getByRole('tab', { name: 'API specification', exact: true })).toBeVisible();
     await expect(page.getByRole('checkbox', { name: 'Enabled', exact: true })).toBeChecked();
     await expect(page.getByText('API entity schema', { exact: true })).toBeVisible();
     await expect(page.getByRole('button', { name: 'Cancel', exact: true })).toBeVisible();

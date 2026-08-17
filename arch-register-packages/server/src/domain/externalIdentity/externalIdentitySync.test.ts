@@ -46,6 +46,7 @@ const makeHarness = (
     identity?: string | null;
     records?: SyncRecord[];
     createError?: DatabaseError;
+    onCreate?: (setIdentity: (recordId: string) => void) => void;
     onIdentityCreate?: (
       row: CatalogRecordExternalIdentityDbCreate,
       setIdentity: (recordId: string) => void
@@ -99,6 +100,7 @@ const makeHarness = (
     },
     create: async context => {
       calls.push('create');
+      options.onCreate?.(setIdentity);
       if (options.createError) throw options.createError;
       mutationAuditMetadata.push(context.sync.auditMetadata);
       const created = { id: 'record-created', value: context.sync.payload.value };
@@ -307,6 +309,32 @@ describe('external identity sync primitives', () => {
     ).rejects.toMatchObject({ code: 'unique' });
     expect(harness.calls.filter(call => call === 'create')).toHaveLength(1);
     expect(harness.calls).not.toContain('prepareExisting');
+  });
+
+  it('retries a unique record-creation race when the winning identity is visible', async () => {
+    const harness = makeHarness({
+      records: [{ id: 'record-winner', value: 'same' }],
+      createError: new DatabaseError('unique', 'duplicate record'),
+      onCreate: setIdentity => setIdentity('record-winner')
+    });
+
+    const result = await runExternalIdentitySyncInTransaction({
+      db: harness.db,
+      workspace: 'ws-1',
+      source: 'source-1',
+      externalKey: 'key-1',
+      body: { value: 'same' },
+      authCtx: null,
+      actor: { id: 'actor-1' },
+      handlers: harness.handlers
+    });
+
+    expect(result).toEqual({
+      status: 'unchanged',
+      result: { id: 'record-winner', value: 'same' }
+    });
+    expect(harness.calls.filter(call => call === 'create')).toHaveLength(1);
+    expect(harness.calls.filter(call => call === 'prepareExisting')).toHaveLength(1);
   });
 
   it('shares value comparison semantics for unordered arrays and null values', () => {

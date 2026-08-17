@@ -31,7 +31,7 @@ const test = createApiTest({
       now
     );
     await server.db.workspace.upsertWorkspaceCapabilityConfiguration({
-      id: '00000000-0000-0000-0000-c000000000111',
+      id: '00000000-0000-0000-0000-c00000000111',
       workspace: seedIds.workspace.default,
       type: 'api-specification',
       bindings: {

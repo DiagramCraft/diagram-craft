@@ -82,8 +82,9 @@ test.describe('entities section', () => {
 
     await expect(entitiesPage.facetCheckbox(apiSchema.name)).toBeChecked();
     await expect(entitiesPage.facetCheckbox(componentSchema.name)).toBeChecked();
-    const combinedCount = Number(await entitiesPage.browserCount().textContent());
-    expect(combinedCount).toBeGreaterThan(seededApiEntityCount);
+    await expect
+      .poll(async () => Number(await entitiesPage.browserCount().textContent()))
+      .toBeGreaterThan(seededApiEntityCount);
 
     const readFilters = () => {
       const parsed: unknown = JSON.parse(new URL(page.url()).searchParams.get('filters') ?? '[]');
@@ -346,7 +347,6 @@ test.describe('entities section', () => {
         }
       }
     });
-    await entitiesPage.goto();
     await entitiesPage.openApiCatalog(notificationsApiEntity.name);
 
     await expect(page.getByText('AsyncAPI catalog')).toBeVisible();
