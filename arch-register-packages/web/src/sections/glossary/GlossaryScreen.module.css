@@ -1,99 +1,182 @@
 .screen {
   display: flex;
   flex-direction: column;
-  gap: 16px;
-  padding: 24px;
+  padding: 20px 24px;
   min-width: 0;
 }
 
 .header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
-  gap: 16px;
+  margin-bottom: 16px;
 }
 
-.title {
-  font-size: 22px;
-  font-weight: 650;
-}
-
-.subtitle {
+.count {
   color: var(--text-muted);
-  margin-top: 4px;
+  font-variant-numeric: tabular-nums;
 }
 
-.controls {
+.tags {
   display: flex;
   flex-wrap: wrap;
-  gap: 8px;
+  gap: 4px;
 }
 
-.search {
-  min-width: 280px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 6px;
-  padding: 8px 10px;
-  background: var(--surface-primary);
+.statusCell {
+  text-transform: capitalize;
+}
+
+.qualityBadges {
+  display: inline-flex;
+  gap: 4px;
+}
+
+.qualityBadge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: var(--warning-fg, #b45309);
+}
+
+.activeFilters {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
+  margin-bottom: 8px;
+}
+
+.activeChip {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  padding: 3px 6px 3px 10px;
+  font-size: 11px;
+  background: var(--cmp-bg);
+}
+
+.activeChipLabel {
+  color: var(--text-muted);
+}
+
+.activeChipRemove {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  background: none;
+  border: none;
+  cursor: pointer;
+  color: var(--text-muted);
+  padding: 2px;
+}
+
+.activeChipRemove:hover {
   color: var(--text-primary);
 }
 
-.list {
-  display: grid;
-  gap: 8px;
+.ownerPopover {
+  padding: 10px 12px;
+  width: 280px;
+  max-height: min(360px, 60vh);
+  overflow: auto;
 }
 
-.term {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  gap: 16px;
-  border: 1px solid var(--border-subtle);
-  border-radius: 8px;
-  padding: 12px 14px;
-  cursor: pointer;
-  background: var(--surface-primary);
-  color: inherit;
-  text-align: left;
-  width: 100%;
-}
-
-.term:hover {
-  border-color: var(--accent-fg);
-}
-
-.termName {
-  font-weight: 600;
-}
-
-.aliases,
-.meta {
-  color: var(--text-muted);
-  font-size: 12px;
-  margin-top: 4px;
-}
-
-.badges {
-  display: flex;
-  gap: 6px;
-  flex-wrap: wrap;
-  justify-content: flex-end;
-}
-
-.badge {
-  border-radius: 999px;
-  padding: 3px 8px;
-  background: var(--surface-secondary);
+.pillGroupLabel {
   color: var(--text-muted);
   font-size: 11px;
+  margin: 8px 0 6px;
 }
 
-.quality {
-  color: var(--warning-fg, #b45309);
+.pillGroupLabel:first-child {
+  margin-top: 0;
+}
+
+.pillRow {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.pill {
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  padding: 3px 10px;
+  font-size: 11px;
+  background: var(--cmp-bg);
+  cursor: pointer;
+  color: var(--text-primary);
+}
+
+.pillActive {
+  border-color: var(--accent-fg);
+  background: var(--accent-bg, var(--cmp-bg));
+  color: var(--accent-fg);
 }
 
 .empty {
   padding: 32px;
   text-align: center;
   color: var(--text-muted);
+}
+
+/* Term detail screen */
+
+.detailHeader {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.section {
+  border-top: 1px solid var(--panel-border);
+  padding-top: 12px;
+  margin-top: 4px;
+}
+
+.sectionLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--text-muted);
+  margin-bottom: 6px;
+}
+
+.conflictNote {
+  display: flex;
+  align-items: flex-start;
+  gap: 6px;
+  color: var(--warning-fg, #b45309);
+  background: var(--warning-bg, rgba(180, 83, 9, 0.08));
+  border-radius: 6px;
+  padding: 8px 10px;
+  font-size: 12px;
+  margin-bottom: 12px;
+}
+
+.usageGroup {
+  margin-bottom: 10px;
+}
+
+.usageGroupLabel {
+  color: var(--text-muted);
+  font-size: 10.5px;
+  margin-bottom: 4px;
+}
+
+.usageRow {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 0;
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.usageRow:last-child {
+  border-bottom: none;
+}
+
+.usageContext {
+  color: var(--text-muted);
+  margin-left: auto;
+  font-size: 11px;
 }

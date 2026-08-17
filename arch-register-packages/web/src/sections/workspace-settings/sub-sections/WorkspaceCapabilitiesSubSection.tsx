@@ -206,10 +206,12 @@ export const WorkspaceCapabilitiesSubSection = ({
                     </FormElement>
 
                     {schema && role.fieldRoles.length > 0 && (
-                      <div>
-                        <div className={styles.sectionTitle}>Field mappings</div>
-                        <div className={styles.sectionSub}>
-                          Map the required glossary roles to fields on this schema.
+                      <div style={{ display: 'flex', flexDirection: 'column', gap: '0.5rem' }}>
+                        <div>
+                          <div className={styles.sectionTitle}>Field mappings</div>
+                          <div className={styles.sectionSub}>
+                            Map the required glossary roles to fields on this schema.
+                          </div>
                         </div>
                         {role.fieldRoles.map(fieldRole => {
                           const fieldId = resolveCapabilityFieldId(draftBinding, fieldRole);

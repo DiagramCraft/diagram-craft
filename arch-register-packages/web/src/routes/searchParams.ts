@@ -450,6 +450,29 @@ export const validateAssistantSearch = (raw: Record<string, unknown>): Assistant
   layout: raw.layout === 'conversation' || raw.layout === 'split' ? raw.layout : undefined
 });
 
+// Glossary params
+export type GlossarySearchParams = {
+  q?: string;
+  categoryIds?: string; // comma-joined TermCategory entity ids
+  quality?: 'unused' | 'conflicting' | 'deprecated' | 'ownerless';
+  owner?: string;
+  lifecycle?: string;
+};
+
+export const validateGlossarySearch = (raw: Record<string, unknown>): GlossarySearchParams => ({
+  q: typeof raw.q === 'string' ? raw.q : undefined,
+  categoryIds: typeof raw.categoryIds === 'string' ? raw.categoryIds : undefined,
+  quality:
+    raw.quality === 'unused' ||
+    raw.quality === 'conflicting' ||
+    raw.quality === 'deprecated' ||
+    raw.quality === 'ownerless'
+      ? raw.quality
+      : undefined,
+  owner: typeof raw.owner === 'string' ? raw.owner : undefined,
+  lifecycle: typeof raw.lifecycle === 'string' ? raw.lifecycle : undefined
+});
+
 // Home params
 export type HomeSearchParams = {
   dashboard?: string;
