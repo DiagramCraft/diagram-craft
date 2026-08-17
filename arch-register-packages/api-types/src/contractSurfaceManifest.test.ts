@@ -44,6 +44,7 @@ const expectedPrimaryContractIds = [
   'changeCaseContract',
   'automationRuleContract',
   'externalContentContract',
+  'glossaryContract',
   'wikiCommentContract',
   'workspaceAnalyticsContract',
   'workspaceMetricContract',
