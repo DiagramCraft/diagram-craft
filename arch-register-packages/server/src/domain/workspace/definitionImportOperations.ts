@@ -50,7 +50,10 @@ import { buildFieldChangeSummary } from '../fieldMigration/fieldMigrationPlannin
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 import { getSchemaGovernancePoliciesBySchema } from '../governance/schemaGovernancePolicy';
 import { writeAudit } from '../audit/db/auditLogging';
-import { replaceDefaultWorkspaceDashboardLayout } from '../dashboard/dashboardOperations';
+import {
+  appendWorkspaceDashboardLayout,
+  replaceDefaultWorkspaceDashboardLayout
+} from '../dashboard/dashboardOperations';
 
 type ImportableSchema = {
   id: string;
@@ -133,6 +136,7 @@ type DefinitionSource = {
   id: string;
   name: string;
   description: string;
+  category: 'full' | 'cross-cutting' | null;
   schemas: ImportableSchema[];
   enums: ImportableEnum[];
   documentTypes: ImportableDocumentType[];
@@ -226,6 +230,7 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
   id: template.id,
   name: template.name,
   description: template.description,
+  category: template.category,
   schemas: template.schemas.map(schema => ({
     id: schema.symId,
     name: schema.name,
@@ -411,6 +416,7 @@ const sourceFromWorkspace = async (
       bindings: configuration.bindings
     })),
     dashboardWidgets: [],
+    category: null,
     teamNames: Object.fromEntries(teamNames)
   };
 };
@@ -838,6 +844,7 @@ const sourceOption = (source: DefinitionSource) => ({
   id: source.id,
   name: source.name,
   description: source.description,
+  category: source.category,
   schemas: source.schemas.map(schema => ({ id: schema.id, name: schema.name })),
   enums: source.enums.map(enumeration => ({ id: enumeration.id, name: enumeration.name })),
   documentTypes: source.documentTypes.map(type => ({ id: type.id, name: type.name })),
@@ -1268,12 +1275,22 @@ export const executeDefinitionImport = async (
         }
 
         if (plan.dashboardWidgets.length > 0) {
-          await replaceDefaultWorkspaceDashboardLayout(
-            tx,
-            ws,
-            resolveTemplateDashboardWidgets(plan.dashboardWidgets, schemaIdMap),
-            authCtx.userId
-          );
+          const widgets = resolveTemplateDashboardWidgets(plan.dashboardWidgets, schemaIdMap);
+          const builtinTemplate =
+            plan.source.kind === 'builtin'
+              ? SCHEMA_TEMPLATES.find(template => template.id === plan.source.id)
+              : undefined;
+          if (builtinTemplate?.category === 'cross-cutting') {
+            await appendWorkspaceDashboardLayout(
+              tx,
+              ws,
+              builtinTemplate.name,
+              widgets,
+              authCtx.userId
+            );
+          } else {
+            await replaceDefaultWorkspaceDashboardLayout(tx, ws, widgets, authCtx.userId);
+          }
         }
       });
 

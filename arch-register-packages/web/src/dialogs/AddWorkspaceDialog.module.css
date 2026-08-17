@@ -231,6 +231,22 @@
   margin-top: 2px;
 }
 
+.crossCuttingSection {
+  margin-top: 14px;
+}
+
+.sectionLabel {
+  color: var(--base-fg);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.sectionHint {
+  color: var(--base-fg-more-dim);
+  font-size: 11.5px;
+  margin-top: 3px;
+}
+
 /* ── Copy panel ─────────────────────────────────────────────── */
 
 .copyPanel {

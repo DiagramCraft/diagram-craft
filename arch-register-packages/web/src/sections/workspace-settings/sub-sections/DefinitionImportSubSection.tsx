@@ -203,7 +203,9 @@ export const DefinitionImportSubSection = () => {
                   key={sourceKey({ kind: item.kind, id: item.id })}
                   value={sourceKey({ kind: item.kind, id: item.id })}
                 >
-                  {item.kind === 'builtin' ? 'Built-in: ' : 'Workspace: '}
+                  {item.kind === 'builtin'
+                    ? `${item.category === 'cross-cutting' ? 'Cross-cutting concern' : 'Full template'}: `
+                    : 'Workspace: '}
                   {item.name}
                 </Select.Item>
               ))}
@@ -245,8 +247,9 @@ export const DefinitionImportSubSection = () => {
             <div className={styles.fieldLeft}>
               <div className={styles.fieldLabel}>Dashboard layout</div>
               <div className={styles.fieldHint}>
-                Optionally replace the default dashboard with {source.dashboardWidgets.length}{' '}
-                template widgets.
+                {source.category === 'cross-cutting'
+                  ? `Add ${source.dashboardWidgets.length} widgets to a new ${source.name} dashboard.`
+                  : `Optionally replace the default dashboard with ${source.dashboardWidgets.length} template widgets.`}
               </div>
             </div>
             <div className={styles.fieldRight}>

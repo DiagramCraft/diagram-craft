@@ -26,7 +26,9 @@ const deleteWorkspaceResponseSchema = z.object({
 const workspaceTemplateSchema = z.object({
   id: z.string().describe('Template identifier'),
   name: z.string().describe('Template name'),
-  description: z.string().describe('Template description')
+  description: z.string().describe('Template description'),
+  category: z.enum(['full', 'cross-cutting']).describe('Template category'),
+  entity_types: z.array(z.string()).describe('Entity types included in the template')
 });
 
 const definitionImportSourceSchema = z.discriminatedUnion('kind', [
@@ -64,6 +66,7 @@ const definitionImportSourceOptionSchema = z.object({
   id: z.string(),
   name: z.string(),
   description: z.string(),
+  category: z.enum(['full', 'cross-cutting']).nullable(),
   schemas: z.array(z.object({ id: z.string(), name: z.string() })),
   enums: z.array(z.object({ id: z.string(), name: z.string() })),
   documentTypes: z.array(z.object({ id: z.string(), name: z.string() })),
@@ -438,6 +441,10 @@ export const workspaceManagementContract = oc.tag('Workspaces').router({
               .describe('Custom URL slug (auto-generated if not provided)'),
             badge: z.string().optional().describe('Workspace badge/icon'),
             template: z.string().optional().describe('Template ID to create from'),
+            cross_cutting_templates: z
+              .array(z.string())
+              .optional()
+              .describe('Cross-cutting template IDs to add to the workspace'),
             replicate_from: z.string().optional().describe('Workspace ID to replicate from'),
             include: z
               .array(z.string())
@@ -695,3 +702,4 @@ export type DefinitionImportPreview = z.infer<typeof definitionImportPreviewSche
 export type DefinitionImportPreviewRequest = z.infer<typeof definitionImportPreviewRequestSchema>;
 export type DefinitionImportExecuteRequest = z.infer<typeof definitionImportExecuteRequestSchema>;
 export type DefinitionImportExecuteResponse = z.infer<typeof definitionImportExecuteResponseSchema>;
+export type WorkspaceTemplate = z.infer<typeof workspaceTemplateSchema>;

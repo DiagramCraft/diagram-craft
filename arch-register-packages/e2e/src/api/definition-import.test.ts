@@ -421,6 +421,7 @@ test.describe('definition import', () => {
       source => source.kind === 'builtin' && source.id === 'risk-compliance'
     )!;
     expect(builtin).toBeDefined();
+    expect(builtin.category).toBe('cross-cutting');
 
     const relationSchema = builtin.relationSchemas.find(
       schema => schema.name === 'Risk Mitigation'
@@ -506,8 +507,12 @@ test.describe('definition import', () => {
         resultType: 'number'
       })
     );
-    expect(dashboards[0]!.widgets).toHaveLength(preview.dashboardWidgets.length);
-    expect(dashboards[0]!.widgets).toContainEqual(
+    expect(dashboards.find(dashboard => dashboard.name === 'Overview')!.widgets).toContainEqual(
+      expect.objectContaining({ id: 'existing-widget' })
+    );
+    const riskDashboard = dashboards.find(dashboard => dashboard.name === 'Risk & Compliance')!;
+    expect(riskDashboard.widgets).toHaveLength(preview.dashboardWidgets.length);
+    expect(riskDashboard.widgets).toContainEqual(
       expect.objectContaining({
         id: 'top-risks-by-score',
         config: expect.objectContaining({ schema: riskSchema?.id })

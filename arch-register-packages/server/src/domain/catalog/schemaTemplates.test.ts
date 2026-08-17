@@ -2,11 +2,48 @@ import { describe, expect, it } from 'vitest';
 import {
   instantiateTemplate,
   instantiateTemplateDefinitions,
+  instantiateTemplateComposition,
   SCHEMA_TEMPLATES
 } from './schemaTemplates';
 import { buildDerivedPlan, evaluateDerivedFields } from '../derived/derivedFields';
 
 describe('instantiateTemplate', () => {
+  it('classifies built-ins and composes one full model with multiple concerns', () => {
+    expect(
+      SCHEMA_TEMPLATES.filter(template => template.category === 'full').map(t => t.id)
+    ).toEqual([
+      'default',
+      'backstage',
+      'c4',
+      'itil',
+      'ddd',
+      'team-topologies',
+      'data-mesh',
+      'archimate'
+    ]);
+    expect(
+      SCHEMA_TEMPLATES.filter(template => template.category === 'cross-cutting').map(t => t.id)
+    ).toEqual(['glossary', 'security', 'risk-compliance']);
+
+    const definitions = instantiateTemplateComposition('ws-1', 'default', [
+      'glossary',
+      'security',
+      'risk-compliance'
+    ]);
+
+    expect(definitions.selectedTemplates.map(template => template.id)).toEqual([
+      'default',
+      'glossary',
+      'security',
+      'risk-compliance'
+    ]);
+    expect(definitions.schemas.map(schema => schema.name)).toContain('Risk');
+    expect(definitions.schemas.map(schema => schema.name)).toContain('Risk & Compliance — Risk');
+    expect(definitions.schemas.map(schema => schema.name)).toContain('Control');
+    expect(definitions.schemas.map(schema => schema.name)).toContain('Risk & Compliance — Control');
+    expect(definitions.dashboardGroups.map(group => group.name)).toEqual(['Risk & Compliance']);
+  });
+
   it('materializes the optional business glossary template', () => {
     const definitions = instantiateTemplateDefinitions('ws-1', 'glossary');
     const term = definitions.schemas.find(schema => schema.name === 'Term');

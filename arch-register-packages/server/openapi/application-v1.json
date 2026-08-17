@@ -42687,6 +42687,13 @@
                     "type": "string",
                     "description": "Template ID to create from"
                   },
+                  "cross_cutting_templates": {
+                    "type": "array",
+                    "items": {
+                      "type": "string"
+                    },
+                    "description": "Cross-cutting template IDs to add to the workspace"
+                  },
                   "replicate_from": {
                     "type": "string",
                     "description": "Workspace ID to replicate from"
@@ -42951,12 +42958,29 @@
                       "description": {
                         "type": "string",
                         "description": "Template description"
+                      },
+                      "category": {
+                        "enum": [
+                          "full",
+                          "cross-cutting"
+                        ],
+                        "type": "string",
+                        "description": "Template category"
+                      },
+                      "entity_types": {
+                        "type": "array",
+                        "items": {
+                          "type": "string"
+                        },
+                        "description": "Entity types included in the template"
                       }
                     },
                     "required": [
                       "id",
                       "name",
-                      "description"
+                      "description",
+                      "category",
+                      "entity_types"
                     ]
                   }
                 }
@@ -43010,6 +43034,20 @@
                       },
                       "description": {
                         "type": "string"
+                      },
+                      "category": {
+                        "anyOf": [
+                          {
+                            "enum": [
+                              "full",
+                              "cross-cutting"
+                            ],
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
                       },
                       "schemas": {
                         "type": "array",
@@ -43164,6 +43202,7 @@
                       "id",
                       "name",
                       "description",
+                      "category",
                       "schemas",
                       "enums",
                       "documentTypes",
