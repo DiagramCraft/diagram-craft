@@ -168,7 +168,9 @@ export const GlossarySidebar = ({ workspaceSlug }: { workspaceSlug: string }) =>
                 label={category._name}
                 checked={selectedCategoryIds.includes(category._uid)}
                 onToggle={() => toggleCategory(category._uid)}
-                trailing={<span className="dim mono">{categoryCounts.get(category._uid) ?? 0}</span>}
+                trailing={
+                  <span className="dim mono">{categoryCounts.get(category._uid) ?? 0}</span>
+                }
                 tagColor={schemaColor(index)}
               />
             ))}

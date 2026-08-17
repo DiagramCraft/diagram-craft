@@ -2,7 +2,9 @@ import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
 import { GlossaryQualityBadges } from './GlossaryQualityBadges';
 
-const quality = (overrides: Partial<Record<'unused' | 'conflicting' | 'deprecated' | 'ownerless', boolean>>) => ({
+const quality = (
+  overrides: Partial<Record<'unused' | 'conflicting' | 'deprecated' | 'ownerless', boolean>>
+) => ({
   unused: false,
   conflicting: false,
   deprecated: false,

@@ -58,7 +58,10 @@ describe('GlossarySidebar', () => {
           total: 2,
           items: [
             term({ categories: [{ id: 'cat-1', name: 'Payments' }] }),
-            { ...term(), quality: { unused: true, conflicting: false, deprecated: false, ownerless: true } }
+            {
+              ...term(),
+              quality: { unused: true, conflicting: false, deprecated: false, ownerless: true }
+            }
           ]
         }
       };

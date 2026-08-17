@@ -90,7 +90,10 @@ export const GlossaryScreen = () => {
     : { to: '/$workspaceSlug/glossary' as const, params: { workspaceSlug } };
 
   const patchSearch = (patch: Record<string, unknown>) =>
-    navigate({ ...currentRoute, search: (previous: Record<string, unknown>) => ({ ...previous, ...patch }) });
+    navigate({
+      ...currentRoute,
+      search: (previous: Record<string, unknown>) => ({ ...previous, ...patch })
+    });
 
   const activeOwnerLifecycleCount = (search.owner ? 1 : 0) + (search.lifecycle ? 1 : 0);
 
@@ -121,7 +124,13 @@ export const GlossaryScreen = () => {
   }
 
   const chips: { key: string; label: string; value: string; onRemove: () => void }[] = [];
-  if (q) chips.push({ key: 'q', label: 'Search', value: q, onRemove: () => patchSearch({ q: undefined }) });
+  if (q)
+    chips.push({
+      key: 'q',
+      label: 'Search',
+      value: q,
+      onRemove: () => patchSearch({ q: undefined })
+    });
   categoryIds.forEach(id => {
     const category = categoryById.get(id);
     if (category) {
@@ -153,7 +162,8 @@ export const GlossaryScreen = () => {
     chips.push({
       key: 'lifecycle',
       label: 'Lifecycle',
-      value: lifecycleStates.find(state => state.id === search.lifecycle)?.label ?? search.lifecycle,
+      value:
+        lifecycleStates.find(state => state.id === search.lifecycle)?.label ?? search.lifecycle,
       onRemove: () => patchSearch({ lifecycle: undefined })
     });
   }
@@ -163,9 +173,7 @@ export const GlossaryScreen = () => {
       <div className={styles.header}>
         <Title
           title="Business glossary"
-          chips={
-            !terms.isLoading && <span className={styles.count}>{terms.data?.total ?? 0}</span>
-          }
+          chips={!terms.isLoading && <span className={styles.count}>{terms.data?.total ?? 0}</span>}
           description="Find governed terms by canonical name, synonym, or abbreviation. Creation and editing happen in Entities."
         />
       </div>
@@ -227,7 +235,9 @@ export const GlossaryScreen = () => {
                     type="button"
                     className={`${styles.pill} ${search.lifecycle === state.id ? styles.pillActive : ''}`}
                     onClick={() =>
-                      patchSearch({ lifecycle: search.lifecycle === state.id ? undefined : state.id })
+                      patchSearch({
+                        lifecycle: search.lifecycle === state.id ? undefined : state.id
+                      })
                     }
                   >
                     {state.label}
@@ -241,9 +251,7 @@ export const GlossaryScreen = () => {
           <FilterDropdown
             label="Sort"
             value={sort?.key ?? 'name'}
-            onChange={value =>
-              value !== sort?.key && toggleSort(value as SortKey)
-            }
+            onChange={value => value !== sort?.key && toggleSort(value as SortKey)}
             options={[
               { value: 'name', label: 'Name' },
               { value: 'usage', label: 'Usage' },
@@ -301,10 +309,7 @@ export const GlossaryScreen = () => {
             </Table.EmptyRow>
           ) : (
             sorted.map(term => (
-              <Table.Row
-                key={term.entity._uid}
-                onClick={() => openTerm(term.entity._publicId)}
-              >
+              <Table.Row key={term.entity._uid} onClick={() => openTerm(term.entity._publicId)}>
                 <Table.NameCell title={term.canonicalName} subtitle={term.entity._publicId} />
                 <Table.Cell>
                   {term.aliases.length > 0 ? (
@@ -335,10 +340,15 @@ export const GlossaryScreen = () => {
                     <span className="dim">—</span>
                   )}
                 </Table.Cell>
-                <Table.Cell>{term.entity._owner?.name ?? <span className="dim">—</span>}</Table.Cell>
+                <Table.Cell>
+                  {term.entity._owner?.name ?? <span className="dim">—</span>}
+                </Table.Cell>
                 <Table.Cell>
                   {term.entity._lifecycle ? (
-                    <StatusChip value={term.entity._lifecycle.id} lifecycleStates={lifecycleStates} />
+                    <StatusChip
+                      value={term.entity._lifecycle.id}
+                      lifecycleStates={lifecycleStates}
+                    />
                   ) : (
                     <span className="dim">—</span>
                   )}
