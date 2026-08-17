@@ -190,6 +190,41 @@ test.describe('entities section', () => {
     await expect.poll(async () => entitiesPage.graphNodes().count()).toBeGreaterThan(1);
   });
 
+  test('filters an explore column by schema and persists the selection', async ({ page }) => {
+    const entitiesPage = new EntitiesPage(page, defaultWorkspace.slug);
+
+    await entitiesPage.goto({ viewMode: 'explore', q: frontendAppEntity.name });
+    await expect(page).toHaveURL(/viewMode=explore/);
+
+    const outgoingColumn = entitiesPage.exploreColumn(1);
+    const schemaFilter = entitiesPage.exploreColumnSchemaFilter(1);
+    await expect(schemaFilter).toBeVisible();
+    await schemaFilter.selectOption(apiSchema.id);
+    await expect(outgoingColumn).toContainText(apiSchema.name);
+    await expect(outgoingColumn.getByText('Auth Service', { exact: true })).toHaveCount(0);
+    await expect
+      .poll(() => new URL(page.url()).searchParams.get('viewConfigs') ?? '')
+      .toContain('columnSchemaIds');
+
+    const parsedViewConfigs: unknown = JSON.parse(
+      new URL(page.url()).searchParams.get('viewConfigs') ?? '{}'
+    );
+    const viewConfigs = (
+      typeof parsedViewConfigs === 'string' ? JSON.parse(parsedViewConfigs) : parsedViewConfigs
+    ) as {
+      explore?: { columnSchemaIds?: Record<string, string> };
+    };
+    expect(viewConfigs).toMatchObject({
+      explore: { columnSchemaIds: { '1': apiSchema.id } }
+    });
+
+    await page.reload();
+    await expect(entitiesPage.exploreColumnSchemaFilter(1)).toHaveValue(apiSchema.id);
+    await expect(
+      entitiesPage.exploreColumn(1).getByText('Auth Service', { exact: true })
+    ).toHaveCount(0);
+  });
+
   test('persists the Capability + Entity + Project roadmap mode and horizon toggle', async ({
     page
   }) => {

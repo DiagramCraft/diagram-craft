@@ -175,6 +175,22 @@ export const ExploreView = ({
     [selectedRelationKeys, updateConfig]
   );
 
+  const updateColumnSchema = useCallback(
+    (columnIndex: number, schemaId: string) => {
+      const nextColumnSchemaIds = { ...(normalizedConfig.columnSchemaIds ?? {}) };
+      if (schemaId.length === 0) {
+        delete nextColumnSchemaIds[String(columnIndex)];
+      } else {
+        nextColumnSchemaIds[String(columnIndex)] = schemaId;
+      }
+      updateConfig({
+        columnSchemaIds:
+          Object.keys(nextColumnSchemaIds).length > 0 ? nextColumnSchemaIds : undefined
+      });
+    },
+    [normalizedConfig.columnSchemaIds, updateConfig]
+  );
+
   const handleEntityContextMenu = useCallback(
     (event: MouseEvent<HTMLButtonElement>, entity: ExploreEntity) => {
       if (onFocusEntity == null) return;
@@ -486,178 +502,237 @@ export const ExploreView = ({
           )}
 
           <div className={styles.columns}>
-            {graph.columns.map(column => (
-              <section key={column.index} className={styles.column}>
-                <header className={styles.columnHeader}>
-                  <div>
-                    <div className={styles.columnLabel}>
-                      {column.direction === 'center'
-                        ? 'Filtered entities'
-                        : column.direction === 'left'
-                          ? `Incoming hop ${column.hop}`
-                          : `Outgoing hop ${column.hop}`}
-                    </div>
-                    <div className={styles.columnMeta}>
-                      {column.entities.length}{' '}
-                      {column.entities.length === 1 ? 'entity' : 'entities'}
-                    </div>
-                  </div>
-
-                  <div className={styles.columnActions}>
-                    {column.direction === 'center' && normalizedConfig.leftDepth === 0 && (
-                      <Button
-                        size={'xs'}
-                        onClick={() => updateConfig({ leftDepth: 1 })}
-                        aria-label="Show left column"
-                        title="Show left column"
-                      >
-                        <TbPlus size={12} />
-                      </Button>
-                    )}
-
-                    {column.direction === 'left' && column.hop === normalizedConfig.leftDepth && (
-                      <Button
-                        size={'xs'}
-                        onClick={() => updateConfig({ leftDepth: normalizedConfig.leftDepth - 1 })}
-                        aria-label="Hide left column"
-                        title="Hide left column"
-                      >
-                        <TbMinus size={12} />
-                      </Button>
-                    )}
-
-                    {column.direction === 'left' ? (
-                      <Button
-                        size={'xs'}
-                        onClick={() => updateConfig({ leftDepth: normalizedConfig.leftDepth + 1 })}
-                        disabled={column.entities.length === 0}
-                        aria-label="Add left column"
-                        title="Add left column"
-                      >
-                        <TbPlus size={12} />
-                      </Button>
-                    ) : null}
-
-                    {column.direction === 'right' && column.hop === normalizedConfig.rightDepth && (
-                      <Button
-                        size={'xs'}
-                        onClick={() =>
-                          updateConfig({ rightDepth: normalizedConfig.rightDepth - 1 })
+            {graph.columns.map(column => {
+              const columnLabel =
+                column.direction === 'center'
+                  ? 'Filtered entities'
+                  : column.direction === 'left'
+                    ? `Incoming hop ${column.hop}`
+                    : `Outgoing hop ${column.hop}`;
+              const selectedSchemaId = normalizedConfig.columnSchemaIds?.[String(column.index)];
+              const availableSchemaIds = new Set(column.availableSchemaIds);
+              const schemaOptions = column.availableSchemaIds
+                .map(schemaId => ({
+                  schemaId,
+                  name: schemaMap.get(schemaId)?.name ?? schemaId
+                }))
+                .concat(
+                  selectedSchemaId != null && !availableSchemaIds.has(selectedSchemaId)
+                    ? [
+                        {
+                          schemaId: selectedSchemaId,
+                          name: schemaMap.get(selectedSchemaId)?.name ?? selectedSchemaId
                         }
-                        aria-label="Hide right column"
-                        title="Hide right column"
-                      >
-                        <TbMinus size={12} />
-                      </Button>
-                    )}
+                      ]
+                    : []
+                )
+                .sort((a, b) => a.name.localeCompare(b.name));
 
-                    {column.direction === 'right' ? (
-                      <Button
-                        size={'xs'}
-                        onClick={() =>
-                          updateConfig({ rightDepth: normalizedConfig.rightDepth + 1 })
-                        }
-                        disabled={column.entities.length === 0}
-                        aria-label="Add right column"
-                        title="Add right column"
-                      >
-                        <TbPlus size={12} />
-                      </Button>
-                    ) : null}
+              return (
+                <section
+                  key={column.index}
+                  className={styles.column}
+                  data-testid={`explore-column-${column.index}`}
+                >
+                  <header className={styles.columnHeader}>
+                    <div>
+                      <div className={styles.columnLabel}>{columnLabel}</div>
+                      <div className={styles.columnMeta}>
+                        {column.entities.length}{' '}
+                        {column.entities.length === 1 ? 'entity' : 'entities'}
+                      </div>
+                    </div>
 
-                    {column.direction === 'center' && normalizedConfig.rightDepth === 0 && (
-                      <Button
-                        size={'xs'}
-                        onClick={() => updateConfig({ rightDepth: 1 })}
-                        aria-label="Show right column"
-                        title="Show right column"
-                      >
-                        <TbPlus size={12} />
-                      </Button>
-                    )}
-                  </div>
-                </header>
-
-                <div className={styles.columnBody}>
-                  {column.entities.length === 0 ? (
-                    <div className={styles.columnEmpty}>No matching entities at this hop.</div>
-                  ) : (
-                    column.entities.map(entity => {
-                      const schema = schemaMap.get(entity.schemaId);
-                      const isDuplicate = graph.duplicateIds.has(entity.entityId);
-                      const isLinked =
-                        linkedEntityIds == null ? true : linkedEntityIdSet.has(entity.entityId);
-                      return (
-                        <button
-                          key={entity.entityId}
-                          ref={setEntityRef(column.index, entity.entityId)}
-                          type="button"
-                          className={styles.entityCard}
-                          onClick={() => onEntityClick(entity.publicId)}
-                          onContextMenu={event => handleEntityContextMenu(event, entity)}
+                    <div className={styles.columnActions}>
+                      {!hideToolbar &&
+                        column.direction !== 'center' &&
+                        schemaOptions.length > 0 && (
+                          <label className={styles.columnSchemaFilter}>
+                            <span className={styles.columnSchemaFilterLabel}>Schema</span>
+                            <select
+                              className={styles.columnSchemaSelect}
+                              value={selectedSchemaId ?? ''}
+                              aria-label={`Filter ${columnLabel} by schema`}
+                              data-testid={`explore-column-schema-filter-${column.index}`}
+                              onChange={event =>
+                                updateColumnSchema(column.index, event.target.value)
+                              }
+                            >
+                              <option value="">All schemas</option>
+                              {schemaOptions.map(option => (
+                                <option key={option.schemaId} value={option.schemaId}>
+                                  {option.name}
+                                  {option.schemaId === selectedSchemaId &&
+                                  !availableSchemaIds.has(option.schemaId)
+                                    ? ' (unavailable)'
+                                    : ''}
+                                </option>
+                              ))}
+                            </select>
+                          </label>
+                        )}
+                      {column.direction === 'center' && normalizedConfig.leftDepth === 0 && (
+                        <Button
+                          size={'xs'}
+                          onClick={() => updateConfig({ leftDepth: 1 })}
+                          aria-label="Show left column"
+                          title="Show left column"
                         >
-                          <div className={styles.entityTop}>
-                            <div className={styles.entityIdentity}>
-                              {schema && (
-                                <TypeBadge
-                                  color={schema.color}
-                                  name={schema.name}
-                                  icon={schema.icon}
-                                  size={18}
-                                />
-                              )}
-                              <div className={styles.entityText}>
-                                <div
-                                  className={styles.entityName}
-                                  style={
-                                    isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }
-                                  }
-                                >
-                                  {entity.name ?? entity.slug}
-                                </div>
-                                {selectedDisplayFields.includes('_slug') && (
-                                  <div className={styles.entitySlug}>{entity.slug}</div>
-                                )}
-                              </div>
-                            </div>
-                            {isDuplicate && (
-                              <span className={styles.duplicateBadge}>Duplicate</span>
-                            )}
-                          </div>
+                          <TbPlus size={12} />
+                        </Button>
+                      )}
 
-                          <div className={styles.entityMeta}>
+                      {column.direction === 'left' && column.hop === normalizedConfig.leftDepth && (
+                        <Button
+                          size={'xs'}
+                          onClick={() =>
+                            updateConfig({ leftDepth: normalizedConfig.leftDepth - 1 })
+                          }
+                          aria-label="Hide left column"
+                          title="Hide left column"
+                        >
+                          <TbMinus size={12} />
+                        </Button>
+                      )}
+
+                      {column.direction === 'left' ? (
+                        <Button
+                          size={'xs'}
+                          onClick={() =>
+                            updateConfig({ leftDepth: normalizedConfig.leftDepth + 1 })
+                          }
+                          disabled={column.entities.length === 0}
+                          aria-label="Add left column"
+                          title="Add left column"
+                        >
+                          <TbPlus size={12} />
+                        </Button>
+                      ) : null}
+
+                      {column.direction === 'right' &&
+                        column.hop === normalizedConfig.rightDepth && (
+                          <Button
+                            size={'xs'}
+                            onClick={() =>
+                              updateConfig({ rightDepth: normalizedConfig.rightDepth - 1 })
+                            }
+                            aria-label="Hide right column"
+                            title="Hide right column"
+                          >
+                            <TbMinus size={12} />
+                          </Button>
+                        )}
+
+                      {column.direction === 'right' ? (
+                        <Button
+                          size={'xs'}
+                          onClick={() =>
+                            updateConfig({ rightDepth: normalizedConfig.rightDepth + 1 })
+                          }
+                          disabled={column.entities.length === 0}
+                          aria-label="Add right column"
+                          title="Add right column"
+                        >
+                          <TbPlus size={12} />
+                        </Button>
+                      ) : null}
+
+                      {column.direction === 'center' && normalizedConfig.rightDepth === 0 && (
+                        <Button
+                          size={'xs'}
+                          onClick={() => updateConfig({ rightDepth: 1 })}
+                          aria-label="Show right column"
+                          title="Show right column"
+                        >
+                          <TbPlus size={12} />
+                        </Button>
+                      )}
+                    </div>
+                  </header>
+
+                  <div className={styles.columnBody}>
+                    {column.entities.length === 0 ? (
+                      <div className={styles.columnEmpty}>No matching entities at this hop.</div>
+                    ) : (
+                      column.entities.map(entity => {
+                        const schema = schemaMap.get(entity.schemaId);
+                        const isDuplicate = graph.duplicateIds.has(entity.entityId);
+                        const isLinked =
+                          linkedEntityIds == null ? true : linkedEntityIdSet.has(entity.entityId);
+                        return (
+                          <button
+                            key={entity.entityId}
+                            ref={setEntityRef(column.index, entity.entityId)}
+                            type="button"
+                            className={styles.entityCard}
+                            onClick={() => onEntityClick(entity.publicId)}
+                            onContextMenu={event => handleEntityContextMenu(event, entity)}
+                          >
+                            <div className={styles.entityTop}>
+                              <div className={styles.entityIdentity}>
+                                {schema && (
+                                  <TypeBadge
+                                    color={schema.color}
+                                    name={schema.name}
+                                    icon={schema.icon}
+                                    size={18}
+                                  />
+                                )}
+                                <div className={styles.entityText}>
+                                  <div
+                                    className={styles.entityName}
+                                    style={
+                                      isLinked ? undefined : { color: 'var(--base-fg-more-dim)' }
+                                    }
+                                  >
+                                    {entity.name ?? entity.slug}
+                                  </div>
+                                  {selectedDisplayFields.includes('_slug') && (
+                                    <div className={styles.entitySlug}>{entity.slug}</div>
+                                  )}
+                                </div>
+                              </div>
+                              {isDuplicate && (
+                                <span className={styles.duplicateBadge}>Duplicate</span>
+                              )}
+                            </div>
+
+                            <div className={styles.entityMeta}>
+                              {entity.record &&
+                                selectedDisplayFields
+                                  .filter(id => id !== '_slug' && id !== '_description')
+                                  .map(id => {
+                                    const field = findEntityDisplayField(
+                                      id,
+                                      entity.record!,
+                                      fullSchemaMap,
+                                      displayFields
+                                    );
+                                    const value = field
+                                      ? formatEntityDisplayValue(entity.record!, field)
+                                      : null;
+                                    return value == null ? null : (
+                                      <Chip key={id} tone="ghost">
+                                        {field!.label}: {value}
+                                      </Chip>
+                                    );
+                                  })}
+                            </div>
                             {entity.record &&
-                              selectedDisplayFields
-                                .filter(id => id !== '_slug' && id !== '_description')
-                                .map(id => {
-                                  const field = findEntityDisplayField(
-                                    id,
-                                    entity.record!,
-                                    fullSchemaMap,
-                                    displayFields
-                                  );
-                                  const value = field
-                                    ? formatEntityDisplayValue(entity.record!, field)
-                                    : null;
-                                  return value == null ? null : (
-                                    <Chip key={id} tone="ghost">
-                                      {field!.label}: {value}
-                                    </Chip>
-                                  );
-                                })}
-                          </div>
-                          {entity.record &&
-                            selectedDisplayFields.includes('_description') &&
-                            entity.record._description && (
-                              <div className={styles.entitySlug}>{entity.record._description}</div>
-                            )}
-                        </button>
-                      );
-                    })
-                  )}
-                </div>
-              </section>
-            ))}
+                              selectedDisplayFields.includes('_description') &&
+                              entity.record._description && (
+                                <div className={styles.entitySlug}>
+                                  {entity.record._description}
+                                </div>
+                              )}
+                          </button>
+                        );
+                      })
+                    )}
+                  </div>
+                </section>
+              );
+            })}
           </div>
         </div>
       </div>
