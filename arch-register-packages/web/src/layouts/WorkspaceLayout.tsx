@@ -1,6 +1,7 @@
 import { useState, useCallback, useMemo } from 'react';
 import { Outlet, getRouteApi, useNavigate, useMatches, useRouter } from '@tanstack/react-router';
 import { useQueryClient } from '@tanstack/react-query';
+import { useQuery } from '@tanstack/react-query';
 import styles from './WorkspaceLayout.module.css';
 import sidePanelStyles from '../shell/SidePanel.module.css';
 import { TopBar } from '../shell/TopBar';
@@ -25,6 +26,7 @@ import { RouteContentBoundary } from '../routes/RouteContentBoundary';
 import { AppErrorState } from '../components/AppErrorState';
 import {
   TbBriefcase2,
+  TbBook,
   TbDatabase,
   TbFileAi,
   TbFiles,
@@ -37,6 +39,7 @@ import { WorkspaceDetailLayout } from './WorkspaceDetailLayout';
 import { navigateFromRailItem, resolveWorkspaceShellDescriptor } from './workspaceShellDescriptors';
 import type { WorkspaceRailItemId } from '../shell/shellTypes';
 import { getWorkspaceShellBuilder } from '../routes/workspace/workspaceShellRoute';
+import { glossaryConfigQuery } from '../queries/glossary';
 import { settingsSectionTarget } from '../routes/settingsNavigation';
 import {
   asEntityPublicId,
@@ -50,6 +53,7 @@ const ALL_RAIL_ITEMS: NavRailItem[] = [
   { id: 'content', icon: TbFiles, tooltip: 'Workspace content' },
   { id: 'projects', icon: TbBriefcase2, tooltip: 'Projects' },
   { id: 'entities', icon: TbDatabase, tooltip: 'Entities' },
+  { id: 'glossary', icon: TbBook, tooltip: 'Business glossary' },
   { id: 'search', icon: TbSearch, tooltip: 'Search' },
   { id: 'governance', icon: TbClipboardCheck, tooltip: 'My work' },
   { id: 'assistant', icon: TbMessageCircleStar, tooltip: 'AI Assistant', separator: true },
@@ -91,6 +95,7 @@ export const WorkspaceLayout = () => {
   const { lifecycleStates, teams, projectEntityTypes, assessmentTypes, currencies } =
     useWorkspaceConfig(workspaceSlug, !!workspaceSlug);
   const { data: aiConfig } = useAiConfig(workspaceSlug, !!workspaceSlug);
+  const { data: glossaryConfig } = useQuery(glossaryConfigQuery(workspaceSlug, !!workspaceSlug));
 
   const {
     canManageWorkspaces,
@@ -193,7 +198,9 @@ export const WorkspaceLayout = () => {
     const aiEnabled = aiConfig?.enabled === true;
     const count = governanceTaskCount?.count ?? 0;
     return ALL_RAIL_ITEMS.filter(
-      item => aiEnabled || (item.id !== 'assistant' && item.id !== 'extract')
+      item =>
+        (aiEnabled || (item.id !== 'assistant' && item.id !== 'extract')) &&
+        (item.id !== 'glossary' || glossaryConfig != null)
     ).map(item =>
       item.id === 'governance' && count > 0
         ? {
@@ -202,7 +209,7 @@ export const WorkspaceLayout = () => {
           }
         : item
     );
-  }, [aiConfig?.enabled, governanceTaskCount?.count]);
+  }, [aiConfig?.enabled, governanceTaskCount?.count, glossaryConfig]);
 
   const contextValue = useMemo(
     () => ({

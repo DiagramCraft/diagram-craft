@@ -190,14 +190,34 @@ export const getEntityDiagramFiles = async (
   return runAuthorizedOperation({
     db: db,
     event: event,
-    scope: { kind: 'workspace', workspace: workspace },
+    scope: { kind: 'entity', workspace: workspace },
     fallback: 'Failed to retrieve entity diagram files',
     dbErrorMessages: projectDbErrorMessages,
-    operation: async ({ ws }) => {
+    operation: async ({ ws, authCtx }) => {
       const entity = await db.catalog.getEntity(ws, entityId);
       httpAssert.present(entity, { status: 404, message: `Entity '${entityId}' not found` });
+      requireEntityAction(
+        authCtx,
+        entity,
+        'view_entity',
+        'You do not have access to view this entity'
+      );
       const rows = await db.project.getEntityDiagramFiles(ws, entity.id);
-      return rows.map(row => ({
+      const projectOwners = new Map(
+        (
+          await Promise.all(
+            [...new Set(rows.map(row => row.project_id))].map(async projectId => [
+              projectId,
+              (await db.project.getProject(ws, projectId))?.owner ?? null
+            ])
+          )
+        ).filter((entry): entry is [string, string] => entry[1] !== null)
+      );
+      const accessibleRows = rows.filter(row => {
+        const owner = projectOwners.get(row.project_id);
+        return owner !== undefined && canAccessProject(authCtx, owner);
+      });
+      return accessibleRows.map(row => ({
         file: {
           id: row.file_id,
           project_id: row.project_id,

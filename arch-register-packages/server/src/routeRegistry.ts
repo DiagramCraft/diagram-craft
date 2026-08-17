@@ -59,6 +59,7 @@ import { createDocumentORPCHandler } from './domain/document/documentOrpc';
 import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
 import { createArtifactORPCHandler } from './domain/artifact/artifactOrpc';
 import { createBaselineORPCHandler } from './domain/baseline/baselineOrpc';
+import { createGlossaryORPCHandler } from './domain/glossary/glossaryOrpc';
 import {
   createPublicCatalogConfigORPCHandler,
   createPublicCatalogORPCHandler
@@ -250,6 +251,15 @@ const protectedRouteDefinitions = [
     prefix: API_PREFIXES.application,
     surfaces: [API_PREFIXES.application],
     create: ({ db }) => createWorkspaceEntityORPCHandler(db)
+  },
+  {
+    id: 'workspace-glossary',
+    auth: 'protected',
+    kind: 'orpc',
+    dependencies: ['db'],
+    prefix: API_PREFIXES.application,
+    surfaces: [API_PREFIXES.application],
+    create: ({ db }) => createGlossaryORPCHandler(db)
   },
   {
     id: 'entity-sync',

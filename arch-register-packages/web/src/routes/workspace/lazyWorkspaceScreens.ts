@@ -56,6 +56,10 @@ export const LazySearchScreen = lazyRouteComponent(
   () => import('../../sections/search/SearchScreen'),
   'SearchScreen'
 );
+export const LazyGlossaryScreen = lazyRouteComponent(
+  () => import('../../sections/glossary/GlossaryScreen'),
+  'GlossaryScreen'
+);
 export const LazyWorkspaceSettingsScreen = lazyRouteComponent(
   () => import('../../sections/workspace-settings/WorkspaceSettingsScreen'),
   'WorkspaceSettingsScreen'

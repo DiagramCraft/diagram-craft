@@ -16,6 +16,7 @@ import type {
 } from '../../domain/catalog/db/catalogDatabase';
 import type { SupportedCurrencyDbResult } from '../../domain/workspace/db/workspaceDatabase';
 import {
+  GLOSSARY_IDS,
   PII_FIELD_GROUP_ID,
   RISK_AFFECTS_RELATION_SCHEMA_ID,
   RISK_AFFECTS_TARGET_SCHEMA_IDS,
@@ -208,6 +209,19 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
       { value: 'not-applicable', label: 'Not Applicable' }
     ],
     sort_order: 12,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: GLOSSARY_IDS.statusEnum,
+    workspace: WORKSPACE_ID,
+    name: 'Glossary Status',
+    options: [
+      { value: 'draft', label: 'Draft' },
+      { value: 'proposed', label: 'Proposed' },
+      { value: 'approved', label: 'Approved' }
+    ],
+    sort_order: 13,
     created_at: now,
     updated_at: now
   },
@@ -890,6 +904,58 @@ export const seedSchemas: SchemaDbResult[] = (
       icon: 'file-check',
       default_owner: null,
       key_prefix: 'CREQ',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: GLOSSARY_IDS.termCategorySchema,
+      workspace: WORKSPACE_ID,
+      name: 'Term Category',
+      description: 'A flat category used to organize business terms.',
+      fields: [],
+      color: AR_COLOR_PURPLE,
+      icon: 'tags',
+      default_owner: null,
+      key_prefix: 'TCAT',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: GLOSSARY_IDS.termSchema,
+      workspace: WORKSPACE_ID,
+      name: 'Term',
+      description: 'A governed business term with a definition, aliases, and category membership.',
+      fields: [
+        { id: 'definition', name: 'Definition', type: 'longtext' },
+        {
+          id: 'synonyms',
+          name: 'Synonyms',
+          type: 'text',
+          minCardinality: 0,
+          maxCardinality: -1
+        },
+        {
+          id: 'abbreviations',
+          name: 'Abbreviations',
+          type: 'text',
+          minCardinality: 0,
+          maxCardinality: -1
+        },
+        {
+          id: 'categories',
+          name: 'Categories',
+          predicate: 'categorized as',
+          type: 'reference',
+          schemaId: GLOSSARY_IDS.termCategorySchema,
+          minCount: 0,
+          maxCount: -1
+        },
+        { id: 'status', name: 'Status', type: 'select', enumId: GLOSSARY_IDS.statusEnum }
+      ],
+      color: AR_COLOR_BLUE,
+      icon: 'book',
+      default_owner: null,
+      key_prefix: 'TERM',
       created_at: now,
       updated_at: now
     },

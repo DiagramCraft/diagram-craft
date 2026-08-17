@@ -236,10 +236,9 @@ test.describe('definition import', () => {
       }
     });
 
-    expect(await server.db.catalog.listSchemas(target.id)).toHaveLength(2);
-    expect((await server.db.catalog.listSchemas(target.id)).map(schema => schema.name)).toContain(
-      'Imported Domain'
-    );
+    const importedSchemas = await server.db.catalog.listSchemas(target.id);
+    expect(importedSchemas).toHaveLength(renamedPreview.schemas.length + 1);
+    expect(importedSchemas.map(schema => schema.name)).toContain('Imported Domain');
   });
 
   test('imports a built-in API capability with its API schema binding', async ({

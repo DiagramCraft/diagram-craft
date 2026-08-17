@@ -1,4 +1,12 @@
-import { TbDatabase, TbFiles, TbFolders, TbHome, TbSearch, TbSettings } from 'react-icons/tb';
+import {
+  TbBook,
+  TbDatabase,
+  TbFiles,
+  TbFolders,
+  TbHome,
+  TbSearch,
+  TbSettings
+} from 'react-icons/tb';
 import type { BreadcrumbItem, WorkspaceRailItemId } from '../shell/shellTypes';
 import type { Workspace } from '@arch-register/api-types/workspaceContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -111,6 +119,23 @@ export const buildEntityBreadcrumbs = (
   ...(detail ? [{ label: 'Detail', onClick: () => {} }] : [])
 ];
 
+export const buildGlossaryBreadcrumbs = (
+  ctx: WorkspaceShellContext,
+  detail = false
+): BreadcrumbItem[] => [
+  ...buildHomeBreadcrumbs(ctx),
+  {
+    label: 'Glossary',
+    icon: <TbBook size={12} />,
+    onClick: () =>
+      ctx.navigate({
+        to: '/$workspaceSlug/glossary',
+        params: { workspaceSlug: ctx.workspaceSlug }
+      })
+  },
+  ...(detail ? [{ label: 'Term', onClick: () => {} }] : [])
+];
+
 export const buildWorkspaceContentBreadcrumbs = (ctx: WorkspaceShellContext): BreadcrumbItem[] => [
   ...buildHomeBreadcrumbs(ctx),
   {
@@ -168,6 +193,7 @@ export const navigateFromRailItem = (
     content: '/$workspaceSlug/content',
     projects: '/$workspaceSlug/projects',
     entities: '/$workspaceSlug/entities',
+    glossary: '/$workspaceSlug/glossary',
     search: '/$workspaceSlug/search',
     governance: '/$workspaceSlug/governance',
     assistant: '/$workspaceSlug/assistant',

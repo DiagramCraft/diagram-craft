@@ -156,6 +156,13 @@
           sources, repeat idempotently without duplicate revisions, and preserve the last successful revision when a
           refresh or completed source scan fails.
 
+        - @id:ar.entities.business-glossary Workspaces can enable a permission-aware business glossary backed by
+          ordinary entity schemas. Users can browse and deep-link to terms, search canonical names, synonyms, and
+          abbreviations, organize terms across flat many-to-many categories, inspect explicit usage across entities,
+          typed relations, Markdown, projects, and diagrams, and review unused, conflicting, deprecated, and ownerless
+          quality reports. Term definitions, aliases, category changes, ownership, lifecycle, and status continue to
+          use the existing entity permissions, history, and approval mechanisms; generic entity behavior is unchanged.
+
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can
           define typed relation schemas with mandatory "in"/"out" endpoints (each constrained to a set of allowed
@@ -343,6 +350,9 @@
         - @id:ar.search.navigation Search results provide context and links into the relevant entity, project, document,
           or workspace surface.
 
+        - @id:ar.search.glossary The dedicated glossary surface provides alias-aware term search and quality filters
+          without changing the semantics of generic workspace search.
+
     - @id:ar.projects Users can organize architecture work into projects containing files, content, diagrams,
       milestones, and assessments.
 
@@ -460,6 +470,9 @@
           of supported content.
 
         - @id:ar.content.diagrams Users can associate Diagram Craft diagrams with architectural entities and projects.
+
+        - @id:ar.content.glossary-links Glossary term usage and backlinks include only explicit, permission-visible
+          links from Markdown metadata, project associations, and diagram entity references.
 
             - @id:ar.content.diagrams.entity-graphs Users can generate or inspect diagrams derived from entity
               relationships and graph data.

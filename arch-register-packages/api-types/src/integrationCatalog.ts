@@ -6,7 +6,7 @@ import {
 } from './workspaceCapabilityContract';
 import { z } from 'zod';
 
-const capabilityFieldTypeSchema = z.enum(['text', 'longtext', 'select']);
+const capabilityFieldTypeSchema = z.enum(['text', 'longtext', 'select', 'reference']);
 
 /** Integration-owned semantic field role metadata. */
 export const capabilityFieldRoleSchema = z.object({
@@ -15,7 +15,9 @@ export const capabilityFieldRoleSchema = z.object({
   description: z.string().min(1),
   required: z.boolean(),
   defaultFieldId: z.string().min(1),
-  allowedTypes: z.array(capabilityFieldTypeSchema)
+  allowedTypes: z.array(capabilityFieldTypeSchema),
+  cardinality: z.enum(['single', 'multi']).optional(),
+  referenceTargetBinding: z.string().min(1).optional()
 });
 
 export type CapabilityFieldRole = z.infer<typeof capabilityFieldRoleSchema>;
@@ -50,6 +52,8 @@ export type CapabilityFieldMappingIssue = {
     | 'archived_target'
     | 'derived_target'
     | 'incompatible_target'
+    | 'incompatible_cardinality'
+    | 'invalid_reference_target'
     | 'duplicate_target';
   roleId: string;
   fieldId?: string;
@@ -65,6 +69,11 @@ export type CapabilityField = {
   id: string;
   type: string;
   archived?: boolean;
+  minCardinality?: number;
+  maxCardinality?: number;
+  schemaId?: string;
+  minCount?: number;
+  maxCount?: number;
 };
 
 const apiSpecificationFieldRoles: CapabilityFieldRole[] = [
@@ -86,6 +95,55 @@ const apiSpecificationFieldRoles: CapabilityFieldRole[] = [
   }
 ];
 
+const businessGlossaryFieldRoles: CapabilityFieldRole[] = [
+  {
+    id: 'definition',
+    label: 'Definition',
+    description: 'The authoritative meaning of the business term.',
+    required: true,
+    defaultFieldId: 'definition',
+    allowedTypes: ['longtext'],
+    cardinality: 'single'
+  },
+  {
+    id: 'synonyms',
+    label: 'Synonyms',
+    description: 'Alternative names for the term.',
+    required: true,
+    defaultFieldId: 'synonyms',
+    allowedTypes: ['text'],
+    cardinality: 'multi'
+  },
+  {
+    id: 'abbreviations',
+    label: 'Abbreviations',
+    description: 'Short forms and abbreviations for the term.',
+    required: true,
+    defaultFieldId: 'abbreviations',
+    allowedTypes: ['text'],
+    cardinality: 'multi'
+  },
+  {
+    id: 'categories',
+    label: 'Categories',
+    description: 'Zero or more flat glossary categories.',
+    required: true,
+    defaultFieldId: 'categories',
+    allowedTypes: ['reference'],
+    cardinality: 'multi',
+    referenceTargetBinding: 'category'
+  },
+  {
+    id: 'status',
+    label: 'Status',
+    description: 'Definition maturity, such as Draft, Proposed, or Approved.',
+    required: true,
+    defaultFieldId: 'status',
+    allowedTypes: ['select'],
+    cardinality: 'single'
+  }
+];
+
 /** Integration-owned capabilities that can be configured at workspace scope. */
 export const workspaceCapabilityDefinitions: WorkspaceCapabilityDefinition[] = [
   {
@@ -101,6 +159,30 @@ export const workspaceCapabilityDefinitions: WorkspaceCapabilityDefinition[] = [
         required: true,
         targetKind: 'entity_schema',
         fieldRoles: apiSpecificationFieldRoles
+      }
+    ]
+  },
+  {
+    type: 'business-glossary',
+    label: 'Business glossary',
+    description: 'Managed business terms, aliases, categories, usage, and quality reports.',
+    features: ['alias-search', 'usage', 'quality-reports', 'governance'],
+    bindingRoles: [
+      {
+        id: 'term',
+        label: 'Term entity schema',
+        description: 'The entity schema used for canonical business terms.',
+        required: true,
+        targetKind: 'entity_schema',
+        fieldRoles: businessGlossaryFieldRoles
+      },
+      {
+        id: 'category',
+        label: 'Term category entity schema',
+        description: 'The entity schema used for flat glossary categories.',
+        required: true,
+        targetKind: 'entity_schema',
+        fieldRoles: []
       }
     ]
   }
@@ -221,6 +303,30 @@ export const resolveCapabilityFieldMappings = (
         fieldId,
         message: `Field '${fieldId}' has type '${field.type}', which is incompatible with role '${role.label}'.`
       });
+    }
+    if (role.cardinality === 'multi') {
+      const maxCardinality = field.maxCardinality ?? 1;
+      const maxCount = field.maxCount ?? 1;
+      if (maxCardinality !== -1 && maxCardinality < 2 && maxCount !== -1 && maxCount < 2) {
+        issues.push({
+          code: 'incompatible_cardinality',
+          roleId: role.id,
+          fieldId,
+          message: `Field '${fieldId}' must accept multiple values for role '${role.label}'.`
+        });
+      }
+    }
+    if (role.cardinality === 'single') {
+      const maxCardinality = field.maxCardinality ?? 1;
+      const maxCount = field.maxCount ?? 1;
+      if (maxCardinality === -1 || maxCardinality > 1 || maxCount === -1 || maxCount > 1) {
+        issues.push({
+          code: 'incompatible_cardinality',
+          roleId: role.id,
+          fieldId,
+          message: `Field '${fieldId}' must accept a single value for role '${role.label}'.`
+        });
+      }
     }
   }
 

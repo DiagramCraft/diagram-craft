@@ -28,9 +28,30 @@ import type { RelationSchemaDbCreate } from './db/relationDatabase';
 import { normalizePublicIdPrefix } from '../../utils/publicIds';
 
 export type SymbolicField =
-  | { id: string; name: string; type: 'text' | 'longtext' | 'boolean' | 'date' | 'currency' }
-  | { id: string; name: string; type: 'select'; enumId: string }
-  | { id: string; name: string; type: 'number'; min?: number; max?: number }
+  | {
+      id: string;
+      name: string;
+      type: 'text' | 'longtext' | 'boolean' | 'date' | 'currency';
+      minCardinality?: number;
+      maxCardinality?: number;
+    }
+  | {
+      id: string;
+      name: string;
+      type: 'select';
+      enumId: string;
+      minCardinality?: number;
+      maxCardinality?: number;
+    }
+  | {
+      id: string;
+      name: string;
+      type: 'number';
+      min?: number;
+      max?: number;
+      minCardinality?: number;
+      maxCardinality?: number;
+    }
   | {
       id: string;
       name: string;
@@ -514,6 +535,57 @@ const technologyReleaseReference = (): SymbolicField => ({
   maxCount: -1
 });
 
+const glossaryStatusEnum = enumDefinition('glossary-status', 'Glossary Status', [
+  { value: 'draft', label: 'Draft' },
+  { value: 'proposed', label: 'Proposed' },
+  { value: 'approved', label: 'Approved' }
+]);
+
+const businessGlossarySchemas: TemplateSchema[] = [
+  {
+    symId: 'term',
+    name: 'Term',
+    description: 'A governed business term with a definition, aliases, and category membership.',
+    color: AR_COLOR_BLUE,
+    icon: 'book',
+    fields: [
+      { id: 'definition', name: 'Definition', type: 'longtext' },
+      {
+        id: 'synonyms',
+        name: 'Synonyms',
+        type: 'text',
+        minCardinality: 0,
+        maxCardinality: -1
+      },
+      {
+        id: 'abbreviations',
+        name: 'Abbreviations',
+        type: 'text',
+        minCardinality: 0,
+        maxCardinality: -1
+      },
+      {
+        id: 'categories',
+        name: 'Categories',
+        predicate: 'categorized as',
+        type: 'reference',
+        symSchemaId: 'term_category',
+        minCount: 0,
+        maxCount: -1
+      },
+      { id: 'status', name: 'Status', type: 'select', enumId: 'glossary-status' }
+    ]
+  },
+  {
+    symId: 'term_category',
+    name: 'Term Category',
+    description: 'A flat category used to organize business terms.',
+    color: AR_COLOR_PURPLE,
+    icon: 'tags',
+    fields: []
+  }
+];
+
 const securityEnums = [
   enumDefinition('classification', 'Classification', [
     { value: 'public', label: 'Public' },
@@ -592,6 +664,24 @@ const riskComplianceEnums = [
 ];
 
 export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
+  {
+    id: 'glossary',
+    name: 'Business Glossary',
+    description: 'Business terms, aliases, categories, and governance-ready definitions.',
+    schemas: businessGlossarySchemas,
+    enums: [glossaryStatusEnum],
+    documentTypes: commonDocumentTypes,
+    documentTemplates: commonDocumentTemplates,
+    capabilityConfigurations: [
+      {
+        type: 'business-glossary',
+        bindings: {
+          term: { target: { kind: 'entity_schema', symId: 'term' } },
+          category: { target: { kind: 'entity_schema', symId: 'term_category' } }
+        }
+      }
+    ]
+  },
   {
     id: 'default',
     name: 'Default',
@@ -1908,7 +1998,9 @@ export const instantiateTemplateDefinitions = (
         id: field.id,
         name: field.name,
         type: field.type,
-        enumId: enumIdMap.get(field.enumId) ?? field.enumId
+        enumId: enumIdMap.get(field.enumId) ?? field.enumId,
+        minCardinality: field.minCardinality,
+        maxCardinality: field.maxCardinality
       };
     }
     if (field.type === 'typedRelation') {
@@ -1924,7 +2016,15 @@ export const instantiateTemplateDefinitions = (
       };
     }
     if (field.type === 'number') {
-      return { id: field.id, name: field.name, type: 'number', min: field.min, max: field.max };
+      return {
+        id: field.id,
+        name: field.name,
+        type: 'number',
+        min: field.min,
+        max: field.max,
+        minCardinality: field.minCardinality,
+        maxCardinality: field.maxCardinality
+      };
     }
     if (field.type === 'derived') {
       return {
@@ -1938,7 +2038,13 @@ export const instantiateTemplateDefinitions = (
           field.resultType === 'select' ? (enumIdMap.get(field.enumId!) ?? field.enumId) : undefined
       };
     }
-    return { id: field.id, name: field.name, type: field.type };
+    return {
+      id: field.id,
+      name: field.name,
+      type: field.type,
+      minCardinality: field.minCardinality,
+      maxCardinality: field.maxCardinality
+    };
   };
 
   const fieldGroups: SharedFieldGroupDbCreate[] = (template.fieldGroups ?? []).map(

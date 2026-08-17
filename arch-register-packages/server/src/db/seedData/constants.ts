@@ -35,6 +35,23 @@ export const TEAM2_IDS = {
   backend: '90000000-0000-0000-0000-000000000026'
 } as const;
 
+export const GLOSSARY_IDS = {
+  statusEnum: '00000000-0000-0000-0000-e0000000000f',
+  termCategorySchema: '00000000-0000-0000-0017-000000000001',
+  termSchema: '00000000-0000-0000-0018-000000000001',
+  categories: {
+    customer: '00000000-0000-0000-0017-000000000101',
+    data: '00000000-0000-0000-0017-000000000102',
+    technology: '00000000-0000-0000-0017-000000000103'
+  },
+  terms: {
+    customerAccount: '00000000-0000-0000-0018-000000000101',
+    dataProduct: '00000000-0000-0000-0018-000000000102',
+    systemOfRecord: '00000000-0000-0000-0018-000000000103',
+    dataDomain: '00000000-0000-0000-0018-000000000104'
+  }
+} as const;
+
 export const COLLECTION_IDS = {
   criticalSystems: '00000000-0000-0000-0030-000000000001',
   apisToReview: '00000000-0000-0000-0030-000000000002'
@@ -88,6 +105,7 @@ export const seedIds = {
   lifecycle2: LIFECYCLE2_IDS,
   teams: TEAM_IDS,
   teams2: TEAM2_IDS,
+  glossary: GLOSSARY_IDS,
   collections: COLLECTION_IDS,
   technologies: TECHNOLOGY_IDS,
   technologyReleases: TECHNOLOGY_RELEASE_IDS,
