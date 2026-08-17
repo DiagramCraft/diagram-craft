@@ -232,7 +232,12 @@ export const HomeSidebar = ({
               <TreeRow
                 key={s.id}
                 icon={
-                  <TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />
+                  <TypeBadge
+                    color={resolveSchemaColor(s, i)}
+                    name={s.name}
+                    icon={s.icon}
+                    size={14}
+                  />
                 }
                 label={s.name}
                 onClick={() =>

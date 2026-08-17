@@ -76,7 +76,12 @@ export const SchemaSettingsSidebar = ({
                   key={s.id}
                   testId={`schema-type-${s.name}`}
                   icon={
-                    <TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />
+                    <TypeBadge
+                      color={resolveSchemaColor(s, i)}
+                      name={s.name}
+                      icon={s.icon}
+                      size={14}
+                    />
                   }
                   label={s.name}
                   active={schemaId === s.id}

@@ -1,8 +1,5 @@
 import { describe, expect, it } from 'vitest';
-import {
-  groupSchemasByCategory,
-  UNCATEGORIZED_SCHEMA_CATEGORY
-} from './schemaPresentation';
+import { groupSchemasByCategory, UNCATEGORIZED_SCHEMA_CATEGORY } from './schemaPresentation';
 
 describe('groupSchemasByCategory', () => {
   it('sorts categories and schemas while preserving original indexes', () => {
