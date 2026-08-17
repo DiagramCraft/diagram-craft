@@ -195,6 +195,38 @@ test.describe('workspace routes', () => {
     );
   });
 
+  test('POST /api/workspaces seeds saved views from a cross-cutting template', async ({
+    server,
+    orpc
+  }) => {
+    const created = await orpc.workspaces.create({
+      body: { name: 'Strategy Views Workspace', template: 'strategy' }
+    });
+
+    const [views, schemas] = await Promise.all([
+      server.db.view.listSavedViews(created.id),
+      server.db.catalog.listSchemas(created.id)
+    ]);
+    const objective = schemas.find(schema => schema.name === 'Objective');
+    const initiative = schemas.find(schema => schema.name === 'Initiative');
+
+    expect(views.map(view => view.name)).toEqual(
+      expect.arrayContaining(['Objectives', 'Initiatives'])
+    );
+    const objectivesView = views.find(view => view.name === 'Objectives');
+    expect(objectivesView).toMatchObject({
+      workspace: created.id,
+      project_id: null,
+      view_mode: 'table',
+      filters: expect.objectContaining({ schemaId: objective?.id }),
+      config: { table: { fieldIds: ['status', 'target_date'] } }
+    });
+    const initiativesView = views.find(view => view.name === 'Initiatives');
+    expect(initiativesView).toMatchObject({
+      filters: expect.objectContaining({ schemaId: initiative?.id })
+    });
+  });
+
   test('POST /api/workspaces applies slug and badge overrides', async ({ orpc }) => {
     const created = await orpc.workspaces.create({
       body: {

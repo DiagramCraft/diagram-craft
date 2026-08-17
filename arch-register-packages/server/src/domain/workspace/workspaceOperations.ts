@@ -988,6 +988,9 @@ export const createWorkspace = async (
                 );
               }
             }
+            for (const view of definitions.views) {
+              await db.view.createSavedView(view);
+            }
           }
         }
 

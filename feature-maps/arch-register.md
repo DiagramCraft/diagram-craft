@@ -61,8 +61,9 @@
         - @id:ar.workspace.templates Administrators can create a workspace from no model, one full architecture
           template, or one full template combined with multiple cross-cutting concerns such as Business Glossary,
           Security / Threat Model, Risk & Compliance, and Strategy. Each selected template contributes its entity schemas,
-          select-option enums, document types and associated templates; conflicting later definition names are
-          qualified, and concern dashboards are kept separate from the full template's Overview dashboard.
+          select-option enums, document types and associated templates, and saved views scoped to the template's
+          schemas; conflicting later definition names are qualified, and concern dashboards are kept separate from
+          the full template's Overview dashboard.
 
         - @id:ar.workspace.configuration Administrators can configure workspace lifecycle states, assessment types, teams, roles, members,
           supported currencies and the workspace's default currency, document types, templates, AI, analytics, audit,
@@ -345,7 +346,9 @@
 
         - @id:ar.entity-views.saved-configuration Users can configure and reuse entity view fields, filters, sorting,
           display modes, and joined data such as assessment fields. Saved views may also use relationship-aware
-          structured queries with projected fields.
+          structured queries with projected fields. Schema templates (full or cross-cutting) can seed initial saved
+          views into a workspace at creation time, so users see a populated view list for template-provided schemas
+          without configuring one themselves.
 
         - @id:ar.entity-views.technology-lifecycle Users can use saved table, radar, and timeline views to review
           technology release lifecycles, radar governance status, and end-of-life planning dates.
