@@ -6,6 +6,7 @@ import { Button } from '@diagram-craft/app-components/Button';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { TbPlus, TbDownload, TbUpload, TbDots, TbCheck, TbCopy, TbBookmark } from 'react-icons/tb';
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
+import { useDevConfig } from '../../hooks/useDevConfig';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCollections } from '../../hooks/useCollections';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
@@ -15,11 +16,14 @@ import { buildEntityBaselineScope } from '../baselines/baselineScope';
 import {
   buildEntityQueryFromBrowserFilters,
   buildSavedViewPayload,
+  getPersistedViewConfig,
   getSingleFacetValue,
+  getSavedViewConfig,
   hasFacetConditions,
   parseEntityQueryFromSearch,
   parseConditionsFromSearch,
-  parseViewConfigs
+  parseViewConfigs,
+  serializeSavedViewDefinitionForDebug
 } from './components/entityBrowserState';
 import { exportEntitiesToCSV } from '../../lib/entityCsv';
 import { downloadBlob } from '../../lib/browserDownload';
@@ -31,6 +35,7 @@ const routeApi = getRouteApi('/authenticated/$workspaceSlug/entities');
 export const EntityBrowserScreen = () => {
   const navigate = routeApi.useNavigate();
   const { workspaceSlug, schemas, permissions, openAddEntityDialog } = useWorkspaceContext();
+  const { data: devConfig } = useDevConfig();
   const search = routeApi.useSearch();
   const workspaceId = workspaceSlug;
   const collectionId = search.collectionId ?? null;
@@ -218,6 +223,44 @@ export const EntityBrowserScreen = () => {
     workspaceId
   ]);
 
+  const handleDumpViewConfig = useCallback(() => {
+    const currentView = view as BrowserView;
+    const currentConfig =
+      viewConfigs[currentView] ??
+      (activeSavedView ? getSavedViewConfig(activeSavedView) : null) ??
+      getPersistedViewConfig(currentView, workspaceSlug);
+    const payload = buildSavedViewPayload({
+      scope: 'workspace',
+      name: '',
+      description: '',
+      view: currentView,
+      typeFilter,
+      statusFilter,
+      ownerFilter,
+      q,
+      sort,
+      conditions,
+      entityQuery,
+      joinAssessmentId: search.joinAssessmentId ?? null,
+      viewConfigs:
+        currentConfig == null ? viewConfigs : { ...viewConfigs, [currentView]: currentConfig }
+    });
+    console.log(serializeSavedViewDefinitionForDebug(payload));
+  }, [
+    activeSavedView,
+    conditions,
+    entityQuery,
+    ownerFilter,
+    q,
+    search.joinAssessmentId,
+    sort,
+    statusFilter,
+    typeFilter,
+    view,
+    viewConfigs,
+    workspaceSlug
+  ]);
+
   const menuItems = useMemo(() => {
     const items: MenuItem[] = [];
 
@@ -249,6 +292,10 @@ export const EntityBrowserScreen = () => {
       onClick: handleExport
     });
 
+    if (devConfig?.enabled) {
+      items.push({ label: 'Dump View Config', onClick: handleDumpViewConfig });
+    }
+
     if (permissions.canCreateEntities && !readOnly) {
       items.push({
         label: 'Import CSV',
@@ -265,6 +312,8 @@ export const EntityBrowserScreen = () => {
     return items;
   }, [
     activeSavedView,
+    devConfig?.enabled,
+    handleDumpViewConfig,
     handleExport,
     handleUpdateSavedView,
     navigate,

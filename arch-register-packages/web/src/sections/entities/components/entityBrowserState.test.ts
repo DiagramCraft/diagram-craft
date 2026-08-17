@@ -5,6 +5,7 @@ import {
   buildSavedViewPayload,
   buildEntityQueryFromBrowserFilters,
   entityQueryToBrowserFilters,
+  getPersistedViewConfig,
   getFirstFilteredSchemaId,
   isBasicRepresentable,
   isEntityInProject,
@@ -15,6 +16,7 @@ import {
   pruneAssessmentReferences,
   replaceFacetConditions,
   resetExploreRelationFilter,
+  serializeSavedViewDefinitionForDebug,
   serializeViewConfigs,
   toSavedViewConfig,
   toSavedViewSearch,
@@ -142,6 +144,10 @@ describe('entity browser view field persistence', () => {
     expect(parseViewConfigs('[]')).toEqual({});
     expect(parseViewConfigs('null')).toEqual({});
     expect(serializeViewConfigs({})).toBeUndefined();
+  });
+
+  it('returns no persisted config when browser storage is unavailable', () => {
+    expect(getPersistedViewConfig('radar', 'workspace-1')).toBeNull();
   });
 
   it('resets Explore relation filters while preserving other view settings', () => {
@@ -336,6 +342,18 @@ describe('structured entity query view persistence', () => {
     const textNode = payload.filters.root.kind === 'and' ? payload.filters.root.children[0] : null;
     expect(textNode).toEqual({ kind: 'freeText', value: 'platform' });
     expect(payload.config).toEqual({ sort: 'owner' });
+
+    expect(serializeSavedViewDefinitionForDebug(payload)).toBe(
+      JSON.stringify(
+        {
+          viewMode: 'table',
+          filters: payload.filters,
+          config: { sort: 'owner' }
+        },
+        null,
+        2
+      )
+    );
 
     const search = toSavedViewSearch({
       id: 'view-search',

@@ -379,6 +379,29 @@ export const serializeViewConfigs = (value: BrowserViewConfigMap): string | unde
   return JSON.stringify(Object.fromEntries(entries));
 };
 
+const persistedViewConfigStorageKeys: Partial<Record<BrowserView, string>> = {
+  radar: 'ar-radar-config',
+  bubble: 'ar-bubble-config',
+  heatmap: 'ar-heatmap-config'
+};
+
+export const getPersistedViewConfig = (
+  view: BrowserView,
+  workspaceSlug: string
+): unknown | null => {
+  const keyPrefix = persistedViewConfigStorageKeys[view];
+  if (keyPrefix == null || typeof localStorage === 'undefined') return null;
+
+  try {
+    const value = localStorage.getItem(`${keyPrefix}-${workspaceSlug}`);
+    if (value == null) return null;
+    const parsed: unknown = JSON.parse(value);
+    return parsed != null && typeof parsed === 'object' ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
 export const resetExploreRelationFilter = (
   viewConfigs: BrowserViewConfigMap
 ): BrowserViewConfigMap => {
@@ -645,3 +668,16 @@ export const buildSavedViewPayload = ({
     config: toSavedViewConfig(view, viewConfigs, sort)
   };
 };
+
+export const serializeSavedViewDefinitionForDebug = (
+  payload: Pick<CreateSavedViewRequest, 'viewMode' | 'filters' | 'config'>
+): string =>
+  JSON.stringify(
+    {
+      viewMode: payload.viewMode,
+      filters: payload.filters,
+      config: payload.config
+    },
+    null,
+    2
+  );
