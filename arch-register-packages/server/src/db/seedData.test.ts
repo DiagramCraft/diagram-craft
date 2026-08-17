@@ -9,6 +9,18 @@ import { seedWorkspaceDashboards } from './seedData/views';
 import { materializeDerivedFields } from '../domain/derived/derivedFields';
 import { RISK_AFFECTS_TARGET_SCHEMA_IDS } from './seedData/constants';
 
+describe('schema presentation categories', () => {
+  it('categorizes every seeded entity and relation schema', () => {
+    expect(seedSchemas.every(schema => (schema.category?.trim() ?? '').length > 0)).toBe(true);
+    expect(seedRelationSchemas.every(schema => (schema.category?.trim() ?? '').length > 0)).toBe(
+      true
+    );
+    expect(seedSchemas.find(schema => schema.name === 'Data Entity')?.category).toBe('Data');
+    expect(seedSchemas.find(schema => schema.name === 'Risk')?.category).toBe('Governance');
+    expect(seedSchemas.find(schema => schema.name === 'Term')?.category).toBe('Glossary');
+  });
+});
+
 describe('dashboard assessment seed data', () => {
   it('seeds the standard assessment types in display order', () => {
     expect(seedAssessmentTypes.map(type => [type.name, type.sort_order])).toEqual([

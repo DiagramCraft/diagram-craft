@@ -1,7 +1,7 @@
 import { getRouteApi } from '@tanstack/react-router';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { TbTable } from 'react-icons/tb';
-import { resolveSchemaColor } from '../../lib/schemaPresentation';
+import { groupSchemasByCategory, resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
@@ -40,6 +40,7 @@ export const SchemaSettingsSidebar = ({
   const enumId = search.enumId ?? null;
   const fieldGroupId = search.fieldGroupId ?? null;
   const relationSchemaId = search.relationSchema ?? null;
+  const schemaGroups = groupSchemasByCategory(schemas);
 
   const activateTab = (tab: SchemaSettingsTab) => {
     navigate({
@@ -67,25 +68,35 @@ export const SchemaSettingsSidebar = ({
       {activeTab === 'types' ? (
         <div className={styles.scroll}>
           <SidebarGroupLabel>Entity types</SidebarGroupLabel>
-          {schemas.map((s, i) => (
-            <TreeRow
-              key={s.id}
-              testId={`schema-type-${s.name}`}
-              icon={
-                <TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />
-              }
-              label={s.name}
-              active={schemaId === s.id}
-              onClick={() =>
-                navigate({
-                  to: '/$workspaceSlug/settings/schemas',
-                  params: { workspaceSlug },
-                  search: { tab: 'types', schema: s.id }
-                })
-              }
-              tagColor={resolveSchemaColor(s, i)}
-              trailing={<span className="dim mono">{s.fields.length}</span>}
-            />
+          {schemaGroups.map(group => (
+            <div key={group.category}>
+              <SidebarGroupLabel>{group.category}</SidebarGroupLabel>
+              {group.items.map(({ schema: s, index: i }) => (
+                <TreeRow
+                  key={s.id}
+                  testId={`schema-type-${s.name}`}
+                  icon={
+                    <TypeBadge
+                      color={resolveSchemaColor(s, i)}
+                      name={s.name}
+                      icon={s.icon}
+                      size={14}
+                    />
+                  }
+                  label={s.name}
+                  active={schemaId === s.id}
+                  onClick={() =>
+                    navigate({
+                      to: '/$workspaceSlug/settings/schemas',
+                      params: { workspaceSlug },
+                      search: { tab: 'types', schema: s.id }
+                    })
+                  }
+                  tagColor={resolveSchemaColor(s, i)}
+                  trailing={<span className="dim mono">{s.fields.length}</span>}
+                />
+              ))}
+            </div>
           ))}
         </div>
       ) : activeTab === 'relation-types' ? (

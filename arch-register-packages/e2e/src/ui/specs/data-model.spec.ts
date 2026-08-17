@@ -11,6 +11,8 @@ test.describe('data model section', () => {
 
     await dataModelPage.goto();
     await dataModelPage.expectLoaded();
+    await expect(page.getByText('Architecture', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Data', { exact: true }).first()).toBeVisible();
   });
 
   test('opens a schema type from the sidebar @quick', async ({ page }) => {
@@ -18,6 +20,7 @@ test.describe('data model section', () => {
 
     await dataModelPage.goto();
     await dataModelPage.expectLoaded();
+    await expect(page.getByText('Architecture', { exact: true }).first()).toBeVisible();
     await dataModelPage.openSchemaType(componentSchema.name);
   });
 

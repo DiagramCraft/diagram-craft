@@ -282,6 +282,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000001',
       workspace: WORKSPACE_ID,
       name: 'Domain',
+      category: 'Architecture',
       description: 'A high-level grouping that owns one or more Systems.',
       fields: [],
       color: AR_COLOR_YELLOW,
@@ -295,6 +296,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000002',
       workspace: WORKSPACE_ID,
       name: 'System',
+      category: 'Architecture',
       description:
         'A collection of resources that exposes one or more APIs to users and other Systems.',
       fields: [
@@ -381,6 +383,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000003',
       workspace: WORKSPACE_ID,
       name: 'Component',
+      category: 'Architecture',
       description: 'A deployable unit of code within a System (service, library, website, etc.).',
       fields: [
         {
@@ -442,6 +445,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000009',
       workspace: WORKSPACE_ID,
       name: 'Contract',
+      category: 'Vendor',
       description: 'A commercial agreement with a vendor supporting a System.',
       fields: [
         {
@@ -498,6 +502,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000010',
       workspace: WORKSPACE_ID,
       name: 'Vendor',
+      category: 'Vendor',
       description: 'A company that provides products or services under one or more Contracts.',
       fields: [],
       color: AR_COLOR_BLUE,
@@ -511,6 +516,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000004',
       workspace: WORKSPACE_ID,
       name: 'API',
+      category: 'Architecture',
       description: 'A machine-readable interface definition (OpenAPI, gRPC, GraphQL, AsyncAPI).',
       fields: [
         {
@@ -570,6 +576,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000005',
       workspace: WORKSPACE_ID,
       name: 'Resource',
+      category: 'Technology',
       description:
         'Infrastructure a System depends on (database, cache, queue, blob storage, etc.).',
       fields: [
@@ -604,6 +611,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000008',
       workspace: WORKSPACE_ID,
       name: 'Data Entity',
+      category: 'Data',
       description:
         'A named category of data (e.g. a business object or record type) that can be carried ' +
         'by a Data Flow relation between Systems (see seedRelationSchemas below, #2670).',
@@ -627,6 +635,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000007',
       workspace: WORKSPACE_ID,
       name: 'Technology',
+      category: 'Technology',
       description: 'A technology product tracked for governance and planning.',
       fields: [
         { id: 'product', name: 'Product', type: 'text' },
@@ -655,6 +664,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000006',
       workspace: WORKSPACE_ID,
       name: 'Technology Release',
+      category: 'Technology',
       description:
         'A product release cycle tracked for support lifecycle, technology radar governance, and planning.',
       fields: [
@@ -728,6 +738,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000013',
       workspace: WORKSPACE_ID,
       name: 'Risk',
+      category: 'Governance',
       description: 'A potential adverse event rated by likelihood and impact.',
       fields: [
         { id: 'likelihood', name: 'Likelihood', type: 'number', min: 1, max: 5 },
@@ -795,6 +806,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000014',
       workspace: WORKSPACE_ID,
       name: 'Control',
+      category: 'Governance',
       description: 'A safeguard that mitigates one or more Risks.',
       fields: [
         {
@@ -848,6 +860,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000015',
       workspace: WORKSPACE_ID,
       name: 'Framework',
+      category: 'Governance',
       description:
         'A compliance framework (e.g. SOC 2, ISO 27001, NIST) with a requirement catalog.',
       fields: [
@@ -870,6 +883,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000016',
       workspace: WORKSPACE_ID,
       name: 'Compliance Requirement',
+      category: 'Governance',
       description: 'A single requirement from a Framework requirement catalog.',
       fields: [
         { id: 'requirement_code', name: 'Requirement Code', type: 'text' },
@@ -911,6 +925,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: GLOSSARY_IDS.termCategorySchema,
       workspace: WORKSPACE_ID,
       name: 'Term Category',
+      category: 'Glossary',
       description: 'A flat category used to organize business terms.',
       fields: [],
       color: AR_COLOR_PURPLE,
@@ -924,6 +939,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: GLOSSARY_IDS.termSchema,
       workspace: WORKSPACE_ID,
       name: 'Term',
+      category: 'Glossary',
       description: 'A governed business term with a definition, aliases, and category membership.',
       fields: [
         { id: 'definition', name: 'Definition', type: 'longtext' },
@@ -964,6 +980,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000011',
       workspace: WORKSPACE2_ID,
       name: 'Application',
+      category: 'Architecture',
       description: 'A mobile or web application delivered to end users.',
       fields: [
         {
@@ -984,6 +1001,7 @@ export const seedSchemas: SchemaDbResult[] = (
       id: '00000000-0000-0000-0000-000000000012',
       workspace: WORKSPACE2_ID,
       name: 'Service',
+      category: 'Architecture',
       description: 'A backend service or microservice.',
       fields: [{ id: 'technology', name: 'Technology', type: 'text' }],
       color: AR_COLOR_CYAN,

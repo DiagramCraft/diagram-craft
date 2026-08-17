@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
   TbDatabase,
@@ -8,7 +8,7 @@ import {
   TbPlus,
   TbTrash
 } from 'react-icons/tb';
-import { resolveSchemaColor } from '../../lib/schemaPresentation';
+import { groupSchemasByCategory, resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
 import styles from '../../shell/SidePanel.module.css';
@@ -52,6 +52,7 @@ export const HomeSidebar = ({
   workspaceSlug: string;
 }) => {
   const navigate = useNavigate();
+  const schemaGroups = useMemo(() => groupSchemasByCategory(schemas), [schemas]);
   const search = useSearch({ strict: false }) as { dashboard?: string };
   const { permissions, openAddProjectDialog, openAddEntityDialog } = useWorkspaceContext();
   const { canManageDashboard, canCreateProjects, canCreateEntities } = permissions;
@@ -224,23 +225,33 @@ export const HomeSidebar = ({
           </div>
         ))}
         <SidebarGroupLabel>Data model</SidebarGroupLabel>
-        {schemas.map((s, i) => (
-          <TreeRow
-            key={s.id}
-            icon={
-              <TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />
-            }
-            label={s.name}
-            onClick={() =>
-              navigate({
-                to: '/$workspaceSlug/entities',
-                params: { workspaceSlug },
-                search: { type: s.id }
-              })
-            }
-            trailing={<span className="dim mono">{s.entity_count}</span>}
-            tagColor={resolveSchemaColor(s, i)}
-          />
+        {schemaGroups.map(group => (
+          <div key={group.category}>
+            <SidebarGroupLabel>{group.category}</SidebarGroupLabel>
+            {group.items.map(({ schema: s, index: i }) => (
+              <TreeRow
+                key={s.id}
+                icon={
+                  <TypeBadge
+                    color={resolveSchemaColor(s, i)}
+                    name={s.name}
+                    icon={s.icon}
+                    size={14}
+                  />
+                }
+                label={s.name}
+                onClick={() =>
+                  navigate({
+                    to: '/$workspaceSlug/entities',
+                    params: { workspaceSlug },
+                    search: { type: s.id }
+                  })
+                }
+                trailing={<span className="dim mono">{s.entity_count}</span>}
+                tagColor={resolveSchemaColor(s, i)}
+              />
+            ))}
+          </div>
         ))}
       </div>
 

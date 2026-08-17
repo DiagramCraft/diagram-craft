@@ -92,6 +92,7 @@ export type TemplateSchema = {
   symId: string;
   name: string;
   description: string;
+  category: string;
   color: string;
   icon: string;
   fields: SymbolicField[];
@@ -129,6 +130,7 @@ export type SymbolicRelationSchema = {
   symId: string;
   name: string;
   description: string;
+  category: string;
   inSymSchemaIds: string[] | 'any';
   outSymSchemaIds: string[] | 'any';
   fields: Array<{
@@ -181,6 +183,7 @@ const apiProviderRelationSchema: SymbolicRelationSchema = {
   symId: 'provides-api',
   name: 'Provides API',
   description: 'Associates a Component or System with an API it provides.',
+  category: 'Architecture',
   inSymSchemaIds: ['component', 'system'],
   outSymSchemaIds: ['api'],
   fields: [],
@@ -192,6 +195,7 @@ const apiConsumerRelationSchema: SymbolicRelationSchema = {
   symId: 'consumes-api',
   name: 'Consumes API',
   description: 'Associates a Component or System with an API it consumes.',
+  category: 'Architecture',
   inSymSchemaIds: ['component', 'system'],
   outSymSchemaIds: ['api'],
   fields: [],
@@ -485,6 +489,7 @@ const technologySchema: TemplateSchema = {
   symId: 'technology',
   name: 'Technology',
   description: 'A technology product tracked for governance and planning.',
+  category: 'Technology',
   color: AR_COLOR_BLUE,
   icon: 'chip',
   fields: [
@@ -500,6 +505,7 @@ const technologyReleaseSchema: TemplateSchema = {
   name: 'Technology Release',
   description:
     'A product release cycle tracked for support lifecycle, technology radar governance, and planning.',
+  category: 'Technology',
   color: AR_COLOR_BLUE,
   icon: 'cpu',
   fields: [
@@ -547,6 +553,7 @@ const businessGlossarySchemas: TemplateSchema[] = [
     symId: 'term',
     name: 'Term',
     description: 'A governed business term with a definition, aliases, and category membership.',
+    category: 'Glossary',
     color: AR_COLOR_BLUE,
     icon: 'book',
     fields: [
@@ -581,6 +588,7 @@ const businessGlossarySchemas: TemplateSchema[] = [
     symId: 'term_category',
     name: 'Term Category',
     description: 'A flat category used to organize business terms.',
+    category: 'Glossary',
     color: AR_COLOR_PURPLE,
     icon: 'tags',
     fields: []
@@ -695,6 +703,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'domain',
         name: 'Domain',
         description: 'A high-level grouping that owns one or more Systems.',
+        category: 'Architecture',
         color: AR_COLOR_YELLOW,
         icon: 'globe',
         fields: []
@@ -704,6 +713,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'System',
         description:
           'A collection of resources that exposes one or more APIs to users and other Systems.',
+        category: 'Architecture',
         color: AR_COLOR_PURPLE,
         icon: 'layers',
         fields: [
@@ -734,6 +744,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'component',
         name: 'Component',
         description: 'A deployable unit of code within a System (service, library, website, etc.).',
+        category: 'Architecture',
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
@@ -765,6 +776,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'api',
         name: 'API',
         description: 'A machine-readable interface definition (OpenAPI, gRPC, GraphQL, AsyncAPI).',
+        category: 'Architecture',
         color: AR_COLOR_BLUE,
         icon: 'api',
         fields: [
@@ -789,6 +801,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'Resource',
         description:
           'Infrastructure a System depends on (database, cache, queue, blob storage, etc.).',
+        category: 'Technology',
         color: AR_COLOR_ORANGE,
         icon: 'database',
         fields: [
@@ -809,6 +822,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'contract',
         name: 'Contract',
         description: 'A commercial agreement with a vendor supporting a System.',
+        category: 'Vendor',
         color: AR_COLOR_ORANGE,
         icon: 'certificate',
         fields: [
@@ -840,6 +854,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'vendor',
         name: 'Vendor',
         description: 'A company that provides products or services under one or more Contracts.',
+        category: 'Vendor',
         color: AR_COLOR_BLUE,
         icon: 'building',
         fields: []
@@ -856,6 +871,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'System Contract',
         description:
           'Associates a System with a vendor Contract and records the agreement purpose.',
+        category: 'Architecture',
         inSymSchemaIds: ['system'],
         outSymSchemaIds: ['contract'],
         fields: [
@@ -894,6 +910,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'domain',
         name: 'Domain',
         description: 'A high-level grouping that owns one or more Systems.',
+        category: 'Architecture',
         color: AR_COLOR_YELLOW,
         icon: 'globe',
         fields: []
@@ -903,6 +920,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'System',
         description:
           'A collection of resources that exposes one or more APIs to users and other Systems.',
+        category: 'Architecture',
         color: AR_COLOR_PURPLE,
         icon: 'layers',
         fields: [
@@ -923,6 +941,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'api',
         name: 'API',
         description: 'A machine-readable interface definition (OpenAPI, gRPC, GraphQL, AsyncAPI).',
+        category: 'Architecture',
         color: AR_COLOR_BLUE,
         icon: 'api',
         fields: [
@@ -945,6 +964,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'component',
         name: 'Component',
         description: 'A deployable unit of code within a System (service, library, website, etc.).',
+        category: 'Architecture',
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
@@ -969,6 +989,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'Resource',
         description:
           'Infrastructure a System depends on (database, cache, queue, blob storage, etc.).',
+        category: 'Technology',
         color: AR_COLOR_ORANGE,
         icon: 'database',
         fields: [
@@ -1011,6 +1032,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'person',
         name: 'Person',
         description: 'A user or actor that interacts with one or more Software Systems.',
+        category: 'Organization',
         color: AR_COLOR_YELLOW,
         icon: 'user',
         fields: [{ id: 'description', name: 'Description', type: 'longtext' }]
@@ -1019,6 +1041,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'software_system',
         name: 'Software System',
         description: 'The highest level of abstraction — something that delivers value to users.',
+        category: 'Architecture',
         color: AR_COLOR_PURPLE,
         icon: 'layers',
         fields: [{ id: 'description', name: 'Description', type: 'longtext' }]
@@ -1028,6 +1051,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'Container',
         description:
           'A separately deployable/runnable unit within a Software System (app, service, DB, etc.).',
+        category: 'Architecture',
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
@@ -1048,6 +1072,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'component',
         name: 'Component',
         description: 'A grouping of related functionality within a Container.',
+        category: 'Architecture',
         color: AR_COLOR_BLUE,
         icon: 'settings',
         fields: [
@@ -1088,6 +1113,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'organization',
         name: 'Organization',
         description: 'A business unit or department that owns one or more Business Services.',
+        category: 'Organization',
         color: AR_COLOR_YELLOW,
         icon: 'globe',
         fields: []
@@ -1097,6 +1123,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'Business Service',
         description:
           'An IT-enabled capability delivered to the business by one or more Applications.',
+        category: 'Architecture',
         color: AR_COLOR_PURPLE,
         icon: 'layers',
         fields: [
@@ -1114,6 +1141,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'application',
         name: 'Application',
         description: 'A software application that supports a Business Service.',
+        category: 'Architecture',
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
@@ -1134,6 +1162,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'database',
         name: 'Database',
         description: 'A data store used by one or more Applications.',
+        category: 'Technology',
         color: AR_COLOR_PURPLE,
         icon: 'database',
         fields: [
@@ -1152,6 +1181,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'host',
         name: 'Host',
         description: 'A physical or virtual machine that runs Applications and Databases.',
+        category: 'Technology',
         color: AR_COLOR_ORANGE,
         icon: 'server',
         fields: [
@@ -1191,6 +1221,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'domain',
         name: 'Domain',
         description: 'A bounded context representing a distinct area of business knowledge.',
+        category: 'Architecture',
         color: AR_COLOR_YELLOW,
         icon: 'globe',
         fields: []
@@ -1199,6 +1230,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'team',
         name: 'Team',
         description: 'An engineering team that owns one or more Services.',
+        category: 'Organization',
         color: AR_COLOR_ORANGE,
         icon: 'users',
         fields: []
@@ -1207,6 +1239,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'service',
         name: 'Service',
         description: 'A deployable unit that implements domain logic within a bounded context.',
+        category: 'Architecture',
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
@@ -1235,6 +1268,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'Event',
         description:
           'An asynchronous message (command, event, or query) exchanged between Services.',
+        category: 'Architecture',
         color: AR_COLOR_BLUE,
         icon: 'zap',
         fields: [
@@ -1273,6 +1307,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'Team',
         description:
           'An engineering team classified by its topology type (stream-aligned, platform, enabling, complicated-subsystem).',
+        category: 'Organization',
         color: AR_COLOR_YELLOW,
         icon: 'users',
         fields: [
@@ -1284,6 +1319,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'system',
         name: 'System',
         description: 'A software system owned by a Team.',
+        category: 'Architecture',
         color: AR_COLOR_PURPLE,
         icon: 'layers',
         fields: [
@@ -1303,6 +1339,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'Team Interaction',
         description:
           'A defined collaboration mode between two Teams (collaboration, X-as-a-Service, facilitating).',
+        category: 'Organization',
         color: AR_COLOR_BLUE,
         icon: 'arrow-right',
         fields: [
@@ -1342,6 +1379,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'domain',
         name: 'Domain',
         description: 'A business domain that owns one or more Data Products.',
+        category: 'Data',
         color: AR_COLOR_YELLOW,
         icon: 'globe',
         fields: []
@@ -1350,6 +1388,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'source_system',
         name: 'Source System',
         description: 'An operational system that produces raw data consumed by Data Products.',
+        category: 'Data',
         color: AR_COLOR_PURPLE,
         icon: 'database',
         fields: [
@@ -1368,6 +1407,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'data_product',
         name: 'Data Product',
         description: 'A self-contained, domain-owned data asset with defined SLOs.',
+        category: 'Data',
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
@@ -1396,6 +1436,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'dataset',
         name: 'Dataset',
         description: 'A versioned, schema-defined output port of a Data Product.',
+        category: 'Data',
         color: AR_COLOR_BLUE,
         icon: 'table',
         fields: [
@@ -1416,6 +1457,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'pipeline',
         name: 'Pipeline',
         description: 'A data transformation job that consumes and produces Datasets.',
+        category: 'Data',
         color: AR_COLOR_ORANGE,
         icon: 'git-branch',
         fields: [
@@ -1453,6 +1495,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'business_capability',
         name: 'Business Capability',
         description: 'A high-level ability the organisation needs to execute its strategy.',
+        category: 'Architecture',
         color: AR_COLOR_YELLOW,
         icon: 'globe',
         fields: [
@@ -1471,6 +1514,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'business_process',
         name: 'Business Process',
         description: 'A sequence of activities that realises a Business Capability.',
+        category: 'Architecture',
         color: AR_COLOR_ORANGE,
         icon: 'git-merge',
         fields: [
@@ -1488,6 +1532,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'application_component',
         name: 'Application Component',
         description: 'A modular part of the application layer that realises a Business Process.',
+        category: 'Architecture',
         color: AR_COLOR_GREEN,
         icon: 'box',
         fields: [
@@ -1508,6 +1553,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'application_service',
         name: 'Application Service',
         description: 'An externally visible function exposed by an Application Component.',
+        category: 'Architecture',
         color: AR_COLOR_BLUE,
         icon: 'api',
         fields: [
@@ -1526,6 +1572,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'Technology Component',
         description:
           'Infrastructure that hosts and runs Application Components (device, system software, artifact).',
+        category: 'Technology',
         color: AR_COLOR_PURPLE,
         icon: 'server',
         fields: [
@@ -1558,6 +1605,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'Asset',
         description:
           'A data, service, infrastructure, or credential item that requires protection.',
+        category: 'Security',
         color: AR_COLOR_YELLOW,
         icon: 'shield',
         fields: [
@@ -1574,6 +1622,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'threat',
         name: 'Threat',
         description: 'A potential adverse action classified by STRIDE category.',
+        category: 'Security',
         color: AR_COLOR_RED,
         icon: 'alert-triangle',
         fields: [
@@ -1599,6 +1648,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'control',
         name: 'Control',
         description: 'A safeguard or countermeasure that mitigates one or more Threats.',
+        category: 'Security',
         color: AR_COLOR_GREEN,
         icon: 'check-circle',
         fields: [
@@ -1627,6 +1677,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'Risk',
         description:
           'The combination of a Threat and its potential impact, rated by likelihood and severity.',
+        category: 'Security',
         color: AR_COLOR_YELLOW,
         icon: 'zap',
         fields: [
@@ -1666,6 +1717,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'risk',
         name: 'Risk',
         description: 'A potential adverse event rated by likelihood and impact.',
+        category: 'Governance',
         color: AR_COLOR_RED,
         icon: 'alert-octagon',
         fields: [
@@ -1710,6 +1762,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'control',
         name: 'Control',
         description: 'A safeguard that mitigates one or more Risks.',
+        category: 'Governance',
         color: AR_COLOR_GREEN,
         icon: 'check-circle',
         fields: [
@@ -1752,6 +1805,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'Framework',
         description:
           'A compliance framework (e.g. SOC 2, ISO 27001, NIST) with a requirement catalog.',
+        category: 'Governance',
         color: AR_COLOR_BLUE,
         icon: 'book',
         fields: [
@@ -1763,6 +1817,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'compliance_requirement',
         name: 'Compliance Requirement',
         description: 'A single requirement from a Framework requirement catalog.',
+        category: 'Governance',
         color: AR_COLOR_PURPLE,
         icon: 'file-check',
         fields: [
@@ -1796,6 +1851,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'risk-control',
         name: 'Risk Mitigation',
         description: 'Associates a Risk with the Controls that mitigate it.',
+        category: 'Governance',
         inSymSchemaIds: ['risk'],
         outSymSchemaIds: ['control'],
         fields: [],
@@ -1806,6 +1862,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         symId: 'control-requirement',
         name: 'Control Compliance',
         description: 'Records that a Control satisfies a ComplianceRequirement.',
+        category: 'Governance',
         inSymSchemaIds: ['control'],
         outSymSchemaIds: ['compliance_requirement'],
         fields: [],
@@ -2081,7 +2138,7 @@ export const instantiateTemplateDefinitions = (
       id: idMap.get(schema.symId)!,
       workspace: workspaceId,
       name: schema.name,
-      category: null,
+      category: schema.category,
       description: schema.description,
       key_prefix: normalizePublicIdPrefix(
         generateTemplateSchemaKeyPrefix(workspaceId, schema.symId)
@@ -2105,7 +2162,7 @@ export const instantiateTemplateDefinitions = (
       id: relationSchemaIdMap.get(relationSchema.symId)!,
       workspace: workspaceId,
       name: relationSchema.name,
-      category: null,
+      category: relationSchema.category,
       description: relationSchema.description,
       in_schema_ids: resolveEndpointSchemaIds(relationSchema.inSymSchemaIds),
       out_schema_ids: resolveEndpointSchemaIds(relationSchema.outSymSchemaIds),

@@ -18,6 +18,8 @@ test.describe('entities section', () => {
 
     await entitiesPage.goto();
     await entitiesPage.expectLoaded();
+    await expect(page.getByText('Architecture', { exact: true }).first()).toBeVisible();
+    await expect(page.getByText('Governance', { exact: true }).first()).toBeVisible();
     await expect(entitiesPage.homeTab()).toBeVisible();
     await entitiesPage.baselinesTab().click();
     await expect(entitiesPage.workspaceBaselinesSection()).toBeVisible();
@@ -28,6 +30,7 @@ test.describe('entities section', () => {
 
     await entitiesPage.goto();
     await entitiesPage.expectLoaded();
+    await expect(page.getByText('Architecture', { exact: true }).first()).toBeVisible();
     await entitiesPage.filterByType(apiSchema.name);
     await entitiesPage.openCreateBaselineDialog();
     await expect(page.getByText('Current filters and search', { exact: true })).toBeVisible();

@@ -44,6 +44,7 @@
           and rename or delete a dashboard via its context menu. Administrators can also enter edit mode to add,
           remove, resize, and reposition widgets and save the layout; other users see the active dashboard read-only.
           Schema templates can seed a complete default dashboard layout when a workspace adopts the template.
+          The home sidebar's Data model section groups schema links by schema category.
           Every widget shows a title bar (an icon and a title, separated from the widget's content by a divider); the
           stat-metric widget's title is configurable (via its label setting), while other widget types show a fixed
           title naming the widget type. In edit mode, the per-widget edit and remove controls appear within the title
@@ -100,7 +101,8 @@
             approval/deprecation policy).
             The model overview visualizes entity schemas and typed relation schemas as graph nodes, showing generic
             references, relation endpoints, and relation-owned entity links; relation nodes and typed edges link to
-            their definitions.
+            their definitions. The entity types sidebar groups schemas by category, with uncategorized schemas shown
+            in a final Uncategorized group.
 
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates, fields,
               versions, validation rules, and AI actions for structured content, including marking a field as externally
@@ -244,7 +246,8 @@
 
     - @id:ar.entity-views Users can browse, filter, search, and analyze entity collections through configurable views,
       including free-text search across entity names, slugs, and descriptions. The entity sidebar provides familiar
-      facet navigation for selecting multiple schemas, lifecycle states, and owners at once; values within a facet
+      facet navigation for selecting multiple schemas, lifecycle states, and owners at once; schema type facets are
+      grouped by category, and values within a facet
       are combined as alternatives while different facets narrow the result together; checked rows can be adjusted
       directly, and the All entities row resets the facet selections.
 
