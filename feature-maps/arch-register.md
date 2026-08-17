@@ -328,8 +328,9 @@
           detail.
 
         - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view,
-          toggling which relation fields draw connections; typed relation instances are included by default
-          alongside generic reference relations and their toggle is marked with the relation schema's colour/icon.
+          using a scoped relation filter popup grouped by source entity schema and labelled with source schema,
+          predicate, and target schema; selected schema relationships apply across matching entities, while typed
+          relation instances remain included alongside generic reference relations by default.
 
         - @id:ar.entity-views.saved-configuration Users can configure and reuse entity view fields, filters, sorting,
           display modes, and joined data such as assessment fields. Saved views may also use relationship-aware

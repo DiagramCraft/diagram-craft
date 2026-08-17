@@ -213,7 +213,11 @@ export const exploreViewConfigSchema = z.object({
   relationFieldNames: z
     .array(z.string())
     .default([])
-    .describe('Relationship field names to include')
+    .describe('Relationship field names to include'),
+  relationKeys: z
+    .array(z.string())
+    .optional()
+    .describe('Specific relationship instances to include')
 });
 
 export const graphViewConfigSchema = z.object({

@@ -2,8 +2,10 @@ import { describe, expect, it } from 'vitest';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { EntityRelationData } from '../../../hooks/useEntities';
 import {
+  buildExploreRelationOptions,
   buildDefaultRelationFieldNames,
   buildExploreGraph,
+  buildRelationKey,
   buildRelationFieldOptions,
   normalizeExploreConfig,
   parseExploreConfigValue
@@ -242,6 +244,40 @@ describe('buildExploreGraph', () => {
     );
   });
 
+  it('filters traversal by schema-level relation', () => {
+    const keep = {
+      entityId: 'keep-me',
+      publicId: 'KEEP1',
+      entitySlug: 'keep-me',
+      entityName: 'Keep Me',
+      entitySchemaId: 'service',
+      fieldName: 'Depends On',
+      kind: 'reference' as const
+    };
+    const drop = {
+      ...keep,
+      entityId: 'drop-me',
+      publicId: 'DROP1',
+      entitySlug: 'drop-me',
+      entityName: 'Drop Me'
+    };
+    const graph = buildExploreGraph({
+      centerEntities: [entity('a', 'App A')],
+      relationsMap: relationMap({ a: { outgoing: [keep, drop] } }),
+      config: {
+        leftDepth: 0,
+        rightDepth: 1,
+        relationFieldNames: [],
+        relationKeys: [buildRelationKey('application', 'service', keep)]
+      }
+    });
+
+    expect(
+      graph.columns.find(column => column.index === 1)?.entities.map(item => item.entityId)
+    ).toEqual(['keep-me', 'drop-me']);
+    expect(graph.connectors).toHaveLength(2);
+  });
+
   it('excludes containment relations by default when no field filter is selected', () => {
     const graph = buildExploreGraph({
       centerEntities: [entity('a', 'App A')],
@@ -315,6 +351,47 @@ describe('buildExploreGraph', () => {
     });
 
     expect(graph.duplicateIds.has('dup')).toBe(true);
+  });
+});
+
+describe('buildExploreRelationOptions', () => {
+  it('deduplicates schema relationships and keeps the full relation wording', () => {
+    const relationKey = buildRelationKey('system-schema', 'api-schema', {
+      fieldName: 'dependsOn',
+      fieldPredicate: 'depends on'
+    });
+    const connector = {
+      fromColumn: 0,
+      fromEntityId: 'system',
+      fromEntityName: 'System',
+      fromEntitySchemaId: 'system-schema',
+      toColumn: 1,
+      toEntityId: 'api',
+      toEntityName: 'API',
+      toEntitySchemaId: 'api-schema',
+      fieldName: 'dependsOn',
+      fieldLabel: 'depends on',
+      kind: 'reference' as const,
+      relationKey
+    };
+    const duplicateWithDifferentFieldName = {
+      ...connector,
+      fieldName: 'consumesApi',
+      relationKey: buildRelationKey('system-schema', 'api-schema', {
+        fieldName: 'consumesApi',
+        fieldPredicate: 'depends on'
+      })
+    };
+
+    expect(buildExploreRelationOptions([connector, duplicateWithDifferentFieldName])).toEqual([
+      {
+        relationKey,
+        sourceEntitySchemaId: 'system-schema',
+        targetEntitySchemaId: 'api-schema',
+        fieldLabel: 'depends on',
+        kind: 'reference'
+      }
+    ]);
   });
 });
 

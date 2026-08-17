@@ -1,9 +1,8 @@
 import { useCallback, useEffect, useMemo, useRef, useState, type MouseEvent } from 'react';
-import { TbMinus, TbPlus } from 'react-icons/tb';
+import { TbFilter, TbMinus, TbPlus } from 'react-icons/tb';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { Chip } from '../../../components/Chip';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
-import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import {
@@ -13,14 +12,14 @@ import {
 import styles from './ExploreView.module.css';
 import { EmptyState } from '../../../components/EmptyState';
 import {
-  buildDefaultRelationFieldNames,
   buildExploreGraph,
-  buildRelationFieldOptions,
+  buildExploreRelationOptions,
   DEFAULT_EXPLORE_CONFIG,
   normalizeExploreConfig
 } from './ExploreView.helpers';
 import { connectorDistance, type ExploreConnectorLine } from './exploreGeometry';
 import { Button } from '@diagram-craft/app-components/Button';
+import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import type { EntityBrowserRowViewProps } from './entityBrowserViewTypes';
 import {
   findEntityDisplayField,
@@ -79,10 +78,6 @@ export const ExploreView = ({
   const [localConfig, setLocalConfig] = useState<ExploreViewConfig>(
     normalizeExploreConfig(parsedConfig ?? DEFAULT_EXPLORE_CONFIG)
   );
-  const defaultRelationFieldNames = useMemo(
-    () => buildDefaultRelationFieldNames(schemas),
-    [schemas]
-  );
   const normalizedConfig = useMemo(
     () => normalizeExploreConfig(parsedConfig ?? localConfig),
     [parsedConfig, localConfig]
@@ -96,18 +91,6 @@ export const ExploreView = ({
     setLocalConfig(normalizeExploreConfig(parsedConfig));
   }, [parsedConfig]);
 
-  useEffect(() => {
-    if (parsedConfig != null || defaultRelationFieldNames.length === 0) return;
-    if (localConfig.relationFieldNames.length > 0) return;
-
-    const nextConfig = normalizeExploreConfig({
-      ...localConfig,
-      relationFieldNames: defaultRelationFieldNames
-    });
-    setLocalConfig(nextConfig);
-    onConfigChange(nextConfig);
-  }, [parsedConfig, defaultRelationFieldNames, localConfig, onConfigChange]);
-
   const updateConfig = useCallback(
     (patch: Partial<ExploreViewConfig>) => {
       const nextConfig = normalizeExploreConfig({ ...normalizedConfig, ...patch });
@@ -117,12 +100,6 @@ export const ExploreView = ({
     [normalizedConfig, onConfigChange]
   );
 
-  const relationFieldOptions = useMemo(() => buildRelationFieldOptions(schemas), [schemas]);
-  const { data: relationSchemas } = useRelationSchemas(workspaceSlug);
-  const relationSchemaMap = useMemo(
-    () => new Map((relationSchemas ?? []).map(schema => [schema.id, schema])),
-    [relationSchemas]
-  );
   const centerIds = useMemo(() => rows.map(row => row._uid).sort(), [rows]);
   const [fetchIds, setFetchIds] = useState<string[]>(centerIds);
 
@@ -139,6 +116,46 @@ export const ExploreView = ({
         config: normalizedConfig
       }),
     [rows, relationsMap, normalizedConfig]
+  );
+
+  const relationOptionGraph = useMemo(
+    () =>
+      buildExploreGraph({
+        centerEntities: rows,
+        relationsMap,
+        config: { ...normalizedConfig, relationKeys: undefined }
+      }),
+    [rows, relationsMap, normalizedConfig]
+  );
+  const relationOptions = useMemo(
+    () => buildExploreRelationOptions(relationOptionGraph.connectors),
+    [relationOptionGraph.connectors]
+  );
+  const relationOptionGroups = useMemo(() => {
+    const groups = new Map<string, { name: string; options: typeof relationOptions }>();
+    for (const option of relationOptions) {
+      const schema = schemaMap.get(option.sourceEntitySchemaId);
+      const group = groups.get(option.sourceEntitySchemaId) ?? {
+        name: schema?.name ?? option.sourceEntitySchemaId,
+        options: []
+      };
+      group.options.push(option);
+      groups.set(option.sourceEntitySchemaId, group);
+    }
+    return [...groups.values()].sort((a, b) => a.name.localeCompare(b.name));
+  }, [relationOptions, schemaMap]);
+  const relationFilterActionsRef = useRef<PopoverActions | null>(null);
+  const selectedRelationKeys = normalizedConfig.relationKeys ?? [];
+  const hasRelationFilter = selectedRelationKeys.length > 0;
+
+  const toggleRelationKey = useCallback(
+    (relationKey: string) => {
+      const nextKeys = selectedRelationKeys.includes(relationKey)
+        ? selectedRelationKeys.filter(key => key !== relationKey)
+        : [...selectedRelationKeys, relationKey];
+      updateConfig({ relationKeys: nextKeys, relationFieldNames: [] });
+    },
+    [selectedRelationKeys, updateConfig]
   );
 
   useEffect(() => {
@@ -266,12 +283,9 @@ export const ExploreView = ({
       <div className={styles.wrap}>
         {!hideToolbar && (
           <div className={styles.toolbar}>
-            <div className={styles.toolbarBlock}>
-              <div className={styles.toolbarLabel}>Relation fields</div>
-              <div className={styles.toggleRow}>
-                <span className={styles.emptyToggle}>No relations available</span>
-              </div>
-            </div>
+            <span className={`${styles.emptyToggle} ${styles.toolbarActions}`}>
+              No relations available
+            </span>
           </div>
         )}
         <EmptyState title="No entities found" subtitle="Try adjusting your search or filters." />
@@ -283,42 +297,84 @@ export const ExploreView = ({
     <div className={styles.wrap}>
       {!hideToolbar && (
         <div className={styles.toolbar}>
-          <div className={styles.toolbarBlock}>
-            <div className={styles.toolbarLabel}>Relation fields</div>
-            <div className={styles.toggleRow}>
-              {relationFieldOptions.map(option => {
-                const active = normalizedConfig.relationFieldNames.includes(option.value);
-                const relationSchema =
-                  option.kind === 'typed' && option.relationSchemaId
-                    ? relationSchemaMap.get(option.relationSchemaId)
-                    : undefined;
-                return (
-                  <button
-                    key={option.value}
-                    type="button"
-                    className={`${styles.toggleButton} ${active ? styles.toggleButtonActive : ''}`}
-                    aria-pressed={active}
-                    onClick={() => {
-                      const nextValues = active
-                        ? normalizedConfig.relationFieldNames.filter(
-                            value => value !== option.value
-                          )
-                        : [...normalizedConfig.relationFieldNames, option.value];
-                      updateConfig({ relationFieldNames: nextValues });
-                    }}
+          <div className={styles.toolbarActions}>
+            <Popover.Root actionsRef={relationFilterActionsRef}>
+              <Popover.Trigger
+                element={
+                  <Button
+                    size="sm"
+                    variant={hasRelationFilter ? 'primary' : 'secondary'}
+                    icon={<TbFilter size={13} />}
+                    aria-label="Filter relations"
+                    title="Filter relations"
+                    disabled={relationOptions.length === 0 && !hasRelationFilter}
                   >
-                    {option.kind === 'typed' && (
-                      <TypeBadge
-                        color={relationSchema?.color ?? 'var(--accent-fg)'}
-                        icon={relationSchema?.icon}
-                        size={14}
-                      />
+                    Filter relations
+                    {hasRelationFilter && (
+                      <span className={styles.filterCount}>{selectedRelationKeys.length}</span>
                     )}
-                    {option.label}
-                  </button>
-                );
-              })}
-            </div>
+                  </Button>
+                }
+              />
+              <Popover.Content
+                sideOffset={4}
+                align="start"
+                arrow={false}
+                closeButton={false}
+                className={styles.relationFilterPopover}
+              >
+                <div className={styles.relationFilterHeader}>
+                  <div>
+                    <div className={styles.relationFilterTitle}>Relations in scope</div>
+                    <div className={styles.relationFilterHint}>
+                      Choose the schema relationships to show.
+                    </div>
+                  </div>
+                  <Button
+                    size="xs"
+                    variant="ghost"
+                    disabled={!hasRelationFilter}
+                    onClick={() =>
+                      updateConfig({ relationKeys: undefined, relationFieldNames: [] })
+                    }
+                  >
+                    Show all
+                  </Button>
+                </div>
+                {relationOptionGroups.length === 0 ? (
+                  <div className={styles.relationFilterEmpty}>No relations are in scope.</div>
+                ) : (
+                  <div className={styles.relationFilterGroups}>
+                    {relationOptionGroups.map(group => (
+                      <div key={group.name} className={styles.relationFilterGroup}>
+                        <div className={styles.relationFilterGroupTitle}>{group.name}</div>
+                        {group.options.map(option => {
+                          const active = selectedRelationKeys.includes(option.relationKey);
+                          return (
+                            <label key={option.relationKey} className={styles.relationFilterOption}>
+                              <input
+                                type="checkbox"
+                                checked={active}
+                                onChange={() => toggleRelationKey(option.relationKey)}
+                              />
+                              <span>
+                                {schemaMap.get(option.sourceEntitySchemaId)?.name ??
+                                  option.sourceEntitySchemaId}{' '}
+                                <span className={styles.relationFilterPredicate}>
+                                  {option.fieldLabel}
+                                </span>{' '}
+                                {schemaMap.get(option.targetEntitySchemaId)?.name ??
+                                  option.targetEntitySchemaId}
+                              </span>
+                            </label>
+                          );
+                        })}
+                      </div>
+                    ))}
+                  </div>
+                )}
+              </Popover.Content>
+            </Popover.Root>
           </div>
         </div>
       )}
@@ -363,9 +419,7 @@ export const ExploreView = ({
                   ? 'url(#explore-arrow-containment)'
                   : 'url(#explore-arrow-reference)';
               return (
-                <g
-                  key={`${line.fromColumn}:${line.fromEntityId}:${line.toColumn}:${line.toEntityId}:${line.fieldName}:${index}`}
-                >
+                <g key={`${line.fromColumn}:${line.relationKey}:${line.toColumn}:${index}`}>
                   <path
                     d={`M ${line.x1} ${line.y1} C ${midX} ${line.y1}, ${midX} ${line.y2}, ${line.x2} ${line.y2}`}
                     className={styles.connector}

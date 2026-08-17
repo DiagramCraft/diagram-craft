@@ -35,10 +35,21 @@ export type ExploreConnector = {
   fromColumn: number;
   fromEntityId: string;
   fromEntityName: string;
+  fromEntitySchemaId: string;
   toColumn: number;
   toEntityId: string;
   toEntityName: string;
+  toEntitySchemaId: string;
   fieldName: string;
+  fieldLabel: string;
+  kind: EntityRelation['kind'];
+  relationKey: string;
+};
+
+export type ExploreRelationOption = {
+  relationKey: string;
+  sourceEntitySchemaId: string;
+  targetEntitySchemaId: string;
   fieldLabel: string;
   kind: EntityRelation['kind'];
 };
@@ -72,6 +83,7 @@ export const normalizeExploreConfig = (
   relationFieldNames: [
     ...new Set(config?.relationFieldNames ?? DEFAULT_EXPLORE_CONFIG.relationFieldNames)
   ],
+  relationKeys: config?.relationKeys == null ? undefined : [...new Set(config.relationKeys)],
   fieldIds: config?.fieldIds
 });
 
@@ -148,13 +160,86 @@ const toRelatedEntity = (relation: EntityRelation): ExploreEntity => ({
   schemaId: relation.entitySchemaId
 });
 
+export const buildRelationKey = (
+  sourceEntitySchemaId: string,
+  targetEntitySchemaId: string,
+  relation: Pick<EntityRelation, 'fieldName' | 'fieldPredicate'>
+) =>
+  JSON.stringify([sourceEntitySchemaId, getRelationDisplayLabel(relation), targetEntitySchemaId]);
+
 const shouldIncludeRelation = (
   selectedFieldNames: Set<string>,
-  relation: Pick<EntityRelation, 'fieldName' | 'kind'>
-) =>
-  selectedFieldNames.size === 0
+  selectedRelationKeys: Set<string>,
+  sourceEntitySchemaId: string,
+  targetEntitySchemaId: string,
+  relation: Pick<EntityRelation, 'fieldName' | 'fieldPredicate' | 'kind' | 'relationId'>
+) => {
+  if (selectedRelationKeys.size > 0) {
+    return selectedRelationKeys.has(
+      buildRelationKey(sourceEntitySchemaId, targetEntitySchemaId, relation)
+    );
+  }
+  return selectedFieldNames.size === 0
     ? relation.kind !== 'containment'
     : selectedFieldNames.has(relation.fieldName);
+};
+
+const toExploreConnector = ({
+  sourceEntityId,
+  sourceEntityName,
+  sourceEntitySchemaId,
+  targetEntityId,
+  targetEntityName,
+  targetEntitySchemaId,
+  fromColumn,
+  toColumn,
+  relation
+}: {
+  sourceEntityId: string;
+  sourceEntityName: string;
+  sourceEntitySchemaId: string;
+  targetEntityId: string;
+  targetEntityName: string;
+  targetEntitySchemaId: string;
+  fromColumn: number;
+  toColumn: number;
+  relation: EntityRelation;
+}): ExploreConnector => ({
+  fromColumn,
+  fromEntityId: sourceEntityId,
+  fromEntityName: sourceEntityName,
+  fromEntitySchemaId: sourceEntitySchemaId,
+  toColumn,
+  toEntityId: targetEntityId,
+  toEntityName: targetEntityName,
+  toEntitySchemaId: targetEntitySchemaId,
+  fieldName: relation.fieldName,
+  fieldLabel: getRelationDisplayLabel(relation),
+  kind: relation.kind,
+  relationKey: buildRelationKey(sourceEntitySchemaId, targetEntitySchemaId, relation)
+});
+
+export const buildExploreRelationOptions = (
+  connectors: ExploreConnector[]
+): ExploreRelationOption[] => {
+  const options = new Map<string, ExploreRelationOption>();
+
+  for (const connector of connectors) {
+    options.set(connector.relationKey, {
+      relationKey: connector.relationKey,
+      sourceEntitySchemaId: connector.fromEntitySchemaId,
+      targetEntitySchemaId: connector.toEntitySchemaId,
+      fieldLabel: connector.fieldLabel,
+      kind: connector.kind
+    });
+  }
+
+  return [...options.values()].sort((a, b) =>
+    `${a.sourceEntitySchemaId} ${a.fieldLabel} ${a.targetEntitySchemaId}`.localeCompare(
+      `${b.sourceEntitySchemaId} ${b.fieldLabel} ${b.targetEntitySchemaId}`
+    )
+  );
+};
 
 const dedupeColumn = (entities: ExploreEntity[]) => {
   const seen = new Set<string>();
@@ -176,6 +261,7 @@ export const buildExploreGraph = ({
 }): ExploreGraph => {
   const normalizedConfig = normalizeExploreConfig(config);
   const selectedFieldNames = new Set(normalizedConfig.relationFieldNames);
+  const selectedRelationKeys = new Set(normalizedConfig.relationKeys ?? []);
   const columns = new Map<number, ExploreColumn>();
   const connectors: ExploreConnector[] = [];
 
@@ -196,19 +282,30 @@ export const buildExploreGraph = ({
       if (!relationData) continue;
 
       for (const relation of relationData.incoming) {
-        if (!shouldIncludeRelation(selectedFieldNames, relation)) continue;
+        if (
+          !shouldIncludeRelation(
+            selectedFieldNames,
+            selectedRelationKeys,
+            relation.entitySchemaId,
+            entity.schemaId,
+            relation
+          )
+        )
+          continue;
         nextEntities.push(toRelatedEntity(relation));
-        connectors.push({
-          fromColumn: -hop,
-          fromEntityId: relation.entityId,
-          fromEntityName: relation.entityName,
-          toColumn: 1 - hop,
-          toEntityId: entity.entityId,
-          toEntityName: entity.name ?? entity.slug,
-          fieldName: relation.fieldName,
-          fieldLabel: getRelationDisplayLabel(relation),
-          kind: relation.kind
-        });
+        connectors.push(
+          toExploreConnector({
+            sourceEntityId: relation.entityId,
+            sourceEntityName: relation.entityName,
+            sourceEntitySchemaId: relation.entitySchemaId,
+            targetEntityId: entity.entityId,
+            targetEntityName: entity.name ?? entity.slug,
+            targetEntitySchemaId: entity.schemaId,
+            fromColumn: -hop,
+            toColumn: 1 - hop,
+            relation
+          })
+        );
       }
     }
 
@@ -226,19 +323,30 @@ export const buildExploreGraph = ({
       if (!relationData) continue;
 
       for (const relation of relationData.outgoing) {
-        if (!shouldIncludeRelation(selectedFieldNames, relation)) continue;
+        if (
+          !shouldIncludeRelation(
+            selectedFieldNames,
+            selectedRelationKeys,
+            entity.schemaId,
+            relation.entitySchemaId,
+            relation
+          )
+        )
+          continue;
         nextEntities.push(toRelatedEntity(relation));
-        connectors.push({
-          fromColumn: hop - 1,
-          fromEntityId: entity.entityId,
-          fromEntityName: entity.name ?? entity.slug,
-          toColumn: hop,
-          toEntityId: relation.entityId,
-          toEntityName: relation.entityName,
-          fieldName: relation.fieldName,
-          fieldLabel: getRelationDisplayLabel(relation),
-          kind: relation.kind
-        });
+        connectors.push(
+          toExploreConnector({
+            sourceEntityId: entity.entityId,
+            sourceEntityName: entity.name ?? entity.slug,
+            sourceEntitySchemaId: entity.schemaId,
+            targetEntityId: relation.entityId,
+            targetEntityName: relation.entityName,
+            targetEntitySchemaId: relation.entitySchemaId,
+            fromColumn: hop - 1,
+            toColumn: hop,
+            relation
+          })
+        );
       }
     }
 
