@@ -381,7 +381,6 @@ export const EntitiesSidebar = ({
                 })
               }
             />
-            <SidebarGroupLabel>By type</SidebarGroupLabel>
             {schemaGroups.map(group => (
               <div key={group.category}>
                 <SidebarGroupLabel>{group.category}</SidebarGroupLabel>

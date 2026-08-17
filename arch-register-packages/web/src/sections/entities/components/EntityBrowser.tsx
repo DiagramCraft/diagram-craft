@@ -36,6 +36,7 @@ import styles from './EntityBrowser.module.css';
 import {
   buildEntityDisplayFields,
   DISPLAY_FIELD_VIEWS,
+  filterDisplayFieldIdsForContext,
   getDisplayFieldIds,
   withDisplayFieldIds,
   withoutDisplayFieldIds
@@ -406,7 +407,10 @@ export const EntityBrowser = ({
     ? (view as 'table' | 'cards' | 'tree' | 'explore' | 'map')
     : null;
   const selectedDisplayFieldIds = displayView
-    ? getDisplayFieldIds(displayView, activeViewConfig)
+    ? filterDisplayFieldIdsForContext(
+        getDisplayFieldIds(displayView, activeViewConfig),
+        projectContext != null
+      )
     : undefined;
   const joinedRows = useMemo<BrowserEntityRecord[]>(() => {
     if (!joined) return filtered;

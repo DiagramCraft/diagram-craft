@@ -252,7 +252,8 @@
       directly, and the All entities row resets the facet selections.
 
         - @id:ar.entity-views.table Users can inspect entities in a tabular browser with configurable fields, sorting,
-          filtering, selection, and bulk actions. Scalar-array filters use any-element matching for positive operators,
+          filtering, selection, and bulk actions. Project-only fields such as project role and project status are shown
+          when the browser is in project context. Scalar-array filters use any-element matching for positive operators,
           while emptiness checks the list and sorting/chart metrics use its first value.
 
         - @id:ar.entity-views.cards Users can inspect entities as cards for quick scanning of record summaries.

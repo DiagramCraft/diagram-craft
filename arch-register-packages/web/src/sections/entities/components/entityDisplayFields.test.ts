@@ -6,6 +6,7 @@ import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import {
   buildEntityDisplayFields,
+  filterDisplayFieldIdsForContext,
   formatEntityDisplayValue,
   getDisplayFieldIds,
   withDisplayFieldIds,
@@ -56,6 +57,13 @@ describe('entity display fields', () => {
       leftDepth: 2
     });
     expect(withoutDisplayFieldIds({ fieldIds: ['active'] })).toBeNull();
+  });
+
+  it('hides project-only fields outside project context', () => {
+    const fieldIds = ['_description', '_projectRole', '_projectStatus'];
+
+    expect(filterDisplayFieldIdsForContext(fieldIds, false)).toEqual(['_description']);
+    expect(filterDisplayFieldIdsForContext(fieldIds, true)).toEqual(fieldIds);
   });
 
   it('formats standard, boolean, and select values', () => {

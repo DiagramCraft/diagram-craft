@@ -12,6 +12,7 @@ import {
 } from './entityBrowserViewShared';
 import { formatDate } from '../../../utils/dateFormat';
 import {
+  filterDisplayFieldIdsForContext,
   findEntityDisplayField,
   formatEntityDisplayValue,
   getDisplayFieldIds,
@@ -49,7 +50,10 @@ export const TableView = ({
   const allSelected = !readOnly && rows.length > 0 && selectedIds?.size === rows.length;
   const someSelected =
     !readOnly && (selectedIds?.size ?? 0) > 0 && (selectedIds?.size ?? 0) < rows.length;
-  const fieldIds = getDisplayFieldIds('table', config);
+  const fieldIds = filterDisplayFieldIdsForContext(
+    getDisplayFieldIds('table', config),
+    projectContext != null
+  );
   const columns = fieldIds.map(
     id => displayFields.find(field => field.id === id) ?? { id, label: id, group: 'Fields' }
   );

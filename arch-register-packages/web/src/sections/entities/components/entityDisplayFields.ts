@@ -148,6 +148,14 @@ export const getDisplayFieldIds = (
   return DEFAULT_DISPLAY_FIELDS[view];
 };
 
+const PROJECT_DISPLAY_FIELD_IDS = new Set(['_projectRole', '_projectStatus']);
+
+export const filterDisplayFieldIdsForContext = (
+  fieldIds: string[],
+  projectContext: boolean
+): string[] =>
+  projectContext ? fieldIds : fieldIds.filter(fieldId => !PROJECT_DISPLAY_FIELD_IDS.has(fieldId));
+
 export const withDisplayFieldIds = (config: unknown, fieldIds: string[]) => ({
   ...(config && typeof config === 'object' ? config : {}),
   fieldIds
