@@ -375,6 +375,28 @@ export const serializeViewConfigs = (value: BrowserViewConfigMap): string | unde
   return JSON.stringify(Object.fromEntries(entries));
 };
 
+export const resetExploreRelationFilter = (
+  viewConfigs: BrowserViewConfigMap
+): BrowserViewConfigMap => {
+  const exploreConfig = viewConfigs.explore;
+  if (exploreConfig == null || typeof exploreConfig !== 'object') return viewConfigs;
+
+  const config = exploreConfig as {
+    relationKeys?: unknown;
+    relationFieldNames?: unknown;
+  };
+  const hasRelationKeys = Array.isArray(config.relationKeys) && config.relationKeys.length > 0;
+  const hasRelationFieldNames =
+    Array.isArray(config.relationFieldNames) && config.relationFieldNames.length > 0;
+  if (!hasRelationKeys && !hasRelationFieldNames) return viewConfigs;
+
+  const { relationKeys: _relationKeys, ...rest } = exploreConfig as Record<string, unknown>;
+  return {
+    ...viewConfigs,
+    explore: { ...rest, relationFieldNames: [] }
+  };
+};
+
 const isAssessmentFieldId = (value: unknown): value is string =>
   typeof value === 'string' && value.startsWith(ASSESSMENT_FIELD_PREFIX);
 

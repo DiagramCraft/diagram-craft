@@ -13,6 +13,7 @@ import {
   parseViewConfigs,
   pruneAssessmentReferences,
   replaceFacetConditions,
+  resetExploreRelationFilter,
   serializeViewConfigs,
   toSavedViewConfig,
   toSavedViewSearch,
@@ -128,6 +129,27 @@ describe('entity browser view field persistence', () => {
     expect(parseViewConfigs('[]')).toEqual({});
     expect(parseViewConfigs('null')).toEqual({});
     expect(serializeViewConfigs({})).toBeUndefined();
+  });
+
+  it('resets Explore relation filters while preserving other view settings', () => {
+    const configs = {
+      explore: {
+        leftDepth: 2,
+        rightDepth: 3,
+        relationKeys: ['service->api'],
+        relationFieldNames: ['depends on']
+      },
+      table: { fieldIds: ['_owner'] }
+    };
+
+    expect(resetExploreRelationFilter(configs)).toEqual({
+      explore: {
+        leftDepth: 2,
+        rightDepth: 3,
+        relationFieldNames: []
+      },
+      table: { fieldIds: ['_owner'] }
+    });
   });
 
   it('returns null for missing or malformed individual JSON configs', () => {

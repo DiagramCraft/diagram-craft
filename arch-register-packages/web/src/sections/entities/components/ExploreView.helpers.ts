@@ -131,7 +131,11 @@ export const buildDefaultRelationFieldNames = (schemas: EntitySchema[]): string[
 
   for (const schema of schemas) {
     for (const field of schema.fields) {
-      if (field.type === 'reference' || isTypedRelationField(field)) {
+      if (
+        field.type === 'reference' ||
+        field.type === 'containment' ||
+        isTypedRelationField(field)
+      ) {
         names.add(field.name);
       }
     }
@@ -179,9 +183,7 @@ const shouldIncludeRelation = (
       buildRelationKey(sourceEntitySchemaId, targetEntitySchemaId, relation)
     );
   }
-  return selectedFieldNames.size === 0
-    ? relation.kind !== 'containment'
-    : selectedFieldNames.has(relation.fieldName);
+  return selectedFieldNames.size === 0 || selectedFieldNames.has(relation.fieldName);
 };
 
 const toExploreConnector = ({

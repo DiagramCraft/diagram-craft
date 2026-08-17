@@ -331,7 +331,7 @@
         - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view,
           using a scoped relation filter popup grouped by source entity schema and labelled with source schema,
           predicate, and target schema; selected schema relationships apply across matching entities, while typed
-          relation instances remain included alongside generic reference relations by default. Entity cards provide
+          relation instances remain included alongside generic reference and containment relations by default. Entity cards provide
           context-menu actions to exclude an entity from the exploration or focus the entity filter on that entity.
 
         - @id:ar.entity-views.saved-configuration Users can configure and reuse entity view fields, filters, sorting,
