@@ -7,6 +7,37 @@ import {
 import { buildDerivedPlan, evaluateDerivedFields } from '../derived/derivedFields';
 
 describe('instantiateTemplate', () => {
+  it('materializes the optional business glossary template', () => {
+    const definitions = instantiateTemplateDefinitions('ws-1', 'glossary');
+    const term = definitions.schemas.find(schema => schema.name === 'Term');
+    const category = definitions.schemas.find(schema => schema.name === 'Term Category');
+    const aliases = term?.fields.find(field => field.id === 'synonyms');
+    const categories = term?.fields.find(field => field.id === 'categories');
+
+    expect(term).toBeDefined();
+    expect(category).toBeDefined();
+    expect(aliases).toMatchObject({ minCardinality: 0, maxCardinality: -1 });
+    expect(term?.fields.find(field => field.id === 'abbreviations')).toMatchObject({
+      minCardinality: 0,
+      maxCardinality: -1
+    });
+    expect(categories).toMatchObject({
+      type: 'reference',
+      schemaId: category?.id,
+      minCount: 0,
+      maxCount: -1
+    });
+    expect(definitions.capabilityConfigurations).toEqual([
+      expect.objectContaining({
+        type: 'business-glossary',
+        bindings: expect.objectContaining({
+          term: { target: { kind: 'entity_schema', id: term?.id } },
+          category: { target: { kind: 'entity_schema', id: category?.id } }
+        })
+      })
+    ]);
+  });
+
   it('preserves date fields in enriched templates', () => {
     const schemas = instantiateTemplate('ws-1', 'security');
     const threat = schemas.find(schema => schema.name === 'Threat');

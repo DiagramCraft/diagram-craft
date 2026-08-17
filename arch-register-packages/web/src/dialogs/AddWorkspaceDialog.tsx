@@ -32,6 +32,12 @@ type AddWorkspaceDialogProps = {
 
 const TEMPLATES = [
   {
+    id: 'glossary',
+    name: 'Business Glossary',
+    desc: 'Business terms, aliases, categories, and governance.',
+    types: ['Term', 'Term Category']
+  },
+  {
     id: 'backstage',
     name: 'Backstage',
     desc: 'CNCF Software Catalog model.',

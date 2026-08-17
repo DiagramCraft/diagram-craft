@@ -2,7 +2,8 @@ import { describe, expect, it } from 'vitest';
 import { seedEntities } from './seedData/entities';
 import { seedRelationSchemas, seedRelations } from './seedData/relations';
 import { seedAssessments } from './seedData/projects';
-import { seedSchemas } from './seedData/catalog';
+import { seedEnums, seedSchemas } from './seedData/catalog';
+import { GLOSSARY_IDS } from './seedData/constants';
 import { seedAssessmentTypes } from './seedData/workspace';
 import { seedWorkspaceDashboards } from './seedData/views';
 import { materializeDerivedFields } from '../domain/derived/derivedFields';
@@ -32,6 +33,49 @@ describe('dashboard assessment seed data', () => {
         mode: 'overdue',
         assessmentTypeId: riskComplianceType?.id
       }
+    });
+  });
+});
+
+describe('business glossary seed data', () => {
+  it('seeds glossary schemas, status values, categories, and example terms', () => {
+    const termSchema = seedSchemas.find(schema => schema.id === GLOSSARY_IDS.termSchema);
+    const categorySchema = seedSchemas.find(
+      schema => schema.id === GLOSSARY_IDS.termCategorySchema
+    );
+    const statusEnum = seedEnums.find(enumeration => enumeration.id === GLOSSARY_IDS.statusEnum);
+    const terms = seedEntities.filter(entity => entity.schema_id === GLOSSARY_IDS.termSchema);
+    const categories = seedEntities.filter(
+      entity => entity.schema_id === GLOSSARY_IDS.termCategorySchema
+    );
+
+    expect(termSchema?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'definition', type: 'longtext' }),
+        expect.objectContaining({ id: 'synonyms', minCardinality: 0, maxCardinality: -1 }),
+        expect.objectContaining({ id: 'abbreviations', minCardinality: 0, maxCardinality: -1 }),
+        expect.objectContaining({
+          id: 'categories',
+          type: 'reference',
+          schemaId: GLOSSARY_IDS.termCategorySchema,
+          maxCount: -1
+        }),
+        expect.objectContaining({ id: 'status', enumId: GLOSSARY_IDS.statusEnum })
+      ])
+    );
+    expect(categorySchema?.fields).toEqual([]);
+    expect(statusEnum?.options.map(option => option.value)).toEqual([
+      'draft',
+      'proposed',
+      'approved'
+    ]);
+    expect(categories).toHaveLength(3);
+    expect(terms).toHaveLength(4);
+    expect(terms.find(term => term.name === 'Customer Account')?.data).toMatchObject({
+      synonyms: ['Client Account', 'Customer Profile'],
+      abbreviations: ['CA'],
+      categories: [GLOSSARY_IDS.categories.customer],
+      status: 'approved'
     });
   });
 });

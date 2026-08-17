@@ -118,4 +118,48 @@ describe('workspace capability definitions', () => {
       ]
     });
   });
+
+  it('describes the business glossary semantic bindings and cardinality requirements', () => {
+    const glossary = getWorkspaceCapabilityDefinition('business-glossary');
+    expect(glossary).toMatchObject({
+      type: 'business-glossary',
+      bindingRoles: [
+        expect.objectContaining({ id: 'term', required: true }),
+        expect.objectContaining({ id: 'category', required: true })
+      ]
+    });
+    expect(glossary?.bindingRoles[0]?.fieldRoles).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'synonyms', cardinality: 'multi' }),
+        expect.objectContaining({ id: 'abbreviations', cardinality: 'multi' }),
+        expect.objectContaining({
+          id: 'categories',
+          cardinality: 'multi',
+          referenceTargetBinding: 'category'
+        })
+      ])
+    );
+  });
+
+  it('rejects single-valued alias fields', () => {
+    const glossary = getWorkspaceCapabilityDefinition('business-glossary')!;
+    const roles = glossary.bindingRoles[0]!.fieldRoles;
+    const result = resolveCapabilityFieldMappings(
+      { target: { kind: 'entity_schema', id: 'term' } },
+      roles,
+      [
+        { id: 'definition', type: 'longtext' },
+        { id: 'synonyms', type: 'text' },
+        { id: 'abbreviations', type: 'text', maxCardinality: -1 },
+        { id: 'categories', type: 'reference', schemaId: 'category', maxCount: -1 },
+        { id: 'status', type: 'select' }
+      ]
+    );
+
+    expect(result.issues).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ roleId: 'synonyms', code: 'incompatible_cardinality' })
+      ])
+    );
+  });
 });

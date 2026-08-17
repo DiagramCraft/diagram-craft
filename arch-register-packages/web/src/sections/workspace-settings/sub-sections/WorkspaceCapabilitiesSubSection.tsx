@@ -10,7 +10,10 @@ import {
   resolveCapabilityFieldId,
   resolveCapabilityFieldMappings
 } from '@arch-register/api-types/integrationCatalog';
-import type { WorkspaceCapabilityBinding } from '@arch-register/api-types/workspaceCapabilityContract';
+import type {
+  WorkspaceCapabilityBinding,
+  WorkspaceCapabilityBindings
+} from '@arch-register/api-types/workspaceCapabilityContract';
 import {
   useDeleteWorkspaceCapabilityConfiguration,
   useUpdateWorkspaceCapabilityConfiguration,
@@ -18,8 +21,9 @@ import {
 } from '../../../hooks/useWorkspaceConfig';
 import styles from './LifecycleSubSection.module.css';
 
-const capabilityType = 'api-specification';
-type CapabilityBindingTab = 'api-specification';
+type CapabilityType = 'api-specification' | 'business-glossary';
+
+const capabilityTypes: CapabilityType[] = ['api-specification', 'business-glossary'];
 
 export const WorkspaceCapabilitiesSubSection = ({
   workspaceSlug,
@@ -30,66 +34,39 @@ export const WorkspaceCapabilitiesSubSection = ({
   schemas: EntitySchema[];
   onActionsChange: (actions: ReactNode | undefined) => void;
 }) => {
-  const [activeTab, setActiveTab] = useState<CapabilityBindingTab>('api-specification');
+  const [activeTab, setActiveTab] = useState<CapabilityType>('api-specification');
   const [enabled, setEnabled] = useState(false);
   const { data: configurations = [], isLoading } =
     useWorkspaceCapabilityConfigurations(workspaceSlug);
-  const configuration = configurations.find(item => item.type === capabilityType);
-  const binding = configuration?.bindings.api;
-  const isConfigured = configuration != null;
-  const definition = getWorkspaceCapabilityDefinition(capabilityType);
-  const configuredSchemaId = binding?.target.kind === 'entity_schema' ? binding.target.id : '';
-  const configuredFieldMappings = useMemo(
-    () => binding?.fieldMappings ?? {},
-    [binding?.fieldMappings]
+  const configuration = configurations.find(item => item.type === activeTab);
+  const definition = getWorkspaceCapabilityDefinition(activeTab);
+  const [bindings, setBindings] = useState<WorkspaceCapabilityBindings>({});
+  const mutation = useUpdateWorkspaceCapabilityConfiguration(workspaceSlug, activeTab);
+  const deleteMutation = useDeleteWorkspaceCapabilityConfiguration(workspaceSlug, activeTab);
+
+  const configuredBindings = useMemo(
+    () => configuration?.bindings ?? {},
+    [configuration?.bindings]
   );
-  const [schemaId, setSchemaId] = useState(configuredSchemaId);
-  const [fieldMappings, setFieldMappings] =
-    useState<Record<string, string>>(configuredFieldMappings);
-  const mutation = useUpdateWorkspaceCapabilityConfiguration(workspaceSlug, capabilityType);
-  const deleteMutation = useDeleteWorkspaceCapabilityConfiguration(workspaceSlug, capabilityType);
 
   useEffect(() => {
-    setEnabled(isConfigured);
-    setSchemaId(configuredSchemaId);
-    setFieldMappings(configuredFieldMappings);
-  }, [configuredFieldMappings, configuredSchemaId, isConfigured]);
+    setEnabled(configuration != null);
+    setBindings(configuredBindings);
+  }, [configuredBindings, configuration]);
 
-  const schema = useMemo(() => schemas.find(item => item.id === schemaId), [schemas, schemaId]);
-  const draftBinding: WorkspaceCapabilityBinding = {
-    target: { kind: 'entity_schema', id: schemaId },
-    ...(Object.keys(fieldMappings).length > 0 ? { fieldMappings } : {})
-  };
-  const resolution =
-    definition && schema
-      ? resolveCapabilityFieldMappings(
-          draftBinding,
-          definition.bindingRoles[0]?.fieldRoles ?? [],
-          schema.fields
-        )
-      : null;
   const dirty =
-    enabled !== isConfigured ||
-    schemaId !== configuredSchemaId ||
-    JSON.stringify(fieldMappings) !== JSON.stringify(configuredFieldMappings);
+    enabled !== (configuration != null) ||
+    JSON.stringify(bindings) !== JSON.stringify(configuredBindings);
 
   const save = useCallback(async () => {
-    if (!enabled || !schemaId) return;
-    await mutation.mutateAsync({
-      bindings: {
-        api: {
-          target: { kind: 'entity_schema', id: schemaId },
-          ...(Object.keys(fieldMappings).length > 0 ? { fieldMappings } : {})
-        }
-      }
-    });
-  }, [enabled, fieldMappings, mutation.mutateAsync, schemaId]);
+    if (!enabled || !definition) return;
+    await mutation.mutateAsync({ bindings });
+  }, [bindings, definition, enabled, mutation.mutateAsync]);
 
   const resetDraft = useCallback(() => {
-    setEnabled(isConfigured);
-    setSchemaId(configuredSchemaId);
-    setFieldMappings(configuredFieldMappings);
-  }, [configuredFieldMappings, configuredSchemaId, isConfigured]);
+    setEnabled(configuration != null);
+    setBindings(configuredBindings);
+  }, [configuredBindings, configuration]);
 
   useEffect(() => {
     onActionsChange(
@@ -102,9 +79,7 @@ export const WorkspaceCapabilitiesSubSection = ({
         </Button>
         <Button
           variant="primary"
-          disabled={
-            !enabled || !schemaId || !dirty || mutation.isPending || deleteMutation.isPending
-          }
+          disabled={!enabled || !dirty || mutation.isPending || deleteMutation.isPending}
           onClick={() => void save()}
         >
           {mutation.isPending ? 'Saving...' : 'Save changes'}
@@ -118,8 +93,7 @@ export const WorkspaceCapabilitiesSubSection = ({
     mutation.isPending,
     onActionsChange,
     resetDraft,
-    save,
-    schemaId
+    save
   ]);
 
   useEffect(() => () => onActionsChange(undefined), [onActionsChange]);
@@ -129,28 +103,45 @@ export const WorkspaceCapabilitiesSubSection = ({
   const handleEnabledChange = (nextEnabled: boolean | undefined) => {
     if (nextEnabled) {
       setEnabled(true);
+      if (Object.keys(bindings).length === 0) {
+        setBindings(
+          Object.fromEntries(
+            definition.bindingRoles.map(role => [
+              role.id,
+              { target: { kind: role.targetKind, id: '' } }
+            ])
+          ) as WorkspaceCapabilityBindings
+        );
+      }
       return;
     }
     if (!configuration) {
       setEnabled(false);
       return;
     }
-    if (!window.confirm('Disable the API specification capability for this workspace?')) return;
-
+    if (!window.confirm(`Disable the ${definition.label} capability for this workspace?`)) return;
     setEnabled(false);
     void deleteMutation.mutateAsync().catch(() => setEnabled(true));
   };
 
+  const updateBinding = (bindingId: string, binding: WorkspaceCapabilityBinding) => {
+    setBindings(current => ({ ...current, [bindingId]: binding }));
+  };
+
   return (
     <div className={styles.blockList}>
-      <Tabs.Root
-        value={activeTab}
-        onValueChange={value => setActiveTab(value as CapabilityBindingTab)}
-      >
+      <Tabs.Root value={activeTab} onValueChange={value => setActiveTab(value as CapabilityType)}>
         <Tabs.List aria-label="Capability binding types">
-          <Tabs.Trigger value="api-specification">API Specification</Tabs.Trigger>
+          {capabilityTypes.map(type => {
+            const item = getWorkspaceCapabilityDefinition(type);
+            return item ? (
+              <Tabs.Trigger key={type} value={type}>
+                {item.label}
+              </Tabs.Trigger>
+            ) : null;
+          })}
         </Tabs.List>
-        <Tabs.Content value="api-specification" style={{ height: 'auto' }}>
+        <Tabs.Content value={activeTab} style={{ height: 'auto' }}>
           <div className={styles.section}>
             <div className={styles.sectionHead}>
               <div className={styles.capabilityHeader}>
@@ -169,75 +160,111 @@ export const WorkspaceCapabilitiesSubSection = ({
               </div>
             </div>
             <div className={styles.sectionBody}>
-              <FormElement label="API entity schema" required>
-                <Select.Root
-                  value={schemaId}
-                  disabled={!enabled || isLoading || mutation.isPending || deleteMutation.isPending}
-                  placeholder="Select an entity schema..."
-                  onChange={value => {
-                    setSchemaId(value ?? '');
-                    setFieldMappings({});
-                  }}
-                >
-                  {schemas.map(candidate => (
-                    <Select.Item key={candidate.id} value={candidate.id}>
-                      {candidate.name}
-                    </Select.Item>
-                  ))}
-                </Select.Root>
-              </FormElement>
+              {definition.bindingRoles.map(role => {
+                const binding = bindings[role.id];
+                const schemaId = binding?.target.kind === 'entity_schema' ? binding.target.id : '';
+                const schema = schemas.find(item => item.id === schemaId);
+                const draftBinding: WorkspaceCapabilityBinding = {
+                  target: { kind: role.targetKind, id: schemaId },
+                  ...(binding?.fieldMappings ? { fieldMappings: binding.fieldMappings } : {})
+                };
+                const resolution =
+                  schema && role.fieldRoles.length > 0
+                    ? resolveCapabilityFieldMappings(draftBinding, role.fieldRoles, schema.fields)
+                    : null;
+                return (
+                  <div
+                    key={role.id}
+                    className={styles.field}
+                    style={{ gridTemplateColumns: '1fr' }}
+                  >
+                    <FormElement label={role.label} required={role.required}>
+                      {role.targetKind === 'entity_schema' ? (
+                        <Select.Root
+                          value={schemaId}
+                          disabled={
+                            !enabled || isLoading || mutation.isPending || deleteMutation.isPending
+                          }
+                          placeholder="Select an entity schema..."
+                          onChange={value =>
+                            updateBinding(role.id, {
+                              target: { kind: role.targetKind, id: value ?? '' }
+                            })
+                          }
+                        >
+                          {schemas.map(candidate => (
+                            <Select.Item key={candidate.id} value={candidate.id}>
+                              {candidate.name}
+                            </Select.Item>
+                          ))}
+                        </Select.Root>
+                      ) : (
+                        <div className={styles.sectionSub}>
+                          Document and relation bindings are not used by this capability.
+                        </div>
+                      )}
+                    </FormElement>
 
-              {schema && (
-                <div className={styles.field} style={{ gridTemplateColumns: '1fr' }}>
-                  <div>
-                    <div className={styles.sectionTitle}>Field mappings</div>
-                    <div className={styles.sectionSub}>
-                      Map integration roles to fields on the selected schema. Defaults use the
-                      conventional field IDs.
-                    </div>
+                    {schema && role.fieldRoles.length > 0 && (
+                      <div>
+                        <div className={styles.sectionTitle}>Field mappings</div>
+                        <div className={styles.sectionSub}>
+                          Map the required glossary roles to fields on this schema.
+                        </div>
+                        {role.fieldRoles.map(fieldRole => {
+                          const fieldId = resolveCapabilityFieldId(draftBinding, fieldRole);
+                          const validFields = schema.fields.filter(
+                            field =>
+                              !field.archived &&
+                              field.type !== 'derived' &&
+                              fieldRole.allowedTypes.includes(field.type as never)
+                          );
+                          return (
+                            <FormElement
+                              key={fieldRole.id}
+                              label={fieldRole.label}
+                              required={fieldRole.required}
+                            >
+                              <Select.Root
+                                value={fieldId}
+                                disabled={
+                                  !enabled || mutation.isPending || deleteMutation.isPending
+                                }
+                                onChange={value => {
+                                  if (!value) return;
+                                  updateBinding(role.id, {
+                                    target: { kind: role.targetKind, id: schemaId },
+                                    fieldMappings: {
+                                      ...(binding?.fieldMappings ?? {}),
+                                      [fieldRole.id]: value
+                                    }
+                                  });
+                                }}
+                              >
+                                {!validFields.some(field => field.id === fieldId) && (
+                                  <Select.Item value={fieldId}>
+                                    Missing field · {fieldId}
+                                  </Select.Item>
+                                )}
+                                {validFields.map(field => (
+                                  <Select.Item key={field.id} value={field.id}>
+                                    {field.name} · {field.id}
+                                  </Select.Item>
+                                ))}
+                              </Select.Root>
+                            </FormElement>
+                          );
+                        })}
+                      </div>
+                    )}
+                    {resolution && resolution.issues.length > 0 && (
+                      <div className={styles.capabilityUnknownFields}>
+                        {resolution.issues.map(issue => issue.message).join(' ')}
+                      </div>
+                    )}
                   </div>
-                  <div>
-                    {definition.bindingRoles[0]?.fieldRoles.map(role => {
-                      const capabilityFieldId = resolveCapabilityFieldId(draftBinding, role);
-                      const validFields = schema.fields.filter(
-                        field =>
-                          !field.archived &&
-                          field.type !== 'derived' &&
-                          role.allowedTypes.some(type => type === field.type)
-                      );
-                      return (
-                        <FormElement key={role.id} label={role.label}>
-                          <Select.Root
-                            value={capabilityFieldId}
-                            disabled={!enabled || mutation.isPending || deleteMutation.isPending}
-                            onChange={value => {
-                              if (!value) return;
-                              setFieldMappings(current => ({ ...current, [role.id]: value }));
-                            }}
-                          >
-                            {!validFields.some(field => field.id === capabilityFieldId) && (
-                              <Select.Item value={capabilityFieldId}>
-                                Missing field · {capabilityFieldId}
-                              </Select.Item>
-                            )}
-                            {validFields.map(field => (
-                              <Select.Item key={field.id} value={field.id}>
-                                {field.name} · {field.id}
-                              </Select.Item>
-                            ))}
-                          </Select.Root>
-                        </FormElement>
-                      );
-                    })}
-                  </div>
-                  {resolution && resolution.issues.length > 0 && (
-                    <div className={styles.capabilityUnknownFields}>
-                      {resolution.issues.map(issue => issue.message).join(' ')}
-                    </div>
-                  )}
-                </div>
-              )}
-
+                );
+              })}
               {configuration && !configuration.valid && (
                 <div className={styles.capabilityUnknownFields}>
                   {configuration.diagnostics.map(diagnostic => diagnostic.message).join(' ')}

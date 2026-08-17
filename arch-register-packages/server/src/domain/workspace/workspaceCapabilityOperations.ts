@@ -51,7 +51,18 @@ const getTarget = async (
 };
 
 const getTargetFields = (target: Awaited<ReturnType<typeof getTarget>>) =>
-  target && 'fields' in target ? target.fields : [];
+  target && 'fields' in target
+    ? target.fields.map(field => ({
+        id: field.id,
+        type: field.type,
+        archived: 'archived' in field ? field.archived : undefined,
+        minCardinality: 'minCardinality' in field ? field.minCardinality : undefined,
+        maxCardinality: 'maxCardinality' in field ? field.maxCardinality : undefined,
+        schemaId: 'schemaId' in field ? field.schemaId : undefined,
+        minCount: 'minCount' in field ? field.minCount : undefined,
+        maxCount: 'maxCount' in field ? field.maxCount : undefined
+      }))
+    : [];
 
 export const validateWorkspaceCapabilityConfiguration = async (
   db: DatabaseAdapter,
@@ -121,6 +132,37 @@ export const validateWorkspaceCapabilityConfiguration = async (
         message: issue.message
       });
     }
+
+    for (const fieldRole of role.fieldRoles) {
+      if (fieldRole.referenceTargetBinding === undefined) continue;
+      const fieldId = resolution.mappings[fieldRole.id];
+      const field = getTargetFields(target).find(candidate => candidate.id === fieldId);
+      const referencedBinding = input.bindings[fieldRole.referenceTargetBinding];
+      if (field?.type !== 'reference' || !referencedBinding) continue;
+      if (field.schemaId !== referencedBinding.target.id) {
+        diagnostics.push({
+          code: 'invalid_field_mapping',
+          bindingId: role.id,
+          message: `Field '${fieldId}' must reference the '${fieldRole.referenceTargetBinding}' binding target.`
+        });
+      }
+    }
+  }
+
+  const termTarget = input.bindings.term?.target;
+  const categoryTarget = input.bindings.category?.target;
+  if (
+    termTarget &&
+    categoryTarget &&
+    termTarget.kind === 'entity_schema' &&
+    categoryTarget.kind === 'entity_schema' &&
+    termTarget.id === categoryTarget.id
+  ) {
+    diagnostics.push({
+      code: 'invalid_field_mapping',
+      bindingId: 'category',
+      message: 'Term and category bindings must target different entity schemas.'
+    });
   }
 
   return diagnostics;

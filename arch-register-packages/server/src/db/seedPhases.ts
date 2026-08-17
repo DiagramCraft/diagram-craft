@@ -27,7 +27,7 @@ import {
   seedSharedFieldGroups,
   seedSupportedCurrencies
 } from './seedData/catalog';
-import { WORKSPACE_ID } from './seedData/constants';
+import { GLOSSARY_IDS, WORKSPACE_ID } from './seedData/constants';
 import { seedSavedViews } from './seedData/views';
 import { seededTestPassword } from './seedFixtures';
 import { hashPassword } from '../utils/password';
@@ -189,6 +189,25 @@ export const seedCatalogDefinitions = async (
         updated_at: apiSchema.updated_at
       };
       await db.workspace.upsertWorkspaceCapabilityConfiguration(capabilityConfiguration);
+    }
+
+    const termSchema = await db.catalog.getSchema(WORKSPACE_ID, GLOSSARY_IDS.termSchema);
+    const termCategorySchema = await db.catalog.getSchema(
+      WORKSPACE_ID,
+      GLOSSARY_IDS.termCategorySchema
+    );
+    if (termSchema && termCategorySchema) {
+      await db.workspace.upsertWorkspaceCapabilityConfiguration({
+        id: '00000000-0000-0000-0000-000000000008',
+        workspace: WORKSPACE_ID,
+        type: 'business-glossary',
+        bindings: {
+          term: { target: { kind: 'entity_schema', id: termSchema.id } },
+          category: { target: { kind: 'entity_schema', id: termCategorySchema.id } }
+        },
+        created_at: termSchema.created_at,
+        updated_at: termSchema.updated_at
+      });
     }
   }
 };
