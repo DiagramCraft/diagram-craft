@@ -129,8 +129,8 @@ export type SymbolicRelationSchema = {
   symId: string;
   name: string;
   description: string;
-  inSymSchemaIds: string[];
-  outSymSchemaIds: string[];
+  inSymSchemaIds: string[] | 'any';
+  outSymSchemaIds: string[] | 'any';
   fields: Array<{
     id: string;
     name: string;
@@ -2084,6 +2084,8 @@ export const instantiateTemplateDefinitions = (
     };
   });
 
+  const resolveEndpointSchemaIds = (schemaIds: string[] | 'any') =>
+    schemaIds === 'any' ? 'any' : schemaIds.map(symId => idMap.get(symId) ?? symId);
   const relationSchemas: RelationSchemaDbCreate[] = (template.relationSchemas ?? []).map(
     relationSchema => ({
       id: relationSchemaIdMap.get(relationSchema.symId)!,
@@ -2091,8 +2093,8 @@ export const instantiateTemplateDefinitions = (
       name: relationSchema.name,
       category: null,
       description: relationSchema.description,
-      in_schema_ids: relationSchema.inSymSchemaIds.map(symId => idMap.get(symId) ?? symId),
-      out_schema_ids: relationSchema.outSymSchemaIds.map(symId => idMap.get(symId) ?? symId),
+      in_schema_ids: resolveEndpointSchemaIds(relationSchema.inSymSchemaIds),
+      out_schema_ids: resolveEndpointSchemaIds(relationSchema.outSymSchemaIds),
       fields: relationSchema.fields.map(
         field =>
           ({

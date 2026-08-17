@@ -166,7 +166,8 @@
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can
           define typed relation schemas with mandatory "in"/"out" endpoints (each constrained to a set of allowed
-          entity schemas) and their own configurable fields, field groups, access control, and validation rules;
+          entity schemas, or allowing any entity schema, and their own configurable fields, field groups, access
+          control, and validation rules;
           relation instances are first-class, independently addressable, audited records rather than entity-data
           values. Saving an entity also validates affected typed relation instances, and relation create/update/delete
           mutations participate in the same atomic blocking-validation behavior. A typed relation
@@ -180,6 +181,9 @@
           relation schemas, allowing Components and Systems to point to APIs while API entities expose inverse
           provider and consumer views; these relations are available to the same graph, topology, search, and
           permission surfaces as other typed relations.
+          The seeded architecture catalog provides a `Risk Affects` relation from each Risk to selected
+          architecture entity schemas, with an inline `Affected Entities` field on Risk and inverse
+          `Affected By Risks` fields on those target schemas.
           While editing the entity, users can add, edit, and remove relation instances directly inline — adding
           picks another entity from schemas the relation type allows and fills in the relation's own fields (subject
           to field-group access control); these changes are saved together with the rest of the entity's edits in one
