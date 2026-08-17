@@ -8,6 +8,23 @@ import {
 import { buildDerivedPlan, evaluateDerivedFields } from '../derived/derivedFields';
 
 describe('instantiateTemplate', () => {
+  it('assigns a presentation category to every built-in entity and relation schema', () => {
+    for (const template of SCHEMA_TEMPLATES) {
+      expect(template.schemas.every(schema => schema.category.trim().length > 0)).toBe(true);
+      expect(
+        (template.relationSchemas ?? []).every(schema => schema.category.trim().length > 0)
+      ).toBe(true);
+
+      const definitions = instantiateTemplateDefinitions('ws-1', template.id);
+      expect(definitions.schemas.every(schema => (schema.category?.trim() ?? '').length > 0)).toBe(
+        true
+      );
+      expect(
+        definitions.relationSchemas.every(schema => (schema.category?.trim() ?? '').length > 0)
+      ).toBe(true);
+    }
+  });
+
   it('classifies built-ins and composes one full model with multiple concerns', () => {
     expect(
       SCHEMA_TEMPLATES.filter(template => template.category === 'full').map(t => t.id)

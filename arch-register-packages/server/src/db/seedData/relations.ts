@@ -30,6 +30,7 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     id: '00000000-0000-0000-0000-000000000034',
     workspace: WORKSPACE_ID,
     name: 'Provides API',
+    category: 'Architecture',
     description: 'Associates a Component or System with an API it provides.',
     in_schema_ids: ['00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000002'],
     out_schema_ids: ['00000000-0000-0000-0000-000000000004'],
@@ -46,6 +47,7 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     id: '00000000-0000-0000-0000-000000000035',
     workspace: WORKSPACE_ID,
     name: 'Consumes API',
+    category: 'Architecture',
     description: 'Associates a Component or System with an API it consumes.',
     in_schema_ids: ['00000000-0000-0000-0000-000000000003', '00000000-0000-0000-0000-000000000002'],
     out_schema_ids: ['00000000-0000-0000-0000-000000000004'],
@@ -62,6 +64,7 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     id: '00000000-0000-0000-0000-000000000031',
     workspace: WORKSPACE_ID,
     name: 'System Contract',
+    category: 'Architecture',
     description:
       'Associates a System with a vendor Contract and records the purpose of the agreement.',
     in_schema_ids: ['00000000-0000-0000-0000-000000000002'],
@@ -95,6 +98,7 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     id: '00000000-0000-0000-0000-000000000030',
     workspace: WORKSPACE_ID,
     name: 'Data Flow',
+    category: 'Data',
     description:
       'Models data moving from one System to another: its direction, the sensitivity of the ' +
       'data carried, and the protocol used to move it.',
@@ -147,6 +151,7 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     id: RISK_AFFECTS_RELATION_SCHEMA_ID,
     workspace: WORKSPACE_ID,
     name: 'Risk Affects',
+    category: 'Governance',
     description: 'Associates a Risk with an architecture entity affected by it.',
     in_schema_ids: ['00000000-0000-0000-0000-000000000013'],
     out_schema_ids: RISK_AFFECTS_TARGET_SCHEMA_IDS,
@@ -163,6 +168,7 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     id: '00000000-0000-0000-0000-000000000032',
     workspace: WORKSPACE_ID,
     name: 'Risk Mitigation',
+    category: 'Governance',
     description:
       'Associates a Risk with the Controls that mitigate it and records the control coverage.',
     in_schema_ids: ['00000000-0000-0000-0000-000000000013'],
@@ -197,6 +203,7 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     id: '00000000-0000-0000-0000-000000000033',
     workspace: WORKSPACE_ID,
     name: 'Control Compliance',
+    category: 'Governance',
     description:
       'Records that a Control satisfies a ComplianceRequirement and captures the verification evidence.',
     in_schema_ids: ['00000000-0000-0000-0000-000000000014'],

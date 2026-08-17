@@ -39,6 +39,41 @@ export const schemaColor = (index: number): string => SCHEMA_COLORS[index % SCHE
 export const resolveSchemaColor = (schema: { color: string | null }, index: number): string =>
   schema.color ?? schemaColor(index);
 
+export const UNCATEGORIZED_SCHEMA_CATEGORY = 'Uncategorized';
+
+export type SchemaCategoryGroup<T> = {
+  category: string;
+  items: Array<{ schema: T; index: number }>;
+};
+
+export const groupSchemasByCategory = <T extends { category?: string | null; name: string }>(
+  schemas: readonly T[]
+): SchemaCategoryGroup<T>[] => {
+  const groups = new Map<string, Array<{ schema: T; index: number }>>();
+
+  schemas.forEach((schema, index) => {
+    const trimmedCategory = schema.category?.trim();
+    const category =
+      trimmedCategory === undefined || trimmedCategory.length === 0
+        ? UNCATEGORIZED_SCHEMA_CATEGORY
+        : trimmedCategory;
+    const items = groups.get(category) ?? [];
+    items.push({ schema, index });
+    groups.set(category, items);
+  });
+
+  return [...groups.entries()]
+    .sort(([left], [right]) => {
+      if (left === UNCATEGORIZED_SCHEMA_CATEGORY) return 1;
+      if (right === UNCATEGORIZED_SCHEMA_CATEGORY) return -1;
+      return left.localeCompare(right);
+    })
+    .map(([category, items]) => ({
+      category,
+      items: items.sort((left, right) => left.schema.name.localeCompare(right.schema.name))
+    }));
+};
+
 export const resolveDocumentTypeColor = (documentType: DocumentType, index: number): string =>
   documentType.color ?? schemaColor(index);
 

@@ -25,7 +25,7 @@ import {
   TbArrowsRightLeft
 } from 'react-icons/tb';
 import { TbBook } from 'react-icons/tb';
-import { resolveSchemaColor } from '../../lib/schemaPresentation';
+import { groupSchemasByCategory, resolveSchemaColor } from '../../lib/schemaPresentation';
 import type { SavedView } from '@arch-register/api-types/viewContract';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { usePinnedEntities } from '../../hooks/useNotifications';
@@ -119,6 +119,7 @@ export const EntitiesSidebar = ({
   const { entityId: routeEntityId } = useParams({ strict: false });
   const { pathname } = useLocation();
   const onRelationsRoute = pathname.includes('/entities/relations');
+  const schemaGroups = useMemo(() => groupSchemasByCategory(schemas), [schemas]);
   const { permissions } = useWorkspaceContext();
   const { data: glossaryConfig } = useQuery(glossaryConfigQuery(workspaceSlug));
   const search = useSearch({ strict: false });
@@ -381,25 +382,30 @@ export const EntitiesSidebar = ({
               }
             />
             <SidebarGroupLabel>By type</SidebarGroupLabel>
-            {schemas.map((s, i) => (
-              <FacetRow
-                key={s.id}
-                testId={`entity-type-filter-${s.name}`}
-                icon={
-                  <TypeBadge
-                    color={resolveSchemaColor(s, i)}
-                    name={s.name}
-                    icon={s.icon}
-                    size={14}
+            {schemaGroups.map(group => (
+              <div key={group.category}>
+                <SidebarGroupLabel>{group.category}</SidebarGroupLabel>
+                {group.items.map(({ schema: s, index: i }) => (
+                  <FacetRow
+                    key={s.id}
+                    testId={`entity-type-filter-${s.name}`}
+                    icon={
+                      <TypeBadge
+                        color={resolveSchemaColor(s, i)}
+                        name={s.name}
+                        icon={s.icon}
+                        size={14}
+                      />
+                    }
+                    label={s.name}
+                    checked={activeFacets.schemaIds.includes(s.id)}
+                    onToggle={() => toggleFacet('type', s.id)}
+                    trailing={<span className="dim mono">{s.entity_count}</span>}
+                    tagColor={resolveSchemaColor(s, i)}
+                    iconOffset
                   />
-                }
-                label={s.name}
-                checked={activeFacets.schemaIds.includes(s.id)}
-                onToggle={() => toggleFacet('type', s.id)}
-                trailing={<span className="dim mono">{s.entity_count}</span>}
-                tagColor={resolveSchemaColor(s, i)}
-                iconOffset
-              />
+                ))}
+              </div>
             ))}
             <SidebarGroupLabel>By status</SidebarGroupLabel>
             {statuses.map(s => {
