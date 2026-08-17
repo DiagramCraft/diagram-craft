@@ -147,6 +147,47 @@ const businessGlossaryFieldRoles: CapabilityFieldRole[] = [
 /** Integration-owned capabilities that can be configured at workspace scope. */
 export const workspaceCapabilityDefinitions: WorkspaceCapabilityDefinition[] = [
   {
+    type: 'strategy-model',
+    label: 'Strategy model',
+    description:
+      'Strategic objectives, outcomes, initiatives, and measures for traceability views.',
+    features: ['traceability', 'roll-ups'],
+    bindingRoles: [
+      {
+        id: 'objective',
+        label: 'Objective entity schema',
+        description: 'The entity schema used for strategic objectives.',
+        required: true,
+        targetKind: 'entity_schema',
+        fieldRoles: []
+      },
+      {
+        id: 'outcome',
+        label: 'Outcome entity schema',
+        description: 'The entity schema used for measurable outcomes.',
+        required: true,
+        targetKind: 'entity_schema',
+        fieldRoles: []
+      },
+      {
+        id: 'initiative',
+        label: 'Initiative entity schema',
+        description: 'The entity schema used for strategic initiatives.',
+        required: true,
+        targetKind: 'entity_schema',
+        fieldRoles: []
+      },
+      {
+        id: 'measure',
+        label: 'Measure entity schema',
+        description: 'The entity schema used for strategic measures.',
+        required: true,
+        targetKind: 'entity_schema',
+        fieldRoles: []
+      }
+    ]
+  },
+  {
     type: 'api-specification',
     label: 'API specification',
     description: 'OpenAPI and AsyncAPI documents with normalized operations or messages.',

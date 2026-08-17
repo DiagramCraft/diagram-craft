@@ -27,7 +27,7 @@ import {
   seedSharedFieldGroups,
   seedSupportedCurrencies
 } from './seedData/catalog';
-import { GLOSSARY_IDS, WORKSPACE_ID } from './seedData/constants';
+import { GLOSSARY_IDS, STRATEGY_IDS, WORKSPACE_ID } from './seedData/constants';
 import { seedSavedViews } from './seedData/views';
 import { seededTestPassword } from './seedFixtures';
 import { hashPassword } from '../utils/password';
@@ -207,6 +207,29 @@ export const seedCatalogDefinitions = async (
         },
         created_at: termSchema.created_at,
         updated_at: termSchema.updated_at
+      });
+    }
+
+    const objectiveSchema = await db.catalog.getSchema(WORKSPACE_ID, STRATEGY_IDS.objectiveSchema);
+    const outcomeSchema = await db.catalog.getSchema(WORKSPACE_ID, STRATEGY_IDS.outcomeSchema);
+    const initiativeSchema = await db.catalog.getSchema(
+      WORKSPACE_ID,
+      STRATEGY_IDS.initiativeSchema
+    );
+    const measureSchema = await db.catalog.getSchema(WORKSPACE_ID, STRATEGY_IDS.measureSchema);
+    if (objectiveSchema && outcomeSchema && initiativeSchema && measureSchema) {
+      await db.workspace.upsertWorkspaceCapabilityConfiguration({
+        id: '00000000-0000-0000-0000-00000000000a',
+        workspace: WORKSPACE_ID,
+        type: 'strategy-model',
+        bindings: {
+          objective: { target: { kind: 'entity_schema', id: objectiveSchema.id } },
+          outcome: { target: { kind: 'entity_schema', id: outcomeSchema.id } },
+          initiative: { target: { kind: 'entity_schema', id: initiativeSchema.id } },
+          measure: { target: { kind: 'entity_schema', id: measureSchema.id } }
+        },
+        created_at: objectiveSchema.created_at,
+        updated_at: objectiveSchema.updated_at
       });
     }
   }

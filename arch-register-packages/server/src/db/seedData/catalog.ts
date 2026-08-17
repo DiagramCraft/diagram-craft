@@ -17,9 +17,12 @@ import type {
 import type { SupportedCurrencyDbResult } from '../../domain/workspace/db/workspaceDatabase';
 import {
   GLOSSARY_IDS,
+  OBJECTIVE_AFFECTS_CAPABILITY_RELATION_SCHEMA_ID,
+  OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
   PII_FIELD_GROUP_ID,
   RISK_AFFECTS_RELATION_SCHEMA_ID,
   RISK_AFFECTS_TARGET_SCHEMA_IDS,
+  STRATEGY_IDS,
   WORKSPACE2_ID,
   WORKSPACE_ID,
   now
@@ -222,6 +225,20 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
       { value: 'approved', label: 'Approved' }
     ],
     sort_order: 13,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: STRATEGY_IDS.statusEnum,
+    workspace: WORKSPACE_ID,
+    name: 'Strategy Status',
+    options: [
+      { value: 'draft', label: 'Draft' },
+      { value: 'active', label: 'Active' },
+      { value: 'achieved', label: 'Achieved' },
+      { value: 'abandoned', label: 'Abandoned' }
+    ],
+    sort_order: 14,
     created_at: now,
     updated_at: now
   },
@@ -972,6 +989,133 @@ export const seedSchemas: SchemaDbResult[] = (
       icon: 'book',
       default_owner: null,
       key_prefix: 'TERM',
+      created_at: now,
+      updated_at: now
+    },
+    // Strategy model: Objective, Outcome, Initiative, Measure (see #3020). Linked with reference
+    // fields rather than containment so no fixed hierarchy or taxonomy is imposed.
+    {
+      id: STRATEGY_IDS.objectiveSchema,
+      workspace: WORKSPACE_ID,
+      name: 'Objective',
+      category: 'Strategy',
+      description: 'A strategic objective the organization is pursuing.',
+      fields: [
+        { id: 'description', name: 'Description', type: 'longtext' },
+        { id: 'status', name: 'Status', type: 'select', enumId: STRATEGY_IDS.statusEnum },
+        { id: 'target_date', name: 'Target Date', type: 'date' },
+        {
+          id: 'supported_capabilities',
+          name: 'Supported Capabilities',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: OBJECTIVE_AFFECTS_CAPABILITY_RELATION_SCHEMA_ID,
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
+        },
+        {
+          id: 'affected_entities',
+          name: 'Affected Entities',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
+        }
+      ],
+      color: AR_COLOR_PURPLE,
+      icon: 'target',
+      default_owner: null,
+      key_prefix: 'OBJ',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: STRATEGY_IDS.outcomeSchema,
+      workspace: WORKSPACE_ID,
+      name: 'Outcome',
+      category: 'Strategy',
+      description: 'A measurable outcome that indicates progress toward one or more Objectives.',
+      fields: [
+        { id: 'description', name: 'Description', type: 'longtext' },
+        {
+          id: 'objectives',
+          name: 'Objectives',
+          type: 'reference',
+          predicate: 'supports',
+          schemaId: STRATEGY_IDS.objectiveSchema,
+          minCount: 0,
+          maxCount: -1
+        }
+      ],
+      color: AR_COLOR_BLUE,
+      icon: 'flag',
+      default_owner: null,
+      key_prefix: 'OUTC',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: STRATEGY_IDS.initiativeSchema,
+      workspace: WORKSPACE_ID,
+      name: 'Initiative',
+      category: 'Strategy',
+      description: 'A body of work undertaken to pursue an Objective or Outcome.',
+      fields: [
+        { id: 'description', name: 'Description', type: 'longtext' },
+        { id: 'status', name: 'Status', type: 'select', enumId: STRATEGY_IDS.statusEnum },
+        {
+          id: 'objectives',
+          name: 'Objectives',
+          type: 'reference',
+          predicate: 'pursues',
+          schemaId: STRATEGY_IDS.objectiveSchema,
+          minCount: 0,
+          maxCount: -1
+        },
+        {
+          id: 'outcomes',
+          name: 'Outcomes',
+          type: 'reference',
+          predicate: 'pursues',
+          schemaId: STRATEGY_IDS.outcomeSchema,
+          minCount: 0,
+          maxCount: -1
+        }
+      ],
+      color: AR_COLOR_GREEN,
+      icon: 'rocket',
+      default_owner: null,
+      key_prefix: 'INIT',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: STRATEGY_IDS.measureSchema,
+      workspace: WORKSPACE_ID,
+      name: 'Measure',
+      category: 'Strategy',
+      description: 'A metric or KPI used to track progress on an Outcome.',
+      fields: [
+        { id: 'description', name: 'Description', type: 'longtext' },
+        { id: 'unit', name: 'Unit', type: 'text' },
+        { id: 'target_value', name: 'Target Value', type: 'number' },
+        {
+          id: 'outcomes',
+          name: 'Outcomes',
+          type: 'reference',
+          predicate: 'measures',
+          schemaId: STRATEGY_IDS.outcomeSchema,
+          minCount: 0,
+          maxCount: -1
+        }
+      ],
+      color: AR_COLOR_ORANGE,
+      icon: 'chart-bar',
+      default_owner: null,
+      key_prefix: 'MEAS',
       created_at: now,
       updated_at: now
     },

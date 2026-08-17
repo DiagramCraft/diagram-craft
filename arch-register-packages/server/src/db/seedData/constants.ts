@@ -52,6 +52,34 @@ export const GLOSSARY_IDS = {
   }
 } as const;
 
+export const STRATEGY_IDS = {
+  statusEnum: '00000000-0000-0000-0000-e00000000010',
+  objectiveSchema: '00000000-0000-0000-0019-000000000001',
+  outcomeSchema: '00000000-0000-0000-001a-000000000001',
+  initiativeSchema: '00000000-0000-0000-001b-000000000001',
+  measureSchema: '00000000-0000-0000-001c-000000000001',
+  objectives: {
+    improveCustomerRetention: '00000000-0000-0000-0019-000000000101',
+    strengthenPlatformReliability: '00000000-0000-0000-0019-000000000102'
+  },
+  outcomes: {
+    reduceChurnRate: '00000000-0000-0000-001a-000000000101',
+    increasePlatformUptime: '00000000-0000-0000-001a-000000000102'
+  },
+  initiatives: {
+    portalRedesign: '00000000-0000-0000-001b-000000000101',
+    observabilityUplift: '00000000-0000-0000-001b-000000000102'
+  },
+  measures: {
+    monthlyChurnRate: '00000000-0000-0000-001c-000000000101',
+    platformUptimePercent: '00000000-0000-0000-001c-000000000102'
+  }
+} as const;
+
+export const OBJECTIVE_AFFECTS_CAPABILITY_RELATION_SCHEMA_ID =
+  '00000000-0000-0000-0000-000000000037';
+export const OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID = '00000000-0000-0000-0000-000000000038';
+
 export const COLLECTION_IDS = {
   criticalSystems: '00000000-0000-0000-0030-000000000001',
   apisToReview: '00000000-0000-0000-0030-000000000002'
@@ -106,6 +134,7 @@ export const seedIds = {
   teams: TEAM_IDS,
   teams2: TEAM2_IDS,
   glossary: GLOSSARY_IDS,
+  strategy: STRATEGY_IDS,
   collections: COLLECTION_IDS,
   technologies: TECHNOLOGY_IDS,
   technologyReleases: TECHNOLOGY_RELEASE_IDS,
