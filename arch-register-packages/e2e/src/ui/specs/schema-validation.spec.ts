@@ -30,7 +30,9 @@ test.describe('schema validation diagnostics', () => {
             name: 'Invalid projection',
             type: 'typedRelation',
             relationSchemaId: DATA_FLOW_RELATION_SCHEMA_ID,
-            direction: 'in'
+            direction: 'in',
+            minCount: 0,
+            maxCount: -1
           }
         ]
       }

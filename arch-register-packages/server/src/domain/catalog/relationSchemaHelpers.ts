@@ -39,11 +39,21 @@ const normalizeRelationEndpoint = (
   value: unknown,
   label: 'in' | 'out',
   knownEntitySchemaIds: Set<string>
-): { schemaIds: string[] | 'any' } => {
+): { schemaIds: string[] | 'any'; label?: string } => {
   httpAssert.json(value, { message: `"${label}" endpoint is required and must be an object` });
-  const schemaIds = (value as Record<string, unknown>).schemaIds;
+  const endpoint = value as Record<string, unknown>;
+  const schemaIds = endpoint.schemaIds;
+  const endpointLabel = endpoint.label;
+  httpAssert.true(endpointLabel === undefined || typeof endpointLabel === 'string', {
+    message: `"${label}.label" must be a string when provided`
+  });
   if (schemaIds === 'any') {
-    return { schemaIds: 'any' };
+    return {
+      schemaIds: 'any',
+      ...(typeof endpointLabel === 'string' && endpointLabel.trim()
+        ? { label: endpointLabel.trim() }
+        : {})
+    };
   }
   httpAssert.true(Array.isArray(schemaIds) && schemaIds.length > 0, {
     message: `"${label}.schemaIds" must be a non-empty array`
@@ -59,7 +69,12 @@ const normalizeRelationEndpoint = (
       message: `"${label}" endpoint references unknown entity schema '${id}'`
     });
   }
-  return { schemaIds: ids };
+  return {
+    schemaIds: ids,
+    ...(typeof endpointLabel === 'string' && endpointLabel.trim()
+      ? { label: endpointLabel.trim() }
+      : {})
+  };
 };
 
 export const normalizeRelationFields = (fields: unknown): RelationField[] => {
@@ -107,6 +122,8 @@ export const buildCreateRelationSchemaInput = (
   const normalizedFields = clearOrphanedGroupIds(normalizeRelationFields(fields), normalizedGroups);
   const validationRules = normalizeValidationRules(validation_rules, normalizedFields);
   assertValidationRulesValid(validationRules, 'relation');
+  const normalizedInEndpoint = normalizeRelationEndpoint(inEndpoint, 'in', knownEntitySchemaIds);
+  const normalizedOutEndpoint = normalizeRelationEndpoint(outEndpoint, 'out', knownEntitySchemaIds);
 
   return {
     id: idFactory(),
@@ -114,8 +131,10 @@ export const buildCreateRelationSchemaInput = (
     name,
     category: normalizeSchemaCategory(category),
     description: typeof description === 'string' ? description : '',
-    in_schema_ids: normalizeRelationEndpoint(inEndpoint, 'in', knownEntitySchemaIds).schemaIds,
-    out_schema_ids: normalizeRelationEndpoint(outEndpoint, 'out', knownEntitySchemaIds).schemaIds,
+    in_schema_ids: normalizedInEndpoint.schemaIds,
+    out_schema_ids: normalizedOutEndpoint.schemaIds,
+    in_label: normalizedInEndpoint.label ?? null,
+    out_label: normalizedOutEndpoint.label ?? null,
     fields: normalizedFields,
     groups: normalizedGroups,
     shared_field_group_links: normalizeSharedFieldGroupLinks(shared_field_group_links),
@@ -185,6 +204,14 @@ export const buildUpdateRelationSchemaInput = (
       outEndpoint !== undefined
         ? normalizeRelationEndpoint(outEndpoint, 'out', knownEntitySchemaIds).schemaIds
         : current.out_schema_ids,
+    in_label:
+      inEndpoint !== undefined
+        ? (normalizeRelationEndpoint(inEndpoint, 'in', knownEntitySchemaIds).label ?? null)
+        : (current.in_label ?? null),
+    out_label:
+      outEndpoint !== undefined
+        ? (normalizeRelationEndpoint(outEndpoint, 'out', knownEntitySchemaIds).label ?? null)
+        : (current.out_label ?? null),
     fields: normalizedFields,
     groups: normalizedGroups,
     shared_field_group_links:
@@ -289,8 +316,14 @@ export const toApiRelationSchema = (
     name: schema.name,
     category: schema.category ?? null,
     description: schema.description,
-    in: { schemaIds: schema.in_schema_ids },
-    out: { schemaIds: schema.out_schema_ids },
+    in: {
+      schemaIds: schema.in_schema_ids,
+      ...(schema.in_label ? { label: schema.in_label } : {})
+    },
+    out: {
+      schemaIds: schema.out_schema_ids,
+      ...(schema.out_label ? { label: schema.out_label } : {})
+    },
     fields,
     groups: (schema.groups ?? []) as RelationSchema['groups'],
     shared_field_group_links: schema.shared_field_group_links ?? [],
@@ -313,8 +346,14 @@ export const toApiRelationSchemaVersion = (
   name: row.name,
   category: row.category ?? null,
   description: row.description,
-  in: { schemaIds: row.in_schema_ids },
-  out: { schemaIds: row.out_schema_ids },
+  in: {
+    schemaIds: row.in_schema_ids,
+    ...(row.in_label ? { label: row.in_label } : {})
+  },
+  out: {
+    schemaIds: row.out_schema_ids,
+    ...(row.out_label ? { label: row.out_label } : {})
+  },
   fields: resolveSelectFieldOptions(row.fields, enums) as RelationSchemaVersion['fields'],
   groups: row.groups as RelationSchemaVersion['groups'],
   validation_rules: row.validation_rules ?? [],

@@ -76,6 +76,13 @@ const collectRelationSourceConstraintsFromPath = (
       };
       constraints.set(JSON.stringify(constraint), constraint);
     }
+    if (step.kind === 'unboundTypedRelation') {
+      const constraint: RelationSourceConstraint = {
+        relationSchemaId: step.relationSchemaId,
+        ownerDirection: step.direction
+      };
+      constraints.set(JSON.stringify(constraint), constraint);
+    }
     if (step.kind !== 'endpoint' && step.filter) {
       collectRelationSourceConstraintsFromNode(step.filter, constraints);
     }
@@ -194,7 +201,7 @@ export const relationPathIsMultiValued = (
   relationSchemas: RelationSchemaCatalog
 ): boolean =>
   path.some(step => {
-    if (step.kind === 'typedRelation') return true;
+    if (step.kind === 'typedRelation' || step.kind === 'unboundTypedRelation') return true;
     if (step.kind === 'endpoint') return false;
     if (step.kind === 'relationBackward') return true;
     if (step.kind === 'relationForward') {
@@ -255,7 +262,7 @@ export const resolveProjectionPathSchemaInfo = (
       continue;
     }
 
-    if (step.kind === 'typedRelation') {
+    if (step.kind === 'typedRelation' || step.kind === 'unboundTypedRelation') {
       const relationSchema = relationSchemas.get(step.relationSchemaId);
       const endpointSchemaIds =
         step.direction === 'out' ? relationSchema?.in_schema_ids : relationSchema?.out_schema_ids;

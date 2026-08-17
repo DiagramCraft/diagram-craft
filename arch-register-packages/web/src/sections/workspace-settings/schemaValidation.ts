@@ -1,5 +1,5 @@
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
-import type { EntitySchema, TypedRelationField } from '@arch-register/api-types/schemaContract';
+import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 
 export type SchemaValidationSeverity = 'warning' | 'error';
 
@@ -13,10 +13,7 @@ export type SchemaValidationNavigationTarget =
   | { kind: 'relation-schema'; id: string };
 
 export type SchemaValidationIssue = {
-  code:
-    | 'TYPED_RELATION_PROJECTION_MISSING'
-    | 'TYPED_RELATION_PROJECTION_DANGLING'
-    | 'TYPED_RELATION_PROJECTION_NOT_ALLOWED';
+  code: 'TYPED_RELATION_PROJECTION_DANGLING' | 'TYPED_RELATION_PROJECTION_NOT_ALLOWED';
   severity: SchemaValidationSeverity;
   relationSchemaId: string | null;
   entitySchemaId: string;
@@ -47,65 +44,18 @@ const issueSortKey = (issue: SchemaValidationIssue): string =>
     issue.code
   ].join('\u0000');
 
-const typedRelationFields = (schema: EntitySchema): TypedRelationField[] =>
-  schema.fields.filter(
-    (field): field is TypedRelationField => field.type === 'typedRelation' && !field.archived
-  );
-
 /**
- * Checks structural consistency between relation endpoint constraints and entity-schema
- * typedRelation projections. This is intentionally pure and advisory: it does not validate
- * records or mutate either schema collection.
+ * Checks structural consistency for declared typedRelation projections. Relation endpoint
+ * constraints are authoritative, while projections are optional and therefore do not produce
+ * diagnostics when an allowed entity schema has no corresponding field.
  */
 export const validateWorkspaceSchemas = (
   schemas: EntitySchema[],
   relationSchemas: RelationSchema[]
 ): SchemaValidationIssue[] => {
   const sortedSchemas = [...schemas].sort(byNameThenId);
-  const sortedRelations = [...relationSchemas].sort(byNameThenId);
-  const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
   const relationById = new Map(relationSchemas.map(relation => [relation.id, relation]));
   const issues: SchemaValidationIssue[] = [];
-
-  for (const relation of sortedRelations) {
-    for (const direction of ['in', 'out'] as const) {
-      const endpoint = relation[direction];
-      const endpointSchemaIds =
-        endpoint.schemaIds === 'any'
-          ? sortedSchemas.map(schema => schema.id)
-          : [...new Set(endpoint.schemaIds)].sort();
-
-      for (const entitySchemaId of endpointSchemaIds) {
-        const entitySchema = schemaById.get(entitySchemaId);
-        if (!entitySchema) continue;
-
-        const matchingFields = typedRelationFields(entitySchema).filter(
-          field => field.relationSchemaId === relation.id && field.direction === direction
-        );
-        if (matchingFields.length > 0) continue;
-
-        issues.push({
-          code: 'TYPED_RELATION_PROJECTION_MISSING',
-          severity: 'warning',
-          relationSchemaId: relation.id,
-          entitySchemaId,
-          direction,
-          fieldId: null,
-          message: `${entitySchema.name} does not expose ${relation.name} at the ${direction} endpoint.`,
-          mitigation: `Add an active typedRelation field referencing ${relation.name} with direction “${direction}”.`,
-          resources: [
-            { kind: 'entity-schema', id: entitySchema.id },
-            { kind: 'relation-schema', id: relation.id }
-          ],
-          navigationTargets: [
-            { kind: 'entity-schema', id: entitySchema.id },
-            { kind: 'relation-schema', id: relation.id }
-          ],
-          expected: { relationSchemaId: relation.id, direction }
-        });
-      }
-    }
-  }
 
   for (const entitySchema of sortedSchemas) {
     for (const field of entitySchema.fields) {

@@ -111,7 +111,7 @@ runContractSuiteAgainstBothDrivers('seededEntityQuery', getDb => {
       projectScope: 'project',
       view: 'summary'
     });
-    expect(result.total).toBe(6);
+    expect(result.total).toBe(7);
 
     const authMigrationAdapter = result.items.find(
       item => item._uid === seededEntities.default.authMigrationAdapter.id

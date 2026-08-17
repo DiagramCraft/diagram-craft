@@ -43,19 +43,15 @@ describe('validateWorkspaceSchemas', () => {
     ).toEqual([]);
   });
 
-  it('requires both projections when one entity schema is allowed at both endpoints', () => {
-    const issues = validateWorkspaceSchemas(
-      [schema('system', 'System', [typedRelation('outgoing', 'relation-1', 'out')])],
-      [relation({ in: { schemaIds: ['system'] }, out: { schemaIds: ['system'] } })]
-    );
+  it('allows a relation to have one or no entity-schema projections', () => {
+    expect(
+      validateWorkspaceSchemas(
+        [schema('system', 'System', [typedRelation('outgoing', 'relation-1', 'out')])],
+        [relation({ in: { schemaIds: ['system'] }, out: { schemaIds: ['system'] } })]
+      )
+    ).toEqual([]);
 
-    expect(issues).toHaveLength(1);
-    expect(issues[0]).toMatchObject({
-      code: 'TYPED_RELATION_PROJECTION_MISSING',
-      entitySchemaId: 'system',
-      direction: 'in',
-      expected: { relationSchemaId: 'relation-1', direction: 'in' }
-    });
+    expect(validateWorkspaceSchemas([schema('system', 'System')], [relation()])).toEqual([]);
   });
 
   it('expands wildcard endpoints to every current entity schema', () => {
@@ -68,9 +64,7 @@ describe('validateWorkspaceSchemas', () => {
       [relation({ in: { schemaIds: 'any' }, out: { schemaIds: 'any' } })]
     );
 
-    expect(issues.filter(issue => issue.code === 'TYPED_RELATION_PROJECTION_MISSING')).toHaveLength(
-      4
-    );
+    expect(issues).toEqual([]);
   });
 
   it('reports dangling and disallowed active projections', () => {
@@ -98,14 +92,13 @@ describe('validateWorkspaceSchemas', () => {
     );
   });
 
-  it('does not let archived fields satisfy a projection check', () => {
+  it('does not validate archived projections beyond dangling or endpoint checks', () => {
     const issues = validateWorkspaceSchemas(
       [schema('application', 'Application', [typedRelation('uses', 'relation-1', 'out', true)])],
       [relation()]
     );
 
-    expect(issues).toHaveLength(1);
-    expect(issues.every(issue => issue.code === 'TYPED_RELATION_PROJECTION_MISSING')).toBe(true);
+    expect(issues).toEqual([]);
   });
 
   it('keeps output deterministic and ignores duplicate matching fields', () => {
@@ -120,7 +113,6 @@ describe('validateWorkspaceSchemas', () => {
       [relation({ in: { schemaIds: ['a'] }, out: { schemaIds: ['z'] } })]
     );
 
-    expect(issues).toHaveLength(1);
-    expect(issues[0]).toMatchObject({ entitySchemaId: 'a', direction: 'in' });
+    expect(issues).toEqual([]);
   });
 });

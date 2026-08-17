@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { TbChevronRight } from 'react-icons/tb';
+import { TbChevronRight, TbPencil, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import type {
   RelationField,
@@ -60,7 +60,9 @@ export const RelationRecordCard = ({
   workspaceId,
   expanded,
   onToggleExpand,
-  onViewHistory
+  onViewHistory,
+  onEdit,
+  onDelete
 }: {
   record: RelationRecord;
   direction: RelationDirection;
@@ -69,6 +71,8 @@ export const RelationRecordCard = ({
   expanded: boolean;
   onToggleExpand: () => void;
   onViewHistory: () => void;
+  onEdit?: () => void;
+  onDelete?: () => void;
 }) => {
   const otherEndpoint = direction === 'outgoing' ? record._out : record._in;
   const activeFields = (relationSchema?.fields ?? []).filter(f => !f.archived);
@@ -137,6 +141,36 @@ export const RelationRecordCard = ({
             )}
           </span>
         </div>
+        {(onEdit || onDelete) && (
+          <div style={{ display: 'flex', gap: 4 }}>
+            {onEdit && (
+              <Button
+                variant="icon-only"
+                size="sm"
+                icon={<TbPencil size={14} />}
+                aria-label="Edit relation"
+                title="Edit relation"
+                onClick={event => {
+                  event.stopPropagation();
+                  onEdit();
+                }}
+              />
+            )}
+            {onDelete && (
+              <Button
+                variant="icon-only"
+                size="sm"
+                icon={<TbTrash size={14} />}
+                aria-label="Delete relation"
+                title="Delete relation"
+                onClick={event => {
+                  event.stopPropagation();
+                  onDelete();
+                }}
+              />
+            )}
+          </div>
+        )}
       </div>
       {expanded && (
         <div style={{ padding: '8px 10px 4px 16px' }}>

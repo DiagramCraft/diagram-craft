@@ -305,6 +305,13 @@
   cursor: pointer;
 }
 
+.futurePlansPage {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  padding: 16px 24px 32px;
+}
+
 .futurePlanApply:hover {
   background: color-mix(in oklch, var(--accent-fg) 10%, transparent);
 }

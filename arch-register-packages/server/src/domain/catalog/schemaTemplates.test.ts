@@ -105,10 +105,40 @@ describe('instantiateTemplate', () => {
     expect(outcome).toBeDefined();
     expect(initiative).toBeDefined();
     expect(measure).toBeDefined();
+    expect(objective?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'supported_entities',
+          name: 'Supports',
+          type: 'typedRelation',
+          direction: 'in'
+        }),
+        expect.objectContaining({
+          id: 'affected_entities',
+          name: 'Affects',
+          type: 'typedRelation',
+          direction: 'in'
+        })
+      ])
+    );
 
     const relationNames = definitions.relationSchemas.map(schema => schema.name);
-    expect(relationNames).toContain('Objective Supports Capability');
+    expect(relationNames).toContain('Objective Supports Entity');
     expect(relationNames).toContain('Objective Affects Entity');
+    expect(definitions.relationSchemas).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          name: 'Objective Supports Entity',
+          in_label: 'Supports Entities',
+          out_label: 'Supported by Objective'
+        }),
+        expect.objectContaining({
+          name: 'Objective Affects Entity',
+          in_label: 'Affects Entities',
+          out_label: 'Affected by Objective'
+        })
+      ])
+    );
     for (const relationSchema of definitions.relationSchemas) {
       expect(relationSchema.in_schema_ids).toEqual([objective?.id]);
       expect(relationSchema.out_schema_ids).toBe('any');
@@ -263,6 +293,8 @@ describe('instantiateTemplate', () => {
     expect(contract?.fields).not.toContainEqual(expect.objectContaining({ id: 'vendor_name' }));
     expect(relation?.in_schema_ids).toEqual([system?.id]);
     expect(relation?.out_schema_ids).toEqual([contract?.id]);
+    expect(relation?.in_label).toBe('Uses Contract');
+    expect(relation?.out_label).toBe('Used by System');
     expect(purpose).toMatchObject({
       type: 'select',
       enumId: definitions.enums.find(e => e.name === 'Contract Purpose')?.id
@@ -295,8 +327,12 @@ describe('instantiateTemplate', () => {
 
     expect(provides?.in_schema_ids).toEqual([component?.id, system?.id]);
     expect(provides?.out_schema_ids).toEqual([api?.id]);
+    expect(provides?.in_label).toBe('Provides APIs');
+    expect(provides?.out_label).toBe('Provided by Component or System');
     expect(consumes?.in_schema_ids).toEqual([component?.id, system?.id]);
     expect(consumes?.out_schema_ids).toEqual([api?.id]);
+    expect(consumes?.in_label).toBe('Consumes APIs');
+    expect(consumes?.out_label).toBe('Consumed by Component or System');
     expect(component?.fields).toContainEqual(
       expect.objectContaining({
         id: 'provides_apis',
@@ -453,8 +489,12 @@ describe('instantiateTemplate', () => {
 
     expect(riskControl?.in_schema_ids).toEqual([risk?.id]);
     expect(riskControl?.out_schema_ids).toEqual([control?.id]);
+    expect(riskControl?.in_label).toBe('Mitigated by Control');
+    expect(riskControl?.out_label).toBe('Mitigates Risk');
     expect(controlRequirement?.in_schema_ids).toEqual([control?.id]);
     expect(controlRequirement?.out_schema_ids).toEqual([complianceRequirement?.id]);
+    expect(controlRequirement?.in_label).toBe('Satisfies Compliance Requirements');
+    expect(controlRequirement?.out_label).toBe('Satisfied by Control');
 
     expect(risk?.fields).toContainEqual(
       expect.objectContaining({

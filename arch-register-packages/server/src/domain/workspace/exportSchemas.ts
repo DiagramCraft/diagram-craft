@@ -157,6 +157,8 @@ const exportRelationSchemaSchema = z
     description: z.string(),
     in_schema_ids: z.union([z.array(z.string()), z.literal('any')]),
     out_schema_ids: z.union([z.array(z.string()), z.literal('any')]),
+    in_label: z.string().nullable().optional(),
+    out_label: z.string().nullable().optional(),
     fields: z.array(z.unknown()),
     groups: z.array(z.unknown()).optional(),
     shared_field_group_links: z.array(z.unknown()).optional(),

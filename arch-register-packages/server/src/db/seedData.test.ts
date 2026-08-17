@@ -1,9 +1,10 @@
 import { describe, expect, it } from 'vitest';
 import { seedEntities } from './seedData/entities';
 import { seedRelationSchemas, seedRelations } from './seedData/relations';
-import { seedAssessments } from './seedData/projects';
+import { seedAssessments, seedProjectEntities } from './seedData/projects';
 import { seedEnums, seedSchemas } from './seedData/catalog';
-import { GLOSSARY_IDS } from './seedData/constants';
+import { GLOSSARY_IDS, STRATEGY_IDS } from './seedData/constants';
+import { seededProjects } from './seedFixtures';
 import { seedAssessmentTypes } from './seedData/workspace';
 import { seedWorkspaceDashboards } from './seedData/views';
 import { materializeDerivedFields } from '../domain/derived/derivedFields';
@@ -178,11 +179,15 @@ describe('API participation seed data', () => {
       '00000000-0000-0000-0000-000000000002'
     ]);
     expect(provides?.out_schema_ids).toEqual([api?.id]);
+    expect(provides?.in_label).toBe('Provides APIs');
+    expect(provides?.out_label).toBe('Provided by Component or System');
     expect(consumes?.in_schema_ids).toEqual([
       component?.id,
       '00000000-0000-0000-0000-000000000002'
     ]);
     expect(consumes?.out_schema_ids).toEqual([api?.id]);
+    expect(consumes?.in_label).toBe('Consumes APIs');
+    expect(consumes?.out_label).toBe('Consumed by Component or System');
     expect(component?.fields).toContainEqual(
       expect.objectContaining({
         id: 'provides_apis',
@@ -250,13 +255,17 @@ describe('API participation seed data', () => {
       schema => schema.name === 'Compliance Requirement'
     );
     expect(riskAffects?.in_schema_ids).toEqual([risk?.id]);
-    expect(riskAffects?.out_schema_ids).toEqual(RISK_AFFECTS_TARGET_SCHEMA_IDS);
+    expect(riskAffects?.out_schema_ids).toBe('any');
+    expect(riskAffects?.in_label).toBe('Affects Entities');
+    expect(riskAffects?.out_label).toBe('Affected by Risk');
+    expect(riskMitigation?.in_label).toBe('Mitigated by Control');
+    expect(riskMitigation?.out_label).toBe('Mitigates Risk');
+    expect(controlCompliance?.in_label).toBe('Satisfies Compliance Requirements');
+    expect(controlCompliance?.out_label).toBe('Satisfied by Control');
     for (const schemaId of RISK_AFFECTS_TARGET_SCHEMA_IDS) {
       const schema = seedSchemas.find(candidate => candidate.id === schemaId);
-      expect(schema?.fields).toContainEqual(
+      expect(schema?.fields).not.toContainEqual(
         expect.objectContaining({
-          id: 'affected_by_risks',
-          type: 'typedRelation',
           relationSchemaId: riskAffects?.id,
           direction: 'out'
         })
@@ -327,6 +336,7 @@ describe('API participation seed data', () => {
         ['out', relation.out_schema_ids]
       ] as const) {
         if (schemaIds === 'any') continue;
+        if (relation.name === 'Risk Affects' && direction === 'out') continue;
         for (const schemaId of schemaIds) {
           const schema = schemasById.get(schemaId);
           expect(schema, `${relation.name} ${direction} endpoint schema`).toBeDefined();
@@ -345,5 +355,34 @@ describe('API participation seed data', () => {
         }
       }
     }
+  });
+});
+
+describe('strategy project context seed data', () => {
+  it('associates strategy examples with projects through project entities', () => {
+    expect(seedProjectEntities).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          project_id: seededProjects.portalRedesign.id,
+          entity_id: STRATEGY_IDS.objectives.improveCustomerRetention,
+          entity_type_id: null
+        }),
+        expect.objectContaining({
+          project_id: seededProjects.authMigration.id,
+          entity_id: STRATEGY_IDS.objectives.strengthenPlatformReliability,
+          entity_type_id: null
+        }),
+        expect.objectContaining({
+          project_id: seededProjects.portalRedesign.id,
+          entity_id: STRATEGY_IDS.initiatives.portalRedesign,
+          entity_type_id: null
+        }),
+        expect.objectContaining({
+          project_id: seededProjects.checkoutRevamp.id,
+          entity_id: STRATEGY_IDS.initiatives.observabilityUplift,
+          entity_type_id: null
+        })
+      ])
+    );
   });
 });

@@ -508,6 +508,77 @@ describe('parseEntityQueryText — typed scalar relation fields', () => {
       }
     });
   });
+
+  it('parses and prints an unbound outgoing typed relation hop', () => {
+    const result = parseEntityQueryText(
+      'schema:System ->"Data Flow"[status = "active"]._name = "Target"',
+      schemas,
+      enums,
+      null,
+      relationSchemas
+    );
+
+    expect(result).toEqual({
+      ok: true,
+      query: {
+        root: {
+          kind: 'and',
+          children: [
+            {
+              kind: 'predicate',
+              path: [],
+              fieldId: '_schemaId',
+              op: 'equals',
+              value: SYSTEM.id
+            },
+            {
+              kind: 'predicate',
+              path: [
+                {
+                  kind: 'unboundTypedRelation',
+                  relationSchemaId: DATA_FLOW.id,
+                  direction: 'in',
+                  filter: {
+                    kind: 'predicate',
+                    path: [],
+                    fieldId: 'status',
+                    op: 'equals',
+                    value: 'active'
+                  }
+                }
+              ],
+              fieldId: '_name',
+              op: 'equals',
+              value: 'Target'
+            }
+          ]
+        }
+      }
+    });
+    if (result.ok) {
+      expect(printEntityQueryText(result.query, schemas, relationSchemas)).toBe(
+        'schema:System AND ->"Data Flow"[status = "active"]._name = "Target"'
+      );
+    }
+  });
+
+  it('parses a quoted unbound incoming typed relation as relationExists', () => {
+    expect(parseEntityQueryText('<-"Data Flow"', schemas, enums, null, relationSchemas)).toEqual({
+      ok: true,
+      query: {
+        root: {
+          kind: 'relationExists',
+          path: [
+            {
+              kind: 'unboundTypedRelation',
+              relationSchemaId: DATA_FLOW.id,
+              direction: 'out'
+            }
+          ]
+        }
+      }
+    });
+  });
 });
 
 describe('parseEntityQueryText — entity-valued relation fields (#2670)', () => {

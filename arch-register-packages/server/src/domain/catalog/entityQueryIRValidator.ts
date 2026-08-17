@@ -406,6 +406,26 @@ const validatePathSteps = (
           authCtx
         );
       }
+    } else if (step.kind === 'unboundTypedRelation') {
+      const relationSchema = relationSchemas.get(step.relationSchemaId);
+      if (!relationSchema) {
+        errors.push({
+          path: [...stepPath, 'relationSchemaId'],
+          message: `Unknown relation schema '${step.relationSchemaId}'`
+        });
+      }
+      if (step.filter && relationSchema) {
+        hopsUsed = validateRelationNode(
+          step.filter,
+          step.relationSchemaId,
+          schemas,
+          relationSchemas,
+          [...stepPath, 'filter'],
+          hopsUsed,
+          errors,
+          authCtx
+        );
+      }
     } else {
       if (!isKnownFieldId(step.fieldId, schemas, authCtx)) {
         errors.push({
@@ -418,6 +438,7 @@ const validatePathSteps = (
     if (
       step.kind !== 'endpoint' &&
       step.kind !== 'typedRelation' &&
+      step.kind !== 'unboundTypedRelation' &&
       step.kind !== 'relationBackward' &&
       step.filter
     ) {
@@ -606,6 +627,8 @@ const projectionAlias = (projection: NonNullable<EntityQuery['projections']>[num
           return `<-${step.ownerSchemaId}.${step.fieldId}`;
         case 'typedRelation':
           return `${step.fieldId}[${step.relationSchemaId}]`;
+        case 'unboundTypedRelation':
+          return `${step.direction === 'in' ? '->' : '<-'}${step.relationSchemaId}`;
         case 'endpoint':
           return `endpoint(${step.direction})`;
         case 'relationForward':
@@ -723,11 +746,14 @@ export const validateEntityQueryIR = (
     }
     const relationProjectionStep =
       projection.source === 'relation'
-        ? [...projection.path].reverse().find(step => step.kind === 'typedRelation')
+        ? [...projection.path]
+            .reverse()
+            .find(step => step.kind === 'typedRelation' || step.kind === 'unboundTypedRelation')
         : undefined;
     if (
       projection.source === 'relation' &&
-      projection.path[projection.path.length - 1]?.kind !== 'typedRelation'
+      projection.path[projection.path.length - 1]?.kind !== 'typedRelation' &&
+      projection.path[projection.path.length - 1]?.kind !== 'unboundTypedRelation'
     ) {
       errors.push({
         path: [...projectionPath, 'source'],

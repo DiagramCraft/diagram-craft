@@ -149,6 +149,8 @@ export type SymbolicRelationSchema = {
   name: string;
   description: string;
   category: string;
+  inLabel: string;
+  outLabel: string;
   inSymSchemaIds: string[] | 'any';
   outSymSchemaIds: string[] | 'any';
   fields: Array<{
@@ -203,6 +205,8 @@ const apiProviderRelationSchema: SymbolicRelationSchema = {
   name: 'Provides API',
   description: 'Associates a Component or System with an API it provides.',
   category: 'Architecture',
+  inLabel: 'Provides APIs',
+  outLabel: 'Provided by Component or System',
   inSymSchemaIds: ['component', 'system'],
   outSymSchemaIds: ['api'],
   fields: [],
@@ -215,6 +219,8 @@ const apiConsumerRelationSchema: SymbolicRelationSchema = {
   name: 'Consumes API',
   description: 'Associates a Component or System with an API it consumes.',
   category: 'Architecture',
+  inLabel: 'Consumes APIs',
+  outLabel: 'Consumed by Component or System',
   inSymSchemaIds: ['component', 'system'],
   outSymSchemaIds: ['api'],
   fields: [],
@@ -632,7 +638,25 @@ const strategySchemas: TemplateSchema[] = [
     fields: [
       { id: 'description', name: 'Description', type: 'longtext' },
       { id: 'status', name: 'Status', type: 'select', enumId: 'strategy-status' },
-      { id: 'target_date', name: 'Target Date', type: 'date' }
+      { id: 'target_date', name: 'Target Date', type: 'date' },
+      {
+        id: 'supported_entities',
+        name: 'Supports',
+        type: 'typedRelation',
+        symRelationSchemaId: 'objective-supports-entity',
+        direction: 'in',
+        minCount: 0,
+        maxCount: -1
+      },
+      {
+        id: 'affected_entities',
+        name: 'Affects',
+        type: 'typedRelation',
+        symRelationSchemaId: 'objective-affects-entity',
+        direction: 'in',
+        minCount: 0,
+        maxCount: -1
+      }
     ]
   },
   {
@@ -711,10 +735,12 @@ const strategySchemas: TemplateSchema[] = [
 
 const strategyRelationSchemas: SymbolicRelationSchema[] = [
   {
-    symId: 'objective-affects-capability',
-    name: 'Objective Supports Capability',
-    description: 'Associates an Objective with a capability it depends on or is realized by.',
+    symId: 'objective-supports-entity',
+    name: 'Objective Supports Entity',
+    description: 'Associates an Objective with an entity that supports or enables it.',
     category: 'Strategy',
+    inLabel: 'Supports Entities',
+    outLabel: 'Supported by Objective',
     inSymSchemaIds: ['objective'],
     outSymSchemaIds: 'any',
     fields: [],
@@ -726,6 +752,8 @@ const strategyRelationSchemas: SymbolicRelationSchema[] = [
     name: 'Objective Affects Entity',
     description: 'Associates an Objective with an architecture entity it affects.',
     category: 'Strategy',
+    inLabel: 'Affects Entities',
+    outLabel: 'Affected by Objective',
     inSymSchemaIds: ['objective'],
     outSymSchemaIds: 'any',
     fields: [],
@@ -865,11 +893,11 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 1,
             maxCount: 1
           },
-          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'in'),
-          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'in'),
+          apiParticipationField('provides_apis', 'Provides APIs', 'provides-api', 'in'),
+          apiParticipationField('consumes_apis', 'Consumes APIs', 'consumes-api', 'in'),
           {
             id: 'contracts',
-            name: 'Contracts',
+            name: 'Uses',
             type: 'typedRelation',
             symRelationSchemaId: 'system-contract',
             direction: 'out',
@@ -890,15 +918,15 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           technologyReleaseReference(),
           {
             id: 'system',
-            name: 'System',
+            name: 'Used by',
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'system',
             minCount: 1,
             maxCount: 1
           },
-          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'in'),
-          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'in'),
+          apiParticipationField('provides_apis', 'Provides APIs', 'provides-api', 'in'),
+          apiParticipationField('consumes_apis', 'Consumes APIs', 'consumes-api', 'in'),
           {
             id: 'depends_on',
             name: 'Depends On',
@@ -930,8 +958,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             maxCount: 1
           },
           { id: 'api_version', name: 'API Version', type: 'text' },
-          apiParticipationField('providers', 'Providers', 'provides-api', 'out'),
-          apiParticipationField('consumers', 'Consumers', 'consumes-api', 'out')
+          apiParticipationField('providers', 'Provided by', 'provides-api', 'out'),
+          apiParticipationField('consumers', 'Consumed by', 'consumes-api', 'out')
         ],
         sharedFieldGroupIds: ['pii-classification']
       },
@@ -1011,6 +1039,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         description:
           'Associates a System with a vendor Contract and records the agreement purpose.',
         category: 'Architecture',
+        inLabel: 'Uses Contract',
+        outLabel: 'Used by System',
         inSymSchemaIds: ['system'],
         outSymSchemaIds: ['contract'],
         fields: [
@@ -1072,8 +1102,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 0,
             maxCount: 1
           },
-          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'in'),
-          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'in')
+          apiParticipationField('provides_apis', 'Provides APIs', 'provides-api', 'in'),
+          apiParticipationField('consumes_apis', 'Consumes APIs', 'consumes-api', 'in')
         ]
       },
       {
@@ -1095,8 +1125,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             maxCount: 1
           },
           { id: 'api_version', name: 'API Version', type: 'text' },
-          apiParticipationField('providers', 'Providers', 'provides-api', 'out'),
-          apiParticipationField('consumers', 'Consumers', 'consumes-api', 'out')
+          apiParticipationField('providers', 'Provided by', 'provides-api', 'out'),
+          apiParticipationField('consumers', 'Consumed by', 'consumes-api', 'out')
         ]
       },
       {
@@ -1119,8 +1149,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             minCount: 0,
             maxCount: 1
           },
-          apiParticipationField('provides_apis', 'Provided APIs', 'provides-api', 'in'),
-          apiParticipationField('consumes_apis', 'Consumed APIs', 'consumes-api', 'in')
+          apiParticipationField('provides_apis', 'Provides APIs', 'provides-api', 'in'),
+          apiParticipationField('consumes_apis', 'Consumes APIs', 'consumes-api', 'in')
         ]
       },
       {
@@ -1888,7 +1918,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           { id: 'treatment_target_date', name: 'Treatment Target Date', type: 'date' },
           {
             id: 'mitigating_controls',
-            name: 'Mitigating Controls',
+            name: 'Mitigated by',
             type: 'typedRelation',
             symRelationSchemaId: 'risk-control',
             direction: 'in',
@@ -1921,7 +1951,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           { id: 'last_verified', name: 'Last Verified', type: 'date' },
           {
             id: 'mitigated_risks',
-            name: 'Mitigated Risks',
+            name: 'Mitigates',
             type: 'typedRelation',
             symRelationSchemaId: 'risk-control',
             direction: 'out',
@@ -1930,7 +1960,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           },
           {
             id: 'satisfied_requirements',
-            name: 'Satisfied Requirements',
+            name: 'Satisfies',
             type: 'typedRelation',
             symRelationSchemaId: 'control-requirement',
             direction: 'in',
@@ -1974,7 +2004,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           },
           {
             id: 'satisfying_controls',
-            name: 'Satisfying Controls',
+            name: 'Satisfied by',
             type: 'typedRelation',
             symRelationSchemaId: 'control-requirement',
             direction: 'out',
@@ -1991,6 +2021,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'Risk Mitigation',
         description: 'Associates a Risk with the Controls that mitigate it.',
         category: 'Governance',
+        inLabel: 'Mitigated by Control',
+        outLabel: 'Mitigates Risk',
         inSymSchemaIds: ['risk'],
         outSymSchemaIds: ['control'],
         fields: [],
@@ -2002,6 +2034,8 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         name: 'Control Compliance',
         description: 'Records that a Control satisfies a ComplianceRequirement.',
         category: 'Governance',
+        inLabel: 'Satisfies Compliance Requirements',
+        outLabel: 'Satisfied by Control',
         inSymSchemaIds: ['control'],
         outSymSchemaIds: ['compliance_requirement'],
         fields: [],
@@ -2126,7 +2160,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     category: 'cross-cutting',
     name: 'Strategy',
     description:
-      'Strategic objectives, outcomes, initiatives, and measures, linked to capabilities and entities.',
+      'Strategic objectives, outcomes, initiatives, and measures, linked to supporting and affected entities.',
     schemas: strategySchemas,
     enums: [strategyStatusEnum],
     relationSchemas: strategyRelationSchemas,
@@ -2209,6 +2243,14 @@ const resolvePathStepSchemaIds = (
         ...step,
         relationSchemaId: relationSchemaIdMap.get(step.relationSchemaId) ?? step.relationSchemaId,
         ownerSchemaIds: step.ownerSchemaIds.map(symId => idMap.get(symId) ?? symId),
+        ...(step.filter && {
+          filter: resolveEntityQueryNodeSchemaIds(step.filter, idMap, relationSchemaIdMap)
+        })
+      };
+    case 'unboundTypedRelation':
+      return {
+        ...step,
+        relationSchemaId: relationSchemaIdMap.get(step.relationSchemaId) ?? step.relationSchemaId,
         ...(step.filter && {
           filter: resolveEntityQueryNodeSchemaIds(step.filter, idMap, relationSchemaIdMap)
         })
@@ -2584,6 +2626,8 @@ export const instantiateTemplateDefinitions = (
       description: relationSchema.description,
       in_schema_ids: resolveEndpointSchemaIds(relationSchema.inSymSchemaIds),
       out_schema_ids: resolveEndpointSchemaIds(relationSchema.outSymSchemaIds),
+      in_label: relationSchema.inLabel,
+      out_label: relationSchema.outLabel,
       fields: relationSchema.fields.map(
         field =>
           ({

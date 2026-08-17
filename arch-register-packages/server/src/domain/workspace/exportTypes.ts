@@ -130,6 +130,8 @@ export type ExportRelationSchema = {
   description: string;
   in_schema_ids: string[] | 'any';
   out_schema_ids: string[] | 'any';
+  in_label?: string | null;
+  out_label?: string | null;
   fields: RelationField[];
   groups?: RelationSchemaGroup[];
   shared_field_group_links?: SharedFieldGroupLink[];

@@ -177,6 +177,7 @@ export const kindAfterStep = (step: PathStep, currentKind: QueryRootKind): Query
     case 'backward':
     case 'endpoint':
     case 'typedRelation':
+    case 'unboundTypedRelation':
     case 'relationForward':
       return 'entity';
     case 'relationBackward':

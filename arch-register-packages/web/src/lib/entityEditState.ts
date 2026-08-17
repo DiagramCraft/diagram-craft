@@ -19,6 +19,8 @@ export type TypedRelationFieldEditState = {
   create: RelationRecordDraft[];
   update: Map<string, Record<string, unknown>>;
   remove: Set<string>;
+  relationSchemaId?: string;
+  direction?: 'in' | 'out';
 };
 
 export type TypedRelationEditState = Record<string, TypedRelationFieldEditState>;
@@ -38,6 +40,10 @@ export const typedRelationEditStateToDeltas = (state: TypedRelationEditState): R
   for (const [fieldId, fieldState] of Object.entries(state)) {
     if (typedRelationFieldStateIsEmpty(fieldState)) continue;
     result[fieldId] = {
+      ...(fieldState.relationSchemaId !== undefined
+        ? { relationSchemaId: fieldState.relationSchemaId }
+        : {}),
+      ...(fieldState.direction !== undefined ? { direction: fieldState.direction } : {}),
       ...(fieldState.create.length > 0 ? { create: fieldState.create } : {}),
       ...(fieldState.update.size > 0
         ? { update: [...fieldState.update.entries()].map(([id, data]) => ({ id, data })) }

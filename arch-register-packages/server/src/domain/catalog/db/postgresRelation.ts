@@ -32,9 +32,9 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
     try {
       const rows = (await this.sql`
         INSERT INTO relation_schema
-          (id, workspace, name, category, description, in_schema_ids, out_schema_ids, fields, groups, shared_field_group_links, validation_rules, color, icon, relation_approval_policy, version, created_at, updated_at)
+          (id, workspace, name, category, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, shared_field_group_links, validation_rules, color, icon, relation_approval_policy, version, created_at, updated_at)
         VALUES
-          (${input.id}, ${input.workspace}, ${input.name}, ${input.category ?? null}, ${input.description}, ${this.json(input.in_schema_ids)}, ${this.json(input.out_schema_ids)}, ${this.json(input.fields)}, ${this.json(input.groups ?? [])}, ${this.json(input.shared_field_group_links ?? [])}, ${this.json(input.validation_rules ?? [])}, ${input.color}, ${input.icon}, ${input.relation_approval_policy ?? 'disabled'}, ${input.version ?? 1}, ${input.created_at}, ${input.updated_at})
+          (${input.id}, ${input.workspace}, ${input.name}, ${input.category ?? null}, ${input.description}, ${this.json(input.in_schema_ids)}, ${this.json(input.out_schema_ids)}, ${input.in_label ?? null}, ${input.out_label ?? null}, ${this.json(input.fields)}, ${this.json(input.groups ?? [])}, ${this.json(input.shared_field_group_links ?? [])}, ${this.json(input.validation_rules ?? [])}, ${input.color}, ${input.icon}, ${input.relation_approval_policy ?? 'disabled'}, ${input.version ?? 1}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `) as DatabaseRow[];
       const [row] = rows;
@@ -56,6 +56,8 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
             description = ${input.description},
             in_schema_ids = ${this.json(input.in_schema_ids)},
             out_schema_ids = ${this.json(input.out_schema_ids)},
+            in_label = ${input.in_label ?? null},
+            out_label = ${input.out_label ?? null},
             fields = ${this.json(input.fields)},
             groups = ${this.json(input.groups ?? [])},
             shared_field_group_links = ${this.json(input.shared_field_group_links ?? [])},
@@ -100,9 +102,9 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
   async createRelationSchemaVersion(input: RelationSchemaVersionDbCreate) {
     const [row] = (await this.sql`
       INSERT INTO relation_schema_version
-        (id, workspace, schema_id, version, name, category, description, in_schema_ids, out_schema_ids, fields, groups, validation_rules, color, icon, change_summary, created_by, created_at)
+        (id, workspace, schema_id, version, name, category, description, in_schema_ids, out_schema_ids, in_label, out_label, fields, groups, validation_rules, color, icon, change_summary, created_by, created_at)
       VALUES
-        (${input.id}, ${input.workspace}, ${input.schema_id}, ${input.version}, ${input.name}, ${input.category ?? null}, ${input.description}, ${this.json(input.in_schema_ids)}, ${this.json(input.out_schema_ids)}, ${this.json(input.fields)}, ${this.json(input.groups)}, ${this.json(input.validation_rules ?? [])}, ${input.color}, ${input.icon}, ${this.json(input.change_summary)}, ${input.created_by}, ${input.created_at})
+        (${input.id}, ${input.workspace}, ${input.schema_id}, ${input.version}, ${input.name}, ${input.category ?? null}, ${input.description}, ${this.json(input.in_schema_ids)}, ${this.json(input.out_schema_ids)}, ${input.in_label ?? null}, ${input.out_label ?? null}, ${this.json(input.fields)}, ${this.json(input.groups)}, ${this.json(input.validation_rules ?? [])}, ${input.color}, ${input.icon}, ${this.json(input.change_summary)}, ${input.created_by}, ${input.created_at})
       RETURNING *
     `) as DatabaseRow[];
     return relationMappers.relationSchemaVersion(row!);

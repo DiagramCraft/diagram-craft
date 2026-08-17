@@ -13,10 +13,10 @@ export type ExternalIdentitySyncResult<TResult> = {
   result: TResult;
 };
 
-class ExternalIdentityRaceError extends Error {
+class ExternalIdentityUniqueError extends Error {
   constructor(readonly databaseError: DatabaseError) {
-    super('External identity unique race');
-    this.name = 'ExternalIdentityRaceError';
+    super('External identity unique conflict');
+    this.name = 'ExternalIdentityUniqueError';
   }
 }
 
@@ -233,41 +233,51 @@ export const runExternalIdentitySyncInTransaction = async <
 
   try {
     created = await db.core.savepoint(async savepointDb => {
-      const savepointContext = { ...syncContext, db: savepointDb };
-      const savepointCreated = await handlers.create({
-        sync: savepointContext,
-        state: createState
-      });
       try {
+        const savepointContext = { ...syncContext, db: savepointDb };
+        const savepointCreated = await handlers.create({
+          sync: savepointContext,
+          state: createState
+        });
         await savepointDb.externalIdentity.create({
           workspace,
           source,
           external_key: externalKey,
           record_id: handlers.recordId(savepointCreated)
         });
+        return savepointCreated;
       } catch (error) {
         if (error instanceof DatabaseError && error.code === 'unique') {
-          throw new ExternalIdentityRaceError(error);
+          // A concurrent first sync can lose the entity's slug race before it reaches the
+          // external-identity insert. Let the savepoint roll back the candidate and decide
+          // whether this was that race after the savepoint is usable again.
+          throw new ExternalIdentityUniqueError(error);
         }
         throw error;
       }
-      return savepointCreated;
     });
   } catch (error) {
-    if (error instanceof ExternalIdentityRaceError) {
-      // The savepoint rolled back this candidate record and its side effects. The outer transaction
-      // is still usable, so re-run the workflow and converge on the winning identity.
-      return runExternalIdentitySyncInTransaction({
-        db,
-        workspace,
-        source,
-        externalKey,
-        body,
-        authCtx,
-        actor,
-        auditMetadata,
-        handlers
-      });
+    if (error instanceof ExternalIdentityUniqueError) {
+      const winningIdentity = await db.externalIdentity.find(workspace, source, externalKey);
+      if (winningIdentity) {
+        // The savepoint rolled back this candidate record and its side effects. The outer
+        // transaction is still usable, so re-run the workflow and converge on the winner.
+        return runExternalIdentitySyncInTransaction({
+          db,
+          workspace,
+          source,
+          externalKey,
+          body,
+          authCtx,
+          actor,
+          auditMetadata,
+          handlers
+        });
+      }
+
+      // No identity won the race, so this is an ordinary unique conflict (for example, a
+      // pre-existing entity with the requested slug).
+      throw error.databaseError;
     }
     throw error;
   }

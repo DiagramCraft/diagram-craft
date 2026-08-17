@@ -117,6 +117,18 @@ const pathUsesRestrictedField = (
           : false)
       );
     }
+    if (step.kind === 'unboundTypedRelation') {
+      return step.filter
+        ? nodeUsesRestrictedField(
+            step.filter,
+            schemas,
+            authCtx,
+            undefined,
+            relationSchemas,
+            step.relationSchemaId
+          )
+        : false;
+    }
     // 'endpoint' has no field/ACL of its own to restrict — visibility of the entity it lands on
     // is governed by ordinary entity view permissions, not schema field-group ACL.
     if (step.kind === 'endpoint') return false;
@@ -304,7 +316,10 @@ export const savedViewUsesRestrictedField = (
     if (projection.source === 'relation') {
       const step = [...projection.path]
         .reverse()
-        .find(candidate => candidate.kind === 'typedRelation');
+        .find(
+          candidate =>
+            candidate.kind === 'typedRelation' || candidate.kind === 'unboundTypedRelation'
+        );
       return (
         step == null ||
         relationFieldIsRestricted(

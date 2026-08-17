@@ -6,6 +6,7 @@ export type TabId =
   | 'topology'
   | 'graph'
   | 'relations'
+  | 'future-plans'
   | 'related-content'
   | 'dependents'
   | 'assessments'
@@ -14,7 +15,7 @@ export type TabId =
   | 'timeline';
 
 // Sidebar groups: each maps to a single sidebar entry whose page shows these as sub-tabs.
-export const HOME_TAB_IDS: readonly TabId[] = ['overview', 'relations', 'changes'];
+export const HOME_TAB_IDS: readonly TabId[] = ['overview', 'relations', 'future-plans', 'changes'];
 export const API_TAB_IDS: readonly TabId[] = ['api'];
 export const CONTEXT_TAB_IDS: readonly TabId[] = [
   'topology',

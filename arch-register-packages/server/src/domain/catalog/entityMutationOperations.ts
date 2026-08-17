@@ -52,12 +52,15 @@ import {
   assertValidExternalUpdateTarget
 } from '../externalMetadata/externalMetadataHelpers';
 import { assertNoDerivedFieldWrites } from '../derived/derivedFields';
-import { isTypedRelationField } from '@arch-register/api-types/schemaContract';
+import {
+  isTypedRelationField,
+  type TypedRelationField
+} from '@arch-register/api-types/schemaContract';
 import {
   applyRelationFieldDelta,
   resolveTypedRelationFieldCardinalityChanges
 } from './relationFieldMutations';
-import { requireTypedRelationFieldEdit } from './relationAccessControl';
+import { requireTypedRelationEdit, requireTypedRelationFieldEdit } from './relationAccessControl';
 import { assertTypedRelationCardinality } from './relationHelpers';
 import { withCatalogMutationTransaction } from './mutationTransaction';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
@@ -706,17 +709,52 @@ export const updateEntityWithPayload = async (
           schema.fields.filter(isTypedRelationField).map(field => [field.id, field])
         );
         const fieldDeltas: Array<{
-          field: Extract<SchemaDbResult['fields'][number], { type: 'typedRelation' }>;
+          field: TypedRelationField;
           delta: (typeof payload.relations)[string];
+          unbound: boolean;
         }> = [];
         for (const [fieldId, delta] of Object.entries(payload.relations)) {
-          const field = typedRelationFieldById.get(fieldId);
-          httpAssert.present(field, {
+          const projectedField = typedRelationFieldById.get(fieldId);
+          if (projectedField) {
+            requireTypedRelationFieldEdit(authCtx, schema, projectedField);
+            fieldDeltas.push({ field: projectedField, delta, unbound: false });
+            continue;
+          }
+
+          if (delta.relationSchemaId === undefined || delta.direction === undefined) {
+            httpAssert.true(false, {
+              status: 400,
+              message: `'${fieldId}' is not a typedRelation field on schema '${schema.name}'`
+            });
+            continue;
+          }
+          const relationSchemaId = delta.relationSchemaId;
+          const direction = delta.direction;
+          const relationSchema = await tx.relation.getRelationSchema(workspace, relationSchemaId);
+          httpAssert.present(relationSchema, {
             status: 400,
-            message: `'${fieldId}' is not a typedRelation field on schema '${schema.name}'`
+            message: `Relation schema '${relationSchemaId}' not found`
           });
-          requireTypedRelationFieldEdit(authCtx, schema, field);
-          fieldDeltas.push({ field, delta });
+          const endpointSchemaIds =
+            direction === 'in' ? relationSchema.in_schema_ids : relationSchema.out_schema_ids;
+          httpAssert.true(endpointSchemaIds === 'any' || endpointSchemaIds.includes(schema.id), {
+            status: 400,
+            message: `Entity schema '${schema.name}' is not an allowed ${direction} endpoint for relation schema '${relationSchema.name}'`
+          });
+          if (authCtx) {
+            requireTypedRelationEdit(authCtx, [{ schema, direction }], relationSchema.id);
+          }
+          const field: TypedRelationField = {
+            id: fieldId,
+            name: relationSchema.name,
+            requirementLevel: null,
+            type: 'typedRelation',
+            relationSchemaId: relationSchema.id,
+            direction,
+            minCount: 0,
+            maxCount: -1
+          };
+          fieldDeltas.push({ field, delta, unbound: true });
         }
 
         const cardinalityChanges = (
@@ -733,7 +771,7 @@ export const updateEntityWithPayload = async (
         ).flat();
         await assertTypedRelationCardinality(tx, workspace, cardinalityChanges);
 
-        for (const { field, delta } of fieldDeltas) {
+        for (const { field, delta, unbound } of fieldDeltas) {
           await applyRelationFieldDelta(tx, {
             workspace,
             ownerEntityId: oldRow.id,
@@ -742,6 +780,7 @@ export const updateEntityWithPayload = async (
             delta,
             authCtx,
             actor,
+            unbound,
             skipTypedRelationCardinalityValidation: true
           });
         }

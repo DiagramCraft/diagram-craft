@@ -592,6 +592,8 @@ export const importRelationSchemas = async (
         source.out_schema_ids === 'any'
           ? ('any' as const)
           : source.out_schema_ids.map(id => resolveMappedId(idMapping.schemas, id)!),
+      in_label: source.in_label ?? null,
+      out_label: source.out_label ?? null,
       fields,
       groups: (source.groups ?? []).map(group => ({
         ...group,
@@ -622,6 +624,8 @@ export const importRelationSchemas = async (
         description: input.description,
         in_schema_ids: input.in_schema_ids,
         out_schema_ids: input.out_schema_ids,
+        in_label: input.in_label,
+        out_label: input.out_label,
         fields: input.fields,
         groups: input.groups,
         shared_field_group_links: input.shared_field_group_links,

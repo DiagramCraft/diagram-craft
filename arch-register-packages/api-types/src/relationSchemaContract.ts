@@ -147,9 +147,15 @@ export const relationEndpointSchema = z
   .object({
     schemaIds: z
       .union([z.literal('any'), z.array(z.string()).min(1)])
-      .describe('Entity schema identifiers allowed at this endpoint, or "any" for no restriction')
+      .describe('Entity schema identifiers allowed at this endpoint, or "any" for no restriction'),
+    label: z
+      .string()
+      .trim()
+      .min(1)
+      .optional()
+      .describe('Contextual label for this endpoint when viewed from an entity')
   })
-  .describe('Typed endpoint constraint for a relation schema');
+  .describe('Typed endpoint constraint and contextual label for a relation schema');
 
 export const relationSchemaSchema = z.object({
   id: z.string().describe('Unique relation schema identifier'),
@@ -160,8 +166,8 @@ export const relationSchemaSchema = z.object({
     .nullable()
     .describe('Optional free-text presentation category for organizing relation schemas'),
   description: z.string().describe('Relation schema description'),
-  in: relationEndpointSchema.describe('Allowed entity schemas for the "in" endpoint'),
-  out: relationEndpointSchema.describe('Allowed entity schemas for the "out" endpoint'),
+  in: relationEndpointSchema.describe('Allowed entity schemas and label for the "in" endpoint'),
+  out: relationEndpointSchema.describe('Allowed entity schemas and label for the "out" endpoint'),
   fields: z.array(relationFieldResponseSchema).describe('Relation field definitions'),
   groups: z
     .array(relationSchemaGroupSchema)

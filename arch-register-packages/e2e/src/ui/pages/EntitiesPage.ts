@@ -19,7 +19,7 @@ export class EntitiesPage extends WorkspacePage {
     }
 
     const path = workspaceEntitiesRoute(this.workspaceSlug);
-    await this.page.goto(query.size > 0 ? `${path}?${query.toString()}` : path);
+    await this.gotoAuthenticated(query.size > 0 ? `${path}?${query.toString()}` : path);
   };
 
   typeFilter = (name: string) => this.page.getByTestId(`entity-type-filter-${name}`);

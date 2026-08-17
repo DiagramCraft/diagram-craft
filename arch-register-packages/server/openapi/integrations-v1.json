@@ -1478,12 +1478,17 @@
                               }
                             ],
                             "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Contextual label for this endpoint when viewed from an entity"
                           }
                         },
                         "required": [
                           "schemaIds"
                         ],
-                        "description": "Allowed entity schemas for the \"in\" endpoint"
+                        "description": "Allowed entity schemas and label for the \"in\" endpoint"
                       },
                       "out": {
                         "type": "object",
@@ -1502,12 +1507,17 @@
                               }
                             ],
                             "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
+                          },
+                          "label": {
+                            "type": "string",
+                            "minLength": 1,
+                            "description": "Contextual label for this endpoint when viewed from an entity"
                           }
                         },
                         "required": [
                           "schemaIds"
                         ],
-                        "description": "Allowed entity schemas for the \"out\" endpoint"
+                        "description": "Allowed entity schemas and label for the \"out\" endpoint"
                       },
                       "fields": {
                         "type": "array",
@@ -2306,12 +2316,17 @@
                             }
                           ],
                           "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Contextual label for this endpoint when viewed from an entity"
                         }
                       },
                       "required": [
                         "schemaIds"
                       ],
-                      "description": "Allowed entity schemas for the \"in\" endpoint"
+                      "description": "Allowed entity schemas and label for the \"in\" endpoint"
                     },
                     "out": {
                       "type": "object",
@@ -2330,12 +2345,17 @@
                             }
                           ],
                           "description": "Entity schema identifiers allowed at this endpoint, or \"any\" for no restriction"
+                        },
+                        "label": {
+                          "type": "string",
+                          "minLength": 1,
+                          "description": "Contextual label for this endpoint when viewed from an entity"
                         }
                       },
                       "required": [
                         "schemaIds"
                       ],
-                      "description": "Allowed entity schemas for the \"out\" endpoint"
+                      "description": "Allowed entity schemas and label for the \"out\" endpoint"
                     },
                     "fields": {
                       "type": "array",
@@ -6684,6 +6704,18 @@
                     "additionalProperties": {
                       "type": "object",
                       "properties": {
+                        "relationSchemaId": {
+                          "type": "string",
+                          "description": "Relation schema identifier when editing an unprojected endpoint"
+                        },
+                        "direction": {
+                          "enum": [
+                            "in",
+                            "out"
+                          ],
+                          "type": "string",
+                          "description": "Entity endpoint direction when editing an unprojected relation"
+                        },
                         "create": {
                           "type": "array",
                           "items": {
@@ -6743,7 +6775,7 @@
                         }
                       }
                     },
-                    "description": "Typed-relation instance deltas to apply atomically with this entity update, keyed by typedRelation field id. Each field's create/update/delete entries are applied in the same transaction as the rest of this mutation."
+                    "description": "Typed-relation instance deltas to apply atomically with this entity update. Projected fields are keyed by typedRelation field id; unprojected endpoints include relationSchemaId and direction in the delta. Each create/update/delete entry is applied in the same transaction as the rest of this mutation."
                   }
                 },
                 "additionalProperties": {},
@@ -8152,6 +8184,18 @@
                     "additionalProperties": {
                       "type": "object",
                       "properties": {
+                        "relationSchemaId": {
+                          "type": "string",
+                          "description": "Relation schema identifier when editing an unprojected endpoint"
+                        },
+                        "direction": {
+                          "enum": [
+                            "in",
+                            "out"
+                          ],
+                          "type": "string",
+                          "description": "Entity endpoint direction when editing an unprojected relation"
+                        },
                         "create": {
                           "type": "array",
                           "items": {
@@ -8211,7 +8255,7 @@
                         }
                       }
                     },
-                    "description": "Typed-relation instance deltas to apply atomically with this entity update, keyed by typedRelation field id. Each field's create/update/delete entries are applied in the same transaction as the rest of this mutation."
+                    "description": "Typed-relation instance deltas to apply atomically with this entity update. Projected fields are keyed by typedRelation field id; unprojected endpoints include relationSchemaId and direction in the delta. Each create/update/delete entry is applied in the same transaction as the rest of this mutation."
                   }
                 },
                 "additionalProperties": {},
@@ -9064,6 +9108,18 @@
                         "additionalProperties": {
                           "type": "object",
                           "properties": {
+                            "relationSchemaId": {
+                              "type": "string",
+                              "description": "Relation schema identifier when editing an unprojected endpoint"
+                            },
+                            "direction": {
+                              "enum": [
+                                "in",
+                                "out"
+                              ],
+                              "type": "string",
+                              "description": "Entity endpoint direction when editing an unprojected relation"
+                            },
                             "create": {
                               "type": "array",
                               "items": {
@@ -9123,7 +9179,7 @@
                             }
                           }
                         },
-                        "description": "Typed-relation instance deltas to apply atomically with this entity update, keyed by typedRelation field id. Each field's create/update/delete entries are applied in the same transaction as the rest of this mutation."
+                        "description": "Typed-relation instance deltas to apply atomically with this entity update. Projected fields are keyed by typedRelation field id; unprojected endpoints include relationSchemaId and direction in the delta. Each create/update/delete entry is applied in the same transaction as the rest of this mutation."
                       }
                     },
                     "additionalProperties": {},

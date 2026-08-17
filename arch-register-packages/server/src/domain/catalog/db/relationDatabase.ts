@@ -38,6 +38,8 @@ export type RelationSchemaDbResult = {
   description: string;
   in_schema_ids: string[] | 'any';
   out_schema_ids: string[] | 'any';
+  in_label?: string | null;
+  out_label?: string | null;
   fields: RelationField[];
   groups?: RelationSchemaGroupDbShape[];
   shared_field_group_links?: SharedFieldGroupLink[];
@@ -70,6 +72,8 @@ export type RelationSchemaVersionDbResult = {
   description: string;
   in_schema_ids: string[] | 'any';
   out_schema_ids: string[] | 'any';
+  in_label?: string | null;
+  out_label?: string | null;
   fields: RelationField[];
   groups: RelationSchemaGroupDbShape[];
   validation_rules?: ValidationRule[];
@@ -185,6 +189,8 @@ export const relationMappers = {
     description: String(row['description'] ?? ''),
     in_schema_ids: parseRelationSchemaIds(row['in_schema_ids'], 'relation_schema.in_schema_ids'),
     out_schema_ids: parseRelationSchemaIds(row['out_schema_ids'], 'relation_schema.out_schema_ids'),
+    in_label: row['in_label'] == null ? null : String(row['in_label']),
+    out_label: row['out_label'] == null ? null : String(row['out_label']),
     fields: parseDatabaseJson(row['fields'], [], 'relation_schema.fields'),
     groups: parseDatabaseJson(row['groups'], [], 'relation_schema.groups'),
     shared_field_group_links: parseDatabaseJson(
@@ -222,6 +228,8 @@ export const relationMappers = {
       row['out_schema_ids'],
       'relation_schema_version.out_schema_ids'
     ),
+    in_label: row['in_label'] == null ? null : String(row['in_label']),
+    out_label: row['out_label'] == null ? null : String(row['out_label']),
     fields: parseDatabaseJson(row['fields'], [], 'relation_schema_version.fields'),
     groups: parseDatabaseJson(row['groups'], [], 'relation_schema_version.groups'),
     validation_rules: parseDatabaseJson(

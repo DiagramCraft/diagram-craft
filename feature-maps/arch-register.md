@@ -173,8 +173,10 @@
         - @id:ar.entities.strategy-model Workspaces can optionally enable a strategy model — Objective, Outcome,
           Initiative, and Measure entity schemas with no fixed taxonomy or hierarchy — bound to the workspace via a
           `strategy-model` capability so other features (traceability views, roll-ups) can discover it. Two wildcard
-          typed relations, Objective Supports Capability and Objective Affects Entity, link objectives to any
-          capability or architecture entity in the workspace.
+          typed relations, Objective Supports Entity and Objective Affects Entity, link objectives to any entity in
+          the workspace with distinct supporting and impact semantics. Relation endpoint constraints are authoritative
+          while typed-relation fields are optional projections, so these relations can be browsed, edited, and queried
+          even when target schemas do not add inverse fields.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can
@@ -193,10 +195,13 @@
           The built-in Default and Backstage templates provide first-class "Provides API" and "Consumes API"
           relation schemas, allowing Components and Systems to point to APIs while API entities expose inverse
           provider and consumer views; these relations are available to the same graph, topology, search, and
-          permission surfaces as other typed relations.
-          The seeded architecture catalog provides a `Risk Affects` relation from each Risk to selected
-          architecture entity schemas, with an inline `Affected Entities` field on Risk and inverse
-          `Affected By Risks` fields on those target schemas.
+          permission surfaces as other typed relations. Endpoint labels are contextual to the entity at each side,
+          so inverse relation views remain understandable without relying on the relation schema name.
+          The seeded architecture catalog provides a `Risk Affects` relation from each Risk to any entity schema,
+          with an inline `Affects` field on Risk; target schemas do not need inverse projection fields
+          because the relation endpoint definition is sufficient. On the entity Overview page, valid
+          unprojected endpoints appear in contextual-label accordions and support the same add, edit, and remove
+          lifecycle as projected typed-relation fields.
           While editing the entity, users can add, edit, and remove relation instances directly inline — adding
           picks another entity from schemas the relation type allows and fills in the relation's own fields (subject
           to field-group access control); these changes are saved together with the rest of the entity's edits in one
@@ -290,6 +295,11 @@
           When grouped by Project + Entity, a project with both a start and target date set shows a gantt bar spanning
           that range in its group header.
 
+        - @id:ar.entity-views.entity-detail Entity detail screens present metadata, project membership, and diagram
+          membership in an accordion, with metadata open initially and project/diagram counts visible while their
+          sections are collapsed. Valid typed relation schemas without projected fields have their own accordion
+          sections, and planned changes are available in a dedicated Future plans tab beside Change history.
+
         - @id:ar.entity-views.diff Users can pick a future date and view a workspace-wide diff of what changes by
           then — entities added, removed, or changed, with all applicable planned changes across projects applied,
           scoped to the browser's current search/filter/project-scope selection, with a field-level diff on
@@ -378,7 +388,9 @@
       milestones, and assessments.
 
         - @id:ar.projects.lifecycle Users can create, edit, view, and delete projects and manage their project-level
-          metadata, including optional start and target dates shown on the project home screen.
+          metadata, including optional start and target dates shown on the project home screen. Entities can be linked
+          to one or more projects, making the project's milestones, assessments, and planned changes available as
+          project context for that entity.
 
         - @id:ar.projects.dashboard The project home screen shows a composable dashboard of widgets scoped to that
           project, built from the same widget catalog as the workspace dashboard (stat metrics, saved-view embeds,
