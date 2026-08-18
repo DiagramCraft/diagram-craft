@@ -16,6 +16,7 @@ export const buildProposedState = (
 ): Record<string, unknown> => {
   const customData: Record<string, unknown> = {};
   for (const f of schema.fields) {
+    if (f.type === 'typedRelation' || f.type === 'derived') continue;
     customData[f.id] = planState[f.id] ?? '';
   }
 

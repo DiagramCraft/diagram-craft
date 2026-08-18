@@ -71,7 +71,7 @@ export const EntityProposedStateFields = ({
     </FormElement>
 
     {schema?.fields
-      .filter(f => !isReference(f))
+      .filter(f => !isReference(f) && f.type !== 'derived')
       .map(f => (
         <FormElement key={f.id} label={f.name} required={f.requirementLevel !== 'optional'}>
           {f.type === 'boolean' ? (
