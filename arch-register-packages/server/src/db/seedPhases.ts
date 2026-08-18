@@ -217,7 +217,17 @@ export const seedCatalogDefinitions = async (
       STRATEGY_IDS.initiativeSchema
     );
     const measureSchema = await db.catalog.getSchema(WORKSPACE_ID, STRATEGY_IDS.measureSchema);
-    if (objectiveSchema && outcomeSchema && initiativeSchema && measureSchema) {
+    const businessCapabilitySchema = await db.catalog.getSchema(
+      WORKSPACE_ID,
+      STRATEGY_IDS.businessCapabilitySchema
+    );
+    if (
+      objectiveSchema &&
+      outcomeSchema &&
+      initiativeSchema &&
+      measureSchema &&
+      businessCapabilitySchema
+    ) {
       await db.workspace.upsertWorkspaceCapabilityConfiguration({
         id: '00000000-0000-0000-0000-00000000000a',
         workspace: WORKSPACE_ID,
@@ -226,7 +236,10 @@ export const seedCatalogDefinitions = async (
           objective: { target: { kind: 'entity_schema', id: objectiveSchema.id } },
           outcome: { target: { kind: 'entity_schema', id: outcomeSchema.id } },
           initiative: { target: { kind: 'entity_schema', id: initiativeSchema.id } },
-          measure: { target: { kind: 'entity_schema', id: measureSchema.id } }
+          measure: { target: { kind: 'entity_schema', id: measureSchema.id } },
+          business_capability: {
+            target: { kind: 'entity_schema', id: businessCapabilitySchema.id }
+          }
         },
         created_at: objectiveSchema.created_at,
         updated_at: objectiveSchema.updated_at

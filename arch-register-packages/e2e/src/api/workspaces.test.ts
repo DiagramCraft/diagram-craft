@@ -207,12 +207,31 @@ test.describe('workspace routes', () => {
       server.db.view.listSavedViews(created.id),
       server.db.catalog.listSchemas(created.id)
     ]);
+    const strategyConfiguration = await server.db.workspace.getWorkspaceCapabilityConfiguration(
+      created.id,
+      'strategy-model'
+    );
+    const businessCapability = schemas.find(schema => schema.name === 'Business Capability');
     const objective = schemas.find(schema => schema.name === 'Objective');
     const initiative = schemas.find(schema => schema.name === 'Initiative');
 
     expect(views.map(view => view.name)).toEqual(
       expect.arrayContaining(['Objectives', 'Initiatives'])
     );
+    expect(businessCapability?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'parent',
+          type: 'containment',
+          schemaId: businessCapability?.id,
+          minCount: 0,
+          maxCount: 1
+        })
+      ])
+    );
+    expect(strategyConfiguration?.bindings.business_capability).toEqual({
+      target: { kind: 'entity_schema', id: businessCapability?.id }
+    });
     const objectivesView = views.find(view => view.name === 'Objectives');
     expect(objectivesView).toMatchObject({
       workspace: created.id,
@@ -225,6 +244,53 @@ test.describe('workspace routes', () => {
     expect(initiativesView).toMatchObject({
       filters: expect.objectContaining({ schemaId: initiative?.id })
     });
+  });
+
+  test('supports nested Business Capability containment in a Strategy workspace', async ({
+    orpc,
+    server
+  }) => {
+    const created = await orpc.workspaces.create({
+      body: { name: 'Nested Business Capabilities', template: 'strategy' }
+    });
+    const schemas = await server.db.catalog.listSchemas(created.id);
+    const businessCapability = schemas.find(schema => schema.name === 'Business Capability')!;
+
+    const root = await orpc.entities.create({
+      params: { workspace: created.url_slug },
+      body: { _schemaId: businessCapability.id, _name: 'Customer Engagement' }
+    });
+    const child = await orpc.entities.create({
+      params: { workspace: created.url_slug },
+      body: {
+        _schemaId: businessCapability.id,
+        _name: 'Customer Self Service',
+        parent: [root._uid]
+      }
+    });
+    const grandchild = await orpc.entities.create({
+      params: { workspace: created.url_slug },
+      body: {
+        _schemaId: businessCapability.id,
+        _name: 'Account Management',
+        parent: [child._uid]
+      }
+    });
+
+    const tree = await orpc.entities.tree({
+      params: { workspace: created.url_slug },
+      query: { _schemaId: businessCapability.id, q: 'Account Management' }
+    });
+
+    expect(tree.nodes.map(node => node._uid)).toEqual(
+      expect.arrayContaining([root._uid, child._uid, grandchild._uid])
+    );
+    expect(tree.edges).toEqual(
+      expect.arrayContaining([
+        { childId: child._uid, parentId: root._uid },
+        { childId: grandchild._uid, parentId: child._uid }
+      ])
+    );
   });
 
   test('POST /api/workspaces applies slug and badge overrides', async ({ orpc }) => {
