@@ -184,6 +184,14 @@ export const workspaceCapabilityDefinitions: WorkspaceCapabilityDefinition[] = [
         required: true,
         targetKind: 'entity_schema',
         fieldRoles: []
+      },
+      {
+        id: 'business_capability',
+        label: 'Business Capability entity schema',
+        description: 'The entity schema used for nested business capability hierarchies.',
+        required: true,
+        targetKind: 'entity_schema',
+        fieldRoles: []
       }
     ]
   },

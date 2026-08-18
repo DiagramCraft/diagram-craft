@@ -43,4 +43,11 @@ describe('entityListFiltersSchema', () => {
       entityListFiltersSchema.parse({ entityQuery: JSON.stringify(query) }).entityQuery
     ).toEqual(query);
   });
+
+  it('accepts bounded structural tree expansion options', () => {
+    expect(entityListFiltersSchema.parse({ treeExpansion: 'both', treeDepth: 3 })).toMatchObject({
+      treeExpansion: 'both',
+      treeDepth: 3
+    });
+  });
 });

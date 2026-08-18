@@ -723,4 +723,27 @@ describe('tree relation access control', () => {
     const result = await getEntityTree(makeTreeDb(), 'ws-1', authCtx(true), {});
     expect(result.edges).toEqual([{ childId: 'entity-2', parentId: 'entity-1' }]);
   });
+
+  it('expands matching tree nodes to structural descendants when requested', async () => {
+    const grandchild = { ...makeEntity(3), data: { parent: ['entity-2'] } };
+    const db = makeDb([parent, child, grandchild]);
+    vi.mocked(db.catalog.listSchemas).mockResolvedValue([containmentSchema]);
+
+    const result = await getEntityTree(db, 'ws-1', authCtx(true), {
+      schemaIds: ['schema-1'],
+      q: 'Entity 001',
+      treeExpansion: 'both',
+      treeDepth: 2
+    });
+
+    expect(result.nodes.map(node => [node._uid, node._isMatch])).toEqual([
+      ['entity-1', true],
+      ['entity-2', false],
+      ['entity-3', false]
+    ]);
+    expect(result.edges).toEqual([
+      { childId: 'entity-2', parentId: 'entity-1' },
+      { childId: 'entity-3', parentId: 'entity-2' }
+    ]);
+  });
 });

@@ -8,6 +8,7 @@ import {
   getChildSchemas,
   getChildRelationSchemas,
   getContainmentChildren,
+  getMapRoots,
   getMapTraversalPath,
   getMapSchemaIds,
   sortContainmentNodes
@@ -175,7 +176,7 @@ describe('map view state', () => {
     ]);
   });
 
-  it('indexes edges and sorts only matching children', () => {
+  it('indexes edges and sorts structural children', () => {
     const nodes = [
       node('b', 'app', 'Beta'),
       node('a', 'app', 'Alpha'),
@@ -189,8 +190,30 @@ describe('map view state', () => {
       { parentId: 'root', childId: 'other' }
     ] as unknown as TreeEdge[];
     const index = buildContainmentTreeIndex(nodes, edges);
-    expect(sortContainmentNodes(nodes, 'app').map(item => item._uid)).toEqual(['a', 'b']);
-    expect(getContainmentChildren('root', 'app', index).map(item => item._uid)).toEqual(['a', 'b']);
+    expect(sortContainmentNodes(nodes, 'app').map(item => item._uid)).toEqual(['a', 'b', 'hidden']);
+    expect(getContainmentChildren('root', 'app', index).map(item => item._uid)).toEqual([
+      'a',
+      'b',
+      'hidden'
+    ]);
+  });
+
+  it('keeps only top-level recursive entities as map roots', () => {
+    const nodes = [
+      node('root', 'capability', 'Root'),
+      node('nested', 'capability', 'Nested', false),
+      node('other', 'capability', 'Other'),
+      node('child', 'component', 'Child')
+    ];
+    const edges = [
+      { parentId: 'root', childId: 'nested' },
+      { parentId: 'root', childId: 'child' }
+    ] as unknown as TreeEdge[];
+
+    expect(getMapRoots(nodes, edges, 'capability').map(item => item._uid)).toEqual([
+      'other',
+      'root'
+    ]);
   });
 
   it('collects the schema ids for the configured map levels', () => {

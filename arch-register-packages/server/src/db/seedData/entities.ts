@@ -889,11 +889,129 @@ const seedRiskComplianceEntities: SeedEntityInput[] = [
   }
 ];
 
-// Strategy model examples (see #3020): Objective, Outcome, Initiative, Measure linked with
-// reference fields rather than containment, and with wildcard typed relations to whatever
-// entity a workspace happens to have (see seedRelations for Objective Supports
-// Entity / Objective Affects Entity instances).
+// Strategy model examples (see #3020): nested Business Capabilities, Objective, Outcome,
+// Initiative, and Measure linked with reference fields and typed relations.
 const seedStrategyEntities: SeedEntityInput[] = [
+  {
+    id: STRATEGY_IDS.businessCapabilities.customerEngagement,
+    workspace: WORKSPACE_ID,
+    public_id: 'CAP-1',
+    slug: 'customer-engagement',
+    namespace: 'default',
+    name: 'Customer Engagement',
+    description: 'The ability to attract, serve, and retain customers across their journey.',
+    owner: TEAM_IDS.design,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['customer', 'engagement'],
+    links: [],
+    schema_id: STRATEGY_IDS.businessCapabilitySchema,
+    data: {
+      description: 'Coordinate customer-facing capabilities that support retention and growth.',
+      parent: [],
+      target_date: '2027-06-30'
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: STRATEGY_IDS.businessCapabilities.selfServiceManagement,
+    workspace: WORKSPACE_ID,
+    public_id: 'CAP-2',
+    slug: 'self-service-management',
+    namespace: 'default',
+    name: 'Self-Service Management',
+    description: 'The ability to provide customers with effective self-service journeys.',
+    owner: TEAM_IDS.design,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['customer', 'self-service'],
+    links: [],
+    schema_id: STRATEGY_IDS.businessCapabilitySchema,
+    data: {
+      description: 'Enable customers to resolve common needs without assisted support.',
+      parent: [STRATEGY_IDS.businessCapabilities.customerEngagement],
+      target_date: '2027-03-31'
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: STRATEGY_IDS.businessCapabilities.accountManagement,
+    workspace: WORKSPACE_ID,
+    public_id: 'CAP-3',
+    slug: 'account-management',
+    namespace: 'default',
+    name: 'Account Management',
+    description: 'The ability to let customers manage their accounts and subscriptions.',
+    owner: TEAM_IDS.design,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['customer', 'accounts'],
+    links: [],
+    schema_id: STRATEGY_IDS.businessCapabilitySchema,
+    data: {
+      description: 'Support secure profile, subscription, and entitlement management.',
+      parent: [STRATEGY_IDS.businessCapabilities.selfServiceManagement],
+      target_date: '2027-03-31'
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: STRATEGY_IDS.businessCapabilities.platformReliability,
+    workspace: WORKSPACE_ID,
+    public_id: 'CAP-4',
+    slug: 'platform-reliability',
+    namespace: 'default',
+    name: 'Platform Reliability',
+    description: 'The ability to operate resilient and dependable digital platforms.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['platform', 'reliability'],
+    links: [],
+    schema_id: STRATEGY_IDS.businessCapabilitySchema,
+    data: {
+      description: 'Maintain dependable platform services through resilient operations.',
+      parent: [],
+      target_date: '2026-12-31'
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: STRATEGY_IDS.businessCapabilities.observabilityManagement,
+    workspace: WORKSPACE_ID,
+    public_id: 'CAP-5',
+    slug: 'observability-management',
+    namespace: 'default',
+    name: 'Observability Management',
+    description: 'The ability to monitor platform health and respond to operational signals.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['platform', 'observability'],
+    links: [],
+    schema_id: STRATEGY_IDS.businessCapabilitySchema,
+    data: {
+      description: 'Provide monitoring, alerting, and tracing for critical platform services.',
+      parent: [STRATEGY_IDS.businessCapabilities.platformReliability],
+      target_date: '2026-09-30'
+    },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
   {
     id: STRATEGY_IDS.objectives.improveCustomerRetention,
     workspace: WORKSPACE_ID,

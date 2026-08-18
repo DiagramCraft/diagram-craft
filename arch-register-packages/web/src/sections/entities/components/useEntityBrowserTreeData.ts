@@ -12,6 +12,8 @@ type UseEntityBrowserTreeDataProps = {
   statusFilter: string | null;
   joinAssessmentId?: string | null;
   schemaIds?: string[] | null;
+  treeExpansion?: 'ancestors' | 'both';
+  treeDepth?: number | null;
   enabled?: boolean;
 };
 
@@ -26,20 +28,24 @@ export const useEntityBrowserTreeData = ({
   statusFilter,
   joinAssessmentId,
   schemaIds,
+  treeExpansion,
+  treeDepth,
   enabled = true
 }: UseEntityBrowserTreeDataProps) => {
   const { data: treeData } = useEntityTree(
     workspaceId,
     {
       schemaId: entityQuery ? undefined : typeFilter,
-      schemaIds: entityQuery ? undefined : schemaIds,
+      schemaIds,
       owner: entityQuery ? undefined : ownerFilter,
       lifecycle: entityQuery ? undefined : statusFilter,
       q: entityQuery ? undefined : q,
       entityQuery,
       assessmentId: entityQuery?.assessmentId ?? joinAssessmentId,
       projectId: projectId ?? undefined,
-      projectScope: projectId ? projectScope : undefined
+      projectScope: projectId ? projectScope : undefined,
+      treeExpansion,
+      treeDepth
     },
     enabled
   );

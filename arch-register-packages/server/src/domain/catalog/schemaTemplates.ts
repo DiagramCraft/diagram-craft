@@ -629,6 +629,51 @@ const strategyStatusEnum = enumDefinition('strategy-status', 'Strategy Status', 
 
 const strategySchemas: TemplateSchema[] = [
   {
+    symId: 'business_capability',
+    name: 'Business Capability',
+    description: 'A high-level ability the organisation needs to execute its strategy.',
+    category: 'Strategy',
+    color: AR_COLOR_YELLOW,
+    icon: 'globe',
+    fields: [
+      {
+        id: 'parent',
+        name: 'Parent Capability',
+        type: 'containment',
+        symSchemaId: 'business_capability',
+        minCount: 0,
+        maxCount: 1
+      },
+      { id: 'target_date', name: 'Target Date', type: 'date' },
+      {
+        id: 'capability_level',
+        name: 'Capability Level',
+        type: 'derived',
+        expression:
+          "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+        resultType: 'text'
+      },
+      {
+        id: 'supporting_objectives',
+        name: 'Supported by Objectives',
+        type: 'typedRelation',
+        symRelationSchemaId: 'objective-supports-business-capability',
+        direction: 'out',
+        minCount: 0,
+        maxCount: -1
+      },
+      {
+        id: 'supported_entities',
+        name: 'Supports Entities',
+        type: 'typedRelation',
+        symRelationSchemaId: 'business-capability-supports-entity',
+        direction: 'in',
+        minCount: 0,
+        maxCount: -1
+      }
+    ]
+  },
+  {
     symId: 'objective',
     name: 'Objective',
     description: 'A strategic objective the organization is pursuing.',
@@ -640,10 +685,10 @@ const strategySchemas: TemplateSchema[] = [
       { id: 'status', name: 'Status', type: 'select', enumId: 'strategy-status' },
       { id: 'target_date', name: 'Target Date', type: 'date' },
       {
-        id: 'supported_entities',
+        id: 'supported_capabilities',
         name: 'Supports',
         type: 'typedRelation',
-        symRelationSchemaId: 'objective-supports-entity',
+        symRelationSchemaId: 'objective-supports-business-capability',
         direction: 'in',
         minCount: 0,
         maxCount: -1
@@ -735,17 +780,30 @@ const strategySchemas: TemplateSchema[] = [
 
 const strategyRelationSchemas: SymbolicRelationSchema[] = [
   {
-    symId: 'objective-supports-entity',
-    name: 'Objective Supports Entity',
-    description: 'Associates an Objective with an entity that supports or enables it.',
+    symId: 'objective-supports-business-capability',
+    name: 'Objective Supports Business Capability',
+    description: 'Associates an Objective with a Business Capability that supports or enables it.',
     category: 'Strategy',
-    inLabel: 'Supports Entities',
-    outLabel: 'Supported by Objective',
+    inLabel: 'Supports Business Capabilities',
+    outLabel: 'Supported by Objectives',
     inSymSchemaIds: ['objective'],
-    outSymSchemaIds: 'any',
+    outSymSchemaIds: ['business_capability'],
     fields: [],
     color: AR_COLOR_PURPLE,
     icon: 'target'
+  },
+  {
+    symId: 'business-capability-supports-entity',
+    name: 'Business Capability Supports Entity',
+    description: 'Associates a Business Capability with an entity that helps realise it.',
+    category: 'Strategy',
+    inLabel: 'Supports Entities',
+    outLabel: 'Supported by Business Capabilities',
+    inSymSchemaIds: ['business_capability'],
+    outSymSchemaIds: 'any',
+    fields: [],
+    color: AR_COLOR_PURPLE,
+    icon: 'layers'
   },
   {
     symId: 'objective-affects-entity',
@@ -2160,7 +2218,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     category: 'cross-cutting',
     name: 'Strategy',
     description:
-      'Strategic objectives, outcomes, initiatives, and measures, linked to supporting and affected entities.',
+      'Strategic objectives, outcomes, initiatives, measures, and Business Capabilities with nested hierarchy.',
     schemas: strategySchemas,
     enums: [strategyStatusEnum],
     relationSchemas: strategyRelationSchemas,
@@ -2173,7 +2231,10 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           objective: { target: { kind: 'entity_schema', symId: 'objective' } },
           outcome: { target: { kind: 'entity_schema', symId: 'outcome' } },
           initiative: { target: { kind: 'entity_schema', symId: 'initiative' } },
-          measure: { target: { kind: 'entity_schema', symId: 'measure' } }
+          measure: { target: { kind: 'entity_schema', symId: 'measure' } },
+          business_capability: {
+            target: { kind: 'entity_schema', symId: 'business_capability' }
+          }
         }
       }
     ],
