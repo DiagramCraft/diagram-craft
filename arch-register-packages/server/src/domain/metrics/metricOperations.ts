@@ -663,6 +663,19 @@ export const getBoxMetrics = async (
     projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
   ]);
 
+  const relationSchemaIds = new Set(relationSchemas.map(schema => schema.id));
+  for (const step of metric.path ?? []) {
+    if (
+      (step.kind === 'typedRelation' || step.kind === 'unboundTypedRelation') &&
+      !relationSchemaIds.has(step.relationSchemaId)
+    ) {
+      httpAssert.true(false, {
+        status: 400,
+        message: `Metric path references unknown relation schema '${step.relationSchemaId}'`
+      });
+    }
+  }
+
   if (metric.source.kind === 'assessmentRating') {
     httpAssert.present(joinedAssessment, {
       status: 400,

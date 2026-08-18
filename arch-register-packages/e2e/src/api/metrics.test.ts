@@ -30,6 +30,7 @@ const contractCostMetric = {
 
 const domainId = '00000000-0000-0000-0001-000000000001';
 const systemContractRelationSchemaId = '00000000-0000-0000-0000-000000000031';
+const providesApiRelationSchemaId = '00000000-0000-0000-0000-000000000034';
 const domainToContractMetric = {
   ...contractCostMetric,
   path: [
@@ -128,6 +129,34 @@ test.describe('metric rollups', () => {
       value: 155000,
       sourceCount: 2,
       populatedCount: 2,
+      duplicateCount: 0
+    });
+  });
+
+  test('rolls up from a field-less typed-relation endpoint', async ({ orpc }) => {
+    const response = await orpc.metrics.rollup({
+      params: { workspace: 'default' },
+      body: {
+        boxEntityIds: [seededEntities.default.customerApi.id],
+        metric: {
+          sourceSchemaId: seededSchemas.default.component.id,
+          path: [
+            {
+              kind: 'unboundTypedRelation' as const,
+              relationSchemaId: providesApiRelationSchemaId,
+              direction: 'out' as const
+            }
+          ],
+          source: { kind: 'lifecycle' as const },
+          aggregation: 'count' as const
+        }
+      }
+    });
+
+    expect(response.results[0]).toMatchObject({
+      value: 1,
+      sourceCount: 1,
+      populatedCount: 1,
       duplicateCount: 0
     });
   });

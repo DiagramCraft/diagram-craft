@@ -84,6 +84,9 @@ const getTypedRelations = async (
     ? { outgoing: [], incoming: [] }
     : db.relation.listRelationsForEntities(workspace, [...new Set(entityIds)]);
 
+const endpointAllowsSchema = (endpoint: string[] | 'any', schemaId: string) =>
+  endpoint === 'any' || endpoint.includes(schemaId);
+
 const expandRelationStep = (
   occurrences: EntityOccurrence[],
   step: Extract<MetricTraversalStep, { kind: 'relation' }>,
@@ -136,7 +139,7 @@ const expandTypedRelationStep = async (
   db: DatabaseAdapter,
   workspace: string,
   occurrences: EntityOccurrence[],
-  step: Extract<MetricTraversalStep, { kind: 'typedRelation' }>,
+  step: Extract<MetricTraversalStep, { kind: 'typedRelation' | 'unboundTypedRelation' }>,
   entities: EntityDbResult[],
   schemas: SchemaDbResult[],
   relationSchemas: RelationSchemaDbResult[],
@@ -168,49 +171,74 @@ const expandTypedRelationStep = async (
   const results: EntityOccurrence[] = [];
   for (const occurrence of occurrences) {
     const currentSchema = schemaById.get(occurrence.entity.schema_id);
-    const typedField = currentSchema?.fields.find(
-      field =>
-        field.type === 'typedRelation' &&
-        field.id === step.fieldId &&
-        field.relationSchemaId === step.relationSchemaId &&
-        field.direction === step.direction
-    );
-    if (!typedField) continue;
-    // A typed-relation field's direction identifies the endpoint occupied by the current entity.
-    // An `in` field therefore follows the row's outgoing edge to its `out` endpoint, while an
-    // `out` field follows the incoming edge to its `in` endpoint.
-    const rows =
-      step.direction === 'in'
-        ? (outgoingByEntity.get(occurrence.entity.id) ?? [])
-        : (incomingByEntity.get(occurrence.entity.id) ?? []);
-    for (const row of dedupeRelationRows(rows)) {
-      if (row.schema_id !== step.relationSchemaId) continue;
-      const targetId = step.direction === 'in' ? row.out_entity_id : row.in_entity_id;
-      const target = entityById.get(targetId);
-      const targetSchema = target ? schemaById.get(target.schema_id) : undefined;
-      if (!target || !targetSchema) continue;
+    const directions =
+      step.kind === 'unboundTypedRelation'
+        ? step.direction === 'both'
+          ? (['in', 'out'] as const)
+          : [step.direction]
+        : [step.direction];
+    const seenRelationIds = new Set<string>();
+    for (const direction of directions) {
+      const typedField =
+        step.kind === 'typedRelation'
+          ? currentSchema?.fields.find(
+              field =>
+                field.type === 'typedRelation' &&
+                field.id === step.fieldId &&
+                field.relationSchemaId === step.relationSchemaId &&
+                field.direction === direction
+            )
+          : undefined;
+      if (step.kind === 'typedRelation' && !typedField) continue;
       if (
-        !canViewTypedRelation(
-          authCtx,
-          [
-            {
-              schema: currentSchema,
-              direction: step.direction
-            },
-            {
-              schema: targetSchema,
-              direction: step.direction === 'in' ? 'out' : 'in'
-            }
-          ],
-          row.schema_id,
-          row.owner
-        ) ||
-        !canViewTypedRelationFromEndpoint(authCtx, currentSchema, row.schema_id, step.direction)
+        !currentSchema ||
+        !endpointAllowsSchema(
+          direction === 'in' ? relationSchema.in_schema_ids : relationSchema.out_schema_ids,
+          currentSchema.id
+        )
       ) {
         continue;
       }
-      results.push({ entity: target, lastRelation: row });
-      if (results.length >= MAX_TRAVERSAL_RESULTS) return results;
+      // A typed-relation field's direction identifies the endpoint occupied by the current
+      // entity. An `in` field follows the row's outgoing edge, while an `out` field follows the
+      // incoming edge. Unbound steps use the same endpoint semantics.
+      const rows =
+        direction === 'in'
+          ? (outgoingByEntity.get(occurrence.entity.id) ?? [])
+          : (incomingByEntity.get(occurrence.entity.id) ?? []);
+      for (const row of dedupeRelationRows(rows)) {
+        if (row.schema_id !== step.relationSchemaId || seenRelationIds.has(row.id)) continue;
+        const targetId = direction === 'in' ? row.out_entity_id : row.in_entity_id;
+        const target = entityById.get(targetId);
+        const targetSchema = target ? schemaById.get(target.schema_id) : undefined;
+        if (!target || !targetSchema) continue;
+        const targetEndpoint =
+          direction === 'in' ? relationSchema.out_schema_ids : relationSchema.in_schema_ids;
+        if (!endpointAllowsSchema(targetEndpoint, targetSchema.id)) continue;
+        if (
+          !canViewTypedRelation(
+            authCtx,
+            [
+              {
+                schema: currentSchema,
+                direction
+              },
+              {
+                schema: targetSchema,
+                direction: direction === 'in' ? 'out' : 'in'
+              }
+            ],
+            row.schema_id,
+            row.owner
+          ) ||
+          !canViewTypedRelationFromEndpoint(authCtx, currentSchema, row.schema_id, direction)
+        ) {
+          continue;
+        }
+        seenRelationIds.add(row.id);
+        results.push({ entity: target, lastRelation: row });
+        if (results.length >= MAX_TRAVERSAL_RESULTS) return results;
+      }
     }
   }
   return results;

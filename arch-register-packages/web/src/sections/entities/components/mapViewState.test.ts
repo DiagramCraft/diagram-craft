@@ -10,6 +10,7 @@ import {
   getContainmentChildren,
   getMapTraversalPath,
   getMapSchemaIds,
+  resolveMapTraversalPath,
   sortContainmentNodes
 } from './mapViewState';
 
@@ -171,6 +172,53 @@ describe('map view state', () => {
         fieldId: 'contracts',
         relationSchemaId: 'system-contract',
         direction: 'in'
+      }
+    ]);
+  });
+
+  it('requires an explicit relation level for a field-less typed relation', () => {
+    const system = schema('system');
+    const contract = schema('contract');
+    const relationSchema = {
+      id: 'system-contract',
+      name: 'System Contract',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['contract'] }
+    } as unknown as RelationSchema;
+
+    expect(getChildSchemas([system, contract], 'system', [relationSchema])).toEqual([]);
+    expect(getChildRelationSchemas([system], 'system', [relationSchema])).toEqual([relationSchema]);
+    expect(
+      getMapTraversalPath(
+        ['system', 'system-contract', 'contract'],
+        [system, contract],
+        [relationSchema]
+      )
+    ).toEqual([
+      {
+        kind: 'unboundTypedRelation',
+        relationSchemaId: 'system-contract',
+        direction: 'in'
+      }
+    ]);
+    expect(
+      resolveMapTraversalPath(['system', 'contract'], [system, contract], [relationSchema]).error
+    ).toContain('intermediate map level');
+  });
+
+  it('uses both directions for a field-less self-loop relation', () => {
+    const system = schema('system');
+    const relationSchema = {
+      id: 'system-links',
+      name: 'System Links',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['system'] }
+    } as unknown as RelationSchema;
+    expect(getMapTraversalPath(['system', 'system-links'], [system], [relationSchema])).toEqual([
+      {
+        kind: 'unboundTypedRelation',
+        relationSchemaId: 'system-links',
+        direction: 'both'
       }
     ]);
   });

@@ -137,6 +137,21 @@ describe('parseMetricConfig', () => {
       })
     ).toMatchObject({ sourceContext: 'relation', path: expect.any(Array) });
   });
+
+  it('parses an unbound typed relation path, including both directions', () => {
+    expect(
+      parseMetricConfig({
+        sourceSchemaId: 'contract',
+        path: [
+          { kind: 'unboundTypedRelation', relationSchemaId: 'system-links', direction: 'both' }
+        ],
+        source: { kind: 'lifecycle' },
+        aggregation: 'count'
+      })?.path
+    ).toEqual([
+      { kind: 'unboundTypedRelation', relationSchemaId: 'system-links', direction: 'both' }
+    ]);
+  });
 });
 
 describe('getMetricPathOptions', () => {
@@ -193,6 +208,26 @@ describe('getMetricPathOptions', () => {
         direction: 'in'
       },
       label: 'Contracts → System Contract',
+      targetSchemaIds: ['contract']
+    });
+  });
+
+  it('offers a field-less relation schema as an explicit traversal hop', () => {
+    const fieldless = {
+      id: 'system-contract',
+      name: 'System Contract',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['contract'] },
+      fields: []
+    } as unknown as RelationSchema;
+    const options = getMetricPathOptions(system, [fieldless]);
+    expect(options).toContainEqual({
+      step: {
+        kind: 'unboundTypedRelation',
+        relationSchemaId: 'system-contract',
+        direction: 'in'
+      },
+      label: 'System Contract → related schema',
       targetSchemaIds: ['contract']
     });
   });

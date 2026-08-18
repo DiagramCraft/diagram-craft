@@ -29,6 +29,7 @@ type MapConfigControlsProps = {
   metricTerminalEntitySchema: EntitySchema | undefined;
   metricTerminalContext: 'entity' | 'relation';
   mapTraversalPath: MetricTraversalStep[];
+  mapTraversalError?: string;
   metricConfig: MetricConfig | null;
   setMetricConfig: (next: MetricConfig | null) => void;
   metricSourceSchema: EntitySchema | RelationSchema | undefined;
@@ -99,6 +100,7 @@ export const MapConfigControls = ({
   metricTerminalEntitySchema,
   metricTerminalContext,
   mapTraversalPath,
+  mapTraversalError,
   metricConfig,
   setMetricConfig,
   metricSourceSchema,
@@ -204,6 +206,7 @@ export const MapConfigControls = ({
             <select
               className={styles.select}
               value={metricConfig ? sourceKey(metricConfig.source) : ''}
+              disabled={mapTraversalError != null}
               onChange={e => {
                 const option = metricSourceOptions.find(
                   candidate => sourceKey(candidate.source) === e.target.value
@@ -238,6 +241,7 @@ export const MapConfigControls = ({
             </select>
             <TbChevronDown size={11} />
           </div>
+          {mapTraversalError && <span className={styles.metricError}>{mapTraversalError}</span>}
         </div>
 
         {metricConfig && (
