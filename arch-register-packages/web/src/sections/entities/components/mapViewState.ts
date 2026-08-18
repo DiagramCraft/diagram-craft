@@ -373,8 +373,25 @@ const nodeName = (node: TreeNode) => node._name ?? node._slug;
 
 export const sortContainmentNodes = (nodes: TreeNode[], schemaId: string | null): TreeNode[] =>
   nodes
-    .filter(node => node._schema.id === schemaId && node._isMatch)
+    .filter(node => node._schema.id === schemaId)
     .sort((a, b) => nodeName(a).localeCompare(nodeName(b)));
+
+export const getMapRoots = (
+  nodes: TreeNode[],
+  edges: TreeEdge[],
+  schemaId: string | null
+): TreeNode[] => {
+  if (!schemaId) return [];
+  const nodeMap = new Map(nodes.map(node => [node._uid, node]));
+  const nestedNodeIds = new Set(
+    edges.flatMap(({ childId, parentId }) => {
+      const child = nodeMap.get(childId);
+      const parent = nodeMap.get(parentId);
+      return child?._schema.id === schemaId && parent?._schema.id === schemaId ? [childId] : [];
+    })
+  );
+  return sortContainmentNodes(nodes, schemaId).filter(node => !nestedNodeIds.has(node._uid));
+};
 
 export const getContainmentChildren = (
   parentUid: string,

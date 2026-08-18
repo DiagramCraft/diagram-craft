@@ -94,13 +94,17 @@ describe('instantiateTemplate', () => {
     ]);
   });
 
-  it('materializes the optional strategy template with wildcard relations', () => {
+  it('materializes the optional strategy template with nested Business Capabilities', () => {
     const definitions = instantiateTemplateDefinitions('ws-1', 'strategy');
+    const businessCapability = definitions.schemas.find(
+      schema => schema.name === 'Business Capability'
+    );
     const objective = definitions.schemas.find(schema => schema.name === 'Objective');
     const outcome = definitions.schemas.find(schema => schema.name === 'Outcome');
     const initiative = definitions.schemas.find(schema => schema.name === 'Initiative');
     const measure = definitions.schemas.find(schema => schema.name === 'Measure');
 
+    expect(businessCapability).toMatchObject({ category: 'Strategy' });
     expect(objective).toBeDefined();
     expect(outcome).toBeDefined();
     expect(initiative).toBeDefined();
@@ -108,7 +112,7 @@ describe('instantiateTemplate', () => {
     expect(objective?.fields).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          id: 'supported_entities',
+          id: 'supported_capabilities',
           name: 'Supports',
           type: 'typedRelation',
           direction: 'in'
@@ -121,16 +125,58 @@ describe('instantiateTemplate', () => {
         })
       ])
     );
+    expect(businessCapability?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'parent',
+          name: 'Parent Capability',
+          type: 'containment',
+          schemaId: businessCapability?.id,
+          minCount: 0,
+          maxCount: 1
+        }),
+        expect.objectContaining({
+          id: 'capability_level',
+          name: 'Capability Level',
+          type: 'derived',
+          expression:
+            "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+          resultType: 'text'
+        }),
+        expect.objectContaining({
+          id: 'supporting_objectives',
+          name: 'Supported by Objectives',
+          type: 'typedRelation',
+          direction: 'out'
+        }),
+        expect.objectContaining({
+          id: 'supported_entities',
+          name: 'Supports Entities',
+          type: 'typedRelation',
+          direction: 'in'
+        })
+      ])
+    );
 
     const relationNames = definitions.relationSchemas.map(schema => schema.name);
-    expect(relationNames).toContain('Objective Supports Entity');
+    expect(relationNames).toContain('Objective Supports Business Capability');
+    expect(relationNames).toContain('Business Capability Supports Entity');
     expect(relationNames).toContain('Objective Affects Entity');
     expect(definitions.relationSchemas).toEqual(
       expect.arrayContaining([
         expect.objectContaining({
-          name: 'Objective Supports Entity',
+          name: 'Objective Supports Business Capability',
+          in_label: 'Supports Business Capabilities',
+          out_label: 'Supported by Objectives',
+          in_schema_ids: [objective?.id],
+          out_schema_ids: [businessCapability?.id]
+        }),
+        expect.objectContaining({
+          name: 'Business Capability Supports Entity',
           in_label: 'Supports Entities',
-          out_label: 'Supported by Objective'
+          out_label: 'Supported by Business Capabilities',
+          in_schema_ids: [businessCapability?.id],
+          out_schema_ids: 'any'
         }),
         expect.objectContaining({
           name: 'Objective Affects Entity',
@@ -139,10 +185,11 @@ describe('instantiateTemplate', () => {
         })
       ])
     );
-    for (const relationSchema of definitions.relationSchemas) {
-      expect(relationSchema.in_schema_ids).toEqual([objective?.id]);
-      expect(relationSchema.out_schema_ids).toBe('any');
-    }
+    const affectsRelation = definitions.relationSchemas.find(
+      relationSchema => relationSchema.name === 'Objective Affects Entity'
+    );
+    expect(affectsRelation?.in_schema_ids).toEqual([objective?.id]);
+    expect(affectsRelation?.out_schema_ids).toBe('any');
 
     expect(definitions.capabilityConfigurations).toEqual([
       expect.objectContaining({
@@ -151,7 +198,10 @@ describe('instantiateTemplate', () => {
           objective: { target: { kind: 'entity_schema', id: objective?.id } },
           outcome: { target: { kind: 'entity_schema', id: outcome?.id } },
           initiative: { target: { kind: 'entity_schema', id: initiative?.id } },
-          measure: { target: { kind: 'entity_schema', id: measure?.id } }
+          measure: { target: { kind: 'entity_schema', id: measure?.id } },
+          business_capability: {
+            target: { kind: 'entity_schema', id: businessCapability?.id }
+          }
         })
       })
     ]);

@@ -170,13 +170,14 @@
           quality reports. Term definitions, aliases, category changes, ownership, lifecycle, and status continue to
           use the existing entity permissions, history, and approval mechanisms; generic entity behavior is unchanged.
 
-        - @id:ar.entities.strategy-model Workspaces can optionally enable a strategy model — Objective, Outcome,
-          Initiative, and Measure entity schemas with no fixed taxonomy or hierarchy — bound to the workspace via a
-          `strategy-model` capability so other features (traceability views, roll-ups) can discover it. Two wildcard
-          typed relations, Objective Supports Entity and Objective Affects Entity, link objectives to any entity in
-          the workspace with distinct supporting and impact semantics. Relation endpoint constraints are authoritative
-          while typed-relation fields are optional projections, so these relations can be browsed, edited, and queried
-          even when target schemas do not add inverse fields.
+        - @id:ar.entities.strategy-model Workspaces can optionally enable a strategy model — nested Business
+          Capability, Objective, Outcome, Initiative, and Measure entity schemas — bound to the workspace via a
+          `strategy-model` capability so other features (traceability views, roll-ups) can discover it. The
+          Objective Supports Business Capability relation connects objectives to the nested capability hierarchy,
+          while Business Capability Supports Entity connects capabilities to systems and other architecture entities;
+          Objective Affects Entity remains a wildcard relation for architecture impact links. Relation endpoint
+          constraints are authoritative and typed-relation fields provide projections on capability and objective
+          schemas, so the hierarchy and strategic links can be browsed, edited, and queried.
 
         - @id:ar.entities.relations Users can create and inspect relationships between entities and navigate related,
           dependent, and referenced records. Alongside generic reference/containment relations, workspace admins can
@@ -344,9 +345,10 @@
           relation fields). Users can optionally hide boxes with missing metric data; a box with a direct source value
           but no aggregate is colored and annotated from that source value. Clicking any rendered entity box opens
           its entity detail card rather than re-rooting the map.
-          Traversal applies the current visibility, permission, project, and filter scope,
-          deduplicates repeated terminal sources, and marks collapsed duplicates in the map with a count and hover
-          detail.
+          Traversal applies the current visibility, permission, project, and filter scope. Map filters select relevant
+          branches while ancestors and configured descendants are included as structural context; recursive maps use
+          only top-most entities as roots. Repeated terminal sources are deduplicated and collapsed duplicates are
+          marked in the map with a count and hover detail.
 
         - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view,
           using a scoped relation filter popup grouped by source entity schema and labelled with source schema,

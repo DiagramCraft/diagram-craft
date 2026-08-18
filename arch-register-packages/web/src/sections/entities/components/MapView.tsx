@@ -117,7 +117,9 @@ export const MapView = ({
     typeFilter,
     ownerFilter,
     statusFilter,
-    schemaIds: mapEntityQuery ? undefined : schemaIds
+    schemaIds,
+    treeExpansion: 'both',
+    treeDepth: Math.max(0, cfg.levelConfigs.length - 1)
   });
   const nodeIds = useMemo(() => nodes.map(node => node._uid), [nodes]);
   const entityRelations = useMultipleEntityRelations(workspaceId, nodeIds);

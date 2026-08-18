@@ -790,9 +790,14 @@ export const getEntityTree = async (
     projectScope?: 'project' | 'all';
     conditions?: FilterCondition[];
     assessmentId?: string | null;
+    schemaIds?: string[] | null;
+    treeExpansion?: 'ancestors' | 'both';
+    treeDepth?: number | null;
   }
 ): Promise<TreeResponse> => {
   const normalized = normalizeEntityQueryOptions(options);
+  const treeExpansion = options.treeExpansion ?? 'ancestors';
+  const descendantDepth = Math.max(0, Math.min(options.treeDepth ?? 20, 20));
   const {
     entityQuery,
     schemaId,
@@ -803,7 +808,8 @@ export const getEntityTree = async (
     projectScope,
     conditions,
     assessmentId,
-    collectionId
+    collectionId,
+    schemaIds
   } = normalized;
   try {
     const { assessmentConditions, otherConditions } = splitAssessmentConditions(conditions);
@@ -863,10 +869,14 @@ export const getEntityTree = async (
       if (cFields.length > 0) containmentFieldsBySchema.set(schema.id, cFields);
     }
 
+    const matchScopeEntities =
+      schemaIds && schemaIds.length > 0
+        ? scopedEntities.filter(entity => schemaIds.includes(entity.schema_id))
+        : scopedEntities;
     const matchRows = (
       structuredMatchIds
-        ? scopedEntities.filter(entity => structuredMatchIds.has(entity.id))
-        : filterEntities(scopedEntities, {
+        ? matchScopeEntities.filter(entity => structuredMatchIds.has(entity.id))
+        : filterEntities(matchScopeEntities, {
             schemaId,
             owner,
             lifecycle,
@@ -894,6 +904,13 @@ export const getEntityTree = async (
     const entityById = new Map(scopedEntities.map(entity => [entity.id, entity]));
     const allIncluded = new Map(matchRows.map(entity => [entity.id, entity]));
     const edges: Array<{ childId: string; parentId: string }> = [];
+    const edgeKeys = new Set<string>();
+    const addEdge = (childId: string, parentId: string) => {
+      const key = `${childId}:${parentId}`;
+      if (edgeKeys.has(key)) return;
+      edgeKeys.add(key);
+      edges.push({ childId, parentId });
+    };
 
     let currentLevel = [...matchRows];
     while (currentLevel.length > 0) {
@@ -902,7 +919,7 @@ export const getEntityTree = async (
         const cFields = containmentFieldsBySchema.get(entity.schema_id) ?? [];
         for (const fieldId of cFields) {
           for (const parentId of decodeRefs(entity.data[fieldId])) {
-            edges.push({ childId: entity.id, parentId });
+            addEdge(entity.id, parentId);
             const parent = entityById.get(parentId);
             if (parent && !allIncluded.has(parent.id)) {
               allIncluded.set(parent.id, parent);
@@ -912,6 +929,41 @@ export const getEntityTree = async (
         }
       }
       currentLevel = nextLevel;
+    }
+
+    if (treeExpansion === 'both' && descendantDepth > 0) {
+      const childrenByParent = new Map<string, EntityDbResult[]>();
+      for (const entity of scopedEntities) {
+        const cFields = containmentFieldsBySchema.get(entity.schema_id) ?? [];
+        for (const fieldId of cFields) {
+          for (const parentId of decodeRefs(entity.data[fieldId])) {
+            const children = childrenByParent.get(parentId) ?? [];
+            children.push(entity);
+            childrenByParent.set(parentId, children);
+          }
+        }
+      }
+
+      for (const match of matchRows) {
+        const visited = new Set<string>([match.id]);
+        let level = [match];
+        for (let depth = 0; depth < descendantDepth && level.length > 0; depth += 1) {
+          const nextLevel: EntityDbResult[] = [];
+          for (const parent of level) {
+            for (const child of childrenByParent.get(parent.id) ?? []) {
+              if (schemaIds && schemaIds.length > 0 && !schemaIds.includes(child.schema_id)) {
+                continue;
+              }
+              addEdge(child.id, parent.id);
+              if (visited.has(child.id)) continue;
+              visited.add(child.id);
+              allIncluded.set(child.id, child);
+              nextLevel.push(child);
+            }
+          }
+          level = nextLevel;
+        }
+      }
     }
 
     return {

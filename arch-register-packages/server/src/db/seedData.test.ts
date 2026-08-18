@@ -3,7 +3,11 @@ import { seedEntities } from './seedData/entities';
 import { seedRelationSchemas, seedRelations } from './seedData/relations';
 import { seedAssessments, seedProjectEntities } from './seedData/projects';
 import { seedEnums, seedSchemas } from './seedData/catalog';
-import { GLOSSARY_IDS, STRATEGY_IDS } from './seedData/constants';
+import {
+  BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
+  GLOSSARY_IDS,
+  STRATEGY_IDS
+} from './seedData/constants';
 import { seededProjects } from './seedFixtures';
 import { seedAssessmentTypes } from './seedData/workspace';
 import { seedWorkspaceDashboards } from './seedData/views';
@@ -19,6 +23,9 @@ describe('schema presentation categories', () => {
     expect(seedSchemas.find(schema => schema.name === 'Data Entity')?.category).toBe('Data');
     expect(seedSchemas.find(schema => schema.name === 'Risk')?.category).toBe('Governance');
     expect(seedSchemas.find(schema => schema.name === 'Term')?.category).toBe('Glossary');
+    expect(seedSchemas.find(schema => schema.name === 'Business Capability')?.category).toBe(
+      'Strategy'
+    );
   });
 });
 
@@ -91,6 +98,99 @@ describe('business glossary seed data', () => {
       categories: [GLOSSARY_IDS.categories.customer],
       status: 'approved'
     });
+  });
+});
+
+describe('business capability strategy seed data', () => {
+  it('seeds a nested Business Capability schema and dedicated objective relation', () => {
+    const businessCapability = seedSchemas.find(schema => schema.name === 'Business Capability');
+    const objective = seedSchemas.find(schema => schema.id === STRATEGY_IDS.objectiveSchema);
+    const supportsCapability = seedRelationSchemas.find(
+      schema => schema.name === 'Objective Supports Business Capability'
+    );
+
+    expect(businessCapability?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'parent',
+          type: 'containment',
+          schemaId: STRATEGY_IDS.businessCapabilitySchema,
+          minCount: 0,
+          maxCount: 1
+        }),
+        expect.objectContaining({
+          id: 'capability_level',
+          type: 'derived',
+          expression:
+            "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+          resultType: 'text'
+        }),
+        expect.objectContaining({
+          id: 'supporting_objectives',
+          type: 'typedRelation',
+          direction: 'out'
+        }),
+        expect.objectContaining({
+          id: 'supported_entities',
+          type: 'typedRelation',
+          relationSchemaId: BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
+          direction: 'in'
+        })
+      ])
+    );
+    expect(objective?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'supported_capabilities',
+          type: 'typedRelation',
+          direction: 'in'
+        })
+      ])
+    );
+    expect(supportsCapability).toMatchObject({
+      in_schema_ids: [STRATEGY_IDS.objectiveSchema],
+      out_schema_ids: [STRATEGY_IDS.businessCapabilitySchema],
+      in_label: 'Supports Business Capabilities',
+      out_label: 'Supported by Objectives'
+    });
+    const capabilities = seedEntities.filter(
+      entity => entity.schema_id === STRATEGY_IDS.businessCapabilitySchema
+    );
+    expect(capabilities).toHaveLength(5);
+    expect(
+      capabilities.find(capability => capability.name === 'Self-Service Management')?.data
+    ).toMatchObject({
+      parent: [STRATEGY_IDS.businessCapabilities.customerEngagement]
+    });
+    expect(
+      capabilities.find(capability => capability.name === 'Account Management')?.data
+    ).toMatchObject({
+      parent: [STRATEGY_IDS.businessCapabilities.selfServiceManagement]
+    });
+    expect(seedRelations).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          schema_id: BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
+          in_entity_id: STRATEGY_IDS.businessCapabilities.selfServiceManagement,
+          out_entity_id: '00000000-0000-0000-0002-000000000001'
+        }),
+        expect.objectContaining({
+          schema_id: BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
+          in_entity_id: STRATEGY_IDS.businessCapabilities.observabilityManagement,
+          out_entity_id: '00000000-0000-0000-0002-000000000006'
+        }),
+        expect.objectContaining({
+          schema_id: supportsCapability?.id,
+          in_entity_id: STRATEGY_IDS.objectives.improveCustomerRetention,
+          out_entity_id: STRATEGY_IDS.businessCapabilities.selfServiceManagement
+        }),
+        expect.objectContaining({
+          schema_id: supportsCapability?.id,
+          in_entity_id: STRATEGY_IDS.objectives.strengthenPlatformReliability,
+          out_entity_id: STRATEGY_IDS.businessCapabilities.observabilityManagement
+        })
+      ])
+    );
   });
 });
 

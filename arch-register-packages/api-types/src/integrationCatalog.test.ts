@@ -99,6 +99,20 @@ describe('workspace capability field mappings', () => {
   });
 });
 
+describe('strategy model capability bindings', () => {
+  it('requires a Business Capability schema for strategy traceability', () => {
+    expect(getWorkspaceCapabilityDefinition('strategy-model')).toMatchObject({
+      bindingRoles: expect.arrayContaining([
+        expect.objectContaining({
+          id: 'business_capability',
+          required: true,
+          targetKind: 'entity_schema'
+        })
+      ])
+    });
+  });
+});
+
 describe('workspace capability definitions', () => {
   it('describes API capability roles independently from entity opt-in metadata', () => {
     const definition = getWorkspaceCapabilityDefinition('api-specification');

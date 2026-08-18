@@ -14,9 +14,10 @@ import { seedEntities, seedEntitiesRaw } from './entities';
 import {
   API_CONSUMER_RELATION_SCHEMA_ID,
   API_PROVIDER_RELATION_SCHEMA_ID,
+  BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
   CONTROL_REQUIREMENT_SCHEMA_ID,
   DATA_FLOW_SCHEMA_ID,
-  OBJECTIVE_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
+  OBJECTIVE_SUPPORTS_BUSINESS_CAPABILITY_RELATION_SCHEMA_ID,
   OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
   RISK_AFFECTS_RELATION_SCHEMA_ID,
   RISK_CONTROL_SCHEMA_ID,
@@ -245,15 +246,33 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     updated_at: now
   },
   {
-    id: OBJECTIVE_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
+    id: BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
     workspace: WORKSPACE_ID,
-    name: 'Objective Supports Entity',
+    name: 'Business Capability Supports Entity',
     category: 'Strategy',
-    description: 'Associates an Objective with an entity that supports or enables it.',
+    description: 'Associates a Business Capability with an entity that helps realise it.',
     in_label: 'Supports Entities',
-    out_label: 'Supported by Objective',
-    in_schema_ids: [STRATEGY_IDS.objectiveSchema],
+    out_label: 'Supported by Business Capabilities',
+    in_schema_ids: [STRATEGY_IDS.businessCapabilitySchema],
     out_schema_ids: 'any',
+    fields: [],
+    groups: [],
+    shared_field_group_links: [],
+    color: AR_COLOR_PURPLE,
+    icon: 'layers',
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: OBJECTIVE_SUPPORTS_BUSINESS_CAPABILITY_RELATION_SCHEMA_ID,
+    workspace: WORKSPACE_ID,
+    name: 'Objective Supports Business Capability',
+    category: 'Strategy',
+    description: 'Associates an Objective with a Business Capability that supports or enables it.',
+    in_label: 'Supports Business Capabilities',
+    out_label: 'Supported by Objectives',
+    in_schema_ids: [STRATEGY_IDS.objectiveSchema],
+    out_schema_ids: [STRATEGY_IDS.businessCapabilitySchema],
     fields: [],
     groups: [],
     shared_field_group_links: [],
@@ -581,10 +600,10 @@ export const seedRelations: RelationDbCreate[] = [
   {
     id: '00000000-0000-0000-001d-000000000001',
     workspace: WORKSPACE_ID,
-    schema_id: OBJECTIVE_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
-    // Improve Customer Retention -> Customer Portal (System).
+    schema_id: OBJECTIVE_SUPPORTS_BUSINESS_CAPABILITY_RELATION_SCHEMA_ID,
+    // Improve Customer Retention -> Self-Service Management.
     in_entity_id: STRATEGY_IDS.objectives.improveCustomerRetention,
-    out_entity_id: '00000000-0000-0000-0002-000000000001',
+    out_entity_id: STRATEGY_IDS.businessCapabilities.selfServiceManagement,
     data: {},
     created_at: now,
     updated_at: now
@@ -592,9 +611,31 @@ export const seedRelations: RelationDbCreate[] = [
   {
     id: '00000000-0000-0000-001d-000000000002',
     workspace: WORKSPACE_ID,
-    schema_id: OBJECTIVE_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
-    // Strengthen Platform Reliability -> Search Platform (System).
+    schema_id: OBJECTIVE_SUPPORTS_BUSINESS_CAPABILITY_RELATION_SCHEMA_ID,
+    // Strengthen Platform Reliability -> Observability Management.
     in_entity_id: STRATEGY_IDS.objectives.strengthenPlatformReliability,
+    out_entity_id: STRATEGY_IDS.businessCapabilities.observabilityManagement,
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0020-000000000001',
+    workspace: WORKSPACE_ID,
+    schema_id: BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
+    // Self-Service Management -> Customer Portal.
+    in_entity_id: STRATEGY_IDS.businessCapabilities.selfServiceManagement,
+    out_entity_id: '00000000-0000-0000-0002-000000000001',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0020-000000000002',
+    workspace: WORKSPACE_ID,
+    schema_id: BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
+    // Observability Management -> Search Platform.
+    in_entity_id: STRATEGY_IDS.businessCapabilities.observabilityManagement,
     out_entity_id: '00000000-0000-0000-0002-000000000006',
     data: {},
     created_at: now,

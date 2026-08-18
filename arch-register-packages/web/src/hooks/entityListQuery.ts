@@ -18,6 +18,8 @@ export type EntityListOptions = {
   offset?: number | null;
   asOf?: string | null;
   includePlannedChanges?: boolean | null;
+  treeExpansion?: 'ancestors' | 'both';
+  treeDepth?: number | null;
 };
 
 export const toEntityListQuery = (options: EntityListOptions) => ({
@@ -33,5 +35,7 @@ export const toEntityListQuery = (options: EntityListOptions) => ({
   projectScope: options.projectScope ?? undefined,
   collectionId: options.collectionId ?? undefined,
   asOf: options.asOf ?? undefined,
-  includePlannedChanges: options.includePlannedChanges ?? undefined
+  includePlannedChanges: options.includePlannedChanges ?? undefined,
+  treeExpansion: options.treeExpansion ?? undefined,
+  treeDepth: options.treeDepth ?? undefined
 });

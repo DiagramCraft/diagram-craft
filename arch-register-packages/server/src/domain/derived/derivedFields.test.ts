@@ -109,6 +109,44 @@ describe('derived fields', () => {
     });
   });
 
+  it('calculates nested capability levels from projected parents', () => {
+    const fields: SchemaField[] = [
+      {
+        id: 'parent',
+        name: 'Parent',
+        type: 'containment',
+        schemaId: 'business-capability',
+        minCount: 0,
+        maxCount: 1
+      },
+      {
+        id: 'capability_level',
+        name: 'Capability Level',
+        type: 'derived',
+        requirementLevel: 'optional',
+        expression:
+          "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+        resultType: 'text'
+      }
+    ];
+    const levelPlan = buildDerivedPlan(fields);
+
+    expect(
+      materializeDerivedFields(fields, { parent: [] }, entityContext, [], { parent: null })
+        .capability_level
+    ).toBe('L1');
+    expect(
+      materializeDerivedFields(fields, { parent: ['parent-1'] }, entityContext, [], {
+        parent: { capability_level: 'L1' }
+      }).capability_level
+    ).toBe('L2');
+    expect(
+      evaluateDerivedFields(levelPlan, { parent: ['parent-2'] }, entityContext, new Set(), {
+        parent: { capability_level: 'L2' }
+      }).capability_level
+    ).toBe('L3');
+  });
+
   it('rejects unsupported identifiers outside entity', () => {
     expect(() => buildDerivedPlan([derivedSchemaText('invalid', 'workspace.secret')])).toThrow(
       /workspace/

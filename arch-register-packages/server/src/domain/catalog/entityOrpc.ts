@@ -114,7 +114,10 @@ const entityHandlers = {
       projectId: query.projectId,
       projectScope: query.projectScope,
       conditions: query.conditions,
-      assessmentId: query.assessmentId
+      assessmentId: query.assessmentId,
+      schemaIds: query.schemaIds,
+      treeExpansion: input.query.treeExpansion,
+      treeDepth: input.query.treeDepth
     });
   }),
 

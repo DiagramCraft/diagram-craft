@@ -17,7 +17,8 @@ import type {
 import type { SupportedCurrencyDbResult } from '../../domain/workspace/db/workspaceDatabase';
 import {
   GLOSSARY_IDS,
-  OBJECTIVE_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
+  BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
+  OBJECTIVE_SUPPORTS_BUSINESS_CAPABILITY_RELATION_SCHEMA_ID,
   OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
   PII_FIELD_GROUP_ID,
   RISK_AFFECTS_RELATION_SCHEMA_ID,
@@ -991,8 +992,62 @@ export const seedSchemas: SchemaDbResult[] = (
       created_at: now,
       updated_at: now
     },
-    // Strategy model: Objective, Outcome, Initiative, Measure (see #3020). Linked with reference
-    // fields rather than containment so no fixed hierarchy or taxonomy is imposed.
+    // Strategy model: Business Capability, Objective, Outcome, Initiative, Measure (see #3020).
+    // Business Capabilities support nested self-containment; the other strategy concepts use
+    // references so no fixed hierarchy or taxonomy is imposed on them.
+    {
+      id: STRATEGY_IDS.businessCapabilitySchema,
+      workspace: WORKSPACE_ID,
+      name: 'Business Capability',
+      category: 'Strategy',
+      description: 'A high-level ability the organisation needs to execute its strategy.',
+      fields: [
+        {
+          id: 'parent',
+          name: 'Parent Capability',
+          type: 'containment',
+          schemaId: STRATEGY_IDS.businessCapabilitySchema,
+          minCount: 0,
+          maxCount: 1
+        },
+        { id: 'target_date', name: 'Target Date', type: 'date' },
+        {
+          id: 'capability_level',
+          name: 'Capability Level',
+          type: 'derived',
+          requirementLevel: 'optional',
+          expression:
+            "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+          resultType: 'text'
+        },
+        {
+          id: 'supporting_objectives',
+          name: 'Supported by Objectives',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: OBJECTIVE_SUPPORTS_BUSINESS_CAPABILITY_RELATION_SCHEMA_ID,
+          direction: 'out',
+          minCount: 0,
+          maxCount: -1
+        },
+        {
+          id: 'supported_entities',
+          name: 'Supports Entities',
+          type: 'typedRelation',
+          requirementLevel: null,
+          relationSchemaId: BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
+        }
+      ],
+      color: AR_COLOR_YELLOW,
+      icon: 'globe',
+      default_owner: null,
+      key_prefix: 'CAP',
+      created_at: now,
+      updated_at: now
+    },
     {
       id: STRATEGY_IDS.objectiveSchema,
       workspace: WORKSPACE_ID,
@@ -1004,11 +1059,11 @@ export const seedSchemas: SchemaDbResult[] = (
         { id: 'status', name: 'Status', type: 'select', enumId: STRATEGY_IDS.statusEnum },
         { id: 'target_date', name: 'Target Date', type: 'date' },
         {
-          id: 'supported_entities',
+          id: 'supported_capabilities',
           name: 'Supports',
           type: 'typedRelation',
           requirementLevel: null,
-          relationSchemaId: OBJECTIVE_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
+          relationSchemaId: OBJECTIVE_SUPPORTS_BUSINESS_CAPABILITY_RELATION_SCHEMA_ID,
           direction: 'in',
           minCount: 0,
           maxCount: -1

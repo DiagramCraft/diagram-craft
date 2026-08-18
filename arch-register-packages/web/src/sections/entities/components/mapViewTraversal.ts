@@ -5,7 +5,7 @@ import type { EntityRelationData } from '../../../hooks/useEntities';
 import {
   buildContainmentTreeIndex,
   getContainmentChildren,
-  sortContainmentNodes,
+  getMapRoots,
   type ContainmentTreeIndex
 } from './mapViewState';
 import type { MapConfig } from './mapViewConfig';
@@ -62,7 +62,7 @@ export const buildRelationMapChildren = (
   const unique = new Map<string, RelationMapNode>();
   for (const relation of [...(relationData?.outgoing ?? []), ...(relationData?.incoming ?? [])]) {
     if (relation.kind !== 'typed' || relation.relationSchemaId !== relationSchemaId) continue;
-    if (!relation.relationId || !treeIndex.nodeMap.get(relation.entityId)?._isMatch) continue;
+    if (!relation.relationId || !treeIndex.nodeMap.has(relation.entityId)) continue;
     unique.set(relation.relationId, makeRelationMapNode(relation, relationSchema));
   }
   return [...unique.values()].sort((a, b) => nodeName(a).localeCompare(nodeName(b)));
@@ -82,7 +82,7 @@ export const buildMapChildren = (
     .map(relation => relation.entityId);
   const relatedChildren = relatedIds
     .map(id => treeIndex.nodeMap.get(id))
-    .filter((node): node is TreeNode => node?._isMatch === true);
+    .filter((node): node is TreeNode => node != null);
   const unique = new Map<string, TreeNode>();
   for (const node of [...containmentChildren, ...relatedChildren]) unique.set(node._uid, node);
   return [...unique.values()].sort((a, b) => nodeName(a).localeCompare(nodeName(b)));
@@ -127,8 +127,8 @@ export const useMapTraversal = ({
 
   const level1SchemaId = cfg.levelConfigs[0]?.schemaId ?? null;
   const level1Items = useMemo(
-    () => sortContainmentNodes(nodes, level1SchemaId),
-    [nodes, level1SchemaId]
+    () => getMapRoots(nodes, edges, level1SchemaId),
+    [edges, level1SchemaId, nodes]
   );
 
   const getMapChildrenForNode = useCallback(
