@@ -71,7 +71,8 @@ describe('map interactions', () => {
       _uid: 'team-1',
       _publicId: 'team-public-id',
       _schema: { id: 'team', name: 'Team' },
-      _name: 'Platform'
+      _name: 'Platform',
+      _isMatch: false
     } as unknown as TreeNode;
     const treeIndex = buildContainmentTreeIndex([entityNode, child], [
       { parentId: entityNode._uid, childId: child._uid }

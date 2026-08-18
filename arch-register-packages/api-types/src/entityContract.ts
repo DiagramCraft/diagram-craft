@@ -215,6 +215,11 @@ const booleanQuerySchema = z.preprocess(value => {
   return undefined;
 }, z.boolean().optional());
 
+const treeDepthQuerySchema = z.preprocess(value => {
+  if (typeof value === 'string' && value.trim() !== '') return Number(value);
+  return value;
+}, z.number().int().min(0).max(20).optional());
+
 const entityQueryRequestSchema = z.preprocess(value => {
   if (typeof value !== 'string') return value;
   try {
@@ -264,7 +269,12 @@ export const entityListFiltersSchema = z.object({
     .optional()
     .describe(
       'When asOf is set, whether to apply planned changes under projects on top of the reconstructed state. Defaults to true.'
-    )
+    ),
+  treeExpansion: z
+    .enum(['ancestors', 'both'])
+    .optional()
+    .describe('Tree context expansion mode; map views use both ancestors and descendants'),
+  treeDepth: treeDepthQuerySchema.describe('Maximum descendant depth used when treeExpansion is both')
 });
 
 const deleteEntityResponseSchema = z.object({

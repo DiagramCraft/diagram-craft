@@ -343,9 +343,10 @@
           relation fields). Users can optionally hide boxes with missing metric data; a box with a direct source value
           but no aggregate is colored and annotated from that source value. Clicking any rendered entity box opens
           its entity detail card rather than re-rooting the map.
-          Traversal applies the current visibility, permission, project, and filter scope,
-          deduplicates repeated terminal sources, and marks collapsed duplicates in the map with a count and hover
-          detail.
+          Traversal applies the current visibility, permission, project, and filter scope. Map filters select relevant
+          branches while ancestors and configured descendants are included as structural context; recursive maps use
+          only top-most entities as roots. Repeated terminal sources are deduplicated and collapsed duplicates are
+          marked in the map with a count and hover detail.
 
         - @id:ar.entity-views.explore Users can inspect entity data in a configurable side-by-side exploration view,
           using a scoped relation filter popup grouped by source entity schema and labelled with source schema,

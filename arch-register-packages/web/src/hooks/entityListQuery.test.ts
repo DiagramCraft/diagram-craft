@@ -16,7 +16,9 @@ describe('toEntityListQuery', () => {
         projectId: 'project-1',
         projectScope: 'project',
         asOf: '2026-07-11T00:00:00Z',
-        includePlannedChanges: false
+        includePlannedChanges: false,
+        treeExpansion: 'both',
+        treeDepth: 2
       })
     ).toEqual({
       _schemaId: 'schema-1',
@@ -28,7 +30,9 @@ describe('toEntityListQuery', () => {
       projectId: 'project-1',
       projectScope: 'project',
       asOf: '2026-07-11T00:00:00Z',
-      includePlannedChanges: false
+      includePlannedChanges: false,
+      treeExpansion: 'both',
+      treeDepth: 2
     });
   });
 
@@ -55,7 +59,9 @@ describe('toEntityListQuery', () => {
       projectId: undefined,
       projectScope: undefined,
       asOf: undefined,
-      includePlannedChanges: undefined
+      includePlannedChanges: undefined,
+      treeExpansion: undefined,
+      treeDepth: undefined
     });
   });
 

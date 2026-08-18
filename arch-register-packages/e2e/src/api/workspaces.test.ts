@@ -300,6 +300,24 @@ test.describe('workspace routes', () => {
         { childId: grandchild._uid, parentId: child._uid }
       ])
     );
+
+    const structuralTree = await orpc.entities.tree({
+      params: { workspace: created.url_slug },
+      query: {
+        _schemaId: businessCapability.id,
+        q: 'Customer Engagement',
+        treeExpansion: 'both',
+        treeDepth: 2
+      }
+    });
+
+    expect(
+      structuralTree.nodes.map(node => [node._uid, node._isMatch])
+    ).toEqual([
+      [root._uid, true],
+      [child._uid, false],
+      [grandchild._uid, false]
+    ]);
   });
 
   test('POST /api/workspaces applies slug and badge overrides', async ({ orpc }) => {
