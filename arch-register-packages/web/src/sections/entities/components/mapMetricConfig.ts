@@ -77,10 +77,15 @@ export const parseMetricConfig = (raw: unknown): MetricConfig | null => {
           );
         }
         return (
-          candidateStep.kind === 'typedRelation' &&
-          typeof candidateStep.fieldId === 'string' &&
-          typeof candidateStep.relationSchemaId === 'string' &&
-          (candidateStep.direction === 'in' || candidateStep.direction === 'out')
+          (candidateStep.kind === 'typedRelation' &&
+            typeof candidateStep.fieldId === 'string' &&
+            typeof candidateStep.relationSchemaId === 'string' &&
+            (candidateStep.direction === 'in' || candidateStep.direction === 'out')) ||
+          (candidateStep.kind === 'unboundTypedRelation' &&
+            typeof candidateStep.relationSchemaId === 'string' &&
+            (candidateStep.direction === 'in' ||
+              candidateStep.direction === 'out' ||
+              candidateStep.direction === 'both'))
         );
       }) as MetricTraversalStep[])
     : undefined;
@@ -217,6 +222,54 @@ export const getMetricPathOptions = (
         targetSchemaIds
       });
     }
+  }
+
+  // A relation schema can be traversed even when the current endpoint has no typed-relation
+  // projection field. Keep this as an explicit relation-schema hop so similarly-shaped relation
+  // schemas are never guessed or merged together.
+  for (const relationSchema of relationSchemas) {
+    const directions = (['in', 'out'] as const).filter(direction => {
+      const endpoint = direction === 'in' ? relationSchema.in : relationSchema.out;
+      const endpointSchemaIds =
+        endpoint.schemaIds === 'any'
+          ? entitySchemas.map(candidate => candidate.id)
+          : endpoint.schemaIds;
+      if (!endpointSchemaIds.includes(schema.id)) return false;
+      const matchingFields = schema.fields.filter(
+        field =>
+          field.type === 'typedRelation' &&
+          field.relationSchemaId === relationSchema.id &&
+          field.direction === direction
+      );
+      if (matchingFields.length === 0) return true;
+      return matchingFields.some(field => {
+        const group = field.groupId
+          ? schema.groups?.find(candidate => candidate.id === field.groupId)
+          : undefined;
+        return getFieldGroupAccess(group?.accessControl) !== 'none';
+      });
+    });
+    if (directions.length === 0) continue;
+    const direction = directions.length === 2 ? 'both' : directions[0]!;
+    const targetSchemaIds = [
+      ...new Set(
+        directions.flatMap(currentDirection => {
+          const endpoint = currentDirection === 'in' ? relationSchema.out : relationSchema.in;
+          return endpoint.schemaIds === 'any'
+            ? entitySchemas.map(candidate => candidate.id)
+            : endpoint.schemaIds;
+        })
+      )
+    ];
+    options.push({
+      step: {
+        kind: 'unboundTypedRelation',
+        relationSchemaId: relationSchema.id,
+        direction
+      },
+      label: `${relationSchema.name} → related schema`,
+      targetSchemaIds
+    });
   }
 
   // Reference and containment fields are stored on the related schema in the common

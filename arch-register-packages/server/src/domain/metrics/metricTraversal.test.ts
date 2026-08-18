@@ -63,12 +63,34 @@ const relationSchema: RelationSchemaDbResult = {
   updated_at: now
 };
 
-const relation = (id: string, inEntityId: string, outEntityId: string): RelationDbResult =>
+const fieldlessRelationSchema: RelationSchemaDbResult = {
+  ...relationSchema,
+  id: 'system-contract-fieldless',
+  name: 'System Contract (fieldless)',
+  fields: []
+};
+
+const selfLoopRelationSchema: RelationSchemaDbResult = {
+  ...relationSchema,
+  id: 'system-links',
+  name: 'System Links',
+  in_schema_ids: ['system'],
+  out_schema_ids: ['system'],
+  fields: []
+};
+
+const relation = (
+  id: string,
+  inEntityId: string,
+  outEntityId: string,
+  schemaId = relationSchema.id,
+  schemaName = relationSchema.name
+): RelationDbResult =>
   ({
     id,
     workspace: 'ws-1',
-    schema_id: relationSchema.id,
-    schema_name: relationSchema.name,
+    schema_id: schemaId,
+    schema_name: schemaName,
     in_entity_id: inEntityId,
     in_entity_name: inEntityId,
     out_entity_id: outEntityId,
@@ -216,5 +238,68 @@ describe('collectMetricTerminals', () => {
       kind: 'relation',
       relation: { id: 'r1' }
     });
+  });
+
+  it('follows a field-less typed relation with endpoint constraints', async () => {
+    const metric: MetricConfig = {
+      sourceSchemaId: 'contract',
+      path: [
+        {
+          kind: 'unboundTypedRelation',
+          relationSchemaId: fieldlessRelationSchema.id,
+          direction: 'in'
+        }
+      ],
+      source: { kind: 'lifecycle' },
+      aggregation: 'count'
+    };
+    const results = await collectMetricTerminals({
+      db: makeDb([
+        relation(
+          'r-fieldless',
+          's1',
+          'c1',
+          fieldlessRelationSchema.id,
+          fieldlessRelationSchema.name
+        )
+      ]),
+      workspace: 'ws-1',
+      boxEntityIds: ['s1'],
+      metric,
+      entities,
+      schemas,
+      relationSchemas: [fieldlessRelationSchema],
+      authCtx: null
+    });
+    expect(results.get('s1')?.terminals).toEqual([{ kind: 'entity', entity: entities[3] }]);
+  });
+
+  it('traverses both directions of a field-less self-loop once per relation', async () => {
+    const selfLoopRows = [
+      relation('r-link-1', 's1', 's2', selfLoopRelationSchema.id, selfLoopRelationSchema.name)
+    ];
+    const metric: MetricConfig = {
+      sourceSchemaId: 'system',
+      path: [
+        {
+          kind: 'unboundTypedRelation',
+          relationSchemaId: selfLoopRelationSchema.id,
+          direction: 'both'
+        }
+      ],
+      source: { kind: 'lifecycle' },
+      aggregation: 'count'
+    };
+    const results = await collectMetricTerminals({
+      db: makeDb(selfLoopRows),
+      workspace: 'ws-1',
+      boxEntityIds: ['s1'],
+      metric,
+      entities: [...entities, entity('s2', 'system')],
+      schemas,
+      relationSchemas: [selfLoopRelationSchema],
+      authCtx: null
+    });
+    expect(results.get('s1')?.terminals).toMatchObject([{ kind: 'entity', entity: { id: 's2' } }]);
   });
 });

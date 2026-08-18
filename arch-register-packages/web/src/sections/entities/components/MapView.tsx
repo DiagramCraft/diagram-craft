@@ -12,7 +12,7 @@ import { EmptyState } from '../../../components/EmptyState';
 import { getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
 import { useMultipleEntityRelations } from '../../../hooks/useEntities';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
-import { getChildLevelOptions, getMapSchemaIds, getMapTraversalPath } from './mapViewState';
+import { getChildLevelOptions, getMapSchemaIds, resolveMapTraversalPath } from './mapViewState';
 import {
   getMetricSourceOptions,
   parseMetricConfig,
@@ -140,6 +140,7 @@ export const MapView = ({
   );
 
   const rootSchemaId = cfg.levelConfigs[0]?.schemaId ?? null;
+  const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
 
   const levelSchemaOptions = useMemo(
     () =>
@@ -149,10 +150,12 @@ export const MapView = ({
           : getChildLevelOptions(
               schemas,
               cfg.levelConfigs[index - 1]?.schemaId ?? null,
-              relationSchemas
+              relationSchemas,
+              index >= 2 ? cfg.levelConfigs[index - 2]?.schemaId : undefined,
+              getFieldGroupAccess
             )
       ),
-    [cfg.levelConfigs, relationSchemas, schemas]
+    [cfg.levelConfigs, getFieldGroupAccess, relationSchemas, schemas]
   );
 
   const { level1Items, renderTree } = useMapTraversal({
@@ -175,10 +178,12 @@ export const MapView = ({
     () => cfg.levelConfigs.map(level => level.schemaId).filter((id): id is string => id != null),
     [cfg.levelConfigs]
   );
-  const mapTraversalPath = useMemo(
-    () => getMapTraversalPath(mapLevelSchemaIds, schemas, relationSchemas),
-    [mapLevelSchemaIds, schemas, relationSchemas]
+  const mapTraversal = useMemo(
+    () => resolveMapTraversalPath(mapLevelSchemaIds, schemas, relationSchemas, getFieldGroupAccess),
+    [getFieldGroupAccess, mapLevelSchemaIds, relationSchemas, schemas]
   );
+  const mapTraversalPath = mapTraversal.path;
+  const mapTraversalError = mapTraversal.error;
   const metricTerminalSchemaId = mapLevelSchemaIds[mapLevelSchemaIds.length - 1] ?? null;
   const metricTerminalEntitySchema = metricTerminalSchemaId
     ? schemaMap.get(metricTerminalSchemaId)?.schema
@@ -191,16 +196,16 @@ export const MapView = ({
     ? 'relation'
     : 'entity';
   const storedMetricConfig = useMemo(() => parseMetricConfig(cfg.metricConfig), [cfg.metricConfig]);
-  const metricConfig = storedMetricConfig
-    ? {
-        ...storedMetricConfig,
-        sourceSchemaId: metricTerminalSchemaId ?? storedMetricConfig.sourceSchemaId,
-        sourceContext: metricTerminalContext,
-        path: mapTraversalPath.length > 0 ? mapTraversalPath : undefined
-      }
-    : null;
+  const metricConfig =
+    storedMetricConfig && !mapTraversalError
+      ? {
+          ...storedMetricConfig,
+          sourceSchemaId: metricTerminalSchemaId ?? storedMetricConfig.sourceSchemaId,
+          sourceContext: metricTerminalContext,
+          path: mapTraversalPath.length > 0 ? mapTraversalPath : undefined
+        }
+      : null;
   const metricSourceSchema = metricTerminalSchema;
-  const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
   const numeratorConditionPopoverRef = useRef<PopoverActions | null>(null);
   const metricSourceOptions = useMemo(
     () =>
@@ -379,6 +384,7 @@ export const MapView = ({
         metricTerminalEntitySchema={metricTerminalEntitySchema}
         metricTerminalContext={metricTerminalContext}
         mapTraversalPath={mapTraversalPath}
+        mapTraversalError={mapTraversalError}
         metricConfig={metricConfig}
         setMetricConfig={setMetricConfig}
         metricSourceSchema={metricSourceSchema}

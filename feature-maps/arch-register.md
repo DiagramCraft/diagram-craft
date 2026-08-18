@@ -337,7 +337,9 @@
           or dominant option) for viewers without view access to that group, rather than exposing the underlying data;
           the field picker also excludes such fields when configuring the metric. Map levels can combine
           reference/containment and typed-relation children, including Domain → System → Contract paths; typed
-          relation instances such as System Contract can also be selected as a map level. Users can add an arbitrary
+          relation instances such as System Contract can also be selected as a map level. Field-less typed relation
+          schemas are available as explicit relation levels, so the selected relation schema (rather than an inferred
+          or merged relationship) determines the hop; self-loop relations may traverse both endpoints. Users can add an arbitrary
           number of ordered levels and hide any level after the first while retaining its descendants. The metric picker
           automatically uses the final selected level (so Contract exposes Annual Cost and System Contract exposes its
           relation fields). Users can optionally hide boxes with missing metric data; a box with a direct source value

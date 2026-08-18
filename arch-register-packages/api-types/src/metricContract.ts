@@ -27,6 +27,15 @@ export const metricTraversalStepSchema = z.discriminatedUnion('kind', [
     direction: z
       .enum(['in', 'out'])
       .describe('Direction of the typed-relation field on the current entity schema')
+  }),
+  z.object({
+    kind: z
+      .literal('unboundTypedRelation')
+      .describe('A hop through a typed relation without a projection field on the current schema'),
+    relationSchemaId: z.string().describe('Typed relation schema identifier'),
+    direction: z
+      .enum(['in', 'out', 'both'])
+      .describe('Endpoint occupied by the current entity; both follows both endpoints')
   })
 ]);
 

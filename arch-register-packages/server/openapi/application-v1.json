@@ -122028,6 +122028,33 @@
                                 "relationSchemaId",
                                 "direction"
                               ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "kind": {
+                                  "const": "unboundTypedRelation",
+                                  "description": "A hop through a typed relation without a projection field on the current schema"
+                                },
+                                "relationSchemaId": {
+                                  "type": "string",
+                                  "description": "Typed relation schema identifier"
+                                },
+                                "direction": {
+                                  "enum": [
+                                    "in",
+                                    "out",
+                                    "both"
+                                  ],
+                                  "type": "string",
+                                  "description": "Endpoint occupied by the current entity; both follows both endpoints"
+                                }
+                              },
+                              "required": [
+                                "kind",
+                                "relationSchemaId",
+                                "direction"
+                              ]
                             }
                           ]
                         },
