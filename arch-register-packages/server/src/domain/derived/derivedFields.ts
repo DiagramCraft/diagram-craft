@@ -1,5 +1,5 @@
 import { bonsai, type ASTNode, type CompiledExpression } from 'bonsai-js';
-import { arrays, math } from 'bonsai-js/stdlib';
+import { arrays, math, strings, types } from 'bonsai-js/stdlib';
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
 import type { SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
 import { currencyValueSchema } from '@arch-register/api-types/common';
@@ -35,7 +35,11 @@ type GroupAccessBoundary =
 
 const logger = createLogger('derived-fields');
 
-const engine = bonsai<EvaluationContext>({ timeout: 50, maxDepth: 50 }).use(arrays).use(math);
+const engine = bonsai<EvaluationContext>({ timeout: 50, maxDepth: 50 })
+  .use(arrays)
+  .use(math)
+  .use(strings)
+  .use(types);
 
 const derivedField = (field: SchemaField | AssessmentField): DerivedFieldDefinition | null =>
   field.type === 'derived'

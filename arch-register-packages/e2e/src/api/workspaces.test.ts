@@ -277,6 +277,15 @@ test.describe('workspace routes', () => {
       }
     });
 
+    const [rootStored, childStored, grandchildStored] = await Promise.all([
+      server.db.catalog.getEntity(created.id, root._uid),
+      server.db.catalog.getEntity(created.id, child._uid),
+      server.db.catalog.getEntity(created.id, grandchild._uid)
+    ]);
+    expect(rootStored?.data.capability_level).toBe('L1');
+    expect(childStored?.data.capability_level).toBe('L2');
+    expect(grandchildStored?.data.capability_level).toBe('L3');
+
     const tree = await orpc.entities.tree({
       params: { workspace: created.url_slug },
       query: { _schemaId: businessCapability.id, q: 'Account Management' }

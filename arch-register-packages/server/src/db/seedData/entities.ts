@@ -909,6 +909,7 @@ const seedStrategyEntities: SeedEntityInput[] = [
     schema_id: STRATEGY_IDS.businessCapabilitySchema,
     data: {
       description: 'Coordinate customer-facing capabilities that support retention and growth.',
+      parent: [],
       target_date: '2027-06-30'
     },
     project_id: null,
@@ -980,6 +981,7 @@ const seedStrategyEntities: SeedEntityInput[] = [
     schema_id: STRATEGY_IDS.businessCapabilitySchema,
     data: {
       description: 'Maintain dependable platform services through resilient operations.',
+      parent: [],
       target_date: '2026-12-31'
     },
     project_id: null,

@@ -1012,6 +1012,15 @@ export const seedSchemas: SchemaDbResult[] = (
         },
         { id: 'target_date', name: 'Target Date', type: 'date' },
         {
+          id: 'capability_level',
+          name: 'Capability Level',
+          type: 'derived',
+          requirementLevel: 'optional',
+          expression:
+            "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+          resultType: 'text'
+        },
+        {
           id: 'supporting_objectives',
           name: 'Supported by Objectives',
           type: 'typedRelation',

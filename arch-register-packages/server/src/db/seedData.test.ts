@@ -119,6 +119,13 @@ describe('business capability strategy seed data', () => {
           maxCount: 1
         }),
         expect.objectContaining({
+          id: 'capability_level',
+          type: 'derived',
+          expression:
+            "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+          resultType: 'text'
+        }),
+        expect.objectContaining({
           id: 'supporting_objectives',
           type: 'typedRelation',
           direction: 'out'
