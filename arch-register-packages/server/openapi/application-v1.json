@@ -28295,6 +28295,32 @@
             "allowReserved": true
           },
           {
+            "name": "treeExpansion",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ancestors",
+                "both"
+              ],
+              "type": "string",
+              "description": "Tree context expansion mode; map views use both ancestors and descendants"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "treeDepth",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "Maximum descendant depth used when treeExpansion is both"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
             "name": "limit",
             "in": "query",
             "schema": {
@@ -31690,6 +31716,32 @@
             "schema": {
               "type": "boolean",
               "description": "When asOf is set, whether to apply planned changes under projects on top of the reconstructed state. Defaults to true."
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "treeExpansion",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ancestors",
+                "both"
+              ],
+              "type": "string",
+              "description": "Tree context expansion mode; map views use both ancestors and descendants"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "treeDepth",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "Maximum descendant depth used when treeExpansion is both"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -37278,6 +37330,32 @@
             "schema": {
               "type": "boolean",
               "description": "When asOf is set, whether to apply planned changes under projects on top of the reconstructed state. Defaults to true."
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "treeExpansion",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ancestors",
+                "both"
+              ],
+              "type": "string",
+              "description": "Tree context expansion mode; map views use both ancestors and descendants"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "treeDepth",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "Maximum descendant depth used when treeExpansion is both"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -44191,6 +44269,32 @@
             "schema": {
               "type": "boolean",
               "description": "When asOf is set, whether to apply planned changes under projects on top of the reconstructed state. Defaults to true."
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "treeExpansion",
+            "in": "query",
+            "schema": {
+              "enum": [
+                "ancestors",
+                "both"
+              ],
+              "type": "string",
+              "description": "Tree context expansion mode; map views use both ancestors and descendants"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "treeDepth",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 20,
+              "description": "Maximum descendant depth used when treeExpansion is both"
             },
             "allowEmptyValue": true,
             "allowReserved": true

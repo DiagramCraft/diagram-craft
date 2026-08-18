@@ -311,9 +311,7 @@ test.describe('workspace routes', () => {
       }
     });
 
-    expect(
-      structuralTree.nodes.map(node => [node._uid, node._isMatch])
-    ).toEqual([
+    expect(structuralTree.nodes.map(node => [node._uid, node._isMatch])).toEqual([
       [root._uid, true],
       [child._uid, false],
       [grandchild._uid, false]

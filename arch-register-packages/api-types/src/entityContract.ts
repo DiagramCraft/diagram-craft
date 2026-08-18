@@ -274,7 +274,9 @@ export const entityListFiltersSchema = z.object({
     .enum(['ancestors', 'both'])
     .optional()
     .describe('Tree context expansion mode; map views use both ancestors and descendants'),
-  treeDepth: treeDepthQuerySchema.describe('Maximum descendant depth used when treeExpansion is both')
+  treeDepth: treeDepthQuerySchema.describe(
+    'Maximum descendant depth used when treeExpansion is both'
+  )
 });
 
 const deleteEntityResponseSchema = z.object({

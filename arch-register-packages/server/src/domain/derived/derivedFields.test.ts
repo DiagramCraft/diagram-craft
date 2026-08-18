@@ -132,31 +132,18 @@ describe('derived fields', () => {
     const levelPlan = buildDerivedPlan(fields);
 
     expect(
-      materializeDerivedFields(
-        fields,
-        { parent: [] },
-        entityContext,
-        [],
-        { parent: null }
-      ).capability_level
+      materializeDerivedFields(fields, { parent: [] }, entityContext, [], { parent: null })
+        .capability_level
     ).toBe('L1');
     expect(
-      materializeDerivedFields(
-        fields,
-        { parent: ['parent-1'] },
-        entityContext,
-        [],
-        { parent: { capability_level: 'L1' } }
-      ).capability_level
+      materializeDerivedFields(fields, { parent: ['parent-1'] }, entityContext, [], {
+        parent: { capability_level: 'L1' }
+      }).capability_level
     ).toBe('L2');
     expect(
-      evaluateDerivedFields(
-        levelPlan,
-        { parent: ['parent-2'] },
-        entityContext,
-        new Set(),
-        { parent: { capability_level: 'L2' } }
-      ).capability_level
+      evaluateDerivedFields(levelPlan, { parent: ['parent-2'] }, entityContext, new Set(), {
+        parent: { capability_level: 'L2' }
+      }).capability_level
     ).toBe('L3');
   });
 

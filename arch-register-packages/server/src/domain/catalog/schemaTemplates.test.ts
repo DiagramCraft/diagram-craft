@@ -96,7 +96,9 @@ describe('instantiateTemplate', () => {
 
   it('materializes the optional strategy template with nested Business Capabilities', () => {
     const definitions = instantiateTemplateDefinitions('ws-1', 'strategy');
-    const businessCapability = definitions.schemas.find(schema => schema.name === 'Business Capability');
+    const businessCapability = definitions.schemas.find(
+      schema => schema.name === 'Business Capability'
+    );
     const objective = definitions.schemas.find(schema => schema.name === 'Objective');
     const outcome = definitions.schemas.find(schema => schema.name === 'Outcome');
     const initiative = definitions.schemas.find(schema => schema.name === 'Initiative');

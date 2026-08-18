@@ -45,8 +45,9 @@ describe('entityListFiltersSchema', () => {
   });
 
   it('accepts bounded structural tree expansion options', () => {
-    expect(
-      entityListFiltersSchema.parse({ treeExpansion: 'both', treeDepth: 3 })
-    ).toMatchObject({ treeExpansion: 'both', treeDepth: 3 });
+    expect(entityListFiltersSchema.parse({ treeExpansion: 'both', treeDepth: 3 })).toMatchObject({
+      treeExpansion: 'both',
+      treeDepth: 3
+    });
   });
 });

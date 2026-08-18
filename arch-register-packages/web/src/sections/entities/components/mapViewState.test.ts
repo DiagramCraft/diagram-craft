@@ -190,11 +190,7 @@ describe('map view state', () => {
       { parentId: 'root', childId: 'other' }
     ] as unknown as TreeEdge[];
     const index = buildContainmentTreeIndex(nodes, edges);
-    expect(sortContainmentNodes(nodes, 'app').map(item => item._uid)).toEqual([
-      'a',
-      'b',
-      'hidden'
-    ]);
+    expect(sortContainmentNodes(nodes, 'app').map(item => item._uid)).toEqual(['a', 'b', 'hidden']);
     expect(getContainmentChildren('root', 'app', index).map(item => item._uid)).toEqual([
       'a',
       'b',
