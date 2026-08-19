@@ -17455,6 +17455,9 @@
                       "alias": {
                         "type": "string",
                         "minLength": 1
+                      },
+                      "chain": {
+                        "type": "boolean"
                       }
                     },
                     "required": [
@@ -19670,6 +19673,9 @@
                       "alias": {
                         "type": "string",
                         "minLength": 1
+                      },
+                      "chain": {
+                        "type": "boolean"
                       }
                     },
                     "required": [
@@ -23661,6 +23667,9 @@
                                   "alias": {
                                     "type": "string",
                                     "minLength": 1
+                                  },
+                                  "chain": {
+                                    "type": "boolean"
                                   }
                                 },
                                 "required": [
@@ -25545,6 +25554,9 @@
                             "alias": {
                               "type": "string",
                               "minLength": 1
+                            },
+                            "chain": {
+                              "type": "boolean"
                             }
                           },
                           "required": [
@@ -27425,6 +27437,9 @@
                       "alias": {
                         "type": "string",
                         "minLength": 1
+                      },
+                      "chain": {
+                        "type": "boolean"
                       }
                     },
                     "required": [
@@ -30851,6 +30866,9 @@
                       "alias": {
                         "type": "string",
                         "minLength": 1
+                      },
+                      "chain": {
+                        "type": "boolean"
                       }
                     },
                     "required": [
@@ -36465,6 +36483,9 @@
                       "alias": {
                         "type": "string",
                         "minLength": 1
+                      },
+                      "chain": {
+                        "type": "boolean"
                       }
                     },
                     "required": [
@@ -43404,6 +43425,9 @@
                       "alias": {
                         "type": "string",
                         "minLength": 1
+                      },
+                      "chain": {
+                        "type": "boolean"
                       }
                     },
                     "required": [
@@ -80403,6 +80427,9 @@
                                 "alias": {
                                   "type": "string",
                                   "minLength": 1
+                                },
+                                "chain": {
+                                  "type": "boolean"
                                 }
                               },
                               "required": [
@@ -83434,6 +83461,9 @@
                             "alias": {
                               "type": "string",
                               "minLength": 1
+                            },
+                            "chain": {
+                              "type": "boolean"
                             }
                           },
                           "required": [
@@ -86519,6 +86549,9 @@
                               "alias": {
                                 "type": "string",
                                 "minLength": 1
+                              },
+                              "chain": {
+                                "type": "boolean"
                               }
                             },
                             "required": [
@@ -90135,6 +90168,9 @@
                             "alias": {
                               "type": "string",
                               "minLength": 1
+                            },
+                            "chain": {
+                              "type": "boolean"
                             }
                           },
                           "required": [
@@ -93215,6 +93251,9 @@
                               "alias": {
                                 "type": "string",
                                 "minLength": 1
+                              },
+                              "chain": {
+                                "type": "boolean"
                               }
                             },
                             "required": [
@@ -127043,6 +127082,9 @@
                             "alias": {
                               "type": "string",
                               "minLength": 1
+                            },
+                            "chain": {
+                              "type": "boolean"
                             }
                           },
                           "required": [
@@ -136871,6 +136913,9 @@
                                         "alias": {
                                           "type": "string",
                                           "minLength": 1
+                                        },
+                                        "chain": {
+                                          "type": "boolean"
                                         }
                                       },
                                       "required": [
@@ -138896,6 +138941,9 @@
                                 "alias": {
                                   "type": "string",
                                   "minLength": 1
+                                },
+                                "chain": {
+                                  "type": "boolean"
                                 }
                               },
                               "required": [
@@ -140966,6 +141014,9 @@
                                       "alias": {
                                         "type": "string",
                                         "minLength": 1
+                                      },
+                                      "chain": {
+                                        "type": "boolean"
                                       }
                                     },
                                     "required": [
@@ -143209,6 +143260,9 @@
                                       "alias": {
                                         "type": "string",
                                         "minLength": 1
+                                      },
+                                      "chain": {
+                                        "type": "boolean"
                                       }
                                     },
                                     "required": [
@@ -146431,6 +146485,9 @@
                                       "alias": {
                                         "type": "string",
                                         "minLength": 1
+                                      },
+                                      "chain": {
+                                        "type": "boolean"
                                       }
                                     },
                                     "required": [
@@ -151673,6 +151730,9 @@
                                       "alias": {
                                         "type": "string",
                                         "minLength": 1
+                                      },
+                                      "chain": {
+                                        "type": "boolean"
                                       }
                                     },
                                     "required": [
@@ -153916,6 +153976,9 @@
                                       "alias": {
                                         "type": "string",
                                         "minLength": 1
+                                      },
+                                      "chain": {
+                                        "type": "boolean"
                                       }
                                     },
                                     "required": [
