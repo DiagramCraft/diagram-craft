@@ -5,6 +5,7 @@ import type { BrowserView, FilterCondition } from '@arch-register/api-types/view
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import { isTreeBasedView, parseDateValue, withLiveSearchText } from './entityBrowserState';
+import { buildTraceabilityEntityQuery } from './traceabilityViewState';
 
 type UseEntityBrowserDataProps = {
   workspaceId: string;
@@ -27,6 +28,7 @@ type UseEntityBrowserDataProps = {
   enabled?: boolean;
   asOf?: string;
   includePlannedChanges?: boolean;
+  activeViewConfig?: unknown;
   onCountChange?: (count: number) => void;
 };
 
@@ -51,6 +53,7 @@ export const useEntityBrowserData = ({
   enabled = true,
   asOf,
   includePlannedChanges = true,
+  activeViewConfig,
   onCountChange
 }: UseEntityBrowserDataProps) => {
   const isPagedBrowse = !disablePaging && (view === 'table' || view === 'cards') && sort === 'name';
@@ -59,7 +62,7 @@ export const useEntityBrowserData = ({
   // While browsing a snapshot date, the "show all entities" toggle has no effect within a
   // project — only project-linked entities are ever shown.
   const effectiveProjectScope = asOf && projectId ? 'project' : projectScope;
-  const executionEntityQuery = entityQuery
+  const baseExecutionEntityQuery = entityQuery
     ? withLiveSearchText(
         {
           ...entityQuery,
@@ -68,6 +71,10 @@ export const useEntityBrowserData = ({
         q
       )
     : null;
+  const executionEntityQuery =
+    view === 'traceability'
+      ? buildTraceabilityEntityQuery(baseExecutionEntityQuery, activeViewConfig).query
+      : baseExecutionEntityQuery;
 
   const {
     data: pagedEntities = [],

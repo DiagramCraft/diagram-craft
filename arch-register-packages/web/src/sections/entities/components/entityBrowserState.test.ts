@@ -94,6 +94,28 @@ describe('entity browser view field persistence', () => {
     expect(toSavedViewConfig('graph', configs)).toEqual({ graph: graphConfig });
   });
 
+  it('persists traceability paths through browser and saved-view state', () => {
+    const traceabilityConfig = {
+      paths: [
+        {
+          id: 'supports',
+          label: 'Supports',
+          path: [{ kind: 'unboundTypedRelation', relationSchemaId: 'supports', direction: 'in' }],
+          targetSchemaIds: 'any'
+        }
+      ],
+      deliverySources: ['projects'],
+      showOrphanEntities: true,
+      showOrphanProjects: true
+    };
+    const configs = { traceability: traceabilityConfig };
+
+    expect(parseViewConfigs(serializeViewConfigs(configs))).toEqual(configs);
+    expect(toSavedViewConfig('traceability', configs)).toEqual({
+      traceability: traceabilityConfig
+    });
+  });
+
   it('restores graph mode and traversal settings from a saved view', () => {
     const search = toSavedViewSearch({
       id: 'graph-view',

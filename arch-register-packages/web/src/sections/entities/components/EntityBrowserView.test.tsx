@@ -24,6 +24,7 @@ vi.mock('./RadarView', () => ({ RadarView: renderLeaf('radar') }));
 vi.mock('./TableView', () => ({ TableView: renderLeaf('table') }));
 vi.mock('./TimelineView', () => ({ TimelineView: renderLeaf('timeline') }));
 vi.mock('./TreeView', () => ({ TreeView: renderLeaf('tree') }));
+vi.mock('./TraceabilityView', () => ({ TraceabilityView: renderLeaf('traceability') }));
 
 const { EntityBrowserView } = await import('./EntityBrowserView');
 
@@ -38,6 +39,7 @@ const baseProps = {
   rows: [],
   schemaMap: new Map(),
   schemas: [],
+  relationSchemas: [],
   lifecycleStates: [],
   projects: [],
   workspaceId: 'workspace',
@@ -100,7 +102,8 @@ const views = [
   'timeline',
   'radar',
   'bubble',
-  'graph'
+  'graph',
+  'traceability'
 ] as const;
 const entityListViews = new Set(['table', 'cards', 'tree']);
 const configurableViews = new Set([
@@ -110,7 +113,8 @@ const configurableViews = new Set([
   'timeline',
   'radar',
   'bubble',
-  'graph'
+  'graph',
+  'traceability'
 ]);
 
 describe('EntityBrowserView', () => {

@@ -314,6 +314,13 @@
           by a specific relation field where typed relation instances are included alongside generic
           reference/containment relations and marked with their relation schema's colour/icon in the field picker.
 
+        - @id:ar.entity-views.traceability Users can save a generic, path-configured traceability view that follows
+          one or more bounded relationship paths from the current entity query, reports architecture and current
+          delivery coverage separately, inherits milestone, planned-change, and assessment evidence from aligned
+          projects, and identifies accessible entities and projects outside the configured traceability graph. Path
+          editors offer arrow-first (`->`/`<-`) controls with only schema-compatible relation types for each hop while
+          preserving invalid saved paths for repair.
+
         - @id:ar.entity-views.bubble Users can plot entities across configurable dimensions such as X, Y, size, and
           colour in a bubble view, with optional equally split axes and named quadrant labels persisted in saved views
           and wiki embeds.

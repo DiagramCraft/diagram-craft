@@ -26,7 +26,8 @@ type Props = {
 
 export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Props) => {
   const { projectId } = context;
-  const { workspaceSlug, schemas, enums, lifecycleStates, projects } = useWorkspaceContext();
+  const { workspaceSlug, schemas, relationSchemas, enums, lifecycleStates, projects } =
+    useWorkspaceContext();
 
   const {
     activeViewConfig,
@@ -96,7 +97,8 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
       sort,
       view,
       pageIndex,
-      pageSize
+      pageSize,
+      activeViewConfig
     });
 
   return (
@@ -141,6 +143,7 @@ export const EntityBrowserEmbedConfigForm = ({ config, onChange, context }: Prop
           rows={filtered}
           schemaMap={schemaMap}
           schemas={schemas}
+          relationSchemas={relationSchemas}
           lifecycleStates={lifecycleStates}
           projects={projects}
           workspaceId={workspaceSlug}

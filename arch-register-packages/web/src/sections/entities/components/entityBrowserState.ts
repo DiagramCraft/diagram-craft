@@ -494,6 +494,7 @@ export const getSavedViewConfig = (view: SavedView): unknown | null => {
   if (view.viewMode === 'cards') return view.config.cards ?? null;
   if (view.viewMode === 'tree') return view.config.tree ?? null;
   if (view.viewMode === 'graph') return view.config.graph ?? null;
+  if (view.viewMode === 'traceability') return view.config.traceability ?? null;
   return null;
 };
 
@@ -614,6 +615,7 @@ export const toSavedViewConfig = (
     if (view === 'cards') result.cards = config;
     if (view === 'tree') result.tree = config;
     if (view === 'graph') result.graph = config;
+    if (view === 'traceability') result.traceability = config;
   }
   return Object.keys(result).length > 0 ? (result as CreateSavedViewRequest['config']) : null;
 };

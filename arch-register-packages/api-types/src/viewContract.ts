@@ -1,7 +1,11 @@
 import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndUUID } from '@arch-register/api-types/common';
-import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
+import {
+  entityQuerySchema,
+  MAX_PATH_HOPS,
+  pathStepSchema
+} from '@arch-register/api-types/entityQueryIR';
 import { filterOpSchema } from '@arch-register/api-types/filterOp';
 
 // ── Shared sub-schemas ────────────────────────────────────────
@@ -19,7 +23,8 @@ export const browserViewSchema = z
     'heatmap',
     'map',
     'diff',
-    'graph'
+    'graph',
+    'traceability'
   ])
   .describe('Available view modes for displaying entities');
 
@@ -82,6 +87,33 @@ export const matrixViewConfigSchema = z.object({
   filterFieldName: z.string().nullable().describe('Field name for filtering relationships'),
   hideEmptyRows: z.boolean().describe('Whether to hide rows with no relationships'),
   hideEmptyCols: z.boolean().describe('Whether to hide columns with no relationships')
+});
+
+export const traceabilityPathConfigSchema = z.object({
+  id: z.string().min(1).max(100).describe('Stable identifier for this traceability path'),
+  label: z.string().min(1).describe('Display label for this traceability path'),
+  path: z
+    .array(pathStepSchema)
+    .min(1)
+    .max(MAX_PATH_HOPS)
+    .describe('Relationship path followed from each root entity'),
+  targetSchemaIds: z
+    .union([z.literal('any'), z.array(z.string()).min(1)])
+    .describe('Entity schemas considered for orphan detection')
+});
+
+export const traceabilityViewConfigSchema = z.object({
+  paths: z
+    .array(traceabilityPathConfigSchema)
+    .min(1)
+    .max(8)
+    .describe('Configured architecture traceability paths'),
+  deliverySources: z
+    .array(z.enum(['projects', 'milestones', 'changeCases', 'assessments']))
+    .min(1)
+    .describe('Delivery record types that count towards delivery coverage'),
+  showOrphanEntities: z.boolean().describe('Whether to show entities outside all configured paths'),
+  showOrphanProjects: z.boolean().describe('Whether to show projects outside all configured paths')
 });
 
 export const bubbleViewConfigSchema = z.object({
@@ -267,7 +299,10 @@ const viewConfigSchema = z
     map: mapViewConfigSchema.optional().describe('Configuration for map view'),
     graph: graphViewConfigSchema
       .optional()
-      .describe('Configuration for entity and relation graph views')
+      .describe('Configuration for entity and relation graph views'),
+    traceability: traceabilityViewConfigSchema
+      .optional()
+      .describe('Configuration for generic architecture traceability views')
   })
   .nullable()
   .describe('View-specific configuration (only one view type should be configured)');
@@ -503,6 +538,8 @@ export type RadarViewConfig = z.infer<typeof radarViewConfigSchema>;
 export type TimelineViewConfig = z.infer<typeof timelineViewConfigSchema>;
 
 export type MatrixViewConfig = z.infer<typeof matrixViewConfigSchema>;
+export type TraceabilityPathConfig = z.infer<typeof traceabilityPathConfigSchema>;
+export type TraceabilityViewConfig = z.infer<typeof traceabilityViewConfigSchema>;
 export type TableViewConfig = z.infer<typeof tableViewConfigSchema>;
 export type CardsViewConfig = z.infer<typeof cardsViewConfigSchema>;
 export type TreeViewConfig = z.infer<typeof treeViewConfigSchema>;

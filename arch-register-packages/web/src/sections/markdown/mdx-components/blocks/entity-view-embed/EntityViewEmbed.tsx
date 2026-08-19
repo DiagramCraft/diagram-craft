@@ -12,6 +12,7 @@ import {
   toSavedViewSearch,
   type BrowserEntityRecord
 } from '../../../../entities/components/entityBrowserState';
+import { buildTraceabilityEntityQuery } from '../../../../entities/components/traceabilityViewState';
 import styles from './EntityViewEmbed.module.css';
 import { Banner } from '../../../../../components/Banner';
 import { EmptyState } from '../../../../../components/EmptyState';
@@ -23,7 +24,8 @@ type Props = {
 
 export const EntityViewEmbed = ({ viewId }: Props) => {
   const navigate = useNavigate();
-  const { workspaceSlug, schemas, lifecycleStates, projects } = useWorkspaceContext();
+  const { workspaceSlug, schemas, relationSchemas, lifecycleStates, projects } =
+    useWorkspaceContext();
   const { projectId } = useMdxContext();
 
   const { data: savedViews = [], isLoading: viewsLoading } = useSavedViews(
@@ -32,6 +34,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
   );
 
   const savedView = viewId ? savedViews.find(v => v.id === viewId) : undefined;
+  const savedViewConfig = savedView ? getSavedViewConfig(savedView) : null;
 
   const isTreeBased = !!savedView && isTreeBasedView(savedView.viewMode);
 
@@ -46,12 +49,17 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
           ...filters,
           ...(resolvedProjectId ? { projectId: resolvedProjectId, projectScope } : {})
         };
+  const executionEntityQuery =
+    savedView?.viewMode === 'traceability'
+      ? buildTraceabilityEntityQuery(entityQuery, savedViewConfig).query
+      : entityQuery;
   const { data: entities = [], isLoading: entitiesLoading } = useEntities(
     workspaceSlug,
     {
-      entityQuery,
+      entityQuery: executionEntityQuery,
       view: 'full',
-      limit: savedView?.viewMode === 'graph' ? undefined : 100
+      limit:
+        savedView?.viewMode === 'graph' || savedView?.viewMode === 'traceability' ? undefined : 100
     },
     { enabled: !!workspaceSlug && !!savedView && !isTreeBased }
   );
@@ -95,7 +103,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
   }
 
   const rows = entities as BrowserEntityRecord[];
-  const viewConfig = getSavedViewConfig(savedView);
+  const viewConfig = savedViewConfig;
   const typeFilter = savedView.filters.schemaId ?? null;
   const ownerFilter = savedViewSearch.owner ?? null;
   const statusFilter = savedViewSearch.status ?? null;
@@ -114,6 +122,7 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
         rows={rows}
         schemaMap={schemaMap}
         schemas={schemas}
+        relationSchemas={relationSchemas}
         lifecycleStates={lifecycleStates}
         projects={projects}
         workspaceId={workspaceSlug}
@@ -124,6 +133,8 @@ export const EntityViewEmbed = ({ viewId }: Props) => {
         ownerFilter={ownerFilter}
         statusFilter={statusFilter}
         activeViewConfig={viewConfig}
+        entityQuery={entityQuery}
+        executionEntityQuery={executionEntityQuery}
         displayFields={displayFields}
         isLoading={entitiesLoading}
         mode={{ kind: 'published', onEntityClick }}

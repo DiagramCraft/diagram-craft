@@ -164,8 +164,16 @@ export const EntityBrowser = ({
   onFirstFilteredSchemaIdChange
 }: EntityBrowserProps) => {
   const navigate = useNavigate();
-  const { workspaceSlug, schemas, enums, lifecycleStates, teams, currencies, projects } =
-    useWorkspaceContext();
+  const {
+    workspaceSlug,
+    schemas,
+    relationSchemas,
+    enums,
+    lifecycleStates,
+    teams,
+    currencies,
+    projects
+  } = useWorkspaceContext();
   const workspaceId = workspaceSlug;
   const projectId = projectContext?.project.id;
   const {
@@ -298,6 +306,7 @@ export const EntityBrowser = ({
     pageSize,
     asOf,
     includePlannedChanges: projectId ? true : includePlannedChanges,
+    activeViewConfig,
     onCountChange
   });
 
@@ -524,6 +533,7 @@ export const EntityBrowser = ({
               rows={joinedRows}
               schemaMap={schemaMap}
               schemas={schemas}
+              relationSchemas={relationSchemas}
               lifecycleStates={lifecycleStates}
               teams={teams as WorkspaceTeam[]}
               projects={projects}

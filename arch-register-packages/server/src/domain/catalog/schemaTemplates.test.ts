@@ -654,6 +654,37 @@ describe('instantiateTemplate', () => {
       });
     });
 
+    it('resolves the generic strategy traceability preset paths to real ids', () => {
+      const definitions = instantiateTemplateDefinitions('ws-1', 'strategy');
+      const objective = definitions.schemas.find(schema => schema.name === 'Objective');
+      const capability = definitions.schemas.find(schema => schema.name === 'Business Capability');
+      const traceability = definitions.views.find(view => view.name === 'Strategy Traceability');
+      const objectiveCapability = definitions.relationSchemas.find(
+        schema => schema.name === 'Objective Supports Business Capability'
+      );
+
+      expect(traceability).toMatchObject({
+        view_mode: 'traceability',
+        filters: { schemaId: objective?.id },
+        config: {
+          traceability: {
+            paths: expect.arrayContaining([
+              expect.objectContaining({
+                id: 'supporting-capabilities',
+                targetSchemaIds: [capability?.id],
+                path: [
+                  expect.objectContaining({
+                    kind: 'unboundTypedRelation',
+                    relationSchemaId: objectiveCapability?.id
+                  })
+                ]
+              })
+            ])
+          }
+        }
+      });
+    });
+
     it('resolves nested filter and backward-step schema ids via a synthetic query', () => {
       const idMap = new Map([
         ['schema-a', 'real-a'],
