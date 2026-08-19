@@ -2673,22 +2673,14 @@ export const seedEntities: Entity[] = seedEntitiesRaw.map(entity => {
   // Seed fixtures are inserted directly (bootstrapSeed.ts), bypassing the normal create path that
   // materializes `type: 'derived'` fields on write - do it here so seeded entities carry computed
   // derived values (e.g. Risk's residual_risk_score) just like entities created through the app.
-  // Typed relations are inserted after entities during bootstrap, so expose their initial
-  // context as empty arrays. bootstrapSeed recalculates all derived fields after relation rows
-  // have been inserted and replaces these provisional values with the relation-aware results.
+  // Relations are inserted after entities during bootstrap. bootstrapSeed recalculates all
+  // relation-dependent derived fields after the relation rows have been inserted.
   const entityData = stripSeedApiRelationshipFields(entity.data);
-  const initialDerivedContext = {
-    ...entityData,
-    ...Object.fromEntries(
-      schema.fields.filter(field => field.type === 'typedRelation').map(field => [field.id, []])
-    )
-  };
   const data = materializeDerivedFields(
     schema.fields,
     entityData,
     { objectType: 'entity', objectId: entity.id },
-    schema.groups,
-    initialDerivedContext
+    schema.groups
   );
   return { ...entity, data, completeness: computeEntityCompleteness({ ...entity, data }, schema) };
 });

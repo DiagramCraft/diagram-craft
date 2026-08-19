@@ -1,4 +1,4 @@
-import { describe, expect, it } from 'vitest';
+import { describe, expect, it, vi } from 'vitest';
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
 import type { SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
 import {
@@ -145,6 +145,38 @@ describe('derived fields', () => {
         parent: { capability_level: 'L2' }
       }).capability_level
     ).toBe('L3');
+  });
+
+  it('defers relation-dependent fields until a relationship projection is available', () => {
+    const fields: SchemaField[] = [
+      {
+        id: 'parent',
+        name: 'Parent',
+        type: 'containment',
+        schemaId: 'business-capability',
+        minCount: 0,
+        maxCount: 1
+      },
+      {
+        id: 'capability_level',
+        name: 'Capability Level',
+        type: 'derived',
+        requirementLevel: 'optional',
+        expression:
+          "entity.parent == null ? 'L1' : 'L' + ((entity.parent.capability_level |> replace('L', '') |> toNumber) + 1)",
+        resultType: 'text'
+      }
+    ];
+    const error = vi.spyOn(console, 'error').mockImplementation(() => undefined);
+
+    try {
+      expect(materializeDerivedFields(fields, { parent: [] }, entityContext)).toEqual({
+        parent: []
+      });
+      expect(error).not.toHaveBeenCalled();
+    } finally {
+      error.mockRestore();
+    }
   });
 
   it('rejects unsupported identifiers outside entity', () => {
