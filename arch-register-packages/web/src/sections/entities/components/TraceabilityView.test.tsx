@@ -97,8 +97,8 @@ describe('TraceabilityView', () => {
 
     expect(directionIndex).toBeGreaterThanOrEqual(0);
     expect(relationIndex).toBeGreaterThan(directionIndex);
-    expect(markup).toContain('>Supports capability</span>');
-    expect(markup).not.toContain('Supports entity');
+    expect(markup).toContain('>Supports capability</option>');
+    expect(markup).not.toContain('>Supports entity</option>');
     expect(markup).toContain('>Entity: 0/0 covered</span>');
     expect(markup).not.toContain('>Architecture: 0/0 covered</span>');
     expect(markup).toContain('1 projects without traceability coverage');

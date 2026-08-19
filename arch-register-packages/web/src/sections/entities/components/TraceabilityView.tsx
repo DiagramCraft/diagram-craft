@@ -1,7 +1,7 @@
 import { useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
-import { TbChevronDown, TbPlus, TbX } from 'react-icons/tb';
-import { Select } from '@diagram-craft/app-components/Select';
+import { TbChevronDown, TbPlus, TbTrash, TbX } from 'react-icons/tb';
+import { TextInput } from '@diagram-craft/app-components/TextInput';
 import {
   MAX_PATH_HOPS,
   type EntityQuery,
@@ -303,90 +303,71 @@ export const TraceabilityView = ({
     <div className={styles.wrap}>
       {!hideToolbar && (
         <div className={styles.config}>
-          <button
-            type="button"
-            className={styles.configToggle}
-            onClick={() => setConfigOpen(open => !open)}
-          >
-            <TbChevronDown
-              size={12}
-              className={styles.configToggleIcon}
-              data-open={configOpen ? 'true' : 'false'}
-            />
-            <span>Traceability configuration</span>
-            <span className={styles.configToggleCount}>
-              {editorConfig.paths.length} {editorConfig.paths.length === 1 ? 'path' : 'paths'}
-            </span>
-          </button>
+          <div className={styles.configHeader}>
+            <button
+              type="button"
+              className={styles.configToggle}
+              onClick={() => setConfigOpen(open => !open)}
+            >
+              <TbChevronDown
+                size={12}
+                className={styles.configToggleIcon}
+                data-open={configOpen ? 'true' : 'false'}
+              />
+              <span>Traceability configuration</span>
+            </button>
+            <button
+              type="button"
+              className={styles.addPath}
+              onClick={addPath}
+              disabled={compatibleRootDirections.length === 0}
+            >
+              <TbPlus size={11} /> Add path
+            </button>
+          </div>
           {configOpen && (
             <div className={styles.configBody}>
               {editorConfig.paths.map(path => {
                 return (
                   <div key={path.id} className={styles.path}>
-                    <div className={styles.pathHd}>
-                      <input
-                        className={styles.pathName}
-                        value={path.label}
-                        aria-label={`Label for ${path.id}`}
-                        onChange={event =>
-                          updateConfig({
-                            ...editorConfig,
-                            paths: editorConfig.paths.map(candidate =>
-                              candidate.id === path.id
-                                ? { ...candidate, label: event.target.value }
-                                : candidate
-                            )
-                          })
-                        }
-                      />
-                      <div className={styles.pathTarget}>
-                        <span
-                          className={styles.pathTargetLabel}
-                          id={`trace-target-label-${path.id}`}
-                        >
-                          Target schema
-                        </span>
-                        <Select.Root
-                          value={
-                            path.targetSchemaIds === 'any'
-                              ? 'any'
-                              : (path.targetSchemaIds[0] ?? 'any')
-                          }
-                          aria-labelledby={`trace-target-label-${path.id}`}
-                          onChange={value =>
-                            updateConfig({
-                              ...editorConfig,
-                              paths: editorConfig.paths.map(candidate =>
-                                candidate.id === path.id
-                                  ? {
-                                      ...candidate,
-                                      targetSchemaIds: value === 'any' || !value ? 'any' : [value]
-                                    }
-                                  : candidate
-                              )
-                            })
-                          }
-                        >
-                          <Select.Item value="any">Any</Select.Item>
-                          {schemas.map(schema => (
-                            <Select.Item key={schema.id} value={schema.id}>
-                              {schema.name}
-                            </Select.Item>
-                          ))}
-                        </Select.Root>
-                      </div>
-                      <button
-                        type="button"
-                        className={styles.pathRm}
-                        title="Remove path"
-                        onClick={() => removePath(path.id)}
-                      >
-                        <TbX size={11} />
-                      </button>
-                    </div>
+                    <button
+                      type="button"
+                      className={styles.pathRm}
+                      title="Remove path"
+                      onClick={() => removePath(path.id)}
+                    >
+                      <TbX size={11} />
+                    </button>
 
-                    <div className={styles.hops}>
-                      {path.path.map((step, depth) => {
+                    <span className={styles.pathTargetLabel} id={`trace-label-label-${path.id}`}>
+                      Path label
+                    </span>
+                    <TextInput
+                      value={path.label}
+                      aria-labelledby={`trace-label-label-${path.id}`}
+                      style={
+                        {
+                          width: 150,
+                          height: 24,
+                          '--cmp-bg': 'var(--panel-bg)',
+                          '--cmp-border': 'var(--panel-border)',
+                          '--cmp-radius': 'var(--r)'
+                        } as React.CSSProperties
+                      }
+                      onChange={value =>
+                        updateConfig({
+                          ...editorConfig,
+                          paths: editorConfig.paths.map(candidate =>
+                            candidate.id === path.id
+                              ? { ...candidate, label: value ?? '' }
+                              : candidate
+                          )
+                        })
+                      }
+                    />
+
+                    {(() => {
+                      const hopEntries = path.path.map((step, depth) => {
                         const stepContext = traceabilityPathStepContext({
                           rootSchemaScope,
                           path,
@@ -420,9 +401,20 @@ export const TraceabilityView = ({
                           relationOptions.some(schema => schema.id === selectedRelation.id);
                         const oppositeDirection = direction === 'in' ? 'out' : 'in';
                         const canToggleDirection = availableDirections.includes(oppositeDirection);
-                        return (
-                          <div key={`${path.id}-${depth}`}>
-                            <div className={styles.hop} style={{ marginLeft: depth * 18 }}>
+                        const errorMessage = !stepContext.invalid
+                          ? null
+                          : selectedRelation == null
+                            ? 'This relation schema is no longer available.'
+                            : !selectedRelationDirections.includes(direction)
+                              ? 'This relation cannot be followed in the selected direction.'
+                              : 'The selected direction is incompatible with the current schema.';
+
+                        return {
+                          depth,
+                          errorMessage,
+                          element: (
+                            <div key={`${path.id}-${depth}`} className={styles.hop}>
+                              {depth > 0 && <span className={styles.hopSep}>›</span>}
                               <button
                                 type="button"
                                 className={styles.hopDir}
@@ -451,29 +443,32 @@ export const TraceabilityView = ({
                               >
                                 Relation for {path.id} hop {depth + 1}
                               </span>
-                              <Select.Root
-                                value={relationId || undefined}
-                                aria-labelledby={`trace-relation-label-${path.id}-${depth}`}
-                                style={{ maxWidth: 220 }}
-                                onChange={value =>
-                                  updatePathStep(path.id, depth, value ?? '', direction)
-                                }
-                              >
-                                {stepContext.invalid &&
-                                  relationId !== '' &&
-                                  !relationIsCompatible && (
-                                    <Select.Item value={relationId} disabled>
-                                      {selectedRelation
-                                        ? `${selectedRelation.name} (incompatible)`
-                                        : `Unknown relation (${relationId})`}
-                                    </Select.Item>
-                                  )}
-                                {relationOptions.map(schema => (
-                                  <Select.Item key={schema.id} value={schema.id}>
-                                    {schema.name}
-                                  </Select.Item>
-                                ))}
-                              </Select.Root>
+                              <div className={styles.selectWrap}>
+                                <select
+                                  className={styles.select}
+                                  value={relationId}
+                                  aria-labelledby={`trace-relation-label-${path.id}-${depth}`}
+                                  onChange={event =>
+                                    updatePathStep(path.id, depth, event.target.value, direction)
+                                  }
+                                >
+                                  {stepContext.invalid &&
+                                    relationId !== '' &&
+                                    !relationIsCompatible && (
+                                      <option value={relationId} disabled>
+                                        {selectedRelation
+                                          ? `${selectedRelation.name} (incompatible)`
+                                          : `Unknown relation (${relationId})`}
+                                      </option>
+                                    )}
+                                  {relationOptions.map(schema => (
+                                    <option key={schema.id} value={schema.id}>
+                                      {schema.name}
+                                    </option>
+                                  ))}
+                                </select>
+                                <TbChevronDown size={11} />
+                              </div>
                               {path.path.length > 1 && (
                                 <button
                                   type="button"
@@ -481,54 +476,100 @@ export const TraceabilityView = ({
                                   title="Remove hop"
                                   onClick={() => removePathStep(path.id, depth)}
                                 >
-                                  <TbX size={10} />
+                                  <TbTrash size={13} />
                                 </button>
                               )}
                             </div>
-                            {stepContext.invalid && (
-                              <div className={styles.hopError} style={{ marginLeft: depth * 18 }}>
-                                {selectedRelation == null
-                                  ? 'This relation schema is no longer available.'
-                                  : !selectedRelationDirections.includes(direction)
-                                    ? 'This relation cannot be followed in the selected direction.'
-                                    : 'The selected direction is incompatible with the current schema.'}
+                          )
+                        };
+                      });
+
+                      return (
+                        <>
+                          <span className={styles.pathTargetLabel}>Path</span>
+
+                          <div className={styles.hopsCell}>
+                            <span className={styles.hopsRow}>
+                              {hopEntries.map(entry => entry.element)}
+                              <button
+                                type="button"
+                                className={styles.addHop}
+                                onClick={() => addPathStep(path.id)}
+                                disabled={
+                                  path.path.length >= MAX_PATH_HOPS ||
+                                  traceabilityAvailableDirections(
+                                    relationSchemas,
+                                    traceabilityPathStepContext({
+                                      rootSchemaScope,
+                                      path,
+                                      depth: path.path.length,
+                                      relationSchemas
+                                    }).currentSchemaScope
+                                  ).length === 0
+                                }
+                              >
+                                + Add hop
+                              </button>
+                            </span>
+
+                            {hopEntries.some(entry => entry.errorMessage) && (
+                              <div className={styles.hopErrors}>
+                                {hopEntries
+                                  .filter(entry => entry.errorMessage)
+                                  .map(entry => (
+                                    <div
+                                      key={`${path.id}-error-${entry.depth}`}
+                                      className={styles.hopError}
+                                    >
+                                      Hop {entry.depth + 1}: {entry.errorMessage}
+                                    </div>
+                                  ))}
                               </div>
                             )}
                           </div>
-                        );
-                      })}
-                      <button
-                        type="button"
-                        className={styles.addHop}
-                        style={{ marginLeft: path.path.length * 18 }}
-                        onClick={() => addPathStep(path.id)}
-                        disabled={
-                          path.path.length >= MAX_PATH_HOPS ||
-                          traceabilityAvailableDirections(
-                            relationSchemas,
-                            traceabilityPathStepContext({
-                              rootSchemaScope,
-                              path,
-                              depth: path.path.length,
-                              relationSchemas
-                            }).currentSchemaScope
-                          ).length === 0
+                        </>
+                      );
+                    })()}
+
+                    <span className={styles.pathTargetLabel} id={`trace-target-label-${path.id}`}>
+                      Target
+                    </span>
+                    <div className={styles.selectWrap}>
+                      <select
+                        className={styles.select}
+                        value={
+                          path.targetSchemaIds === 'any'
+                            ? 'any'
+                            : (path.targetSchemaIds[0] ?? 'any')
+                        }
+                        aria-labelledby={`trace-target-label-${path.id}`}
+                        onChange={event =>
+                          updateConfig({
+                            ...editorConfig,
+                            paths: editorConfig.paths.map(candidate =>
+                              candidate.id === path.id
+                                ? {
+                                    ...candidate,
+                                    targetSchemaIds:
+                                      event.target.value === 'any' ? 'any' : [event.target.value]
+                                  }
+                                : candidate
+                            )
+                          })
                         }
                       >
-                        <TbPlus size={10} /> Add hop
-                      </button>
+                        <option value="any">Any</option>
+                        {schemas.map(schema => (
+                          <option key={schema.id} value={schema.id}>
+                            {schema.name}
+                          </option>
+                        ))}
+                      </select>
+                      <TbChevronDown size={11} />
                     </div>
                   </div>
                 );
               })}
-              <button
-                type="button"
-                className={styles.addPath}
-                onClick={addPath}
-                disabled={compatibleRootDirections.length === 0}
-              >
-                <TbPlus size={11} /> Add path
-              </button>
             </div>
           )}
         </div>
@@ -591,13 +632,15 @@ export const TraceabilityView = ({
             coverage.orphanProjectIds.size > 0 && (
               <section className={styles.gapSection}>
                 <h4>Projects without traceability coverage</h4>
-                <ul>
+                <div className={styles.gapChips}>
                   {visibleProjects
                     .filter(project => coverage.orphanProjectIds.has(project.id))
                     .map(project => (
-                      <li key={project.id}>{project.name}</li>
+                      <span key={project.id} className={styles.gapChip}>
+                        {project.name}
+                      </span>
                     ))}
-                </ul>
+                </div>
               </section>
             )}
           {parsedConfig.showOrphanEntities &&
@@ -605,15 +648,17 @@ export const TraceabilityView = ({
             orphanEntities.length > 0 && (
               <section className={styles.gapSection}>
                 <h4>Entities without traceability coverage</h4>
-                <ul>
+                <div className={styles.gapChips}>
                   {orphanEntities.slice(0, 50).map(entity => (
-                    <li key={entity._uid}>
-                      <EntityNavigationLink publicId={entity._publicId}>
-                        {entity._name}
-                      </EntityNavigationLink>
-                    </li>
+                    <EntityNavigationLink
+                      key={entity._uid}
+                      publicId={entity._publicId}
+                      className={styles.gapChip}
+                    >
+                      {entity._name}
+                    </EntityNavigationLink>
                   ))}
-                </ul>
+                </div>
               </section>
             )}
 

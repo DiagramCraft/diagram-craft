@@ -28,11 +28,19 @@
   background: var(--panel-bg);
 }
 
+.configHeader {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding-right: 8px;
+}
+
 .configToggle {
   display: flex;
   align-items: center;
   gap: 6px;
-  width: 100%;
+  flex: 1;
+  min-width: 0;
   height: 32px;
   padding: 0 10px;
   background: transparent;
@@ -59,13 +67,6 @@
   transform: rotate(-90deg);
 }
 
-.configToggleCount {
-  margin-left: auto;
-  font-size: 11px;
-  font-weight: normal;
-  color: var(--base-fg-more-dim);
-}
-
 .configBody {
   display: flex;
   flex-direction: column;
@@ -75,44 +76,17 @@
 
 /* Path card */
 .path {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-  padding: 8px 10px;
+  position: relative;
+  display: grid;
+  grid-template-columns: 62px 1fr;
+  align-items: center;
+  justify-items: start;
+  row-gap: 6px;
+  column-gap: 5px;
+  padding: 8px 24px 8px 10px;
   border: 1px solid var(--panel-border);
   border-radius: var(--r);
   background: var(--base-bg);
-}
-
-.pathHd {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.pathName {
-  width: 150px;
-  height: 24px;
-  padding: 0 8px;
-  font-size: 12px;
-  font-weight: 600;
-  color: var(--base-fg);
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  font-family: inherit;
-}
-
-.pathName:focus {
-  outline: none;
-  border-color: var(--cmp-border-focus, var(--accent-fg));
-}
-
-.pathTarget {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  flex-shrink: 0;
 }
 
 .pathTargetLabel {
@@ -122,6 +96,9 @@
 }
 
 .pathRm {
+  position: absolute;
+  top: 6px;
+  right: 6px;
   flex-shrink: 0;
   display: inline-flex;
   align-items: center;
@@ -142,16 +119,27 @@
 }
 
 /* Hops */
-.hops {
+.hopsCell {
   display: flex;
   flex-direction: column;
-  gap: 5px;
+  gap: 4px;
+}
+
+.hopsRow {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: 6px;
 }
 
 .hop {
   display: flex;
   align-items: center;
   gap: 6px;
+}
+
+.hopSep {
+  color: var(--base-fg-more-dim);
 }
 
 .hopDir {
@@ -180,23 +168,30 @@
 }
 
 .hopRm {
-  flex-shrink: 0;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 20px;
-  height: 20px;
-  padding: 0;
-  background: transparent;
-  border: none;
+  border: 1px solid var(--panel-border);
   border-radius: var(--r);
-  color: var(--base-fg-more-dim);
+  background: var(--panel-bg);
+  color: var(--base-fg);
   cursor: pointer;
+  font: inherit;
+  font-size: 11px;
+  min-height: 24px;
+  min-width: 24px;
+  padding: 2px 6px;
 }
 
 .hopRm:hover {
   background: color-mix(in oklch, var(--error-fg) 15%, transparent);
   color: var(--error-fg);
+}
+
+.hopErrors {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
 }
 
 .hopError {
@@ -209,13 +204,12 @@
   display: inline-flex;
   align-items: center;
   gap: 5px;
-  align-self: flex-start;
   height: 22px;
   padding: 0 8px;
   font-size: 11px;
   color: var(--base-fg-more-dim);
   background: transparent;
-  border: 1px dashed var(--panel-border);
+  border: 1px solid var(--panel-border);
   border-radius: var(--r);
   cursor: pointer;
   font-family: inherit;
@@ -245,7 +239,7 @@
 
 .badge {
   display: inline-flex;
-  align-items: baseline;
+  align-items: center;
   gap: 5px;
   height: 22px;
   padding: 0 8px;
@@ -488,16 +482,51 @@
   color: var(--base-fg);
 }
 
-.gapSection ul {
+.gapChips {
   display: flex;
-  flex-direction: column;
-  gap: 3px;
-  margin: 0;
-  padding: 0;
-  list-style: none;
+  flex-wrap: wrap;
+  gap: 5px;
 }
 
-.gapSection li {
-  font-size: 12px;
+.gapChip {
+  display: inline-flex;
+  align-items: center;
+  height: 20px;
+  padding: 0 8px;
+  font-size: 11px;
   color: var(--base-fg);
+  background: var(--base-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: 999px;
+  text-decoration: none;
+}
+
+a.gapChip:hover {
+  border-color: var(--accent-border);
+  color: var(--accent-fg);
+}
+
+.selectWrap {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  position: relative;
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  padding: 0 6px 0 8px;
+  height: 24px;
+  cursor: pointer;
+}
+
+.select {
+  appearance: none;
+  background: transparent;
+  border: none;
+  outline: none;
+  font-size: 11.5px;
+  color: var(--base-fg);
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
 }
