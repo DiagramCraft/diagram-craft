@@ -1,15 +1,3 @@
-.visuallyHidden {
-  position: absolute;
-  width: 1px;
-  height: 1px;
-  padding: 0;
-  margin: -1px;
-  overflow: hidden;
-  clip: rect(0, 0, 0, 0);
-  white-space: nowrap;
-  border: 0;
-}
-
 /* Outer wrapper */
 .wrap {
   flex: 1;
@@ -102,6 +90,12 @@
   font-size: 10px;
   color: var(--base-fg-more-dim);
   white-space: nowrap;
+}
+
+.pathLabelInput {
+  --cmp-bg: var(--panel-bg);
+  --cmp-border: var(--panel-border);
+  --cmp-radius: var(--r);
 }
 
 .pathRm {

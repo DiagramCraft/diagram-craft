@@ -93,7 +93,7 @@ describe('TraceabilityView', () => {
     );
 
     const directionIndex = markup.indexOf('aria-label="Direction for strategy hop 1"');
-    const relationIndex = markup.indexOf('aria-labelledby="trace-relation-label-strategy-0"');
+    const relationIndex = markup.indexOf('aria-label="Relation for strategy hop 1"');
 
     expect(directionIndex).toBeGreaterThanOrEqual(0);
     expect(relationIndex).toBeGreaterThan(directionIndex);
