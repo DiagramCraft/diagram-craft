@@ -112,7 +112,15 @@ export const TraceabilityView = ({
       getFieldGroupAccess
     });
     if (pruned !== parsedConfig) onConfigChange(pruned);
-  }, [hideToolbar, parsedConfig, rootSchemaScope, schemas, relationSchemas, getFieldGroupAccess, onConfigChange]);
+  }, [
+    hideToolbar,
+    parsedConfig,
+    rootSchemaScope,
+    schemas,
+    relationSchemas,
+    getFieldGroupAccess,
+    onConfigChange
+  ]);
   const pathOptionsAt = (
     path: TraceabilityViewConfig['paths'][number],
     depth: number,
@@ -385,9 +393,8 @@ export const TraceabilityView = ({
                     option => pathStepKey(option.step) === stepKey
                   );
                   const oppositeDirection = direction === 'in' ? 'out' : 'in';
-                  const canToggleDirection = stepContext.availableDirections.includes(
-                    oppositeDirection
-                  );
+                  const canToggleDirection =
+                    stepContext.availableDirections.includes(oppositeDirection);
                   const errorMessage = !stepContext.invalid
                     ? null
                     : 'This hop is no longer available for the current schema.';

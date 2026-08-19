@@ -114,10 +114,7 @@ describe('traceabilityViewState', () => {
       schemas: [],
       relationSchemas: traceabilityRelations
     });
-    expect(outOptions.map(option => option.label)).toEqual([
-      'Affects entity',
-      'Supports entity'
-    ]);
+    expect(outOptions.map(option => option.label)).toEqual(['Affects entity', 'Supports entity']);
 
     const inOptions = traceabilityPathOptions({
       direction: 'in',
@@ -125,7 +122,10 @@ describe('traceabilityViewState', () => {
       schemas: [],
       relationSchemas: traceabilityRelations
     });
-    expect(inOptions.map(option => option.label)).toEqual(['Affects entity', 'Supports capability']);
+    expect(inOptions.map(option => option.label)).toEqual([
+      'Affects entity',
+      'Supports capability'
+    ]);
   });
 
   it('enumerates plain reference/containment field hops alongside relation hops', () => {
@@ -178,7 +178,7 @@ describe('traceabilityViewState', () => {
     ]);
   });
 
-  it('prefers a field\'s predicate over its bare name in the label (#3040)', () => {
+  it("prefers a field's predicate over its bare name in the label (#3040)", () => {
     // A containment field named the same as its target schema (e.g. System's "Domain" field
     // pointing at the Domain schema) would otherwise read as a nonsensical self-loop, "Domain ->
     // Domain" - the field's predicate ("belongs to") disambiguates it, matching the
@@ -429,9 +429,7 @@ describe('traceabilityViewState', () => {
 
     expect(context.invalid).toBe(false);
     expect(
-      context.options.some(
-        option => pathStepKey(option.step) === pathStepKey(path.path[0]!)
-      )
+      context.options.some(option => pathStepKey(option.step) === pathStepKey(path.path[0]!))
     ).toBe(true);
 
     const invalidContext = traceabilityPathStepContext({
@@ -626,11 +624,26 @@ describe('traceabilityViewState', () => {
       [
         makeRoot('domain-1', {
           '__traceability__supports:chain': [
-            [{ id: 'sys-cp', name: 'Customer Portal' }, { id: 'c4', name: 'Rate Limiter' }],
-            [{ id: 'sys-nh', name: 'Notification Hub' }, { id: 'c2', name: 'Webhook Relay' }],
-            [{ id: 'sys-cp', name: 'Customer Portal' }, { id: 'c1', name: 'API Gateway' }],
-            [{ id: 'sys-sp', name: 'Search Platform' }, { id: 'c5', name: 'Search Service' }],
-            [{ id: 'sys-cp', name: 'Customer Portal' }, { id: 'c3', name: 'Feature Flag Service' }]
+            [
+              { id: 'sys-cp', name: 'Customer Portal' },
+              { id: 'c4', name: 'Rate Limiter' }
+            ],
+            [
+              { id: 'sys-nh', name: 'Notification Hub' },
+              { id: 'c2', name: 'Webhook Relay' }
+            ],
+            [
+              { id: 'sys-cp', name: 'Customer Portal' },
+              { id: 'c1', name: 'API Gateway' }
+            ],
+            [
+              { id: 'sys-sp', name: 'Search Platform' },
+              { id: 'c5', name: 'Search Service' }
+            ],
+            [
+              { id: 'sys-cp', name: 'Customer Portal' },
+              { id: 'c3', name: 'Feature Flag Service' }
+            ]
           ]
         })
       ],

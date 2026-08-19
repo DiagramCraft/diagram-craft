@@ -460,9 +460,11 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
       schemaId: componentSchema.id
     });
     expect(chains.every(chain => chain[0]!.schemaId === systemSchema.id)).toBe(true);
-    expect(chains.every(chain => chain[0]!.name === 'API Gateway' || chain[0]!.name === 'Feature Flag Service')).toBe(
-      true
-    );
+    expect(
+      chains.every(
+        chain => chain[0]!.name === 'API Gateway' || chain[0]!.name === 'Feature Flag Service'
+      )
+    ).toBe(true);
   });
 
   it('scopes a bracketed filter to the same existential witness (§4.3)', async () => {

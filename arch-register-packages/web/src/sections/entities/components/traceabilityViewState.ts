@@ -78,9 +78,7 @@ export type TraceabilityCoverage = {
   coveredEntityIds: Set<string>;
 };
 
-const isChainNode = (
-  value: unknown
-): value is { id: string; name: unknown; schemaId: unknown } =>
+const isChainNode = (value: unknown): value is { id: string; name: unknown; schemaId: unknown } =>
   value != null && typeof value === 'object' && typeof (value as { id?: unknown }).id === 'string';
 
 // The chain aggregate has no defined order (no ORDER BY inside json_agg/json_group_array), so
@@ -228,10 +226,7 @@ export const traceabilityPathOptions = ({
     typedRelation: { priority: 2, group: 'Typed relation' },
     unboundTypedRelation: { priority: 3, group: 'Relation' }
   } as const;
-  const optionsByKey = new Map<
-    string,
-    TraceabilityPathOption & { priority: number }
-  >();
+  const optionsByKey = new Map<string, TraceabilityPathOption & { priority: number }>();
   const addOption = (
     step: PathStep,
     label: string,
@@ -251,7 +246,13 @@ export const traceabilityPathOptions = ({
       }
       return;
     }
-    optionsByKey.set(key, { step, label, targetSchemaIds, group: tier.group, priority: tier.priority });
+    optionsByKey.set(key, {
+      step,
+      label,
+      targetSchemaIds,
+      group: tier.group,
+      priority: tier.priority
+    });
   };
 
   // Labeled as a sentence describing the relationship itself - "<owner> <predicate> <target>" -
@@ -324,7 +325,9 @@ export const traceabilityPathOptions = ({
     if (option.step.kind !== 'typedRelation') continue;
     const { ownerSchemaIds } = option.step;
     if (scopedSchemas.every(schema => ownerSchemaIds.includes(schema.id))) {
-      fullyCoveredRelationDirections.add(`${option.step.relationSchemaId}:${option.step.direction}`);
+      fullyCoveredRelationDirections.add(
+        `${option.step.relationSchemaId}:${option.step.direction}`
+      );
     }
   }
 
@@ -381,7 +384,9 @@ const nextTraceabilitySchemaScope = (
     case 'typedRelation':
     case 'unboundTypedRelation': {
       const relation = relationSchemas.find(candidate => candidate.id === step.relationSchemaId);
-      return relation ? resolveEndpointSchemaIds(relation, oppositeEndpoint(step.direction), schemas) : 'any';
+      return relation
+        ? resolveEndpointSchemaIds(relation, oppositeEndpoint(step.direction), schemas)
+        : 'any';
     }
     default:
       return 'any';
