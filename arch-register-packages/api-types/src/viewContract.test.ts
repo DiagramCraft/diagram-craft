@@ -3,7 +3,8 @@ import {
   bubbleViewConfigSchema,
   graphViewConfigSchema,
   exploreViewConfigSchema,
-  savedViewQuerySchema
+  savedViewQuerySchema,
+  traceabilityViewConfigSchema
 } from './viewContract';
 
 describe('explore view configuration', () => {
@@ -86,6 +87,43 @@ describe('saved view filters', () => {
       savedViewQuerySchema.safeParse({
         conditions: [],
         root: { kind: 'and', children: [] }
+      }).success
+    ).toBe(false);
+  });
+});
+
+describe('traceability view configuration', () => {
+  it('accepts generic bounded relationship paths and delivery sources', () => {
+    expect(
+      traceabilityViewConfigSchema.safeParse({
+        paths: [
+          {
+            id: 'supports',
+            label: 'Supports',
+            path: [
+              {
+                kind: 'unboundTypedRelation',
+                relationSchemaId: 'supports',
+                direction: 'in'
+              }
+            ],
+            targetSchemaIds: 'any'
+          }
+        ],
+        deliverySources: ['projects', 'changeCases'],
+        showOrphanEntities: true,
+        showOrphanProjects: true
+      }).success
+    ).toBe(true);
+  });
+
+  it('rejects an empty path list', () => {
+    expect(
+      traceabilityViewConfigSchema.safeParse({
+        paths: [],
+        deliverySources: ['projects'],
+        showOrphanEntities: true,
+        showOrphanProjects: true
       }).success
     ).toBe(false);
   });

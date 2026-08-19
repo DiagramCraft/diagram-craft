@@ -21,7 +21,8 @@ type Props = {
 
 export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
   const navigate = useNavigate();
-  const { workspaceSlug, schemas, lifecycleStates, projects } = useWorkspaceContext();
+  const { workspaceSlug, schemas, relationSchemas, lifecycleStates, projects } =
+    useWorkspaceContext();
   const { projectId } = useMdxContext();
 
   const config = useMemo(() => decodeEntityBrowserEmbedConfig(rawConfig), [rawConfig]);
@@ -59,7 +60,8 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
     pageIndex: 0,
     pageSize: 0,
     disablePaging: true,
-    enabled: !!workspaceSlug && !!config && !isTreeBased
+    enabled: !!workspaceSlug && !!config && !isTreeBased,
+    activeViewConfig: config?.viewConfigs[config?.view ?? 'table']
   });
 
   if (!config) {
@@ -94,6 +96,7 @@ export const EntityBrowserEmbed = ({ config: rawConfig }: Props) => {
         rows={browserRows}
         schemaMap={schemaMap}
         schemas={schemas}
+        relationSchemas={relationSchemas}
         lifecycleStates={lifecycleStates}
         projects={projects}
         workspaceId={workspaceSlug}

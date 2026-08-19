@@ -291,6 +291,8 @@ export const EntitiesSidebar = ({
         return <TbMap size={12} />;
       case 'graph':
         return <TbVectorTriangle size={12} />;
+      case 'traceability':
+        return <TbArrowsRightLeft size={12} />;
       default:
         return <TbTable size={12} />;
     }

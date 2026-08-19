@@ -152,7 +152,8 @@ export const EntityBrowserToolbar = ({
             { value: 'explore', label: 'Explore' },
             { value: 'map', label: 'Map' },
             { value: 'diff', label: 'Diff' },
-            { value: 'graph', label: 'Graph' }
+            { value: 'graph', label: 'Graph' },
+            { value: 'traceability', label: 'Traceability' }
           ]
         }
       />

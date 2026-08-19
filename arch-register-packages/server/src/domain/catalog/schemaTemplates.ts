@@ -2258,6 +2258,65 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           root: { kind: 'and', children: [] }
         },
         config: { table: { fieldIds: ['status', 'objectives', 'outcomes'] } }
+      },
+      {
+        id: 'strategy-traceability',
+        name: 'Strategy Traceability',
+        viewMode: 'traceability',
+        filters: {
+          schemaId: 'objective',
+          root: { kind: 'and', children: [] }
+        },
+        config: {
+          traceability: {
+            paths: [
+              {
+                id: 'supporting-capabilities',
+                label: 'Supporting capabilities',
+                path: [
+                  {
+                    kind: 'unboundTypedRelation',
+                    relationSchemaId: 'objective-supports-business-capability',
+                    direction: 'in'
+                  }
+                ],
+                targetSchemaIds: ['business_capability']
+              },
+              {
+                id: 'supported-entities',
+                label: 'Supported entities',
+                path: [
+                  {
+                    kind: 'unboundTypedRelation',
+                    relationSchemaId: 'objective-supports-business-capability',
+                    direction: 'in'
+                  },
+                  {
+                    kind: 'unboundTypedRelation',
+                    relationSchemaId: 'business-capability-supports-entity',
+                    direction: 'in'
+                  }
+                ],
+                targetSchemaIds: 'any'
+              },
+              {
+                id: 'affected-entities',
+                label: 'Affected entities',
+                path: [
+                  {
+                    kind: 'unboundTypedRelation',
+                    relationSchemaId: 'objective-affects-entity',
+                    direction: 'in'
+                  }
+                ],
+                targetSchemaIds: 'any'
+              }
+            ],
+            deliverySources: ['projects', 'milestones', 'changeCases', 'assessments'],
+            showOrphanEntities: true,
+            showOrphanProjects: true
+          }
+        }
       }
     ]
   }
@@ -2432,6 +2491,25 @@ const resolveViewModeConfigSchemaIds = (
           )
         })
       };
+    case 'traceability': {
+      const resolved: Record<string, unknown> = { ...config };
+      if (Array.isArray(config.paths)) {
+        resolved.paths = (config.paths as Array<Record<string, unknown>>).map(path => ({
+          ...path,
+          ...(Array.isArray(path.path) && {
+            path: (path.path as PathStep[]).map(step =>
+              resolvePathStepSchemaIds(step, idMap, relationSchemaIdMap)
+            )
+          }),
+          ...(Array.isArray(path.targetSchemaIds) && {
+            targetSchemaIds: (path.targetSchemaIds as string[]).map(
+              symId => idMap.get(symId) ?? symId
+            )
+          })
+        }));
+      }
+      return resolved;
+    }
     default:
       return config;
   }
@@ -2444,7 +2522,7 @@ const resolveViewConfigSchemaIds = (
 ): Record<string, unknown> | null => {
   if (!config) return config;
   const resolved: Record<string, unknown> = { ...config };
-  for (const mode of ['radar', 'matrix', 'map', 'explore', 'graph']) {
+  for (const mode of ['radar', 'matrix', 'map', 'explore', 'graph', 'traceability']) {
     const modeConfig = config[mode];
     if (modeConfig && typeof modeConfig === 'object') {
       resolved[mode] = resolveViewModeConfigSchemaIds(

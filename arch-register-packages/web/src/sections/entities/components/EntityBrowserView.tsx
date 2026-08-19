@@ -2,6 +2,7 @@ import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
 import type { Project } from '@arch-register/api-types/projectCrudContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
@@ -18,6 +19,7 @@ import { RadarView } from './RadarView';
 import { TableView, type TableViewProps } from './TableView';
 import { TimelineView } from './TimelineView';
 import { TreeView } from './TreeView';
+import { TraceabilityView } from './TraceabilityView';
 import type { BrowserEntityRecord, ProjectBrowserContext } from './entityBrowserState';
 import type { EntityDisplayField } from './entityDisplayFields';
 import type { JoinedAssessmentContext } from './entityFieldSources';
@@ -31,6 +33,7 @@ type EntityBrowserViewData = {
   rows: BrowserEntityRecord[];
   schemaMap: Map<string, { schema: EntitySchema; index: number }>;
   schemas: EntitySchema[];
+  relationSchemas: RelationSchema[];
   lifecycleStates: WorkspaceLifecycleState[];
   teams?: WorkspaceTeam[];
   projects: Project[];
@@ -97,6 +100,7 @@ export const EntityBrowserView = ({
   rows,
   schemaMap,
   schemas,
+  relationSchemas,
   lifecycleStates,
   teams,
   projects,
@@ -220,6 +224,26 @@ export const EntityBrowserView = ({
           linkedEntityIds={linkedEntityIds}
           hideToolbar={hideToolbar}
           joinedAssessment={joinedAssessment}
+        />
+      );
+    case 'traceability':
+      return (
+        <TraceabilityView
+          rows={rows}
+          rootSchemaIds={
+            typeFilter != null ? [typeFilter] : [...new Set(rows.map(row => row._schema.id))]
+          }
+          schemas={schemas}
+          relationSchemas={relationSchemas}
+          projects={projects}
+          workspaceId={workspaceId}
+          projectId={projectId}
+          executionEntityQuery={executionEntityQuery}
+          config={activeViewConfig}
+          onConfigChange={onConfigChange}
+          onEntityClick={onEntityClick}
+          hideToolbar={hideToolbar}
+          isLoading={isLoading}
         />
       );
     case 'timeline':

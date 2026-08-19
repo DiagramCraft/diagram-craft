@@ -18,7 +18,8 @@ export type SharedEntityBrowserSearchParams = {
     | 'heatmap'
     | 'map'
     | 'diff'
-    | 'graph';
+    | 'graph'
+    | 'traceability';
   sort?: string;
   projectScope?: 'project' | 'all';
   viewConfigs?: string;
@@ -52,7 +53,8 @@ const validateSharedEntityBrowserSearch = (
     raw.viewMode === 'heatmap' ||
     raw.viewMode === 'map' ||
     raw.viewMode === 'diff' ||
-    raw.viewMode === 'graph'
+    raw.viewMode === 'graph' ||
+    raw.viewMode === 'traceability'
       ? raw.viewMode
       : undefined,
   sort: typeof raw.sort === 'string' ? raw.sort : undefined,
