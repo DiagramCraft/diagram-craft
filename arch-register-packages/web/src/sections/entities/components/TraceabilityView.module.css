@@ -1,0 +1,503 @@
+.visuallyHidden {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+/* Outer wrapper */
+.wrap {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  overflow: auto;
+}
+
+/* ── Configuration ───────────────────────────────────────────── */
+
+.config {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  background: var(--panel-bg);
+}
+
+.configToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--base-fg);
+  cursor: pointer;
+  text-align: left;
+}
+
+.configToggle:hover {
+  background: color-mix(in oklch, var(--base-fg) 5%, transparent);
+}
+
+.configToggleIcon {
+  flex-shrink: 0;
+  transition: transform 100ms;
+  color: var(--base-fg-more-dim);
+}
+
+.configToggleIcon[data-open="false"] {
+  transform: rotate(-90deg);
+}
+
+.configToggleCount {
+  margin-left: auto;
+  font-size: 11px;
+  font-weight: normal;
+  color: var(--base-fg-more-dim);
+}
+
+.configBody {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  padding: 4px 10px 12px;
+}
+
+/* Path card */
+.path {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 8px 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  background: var(--base-bg);
+}
+
+.pathHd {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.pathName {
+  width: 150px;
+  height: 24px;
+  padding: 0 8px;
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--base-fg);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  font-family: inherit;
+}
+
+.pathName:focus {
+  outline: none;
+  border-color: var(--cmp-border-focus, var(--accent-fg));
+}
+
+.pathTarget {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  flex-shrink: 0;
+}
+
+.pathTargetLabel {
+  font-size: 10px;
+  color: var(--base-fg-more-dim);
+  white-space: nowrap;
+}
+
+.pathRm {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--r);
+  color: var(--base-fg-more-dim);
+  cursor: pointer;
+}
+
+.pathRm:hover {
+  background: color-mix(in oklch, var(--error-fg) 15%, transparent);
+  color: var(--error-fg);
+}
+
+/* Hops */
+.hops {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.hop {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.hopDir {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 22px;
+  height: 22px;
+  flex-shrink: 0;
+  font-size: 12px;
+  color: var(--base-fg);
+  background: var(--panel-bg);
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  cursor: pointer;
+}
+
+.hopDir:hover:not(:disabled) {
+  border-color: var(--accent-border);
+  color: var(--accent-fg);
+}
+
+.hopDir:disabled {
+  cursor: not-allowed;
+  color: var(--base-fg-more-dim);
+}
+
+.hopRm {
+  flex-shrink: 0;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  background: transparent;
+  border: none;
+  border-radius: var(--r);
+  color: var(--base-fg-more-dim);
+  cursor: pointer;
+}
+
+.hopRm:hover {
+  background: color-mix(in oklch, var(--error-fg) 15%, transparent);
+  color: var(--error-fg);
+}
+
+.hopError {
+  font-size: 11px;
+  color: var(--error-fg);
+}
+
+.addHop,
+.addPath {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  align-self: flex-start;
+  height: 22px;
+  padding: 0 8px;
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  background: transparent;
+  border: 1px dashed var(--panel-border);
+  border-radius: var(--r);
+  cursor: pointer;
+  font-family: inherit;
+}
+
+.addHop:hover,
+.addPath:hover {
+  color: var(--accent-fg);
+  border-color: var(--accent-border);
+  background: color-mix(in oklch, var(--accent-bg) 10%, transparent);
+}
+
+.addHop:disabled,
+.addPath:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+/* ── Summary ─────────────────────────────────────────────────── */
+
+.summary {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex-wrap: wrap;
+}
+
+.badge {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 5px;
+  height: 22px;
+  padding: 0 8px;
+  border-radius: var(--r);
+  font-size: 11px;
+  font-weight: 600;
+  border: 1px solid transparent;
+}
+
+.badgeOk {
+  color: var(--green);
+  background: color-mix(in oklch, var(--green) 14%, transparent);
+  border-color: color-mix(in oklch, var(--green) 30%, transparent);
+}
+
+.badgeWarn {
+  color: var(--warning-fg);
+  background: color-mix(in oklch, var(--warning-fg) 14%, transparent);
+  border-color: color-mix(in oklch, var(--warning-fg) 30%, transparent);
+}
+
+.statText {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+}
+
+.statLink {
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  text-underline-offset: 2px;
+}
+
+.statLink:hover {
+  color: var(--accent-fg);
+}
+
+.error {
+  font-size: 12px;
+  color: var(--error-fg);
+}
+
+.loading,
+.empty {
+  font-size: 12px;
+  color: var(--base-fg-more-dim);
+}
+
+/* ── Table ───────────────────────────────────────────────────── */
+
+.tableWrap {
+  overflow-x: auto;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+}
+
+.table {
+  width: 100%;
+  border-collapse: separate;
+  border-spacing: 0;
+  font-size: 12px;
+}
+
+.table th {
+  text-align: left;
+  padding: 6px 10px;
+  font-size: 10.5px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.4px;
+  color: var(--base-fg-more-dim);
+  border-bottom: 1px solid var(--panel-border);
+  white-space: nowrap;
+}
+
+.table td {
+  padding: 7px 10px;
+  vertical-align: top;
+  background: var(--panel-bg);
+  border-bottom: 1px solid var(--panel-border);
+}
+
+.table tr:last-child td {
+  border-bottom: none;
+}
+
+.table tr:hover td {
+  background: color-mix(in oklch, var(--base-fg) 4%, var(--panel-bg));
+}
+
+.colRoot {
+  width: 220px;
+  min-width: 200px;
+}
+
+.colStatus {
+  width: 110px;
+}
+
+.rootBtn {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  background: transparent;
+  border: none;
+  padding: 0;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--base-fg);
+  cursor: pointer;
+  text-align: left;
+  text-decoration: none;
+}
+
+.rootBtn:hover {
+  color: var(--accent-fg);
+}
+
+.rootName {
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.cellEmpty {
+  color: var(--base-fg-more-dim);
+  font-size: 11px;
+}
+
+.cell {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: 0 4px;
+  font-size: 12px;
+}
+
+.pathStep {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 4px;
+  white-space: nowrap;
+}
+
+.pathArrow {
+  color: var(--base-fg-more-dim);
+}
+
+.pathNode {
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 12px;
+  color: var(--base-fg);
+  cursor: pointer;
+  text-decoration: none;
+}
+
+.pathNode:hover:not(:disabled) {
+  color: var(--accent-fg);
+}
+
+.pathNode:disabled {
+  color: var(--base-fg);
+  cursor: default;
+}
+
+.pathMore {
+  padding: 0;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  font-size: 11px;
+  color: var(--base-fg-more-dim);
+  cursor: pointer;
+}
+
+.pathMore:hover {
+  color: var(--accent-fg);
+}
+
+/* Coverage pills */
+.pill {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  height: 20px;
+  padding: 0 8px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.pillOk {
+  color: var(--green);
+  background: color-mix(in oklch, var(--green) 16%, transparent);
+}
+
+.pillGap {
+  color: var(--error-fg);
+  background: color-mix(in oklch, var(--error-fg) 14%, transparent);
+}
+
+.pillDot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: currentColor;
+  flex-shrink: 0;
+}
+
+.pillProjects {
+  margin-top: 3px;
+  font-size: 10.5px;
+  color: var(--base-fg-more-dim);
+}
+
+/* ── Gap sections ────────────────────────────────────────────── */
+
+.gapSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  padding: 10px 12px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  background: var(--panel-bg);
+}
+
+.gapSection h4 {
+  margin: 0;
+  font-size: 11.5px;
+  font-weight: 600;
+  color: var(--base-fg);
+}
+
+.gapSection ul {
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.gapSection li {
+  font-size: 12px;
+  color: var(--base-fg);
+}

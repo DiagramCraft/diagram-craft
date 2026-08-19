@@ -93,17 +93,17 @@ describe('TraceabilityView', () => {
     );
 
     const directionIndex = markup.indexOf('aria-label="Direction for strategy hop 1"');
-    const relationIndex = markup.indexOf('aria-label="Relation for strategy hop 1"');
+    const relationIndex = markup.indexOf('aria-labelledby="trace-relation-label-strategy-0"');
 
     expect(directionIndex).toBeGreaterThanOrEqual(0);
     expect(relationIndex).toBeGreaterThan(directionIndex);
-    expect(markup).toContain('>-&gt;</option>');
-    expect(markup).toContain('>Supports capability</option>');
-    expect(markup).not.toContain('>Supports entity</option>');
+    expect(markup).toContain('>Supports capability</span>');
+    expect(markup).not.toContain('Supports entity');
     expect(markup).toContain('>Entity: 0/0 covered</span>');
     expect(markup).not.toContain('>Architecture: 0/0 covered</span>');
-    expect(markup).toContain('>Projects without traceability coverage</h4>');
-    expect(markup).not.toContain('>Projects without strategic alignment</h4>');
+    expect(markup).toContain('1 projects without traceability coverage');
+    expect(markup).not.toContain('>Projects without traceability coverage</h4>');
+    expect(markup).not.toContain('Projects without strategic alignment');
     expect(markup).not.toContain('milestones');
     expect(markup).not.toContain('Planned changes');
     expect(markup).not.toContain('assessments');
