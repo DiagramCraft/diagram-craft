@@ -379,10 +379,16 @@
 
 .cell {
   display: flex;
+  flex-direction: column;
+  gap: 2px;
+  font-size: 12px;
+}
+
+.pathChain {
+  display: flex;
   flex-wrap: wrap;
   align-items: baseline;
   gap: 0 4px;
-  font-size: 12px;
 }
 
 .pathStep {

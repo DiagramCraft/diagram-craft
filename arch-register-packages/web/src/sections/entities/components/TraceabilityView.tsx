@@ -1,4 +1,4 @@
-import { useMemo, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import { useQueries } from '@tanstack/react-query';
 import { TbChevronDown, TbPlus, TbTrash, TbX } from 'react-icons/tb';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -13,6 +13,7 @@ import type { Project } from '@arch-register/api-types/projectCrudContract';
 import type { TraceabilityViewConfig } from '@arch-register/api-types/viewContract';
 import { projectEntitiesQuery } from '../../../queries/projects';
 import { useEntities, useEntitiesByIds, useEntitiesBySchema } from '../../../hooks/useEntities';
+import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
 import { EmptyState } from '../../../components/EmptyState';
 import { TypeBadge } from '../../../components/TypeBadge';
@@ -27,11 +28,11 @@ import {
   entityIsOrphan,
   hasAnyTargetSchema,
   parseTraceabilityConfig,
-  traceabilityAvailableDirections,
-  traceabilityCompatibleRelationsForDirection,
-  traceabilityPathStepContext,
-  traceabilityRelationIdForDirection,
-  traceabilityRelationDirections
+  groupTraceabilityOptions,
+  pathStepKey,
+  pruneInvalidTraceabilityPaths,
+  traceabilityPathOptions,
+  traceabilityPathStepContext
 } from './traceabilityViewState';
 
 type TraceabilityViewProps = {
@@ -61,13 +62,7 @@ const emptyConfig = (): Omit<TraceabilityViewConfig, 'paths'> & {
   showOrphanProjects: true
 });
 
-const CELL_VISIBLE_NODES = 6;
-
-const pathStep = (relationSchemaId: string, direction: 'in' | 'out'): PathStep => ({
-  kind: 'unboundTypedRelation',
-  relationSchemaId,
-  direction
-});
+const CELL_VISIBLE_CHAINS = 3;
 
 export const TraceabilityView = ({
   rows,
@@ -102,6 +97,45 @@ export const TraceabilityView = ({
     () => (rootSchemaIds.length > 0 ? rootSchemaIds : schemas.map(schema => schema.id)),
     [rootSchemaIds, schemas]
   );
+  const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
+  // A saved hop can become unselectable (its option no longer appears in the dropdown) when the
+  // schemas/relations reachable at that depth change out from under it - e.g. a sidebar filter
+  // narrows the root schema scope. Rather than leaving it stuck showing "Unavailable hop" with no
+  // way to fix it from the dropdown, drop it and any hops after it (or the whole path, if even its
+  // first hop is invalid) as soon as that happens.
+  useEffect(() => {
+    if (hideToolbar || !parsedConfig) return;
+    const pruned = pruneInvalidTraceabilityPaths(parsedConfig, {
+      rootSchemaScope,
+      schemas,
+      relationSchemas,
+      getFieldGroupAccess
+    });
+    if (pruned !== parsedConfig) onConfigChange(pruned);
+  }, [hideToolbar, parsedConfig, rootSchemaScope, schemas, relationSchemas, getFieldGroupAccess, onConfigChange]);
+  const pathOptionsAt = (
+    path: TraceabilityViewConfig['paths'][number],
+    depth: number,
+    direction: 'in' | 'out'
+  ) => {
+    const context = traceabilityPathStepContext({
+      rootSchemaScope,
+      path,
+      depth,
+      schemas,
+      relationSchemas,
+      getFieldGroupAccess
+    });
+    return direction === context.direction
+      ? context.options
+      : traceabilityPathOptions({
+          direction,
+          currentSchemaScope: context.currentSchemaScope,
+          schemas,
+          relationSchemas,
+          getFieldGroupAccess
+        });
+  };
   const targetSchemaIds = parsedConfig ? collectTargetSchemaIds(parsedConfig) : [];
   const anyTargetSchema = parsedConfig ? hasAnyTargetSchema(parsedConfig) : false;
   const candidateBySchema = useEntitiesBySchema(workspaceId, targetSchemaIds);
@@ -191,18 +225,30 @@ export const TraceabilityView = ({
 
   const updateConfig = (next: TraceabilityViewConfig) => onConfigChange(next);
   const compatibleRootDirections = useMemo(
-    () => traceabilityAvailableDirections(relationSchemas, rootSchemaScope),
-    [relationSchemas, rootSchemaScope]
+    () =>
+      (['in', 'out'] as const).filter(
+        direction =>
+          traceabilityPathOptions({
+            direction,
+            currentSchemaScope: rootSchemaScope,
+            schemas,
+            relationSchemas,
+            getFieldGroupAccess
+          }).length > 0
+      ),
+    [rootSchemaScope, schemas, relationSchemas, getFieldGroupAccess]
   );
   const addPath = () => {
     const direction = compatibleRootDirections[0];
     if (!direction) return;
-    const relation = traceabilityCompatibleRelationsForDirection(
+    const option = traceabilityPathOptions({
+      direction,
+      currentSchemaScope: rootSchemaScope,
+      schemas,
       relationSchemas,
-      rootSchemaScope,
-      direction
-    )[0];
-    if (!relation) return;
+      getFieldGroupAccess
+    })[0];
+    if (!option) return;
     setConfigOpen(true);
     updateConfig({
       ...editorConfig,
@@ -210,28 +256,21 @@ export const TraceabilityView = ({
         ...editorConfig.paths,
         {
           id: `path-${editorConfig.paths.length + 1}`,
-          label: relation.name,
-          path: [pathStep(relation.id, direction)],
+          label: 'Trace',
+          path: [option.step],
           targetSchemaIds: 'any'
         }
       ]
     });
   };
-  const updatePathStep = (
-    pathId: string,
-    depth: number,
-    relationSchemaId: string,
-    direction: 'in' | 'out'
-  ) => {
+  const updatePathStep = (pathId: string, depth: number, step: PathStep) => {
     updateConfig({
       ...editorConfig,
       paths: editorConfig.paths.map(path =>
         path.id === pathId
           ? {
               ...path,
-              path: path.path.map((step, index) =>
-                index === depth ? pathStep(relationSchemaId, direction) : step
-              )
+              path: path.path.map((existing, index) => (index === depth ? step : existing))
             }
           : path
       )
@@ -242,54 +281,37 @@ export const TraceabilityView = ({
       rootSchemaScope,
       path,
       depth: path.path.length,
-      relationSchemas
+      schemas,
+      relationSchemas,
+      getFieldGroupAccess
     });
   const canAddHop = (path: TraceabilityViewConfig['paths'][number]) =>
-    path.path.length < MAX_PATH_HOPS &&
-    traceabilityAvailableDirections(relationSchemas, nextHopContext(path).currentSchemaScope)
-      .length > 0;
+    path.path.length < MAX_PATH_HOPS && nextHopContext(path).availableDirections.length > 0;
   const addPathStep = (pathId: string) => {
     const path = editorConfig.paths.find(candidate => candidate.id === pathId);
     if (!path) return;
     const context = nextHopContext(path);
-    const direction = traceabilityAvailableDirections(
-      relationSchemas,
-      context.currentSchemaScope
-    )[0];
+    const direction = context.availableDirections[0];
     if (!direction) return;
-    const relation = traceabilityCompatibleRelationsForDirection(
-      relationSchemas,
-      context.currentSchemaScope,
-      direction
-    )[0];
-    if (!relation) return;
+    const option = pathOptionsAt(path, path.path.length, direction)[0];
+    if (!option) return;
     updateConfig({
       ...editorConfig,
-      paths: editorConfig.paths.map(path =>
-        path.id === pathId && path.path.length < MAX_PATH_HOPS
-          ? { ...path, path: [...path.path, pathStep(relation.id, direction)] }
-          : path
+      paths: editorConfig.paths.map(candidate =>
+        candidate.id === pathId && candidate.path.length < MAX_PATH_HOPS
+          ? { ...candidate, path: [...candidate.path, option.step] }
+          : candidate
       )
     });
   };
   const updatePathDirection = (
-    pathId: string,
+    path: TraceabilityViewConfig['paths'][number],
     depth: number,
-    relationSchemaId: string,
-    direction: 'in' | 'out',
-    currentSchemaScope: readonly string[] | 'any'
+    direction: 'in' | 'out'
   ) => {
-    updatePathStep(
-      pathId,
-      depth,
-      traceabilityRelationIdForDirection(
-        relationSchemas,
-        currentSchemaScope,
-        direction,
-        relationSchemaId
-      ) ?? relationSchemaId,
-      direction
-    );
+    const option = pathOptionsAt(path, depth, direction)[0];
+    if (!option) return;
+    updatePathStep(path.id, depth, option.step);
   };
   const removePathStep = (pathId: string, depth: number) => {
     updateConfig({
@@ -353,39 +375,22 @@ export const TraceabilityView = ({
                     rootSchemaScope,
                     path,
                     depth,
-                    relationSchemas
+                    schemas,
+                    relationSchemas,
+                    getFieldGroupAccess
                   });
-                  const relationId =
-                    step.kind === 'unboundTypedRelation' ? step.relationSchemaId : '';
-                  const direction = step.kind === 'unboundTypedRelation' ? step.direction : 'in';
-                  const selectedRelation = relationSchemas.find(schema => schema.id === relationId);
-                  const availableDirections = traceabilityAvailableDirections(
-                    relationSchemas,
-                    stepContext.currentSchemaScope
+                  const direction = stepContext.direction;
+                  const stepKey = pathStepKey(step);
+                  const selectedOption = stepContext.options.find(
+                    option => pathStepKey(option.step) === stepKey
                   );
-                  const selectedRelationDirections = selectedRelation
-                    ? traceabilityRelationDirections(
-                        selectedRelation,
-                        stepContext.currentSchemaScope
-                      )
-                    : [];
-                  const relationOptions = traceabilityCompatibleRelationsForDirection(
-                    relationSchemas,
-                    stepContext.currentSchemaScope,
-                    direction
-                  );
-                  const relationIsCompatible =
-                    selectedRelation != null &&
-                    relationOptions.some(schema => schema.id === selectedRelation.id);
                   const oppositeDirection = direction === 'in' ? 'out' : 'in';
-                  const canToggleDirection = availableDirections.includes(oppositeDirection);
+                  const canToggleDirection = stepContext.availableDirections.includes(
+                    oppositeDirection
+                  );
                   const errorMessage = !stepContext.invalid
                     ? null
-                    : selectedRelation == null
-                      ? 'This relation schema is no longer available.'
-                      : !selectedRelationDirections.includes(direction)
-                        ? 'This relation cannot be followed in the selected direction.'
-                        : 'The selected direction is incompatible with the current schema.';
+                    : 'This hop is no longer available for the current schema.';
 
                   return {
                     depth,
@@ -403,39 +408,41 @@ export const TraceabilityView = ({
                               : `Traversing ${direction}`
                           }
                           disabled={!canToggleDirection}
-                          onClick={() =>
-                            updatePathDirection(
-                              path.id,
-                              depth,
-                              relationId,
-                              oppositeDirection,
-                              stepContext.currentSchemaScope
-                            )
-                          }
+                          onClick={() => updatePathDirection(path, depth, oppositeDirection)}
                         >
                           {direction === 'in' ? '→' : '←'}
                         </button>
                         <div className={styles.selectWrap}>
                           <select
                             className={styles.select}
-                            value={relationId}
-                            aria-label={`Relation for ${path.id} hop ${depth + 1}`}
-                            onChange={event =>
-                              updatePathStep(path.id, depth, event.target.value, direction)
-                            }
+                            value={stepKey}
+                            aria-label={`Hop for ${path.id} hop ${depth + 1}`}
+                            onChange={event => {
+                              const option = stepContext.options.find(
+                                candidate => pathStepKey(candidate.step) === event.target.value
+                              );
+                              if (option) updatePathStep(path.id, depth, option.step);
+                            }}
                           >
-                            {stepContext.invalid && relationId !== '' && !relationIsCompatible && (
-                              <option value={relationId} disabled>
-                                {selectedRelation
-                                  ? `${selectedRelation.name} (incompatible)`
-                                  : `Unknown relation (${relationId})`}
+                            {selectedOption == null && (
+                              <option value={stepKey} disabled>
+                                {`Unavailable hop (${stepKey})`}
                               </option>
                             )}
-                            {relationOptions.map(schema => (
-                              <option key={schema.id} value={schema.id}>
-                                {schema.name}
-                              </option>
-                            ))}
+                            {groupTraceabilityOptions(stepContext.options).map(
+                              ({ group, options }) => (
+                                <optgroup key={group} label={group}>
+                                  {options.map(option => (
+                                    <option
+                                      key={pathStepKey(option.step)}
+                                      value={pathStepKey(option.step)}
+                                    >
+                                      {option.label}
+                                    </option>
+                                  ))}
+                                </optgroup>
+                              )
+                            )}
                           </select>
                           <TbChevronDown size={11} />
                         </div>
@@ -674,31 +681,38 @@ export const TraceabilityView = ({
                     {row.paths.map(path => {
                       const cellKey = `${row.root._uid}|${path.pathId}`;
                       const expanded =
-                        expandedCells.has(cellKey) || path.nodes.length <= CELL_VISIBLE_NODES;
+                        expandedCells.has(cellKey) || path.chains.length <= CELL_VISIBLE_CHAINS;
                       const shown = expanded
-                        ? path.nodes
-                        : path.nodes.slice(0, CELL_VISIBLE_NODES - 1);
+                        ? path.chains
+                        : path.chains.slice(0, CELL_VISIBLE_CHAINS);
                       return (
                         <td key={path.pathId}>
-                          {path.nodes.length === 0 ? (
+                          {path.chains.length === 0 ? (
                             <span className={styles.cellEmpty}>No linked entities</span>
                           ) : (
                             <div className={styles.cell}>
-                              {shown.map(node => (
-                                <span key={node.id} className={styles.pathStep}>
-                                  <span className={styles.pathArrow}>→</span>
-                                  <button
-                                    type="button"
-                                    className={styles.pathNode}
-                                    onClick={() => {
-                                      const details = pathEntityDetails.get(node.id);
-                                      if (details) onEntityClick(details.publicId);
-                                    }}
-                                    disabled={!pathEntityDetails.has(node.id)}
-                                  >
-                                    {node.name}
-                                  </button>
-                                </span>
+                              {shown.map((chain, chainIndex) => (
+                                <div
+                                  key={`${path.pathId}-${chainIndex}`}
+                                  className={styles.pathChain}
+                                >
+                                  {chain.map(node => (
+                                    <span key={node.id} className={styles.pathStep}>
+                                      <span className={styles.pathArrow}>→</span>
+                                      <button
+                                        type="button"
+                                        className={styles.pathNode}
+                                        onClick={() => {
+                                          const details = pathEntityDetails.get(node.id);
+                                          if (details) onEntityClick(details.publicId);
+                                        }}
+                                        disabled={!pathEntityDetails.has(node.id)}
+                                      >
+                                        {node.name}
+                                      </button>
+                                    </span>
+                                  ))}
+                                </div>
                               ))}
                               {!expanded && (
                                 <button
@@ -706,7 +720,7 @@ export const TraceabilityView = ({
                                   className={styles.pathMore}
                                   onClick={() => toggleCell(cellKey)}
                                 >
-                                  +{path.nodes.length - shown.length} more
+                                  +{path.chains.length - shown.length} more
                                 </button>
                               )}
                             </div>

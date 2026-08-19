@@ -706,6 +706,42 @@ export const validateEntityQueryIR = (
       authCtx,
       rootKind
     );
+    if (projection.chain) {
+      if (projection.path.length === 0) {
+        errors.push({
+          path: [...projectionPath, 'chain'],
+          message: 'Chain projections require a non-empty path'
+        });
+      }
+      const unsupportedStep = projection.path.find(
+        step =>
+          step.kind !== 'forward' &&
+          step.kind !== 'backward' &&
+          step.kind !== 'typedRelation' &&
+          step.kind !== 'unboundTypedRelation'
+      );
+      if (unsupportedStep) {
+        errors.push({
+          path: [...projectionPath, 'path'],
+          message: `Chain projections only support forward/backward/typedRelation/unboundTypedRelation hops, got '${unsupportedStep.kind}'`
+        });
+      }
+      if (projection.source === 'relation') {
+        errors.push({
+          path: [...projectionPath, 'source'],
+          message: "Chain projections cannot use source: 'relation'"
+        });
+      }
+      const alias = projectionAlias(projection);
+      if (aliases.has(alias)) {
+        errors.push({
+          path: [...projectionPath, 'alias'],
+          message: `Duplicate projection alias '${alias}'`
+        });
+      }
+      aliases.add(alias);
+      continue;
+    }
     if (rootKind === 'relation' && projection.path.length === 0) {
       if (!isKnownRelationFieldId(projection.fieldId, relationSchemas, authCtx)) {
         errors.push({

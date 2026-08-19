@@ -318,8 +318,12 @@
           one or more bounded relationship paths from the current entity query, reports architecture and current
           delivery coverage separately, inherits milestone, planned-change, and assessment evidence from aligned
           projects, and identifies accessible entities and projects outside the configured traceability graph. Path
-          editors offer arrow-first (`->`/`<-`) controls with only schema-compatible relation types for each hop while
-          preserving invalid saved paths for repair.
+          editors offer arrow-first (`->`/`<-`) controls with each hop's dropdown populated by every schema-compatible
+          option for that direction — plain reference/containment fields, typed-relation fields bound to a specific
+          projection field, and unbound relation-schema traversals alike — filtered by field-group access, while
+          preserving invalid saved paths for repair. Multi-hop paths render one line per matched root-to-leaf chain
+          (not a flattened, uncorrelated bag of every entity touched at each hop), capped at 3 visible chains per
+          cell with a "+N more" expander.
 
         - @id:ar.entity-views.bubble Users can plot entities across configurable dimensions such as X, Y, size, and
           colour in a bubble view, with optional equally split axes and named quadrant labels persisted in saved views
