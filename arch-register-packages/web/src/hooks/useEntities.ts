@@ -183,6 +183,34 @@ export const useMultipleEntityRelations = (
   }, [data, isLoading, entityIds]);
 };
 
+// Batch-fetches full entity summaries for a set of ids in a single request (via the `_id`/`in`
+// predicate), unlike `useEntitiesByIds` below which issues one detail request per id - use this
+// when callers need full record fields (icon, owner, lifecycle, ...), not just name/publicId, for
+// potentially many ids at once (e.g. hydrating every node across a map's matched relation chains).
+export const useEntitiesByIdSet = (
+  workspaceId: string,
+  ids: string[],
+  queryOptions?: { enabled?: boolean }
+) => {
+  const sortedIds = useMemo(() => [...new Set(ids)].sort(), [ids]);
+  const enabled = (queryOptions?.enabled ?? true) && sortedIds.length > 0;
+  const query = useEntities(
+    workspaceId,
+    {
+      view: 'full',
+      entityQuery: { root: { kind: 'predicate', path: [], fieldId: '_id', op: 'in', value: sortedIds } },
+      limit: sortedIds.length
+    },
+    { enabled }
+  );
+
+  return useMemo(() => {
+    const map = new Map<string, (typeof query.data)[number]>();
+    for (const entity of query.data) map.set(entity._uid, entity);
+    return map;
+  }, [query.data]);
+};
+
 // Hook for resolving a set of entity ids to their name/publicId (e.g. to render entityRelation
 // field values as links instead of raw ids). Shares its cache with useEntity via entityKeys.detail.
 export const useEntitiesByIds = (

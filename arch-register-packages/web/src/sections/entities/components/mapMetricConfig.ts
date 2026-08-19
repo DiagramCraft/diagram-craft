@@ -118,7 +118,10 @@ export type MetricPathOption = {
  * Selectable metric sources for `schema`'s descendants: numeric/currency/select fields, lifecycle,
  * and (if joined) assessment rating/enum fields. Fields in a group the caller cannot view are
  * omitted - pass `useWorkspaceAuthorization(workspaceId).getFieldGroupAccess`, matching
- * `FilterBuilder`.
+ * `FilterBuilder`. `schema` may be omitted when the terminal level has no single resolved schema
+ * (e.g. a Map level whose hop targets more than one candidate schema and no target was picked) -
+ * lifecycle and assessment fields are schema-independent, so they're still offered; only the
+ * schema's own custom fields are unavailable (#3040-map).
  */
 export const getMetricSourceOptions = (
   schema: EntitySchema | RelationSchema | undefined,
@@ -128,11 +131,10 @@ export const getMetricSourceOptions = (
   ) => FieldGroupAccess = () => 'edit',
   sourceContext: 'entity' | 'relation' = 'entity'
 ): MetricSourceOption[] => {
-  if (!schema) return [];
   const options: MetricSourceOption[] = [{ source: { kind: 'lifecycle' }, label: 'Lifecycle' }];
-  for (const field of schema.fields) {
+  for (const field of schema?.fields ?? []) {
     if (field.groupId) {
-      const group = schema.groups?.find(g => g.id === field.groupId);
+      const group = schema?.groups?.find(g => g.id === field.groupId);
       if (getFieldGroupAccess(group?.accessControl) === 'none') continue;
     }
     if (

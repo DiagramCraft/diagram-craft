@@ -163,6 +163,12 @@ export const buildConditionClause = (
       return `CAST(${col} AS NUMERIC) >= CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`;
     case 'lte':
       return `CAST(${col} AS NUMERIC) <= CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`;
+    case 'in': {
+      const values = Array.isArray(cond.value) ? cond.value : [cond.value];
+      // An empty list matches nothing, rather than every row (which an empty `IN ()` would be a
+      // SQL syntax error for anyway).
+      return values.length === 0 ? '1=0' : `${col} IN (${values.map(v => addParam(v)).join(', ')})`;
+    }
     default:
       return null;
   }

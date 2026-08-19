@@ -346,12 +346,20 @@
           enum-sourced metrics, "worst" ranks options by the admin-configured top-to-bottom order of the enum's
           options. A metric source in an access-restricted field group evaluates as unavailable (no value, distribution,
           or dominant option) for viewers without view access to that group, rather than exposing the underlying data;
-          the field picker also excludes such fields when configuring the metric. Map levels can combine
-          reference/containment and typed-relation children, including Domain → System → Contract paths; typed
-          relation instances such as System Contract can also be selected as a map level. Field-less typed relation
-          schemas are available as explicit relation levels, so the selected relation schema (rather than an inferred
-          or merged relationship) determines the hop; self-loop relations may traverse both endpoints. Users can add an arbitrary
-          number of ordered levels and hide any level after the first while retaining its descendants. The metric picker
+          the field picker also excludes such fields when configuring the metric. Each level after the first is
+          connected to its parent by an explicit, user-picked hop (the same direction-toggle-plus-grouped-dropdown
+          hop editor used by traceability paths), so a level can traverse any reference/containment field, any
+          typed-relation field, or any unbound relation schema - not just containment - grouped in the dropdown as
+          Containment, Reference, Typed relation, and Relation. Level 1 has no schema of its own and always
+          represents every entity currently matching the view's filters, spanning whatever schemas they belong to;
+          subsequent levels narrow from there via their configured hop. Typed relation instances such as System
+          Contract can still be selected as their own map level (shown as a box for the relation instance itself)
+          via the legacy schema-picker mechanism; field-less typed relation schemas are available as explicit
+          relation levels this way too, so the selected relation schema (rather than an inferred or merged
+          relationship) determines the hop, and self-loop relations may traverse both endpoints - once a relation
+          level appears anywhere in a map's configured levels, every level from Level 1 onward reverts to the
+          legacy single-schema picker for that map. Users can add an arbitrary number of ordered levels and hide
+          any level after the first while retaining its descendants. The metric picker
           automatically uses the final selected level (so Contract exposes Annual Cost and System Contract exposes its
           relation fields). Users can optionally hide boxes with missing metric data; a box with a direct source value
           but no aggregate is colored and annotated from that source value. Clicking any rendered entity box opens

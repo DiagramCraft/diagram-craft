@@ -187,6 +187,9 @@ export const EntityBrowserView = ({
           ownerFilter={ownerFilter}
           statusFilter={statusFilter}
           conditions={conditions}
+          rootSchemaIds={
+            typeFilter != null ? [typeFilter] : [...new Set(rows.map(row => row._schema.id))]
+          }
           entityQuery={executionEntityQuery}
           onEntityClick={onEntityClick}
           config={activeViewConfig}

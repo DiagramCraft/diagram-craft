@@ -1,5 +1,11 @@
 import { useCallback, useMemo } from 'react';
-import type { EntityRelation, TreeEdge, TreeNode } from '@arch-register/api-types/entityContract';
+import type {
+  EntityRecord,
+  EntityRelation,
+  TreeEdge,
+  TreeNode
+} from '@arch-register/api-types/entityContract';
+import type { EntityQuery, PathStep } from '@arch-register/api-types/entityQueryIR';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { EntityRelationData } from '../../../hooks/useEntities';
 import {
@@ -8,6 +14,7 @@ import {
   getMapRoots,
   type ContainmentTreeIndex
 } from './mapViewState';
+import { decodeChainProjection, type PathChain } from './pathBuilder/pathBuilderState';
 import type { MapConfig } from './mapViewConfig';
 
 export const nodeName = (node: TreeNode) => node._name ?? node._slug;
@@ -47,6 +54,108 @@ export type RenderTreeNode = {
   node: TreeNode;
   levelIndex: number;
   children: RenderTreeNode[];
+};
+
+export const MAP_CHAIN_PROJECTION_ALIAS = '__map__:chain';
+
+/** Adds a single correlated `chain: true` projection for `hopChain` (the resolved `PathStep`
+ *  connecting levels 1..N) onto `entityQuery`'s root scope, mirroring
+ *  `buildTraceabilityEntityQuery`. An empty `hopChain` (a single-level map) adds no projection -
+ *  `chain: true` requires a non-empty path. */
+export const buildMapChainQuery = (
+  entityQuery: EntityQuery | null | undefined,
+  hopChain: PathStep[]
+): { query: EntityQuery; alias: string } => {
+  const baseQuery: EntityQuery = entityQuery ?? { root: { kind: 'and', children: [] } };
+  if (hopChain.length === 0) return { query: baseQuery, alias: MAP_CHAIN_PROJECTION_ALIAS };
+  if ((baseQuery.projections ?? []).some(p => p.alias === MAP_CHAIN_PROJECTION_ALIAS)) {
+    return { query: baseQuery, alias: MAP_CHAIN_PROJECTION_ALIAS };
+  }
+  return {
+    query: {
+      ...baseQuery,
+      projections: [
+        ...(baseQuery.projections ?? []),
+        { path: hopChain, fieldId: '_id', alias: MAP_CHAIN_PROJECTION_ALIAS, chain: true }
+      ]
+    },
+    alias: MAP_CHAIN_PROJECTION_ALIAS
+  };
+};
+
+const toTreeNode = (entity: EntityRecord): TreeNode => ({ ...entity, _isMatch: true }) as TreeNode;
+
+/** Decodes every root's chain projection value into `{ rootId -> PathChain[] }`, ready for
+ *  `buildTreeFromChains`/`collectMapChainNodeIds`. */
+export const decodeMapChainsByRoot = (
+  roots: Array<{ _uid: string; _projections?: Record<string, unknown> }>
+): Map<string, PathChain[]> =>
+  new Map(
+    roots.map(root => [
+      root._uid,
+      decodeChainProjection(root._projections?.[MAP_CHAIN_PROJECTION_ALIAS])
+    ])
+  );
+
+/** Every id referenced anywhere in `chainsByRootId`'s chains - the set of entities that need
+ *  hydrating (via a batch id fetch) into full records before a render tree can be built, since a
+ *  chain projection only carries `{id, name, schemaId}` per hop. */
+export const collectMapChainNodeIds = (chainsByRootId: Map<string, PathChain[]>): string[] => [
+  ...new Set(
+    [...chainsByRootId.values()].flatMap(chains => chains.flatMap(chain => chain.map(node => node.id)))
+  )
+];
+
+/** Builds the map's render tree directly from correlated relation chains, replacing the
+ *  client-side containment-only reassembly (`buildMapChildren`/`getContainmentChildren`) for maps
+ *  whose whole level chain is expressible as `PathStep`s (see `MapView.tsx`'s `useChainTraversal`). Chain nodes
+ *  sharing a prefix (e.g. the same System reached via two different Component chains under one
+ *  Domain) are merged into a single tree node rather than duplicated, by matching on id at each
+ *  depth. `hydrate` resolves a chain node's id to its full entity record (from a batch id fetch);
+ *  a node that fails to hydrate (e.g. became inaccessible between the chain query and the hydrate
+ *  fetch) is dropped along with its descendants rather than rendered incomplete. */
+export const buildTreeFromChains = (
+  roots: EntityRecord[],
+  chainsByRootId: Map<string, PathChain[]>,
+  hydrate: (id: string) => EntityRecord | undefined
+): RenderTreeNode[] => {
+  const sortByName = (nodes: RenderTreeNode[]) =>
+    nodes.sort((a, b) => nodeName(a.node).localeCompare(nodeName(b.node)));
+
+  const tree = roots.map(root => {
+    const rootNode: RenderTreeNode = { node: toTreeNode(root), levelIndex: 0, children: [] };
+    // Tracks each tree node's children-by-chain-id lookup, so chains sharing a prefix (the same
+    // System reached via two different Component chains) merge onto the same node instead of
+    // duplicating it.
+    const childrenById = new WeakMap<RenderTreeNode, Map<string, RenderTreeNode>>();
+    childrenById.set(rootNode, new Map());
+
+    for (const chain of chainsByRootId.get(root._uid) ?? []) {
+      let parent = rootNode;
+      for (let depth = 0; depth < chain.length; depth += 1) {
+        const chainNode = chain[depth]!;
+        const parentChildren = childrenById.get(parent)!;
+        let entry = parentChildren.get(chainNode.id);
+        if (!entry) {
+          const hydrated = hydrate(chainNode.id);
+          if (!hydrated) break;
+          entry = { node: toTreeNode(hydrated), levelIndex: depth + 1, children: [] };
+          parent.children.push(entry);
+          parentChildren.set(chainNode.id, entry);
+          childrenById.set(entry, new Map());
+        }
+        parent = entry;
+      }
+    }
+    return rootNode;
+  });
+
+  const sortRecursive = (node: RenderTreeNode) => {
+    sortByName(node.children);
+    node.children.forEach(sortRecursive);
+  };
+  tree.forEach(sortRecursive);
+  return sortByName(tree);
 };
 
 export const buildRelationMapChildren = (

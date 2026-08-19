@@ -180,7 +180,19 @@ const mapLevelConfigSchema = z.object({
   hidden: z
     .boolean()
     .optional()
-    .describe('Whether this level is traversed but omitted from the rendered map')
+    .describe('Whether this level is traversed but omitted from the rendered map'),
+  step: pathStepSchema
+    .optional()
+    .describe(
+      'Explicit hop connecting this level to the previous level; derived from schema adjacency when absent'
+    ),
+  targetSchemaId: z
+    .string()
+    .nullable()
+    .optional()
+    .describe(
+      'Restricts this level to one schema when its hop targets more than one candidate schema; unset means any'
+    )
 });
 
 export const mapViewConfigSchema = z.object({
