@@ -14,6 +14,7 @@ import type { TraceabilityViewConfig } from '@arch-register/api-types/viewContra
 import { projectEntitiesQuery } from '../../../queries/projects';
 import { useEntities, useEntitiesByIds, useEntitiesBySchema } from '../../../hooks/useEntities';
 import { EntityNavigationLink } from '../../../components/EntityNavigationLink';
+import { EmptyState } from '../../../components/EmptyState';
 import { TypeBadge } from '../../../components/TypeBadge';
 import { resolveSchemaColor } from '../../../lib/schemaPresentation';
 import type { BrowserEntityRecord } from './entityBrowserState';
@@ -198,6 +199,7 @@ export const TraceabilityView = ({
       direction
     )[0];
     if (!relation) return;
+    setConfigOpen(true);
     updateConfig({
       ...editorConfig,
       paths: [
@@ -298,6 +300,14 @@ export const TraceabilityView = ({
 
   const entityAllCovered = coverage.rows.every(row => row.architectureCovered);
   const deliveryAllCovered = coverage.rows.every(row => row.deliveryCovered);
+  const showOrphanProjectsSection =
+    parsedConfig?.showOrphanProjects === true &&
+    showOrphanProjectsPanel &&
+    coverage.orphanProjectIds.size > 0;
+  const showOrphanEntitiesSection =
+    parsedConfig?.showOrphanEntities === true &&
+    showOrphanEntitiesPanel &&
+    orphanEntities.length > 0;
 
   return (
     <div className={styles.wrap}>
@@ -314,7 +324,7 @@ export const TraceabilityView = ({
                 className={styles.configToggleIcon}
                 data-open={configOpen ? 'true' : 'false'}
               />
-              <span>Traceability configuration</span>
+              <span className={styles.configTitle}>Traceability configuration</span>
             </button>
             <button
               type="button"
@@ -575,61 +585,63 @@ export const TraceabilityView = ({
         </div>
       )}
 
-      {dataError && (
-        <div className={styles.error}>
-          Traceability data could not be loaded. Coverage statuses are unavailable until it reloads.
-        </div>
-      )}
-      {dataLoading && <div className={styles.loading}>Loading traceability data…</div>}
-      {!parsedConfig && (
-        <div className={styles.empty}>
-          Add a relationship path to start tracing the current entities.
-        </div>
-      )}
       {parsedConfig && !dataLoading && !dataError && (
-        <>
-          <div className={styles.summary}>
-            <span
-              className={`${styles.badge} ${entityAllCovered ? styles.badgeOk : styles.badgeWarn}`}
-            >
-              Entity: {coverage.rows.filter(row => row.architectureCovered).length}/
-              {coverage.rows.length} covered
-            </span>
-            <span
-              className={`${styles.badge} ${deliveryAllCovered ? styles.badgeOk : styles.badgeWarn}`}
-            >
-              Delivery: {coverage.rows.filter(row => row.deliveryCovered).length}/
-              {coverage.rows.length} covered
-            </span>
-            {parsedConfig.showOrphanProjects &&
-              (coverage.orphanProjectIds.size > 0 ? (
-                <button
-                  type="button"
-                  className={styles.statLink}
-                  onClick={() => setShowOrphanProjectsPanel(open => !open)}
-                >
-                  {coverage.orphanProjectIds.size} projects without traceability coverage
-                </button>
-              ) : (
-                <span className={styles.statText}>0 projects without traceability coverage</span>
-              ))}
-            {parsedConfig.showOrphanEntities &&
-              (orphanEntities.length > 0 ? (
-                <button
-                  type="button"
-                  className={styles.statLink}
-                  onClick={() => setShowOrphanEntitiesPanel(open => !open)}
-                >
-                  {orphanEntities.length} entities without traceability coverage
-                </button>
-              ) : (
-                <span className={styles.statText}>0 entities without traceability coverage</span>
-              ))}
-          </div>
-
+        <div className={styles.summary}>
+          <span
+            className={`${styles.badge} ${entityAllCovered ? styles.badgeOk : styles.badgeWarn}`}
+          >
+            Entity: {coverage.rows.filter(row => row.architectureCovered).length}/
+            {coverage.rows.length} covered
+          </span>
+          <span
+            className={`${styles.badge} ${deliveryAllCovered ? styles.badgeOk : styles.badgeWarn}`}
+          >
+            Delivery: {coverage.rows.filter(row => row.deliveryCovered).length}/
+            {coverage.rows.length} covered
+          </span>
           {parsedConfig.showOrphanProjects &&
-            showOrphanProjectsPanel &&
-            coverage.orphanProjectIds.size > 0 && (
+            (coverage.orphanProjectIds.size > 0 ? (
+              <button
+                type="button"
+                className={styles.statLink}
+                onClick={() => setShowOrphanProjectsPanel(open => !open)}
+              >
+                {coverage.orphanProjectIds.size} projects without traceability coverage
+              </button>
+            ) : (
+              <span className={styles.statText}>0 projects without traceability coverage</span>
+            ))}
+          {parsedConfig.showOrphanEntities &&
+            (orphanEntities.length > 0 ? (
+              <button
+                type="button"
+                className={styles.statLink}
+                onClick={() => setShowOrphanEntitiesPanel(open => !open)}
+              >
+                {orphanEntities.length} entities without traceability coverage
+              </button>
+            ) : (
+              <span className={styles.statText}>0 entities without traceability coverage</span>
+            ))}
+        </div>
+      )}
+
+      <div className={styles.scroll}>
+        {dataError ? (
+          <EmptyState
+            title="Traceability data could not be loaded"
+            subtitle="Coverage statuses are unavailable until it reloads."
+          />
+        ) : dataLoading ? (
+          <EmptyState title="Loading traceability data…" />
+        ) : !parsedConfig ? (
+          <EmptyState
+            title="No relationship paths configured"
+            subtitle="Add a relationship path to start tracing the current entities."
+          />
+        ) : (
+          <>
+            {showOrphanProjectsSection && (
               <section className={styles.gapSection}>
                 <h4>Projects without traceability coverage</h4>
                 <div className={styles.gapChips}>
@@ -643,9 +655,7 @@ export const TraceabilityView = ({
                 </div>
               </section>
             )}
-          {parsedConfig.showOrphanEntities &&
-            showOrphanEntitiesPanel &&
-            orphanEntities.length > 0 && (
+            {showOrphanEntitiesSection && (
               <section className={styles.gapSection}>
                 <h4>Entities without traceability coverage</h4>
                 <div className={styles.gapChips}>
@@ -662,7 +672,6 @@ export const TraceabilityView = ({
               </section>
             )}
 
-          <div className={styles.tableWrap}>
             <table className={styles.table}>
               <thead>
                 <tr>
@@ -754,9 +763,9 @@ export const TraceabilityView = ({
                 ))}
               </tbody>
             </table>
-          </div>
-        </>
-      )}
+          </>
+        )}
+      </div>
     </div>
   );
 };
