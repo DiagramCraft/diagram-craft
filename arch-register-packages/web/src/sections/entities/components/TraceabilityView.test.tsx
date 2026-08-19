@@ -16,6 +16,9 @@ vi.mock('../../../queries/projects', () => ({ projectEntitiesQuery: () => ({}) }
 vi.mock('../../../components/EntityNavigationLink', () => ({
   EntityNavigationLink: ({ children }: { children: ReactNode }) => <span>{children}</span>
 }));
+vi.mock('../../../auth/WorkspaceAuthorizationContext', () => ({
+  useWorkspaceAuthorization: () => ({ getFieldGroupAccess: () => 'edit' })
+}));
 
 const { TraceabilityView } = await import('./TraceabilityView');
 
@@ -70,8 +73,8 @@ describe('TraceabilityView', () => {
         rows={[]}
         rootSchemaIds={['objective']}
         schemas={[
-          { id: 'objective', name: 'Objective' } as never,
-          { id: 'capability', name: 'Business Capability' } as never
+          { id: 'objective', name: 'Objective', fields: [], groups: [] } as never,
+          { id: 'capability', name: 'Business Capability', fields: [], groups: [] } as never
         ]}
         relationSchemas={[
           makeRelation(
@@ -93,7 +96,7 @@ describe('TraceabilityView', () => {
     );
 
     const directionIndex = markup.indexOf('aria-label="Direction for strategy hop 1"');
-    const relationIndex = markup.indexOf('aria-label="Relation for strategy hop 1"');
+    const relationIndex = markup.indexOf('aria-label="Hop for strategy hop 1"');
 
     expect(directionIndex).toBeGreaterThanOrEqual(0);
     expect(relationIndex).toBeGreaterThan(directionIndex);

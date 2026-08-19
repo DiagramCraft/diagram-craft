@@ -203,7 +203,10 @@ export const relationPathIsMultiValued = (
   path.some(step => {
     if (step.kind === 'typedRelation' || step.kind === 'unboundTypedRelation') return true;
     if (step.kind === 'endpoint') return false;
-    if (step.kind === 'relationBackward') return true;
+    // A backward hop's fan-out is bounded by how many owner rows point at the current row, which
+    // the field's own maxCount says nothing about (maxCount bounds the forward direction: how many
+    // targets one owner row can have). Mirrors relationBackward below - always potentially many.
+    if (step.kind === 'relationBackward' || step.kind === 'backward') return true;
     if (step.kind === 'relationForward') {
       const fields = [...relationSchemas.values()].map(schema =>
         relationFieldById(schema, step.fieldId)
@@ -212,10 +215,7 @@ export const relationPathIsMultiValued = (
         field => field !== undefined && field.type === 'entityRelation' && field.maxCount !== 1
       );
     }
-    const fields =
-      step.kind === 'backward'
-        ? [schemaFieldById(schemas.get(step.ownerSchemaId), step.fieldId)]
-        : [...schemas.values()].map(schema => schemaFieldById(schema, step.fieldId));
+    const fields = [...schemas.values()].map(schema => schemaFieldById(schema, step.fieldId));
     return fields.some(
       field => field !== undefined && isReferenceOrContainmentField(field) && field.maxCount !== 1
     );

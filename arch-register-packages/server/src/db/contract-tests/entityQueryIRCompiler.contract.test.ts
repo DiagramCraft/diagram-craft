@@ -319,6 +319,154 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(matches.map(e => e.id)).toEqual([domainMatch.id]);
   });
 
+  it('aggregates a backward projection across every owner row, not just one (#3040)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+
+    const domainSchema = await createSchema(db, workspace, { name: 'Domain' });
+    const systemSchema = await createSchema(db, workspace, {
+      name: 'System',
+      fields: [
+        {
+          id: 'domain',
+          name: 'Domain',
+          type: 'containment',
+          schemaId: domainSchema.id,
+          minCount: 0,
+          maxCount: 1
+        }
+      ]
+    });
+
+    const domain = await createFixtureEntity(db, workspace, domainSchema.id);
+    const firstSystem = await createFixtureEntity(db, workspace, systemSchema.id, {
+      data: { domain: [domain.id] }
+    });
+    const secondSystem = await createFixtureEntity(db, workspace, systemSchema.id, {
+      data: { domain: [domain.id] }
+    });
+
+    const schemas: SchemaCatalog = new Map([
+      [domainSchema.id, domainSchema],
+      [systemSchema.id, systemSchema]
+    ]);
+
+    const query: EntityQuery = {
+      schemaId: domainSchema.id,
+      root: { kind: 'predicate', path: [], fieldId: '_id', op: 'equals', value: domain.id },
+      projections: [
+        {
+          path: [{ kind: 'backward', fieldId: 'domain', ownerSchemaId: systemSchema.id }],
+          fieldId: '_id',
+          alias: 'systems'
+        }
+      ]
+    };
+
+    const matches = await runQuery(db, driver, workspace, schemas, query);
+    expect(matches).toHaveLength(1);
+    const projected = matches[0]!.projections!.systems as string[];
+    expect(new Set(projected)).toEqual(new Set([firstSystem.id, secondSystem.id]));
+  });
+
+  it('correlates a multi-hop chain projection, unlike independent per-depth projections (#3040)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+
+    const domainSchema = await createSchema(db, workspace, { name: 'Domain' });
+    const systemSchema = await createSchema(db, workspace, {
+      name: 'System',
+      fields: [
+        {
+          id: 'domain',
+          name: 'Domain',
+          type: 'containment',
+          schemaId: domainSchema.id,
+          minCount: 0,
+          maxCount: 1
+        }
+      ]
+    });
+    const componentSchema = await createSchema(db, workspace, {
+      name: 'Component',
+      fields: [
+        {
+          id: 'system',
+          name: 'System',
+          type: 'containment',
+          schemaId: systemSchema.id,
+          minCount: 0,
+          maxCount: 1
+        }
+      ]
+    });
+
+    const domain = await createFixtureEntity(db, workspace, domainSchema.id, {
+      name: 'Identity Platform'
+    });
+    const systemA = await createFixtureEntity(db, workspace, systemSchema.id, {
+      name: 'API Gateway',
+      data: { domain: [domain.id] }
+    });
+    const systemB = await createFixtureEntity(db, workspace, systemSchema.id, {
+      name: 'Feature Flag Service',
+      data: { domain: [domain.id] }
+    });
+    const componentA = await createFixtureEntity(db, workspace, componentSchema.id, {
+      name: 'Gateway Router',
+      data: { system: [systemA.id] }
+    });
+    const componentB = await createFixtureEntity(db, workspace, componentSchema.id, {
+      name: 'Flag Evaluator',
+      data: { system: [systemB.id] }
+    });
+
+    const schemas: SchemaCatalog = new Map([
+      [domainSchema.id, domainSchema],
+      [systemSchema.id, systemSchema],
+      [componentSchema.id, componentSchema]
+    ]);
+
+    const query: EntityQuery = {
+      schemaId: domainSchema.id,
+      root: { kind: 'predicate', path: [], fieldId: '_id', op: 'equals', value: domain.id },
+      projections: [
+        {
+          path: [
+            { kind: 'backward', fieldId: 'domain', ownerSchemaId: systemSchema.id },
+            { kind: 'backward', fieldId: 'system', ownerSchemaId: componentSchema.id }
+          ],
+          fieldId: '_id',
+          alias: 'chain',
+          chain: true
+        }
+      ]
+    };
+
+    const matches = await runQuery(db, driver, workspace, schemas, query);
+    expect(matches).toHaveLength(1);
+    const chains = matches[0]!.projections!.chain as Array<
+      Array<{ id: string; name: string; schemaId: string }>
+    >;
+    const bySystem = new Map(chains.map(chain => [chain[0]!.id, chain[1]!]));
+    expect(bySystem.get(systemA.id)).toEqual({
+      id: componentA.id,
+      name: 'Gateway Router',
+      schemaId: componentSchema.id
+    });
+    expect(bySystem.get(systemB.id)).toEqual({
+      id: componentB.id,
+      name: 'Flag Evaluator',
+      schemaId: componentSchema.id
+    });
+    expect(chains.every(chain => chain[0]!.schemaId === systemSchema.id)).toBe(true);
+    expect(
+      chains.every(
+        chain => chain[0]!.name === 'API Gateway' || chain[0]!.name === 'Feature Flag Service'
+      )
+    ).toBe(true);
+  });
+
   it('scopes a bracketed filter to the same existential witness (§4.3)', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);

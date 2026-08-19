@@ -1085,7 +1085,11 @@ const buildProjectionBindings = (
         from +=
           `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${targetId}` +
           (targetSchemaClause ? ` AND ${targetSchemaClause}` : '');
-        selectParts.push(`${targetAlias}.id AS hop_${stepIndex + 1}_id`);
+        selectParts.push(
+          `${targetAlias}.id AS hop_${stepIndex + 1}_id`,
+          `${targetAlias}.name AS hop_${stepIndex + 1}_name`,
+          `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`
+        );
         currentAlias = targetAlias;
         return;
       }
@@ -1137,7 +1141,9 @@ const buildProjectionBindings = (
         selectParts.push(
           `${relationAlias}.id AS relation_${stepIndex + 1}_id`,
           `${relationAlias}.data AS relation_${stepIndex + 1}_data`,
-          `${targetAlias}.id AS hop_${stepIndex + 1}_id`
+          `${targetAlias}.id AS hop_${stepIndex + 1}_id`,
+          `${targetAlias}.name AS hop_${stepIndex + 1}_name`,
+          `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`
         );
         currentAlias = targetAlias;
         return;
@@ -1165,7 +1171,11 @@ const buildProjectionBindings = (
         from +=
           `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${relation}${fieldScope}` +
           `${targetSchemaClause ? ` AND ${targetSchemaClause}` : ''}${filter}`;
-        selectParts.push(`${targetAlias}.id AS hop_${stepIndex + 1}_id`);
+        selectParts.push(
+          `${targetAlias}.id AS hop_${stepIndex + 1}_id`,
+          `${targetAlias}.name AS hop_${stepIndex + 1}_name`,
+          `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`
+        );
         currentAlias = targetAlias;
         return;
       }
@@ -1224,7 +1234,11 @@ const buildProjectionBindings = (
       from +=
         `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${relation}${ownerSchema}${forwardScope}` +
         `${targetSchemaClause ? ` AND ${targetSchemaClause}` : ''}${filter}`;
-      selectParts.push(`${targetAlias}.id AS hop_${stepIndex + 1}_id`);
+      selectParts.push(
+        `${targetAlias}.id AS hop_${stepIndex + 1}_id`,
+        `${targetAlias}.name AS hop_${stepIndex + 1}_name`,
+        `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`
+      );
       currentAlias = targetAlias;
     });
     state.compilingBinding = false;
@@ -1313,6 +1327,40 @@ const projectionValue = (
     return {
       value: scope ? `(CASE WHEN ${scope} THEN ${raw} ELSE NULL END)` : raw,
       isArray: false
+    };
+  }
+
+  if (projection.chain) {
+    // Every hop already carries its own id/name/schema_id columns on this SAME binding row (added
+    // alongside hop_N_id in compilePathBindings), so - unlike the scalar branch below - no extra
+    // join is needed: one row of the binding CTE already correlates every hop of one matched
+    // chain, which is exactly what makes this different from projecting `_id`/`_name` separately
+    // at each depth (those would be independent, uncorrelated aggregates). schemaId is included so
+    // callers can filter matched chains by the terminal hop's schema without a second query.
+    const chainBindingAlias = `pv_${binding.name}`;
+    const hopObject = (hopIndex: number) =>
+      state.dialectAdapter.jsonObject([
+        "'id'",
+        `${chainBindingAlias}.hop_${hopIndex}_id`,
+        "'name'",
+        `${chainBindingAlias}.hop_${hopIndex}_name`,
+        "'schemaId'",
+        `${chainBindingAlias}.hop_${hopIndex}_schema_id`
+      ]);
+    const chainArrayEntries = Array.from({ length: projection.path.length }, (_, index) =>
+      hopObject(index + 1)
+    ).join(', ');
+    const chainArray =
+      state.dialect === 'postgres'
+        ? `jsonb_build_array(${chainArrayEntries})`
+        : `json_array(${chainArrayEntries})`;
+    const aggregate =
+      state.dialect === 'postgres'
+        ? `COALESCE(jsonb_agg(${chainArray}), '[]'::jsonb)`
+        : `COALESCE(json_group_array(${chainArray}), json('[]'))`;
+    return {
+      value: `(SELECT ${aggregate} FROM ${binding.name} ${chainBindingAlias} WHERE ${chainBindingAlias}.root_id = ${ROOT_ALIAS}.id)`,
+      isArray: true
     };
   }
 

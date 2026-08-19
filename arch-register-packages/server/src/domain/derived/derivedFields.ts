@@ -1,7 +1,11 @@
 import { bonsai, type ASTNode, type CompiledExpression } from 'bonsai-js';
 import { arrays, math, strings, types } from 'bonsai-js/stdlib';
 import type { AssessmentField } from '@arch-register/api-types/assessmentContract';
-import type { SchemaField, SchemaGroup } from '@arch-register/api-types/schemaContract';
+import {
+  isRelationLikeField,
+  type SchemaField,
+  type SchemaGroup
+} from '@arch-register/api-types/schemaContract';
 import { currencyValueSchema } from '@arch-register/api-types/common';
 import { createLogger } from '../../utils/logger';
 import { httpAssert } from '../../utils/httpAssert';
@@ -390,11 +394,26 @@ export const materializeDerivedFields = (
   const unsafeDerivedFieldIds = groups
     ? getDerivedFieldIdsWithUnresolvedGroups(fields, groups)
     : new Set<string>();
+  const relationFieldIds = new Set(
+    fields.filter(field => 'name' in field && isRelationLikeField(field)).map(field => field.id)
+  );
+  const relationDependentDerivedFieldIds =
+    entityContext === undefined
+      ? new Set(
+          plan.fields
+            .filter(field => plan.references.get(field.id)?.some(id => relationFieldIds.has(id)))
+            .map(field => field.id)
+        )
+      : new Set<string>();
+  const deferredDerivedFieldIds = new Set([
+    ...unsafeDerivedFieldIds,
+    ...relationDependentDerivedFieldIds
+  ]);
   return evaluateDerivedFields(
     plan,
     values,
     context,
-    unsafeDerivedFieldIds,
+    deferredDerivedFieldIds,
     entityContext ?? values
   );
 };
