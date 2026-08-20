@@ -248,8 +248,12 @@ describe('getMetricSourceOptions', () => {
     ]
   } as unknown as EntitySchema;
 
-  it('returns no options when no schema is selected', () => {
-    expect(getMetricSourceOptions(undefined)).toEqual([]);
+  it('offers only schema-agnostic fields (lifecycle) when no single schema is resolved (#3040-map)', () => {
+    // e.g. a Map level whose hop targets more than one candidate schema with no explicit target
+    // picked - there's no single schema's fields to read, but lifecycle applies to any entity.
+    expect(getMetricSourceOptions(undefined)).toEqual([
+      { source: { kind: 'lifecycle' }, label: 'Lifecycle' }
+    ]);
   });
 
   it('offers lifecycle plus the schema numeric, currency, and select fields, excluding other field types', () => {

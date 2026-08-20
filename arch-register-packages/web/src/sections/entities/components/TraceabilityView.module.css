@@ -128,46 +128,10 @@
   gap: 4px;
 }
 
-.hopsRow {
-  display: flex;
-  flex-wrap: wrap;
-  align-items: center;
-  gap: 6px;
-}
-
 .hop {
   display: flex;
   align-items: center;
   gap: 6px;
-}
-
-.hopSep {
-  color: var(--base-fg-more-dim);
-}
-
-.hopDir {
-  display: inline-flex;
-  align-items: center;
-  justify-content: center;
-  width: 22px;
-  height: 22px;
-  flex-shrink: 0;
-  font-size: 12px;
-  color: var(--base-fg);
-  background: var(--panel-bg);
-  border: 1px solid var(--panel-border);
-  border-radius: var(--r);
-  cursor: pointer;
-}
-
-.hopDir:hover:not(:disabled) {
-  border-color: var(--accent-border);
-  color: var(--accent-fg);
-}
-
-.hopDir:disabled {
-  cursor: not-allowed;
-  color: var(--base-fg-more-dim);
 }
 
 .hopRm {
@@ -202,7 +166,7 @@
   color: var(--error-fg);
 }
 
-.addHop,
+/* Matches Map's `.levelAction` ("+ Add level") styling (#3040-map). */
 .addPath {
   display: inline-flex;
   align-items: center;
@@ -216,25 +180,20 @@
   border-radius: var(--r);
   cursor: pointer;
   font-family: inherit;
+  position: absolute;
+  right: 10px;
+  top: 5px;
 }
 
-.addHop:hover,
 .addPath:hover {
   color: var(--accent-fg);
   border-color: var(--accent-border);
   background: color-mix(in oklch, var(--accent-bg) 10%, transparent);
 }
 
-.addHop:disabled,
 .addPath:disabled {
   cursor: not-allowed;
   opacity: 0.5;
-}
-
-.addPath {
-  position: absolute;
-  right: 10px;
-  top: 5px;
 }
 
 /* ── Summary ─────────────────────────────────────────────────── */

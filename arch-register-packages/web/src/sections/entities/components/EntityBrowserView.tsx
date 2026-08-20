@@ -6,7 +6,7 @@ import type { RelationSchema } from '@arch-register/api-types/relationSchemaCont
 import type { BrowserView, FilterCondition } from '@arch-register/api-types/viewContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
-import type { ReactNode } from 'react';
+import { useMemo, type ReactNode } from 'react';
 import { BubbleView } from './BubbleView';
 import { CardsView } from './CardsView';
 import { EntityBrowserGraphView } from './EntityBrowserGraphView';
@@ -143,6 +143,10 @@ export const EntityBrowserView = ({
   const selectedIds = mode.kind === 'interactive' ? mode.selectedIds : undefined;
   const onSelectAll = mode.kind === 'interactive' ? mode.onSelectAll : undefined;
   const onSelectRow = mode.kind === 'interactive' ? mode.onSelectRow : undefined;
+  const rootSchemaIds = useMemo(
+    () => (typeFilter != null ? [typeFilter] : [...new Set(rows.map(row => row._schema.id))]),
+    [typeFilter, rows]
+  );
   switch (view) {
     case 'graph':
       return (
@@ -187,6 +191,7 @@ export const EntityBrowserView = ({
           ownerFilter={ownerFilter}
           statusFilter={statusFilter}
           conditions={conditions}
+          rootSchemaIds={rootSchemaIds}
           entityQuery={executionEntityQuery}
           onEntityClick={onEntityClick}
           config={activeViewConfig}
@@ -230,9 +235,7 @@ export const EntityBrowserView = ({
       return (
         <TraceabilityView
           rows={rows}
-          rootSchemaIds={
-            typeFilter != null ? [typeFilter] : [...new Set(rows.map(row => row._schema.id))]
-          }
+          rootSchemaIds={rootSchemaIds}
           schemas={schemas}
           relationSchemas={relationSchemas}
           projects={projects}

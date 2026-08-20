@@ -15,12 +15,8 @@ import { getInlineAssessmentEnumOptions } from '@arch-register/api-types/assessm
 import { httpAssert } from '../../utils/httpAssert';
 import { filterVisibleEntities } from '../auth/authorization';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
-import {
-  resolveJoinedAssessment,
-  collectEntitiesFromIR,
-  normalizeEntityQueryOptions
-} from '../catalog/entityQueryOperations';
-import { parseEntityQuery, buildEntityQueryForExecution } from '../catalog/entityQuery';
+import { resolveJoinedAssessment } from '../catalog/entityQueryOperations';
+import { parseEntityQuery } from '../catalog/entityQuery';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { matchesFilterCondition } from '../catalog/dataHelpers';
 import { buildContainmentChildrenIndex, collectDescendantIds } from './metricDescendants';
@@ -304,10 +300,15 @@ const pickWorstEnumOption = (
 
 /**
  * Pure metric aggregation over an already permission- and project-scope-filtered entity pool.
- * `isFilterMatch` additionally gates which descendants *contribute* to the aggregation (current
- * browser filters/conditions), while `entities` (and the containment index built from it)
- * determines structural reachability - matching `getEntityTree`'s split between "included for
- * connectivity" and "matches the active filters". `enumOptions` is only consulted for
+ * The active browse filter (schema/lifecycle/owner/conditions/free text) only ever determines
+ * which entities are shown as *boxes* (`boxEntityIds`, resolved by the caller before this runs) -
+ * it is never reapplied here to decide which descendants *contribute* to a box's aggregation.
+ * Applying it a second time here would silently drop cross-schema terminals (a filter scoped to
+ * one schema, like the root's, can never match a terminal of a different schema) and would make
+ * aggregated totals depend on filter state in a way nothing about "sum of this box's descendants"
+ * implies (#3040-map). `entities` (and the containment index built from it) determines structural
+ * reachability - matching `getEntityTree`'s split between "included for connectivity" and
+ * "matches the active filters", minus the second half. `enumOptions` is only consulted for
  * enum/assessmentEnum sources.
  */
 export const computeBoxMetrics = (
@@ -317,7 +318,6 @@ export const computeBoxMetrics = (
   schemas: SchemaDbResult[],
   lifecycleStates: LifecycleStateDbResult[],
   responsesByEntity: Map<string, Record<string, string | number | boolean>> | null,
-  isFilterMatch: (entity: EntityDbResult) => boolean,
   enumOptions: EnumOption[] | null = null,
   authCtx: AuthorizationContext | null = null,
   sourceAvailableOverride?: boolean,
@@ -352,10 +352,7 @@ export const computeBoxMetrics = (
             )
             .map(entity => ({ kind: 'entity' as const, entity }))
         : [];
-    const sourceTerminalsFiltered = sourceTerminals.filter(terminal =>
-      terminal.kind === 'entity' ? isFilterMatch(terminal.entity) : true
-    );
-    const sourceCount = sourceTerminalsFiltered.length;
+    const sourceCount = sourceTerminals.length;
     const duplicateCount = traversal?.duplicateCount ?? 0;
 
     if (isEnumSourceKind(metric.source.kind)) {
@@ -363,7 +360,7 @@ export const computeBoxMetrics = (
         MetricConfig['source'],
         { kind: 'enum' | 'assessmentEnum' }
       >;
-      const values = sourceTerminalsFiltered
+      const values = sourceTerminals
         .map(terminal =>
           extractEnumValue(
             terminal.kind === 'entity' ? terminal.entity : terminal.relation,
@@ -411,7 +408,7 @@ export const computeBoxMetrics = (
     }
 
     if (metric.aggregation === 'percentage') {
-      const numeratorCount = sourceTerminalsFiltered.filter(
+      const numeratorCount = sourceTerminals.filter(
         terminal =>
           terminal.kind === 'entity' &&
           matchesFilterCondition(terminal.entity, metric.numeratorCondition!, null)
@@ -429,7 +426,7 @@ export const computeBoxMetrics = (
       };
     }
 
-    const populated = sourceTerminalsFiltered
+    const populated = sourceTerminals
       .map(terminal =>
         extractValue(
           terminal.kind === 'entity' ? terminal.entity : terminal.relation,
@@ -626,7 +623,10 @@ export const getBoxMetrics = async (
     });
   }
 
-  const requestParams = {
+  // Only used to resolve `assessmentId` (which may be nested inside `entityQuery`) - the browse
+  // filter itself (schema/owner/lifecycle/conditions/free text) is never reapplied to aggregation,
+  // see the note on `computeBoxMetrics` (#3040-map).
+  const parsed = parseEntityQuery({
     entityQuery: entityQuery ?? undefined,
     _schemaId: schemaId ?? undefined,
     owner: owner ?? undefined,
@@ -636,10 +636,7 @@ export const getBoxMetrics = async (
     assessmentId: assessmentId ?? undefined,
     projectId: projectId ?? undefined,
     projectScope
-  };
-  const parsed = parseEntityQuery(requestParams);
-  const query = buildEntityQueryForExecution(requestParams, parsed);
-  httpAssert.present(query, { status: 400, message: 'Unable to build entity query' });
+  });
 
   const needsAssessment =
     metric.source.kind === 'assessmentRating' || metric.source.kind === 'assessmentEnum';
@@ -647,21 +644,14 @@ export const getBoxMetrics = async (
   const relationSchemasPromise = db.relation?.listRelationSchemas
     ? db.relation.listRelationSchemas(workspace)
     : Promise.resolve<RelationSchemaDbResult[]>([]);
-  const [
-    schemas,
-    relationSchemas,
-    allEntities,
-    lifecycleStates,
-    joinedAssessment,
-    projectEntities
-  ] = await Promise.all([
-    db.catalog.listSchemas(workspace),
-    relationSchemasPromise,
-    listAllCatalogEntities(db, workspace, projectId ? { projectId, projectScope } : undefined),
-    db.workspace.listLifecycleStates(workspace),
-    resolveJoinedAssessment(db, workspace, authCtx, parsed.assessmentId, needsAssessment),
-    projectId ? db.project.listProjectEntities(workspace, projectId) : Promise.resolve([])
-  ]);
+  const [schemas, relationSchemas, allEntities, lifecycleStates, joinedAssessment] =
+    await Promise.all([
+      db.catalog.listSchemas(workspace),
+      relationSchemasPromise,
+      listAllCatalogEntities(db, workspace, projectId ? { projectId, projectScope } : undefined),
+      db.workspace.listLifecycleStates(workspace),
+      resolveJoinedAssessment(db, workspace, authCtx, parsed.assessmentId, needsAssessment)
+    ]);
 
   const relationSchemaIds = new Set(relationSchemas.map(schema => schema.id));
   for (const step of metric.path ?? []) {
@@ -736,27 +726,6 @@ export const getBoxMetrics = async (
     };
   }
 
-  const matchIds = new Set(
-    (
-      await collectEntitiesFromIR(
-        db,
-        workspace,
-        authCtx,
-        normalizeEntityQueryOptions({
-          entityQuery: query,
-          projectId,
-          projectScope,
-          view: 'summary'
-        }),
-        schemas,
-        projectEntities,
-        null
-      )
-    ).map(row => row.entity._uid)
-  );
-
-  const isFilterMatch = (entity: EntityDbResult): boolean => matchIds.has(entity.id);
-
   const traversalResults = sourceAvailable
     ? await collectMetricTerminals({
         db,
@@ -777,7 +746,6 @@ export const getBoxMetrics = async (
     schemas,
     lifecycleStates,
     joinedAssessment?.responsesByEntity ?? null,
-    isFilterMatch,
     enumOptions,
     authCtx,
     sourceAvailable,

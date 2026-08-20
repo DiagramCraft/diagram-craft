@@ -467,6 +467,76 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     ).toBe(true);
   });
 
+  it('returns a single-hop backward chain projection across every root, not just a filtered one (#3040-map)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+
+    const domainSchema = await createSchema(db, workspace, { name: 'Domain' });
+    const systemSchema = await createSchema(db, workspace, {
+      name: 'System',
+      fields: [
+        {
+          id: 'domain',
+          name: 'Domain',
+          type: 'containment',
+          schemaId: domainSchema.id,
+          minCount: 0,
+          maxCount: 1
+        }
+      ]
+    });
+
+    const domainA = await createFixtureEntity(db, workspace, domainSchema.id, {
+      name: 'Identity Platform'
+    });
+    const domainB = await createFixtureEntity(db, workspace, domainSchema.id, {
+      name: 'Payments'
+    });
+    await createFixtureEntity(db, workspace, systemSchema.id, {
+      name: 'API Gateway',
+      data: { domain: [domainA.id] }
+    });
+    await createFixtureEntity(db, workspace, systemSchema.id, {
+      name: 'Ledger Service',
+      data: { domain: [domainB.id] }
+    });
+
+    const schemas: SchemaCatalog = new Map([
+      [domainSchema.id, domainSchema],
+      [systemSchema.id, systemSchema]
+    ]);
+
+    // Mirrors Map's root fetch: no root-id filter, matching every Domain, exactly like the
+    // "Level 1 = every entity matching the current filter" root query.
+    const query: EntityQuery = {
+      schemaId: domainSchema.id,
+      root: { kind: 'and', children: [] },
+      projections: [
+        {
+          path: [{ kind: 'backward', fieldId: 'domain', ownerSchemaId: systemSchema.id }],
+          fieldId: '_id',
+          alias: 'chain',
+          chain: true
+        }
+      ]
+    };
+
+    const matches = await runQuery(db, driver, workspace, schemas, query);
+    expect(matches).toHaveLength(2);
+    const chainsByDomainName = new Map(
+      matches.map(match => [
+        match.name,
+        match.projections!.chain as Array<Array<{ id: string; name: string; schemaId: string }>>
+      ])
+    );
+    expect(chainsByDomainName.get('Identity Platform')?.map(chain => chain[0]!.name)).toEqual([
+      'API Gateway'
+    ]);
+    expect(chainsByDomainName.get('Payments')?.map(chain => chain[0]!.name)).toEqual([
+      'Ledger Service'
+    ]);
+  });
+
   it('scopes a bracketed filter to the same existential witness (§4.3)', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
@@ -1465,6 +1535,38 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(page.items.map(item => item._uid)).toEqual([component.id]);
     expect(page.items[0]?._projections).toEqual({ release_eol: ['2026-01-01'] });
     expect(await countEntities(db, workspace, null, { entityQuery: query })).toBe(1);
+  });
+
+  it('batch-fetches entities by id via a root _id "in" predicate (#3040-map)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'System' });
+    const a = await createFixtureEntity(db, workspace, schema.id, { slug: 'system-a' });
+    const b = await createFixtureEntity(db, workspace, schema.id, { slug: 'system-b' });
+    await createFixtureEntity(db, workspace, schema.id, { slug: 'system-c' });
+
+    const query: EntityQuery = {
+      root: { kind: 'predicate', path: [], fieldId: '_id', op: 'in', value: [a.id, b.id] }
+    };
+
+    const page = await listEntitiesWithCount(db, workspace, null, {
+      entityQuery: query,
+      view: 'summary',
+      limit: 10,
+      offset: 0
+    });
+
+    expect(new Set(page.items.map(item => item._uid))).toEqual(new Set([a.id, b.id]));
+    expect(page.total).toBe(2);
+
+    // An empty id list matches nothing, rather than every row.
+    const empty = await listEntitiesWithCount(db, workspace, null, {
+      entityQuery: { root: { kind: 'predicate', path: [], fieldId: '_id', op: 'in', value: [] } },
+      view: 'summary',
+      limit: 10,
+      offset: 0
+    });
+    expect(empty.total).toBe(0);
   });
 
   it('preserves project scope and pagination through the IR list/count path', async () => {

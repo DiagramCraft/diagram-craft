@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { TreeEdge, TreeNode } from '@arch-register/api-types/entityContract';
+import type { MapLevelConfig } from './mapViewState';
 import {
   buildContainmentTreeIndex,
   getChildLevelOptions,
@@ -11,6 +12,9 @@ import {
   getMapRoots,
   getMapTraversalPath,
   getMapSchemaIds,
+  pathStepToMetricTraversalStep,
+  repairMapLevelSchemaIds,
+  resolveDefaultStep,
   resolveMapTraversalPath,
   sortContainmentNodes
 } from './mapViewState';
@@ -332,5 +336,164 @@ describe('map view state', () => {
         level3SchemaId: null
       })
     ).toEqual([]);
+  });
+
+  it('resolveDefaultStep matches a plain containment/typed-relation hop as a PathStep (#3040-map)', () => {
+    const domain = schema('domain');
+    const system = {
+      ...schema('system', 'domain'),
+      fields: [
+        { id: 'domain', name: 'Domain', type: 'containment', schemaId: 'domain' },
+        {
+          id: 'contracts',
+          name: 'Contracts',
+          type: 'typedRelation',
+          relationSchemaId: 'system-contract',
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
+        }
+      ]
+    } as unknown as EntitySchema;
+    const contract = schema('contract');
+    const relationSchema = {
+      id: 'system-contract',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['contract'] }
+    } as unknown as RelationSchema;
+
+    expect(resolveDefaultStep(domain, system, [relationSchema], () => 'edit')).toEqual({
+      kind: 'backward',
+      fieldId: 'domain',
+      ownerSchemaId: 'system'
+    });
+    expect(resolveDefaultStep(system, contract, [relationSchema], () => 'edit')).toEqual({
+      kind: 'typedRelation',
+      fieldId: 'contracts',
+      relationSchemaId: 'system-contract',
+      direction: 'in',
+      ownerSchemaIds: ['system']
+    });
+  });
+
+  it('pathStepToMetricTraversalStep narrows every hop kind the map hop editor can produce (#3040-map)', () => {
+    expect(pathStepToMetricTraversalStep({ kind: 'forward', fieldId: 'f' })).toEqual({
+      kind: 'relation',
+      fieldId: 'f',
+      direction: 'forward'
+    });
+    expect(
+      pathStepToMetricTraversalStep({ kind: 'backward', fieldId: 'f', ownerSchemaId: 'owner' })
+    ).toEqual({ kind: 'relation', fieldId: 'f', direction: 'backward', ownerSchemaId: 'owner' });
+    expect(
+      pathStepToMetricTraversalStep({
+        kind: 'typedRelation',
+        fieldId: 'f',
+        relationSchemaId: 'r',
+        direction: 'in',
+        ownerSchemaIds: ['owner']
+      })
+    ).toEqual({ kind: 'typedRelation', fieldId: 'f', relationSchemaId: 'r', direction: 'in' });
+    expect(
+      pathStepToMetricTraversalStep({
+        kind: 'unboundTypedRelation',
+        relationSchemaId: 'r',
+        direction: 'out'
+      })
+    ).toEqual({ kind: 'unboundTypedRelation', relationSchemaId: 'r', direction: 'out' });
+    expect(pathStepToMetricTraversalStep({ kind: 'endpoint', direction: 'in' })).toBeNull();
+  });
+
+  it('honors an explicit level step over the auto-derived default, disambiguating two same-target typed-relation fields (#3040-map)', () => {
+    const system = {
+      ...schema('system'),
+      fields: [
+        {
+          id: 'primary-contract',
+          name: 'Primary contract',
+          type: 'typedRelation',
+          relationSchemaId: 'system-contract',
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
+        },
+        {
+          id: 'backup-contract',
+          name: 'Backup contract',
+          type: 'typedRelation',
+          relationSchemaId: 'system-contract',
+          direction: 'in',
+          minCount: 0,
+          maxCount: -1
+        }
+      ]
+    } as unknown as EntitySchema;
+    const contract = schema('contract');
+    const relationSchema = {
+      id: 'system-contract',
+      in: { schemaIds: ['system'] },
+      out: { schemaIds: ['contract'] }
+    } as unknown as RelationSchema;
+
+    // Without an explicit step, resolution picks whichever typed-relation field is found first.
+    expect(
+      getMapTraversalPath(['system', 'contract'], [system, contract], [relationSchema])
+    ).toEqual([
+      {
+        kind: 'typedRelation',
+        fieldId: 'primary-contract',
+        relationSchemaId: 'system-contract',
+        direction: 'in'
+      }
+    ]);
+
+    // An explicit step for the second field overrides that default, picking the field the user
+    // actually selected in the hop editor rather than the auto-inferred first match.
+    expect(
+      resolveMapTraversalPath(
+        ['system', 'contract'],
+        [system, contract],
+        [relationSchema],
+        () => 'edit',
+        [
+          undefined,
+          {
+            kind: 'typedRelation',
+            fieldId: 'backup-contract',
+            relationSchemaId: 'system-contract',
+            direction: 'in',
+            ownerSchemaIds: ['system']
+          }
+        ]
+      ).path
+    ).toEqual([
+      {
+        kind: 'typedRelation',
+        fieldId: 'backup-contract',
+        relationSchemaId: 'system-contract',
+        direction: 'in'
+      }
+    ]);
+  });
+
+  it('repairMapLevelSchemaIds fills in a schemaId left unresolved by a saved step (#3040-map)', () => {
+    const domain = schema('domain');
+    const system = schema('system', 'domain');
+    const levelConfigs: MapLevelConfig[] = [
+      { schemaId: 'domain', columns: 2 },
+      {
+        schemaId: null,
+        columns: 3,
+        step: { kind: 'backward', fieldId: 'parent', ownerSchemaId: 'system' }
+      }
+    ];
+
+    const repaired = repairMapLevelSchemaIds(levelConfigs, [domain, system], []);
+    expect(repaired).not.toBe(levelConfigs);
+    expect(repaired[1]?.schemaId).toBe('system');
+    expect(repaired[1]?.step).toEqual(levelConfigs[1]?.step);
+
+    // Nothing to repair - same reference back so callers can skip a no-op config write.
+    expect(repairMapLevelSchemaIds(repaired, [domain, system], [])).toBe(repaired);
   });
 });

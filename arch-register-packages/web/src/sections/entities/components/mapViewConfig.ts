@@ -40,7 +40,9 @@ export const normalizeMapConfig = (raw: unknown): MapConfig => {
       levelConfigs: parsed.levelConfigs.map(level => ({
         schemaId: level.schemaId,
         columns: level.columns ?? 3,
-        ...(level.hidden ? { hidden: true } : {})
+        ...(level.hidden ? { hidden: true } : {}),
+        ...(level.step ? { step: level.step } : {}),
+        ...(level.targetSchemaId ? { targetSchemaId: level.targetSchemaId } : {})
       })),
       fieldIds: parsed.fieldIds,
       metricConfig: parsed.metricConfig,

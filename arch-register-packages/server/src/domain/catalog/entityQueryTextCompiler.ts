@@ -1422,6 +1422,8 @@ const printComparatorAndValue = (
       return `= empty`;
     case 'not_empty':
       return `= not_empty`;
+    case 'in':
+      return `in (${(Array.isArray(value) ? value : [value]).map(v => printValueLiteral(v, fieldType)).join(', ')})`;
   }
 };
 

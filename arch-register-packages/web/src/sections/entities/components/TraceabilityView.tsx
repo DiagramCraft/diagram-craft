@@ -7,6 +7,8 @@ import {
   type EntityQuery,
   type PathStep
 } from '@arch-register/api-types/entityQueryIR';
+import { HopPicker } from './pathBuilder/HopPicker';
+import { HopSequence } from './pathBuilder/HopSequence';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { Project } from '@arch-register/api-types/projectCrudContract';
@@ -28,8 +30,6 @@ import {
   entityIsOrphan,
   hasAnyTargetSchema,
   parseTraceabilityConfig,
-  groupTraceabilityOptions,
-  pathStepKey,
   pruneInvalidTraceabilityPaths,
   traceabilityPathOptions,
   traceabilityPathStepContext
@@ -321,12 +321,14 @@ export const TraceabilityView = ({
     if (!option) return;
     updatePathStep(path.id, depth, option.step);
   };
-  const removePathStep = (pathId: string, depth: number) => {
+  // Only the last hop can be removed, matching Map's level removal - trimming from the middle
+  // would leave later hops referencing a schema scope that no longer has a defined predecessor.
+  const removeLastPathStep = (pathId: string) => {
     updateConfig({
       ...editorConfig,
       paths: editorConfig.paths.map(path =>
         path.id === pathId && path.path.length > 1
-          ? { ...path, path: path.path.filter((_step, index) => index !== depth) }
+          ? { ...path, path: path.path.slice(0, -1) }
           : path
       )
     });
@@ -378,7 +380,7 @@ export const TraceabilityView = ({
           {configOpen && (
             <div className={styles.configBody}>
               {editorConfig.paths.map(path => {
-                const hopEntries = path.path.map((step, depth) => {
+                const hopEntries = path.path.map((_step, depth) => {
                   const stepContext = traceabilityPathStepContext({
                     rootSchemaScope,
                     path,
@@ -387,85 +389,11 @@ export const TraceabilityView = ({
                     relationSchemas,
                     getFieldGroupAccess
                   });
-                  const direction = stepContext.direction;
-                  const stepKey = pathStepKey(step);
-                  const selectedOption = stepContext.options.find(
-                    option => pathStepKey(option.step) === stepKey
-                  );
-                  const oppositeDirection = direction === 'in' ? 'out' : 'in';
-                  const canToggleDirection =
-                    stepContext.availableDirections.includes(oppositeDirection);
                   const errorMessage = !stepContext.invalid
                     ? null
                     : 'This hop is no longer available for the current schema.';
 
-                  return {
-                    depth,
-                    errorMessage,
-                    element: (
-                      <div key={`${path.id}-${depth}`} className={styles.hop}>
-                        {depth > 0 && <span className={styles.hopSep}>›</span>}
-                        <button
-                          type="button"
-                          className={styles.hopDir}
-                          aria-label={`Direction for ${path.id} hop ${depth + 1}`}
-                          title={
-                            canToggleDirection
-                              ? `Traversing ${direction} — click to reverse`
-                              : `Traversing ${direction}`
-                          }
-                          disabled={!canToggleDirection}
-                          onClick={() => updatePathDirection(path, depth, oppositeDirection)}
-                        >
-                          {direction === 'in' ? '→' : '←'}
-                        </button>
-                        <div className={styles.selectWrap}>
-                          <select
-                            className={styles.select}
-                            value={stepKey}
-                            aria-label={`Hop for ${path.id} hop ${depth + 1}`}
-                            onChange={event => {
-                              const option = stepContext.options.find(
-                                candidate => pathStepKey(candidate.step) === event.target.value
-                              );
-                              if (option) updatePathStep(path.id, depth, option.step);
-                            }}
-                          >
-                            {selectedOption == null && (
-                              <option value={stepKey} disabled>
-                                {`Unavailable hop (${stepKey})`}
-                              </option>
-                            )}
-                            {groupTraceabilityOptions(stepContext.options).map(
-                              ({ group, options }) => (
-                                <optgroup key={group} label={group}>
-                                  {options.map(option => (
-                                    <option
-                                      key={pathStepKey(option.step)}
-                                      value={pathStepKey(option.step)}
-                                    >
-                                      {option.label}
-                                    </option>
-                                  ))}
-                                </optgroup>
-                              )
-                            )}
-                          </select>
-                          <TbChevronDown size={11} />
-                        </div>
-                        {path.path.length > 1 && (
-                          <button
-                            type="button"
-                            className={styles.hopRm}
-                            title="Remove hop"
-                            onClick={() => removePathStep(path.id, depth)}
-                          >
-                            <TbTrash size={13} />
-                          </button>
-                        )}
-                      </div>
-                    )
-                  };
+                  return { depth, errorMessage, stepContext };
                 });
 
                 return (
@@ -503,17 +431,40 @@ export const TraceabilityView = ({
                     <span className={styles.pathTargetLabel}>Path</span>
 
                     <div className={styles.hopsCell}>
-                      <span className={styles.hopsRow}>
-                        {hopEntries.map(entry => entry.element)}
-                        <button
-                          type="button"
-                          className={styles.addHop}
-                          onClick={() => addPathStep(path.id)}
-                          disabled={!canAddHop(path)}
-                        >
-                          + Add hop
-                        </button>
-                      </span>
+                      <HopSequence
+                        items={path.path}
+                        getItemKey={(_step, depth) => `${path.id}-${depth}`}
+                        renderItem={(step, depth) => {
+                          const { stepContext } = hopEntries[depth]!;
+                          return (
+                            <div className={styles.hop}>
+                              <HopPicker
+                                step={step}
+                                stepContext={stepContext}
+                                ariaLabelDirection={`Direction for ${path.id} hop ${depth + 1}`}
+                                ariaLabelHop={`Hop for ${path.id} hop ${depth + 1}`}
+                                onChangeStep={nextStep => updatePathStep(path.id, depth, nextStep)}
+                                onToggleDirection={direction =>
+                                  updatePathDirection(path, depth, direction)
+                                }
+                              />
+                              {path.path.length > 1 && depth === path.path.length - 1 && (
+                                <button
+                                  type="button"
+                                  className={styles.hopRm}
+                                  title="Remove hop"
+                                  onClick={() => removeLastPathStep(path.id)}
+                                >
+                                  <TbTrash size={13} />
+                                </button>
+                              )}
+                            </div>
+                          );
+                        }}
+                        onAdd={() => addPathStep(path.id)}
+                        addLabel="Add hop"
+                        addDisabled={!canAddHop(path)}
+                      />
 
                       {hopEntries.some(entry => entry.errorMessage) && (
                         <div className={styles.hopErrors}>

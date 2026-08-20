@@ -22,6 +22,44 @@
   min-height: 42px;
 }
 
+.hierarchyConfig {
+  display: flex;
+  flex-direction: column;
+  border-bottom: 1px solid var(--panel-border);
+  flex-shrink: 0;
+}
+
+.hierarchyToggle {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  width: 100%;
+  height: 32px;
+  padding: 0 10px;
+  background: transparent;
+  border: none;
+  font-family: inherit;
+  cursor: pointer;
+}
+
+.hierarchyToggle:hover {
+  background: color-mix(in oklch, var(--base-fg) 5%, transparent);
+}
+
+.hierarchyToggleIcon {
+  flex-shrink: 0;
+  transition: transform 100ms;
+  color: var(--base-fg-more-dim);
+}
+
+.hierarchyToggleIcon[data-open="false"] {
+  transform: rotate(-90deg);
+}
+
+.hierarchyBody {
+  padding: 4px 10px 12px;
+}
+
 .axisPill {
   display: flex;
   align-items: center;

@@ -5,7 +5,9 @@ import type {
 } from '@arch-register/api-types/relationSchemaContract';
 import type { MetricTraversalStep } from '@arch-register/api-types/metricContract';
 import type { TreeEdge, TreeNode } from '@arch-register/api-types/entityContract';
+import type { PathStep } from '@arch-register/api-types/entityQueryIR';
 import type { FieldGroupAccessControl } from '@arch-register/permissions';
+import { targetSchemaIdsForStep } from './pathBuilder/pathBuilderState';
 
 type FieldGroupAccessResolver = (
   accessControl: FieldGroupAccessControl | undefined
@@ -24,6 +26,16 @@ export type MapLevelConfig = {
   schemaId: string | null;
   columns: number;
   hidden?: boolean;
+  /** Explicit hop connecting this level to the previous level; derived from schema adjacency
+   *  (`resolveDefaultStep`) when absent. Never set on level 1. */
+  step?: PathStep;
+  /** Restricts this level's matches to one schema, when its hop resolves to more than one
+   *  candidate target schema (e.g. an 'any'-endpoint relation) - mirrors Traceability's per-path
+   *  `targetSchemaIds`. Only meaningful, and only ever shown in the hop editor, on the last level.
+   *  Unset ("any") keeps every candidate schema's matches, and the metric picker falls back to
+   *  schema-agnostic fields (lifecycle, assessment) since there's no single schema to read
+   *  fields from (#3040-map). */
+  targetSchemaId?: string | null;
 };
 
 export const getMapSchemaIds = (cfg: {
@@ -179,12 +191,17 @@ const relationDirectionsForEntity = (
     return allFields.length === 0 || fields.length > 0;
   });
 
-const findTraversalStep = (
+/** Default hop connecting `parentSchema` to `childSchema` when a map level has no explicit
+ *  `step` saved: the first compatible containment/reference field, falling back to a typed-relation
+ *  field. Generalizes what used to be `findTraversalStep`, emitting a `PathStep` (the canonical hop
+ *  type shared with Traceability's hop editor) rather than a `MetricTraversalStep` directly - use
+ *  `pathStepToMetricTraversalStep` to narrow for the metric-rollup path. */
+export const resolveDefaultStep = (
   parentSchema: EntitySchema | undefined,
   childSchema: EntitySchema,
   relationSchemas: RelationSchema[],
   getFieldGroupAccess: FieldGroupAccessResolver
-): MetricTraversalStep | null => {
+): PathStep | null => {
   if (!parentSchema) return null;
 
   const forwardField = parentSchema.fields.find(
@@ -193,7 +210,7 @@ const findTraversalStep = (
       field.schemaId === childSchema.id
   );
   if (forwardField) {
-    return { kind: 'relation', fieldId: forwardField.id, direction: 'forward' };
+    return { kind: 'forward', fieldId: forwardField.id };
   }
 
   const backwardField = childSchema.fields.find(
@@ -202,12 +219,7 @@ const findTraversalStep = (
       field.schemaId === parentSchema.id
   );
   if (backwardField) {
-    return {
-      kind: 'relation',
-      fieldId: backwardField.id,
-      direction: 'backward',
-      ownerSchemaId: childSchema.id
-    };
+    return { kind: 'backward', fieldId: backwardField.id, ownerSchemaId: childSchema.id };
   }
 
   const relationSchemaById = new Map(relationSchemas.map(schema => [schema.id, schema]));
@@ -227,11 +239,75 @@ const findTraversalStep = (
       kind: 'typedRelation',
       fieldId: typedField.id,
       relationSchemaId: typedField.relationSchemaId,
-      direction: typedField.direction
+      direction: typedField.direction,
+      ownerSchemaIds: [parentSchema.id]
     };
   }
 
   return null;
+};
+
+/** Narrows a `PathStep` to the metric-rollup engine's `MetricTraversalStep`, the isolated boundary
+ *  between the two type hierarchies (see the module comment). Relation-rooted `PathStep` kinds
+ *  (`endpoint`/`relationForward`/`relationBackward`) have no `MetricTraversalStep` equivalent and
+ *  are never produced by the map's hop editor, so they map to `null`. */
+export const pathStepToMetricTraversalStep = (step: PathStep): MetricTraversalStep | null => {
+  switch (step.kind) {
+    case 'forward':
+      return { kind: 'relation', fieldId: step.fieldId, direction: 'forward' };
+    case 'backward':
+      return {
+        kind: 'relation',
+        fieldId: step.fieldId,
+        direction: 'backward',
+        ownerSchemaId: step.ownerSchemaId
+      };
+    case 'typedRelation':
+      return {
+        kind: 'typedRelation',
+        fieldId: step.fieldId,
+        relationSchemaId: step.relationSchemaId,
+        direction: step.direction
+      };
+    case 'unboundTypedRelation':
+      return {
+        kind: 'unboundTypedRelation',
+        relationSchemaId: step.relationSchemaId,
+        direction: step.direction
+      };
+    default:
+      return null;
+  }
+};
+
+/** Repairs a level whose `step` was saved without its resolved `schemaId` (a prior bug: the hop
+ *  editor could persist `step` while failing to resolve the schema it lands on - #3040-map).
+ *  Returns the same `levelConfigs` reference when nothing needed repair, so callers can skip a
+ *  no-op config write. */
+export const repairMapLevelSchemaIds = (
+  levelConfigs: MapLevelConfig[],
+  schemas: EntitySchema[],
+  relationSchemas: RelationSchema[]
+): MapLevelConfig[] => {
+  let changed = false;
+  const repaired = levelConfigs.map(level => {
+    if (level.schemaId != null || !level.step) return level;
+    const targetSchemaId = targetSchemaIdsForStep(level.step, schemas, relationSchemas)[0];
+    if (!targetSchemaId) return level;
+    changed = true;
+    return { ...level, schemaId: targetSchemaId };
+  });
+  return changed ? repaired : levelConfigs;
+};
+
+const findTraversalStep = (
+  parentSchema: EntitySchema | undefined,
+  childSchema: EntitySchema,
+  relationSchemas: RelationSchema[],
+  getFieldGroupAccess: FieldGroupAccessResolver
+): MetricTraversalStep | null => {
+  const step = resolveDefaultStep(parentSchema, childSchema, relationSchemas, getFieldGroupAccess);
+  return step ? pathStepToMetricTraversalStep(step) : null;
 };
 
 export const getMapTraversalPath = (
@@ -246,7 +322,13 @@ export const resolveMapTraversalPath = (
   schemaIds: string[],
   schemas: EntitySchema[],
   relationSchemas: RelationSchema[],
-  getFieldGroupAccess: FieldGroupAccessResolver = () => 'edit'
+  getFieldGroupAccess: FieldGroupAccessResolver = () => 'edit',
+  /** Explicit hop overrides, aligned by index with `schemaIds` (i.e. `explicitSteps[index]` is the
+   *  hop that reaches `schemaIds[index]`; index 0 is never consulted). Only honored for a plain
+   *  entity-to-entity hop - relation-level positions keep their existing auto-inferred handling,
+   *  since a `PathStep` can't represent "which relation-schema field/direction" the way this
+   *  function's relation-level branches already do. */
+  explicitSteps?: Array<PathStep | undefined>
 ): MapTraversalResolution => {
   const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
   const relationSchemaById = new Map(relationSchemas.map(schema => [schema.id, schema]));
@@ -330,7 +412,10 @@ export const resolveMapTraversalPath = (
         error: `“${childSchema.name}” is not a valid endpoint of “${parentRelationSchema.name}”`
       };
     }
-    const step = findTraversalStep(parentSchema, childSchema, relationSchemas, getFieldGroupAccess);
+    const explicitStep = explicitSteps?.[index];
+    const step = explicitStep
+      ? pathStepToMetricTraversalStep(explicitStep)
+      : findTraversalStep(parentSchema, childSchema, relationSchemas, getFieldGroupAccess);
     if (!step) {
       const relationCandidate = relationSchemas.find(relationSchema =>
         relationDirectionsForEntity(parentSchema!, relationSchema, getFieldGroupAccess).some(
