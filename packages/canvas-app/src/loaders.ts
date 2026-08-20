@@ -44,11 +44,17 @@ export const loadFileFromUrl = async (
   const content = await FileSystem.loadFromUrl(url);
 
   const root = opts?.root ?? (await documentFactory.loadCRDT(url, userState, progressCallback));
-  const doc = await documentFactory.createDocument(root, url, progressCallback);
-  await fileLoader(content, doc, diagramFactory);
-  await doc.load();
+  let doc: DiagramDocument | undefined;
+  try {
+    doc = await documentFactory.createDocument(root, url, progressCallback);
+    await fileLoader(content, doc, diagramFactory);
+    await doc.load();
 
-  return doc;
+    return doc;
+  } catch (error) {
+    doc?.release();
+    throw error;
+  }
 };
 
 /** @namespace */
