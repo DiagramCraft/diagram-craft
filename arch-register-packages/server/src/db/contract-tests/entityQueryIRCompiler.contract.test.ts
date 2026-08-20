@@ -537,6 +537,181 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     ]);
   });
 
+  // #3024: a chain projection's hop is validated through the same `validatePathSteps` machinery
+  // as any other path (predicate/relationExists), so a field-group-restricted hop field is
+  // treated as unknown for a chain query too, not just for filters.
+  it('rejects a chain projection whose hop field is field-group-restricted (#3024)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const user = await createFixtureUser(db);
+
+    const domainSchema = await createSchema(db, workspace, { name: 'Domain' });
+    const systemSchema = await createSchema(db, workspace, {
+      name: 'System',
+      fields: [
+        {
+          id: 'domain',
+          name: 'Domain',
+          type: 'containment',
+          schemaId: domainSchema.id,
+          minCount: 0,
+          maxCount: 1,
+          groupId: 'restricted'
+        }
+      ],
+      groups: [
+        { id: 'restricted', name: 'Restricted', accessControl: { teamIds: ['team-restricted'] } }
+      ]
+    });
+
+    const domain = await createFixtureEntity(db, workspace, domainSchema.id, {
+      name: 'Identity Platform'
+    });
+    const system = await createFixtureEntity(db, workspace, systemSchema.id, {
+      name: 'API Gateway',
+      data: { domain: [domain.id] }
+    });
+
+    const schemas: SchemaCatalog = new Map([
+      [domainSchema.id, domainSchema],
+      [systemSchema.id, systemSchema]
+    ]);
+    const noAccess = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [],
+      schemas: [domainSchema, systemSchema],
+      entities: [domain, system],
+      grants: []
+    });
+
+    const query: EntityQuery = {
+      schemaId: domainSchema.id,
+      root: { kind: 'predicate', path: [], fieldId: '_id', op: 'equals', value: domain.id },
+      projections: [
+        {
+          path: [{ kind: 'backward', fieldId: 'domain', ownerSchemaId: systemSchema.id }],
+          fieldId: '_id',
+          alias: 'chain',
+          chain: true
+        }
+      ]
+    };
+
+    const restrictedValidation = validateEntityQueryIR(query, schemas, noAccess);
+    expect(restrictedValidation.ok).toBe(false);
+
+    const viewer = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: 'editor',
+      teamAssignments: [{ teamId: 'team-restricted', role: 'team_reviewer' }],
+      schemas: [domainSchema, systemSchema],
+      entities: [domain, system],
+      grants: []
+    });
+    const viewerValidation = validateEntityQueryIR(query, schemas, viewer);
+    expect(viewerValidation.ok, JSON.stringify(viewerValidation)).toBe(true);
+  });
+
+  // #3024: a chain hop's target entity that the caller has no view grant for must never surface
+  // in the chain's node list - the SCOPE_CTE join every hop is compiled against must exclude it,
+  // the same as it would for a non-chain list/detail query.
+  it('excludes an entity-level-restricted hop target from a chain projection (#3024)', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const user = await createFixtureUser(db);
+
+    const domainSchema = await createSchema(db, workspace, { name: 'Domain' });
+    const systemSchema = await createSchema(db, workspace, {
+      name: 'System',
+      fields: [
+        {
+          id: 'domain',
+          name: 'Domain',
+          type: 'containment',
+          schemaId: domainSchema.id,
+          minCount: 0,
+          maxCount: 1
+        }
+      ]
+    });
+
+    const domain = await createFixtureEntity(db, workspace, domainSchema.id, {
+      name: 'Identity Platform'
+    });
+    const allowed = await createFixtureEntity(db, workspace, systemSchema.id, {
+      name: 'API Gateway',
+      data: { domain: [domain.id] }
+    });
+    const denied = await createFixtureEntity(db, workspace, systemSchema.id, {
+      name: 'Ledger Service',
+      data: { domain: [domain.id] }
+    });
+    const grantFor = (entityId: string) =>
+      db.catalog.replaceEntityGrants(workspace, entityId, [
+        {
+          id: randomUUID(),
+          workspace,
+          entity_id: entityId,
+          principal_type: 'user',
+          principal_id: user.id,
+          role: 'editor',
+          applies_to: 'self',
+          created_at: new Date()
+        }
+      ]);
+    // Grants the root (domain) and the one system that should be reachable, but not the other
+    // system - so a leak here can only come from the chain hop join itself, not from the root
+    // query being unscoped too.
+    const grants = [...(await grantFor(domain.id)), ...(await grantFor(allowed.id))];
+    const authCtx = buildAuthorizationContext({
+      userId: user.id,
+      globalRoles: [],
+      workspaceRole: null,
+      schemas: [domainSchema, systemSchema],
+      entities: [domain, allowed, denied],
+      grants
+    });
+
+    const schemas: SchemaCatalog = new Map([
+      [domainSchema.id, domainSchema],
+      [systemSchema.id, systemSchema]
+    ]);
+    const query: EntityQuery = {
+      schemaId: domainSchema.id,
+      root: { kind: 'predicate', path: [], fieldId: '_id', op: 'equals', value: domain.id },
+      projections: [
+        {
+          path: [{ kind: 'backward', fieldId: 'domain', ownerSchemaId: systemSchema.id }],
+          fieldId: '_id',
+          alias: 'chain',
+          chain: true
+        }
+      ]
+    };
+
+    const validation = validateEntityQueryIR(query, schemas, authCtx);
+    expect(validation.ok, JSON.stringify(validation)).toBe(true);
+
+    // Entity-level view scoping (as opposed to field-group scrubbing) is applied by
+    // `listEntitiesWithCount`'s `buildEntityViewPermissionScope(authCtx)` wiring, not merely by
+    // passing `authCtx` to `compileEntityQueryIR` directly - matches how Traceability/Map's
+    // actual list queries reach the server (via `listEntitiesWithCount`), not the raw compiler.
+    const page = await listEntitiesWithCount(db, workspace, authCtx, {
+      entityQuery: query,
+      view: 'full'
+    });
+
+    expect(page.items).toHaveLength(1);
+    const chains = page.items[0]!._projections!.chain as Array<
+      Array<{ id: string; name: string; schemaId: string }>
+    >;
+    expect(chains.map(chain => chain[0]!.id)).toEqual([allowed.id]);
+    expect(chains.map(chain => chain[0]!.id)).not.toContain(denied.id);
+  });
+
   it('scopes a bracketed filter to the same existential witness (§4.3)', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);
