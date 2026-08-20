@@ -94,7 +94,9 @@ export const decodeMapChainsByRoot = (
  *  chain projection only carries `{id, name, schemaId}` per hop. */
 export const collectMapChainNodeIds = (chainsByRootId: Map<string, PathChain[]>): string[] => [
   ...new Set(
-    [...chainsByRootId.values()].flatMap(chains => chains.flatMap(chain => chain.map(node => node.id)))
+    [...chainsByRootId.values()].flatMap(chains =>
+      chains.flatMap(chain => chain.map(node => node.id))
+    )
   )
 ];
 

@@ -71,7 +71,10 @@ export const addChainProjection = (
  *  target restricts which matched chains are kept, based on the leaf hop's schema, not just which
  *  candidate entities are checked elsewhere (e.g. Traceability's orphan detection). Shared by
  *  Traceability's per-path target filter and Map's last-level target filter (#3040-map). */
-export const chainMatchesTarget = (chain: PathChain, targetSchemaIds: 'any' | string[]): boolean => {
+export const chainMatchesTarget = (
+  chain: PathChain,
+  targetSchemaIds: 'any' | string[]
+): boolean => {
   if (targetSchemaIds === 'any') return true;
   const leaf = chain[chain.length - 1];
   return leaf != null && targetSchemaIds.includes(leaf.schemaId);
@@ -155,7 +158,9 @@ export const targetSchemaIdsForStep = (
     case 'typedRelation':
     case 'unboundTypedRelation': {
       const relation = relationSchemas.find(candidate => candidate.id === step.relationSchemaId);
-      return relation ? resolveEndpointSchemaIds(relation, oppositeEndpoint(step.direction), schemas) : [];
+      return relation
+        ? resolveEndpointSchemaIds(relation, oppositeEndpoint(step.direction), schemas)
+        : [];
     }
     default:
       return [];
@@ -432,8 +437,20 @@ export const pathStepContext = ({
   const step = steps[depth];
   const direction = step ? stepDirection(step) : 'in';
   const optionsByDirection = {
-    in: pathStepOptions({ direction: 'in', currentSchemaScope, schemas, relationSchemas, getFieldGroupAccess }),
-    out: pathStepOptions({ direction: 'out', currentSchemaScope, schemas, relationSchemas, getFieldGroupAccess })
+    in: pathStepOptions({
+      direction: 'in',
+      currentSchemaScope,
+      schemas,
+      relationSchemas,
+      getFieldGroupAccess
+    }),
+    out: pathStepOptions({
+      direction: 'out',
+      currentSchemaScope,
+      schemas,
+      relationSchemas,
+      getFieldGroupAccess
+    })
   };
   const availableDirections = (['in', 'out'] as const).filter(
     candidate => optionsByDirection[candidate].length > 0
@@ -460,10 +477,14 @@ type PathStepContextArgs = Parameters<typeof pathStepContext>[0];
  *  resolving which schema a freshly picked option lands on) should use this instead of
  *  `pathStepContext` directly - using the two inconsistently for the same hop is what let a step
  *  get saved without its resolved target schema (#3040-map). */
-export const pathStepContextWithFallbackDirection = (args: PathStepContextArgs): PathStepContext => {
+export const pathStepContextWithFallbackDirection = (
+  args: PathStepContextArgs
+): PathStepContext => {
   const context = pathStepContext(args);
   if (args.steps[args.depth] || context.options.length > 0) return context;
-  const altDirection = context.availableDirections.find(direction => direction !== context.direction);
+  const altDirection = context.availableDirections.find(
+    direction => direction !== context.direction
+  );
   if (!altDirection) return context;
   return {
     ...context,

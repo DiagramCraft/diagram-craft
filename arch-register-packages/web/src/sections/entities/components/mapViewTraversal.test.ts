@@ -16,7 +16,12 @@ describe('mapViewTraversal chain building (#3040-map)', () => {
   it('adds a single chain projection for a non-empty hop chain, and none for an empty one', () => {
     const withHops = buildMapChainQuery(null, [{ kind: 'forward', fieldId: 'f' }]);
     expect(withHops.query.projections).toEqual([
-      { path: [{ kind: 'forward', fieldId: 'f' }], fieldId: '_id', alias: MAP_CHAIN_PROJECTION_ALIAS, chain: true }
+      {
+        path: [{ kind: 'forward', fieldId: 'f' }],
+        fieldId: '_id',
+        alias: MAP_CHAIN_PROJECTION_ALIAS,
+        chain: true
+      }
     ]);
 
     const noHops = buildMapChainQuery(null, []);
@@ -70,11 +75,7 @@ describe('mapViewTraversal chain building (#3040-map)', () => {
       ]
     ];
 
-    const tree = buildTreeFromChains(
-      [domain],
-      new Map([['domain-1', chains]]),
-      id => byId.get(id)
-    );
+    const tree = buildTreeFromChains([domain], new Map([['domain-1', chains]]), id => byId.get(id));
 
     expect(tree).toHaveLength(1);
     expect(tree[0]!.node._uid).toBe('domain-1');

@@ -62,9 +62,9 @@ describe('pathBuilderState direction fallback and target-schema derivation (#304
   });
 
   it('derives the target schema for a forward step from the field it names', () => {
-    expect(targetSchemaIdsForStep({ kind: 'forward', fieldId: 'parent' }, [domain, system], [])).toEqual(
-      ['domain']
-    );
+    expect(
+      targetSchemaIdsForStep({ kind: 'forward', fieldId: 'parent' }, [domain, system], [])
+    ).toEqual(['domain']);
   });
 
   it('chainMatchesTarget matches on the chain leaf, and "any" always matches (#3040-map)', () => {

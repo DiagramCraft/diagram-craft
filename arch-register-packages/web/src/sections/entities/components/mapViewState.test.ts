@@ -404,7 +404,7 @@ describe('map view state', () => {
     expect(pathStepToMetricTraversalStep({ kind: 'endpoint', direction: 'in' })).toBeNull();
   });
 
-  it("honors an explicit level step over the auto-derived default, disambiguating two same-target typed-relation fields (#3040-map)", () => {
+  it('honors an explicit level step over the auto-derived default, disambiguating two same-target typed-relation fields (#3040-map)', () => {
     const system = {
       ...schema('system'),
       fields: [
@@ -439,7 +439,12 @@ describe('map view state', () => {
     expect(
       getMapTraversalPath(['system', 'contract'], [system, contract], [relationSchema])
     ).toEqual([
-      { kind: 'typedRelation', fieldId: 'primary-contract', relationSchemaId: 'system-contract', direction: 'in' }
+      {
+        kind: 'typedRelation',
+        fieldId: 'primary-contract',
+        relationSchemaId: 'system-contract',
+        direction: 'in'
+      }
     ]);
 
     // An explicit step for the second field overrides that default, picking the field the user
@@ -462,7 +467,12 @@ describe('map view state', () => {
         ]
       ).path
     ).toEqual([
-      { kind: 'typedRelation', fieldId: 'backup-contract', relationSchemaId: 'system-contract', direction: 'in' }
+      {
+        kind: 'typedRelation',
+        fieldId: 'backup-contract',
+        relationSchemaId: 'system-contract',
+        direction: 'in'
+      }
     ]);
   });
 

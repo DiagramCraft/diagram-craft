@@ -200,7 +200,9 @@ export const useEntitiesByIdSet = (
     workspaceId,
     {
       view: 'full',
-      entityQuery: { root: { kind: 'predicate', path: [], fieldId: '_id', op: 'in', value: sortedIds } },
+      entityQuery: {
+        root: { kind: 'predicate', path: [], fieldId: '_id', op: 'in', value: sortedIds }
+      },
       limit: sortedIds.length
     },
     { enabled }

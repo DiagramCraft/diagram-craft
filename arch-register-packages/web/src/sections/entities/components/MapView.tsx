@@ -10,7 +10,11 @@ import type { EntityQuery, PathStep, QueryNode } from '@arch-register/api-types/
 import { useEntityBrowserTreeData } from './useEntityBrowserTreeData';
 import { EmptyState } from '../../../components/EmptyState';
 import { getDisplayFieldIds, type EntityDisplayField } from './entityDisplayFields';
-import { useEntities, useEntitiesByIdSet, useMultipleEntityRelations } from '../../../hooks/useEntities';
+import {
+  useEntities,
+  useEntitiesByIdSet,
+  useMultipleEntityRelations
+} from '../../../hooks/useEntities';
 import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
 import {
   getChildLevelOptions,
@@ -98,8 +102,13 @@ const resolveMetricTerminalSchemaId = (args: {
   rootSchemaScope: PathSchemaScope;
   legacyTerminalSchemaId: string | null;
 }): string | null => {
-  const { useChainTraversal, fullHopChain, lastHopCandidateSchemaIds, lastLevelTargetSchemaId, rootSchemaScope } =
-    args;
+  const {
+    useChainTraversal,
+    fullHopChain,
+    lastHopCandidateSchemaIds,
+    lastLevelTargetSchemaId,
+    rootSchemaScope
+  } = args;
   if (!useChainTraversal) return args.legacyTerminalSchemaId;
   if (fullHopChain && fullHopChain.length > 0) {
     return lastHopCandidateSchemaIds.length <= 1
@@ -250,10 +259,22 @@ export const MapView = ({
     });
     const extra: QueryNode[] = [];
     if (ownerFilter) {
-      extra.push({ kind: 'predicate', path: [], fieldId: '_owner', op: 'equals', value: ownerFilter });
+      extra.push({
+        kind: 'predicate',
+        path: [],
+        fieldId: '_owner',
+        op: 'equals',
+        value: ownerFilter
+      });
     }
     if (statusFilter) {
-      extra.push({ kind: 'predicate', path: [], fieldId: '_lifecycle', op: 'equals', value: statusFilter });
+      extra.push({
+        kind: 'predicate',
+        path: [],
+        fieldId: '_lifecycle',
+        op: 'equals',
+        value: statusFilter
+      });
     }
     return extra.length === 0
       ? built
@@ -280,12 +301,17 @@ export const MapView = ({
     if (lastHopTargetFilter === 'any') return decoded;
     const filtered = new Map<string, PathChain[]>();
     for (const [rootId, chains] of decoded) {
-      filtered.set(rootId, chains.filter(chain => chainMatchesTarget(chain, lastHopTargetFilter)));
+      filtered.set(
+        rootId,
+        chains.filter(chain => chainMatchesTarget(chain, lastHopTargetFilter))
+      );
     }
     return filtered;
   }, [chainRoots.data, lastHopTargetFilter]);
   const chainNodeIds = useMemo(() => collectMapChainNodeIds(chainsByRootId), [chainsByRootId]);
-  const chainNodeById = useEntitiesByIdSet(workspaceId, chainNodeIds, { enabled: useChainTraversal });
+  const chainNodeById = useEntitiesByIdSet(workspaceId, chainNodeIds, {
+    enabled: useChainTraversal
+  });
 
   const nodes = useChainTraversal ? chainRoots.data : legacyNodes;
   useEffect(() => {
@@ -361,9 +387,10 @@ export const MapView = ({
   // ── Metric configuration ─────────────────────────────────────────────────
 
   const mapLevelsWithSchema = useMemo(
-    () => cfg.levelConfigs.filter((level): level is typeof level & { schemaId: string } =>
-      level.schemaId != null
-    ),
+    () =>
+      cfg.levelConfigs.filter(
+        (level): level is typeof level & { schemaId: string } => level.schemaId != null
+      ),
     [cfg.levelConfigs]
   );
   const mapLevelSchemaIds = useMemo(
@@ -520,7 +547,12 @@ export const MapView = ({
         // used for box color/hover text in this case, so "hide missing" must honor it too, or it
         // hides exactly the boxes that actually have the data (#3040-map).
         const isLeaf = entry.children.length === 0;
-        const directValue = getDirectMetricValue(entry.node, metricConfig, metricSourceSchema, isLeaf);
+        const directValue = getDirectMetricValue(
+          entry.node,
+          metricConfig,
+          metricSourceSchema,
+          isLeaf
+        );
         if (hasMissingMetricData(metricConfig, result) && directValue == null) return null;
       }
       return {

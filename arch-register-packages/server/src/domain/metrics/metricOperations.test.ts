@@ -172,14 +172,7 @@ const currencyMetric: MetricConfig = {
 describe('computeBoxMetrics', () => {
   it('returns a null value and zero counts for a box with no descendants', () => {
     const d1 = makeDomain('d1');
-    const result = computeBoxMetrics(
-      ['d1'],
-      numericMetric,
-      [d1],
-      schemas,
-      lifecycleStates,
-      null,
-    );
+    const result = computeBoxMetrics(['d1'], numericMetric, [d1], schemas, lifecycleStates, null);
     expect(result.results).toEqual([
       {
         boxEntityId: 'd1',
@@ -209,7 +202,7 @@ describe('computeBoxMetrics', () => {
       entities,
       schemas,
       lifecycleStates,
-      null,
+      null
     );
     expect(result.results[0]).toMatchObject({
       value: 15,
@@ -245,7 +238,7 @@ describe('computeBoxMetrics', () => {
       entities,
       [domainSchema, groupSchema, serviceSchema],
       lifecycleStates,
-      null,
+      null
     );
     expect(result.results[0]).toMatchObject({ value: 7, sourceCount: 1, populatedCount: 1 });
   });
@@ -262,7 +255,7 @@ describe('computeBoxMetrics', () => {
       entities,
       schemas,
       lifecycleStates,
-      null,
+      null
     );
     expect(result.results[0]).toMatchObject({ value: 2, sourceCount: 2, populatedCount: 2 });
   });
@@ -285,7 +278,7 @@ describe('computeBoxMetrics', () => {
       entities,
       schemas,
       lifecycleStates,
-      null,
+      null
     );
     expect(result.results[0]).toMatchObject({
       value: 50,
@@ -311,7 +304,7 @@ describe('computeBoxMetrics', () => {
       entities,
       schemas,
       lifecycleStates,
-      null,
+      null
     );
     expect(result.results[0]).toMatchObject({ value: null, sourceCount: 0, populatedCount: 0 });
   });
@@ -332,7 +325,7 @@ describe('computeBoxMetrics', () => {
       entities,
       schemas,
       lifecycleStates,
-      null,
+      null
     );
     expect(result.results[0]).toMatchObject({ value: 50, sourceCount: 2 });
   });
@@ -350,7 +343,7 @@ describe('computeBoxMetrics', () => {
       entities,
       schemas,
       lifecycleStates,
-      null,
+      null
     );
     expect(result.results[0]?.value).toBe(15);
   });
@@ -364,14 +357,7 @@ describe('computeBoxMetrics', () => {
       makeService('s2', 'd1', { data: { parent: 'd1', cost: { amount: 30000, currency: 'USD' } } })
     ];
 
-    const sum = computeBoxMetrics(
-      ['d1'],
-      currencyMetric,
-      entities,
-      schemas,
-      lifecycleStates,
-      null,
-    );
+    const sum = computeBoxMetrics(['d1'], currencyMetric, entities, schemas, lifecycleStates, null);
     expect(sum.results[0]).toMatchObject({
       value: 155000,
       currencyCode: 'USD',
@@ -392,7 +378,7 @@ describe('computeBoxMetrics', () => {
       entities,
       schemas,
       lifecycleStates,
-      null,
+      null
     );
     expect(average.results[0]).toMatchObject({ value: 77500, currencyCode: 'USD' });
   });
@@ -415,7 +401,7 @@ describe('computeBoxMetrics', () => {
       entities,
       schemas,
       lifecycleStates,
-      null,
+      null
     );
     expect(result.results[0]).toMatchObject({
       value: 209000,
@@ -481,7 +467,7 @@ describe('computeBoxMetrics', () => {
       entities,
       schemas,
       lifecycleStates,
-      null,
+      null
     );
     expect(result.results[0]?.value).toBe(3);
   });
@@ -498,7 +484,7 @@ describe('computeBoxMetrics', () => {
       entities,
       schemas,
       lifecycleStates,
-      null,
+      null
     );
     expect(result.results[0]?.value).toBe(10);
   });
@@ -516,14 +502,7 @@ describe('computeBoxMetrics', () => {
       aggregation: 'worst',
       worstDirection: 'high'
     };
-    const result = computeBoxMetrics(
-      ['d1'],
-      metric,
-      entities,
-      schemas,
-      lifecycleStates,
-      null,
-    );
+    const result = computeBoxMetrics(['d1'], metric, entities, schemas, lifecycleStates, null);
     expect(result.results[0]).toMatchObject({
       value: 2,
       lifecycleId: 'deprecated',
@@ -548,7 +527,7 @@ describe('computeBoxMetrics', () => {
       entities,
       schemas,
       lifecycleStates,
-      responsesByEntity,
+      responsesByEntity
     );
     expect(result.results[0]).toMatchObject({ value: 4, sourceCount: 2, populatedCount: 1 });
   });
@@ -560,14 +539,7 @@ describe('computeBoxMetrics', () => {
       source: { kind: 'assessmentRating', fieldId: 'rating1' },
       aggregation: 'average'
     };
-    const result = computeBoxMetrics(
-      ['d1'],
-      metric,
-      entities,
-      schemas,
-      lifecycleStates,
-      null,
-    );
+    const result = computeBoxMetrics(['d1'], metric, entities, schemas, lifecycleStates, null);
     expect(result.results[0]).toMatchObject({ value: null, sourceCount: 1, populatedCount: 0 });
   });
 
@@ -583,7 +555,7 @@ describe('computeBoxMetrics', () => {
       entities,
       schemas,
       lifecycleStates,
-      null,
+      null
     );
     expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
   });
@@ -598,7 +570,14 @@ describe('computeBoxMetrics', () => {
       makeService('s1', 'd1', { data: { parent: 'd1', score: 10 }, owner: 'team-a' }),
       makeService('s2', 'd1', { data: { parent: 'd1', score: 20 }, owner: 'team-b' })
     ];
-    const result = computeBoxMetrics(['d1'], numericMetric, entities, schemas, lifecycleStates, null);
+    const result = computeBoxMetrics(
+      ['d1'],
+      numericMetric,
+      entities,
+      schemas,
+      lifecycleStates,
+      null
+    );
     expect(result.results[0]).toMatchObject({ value: 30, sourceCount: 2, populatedCount: 2 });
   });
 
@@ -617,7 +596,7 @@ describe('computeBoxMetrics', () => {
       entities,
       schemas,
       lifecycleStates,
-      null,
+      null
     );
     expect(result.legend).toEqual({ min: 10, max: 50 });
   });
@@ -852,7 +831,7 @@ describe('computeBoxMetrics - stale metric sources', () => {
       [makeDomain('d1'), entity],
       [domainSchema, currentServiceSchema],
       lifecycleStates,
-      null,
+      null
     );
 
     expect(result.results[0]).toMatchObject({
@@ -871,7 +850,7 @@ describe('computeBoxMetrics - stale metric sources', () => {
       [makeDomain('d1'), makeService('s1', 'd1', { data: guarded.data })],
       [domainSchema],
       lifecycleStates,
-      null,
+      null
     );
 
     expect(result.results[0]).toMatchObject({
@@ -898,7 +877,7 @@ describe('computeBoxMetrics - stale metric sources', () => {
       [makeDomain('d1'), entity],
       [domainSchema, incompatibleServiceSchema],
       lifecycleStates,
-      null,
+      null
     );
 
     expect(result.results[0]).toMatchObject({
@@ -1058,7 +1037,7 @@ describe('computeBoxMetrics - restricted field groups', () => {
       entities,
       restrictedSchemas,
       lifecycleStates,
-      null,
+      null
     );
     expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
   });
