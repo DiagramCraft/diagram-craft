@@ -169,8 +169,6 @@ const currencyMetric: MetricConfig = {
   aggregation: 'sum'
 };
 
-const alwaysMatch = () => true;
-
 describe('computeBoxMetrics', () => {
   it('returns a null value and zero counts for a box with no descendants', () => {
     const d1 = makeDomain('d1');
@@ -181,7 +179,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results).toEqual([
       {
@@ -213,7 +210,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results[0]).toMatchObject({
       value: 15,
@@ -250,7 +246,6 @@ describe('computeBoxMetrics', () => {
       [domainSchema, groupSchema, serviceSchema],
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results[0]).toMatchObject({ value: 7, sourceCount: 1, populatedCount: 1 });
   });
@@ -268,7 +263,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results[0]).toMatchObject({ value: 2, sourceCount: 2, populatedCount: 2 });
   });
@@ -292,7 +286,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results[0]).toMatchObject({
       value: 50,
@@ -319,7 +312,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results[0]).toMatchObject({ value: null, sourceCount: 0, populatedCount: 0 });
   });
@@ -341,7 +333,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results[0]).toMatchObject({ value: 50, sourceCount: 2 });
   });
@@ -360,7 +351,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results[0]?.value).toBe(15);
   });
@@ -381,7 +371,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(sum.results[0]).toMatchObject({
       value: 155000,
@@ -404,7 +393,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(average.results[0]).toMatchObject({ value: 77500, currencyCode: 'USD' });
   });
@@ -428,7 +416,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results[0]).toMatchObject({
       value: 209000,
@@ -462,7 +449,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch,
       null,
       null,
       true,
@@ -496,7 +482,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results[0]?.value).toBe(3);
   });
@@ -514,7 +499,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results[0]?.value).toBe(10);
   });
@@ -539,7 +523,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results[0]).toMatchObject({
       value: 2,
@@ -566,7 +549,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       responsesByEntity,
-      alwaysMatch
     );
     expect(result.results[0]).toMatchObject({ value: 4, sourceCount: 2, populatedCount: 1 });
   });
@@ -585,7 +567,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results[0]).toMatchObject({ value: null, sourceCount: 1, populatedCount: 0 });
   });
@@ -603,27 +584,22 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
   });
 
-  it('excludes descendants that fail the current filter predicate from aggregation', () => {
+  it('aggregation is independent of the browse filter - every structural descendant counts (#3040-map)', () => {
+    // The active browse filter only ever determines which entities are shown as boxes
+    // (`boxEntityIds`, resolved by the caller); it must never also gate which descendants
+    // contribute to a box's own aggregation - a filter scoped to one schema previously excluded
+    // every cross-schema descendant, silently zeroing out the sum.
     const entities = [
       makeDomain('d1'),
       makeService('s1', 'd1', { data: { parent: 'd1', score: 10 }, owner: 'team-a' }),
       makeService('s2', 'd1', { data: { parent: 'd1', score: 20 }, owner: 'team-b' })
     ];
-    const result = computeBoxMetrics(
-      ['d1'],
-      numericMetric,
-      entities,
-      schemas,
-      lifecycleStates,
-      null,
-      entity => entity.owner === 'team-a'
-    );
-    expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
+    const result = computeBoxMetrics(['d1'], numericMetric, entities, schemas, lifecycleStates, null);
+    expect(result.results[0]).toMatchObject({ value: 30, sourceCount: 2, populatedCount: 2 });
   });
 
   it('computes legend min/max across all requested boxes, ignoring nulls', () => {
@@ -642,7 +618,6 @@ describe('computeBoxMetrics', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.legend).toEqual({ min: 10, max: 50 });
   });
@@ -670,7 +645,6 @@ describe('computeBoxMetrics - enum sources', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch,
       tierEnumOptions
     );
     expect(result.results[0]).toMatchObject({
@@ -703,7 +677,6 @@ describe('computeBoxMetrics - enum sources', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch,
       tierEnumOptions
     );
     expect(result.results[0]?.dominantValue).toBe('silver');
@@ -727,7 +700,6 @@ describe('computeBoxMetrics - enum sources', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch,
       tierEnumOptions
     );
     const resultB = computeBoxMetrics(
@@ -737,7 +709,6 @@ describe('computeBoxMetrics - enum sources', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch,
       tierEnumOptions
     );
     expect(resultA.results[0]?.dominantValue).toBe(resultB.results[0]?.dominantValue);
@@ -753,7 +724,6 @@ describe('computeBoxMetrics - enum sources', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch,
       tierEnumOptions
     );
     expect(result.results[0]).toMatchObject({
@@ -779,7 +749,6 @@ describe('computeBoxMetrics - enum sources', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch,
       tierEnumOptions
     );
     expect(result.results[0]).toMatchObject({ dominantValue: 'gold', dominantLabel: 'Gold' });
@@ -799,7 +768,6 @@ describe('computeBoxMetrics - enum sources', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch,
       tierEnumOptions
     );
     expect(result.results[0]).toMatchObject({ dominantValue: 'silver', dominantLabel: 'Silver' });
@@ -818,7 +786,6 @@ describe('computeBoxMetrics - enum sources', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch,
       tierEnumOptions
     );
     expect(result.results[0]).toMatchObject({ dominantValue: 'silver', dominantLabel: 'Silver' });
@@ -833,7 +800,6 @@ describe('computeBoxMetrics - enum sources', () => {
       schemas,
       lifecycleStates,
       null,
-      alwaysMatch,
       tierEnumOptions
     );
     expect(result.results[0]).toMatchObject({ dominantValue: null, dominantLabel: null });
@@ -861,7 +827,6 @@ describe('computeBoxMetrics - enum sources', () => {
       schemas,
       lifecycleStates,
       responsesByEntity,
-      alwaysMatch,
       riskOptions
     );
     expect(result.results[0]).toMatchObject({
@@ -888,7 +853,6 @@ describe('computeBoxMetrics - stale metric sources', () => {
       [domainSchema, currentServiceSchema],
       lifecycleStates,
       null,
-      alwaysMatch
     );
 
     expect(result.results[0]).toMatchObject({
@@ -908,7 +872,6 @@ describe('computeBoxMetrics - stale metric sources', () => {
       [domainSchema],
       lifecycleStates,
       null,
-      alwaysMatch
     );
 
     expect(result.results[0]).toMatchObject({
@@ -936,7 +899,6 @@ describe('computeBoxMetrics - stale metric sources', () => {
       [domainSchema, incompatibleServiceSchema],
       lifecycleStates,
       null,
-      alwaysMatch
     );
 
     expect(result.results[0]).toMatchObject({
@@ -967,7 +929,6 @@ describe('computeBoxMetrics - stale metric sources', () => {
       [domainSchema, currentServiceSchema],
       lifecycleStates,
       null,
-      alwaysMatch,
       tierEnumOptions
     );
 
@@ -1028,7 +989,6 @@ describe('computeBoxMetrics - restricted field groups', () => {
         restrictedSchemas,
         lifecycleStates,
         null,
-        alwaysMatch,
         null,
         noAccessAuthCtx
       );
@@ -1057,7 +1017,6 @@ describe('computeBoxMetrics - restricted field groups', () => {
       restrictedSchemas,
       lifecycleStates,
       null,
-      alwaysMatch,
       tierEnumOptions,
       noAccessAuthCtx
     );
@@ -1082,7 +1041,6 @@ describe('computeBoxMetrics - restricted field groups', () => {
       restrictedSchemas,
       lifecycleStates,
       null,
-      alwaysMatch,
       null,
       viewerAuthCtx
     );
@@ -1101,7 +1059,6 @@ describe('computeBoxMetrics - restricted field groups', () => {
       restrictedSchemas,
       lifecycleStates,
       null,
-      alwaysMatch
     );
     expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
   });
@@ -1127,7 +1084,6 @@ describe('computeBoxMetrics - restricted field groups', () => {
       [domainSchema, restrictedContainmentSchema],
       lifecycleStates,
       null,
-      alwaysMatch,
       null,
       noAccessAuthCtx
     );
@@ -1160,7 +1116,6 @@ describe('computeBoxMetrics - restricted field groups', () => {
       [domainSchema, restrictedContainmentSchema],
       lifecycleStates,
       null,
-      alwaysMatch,
       null,
       viewerAuthCtx
     );
@@ -1341,77 +1296,7 @@ describe('getBoxMetrics', () => {
     expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
   });
 
-  it('applies the current browser filters (owner) to roll-up inputs', async () => {
-    const entities = [
-      makeDomain('d1'),
-      makeService('s1', 'd1', {
-        data: { parent: 'd1', score: 10 },
-        owner: 'team-a'
-      }),
-      makeService('s2', 'd1', {
-        data: { parent: 'd1', score: 20 },
-        owner: 'team-b'
-      })
-    ];
-    const db = makeDb(entities);
-    // The legacy `owner` filter is now folded into the compiled EntityQuery (see
-    // `buildEntityQueryForExecution`) rather than applied in JS, so the compiled-SQL result set
-    // is what determines the match set here — simulate what real SQL would return for `owner:
-    // 'team-a'`.
-    vi.mocked(db.catalog.runCompiledEntityQuery).mockResolvedValue(
-      entities
-        .filter(entity => entity.owner === 'team-a')
-        .map(entity => ({ ...entity, projections: {} }))
-    );
-
-    const result = await getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
-      boxEntityIds: ['d1'],
-      metric: numericMetric,
-      owner: 'team-a'
-    });
-
-    expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
-  });
-
-  it('routes an explicit entityQuery through the IR compiler', async () => {
-    const entities = [
-      makeDomain('d1'),
-      makeService('s1', 'd1', { data: { parent: 'd1', score: 10, tier: 'gold' } }),
-      makeService('s2', 'd1', { data: { parent: 'd1', score: 20, tier: 'silver' } })
-    ];
-    const db = makeDb(entities);
-    vi.mocked(db.catalog.runCompiledEntityQuery).mockResolvedValue(
-      entities
-        .filter(entity => entity.data.tier === 'gold')
-        .map(entity => ({ ...entity, projections: {} }))
-    );
-
-    const result = await getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
-      boxEntityIds: ['d1'],
-      metric: numericMetric,
-      entityQuery: {
-        root: { kind: 'predicate', path: [], fieldId: 'tier', op: 'equals', value: 'gold' }
-      }
-    });
-
-    expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
-  });
-
-  it('rejects an entityQuery with an unknown fieldId with a 400', async () => {
-    const db = makeDb([makeDomain('d1'), makeService('s1', 'd1', { data: { parent: 'd1' } })]);
-
-    await expect(
-      getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
-        boxEntityIds: ['d1'],
-        metric: numericMetric,
-        entityQuery: {
-          root: { kind: 'predicate', path: [], fieldId: 'notAField', op: 'equals', value: 'x' }
-        }
-      })
-    ).rejects.toMatchObject({ status: 400 });
-  });
-
-  it('combines an explicit entityQuery with legacy owner/conditions as an additional AND-gate', async () => {
+  it('ignores browse-filter fields (owner, entityQuery) entirely - they only ever scope which boxes are shown, resolved by the caller before this runs (#3040-map)', async () => {
     const entities = [
       makeDomain('d1'),
       makeService('s1', 'd1', {
@@ -1419,18 +1304,11 @@ describe('getBoxMetrics', () => {
         owner: 'team-a'
       }),
       makeService('s2', 'd1', {
-        data: { parent: 'd1', score: 20, tier: 'gold' },
+        data: { parent: 'd1', score: 20, tier: 'silver' },
         owner: 'team-b'
       })
     ];
     const db = makeDb(entities);
-    // buildEntityQueryForExecution ANDs the explicit entityQuery with owner/lifecycle/q, so the
-    // compiled SQL is expected to already reflect both — simulate that combined result here.
-    vi.mocked(db.catalog.runCompiledEntityQuery).mockResolvedValue(
-      entities
-        .filter(entity => entity.data.tier === 'gold' && entity.owner === 'team-a')
-        .map(entity => ({ ...entity, projections: {} }))
-    );
 
     const result = await getBoxMetrics(db, 'ws-1', permissiveAuthCtx, {
       boxEntityIds: ['d1'],
@@ -1441,7 +1319,8 @@ describe('getBoxMetrics', () => {
       }
     });
 
-    expect(result.results[0]).toMatchObject({ value: 10, sourceCount: 1, populatedCount: 1 });
+    // Both s1 and s2 contribute, despite s2 matching neither the owner nor the entityQuery filter.
+    expect(result.results[0]).toMatchObject({ value: 30, sourceCount: 2, populatedCount: 2 });
   });
 
   it('accepts a "worst" aggregation for an enum source', async () => {

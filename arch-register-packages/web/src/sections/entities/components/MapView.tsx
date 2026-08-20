@@ -494,7 +494,14 @@ export const MapView = ({
     const filter = (entry: RenderTreeNode): RenderTreeNode | null => {
       if (!isRelationMapNode(entry.node)) {
         const result = resultsByBoxId.get(entry.node._uid);
-        if (hasMissingMetricData(metricConfig, result)) return null;
+        // A leaf box whose own schema matches the metric source (e.g. the System itself carries
+        // the budget field being summed) has no *descendants* for the traversal to find, so the
+        // aggregate is legitimately empty - `getDirectMetricValue` is the same fallback already
+        // used for box color/hover text in this case, so "hide missing" must honor it too, or it
+        // hides exactly the boxes that actually have the data (#3040-map).
+        const isLeaf = entry.children.length === 0;
+        const directValue = getDirectMetricValue(entry.node, metricConfig, metricSourceSchema, isLeaf);
+        if (hasMissingMetricData(metricConfig, result) && directValue == null) return null;
       }
       return {
         ...entry,
@@ -504,7 +511,7 @@ export const MapView = ({
       };
     };
     return renderTree.map(filter).filter((entry): entry is RenderTreeNode => entry !== null);
-  }, [cfg.hideMissingMetricData, metricConfig, renderTree, resultsByBoxId]);
+  }, [cfg.hideMissingMetricData, metricConfig, metricSourceSchema, renderTree, resultsByBoxId]);
 
   const boxStyle = useCallback(
     (node: TreeNode, isLeaf: boolean): React.CSSProperties | undefined => {
