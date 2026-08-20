@@ -1,4 +1,4 @@
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useState } from 'react';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspaceContract';
@@ -20,6 +20,7 @@ import { FilterBuilder } from '../../../components/FilterBuilder';
 import { AGGREGATION_OPTIONS, isCurrencyMetric, isEnumSource, sourceKey } from './mapMetricConfig';
 import type { MetricSourceOption } from './mapMetricConfig';
 import type { MapConfig } from './mapViewConfig';
+import type { MapLevelConfig } from './mapViewState';
 import { HopPicker } from './pathBuilder/HopPicker';
 import { HopSequence } from './pathBuilder/HopSequence';
 import {
@@ -152,6 +153,10 @@ const MapLevelHop = ({
       onChangeStep(step, stepContext.options.find(option => option.step === step)?.targetSchemaIds);
     }
   }, [hasSavedStep, step, stepContext, onChangeStep]);
+  const candidateSchemaIds = useMemo(
+    () => (step && isLastLevel ? targetSchemaIdsForStep(step, schemas, relationSchemas) : []),
+    [step, isLastLevel, schemas, relationSchemas]
+  );
   if (!step) {
     return (
       <div className={styles.axisPill}>
@@ -159,9 +164,6 @@ const MapLevelHop = ({
       </div>
     );
   }
-  const candidateSchemaIds = isLastLevel
-    ? targetSchemaIdsForStep(step, schemas, relationSchemas)
-    : [];
   return (
     <div className={styles.axisPill}>
       <HopPicker
@@ -209,6 +211,49 @@ const MapLevelHop = ({
   );
 };
 
+type LevelStepContext = {
+  useHopPicker: boolean;
+  stepContext: PathStepContext | null;
+  resolvedStep: PathStep | undefined;
+};
+
+/** For each level, resolves whether it can use the `HopPicker` (every level before it, including
+ *  Level 1, must already have a resolved step/schema) and, if so, its `stepContext` - computed
+ *  once per level here (mirroring Traceability's `hopEntries`) and reused for both rendering and
+ *  resolving the target schema on selection, so the two can never drift apart the way they did
+ *  when each computed it independently (#3040-map). Hoisted out of `renderItem` and memoized so an
+ *  unrelated re-render (e.g. toggling the hierarchy panel) doesn't re-scan every schema/field for
+ *  every level. */
+const resolveLevelStepContexts = (
+  levelConfigs: MapLevelConfig[],
+  rootSchemaScope: PathSchemaScope,
+  schemas: EntitySchema[],
+  relationSchemas: RelationSchema[],
+  getFieldGroupAccess: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess
+): LevelStepContext[] => {
+  const level0Ok =
+    levelConfigs[0]?.schemaId == null ||
+    schemas.some(schema => schema.id === levelConfigs[0]!.schemaId);
+  return levelConfigs.map((level, index) => {
+    const priorStepsRaw = levelConfigs.slice(1, index).map(candidate => candidate.step);
+    const priorSteps = priorStepsRaw.filter((step): step is PathStep => step != null);
+    const priorStepsResolved = priorSteps.length === priorStepsRaw.length;
+    const useHopPicker = index > 0 && priorStepsResolved && level0Ok;
+    const stepContext = useHopPicker
+      ? pathStepContextWithFallbackDirection({
+          rootSchemaScope,
+          steps: level.step ? [...priorSteps, level.step] : priorSteps,
+          depth: index - 1,
+          schemas,
+          relationSchemas,
+          getFieldGroupAccess
+        })
+      : null;
+    const resolvedStep = stepContext ? (level.step ?? stepContext.options[0]?.step) : undefined;
+    return { useHopPicker, stepContext, resolvedStep };
+  });
+};
+
 export const MapConfigControls = ({
   hideToolbar,
   cfg,
@@ -236,6 +281,17 @@ export const MapConfigControls = ({
   numeratorConditionPopoverRef
 }: MapConfigControlsProps) => {
   const [hierarchyOpen, setHierarchyOpen] = useState(true);
+  const levelStepContexts = useMemo(
+    () =>
+      resolveLevelStepContexts(
+        cfg.levelConfigs,
+        rootSchemaScope,
+        schemas,
+        relationSchemas,
+        getFieldGroupAccess
+      ),
+    [cfg.levelConfigs, rootSchemaScope, schemas, relationSchemas, getFieldGroupAccess]
+  );
   return (
     <>
       {!hideToolbar && (
@@ -273,36 +329,7 @@ export const MapConfigControls = ({
                   )
                 }
                 renderItem={(level, index) => {
-                  // Every level before this one needs an already-resolved step for this level's hop to be
-                  // computable, and Level 1 must not be a relation-as-its-own-level (legacy feature, not
-                  // representable as a PathStep) - otherwise this level falls back to the legacy schema
-                  // select below.
-                  const priorStepsRaw = cfg.levelConfigs
-                    .slice(1, index)
-                    .map(candidate => candidate.step);
-                  const priorSteps = priorStepsRaw.filter((step): step is PathStep => step != null);
-                  const priorStepsResolved = priorSteps.length === priorStepsRaw.length;
-                  const level0Ok =
-                    cfg.levelConfigs[0]?.schemaId == null ||
-                    schemas.some(schema => schema.id === cfg.levelConfigs[0]!.schemaId);
-                  const useHopPicker = index > 0 && priorStepsResolved && level0Ok;
-                  // One `stepContext`, computed once, drives both what's rendered and what a selection
-                  // resolves to - the same pattern Traceability's `hopEntries` uses. Two independent
-                  // computations (one for display, one for persistence) is what let them drift apart and
-                  // save a step without its resolved schema (#3040-map).
-                  const stepContext = useHopPicker
-                    ? pathStepContextWithFallbackDirection({
-                        rootSchemaScope,
-                        steps: level.step ? [...priorSteps, level.step] : priorSteps,
-                        depth: index - 1,
-                        schemas,
-                        relationSchemas,
-                        getFieldGroupAccess
-                      })
-                    : null;
-                  const resolvedStep = stepContext
-                    ? (level.step ?? stepContext.options[0]?.step)
-                    : undefined;
+                  const { useHopPicker, stepContext, resolvedStep } = levelStepContexts[index]!;
 
                   return (
                     <div className={styles.levelControl}>

@@ -50,6 +50,7 @@ import {
   collectMapChainNodeIds,
   decodeMapChainsByRoot,
   isRelationMapNode,
+  toTreeNode,
   useMapTraversal,
   type RenderTreeNode
 } from './mapViewTraversal';
@@ -82,6 +83,31 @@ type MapViewProps = {
   joinAssessmentId?: string | null;
   joinedAssessment?: JoinedAssessmentContext | null;
   onCountChange?: (count: number) => void;
+};
+
+// Under chain traversal, the terminal schema comes from the last hop's resolved candidates (or,
+// for a single-level map with no hops at all, the root scope) rather than the level's own
+// possibly-arbitrary `schemaId` - when that resolves to more than one schema and no explicit
+// target was picked, there's no single schema to read fields from, so the metric falls back to
+// schema-agnostic fields only (#3040-map).
+const resolveMetricTerminalSchemaId = (args: {
+  useChainTraversal: boolean;
+  fullHopChain: PathStep[] | null;
+  lastHopCandidateSchemaIds: string[];
+  lastLevelTargetSchemaId: string | null;
+  rootSchemaScope: PathSchemaScope;
+  legacyTerminalSchemaId: string | null;
+}): string | null => {
+  const { useChainTraversal, fullHopChain, lastHopCandidateSchemaIds, lastLevelTargetSchemaId, rootSchemaScope } =
+    args;
+  if (!useChainTraversal) return args.legacyTerminalSchemaId;
+  if (fullHopChain && fullHopChain.length > 0) {
+    return lastHopCandidateSchemaIds.length <= 1
+      ? (lastHopCandidateSchemaIds[0] ?? null)
+      : lastLevelTargetSchemaId;
+  }
+  if (rootSchemaScope !== 'any' && rootSchemaScope.length === 1) return rootSchemaScope[0]!;
+  return null;
 };
 
 export const MapView = ({
@@ -321,7 +347,7 @@ export const MapView = ({
   );
   const level1Items = useChainTraversal
     ? [...chainRoots.data]
-        .map(entity => ({ ...entity, _isMatch: true }) as TreeNode)
+        .map(toTreeNode)
         .sort((a, b) => (a._name ?? a._slug).localeCompare(b._name ?? b._slug))
     : legacyTraversal.level1Items;
   const renderTree = useChainTraversal ? chainRenderTree : legacyTraversal.renderTree;
@@ -375,20 +401,14 @@ export const MapView = ({
   );
   const mapTraversalPath = mapTraversal.path;
   const mapTraversalError = 'error' in mapTraversal ? mapTraversal.error : undefined;
-  // Under chain traversal, the terminal schema comes from the last hop's resolved candidates (or,
-  // for a single-level map with no hops at all, the root scope) rather than the level's own
-  // possibly-arbitrary `schemaId` - when that resolves to more than one schema and no explicit
-  // target was picked, there's no single schema to read fields from, so the metric falls back to
-  // schema-agnostic fields only (#3040-map).
-  const metricTerminalSchemaId = useChainTraversal
-    ? fullHopChain && fullHopChain.length > 0
-      ? lastHopCandidateSchemaIds.length <= 1
-        ? (lastHopCandidateSchemaIds[0] ?? null)
-        : lastLevelTargetSchemaId
-      : rootSchemaScope !== 'any' && rootSchemaScope.length === 1
-        ? rootSchemaScope[0]!
-        : null
-    : (cfg.levelConfigs.at(-1)?.schemaId ?? null);
+  const metricTerminalSchemaId = resolveMetricTerminalSchemaId({
+    useChainTraversal,
+    fullHopChain,
+    lastHopCandidateSchemaIds,
+    lastLevelTargetSchemaId,
+    rootSchemaScope,
+    legacyTerminalSchemaId: cfg.levelConfigs.at(-1)?.schemaId ?? null
+  });
   const metricTerminalEntitySchema = metricTerminalSchemaId
     ? schemaMap.get(metricTerminalSchemaId)?.schema
     : undefined;

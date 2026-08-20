@@ -1,4 +1,4 @@
-import type { PathStep } from '@arch-register/api-types/entityQueryIR';
+import type { EntityQuery, PathStep } from '@arch-register/api-types/entityQueryIR';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
@@ -46,6 +46,25 @@ export const decodeChainProjection = (value: unknown): PathChain[] => {
     )
     .filter(chain => chain.length > 0)
     .sort(compareChains);
+};
+
+/** Adds a single correlated `chain: true` projection for `path` (aliased `alias`) onto `query`'s
+ *  root scope, unless a projection with that alias already exists - shared by Map's
+ *  `buildMapChainQuery` and Traceability's `buildTraceabilityEntityQuery` so the two ways of
+ *  attaching a chain to a query can't drift apart. An empty `path` adds no projection, since
+ *  `chain: true` requires a non-empty path. */
+export const addChainProjection = (
+  query: EntityQuery | null | undefined,
+  path: PathStep[],
+  alias: string
+): EntityQuery => {
+  const baseQuery: EntityQuery = query ?? { root: { kind: 'and', children: [] } };
+  if (path.length === 0) return baseQuery;
+  if ((baseQuery.projections ?? []).some(p => p.alias === alias)) return baseQuery;
+  return {
+    ...baseQuery,
+    projections: [...(baseQuery.projections ?? []), { path, fieldId: '_id', alias, chain: true }]
+  };
 };
 
 /** Whether `chain`'s leaf (last) node matches `targetSchemaIds` - `'any'` always matches. A
@@ -412,23 +431,14 @@ export const pathStepContext = ({
 
   const step = steps[depth];
   const direction = step ? stepDirection(step) : 'in';
+  const optionsByDirection = {
+    in: pathStepOptions({ direction: 'in', currentSchemaScope, schemas, relationSchemas, getFieldGroupAccess }),
+    out: pathStepOptions({ direction: 'out', currentSchemaScope, schemas, relationSchemas, getFieldGroupAccess })
+  };
   const availableDirections = (['in', 'out'] as const).filter(
-    candidate =>
-      pathStepOptions({
-        direction: candidate,
-        currentSchemaScope,
-        schemas,
-        relationSchemas,
-        getFieldGroupAccess
-      }).length > 0
+    candidate => optionsByDirection[candidate].length > 0
   );
-  const options = pathStepOptions({
-    direction,
-    currentSchemaScope,
-    schemas,
-    relationSchemas,
-    getFieldGroupAccess
-  });
+  const options = optionsByDirection[direction];
   const stepKey = step ? pathStepKey(step) : undefined;
 
   return {

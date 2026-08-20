@@ -10,6 +10,7 @@ import type { RelationSchema } from '@arch-register/api-types/relationSchemaCont
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 import type { BrowserEntityRecord } from './entityBrowserState';
 import {
+  addChainProjection,
   chainMatchesTarget,
   decodeChainProjection,
   groupPathStepOptions,
@@ -155,19 +156,12 @@ export const buildTraceabilityEntityQuery = (
   const baseQuery: EntityQuery = query ?? {
     root: { kind: 'and', children: [] }
   };
-  const existingAliases = new Set(
-    (baseQuery.projections ?? []).map(projection => projection.alias)
-  );
-  const projections = aliases.flatMap(entry => {
-    if (existingAliases.has(entry.alias)) return [];
+  const resultQuery = aliases.reduce((acc, entry) => {
     const path = parsed.paths.find(candidate => candidate.id === entry.pathId)?.path ?? [];
-    return [{ path, fieldId: '_id', alias: entry.alias, chain: true }];
-  });
+    return addChainProjection(acc, path, entry.alias);
+  }, baseQuery);
 
-  return {
-    query: { ...baseQuery, projections: [...(baseQuery.projections ?? []), ...projections] },
-    aliases
-  };
+  return { query: resultQuery, aliases };
 };
 
 export const buildTraceabilityRoots = (

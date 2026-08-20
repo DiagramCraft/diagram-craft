@@ -14,7 +14,11 @@ import {
   getMapRoots,
   type ContainmentTreeIndex
 } from './mapViewState';
-import { decodeChainProjection, type PathChain } from './pathBuilder/pathBuilderState';
+import {
+  addChainProjection,
+  decodeChainProjection,
+  type PathChain
+} from './pathBuilder/pathBuilderState';
 import type { MapConfig } from './mapViewConfig';
 
 export const nodeName = (node: TreeNode) => node._name ?? node._slug;
@@ -65,25 +69,13 @@ export const MAP_CHAIN_PROJECTION_ALIAS = '__map__:chain';
 export const buildMapChainQuery = (
   entityQuery: EntityQuery | null | undefined,
   hopChain: PathStep[]
-): { query: EntityQuery; alias: string } => {
-  const baseQuery: EntityQuery = entityQuery ?? { root: { kind: 'and', children: [] } };
-  if (hopChain.length === 0) return { query: baseQuery, alias: MAP_CHAIN_PROJECTION_ALIAS };
-  if ((baseQuery.projections ?? []).some(p => p.alias === MAP_CHAIN_PROJECTION_ALIAS)) {
-    return { query: baseQuery, alias: MAP_CHAIN_PROJECTION_ALIAS };
-  }
-  return {
-    query: {
-      ...baseQuery,
-      projections: [
-        ...(baseQuery.projections ?? []),
-        { path: hopChain, fieldId: '_id', alias: MAP_CHAIN_PROJECTION_ALIAS, chain: true }
-      ]
-    },
-    alias: MAP_CHAIN_PROJECTION_ALIAS
-  };
-};
+): { query: EntityQuery; alias: string } => ({
+  query: addChainProjection(entityQuery, hopChain, MAP_CHAIN_PROJECTION_ALIAS),
+  alias: MAP_CHAIN_PROJECTION_ALIAS
+});
 
-const toTreeNode = (entity: EntityRecord): TreeNode => ({ ...entity, _isMatch: true }) as TreeNode;
+export const toTreeNode = (entity: EntityRecord): TreeNode =>
+  ({ ...entity, _isMatch: true }) as TreeNode;
 
 /** Decodes every root's chain projection value into `{ rootId -> PathChain[] }`, ready for
  *  `buildTreeFromChains`/`collectMapChainNodeIds`. */

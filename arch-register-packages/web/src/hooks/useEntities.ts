@@ -27,6 +27,8 @@ import {
 import { invalidateEntityVersionQueries } from '../queries/entityVersions';
 import { orpcClient } from '../lib/orpcClient';
 
+const dedupeAndSortIds = (ids: readonly string[]): string[] => [...new Set(ids)].sort();
+
 export const useEntities = (
   workspaceId: string,
   options: EntityListOptions = {},
@@ -192,7 +194,7 @@ export const useEntitiesByIdSet = (
   ids: string[],
   queryOptions?: { enabled?: boolean }
 ) => {
-  const sortedIds = useMemo(() => [...new Set(ids)].sort(), [ids]);
+  const sortedIds = useMemo(() => dedupeAndSortIds(ids), [ids]);
   const enabled = (queryOptions?.enabled ?? true) && sortedIds.length > 0;
   const query = useEntities(
     workspaceId,
@@ -217,7 +219,7 @@ export const useEntitiesByIds = (
   workspaceId: string,
   ids: string[]
 ): Map<string, { name: string; publicId: string }> => {
-  const sortedIds = useMemo(() => [...new Set(ids)].sort(), [ids]);
+  const sortedIds = useMemo(() => dedupeAndSortIds(ids), [ids]);
 
   const results = useQueries({
     queries: sortedIds.map(id => entityDetailQuery(workspaceId, id))

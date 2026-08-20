@@ -12,10 +12,6 @@ export type HopSequenceProps<T> = {
   onAdd: () => void;
   addLabel: string;
   addDisabled?: boolean;
-  /** Whether to show a "›" before the add button - defaults to `items.length > 0`. A caller whose
-   *  last entry isn't "ready" yet (e.g. a level with no schema/hop picked) can override this so
-   *  the separator doesn't appear until adding another entry actually makes sense. */
-  showAddSeparator?: boolean;
   className?: string;
 };
 
