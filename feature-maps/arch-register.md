@@ -323,7 +323,10 @@
           projection field, and unbound relation-schema traversals alike — filtered by field-group access, while
           preserving invalid saved paths for repair. Multi-hop paths render one line per matched root-to-leaf chain
           (not a flattened, uncorrelated bag of every entity touched at each hop), capped at 3 visible chains per
-          cell with a "+N more" expander.
+          cell with a "+N more" expander. Each row also reports a completion roll-up — the share of aligned projects
+          with `complete` status — so a root entity (e.g. a strategy Objective reached via its Initiatives) shows
+          delivery progress alongside its coverage/gap status, without exposing project detail the viewer can't
+          already see.
 
         - @id:ar.entity-views.bubble Users can plot entities across configurable dimensions such as X, Y, size, and
           colour in a bubble view, with optional equally split axes and named quadrant labels persisted in saved views

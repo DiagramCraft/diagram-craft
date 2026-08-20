@@ -622,6 +622,7 @@ export const TraceabilityView = ({
                   ))}
                   <th className={styles.colStatus}>Entity</th>
                   <th className={styles.colStatus}>Delivery</th>
+                  <th className={styles.colStatus}>Completion</th>
                 </tr>
               </thead>
               <tbody>
@@ -705,6 +706,28 @@ export const TraceabilityView = ({
                         <div className={styles.pillProjects}>
                           {row.alignedProjects.map(project => project.name).join(', ')}
                         </div>
+                      )}
+                    </td>
+                    <td className={styles.colStatus}>
+                      {row.completionRate === null ? (
+                        <span className={styles.cellEmpty}>No linked projects</span>
+                      ) : (
+                        <span
+                          className={`${styles.completionText} ${
+                            row.completionRate === 1
+                              ? styles.completionOk
+                              : row.completionRate >= 2 / 3
+                                ? styles.completionPartial
+                                : styles.completionGap
+                          }`}
+                        >
+                          {
+                            row.alignedProjects.filter(project => project.status === 'complete')
+                              .length
+                          }
+                          /{row.alignedProjects.length} projects complete (
+                          {Math.round(row.completionRate * 100)}%)
+                        </span>
                       )}
                     </td>
                   </tr>
