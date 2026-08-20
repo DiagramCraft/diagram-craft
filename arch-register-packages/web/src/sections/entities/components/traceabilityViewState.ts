@@ -59,11 +59,14 @@ export type TraceabilityPathStepContext = PathStepContext;
 export type TraceabilityCoverageRow = TraceabilityRoot & {
   architectureCovered: boolean;
   alignedProjects: Project[];
-  activeDelivery: {
-    projects: Project[];
-  };
+  deliveringProjects: Project[];
   deliveryCovered: boolean;
+  completionRate: number | null;
 };
+
+/** A project counts toward delivery coverage unless it was cancelled - draft, active, and
+ *  complete projects all represent (or represented) real delivery work toward the objective. */
+const isDeliveringStatus = (status: Project['status']) => status !== 'cancelled';
 
 export type TraceabilityCoverage = {
   rows: TraceabilityCoverageRow[];
@@ -201,15 +204,19 @@ export const buildTraceabilityCoverage = ({
     const alignedProjects = projects.filter(project =>
       (memberships.get(project.id) ?? []).some(entityId => root.graphNodeIds.has(entityId))
     );
-    const activeDelivery = {
-      projects: alignedProjects.filter(project => project.status === 'active')
-    };
+    const deliveringProjects = alignedProjects.filter(project => isDeliveringStatus(project.status));
+    const completionRate =
+      alignedProjects.length === 0
+        ? null
+        : alignedProjects.filter(project => project.status === 'complete').length /
+          alignedProjects.length;
     return {
       ...root,
       architectureCovered: root.paths.some(path => path.chains.length > 0),
       alignedProjects,
-      activeDelivery,
-      deliveryCovered: activeDelivery.projects.length > 0
+      deliveringProjects,
+      deliveryCovered: deliveringProjects.length > 0,
+      completionRate
     };
   });
 

@@ -431,6 +431,24 @@
   color: var(--base-fg-more-dim);
 }
 
+/* Completion text - colour only, no chip */
+.completionText {
+  font-size: 10.5px;
+  font-weight: 600;
+}
+
+.completionOk {
+  color: var(--green);
+}
+
+.completionPartial {
+  color: var(--warning-fg);
+}
+
+.completionGap {
+  color: var(--error-fg);
+}
+
 /* ── Gap sections ────────────────────────────────────────────── */
 
 .gapSection {
