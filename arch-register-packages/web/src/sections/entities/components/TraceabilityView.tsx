@@ -8,6 +8,7 @@ import {
   type PathStep
 } from '@arch-register/api-types/entityQueryIR';
 import { HopPicker } from './pathBuilder/HopPicker';
+import { HopSequence } from './pathBuilder/HopSequence';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { Project } from '@arch-register/api-types/projectCrudContract';
@@ -379,7 +380,7 @@ export const TraceabilityView = ({
           {configOpen && (
             <div className={styles.configBody}>
               {editorConfig.paths.map(path => {
-                const hopEntries = path.path.map((step, depth) => {
+                const hopEntries = path.path.map((_step, depth) => {
                   const stepContext = traceabilityPathStepContext({
                     rootSchemaScope,
                     path,
@@ -392,35 +393,7 @@ export const TraceabilityView = ({
                     ? null
                     : 'This hop is no longer available for the current schema.';
 
-                  return {
-                    depth,
-                    errorMessage,
-                    element: (
-                      <div key={`${path.id}-${depth}`} className={styles.hop}>
-                        {depth > 0 && <span className={styles.hopSep}>›</span>}
-                        <HopPicker
-                          step={step}
-                          stepContext={stepContext}
-                          ariaLabelDirection={`Direction for ${path.id} hop ${depth + 1}`}
-                          ariaLabelHop={`Hop for ${path.id} hop ${depth + 1}`}
-                          onChangeStep={nextStep => updatePathStep(path.id, depth, nextStep)}
-                          onToggleDirection={direction =>
-                            updatePathDirection(path, depth, direction)
-                          }
-                        />
-                        {path.path.length > 1 && depth === path.path.length - 1 && (
-                          <button
-                            type="button"
-                            className={styles.hopRm}
-                            title="Remove hop"
-                            onClick={() => removeLastPathStep(path.id)}
-                          >
-                            <TbTrash size={13} />
-                          </button>
-                        )}
-                      </div>
-                    )
-                  };
+                  return { depth, errorMessage, stepContext };
                 });
 
                 return (
@@ -458,18 +431,40 @@ export const TraceabilityView = ({
                     <span className={styles.pathTargetLabel}>Path</span>
 
                     <div className={styles.hopsCell}>
-                      <span className={styles.hopsRow}>
-                        {hopEntries.map(entry => entry.element)}
-                        {hopEntries.length > 0 && <span className={styles.hopSep}>›</span>}
-                        <button
-                          type="button"
-                          className={styles.addHop}
-                          onClick={() => addPathStep(path.id)}
-                          disabled={!canAddHop(path)}
-                        >
-                          + Add hop
-                        </button>
-                      </span>
+                      <HopSequence
+                        items={path.path}
+                        getItemKey={(_step, depth) => `${path.id}-${depth}`}
+                        renderItem={(step, depth) => {
+                          const { stepContext } = hopEntries[depth]!;
+                          return (
+                            <div className={styles.hop}>
+                              <HopPicker
+                                step={step}
+                                stepContext={stepContext}
+                                ariaLabelDirection={`Direction for ${path.id} hop ${depth + 1}`}
+                                ariaLabelHop={`Hop for ${path.id} hop ${depth + 1}`}
+                                onChangeStep={nextStep => updatePathStep(path.id, depth, nextStep)}
+                                onToggleDirection={direction =>
+                                  updatePathDirection(path, depth, direction)
+                                }
+                              />
+                              {path.path.length > 1 && depth === path.path.length - 1 && (
+                                <button
+                                  type="button"
+                                  className={styles.hopRm}
+                                  title="Remove hop"
+                                  onClick={() => removeLastPathStep(path.id)}
+                                >
+                                  <TbTrash size={13} />
+                                </button>
+                              )}
+                            </div>
+                          );
+                        }}
+                        onAdd={() => addPathStep(path.id)}
+                        addLabel="Add hop"
+                        addDisabled={!canAddHop(path)}
+                      />
 
                       {hopEntries.some(entry => entry.errorMessage) && (
                         <div className={styles.hopErrors}>

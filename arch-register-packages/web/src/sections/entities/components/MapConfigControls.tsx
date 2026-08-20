@@ -21,6 +21,7 @@ import { AGGREGATION_OPTIONS, isCurrencyMetric, isEnumSource, sourceKey } from '
 import type { MetricSourceOption } from './mapMetricConfig';
 import type { MapConfig } from './mapViewConfig';
 import { HopPicker } from './pathBuilder/HopPicker';
+import { HopSequence } from './pathBuilder/HopSequence';
 import {
   pathStepContextWithFallbackDirection,
   pathStepOptions,
@@ -238,165 +239,155 @@ export const MapConfigControls = ({
     {!hideToolbar && (
       <div className={styles.config}>
         <span className={styles.axisKicker}>Hierarchy</span>
-        {cfg.levelConfigs.map((level, index) => {
-          // Every level before this one needs an already-resolved step for this level's hop to be
-          // computable, and Level 1 must not be a relation-as-its-own-level (legacy feature, not
-          // representable as a PathStep) - otherwise this level falls back to the legacy schema
-          // select below.
-          const priorStepsRaw = cfg.levelConfigs.slice(1, index).map(candidate => candidate.step);
-          const priorSteps = priorStepsRaw.filter((step): step is PathStep => step != null);
-          const priorStepsResolved = priorSteps.length === priorStepsRaw.length;
-          const level0Ok =
-            cfg.levelConfigs[0]?.schemaId == null ||
-            schemas.some(schema => schema.id === cfg.levelConfigs[0]!.schemaId);
-          const useHopPicker = index > 0 && priorStepsResolved && level0Ok;
-          // One `stepContext`, computed once, drives both what's rendered and what a selection
-          // resolves to - the same pattern Traceability's `hopEntries` uses. Two independent
-          // computations (one for display, one for persistence) is what let them drift apart and
-          // save a step without its resolved schema (#3040-map).
-          const stepContext = useHopPicker
-            ? pathStepContextWithFallbackDirection({
-                rootSchemaScope,
-                steps: level.step ? [...priorSteps, level.step] : priorSteps,
-                depth: index - 1,
-                schemas,
-                relationSchemas,
-                getFieldGroupAccess
-              })
-            : null;
-          const resolvedStep = stepContext
-            ? (level.step ?? stepContext.options[0]?.step)
-            : undefined;
+        <HopSequence
+          items={cfg.levelConfigs}
+          getItemKey={(_level, index) => index}
+          onAdd={() =>
+            notify({
+              levelConfigs: [...cfg.levelConfigs, { schemaId: null, columns: 3, hidden: false }]
+            })
+          }
+          addLabel="Add level"
+          addDisabled={
+            !(
+              cfg.levelConfigs.at(-1)?.schemaId != null ||
+              (useChainTraversal && cfg.levelConfigs.length === 1)
+            )
+          }
+          renderItem={(level, index) => {
+            // Every level before this one needs an already-resolved step for this level's hop to be
+            // computable, and Level 1 must not be a relation-as-its-own-level (legacy feature, not
+            // representable as a PathStep) - otherwise this level falls back to the legacy schema
+            // select below.
+            const priorStepsRaw = cfg.levelConfigs.slice(1, index).map(candidate => candidate.step);
+            const priorSteps = priorStepsRaw.filter((step): step is PathStep => step != null);
+            const priorStepsResolved = priorSteps.length === priorStepsRaw.length;
+            const level0Ok =
+              cfg.levelConfigs[0]?.schemaId == null ||
+              schemas.some(schema => schema.id === cfg.levelConfigs[0]!.schemaId);
+            const useHopPicker = index > 0 && priorStepsResolved && level0Ok;
+            // One `stepContext`, computed once, drives both what's rendered and what a selection
+            // resolves to - the same pattern Traceability's `hopEntries` uses. Two independent
+            // computations (one for display, one for persistence) is what let them drift apart and
+            // save a step without its resolved schema (#3040-map).
+            const stepContext = useHopPicker
+              ? pathStepContextWithFallbackDirection({
+                  rootSchemaScope,
+                  steps: level.step ? [...priorSteps, level.step] : priorSteps,
+                  depth: index - 1,
+                  schemas,
+                  relationSchemas,
+                  getFieldGroupAccess
+                })
+              : null;
+            const resolvedStep = stepContext
+              ? (level.step ?? stepContext.options[0]?.step)
+              : undefined;
 
-          return (
-            <div key={index} className={styles.levelControl}>
-              {index > 0 && <span className={styles.cross}>›</span>}
-              {index === 0 && useChainTraversal ? (
-                <div className={styles.axisPill}>
-                  <span className={styles.pathSummary}>Root</span>
-                </div>
-              ) : useHopPicker && stepContext ? (
-                <MapLevelHop
-                  index={index}
-                  step={resolvedStep}
-                  stepContext={stepContext}
-                  hasSavedStep={level.step != null}
-                  schemas={schemas}
-                  relationSchemas={relationSchemas}
-                  getFieldGroupAccess={getFieldGroupAccess}
-                  onChangeStep={(step, targetSchemaIds) => {
-                    const nextLevels = cfg.levelConfigs
-                      .slice(0, index + 1)
-                      .map((candidate, candidateIndex) =>
-                        candidateIndex === index
-                          ? {
-                              ...candidate,
-                              schemaId: targetSchemaIds?.[0] ?? candidate.schemaId,
-                              step
-                            }
-                          : candidate
+            return (
+              <div className={styles.levelControl}>
+                {index === 0 && useChainTraversal ? (
+                  <div className={styles.axisPill}>
+                    <span className={styles.pathSummary}>Root</span>
+                  </div>
+                ) : useHopPicker && stepContext ? (
+                  <MapLevelHop
+                    index={index}
+                    step={resolvedStep}
+                    stepContext={stepContext}
+                    hasSavedStep={level.step != null}
+                    schemas={schemas}
+                    relationSchemas={relationSchemas}
+                    getFieldGroupAccess={getFieldGroupAccess}
+                    onChangeStep={(step, targetSchemaIds) => {
+                      const nextLevels = cfg.levelConfigs
+                        .slice(0, index + 1)
+                        .map((candidate, candidateIndex) =>
+                          candidateIndex === index
+                            ? {
+                                ...candidate,
+                                schemaId: targetSchemaIds?.[0] ?? candidate.schemaId,
+                                step
+                              }
+                            : candidate
+                        );
+                      notify({ levelConfigs: nextLevels });
+                    }}
+                    isLastLevel={index === cfg.levelConfigs.length - 1}
+                    targetSchemaId={level.targetSchemaId ?? null}
+                    onChangeTargetSchemaId={targetSchemaId => {
+                      const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
+                        candidateIndex === index ? { ...candidate, targetSchemaId } : candidate
                       );
-                    notify({ levelConfigs: nextLevels });
-                  }}
-                  isLastLevel={index === cfg.levelConfigs.length - 1}
-                  targetSchemaId={level.targetSchemaId ?? null}
-                  onChangeTargetSchemaId={targetSchemaId => {
+                      notify({ levelConfigs: nextLevels });
+                    }}
+                  />
+                ) : (
+                  <SchemaSelect
+                    value={level.schemaId}
+                    options={levelSchemaOptions[index] ?? []}
+                    onChange={id => {
+                      const nextLevels = cfg.levelConfigs
+                        .slice(0, index + 1)
+                        .map((candidate, candidateIndex) =>
+                          candidateIndex === index
+                            ? { ...candidate, schemaId: id, step: undefined }
+                            : candidate
+                        );
+                      notify({ levelConfigs: nextLevels });
+                    }}
+                  />
+                )}
+                <ColsSelect
+                  value={level.columns}
+                  onChange={columns => {
                     const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
-                      candidateIndex === index ? { ...candidate, targetSchemaId } : candidate
+                      candidateIndex === index ? { ...candidate, columns } : candidate
                     );
                     notify({ levelConfigs: nextLevels });
                   }}
                 />
-              ) : (
-                <SchemaSelect
-                  value={level.schemaId}
-                  options={levelSchemaOptions[index] ?? []}
-                  onChange={id => {
-                    const nextLevels = cfg.levelConfigs
-                      .slice(0, index + 1)
-                      .map((candidate, candidateIndex) =>
-                        candidateIndex === index
-                          ? { ...candidate, schemaId: id, step: undefined }
-                          : candidate
-                      );
-                    notify({ levelConfigs: nextLevels });
-                  }}
-                />
-              )}
-              <ColsSelect
-                value={level.columns}
-                onChange={columns => {
-                  const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
-                    candidateIndex === index ? { ...candidate, columns } : candidate
-                  );
-                  notify({ levelConfigs: nextLevels });
-                }}
-              />
-              {index > 0 && (
-                <>
-                  <button
-                    type="button"
-                    className={`${styles.levelAction} ${level.hidden ? styles.levelHidden : ''}`}
-                    aria-label={`${level.hidden ? 'Show' : 'Hide'} level ${index + 1}`}
-                    aria-pressed={level.hidden === true}
-                    title={`${level.hidden ? 'Show' : 'Hide'} level ${index + 1}`}
-                    onClick={() => {
-                      const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
-                        candidateIndex === index
-                          ? { ...candidate, hidden: candidate.hidden !== true }
-                          : candidate
-                      );
-                      notify({ levelConfigs: nextLevels });
-                    }}
-                  >
-                    <TbEyeOff size={13} />
-                  </button>
-                  {index === cfg.levelConfigs.length - 1 && (
+                {index > 0 && (
+                  <>
                     <button
                       type="button"
-                      className={styles.levelAction}
-                      aria-label={`Remove level ${index + 1}`}
-                      onClick={() =>
-                        notify({
-                          levelConfigs: cfg.levelConfigs.filter(
-                            (_, candidateIndex) => candidateIndex !== index
-                          )
-                        })
-                      }
+                      className={`${styles.levelAction} ${level.hidden ? styles.levelHidden : ''}`}
+                      aria-label={`${level.hidden ? 'Show' : 'Hide'} level ${index + 1}`}
+                      aria-pressed={level.hidden === true}
+                      title={`${level.hidden ? 'Show' : 'Hide'} level ${index + 1}`}
+                      onClick={() => {
+                        const nextLevels = cfg.levelConfigs.map((candidate, candidateIndex) =>
+                          candidateIndex === index
+                            ? { ...candidate, hidden: candidate.hidden !== true }
+                            : candidate
+                        );
+                        notify({ levelConfigs: nextLevels });
+                      }}
                     >
-                      <TbTrash size={13} />
+                      <TbEyeOff size={13} />
                     </button>
-                  )}
-                </>
-              )}
-            </div>
-          );
-        })}
-        {(() => {
-          const lastIsReady =
-            cfg.levelConfigs.at(-1)?.schemaId != null ||
-            (useChainTraversal && cfg.levelConfigs.length === 1);
-          return (
-            <>
-              {lastIsReady && <span className={styles.cross}>›</span>}
-              <button
-                type="button"
-                className={styles.levelAction}
-                disabled={!lastIsReady}
-                onClick={() =>
-                  notify({
-                    levelConfigs: [
-                      ...cfg.levelConfigs,
-                      { schemaId: null, columns: 3, hidden: false }
-                    ]
-                  })
-                }
-              >
-                + Add level
-              </button>
-            </>
-          );
-        })()}
+                    {index === cfg.levelConfigs.length - 1 && (
+                      <button
+                        type="button"
+                        className={styles.levelAction}
+                        aria-label={`Remove level ${index + 1}`}
+                        onClick={() =>
+                          notify({
+                            levelConfigs: cfg.levelConfigs.filter(
+                              (_, candidateIndex) => candidateIndex !== index
+                            )
+                          })
+                        }
+                      >
+                        <TbTrash size={13} />
+                      </button>
+                    )}
+                  </>
+                )}
+              </div>
+            );
+          }}
+        />
       </div>
     )}
 
