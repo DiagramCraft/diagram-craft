@@ -237,6 +237,7 @@ export const MapConfigControls = ({
   <>
     {!hideToolbar && (
       <div className={styles.config}>
+        <span className={styles.axisKicker}>Hierarchy</span>
         {cfg.levelConfigs.map((level, index) => {
           // Every level before this one needs an already-resolved step for this level's hop to be
           // computable, and Level 1 must not be a relation-as-its-own-level (legacy feature, not
