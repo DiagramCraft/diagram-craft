@@ -312,10 +312,26 @@ export const pathStepOptions = ({
     }
   }
 
+  // Tracks, per relation/direction, whether the current scope has an owning `typedRelation`
+  // field at all and whether any of them is field-group-viewable - mirrors the server's
+  // `canViewTypedRelationFromEndpoint` (relationAccessControl.ts) default-allow-when-nothing-to-
+  // restrict semantics for this one endpoint side, so the unbound relation-schema traversal below
+  // isn't offered when every owning field for it is restricted from this scope.
+  const relationFieldVisibility = new Map<string, { hasField: boolean; viewable: boolean }>();
+
   for (const schema of scopedSchemas) {
     for (const field of schema.fields) {
       if (field.type !== 'typedRelation' || field.direction !== direction) continue;
-      if (!fieldGroupAllowed(schema, field, getFieldGroupAccess)) continue;
+      const visibilityKey = `${field.relationSchemaId}:${direction}`;
+      const visibility = relationFieldVisibility.get(visibilityKey) ?? {
+        hasField: false,
+        viewable: false
+      };
+      visibility.hasField = true;
+      const allowed = fieldGroupAllowed(schema, field, getFieldGroupAccess);
+      if (allowed) visibility.viewable = true;
+      relationFieldVisibility.set(visibilityKey, visibility);
+      if (!allowed) continue;
       const relation = relationSchemas.find(candidate => candidate.id === field.relationSchemaId);
       if (!relation) continue;
       addOption(
@@ -352,6 +368,8 @@ export const pathStepOptions = ({
   for (const relation of relationSchemas) {
     if (!pathRelationDirections(relation, currentSchemaScope).includes(direction)) continue;
     if (fullyCoveredRelationDirections.has(`${relation.id}:${direction}`)) continue;
+    const visibility = relationFieldVisibility.get(`${relation.id}:${direction}`);
+    if (visibility?.hasField && !visibility.viewable) continue;
     addOption(
       { kind: 'unboundTypedRelation', relationSchemaId: relation.id, direction },
       relation.name,
