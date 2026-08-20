@@ -24,7 +24,7 @@ export type HopSequenceProps<T> = {
  *  row and Map's level row (#3040-map). */
 export const HopSequence = <T,>({
   items,
-  renderItem,x
+  renderItem,
   getItemKey,
   onAdd,
   addLabel,
