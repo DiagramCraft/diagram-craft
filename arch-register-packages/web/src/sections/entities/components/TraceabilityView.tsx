@@ -721,7 +721,10 @@ export const TraceabilityView = ({
                                 : styles.completionGap
                           }`}
                         >
-                          {row.alignedProjects.filter(project => project.status === 'complete').length}
+                          {
+                            row.alignedProjects.filter(project => project.status === 'complete')
+                              .length
+                          }
                           /{row.alignedProjects.length} projects complete (
                           {Math.round(row.completionRate * 100)}%)
                         </span>

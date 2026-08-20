@@ -204,7 +204,9 @@ export const buildTraceabilityCoverage = ({
     const alignedProjects = projects.filter(project =>
       (memberships.get(project.id) ?? []).some(entityId => root.graphNodeIds.has(entityId))
     );
-    const deliveringProjects = alignedProjects.filter(project => isDeliveringStatus(project.status));
+    const deliveringProjects = alignedProjects.filter(project =>
+      isDeliveringStatus(project.status)
+    );
     const completionRate =
       alignedProjects.length === 0
         ? null

@@ -717,6 +717,54 @@ describe('traceabilityViewState', () => {
     expect(coverage.orphanProjectIds).toEqual(new Set(['orphan']));
   });
 
+  it('treats delivery as covered when aligned projects are complete, not just active', () => {
+    const queryResult = buildTraceabilityEntityQuery(null, config);
+    const roots = buildTraceabilityRoots(
+      [
+        makeRoot('objective-1', {
+          '__traceability__supports:chain': [[{ id: 'capability-1', name: 'Capability 1' }]]
+        })
+      ],
+      queryResult.aliases,
+      config
+    );
+    const complete = makeProject('complete-1', 'complete');
+    const coverage = buildTraceabilityCoverage({
+      roots,
+      projects: [complete],
+      memberships: new Map([[complete.id, ['capability-1']]])
+    });
+
+    expect(coverage.rows[0]).toMatchObject({
+      deliveryCovered: true,
+      deliveringProjects: [complete]
+    });
+  });
+
+  it('treats delivery as a gap when every aligned project was cancelled', () => {
+    const queryResult = buildTraceabilityEntityQuery(null, config);
+    const roots = buildTraceabilityRoots(
+      [
+        makeRoot('objective-1', {
+          '__traceability__supports:chain': [[{ id: 'capability-1', name: 'Capability 1' }]]
+        })
+      ],
+      queryResult.aliases,
+      config
+    );
+    const cancelled = makeProject('cancelled-1', 'cancelled');
+    const coverage = buildTraceabilityCoverage({
+      roots,
+      projects: [cancelled],
+      memberships: new Map([[cancelled.id, ['capability-1']]])
+    });
+
+    expect(coverage.rows[0]).toMatchObject({
+      deliveryCovered: false,
+      deliveringProjects: []
+    });
+  });
+
   it('computes completion rate as the share of aligned projects that are complete', () => {
     const queryResult = buildTraceabilityEntityQuery(null, config);
     const roots = buildTraceabilityRoots(
