@@ -446,7 +446,10 @@
           introduction of new project-scoped entities. A member's recorded base and proposed state scrub field
           values from access-restricted field groups for viewers without view access to that group, with an
           undifferentiated "Restricted changes" indicator shown where redaction would otherwise leave a member's
-          diff looking empty.
+          diff looking empty. When the workspace has a strategy model, the planned-change editor also shows the
+          affected objectives derived from the selected existing entities' current `Objective Affects Entity`
+          relationships, with a deduplicated case-level summary and per-entity attribution; new draft entities have
+          no current objective links, and inaccessible relationships remain omitted.
 
             - @id:ar.projects.planned-changes.schedule Users can target a planned entity change to a future date or
               associate it with a project milestone.

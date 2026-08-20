@@ -23,7 +23,13 @@ import type { WorkspaceLifecycleState } from '@arch-register/api-types/workspace
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import type { EntityRecord, EntitySummary } from '@arch-register/api-types/entityContract';
 import { LoadingState } from '../../../components/LoadingState';
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { EntityProposedStateFields } from './EntityProposedStateFields';
+import {
+  AffectedObjectivesMemberLine,
+  AffectedObjectivesSummary,
+  useAffectedObjectives
+} from './AffectedObjectivesPanel';
 import styles from './PlanChangeDialog.module.css';
 
 type Props = {
@@ -189,6 +195,7 @@ export const PlanChangeDialog = ({
   onClose
 }: Props) => {
   const isEditing = !!editCaseId;
+  const { relationSchemas } = useWorkspaceContext();
   const { data: projectEntities = [] } = useProjectEntities(workspaceId, projectId);
   const { data: milestones = [] } = useMilestones(workspaceId, projectId, open);
   const { data: existingCase } = useChangeCase(
@@ -216,6 +223,12 @@ export const PlanChangeDialog = ({
   const [initialized, setInitialized] = useState(false);
   const addEntitySearchRef = useRef<HTMLInputElement>(null);
   useAutoFocus(addEntitySearchRef, { enabled: isAddingEntity, delay: 40 });
+  const affectedObjectives = useAffectedObjectives({
+    workspaceId,
+    memberKeys: memberIds,
+    relationSchemas,
+    enabled: open
+  });
 
   useEffect(() => {
     if (!open) {
@@ -492,6 +505,7 @@ export const PlanChangeDialog = ({
                 style={{ width: '100%' }}
               />
             </FormElement>
+            <AffectedObjectivesSummary state={affectedObjectives} />
           </div>
 
           <div className={styles.layout}>
@@ -567,6 +581,11 @@ export const PlanChangeDialog = ({
                               <div className={styles.entityPaneRowChanges}>
                                 {labels.length > 0 ? labels.join(', ') : 'No changes yet'}
                               </div>
+                              <AffectedObjectivesMemberLine
+                                state={affectedObjectives}
+                                memberKey={memberKey}
+                                isDraft={isDraftKey(memberKey)}
+                              />
                             </button>
                             <button
                               type="button"
