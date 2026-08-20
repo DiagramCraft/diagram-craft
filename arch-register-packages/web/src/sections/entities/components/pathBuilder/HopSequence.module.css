@@ -3,14 +3,34 @@
   align-items: center;
   flex-wrap: wrap;
   gap: 6px;
+
+  --indent: 1.5rem;
+  padding-inline-start: var(--indent);
+
+  & > :first-child {
+    margin-inline-start: calc(var(--indent) * -1);
+  }
+
+  & > * {
+    &::before {
+      content: "›";
+
+      font-size: 13px;
+      color: var(--base-fg-more-dim);
+      font-weight: 300;
+      padding: 0 2px;
+      flex-shrink: 0;
+    }
+    &:first-child {
+      &::before {
+        display: none;
+      }
+    }
+  }
 }
 
-.sequenceSep {
-  font-size: 13px;
-  color: var(--base-fg-more-dim);
-  font-weight: 300;
-  padding: 0 2px;
-  flex-shrink: 0;
+.sequenceAddContainer > button {
+  margin-left: 5px;
 }
 
 .sequenceAdd {

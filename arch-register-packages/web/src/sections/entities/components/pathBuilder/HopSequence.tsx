@@ -24,24 +24,23 @@ export type HopSequenceProps<T> = {
  *  row and Map's level row (#3040-map). */
 export const HopSequence = <T,>({
   items,
-  renderItem,
+  renderItem,x
   getItemKey,
   onAdd,
   addLabel,
   addDisabled = false,
-  showAddSeparator,
   className
 }: HopSequenceProps<T>) => (
   <div className={className ? `${styles.sequence} ${className}` : styles.sequence}>
     {items.map((item, index) => (
       <Fragment key={getItemKey ? getItemKey(item, index) : index}>
-        {index > 0 && <span className={styles.sequenceSep}>›</span>}
         {renderItem(item, index)}
       </Fragment>
     ))}
-    {(showAddSeparator ?? items.length > 0) && <span className={styles.sequenceSep}>›</span>}
-    <button type="button" className={styles.sequenceAdd} onClick={onAdd} disabled={addDisabled}>
-      + {addLabel}
-    </button>
+    <div className={styles.sequenceAddContainer}>
+      <button type="button" className={styles.sequenceAdd} onClick={onAdd} disabled={addDisabled}>
+        + {addLabel}
+      </button>
+    </div>
   </div>
 );
