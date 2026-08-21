@@ -16,6 +16,21 @@ import type {
 } from './conformanceDatabase';
 import { conformanceMappers } from './conformanceDatabase';
 
+// A violation's effective status is derived at read time: an active, unexpired exemption
+// overrides the persisted `v.status` to 'exempt' (exempting a violation never rewrites that
+// column). Filtering must use this same expression, not the raw column, or an exempted
+// violation still matches a `status = 'active'` filter.
+const EFFECTIVE_STATUS_SQL = `
+    CASE
+      WHEN x.id IS NOT NULL
+       AND x.revoked_at IS NULL
+       AND v.status != 'resolved'
+       AND (x.expires_at IS NULL OR x.expires_at > NOW())
+      THEN 'exempt'
+      ELSE v.status
+    END
+`;
+
 const VIOLATION_SELECT = `
   SELECT v.*,
     c.name AS check_name,
@@ -28,14 +43,7 @@ const VIOLATION_SELECT = `
     x.created_by AS exemption_created_by,
     x.created_at AS exemption_created_at,
     x.revoked_at AS exemption_revoked_at,
-    CASE
-      WHEN x.id IS NOT NULL
-       AND x.revoked_at IS NULL
-       AND v.status != 'resolved'
-       AND (x.expires_at IS NULL OR x.expires_at > NOW())
-      THEN 'exempt'
-      ELSE v.status
-    END AS status
+    ${EFFECTIVE_STATUS_SQL} AS status
   FROM conformance_violation v
   JOIN conformance_check c ON c.id = v.check_id
   LEFT JOIN catalog_record e ON e.id = v.entity_id AND e.kind = 'entity'
@@ -187,14 +195,8 @@ export class PostgresConformanceDatabase
       where.push(`e.owner = $${params.length}`);
     }
     if (options.status) {
-      if (options.status === 'exempt') {
-        where.push(
-          "x.id IS NOT NULL AND x.revoked_at IS NULL AND v.status != 'resolved' AND (x.expires_at IS NULL OR x.expires_at > NOW())"
-        );
-      } else {
-        params.push(options.status);
-        where.push(`v.status = $${params.length}`);
-      }
+      params.push(options.status);
+      where.push(`(${EFFECTIVE_STATUS_SQL}) = $${params.length}`);
     }
     if (options.severity) {
       params.push(options.severity);
@@ -215,7 +217,10 @@ export class PostgresConformanceDatabase
        ORDER BY v.last_seen_at DESC, v.id DESC LIMIT $${limitParam} OFFSET $${offsetParam}`,
       [...params, options.limit, options.offset] as Parameters<typeof this.sql.unsafe>[1]
     );
-    return { items: mapDatabaseRows(rows, conformanceMappers.violation), total: Number(countRows[0]?.count ?? 0) };
+    return {
+      items: mapDatabaseRows(rows, conformanceMappers.violation),
+      total: Number(countRows[0]?.count ?? 0)
+    };
   }
 
   async countViolations(workspace: string): Promise<ConformanceViolationCounts> {
@@ -315,7 +320,11 @@ export class PostgresConformanceDatabase
       violation_id: id,
       run_id: null,
       event_type:
-        status === 'acknowledged' ? 'acknowledged' : status === 'resolved' ? 'resolved' : 'observed',
+        status === 'acknowledged'
+          ? 'acknowledged'
+          : status === 'resolved'
+            ? 'resolved'
+            : 'observed',
       details,
       occurred_at: changedAt
     });

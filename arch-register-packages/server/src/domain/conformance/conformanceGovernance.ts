@@ -11,7 +11,10 @@ import {
 import type { GovernanceRegistry } from '../governance/governanceRegistry';
 import { resolveScopeAwareEscalationTarget } from '../governance/governanceOperations';
 import { PermissionChecker } from '@arch-register/permissions';
-import type { ConformanceCheckDbResult, ConformanceViolationDbResult } from './db/conformanceDatabase';
+import type {
+  ConformanceCheckDbResult,
+  ConformanceViolationDbResult
+} from './db/conformanceDatabase';
 
 export const CONFORMANCE_VIOLATION_CASE_KIND = 'conformance.violation';
 
@@ -39,13 +42,16 @@ export const createConformanceGovernanceRegistry = (): GovernanceRegistry =>
           const violation = await db.conformance.getViolation(workspace, subjectId);
           if (!violation) return false;
           const entity = await db.catalog.getEntity(workspace, violation.entity_id);
-          return entity != null && permissionChecker.hasEntityPermission(authCtx, entity, 'view_entity');
+          return (
+            entity != null && permissionChecker.hasEntityPermission(authCtx, entity, 'view_entity')
+          );
         },
         handleDecision: async (tx, { case: caseRow, event, decision }) => {
           if (decision !== 'acknowledge') return;
           const violationId = caseRow.payload['violationId'];
           if (typeof violationId !== 'string') return;
-          const resolution = caseRow.payload['resolution'] === 'resolve' ? 'resolved' : 'acknowledged';
+          const resolution =
+            caseRow.payload['resolution'] === 'resolve' ? 'resolved' : 'acknowledged';
           await tx.conformance.setViolationStatus(
             caseRow.workspace,
             violationId,

@@ -1,10 +1,26 @@
-import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
-import { TbPencil, TbPlayerPlay, TbPlus, TbRefresh, TbShieldCheck } from 'react-icons/tb';
+import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import {
+  TbAlertTriangle,
+  TbCheck,
+  TbClock,
+  TbEye,
+  TbInfoCircle,
+  TbListSearch,
+  TbLock,
+  TbPencil,
+  TbPlayerPlay,
+  TbPlus,
+  TbRefresh,
+  TbShieldCheck,
+  TbSparkles
+} from 'react-icons/tb';
 import type {
   ConformanceCheck,
   ConformanceCheckDefinition,
   ConformanceCheckStatus,
+  ConformanceEvaluationRun,
   ConformanceSeverity,
+  ConformanceViolation,
   CreateConformanceCheck
 } from '@arch-register/api-types/conformanceContract';
 import { DOCUMENT_AI_READ_ONLY_TOOLS } from '@arch-register/api-types/conformanceContract';
@@ -18,9 +34,13 @@ import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Table } from '../../../components/table/Table';
-import { EmptyState } from '../../../components/EmptyState';
-import { LoadingState } from '../../../components/LoadingState';
+import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
+import { Drawer } from '../../../components/Drawer';
+import { EmptyState } from '../../../components/EmptyState';
+import { FilterDropdown } from '../../../components/FilterDropdown';
+import { LoadingState } from '../../../components/LoadingState';
+import { Pagination } from '../../../components/Pagination';
 import { formatDateTime } from '../../../utils/dateFormat';
 import { useAiStatus } from '../../../hooks/useAiConfig';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
@@ -47,6 +67,68 @@ const CHECK_TYPE_LABELS: Record<CheckType, string> = {
   ai_prompt: 'AI prompt'
 };
 
+const CHECK_TYPE_DESCRIPTIONS: Record<CheckType, string> = {
+  scheduled_validation: 'Evaluate a validation expression against every entity of a schema.',
+  query_policy: 'Identify entities matching a saved query.',
+  ai_prompt: 'AI-assisted yes/no conformance check on selected fields.'
+};
+
+const CHECK_TYPE_ICONS: Record<CheckType, typeof TbClock> = {
+  scheduled_validation: TbClock,
+  query_policy: TbListSearch,
+  ai_prompt: TbSparkles
+};
+
+const SEVERITY_META: Record<
+  ConformanceSeverity,
+  { icon: typeof TbAlertTriangle; color: string; label: string }
+> = {
+  error: { icon: TbAlertTriangle, color: 'var(--error-fg)', label: 'Error' },
+  warning: { icon: TbInfoCircle, color: 'var(--warning-fg)', label: 'Warning' }
+};
+
+const SeverityBadge = ({ severity }: { severity: ConformanceSeverity }) => {
+  const meta = SEVERITY_META[severity];
+  const SeverityIcon = meta.icon;
+  return (
+    <span className={styles.severityBadge} style={{ color: meta.color }}>
+      <SeverityIcon size={12} /> {meta.label}
+    </span>
+  );
+};
+
+const STATUS_META: Record<
+  ConformanceCheckStatus,
+  { icon: typeof TbAlertTriangle; dot: string; label: string }
+> = {
+  active: { icon: TbAlertTriangle, dot: 'var(--error-fg)', label: 'Active' },
+  acknowledged: { icon: TbEye, dot: 'var(--cmp-fg-disabled)', label: 'Acknowledged' },
+  resolved: { icon: TbCheck, dot: 'var(--success-fg, var(--green-9))', label: 'Resolved' },
+  exempt: { icon: TbLock, dot: 'var(--accent-fg)', label: 'Exempt' }
+};
+
+const ViolationStatusChip = ({ status }: { status: ConformanceCheckStatus }) => {
+  const meta = STATUS_META[status];
+  const StatusIcon = meta.icon;
+  return (
+    <Chip tone="ghost" dot={meta.dot} icon={<StatusIcon size={11} />}>
+      {meta.label}
+    </Chip>
+  );
+};
+
+const RUN_STATUS_TONE: Record<ConformanceEvaluationRun['status'], string> = {
+  succeeded: 'var(--success-fg, var(--green-9))',
+  running: 'var(--accent-fg)',
+  failed: 'var(--error-fg)'
+};
+
+const RUN_STATUS_LABEL: Record<ConformanceEvaluationRun['status'], string> = {
+  succeeded: 'Succeeded',
+  running: 'Running…',
+  failed: 'Failed'
+};
+
 const STATUS_OPTIONS: Array<{ value: '' | ConformanceCheckStatus; label: string }> = [
   { value: '', label: 'Current and historical' },
   { value: 'active', label: 'Active' },
@@ -63,12 +145,71 @@ const SEVERITY_OPTIONS: Array<{ value: '' | ConformanceSeverity; label: string }
 
 const defaultQuery = JSON.stringify({ root: { kind: 'and', children: [] } }, null, 2);
 
+const AddCheckMenu = ({
+  aiConfigured,
+  onSelect
+}: {
+  aiConfigured: boolean;
+  onSelect: (type: CheckType) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useRef<HTMLDivElement>(null);
+
+  useEffect(() => {
+    if (!open) return;
+    const handler = (event: MouseEvent) => {
+      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
+    };
+    window.addEventListener('mousedown', handler);
+    return () => window.removeEventListener('mousedown', handler);
+  }, [open]);
+
+  return (
+    <div className={styles.addMenuWrap} ref={ref}>
+      <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => setOpen(o => !o)}>
+        Add check
+      </Button>
+      {open && (
+        <div className={styles.addMenu}>
+          {(Object.keys(CHECK_TYPE_LABELS) as CheckType[]).map(type => {
+            const TypeIcon = CHECK_TYPE_ICONS[type];
+            const disabled = type === 'ai_prompt' && !aiConfigured;
+            return (
+              <button
+                key={type}
+                type="button"
+                className={styles.addMenuItem}
+                disabled={disabled}
+                onClick={() => {
+                  setOpen(false);
+                  onSelect(type);
+                }}
+              >
+                <TypeIcon size={14} />
+                <span className={styles.addMenuItemText}>
+                  <span className={styles.menuItemName}>{CHECK_TYPE_LABELS[type]}</span>
+                  <span className={styles.menuItemDesc}>
+                    {disabled
+                      ? 'AI is not configured for this workspace.'
+                      : CHECK_TYPE_DESCRIPTIONS[type]}
+                  </span>
+                </span>
+              </button>
+            );
+          })}
+        </div>
+      )}
+    </div>
+  );
+};
+
 const CheckDialog = ({
   open,
   onClose,
   schemas,
   aiConfigured,
   check,
+  initialType,
   onSubmit,
   pending,
   error
@@ -78,6 +219,7 @@ const CheckDialog = ({
   schemas: EntitySchema[];
   aiConfigured: boolean;
   check: ConformanceCheck | null;
+  initialType: CheckType;
   onSubmit: (body: CreateConformanceCheck) => void;
   pending: boolean;
   error: Error | null;
@@ -104,7 +246,7 @@ const CheckDialog = ({
   const schema = schemas.find(candidate => candidate.id === schemaId) ?? schemas[0];
 
   const reset = useCallback(() => {
-    setType('scheduled_validation');
+    setType(initialType);
     setName('');
     setDescription('');
     setSeverity('error');
@@ -119,7 +261,7 @@ const CheckDialog = ({
     setGovernanceEnabled(false);
     setGovernanceResolution('acknowledge');
     setEnabled(true);
-  }, [schemas]);
+  }, [initialType, schemas]);
 
   useEffect(() => {
     if (!open) return;
@@ -248,15 +390,9 @@ const CheckDialog = ({
       ]}
     >
       <div className={styles.form}>
-        <FormElement label="Check type">
-          <Select.Root value={type} onChange={value => setType(value as CheckType)}>
-            <Select.Item value="scheduled_validation">Scheduled validation</Select.Item>
-            <Select.Item value="query_policy">Query policy</Select.Item>
-            <Select.Item value="ai_prompt" disabled={!aiConfigured}>
-              AI prompt {!aiConfigured ? '(AI unavailable)' : ''}
-            </Select.Item>
-          </Select.Root>
-        </FormElement>
+        <div className={styles.notice}>
+          {CHECK_TYPE_LABELS[type]} — {CHECK_TYPE_DESCRIPTIONS[type]}
+        </div>
         <FormElement label="Name">
           <TextInput value={name} onChange={value => setName(value ?? '')} />
         </FormElement>
@@ -422,6 +558,163 @@ const CheckDialog = ({
   );
 };
 
+const LIFECYCLE_ORDER: ConformanceCheckStatus[] = ['active', 'acknowledged', 'resolved'];
+
+const ViolationDrawer = ({
+  violation,
+  schemas,
+  teams,
+  canManageWorkspaces,
+  onRequestExempt,
+  onClose
+}: {
+  violation: ConformanceViolation;
+  schemas: EntitySchema[];
+  teams: { id: string; name: string }[];
+  canManageWorkspaces: boolean;
+  onRequestExempt: () => void;
+  onClose: () => void;
+}) => {
+  const schemaName =
+    schemas.find(schema => schema.id === violation.schema_id)?.name ?? violation.schema_id ?? '—';
+  const ownerName = teams.find(team => team.id === violation.owner_team_id)?.name ?? 'No owner';
+
+  const finalStep: ConformanceCheckStatus = violation.status === 'exempt' ? 'exempt' : 'resolved';
+  const steps: ConformanceCheckStatus[] = [...LIFECYCLE_ORDER.slice(0, 2), finalStep];
+  const currentIdx =
+    violation.status === 'active' ? 0 : violation.status === 'acknowledged' ? 1 : 2;
+
+  const canExempt =
+    canManageWorkspaces && (violation.status === 'active' || violation.status === 'acknowledged');
+
+  return (
+    <Drawer
+      onClose={onClose}
+      eyebrow={<span className="dim">Violation</span>}
+      title={violation.entity_name ?? violation.entity_id}
+      badges={
+        <>
+          <Chip tone="ghost">{schemaName}</Chip>
+          <Chip tone="ghost">Owner: {ownerName}</Chip>
+        </>
+      }
+      footer={
+        canExempt ? (
+          <Button variant="primary" onClick={onRequestExempt}>
+            Exempt…
+          </Button>
+        ) : undefined
+      }
+    >
+      <div className={styles.dsectionLabel}>Lifecycle</div>
+      <div className={styles.lifecycle}>
+        {steps.map((step, index) => {
+          const meta = STATUS_META[step];
+          const StepIcon = meta.icon;
+          const done = index <= currentIdx;
+          return (
+            <span className={styles.lcStep} key={step}>
+              {index > 0 && <span className={`${styles.lcLine} ${done ? styles.lcDone : ''}`} />}
+              <span className={`${styles.lcDot} ${done ? styles.lcDone : ''}`}>
+                <StepIcon size={11} />
+              </span>
+              <span className={`${styles.lcLabel} ${done ? styles.lcDone : ''}`}>{meta.label}</span>
+            </span>
+          );
+        })}
+      </div>
+
+      <div className={styles.dsectionLabel}>Details</div>
+      <dl className={styles.kv}>
+        <dt>Status</dt>
+        <dd>
+          <ViolationStatusChip status={violation.status} />
+        </dd>
+        <dt>Severity</dt>
+        <dd>
+          <SeverityBadge severity={violation.severity} />
+        </dd>
+        <dt>Check</dt>
+        <dd>{violation.check_name}</dd>
+        <dt>Source type</dt>
+        <dd>{CHECK_TYPE_LABELS[violation.source_type]}</dd>
+        <dt>Message</dt>
+        <dd>{violation.message}</dd>
+        <dt>Last seen</dt>
+        <dd>{formatDateTime(violation.last_seen_at)}</dd>
+        {violation.exemption && (
+          <>
+            <dt>Exempted</dt>
+            <dd>{formatDateTime(violation.exemption.created_at)}</dd>
+            <dt>Reason</dt>
+            <dd>{violation.exemption.reason}</dd>
+            {violation.exemption.expires_at && (
+              <>
+                <dt>Expires</dt>
+                <dd>{formatDateTime(violation.exemption.expires_at)}</dd>
+              </>
+            )}
+          </>
+        )}
+        {violation.resolved_at && (
+          <>
+            <dt>Resolved</dt>
+            <dd>{formatDateTime(violation.resolved_at)}</dd>
+          </>
+        )}
+      </dl>
+    </Drawer>
+  );
+};
+
+const ExemptDialog = ({
+  violation,
+  pending,
+  onSubmit,
+  onClose
+}: {
+  violation: ConformanceViolation;
+  pending: boolean;
+  onSubmit: (reason: string, expiresAt: string | null) => void;
+  onClose: () => void;
+}) => {
+  const [reason, setReason] = useState('Exempted by workspace administrator');
+  const [expiresAt, setExpiresAt] = useState('');
+
+  return (
+    <Dialog
+      open
+      onClose={onClose}
+      title="Exempt violation"
+      sub={violation.entity_name ?? violation.entity_id}
+      width={420}
+      buttons={[
+        { label: 'Cancel', type: 'cancel', onClick: onClose },
+        {
+          label: pending ? 'Exempting…' : 'Exempt',
+          type: 'default',
+          disabled: !reason.trim() || pending,
+          onClick: () =>
+            onSubmit(reason.trim(), expiresAt ? new Date(expiresAt).toISOString() : null)
+        }
+      ]}
+    >
+      <div className={styles.exemptForm}>
+        <FormElement label="Reason">
+          <TextInput
+            value={reason}
+            onChange={value => setReason(value ?? '')}
+            placeholder="Why is this violation exempt?"
+          />
+        </FormElement>
+        <FormElement label="Expires (optional)">
+          <TextInput type="date" value={expiresAt} onChange={value => setExpiresAt(value ?? '')} />
+        </FormElement>
+      </div>
+    </Dialog>
+  );
+};
+
 export const ConformanceSubSection = ({
   workspaceSlug,
   schemas,
@@ -449,37 +742,42 @@ export const ConformanceSubSection = ({
   const [severity, setSeverity] = useState<'' | ConformanceSeverity>('');
   const [dialogOpen, setDialogOpen] = useState(false);
   const [editingCheck, setEditingCheck] = useState<ConformanceCheck | null>(null);
+  const [initialType, setInitialType] = useState<CheckType>('scheduled_validation');
+  const [openViolationId, setOpenViolationId] = useState<string | null>(null);
+  const [exemptTarget, setExemptTarget] = useState<ConformanceViolation | null>(null);
   const createCheck = useCreateConformanceCheck(workspaceSlug);
   const updateCheck = useUpdateConformanceCheck(workspaceSlug);
   const deleteCheck = useDeleteConformanceCheck(workspaceSlug);
   const runConformance = useRunConformance(workspaceSlug);
   const [offset, setOffset] = useState(0);
+  const [pageSize, setPageSize] = useState(50);
   const { data: violations } = useConformanceViolations(workspaceSlug, {
     checkId: checkId || undefined,
     schemaId: schemaId || undefined,
     ownerId: ownerId || undefined,
     status: status || undefined,
     severity: severity || undefined,
-    limit: 50,
+    limit: pageSize,
     offset
   });
   const exemptViolation = useExemptConformanceViolation(workspaceSlug);
 
-  const openCreateDialog = useCallback(() => {
+  const handleAddCheck = useCallback((type: CheckType) => {
     setEditingCheck(null);
+    setInitialType(type);
     setDialogOpen(true);
   }, []);
+
+  const aiConfigured = aiStatus?.configured === true;
 
   useEffect(() => {
     onActionsChange(
       canManageWorkspaces ? (
-        <Button variant="primary" icon={<TbPlus size={12} />} onClick={openCreateDialog}>
-          Add check
-        </Button>
+        <AddCheckMenu aiConfigured={aiConfigured} onSelect={handleAddCheck} />
       ) : undefined
     );
     return () => onActionsChange(undefined);
-  }, [canManageWorkspaces, onActionsChange, openCreateDialog]);
+  }, [aiConfigured, canManageWorkspaces, handleAddCheck, onActionsChange]);
 
   const handleSubmit = (body: CreateConformanceCheck) => {
     if (editingCheck) {
@@ -501,8 +799,7 @@ export const ConformanceSubSection = ({
       }
     });
   };
-  const pageCount = Math.max(1, Math.ceil((violations?.total ?? 0) / 50));
-  const currentPage = Math.floor(offset / 50) + 1;
+  const openViolation = violations?.items.find(item => item.id === openViolationId) ?? null;
 
   return (
     <div className={styles.stack}>
@@ -513,11 +810,11 @@ export const ConformanceSubSection = ({
             <div className={styles.summaryLabel}>Active violations</div>
           </div>
           <div className={styles.summaryCard}>
-            <div className={styles.summaryValue}>{summary.errors}</div>
+            <div className={`${styles.summaryValue} ${styles.toneDanger}`}>{summary.errors}</div>
             <div className={styles.summaryLabel}>Errors</div>
           </div>
           <div className={styles.summaryCard}>
-            <div className={styles.summaryValue}>{summary.warnings}</div>
+            <div className={`${styles.summaryValue} ${styles.toneWarn}`}>{summary.warnings}</div>
             <div className={styles.summaryLabel}>Warnings</div>
           </div>
           <div className={styles.summaryCard}>
@@ -527,6 +824,12 @@ export const ConformanceSubSection = ({
           <div className={styles.summaryCard}>
             <div className={styles.summaryValue}>{summary.exempt}</div>
             <div className={styles.summaryLabel}>Exempt</div>
+          </div>
+          <div className={styles.summaryCard}>
+            <div className={styles.summaryValue} style={{ fontSize: 13 }}>
+              {summary.lastRunAt ? formatDateTime(summary.lastRunAt) : 'Never'}
+            </div>
+            <div className={styles.summaryLabel}>Last completed evaluation</div>
           </div>
         </div>
       )}
@@ -540,96 +843,115 @@ export const ConformanceSubSection = ({
 
       {tab === 'checks' && (
         <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <div>
-              <div className={styles.sectionTitle}>Managed checks</div>
-              <div className={styles.sectionSub}>
-                Central scheduled checks are independent of schema on-save rules.
-              </div>
+          <Banner variant="neutral">
+            Conformance checks are centrally managed and run on demand or on a schedule, unlike
+            schema validation, which checks entities immediately on save. Results here persist for
+            review, acknowledgement, or exemption.
+          </Banner>
+          {canManageWorkspaces && (
+            <div className={styles.toolbar}>
+              <Button
+                size="sm"
+                icon={<TbRefresh size={12} />}
+                disabled={runConformance.isPending}
+                onClick={() => runConformance.mutate(undefined)}
+              >
+                Run workspace scan
+              </Button>
             </div>
-            {canManageWorkspaces && (
-              <div className={styles.actions}>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  icon={<TbPlayerPlay size={13} />}
-                  disabled={runConformance.isPending}
-                  onClick={() => runConformance.mutate(undefined)}
-                >
-                  Run workspace scan
-                </Button>
-              </div>
-            )}
-          </div>
+          )}
           {checksLoading ? (
             <LoadingState text="Loading conformance checks…" size="sm" />
           ) : checksError ? (
             <div className={styles.error}>Conformance checks could not be loaded.</div>
           ) : checks.length === 0 ? (
-            <EmptyState compact title="No centrally managed checks yet." />
+            <EmptyState
+              framed
+              icon={<TbShieldCheck size={24} />}
+              title="No checks configured"
+              subtitle="Conformance checks are centrally managed rules that evaluate entities against architectural and governance expectations. Add a scheduled validation, a query policy, or an AI prompt check to start finding violations across the workspace."
+              action={
+                canManageWorkspaces ? (
+                  <AddCheckMenu aiConfigured={aiConfigured} onSelect={handleAddCheck} />
+                ) : undefined
+              }
+            />
           ) : (
             <div className={styles.tableWrap}>
-              <Table.Root layout="fixed" bordered={false}>
+              <Table.Root layout="fixed">
                 <Table.Head>
                   <Table.Row>
                     <Table.HeaderCell>Name</Table.HeaderCell>
                     <Table.HeaderCell>Type</Table.HeaderCell>
                     <Table.HeaderCell>Severity</Table.HeaderCell>
-                    <Table.HeaderCell>Status</Table.HeaderCell>
+                    <Table.HeaderCell width={80}>Enabled</Table.HeaderCell>
+                    <Table.HeaderCell width={80}>Revision</Table.HeaderCell>
                     <Table.HeaderCell width={230}>Actions</Table.HeaderCell>
                   </Table.Row>
                 </Table.Head>
                 <Table.Body>
-                  {checks.map(check => (
-                    <Table.Row key={check.id}>
-                      <Table.Cell>
-                        <div>{check.name}</div>
-                        <div className={styles.muted}>{check.description ?? 'No description'}</div>
-                      </Table.Cell>
-                      <Table.Cell>{CHECK_TYPE_LABELS[check.definition.type]}</Table.Cell>
-                      <Table.Cell>
-                        <Chip>{check.severity}</Chip>
-                      </Table.Cell>
-                      <Table.Cell>
-                        {check.enabled ? 'Enabled' : 'Disabled'} · rev {check.revision}
-                      </Table.Cell>
-                      <Table.Cell>
-                        {canManageWorkspaces && (
-                          <div className={styles.actions}>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              icon={<TbPencil size={12} />}
-                              onClick={() => {
-                                setEditingCheck(check);
-                                setDialogOpen(true);
-                              }}
-                            >
-                              Edit
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              icon={<TbPlayerPlay size={12} />}
-                              onClick={() => runConformance.mutate(check.id)}
-                            >
-                              Run
-                            </Button>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() => {
-                                if (window.confirm(`Delete '${check.name}'?`))
-                                  deleteCheck.mutate(check.id);
-                              }}
-                            >
-                              Delete
-                            </Button>
+                  {checks.map(check => {
+                    const TypeIcon = CHECK_TYPE_ICONS[check.definition.type];
+                    return (
+                      <Table.Row key={check.id}>
+                        <Table.Cell>
+                          <div>{check.name}</div>
+                          <div className={styles.muted}>
+                            {check.description ?? 'No description'}
                           </div>
-                        )}
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
+                        </Table.Cell>
+                        <Table.Cell>
+                          <span className={styles.typeTag}>
+                            <TypeIcon size={12} /> {CHECK_TYPE_LABELS[check.definition.type]}
+                          </span>
+                        </Table.Cell>
+                        <Table.Cell>
+                          <SeverityBadge severity={check.severity} />
+                        </Table.Cell>
+                        <Table.Cell>
+                          <input type="checkbox" checked={check.enabled} readOnly />
+                        </Table.Cell>
+                        <Table.Cell>
+                          <span className={styles.revision}>v{check.revision}</span>
+                        </Table.Cell>
+                        <Table.Cell>
+                          {canManageWorkspaces && (
+                            <div className={styles.actions}>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                icon={<TbPencil size={12} />}
+                                onClick={() => {
+                                  setEditingCheck(check);
+                                  setDialogOpen(true);
+                                }}
+                              >
+                                Edit
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                icon={<TbPlayerPlay size={12} />}
+                                onClick={() => runConformance.mutate(check.id)}
+                              >
+                                Run
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                onClick={() => {
+                                  if (window.confirm(`Delete '${check.name}'?`))
+                                    deleteCheck.mutate(check.id);
+                                }}
+                              >
+                                Delete
+                              </Button>
+                            </div>
+                          )}
+                        </Table.Cell>
+                      </Table.Row>
+                    );
+                  })}
                 </Table.Body>
               </Table.Root>
             </div>
@@ -639,185 +961,121 @@ export const ConformanceSubSection = ({
 
       {tab === 'violations' && (
         <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <div>
-              <div className={styles.sectionTitle}>Violation history</div>
-              <div className={styles.sectionSub}>
-                Only violations for entities visible to the current member are shown.
-              </div>
-            </div>
-            <Button
-              variant="ghost"
-              size="sm"
-              icon={<TbRefresh size={13} />}
-              onClick={() => setOffset(0)}
-            >
-              Refresh
-            </Button>
-          </div>
           <div className={styles.filterRow}>
-            <Select.Root
+            <FilterDropdown
+              label="Status"
               value={status}
               onChange={value => {
-                setStatus((value ?? '') as '' | ConformanceCheckStatus);
+                setStatus(value as '' | ConformanceCheckStatus);
                 setOffset(0);
               }}
-            >
-              {STATUS_OPTIONS.map(option => (
-                <Select.Item key={option.value} value={option.value}>
-                  {option.label}
-                </Select.Item>
-              ))}
-            </Select.Root>
-            <Select.Root
+              options={STATUS_OPTIONS}
+            />
+            <FilterDropdown
+              label="Severity"
               value={severity}
               onChange={value => {
-                setSeverity((value ?? '') as '' | ConformanceSeverity);
+                setSeverity(value as '' | ConformanceSeverity);
                 setOffset(0);
               }}
-            >
-              {SEVERITY_OPTIONS.map(option => (
-                <Select.Item key={option.value} value={option.value}>
-                  {option.label}
-                </Select.Item>
-              ))}
-            </Select.Root>
-            <Select.Root
+              options={SEVERITY_OPTIONS}
+            />
+            <FilterDropdown
+              label="Check"
               value={checkId}
               onChange={value => {
-                setCheckId(value ?? '');
+                setCheckId(value);
                 setOffset(0);
               }}
-            >
-              <Select.Item value="">All checks</Select.Item>
-              {checks.map(check => (
-                <Select.Item key={check.id} value={check.id}>
-                  {check.name}
-                </Select.Item>
-              ))}
-            </Select.Root>
-            <Select.Root
+              options={[
+                { value: '', label: 'All checks' },
+                ...checks.map(check => ({ value: check.id, label: check.name }))
+              ]}
+            />
+            <FilterDropdown
+              label="Schema"
               value={schemaId}
               onChange={value => {
-                setSchemaId(value ?? '');
+                setSchemaId(value);
                 setOffset(0);
               }}
-            >
-              <Select.Item value="">All schemas</Select.Item>
-              {schemas.map(schema => (
-                <Select.Item key={schema.id} value={schema.id}>
-                  {schema.name}
-                </Select.Item>
-              ))}
-            </Select.Root>
-            <Select.Root
+              options={[
+                { value: '', label: 'All schemas' },
+                ...schemas.map(schema => ({ value: schema.id, label: schema.name }))
+              ]}
+            />
+            <FilterDropdown
+              label="Owner"
               value={ownerId}
               onChange={value => {
-                setOwnerId(value ?? '');
+                setOwnerId(value);
                 setOffset(0);
               }}
-            >
-              <Select.Item value="">All owners</Select.Item>
-              {teams.map(team => (
-                <Select.Item key={team.id} value={team.id}>
-                  {team.name}
-                </Select.Item>
-              ))}
-            </Select.Root>
+              options={[
+                { value: '', label: 'All owners' },
+                ...teams.map(team => ({ value: team.id, label: team.name }))
+              ]}
+            />
           </div>
           {!violations ? (
             <LoadingState text="Loading violations…" size="sm" />
           ) : violations.items.length === 0 ? (
             <div className={styles.empty}>No violations match the current filter.</div>
           ) : (
-            <div className={styles.tableWrap}>
-              <Table.Root layout="fixed" bordered={false}>
-                <Table.Head>
-                  <Table.Row>
-                    <Table.HeaderCell>Entity</Table.HeaderCell>
-                    <Table.HeaderCell>Check / source</Table.HeaderCell>
-                    <Table.HeaderCell>Schema / owner</Table.HeaderCell>
-                    <Table.HeaderCell>Severity</Table.HeaderCell>
-                    <Table.HeaderCell>Status</Table.HeaderCell>
-                    <Table.HeaderCell>Last seen</Table.HeaderCell>
-                    <Table.HeaderCell width={100}>Action</Table.HeaderCell>
-                  </Table.Row>
-                </Table.Head>
-                <Table.Body>
-                  {violations.items.map(violation => (
-                    <Table.Row key={violation.id}>
-                      <Table.Cell>
-                        <div>{violation.entity_name ?? violation.entity_id}</div>
-                        <div className={styles.muted}>{violation.message}</div>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <div>{violation.check_name}</div>
-                        <div className={styles.muted}>
-                          {CHECK_TYPE_LABELS[violation.source_type]}
-                        </div>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <div>
-                          {schemas.find(schema => schema.id === violation.schema_id)?.name ??
-                            violation.schema_id ??
-                            '—'}
-                        </div>
-                        <div className={styles.muted}>
-                          {teams.find(team => team.id === violation.owner_team_id)?.name ??
-                            'No owner'}
-                        </div>
-                      </Table.Cell>
-                      <Table.Cell>
-                        <Chip>{violation.severity}</Chip>
-                      </Table.Cell>
-                      <Table.Cell>
-                        {violation.status}
-                        {violation.exemption ? ` · ${violation.exemption.reason}` : ''}
-                      </Table.Cell>
-                      <Table.Cell>{formatDateTime(violation.last_seen_at)}</Table.Cell>
-                      <Table.Cell>
-                        {canManageWorkspaces &&
-                          (violation.status === 'active' ||
-                            violation.status === 'acknowledged') && (
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              onClick={() =>
-                                exemptViolation.mutate({
-                                  id: violation.id,
-                                  body: { reason: 'Exempted by workspace administrator' }
-                                })
-                              }
-                            >
-                              Exempt
-                            </Button>
-                          )}
-                      </Table.Cell>
-                    </Table.Row>
-                  ))}
-                </Table.Body>
-              </Table.Root>
-              <div className={styles.filterRow}>
-                <span className={styles.muted}>
-                  Page {currentPage} of {pageCount}
-                </span>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={offset === 0}
-                  onClick={() => setOffset(Math.max(0, offset - 50))}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="sm"
-                  disabled={currentPage >= pageCount}
-                  onClick={() => setOffset(offset + 50)}
-                >
-                  Next
-                </Button>
-              </div>
+            <div className={styles.vlist}>
+              {violations.items.map(violation => {
+                const violationSchemaName =
+                  schemas.find(schema => schema.id === violation.schema_id)?.name ??
+                  violation.schema_id ??
+                  '—';
+                const violationOwnerName =
+                  teams.find(team => team.id === violation.owner_team_id)?.name ?? 'No owner';
+                return (
+                  <div
+                    key={violation.id}
+                    className={styles.vrow}
+                    onClick={() => setOpenViolationId(violation.id)}
+                  >
+                    <div className={styles.vrowMain}>
+                      <div className={styles.vrowHead}>
+                        <span className={styles.vrowEntity}>
+                          {violation.entity_name ?? violation.entity_id}
+                        </span>
+                        <SeverityBadge severity={violation.severity} />
+                      </div>
+                      <div className={styles.vrowMsg}>{violation.message}</div>
+                      <div className={styles.vrowMeta}>
+                        <span>{violation.check_name}</span>
+                        <span>·</span>
+                        <span>{violationSchemaName}</span>
+                        <span>·</span>
+                        <span>Owner: {violationOwnerName}</span>
+                        <span>·</span>
+                        <span>Last seen {formatDateTime(violation.last_seen_at)}</span>
+                      </div>
+                    </div>
+                    <div className={styles.vrowSide}>
+                      <ViolationStatusChip status={violation.status} />
+                      {violation.status === 'exempt' && violation.exemption?.expires_at && (
+                        <span className={styles.muted}>
+                          expires {formatDateTime(violation.exemption.expires_at)}
+                        </span>
+                      )}
+                    </div>
+                  </div>
+                );
+              })}
+              <Pagination
+                pageSize={pageSize}
+                onPageSizeChange={size => {
+                  setPageSize(size);
+                  setOffset(0);
+                }}
+                canGoPrev={offset > 0}
+                canGoNext={offset + pageSize < (violations.total ?? 0)}
+                onPrev={() => setOffset(Math.max(0, offset - pageSize))}
+                onNext={() => setOffset(offset + pageSize)}
+              />
             </div>
           )}
         </section>
@@ -825,19 +1083,11 @@ export const ConformanceSubSection = ({
 
       {tab === 'runs' && (
         <section className={styles.section}>
-          <div className={styles.sectionHead}>
-            <div>
-              <div className={styles.sectionTitle}>Evaluation runs</div>
-              <div className={styles.sectionSub}>
-                Detailed violation records live separately from the generic job-run summary.
-              </div>
-            </div>
-          </div>
           {runs.length === 0 ? (
             <div className={styles.empty}>No evaluation runs yet.</div>
           ) : (
             <div className={styles.tableWrap}>
-              <Table.Root layout="fixed" bordered={false}>
+              <Table.Root layout="fixed">
                 <Table.Head>
                   <Table.Row>
                     <Table.HeaderCell>Started</Table.HeaderCell>
@@ -857,7 +1107,11 @@ export const ConformanceSubSection = ({
                           ? (checks.find(check => check.id === run.check_id)?.name ?? run.check_id)
                           : 'Workspace scan'}
                       </Table.Cell>
-                      <Table.Cell>{run.status}</Table.Cell>
+                      <Table.Cell>
+                        <Chip tone="ghost" dot={RUN_STATUS_TONE[run.status]}>
+                          {RUN_STATUS_LABEL[run.status]}
+                        </Chip>
+                      </Table.Cell>
                       <Table.Cell>{run.checked_count}</Table.Cell>
                       <Table.Cell>{run.violation_count}</Table.Cell>
                       <Table.Cell>{run.error ?? '—'}</Table.Cell>
@@ -877,16 +1131,41 @@ export const ConformanceSubSection = ({
           setEditingCheck(null);
         }}
         check={editingCheck}
+        initialType={initialType}
         schemas={schemas}
-        aiConfigured={aiStatus?.configured === true}
+        aiConfigured={aiConfigured}
         onSubmit={handleSubmit}
         pending={createCheck.isPending || updateCheck.isPending}
         error={(createCheck.error ?? updateCheck.error) as Error | null}
       />
-      <div className={styles.muted}>
-        <TbShieldCheck size={13} /> Last completed run:{' '}
-        {summary?.lastRunAt ? formatDateTime(summary.lastRunAt) : 'never'}
-      </div>
+
+      {openViolation && (
+        <ViolationDrawer
+          violation={openViolation}
+          schemas={schemas}
+          teams={teams}
+          canManageWorkspaces={canManageWorkspaces}
+          onRequestExempt={() => {
+            setExemptTarget(openViolation);
+            setOpenViolationId(null);
+          }}
+          onClose={() => setOpenViolationId(null)}
+        />
+      )}
+
+      {exemptTarget && (
+        <ExemptDialog
+          violation={exemptTarget}
+          pending={exemptViolation.isPending}
+          onSubmit={(reason, expiresAt) =>
+            exemptViolation.mutate(
+              { id: exemptTarget.id, body: { reason, expiresAt } },
+              { onSuccess: () => setExemptTarget(null) }
+            )
+          }
+          onClose={() => setExemptTarget(null)}
+        />
+      )}
     </div>
   );
 };

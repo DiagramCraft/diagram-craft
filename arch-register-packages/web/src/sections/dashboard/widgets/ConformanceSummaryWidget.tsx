@@ -28,16 +28,29 @@ export const ConformanceSummaryWidget = ({
   return (
     <div className={styles.container}>
       <div className={styles.metrics}>
-        <div><strong>{summary.active}</strong><span>active</span></div>
-        <div><strong>{summary.errors}</strong><span>errors</span></div>
-        <div><strong>{summary.warnings}</strong><span>warnings</span></div>
-        <div><strong>{summary.acknowledged}</strong><span>acknowledged</span></div>
+        <div>
+          <strong>{summary.active}</strong>
+          <span>active</span>
+        </div>
+        <div>
+          <strong className={styles.toneDanger}>{summary.errors}</strong>
+          <span>errors</span>
+        </div>
+        <div>
+          <strong className={styles.toneWarn}>{summary.warnings}</strong>
+          <span>warnings</span>
+        </div>
+        <div>
+          <strong>{summary.acknowledged}</strong>
+          <span>acknowledged</span>
+        </div>
       </div>
       {summary.byCheck.length > 0 && (
         <div className={styles.breakdown}>
           {summary.byCheck.slice(0, 3).map(item => (
             <div className={styles.row} key={item.id}>
-              <span>{item.name}</span><strong>{item.count}</strong>
+              <span>{item.name}</span>
+              <strong>{item.count}</strong>
             </div>
           ))}
         </div>
@@ -45,10 +58,12 @@ export const ConformanceSummaryWidget = ({
       <button
         type="button"
         className={styles.link}
-        onClick={() => navigate({
-          to: '/$workspaceSlug/settings/$section',
-          params: { workspaceSlug, section: 'conformance' }
-        })}
+        onClick={() =>
+          navigate({
+            to: '/$workspaceSlug/settings/$section',
+            params: { workspaceSlug, section: 'conformance' }
+          })
+        }
       >
         Review conformance <TbArrowRight size={12} />
       </button>

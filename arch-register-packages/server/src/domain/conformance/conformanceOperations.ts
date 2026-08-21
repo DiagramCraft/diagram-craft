@@ -8,7 +8,10 @@ import type {
   UpdateConformanceCheck
 } from '@arch-register/api-types/conformanceContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
-import type { AuthorizationContext, WorkspaceAuthorizationContext } from '@arch-register/permissions';
+import type {
+  AuthorizationContext,
+  WorkspaceAuthorizationContext
+} from '@arch-register/permissions';
 import { PermissionChecker } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -29,7 +32,9 @@ import { CONFORMANCE_SCAN_JOB_TYPE, CONFORMANCE_SCAN_SYSTEM_IDENTITY } from './c
 
 const checker = new PermissionChecker();
 
-const normalizeDefinition = (definition: ConformanceCheckDefinition): ConformanceCheckDefinition => ({
+const normalizeDefinition = (
+  definition: ConformanceCheckDefinition
+): ConformanceCheckDefinition => ({
   ...definition,
   governance: definition.governance ?? { enabled: false, resolution: 'acknowledge' }
 });
@@ -137,12 +142,18 @@ const assertDefinitionValid = async (
   ]);
   if (definition.type === 'scheduled_validation') {
     const schema = schemas.find(candidate => candidate.id === definition.schemaId);
-    httpAssert.present(schema, { status: 400, message: `Schema '${definition.schemaId}' not found` });
+    httpAssert.present(schema, {
+      status: 400,
+      message: `Schema '${definition.schemaId}' not found`
+    });
     if (definition.fieldId) {
-      httpAssert.true(schema.fields.some(field => field.id === definition.fieldId), {
-        status: 400,
-        message: `Field '${definition.fieldId}' is not part of schema '${schema.id}'`
-      });
+      httpAssert.true(
+        schema.fields.some(field => field.id === definition.fieldId),
+        {
+          status: 400,
+          message: `Field '${definition.fieldId}' is not part of schema '${schema.id}'`
+        }
+      );
     }
     assertValidationRulesValid([
       {
@@ -158,12 +169,7 @@ const assertDefinitionValid = async (
     return;
   }
   if (definition.type === 'query_policy') {
-    assertQueryIsWorkspaceLiveEntityQuery(
-      definition.query,
-      schemas,
-      relationSchemas,
-      authCtx
-    );
+    assertQueryIsWorkspaceLiveEntityQuery(definition.query, schemas, relationSchemas, authCtx);
     return;
   }
   const aiConfig = await resolveAiConfig(db, workspace);
@@ -179,10 +185,13 @@ const assertDefinitionValid = async (
     message: 'AI conformance fields must be unique'
   });
   for (const fieldId of definition.fieldIds) {
-    httpAssert.true(schema.fields.some(field => field.id === fieldId), {
-      status: 400,
-      message: `Field '${fieldId}' is not part of schema '${schema.id}'`
-    });
+    httpAssert.true(
+      schema.fields.some(field => field.id === fieldId),
+      {
+        status: 400,
+        message: `Field '${fieldId}' is not part of schema '${schema.id}'`
+      }
+    );
     httpAssert.true(!isFieldViewRestricted(authCtx, schema, fieldId), {
       status: 403,
       message: `You cannot grant an AI check access to field '${fieldId}'`
@@ -407,8 +416,8 @@ export const getConformanceSummary = async (
   for (const violation of allViolations.items) {
     if (await canViewViolation(db, workspace, violation, entityAuthCtx)) visible.push(violation);
   }
-  const current = visible.filter(violation =>
-    violation.status === 'active' || violation.status === 'acknowledged'
+  const current = visible.filter(
+    violation => violation.status === 'active' || violation.status === 'acknowledged'
   );
   const active = current.filter(violation => violation.status === 'active');
   const byCheck = new Map<string, { id: string; name: string; count: number }>();

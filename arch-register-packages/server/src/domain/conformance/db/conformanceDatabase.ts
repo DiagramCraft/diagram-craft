@@ -258,9 +258,7 @@ export const conformanceMappers = {
               row['exemption_created_by'] == null ? null : String(row['exemption_created_by']),
             created_at: databaseDate(row['exemption_created_at']),
             revoked_at:
-              row['exemption_revoked_at'] == null
-                ? null
-                : databaseDate(row['exemption_revoked_at'])
+              row['exemption_revoked_at'] == null ? null : databaseDate(row['exemption_revoked_at'])
           }
   })
 };

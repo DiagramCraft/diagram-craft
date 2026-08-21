@@ -55,7 +55,8 @@ export const ensureAllConformanceSchedules = async (db: DatabaseAdapter, now = n
   }
 };
 
-export const createConformanceScanJobHandler = (db: DatabaseAdapter) =>
+export const createConformanceScanJobHandler =
+  (db: DatabaseAdapter) =>
   async (context: {
     jobId: string;
     workspace: string;
@@ -83,10 +84,5 @@ export const createConformanceScanJobHandler = (db: DatabaseAdapter) =>
               configuration: { scheduled: true }
             })
           ).id;
-    return executeConformanceRun(
-      db,
-      context.workspace,
-      evaluationRunId,
-      effectiveCheckId
-    );
+    return executeConformanceRun(db, context.workspace, evaluationRunId, effectiveCheckId);
   };

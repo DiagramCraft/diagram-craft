@@ -83,12 +83,14 @@ runContractSuiteAgainstBothDrivers('ConformanceDatabase', getDb => {
       )
     ).toMatchObject({ subject_id: violation.id, case_kind: CONFORMANCE_VIOLATION_CASE_KIND });
     expect(
-      (await db.conformance.listViolations(workspace, {
-        schema_id: schema,
-        status: 'active',
-        limit: 10,
-        offset: 0
-      })).total
+      (
+        await db.conformance.listViolations(workspace, {
+          schema_id: schema,
+          status: 'active',
+          limit: 10,
+          offset: 0
+        })
+      ).total
     ).toBe(1);
 
     await db.conformance.setViolationStatus(workspace, violation.id, 'acknowledged', now, {
@@ -110,6 +112,29 @@ runContractSuiteAgainstBothDrivers('ConformanceDatabase', getDb => {
     });
     expect(exemption.reason).toBe('Accepted for the release window');
     expect((await db.conformance.getViolation(workspace, violation.id))?.status).toBe('exempt');
+
+    // An exempted violation must drop out of the 'active' filter and appear under 'exempt' —
+    // exempting a violation doesn't rewrite its persisted status, only its effective one.
+    expect(
+      (
+        await db.conformance.listViolations(workspace, {
+          schema_id: schema,
+          status: 'active',
+          limit: 10,
+          offset: 0
+        })
+      ).total
+    ).toBe(0);
+    expect(
+      (
+        await db.conformance.listViolations(workspace, {
+          schema_id: schema,
+          status: 'exempt',
+          limit: 10,
+          offset: 0
+        })
+      ).total
+    ).toBe(1);
 
     const resolved = await db.conformance.resolveUnseenViolations(
       workspace,

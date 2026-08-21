@@ -15,10 +15,7 @@ import { evaluateValidationRules } from '../catalog/entityValidationRules';
 import { listEntitiesWithCount } from '../catalog/entityQueryOperations';
 import type { EntityDbResult, SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type { RelationDbResult, RelationSchemaDbResult } from '../catalog/db/relationDatabase';
-import type {
-  ConformanceCheckDbResult,
-  ConformanceRunDbResult
-} from './db/conformanceDatabase';
+import type { ConformanceCheckDbResult, ConformanceRunDbResult } from './db/conformanceDatabase';
 import {
   closeConformanceGovernanceCases,
   ensureConformanceGovernanceCase
@@ -47,11 +44,7 @@ const loadDataset = async (db: DatabaseAdapter, workspace: string): Promise<Data
   const relations: RelationDbResult[] = [];
   let offset = 0;
   while (true) {
-    const page = await db.relation.listRelations(
-      workspace,
-      {},
-      { limit: 1000, offset }
-    );
+    const page = await db.relation.listRelations(workspace, {}, { limit: 1000, offset });
     relations.push(...page.items);
     if (page.items.length < 1000) break;
     offset += page.items.length;
@@ -160,7 +153,10 @@ const evaluateScheduledValidation = async (
     violationCount += 1;
   }
   await resolveUnseen(db, check, seenEntityIds, runId, seenAt);
-  return { checkedCount: dataset.entities.filter(candidate => candidate.schema_id === schema.id).length, violationCount };
+  return {
+    checkedCount: dataset.entities.filter(candidate => candidate.schema_id === schema.id).length,
+    violationCount
+  };
 };
 
 const evaluateQueryPolicy = async (
@@ -192,7 +188,13 @@ const evaluateQueryPolicy = async (
     });
     await ensureConformanceGovernanceCase(db, check, violation, seenAt);
   }
-  await resolveUnseen(db, check, result.items.map(entity => entity._uid), runId, seenAt);
+  await resolveUnseen(
+    db,
+    check,
+    result.items.map(entity => entity._uid),
+    runId,
+    seenAt
+  );
   return { checkedCount: result.total, violationCount: result.items.length };
 };
 

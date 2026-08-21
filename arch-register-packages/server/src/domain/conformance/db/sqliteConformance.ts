@@ -16,6 +16,21 @@ import type {
 } from './conformanceDatabase';
 import { conformanceMappers } from './conformanceDatabase';
 
+// A violation's effective status is derived at read time: an active, unexpired exemption
+// overrides the persisted `v.status` to 'exempt' (exempting a violation never rewrites that
+// column). Filtering must use this same expression, not the raw column, or an exempted
+// violation still matches a `status = 'active'` filter.
+const EFFECTIVE_STATUS_SQL = `
+    CASE
+      WHEN x.id IS NOT NULL
+       AND x.revoked_at IS NULL
+       AND v.status != 'resolved'
+       AND (x.expires_at IS NULL OR x.expires_at > datetime('now'))
+      THEN 'exempt'
+      ELSE v.status
+    END
+`;
+
 const VIOLATION_SELECT = `
   SELECT v.*,
     c.name AS check_name,
@@ -28,14 +43,7 @@ const VIOLATION_SELECT = `
     x.created_by AS exemption_created_by,
     x.created_at AS exemption_created_at,
     x.revoked_at AS exemption_revoked_at,
-    CASE
-      WHEN x.id IS NOT NULL
-       AND x.revoked_at IS NULL
-       AND v.status != 'resolved'
-       AND (x.expires_at IS NULL OR x.expires_at > datetime('now'))
-      THEN 'exempt'
-      ELSE v.status
-    END AS status
+    ${EFFECTIVE_STATUS_SQL} AS status
   FROM conformance_violation v
   JOIN conformance_check c ON c.id = v.check_id
   LEFT JOIN catalog_record e ON e.id = v.entity_id AND e.kind = 'entity'
@@ -199,8 +207,10 @@ export class SqliteConformanceDatabase extends SqliteDatabaseBase implements Con
   }
 
   async getViolation(workspace: string, id: string) {
-    return this.get(`${VIOLATION_SELECT} WHERE v.workspace = ? AND v.id = ?`, [workspace, id], row =>
-      this.mapViolation(row)
+    return this.get(
+      `${VIOLATION_SELECT} WHERE v.workspace = ? AND v.id = ?`,
+      [workspace, id],
+      row => this.mapViolation(row)
     );
   }
 
@@ -220,14 +230,8 @@ export class SqliteConformanceDatabase extends SqliteDatabaseBase implements Con
       params.push(options.owner_id);
     }
     if (options.status) {
-      if (options.status === 'exempt') {
-        where.push(
-          "x.id IS NOT NULL AND x.revoked_at IS NULL AND v.status != 'resolved' AND (x.expires_at IS NULL OR x.expires_at > datetime('now'))"
-        );
-      } else {
-        where.push('v.status = ?');
-        params.push(options.status);
-      }
+      where.push(`(${EFFECTIVE_STATUS_SQL}) = ?`);
+      params.push(options.status);
     }
     if (options.severity) {
       where.push('v.severity = ?');
@@ -330,7 +334,8 @@ export class SqliteConformanceDatabase extends SqliteDatabaseBase implements Con
         input.seen_at.toISOString()
       ]
     );
-    const violation = (await this.getViolation(input.workspace, input.id)) ??
+    const violation =
+      (await this.getViolation(input.workspace, input.id)) ??
       (await this.get(
         `${VIOLATION_SELECT} WHERE v.workspace = ? AND v.check_id = ? AND v.entity_id = ?`,
         [input.workspace, input.check_id, input.entity_id],
@@ -369,7 +374,11 @@ export class SqliteConformanceDatabase extends SqliteDatabaseBase implements Con
       violation_id: id,
       run_id: null,
       event_type:
-        status === 'acknowledged' ? 'acknowledged' : status === 'resolved' ? 'resolved' : 'observed',
+        status === 'acknowledged'
+          ? 'acknowledged'
+          : status === 'resolved'
+            ? 'resolved'
+            : 'observed',
       details,
       occurred_at: changedAt
     });
@@ -448,10 +457,10 @@ export class SqliteConformanceDatabase extends SqliteDatabaseBase implements Con
         input.revoked_at?.toISOString() ?? null
       ]
     );
-    this.run(
-      "UPDATE conformance_violation SET status = 'active' WHERE workspace = ? AND id = ?",
-      [input.workspace, input.violation_id]
-    );
+    this.run("UPDATE conformance_violation SET status = 'active' WHERE workspace = ? AND id = ?", [
+      input.workspace,
+      input.violation_id
+    ]);
     await this.createViolationEvent({
       id: randomUUID(),
       workspace: input.workspace,

@@ -59,15 +59,7 @@ const renderDashboard = (
     <StoryProviders client={client} permissions={permissions}>
       <DashboardStory
         widgets={[
-          dashboardWidget(
-            'conformance-summary',
-            'conformance-violation-summary',
-            {},
-            0,
-            0,
-            5,
-            4
-          )
+          dashboardWidget('conformance-summary', 'conformance-violation-summary', {}, 0, 0, 5, 4)
         ]}
       />
     </StoryProviders>

@@ -167,8 +167,12 @@ const conformanceSummarySchema = z.object({
   exempt: z.number().int().nonnegative(),
   resolvedRecently: z.number().int().nonnegative(),
   lastRunAt: z.string().nullable(),
-  byCheck: z.array(z.object({ id: z.string(), name: z.string(), count: z.number().int().nonnegative() })),
-  bySchema: z.array(z.object({ id: z.string(), name: z.string(), count: z.number().int().nonnegative() }))
+  byCheck: z.array(
+    z.object({ id: z.string(), name: z.string(), count: z.number().int().nonnegative() })
+  ),
+  bySchema: z.array(
+    z.object({ id: z.string(), name: z.string(), count: z.number().int().nonnegative() })
+  )
 });
 
 export const conformanceContract = oc.tag('Conformance').router({

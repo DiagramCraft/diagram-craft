@@ -59,12 +59,7 @@ export const conformanceORPCRouter = conformanceRouter.router({
         listConformanceRuns(context.db, context.workspace, context.authCtx)
       ),
       start: conformanceRouter.conformance.runs.start.handler(({ input, context }) =>
-        startConformanceRun(
-          context.db,
-          context.workspace,
-          input.body.checkId,
-          context.authCtx
-        )
+        startConformanceRun(context.db, context.workspace, input.body.checkId, context.authCtx)
       )
     },
     violations: {
