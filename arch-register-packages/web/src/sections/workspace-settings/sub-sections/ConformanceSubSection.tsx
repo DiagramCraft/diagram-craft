@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useRef, useState, type ReactNode } from 'react';
+import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   TbAlertTriangle,
   TbCheck,
@@ -43,6 +43,7 @@ import { LoadingState } from '../../../components/LoadingState';
 import { Pagination } from '../../../components/Pagination';
 import { formatDateTime } from '../../../utils/dateFormat';
 import { useAiStatus } from '../../../hooks/useAiConfig';
+import { useDismissibleMenu } from '../../../hooks/useDismissibleMenu';
 import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import {
@@ -61,22 +62,25 @@ import styles from './ConformanceSubSection.module.css';
 type CheckType = ConformanceCheckDefinition['type'];
 type Tab = 'checks' | 'violations' | 'runs';
 
-const CHECK_TYPE_LABELS: Record<CheckType, string> = {
-  scheduled_validation: 'Scheduled validation',
-  query_policy: 'Query policy',
-  ai_prompt: 'AI prompt'
-};
-
-const CHECK_TYPE_DESCRIPTIONS: Record<CheckType, string> = {
-  scheduled_validation: 'Evaluate a validation expression against every entity of a schema.',
-  query_policy: 'Identify entities matching a saved query.',
-  ai_prompt: 'AI-assisted yes/no conformance check on selected fields.'
-};
-
-const CHECK_TYPE_ICONS: Record<CheckType, typeof TbClock> = {
-  scheduled_validation: TbClock,
-  query_policy: TbListSearch,
-  ai_prompt: TbSparkles
+const CHECK_TYPE_META: Record<
+  CheckType,
+  { label: string; description: string; icon: typeof TbClock }
+> = {
+  scheduled_validation: {
+    label: 'Scheduled validation',
+    description: 'Evaluate a validation expression against every entity of a schema.',
+    icon: TbClock
+  },
+  query_policy: {
+    label: 'Query policy',
+    description: 'Identify entities matching a saved query.',
+    icon: TbListSearch
+  },
+  ai_prompt: {
+    label: 'AI prompt',
+    description: 'AI-assisted yes/no conformance check on selected fields.',
+    icon: TbSparkles
+  }
 };
 
 const SEVERITY_META: Record<
@@ -117,17 +121,12 @@ const ViolationStatusChip = ({ status }: { status: ConformanceCheckStatus }) => 
   );
 };
 
-const RUN_STATUS_TONE: Record<ConformanceEvaluationRun['status'], string> = {
-  succeeded: 'var(--success-fg, var(--green-9))',
-  running: 'var(--accent-fg)',
-  failed: 'var(--error-fg)'
-};
-
-const RUN_STATUS_LABEL: Record<ConformanceEvaluationRun['status'], string> = {
-  succeeded: 'Succeeded',
-  running: 'Running…',
-  failed: 'Failed'
-};
+const RUN_STATUS_META: Record<ConformanceEvaluationRun['status'], { tone: string; label: string }> =
+  {
+    succeeded: { tone: 'var(--success-fg, var(--green-9))', label: 'Succeeded' },
+    running: { tone: 'var(--accent-fg)', label: 'Running…' },
+    failed: { tone: 'var(--error-fg)', label: 'Failed' }
+  };
 
 const STATUS_OPTIONS: Array<{ value: '' | ConformanceCheckStatus; label: string }> = [
   { value: '', label: 'Current and historical' },
@@ -152,17 +151,7 @@ const AddCheckMenu = ({
   aiConfigured: boolean;
   onSelect: (type: CheckType) => void;
 }) => {
-  const [open, setOpen] = useState(false);
-  const ref = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    if (!open) return;
-    const handler = (event: MouseEvent) => {
-      if (ref.current && !ref.current.contains(event.target as Node)) setOpen(false);
-    };
-    window.addEventListener('mousedown', handler);
-    return () => window.removeEventListener('mousedown', handler);
-  }, [open]);
+  const { open, setOpen, ref } = useDismissibleMenu<HTMLDivElement>();
 
   return (
     <div className={styles.addMenuWrap} ref={ref}>
@@ -171,8 +160,9 @@ const AddCheckMenu = ({
       </Button>
       {open && (
         <div className={styles.addMenu}>
-          {(Object.keys(CHECK_TYPE_LABELS) as CheckType[]).map(type => {
-            const TypeIcon = CHECK_TYPE_ICONS[type];
+          {(Object.keys(CHECK_TYPE_META) as CheckType[]).map(type => {
+            const meta = CHECK_TYPE_META[type];
+            const TypeIcon = meta.icon;
             const disabled = type === 'ai_prompt' && !aiConfigured;
             return (
               <button
@@ -187,11 +177,9 @@ const AddCheckMenu = ({
               >
                 <TypeIcon size={14} />
                 <span className={styles.addMenuItemText}>
-                  <span className={styles.menuItemName}>{CHECK_TYPE_LABELS[type]}</span>
+                  <span className={styles.menuItemName}>{meta.label}</span>
                   <span className={styles.menuItemDesc}>
-                    {disabled
-                      ? 'AI is not configured for this workspace.'
-                      : CHECK_TYPE_DESCRIPTIONS[type]}
+                    {disabled ? 'AI is not configured for this workspace.' : meta.description}
                   </span>
                 </span>
               </button>
@@ -391,7 +379,7 @@ const CheckDialog = ({
     >
       <div className={styles.form}>
         <div className={styles.notice}>
-          {CHECK_TYPE_LABELS[type]} — {CHECK_TYPE_DESCRIPTIONS[type]}
+          {CHECK_TYPE_META[type].label} — {CHECK_TYPE_META[type].description}
         </div>
         <FormElement label="Name">
           <TextInput value={name} onChange={value => setName(value ?? '')} />
@@ -558,8 +546,6 @@ const CheckDialog = ({
   );
 };
 
-const LIFECYCLE_ORDER: ConformanceCheckStatus[] = ['active', 'acknowledged', 'resolved'];
-
 const ViolationDrawer = ({
   violation,
   schemas,
@@ -579,8 +565,11 @@ const ViolationDrawer = ({
     schemas.find(schema => schema.id === violation.schema_id)?.name ?? violation.schema_id ?? '—';
   const ownerName = teams.find(team => team.id === violation.owner_team_id)?.name ?? 'No owner';
 
-  const finalStep: ConformanceCheckStatus = violation.status === 'exempt' ? 'exempt' : 'resolved';
-  const steps: ConformanceCheckStatus[] = [...LIFECYCLE_ORDER.slice(0, 2), finalStep];
+  const steps: ConformanceCheckStatus[] = [
+    'active',
+    'acknowledged',
+    violation.status === 'exempt' ? 'exempt' : 'resolved'
+  ];
   const currentIdx =
     violation.status === 'active' ? 0 : violation.status === 'acknowledged' ? 1 : 2;
 
@@ -637,7 +626,7 @@ const ViolationDrawer = ({
         <dt>Check</dt>
         <dd>{violation.check_name}</dd>
         <dt>Source type</dt>
-        <dd>{CHECK_TYPE_LABELS[violation.source_type]}</dd>
+        <dd>{CHECK_TYPE_META[violation.source_type].label}</dd>
         <dt>Message</dt>
         <dd>{violation.message}</dd>
         <dt>Last seen</dt>
@@ -744,7 +733,7 @@ export const ConformanceSubSection = ({
   const [editingCheck, setEditingCheck] = useState<ConformanceCheck | null>(null);
   const [initialType, setInitialType] = useState<CheckType>('scheduled_validation');
   const [openViolationId, setOpenViolationId] = useState<string | null>(null);
-  const [exemptTarget, setExemptTarget] = useState<ConformanceViolation | null>(null);
+  const [exemptViolationId, setExemptViolationId] = useState<string | null>(null);
   const createCheck = useCreateConformanceCheck(workspaceSlug);
   const updateCheck = useUpdateConformanceCheck(workspaceSlug);
   const deleteCheck = useDeleteConformanceCheck(workspaceSlug);
@@ -799,7 +788,10 @@ export const ConformanceSubSection = ({
       }
     });
   };
-  const openViolation = violations?.items.find(item => item.id === openViolationId) ?? null;
+  const findViolation = (id: string | null) =>
+    id ? (violations?.items.find(item => item.id === id) ?? null) : null;
+  const openViolation = findViolation(openViolationId);
+  const exemptTarget = findViolation(exemptViolationId);
 
   return (
     <div className={styles.stack}>
@@ -891,7 +883,7 @@ export const ConformanceSubSection = ({
                 </Table.Head>
                 <Table.Body>
                   {checks.map(check => {
-                    const TypeIcon = CHECK_TYPE_ICONS[check.definition.type];
+                    const TypeIcon = CHECK_TYPE_META[check.definition.type].icon;
                     return (
                       <Table.Row key={check.id}>
                         <Table.Cell>
@@ -902,7 +894,7 @@ export const ConformanceSubSection = ({
                         </Table.Cell>
                         <Table.Cell>
                           <span className={styles.typeTag}>
-                            <TypeIcon size={12} /> {CHECK_TYPE_LABELS[check.definition.type]}
+                            <TypeIcon size={12} /> {CHECK_TYPE_META[check.definition.type].label}
                           </span>
                         </Table.Cell>
                         <Table.Cell>
@@ -1108,8 +1100,8 @@ export const ConformanceSubSection = ({
                           : 'Workspace scan'}
                       </Table.Cell>
                       <Table.Cell>
-                        <Chip tone="ghost" dot={RUN_STATUS_TONE[run.status]}>
-                          {RUN_STATUS_LABEL[run.status]}
+                        <Chip tone="ghost" dot={RUN_STATUS_META[run.status].tone}>
+                          {RUN_STATUS_META[run.status].label}
                         </Chip>
                       </Table.Cell>
                       <Table.Cell>{run.checked_count}</Table.Cell>
@@ -1146,7 +1138,7 @@ export const ConformanceSubSection = ({
           teams={teams}
           canManageWorkspaces={canManageWorkspaces}
           onRequestExempt={() => {
-            setExemptTarget(openViolation);
+            setExemptViolationId(openViolation.id);
             setOpenViolationId(null);
           }}
           onClose={() => setOpenViolationId(null)}
@@ -1160,10 +1152,10 @@ export const ConformanceSubSection = ({
           onSubmit={(reason, expiresAt) =>
             exemptViolation.mutate(
               { id: exemptTarget.id, body: { reason, expiresAt } },
-              { onSuccess: () => setExemptTarget(null) }
+              { onSuccess: () => setExemptViolationId(null) }
             )
           }
-          onClose={() => setExemptTarget(null)}
+          onClose={() => setExemptViolationId(null)}
         />
       )}
     </div>
