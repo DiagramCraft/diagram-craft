@@ -2,6 +2,7 @@ import { useEffect, useRef, useState } from 'react';
 import {
   TbChevronDown,
   TbChevronUp,
+  TbDots,
   TbExternalLink,
   TbInfoCircle,
   TbLink,
@@ -16,6 +17,9 @@ import {
 } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/Menu';
+import { RenameDialog } from '../../components/RenameDialog';
 import type {
   DetailLayoutConfig,
   LayoutBlock,
@@ -122,32 +126,6 @@ type AddBlockOptionGroups = {
   relations: AddBlockOption[];
   other: AddBlockOption[];
 };
-
-const Segmented = ({
-  options,
-  value,
-  disabled,
-  onChange
-}: {
-  options: Array<{ value: 1 | 2; label: string }>;
-  value: 1 | 2;
-  disabled?: boolean;
-  onChange: (value: 1 | 2) => void;
-}) => (
-  <div className={styles.segmented}>
-    {options.map(option => (
-      <button
-        key={option.value}
-        type="button"
-        data-active={value === option.value}
-        disabled={disabled}
-        onClick={() => onChange(option.value)}
-      >
-        {option.label}
-      </button>
-    ))}
-  </div>
-);
 
 const useCloseOnOutsideClick = (open: boolean, onClose: () => void) => {
   const ref = useRef<HTMLDivElement>(null);
@@ -309,6 +287,155 @@ const AddPanelMenu = ({
   );
 };
 
+const TabMenu = ({
+  tab,
+  onRename,
+  onSetColumns,
+  canMoveLeft,
+  canMoveRight,
+  onMoveLeft,
+  onMoveRight,
+  canRemove,
+  onRemove
+}: {
+  tab: LayoutTab;
+  onRename: () => void;
+  onSetColumns: (columns: 1 | 2) => void;
+  canMoveLeft: boolean;
+  canMoveRight: boolean;
+  onMoveLeft: () => void;
+  onMoveRight: () => void;
+  canRemove: boolean;
+  onRemove: () => void;
+}) => (
+  <MenuButton.Root>
+    <MenuButton.Trigger variant="icon-only" size="xs" aria-label="Tab options">
+      <TbDots size={11} />
+    </MenuButton.Trigger>
+    <MenuButton.Menu align="end">
+      <Menu.Item onClick={onRename}>Rename</Menu.Item>
+      <Menu.Separator />
+      <Menu.RadioGroup value={String(tab.columns ?? 1)}>
+        <Menu.RadioItem value="1" onClick={() => onSetColumns(1)}>
+          1 column
+        </Menu.RadioItem>
+        <Menu.RadioItem value="2" onClick={() => onSetColumns(2)}>
+          2 columns
+        </Menu.RadioItem>
+      </Menu.RadioGroup>
+      {(canMoveLeft || canMoveRight) && <Menu.Separator />}
+      {canMoveLeft && <Menu.Item onClick={onMoveLeft}>Move left</Menu.Item>}
+      {canMoveRight && <Menu.Item onClick={onMoveRight}>Move right</Menu.Item>}
+      {canRemove && <Menu.Separator />}
+      {canRemove && (
+        <Menu.Item type="danger" onClick={onRemove}>
+          Remove tab
+        </Menu.Item>
+      )}
+    </MenuButton.Menu>
+  </MenuButton.Root>
+);
+
+const PanelMenu = ({
+  panel,
+  isGroup,
+  currentTab,
+  otherTabs,
+  onToggleCollapsible,
+  onSetColumn,
+  onMoveToTab
+}: {
+  panel: LayoutPanel;
+  isGroup: boolean;
+  currentTab: LayoutTab;
+  otherTabs: LayoutTab[];
+  onToggleCollapsible: (collapsible: boolean) => void;
+  onSetColumn: (column: 1 | 2) => void;
+  onMoveToTab: (toTabId: string) => void;
+}) => {
+  const showCollapsible = !isGroup;
+  const showColumns = currentTab.columns === 2;
+  const showMoveToTab = otherTabs.length > 0;
+  if (!showCollapsible && !showColumns && !showMoveToTab) return null;
+
+  return (
+    <MenuButton.Root>
+      <MenuButton.Trigger variant="icon-only" size="xs" aria-label="Panel options">
+        <TbDots size={12} />
+      </MenuButton.Trigger>
+      <MenuButton.Menu align="end">
+        {showCollapsible && (
+          <Menu.CheckboxItem
+            checked={panel.collapsible !== false}
+            onCheckedChange={onToggleCollapsible}
+          >
+            Collapsible
+          </Menu.CheckboxItem>
+        )}
+        {showCollapsible && (showColumns || showMoveToTab) && <Menu.Separator />}
+        {showColumns && (
+          <Menu.RadioGroup value={String(panel.column ?? 1)}>
+            <Menu.RadioItem value="1" onClick={() => onSetColumn(1)}>
+              Column 1
+            </Menu.RadioItem>
+            <Menu.RadioItem value="2" onClick={() => onSetColumn(2)}>
+              Column 2
+            </Menu.RadioItem>
+          </Menu.RadioGroup>
+        )}
+        {showColumns && showMoveToTab && <Menu.Separator />}
+        {showMoveToTab && (
+          <Menu.SubMenu label="Move to tab">
+            {otherTabs.map(tab => (
+              <Menu.Item key={tab.id} onClick={() => onMoveToTab(tab.id)}>
+                {tab.title}
+              </Menu.Item>
+            ))}
+          </Menu.SubMenu>
+        )}
+      </MenuButton.Menu>
+    </MenuButton.Root>
+  );
+};
+
+const BlockMenu = ({
+  targets,
+  onMoveTo
+}: {
+  targets: Array<{ tab: LayoutTab; panels: LayoutPanel[] }>;
+  onMoveTo: (toTabId: string, toPanelId: string) => void;
+}) => {
+  if (targets.length === 0) return null;
+  const nestByTab = targets.length > 1;
+
+  return (
+    <MenuButton.Root>
+      <MenuButton.Trigger variant="icon-only" size="xs" aria-label="Block options">
+        <TbDots size={10} />
+      </MenuButton.Trigger>
+      <MenuButton.Menu align="end">
+        <Menu.SubMenu label="Move to">
+          {nestByTab
+            ? targets.map(({ tab, panels }) => (
+                <Menu.SubMenu key={tab.id} label={tab.title}>
+                  {panels.map(panel => (
+                    <Menu.Item key={panel.id} onClick={() => onMoveTo(tab.id, panel.id)}>
+                      {panel.title}
+                    </Menu.Item>
+                  ))}
+                </Menu.SubMenu>
+              ))
+            : targets[0]!.panels.map(panel => (
+                <Menu.Item key={panel.id} onClick={() => onMoveTo(targets[0]!.tab.id, panel.id)}>
+                  {panel.title}
+                </Menu.Item>
+              ))}
+        </Menu.SubMenu>
+      </MenuButton.Menu>
+    </MenuButton.Root>
+  );
+};
+
 export const SchemaLayoutEditor = ({
   layout,
   fields,
@@ -326,6 +453,8 @@ export const SchemaLayoutEditor = ({
 }) => {
   const [activeTabId, setActiveTabId] = useState<string | undefined>(layout.tabs[0]?.id);
   const activeTab = layout.tabs.find(tab => tab.id === activeTabId) ?? layout.tabs[0];
+  const [renamingTabId, setRenamingTabId] = useState<string | undefined>(undefined);
+  const renamingTab = layout.tabs.find(tab => tab.id === renamingTabId);
 
   const fieldsById = new Map(fields.map(field => [field.id, field]));
   const relationSchemasById = new Map(relationSchemas.map(rs => [rs.id, rs]));
@@ -394,6 +523,54 @@ export const SchemaLayoutEditor = ({
   const setPanelColumn = (tabId: string, panelId: string, column: 1 | 2) =>
     updatePanel(tabId, panelId, panel => ({ ...panel, column }));
 
+  const movePanelToTab = (fromTabId: string, panelId: string, toTabId: string) => {
+    const fromTab = layout.tabs.find(tab => tab.id === fromTabId);
+    const panel = fromTab?.panels.find(p => p.id === panelId);
+    if (!panel) return;
+    const toTab = layout.tabs.find(tab => tab.id === toTabId);
+    const movedPanel = (toTab?.columns ?? 1) === 1 ? { ...panel, column: 1 as const } : panel;
+    onChange({
+      ...layout,
+      tabs: layout.tabs.map(tab => {
+        if (tab.id === fromTabId)
+          return { ...tab, panels: tab.panels.filter(p => p.id !== panelId) };
+        if (tab.id === toTabId) return { ...tab, panels: [...tab.panels, movedPanel] };
+        return tab;
+      })
+    });
+    setActiveTabId(toTabId);
+  };
+
+  const moveBlockToPanel = (
+    fromTabId: string,
+    fromPanelId: string,
+    blockId: string,
+    toTabId: string,
+    toPanelId: string
+  ) => {
+    const fromTab = layout.tabs.find(tab => tab.id === fromTabId);
+    const fromPanel = fromTab?.panels.find(p => p.id === fromPanelId);
+    const block = fromPanel?.blocks.find(b => b.id === blockId);
+    if (!block) return;
+    onChange({
+      ...layout,
+      tabs: layout.tabs.map(tab => {
+        if (tab.id !== fromTabId && tab.id !== toTabId) return tab;
+        return {
+          ...tab,
+          panels: tab.panels.map(panel => {
+            if (tab.id === fromTabId && panel.id === fromPanelId)
+              return { ...panel, blocks: panel.blocks.filter(b => b.id !== blockId) };
+            if (tab.id === toTabId && panel.id === toPanelId)
+              return { ...panel, blocks: [...panel.blocks, block] };
+            return panel;
+          })
+        };
+      })
+    });
+    if (toTabId !== activeTabId) setActiveTabId(toTabId);
+  };
+
   const addBlock = (tabId: string, panelId: string, kind: LayoutBlockKind, refId?: string) =>
     updatePanel(tabId, panelId, panel => ({
       ...panel,
@@ -454,94 +631,67 @@ export const SchemaLayoutEditor = ({
     return options;
   };
 
+  const moveTargetsForBlock = (excludeTabId: string, excludePanelId: string) =>
+    layout.tabs
+      .map(tab => ({
+        tab,
+        panels: tab.panels.filter(
+          panel =>
+            !soleGroupBlock(panel) && !(tab.id === excludeTabId && panel.id === excludePanelId)
+        )
+      }))
+      .filter(entry => entry.panels.length > 0);
+
   return (
     <div>
       <div className={styles.topbar}>
         <div className={styles.sectionLabel}>Detail/Edit layout</div>
-        {activeTab && (
-          <div className={styles.colPick}>
-            <span>Columns</span>
-            <Segmented
-              options={[
-                { value: 1, label: '1' },
-                { value: 2, label: '2' }
-              ]}
-              value={activeTab.columns ?? 1}
-              disabled={!canEdit}
-              onChange={value => setTabColumns(activeTab.id, value)}
-            />
+      </div>
+
+      <div className={styles.tabStrip}>
+        {layout.tabs.map((tab, tabIndex) => (
+          <div
+            key={tab.id}
+            className={styles.tabChip}
+            data-active={tab.id === activeTab?.id}
+            onClick={() => setActiveTabId(tab.id)}
+          >
+            <span className={styles.tabChipLabel}>{tab.title}</span>
+            {canEdit && (
+              <span className={styles.tabChipActions} onClick={e => e.stopPropagation()}>
+                <TabMenu
+                  tab={tab}
+                  onRename={() => setRenamingTabId(tab.id)}
+                  onSetColumns={columns => setTabColumns(tab.id, columns)}
+                  canMoveLeft={tabIndex > 0}
+                  canMoveRight={tabIndex < layout.tabs.length - 1}
+                  onMoveLeft={() => updateTabs(tabs => moveItem(tabs, tabIndex, -1))}
+                  onMoveRight={() => updateTabs(tabs => moveItem(tabs, tabIndex, 1))}
+                  canRemove={layout.tabs.length > 1}
+                  onRemove={() => removeTab(tab.id)}
+                />
+              </span>
+            )}
           </div>
+        ))}
+        {canEdit && (
+          <button type="button" className={styles.addTab} onClick={addTab}>
+            <TbPlus size={11} /> Add tab
+          </button>
         )}
       </div>
 
-      {layout.tabs.length > 1 && (
-        <div className={styles.tabStrip}>
-          {layout.tabs.map((tab, tabIndex) => (
-            <div
-              key={tab.id}
-              className={styles.tabChip}
-              data-active={tab.id === activeTab?.id}
-              onClick={() => setActiveTabId(tab.id)}
-            >
-              <input
-                className={styles.tabChipInput}
-                value={tab.title}
-                disabled={!canEdit}
-                onChange={e => updateTab(tab.id, t => ({ ...t, title: e.target.value }))}
-                onClick={e => e.stopPropagation()}
-              />
-              {canEdit && (
-                <span className={styles.tabChipActions}>
-                  <Button
-                    variant="icon-only"
-                    size="xs"
-                    disabled={tabIndex === 0}
-                    aria-label="Move tab up"
-                    onClick={e => {
-                      e.stopPropagation();
-                      updateTabs(tabs => moveItem(tabs, tabIndex, -1));
-                    }}
-                  >
-                    <TbChevronUp size={11} />
-                  </Button>
-                  <Button
-                    variant="icon-only"
-                    size="xs"
-                    disabled={tabIndex === layout.tabs.length - 1}
-                    aria-label="Move tab down"
-                    onClick={e => {
-                      e.stopPropagation();
-                      updateTabs(tabs => moveItem(tabs, tabIndex, 1));
-                    }}
-                  >
-                    <TbChevronDown size={11} />
-                  </Button>
-                  <Button
-                    variant="icon-only"
-                    size="xs"
-                    aria-label="Remove tab"
-                    onClick={e => {
-                      e.stopPropagation();
-                      removeTab(tab.id);
-                    }}
-                  >
-                    <TbTrash size={11} />
-                  </Button>
-                </span>
-              )}
-            </div>
-          ))}
-          {canEdit && (
-            <button type="button" className={styles.addTab} onClick={addTab}>
-              <TbPlus size={11} /> Add tab
-            </button>
-          )}
-        </div>
-      )}
-      {layout.tabs.length === 1 && canEdit && (
-        <button type="button" className={`${styles.addTab} ${styles.addTabSolo}`} onClick={addTab}>
-          <TbPlus size={11} /> Add tab
-        </button>
+      {renamingTab && (
+        <RenameDialog
+          open={!!renamingTab}
+          currentName={renamingTab.title}
+          entityType="tab"
+          onRename={name => {
+            updateTab(renamingTab.id, t => ({ ...t, title: name }));
+            setRenamingTabId(undefined);
+          }}
+          onCancel={() => setRenamingTabId(undefined)}
+        />
       )}
 
       {activeTab && (
@@ -583,22 +733,6 @@ export const SchemaLayoutEditor = ({
                             <TbLock size={10} /> Group
                           </span>
                         )}
-                        {canEdit && !isGroup && (
-                          <label className={styles.panelCollapsible}>
-                            <input
-                              type="checkbox"
-                              className={styles.checkbox}
-                              checked={panel.collapsible !== false}
-                              onChange={e =>
-                                updatePanel(activeTab.id, panel.id, p => ({
-                                  ...p,
-                                  collapsible: e.target.checked
-                                }))
-                              }
-                            />
-                            Collapsible
-                          </label>
-                        )}
                         {canEdit && (
                           <span className={styles.panelActions}>
                             <Button
@@ -637,6 +771,19 @@ export const SchemaLayoutEditor = ({
                             >
                               <TbChevronDown size={12} />
                             </Button>
+                            <PanelMenu
+                              panel={panel}
+                              isGroup={isGroup}
+                              currentTab={activeTab}
+                              otherTabs={layout.tabs.filter(tab => tab.id !== activeTab.id)}
+                              onToggleCollapsible={collapsible =>
+                                updatePanel(activeTab.id, panel.id, p => ({ ...p, collapsible }))
+                              }
+                              onSetColumn={column => setPanelColumn(activeTab.id, panel.id, column)}
+                              onMoveToTab={toTabId =>
+                                movePanelToTab(activeTab.id, panel.id, toTabId)
+                              }
+                            />
                             <Button
                               variant="icon-only"
                               size="xs"
@@ -653,20 +800,6 @@ export const SchemaLayoutEditor = ({
                           </span>
                         )}
                       </div>
-
-                      {canEdit && activeTab.columns === 2 && (
-                        <div className={styles.panelMeta}>
-                          <span>Column</span>
-                          <Segmented
-                            options={[
-                              { value: 1, label: '1' },
-                              { value: 2, label: '2' }
-                            ]}
-                            value={panel.column ?? 1}
-                            onChange={value => setPanelColumn(activeTab.id, panel.id, value)}
-                          />
-                        </div>
-                      )}
 
                       {isGroup ? (
                         <div className={styles.blockList}>
@@ -726,6 +859,20 @@ export const SchemaLayoutEditor = ({
                                       <TbChevronDown size={10} />
                                     </Button>
                                   </span>
+                                )}
+                                {canEdit && (
+                                  <BlockMenu
+                                    targets={moveTargetsForBlock(activeTab.id, panel.id)}
+                                    onMoveTo={(toTabId, toPanelId) =>
+                                      moveBlockToPanel(
+                                        activeTab.id,
+                                        panel.id,
+                                        block.id,
+                                        toTabId,
+                                        toPanelId
+                                      )
+                                    }
+                                  />
                                 )}
                                 {canEdit && (
                                   <button
