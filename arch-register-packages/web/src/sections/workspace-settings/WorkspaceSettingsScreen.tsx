@@ -141,6 +141,7 @@ export const WorkspaceSettingsScreen = () => {
   const [jobAddDialogOpen, setJobAddDialogOpen] = useState(false);
   const [apiTokenAddDialogOpen, setApiTokenAddDialogOpen] = useState(false);
   const [capabilityActions, setCapabilityActions] = useState<ReactNode>();
+  const [conformanceActions, setConformanceActions] = useState<ReactNode>();
 
   useEffect(() => {
     if (sectionIsValid || !ctx.defaultSettingsSection) return;
@@ -159,7 +160,7 @@ export const WorkspaceSettingsScreen = () => {
     {
       label: 'Home',
       onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-  },
+    },
     { label: 'Settings' }
   ];
 
@@ -182,6 +183,8 @@ export const WorkspaceSettingsScreen = () => {
   const sectionButton =
     section === 'capabilities' ? (
       capabilityActions
+    ) : section === 'conformance' ? (
+      conformanceActions
     ) : section === 'members' ? (
       <Button
         variant="primary"
@@ -324,7 +327,11 @@ export const WorkspaceSettingsScreen = () => {
       )}
       {section === 'jobs' && <JobMonitoringSubSection workspaceSlug={workspaceSlug} />}
       {section === 'conformance' && (
-        <ConformanceSubSection workspaceSlug={workspaceSlug} schemas={ctx.schemas} />
+        <ConformanceSubSection
+          workspaceSlug={workspaceSlug}
+          schemas={ctx.schemas}
+          onActionsChange={setConformanceActions}
+        />
       )}
       {section === 'jobs' && (
         <CreateJobDialog

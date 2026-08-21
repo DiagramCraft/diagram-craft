@@ -5,21 +5,6 @@
   padding: 0 24px 24px;
 }
 
-.notice {
-  border: 1px solid color-mix(in oklch, var(--blue) 40%, var(--cmp-border));
-  border-radius: 8px;
-  background: color-mix(in oklch, var(--blue) 8%, var(--base-bg));
-  padding: 12px 14px;
-  color: var(--base-fg);
-  font-size: 12px;
-  line-height: 1.5;
-}
-
-.warning {
-  border-color: color-mix(in oklch, var(--warning-fg) 45%, var(--cmp-border));
-  background: color-mix(in oklch, var(--warning-fg) 9%, var(--base-bg));
-}
-
 .section {
   border: 1px solid var(--panel-border);
   border-radius: 8px;
