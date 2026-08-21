@@ -334,6 +334,91 @@ const sharedFieldGroupLinkSchema = z
   })
   .describe('A schema-local inclusion of a workspace shared fieldgroup');
 
+// ── Detail/Edit Layout ────────────────────────────────────────
+
+export const layoutBlockKindSchema = z
+  .enum([
+    'field',
+    'fieldGroup',
+    'metadata',
+    'links',
+    'unboundTypedRelation',
+    'projects',
+    'diagrams'
+  ])
+  .describe('Kind of content a layout block places');
+
+export const layoutMetadataSlotSchema = z
+  .enum([
+    'name',
+    'slug',
+    'description',
+    'owner',
+    'lifecycle',
+    'targetLifecycle',
+    'targetLifecycleDate',
+    'tags',
+    'publicId',
+    'namespace'
+  ])
+  .describe('Fixed entity metadata slot a metadata block can render');
+
+export const layoutBlockSchema = z
+  .object({
+    id: z.string().describe('Unique block id within the layout, stable across edits'),
+    kind: layoutBlockKindSchema,
+    refId: z
+      .string()
+      .optional()
+      .describe(
+        'For kind=field: field id. For kind=fieldGroup: group id. For kind=metadata: metadata slot name. ' +
+          'For kind=unboundTypedRelation: relation schema id. Omitted for kind=links (singleton).'
+      )
+  })
+  .describe('A single placeable unit of content within a layout panel');
+
+export const layoutPanelSchema = z
+  .object({
+    id: z.string().describe('Unique panel id within the layout, stable across edits'),
+    title: z.string().describe('Panel display title'),
+    collapsible: z
+      .boolean()
+      .optional()
+      .default(true)
+      .describe('Whether the panel renders as a collapsible accordion section'),
+    column: z
+      .union([z.literal(1), z.literal(2)])
+      .optional()
+      .default(1)
+      .describe(
+        'Which column this panel renders in when its tab has columns=2; ignored for single-column tabs'
+      ),
+    blocks: z.array(layoutBlockSchema).describe('Blocks placed in this panel, in display order')
+  })
+  .describe('A named group of blocks within a layout tab');
+
+export const layoutTabSchema = z
+  .object({
+    id: z.string().describe('Unique tab id within the layout, stable across edits'),
+    title: z.string().describe('Tab display title'),
+    columns: z
+      .union([z.literal(1), z.literal(2)])
+      .optional()
+      .default(1)
+      .describe('Number of side-by-side columns this tab renders its panels in'),
+    panels: z.array(layoutPanelSchema).describe('Panels within this tab, in display order')
+  })
+  .describe('A tab within a detail layout');
+
+export const detailLayoutConfigSchema = z
+  .object({
+    version: z.literal(1).describe('Layout config schema version'),
+    tabs: z.array(layoutTabSchema).describe('Tabs in display order')
+  })
+  .describe(
+    'Custom tab/panel/block layout for the entity Details and Edit screens; omitted means the default layout'
+  );
+
 export type ValidationRule = z.infer<typeof validationRuleSchema>;
 
 const entitySchemaSchema = z.object({
@@ -359,6 +444,9 @@ const entitySchemaSchema = z.object({
     .array(validationRuleSchema)
     .optional()
     .describe('Bonsai validation rules evaluated when entities are saved'),
+  detail_layout: detailLayoutConfigSchema
+    .optional()
+    .describe('Custom Details/Edit screen layout; omitted means the default layout'),
   color: z.string().nullable().describe('Schema color (hex format)'),
   icon: z.string().nullable().describe('Schema icon identifier'),
   entity_count: z.number().int().min(0).describe('Number of entities using this schema'),
@@ -435,6 +523,12 @@ const createSchemaBodySchema = z.object({
     .array(validationRuleSchema)
     .optional()
     .describe('Validation rules evaluated when entities are saved'),
+  detail_layout: detailLayoutConfigSchema
+    .nullable()
+    .optional()
+    .describe(
+      'Custom Details/Edit screen layout. Omit to leave unchanged; null clears it back to the default layout.'
+    ),
   color: z.preprocess(
     v => (v === undefined ? undefined : v === null || typeof v === 'string' ? v : null),
     z.string().nullable().optional().describe('Schema color (hex format)')
@@ -611,6 +705,12 @@ export type EntityTemplateValues = EntityTemplate['values'];
 export type SchemaGroup = z.infer<typeof schemaGroupSchema>;
 export type FieldGroupAccessControl = z.infer<typeof fieldGroupAccessControlSchema>;
 export type SharedFieldGroupLink = z.infer<typeof sharedFieldGroupLinkSchema>;
+export type DetailLayoutConfig = z.infer<typeof detailLayoutConfigSchema>;
+export type LayoutTab = z.infer<typeof layoutTabSchema>;
+export type LayoutPanel = z.infer<typeof layoutPanelSchema>;
+export type LayoutBlock = z.infer<typeof layoutBlockSchema>;
+export type LayoutBlockKind = z.infer<typeof layoutBlockKindSchema>;
+export type LayoutMetadataSlot = z.infer<typeof layoutMetadataSlotSchema>;
 export type SchemaFieldInput = z.infer<typeof schemaFieldInputSchema>;
 export type CreateSchemaRequest = z.infer<typeof createSchemaBodySchema>;
 export type UpdateSchemaRequest = z.infer<typeof updateSchemaBodySchema>;

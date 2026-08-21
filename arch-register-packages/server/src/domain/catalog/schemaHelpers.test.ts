@@ -6,11 +6,12 @@ import {
   normalizeEntityTemplates,
   normalizeSchemaFields,
   normalizeSchemaGroups,
+  remapLayoutFieldIds,
   toApiEnum,
   toApiSchema
 } from './schemaHelpers';
 import { SchemaDbResult, WorkspaceEnumDbResult } from './db/catalogDatabase';
-import { SchemaField } from '@arch-register/api-types/schemaContract';
+import { DetailLayoutConfig, SchemaField } from '@arch-register/api-types/schemaContract';
 
 const now = new Date('2025-06-01T12:00:00.000Z');
 const nowIso = '2025-06-01T12:00:00.000Z';
@@ -501,5 +502,87 @@ describe('normalizeEntityTemplates', () => {
         fields
       )
     ).toThrow('allows at most 1 relation');
+  });
+});
+
+// ── remapLayoutFieldIds ──────────────────────────────────────
+
+describe('remapLayoutFieldIds', () => {
+  const layout: DetailLayoutConfig = {
+    version: 1,
+    tabs: [
+      {
+        id: 'overview',
+        title: 'Overview',
+        columns: 1,
+        panels: [
+          {
+            id: 'properties',
+            title: 'Properties',
+            collapsible: false,
+            column: 1,
+            blocks: [
+              { id: 'field:f1', kind: 'field', refId: 'f1' },
+              { id: 'field:f2', kind: 'field', refId: 'f2' }
+            ]
+          },
+          {
+            id: 'group:g1',
+            title: 'Group One',
+            collapsible: false,
+            column: 1,
+            blocks: [{ id: 'fieldGroup:g1', kind: 'fieldGroup', refId: 'g1' }]
+          },
+          {
+            id: 'links',
+            title: 'Links',
+            collapsible: true,
+            column: 1,
+            blocks: [{ id: 'links', kind: 'links' }]
+          }
+        ]
+      }
+    ]
+  };
+
+  it('returns undefined unchanged', () => {
+    expect(remapLayoutFieldIds(undefined, new Map(), new Set(), new Set())).toBeUndefined();
+  });
+
+  it('rewrites field blocks whose field was renamed', () => {
+    const remapped = remapLayoutFieldIds(
+      layout,
+      new Map([['f1', 'f1-renamed']]),
+      new Set(['f1-renamed', 'f2']),
+      new Set(['g1'])
+    );
+    expect(remapped!.tabs[0]!.panels[0]!.blocks).toEqual([
+      { id: 'field:f1', kind: 'field', refId: 'f1-renamed' },
+      { id: 'field:f2', kind: 'field', refId: 'f2' }
+    ]);
+  });
+
+  it('drops field blocks whose field was removed, leaving the panel otherwise intact', () => {
+    const remapped = remapLayoutFieldIds(layout, new Map(), new Set(['f2']), new Set(['g1']));
+    expect(remapped!.tabs[0]!.panels[0]!.blocks).toEqual([
+      { id: 'field:f2', kind: 'field', refId: 'f2' }
+    ]);
+  });
+
+  it('drops fieldGroup blocks whose group was removed', () => {
+    const remapped = remapLayoutFieldIds(
+      layout,
+      new Map(),
+      new Set(['f1', 'f2']),
+      new Set() // g1 no longer exists
+    );
+    const groupPanel = remapped!.tabs[0]!.panels.find(panel => panel.id === 'group:g1');
+    expect(groupPanel!.blocks).toEqual([]);
+  });
+
+  it('leaves non-field blocks (e.g. links) untouched', () => {
+    const remapped = remapLayoutFieldIds(layout, new Map(), new Set(['f1', 'f2']), new Set(['g1']));
+    const linksPanel = remapped!.tabs[0]!.panels.find(panel => panel.id === 'links');
+    expect(linksPanel!.blocks).toEqual([{ id: 'links', kind: 'links' }]);
   });
 });

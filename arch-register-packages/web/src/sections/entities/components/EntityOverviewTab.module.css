@@ -7,11 +7,19 @@
 }
 
 .propsPanel,
-.sidePanel {
+.sidePanel,
+.layoutPanel {
   background: var(--panel-bg);
   border: 1px solid var(--panel-border);
   border-radius: var(--r-md);
   padding: 12px 14px 16px;
+}
+
+.layoutColumn {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px 24px 32px;
 }
 
 .sectionLabel {

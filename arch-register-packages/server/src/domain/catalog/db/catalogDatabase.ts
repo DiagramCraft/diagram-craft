@@ -13,6 +13,7 @@ import {
 } from '@arch-register/api-types/viewContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import {
+  DetailLayoutConfig,
   EntityTemplate,
   SchemaField,
   SchemaGroup,
@@ -91,6 +92,7 @@ export type SchemaDbResult = {
   groups?: SchemaGroup[];
   shared_field_group_links?: SharedFieldGroupLink[];
   validation_rules?: ValidationRule[];
+  detail_layout?: DetailLayoutConfig;
   color: string | null;
   icon: string | null;
   default_owner: string | null;
@@ -453,6 +455,11 @@ export const catalogMappers = {
       row['validation_rules'],
       [],
       'entity_schema.validation_rules'
+    ),
+    detail_layout: parseDatabaseJson(
+      row['detail_layout'],
+      undefined,
+      'entity_schema.detail_layout'
     ),
     color: row['color'] == null ? null : String(row['color']),
     icon: row['icon'] == null ? null : String(row['icon']),

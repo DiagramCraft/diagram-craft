@@ -60,6 +60,7 @@ import {
 } from './types/entityDetailTypes';
 import type { EntityDetailSearchParams } from '../../routes/searchParams';
 import { buildEntityRefLookup } from './entityDetailHelpers';
+import { buildDefaultLayout } from '../../lib/detailLayoutDefaults';
 import { flattenChangeCaseMembers } from './components/snapshotDisplay';
 
 export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
@@ -93,22 +94,6 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const navigateToEntities = useCallback(() => {
     navigate({ to: '/$workspaceSlug/entities', params: { workspaceSlug } });
   }, [navigate, workspaceSlug]);
-  const requestedTab = search.tab ?? 'overview';
-  const setTab = useCallback(
-    (nextTab: TabId) => {
-      const route = contentFolder
-        ? entityContentFolderRoute(workspaceSlug, asEntityPublicId(entityId), contentFolder)
-        : entityDetailRoute(workspaceSlug, asEntityPublicId(entityId));
-      navigate({
-        ...route,
-        search: {
-          ...search,
-          tab: nextTab === 'overview' ? undefined : nextTab
-        }
-      });
-    },
-    [contentFolder, entityId, navigate, search, workspaceSlug]
-  );
   // Query hooks
   const { data: entity, isLoading: loading } = useEntity(workspaceId, entityId);
   const [viewJsonOpen, setViewJsonOpen] = useState(false);
@@ -162,6 +147,36 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const [initiationFieldValues, setInitiationFieldValues] = useState<Record<string, unknown>>({});
 
   const schema = schemaEntry?.schema ?? null;
+  // The schema's configurable detail layout contributes its own tabs (e.g. "Details",
+  // "Technical") to the top-level tab bar, in place of a single static "Overview" tab.
+  const layout = useMemo(
+    () => schema?.detail_layout ?? buildDefaultLayout(schema, relationSchemas),
+    [schema, relationSchemas]
+  );
+  const defaultTabId = layout.tabs[0]?.id ?? 'overview';
+  const homeTabIds = useMemo(
+    () => [
+      ...layout.tabs.map(layoutTab => layoutTab.id),
+      ...HOME_TAB_IDS.filter(id => id !== 'overview')
+    ],
+    [layout]
+  );
+  const requestedTab = search.tab ?? defaultTabId;
+  const setTab = useCallback(
+    (nextTab: TabId) => {
+      const route = contentFolder
+        ? entityContentFolderRoute(workspaceSlug, asEntityPublicId(entityId), contentFolder)
+        : entityDetailRoute(workspaceSlug, asEntityPublicId(entityId));
+      navigate({
+        ...route,
+        search: {
+          ...search,
+          tab: nextTab === defaultTabId ? undefined : nextTab
+        }
+      });
+    },
+    [contentFolder, entityId, navigate, search, workspaceSlug, defaultTabId]
+  );
   const workspaceApiConfiguration = workspaceCapabilityConfigurations.find(
     configuration => configuration.type === 'api-specification'
   );
@@ -174,7 +189,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     ? workspaceApiBinding
     : undefined;
   const apiCapable = apiCapability !== undefined;
-  const tab = requestedTab === 'api' && !apiCapable ? 'overview' : requestedTab;
+  const tab = requestedTab === 'api' && !apiCapable ? defaultTabId : requestedTab;
   const updateApiSearch = useCallback(
     (patch: Partial<EntityDetailSearchParams>, replace = true) => {
       const route = contentFolder
@@ -399,10 +414,11 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
       )}
 
       {/* Overview / Relationships / Change history */}
-      {!contentFolder && HOME_TAB_IDS.includes(tab) && (
+      {!contentFolder && homeTabIds.includes(tab) && (
         <EntityOverviewSection
           tab={tab}
           setTab={setTab}
+          layout={layout}
           relationCount={relationCount}
           futurePlansCount={futurePlansCount}
           canViewAudit={canViewAudit}

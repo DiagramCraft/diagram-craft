@@ -12,11 +12,13 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import type { FieldType } from '../../lib/schemaPresentation';
 import type {
+  DetailLayoutConfig,
   EntitySchema,
   EntityTemplate,
   SchemaField,
   SchemaGroup
 } from '@arch-register/api-types/schemaContract';
+import { buildDefaultLayout } from '../../lib/detailLayoutDefaults';
 import {
   useCreateSchema,
   useDeleteSchema,
@@ -50,6 +52,9 @@ type EntityEditorExtra = {
   keyPrefix: string;
   category: string;
   templates: EntityTemplate[];
+  detailLayoutEnabled: boolean;
+  // Retains the last-edited custom layout even while disabled, so re-enabling doesn't lose work.
+  detailLayout: DetailLayoutConfig | undefined;
 };
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
@@ -103,6 +108,8 @@ export const SchemaSettingsScreen = () => {
         groups: schema.groups,
         sharedFieldGroupLinks: schema.shared_field_group_links ?? [],
         validationRules: schema.validation_rules ?? [],
+        detailLayoutEnabled: schema.detail_layout !== undefined,
+        detailLayout: schema.detail_layout,
         color: schema.color,
         icon: schema.icon
       }),
@@ -133,6 +140,8 @@ export const SchemaSettingsScreen = () => {
         JSON.stringify(draft.sharedFieldGroupLinks) !==
           JSON.stringify(schema.shared_field_group_links ?? []) ||
         JSON.stringify(draft.validationRules) !== JSON.stringify(schema.validation_rules ?? []) ||
+        JSON.stringify(draft.detailLayoutEnabled ? draft.detailLayout : undefined) !==
+          JSON.stringify(schema.detail_layout) ||
         draft.color !== schema.color ||
         draft.icon !== schema.icon,
       save: async (schema, draft, fieldMigrations) => {
@@ -148,6 +157,7 @@ export const SchemaSettingsScreen = () => {
             groups: draft.groups,
             shared_field_group_links: draft.sharedFieldGroupLinks,
             validation_rules: draft.validationRules,
+            detail_layout: draft.detailLayoutEnabled ? (draft.detailLayout ?? null) : null,
             color: draft.color,
             icon: draft.icon,
             fieldMigrations
@@ -351,6 +361,34 @@ export const SchemaSettingsScreen = () => {
             onUpdateValidationRule={editor.updateValidationRule}
             onToggleValidationRule={editor.toggleValidationRule}
             onDeleteValidationRule={editor.deleteValidationRule}
+            detailLayoutEnabled={draft.detailLayoutEnabled}
+            onToggleDetailLayoutEnabled={enabled =>
+              editor.updateDraft(current => ({
+                ...current,
+                detailLayoutEnabled: enabled,
+                detailLayout:
+                  enabled && !current.detailLayout
+                    ? buildDefaultLayout(
+                        {
+                          ...selected,
+                          fields: current.fields,
+                          groups: current.groups
+                        } as EntitySchema,
+                        relationSchemas
+                      )
+                    : current.detailLayout
+              }))
+            }
+            detailLayout={
+              draft.detailLayout ??
+              buildDefaultLayout(
+                { ...selected, fields: draft.fields, groups: draft.groups } as EntitySchema,
+                relationSchemas
+              )
+            }
+            onDetailLayoutChange={layout =>
+              editor.updateDraft(current => ({ ...current, detailLayout: layout }))
+            }
             onDelete={() => editor.setConfirmDelete(true)}
             onSave={() => void editor.save()}
           />

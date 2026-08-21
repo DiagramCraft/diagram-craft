@@ -1,4 +1,5 @@
 import type {
+  DetailLayoutConfig,
   EntitySchema,
   EntityTemplate,
   SchemaField,
@@ -61,6 +62,10 @@ export const SchemaEditorForm = ({
   onUpdateValidationRule,
   onToggleValidationRule,
   onDeleteValidationRule,
+  detailLayoutEnabled,
+  onToggleDetailLayoutEnabled,
+  detailLayout,
+  onDetailLayoutChange,
   onDelete,
   onSave
 }: {
@@ -110,6 +115,10 @@ export const SchemaEditorForm = ({
   onUpdateValidationRule: (index: number, patch: Partial<ValidationRule>) => void;
   onToggleValidationRule: (index: number) => void;
   onDeleteValidationRule: (index: number) => void;
+  detailLayoutEnabled: boolean;
+  onToggleDetailLayoutEnabled: (enabled: boolean) => void;
+  detailLayout: DetailLayoutConfig;
+  onDetailLayoutChange: (layout: DetailLayoutConfig) => void;
   onDelete: () => void;
   onSave: () => void;
 }) => (
@@ -177,6 +186,10 @@ export const SchemaEditorForm = ({
       onUpdateValidationRule={onUpdateValidationRule}
       onToggleValidationRule={onToggleValidationRule}
       onDeleteValidationRule={onDeleteValidationRule}
+      detailLayoutEnabled={detailLayoutEnabled}
+      onToggleDetailLayoutEnabled={onToggleDetailLayoutEnabled}
+      detailLayout={detailLayout}
+      onDetailLayoutChange={onDetailLayoutChange}
     />
   </SchemaEditorFormShell>
 );

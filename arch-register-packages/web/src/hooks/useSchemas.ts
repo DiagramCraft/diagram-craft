@@ -11,6 +11,7 @@ import {
   type SchemaUpdateCacheInput
 } from '../queries/schemas';
 import {
+  DetailLayoutConfig,
   EntityTemplate,
   FieldMigrations,
   SchemaField,
@@ -72,6 +73,7 @@ export const useUpdateSchema = (workspaceId: string) => {
         groups?: SchemaGroup[];
         shared_field_group_links?: SharedFieldGroupLink[];
         validation_rules?: ValidationRule[];
+        detail_layout?: DetailLayoutConfig | null;
         color?: string | null;
         icon?: string | null;
         fieldMigrations?: FieldMigrations;
