@@ -25,6 +25,7 @@ import { WorkspaceApiTokensSubSection } from './sub-sections/WorkspaceApiTokensS
 import { AssessmentTypesSubSection } from './sub-sections/AssessmentTypesSubSection';
 import { PublicCatalogSubSection } from './sub-sections/PublicCatalogSubSection';
 import { WorkspaceCapabilitiesSubSection } from './sub-sections/WorkspaceCapabilitiesSubSection';
+import { ConformanceSubSection } from './sub-sections/ConformanceSubSection';
 
 const WorkspaceAnalyticsScreen = lazy(() =>
   import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
@@ -113,6 +114,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'public-catalog': {
     title: 'Public catalog',
     sub: 'Configure the read-only entities, wiki pages, and API specifications exposed to external consumers.'
+  },
+  'conformance': {
+    title: 'Conformance',
+    sub: 'Manage scheduled validations, query policies, AI checks, and their persistent violations.'
   }
 };
 
@@ -154,7 +159,7 @@ export const WorkspaceSettingsScreen = () => {
     {
       label: 'Home',
       onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
-    },
+  },
     { label: 'Settings' }
   ];
 
@@ -318,6 +323,9 @@ export const WorkspaceSettingsScreen = () => {
         />
       )}
       {section === 'jobs' && <JobMonitoringSubSection workspaceSlug={workspaceSlug} />}
+      {section === 'conformance' && (
+        <ConformanceSubSection workspaceSlug={workspaceSlug} schemas={ctx.schemas} />
+      )}
       {section === 'jobs' && (
         <CreateJobDialog
           open={jobAddDialogOpen}

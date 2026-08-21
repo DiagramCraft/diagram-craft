@@ -10,6 +10,7 @@ import { automationRuleContract } from './automationRuleContract';
 import { baselineContract } from './baselineContract';
 import { changeCaseContract } from './changeCaseContract';
 import { workspaceCollectionContract } from './collectionContract';
+import { conformanceContract } from './conformanceContract';
 import {
   personalDashboardContract,
   projectDashboardContract,
@@ -140,6 +141,7 @@ const applicationEntries = [
   { id: 'personalDashboardContract', contract: personalDashboardContract },
   { id: 'projectDashboardContract', contract: projectDashboardContract },
   { id: 'workspaceCollectionContract', contract: workspaceCollectionContract },
+  { id: 'conformanceContract', contract: conformanceContract },
   { id: 'workspaceTemplateContract', contract: workspaceTemplateContract },
   { id: 'auditContract', contract: auditContract },
   { id: 'watchContract', contract: watchContract },

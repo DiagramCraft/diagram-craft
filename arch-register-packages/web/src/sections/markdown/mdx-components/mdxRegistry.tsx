@@ -75,6 +75,10 @@ import {
   TOP_ENTITIES_TYPE,
   topEntitiesSpec
 } from '../../dashboard/widgets/TopEntitiesRegistration';
+import {
+  CONFORMANCE_SUMMARY_TYPE,
+  conformanceSummarySpec
+} from '../../dashboard/widgets/ConformanceSummaryRegistration';
 import type { DashboardWidgetSpec, MdxComponentSpec } from './types';
 export type { SlashCommandDef, EditorSpec, MdxComponentSpec, DashboardWidgetSpec } from './types';
 
@@ -109,7 +113,8 @@ export const MDX_COMPONENTS = {
   [UPCOMING_MILESTONES_TYPE]: upcomingMilestonesSpec,
   [MARKDOWN_WIDGET_TYPE]: markdownWidgetSpec,
   [AGGREGATE_STAT_TYPE]: aggregateStatSpec,
-  [TOP_ENTITIES_TYPE]: topEntitiesSpec
+  [TOP_ENTITIES_TYPE]: topEntitiesSpec,
+  [CONFORMANCE_SUMMARY_TYPE]: conformanceSummarySpec
 } satisfies Record<string, MdxComponentSpec>;
 
 export type MdxComponentName = keyof typeof MDX_COMPONENTS;

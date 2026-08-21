@@ -32,6 +32,7 @@ import type { ApiSpecificationDatabase } from '../domain/artifact/db/apiSpecific
 import type { ArtifactProcessorRegistry } from '../domain/artifact/artifactProcessor';
 import type { BaselineDatabase } from '../domain/baseline/db/baselineDatabase';
 import type { PublicCatalogDatabase } from '../domain/publicCatalog/db/publicCatalogDatabase';
+import type { ConformanceDatabase } from '../domain/conformance/db/conformanceDatabase';
 // Keep the existing import path stable for database consumers.
 // biome-ignore lint/performance/noBarrelFile: compatibility re-export for database errors
 export { DatabaseError, type NormalizedDbErrorCode } from './databaseError';
@@ -87,6 +88,7 @@ export type DatabaseAdapter = {
   artifactProcessors: ArtifactProcessorRegistry;
   baseline: BaselineDatabase;
   publicCatalog: PublicCatalogDatabase;
+  conformance: ConformanceDatabase;
 };
 
 // Re-export domain types for convenience if needed, or just let consumers import from domain
@@ -257,6 +259,20 @@ export type {
   PublicCatalogConfigDbResult,
   PublicCatalogConfigDbUpsert
 } from '../domain/publicCatalog/db/publicCatalogDatabase';
+export type {
+  ConformanceDatabase,
+  ConformanceCheckDbCreate,
+  ConformanceCheckDbResult,
+  ConformanceCheckDbUpdate,
+  ConformanceExemptionDbResult,
+  ConformanceRunDbCreate,
+  ConformanceRunDbResult,
+  ConformanceRunDbUpdate,
+  ConformanceViolationDbResult,
+  ConformanceViolationEventDbCreate,
+  ConformanceViolationListOptions,
+  ConformanceViolationUpsert
+} from '../domain/conformance/db/conformanceDatabase';
 
 // Legacy names for backward compatibility during transition if needed,
 // but we plan to update all usages.
