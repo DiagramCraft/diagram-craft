@@ -26,6 +26,12 @@
   border-color: color-mix(in oklch, var(--accent-fg) 25%, transparent);
 }
 
+.banner[data-variant="neutral"] {
+  color: var(--cmp-fg-disabled);
+  background: var(--panel-bg);
+  border-color: var(--panel-border);
+}
+
 .icon {
   display: flex;
   align-items: center;

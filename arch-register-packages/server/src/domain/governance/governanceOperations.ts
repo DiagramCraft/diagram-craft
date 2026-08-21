@@ -320,7 +320,7 @@ export const createGovernanceCase = async (
 export const createGovernanceCaseInTransaction = async (
   tx: DatabaseAdapter,
   workspace: string,
-  initiatorUserId: string,
+  initiatorUserId: string | null,
   input: CreateGovernanceCaseInput,
   now = new Date(),
   caseId = randomUUID()

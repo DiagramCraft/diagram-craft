@@ -12,7 +12,7 @@ const meta = {
   argTypes: {
     variant: {
       control: 'select',
-      options: ['error', 'warning', 'info']
+      options: ['error', 'warning', 'info', 'neutral']
     }
   }
 } satisfies Meta<typeof Banner>;

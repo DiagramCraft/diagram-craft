@@ -26,6 +26,7 @@ const expectedPrimaryContractIds = [
   'personalDashboardContract',
   'projectDashboardContract',
   'workspaceCollectionContract',
+  'conformanceContract',
   'workspaceTemplateContract',
   'auditContract',
   'watchContract',

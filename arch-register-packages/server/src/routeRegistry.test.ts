@@ -49,6 +49,7 @@ const expectedRouteIds = [
   'workspace-analytics',
   'workspace-metrics',
   'jobs',
+  'conformance',
   'external-content',
   'webhooks',
   'automation-rules',

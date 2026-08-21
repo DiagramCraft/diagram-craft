@@ -13,7 +13,8 @@ describe('createApplicationGovernanceRegistry', () => {
         'relation.change-case',
         'document.status',
         'assessment.response',
-        'field-date-reminder'
+        'field-date-reminder',
+        'conformance.violation'
       ])
     );
   });

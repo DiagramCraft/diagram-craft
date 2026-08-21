@@ -5,6 +5,7 @@ import { createDeprecationGovernanceRegistry } from '../catalog/entityDeprecatio
 import { createFieldDateReminderGovernanceRegistry } from '../catalog/fieldDateReminderJob';
 import { createDocumentGovernanceRegistry } from '../document/documentWorkflowOperations';
 import { createAssessmentGovernanceRegistry } from '../project/assessmentOperations';
+import { createConformanceGovernanceRegistry } from '../conformance/conformanceGovernance';
 
 /**
  * Builds the complete governance runtime registry for every process that evaluates cases.
@@ -18,5 +19,6 @@ export const createApplicationGovernanceRegistry = (): GovernanceRegistry =>
     ...createDeprecationGovernanceRegistry(),
     ...createDocumentGovernanceRegistry(),
     ...createAssessmentGovernanceRegistry(),
-    ...createFieldDateReminderGovernanceRegistry()
+    ...createFieldDateReminderGovernanceRegistry(),
+    ...createConformanceGovernanceRegistry()
   ]);
