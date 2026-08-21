@@ -370,6 +370,8 @@ export type ModelOverviewSearchParams = {
   springStrength?: number;
   repulsionStrength?: number;
   idealEdgeLength?: number;
+  categoryStates?: string; // JSON string of Record<string, 'collapsed' | 'hidden'>
+  typedRelationMode?: 'entity' | 'reference';
 };
 
 const parseNumberInRange = (
@@ -416,7 +418,9 @@ export const validateModelOverviewSearch = (
   iterations: parseNumberInRange(raw.iterations, 50, 1000, 300, true),
   springStrength: parseNumberInRange(raw.springStrength, 0.1, 2.0, 0.5),
   repulsionStrength: parseNumberInRange(raw.repulsionStrength, 0.1, 3.0, 1.0),
-  idealEdgeLength: parseNumberInRange(raw.idealEdgeLength, 50, 500, 160)
+  idealEdgeLength: parseNumberInRange(raw.idealEdgeLength, 50, 500, 160),
+  categoryStates: typeof raw.categoryStates === 'string' ? raw.categoryStates : undefined,
+  typedRelationMode: raw.typedRelationMode === 'reference' ? 'reference' : undefined
 });
 
 // Assistant params

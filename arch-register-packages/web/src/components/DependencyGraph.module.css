@@ -39,6 +39,13 @@
       stroke-width: 2;
       stroke-dasharray: 6 3;
     }
+
+    &[data-node-kind="category"] {
+      fill: color-mix(in oklch, var(--base-fg-more-dim) 10%, var(--panel-bg));
+      stroke: var(--base-fg-more-dim);
+      stroke-width: 1.5;
+      stroke-dasharray: 3 3;
+    }
   }
 
   .eNodeContent {
