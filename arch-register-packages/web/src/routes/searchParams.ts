@@ -121,19 +121,9 @@ export type EntityDetailSearchParams = {
   apiPage?: number;
   apiArtifactId?: string;
   apiRevisionId?: string;
-  tab?:
-    | 'overview'
-    | 'api'
-    | 'topology'
-    | 'graph'
-    | 'relations'
-    | 'future-plans'
-    | 'related-content'
-    | 'dependents'
-    | 'assessments'
-    | 'discussions'
-    | 'changes'
-    | 'timeline';
+  // Most values are the fixed TabId set (api/topology/graph/relations/...); the rest are dynamic
+  // per-schema detail-layout tab ids (see entityDetailTypes.ts), so this accepts any string.
+  tab?: string;
 };
 
 export type SharedContentBrowserSearchParams = {
@@ -179,21 +169,7 @@ export const validateEntityDetailSearch = (
   apiPage: validatePositivePage(raw.apiPage),
   apiArtifactId: typeof raw.apiArtifactId === 'string' ? raw.apiArtifactId : undefined,
   apiRevisionId: typeof raw.apiRevisionId === 'string' ? raw.apiRevisionId : undefined,
-  tab:
-    raw.tab === 'overview' ||
-    raw.tab === 'api' ||
-    raw.tab === 'topology' ||
-    raw.tab === 'graph' ||
-    raw.tab === 'relations' ||
-    raw.tab === 'future-plans' ||
-    raw.tab === 'related-content' ||
-    raw.tab === 'dependents' ||
-    raw.tab === 'assessments' ||
-    raw.tab === 'discussions' ||
-    raw.tab === 'changes' ||
-    raw.tab === 'timeline'
-      ? raw.tab
-      : undefined
+  tab: typeof raw.tab === 'string' ? raw.tab : undefined
 });
 
 export type MarkdownSearchParams = {

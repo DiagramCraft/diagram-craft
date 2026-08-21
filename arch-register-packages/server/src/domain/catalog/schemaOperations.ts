@@ -21,7 +21,8 @@ import {
   toApiSchemaVersion,
   buildCreateSchemaInput,
   buildUpdateSchemaInput,
-  toFieldMigrationFields
+  toFieldMigrationFields,
+  remapLayoutFieldIds
 } from './schemaHelpers';
 import {
   buildFieldChangeSummary,
@@ -312,6 +313,20 @@ export const updateWorkspaceSchema = async (
 
       validateDerivedFieldGroupAccess(finalFields, compiledNext.groups ?? []);
 
+      const fieldRenames = new Map(
+        fieldChanges.flatMap(change =>
+          change.kind === 'renamed' && change.renamedToId
+            ? [[change.fieldId, change.renamedToId] as const]
+            : []
+        )
+      );
+      const remappedLayout = remapLayoutFieldIds(
+        next.detail_layout,
+        fieldRenames,
+        new Set(finalFields.map(field => field.id)),
+        new Set((compiledNext.groups ?? []).map(group => group.id))
+      );
+
       const changeSummary = buildFieldChangeSummary(
         toFieldMigrationFields(oldRow.fields),
         toFieldMigrationFields(finalFields),
@@ -410,6 +425,7 @@ export const updateWorkspaceSchema = async (
           groups: compiledNext.groups,
           shared_field_group_links: compiledNext.shared_field_group_links ?? [],
           validation_rules: next.validation_rules,
+          detail_layout: remappedLayout,
           color: next.color,
           icon: next.icon,
           default_owner: next.defaultOwner,

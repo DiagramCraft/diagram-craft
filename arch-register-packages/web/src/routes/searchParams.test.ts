@@ -29,7 +29,7 @@ describe('validateWorkspaceContentSearch', () => {
 });
 
 describe('validateEntityDetailSearch', () => {
-  it('accepts reloadable entity tabs and rejects unknown tabs', () => {
+  it('accepts reloadable entity tabs, including dynamic per-schema detail-layout tab ids', () => {
     expect(
       validateEntityDetailSearch({
         tab: 'topology',
@@ -42,9 +42,19 @@ describe('validateEntityDetailSearch', () => {
       contentQuery: 'guide',
       contentView: 'list'
     });
+    // Schema-defined detail-layout tabs use arbitrary ids, so any string tab value is accepted.
     expect(
-      validateEntityDetailSearch({ tab: 'unknown', contentFolder: 'legacy', contentView: 'kanban' })
+      validateEntityDetailSearch({
+        tab: 'tab-4f3c2b1a',
+        contentFolder: 'legacy',
+        contentView: 'kanban'
+      })
     ).toEqual({
+      tab: 'tab-4f3c2b1a',
+      contentQuery: undefined,
+      contentView: undefined
+    });
+    expect(validateEntityDetailSearch({ tab: 123 })).toEqual({
       tab: undefined,
       contentQuery: undefined,
       contentView: undefined

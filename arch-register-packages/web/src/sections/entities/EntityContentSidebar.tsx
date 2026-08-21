@@ -53,6 +53,7 @@ import { AddMarkdownDialog } from '../markdown/AddMarkdownDialog';
 import { AddDiagramDialog } from '../projects/AddDiagramDialog';
 import localStyles from './EntityContentSidebar.module.css';
 import { downloadUrl } from '../../lib/browserDownload';
+import { buildDefaultLayout } from '../../lib/detailLayoutDefaults';
 
 export const EntityContentSidebar = ({
   workspaceSlug,
@@ -91,7 +92,16 @@ export const EntityContentSidebar = ({
   const search = useSearch({ strict: false }) as EntityDetailSearchParams;
   const contentFolder = params._splat ?? null;
   const activeFileId = params.nodeId ?? params.diagramId ?? null;
-  const tab = search.tab ?? 'overview';
+  // The schema's configurable detail layout may define its own first tab id in place of the
+  // static 'overview' id — mirrors EntityDetailScreen's default-tab resolution.
+  const layout =
+    schema?.detail_layout ?? buildDefaultLayout(schema ?? null, context.relationSchemas);
+  const defaultTabId = layout.tabs[0]?.id ?? 'overview';
+  const homeTabIds = [
+    ...layout.tabs.map(layoutTab => layoutTab.id),
+    ...HOME_TAB_IDS.filter(id => id !== 'overview')
+  ];
+  const tab = search.tab ?? defaultTabId;
   const hasFilesOrFolders = (data?.rootFiles.length ?? 0) > 0 || (data?.folders.length ?? 0) > 0;
   const apiSearch = {
     apiQ: search.apiQ,
@@ -108,7 +118,7 @@ export const EntityContentSidebar = ({
         contentQuery: search.contentQuery,
         contentView: search.contentView,
         ...apiSearch,
-        tab: nextTab === 'overview' ? undefined : nextTab
+        tab: nextTab === defaultTabId ? undefined : nextTab
       })
     );
   };
@@ -202,8 +212,8 @@ export const EntityContentSidebar = ({
         <TreeRow
           label="Overview"
           icon={<TbHome size={13} />}
-          active={!contentFolder && HOME_TAB_IDS.includes(tab)}
-          onClick={() => navigateTab('overview')}
+          active={!contentFolder && homeTabIds.includes(tab)}
+          onClick={() => navigateTab(defaultTabId)}
         />
         <TreeRow
           label="Context"

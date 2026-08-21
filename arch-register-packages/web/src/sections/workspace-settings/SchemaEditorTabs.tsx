@@ -1,5 +1,6 @@
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import type {
+  DetailLayoutConfig,
   EntitySchema,
   EntityTemplate,
   SchemaField,
@@ -13,8 +14,9 @@ import type { FieldType } from '../../lib/schemaPresentation';
 import { SchemaFieldsEditor } from './SchemaFieldsEditor';
 import { SchemaTemplatesEditor } from './SchemaTemplatesEditor';
 import { SchemaValidationEditor } from './SchemaValidationEditor';
+import { SchemaLayoutEditor } from './SchemaLayoutEditor';
 
-export type SchemaPanelTab = 'fields' | 'templates' | 'validation';
+export type SchemaPanelTab = 'fields' | 'templates' | 'validation' | 'layout';
 
 export const SchemaEditorTabs = ({
   activeTab,
@@ -48,7 +50,11 @@ export const SchemaEditorTabs = ({
   onAddValidationRule,
   onUpdateValidationRule,
   onToggleValidationRule,
-  onDeleteValidationRule
+  onDeleteValidationRule,
+  detailLayoutEnabled,
+  onToggleDetailLayoutEnabled,
+  detailLayout,
+  onDetailLayoutChange
 }: {
   activeTab: SchemaPanelTab;
   onTabChange: (tab: SchemaPanelTab) => void;
@@ -82,12 +88,17 @@ export const SchemaEditorTabs = ({
   onUpdateValidationRule: (index: number, patch: Partial<ValidationRule>) => void;
   onToggleValidationRule: (index: number) => void;
   onDeleteValidationRule: (index: number) => void;
+  detailLayoutEnabled: boolean;
+  onToggleDetailLayoutEnabled: (enabled: boolean) => void;
+  detailLayout: DetailLayoutConfig;
+  onDetailLayoutChange: (layout: DetailLayoutConfig) => void;
 }) => (
   <Tabs.Root value={activeTab} onValueChange={value => onTabChange(value as SchemaPanelTab)}>
     <Tabs.List aria-label="Schema editor sections">
       <Tabs.Trigger value="fields">Fields</Tabs.Trigger>
       <Tabs.Trigger value="templates">Templates</Tabs.Trigger>
       <Tabs.Trigger value="validation">Validation</Tabs.Trigger>
+      <Tabs.Trigger value="layout">Layout</Tabs.Trigger>
     </Tabs.List>
     <Tabs.Content value="fields" style={{ height: 'auto' }}>
       <SchemaFieldsEditor
@@ -132,6 +143,40 @@ export const SchemaEditorTabs = ({
         onToggle={onToggleValidationRule}
         onDelete={onDeleteValidationRule}
       />
+    </Tabs.Content>
+    <Tabs.Content value="layout" style={{ height: 'auto' }}>
+      <label
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 6,
+          fontSize: 12,
+          marginBottom: 12
+        }}
+      >
+        <input
+          type="checkbox"
+          disabled={!canEdit}
+          checked={detailLayoutEnabled}
+          onChange={e => onToggleDetailLayoutEnabled(e.target.checked)}
+        />
+        Use a custom layout for the Details/Edit screens
+      </label>
+      {detailLayoutEnabled ? (
+        <SchemaLayoutEditor
+          layout={detailLayout}
+          fields={fields}
+          groups={groups}
+          relationSchemas={relationSchemas}
+          canEdit={canEdit}
+          onChange={onDetailLayoutChange}
+        />
+      ) : (
+        <div style={{ fontSize: 12, color: 'var(--cmp-fg-disabled)' }}>
+          Using the default layout (fields, groups, metadata, links, relations, projects, and
+          diagrams in their standard arrangement).
+        </div>
+      )}
     </Tabs.Content>
   </Tabs.Root>
 );

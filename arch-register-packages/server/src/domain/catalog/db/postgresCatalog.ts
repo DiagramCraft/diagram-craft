@@ -66,8 +66,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createSchema(input: SchemaDbCreate) {
     try {
       const rows = (await this.sql`
-        INSERT INTO entity_schema (id, workspace, name, category, description, fields, templates, groups, shared_field_group_links, validation_rules, color, icon, default_owner, key_prefix, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.category ?? null}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates ?? [])}, ${this.json(input.groups ?? [])}, ${this.json(input.shared_field_group_links ?? [])}, ${this.json(input.validation_rules ?? [])}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO entity_schema (id, workspace, name, category, description, fields, templates, groups, shared_field_group_links, validation_rules, detail_layout, color, icon, default_owner, key_prefix, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.category ?? null}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates ?? [])}, ${this.json(input.groups ?? [])}, ${this.json(input.shared_field_group_links ?? [])}, ${this.json(input.validation_rules ?? [])}, ${input.detail_layout ? this.json(input.detail_layout) : null}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `) as DatabaseRow[];
       const [row] = rows;
@@ -92,6 +92,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
             groups = ${this.json(input.groups ?? [])},
             shared_field_group_links = ${this.json(input.shared_field_group_links ?? [])},
             validation_rules = ${this.json(input.validation_rules ?? [])},
+            detail_layout = ${input.detail_layout ? this.json(input.detail_layout) : null},
             color = ${input.color},
             icon = ${input.icon},
             default_owner = ${input.default_owner},

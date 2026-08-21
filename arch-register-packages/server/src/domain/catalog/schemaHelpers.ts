@@ -3,6 +3,7 @@ import type { WorkspaceEnumDbResult as InternalWorkspaceEnum } from './db/catalo
 import { SchemaDbResult as InternalEntitySchema } from './db/catalogDatabase';
 import { httpAssert } from '../../utils/httpAssert';
 import {
+  DetailLayoutConfig,
   EntitySchema,
   EntityTemplate,
   SchemaField,
@@ -10,6 +11,7 @@ import {
   SchemaVersion,
   SharedFieldGroupLink,
   ValidationRule,
+  detailLayoutConfigSchema,
   isReferenceOrContainmentField,
   isTypedRelationField
 } from '@arch-register/api-types/schemaContract';
@@ -39,6 +41,7 @@ type SchemaMutationPayload = {
   groups: SchemaGroup[];
   shared_field_group_links: SharedFieldGroupLink[];
   validation_rules: ValidationRule[];
+  detail_layout?: DetailLayoutConfig;
   color: string | null;
   icon: string | null;
   defaultOwner: string | null;
@@ -360,6 +363,50 @@ export const normalizeSharedFieldGroupLinks = (links: unknown): SharedFieldGroup
   return result;
 };
 
+export const normalizeDetailLayout = (value: unknown): DetailLayoutConfig | undefined => {
+  if (value == null) return undefined;
+  const parsed = detailLayoutConfigSchema.safeParse(value);
+  return parsed.success ? parsed.data : undefined;
+};
+
+/**
+ * Applies resolved field renames/removals to a detail layout config's `field` blocks, and drops
+ * `fieldGroup`/`field` blocks whose referenced field or group no longer exists. Layout is
+ * presentation-only and non-destructive to entity data, so stale references are dropped silently
+ * rather than surfaced through the field-migration dialog.
+ */
+export const remapLayoutFieldIds = (
+  layout: DetailLayoutConfig | undefined,
+  fieldRenames: ReadonlyMap<string, string>,
+  liveFieldIds: ReadonlySet<string>,
+  liveGroupIds: ReadonlySet<string>
+): DetailLayoutConfig | undefined => {
+  if (!layout) return layout;
+  return {
+    ...layout,
+    tabs: layout.tabs.map(tab => ({
+      ...tab,
+      panels: tab.panels.map(panel => ({
+        ...panel,
+        blocks: panel.blocks.flatMap(block => {
+          if (block.kind === 'field') {
+            const refId = block.refId
+              ? (fieldRenames.get(block.refId) ?? block.refId)
+              : block.refId;
+            if (!refId || !liveFieldIds.has(refId)) return [];
+            return [{ ...block, refId }];
+          }
+          if (block.kind === 'fieldGroup') {
+            if (!block.refId || !liveGroupIds.has(block.refId)) return [];
+            return [block];
+          }
+          return [block];
+        })
+      }))
+    }))
+  };
+};
+
 export const clearOrphanedGroupIds = <F extends { groupId?: string }>(
   fields: F[],
   groups: SchemaGroup[]
@@ -415,6 +462,7 @@ export const buildCreateSchemaInput = (
     groups = [],
     shared_field_group_links = [],
     validation_rules,
+    detail_layout,
     color,
     icon,
     default_owner
@@ -441,6 +489,7 @@ export const buildCreateSchemaInput = (
     groups: normalizedGroups,
     shared_field_group_links: normalizeSharedFieldGroupLinks(shared_field_group_links),
     validation_rules: normalizedValidationRules,
+    detail_layout: normalizeDetailLayout(detail_layout),
     color: typeof color === 'string' ? color : null,
     icon: typeof icon === 'string' ? icon : null,
     default_owner: resolveSchemaDefaultOwner(default_owner, teamIds, null),
@@ -465,6 +514,7 @@ export const buildUpdateSchemaInput = (
     groups,
     shared_field_group_links,
     validation_rules,
+    detail_layout,
     color,
     icon,
     default_owner
@@ -504,6 +554,8 @@ export const buildUpdateSchemaInput = (
         ? normalizeSharedFieldGroupLinks(shared_field_group_links)
         : (current.shared_field_group_links ?? []),
     validation_rules: normalizedValidationRules,
+    detail_layout:
+      detail_layout !== undefined ? normalizeDetailLayout(detail_layout) : current.detail_layout,
     color: color !== undefined ? (typeof color === 'string' ? color : null) : current.color,
     icon: icon !== undefined ? (typeof icon === 'string' ? icon : null) : current.icon,
     defaultOwner:
@@ -622,6 +674,7 @@ export const toApiSchema = (
     groups: schema.groups ?? [],
     shared_field_group_links: schema.shared_field_group_links ?? [],
     validation_rules: schema.validation_rules ?? [],
+    detail_layout: schema.detail_layout,
     color: schema.color,
     icon: schema.icon,
     entity_count: entityCount,

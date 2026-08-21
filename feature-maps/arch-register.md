@@ -92,6 +92,15 @@
             effect on validation, required-ness, or completeness. A group — a schema-local group, or a schema's
             inclusion of a reusable shared fieldgroup — can optionally be assigned one or more teams to scope its
             access: a team's reviewer role (or above) grants view, and editor role (or above) grants edit.
+            A schema's "Layout" admin tab lets administrators optionally customize the tab/panel/block composition
+            of the entity Details/Edit screen: fields, field groups, fixed metadata (name, slug, description, owner,
+            lifecycle, target lifecycle, tags, public ID, namespace), the external links block, and individually
+            placeable unbound typed-relation sections can each be arranged into named panels (optionally linked to a
+            field group, inheriting its access control) across one or more tabs. A schema without a saved layout
+            renders the previous default composition (ungrouped fields, then one section per field group, metadata,
+            links, then unbound relations) unchanged; the same layout drives both the Details and Edit screens. Field
+            or field-group renames/removals resolved via schema field migrations are applied to the saved layout
+            automatically, dropping stale placements without prompting.
             Administrators can similarly define relation types (name, description, "in"/"out" endpoint constraints
             naming the allowed entity schemas at each end, fields, groups, and field-group access control) from a
             dedicated relation-types admin screen alongside entity types, enums, and shared fieldgroups; relation
@@ -132,7 +141,8 @@
           visible alongside the latest update's source, timestamp, status, and any explanation or findings. A user
           edit to any other field on the entity marks that entity's external field results outdated. Fields belonging
           to a schema group render under a labeled section in the entity's Properties panel, with ungrouped fields
-          shown first.
+          shown first, unless the schema defines a custom layout (@id:ar.workspace.configuration.schemas), in which
+          case the Details/Edit screen renders that schema's configured tabs and panels instead.
           Entity saves return validation warnings and reject blocking validation rules atomically, including rules that
           evaluate direct dependent entities through the same bounded JSON context.
 
