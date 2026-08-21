@@ -1,4 +1,19 @@
-import { TbChevronDown, TbChevronUp, TbPlus, TbTrash } from 'react-icons/tb';
+import { useEffect, useRef, useState } from 'react';
+import {
+  TbChevronDown,
+  TbChevronUp,
+  TbExternalLink,
+  TbInfoCircle,
+  TbLink,
+  TbLock,
+  TbPlus,
+  TbSitemap,
+  TbSquare,
+  TbStack2,
+  TbTag,
+  TbTrash,
+  TbX
+} from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import type {
@@ -12,7 +27,7 @@ import type {
   SchemaGroup
 } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
-import styles from './SchemaSettingsScreen.module.css';
+import styles from './SchemaLayoutEditor.module.css';
 
 const METADATA_SLOT_LABELS: Record<LayoutMetadataSlot, string> = {
   name: 'Name',
@@ -28,6 +43,16 @@ const METADATA_SLOT_LABELS: Record<LayoutMetadataSlot, string> = {
 };
 
 const ALL_METADATA_SLOTS = Object.keys(METADATA_SLOT_LABELS) as LayoutMetadataSlot[];
+
+const KIND_ICON: Record<LayoutBlockKind, React.ComponentType<{ size?: number }>> = {
+  field: TbSquare,
+  fieldGroup: TbSquare,
+  metadata: TbTag,
+  unboundTypedRelation: TbLink,
+  links: TbExternalLink,
+  projects: TbStack2,
+  diagrams: TbSitemap
+};
 
 const moveItem = <T,>(items: T[], index: number, direction: -1 | 1): T[] => {
   const target = index + direction;
@@ -90,6 +115,200 @@ const blockLabel = (
   return '(unknown block)';
 };
 
+type AddBlockOption = { value: string; label: string; kind: LayoutBlockKind; refId?: string };
+type AddBlockOptionGroups = {
+  fields: AddBlockOption[];
+  metadata: AddBlockOption[];
+  relations: AddBlockOption[];
+  other: AddBlockOption[];
+};
+
+const Segmented = ({
+  options,
+  value,
+  disabled,
+  onChange
+}: {
+  options: Array<{ value: 1 | 2; label: string }>;
+  value: 1 | 2;
+  disabled?: boolean;
+  onChange: (value: 1 | 2) => void;
+}) => (
+  <div className={styles.segmented}>
+    {options.map(option => (
+      <button
+        key={option.value}
+        type="button"
+        data-active={value === option.value}
+        disabled={disabled}
+        onClick={() => onChange(option.value)}
+      >
+        {option.label}
+      </button>
+    ))}
+  </div>
+);
+
+const useCloseOnOutsideClick = (open: boolean, onClose: () => void) => {
+  const ref = useRef<HTMLDivElement>(null);
+  useEffect(() => {
+    if (!open) return;
+    const handler = (e: MouseEvent) => {
+      if (ref.current && !ref.current.contains(e.target as Node)) onClose();
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [open, onClose]);
+  return ref;
+};
+
+const AddBlockMenu = ({
+  options,
+  onAdd
+}: {
+  options: AddBlockOptionGroups;
+  onAdd: (kind: LayoutBlockKind, refId?: string) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useCloseOnOutsideClick(open, () => setOpen(false));
+  const nothing =
+    !options.fields.length &&
+    !options.metadata.length &&
+    !options.relations.length &&
+    !options.other.length;
+
+  const pick = (option: AddBlockOption) => {
+    onAdd(option.kind, option.refId);
+    setOpen(false);
+  };
+
+  return (
+    <div className={styles.addMenuWrap} ref={ref}>
+      <button type="button" className={styles.addBlockBtn} onClick={() => setOpen(o => !o)}>
+        <TbPlus size={10} /> Add block
+      </button>
+      {open && (
+        <div className={styles.menu}>
+          {nothing && (
+            <div className={styles.menuEmpty}>Everything available is already placed</div>
+          )}
+          {!!options.fields.length && (
+            <div className={styles.menuGroup}>
+              <div className={styles.menuLabel}>Fields</div>
+              {options.fields.map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={styles.menuItem}
+                  onClick={() => pick(option)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {!!options.metadata.length && (
+            <div className={styles.menuGroup}>
+              <div className={styles.menuLabel}>Metadata</div>
+              {options.metadata.map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={styles.menuItem}
+                  onClick={() => pick(option)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {!!options.relations.length && (
+            <div className={styles.menuGroup}>
+              <div className={styles.menuLabel}>Relations</div>
+              {options.relations.map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={styles.menuItem}
+                  onClick={() => pick(option)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+          {!!options.other.length && (
+            <div className={styles.menuGroup}>
+              <div className={styles.menuLabel}>Other</div>
+              {options.other.map(option => (
+                <button
+                  key={option.value}
+                  type="button"
+                  className={styles.menuItem}
+                  onClick={() => pick(option)}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
+const AddPanelMenu = ({
+  unplacedGroups,
+  onAdd
+}: {
+  unplacedGroups: SchemaGroup[];
+  onAdd: (groupId: string | undefined) => void;
+}) => {
+  const [open, setOpen] = useState(false);
+  const ref = useCloseOnOutsideClick(open, () => setOpen(false));
+
+  return (
+    <div className={styles.addMenuWrap} ref={ref}>
+      <button type="button" className={styles.addPanelBtn} onClick={() => setOpen(o => !o)}>
+        <TbPlus size={11} /> Add panel
+      </button>
+      {open && (
+        <div className={styles.menu}>
+          <button
+            type="button"
+            className={styles.menuItem}
+            onClick={() => {
+              onAdd(undefined);
+              setOpen(false);
+            }}
+          >
+            Free-form panel
+          </button>
+          {unplacedGroups.length > 0 && (
+            <div className={styles.menuGroup}>
+              <div className={styles.menuLabel}>Link to field group</div>
+              {unplacedGroups.map(group => (
+                <button
+                  key={group.id}
+                  type="button"
+                  className={styles.menuItem}
+                  onClick={() => {
+                    onAdd(group.id);
+                    setOpen(false);
+                  }}
+                >
+                  {group.name}
+                </button>
+              ))}
+            </div>
+          )}
+        </div>
+      )}
+    </div>
+  );
+};
+
 export const SchemaLayoutEditor = ({
   layout,
   fields,
@@ -105,9 +324,22 @@ export const SchemaLayoutEditor = ({
   canEdit: boolean;
   onChange: (layout: DetailLayoutConfig) => void;
 }) => {
+  const [activeTabId, setActiveTabId] = useState<string | undefined>(layout.tabs[0]?.id);
+  const activeTab = layout.tabs.find(tab => tab.id === activeTabId) ?? layout.tabs[0];
+
   const fieldsById = new Map(fields.map(field => [field.id, field]));
   const relationSchemasById = new Map(relationSchemas.map(rs => [rs.id, rs]));
   const placed = computePlaced(layout);
+  const linkedGroupIds = new Set(
+    layout.tabs.flatMap(tab =>
+      tab.panels.flatMap(panel =>
+        panel.blocks.length === 1 && panel.blocks[0]!.kind === 'fieldGroup'
+          ? [panel.blocks[0]!.refId]
+          : []
+      )
+    )
+  );
+  const unplacedGroups = groups.filter(group => !linkedGroupIds.has(group.id));
 
   const updateTabs = (updater: (tabs: LayoutTab[]) => LayoutTab[]) =>
     onChange({ ...layout, tabs: updater(layout.tabs) });
@@ -125,27 +357,37 @@ export const SchemaLayoutEditor = ({
       panels: tab.panels.map(panel => (panel.id === panelId ? updater(panel) : panel))
     }));
 
-  const addTab = () =>
-    updateTabs(tabs => [
-      ...tabs,
-      { id: newId('tab'), title: 'New tab', columns: 1 as const, panels: [] }
-    ]);
+  const addTab = () => {
+    const id = newId('tab');
+    updateTabs(tabs => [...tabs, { id, title: 'New tab', columns: 1 as const, panels: [] }]);
+    setActiveTabId(id);
+  };
+
+  const removeTab = (tabId: string) => {
+    updateTabs(tabs => tabs.filter(tab => tab.id !== tabId));
+    if (tabId === activeTabId) {
+      const remaining = layout.tabs.filter(tab => tab.id !== tabId);
+      setActiveTabId(remaining[0]?.id);
+    }
+  };
 
   const setTabColumns = (tabId: string, columns: 1 | 2) =>
     updateTab(tabId, tab => ({ ...tab, columns }));
 
-  const addPanel = (tabId: string) =>
+  const addPanel = (tabId: string, column: 1 | 2, groupId: string | undefined) =>
     updateTab(tabId, tab => ({
       ...tab,
       panels: [
         ...tab.panels,
-        {
-          id: newId('panel'),
-          title: 'New panel',
-          collapsible: true,
-          column: 1 as const,
-          blocks: []
-        }
+        groupId
+          ? {
+              id: newId('panel'),
+              title: groups.find(g => g.id === groupId)?.name ?? groupId,
+              collapsible: false,
+              column,
+              blocks: [{ id: newId('block'), kind: 'fieldGroup' as const, refId: groupId }]
+            }
+          : { id: newId('panel'), title: 'New panel', collapsible: true, column, blocks: [] }
       ]
     }));
 
@@ -170,342 +412,356 @@ export const SchemaLayoutEditor = ({
       blocks: moveItem(panel.blocks, index, direction)
     }));
 
-  const linkPanelToGroup = (tabId: string, panelId: string, groupId: string) =>
-    updatePanel(tabId, panelId, panel => ({
-      ...panel,
-      blocks: [{ id: newId('block'), kind: 'fieldGroup', refId: groupId }]
-    }));
-
-  const unlinkPanel = (tabId: string, panelId: string) =>
-    updatePanel(tabId, panelId, panel => ({ ...panel, blocks: [] }));
-
   const soleGroupBlock = (panel: LayoutPanel) =>
     panel.blocks.length === 1 && panel.blocks[0]!.kind === 'fieldGroup'
       ? panel.blocks[0]
       : undefined;
 
-  const addBlockOptions = (panel: LayoutPanel) => {
-    const options: Array<{ value: string; label: string; kind: LayoutBlockKind; refId?: string }> =
-      [];
+  const addBlockOptions = (): AddBlockOptionGroups => {
+    const options: AddBlockOptionGroups = { fields: [], metadata: [], relations: [], other: [] };
     for (const field of fields) {
       if (!placed.fieldIds.has(field.id) && !field.groupId)
-        options.push({
+        options.fields.push({
           value: `field:${field.id}`,
-          label: `Field: ${field.name}`,
+          label: field.name,
           kind: 'field',
           refId: field.id
         });
     }
     for (const slot of ALL_METADATA_SLOTS) {
       if (!placed.metadataSlots.has(slot))
-        options.push({
+        options.metadata.push({
           value: `metadata:${slot}`,
-          label: `Metadata: ${METADATA_SLOT_LABELS[slot]}`,
+          label: METADATA_SLOT_LABELS[slot],
           kind: 'metadata',
           refId: slot
         });
     }
-    if (!placed.hasLinks) options.push({ value: 'links', label: 'Links', kind: 'links' });
     for (const relationSchema of relationSchemas) {
       if (!placed.relationSchemaIds.has(relationSchema.id))
-        options.push({
+        options.relations.push({
           value: `unboundTypedRelation:${relationSchema.id}`,
-          label: `Unbound relation: ${relationSchema.name}`,
+          label: relationSchema.name,
           kind: 'unboundTypedRelation',
           refId: relationSchema.id
         });
     }
+    if (!placed.hasLinks) options.other.push({ value: 'links', label: 'Links', kind: 'links' });
     if (!placed.hasProjects)
-      options.push({ value: 'projects', label: 'Projects', kind: 'projects' });
+      options.other.push({ value: 'projects', label: 'Projects', kind: 'projects' });
     if (!placed.hasDiagrams)
-      options.push({ value: 'diagrams', label: 'Diagrams', kind: 'diagrams' });
-    void panel;
+      options.other.push({ value: 'diagrams', label: 'Diagrams', kind: 'diagrams' });
     return options;
   };
 
   return (
     <div>
-      <div className={styles.fieldsHead}>
+      <div className={styles.topbar}>
         <div className={styles.sectionLabel}>Detail/Edit layout</div>
-        {canEdit && (
-          <Button variant="ghost" icon={<TbPlus size={11} />} onClick={addTab}>
-            Add tab
-          </Button>
+        {activeTab && (
+          <div className={styles.colPick}>
+            <span>Columns</span>
+            <Segmented
+              options={[
+                { value: 1, label: '1' },
+                { value: 2, label: '2' }
+              ]}
+              value={activeTab.columns ?? 1}
+              disabled={!canEdit}
+              onChange={value => setTabColumns(activeTab.id, value)}
+            />
+          </div>
         )}
       </div>
 
-      {layout.tabs.map((tab, tabIndex) => (
-        <div
-          key={tab.id}
-          className={styles.templateRow}
-          style={{ flexDirection: 'column', alignItems: 'stretch', gap: 8 }}
-        >
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            {canEdit ? (
-              <div style={{ display: 'flex', gap: 2 }}>
-                <button
-                  type="button"
-                  className={styles.iconBtn}
-                  disabled={tabIndex === 0}
-                  aria-label="Move tab up"
-                  onClick={() => updateTabs(tabs => moveItem(tabs, tabIndex, -1))}
-                >
-                  <TbChevronUp size={13} />
-                </button>
-                <button
-                  type="button"
-                  className={styles.iconBtn}
-                  disabled={tabIndex === layout.tabs.length - 1}
-                  aria-label="Move tab down"
-                  onClick={() => updateTabs(tabs => moveItem(tabs, tabIndex, 1))}
-                >
-                  <TbChevronDown size={13} />
-                </button>
-              </div>
-            ) : (
-              <span />
-            )}
-            <TextInput
-              value={tab.title}
-              readOnly={!canEdit}
-              onChange={value => updateTab(tab.id, t => ({ ...t, title: value ?? '' }))}
-              style={{ flex: 1 }}
-            />
-            {canEdit && (
-              <button
-                type="button"
-                className={styles.iconBtn}
-                aria-label="Remove tab"
-                onClick={() => updateTabs(tabs => tabs.filter(t => t.id !== tab.id))}
-              >
-                <TbTrash size={13} />
-              </button>
-            )}
-          </div>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-            <span style={{ color: 'var(--cmp-fg-disabled)' }}>Columns:</span>
-            <select
-              className={styles.selectInline}
-              disabled={!canEdit}
-              value={tab.columns ?? 1}
-              onChange={e => setTabColumns(tab.id, Number(e.target.value) === 2 ? 2 : 1)}
+      {layout.tabs.length > 1 && (
+        <div className={styles.tabStrip}>
+          {layout.tabs.map((tab, tabIndex) => (
+            <div
+              key={tab.id}
+              className={styles.tabChip}
+              data-active={tab.id === activeTab?.id}
+              onClick={() => setActiveTabId(tab.id)}
             >
-              <option value={1}>1 (single column)</option>
-              <option value={2}>2 (properties / sidebar)</option>
-            </select>
-          </div>
+              <input
+                className={styles.tabChipInput}
+                value={tab.title}
+                disabled={!canEdit}
+                onChange={e => updateTab(tab.id, t => ({ ...t, title: e.target.value }))}
+                onClick={e => e.stopPropagation()}
+              />
+              {canEdit && (
+                <span className={styles.tabChipActions}>
+                  <Button
+                    variant="icon-only"
+                    size="xs"
+                    disabled={tabIndex === 0}
+                    aria-label="Move tab up"
+                    onClick={e => {
+                      e.stopPropagation();
+                      updateTabs(tabs => moveItem(tabs, tabIndex, -1));
+                    }}
+                  >
+                    <TbChevronUp size={11} />
+                  </Button>
+                  <Button
+                    variant="icon-only"
+                    size="xs"
+                    disabled={tabIndex === layout.tabs.length - 1}
+                    aria-label="Move tab down"
+                    onClick={e => {
+                      e.stopPropagation();
+                      updateTabs(tabs => moveItem(tabs, tabIndex, 1));
+                    }}
+                  >
+                    <TbChevronDown size={11} />
+                  </Button>
+                  <Button
+                    variant="icon-only"
+                    size="xs"
+                    aria-label="Remove tab"
+                    onClick={e => {
+                      e.stopPropagation();
+                      removeTab(tab.id);
+                    }}
+                  >
+                    <TbTrash size={11} />
+                  </Button>
+                </span>
+              )}
+            </div>
+          ))}
+          {canEdit && (
+            <button type="button" className={styles.addTab} onClick={addTab}>
+              <TbPlus size={11} /> Add tab
+            </button>
+          )}
+        </div>
+      )}
+      {layout.tabs.length === 1 && canEdit && (
+        <button type="button" className={`${styles.addTab} ${styles.addTabSolo}`} onClick={addTab}>
+          <TbPlus size={11} /> Add tab
+        </button>
+      )}
 
-          <div style={{ paddingLeft: 24, display: 'flex', flexDirection: 'column', gap: 8 }}>
-            {tab.panels.map((panel, panelIndex) => {
-              const groupBlock = soleGroupBlock(panel);
-              return (
-                <div
-                  key={panel.id}
-                  style={{
-                    border: '1px solid var(--panel-border)',
-                    borderRadius: 'var(--r-md)',
-                    padding: 8,
-                    display: 'flex',
-                    flexDirection: 'column',
-                    gap: 6
-                  }}
-                >
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    {canEdit ? (
-                      <div style={{ display: 'flex', gap: 2 }}>
-                        <button
-                          type="button"
-                          className={styles.iconBtn}
-                          disabled={panelIndex === 0}
-                          aria-label="Move panel up"
-                          onClick={() =>
-                            updateTab(tab.id, t => ({
-                              ...t,
-                              panels: moveItem(t.panels, panelIndex, -1)
-                            }))
-                          }
-                        >
-                          <TbChevronUp size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.iconBtn}
-                          disabled={panelIndex === tab.panels.length - 1}
-                          aria-label="Move panel down"
-                          onClick={() =>
-                            updateTab(tab.id, t => ({
-                              ...t,
-                              panels: moveItem(t.panels, panelIndex, 1)
-                            }))
-                          }
-                        >
-                          <TbChevronDown size={13} />
-                        </button>
-                      </div>
-                    ) : (
-                      <span />
-                    )}
-                    <TextInput
-                      value={panel.title}
-                      readOnly={!canEdit}
-                      onChange={value =>
-                        updatePanel(tab.id, panel.id, p => ({ ...p, title: value ?? '' }))
-                      }
-                      style={{ flex: 1 }}
-                    />
-                    {canEdit && (
-                      <label
-                        style={{ fontSize: 11, display: 'flex', alignItems: 'center', gap: 4 }}
-                      >
-                        <input
-                          type="checkbox"
-                          checked={panel.collapsible !== false}
-                          onChange={e =>
-                            updatePanel(tab.id, panel.id, p => ({
+      {activeTab && (
+        <div
+          className={`${styles.canvas} ${activeTab.columns === 2 ? styles.canvas2 : styles.canvas1}`}
+        >
+          {Array.from({ length: activeTab.columns ?? 1 }).map((_, colIdx) => {
+            const column = (colIdx + 1) as 1 | 2;
+            const panels = activeTab.panels.filter(panel => (panel.column ?? 1) === column);
+            return (
+              <div key={column} className={styles.column}>
+                {panels.length === 0 && <div className={styles.columnEmpty}>No panels yet</div>}
+                {panels.map((panel, panelIndex) => {
+                  const groupBlock = soleGroupBlock(panel);
+                  const isGroup = !!groupBlock;
+                  const groupFields = isGroup
+                    ? fields.filter(f => f.groupId === groupBlock!.refId)
+                    : [];
+
+                  return (
+                    <div
+                      key={panel.id}
+                      className={`${styles.panel} ${isGroup ? styles.panelLinked : ''}`}
+                    >
+                      <div className={styles.panelHead}>
+                        <TextInput
+                          value={panel.title}
+                          readOnly={!canEdit || isGroup}
+                          onChange={value =>
+                            updatePanel(activeTab.id, panel.id, p => ({
                               ...p,
-                              collapsible: e.target.checked
+                              title: value ?? ''
                             }))
                           }
+                          style={{ flex: 1, minWidth: 0 }}
                         />
-                        Collapsible
-                      </label>
-                    )}
-                    {canEdit && (
-                      <button
-                        type="button"
-                        className={styles.iconBtn}
-                        aria-label="Remove panel"
-                        onClick={() =>
-                          updateTab(tab.id, t => ({
-                            ...t,
-                            panels: t.panels.filter(p => p.id !== panel.id)
-                          }))
-                        }
-                      >
-                        <TbTrash size={13} />
-                      </button>
-                    )}
-                  </div>
-
-                  {canEdit && tab.columns === 2 && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-                      <span style={{ color: 'var(--cmp-fg-disabled)' }}>Column:</span>
-                      <select
-                        className={styles.selectInline}
-                        value={panel.column ?? 1}
-                        onChange={e =>
-                          setPanelColumn(tab.id, panel.id, Number(e.target.value) === 2 ? 2 : 1)
-                        }
-                      >
-                        <option value={1}>1 (main)</option>
-                        <option value={2}>2 (sidebar)</option>
-                      </select>
-                    </div>
-                  )}
-
-                  {canEdit && (
-                    <div style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}>
-                      <span style={{ color: 'var(--cmp-fg-disabled)' }}>Field group:</span>
-                      <select
-                        className={styles.selectInline}
-                        value={groupBlock?.refId ?? ''}
-                        onChange={e =>
-                          e.target.value
-                            ? linkPanelToGroup(tab.id, panel.id, e.target.value)
-                            : unlinkPanel(tab.id, panel.id)
-                        }
-                      >
-                        <option value="">— free-form —</option>
-                        {groups.map(group => (
-                          <option key={group.id} value={group.id}>
-                            {group.name}
-                          </option>
-                        ))}
-                      </select>
-                    </div>
-                  )}
-
-                  {!groupBlock && (
-                    <div style={{ display: 'flex', flexDirection: 'column', gap: 4 }}>
-                      {panel.blocks.map((block, blockIndex) => (
-                        <div
-                          key={block.id}
-                          style={{ display: 'flex', alignItems: 'center', gap: 6, fontSize: 12 }}
-                        >
-                          {canEdit ? (
-                            <div style={{ display: 'flex', gap: 2 }}>
-                              <button
-                                type="button"
-                                className={styles.iconBtn}
-                                disabled={blockIndex === 0}
-                                aria-label="Move block up"
-                                onClick={() => moveBlock(tab.id, panel.id, blockIndex, -1)}
-                              >
-                                <TbChevronUp size={12} />
-                              </button>
-                              <button
-                                type="button"
-                                className={styles.iconBtn}
-                                disabled={blockIndex === panel.blocks.length - 1}
-                                aria-label="Move block down"
-                                onClick={() => moveBlock(tab.id, panel.id, blockIndex, 1)}
-                              >
-                                <TbChevronDown size={12} />
-                              </button>
-                            </div>
-                          ) : (
-                            <span />
-                          )}
-                          <span style={{ flex: 1 }}>
-                            {blockLabel(block, fieldsById, relationSchemasById)}
+                        {isGroup && (
+                          <span className={styles.linkedTag}>
+                            <TbLock size={10} /> Group
                           </span>
-                          {canEdit && (
-                            <button
-                              type="button"
-                              className={styles.iconBtn}
-                              aria-label="Remove block"
-                              onClick={() => removeBlock(tab.id, panel.id, block.id)}
+                        )}
+                        {canEdit && !isGroup && (
+                          <label className={styles.panelCollapsible}>
+                            <input
+                              type="checkbox"
+                              className={styles.checkbox}
+                              checked={panel.collapsible !== false}
+                              onChange={e =>
+                                updatePanel(activeTab.id, panel.id, p => ({
+                                  ...p,
+                                  collapsible: e.target.checked
+                                }))
+                              }
+                            />
+                            Collapsible
+                          </label>
+                        )}
+                        {canEdit && (
+                          <span className={styles.panelActions}>
+                            <Button
+                              variant="icon-only"
+                              size="xs"
+                              disabled={panelIndex === 0}
+                              aria-label="Move panel up"
+                              onClick={() =>
+                                updateTab(activeTab.id, t => ({
+                                  ...t,
+                                  panels: moveItem(
+                                    t.panels,
+                                    t.panels.findIndex(p => p.id === panel.id),
+                                    -1
+                                  )
+                                }))
+                              }
+                            >
+                              <TbChevronUp size={12} />
+                            </Button>
+                            <Button
+                              variant="icon-only"
+                              size="xs"
+                              disabled={panelIndex === panels.length - 1}
+                              aria-label="Move panel down"
+                              onClick={() =>
+                                updateTab(activeTab.id, t => ({
+                                  ...t,
+                                  panels: moveItem(
+                                    t.panels,
+                                    t.panels.findIndex(p => p.id === panel.id),
+                                    1
+                                  )
+                                }))
+                              }
+                            >
+                              <TbChevronDown size={12} />
+                            </Button>
+                            <Button
+                              variant="icon-only"
+                              size="xs"
+                              aria-label="Remove panel"
+                              onClick={() =>
+                                updateTab(activeTab.id, t => ({
+                                  ...t,
+                                  panels: t.panels.filter(p => p.id !== panel.id)
+                                }))
+                              }
                             >
                               <TbTrash size={12} />
-                            </button>
+                            </Button>
+                          </span>
+                        )}
+                      </div>
+
+                      {canEdit && activeTab.columns === 2 && (
+                        <div className={styles.panelMeta}>
+                          <span>Column</span>
+                          <Segmented
+                            options={[
+                              { value: 1, label: '1' },
+                              { value: 2, label: '2' }
+                            ]}
+                            value={panel.column ?? 1}
+                            onChange={value => setPanelColumn(activeTab.id, panel.id, value)}
+                          />
+                        </div>
+                      )}
+
+                      {isGroup ? (
+                        <div className={styles.blockList}>
+                          {groupFields.length === 0 && (
+                            <div className={styles.emptyInline}>This group has no fields yet</div>
+                          )}
+                          {groupFields.map(field => (
+                            <div key={field.id} className={styles.block}>
+                              <span className={styles.blockIcon}>
+                                <TbSquare size={11} />
+                              </span>
+                              <span className={styles.blockLabel}>{field.name}</span>
+                              <TbLock size={10} className={styles.blockIcon} />
+                            </div>
+                          ))}
+                          <div className={styles.hint}>
+                            <TbInfoCircle size={10} /> Membership is edited on the Fields tab.
+                          </div>
+                        </div>
+                      ) : (
+                        <div className={styles.blockList}>
+                          {panel.blocks.length === 0 && (
+                            <div className={styles.emptyInline}>Add a block to fill this panel</div>
+                          )}
+                          {panel.blocks.map((block, blockIndex) => {
+                            const BlockIcon = KIND_ICON[block.kind] ?? TbSquare;
+                            return (
+                              <div key={block.id} className={styles.block}>
+                                <span className={styles.blockIcon}>
+                                  <BlockIcon size={11} />
+                                </span>
+                                <span className={styles.blockLabel}>
+                                  {blockLabel(block, fieldsById, relationSchemasById)}
+                                </span>
+                                {canEdit && (
+                                  <span className={styles.blockOrder}>
+                                    <Button
+                                      variant="icon-only"
+                                      size="xs"
+                                      disabled={blockIndex === 0}
+                                      aria-label="Move block up"
+                                      onClick={() =>
+                                        moveBlock(activeTab.id, panel.id, blockIndex, -1)
+                                      }
+                                    >
+                                      <TbChevronUp size={10} />
+                                    </Button>
+                                    <Button
+                                      variant="icon-only"
+                                      size="xs"
+                                      disabled={blockIndex === panel.blocks.length - 1}
+                                      aria-label="Move block down"
+                                      onClick={() =>
+                                        moveBlock(activeTab.id, panel.id, blockIndex, 1)
+                                      }
+                                    >
+                                      <TbChevronDown size={10} />
+                                    </Button>
+                                  </span>
+                                )}
+                                {canEdit && (
+                                  <button
+                                    type="button"
+                                    className={styles.blockRemove}
+                                    aria-label="Remove block"
+                                    onClick={() => removeBlock(activeTab.id, panel.id, block.id)}
+                                  >
+                                    <TbX size={10} />
+                                  </button>
+                                )}
+                              </div>
+                            );
+                          })}
+                          {canEdit && (
+                            <AddBlockMenu
+                              options={addBlockOptions()}
+                              onAdd={(kind, refId) => addBlock(activeTab.id, panel.id, kind, refId)}
+                            />
                           )}
                         </div>
-                      ))}
-
-                      {canEdit && (
-                        <select
-                          className={styles.selectInline}
-                          value=""
-                          onChange={e => {
-                            const option = addBlockOptions(panel).find(
-                              candidate => candidate.value === e.target.value
-                            );
-                            if (option) addBlock(tab.id, panel.id, option.kind, option.refId);
-                          }}
-                        >
-                          <option value="">+ Add block…</option>
-                          {addBlockOptions(panel).map(option => (
-                            <option key={option.value} value={option.value}>
-                              {option.label}
-                            </option>
-                          ))}
-                        </select>
                       )}
                     </div>
-                  )}
-                </div>
-              );
-            })}
-
-            {canEdit && (
-              <Button variant="ghost" icon={<TbPlus size={11} />} onClick={() => addPanel(tab.id)}>
-                Add panel
-              </Button>
-            )}
-          </div>
+                  );
+                })}
+                {canEdit && (
+                  <AddPanelMenu
+                    unplacedGroups={unplacedGroups}
+                    onAdd={groupId => addPanel(activeTab.id, column, groupId)}
+                  />
+                )}
+              </div>
+            );
+          })}
         </div>
-      ))}
+      )}
     </div>
   );
 };

@@ -1,4 +1,5 @@
 import { Tabs } from '@diagram-craft/app-components/Tabs';
+import { Button } from '@diagram-craft/app-components/Button';
 import type {
   DetailLayoutConfig,
   EntitySchema,
@@ -15,6 +16,7 @@ import { SchemaFieldsEditor } from './SchemaFieldsEditor';
 import { SchemaTemplatesEditor } from './SchemaTemplatesEditor';
 import { SchemaValidationEditor } from './SchemaValidationEditor';
 import { SchemaLayoutEditor } from './SchemaLayoutEditor';
+import layoutStyles from './SchemaLayoutEditor.module.css';
 
 export type SchemaPanelTab = 'fields' | 'templates' | 'validation' | 'layout';
 
@@ -145,36 +147,41 @@ export const SchemaEditorTabs = ({
       />
     </Tabs.Content>
     <Tabs.Content value="layout" style={{ height: 'auto' }}>
-      <label
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          fontSize: 12,
-          marginBottom: 12
-        }}
-      >
-        <input
-          type="checkbox"
-          disabled={!canEdit}
-          checked={detailLayoutEnabled}
-          onChange={e => onToggleDetailLayoutEnabled(e.target.checked)}
-        />
-        Use a custom layout for the Details/Edit screens
-      </label>
       {detailLayoutEnabled ? (
-        <SchemaLayoutEditor
-          layout={detailLayout}
-          fields={fields}
-          groups={groups}
-          relationSchemas={relationSchemas}
-          canEdit={canEdit}
-          onChange={onDetailLayoutChange}
-        />
+        <>
+          <label className={layoutStyles.toggle} style={{ marginBottom: 12 }}>
+            <input
+              type="checkbox"
+              className={layoutStyles.checkbox}
+              disabled={!canEdit}
+              checked={detailLayoutEnabled}
+              onChange={e => onToggleDetailLayoutEnabled(e.target.checked)}
+            />
+            Use a custom layout for the Details/Edit screens
+          </label>
+          <SchemaLayoutEditor
+            layout={detailLayout}
+            fields={fields}
+            groups={groups}
+            relationSchemas={relationSchemas}
+            canEdit={canEdit}
+            onChange={onDetailLayoutChange}
+          />
+        </>
       ) : (
-        <div style={{ fontSize: 12, color: 'var(--cmp-fg-disabled)' }}>
-          Using the default layout (fields, groups, metadata, links, relations, projects, and
-          diagrams in their standard arrangement).
+        <div className={layoutStyles.off}>
+          <div className={layoutStyles.offCopy}>
+            <div className={layoutStyles.offTitle}>Using the default layout</div>
+            <div className={layoutStyles.offDesc}>
+              Ungrouped fields, then each field group, then a fixed sidebar of metadata, links,
+              relations, projects, and diagrams.
+            </div>
+          </div>
+          {canEdit && (
+            <Button variant="primary" onClick={() => onToggleDetailLayoutEnabled(true)}>
+              Use a custom layout
+            </Button>
+          )}
         </div>
       )}
     </Tabs.Content>
