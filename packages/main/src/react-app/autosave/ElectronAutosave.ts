@@ -32,6 +32,7 @@ export const ElectronAutosave: Autosave = {
     if (!CollaborationConfig.isNoOp) return undefined;
     assert.present(window.electronAPI);
 
+    let documentToRelease: DiagramDocument | undefined;
     try {
       const autosaveContent = await window.electronAPI.autosaveLoad();
       if (!autosaveContent) return undefined;
@@ -39,6 +40,7 @@ export const ElectronAutosave: Autosave = {
       const autosaveData = JSON.parse(autosaveContent);
       const { diagram, url } = autosaveData;
       const doc = await documentFactory.createDocument(root, url, progressCallback);
+      documentToRelease = doc;
       await deserializeDiagramDocument(diagram, doc, diagramFactory, {
         includedPackages: getDefaultStencilPackages()
       });
@@ -46,6 +48,7 @@ export const ElectronAutosave: Autosave = {
 
       return { document: doc, url };
     } catch (e) {
+      documentToRelease?.release();
       if (!failSilently) throw e;
 
       console.warn('Failed to load autosaved document', e);

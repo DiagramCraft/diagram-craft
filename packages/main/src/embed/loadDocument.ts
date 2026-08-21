@@ -50,87 +50,98 @@ export const loadDocument = async (opts: LoadDocumentOpts): Promise<LoadedDocume
 
   const root = await documentFactory.loadCRDT(opts.url, awareness, progress);
 
-  if (opts.forceClearServerState || AppConfig.get().collaboration.forceClearServerState()) {
-    root.clear();
-  }
-
   const disconnect = () => {
     CollaborationConfig.Backend.disconnect(noopProgress);
   };
   const backendAwareness = CollaborationConfig.Backend.awareness;
+  let documentToRelease: DiagramDocument | undefined;
 
-  if (opts.url) {
-    if (
-      opts.forceLoadFromServer ||
-      root.hasData() ||
-      AppConfig.get().collaboration.forceLoadFromServer()
-    ) {
-      const doc = await documentFactory.createDocument(root, opts.url, progress, {
-        dataProviders: opts.dataProviders
-      });
-      // Only seed content into an empty document — if collaborative state already
-      // synced in diagrams, seeding again would clobber a collaborator's work.
-      if (opts.seedContent && doc.diagrams.length === 0) await opts.seedContent(doc);
-      return { doc, url: opts.url, disconnect, awareness: backendAwareness };
+  try {
+    if (opts.forceClearServerState || AppConfig.get().collaboration.forceClearServerState()) {
+      root.clear();
     }
 
-    const multiWindowAutosaved = await Autosave.get().load(
-      root,
-      progress,
-      documentFactory,
-      diagramFactory,
-      true
-    );
+    if (opts.url) {
+      if (
+        opts.forceLoadFromServer ||
+        root.hasData() ||
+        AppConfig.get().collaboration.forceLoadFromServer()
+      ) {
+        const doc = await documentFactory.createDocument(root, opts.url, progress, {
+          dataProviders: opts.dataProviders
+        });
+        documentToRelease = doc;
+        // Only seed content into an empty document — if collaborative state already
+        // synced in diagrams, seeding again would clobber a collaborator's work.
+        if (opts.seedContent && doc.diagrams.length === 0) await opts.seedContent(doc);
+        return { doc, url: opts.url, disconnect, awareness: backendAwareness };
+      }
 
-    if (multiWindowAutosaved) {
-      const restoredUrl = multiWindowAutosaved.url ?? opts.url;
-      multiWindowAutosaved.document.url = restoredUrl;
-      return {
-        doc: multiWindowAutosaved.document,
-        url: restoredUrl,
-        disconnect,
-        awareness: backendAwareness
+      const multiWindowAutosaved = await Autosave.get().load(
+        root,
+        progress,
+        documentFactory,
+        diagramFactory,
+        true
+      );
+
+      if (multiWindowAutosaved) {
+        documentToRelease = multiWindowAutosaved.document;
+        const restoredUrl = multiWindowAutosaved.url ?? opts.url;
+        multiWindowAutosaved.document.url = restoredUrl;
+        return {
+          doc: multiWindowAutosaved.document,
+          url: restoredUrl,
+          disconnect,
+          awareness: backendAwareness
+        };
+      }
+
+      const defDiagram = await loadFileFromUrl(
+        opts.url,
+        awareness,
+        progress,
+        documentFactory,
+        diagramFactory,
+        { root }
+      );
+      documentToRelease = defDiagram;
+      defDiagram.url = opts.url;
+      return { doc: defDiagram, url: opts.url, disconnect, awareness: backendAwareness };
+    }
+
+    const doc = await documentFactory.createDocument(root, undefined, progress, {
+      dataProviders: opts.dataProviders
+    });
+    documentToRelease = doc;
+
+    if (opts.seedContent) await opts.seedContent(doc);
+
+    if (opts.createDefaultDiagram !== false) {
+      const size = opts.createDefaultDiagram?.size ?? defaultDiagramSize();
+
+      const margin = 30;
+      const rulerWidth = 20;
+      const offset = {
+        x: -(margin + rulerWidth / 2) - 10,
+        y: -(margin + rulerWidth / 2)
       };
+
+      const diagram = new Diagram(newid(), 'Untitled', doc, undefined, size, offset);
+      UnitOfWork.execute(diagram, uow =>
+        diagram.layers.add(new RegularLayer(newid(), 'Default', [], diagram), uow)
+      );
+      doc.addDiagram(diagram);
     }
 
-    const defDiagram = await loadFileFromUrl(
-      opts.url,
-      awareness,
-      progress,
-      documentFactory,
-      diagramFactory,
-      { root }
-    );
-    defDiagram.url = opts.url;
-    return { doc: defDiagram, url: opts.url, disconnect, awareness: backendAwareness };
+    progress('complete', {});
+
+    return { doc, url: undefined, disconnect, awareness: backendAwareness };
+  } catch (error) {
+    disconnect();
+    documentToRelease?.release();
+    throw error;
   }
-
-  const doc = await documentFactory.createDocument(root, undefined, progress, {
-    dataProviders: opts.dataProviders
-  });
-
-  if (opts.seedContent) await opts.seedContent(doc);
-
-  if (opts.createDefaultDiagram !== false) {
-    const size = opts.createDefaultDiagram?.size ?? defaultDiagramSize();
-
-    const margin = 30;
-    const rulerWidth = 20;
-    const offset = {
-      x: -(margin + rulerWidth / 2) - 10,
-      y: -(margin + rulerWidth / 2)
-    };
-
-    const diagram = new Diagram(newid(), 'Untitled', doc, undefined, size, offset);
-    UnitOfWork.execute(diagram, uow =>
-      diagram.layers.add(new RegularLayer(newid(), 'Default', [], diagram), uow)
-    );
-    doc.addDiagram(diagram);
-  }
-
-  progress('complete', {});
-
-  return { doc, url: undefined, disconnect, awareness: backendAwareness };
 };
 
 const defaultDiagramSize = (): Extent => {

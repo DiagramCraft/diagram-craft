@@ -93,4 +93,69 @@ describe('loadFileFromUrl()', () => {
     expect(doc.load).toHaveBeenCalledOnce();
     expect(result).toBe(doc);
   });
+
+  it('releases the document when the file loader fails', async () => {
+    const root = { type: 'root' };
+    const release = vi.fn();
+    const doc = {
+      load: vi.fn(async () => undefined),
+      release
+    };
+    const error = new Error('file loader failed');
+    const loader = vi.fn(async () => {
+      throw error;
+    });
+    const loaderFactory = vi.fn(async () => loader);
+    const documentFactory = {
+      loadCRDT: vi.fn(async () => root),
+      createDocument: vi.fn(async () => doc)
+    };
+
+    fileLoaderRegistry['.dcd'] = loaderFactory;
+    vi.spyOn(FileSystem, 'loadFromUrl').mockResolvedValue('serialized');
+
+    await expect(
+      loadFileFromUrl(
+        'folder/diagram.dcd',
+        { userId: 'user' } as never,
+        vi.fn() as never,
+        documentFactory as never,
+        {} as never
+      )
+    ).rejects.toBe(error);
+
+    expect(release).toHaveBeenCalledOnce();
+  });
+
+  it('releases the document when document loading fails', async () => {
+    const root = { type: 'root' };
+    const release = vi.fn();
+    const doc = {
+      load: vi.fn(async () => {
+        throw new Error('document loading failed');
+      }),
+      release
+    };
+    const loader = vi.fn(async () => undefined);
+    const loaderFactory = vi.fn(async () => loader);
+    const documentFactory = {
+      loadCRDT: vi.fn(async () => root),
+      createDocument: vi.fn(async () => doc)
+    };
+
+    fileLoaderRegistry['.dcd'] = loaderFactory;
+    vi.spyOn(FileSystem, 'loadFromUrl').mockResolvedValue('serialized');
+
+    await expect(
+      loadFileFromUrl(
+        'folder/diagram.dcd',
+        { userId: 'user' } as never,
+        vi.fn() as never,
+        documentFactory as never,
+        {} as never
+      )
+    ).rejects.toThrow('document loading failed');
+
+    expect(release).toHaveBeenCalledOnce();
+  });
 });

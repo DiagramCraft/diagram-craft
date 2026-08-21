@@ -75,6 +75,7 @@ export const MultiWindowAutosave = {
   ): Promise<{ document: DiagramDocument; url?: string } | undefined> => {
     if (!CollaborationConfig.isNoOp) return undefined;
 
+    let documentToRelease: DiagramDocument | undefined;
     try {
       const storage = AutosaveStorage.get();
       if (storage.entries.length === 0) return undefined;
@@ -93,6 +94,7 @@ export const MultiWindowAutosave = {
       const entry = sortedEntries.find(entry => entry.windowId === currentWindowId);
       if (entry) {
         const doc = await documentFactory.createDocument(root, entry.url, progressCallback);
+        documentToRelease = doc;
         await deserializeDiagramDocument(entry.diagram, doc, diagramFactory, {
           includedPackages: getDefaultStencilPackages()
         });
@@ -144,6 +146,7 @@ export const MultiWindowAutosave = {
 
       // Load the selected autosave
       const doc = await documentFactory.createDocument(root, selectedEntry.url, progressCallback);
+      documentToRelease = doc;
       await deserializeDiagramDocument(selectedEntry.diagram, doc, diagramFactory, {
         includedPackages: getDefaultStencilPackages()
       });
@@ -151,6 +154,7 @@ export const MultiWindowAutosave = {
 
       return { document: doc, url: selectedEntry.url };
     } catch (e) {
+      documentToRelease?.release();
       if (!failSilently) throw e;
 
       console.warn('Failed to load autosaved document', e);
