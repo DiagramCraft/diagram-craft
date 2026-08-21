@@ -1321,6 +1321,130 @@
                         },
                         "description": "Bonsai validation rules evaluated when entities are saved"
                       },
+                      "detail_layout": {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "const": 1,
+                            "description": "Layout config schema version"
+                          },
+                          "tabs": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique tab id within the layout, stable across edits"
+                                },
+                                "title": {
+                                  "type": "string",
+                                  "description": "Tab display title"
+                                },
+                                "columns": {
+                                  "anyOf": [
+                                    {
+                                      "const": 1
+                                    },
+                                    {
+                                      "const": 2
+                                    }
+                                  ],
+                                  "default": 1,
+                                  "description": "Number of side-by-side columns this tab renders its panels in"
+                                },
+                                "panels": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "description": "Unique panel id within the layout, stable across edits"
+                                      },
+                                      "title": {
+                                        "type": "string",
+                                        "description": "Panel display title"
+                                      },
+                                      "collapsible": {
+                                        "type": "boolean",
+                                        "default": true,
+                                        "description": "Whether the panel renders as a collapsible accordion section"
+                                      },
+                                      "column": {
+                                        "anyOf": [
+                                          {
+                                            "const": 1
+                                          },
+                                          {
+                                            "const": 2
+                                          }
+                                        ],
+                                        "default": 1,
+                                        "description": "Which column this panel renders in when its tab has columns=2; ignored for single-column tabs"
+                                      },
+                                      "blocks": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "id": {
+                                              "type": "string",
+                                              "description": "Unique block id within the layout, stable across edits"
+                                            },
+                                            "kind": {
+                                              "enum": [
+                                                "field",
+                                                "fieldGroup",
+                                                "metadata",
+                                                "links",
+                                                "unboundTypedRelation",
+                                                "projects",
+                                                "diagrams"
+                                              ],
+                                              "type": "string",
+                                              "description": "Kind of content a layout block places"
+                                            },
+                                            "refId": {
+                                              "type": "string",
+                                              "description": "For kind=field: field id. For kind=fieldGroup: group id. For kind=metadata: metadata slot name. For kind=unboundTypedRelation: relation schema id. Omitted for kind=links (singleton)."
+                                            }
+                                          },
+                                          "required": [
+                                            "id",
+                                            "kind"
+                                          ],
+                                          "description": "A single placeable unit of content within a layout panel"
+                                        },
+                                        "description": "Blocks placed in this panel, in display order"
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "title",
+                                      "blocks"
+                                    ],
+                                    "description": "A named group of blocks within a layout tab"
+                                  },
+                                  "description": "Panels within this tab, in display order"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "title",
+                                "panels"
+                              ],
+                              "description": "A tab within a detail layout"
+                            },
+                            "description": "Tabs in display order"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "tabs"
+                        ],
+                        "description": "Custom Details/Edit screen layout; omitted means the default layout"
+                      },
                       "color": {
                         "anyOf": [
                           {
@@ -2660,6 +2784,138 @@
                     },
                     "description": "Validation rules evaluated when entities are saved"
                   },
+                  "detail_layout": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "const": 1,
+                            "description": "Layout config schema version"
+                          },
+                          "tabs": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique tab id within the layout, stable across edits"
+                                },
+                                "title": {
+                                  "type": "string",
+                                  "description": "Tab display title"
+                                },
+                                "columns": {
+                                  "anyOf": [
+                                    {
+                                      "const": 1
+                                    },
+                                    {
+                                      "const": 2
+                                    }
+                                  ],
+                                  "default": 1,
+                                  "description": "Number of side-by-side columns this tab renders its panels in"
+                                },
+                                "panels": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "description": "Unique panel id within the layout, stable across edits"
+                                      },
+                                      "title": {
+                                        "type": "string",
+                                        "description": "Panel display title"
+                                      },
+                                      "collapsible": {
+                                        "type": "boolean",
+                                        "default": true,
+                                        "description": "Whether the panel renders as a collapsible accordion section"
+                                      },
+                                      "column": {
+                                        "anyOf": [
+                                          {
+                                            "const": 1
+                                          },
+                                          {
+                                            "const": 2
+                                          }
+                                        ],
+                                        "default": 1,
+                                        "description": "Which column this panel renders in when its tab has columns=2; ignored for single-column tabs"
+                                      },
+                                      "blocks": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "id": {
+                                              "type": "string",
+                                              "description": "Unique block id within the layout, stable across edits"
+                                            },
+                                            "kind": {
+                                              "enum": [
+                                                "field",
+                                                "fieldGroup",
+                                                "metadata",
+                                                "links",
+                                                "unboundTypedRelation",
+                                                "projects",
+                                                "diagrams"
+                                              ],
+                                              "type": "string",
+                                              "description": "Kind of content a layout block places"
+                                            },
+                                            "refId": {
+                                              "type": "string",
+                                              "description": "For kind=field: field id. For kind=fieldGroup: group id. For kind=metadata: metadata slot name. For kind=unboundTypedRelation: relation schema id. Omitted for kind=links (singleton)."
+                                            }
+                                          },
+                                          "required": [
+                                            "id",
+                                            "kind"
+                                          ],
+                                          "description": "A single placeable unit of content within a layout panel"
+                                        },
+                                        "description": "Blocks placed in this panel, in display order"
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "title",
+                                      "blocks"
+                                    ],
+                                    "description": "A named group of blocks within a layout tab"
+                                  },
+                                  "description": "Panels within this tab, in display order"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "title",
+                                "panels"
+                              ],
+                              "description": "A tab within a detail layout"
+                            },
+                            "description": "Tabs in display order"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "tabs"
+                        ],
+                        "description": "Custom tab/panel/block layout for the entity Details and Edit screens; omitted means the default layout"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Custom Details/Edit screen layout. Omit to leave unchanged; null clears it back to the default layout."
+                  },
                   "color": {
                     "anyOf": [
                       {
@@ -3990,6 +4246,130 @@
                         ]
                       },
                       "description": "Bonsai validation rules evaluated when entities are saved"
+                    },
+                    "detail_layout": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "const": 1,
+                          "description": "Layout config schema version"
+                        },
+                        "tabs": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique tab id within the layout, stable across edits"
+                              },
+                              "title": {
+                                "type": "string",
+                                "description": "Tab display title"
+                              },
+                              "columns": {
+                                "anyOf": [
+                                  {
+                                    "const": 1
+                                  },
+                                  {
+                                    "const": 2
+                                  }
+                                ],
+                                "default": 1,
+                                "description": "Number of side-by-side columns this tab renders its panels in"
+                              },
+                              "panels": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "description": "Unique panel id within the layout, stable across edits"
+                                    },
+                                    "title": {
+                                      "type": "string",
+                                      "description": "Panel display title"
+                                    },
+                                    "collapsible": {
+                                      "type": "boolean",
+                                      "default": true,
+                                      "description": "Whether the panel renders as a collapsible accordion section"
+                                    },
+                                    "column": {
+                                      "anyOf": [
+                                        {
+                                          "const": 1
+                                        },
+                                        {
+                                          "const": 2
+                                        }
+                                      ],
+                                      "default": 1,
+                                      "description": "Which column this panel renders in when its tab has columns=2; ignored for single-column tabs"
+                                    },
+                                    "blocks": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "id": {
+                                            "type": "string",
+                                            "description": "Unique block id within the layout, stable across edits"
+                                          },
+                                          "kind": {
+                                            "enum": [
+                                              "field",
+                                              "fieldGroup",
+                                              "metadata",
+                                              "links",
+                                              "unboundTypedRelation",
+                                              "projects",
+                                              "diagrams"
+                                            ],
+                                            "type": "string",
+                                            "description": "Kind of content a layout block places"
+                                          },
+                                          "refId": {
+                                            "type": "string",
+                                            "description": "For kind=field: field id. For kind=fieldGroup: group id. For kind=metadata: metadata slot name. For kind=unboundTypedRelation: relation schema id. Omitted for kind=links (singleton)."
+                                          }
+                                        },
+                                        "required": [
+                                          "id",
+                                          "kind"
+                                        ],
+                                        "description": "A single placeable unit of content within a layout panel"
+                                      },
+                                      "description": "Blocks placed in this panel, in display order"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "title",
+                                    "blocks"
+                                  ],
+                                  "description": "A named group of blocks within a layout tab"
+                                },
+                                "description": "Panels within this tab, in display order"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "title",
+                              "panels"
+                            ],
+                            "description": "A tab within a detail layout"
+                          },
+                          "description": "Tabs in display order"
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "tabs"
+                      ],
+                      "description": "Custom Details/Edit screen layout; omitted means the default layout"
                     },
                     "color": {
                       "anyOf": [
@@ -5392,6 +5772,130 @@
                       },
                       "description": "Bonsai validation rules evaluated when entities are saved"
                     },
+                    "detail_layout": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "const": 1,
+                          "description": "Layout config schema version"
+                        },
+                        "tabs": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique tab id within the layout, stable across edits"
+                              },
+                              "title": {
+                                "type": "string",
+                                "description": "Tab display title"
+                              },
+                              "columns": {
+                                "anyOf": [
+                                  {
+                                    "const": 1
+                                  },
+                                  {
+                                    "const": 2
+                                  }
+                                ],
+                                "default": 1,
+                                "description": "Number of side-by-side columns this tab renders its panels in"
+                              },
+                              "panels": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "description": "Unique panel id within the layout, stable across edits"
+                                    },
+                                    "title": {
+                                      "type": "string",
+                                      "description": "Panel display title"
+                                    },
+                                    "collapsible": {
+                                      "type": "boolean",
+                                      "default": true,
+                                      "description": "Whether the panel renders as a collapsible accordion section"
+                                    },
+                                    "column": {
+                                      "anyOf": [
+                                        {
+                                          "const": 1
+                                        },
+                                        {
+                                          "const": 2
+                                        }
+                                      ],
+                                      "default": 1,
+                                      "description": "Which column this panel renders in when its tab has columns=2; ignored for single-column tabs"
+                                    },
+                                    "blocks": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "id": {
+                                            "type": "string",
+                                            "description": "Unique block id within the layout, stable across edits"
+                                          },
+                                          "kind": {
+                                            "enum": [
+                                              "field",
+                                              "fieldGroup",
+                                              "metadata",
+                                              "links",
+                                              "unboundTypedRelation",
+                                              "projects",
+                                              "diagrams"
+                                            ],
+                                            "type": "string",
+                                            "description": "Kind of content a layout block places"
+                                          },
+                                          "refId": {
+                                            "type": "string",
+                                            "description": "For kind=field: field id. For kind=fieldGroup: group id. For kind=metadata: metadata slot name. For kind=unboundTypedRelation: relation schema id. Omitted for kind=links (singleton)."
+                                          }
+                                        },
+                                        "required": [
+                                          "id",
+                                          "kind"
+                                        ],
+                                        "description": "A single placeable unit of content within a layout panel"
+                                      },
+                                      "description": "Blocks placed in this panel, in display order"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "title",
+                                    "blocks"
+                                  ],
+                                  "description": "A named group of blocks within a layout tab"
+                                },
+                                "description": "Panels within this tab, in display order"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "title",
+                              "panels"
+                            ],
+                            "description": "A tab within a detail layout"
+                          },
+                          "description": "Tabs in display order"
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "tabs"
+                      ],
+                      "description": "Custom Details/Edit screen layout; omitted means the default layout"
+                    },
                     "color": {
                       "anyOf": [
                         {
@@ -6738,6 +7242,138 @@
                       ]
                     },
                     "description": "Validation rules evaluated when entities are saved"
+                  },
+                  "detail_layout": {
+                    "anyOf": [
+                      {
+                        "type": "object",
+                        "properties": {
+                          "version": {
+                            "const": 1,
+                            "description": "Layout config schema version"
+                          },
+                          "tabs": {
+                            "type": "array",
+                            "items": {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique tab id within the layout, stable across edits"
+                                },
+                                "title": {
+                                  "type": "string",
+                                  "description": "Tab display title"
+                                },
+                                "columns": {
+                                  "anyOf": [
+                                    {
+                                      "const": 1
+                                    },
+                                    {
+                                      "const": 2
+                                    }
+                                  ],
+                                  "default": 1,
+                                  "description": "Number of side-by-side columns this tab renders its panels in"
+                                },
+                                "panels": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "id": {
+                                        "type": "string",
+                                        "description": "Unique panel id within the layout, stable across edits"
+                                      },
+                                      "title": {
+                                        "type": "string",
+                                        "description": "Panel display title"
+                                      },
+                                      "collapsible": {
+                                        "type": "boolean",
+                                        "default": true,
+                                        "description": "Whether the panel renders as a collapsible accordion section"
+                                      },
+                                      "column": {
+                                        "anyOf": [
+                                          {
+                                            "const": 1
+                                          },
+                                          {
+                                            "const": 2
+                                          }
+                                        ],
+                                        "default": 1,
+                                        "description": "Which column this panel renders in when its tab has columns=2; ignored for single-column tabs"
+                                      },
+                                      "blocks": {
+                                        "type": "array",
+                                        "items": {
+                                          "type": "object",
+                                          "properties": {
+                                            "id": {
+                                              "type": "string",
+                                              "description": "Unique block id within the layout, stable across edits"
+                                            },
+                                            "kind": {
+                                              "enum": [
+                                                "field",
+                                                "fieldGroup",
+                                                "metadata",
+                                                "links",
+                                                "unboundTypedRelation",
+                                                "projects",
+                                                "diagrams"
+                                              ],
+                                              "type": "string",
+                                              "description": "Kind of content a layout block places"
+                                            },
+                                            "refId": {
+                                              "type": "string",
+                                              "description": "For kind=field: field id. For kind=fieldGroup: group id. For kind=metadata: metadata slot name. For kind=unboundTypedRelation: relation schema id. Omitted for kind=links (singleton)."
+                                            }
+                                          },
+                                          "required": [
+                                            "id",
+                                            "kind"
+                                          ],
+                                          "description": "A single placeable unit of content within a layout panel"
+                                        },
+                                        "description": "Blocks placed in this panel, in display order"
+                                      }
+                                    },
+                                    "required": [
+                                      "id",
+                                      "title",
+                                      "blocks"
+                                    ],
+                                    "description": "A named group of blocks within a layout tab"
+                                  },
+                                  "description": "Panels within this tab, in display order"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "title",
+                                "panels"
+                              ],
+                              "description": "A tab within a detail layout"
+                            },
+                            "description": "Tabs in display order"
+                          }
+                        },
+                        "required": [
+                          "version",
+                          "tabs"
+                        ],
+                        "description": "Custom tab/panel/block layout for the entity Details and Edit screens; omitted means the default layout"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Custom Details/Edit screen layout. Omit to leave unchanged; null clears it back to the default layout."
                   },
                   "color": {
                     "anyOf": [
@@ -8098,6 +8734,130 @@
                         ]
                       },
                       "description": "Bonsai validation rules evaluated when entities are saved"
+                    },
+                    "detail_layout": {
+                      "type": "object",
+                      "properties": {
+                        "version": {
+                          "const": 1,
+                          "description": "Layout config schema version"
+                        },
+                        "tabs": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique tab id within the layout, stable across edits"
+                              },
+                              "title": {
+                                "type": "string",
+                                "description": "Tab display title"
+                              },
+                              "columns": {
+                                "anyOf": [
+                                  {
+                                    "const": 1
+                                  },
+                                  {
+                                    "const": 2
+                                  }
+                                ],
+                                "default": 1,
+                                "description": "Number of side-by-side columns this tab renders its panels in"
+                              },
+                              "panels": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string",
+                                      "description": "Unique panel id within the layout, stable across edits"
+                                    },
+                                    "title": {
+                                      "type": "string",
+                                      "description": "Panel display title"
+                                    },
+                                    "collapsible": {
+                                      "type": "boolean",
+                                      "default": true,
+                                      "description": "Whether the panel renders as a collapsible accordion section"
+                                    },
+                                    "column": {
+                                      "anyOf": [
+                                        {
+                                          "const": 1
+                                        },
+                                        {
+                                          "const": 2
+                                        }
+                                      ],
+                                      "default": 1,
+                                      "description": "Which column this panel renders in when its tab has columns=2; ignored for single-column tabs"
+                                    },
+                                    "blocks": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "object",
+                                        "properties": {
+                                          "id": {
+                                            "type": "string",
+                                            "description": "Unique block id within the layout, stable across edits"
+                                          },
+                                          "kind": {
+                                            "enum": [
+                                              "field",
+                                              "fieldGroup",
+                                              "metadata",
+                                              "links",
+                                              "unboundTypedRelation",
+                                              "projects",
+                                              "diagrams"
+                                            ],
+                                            "type": "string",
+                                            "description": "Kind of content a layout block places"
+                                          },
+                                          "refId": {
+                                            "type": "string",
+                                            "description": "For kind=field: field id. For kind=fieldGroup: group id. For kind=metadata: metadata slot name. For kind=unboundTypedRelation: relation schema id. Omitted for kind=links (singleton)."
+                                          }
+                                        },
+                                        "required": [
+                                          "id",
+                                          "kind"
+                                        ],
+                                        "description": "A single placeable unit of content within a layout panel"
+                                      },
+                                      "description": "Blocks placed in this panel, in display order"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "title",
+                                    "blocks"
+                                  ],
+                                  "description": "A named group of blocks within a layout tab"
+                                },
+                                "description": "Panels within this tab, in display order"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "title",
+                              "panels"
+                            ],
+                            "description": "A tab within a detail layout"
+                          },
+                          "description": "Tabs in display order"
+                        }
+                      },
+                      "required": [
+                        "version",
+                        "tabs"
+                      ],
+                      "description": "Custom Details/Edit screen layout; omitted means the default layout"
                     },
                     "color": {
                       "anyOf": [
