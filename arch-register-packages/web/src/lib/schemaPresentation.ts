@@ -41,6 +41,11 @@ export const resolveSchemaColor = (schema: { color: string | null }, index: numb
 
 export const UNCATEGORIZED_SCHEMA_CATEGORY = 'Uncategorized';
 
+export const normalizeSchemaCategory = (category?: string | null): string => {
+  const trimmed = category?.trim();
+  return trimmed === undefined || trimmed.length === 0 ? UNCATEGORIZED_SCHEMA_CATEGORY : trimmed;
+};
+
 export type SchemaCategoryGroup<T> = {
   category: string;
   items: Array<{ schema: T; index: number }>;
@@ -52,11 +57,7 @@ export const groupSchemasByCategory = <T extends { category?: string | null; nam
   const groups = new Map<string, Array<{ schema: T; index: number }>>();
 
   schemas.forEach((schema, index) => {
-    const trimmedCategory = schema.category?.trim();
-    const category =
-      trimmedCategory === undefined || trimmedCategory.length === 0
-        ? UNCATEGORIZED_SCHEMA_CATEGORY
-        : trimmedCategory;
+    const category = normalizeSchemaCategory(schema.category);
     const items = groups.get(category) ?? [];
     items.push({ schema, index });
     groups.set(category, items);

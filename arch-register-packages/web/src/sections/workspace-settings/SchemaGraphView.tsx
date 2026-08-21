@@ -10,6 +10,7 @@ import type {
 import { TypeBadge } from '../../components/TypeBadge';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Select } from '@diagram-craft/app-components/Select';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { NumberInput } from '@diagram-craft/app-components/NumberInput';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TbFileExport, TbVectorTriangle } from 'react-icons/tb';
@@ -19,7 +20,15 @@ import { createDiagramFromGraph } from '../../lib/diagramFromGraph';
 import type { SerializedDiagramDocument } from '@diagram-craft/model/serialization/serializedTypes';
 import type { ProjectFile } from '@arch-register/api-types/projectContentContract';
 import type { ModelOverviewSearchParams } from '../../routes/searchParams';
-import { buildSchemaGraphData, type SchemaGraphNodeData } from './schemaGraphState';
+import {
+  buildSchemaGraphData,
+  parseCategoryStatesParam,
+  serializeCategoryStatesParam,
+  type EntityCategoryState,
+  type SchemaGraphNodeData,
+  type TypedRelationRenderMode
+} from './schemaGraphState';
+import { CategoryVisibilityPopover } from './CategoryVisibilityPopover';
 
 const DEFAULT_LAYOUT: LayoutAlgorithm = 'hierarchy';
 
@@ -105,10 +114,14 @@ const areLayoutOptionsEqual = (
 
 const serializeSearch = (
   layout: LayoutAlgorithm,
-  options: Required<LayoutOptions>
+  options: Required<LayoutOptions>,
+  categoryStatesParam: string | undefined,
+  typedRelationMode: TypedRelationRenderMode
 ): ModelOverviewSearchParams => {
   const search: ModelOverviewSearchParams = {
-    layout: layout === DEFAULT_LAYOUT ? undefined : layout
+    layout: layout === DEFAULT_LAYOUT ? undefined : layout,
+    categoryStates: categoryStatesParam,
+    typedRelationMode: typedRelationMode === 'reference' ? 'reference' : undefined
   };
 
   for (const key of getApplicableKeys(layout)) {
@@ -153,9 +166,16 @@ export const SchemaGraphView = () => {
     });
   }, [layout, search]);
 
+  const categoryStates = useMemo(
+    () => parseCategoryStatesParam(search.categoryStates),
+    [search.categoryStates]
+  );
+  const typedRelationMode: TypedRelationRenderMode =
+    search.typedRelationMode === 'reference' ? 'reference' : 'entity';
+
   const graph = useMemo(
-    () => buildSchemaGraphData(schemas, relationSchemas),
-    [schemas, relationSchemas]
+    () => buildSchemaGraphData(schemas, relationSchemas, categoryStates, typedRelationMode),
+    [schemas, relationSchemas, categoryStates, typedRelationMode]
   );
   const { nodes, edges } = graph;
 
@@ -165,6 +185,8 @@ export const SchemaGraphView = () => {
     (nodeId: string) => {
       const node = nodeById.get(nodeId);
       if (!node) return;
+
+      if (node.data.kind === 'category') return;
 
       if (node.data.kind === 'relation') {
         navigate({
@@ -201,11 +223,11 @@ export const SchemaGraphView = () => {
       navigate({
         to: '/$workspaceSlug/settings/model-overview',
         params: { workspaceSlug },
-        search: serializeSearch(nextLayout, nextOptions),
+        search: serializeSearch(nextLayout, nextOptions, search.categoryStates, typedRelationMode),
         replace
       });
     },
-    [navigate, workspaceSlug]
+    [navigate, workspaceSlug, search.categoryStates, typedRelationMode]
   );
 
   const setLayoutOption = useCallback(
@@ -233,6 +255,42 @@ export const SchemaGraphView = () => {
       updateSearch(nextLayout, nextOptions, false);
     },
     [layoutOptionCache, updateSearch]
+  );
+
+  const setCategoryState = useCallback(
+    (category: string, state: EntityCategoryState | 'visible') => {
+      const nextCategoryStates = new Map(categoryStates);
+      if (state === 'visible') {
+        nextCategoryStates.delete(category);
+      } else {
+        nextCategoryStates.set(category, state);
+      }
+
+      navigate({
+        to: '/$workspaceSlug/settings/model-overview',
+        params: { workspaceSlug },
+        search: serializeSearch(
+          layout,
+          layoutOptions,
+          serializeCategoryStatesParam(nextCategoryStates),
+          typedRelationMode
+        ),
+        replace: true
+      });
+    },
+    [categoryStates, layout, layoutOptions, navigate, workspaceSlug, typedRelationMode]
+  );
+
+  const setTypedRelationMode = useCallback(
+    (mode: TypedRelationRenderMode) => {
+      navigate({
+        to: '/$workspaceSlug/settings/model-overview',
+        params: { workspaceSlug },
+        search: serializeSearch(layout, layoutOptions, search.categoryStates, mode),
+        replace: true
+      });
+    },
+    [layout, layoutOptions, navigate, workspaceSlug, search.categoryStates]
   );
 
   const schemaIndexMap = useMemo(() => new Map(schemas.map((s, i) => [s.id, i])), [schemas]);
@@ -355,13 +413,33 @@ export const SchemaGraphView = () => {
           </>
         )}
 
+        <div className={styles.eToolbarSeparator} />
+
+        <Checkbox
+          label="Typed relations"
+          value={typedRelationMode === 'entity'}
+          onChange={value => setTypedRelationMode(value ? 'entity' : 'reference')}
+        />
+
+        <div className={styles.eToolbarSeparator} />
+
+        <CategoryVisibilityPopover
+          schemas={schemas}
+          categoryStates={categoryStates}
+          onChange={setCategoryState}
+        />
+
         <Button
           size={'sm'}
           onClick={() => {
             const graphNodes = nodes.map(node => ({
               id: node.id,
               label:
-                node.data.kind === 'entity' ? node.data.schema.name : node.data.relationSchema.name
+                node.data.kind === 'entity'
+                  ? node.data.schema.name
+                  : node.data.kind === 'relation'
+                    ? node.data.relationSchema.name
+                    : `${node.data.category} (${node.data.count})`
             }));
             const graphEdges = edges.map(e => ({
               id: e.id,
@@ -395,6 +473,14 @@ export const SchemaGraphView = () => {
           nodeHeight={48}
           nodeKind={node => node.data.kind}
           renderNode={node => {
+            if (node.data.kind === 'category') {
+              return (
+                <span className={styles.eNodeLabel}>
+                  {node.data.category} ({node.data.count})
+                </span>
+              );
+            }
+
             if (node.data.kind === 'relation') {
               const relationSchema = node.data.relationSchema;
               const idx = relationSchemaIndexMap.get(relationSchema.id) ?? 0;
