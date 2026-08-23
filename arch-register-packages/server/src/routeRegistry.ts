@@ -59,6 +59,7 @@ import { createDocumentORPCHandler } from './domain/document/documentOrpc';
 import { createEntityDeprecationORPCHandler } from './domain/catalog/entityDeprecationOrpc';
 import { createArtifactORPCHandler } from './domain/artifact/artifactOrpc';
 import { createBaselineORPCHandler } from './domain/baseline/baselineOrpc';
+import { createConformanceORPCHandler } from './domain/conformance/conformanceOrpc';
 import { createGlossaryORPCHandler } from './domain/glossary/glossaryOrpc';
 import {
   createPublicCatalogConfigORPCHandler,
@@ -449,6 +450,15 @@ const protectedRouteDefinitions = [
     prefix: API_PREFIXES.application,
     surfaces: [API_PREFIXES.application],
     create: ({ db }) => createJobsORPCHandler(db)
+  },
+  {
+    id: 'conformance',
+    auth: 'protected',
+    kind: 'orpc',
+    dependencies: ['db'],
+    prefix: API_PREFIXES.application,
+    surfaces: [API_PREFIXES.application],
+    create: ({ db }) => createConformanceORPCHandler(db)
   },
   {
     id: 'external-content',

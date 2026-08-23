@@ -69,6 +69,14 @@
           supported currencies and the workspace's default currency, document types, templates, AI, analytics, audit,
           and other workspace settings.
 
+            - @id:ar.workspace.configuration.conformance Administrators can manage centrally scheduled conformance
+              checks in one workspace-level section, including reusable schema validation expressions, cross-cutting
+              entity query policies, and optional AI yes/no conformance prompts when workspace AI is enabled. Each
+              check can persist evaluation runs, current and historical violations, auditable time-bound exemptions,
+              and optional governance acknowledgement or resolution cases. Violation lists and summary dashboard
+              widgets respect the entity and field-group permissions of the viewing member; schema validation remains
+              available on entity save as a schema-local blocking or warning diagnostic.
+
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
             reusable shared fieldgroups, relationships, and schema-specific behavior, including currency fields and
             ordered multi-valued scalar fields (text, long text, boolean, date, number, currency, and select) with

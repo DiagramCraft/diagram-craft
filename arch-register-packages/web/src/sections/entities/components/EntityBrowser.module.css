@@ -63,13 +63,6 @@
   color: var(--error-fg, #e05252);
 }
 
-.pagination {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 10px 0 0 0;
-}
-
 .graphView {
   flex: 1;
   min-height: 0;

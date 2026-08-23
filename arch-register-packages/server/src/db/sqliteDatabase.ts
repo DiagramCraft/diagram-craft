@@ -41,6 +41,7 @@ import {
   type ArtifactProcessorRegistry
 } from '../domain/artifact/artifactProcessor';
 import { SqlitePublicCatalogDatabase } from '../domain/publicCatalog/db/sqlitePublicCatalog';
+import { SqliteConformanceDatabase } from '../domain/conformance/db/sqliteConformance';
 
 export class SqliteDatabase implements DatabaseAdapter {
   private db;
@@ -81,6 +82,7 @@ export class SqliteDatabase implements DatabaseAdapter {
   readonly artifactProcessors: ArtifactProcessorRegistry;
   readonly baseline;
   readonly publicCatalog: SqlitePublicCatalogDatabase;
+  readonly conformance: SqliteConformanceDatabase;
   private transactionTail: Promise<void> = Promise.resolve();
   private savepointCounter = 0;
 
@@ -126,6 +128,7 @@ export class SqliteDatabase implements DatabaseAdapter {
     };
     this.artifactProcessors = createArtifactProcessorRegistry([apiSpecificationArtifactProcessor]);
     this.publicCatalog = new SqlitePublicCatalogDatabase(() => this.db);
+    this.conformance = new SqliteConformanceDatabase(() => this.db);
 
     runSqliteMigrations(this.db);
 
@@ -222,7 +225,8 @@ export class SqliteDatabase implements DatabaseAdapter {
       artifactProjections: this.artifactProjections,
       artifactProcessors: this.artifactProcessors,
       baseline: this.baseline,
-      publicCatalog: this.publicCatalog
+      publicCatalog: this.publicCatalog,
+      conformance: this.conformance
     };
   }
 

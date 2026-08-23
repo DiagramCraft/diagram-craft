@@ -1,7 +1,5 @@
 import { useState, useCallback, useEffect, useMemo } from 'react';
 import { useNavigate } from '@tanstack/react-router';
-import { TbChevronLeft, TbChevronRight } from 'react-icons/tb';
-import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -9,7 +7,7 @@ import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Checkbox } from '@diagram-craft/app-components/Checkbox';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
-import { FilterDropdown } from '../../../components/FilterDropdown';
+import { Pagination } from '../../../components/Pagination';
 import type { WorkspaceTeam } from '@arch-register/api-types/workspaceConfigContract';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { asEntityPublicId, entityDetailRoute } from '../../../routes/publicObjectRoutes';
@@ -586,40 +584,14 @@ export const EntityBrowser = ({
         </>
       )}
       {isPagedBrowse && (
-        <div className={styles.pagination}>
-          <FilterDropdown
-            label="Page Size"
-            variant={'secondary'}
-            value={String(pageSize)}
-            onChange={handlePageSizeChange}
-            options={[
-              { value: '25', label: '25' },
-              { value: '50', label: '50' },
-              { value: '100', label: '100' },
-              { value: '200', label: '200' }
-            ]}
-          />
-          <div style={{ marginLeft: 'auto' }}>
-            <Button
-              size="sm"
-              variant="secondary"
-              icon={<TbChevronLeft size={12} />}
-              disabled={pageIndex === 0}
-              onClick={goToPreviousPage}
-            >
-              Prev
-            </Button>
-            <Button
-              size="sm"
-              variant="secondary"
-              icon={<TbChevronRight size={12} />}
-              disabled={filteredCount < pageSize}
-              onClick={goToNextPage}
-            >
-              Next
-            </Button>
-          </div>
-        </div>
+        <Pagination
+          pageSize={pageSize}
+          onPageSizeChange={size => handlePageSizeChange(String(size))}
+          canGoPrev={pageIndex !== 0}
+          canGoNext={filteredCount >= pageSize}
+          onPrev={goToPreviousPage}
+          onNext={goToNextPage}
+        />
       )}
       <DeleteConfirmationDialog
         open={!!hookDeleteTarget}

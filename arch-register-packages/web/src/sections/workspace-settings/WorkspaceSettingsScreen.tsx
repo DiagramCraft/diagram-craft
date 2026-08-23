@@ -25,6 +25,7 @@ import { WorkspaceApiTokensSubSection } from './sub-sections/WorkspaceApiTokensS
 import { AssessmentTypesSubSection } from './sub-sections/AssessmentTypesSubSection';
 import { PublicCatalogSubSection } from './sub-sections/PublicCatalogSubSection';
 import { WorkspaceCapabilitiesSubSection } from './sub-sections/WorkspaceCapabilitiesSubSection';
+import { ConformanceSubSection } from './sub-sections/ConformanceSubSection';
 
 const WorkspaceAnalyticsScreen = lazy(() =>
   import('./sub-sections/analytics/WorkspaceAnalyticsScreen').then(module => ({
@@ -113,6 +114,10 @@ const SECTION_META: Record<string, { title: string; sub: string }> = {
   'public-catalog': {
     title: 'Public catalog',
     sub: 'Configure the read-only entities, wiki pages, and API specifications exposed to external consumers.'
+  },
+  'conformance': {
+    title: 'Conformance',
+    sub: 'Manage scheduled validations, query policies, AI checks, and their persistent violations.'
   }
 };
 
@@ -136,6 +141,7 @@ export const WorkspaceSettingsScreen = () => {
   const [jobAddDialogOpen, setJobAddDialogOpen] = useState(false);
   const [apiTokenAddDialogOpen, setApiTokenAddDialogOpen] = useState(false);
   const [capabilityActions, setCapabilityActions] = useState<ReactNode>();
+  const [conformanceActions, setConformanceActions] = useState<ReactNode>();
 
   useEffect(() => {
     if (sectionIsValid || !ctx.defaultSettingsSection) return;
@@ -177,6 +183,8 @@ export const WorkspaceSettingsScreen = () => {
   const sectionButton =
     section === 'capabilities' ? (
       capabilityActions
+    ) : section === 'conformance' ? (
+      conformanceActions
     ) : section === 'members' ? (
       <Button
         variant="primary"
@@ -318,6 +326,13 @@ export const WorkspaceSettingsScreen = () => {
         />
       )}
       {section === 'jobs' && <JobMonitoringSubSection workspaceSlug={workspaceSlug} />}
+      {section === 'conformance' && (
+        <ConformanceSubSection
+          workspaceSlug={workspaceSlug}
+          schemas={ctx.schemas}
+          onActionsChange={setConformanceActions}
+        />
+      )}
       {section === 'jobs' && (
         <CreateJobDialog
           open={jobAddDialogOpen}

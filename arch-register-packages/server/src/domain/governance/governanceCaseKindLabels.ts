@@ -10,7 +10,8 @@ export const CASE_KIND_LABELS: Record<string, string> = {
   'relation.change-case': 'Relation change proposals',
   'document.status': 'Document status approvals',
   'assessment.response': 'Assessment responses',
-  'field-date-reminder': 'Entity field date reminders'
+  'field-date-reminder': 'Entity field date reminders',
+  'conformance.violation': 'Conformance violations'
 };
 
 export const CASE_KIND_DESCRIPTIONS: Record<string, string> = {
@@ -22,5 +23,7 @@ export const CASE_KIND_DESCRIPTIONS: Record<string, string> = {
     'Approver and quorum rules for document status fields, configured per document type.',
   'assessment.response': 'Governance workflow for submitted assessment responses.',
   'field-date-reminder':
-    'Reminders for entity date fields flagged for reminders. Cadence is set per schema field, not workspace-wide.'
+    'Reminders for entity date fields flagged for reminders. Cadence is set per schema field, not workspace-wide.',
+  'conformance.violation':
+    'Workspace conformance violations that require acknowledgement or remediation.'
 };

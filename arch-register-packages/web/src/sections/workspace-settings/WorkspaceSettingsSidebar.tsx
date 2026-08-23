@@ -62,6 +62,12 @@ const SETTINGS_SECTIONS: SettingsNavItem[] = [
     group: 'Model'
   },
   {
+    id: 'conformance',
+    label: 'Conformance',
+    icon: <TbShieldLock size={12} />,
+    group: 'Model'
+  },
+  {
     id: 'documents',
     label: 'Document Schema',
     icon: <TbFileDescription size={12} />,

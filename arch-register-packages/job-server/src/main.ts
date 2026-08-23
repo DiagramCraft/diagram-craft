@@ -50,6 +50,11 @@ import {
   ensureAllContentReconciliationSchedules,
   CONTENT_RECONCILIATION_SCAN_JOB_TYPE
 } from '@arch-register/server/domain/project/contentReconciliationJob';
+import {
+  createConformanceScanJobHandler,
+  ensureAllConformanceSchedules,
+  CONFORMANCE_SCAN_JOB_TYPE
+} from '@arch-register/server/domain/conformance/conformanceJob';
 
 const logger = createLogger('job-server');
 
@@ -86,6 +91,7 @@ const main = async () => {
   const storage = createStorage();
   await ensureAllNotificationDeliverySchedules(db);
   await ensureAllContentReconciliationSchedules(db);
+  await ensureAllConformanceSchedules(db);
   await ensureAllGovernanceDeadlineScanSchedules(db);
   await ensureAllCurrencyRatesSchedules(db);
   const governanceRegistry = createApplicationGovernanceRegistry();
@@ -120,6 +126,7 @@ const main = async () => {
     CONTENT_RECONCILIATION_SCAN_JOB_TYPE,
     createContentReconciliationJobHandler(db, storage)
   );
+  handlers.set(CONFORMANCE_SCAN_JOB_TYPE, createConformanceScanJobHandler(db));
   const server = createJobServer({
     db,
     handlers,

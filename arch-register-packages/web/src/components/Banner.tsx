@@ -2,7 +2,7 @@ import { type ReactNode } from 'react';
 import styles from './Banner.module.css';
 
 type BannerProps = {
-  variant: 'error' | 'warning' | 'info';
+  variant: 'error' | 'warning' | 'info' | 'neutral';
   icon?: ReactNode;
   children: ReactNode;
   action?: ReactNode;
