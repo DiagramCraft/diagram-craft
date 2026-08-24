@@ -6,6 +6,7 @@ import { EntityOverviewLayout } from './EntityOverviewLayout';
 import { EntityRelationsTab } from './EntityRelationsTab';
 import { EntityChangeHistoryTab } from './EntityChangeHistoryTab';
 import { EntityFuturePlansTab } from './EntityFuturePlansTab';
+import { EntityConformanceTab } from './EntityConformanceTab';
 import type { TabId } from '../types/entityDetailTypes';
 
 type Props = {
@@ -14,11 +15,13 @@ type Props = {
   layout: DetailLayoutConfig;
   relationCount: number;
   futurePlansCount: number;
+  activeViolationCount: number;
   canViewAudit: boolean;
   overviewProps: Omit<ComponentProps<typeof EntityOverviewLayout>, 'layout'>;
   relationsProps: ComponentProps<typeof EntityRelationsTab>;
   changeHistoryProps: ComponentProps<typeof EntityChangeHistoryTab>;
   futurePlansProps: ComponentProps<typeof EntityFuturePlansTab>;
+  conformanceProps: ComponentProps<typeof EntityConformanceTab>;
 };
 
 // Folds the schema's configurable detail-layout tabs (e.g. "Details", "Technical") into the same
@@ -30,13 +33,16 @@ export const EntityOverviewSection = ({
   layout,
   relationCount,
   futurePlansCount,
+  activeViolationCount,
   canViewAudit,
   overviewProps,
   relationsProps,
   changeHistoryProps,
-  futurePlansProps
+  futurePlansProps,
+  conformanceProps
 }: Props) => {
   const activeLayoutTab = layout.tabs.find(layoutTab => layoutTab.id === tab) ?? layout.tabs[0];
+  const nonLayoutTabIds = ['relations', 'future-plans', 'conformance', 'changes'];
 
   return (
     <>
@@ -52,15 +58,21 @@ export const EntityOverviewSection = ({
               Relationships{relationCount > 0 ? ` (${relationCount})` : ''}
             </Tabs.Trigger>
             <Tabs.Trigger value="future-plans">Future plans ({futurePlansCount})</Tabs.Trigger>
+            {conformanceProps.canViewConformance && (
+              <Tabs.Trigger value="conformance">
+                Conformance{activeViolationCount > 0 ? ` (${activeViolationCount})` : ''}
+              </Tabs.Trigger>
+            )}
             {canViewAudit && <Tabs.Trigger value="changes">Change history</Tabs.Trigger>}
           </Tabs.List>
         </Tabs.Root>
       </div>
-      {activeLayoutTab && tab !== 'relations' && tab !== 'future-plans' && tab !== 'changes' && (
+      {activeLayoutTab && !nonLayoutTabIds.includes(tab) && (
         <EntityOverviewLayout {...overviewProps} layout={{ version: 1, tabs: [activeLayoutTab] }} />
       )}
       {tab === 'relations' && <EntityRelationsTab {...relationsProps} />}
       {tab === 'future-plans' && <EntityFuturePlansTab {...futurePlansProps} />}
+      {tab === 'conformance' && <EntityConformanceTab {...conformanceProps} />}
       {tab === 'changes' && <EntityChangeHistoryTab {...changeHistoryProps} />}
     </>
   );

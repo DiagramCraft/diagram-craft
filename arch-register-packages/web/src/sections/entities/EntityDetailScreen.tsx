@@ -17,6 +17,7 @@ import { useEntityVersions } from '../../hooks/useEntityVersions';
 import { useChangeCasesByEntity } from '../../hooks/useChangeCases';
 import { useEntityChangeApproval } from '../../hooks/useEntityChanges';
 import { useEntityDeprecation } from '../../hooks/useEntityDeprecation';
+import { useConformanceViolations } from '../../hooks/useConformance';
 import { EntityDeprecationPanel } from './components/EntityDeprecationPanel';
 import { useEntityEditController } from '../../hooks/useEntityEditController';
 import { useEntityDiagramFiles, useEntityProjects } from '../../hooks/useProjects';
@@ -82,6 +83,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
   const { data: workspaceCapabilityConfigurations = [] } =
     useWorkspaceCapabilityConfigurations(workspaceId);
   const canViewAudit = permissions.canViewAudit;
+  const canViewConformance = permissions.canViewSchemas;
   const contentFolder = folder ?? null;
 
   const navigateToEntity = useCallback(
@@ -254,6 +256,14 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
     entry => entry.changeCase.status === 'planned'
   ).length;
 
+  const conformanceEntityId = entity?._uid ?? entityId;
+  const { data: conformanceViolations } = useConformanceViolations(
+    workspaceId,
+    { entityId: conformanceEntityId, status: 'active', limit: 200, offset: 0 },
+    canViewConformance && !!conformanceEntityId
+  );
+  const activeViolationCount = conformanceViolations?.items.length ?? 0;
+
   const {
     editing,
     editState,
@@ -421,6 +431,7 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
           layout={layout}
           relationCount={relationCount}
           futurePlansCount={futurePlansCount}
+          activeViolationCount={activeViolationCount}
           canViewAudit={canViewAudit}
           overviewProps={{
             workspaceSlug,
@@ -473,6 +484,11 @@ export const EntityDetailScreen = ({ folder }: { folder?: string } = {}) => {
             workspaceId,
             entityProjects,
             changeCases: entityChangeCases
+          }}
+          conformanceProps={{
+            workspaceId,
+            entityId: conformanceEntityId,
+            canViewConformance
           }}
         />
       )}

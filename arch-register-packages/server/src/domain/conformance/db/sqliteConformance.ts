@@ -221,6 +221,10 @@ export class SqliteConformanceDatabase extends SqliteDatabaseBase implements Con
       where.push('v.check_id = ?');
       params.push(options.check_id);
     }
+    if (options.entity_id) {
+      where.push('v.entity_id = ?');
+      params.push(options.entity_id);
+    }
     if (options.schema_id) {
       where.push('e.schema_id = ?');
       params.push(options.schema_id);

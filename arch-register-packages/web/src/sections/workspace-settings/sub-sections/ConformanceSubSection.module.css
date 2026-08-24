@@ -128,14 +128,6 @@
   color: var(--cmp-fg-disabled);
 }
 
-.severityBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 5px;
-  font-size: 12px;
-  font-weight: 500;
-}
-
 .revision {
   font-family: var(--font-mono, ui-monospace, monospace);
   font-size: 11px;

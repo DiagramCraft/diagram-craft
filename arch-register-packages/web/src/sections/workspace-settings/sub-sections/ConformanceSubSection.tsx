@@ -1,18 +1,11 @@
 import { useCallback, useEffect, useMemo, useState, type ReactNode } from 'react';
 import {
   TbAlertTriangle,
-  TbCheck,
-  TbClock,
-  TbEye,
-  TbInfoCircle,
-  TbListSearch,
-  TbLock,
   TbPencil,
   TbPlayerPlay,
   TbPlus,
   TbRefresh,
-  TbShieldCheck,
-  TbSparkles
+  TbShieldCheck
 } from 'react-icons/tb';
 import type {
   ConformanceCheck,
@@ -43,6 +36,12 @@ import { Tabs } from '@diagram-craft/app-components/Tabs';
 import { Table } from '../../../components/table/Table';
 import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
+import {
+  CHECK_TYPE_META,
+  SeverityBadge,
+  ViolationStatusChip,
+  STATUS_META
+} from '../../../components/ConformanceBadges';
 import { Drawer } from '../../../components/Drawer';
 import { EmptyState } from '../../../components/EmptyState';
 import { FilterBuilder } from '../../../components/FilterBuilder';
@@ -75,65 +74,6 @@ import styles from './ConformanceSubSection.module.css';
 
 type CheckType = ConformanceCheckDefinition['type'];
 type Tab = 'checks' | 'violations' | 'runs';
-
-const CHECK_TYPE_META: Record<
-  CheckType,
-  { label: string; description: string; icon: typeof TbClock }
-> = {
-  scheduled_validation: {
-    label: 'Scheduled validation',
-    description: 'Evaluate a validation expression against every entity of a schema.',
-    icon: TbClock
-  },
-  query_policy: {
-    label: 'Query policy',
-    description: 'Identify entities matching a saved query.',
-    icon: TbListSearch
-  },
-  ai_prompt: {
-    label: 'AI prompt',
-    description: 'AI-assisted yes/no conformance check on selected fields.',
-    icon: TbSparkles
-  }
-};
-
-const SEVERITY_META: Record<
-  ConformanceSeverity,
-  { icon: typeof TbAlertTriangle; color: string; label: string }
-> = {
-  error: { icon: TbAlertTriangle, color: 'var(--error-fg)', label: 'Error' },
-  warning: { icon: TbInfoCircle, color: 'var(--warning-fg)', label: 'Warning' }
-};
-
-const SeverityBadge = ({ severity }: { severity: ConformanceSeverity }) => {
-  const meta = SEVERITY_META[severity];
-  const SeverityIcon = meta.icon;
-  return (
-    <span className={styles.severityBadge} style={{ color: meta.color }}>
-      <SeverityIcon size={12} /> {meta.label}
-    </span>
-  );
-};
-
-const STATUS_META: Record<
-  ConformanceCheckStatus,
-  { icon: typeof TbAlertTriangle; dot: string; label: string }
-> = {
-  active: { icon: TbAlertTriangle, dot: 'var(--error-fg)', label: 'Active' },
-  acknowledged: { icon: TbEye, dot: 'var(--cmp-fg-disabled)', label: 'Acknowledged' },
-  resolved: { icon: TbCheck, dot: 'var(--success-fg, var(--green-9))', label: 'Resolved' },
-  exempt: { icon: TbLock, dot: 'var(--accent-fg)', label: 'Exempt' }
-};
-
-const ViolationStatusChip = ({ status }: { status: ConformanceCheckStatus }) => {
-  const meta = STATUS_META[status];
-  const StatusIcon = meta.icon;
-  return (
-    <Chip tone="ghost" dot={meta.dot} icon={<StatusIcon size={11} />}>
-      {meta.label}
-    </Chip>
-  );
-};
 
 const RUN_STATUS_META: Record<ConformanceEvaluationRun['status'], { tone: string; label: string }> =
   {

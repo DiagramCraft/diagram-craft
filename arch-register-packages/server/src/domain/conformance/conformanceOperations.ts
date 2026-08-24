@@ -340,6 +340,7 @@ export const listConformanceViolations = async (
   workspace: string,
   query: {
     checkId?: string;
+    entityId?: string;
     schemaId?: string;
     ownerId?: string;
     status?: 'active' | 'acknowledged' | 'resolved' | 'exempt';
@@ -353,6 +354,7 @@ export const listConformanceViolations = async (
   requireWorkspaceCapability(authCtx, 'ws.view');
   const result = await db.conformance.listViolations(workspace, {
     check_id: query.checkId,
+    entity_id: query.entityId,
     schema_id: query.schemaId,
     owner_id: query.ownerId,
     status: query.status,

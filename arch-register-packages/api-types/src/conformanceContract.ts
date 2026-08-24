@@ -137,6 +137,7 @@ const violationSchema = z.object({
 
 const violationListQuerySchema = z.object({
   checkId: z.string().optional(),
+  entityId: z.string().optional(),
   schemaId: z.string().optional(),
   ownerId: z.string().optional(),
   status: conformanceCheckStatusSchema.optional(),
