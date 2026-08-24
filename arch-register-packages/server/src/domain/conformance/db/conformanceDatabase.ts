@@ -114,6 +114,7 @@ export type ConformanceViolationEventDbCreate = {
 
 export type ConformanceViolationListOptions = {
   check_id?: string;
+  entity_id?: string;
   schema_id?: string;
   owner_id?: string;
   status?: ConformanceCheckStatus;

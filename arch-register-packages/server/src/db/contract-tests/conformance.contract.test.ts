@@ -92,6 +92,24 @@ runContractSuiteAgainstBothDrivers('ConformanceDatabase', getDb => {
         })
       ).total
     ).toBe(1);
+    expect(
+      (
+        await db.conformance.listViolations(workspace, {
+          entity_id: entity.id,
+          limit: 10,
+          offset: 0
+        })
+      ).total
+    ).toBe(1);
+    expect(
+      (
+        await db.conformance.listViolations(workspace, {
+          entity_id: randomUUID(),
+          limit: 10,
+          offset: 0
+        })
+      ).total
+    ).toBe(0);
 
     await db.conformance.setViolationStatus(workspace, violation.id, 'acknowledged', now, {
       source: 'test'

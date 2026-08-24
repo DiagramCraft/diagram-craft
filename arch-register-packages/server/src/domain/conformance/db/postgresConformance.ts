@@ -186,6 +186,10 @@ export class PostgresConformanceDatabase
       params.push(options.check_id);
       where.push(`v.check_id = $${params.length}`);
     }
+    if (options.entity_id) {
+      params.push(options.entity_id);
+      where.push(`v.entity_id = $${params.length}`);
+    }
     if (options.schema_id) {
       params.push(options.schema_id);
       where.push(`e.schema_id = $${params.length}`);
