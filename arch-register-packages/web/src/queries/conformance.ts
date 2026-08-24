@@ -9,7 +9,9 @@ export const conformanceKeys = {
   runs: (workspaceId: string) => [...conformanceKeys.all, 'runs', workspaceId] as const,
   summary: (workspaceId: string) => [...conformanceKeys.all, 'summary', workspaceId] as const,
   violations: (workspaceId: string, filters: Record<string, unknown>) =>
-    [...conformanceKeys.all, 'violations', workspaceId, filters] as const
+    [...conformanceKeys.all, 'violations', workspaceId, filters] as const,
+  violationEvents: (workspaceId: string, violationId: string) =>
+    [...conformanceKeys.all, 'violation-events', workspaceId, violationId] as const
 };
 
 export const conformanceChecksQuery = (workspaceId: string, enabled = true) =>
@@ -52,6 +54,20 @@ export const conformanceViolationsQuery = (
     refetchInterval: 15_000
   });
 
+export const conformanceViolationEventsQuery = (
+  workspaceId: string,
+  violationId: string,
+  enabled = true
+) =>
+  queryOptions({
+    queryKey: conformanceKeys.violationEvents(workspaceId, violationId),
+    queryFn: () =>
+      orpcClient.conformance.violations.events({
+        params: { workspace: workspaceId, id: violationId }
+      }),
+    enabled: enabled && !!workspaceId && !!violationId
+  });
+
 export const invalidateConformanceQueries = (queryClient: QueryClient, workspaceId: string) =>
   Promise.all([
     queryClient.invalidateQueries({ queryKey: conformanceKeys.checks(workspaceId) }),
@@ -59,6 +75,9 @@ export const invalidateConformanceQueries = (queryClient: QueryClient, workspace
     queryClient.invalidateQueries({ queryKey: conformanceKeys.summary(workspaceId) }),
     queryClient.invalidateQueries({
       queryKey: [...conformanceKeys.all, 'violations', workspaceId]
+    }),
+    queryClient.invalidateQueries({
+      queryKey: [...conformanceKeys.all, 'violation-events', workspaceId]
     }),
     queryClient.invalidateQueries({ queryKey: entityKeys.workspaceLists(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: entityKeys.counts(workspaceId) }),

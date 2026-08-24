@@ -146,6 +146,19 @@ const violationSchema = z.object({
   exemption: exemptionSchema.nullable()
 });
 
+const violationEventSchema = z.object({
+  id: z.string(),
+  violation_id: z.string(),
+  run_id: z.string().nullable(),
+  event_type: z.enum(['observed', 'acknowledged', 'resolved', 'exempted', 'exemption_revoked']),
+  details: z.record(z.string(), z.unknown()),
+  occurred_at: z.string()
+});
+
+const violationStatusRequestSchema = z.object({
+  status: z.enum(['acknowledged', 'resolved'])
+});
+
 const violationListQuerySchema = z.object({
   checkId: z.string().optional(),
   entityId: z.string().optional(),
@@ -281,7 +294,40 @@ export const conformanceContract = oc.tag('Conformance').router({
           tags: ['Conformance']
         })
         .input(z.object({ params: wsAndUUID, body: exemptionRequestSchema }))
-        .output(violationSchema)
+        .output(violationSchema),
+      revokeExemption: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/conformance/violations/{id}/exemption/revoke',
+          inputStructure: 'detailed',
+          summary: 'Revoke a conformance violation exemption',
+          description: 'Ends an active exemption early; the violation re-surfaces immediately.',
+          tags: ['Conformance']
+        })
+        .input(z.object({ params: wsAndUUID }))
+        .output(violationSchema),
+      setStatus: oc
+        .route({
+          method: 'POST',
+          path: '/{workspace}/conformance/violations/{id}/status',
+          inputStructure: 'detailed',
+          summary: 'Acknowledge or resolve a conformance violation',
+          description: 'Manually transitions a violation for checks without governance wired up.',
+          tags: ['Conformance']
+        })
+        .input(z.object({ params: wsAndUUID, body: violationStatusRequestSchema }))
+        .output(violationSchema),
+      events: oc
+        .route({
+          method: 'GET',
+          path: '/{workspace}/conformance/violations/{id}/events',
+          inputStructure: 'detailed',
+          summary: 'List a conformance violation audit trail',
+          description: 'Lists the observed/acknowledged/resolved/exempted transition history.',
+          tags: ['Conformance']
+        })
+        .input(z.object({ params: wsAndUUID }))
+        .output(z.array(violationEventSchema))
     },
     summary: oc
       .route({
@@ -311,5 +357,7 @@ export type ConformanceViolation = z.infer<typeof violationSchema>;
 export type ConformanceViolationListQuery = z.infer<typeof violationListQuerySchema>;
 export type ConformanceSummary = z.infer<typeof conformanceSummarySchema>;
 export type ConformanceExemptionRequest = z.infer<typeof exemptionRequestSchema>;
+export type ConformanceViolationEvent = z.infer<typeof violationEventSchema>;
+export type ConformanceViolationStatusRequest = z.infer<typeof violationStatusRequestSchema>;
 export type ConformanceAiToolId = DocumentAiToolId;
 export { DOCUMENT_AI_READ_ONLY_TOOLS };

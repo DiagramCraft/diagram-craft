@@ -11,7 +11,10 @@ import {
   getConformanceSummary,
   listConformanceChecks,
   listConformanceRuns,
+  listConformanceViolationEvents,
   listConformanceViolations,
+  revokeConformanceExemption,
+  setConformanceViolationStatus,
   startConformanceRun,
   updateConformanceCheck
 } from './conformanceOperations';
@@ -73,6 +76,32 @@ export const conformanceORPCRouter = conformanceRouter.router({
           input.params.id,
           input.body,
           context.authCtx,
+          context.event
+        )
+      ),
+      revokeExemption: conformanceRouter.conformance.violations.revokeExemption.handler(
+        ({ input, context }) =>
+          revokeConformanceExemption(
+            context.db,
+            context.workspace,
+            input.params.id,
+            context.authCtx
+          )
+      ),
+      setStatus: conformanceRouter.conformance.violations.setStatus.handler(({ input, context }) =>
+        setConformanceViolationStatus(
+          context.db,
+          context.workspace,
+          input.params.id,
+          input.body.status,
+          context.authCtx
+        )
+      ),
+      events: conformanceRouter.conformance.violations.events.handler(({ input, context }) =>
+        listConformanceViolationEvents(
+          context.db,
+          context.workspace,
+          input.params.id,
           context.event
         )
       )

@@ -71,12 +71,38 @@ const toApiRun = (run: ConformanceRunDbResult) => ({
   configuration: run.configuration
 });
 
+// Evidence for scheduled_validation/ai_prompt checks names the specific field(s) it's about via
+// `fieldId`/`fieldIds` (not as value-bearing keys), so filterRestrictedFieldGroups' blind
+// key-by-key redaction can't see them — it only redacts entries whose own key is a restricted
+// field id. Resolve those references explicitly and drop the whole evidence payload (not just
+// the field's value) when the referenced field is restricted, since which field failed is itself
+// information about a field the viewer can't see.
+const evidenceFieldIds = (violation: ConformanceViolationDbResult): string[] => {
+  const { evidence } = violation;
+  if (violation.source_type === 'scheduled_validation') {
+    return typeof evidence['fieldId'] === 'string' ? [evidence['fieldId']] : [];
+  }
+  if (violation.source_type === 'ai_prompt') {
+    return Array.isArray(evidence['fieldIds'])
+      ? evidence['fieldIds'].filter((id): id is string => typeof id === 'string')
+      : [];
+  }
+  return [];
+};
+
 const redactConformanceEvidence = (
-  evidence: Record<string, unknown>,
+  violation: ConformanceViolationDbResult,
   authCtx: WorkspaceAuthorizationContext,
   schema: SchemaDbResult | null
-): Record<string, unknown> =>
-  schema == null ? {} : filterRestrictedFieldGroups(authCtx, schema, evidence);
+): Record<string, unknown> => {
+  if (schema == null) return {};
+  if (
+    evidenceFieldIds(violation).some(fieldId => isFieldViewRestricted(authCtx, schema, fieldId))
+  ) {
+    return { redacted: true };
+  }
+  return filterRestrictedFieldGroups(authCtx, schema, violation.evidence);
+};
 
 const toApiViolation = (
   violation: ConformanceViolationDbResult,
@@ -94,7 +120,7 @@ const toApiViolation = (
   source_type: violation.source_type,
   severity: violation.severity,
   message: violation.message,
-  evidence: redactConformanceEvidence(violation.evidence, authCtx, schema),
+  evidence: redactConformanceEvidence(violation, authCtx, schema),
   status: violation.status,
   first_seen_at: violation.first_seen_at.toISOString(),
   last_seen_at: violation.last_seen_at.toISOString(),
@@ -427,6 +453,77 @@ export const exemptConformanceViolation = async (
     authCtx,
     schemas.find(schema => schema.id === refreshed.schema_id) ?? null
   );
+};
+
+export const revokeConformanceExemption = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  id: string,
+  authCtx: WorkspaceAuthorizationContext
+) => {
+  requireWorkspaceCapability(authCtx, 'ws.settings');
+  const existing = await db.conformance.getViolation(workspace, id);
+  httpAssert.present(existing, { status: 404, message: 'Conformance violation not found' });
+  httpAssert.present(existing.exemption, {
+    status: 409,
+    statusText: 'Conflict',
+    message: 'Conformance violation has no active exemption'
+  });
+  const updated = await db.conformance.revokeExemption(workspace, id, new Date());
+  httpAssert.present(updated, { status: 404, message: 'Conformance violation not found' });
+  const schemas = await db.catalog.listSchemas(workspace);
+  return toApiViolation(
+    updated,
+    authCtx,
+    schemas.find(schema => schema.id === updated.schema_id) ?? null
+  );
+};
+
+export const setConformanceViolationStatus = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  id: string,
+  status: 'acknowledged' | 'resolved',
+  authCtx: WorkspaceAuthorizationContext
+) => {
+  requireWorkspaceCapability(authCtx, 'ws.settings');
+  const existing = await db.conformance.getViolation(workspace, id);
+  httpAssert.present(existing, { status: 404, message: 'Conformance violation not found' });
+  const updated = await db.conformance.setViolationStatus(workspace, id, status, new Date(), {
+    reason: 'Manually set'
+  });
+  httpAssert.present(updated, { status: 404, message: 'Conformance violation not found' });
+  const schemas = await db.catalog.listSchemas(workspace);
+  return toApiViolation(
+    updated,
+    authCtx,
+    schemas.find(schema => schema.id === updated.schema_id) ?? null
+  );
+};
+
+export const listConformanceViolationEvents = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  id: string,
+  event: AuthenticatedEvent
+) => {
+  const authCtx = await buildApiEntityAuthCtx(db, workspace, event);
+  requireWorkspaceCapability(authCtx, 'ws.view');
+  const violation = await db.conformance.getViolation(workspace, id);
+  httpAssert.present(violation, { status: 404, message: 'Conformance violation not found' });
+  httpAssert.true(await canViewViolation(db, workspace, violation, authCtx), {
+    status: 404,
+    message: 'Conformance violation not found'
+  });
+  const events = await db.conformance.listViolationEvents(workspace, id);
+  return events.map(item => ({
+    id: item.id,
+    violation_id: item.violation_id,
+    run_id: item.run_id,
+    event_type: item.event_type,
+    details: item.details,
+    occurred_at: item.occurred_at.toISOString()
+  }));
 };
 
 export const getConformanceSummary = async (

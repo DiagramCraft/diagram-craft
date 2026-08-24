@@ -14,6 +14,7 @@ import type {
   ConformanceEvaluationRun,
   ConformanceSeverity,
   ConformanceViolation,
+  ConformanceViolationEvent,
   CreateConformanceCheck
 } from '@arch-register/api-types/conformanceContract';
 import { DOCUMENT_AI_READ_ONLY_TOOLS } from '@arch-register/api-types/conformanceContract';
@@ -63,11 +64,14 @@ import {
   useConformanceChecks,
   useConformanceRuns,
   useConformanceSummary,
+  useConformanceViolationEvents,
   useConformanceViolations,
   useCreateConformanceCheck,
   useDeleteConformanceCheck,
   useExemptConformanceViolation,
+  useRevokeConformanceExemption,
   useRunConformance,
+  useSetConformanceViolationStatus,
   useUpdateConformanceCheck
 } from '../../../hooks/useConformance';
 import styles from './ConformanceSubSection.module.css';
@@ -618,24 +622,60 @@ const CheckDialog = ({
   );
 };
 
+const EVENT_TYPE_LABELS: Record<ConformanceViolationEvent['event_type'], string> = {
+  observed: 'Observed',
+  acknowledged: 'Acknowledged',
+  resolved: 'Resolved',
+  exempted: 'Exempted',
+  exemption_revoked: 'Exemption revoked'
+};
+
+const ViolationTimeline = ({ events }: { events: ConformanceViolationEvent[] }) => {
+  if (events.length === 0) return null;
+  return (
+    <>
+      <div className={styles.dsectionLabel}>History</div>
+      <ul className={styles.kv} style={{ display: 'block' }}>
+        {events.map(item => (
+          <li key={item.id} style={{ marginBottom: 8 }}>
+            <strong>{EVENT_TYPE_LABELS[item.event_type]}</strong>{' '}
+            <span className="dim">{formatDateTime(item.occurred_at)}</span>
+          </li>
+        ))}
+      </ul>
+    </>
+  );
+};
+
 const ViolationDrawer = ({
   violation,
   schemas,
   teams,
   canManageWorkspaces,
+  governanceEnabled,
   onRequestExempt,
+  onRevokeExemption,
+  revokePending,
+  onSetStatus,
+  setStatusPending,
   onClose
 }: {
   violation: ConformanceViolation;
   schemas: EntitySchema[];
   teams: { id: string; name: string }[];
   canManageWorkspaces: boolean;
+  governanceEnabled: boolean;
   onRequestExempt: () => void;
+  onRevokeExemption: () => void;
+  revokePending: boolean;
+  onSetStatus: (status: 'acknowledged' | 'resolved') => void;
+  setStatusPending: boolean;
   onClose: () => void;
 }) => {
   const schemaName =
     schemas.find(schema => schema.id === violation.schema_id)?.name ?? violation.schema_id ?? '—';
   const ownerName = teams.find(team => team.id === violation.owner_team_id)?.name ?? 'No owner';
+  const { data: events = [] } = useConformanceViolationEvents(violation.workspace, violation.id);
 
   const steps: ConformanceCheckStatus[] = [
     'active',
@@ -647,6 +687,13 @@ const ViolationDrawer = ({
 
   const canExempt =
     canManageWorkspaces && (violation.status === 'active' || violation.status === 'acknowledged');
+  const canRevoke = canManageWorkspaces && violation.exemption != null;
+  // Manual acknowledge/resolve only makes sense when there's no governance case already driving
+  // the violation's status via its check's governance.resolution config.
+  const canSetStatusManually =
+    canManageWorkspaces &&
+    !governanceEnabled &&
+    (violation.status === 'active' || violation.status === 'acknowledged');
 
   return (
     <Drawer
@@ -660,10 +707,37 @@ const ViolationDrawer = ({
         </>
       }
       footer={
-        canExempt ? (
-          <Button variant="primary" onClick={onRequestExempt}>
-            Exempt…
-          </Button>
+        canExempt || canRevoke || canSetStatusManually ? (
+          <>
+            {canSetStatusManually && violation.status === 'active' && (
+              <Button
+                variant="secondary"
+                onClick={() => onSetStatus('acknowledged')}
+                disabled={setStatusPending}
+              >
+                Acknowledge
+              </Button>
+            )}
+            {canSetStatusManually && (
+              <Button
+                variant="secondary"
+                onClick={() => onSetStatus('resolved')}
+                disabled={setStatusPending}
+              >
+                Resolve
+              </Button>
+            )}
+            {canRevoke && (
+              <Button variant="secondary" onClick={onRevokeExemption} disabled={revokePending}>
+                Revoke exemption
+              </Button>
+            )}
+            {canExempt && (
+              <Button variant="primary" onClick={onRequestExempt}>
+                Exempt…
+              </Button>
+            )}
+          </>
         ) : undefined
       }
     >
@@ -724,6 +798,8 @@ const ViolationDrawer = ({
           </>
         )}
       </dl>
+
+      <ViolationTimeline events={events} />
     </Drawer>
   );
 };
@@ -822,6 +898,8 @@ export const ConformanceSubSection = ({
     offset
   });
   const exemptViolation = useExemptConformanceViolation(workspaceSlug);
+  const revokeExemption = useRevokeConformanceExemption(workspaceSlug);
+  const setViolationStatus = useSetConformanceViolationStatus(workspaceSlug);
 
   const handleAddCheck = useCallback((type: CheckType) => {
     setEditingCheck(null);
@@ -864,6 +942,9 @@ export const ConformanceSubSection = ({
     id ? (violations?.items.find(item => item.id === id) ?? null) : null;
   const openViolation = findViolation(openViolationId);
   const exemptTarget = findViolation(exemptViolationId);
+  const openViolationGovernanceEnabled =
+    checks.find(check => check.id === openViolation?.check_id)?.definition.governance?.enabled ??
+    false;
 
   return (
     <div className={styles.stack}>
@@ -1213,10 +1294,17 @@ export const ConformanceSubSection = ({
           schemas={schemas}
           teams={teams}
           canManageWorkspaces={canManageWorkspaces}
+          governanceEnabled={openViolationGovernanceEnabled}
           onRequestExempt={() => {
             setExemptViolationId(openViolation.id);
             setOpenViolationId(null);
           }}
+          onRevokeExemption={() => revokeExemption.mutate(openViolation.id)}
+          revokePending={revokeExemption.isPending}
+          onSetStatus={statusValue =>
+            setViolationStatus.mutate({ id: openViolation.id, status: statusValue })
+          }
+          setStatusPending={setViolationStatus.isPending}
           onClose={() => setOpenViolationId(null)}
         />
       )}

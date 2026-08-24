@@ -437,6 +437,16 @@ export class SqliteConformanceDatabase extends SqliteDatabaseBase implements Con
     );
   }
 
+  async listViolationEvents(workspace: string, violationId: string) {
+    return this.all(
+      `SELECT * FROM conformance_violation_event
+       WHERE workspace = ? AND violation_id = ?
+       ORDER BY occurred_at ASC`,
+      [workspace, violationId],
+      conformanceMappers.violationEvent
+    );
+  }
+
   async resolveUnseenViolations(
     workspace: string,
     checkId: string,
@@ -511,5 +521,29 @@ export class SqliteConformanceDatabase extends SqliteDatabaseBase implements Con
       conformanceMappers.exemption
     );
     return row!;
+  }
+
+  async revokeExemption(workspace: string, violationId: string, revokedAt: Date) {
+    const existing = await this.get<{ id: string }>(
+      `SELECT id FROM conformance_exemption
+       WHERE workspace = ? AND violation_id = ? AND revoked_at IS NULL`,
+      [workspace, violationId]
+    );
+    if (!existing) return null;
+    this.run(
+      `UPDATE conformance_exemption SET revoked_at = ?
+       WHERE workspace = ? AND id = ?`,
+      [revokedAt.toISOString(), workspace, existing.id]
+    );
+    await this.createViolationEvent({
+      id: randomUUID(),
+      workspace,
+      violation_id: violationId,
+      run_id: null,
+      event_type: 'exemption_revoked',
+      details: {},
+      occurred_at: revokedAt
+    });
+    return this.getViolation(workspace, violationId);
   }
 }
