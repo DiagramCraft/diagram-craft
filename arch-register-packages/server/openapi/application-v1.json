@@ -112765,6 +112765,561 @@
         }
       }
     },
+    "/{workspace}/conformance/violations/{id}/exemption/revoke": {
+      "post": {
+        "operationId": "conformance.violations.revokeExemption",
+        "summary": "Revoke a conformance violation exemption",
+        "description": "Ends an active exemption early; the violation re-surfaces immediately.",
+        "tags": [
+          "Conformance",
+          "Conformance"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "workspace": {
+                      "type": "string"
+                    },
+                    "check_id": {
+                      "type": "string"
+                    },
+                    "check_name": {
+                      "type": "string"
+                    },
+                    "entity_id": {
+                      "type": "string"
+                    },
+                    "entity_name": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "schema_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "owner_team_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "source_type": {
+                      "enum": [
+                        "scheduled_validation",
+                        "query_policy",
+                        "ai_prompt"
+                      ],
+                      "type": "string"
+                    },
+                    "severity": {
+                      "enum": [
+                        "error",
+                        "warning"
+                      ],
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "evidence": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {}
+                    },
+                    "status": {
+                      "enum": [
+                        "active",
+                        "acknowledged",
+                        "resolved",
+                        "exempt"
+                      ],
+                      "type": "string"
+                    },
+                    "first_seen_at": {
+                      "type": "string"
+                    },
+                    "last_seen_at": {
+                      "type": "string"
+                    },
+                    "resolved_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "exemption": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "violation_id": {
+                              "type": "string"
+                            },
+                            "reason": {
+                              "type": "string"
+                            },
+                            "expires_at": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "created_by": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "created_at": {
+                              "type": "string"
+                            },
+                            "revoked_at": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "violation_id",
+                            "reason",
+                            "expires_at",
+                            "created_by",
+                            "created_at",
+                            "revoked_at"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "check_id",
+                    "check_name",
+                    "entity_id",
+                    "entity_name",
+                    "schema_id",
+                    "owner_team_id",
+                    "source_type",
+                    "severity",
+                    "message",
+                    "evidence",
+                    "status",
+                    "first_seen_at",
+                    "last_seen_at",
+                    "resolved_at",
+                    "exemption"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/conformance/violations/{id}/status": {
+      "post": {
+        "operationId": "conformance.violations.setStatus",
+        "summary": "Acknowledge or resolve a conformance violation",
+        "description": "Manually transitions a violation for checks without governance wired up.",
+        "tags": [
+          "Conformance",
+          "Conformance"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "status": {
+                    "enum": [
+                      "acknowledged",
+                      "resolved"
+                    ],
+                    "type": "string"
+                  }
+                },
+                "required": [
+                  "status"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string"
+                    },
+                    "workspace": {
+                      "type": "string"
+                    },
+                    "check_id": {
+                      "type": "string"
+                    },
+                    "check_name": {
+                      "type": "string"
+                    },
+                    "entity_id": {
+                      "type": "string"
+                    },
+                    "entity_name": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "schema_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "owner_team_id": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "source_type": {
+                      "enum": [
+                        "scheduled_validation",
+                        "query_policy",
+                        "ai_prompt"
+                      ],
+                      "type": "string"
+                    },
+                    "severity": {
+                      "enum": [
+                        "error",
+                        "warning"
+                      ],
+                      "type": "string"
+                    },
+                    "message": {
+                      "type": "string"
+                    },
+                    "evidence": {
+                      "type": "object",
+                      "propertyNames": {
+                        "type": "string"
+                      },
+                      "additionalProperties": {}
+                    },
+                    "status": {
+                      "enum": [
+                        "active",
+                        "acknowledged",
+                        "resolved",
+                        "exempt"
+                      ],
+                      "type": "string"
+                    },
+                    "first_seen_at": {
+                      "type": "string"
+                    },
+                    "last_seen_at": {
+                      "type": "string"
+                    },
+                    "resolved_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    },
+                    "exemption": {
+                      "anyOf": [
+                        {
+                          "type": "object",
+                          "properties": {
+                            "id": {
+                              "type": "string"
+                            },
+                            "violation_id": {
+                              "type": "string"
+                            },
+                            "reason": {
+                              "type": "string"
+                            },
+                            "expires_at": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "created_by": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            },
+                            "created_at": {
+                              "type": "string"
+                            },
+                            "revoked_at": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ]
+                            }
+                          },
+                          "required": [
+                            "id",
+                            "violation_id",
+                            "reason",
+                            "expires_at",
+                            "created_by",
+                            "created_at",
+                            "revoked_at"
+                          ]
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ]
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "workspace",
+                    "check_id",
+                    "check_name",
+                    "entity_id",
+                    "entity_name",
+                    "schema_id",
+                    "owner_team_id",
+                    "source_type",
+                    "severity",
+                    "message",
+                    "evidence",
+                    "status",
+                    "first_seen_at",
+                    "last_seen_at",
+                    "resolved_at",
+                    "exemption"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/{workspace}/conformance/violations/{id}/events": {
+      "get": {
+        "operationId": "conformance.violations.events",
+        "summary": "List a conformance violation audit trail",
+        "description": "Lists the observed/acknowledged/resolved/exempted transition history.",
+        "tags": [
+          "Conformance",
+          "Conformance"
+        ],
+        "parameters": [
+          {
+            "name": "workspace",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          },
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "array",
+                  "items": {
+                    "type": "object",
+                    "properties": {
+                      "id": {
+                        "type": "string"
+                      },
+                      "violation_id": {
+                        "type": "string"
+                      },
+                      "run_id": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ]
+                      },
+                      "event_type": {
+                        "enum": [
+                          "observed",
+                          "acknowledged",
+                          "resolved",
+                          "exempted",
+                          "exemption_revoked"
+                        ],
+                        "type": "string"
+                      },
+                      "details": {
+                        "type": "object",
+                        "propertyNames": {
+                          "type": "string"
+                        },
+                        "additionalProperties": {}
+                      },
+                      "occurred_at": {
+                        "type": "string"
+                      }
+                    },
+                    "required": [
+                      "id",
+                      "violation_id",
+                      "run_id",
+                      "event_type",
+                      "details",
+                      "occurred_at"
+                    ]
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    },
     "/{workspace}/conformance/summary": {
       "get": {
         "operationId": "conformance.summary",
