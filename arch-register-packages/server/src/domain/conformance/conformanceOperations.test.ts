@@ -200,4 +200,38 @@ describe('conformance violation visibility', () => {
       secret_field: 'must be hidden'
     });
   });
+
+  it('drops the whole evidence payload when a scheduled_validation fieldId is restricted', async () => {
+    const authCtx = makeAuthContext([]);
+    mocks.buildApiEntityAuthCtx.mockResolvedValue(authCtx);
+    const violation: ConformanceViolationDbResult = {
+      ...makeViolation('violation-scheduled', visibleEntity),
+      source_type: 'scheduled_validation',
+      evidence: { ruleId: 'check-1', fieldId: 'secret_field', schemaVersion: 1 }
+    };
+    const db = makeDatabase([violation]);
+
+    const page = await listConformanceViolations(db, 'ws-1', { limit: 50, offset: 0 }, event);
+
+    expect(page.items[0]?.evidence).toEqual({ redacted: true });
+  });
+
+  it('keeps scheduled_validation evidence when the referenced field is visible', async () => {
+    const authCtx = makeAuthContext([]);
+    mocks.buildApiEntityAuthCtx.mockResolvedValue(authCtx);
+    const violation: ConformanceViolationDbResult = {
+      ...makeViolation('violation-scheduled', visibleEntity),
+      source_type: 'scheduled_validation',
+      evidence: { ruleId: 'check-1', fieldId: 'public_field', schemaVersion: 1 }
+    };
+    const db = makeDatabase([violation]);
+
+    const page = await listConformanceViolations(db, 'ws-1', { limit: 50, offset: 0 }, event);
+
+    expect(page.items[0]?.evidence).toEqual({
+      ruleId: 'check-1',
+      fieldId: 'public_field',
+      schemaVersion: 1
+    });
+  });
 });

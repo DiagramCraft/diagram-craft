@@ -154,6 +154,17 @@ runContractSuiteAgainstBothDrivers('ConformanceDatabase', getDb => {
       ).total
     ).toBe(1);
 
+    // Revoking the exemption ends it early: the violation's effective status reverts to its
+    // persisted status immediately, without waiting for expiry. (createExemption resets the
+    // persisted status to 'active', so that's what re-surfaces here, not the prior 'acknowledged'.)
+    const revoked = await db.conformance.revokeExemption(
+      workspace,
+      violation.id,
+      new Date(now.getTime() + 500)
+    );
+    expect(revoked?.status).toBe('active');
+    expect(revoked?.exemption).toBeNull();
+
     const resolved = await db.conformance.resolveUnseenViolations(
       workspace,
       check.id,
@@ -163,5 +174,56 @@ runContractSuiteAgainstBothDrivers('ConformanceDatabase', getDb => {
     );
     expect(resolved).toEqual([violation.id]);
     expect((await db.conformance.getViolation(workspace, violation.id))?.status).toBe('resolved');
+
+    const events = await db.conformance.listViolationEvents(workspace, violation.id);
+    expect(events.map(item => item.event_type)).toEqual([
+      'observed',
+      'acknowledged',
+      'exempted',
+      'exemption_revoked',
+      'resolved'
+    ]);
+  });
+
+  it('revokeExemption is a no-op when there is no active exemption', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const user = await createFixtureUser(db);
+    const schema = await createFixtureSchema(db, workspace);
+    const entity = await createFixtureEntity(db, workspace, schema, { name: 'Unexempted' });
+    const now = new Date();
+    const check: ConformanceCheckDbCreate = {
+      id: randomUUID(),
+      workspace,
+      name: 'Unexempted policy',
+      description: null,
+      severity: 'warning',
+      enabled: true,
+      definition: {
+        type: 'query_policy',
+        query: { root: { kind: 'and', children: [] } },
+        message: 'Policy failed'
+      },
+      revision: 1,
+      created_by: user.id,
+      created_at: now,
+      updated_at: now
+    };
+    await db.conformance.createCheck(check);
+    const violation = await db.conformance.upsertViolation({
+      id: randomUUID(),
+      workspace,
+      check_id: check.id,
+      entity_id: entity.id,
+      entity_name: entity.name,
+      schema_id: schema,
+      severity: 'warning',
+      message: 'Policy failed',
+      evidence: {},
+      run_id: null,
+      seen_at: now
+    });
+    expect(await db.conformance.revokeExemption(workspace, violation.id, now)).toBeNull();
+    expect(await db.conformance.listViolationEvents(workspace, violation.id)).toHaveLength(1);
   });
 });

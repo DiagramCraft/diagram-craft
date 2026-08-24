@@ -111,15 +111,24 @@ export type ConformanceEntityEvaluationUpsert = {
   evaluated_at: Date;
 };
 
+export type ConformanceViolationEventType =
+  | 'observed'
+  | 'acknowledged'
+  | 'resolved'
+  | 'exempted'
+  | 'exemption_revoked';
+
 export type ConformanceViolationEventDbCreate = {
   id: string;
   workspace: string;
   violation_id: string;
   run_id: string | null;
-  event_type: 'observed' | 'acknowledged' | 'resolved' | 'exempted';
+  event_type: ConformanceViolationEventType;
   details: Record<string, unknown>;
   occurred_at: Date;
 };
+
+export type ConformanceViolationEventDbResult = ConformanceViolationEventDbCreate;
 
 export type ConformanceViolationListOptions = {
   check_id?: string;
@@ -177,6 +186,10 @@ export type ConformanceDatabase = {
     details: Record<string, unknown>
   ): Promise<ConformanceViolationDbResult | null>;
   createViolationEvent(input: ConformanceViolationEventDbCreate): Promise<void>;
+  listViolationEvents(
+    workspace: string,
+    violationId: string
+  ): Promise<ConformanceViolationEventDbResult[]>;
   resolveUnseenViolations(
     workspace: string,
     checkId: string,
@@ -185,6 +198,11 @@ export type ConformanceDatabase = {
     runId: string | null
   ): Promise<string[]>;
   createExemption(input: ConformanceExemptionDbResult): Promise<ConformanceExemptionDbResult>;
+  revokeExemption(
+    workspace: string,
+    violationId: string,
+    revokedAt: Date
+  ): Promise<ConformanceViolationDbResult | null>;
 };
 
 export const conformanceMappers = {
@@ -231,6 +249,19 @@ export const conformanceMappers = {
     created_by: row['created_by'] == null ? null : String(row['created_by']),
     created_at: databaseDate(row['created_at']),
     revoked_at: row['revoked_at'] == null ? null : databaseDate(row['revoked_at'])
+  }),
+  violationEvent: (row: DatabaseRow): ConformanceViolationEventDbResult => ({
+    id: String(row['id']),
+    workspace: String(row['workspace']),
+    violation_id: String(row['violation_id']),
+    run_id: row['run_id'] == null ? null : String(row['run_id']),
+    event_type: String(row['event_type']) as ConformanceViolationEventType,
+    details: parseDatabaseJson<Record<string, unknown>>(
+      row['details'],
+      {},
+      'conformance_violation_event.details'
+    ),
+    occurred_at: databaseDate(row['occurred_at'])
   }),
   violation: (row: DatabaseRow): ConformanceViolationDbResult => ({
     id: String(row['id']),

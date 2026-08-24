@@ -72,10 +72,14 @@
             - @id:ar.workspace.configuration.conformance Administrators can manage centrally scheduled conformance
               checks in one workspace-level section, including reusable schema validation expressions, cross-cutting
               entity query policies, and optional AI yes/no conformance prompts when workspace AI is enabled. Each
-              check can persist evaluation runs, current and historical violations, auditable time-bound exemptions,
-              and optional governance acknowledgement or resolution cases. Violation lists and summary dashboard
-              widgets respect the entity and field-group permissions of the viewing member; schema validation remains
-              available on entity save as a schema-local blocking or warning diagnostic.
+              check can persist evaluation runs, current and historical violations, auditable time-bound exemptions
+              that can also be revoked early, and optional governance acknowledgement or resolution cases; violations
+              on checks without governance enabled can be acknowledged or resolved directly. Each violation's full
+              observed/acknowledged/resolved/exempted/exemption-revoked transition history is viewable. Violation
+              lists, evidence, and summary dashboard widgets respect the entity and field-group permissions of the
+              viewing member — evidence naming a field the viewer cannot see is withheld entirely rather than only
+              its value; schema validation remains available on entity save as a schema-local blocking or warning
+              diagnostic.
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
             reusable shared fieldgroups, relationships, and schema-specific behavior, including currency fields and

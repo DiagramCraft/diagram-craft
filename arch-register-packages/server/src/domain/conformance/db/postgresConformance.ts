@@ -374,6 +374,15 @@ export class PostgresConformanceDatabase
     `;
   }
 
+  async listViolationEvents(workspace: string, violationId: string) {
+    const rows = await this.sql<Record<string, unknown>[]>`
+      SELECT * FROM conformance_violation_event
+      WHERE workspace = ${workspace} AND violation_id = ${violationId}
+      ORDER BY occurred_at ASC
+    `;
+    return mapDatabaseRows(rows, conformanceMappers.violationEvent);
+  }
+
   async resolveUnseenViolations(
     workspace: string,
     checkId: string,
@@ -444,5 +453,27 @@ export class PostgresConformanceDatabase
     } catch (error) {
       return normalizePostgresError(error);
     }
+  }
+
+  async revokeExemption(workspace: string, violationId: string, revokedAt: Date) {
+    const existing = await this.sql<Record<string, unknown>[]>`
+      SELECT id FROM conformance_exemption
+      WHERE workspace = ${workspace} AND violation_id = ${violationId} AND revoked_at IS NULL
+    `;
+    if (!existing[0]) return null;
+    await this.sql`
+      UPDATE conformance_exemption SET revoked_at = ${revokedAt}
+      WHERE workspace = ${workspace} AND id = ${String(existing[0]['id'])}
+    `;
+    await this.createViolationEvent({
+      id: randomUUID(),
+      workspace,
+      violation_id: violationId,
+      run_id: null,
+      event_type: 'exemption_revoked',
+      details: {},
+      occurred_at: revokedAt
+    });
+    return await this.getViolation(workspace, violationId);
   }
 }

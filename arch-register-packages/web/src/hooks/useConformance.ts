@@ -11,6 +11,7 @@ import {
   conformanceChecksQuery,
   conformanceRunsQuery,
   conformanceSummaryQuery,
+  conformanceViolationEventsQuery,
   conformanceViolationsQuery,
   invalidateConformanceQueries
 } from '../queries/conformance';
@@ -97,3 +98,32 @@ export const useExemptConformanceViolation = (workspaceSlug: string) => {
     onSuccess: () => invalidateConformanceQueries(queryClient, workspaceSlug)
   });
 };
+
+export const useRevokeConformanceExemption = (workspaceSlug: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (id: string) =>
+      orpcClient.conformance.violations.revokeExemption({
+        params: { workspace: workspaceSlug, id }
+      }),
+    onSuccess: () => invalidateConformanceQueries(queryClient, workspaceSlug)
+  });
+};
+
+export const useSetConformanceViolationStatus = (workspaceSlug: string) => {
+  const queryClient = useQueryClient();
+  return useMutation({
+    mutationFn: (input: { id: string; status: 'acknowledged' | 'resolved' }) =>
+      orpcClient.conformance.violations.setStatus({
+        params: { workspace: workspaceSlug, id: input.id },
+        body: { status: input.status }
+      }),
+    onSuccess: () => invalidateConformanceQueries(queryClient, workspaceSlug)
+  });
+};
+
+export const useConformanceViolationEvents = (
+  workspaceSlug: string,
+  violationId: string,
+  enabled = true
+) => useQuery(conformanceViolationEventsQuery(workspaceSlug, violationId, enabled));
