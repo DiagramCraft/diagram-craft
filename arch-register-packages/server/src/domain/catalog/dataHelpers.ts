@@ -629,16 +629,15 @@ type IncomingIndexEntry = {
   relationFields?: Record<string, unknown>;
 };
 
-export const buildEntityDependents = (
-  entityId: string,
+type IncomingIndex = Map<string, IncomingIndexEntry[]>;
+
+const buildIncomingIndex = (
   entities: Entity[],
   schemas: InternalEntitySchema[],
-  options: { transitive: boolean; maxDepth?: number },
   authCtx: AuthorizationContext | null,
   typedRelations?: RelationDbResult[],
   relationSchemas?: RelationSchemaDbResult[]
-): DependentsResponse => {
-  const maxDepth = options.maxDepth ?? 5;
+): IncomingIndex => {
   const schemaMap = new Map(schemas.map(s => [s.id, s]));
   const entityMap = new Map(entities.map(e => [e.id, e]));
 
@@ -711,6 +710,20 @@ export const buildEntityDependents = (
       });
     }
   }
+
+  return incomingIndex;
+};
+
+const buildEntityDependentsFromIndex = (
+  entityId: string,
+  entities: Entity[],
+  schemas: InternalEntitySchema[],
+  options: { transitive: boolean; maxDepth?: number },
+  incomingIndex: IncomingIndex
+): DependentsResponse => {
+  const maxDepth = options.maxDepth ?? 5;
+  const schemaMap = new Map(schemas.map(s => [s.id, s]));
+  const entityMap = new Map(entities.map(e => [e.id, e]));
 
   const visited = new Set<string>([entityId]);
   const dependents: DependentRecord[] = [];
@@ -785,6 +798,54 @@ export const buildEntityDependents = (
   }
 
   return { dependents, truncated };
+};
+
+export const buildEntityDependents = (
+  entityId: string,
+  entities: Entity[],
+  schemas: InternalEntitySchema[],
+  options: { transitive: boolean; maxDepth?: number },
+  authCtx: AuthorizationContext | null,
+  typedRelations?: RelationDbResult[],
+  relationSchemas?: RelationSchemaDbResult[]
+): DependentsResponse =>
+  buildEntityDependentsFromIndex(
+    entityId,
+    entities,
+    schemas,
+    options,
+    buildIncomingIndex(entities, schemas, authCtx, typedRelations, relationSchemas)
+  );
+
+/**
+ * Builds dependent lookups for several entities from one shared inverse graph. This is useful for
+ * list endpoints that need usage counts for many records; rebuilding the graph for every target
+ * turns the same workspace-wide catalog scan into an avoidable N+1 operation.
+ */
+export const buildBatchEntityDependents = (
+  entityIds: string[],
+  entities: Entity[],
+  schemas: InternalEntitySchema[],
+  options: { transitive: boolean; maxDepth?: number },
+  authCtx: AuthorizationContext | null,
+  typedRelations?: RelationDbResult[],
+  relationSchemas?: RelationSchemaDbResult[]
+): Map<string, DependentsResponse> => {
+  const incomingIndex = buildIncomingIndex(
+    entities,
+    schemas,
+    authCtx,
+    typedRelations,
+    relationSchemas
+  );
+  const result = new Map<string, DependentsResponse>();
+  for (const entityId of new Set(entityIds)) {
+    result.set(
+      entityId,
+      buildEntityDependentsFromIndex(entityId, entities, schemas, options, incomingIndex)
+    );
+  }
+  return result;
 };
 
 export const buildEntityGrantInputs = (

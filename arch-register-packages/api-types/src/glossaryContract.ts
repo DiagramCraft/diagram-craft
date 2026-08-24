@@ -3,48 +3,56 @@ import { z } from 'zod';
 import { entityRecordSchema } from './entityContract';
 import { foreignKeySchema, ws, wsAndId } from './common';
 
-const glossaryConfigSchema = z.object({
-  termSchemaId: z.string(),
-  categorySchemaId: z.string(),
+export const glossaryConfigSchema = z.object({
+  termSchemaId: z.string().describe('Schema identifier used for glossary terms'),
+  categorySchemaId: z.string().describe('Schema identifier used for glossary categories'),
   fields: z.object({
-    definition: z.string(),
-    synonyms: z.string(),
-    abbreviations: z.string(),
-    categories: z.string(),
-    status: z.string()
+    definition: z.string().describe('Term field identifier containing the definition'),
+    synonyms: z.string().describe('Term field identifier containing synonyms'),
+    abbreviations: z.string().describe('Term field identifier containing abbreviations'),
+    categories: z.string().describe('Term field identifier containing category references'),
+    status: z.string().describe('Term field identifier containing the status')
   })
 });
 
-const glossaryQualitySchema = z.object({
-  unused: z.boolean(),
-  conflicting: z.boolean(),
-  deprecated: z.boolean(),
-  ownerless: z.boolean()
+export const glossaryQualitySchema = z.object({
+  unused: z.boolean().describe('No visible references were found'),
+  conflicting: z.boolean().describe('The name or an alias is shared by another term'),
+  deprecated: z.boolean().describe('The term uses the deprecated lifecycle state'),
+  ownerless: z.boolean().describe('The term has no owner')
 });
 
-const glossaryCategorySchema = foreignKeySchema.extend({
-  public_id: z.string().nullable().optional()
+export const glossaryCategorySchema = foreignKeySchema.extend({
+  public_id: z.string().nullable().optional().describe('Public identifier for the category')
 });
 
-const glossaryTermSchema = z.object({
-  entity: entityRecordSchema,
-  canonicalName: z.string(),
-  aliases: z.array(z.string()),
-  categories: z.array(glossaryCategorySchema),
-  status: z.string().nullable(),
-  usageCount: z.number().int().min(0),
-  quality: glossaryQualitySchema
+export const glossaryTermSchema = z.object({
+  entity: entityRecordSchema.describe('The underlying catalog entity'),
+  canonicalName: z.string().describe('Canonical display name for the term'),
+  aliases: z.array(z.string()).describe('Synonyms and abbreviations for the term'),
+  categories: z.array(glossaryCategorySchema).describe('Categories assigned to the term'),
+  status: z.string().nullable().describe('Configured term status, if present'),
+  usageCount: z.number().int().min(0).describe('Number of visible usage references'),
+  quality: glossaryQualitySchema.describe('Computed glossary quality indicators')
 });
 
-const glossaryUsageSchema = z.object({
-  kind: z.enum(['entity', 'relation', 'document', 'project', 'diagram']),
-  id: z.string(),
-  label: z.string(),
-  href: z.string().optional(),
-  context: z.string().optional()
+export const glossaryUsageSchema = z.object({
+  kind: z
+    .enum(['entity', 'relation', 'document', 'project', 'diagram'])
+    .describe('Type of resource that references the term'),
+  id: z.string().describe('Identifier of the referencing resource'),
+  label: z.string().describe('Display label of the referencing resource'),
+  context: z.string().optional().describe('Field or relation context for the reference')
 });
 
-const glossaryReportKindSchema = z.enum(['unused', 'conflicting', 'deprecated', 'ownerless']);
+export const glossaryUsagePageSchema = z.object({
+  items: z.array(glossaryUsageSchema).describe('Visible usage references in this page'),
+  total: z.number().int().min(0).describe('Total number of visible usage references')
+});
+
+export const glossaryReportKindSchema = z
+  .enum(['unused', 'conflicting', 'deprecated', 'ownerless'])
+  .describe('Quality report to run');
 
 export const glossaryContract = oc.tag('Glossary').router({
   glossary: {
@@ -74,14 +82,28 @@ export const glossaryContract = oc.tag('Glossary').router({
             params: ws,
             query: z
               .object({
-                q: z.string().optional(),
-                categoryIds: z.array(z.string()).optional(),
-                owner: z.string().optional(),
-                status: z.string().optional(),
-                lifecycle: z.string().optional(),
+                q: z.string().optional().describe('Case-insensitive name or alias search'),
+                categoryIds: z
+                  .array(z.string())
+                  .optional()
+                  .describe('Only terms assigned to one of these categories'),
+                owner: z.string().optional().describe('Exact owner identifier'),
+                status: z.string().optional().describe('Exact configured status'),
+                lifecycle: z.string().optional().describe('Exact lifecycle identifier'),
                 quality: glossaryReportKindSchema.optional(),
-                limit: z.coerce.number().int().min(1).max(200).optional(),
-                offset: z.coerce.number().int().min(0).optional()
+                limit: z.coerce
+                  .number()
+                  .int()
+                  .min(1)
+                  .max(200)
+                  .optional()
+                  .describe('Maximum number of terms to return'),
+                offset: z.coerce
+                  .number()
+                  .int()
+                  .min(0)
+                  .optional()
+                  .describe('Number of matching terms to skip')
               })
               .optional()
           })
@@ -107,8 +129,29 @@ export const glossaryContract = oc.tag('Glossary').router({
           description: 'Returns permission-filtered explicit references to a term.',
           tags: ['Glossary']
         })
-        .input(z.object({ params: wsAndId }))
-        .output(z.array(glossaryUsageSchema))
+        .input(
+          z.object({
+            params: wsAndId,
+            query: z
+              .object({
+                limit: z.coerce
+                  .number()
+                  .int()
+                  .min(1)
+                  .max(200)
+                  .optional()
+                  .describe('Maximum number of usage references to return'),
+                offset: z.coerce
+                  .number()
+                  .int()
+                  .min(0)
+                  .optional()
+                  .describe('Number of usage references to skip')
+              })
+              .optional()
+          })
+        )
+        .output(glossaryUsagePageSchema)
     },
     reports: {
       list: oc
@@ -125,8 +168,19 @@ export const glossaryContract = oc.tag('Glossary').router({
             params: ws,
             query: z.object({
               kind: glossaryReportKindSchema,
-              limit: z.coerce.number().int().min(1).max(200).optional(),
-              offset: z.coerce.number().int().min(0).optional()
+              limit: z.coerce
+                .number()
+                .int()
+                .min(1)
+                .max(200)
+                .optional()
+                .describe('Maximum number of report terms to return'),
+              offset: z.coerce
+                .number()
+                .int()
+                .min(0)
+                .optional()
+                .describe('Number of matching report terms to skip')
             })
           })
         )
@@ -138,3 +192,4 @@ export const glossaryContract = oc.tag('Glossary').router({
 export type GlossaryConfig = z.infer<typeof glossaryConfigSchema>;
 export type GlossaryTerm = z.infer<typeof glossaryTermSchema>;
 export type GlossaryUsage = z.infer<typeof glossaryUsageSchema>;
+export type GlossaryUsagePage = z.infer<typeof glossaryUsagePageSchema>;

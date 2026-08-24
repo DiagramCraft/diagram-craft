@@ -18,7 +18,7 @@ const router = implement(glossaryContract).$context<Context>().use(orpcErrorMidd
 export const glossaryORPCRouter = router.router({
   glossary: {
     config: router.glossary.config.handler(({ input, context }) =>
-      getGlossaryConfig(context.db, input.params.workspace)
+      getGlossaryConfig(context.db, input.params.workspace, context.event)
     ),
     terms: {
       list: router.glossary.terms.list.handler(({ input, context }) =>
@@ -28,7 +28,14 @@ export const glossaryORPCRouter = router.router({
         getGlossaryTerm(context.db, input.params.workspace, input.params.id, context.event)
       ),
       usage: router.glossary.terms.usage.handler(({ input, context }) =>
-        getGlossaryTermUsage(context.db, input.params.workspace, input.params.id, context.event)
+        getGlossaryTermUsage(
+          context.db,
+          input.params.workspace,
+          input.params.id,
+          context.event,
+          input.query?.limit,
+          input.query?.offset
+        )
       )
     },
     reports: {

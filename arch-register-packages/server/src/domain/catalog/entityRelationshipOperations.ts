@@ -6,7 +6,12 @@ import { httpAssert } from '../../utils/httpAssert';
 
 import { requireEntityAction } from '../auth/authorization';
 
-import { handleError, buildEntityRelations, buildEntityDependents } from './dataHelpers';
+import {
+  handleError,
+  buildEntityRelations,
+  buildEntityDependents,
+  buildBatchEntityDependents
+} from './dataHelpers';
 
 import { EntityDependents, EntityRelations } from '@arch-register/api-types/entityContract';
 
@@ -150,5 +155,46 @@ export const getEntityDependents = async (
     );
   } catch (error) {
     return handleError(error, 'Failed to retrieve entity dependents');
+  }
+};
+
+export const getBatchEntityDependents = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  ids: string[],
+  options: { transitive: boolean; maxDepth?: number },
+  authCtx: AuthorizationContext | null
+): Promise<Map<string, EntityDependents>> => {
+  try {
+    if (ids.length === 0) return new Map();
+
+    const [schemas, entitiesRaw] = await Promise.all([
+      db.catalog.listSchemas(workspace),
+      listAllCatalogEntities(db, workspace)
+    ]);
+    const entities = authCtx
+      ? entitiesRaw.filter(row => checker.hasEntityPermission(authCtx, row, 'view_entity'))
+      : entitiesRaw;
+    const entityIds = entities.map(row => row.id);
+    const [typedRelationsRaw, relationSchemas] = await Promise.all([
+      db.relation.listRelationsForEntities(workspace, entityIds),
+      db.relation.listRelationSchemas(workspace)
+    ]);
+    const typedRelations = [
+      ...new Map(
+        [...typedRelationsRaw.outgoing, ...typedRelationsRaw.incoming].map(row => [row.id, row])
+      ).values()
+    ];
+    return buildBatchEntityDependents(
+      ids,
+      entities,
+      schemas,
+      options,
+      authCtx,
+      typedRelations,
+      relationSchemas
+    );
+  } catch (error) {
+    return handleError(error, 'Failed to retrieve batch entity dependents');
   }
 };

@@ -11,15 +11,19 @@ import {
 import type {
   GlossaryConfig,
   GlossaryTerm,
-  GlossaryUsage
+  GlossaryUsage,
+  GlossaryUsagePage
 } from '@arch-register/api-types/glossaryContract';
 import { listEntitiesWithCount, getEntity } from '../catalog/entityQueryOperations';
-import { getEntityDependents } from '../catalog/entityRelationshipOperations';
+import {
+  getBatchEntityDependents,
+  getEntityDependents
+} from '../catalog/entityRelationshipOperations';
 import { getEntityProjects, getEntityDiagramFiles } from '../project/projectEntityOperations';
 import { listRelatedContent } from '../project/markdownListingOperations';
 import { runAuthorizedOperation } from '../operation';
 import { projectDbErrorMessages } from '../project/projectOperationHelpers';
-import { resolveWorkspace } from '../workspace/resolveWorkspace';
+import { requireWorkspaceCapability } from '../auth/authorization';
 
 type GlossaryResolution = {
   config: GlossaryConfig;
@@ -80,6 +84,27 @@ const entityPublicId = (entity: Record<string, unknown>) =>
 
 const entityName = (entity: Record<string, unknown>) =>
   typeof entity['_name'] === 'string' ? entity['_name'] : String(entity['_uid'] ?? '');
+
+const mapWithConcurrency = async <T, Result>(
+  items: T[],
+  concurrency: number,
+  mapper: (item: T) => Promise<Result>
+): Promise<Result[]> => {
+  if (items.length === 0) return [];
+  const results = new Array<Result>(items.length);
+  let nextIndex = 0;
+  const worker = async () => {
+    while (true) {
+      const index = nextIndex++;
+      if (index >= items.length) return;
+      results[index] = await mapper(items[index]!);
+    }
+  };
+  await Promise.all(
+    Array.from({ length: Math.min(Math.max(concurrency, 1), items.length) }, () => worker())
+  );
+  return results;
+};
 
 const resolveGlossary = async (
   db: DatabaseAdapter,
@@ -174,16 +199,35 @@ const getCategorySummaries = async (
   );
 };
 
+type GlossaryTermQuery = {
+  q?: string;
+  categoryIds?: string[];
+  owner?: string;
+  status?: string;
+  lifecycle?: string;
+  quality?: 'unused' | 'conflicting' | 'deprecated' | 'ownerless';
+  limit?: number;
+  offset?: number;
+};
+
+type GlossaryTermMetadata = Omit<GlossaryTerm, 'usageCount' | 'quality'> & {
+  quality: Omit<GlossaryTerm['quality'], 'unused'>;
+};
+
+type GlossaryDependents = Awaited<ReturnType<typeof getEntityDependents>>;
+
 const collectUsage = async (
   db: DatabaseAdapter,
   workspaceId: string,
   workspaceKey: string,
   entityId: string,
   event: AuthenticatedEvent,
-  authCtx: AuthorizationContext
+  authCtx: AuthorizationContext,
+  preloadedDependents?: GlossaryDependents
 ): Promise<GlossaryUsage[]> => {
   const [dependents, documents, projects, diagrams] = await Promise.all([
-    getEntityDependents(db, workspaceId, entityId, { transitive: false }, authCtx),
+    preloadedDependents ??
+      getEntityDependents(db, workspaceId, entityId, { transitive: false }, authCtx),
     listRelatedContent(db, workspaceKey, entityId, event),
     getEntityProjects(db, workspaceKey, entityId, event),
     getEntityDiagramFiles(db, workspaceKey, entityId, event)
@@ -221,14 +265,12 @@ const collectUsage = async (
   return usage;
 };
 
-const buildTerms = async (
+const buildTermMetadata = async (
   db: DatabaseAdapter,
   workspace: string,
-  workspaceKey: string,
   authCtx: AuthorizationContext,
-  event: AuthenticatedEvent,
   resolution: GlossaryResolution
-): Promise<GlossaryTerm[]> => {
+): Promise<GlossaryTermMetadata[]> => {
   const [terms, categories, lifecycleStates] = await Promise.all([
     listEntitiesWithCount(db, workspace, authCtx, {
       schemaId: resolution.termSchemaId,
@@ -264,7 +306,7 @@ const buildTerms = async (
     [...collisions.entries()].filter(([, ids]) => ids.size > 1).map(([value]) => value)
   );
 
-  const result: GlossaryTerm[] = [];
+  const result: GlossaryTermMetadata[] = [];
   for (const entity of terms.items) {
     const aliases = aliasesByTerm.get(entity._uid) ?? [];
     const categoryIds = asStrings(entity[resolution.fieldIds.categories]);
@@ -272,7 +314,6 @@ const buildTerms = async (
       const category = categories.get(categoryId);
       return category ? [category] : [];
     });
-    const usage = await collectUsage(db, workspace, workspaceKey, entity._uid, event, authCtx);
     const conflict = [entityName(entity), ...aliases].some(value =>
       conflictingValues.has(normalized(value))
     );
@@ -284,9 +325,7 @@ const buildTerms = async (
       aliases,
       categories: categorySummaries,
       status: valueAsText(entity[resolution.fieldIds.status]),
-      usageCount: usage.length,
       quality: {
-        unused: usage.length === 0,
         conflicting: conflict,
         deprecated,
         ownerless
@@ -296,18 +335,15 @@ const buildTerms = async (
   return result.sort((a, b) => a.canonicalName.localeCompare(b.canonicalName));
 };
 
-type GlossaryTermQuery = {
-  q?: string;
-  categoryIds?: string[];
-  owner?: string;
-  status?: string;
-  lifecycle?: string;
-  quality?: 'unused' | 'conflicting' | 'deprecated' | 'ownerless';
-  limit?: number;
-  offset?: number;
+type FilterableGlossaryTerm = Omit<GlossaryTerm, 'usageCount' | 'quality'> & {
+  quality: Partial<GlossaryTerm['quality']>;
 };
 
-const filterTerms = (terms: GlossaryTerm[], query: GlossaryTermQuery) => {
+const filterTerms = <Term extends FilterableGlossaryTerm>(
+  terms: Term[],
+  query: GlossaryTermQuery,
+  includeQuality = true
+) => {
   const q = query.q?.trim().toLocaleLowerCase() ?? '';
   const categoryIds = new Set(query.categoryIds ?? []);
   return terms.filter(term => {
@@ -323,9 +359,88 @@ const filterTerms = (terms: GlossaryTerm[], query: GlossaryTermQuery) => {
     if (query.owner !== undefined && ownerId(term.entity) !== query.owner) return false;
     if (query.lifecycle !== undefined && lifecycleId(term.entity) !== query.lifecycle) return false;
     if (query.status !== undefined && term.status !== query.status) return false;
-    if (query.quality !== undefined && !term.quality[query.quality]) return false;
+    if (includeQuality && query.quality !== undefined && !term.quality[query.quality]) {
+      return false;
+    }
     return true;
   });
+};
+
+const collectUsageByTerm = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  workspaceKey: string,
+  terms: GlossaryTermMetadata[],
+  event: AuthenticatedEvent,
+  authCtx: AuthorizationContext
+) => {
+  if (terms.length === 0) return new Map<string, GlossaryUsage[]>();
+  const dependentsByTerm = await getBatchEntityDependents(
+    db,
+    workspace,
+    terms.map(term => term.entity._uid),
+    { transitive: false },
+    authCtx
+  );
+  const usageEntries = await mapWithConcurrency(
+    terms,
+    8,
+    async term =>
+      [
+        term.entity._uid,
+        await collectUsage(
+          db,
+          workspace,
+          workspaceKey,
+          term.entity._uid,
+          event,
+          authCtx,
+          dependentsByTerm.get(term.entity._uid)
+        )
+      ] as const
+  );
+  return new Map(usageEntries);
+};
+
+const buildTerms = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  workspaceKey: string,
+  authCtx: AuthorizationContext,
+  event: AuthenticatedEvent,
+  resolution: GlossaryResolution,
+  query: GlossaryTermQuery = {},
+  entityIds?: Set<string>
+) => {
+  const metadata = (await buildTermMetadata(db, workspace, authCtx, resolution)).filter(
+    term => entityIds === undefined || entityIds.has(term.entity._uid)
+  );
+  const candidates = filterTerms(metadata, query, query.quality !== 'unused');
+  const offset = query.offset ?? 0;
+  const limit = query.limit ?? 50;
+  const usageTargets =
+    query.quality === 'unused' ? candidates : candidates.slice(offset, offset + limit);
+  const usageByTerm = await collectUsageByTerm(
+    db,
+    workspace,
+    workspaceKey,
+    usageTargets,
+    event,
+    authCtx
+  );
+  const enriched: GlossaryTerm[] = candidates.map(term => {
+    const usage = usageByTerm.get(term.entity._uid);
+    return {
+      ...term,
+      usageCount: usage?.length ?? 0,
+      quality: { ...term.quality, unused: usage === undefined || usage.length === 0 }
+    };
+  });
+  const filtered = query.quality === 'unused' ? filterTerms(enriched, query) : enriched;
+  return {
+    items: filtered.slice(offset, offset + limit),
+    total: filtered.length
+  };
 };
 
 const requireGlossary = async (db: DatabaseAdapter, workspace: string) => {
@@ -337,10 +452,22 @@ const requireGlossary = async (db: DatabaseAdapter, workspace: string) => {
   return resolution!;
 };
 
-export const getGlossaryConfig = async (db: DatabaseAdapter, workspace: string) => {
-  const workspaceId = await resolveWorkspace(db.catalog, workspace);
-  return (await resolveGlossary(db, workspaceId))?.config ?? null;
-};
+export const getGlossaryConfig = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  event: AuthenticatedEvent
+) =>
+  runAuthorizedOperation({
+    db,
+    event,
+    scope: { kind: 'workspace', workspace },
+    fallback: 'Failed to retrieve glossary configuration',
+    dbErrorMessages: projectDbErrorMessages,
+    operation: async ({ ws, authCtx }) => {
+      requireWorkspaceCapability(authCtx, 'ws.view');
+      return (await resolveGlossary(db, ws))?.config ?? null;
+    }
+  });
 
 export const listGlossaryTerms = async (
   db: DatabaseAdapter,
@@ -356,13 +483,7 @@ export const listGlossaryTerms = async (
     dbErrorMessages: projectDbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       const resolution = await requireGlossary(db, ws);
-      const terms = filterTerms(
-        await buildTerms(db, ws, workspace, authCtx, event, resolution),
-        query
-      );
-      const offset = query.offset ?? 0;
-      const limit = query.limit ?? 50;
-      return { items: terms.slice(offset, offset + limit), total: terms.length };
+      return buildTerms(db, ws, workspace, authCtx, event, resolution, query);
     }
   });
 
@@ -385,8 +506,18 @@ export const getGlossaryTerm = async (
         status: 404,
         message: `Data record '${id}' is not a glossary term`
       });
-      const term = await buildTerms(db, ws, workspace, authCtx, event, resolution);
-      const result = term.find(item => item.entity._uid === entity._uid);
+      const result = (
+        await buildTerms(
+          db,
+          ws,
+          workspace,
+          authCtx,
+          event,
+          resolution,
+          { limit: 1 },
+          new Set([entity._uid])
+        )
+      ).items[0];
       httpAssert.present(result, { status: 404, message: `Glossary term '${id}' not found` });
       return result!;
     }
@@ -396,7 +527,9 @@ export const getGlossaryTermUsage = async (
   db: DatabaseAdapter,
   workspace: string,
   id: string,
-  event: AuthenticatedEvent
+  event: AuthenticatedEvent,
+  limit?: number,
+  offset?: number
 ) =>
   runAuthorizedOperation({
     db,
@@ -411,7 +544,13 @@ export const getGlossaryTermUsage = async (
         status: 404,
         message: `Data record '${id}' is not a glossary term`
       });
-      return await collectUsage(db, ws, workspace, entity._uid, event, authCtx);
+      const usage = await collectUsage(db, ws, workspace, entity._uid, event, authCtx);
+      const pageLimit = limit ?? 100;
+      const pageOffset = offset ?? 0;
+      return {
+        items: usage.slice(pageOffset, pageOffset + pageLimit),
+        total: usage.length
+      } satisfies GlossaryUsagePage;
     }
   });
 

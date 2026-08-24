@@ -58,6 +58,7 @@ export const GlossaryTermDrawer = ({
       config.data != null
     )
   );
+  const usageItems = usage.data?.items ?? [];
 
   const categoryById = useMemo(() => {
     const map = new Map<string, { name: string; color: string }>();
@@ -68,7 +69,7 @@ export const GlossaryTermDrawer = ({
   }, [categories.data]);
 
   const usageGroups = Object.keys(USAGE_KIND_LABEL)
-    .map(kind => ({ kind, items: (usage.data ?? []).filter(item => item.kind === kind) }))
+    .map(kind => ({ kind, items: usageItems.filter(item => item.kind === kind) }))
     .filter(group => group.items.length > 0);
 
   if (term.isLoading || config.isLoading) {
@@ -165,8 +166,8 @@ export const GlossaryTermDrawer = ({
       <div className={styles.sectionLabel}>
         Usage &amp; backlinks
         <span className="dim" style={{ marginLeft: 8, fontWeight: 400 }}>
-          {(usage.data ?? []).length} visible reference
-          {(usage.data ?? []).length === 1 ? '' : 's'}
+          {usage.data?.total ?? usageItems.length} visible reference
+          {(usage.data?.total ?? usageItems.length) === 1 ? '' : 's'}
         </span>
       </div>
       {usageGroups.length === 0 ? (
