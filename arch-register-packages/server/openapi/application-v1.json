@@ -67492,28 +67492,35 @@
                       "type": "object",
                       "properties": {
                         "termSchemaId": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Schema identifier used for glossary terms"
                         },
                         "categorySchemaId": {
-                          "type": "string"
+                          "type": "string",
+                          "description": "Schema identifier used for glossary categories"
                         },
                         "fields": {
                           "type": "object",
                           "properties": {
                             "definition": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Term field identifier containing the definition"
                             },
                             "synonyms": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Term field identifier containing synonyms"
                             },
                             "abbreviations": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Term field identifier containing abbreviations"
                             },
                             "categories": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Term field identifier containing category references"
                             },
                             "status": {
-                              "type": "string"
+                              "type": "string",
+                              "description": "Term field identifier containing the status"
                             }
                           },
                           "required": [
@@ -67564,7 +67571,8 @@
             "name": "q",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "Case-insensitive name or alias search"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -67576,7 +67584,8 @@
               "type": "array",
               "items": {
                 "type": "string"
-              }
+              },
+              "description": "Only terms assigned to one of these categories"
             },
             "style": "deepObject",
             "explode": true,
@@ -67587,7 +67596,8 @@
             "name": "owner",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "Exact owner identifier"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -67596,7 +67606,8 @@
             "name": "status",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "Exact configured status"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -67605,7 +67616,8 @@
             "name": "lifecycle",
             "in": "query",
             "schema": {
-              "type": "string"
+              "type": "string",
+              "description": "Exact lifecycle identifier"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -67620,7 +67632,8 @@
                 "deprecated",
                 "ownerless"
               ],
-              "type": "string"
+              "type": "string",
+              "description": "Quality report to run"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -67631,7 +67644,8 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 200
+              "maximum": 200,
+              "description": "Maximum number of terms to return"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -67642,7 +67656,8 @@
             "schema": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 9007199254740991
+              "maximum": 9007199254740991,
+              "description": "Number of matching terms to skip"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -68187,16 +68202,18 @@
                               "_completeness"
                             ],
                             "additionalProperties": {},
-                            "description": "Complete entity record with schema-specific fields"
+                            "description": "The underlying catalog entity"
                           },
                           "canonicalName": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Canonical display name for the term"
                           },
                           "aliases": {
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "description": "Synonyms and abbreviations for the term"
                           },
                           "categories": {
                             "type": "array",
@@ -68217,14 +68234,16 @@
                                     {
                                       "type": "null"
                                     }
-                                  ]
+                                  ],
+                                  "description": "Public identifier for the category"
                                 }
                               },
                               "required": [
                                 "id",
                                 "name"
                               ]
-                            }
+                            },
+                            "description": "Categories assigned to the term"
                           },
                           "status": {
                             "anyOf": [
@@ -68234,27 +68253,33 @@
                               {
                                 "type": "null"
                               }
-                            ]
+                            ],
+                            "description": "Configured term status, if present"
                           },
                           "usageCount": {
                             "type": "integer",
                             "minimum": 0,
-                            "maximum": 9007199254740991
+                            "maximum": 9007199254740991,
+                            "description": "Number of visible usage references"
                           },
                           "quality": {
                             "type": "object",
                             "properties": {
                               "unused": {
-                                "type": "boolean"
+                                "type": "boolean",
+                                "description": "No visible references were found"
                               },
                               "conflicting": {
-                                "type": "boolean"
+                                "type": "boolean",
+                                "description": "The name or an alias is shared by another term"
                               },
                               "deprecated": {
-                                "type": "boolean"
+                                "type": "boolean",
+                                "description": "The term uses the deprecated lifecycle state"
                               },
                               "ownerless": {
-                                "type": "boolean"
+                                "type": "boolean",
+                                "description": "The term has no owner"
                               }
                             },
                             "required": [
@@ -68262,7 +68287,8 @@
                               "conflicting",
                               "deprecated",
                               "ownerless"
-                            ]
+                            ],
+                            "description": "Computed glossary quality indicators"
                           }
                         },
                         "required": [
@@ -68854,16 +68880,18 @@
                         "_completeness"
                       ],
                       "additionalProperties": {},
-                      "description": "Complete entity record with schema-specific fields"
+                      "description": "The underlying catalog entity"
                     },
                     "canonicalName": {
-                      "type": "string"
+                      "type": "string",
+                      "description": "Canonical display name for the term"
                     },
                     "aliases": {
                       "type": "array",
                       "items": {
                         "type": "string"
-                      }
+                      },
+                      "description": "Synonyms and abbreviations for the term"
                     },
                     "categories": {
                       "type": "array",
@@ -68884,14 +68912,16 @@
                               {
                                 "type": "null"
                               }
-                            ]
+                            ],
+                            "description": "Public identifier for the category"
                           }
                         },
                         "required": [
                           "id",
                           "name"
                         ]
-                      }
+                      },
+                      "description": "Categories assigned to the term"
                     },
                     "status": {
                       "anyOf": [
@@ -68901,27 +68931,33 @@
                         {
                           "type": "null"
                         }
-                      ]
+                      ],
+                      "description": "Configured term status, if present"
                     },
                     "usageCount": {
                       "type": "integer",
                       "minimum": 0,
-                      "maximum": 9007199254740991
+                      "maximum": 9007199254740991,
+                      "description": "Number of visible usage references"
                     },
                     "quality": {
                       "type": "object",
                       "properties": {
                         "unused": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "No visible references were found"
                         },
                         "conflicting": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "The name or an alias is shared by another term"
                         },
                         "deprecated": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "The term uses the deprecated lifecycle state"
                         },
                         "ownerless": {
-                          "type": "boolean"
+                          "type": "boolean",
+                          "description": "The term has no owner"
                         }
                       },
                       "required": [
@@ -68929,7 +68965,8 @@
                         "conflicting",
                         "deprecated",
                         "ownerless"
-                      ]
+                      ],
+                      "description": "Computed glossary quality indicators"
                     }
                   },
                   "required": [
@@ -68973,6 +69010,30 @@
             "schema": {
               "type": "string"
             }
+          },
+          {
+            "name": "limit",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 1,
+              "maximum": 200,
+              "description": "Maximum number of usage references to return"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
+            "name": "offset",
+            "in": "query",
+            "schema": {
+              "type": "integer",
+              "minimum": 0,
+              "maximum": 9007199254740991,
+              "description": "Number of usage references to skip"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
           }
         ],
         "responses": {
@@ -68981,39 +69042,56 @@
             "content": {
               "application/json": {
                 "schema": {
-                  "type": "array",
-                  "items": {
-                    "type": "object",
-                    "properties": {
-                      "kind": {
-                        "enum": [
-                          "entity",
-                          "relation",
-                          "document",
-                          "project",
-                          "diagram"
-                        ],
-                        "type": "string"
+                  "type": "object",
+                  "properties": {
+                    "items": {
+                      "type": "array",
+                      "items": {
+                        "type": "object",
+                        "properties": {
+                          "kind": {
+                            "enum": [
+                              "entity",
+                              "relation",
+                              "document",
+                              "project",
+                              "diagram"
+                            ],
+                            "type": "string",
+                            "description": "Type of resource that references the term"
+                          },
+                          "id": {
+                            "type": "string",
+                            "description": "Identifier of the referencing resource"
+                          },
+                          "label": {
+                            "type": "string",
+                            "description": "Display label of the referencing resource"
+                          },
+                          "context": {
+                            "type": "string",
+                            "description": "Field or relation context for the reference"
+                          }
+                        },
+                        "required": [
+                          "kind",
+                          "id",
+                          "label"
+                        ]
                       },
-                      "id": {
-                        "type": "string"
-                      },
-                      "label": {
-                        "type": "string"
-                      },
-                      "href": {
-                        "type": "string"
-                      },
-                      "context": {
-                        "type": "string"
-                      }
+                      "description": "Visible usage references in this page"
                     },
-                    "required": [
-                      "kind",
-                      "id",
-                      "label"
-                    ]
-                  }
+                    "total": {
+                      "type": "integer",
+                      "minimum": 0,
+                      "maximum": 9007199254740991,
+                      "description": "Total number of visible usage references"
+                    }
+                  },
+                  "required": [
+                    "items",
+                    "total"
+                  ]
                 }
               }
             }
@@ -69050,7 +69128,8 @@
                 "deprecated",
                 "ownerless"
               ],
-              "type": "string"
+              "type": "string",
+              "description": "Quality report to run"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -69062,7 +69141,8 @@
             "schema": {
               "type": "integer",
               "minimum": 1,
-              "maximum": 200
+              "maximum": 200,
+              "description": "Maximum number of report terms to return"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -69074,7 +69154,8 @@
             "schema": {
               "type": "integer",
               "minimum": 0,
-              "maximum": 9007199254740991
+              "maximum": 9007199254740991,
+              "description": "Number of matching report terms to skip"
             },
             "allowEmptyValue": true,
             "allowReserved": true
@@ -69619,16 +69700,18 @@
                               "_completeness"
                             ],
                             "additionalProperties": {},
-                            "description": "Complete entity record with schema-specific fields"
+                            "description": "The underlying catalog entity"
                           },
                           "canonicalName": {
-                            "type": "string"
+                            "type": "string",
+                            "description": "Canonical display name for the term"
                           },
                           "aliases": {
                             "type": "array",
                             "items": {
                               "type": "string"
-                            }
+                            },
+                            "description": "Synonyms and abbreviations for the term"
                           },
                           "categories": {
                             "type": "array",
@@ -69649,14 +69732,16 @@
                                     {
                                       "type": "null"
                                     }
-                                  ]
+                                  ],
+                                  "description": "Public identifier for the category"
                                 }
                               },
                               "required": [
                                 "id",
                                 "name"
                               ]
-                            }
+                            },
+                            "description": "Categories assigned to the term"
                           },
                           "status": {
                             "anyOf": [
@@ -69666,27 +69751,33 @@
                               {
                                 "type": "null"
                               }
-                            ]
+                            ],
+                            "description": "Configured term status, if present"
                           },
                           "usageCount": {
                             "type": "integer",
                             "minimum": 0,
-                            "maximum": 9007199254740991
+                            "maximum": 9007199254740991,
+                            "description": "Number of visible usage references"
                           },
                           "quality": {
                             "type": "object",
                             "properties": {
                               "unused": {
-                                "type": "boolean"
+                                "type": "boolean",
+                                "description": "No visible references were found"
                               },
                               "conflicting": {
-                                "type": "boolean"
+                                "type": "boolean",
+                                "description": "The name or an alias is shared by another term"
                               },
                               "deprecated": {
-                                "type": "boolean"
+                                "type": "boolean",
+                                "description": "The term uses the deprecated lifecycle state"
                               },
                               "ownerless": {
-                                "type": "boolean"
+                                "type": "boolean",
+                                "description": "The term has no owner"
                               }
                             },
                             "required": [
@@ -69694,7 +69785,8 @@
                               "conflicting",
                               "deprecated",
                               "ownerless"
-                            ]
+                            ],
+                            "description": "Computed glossary quality indicators"
                           }
                         },
                         "required": [

@@ -2,6 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { buildAuthorizationContext } from '@arch-register/permissions';
 import {
   buildEntityGrantInputs,
+  buildBatchEntityDependents,
   buildEntityDependents,
   buildEntityRelations,
   filterEntities,
@@ -616,6 +617,24 @@ describe('data route helpers', () => {
       allowedAuthCtx
     );
     expect(allowed.dependents.map(dependent => dependent.entityId)).toEqual(['component-1']);
+  });
+
+  it('builds dependent results for multiple targets from one shared graph', () => {
+    const batch = buildBatchEntityDependents(
+      [dependency.id, system.id],
+      [domain, system, component, dependency],
+      [domainSchema, systemSchema, componentSchema],
+      { transitive: false },
+      allowedAuthCtx
+    );
+
+    expect(batch.get(dependency.id)?.dependents.map(dependent => dependent.entityId)).toEqual([
+      component.id
+    ]);
+    expect(batch.get(system.id)?.dependents.map(dependent => dependent.entityId)).toEqual([
+      component.id,
+      dependency.id
+    ]);
   });
 
   const visibleRelationRowReversed: RelationDbResult = {
