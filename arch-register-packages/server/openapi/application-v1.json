@@ -111780,6 +111780,15 @@
             "allowReserved": true
           },
           {
+            "name": "entityId",
+            "in": "query",
+            "schema": {
+              "type": "string"
+            },
+            "allowEmptyValue": true,
+            "allowReserved": true
+          },
+          {
             "name": "schemaId",
             "in": "query",
             "schema": {
