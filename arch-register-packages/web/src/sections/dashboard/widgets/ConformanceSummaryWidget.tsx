@@ -45,14 +45,30 @@ export const ConformanceSummaryWidget = ({
           <span>acknowledged</span>
         </div>
       </div>
-      {summary.byCheck.length > 0 && (
-        <div className={styles.breakdown}>
-          {summary.byCheck.slice(0, 3).map(item => (
-            <div className={styles.row} key={item.id}>
-              <span>{item.name}</span>
-              <strong>{item.count}</strong>
+      {(summary.byCheck.length > 0 || summary.bySchema.length > 0) && (
+        <div className={styles.breakdowns}>
+          {summary.byCheck.length > 0 && (
+            <div className={styles.breakdown}>
+              <div className={styles.breakdownTitle}>By check</div>
+              {summary.byCheck.slice(0, 3).map(item => (
+                <div className={styles.row} key={item.id}>
+                  <span>{item.name}</span>
+                  <strong>{item.count}</strong>
+                </div>
+              ))}
             </div>
-          ))}
+          )}
+          {summary.bySchema.length > 0 && (
+            <div className={styles.breakdown}>
+              <div className={styles.breakdownTitle}>By schema</div>
+              {summary.bySchema.slice(0, 3).map(item => (
+                <div className={styles.row} key={item.id}>
+                  <span>{item.name}</span>
+                  <strong>{item.count}</strong>
+                </div>
+              ))}
+            </div>
+          )}
         </div>
       )}
       <button

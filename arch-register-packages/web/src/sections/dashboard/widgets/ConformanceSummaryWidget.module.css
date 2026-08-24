@@ -37,10 +37,23 @@
   font-size: 10px;
 }
 
+.breakdowns {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(110px, 1fr));
+  gap: 10px;
+}
+
 .breakdown {
   display: flex;
   flex-direction: column;
   gap: 4px;
+}
+
+.breakdownTitle {
+  color: var(--cmp-fg-disabled);
+  font-size: 10px;
+  font-weight: 600;
+  text-transform: uppercase;
 }
 
 .row {
