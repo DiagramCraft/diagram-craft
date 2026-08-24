@@ -21,7 +21,7 @@ export const conformanceSummarySpec = defineMdxComponent<
   dashboardWidget: {
     icon: TbShieldCheck,
     label: 'Conformance summary',
-    description: 'Current conformance violations grouped by severity and check.',
+    description: 'Current conformance violations grouped by severity, check, and schema.',
     defaultW: 5,
     defaultH: 4,
     surfaces: ['workspace'],

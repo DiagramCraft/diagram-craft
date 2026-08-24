@@ -16,12 +16,16 @@ import { PermissionChecker } from '@arch-register/permissions';
 import type { DatabaseAdapter } from '../../db/database';
 import type { AuthenticatedEvent } from '../../middleware/auth';
 import { requireWorkspaceCapability, buildApiEntityAuthCtx } from '../auth/authorization';
-import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
+import {
+  filterRestrictedFieldGroups,
+  isFieldViewRestricted
+} from '../auth/fieldGroupAccessControl';
 import { assertValidationRulesValid } from '../catalog/entityValidationRules';
 import { validateEntityQueryIR } from '../catalog/entityQueryIRValidator';
 import { enqueueOneOffJobRun } from '../jobs/jobOperations';
 import { resolveAiConfig } from '../ai/tanstackAiAdapter';
 import { httpAssert } from '../../utils/httpAssert';
+import type { SchemaDbResult } from '../catalog/db/catalogDatabase';
 import type {
   ConformanceCheckDbResult,
   ConformanceExemptionDbResult,
@@ -67,7 +71,18 @@ const toApiRun = (run: ConformanceRunDbResult) => ({
   configuration: run.configuration
 });
 
-const toApiViolation = (violation: ConformanceViolationDbResult) => ({
+const redactConformanceEvidence = (
+  evidence: Record<string, unknown>,
+  authCtx: WorkspaceAuthorizationContext,
+  schema: SchemaDbResult | null
+): Record<string, unknown> =>
+  schema == null ? {} : filterRestrictedFieldGroups(authCtx, schema, evidence);
+
+const toApiViolation = (
+  violation: ConformanceViolationDbResult,
+  authCtx: WorkspaceAuthorizationContext,
+  schema: SchemaDbResult | null
+) => ({
   id: violation.id,
   workspace: violation.workspace,
   check_id: violation.check_id,
@@ -79,7 +94,7 @@ const toApiViolation = (violation: ConformanceViolationDbResult) => ({
   source_type: violation.source_type,
   severity: violation.severity,
   message: violation.message,
-  evidence: violation.evidence,
+  evidence: redactConformanceEvidence(violation.evidence, authCtx, schema),
   status: violation.status,
   first_seen_at: violation.first_seen_at.toISOString(),
   last_seen_at: violation.last_seen_at.toISOString(),
@@ -352,22 +367,30 @@ export const listConformanceViolations = async (
 ) => {
   const authCtx = await buildApiEntityAuthCtx(db, workspace, event);
   requireWorkspaceCapability(authCtx, 'ws.view');
-  const result = await db.conformance.listViolations(workspace, {
-    check_id: query.checkId,
-    entity_id: query.entityId,
-    schema_id: query.schemaId,
-    owner_id: query.ownerId,
-    status: query.status,
-    severity: query.severity,
-    limit: 10000,
-    offset: 0
-  });
+  const [result, schemas] = await Promise.all([
+    db.conformance.listViolations(workspace, {
+      check_id: query.checkId,
+      entity_id: query.entityId,
+      schema_id: query.schemaId,
+      owner_id: query.ownerId,
+      status: query.status,
+      severity: query.severity,
+      limit: 10000,
+      offset: 0
+    }),
+    db.catalog.listSchemas(workspace)
+  ]);
+  const schemasById = new Map(schemas.map(schema => [schema.id, schema]));
   const visible: ConformanceViolationDbResult[] = [];
   for (const violation of result.items) {
     if (await canViewViolation(db, workspace, violation, authCtx)) visible.push(violation);
   }
   return {
-    items: visible.slice(query.offset, query.offset + query.limit).map(toApiViolation),
+    items: visible
+      .slice(query.offset, query.offset + query.limit)
+      .map(violation =>
+        toApiViolation(violation, authCtx, schemasById.get(violation.schema_id ?? '') ?? null)
+      ),
     total: visible.length,
     limit: query.limit,
     offset: query.offset
@@ -397,7 +420,13 @@ export const exemptConformanceViolation = async (
     revoked_at: null
   };
   await db.conformance.createExemption(exemption);
-  return toApiViolation((await db.conformance.getViolation(workspace, id))!);
+  const schemas = await db.catalog.listSchemas(workspace);
+  const refreshed = (await db.conformance.getViolation(workspace, id))!;
+  return toApiViolation(
+    refreshed,
+    authCtx,
+    schemas.find(schema => schema.id === refreshed.schema_id) ?? null
+  );
 };
 
 export const getConformanceSummary = async (
