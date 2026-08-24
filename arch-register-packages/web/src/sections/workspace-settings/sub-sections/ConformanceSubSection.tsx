@@ -27,6 +27,13 @@ import { DOCUMENT_AI_READ_ONLY_TOOLS } from '@arch-register/api-types/conformanc
 import type { DocumentAiToolId } from '@arch-register/api-types/documentContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import type {
+  WorkspaceLifecycleState,
+  WorkspaceOwnerOption
+} from '@arch-register/api-types/workspaceContract';
+import type { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
 import { Button } from '@diagram-craft/app-components/Button';
 import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
@@ -38,9 +45,16 @@ import { Banner } from '../../../components/Banner';
 import { Chip } from '../../../components/Chip';
 import { Drawer } from '../../../components/Drawer';
 import { EmptyState } from '../../../components/EmptyState';
+import { FilterBuilder } from '../../../components/FilterBuilder';
 import { FilterDropdown } from '../../../components/FilterDropdown';
 import { LoadingState } from '../../../components/LoadingState';
 import { Pagination } from '../../../components/Pagination';
+import {
+  buildEntityQueryFromBrowserFilters,
+  entityQueryToBrowserFilters,
+  getFilterValue,
+  isBasicRepresentable
+} from '../../entities/components/entityBrowserState';
 import { formatDateTime } from '../../../utils/dateFormat';
 import { useAiStatus } from '../../../hooks/useAiConfig';
 import { useDismissibleMenu } from '../../../hooks/useDismissibleMenu';
@@ -142,7 +156,10 @@ const SEVERITY_OPTIONS: Array<{ value: '' | ConformanceSeverity; label: string }
   { value: 'warning', label: 'Warnings' }
 ];
 
-const defaultQuery = JSON.stringify({ root: { kind: 'and', children: [] } }, null, 2);
+const defaultEntityQuery: EntityQuery = { root: { kind: 'and', children: [] } };
+const defaultQuery = JSON.stringify(defaultEntityQuery, null, 2);
+
+type QueryEditMode = 'basic' | 'advanced';
 
 const AddCheckMenu = ({
   aiConfigured,
@@ -195,6 +212,10 @@ const CheckDialog = ({
   open,
   onClose,
   schemas,
+  lifecycleStates,
+  owners,
+  enums,
+  getFieldGroupAccess,
   aiConfigured,
   check,
   initialType,
@@ -205,6 +226,10 @@ const CheckDialog = ({
   open: boolean;
   onClose: () => void;
   schemas: EntitySchema[];
+  lifecycleStates: WorkspaceLifecycleState[];
+  owners: WorkspaceOwnerOption[];
+  enums: WorkspaceEnum[];
+  getFieldGroupAccess: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
   aiConfigured: boolean;
   check: ConformanceCheck | null;
   initialType: CheckType;
@@ -220,7 +245,10 @@ const CheckDialog = ({
   const [fieldId, setFieldId] = useState('');
   const [expression, setExpression] = useState('');
   const [message, setMessage] = useState('Entity does not conform');
+  const [queryMode, setQueryMode] = useState<QueryEditMode>('basic');
+  const [queryConditions, setQueryConditions] = useState<FilterCondition[]>([]);
   const [queryJson, setQueryJson] = useState(defaultQuery);
+  const [queryJsonError, setQueryJsonError] = useState<string | null>(null);
   const [prompt, setPrompt] = useState(
     'Does this entity conform to the stated architecture policy?'
   );
@@ -242,7 +270,10 @@ const CheckDialog = ({
     setFieldId('');
     setExpression('');
     setMessage('Entity does not conform');
+    setQueryMode('basic');
+    setQueryConditions([]);
     setQueryJson(defaultQuery);
+    setQueryJsonError(null);
     setPrompt('Does this entity conform to the stated architecture policy?');
     setFieldIds([]);
     setTools([]);
@@ -268,7 +299,10 @@ const CheckDialog = ({
     setFieldId('');
     setExpression('');
     setMessage('Entity does not conform');
+    setQueryMode('basic');
+    setQueryConditions([]);
     setQueryJson(defaultQuery);
+    setQueryJsonError(null);
     setPrompt('Does this entity conform to the stated architecture policy?');
     setFieldIds([]);
     setTools([]);
@@ -282,6 +316,8 @@ const CheckDialog = ({
       setMessage(definition.message);
     } else if (definition.type === 'query_policy') {
       setQueryJson(JSON.stringify(definition.query, null, 2));
+      setQueryMode(isBasicRepresentable(definition.query) ? 'basic' : 'advanced');
+      setQueryConditions(entityQueryToBrowserFilters(definition.query).conditions);
       setMessage(definition.message);
     } else {
       setSchemaId(definition.schemaId);
@@ -314,6 +350,18 @@ const CheckDialog = ({
         governance: { enabled: governanceEnabled, resolution: governanceResolution }
       };
     }
+    if (queryMode === 'basic') {
+      const query = buildEntityQueryFromBrowserFilters({
+        typeFilter: null,
+        conditions: queryConditions
+      });
+      return {
+        type,
+        query,
+        message: message.trim() || 'Entity does not conform',
+        governance: { enabled: governanceEnabled, resolution: governanceResolution }
+      };
+    }
     try {
       const query = JSON.parse(queryJson) as EntityQuery;
       return {
@@ -334,11 +382,60 @@ const CheckDialog = ({
     governanceResolution,
     message,
     prompt,
+    queryConditions,
     queryJson,
+    queryMode,
     schemaId,
     tools,
     type
   ]);
+
+  const switchToAdvanced = () => {
+    setQueryJson(
+      JSON.stringify(
+        buildEntityQueryFromBrowserFilters({ typeFilter: null, conditions: queryConditions }),
+        null,
+        2
+      )
+    );
+    setQueryJsonError(null);
+    setQueryMode('advanced');
+  };
+
+  const applyBasicConversion = (query: EntityQuery) => {
+    setQueryConditions(entityQueryToBrowserFilters(query).conditions);
+    setQueryMode('basic');
+  };
+
+  const switchToBasic = () => {
+    let parsed: EntityQuery;
+    try {
+      parsed = JSON.parse(queryJson) as EntityQuery;
+    } catch {
+      setQueryJsonError('Enter valid JSON before switching to the visual builder.');
+      return;
+    }
+    setQueryJsonError(null);
+    if (
+      isBasicRepresentable(parsed) ||
+      window.confirm(
+        'This query uses grouping, NOT, or relation traversal that the visual builder ' +
+          "can't represent. Switching will keep only the parts it supports and drop the rest."
+      )
+    ) {
+      applyBasicConversion(parsed);
+    }
+  };
+
+  const handleQueryJsonChange = (value: string) => {
+    setQueryJson(value);
+    try {
+      JSON.parse(value);
+      setQueryJsonError(null);
+    } catch {
+      setQueryJsonError('Invalid JSON.');
+    }
+  };
 
   const submit = () => {
     if (!definition || !name.trim()) return;
@@ -450,13 +547,48 @@ const CheckDialog = ({
             <FormElement label="Violation message">
               <TextInput value={message} onChange={value => setMessage(value ?? '')} />
             </FormElement>
-            <FormElement label="EntityQuery JSON">
-              <textarea
-                className={styles.textarea}
-                value={queryJson}
-                onChange={event => setQueryJson(event.target.value)}
-              />
-            </FormElement>
+            {queryMode === 'basic' ? (
+              <div className={styles.filter}>
+                <FilterBuilder
+                  conditions={queryConditions}
+                  onChange={setQueryConditions}
+                  schemas={schemas}
+                  lifecycleStates={lifecycleStates}
+                  owners={owners}
+                  enums={enums}
+                  selectedSchemaId={getFilterValue(queryConditions, '_schemaId')}
+                  getFieldGroupAccess={getFieldGroupAccess}
+                  headerActions={
+                    <Button variant="secondary" size="sm" onClick={switchToAdvanced}>
+                      Advanced
+                    </Button>
+                  }
+                />
+              </div>
+            ) : (
+              <div className={styles.form + ' ' + styles.filter}>
+                <div className={styles.queryHeader}>
+                  <span className={styles.dsectionLabel}>Entity query conditions</span>
+                  <Button variant="secondary" size="sm" onClick={switchToBasic}>
+                    Use visual builder
+                  </Button>
+                </div>
+                <textarea
+                  className={styles.textarea}
+                  value={queryJson}
+                  onChange={event => handleQueryJsonChange(event.target.value)}
+                />
+                {queryJsonError && (
+                  <div className={styles.advancedError}>
+                    <TbAlertTriangle size={12} /> {queryJsonError}
+                  </div>
+                )}
+                <div className={styles.muted}>
+                  Advanced mode exposes the underlying EntityQuery JSON for query shapes the visual
+                  builder doesn&apos;t support (grouping, NOT, relation traversal).
+                </div>
+              </div>
+            )}
           </>
         )}
 
@@ -713,7 +845,7 @@ export const ConformanceSubSection = ({
   schemas: EntitySchema[];
   onActionsChange: (actions: ReactNode | undefined) => void;
 }) => {
-  const { canManageWorkspaces } = useWorkspaceAuthorization(workspaceSlug);
+  const { canManageWorkspaces, getFieldGroupAccess } = useWorkspaceAuthorization(workspaceSlug);
   const { data: aiStatus } = useAiStatus(workspaceSlug);
   const {
     data: checks = [],
@@ -722,7 +854,7 @@ export const ConformanceSubSection = ({
   } = useConformanceChecks(workspaceSlug);
   const { data: summary } = useConformanceSummary(workspaceSlug);
   const { data: runs = [] } = useConformanceRuns(workspaceSlug);
-  const { teams } = useWorkspaceContext();
+  const { teams, lifecycleStates, enums } = useWorkspaceContext();
   const [tab, setTab] = useState<Tab>('checks');
   const [status, setStatus] = useState<'' | ConformanceCheckStatus>('active');
   const [checkId, setCheckId] = useState('');
@@ -1125,6 +1257,10 @@ export const ConformanceSubSection = ({
         check={editingCheck}
         initialType={initialType}
         schemas={schemas}
+        lifecycleStates={lifecycleStates}
+        owners={teams}
+        enums={enums}
+        getFieldGroupAccess={getFieldGroupAccess}
         aiConfigured={aiConfigured}
         onSubmit={handleSubmit}
         pending={createCheck.isPending || updateCheck.isPending}

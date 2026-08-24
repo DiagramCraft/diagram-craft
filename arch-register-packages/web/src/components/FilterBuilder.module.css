@@ -27,6 +27,12 @@
   letter-spacing: 0.5px;
 }
 
+.headerActions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
 .clearAll {
   font-size: 11px;
   color: var(--cmp-fg-disabled);
