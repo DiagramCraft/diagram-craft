@@ -41,6 +41,9 @@ export const ENTITY_PSEUDO_FIELD_IDS = new Set([
   '_completeness',
   '_updatedAt',
   '_tags',
+  '_conformanceStatus',
+  '_conformanceEvaluatedAt',
+  '_conformanceStale',
   '_assessment'
 ]);
 

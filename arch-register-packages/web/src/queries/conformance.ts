@@ -1,6 +1,7 @@
 import { queryOptions, type QueryClient } from '@tanstack/react-query';
 import type { ConformanceViolationListQuery } from '@arch-register/api-types/conformanceContract';
 import { orpcClient } from '../lib/orpcClient';
+import { entityKeys } from './entities';
 
 export const conformanceKeys = {
   all: ['conformance'] as const,
@@ -56,5 +57,10 @@ export const invalidateConformanceQueries = (queryClient: QueryClient, workspace
     queryClient.invalidateQueries({ queryKey: conformanceKeys.checks(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: conformanceKeys.runs(workspaceId) }),
     queryClient.invalidateQueries({ queryKey: conformanceKeys.summary(workspaceId) }),
-    queryClient.invalidateQueries({ queryKey: [...conformanceKeys.all, 'violations', workspaceId] })
+    queryClient.invalidateQueries({
+      queryKey: [...conformanceKeys.all, 'violations', workspaceId]
+    }),
+    queryClient.invalidateQueries({ queryKey: entityKeys.workspaceLists(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: entityKeys.counts(workspaceId) }),
+    queryClient.invalidateQueries({ queryKey: entityKeys.trees(workspaceId) })
   ]);

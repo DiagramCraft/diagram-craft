@@ -288,6 +288,11 @@
           when the browser is in project context. Scalar-array filters use any-element matching for positive operators,
           while emptiness checks the list and sorting/chart metrics use its first value.
 
+          Entity lists also expose an aggregate Conformance status field that can be displayed and filtered in
+          browser queries and saved views. The status distinguishes conformant, violating, acknowledged, exempt, and
+          not-evaluated entities; unresolved filtering matches active or acknowledged violations, and stale evaluation
+          coverage is shown separately from the substantive status.
+
         - @id:ar.entity-views.cards Users can inspect entities as cards for quick scanning of record summaries.
 
         - @id:ar.entity-views.tree Users can inspect hierarchical entity structure in a tree-oriented view.

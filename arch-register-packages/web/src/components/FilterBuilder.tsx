@@ -19,6 +19,7 @@ import {
   ASSESSMENT_PRESENCE_FIELD_ID
 } from '@arch-register/api-types/assessmentFilter';
 import type { FieldGroupAccess, FieldGroupAccessControl } from '@arch-register/permissions';
+import type { EntityConformanceStatusFilter } from '@arch-register/api-types/conformanceContract';
 
 export const TEXT_OPERATORS = [
   { value: 'equals', label: 'Equals' },
@@ -64,6 +65,15 @@ const RATING_OPERATORS = [
 const PRESENCE_OPERATORS = [
   { value: 'not_empty', label: 'Has response' },
   { value: 'empty', label: 'No response' }
+];
+
+const CONFORMANCE_STATUS_OPTIONS: { value: EntityConformanceStatusFilter; label: string }[] = [
+  { value: 'conformant', label: 'Conformant' },
+  { value: 'violating', label: 'Violating' },
+  { value: 'acknowledged', label: 'Acknowledged' },
+  { value: 'exempt', label: 'Exempt' },
+  { value: 'unresolved', label: 'Unresolved' },
+  { value: 'not_evaluated', label: 'Not evaluated' }
 ];
 
 export type FieldDef = {
@@ -168,6 +178,12 @@ export const FilterBuilder = ({
         name: 'Status',
         type: 'select',
         options: lifecycleStates.map(s => ({ value: s.id, label: s.label }))
+      },
+      {
+        id: '_conformanceStatus',
+        name: 'Conformance status',
+        type: 'select',
+        options: CONFORMANCE_STATUS_OPTIONS
       },
       { id: '_description', name: 'Description', type: 'text' },
       { id: '_namespace', name: 'Namespace', type: 'text' },

@@ -207,6 +207,22 @@ const withQueryProjections = (
 ): EntityRecord =>
   Object.keys(projections).length > 0 ? { ...entity, _projections: projections } : entity;
 
+const withQueryConformance = (
+  entity: EntityRecord,
+  row: Pick<
+    EntityQueryDbResult,
+    'conformance_status' | 'conformance_evaluated_at' | 'conformance_stale'
+  >
+): EntityRecord =>
+  row.conformance_status == null
+    ? entity
+    : {
+        ...entity,
+        _conformanceStatus: row.conformance_status,
+        _conformanceEvaluatedAt: row.conformance_evaluated_at?.toISOString() ?? null,
+        _conformanceStale: row.conformance_stale ?? false
+      };
+
 type EntityQueryCompilation = {
   rowQuery: EntityQueryCompilationPair['rowQuery'];
   countQuery: EntityQueryCompilationPair['countQuery'];
@@ -320,7 +336,7 @@ const mapEntityQueryRows = (
             projectEntityMap
           );
     return {
-      entity: withQueryProjections(apiEntity, row.projections),
+      entity: withQueryProjections(withQueryConformance(apiEntity, row), row.projections),
       completeness
     };
   });

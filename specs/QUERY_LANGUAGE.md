@@ -100,6 +100,7 @@ field_id        := identifier                                (* schema field id,
                  | "_id"                                      (* anchor to one specific entity instance, see §2 *)
                  | "_schemaId" | "_lifecycle" | "_owner" | "_name" | "_slug"
                  | "_description" | "_namespace" | "_completeness" | "_updatedAt" | "_tags"
+                 | "_conformanceStatus" | "_conformanceEvaluatedAt" | "_conformanceStale"
 
 comparator      := ":" | "=" | "!=" | "~" | "^=" | "$="
                  | ">" | ">=" | "<" | "<="
@@ -130,6 +131,10 @@ relation_ref    := identifier | quoted_string            (* typed relation schem
   `_description` using case-insensitive contains semantics. It may participate in the root boolean tree, but it is
   invalid inside a forward/backward relation scope (`[...]`); relation predicates remain field-specific. Empty or
   whitespace-only values are invalid, while an empty browser search omits the clause.
+- `_conformanceStatus` exposes the aggregate entity status (`conformant`, `violating`, `acknowledged`, `exempt`, or
+  `not_evaluated`); the `unresolved` filter value is an alias for `violating` or `acknowledged`. The separate
+  `_conformanceStale` field indicates incomplete, older-than-24-hours, or entity-outdated coverage, while
+  `_conformanceEvaluatedAt` records the latest applicable evaluation timestamp.
 - A typed relation field uses the same endpoint-transparent path syntax as other relation fields. For example,
   `data_flows_out[status = "active"]._name = "B"` traverses an outgoing `Data Flow` relation and evaluates `status`
   against that same relation instance before testing the target entity's `_name`. A bare `data_flows_out` is

@@ -15,6 +15,7 @@ import {
 } from '@arch-register/api-types/changeCaseContract';
 import { entityQuerySchema } from '@arch-register/api-types/entityQueryIR';
 import { relationRecordSchema } from '@arch-register/api-types/relationContract';
+import { entityConformanceStatusSchema } from '@arch-register/api-types/conformanceContract';
 
 // ── Query text ⇄ IR (specs/QUERY_LANGUAGE.md §4) ───────────────
 
@@ -111,6 +112,18 @@ const entitySummarySchema = entityCapabilitiesSchema.extend({
   _validation: entityValidationResultSchema
     .optional()
     .describe('Validation diagnostics produced by the most recent mutation response'),
+  _conformanceStatus: entityConformanceStatusSchema
+    .optional()
+    .describe('Aggregate conformance status from the most recent applicable evaluations'),
+  _conformanceEvaluatedAt: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Timestamp of the most recent successful applicable conformance evaluation'),
+  _conformanceStale: z
+    .boolean()
+    .optional()
+    .describe('Whether conformance coverage is incomplete, old, or predates the entity update'),
   _projections: z
     .record(z.string(), z.unknown())
     .optional()

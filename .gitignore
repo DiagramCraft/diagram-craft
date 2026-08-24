@@ -33,6 +33,7 @@ packages/main/public/stencils
 packages/main/public/Test*
 
 herdr-workspace.yaml
+herdr-quick-actions.yaml
 
 # Editor directories and files
 .tsimp

@@ -23,6 +23,7 @@ import {
 import { EntityLink } from '@arch-register/api-types/entityContract';
 import type { EntityRole } from '@arch-register/permissions';
 import type { ExternalMetadata } from '@arch-register/api-types/common';
+import type { EntityConformanceStatus } from '@arch-register/api-types/conformanceContract';
 import {
   databaseDate,
   databaseDateOnly,
@@ -252,6 +253,9 @@ export type EntityDbResult = Entity & {
 
 export type EntityQueryDbResult = EntityDbResult & {
   projections: Record<string, unknown>;
+  conformance_status?: EntityConformanceStatus;
+  conformance_evaluated_at?: Date | null;
+  conformance_stale?: boolean;
 };
 
 export type EntityDbCreate = Omit<
@@ -376,6 +380,16 @@ export const catalogMappers = {
   }),
   entityQuery: (row: DatabaseRow): EntityQueryDbResult => ({
     ...catalogMappers.enrichedEntity(row),
+    ...(row['conformance_status'] == null
+      ? {}
+      : {
+          conformance_status: String(row['conformance_status']) as EntityConformanceStatus,
+          conformance_evaluated_at:
+            row['conformance_evaluated_at'] == null
+              ? null
+              : databaseDate(row['conformance_evaluated_at']),
+          conformance_stale: Boolean(Number(row['conformance_stale'] ?? 0))
+        }),
     projections: parseDatabaseJson<Record<string, unknown>>(
       row['projections'],
       {},

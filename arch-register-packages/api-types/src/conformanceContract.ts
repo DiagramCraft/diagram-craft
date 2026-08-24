@@ -10,6 +10,17 @@ import {
 
 const conformanceSeveritySchema = z.enum(['error', 'warning']);
 const conformanceCheckStatusSchema = z.enum(['active', 'acknowledged', 'resolved', 'exempt']);
+export const entityConformanceStatusSchema = z.enum([
+  'conformant',
+  'violating',
+  'acknowledged',
+  'exempt',
+  'not_evaluated'
+]);
+export const entityConformanceStatusFilterSchema = z.enum([
+  ...entityConformanceStatusSchema.options,
+  'unresolved'
+]);
 
 const conformanceGovernanceSchema = z.object({
   enabled: z.boolean(),
@@ -288,6 +299,8 @@ export const conformanceContract = oc.tag('Conformance').router({
 
 export type ConformanceSeverity = z.infer<typeof conformanceSeveritySchema>;
 export type ConformanceCheckStatus = z.infer<typeof conformanceCheckStatusSchema>;
+export type EntityConformanceStatus = z.infer<typeof entityConformanceStatusSchema>;
+export type EntityConformanceStatusFilter = z.infer<typeof entityConformanceStatusFilterSchema>;
 export type ConformanceGovernanceConfig = z.infer<typeof conformanceGovernanceSchema>;
 export type ConformanceCheckDefinition = z.infer<typeof conformanceCheckDefinitionSchema>;
 export type ConformanceCheck = z.infer<typeof conformanceCheckSchema>;
