@@ -1,4 +1,13 @@
-import { TbAlertTriangle, TbCheck, TbClock, TbEye, TbInfoCircle, TbListSearch, TbLock, TbSparkles } from 'react-icons/tb';
+import {
+  TbAlertTriangle,
+  TbCheck,
+  TbClock,
+  TbEye,
+  TbInfoCircle,
+  TbListSearch,
+  TbLock,
+  TbSparkles
+} from 'react-icons/tb';
 import type {
   ConformanceCheckDefinition,
   ConformanceCheckStatus,
