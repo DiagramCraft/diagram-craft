@@ -494,6 +494,20 @@ describe('relation-rooted query pagination (#2700)', () => {
     expect(compiled.sql).toContain("c.definition->'query'->>'schemaId' = e.schema_id::text");
   });
 
+  it('scopes the conformance aggregate CTEs to the query workspace', () => {
+    const compiled = compileEntityQueryIR(
+      { root: { kind: 'and', children: [] } },
+      schemas,
+      'postgres',
+      'ws-1',
+      {},
+      null,
+      relationSchemas
+    );
+    expect(compiled.sql).toContain('v.workspace = $');
+    expect(compiled.params).toContain('ws-1');
+  });
+
   it('compiles a COUNT(*) query with the same WHERE clause and no ORDER BY/LIMIT/OFFSET', () => {
     const filtered: EntityQuery = {
       schemaId: dataFlow.id,

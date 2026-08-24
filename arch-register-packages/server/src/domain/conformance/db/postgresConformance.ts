@@ -173,20 +173,31 @@ export class PostgresConformanceDatabase
   }
 
   async recordEntityEvaluations(input: ConformanceEntityEvaluationUpsert[]) {
-    for (const evaluation of input) {
-      await this.sql`
-        INSERT INTO conformance_entity_evaluation
-          (workspace, check_id, entity_id, check_revision, run_id, evaluated_at)
-        VALUES
-          (${evaluation.workspace}, ${evaluation.check_id}, ${evaluation.entity_id},
-           ${evaluation.check_revision}, ${evaluation.run_id}, ${evaluation.evaluated_at})
-        ON CONFLICT (workspace, check_id, entity_id) DO UPDATE SET
-          check_revision = EXCLUDED.check_revision,
-          run_id = EXCLUDED.run_id,
-          evaluated_at = EXCLUDED.evaluated_at
-        WHERE EXCLUDED.evaluated_at >= conformance_entity_evaluation.evaluated_at
-      `;
-    }
+    if (input.length === 0) return;
+    const params: unknown[] = [];
+    const rows = input.map(evaluation => {
+      const base = params.length;
+      params.push(
+        evaluation.workspace,
+        evaluation.check_id,
+        evaluation.entity_id,
+        evaluation.check_revision,
+        evaluation.run_id,
+        evaluation.evaluated_at
+      );
+      return `($${base + 1}, $${base + 2}, $${base + 3}, $${base + 4}, $${base + 5}, $${base + 6})`;
+    });
+    await this.sql.unsafe(
+      `INSERT INTO conformance_entity_evaluation
+         (workspace, check_id, entity_id, check_revision, run_id, evaluated_at)
+       VALUES ${rows.join(', ')}
+       ON CONFLICT (workspace, check_id, entity_id) DO UPDATE SET
+         check_revision = EXCLUDED.check_revision,
+         run_id = EXCLUDED.run_id,
+         evaluated_at = EXCLUDED.evaluated_at
+       WHERE EXCLUDED.evaluated_at >= conformance_entity_evaluation.evaluated_at`,
+      params as Parameters<typeof this.sql.unsafe>[1]
+    );
   }
 
   async getViolation(workspace: string, id: string) {

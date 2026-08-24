@@ -204,24 +204,31 @@ export class SqliteConformanceDatabase extends SqliteDatabaseBase implements Con
   }
 
   async recordEntityEvaluations(input: ConformanceEntityEvaluationUpsert[]) {
-    for (const evaluation of input) {
+    // Batched into one multi-row INSERT per chunk instead of one statement per evaluation: with
+    // 6 bound params/row, ROWS_PER_STATEMENT keeps every chunk safely under SQLite's default
+    // host-parameter limit (SQLITE_MAX_VARIABLE_NUMBER, 999 on older builds).
+    const ROWS_PER_STATEMENT = 150;
+    for (let offset = 0; offset < input.length; offset += ROWS_PER_STATEMENT) {
+      const chunk = input.slice(offset, offset + ROWS_PER_STATEMENT);
+      const placeholders = chunk.map(() => '(?, ?, ?, ?, ?, ?)').join(', ');
+      const params = chunk.flatMap(evaluation => [
+        evaluation.workspace,
+        evaluation.check_id,
+        evaluation.entity_id,
+        evaluation.check_revision,
+        evaluation.run_id,
+        evaluation.evaluated_at.toISOString()
+      ]);
       this.run(
         `INSERT INTO conformance_entity_evaluation
            (workspace, check_id, entity_id, check_revision, run_id, evaluated_at)
-         VALUES (?, ?, ?, ?, ?, ?)
+         VALUES ${placeholders}
          ON CONFLICT (workspace, check_id, entity_id) DO UPDATE SET
            check_revision = excluded.check_revision,
            run_id = excluded.run_id,
            evaluated_at = excluded.evaluated_at
          WHERE excluded.evaluated_at >= conformance_entity_evaluation.evaluated_at`,
-        [
-          evaluation.workspace,
-          evaluation.check_id,
-          evaluation.entity_id,
-          evaluation.check_revision,
-          evaluation.run_id,
-          evaluation.evaluated_at.toISOString()
-        ]
+        params
       );
     }
   }

@@ -167,11 +167,8 @@ const queryPolicyPopulation = async (
   db: DatabaseAdapter,
   workspace: string,
   definition: Extract<ConformanceCheckDefinition, { type: 'query_policy' }>
-): Promise<EntityDbResult[]> => {
-  const entities = await listAllCatalogEntities(db, workspace);
-  if (!definition.query.schemaId) return entities;
-  return entities.filter(entity => entity.schema_id === definition.query.schemaId);
-};
+): Promise<EntityDbResult[]> =>
+  listAllCatalogEntities(db, workspace, { schemaId: definition.query.schemaId ?? null });
 
 const evaluateQueryPolicy = async (
   db: DatabaseAdapter,

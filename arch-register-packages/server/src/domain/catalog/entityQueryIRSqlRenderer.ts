@@ -188,6 +188,14 @@ const buildConformanceStatusCte = (state: CompileState): string => {
       : 'datetime(e.updated_at) > datetime(ea.last_evaluated_at)';
   const falseValue = state.dialect === 'postgres' ? 'FALSE' : '0';
   const trueValue = state.dialect === 'postgres' ? 'TRUE' : '1';
+  // Scope every aggregate CTE to the query's own workspace up front, rather than aggregating
+  // across every workspace in the deployment and relying on the outer join to discard the rest.
+  // A fresh addParam() call per occurrence — not one placeholder string reused — because SQLite's
+  // `?` placeholders are positional: each occurrence must consume its own entry in params, unlike
+  // Postgres's numbered `$N` placeholders where the same param can be referenced repeatedly.
+  const violationWorkspaceParam = addParam(state, state.workspace);
+  const evaluationWorkspaceParam = addParam(state, state.workspace);
+  const statusWorkspaceParam = addParam(state, state.workspace);
 
   return `
     conformance_violation_aggregate AS (
@@ -204,7 +212,8 @@ const buildConformanceStatusCte = (state: CompileState): string => {
         ON e.id = v.entity_id
        AND e.workspace = v.workspace
        AND e.kind = 'entity'
-      WHERE ${conformanceApplicableCheckClause('c', 'e', state.dialect)}
+      WHERE v.workspace = ${violationWorkspaceParam}
+        AND ${conformanceApplicableCheckClause('c', 'e', state.dialect)}
       GROUP BY v.workspace, v.entity_id
     ),
     conformance_evaluation_aggregate AS (
@@ -223,7 +232,8 @@ const buildConformanceStatusCte = (state: CompileState): string => {
        AND ee.entity_id = e.id
        AND ee.check_id = c.id
        AND ee.check_revision = c.revision
-      WHERE e.kind = 'entity'
+      WHERE e.workspace = ${evaluationWorkspaceParam}
+        AND e.kind = 'entity'
         AND e.deleted_at IS NULL
       GROUP BY e.workspace, e.id
     ),
@@ -251,7 +261,8 @@ const buildConformanceStatusCte = (state: CompileState): string => {
       LEFT JOIN conformance_evaluation_aggregate ea
         ON ea.workspace = e.workspace
        AND ea.entity_id = e.id
-      WHERE e.kind = 'entity'
+      WHERE e.workspace = ${statusWorkspaceParam}
+        AND e.kind = 'entity'
         AND e.deleted_at IS NULL
     )`;
 };
@@ -463,6 +474,33 @@ const jsonArrayElementPosition = (
     return `(SELECT array_item.ordinal FROM jsonb_array_elements_text(${ownerAlias}.data->'${fieldId}') WITH ORDINALITY AS array_item(value, ordinal) WHERE array_item.value = ${targetId}::text LIMIT 1)`;
   }
   return `(SELECT array_item.key FROM json_each(${ownerAlias}.data, '$.${fieldId}') AS array_item WHERE array_item.value = ${targetId} LIMIT 1)`;
+};
+
+// Forward-direction counterpart of relationJoinClause + jsonArrayElementPosition, fused into a
+// single array scan. relationJoinClause's EXISTS(...) and jsonArrayElementPosition's own
+// correlated subquery each independently unnest the same owner array, so a forward hop (the owner
+// alias is already known before the target is joined) re-scans the array twice per row. Emitting
+// one lateral unnest that carries both the matched value and its ordinal lets the target join and
+// the order column share a single pass over the array.
+const jsonArrayLateralElement = (
+  ownerAlias: string,
+  fieldId: string,
+  elementAlias: string,
+  dialect: EntityQueryDialect
+): { joinClause: string; valueColumn: string; ordinalColumn: string } => {
+  assertValidFieldId(fieldId);
+  if (dialect === 'postgres') {
+    return {
+      joinClause: `JOIN LATERAL jsonb_array_elements_text(${ownerAlias}.data->'${fieldId}') WITH ORDINALITY AS ${elementAlias}(value, ordinal) ON TRUE`,
+      valueColumn: `${elementAlias}.value::uuid`,
+      ordinalColumn: `${elementAlias}.ordinal`
+    };
+  }
+  return {
+    joinClause: `JOIN json_each(${ownerAlias}.data, '$.${fieldId}') AS ${elementAlias}`,
+    valueColumn: `${elementAlias}.value`,
+    ordinalColumn: `${elementAlias}.key`
+  };
 };
 
 const resolveColumn = (
@@ -1342,7 +1380,13 @@ const buildProjectionBindings = (
       }
       if (step.kind === 'relationForward') {
         const targetAlias = `pb_${binding.name}_${stepIndex + 1}`;
-        const relation = relationJoinClause(currentAlias, step.fieldId, targetAlias, state.dialect);
+        const elementAlias = `${targetAlias}_arr`;
+        const element = jsonArrayLateralElement(
+          currentAlias,
+          step.fieldId,
+          elementAlias,
+          state.dialect
+        );
         const fieldScope = (() => {
           const scope = relationSchemaScopeClause(
             currentAlias,
@@ -1361,13 +1405,14 @@ const buildProjectionBindings = (
           state
         );
         from +=
-          `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${relation}${fieldScope}` +
+          `\n      ${element.joinClause}` +
+          `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${element.valueColumn}${fieldScope}` +
           `${targetSchemaClause ? ` AND ${targetSchemaClause}` : ''}${filter}`;
         selectParts.push(
           `${targetAlias}.id AS hop_${stepIndex + 1}_id`,
           `${targetAlias}.name AS hop_${stepIndex + 1}_name`,
           `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`,
-          `${jsonArrayElementPosition(currentAlias, step.fieldId, `${targetAlias}.id`, state.dialect)} AS hop_${stepIndex + 1}_order`
+          `${element.ordinalColumn} AS hop_${stepIndex + 1}_order`
         );
         currentAlias = targetAlias;
         return;
@@ -1401,22 +1446,6 @@ const buildProjectionBindings = (
         return;
       }
       const targetAlias = `pb_${binding.name}_${stepIndex + 1}`;
-      const relation =
-        step.kind === 'forward'
-          ? relationJoinClause(currentAlias, step.fieldId, targetAlias, state.dialect)
-          : relationJoinClause(targetAlias, step.fieldId, currentAlias, state.dialect);
-      const ownerSchema =
-        step.kind === 'backward'
-          ? ` AND ${targetAlias}.schema_id = ${addParam(state, step.ownerSchemaId)}`
-          : '';
-      // Same rationale as compilePathSteps' forwardScopeClause: a forward step's fieldId is read
-      // off `currentAlias`, so that's the alias that needs scoping when the field id collides
-      // across schemas (#2592).
-      const forwardScope = (() => {
-        if (step.kind !== 'forward') return '';
-        const scope = schemaScopeClause(currentAlias, step.fieldId, schemas, state);
-        return scope ? ` AND ${scope}` : '';
-      })();
       const filter = step.filter
         ? ` AND ${compileNode(step.filter, targetAlias, schemas, relationSchemas, state, false)}`
         : '';
@@ -1425,19 +1454,47 @@ const buildProjectionBindings = (
         pathSchemaInfo.entitySchemaIdsByStep[stepIndex] ?? [],
         state
       );
+      if (step.kind === 'forward') {
+        // The owner (currentAlias) is already known, so the array carrying the target id can be
+        // unnested once — matching the target and recovering its position in the same pass,
+        // instead of relationJoinClause's EXISTS scan plus a second jsonArrayElementPosition scan.
+        const elementAlias = `${targetAlias}_arr`;
+        const element = jsonArrayLateralElement(
+          currentAlias,
+          step.fieldId,
+          elementAlias,
+          state.dialect
+        );
+        // Same rationale as compilePathSteps' forwardScopeClause: a forward step's fieldId is read
+        // off `currentAlias`, so that's the alias that needs scoping when the field id collides
+        // across schemas (#2592).
+        const forwardScope = (() => {
+          const scope = schemaScopeClause(currentAlias, step.fieldId, schemas, state);
+          return scope ? ` AND ${scope}` : '';
+        })();
+        from +=
+          `\n      ${element.joinClause}` +
+          `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${targetAlias}.id = ${element.valueColumn}${forwardScope}` +
+          `${targetSchemaClause ? ` AND ${targetSchemaClause}` : ''}${filter}`;
+        selectParts.push(
+          `${targetAlias}.id AS hop_${stepIndex + 1}_id`,
+          `${targetAlias}.name AS hop_${stepIndex + 1}_name`,
+          `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`,
+          `${element.ordinalColumn} AS hop_${stepIndex + 1}_order`
+        );
+        currentAlias = targetAlias;
+        return;
+      }
+      const relation = relationJoinClause(targetAlias, step.fieldId, currentAlias, state.dialect);
+      const ownerSchema = ` AND ${targetAlias}.schema_id = ${addParam(state, step.ownerSchemaId)}`;
       from +=
-        `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${relation}${ownerSchema}${forwardScope}` +
+        `\n      JOIN ${SCOPE_CTE} ${targetAlias} ON ${relation}${ownerSchema}` +
         `${targetSchemaClause ? ` AND ${targetSchemaClause}` : ''}${filter}`;
       selectParts.push(
         `${targetAlias}.id AS hop_${stepIndex + 1}_id`,
         `${targetAlias}.name AS hop_${stepIndex + 1}_name`,
         `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`,
-        `${jsonArrayElementPosition(
-          step.kind === 'forward' ? currentAlias : targetAlias,
-          step.fieldId,
-          step.kind === 'forward' ? `${targetAlias}.id` : `${currentAlias}.id`,
-          state.dialect
-        )} AS hop_${stepIndex + 1}_order`
+        `${jsonArrayElementPosition(targetAlias, step.fieldId, `${currentAlias}.id`, state.dialect)} AS hop_${stepIndex + 1}_order`
       );
       currentAlias = targetAlias;
     });
