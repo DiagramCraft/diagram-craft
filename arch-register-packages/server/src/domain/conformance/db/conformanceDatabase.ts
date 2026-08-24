@@ -102,6 +102,15 @@ export type ConformanceViolationUpsert = {
   seen_at: Date;
 };
 
+export type ConformanceEntityEvaluationUpsert = {
+  workspace: string;
+  check_id: string;
+  entity_id: string;
+  check_revision: number;
+  run_id: string | null;
+  evaluated_at: Date;
+};
+
 export type ConformanceViolationEventDbCreate = {
   id: string;
   workspace: string;
@@ -158,6 +167,7 @@ export type ConformanceDatabase = {
     options: ConformanceViolationListOptions
   ): Promise<{ items: ConformanceViolationDbResult[]; total: number }>;
   countViolations(workspace: string): Promise<ConformanceViolationCounts>;
+  recordEntityEvaluations(input: ConformanceEntityEvaluationUpsert[]): Promise<void>;
   upsertViolation(input: ConformanceViolationUpsert): Promise<ConformanceViolationDbResult>;
   setViolationStatus(
     workspace: string,

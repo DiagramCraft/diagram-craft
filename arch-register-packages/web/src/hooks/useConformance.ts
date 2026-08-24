@@ -1,3 +1,4 @@
+import { useEffect, useRef } from 'react';
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import type {
   ConformanceExemptionRequest,
@@ -17,8 +18,22 @@ import {
 export const useConformanceChecks = (workspaceSlug: string, enabled = true) =>
   useQuery(conformanceChecksQuery(workspaceSlug, enabled));
 
-export const useConformanceRuns = (workspaceSlug: string, enabled = true) =>
-  useQuery(conformanceRunsQuery(workspaceSlug, enabled));
+export const useConformanceRuns = (workspaceSlug: string, enabled = true) => {
+  const queryClient = useQueryClient();
+  const previousStatuses = useRef(new Map<string, string>());
+  const query = useQuery(conformanceRunsQuery(workspaceSlug, enabled));
+
+  useEffect(() => {
+    if (!query.data) return;
+    const completedRun = query.data.some(
+      run => previousStatuses.current.get(run.id) === 'running' && run.status !== 'running'
+    );
+    previousStatuses.current = new Map(query.data.map(run => [run.id, run.status]));
+    if (completedRun) void invalidateConformanceQueries(queryClient, workspaceSlug);
+  }, [query.data, queryClient, workspaceSlug]);
+
+  return query;
+};
 
 export const useConformanceSummary = (workspaceSlug: string, enabled = true) =>
   useQuery(conformanceSummaryQuery(workspaceSlug, enabled));

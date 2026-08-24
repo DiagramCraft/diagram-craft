@@ -33,6 +33,7 @@ type Dataset = {
 type EvaluationTotals = {
   checkedCount: number;
   violationCount: number;
+  evaluatedEntityIds: string[];
 };
 
 const loadDataset = async (db: DatabaseAdapter, workspace: string): Promise<Dataset> => {
@@ -117,6 +118,7 @@ const evaluateScheduledValidation = async (
     active: true
   } as const;
   const seenEntityIds: string[] = [];
+  const evaluatedEntityIds: string[] = [];
   let violationCount = 0;
   for (const entity of dataset.entities.filter(candidate => candidate.schema_id === schema.id)) {
     const projection = buildEntityProjection(
@@ -128,6 +130,7 @@ const evaluateScheduledValidation = async (
       { depth: 1 }
     );
     if (!projection) continue;
+    evaluatedEntityIds.push(entity.id);
     const result = evaluateValidationRules([rule], projection, {
       id: entity.id,
       schemaId: schema.id,
@@ -154,9 +157,20 @@ const evaluateScheduledValidation = async (
   }
   await resolveUnseen(db, check, seenEntityIds, runId, seenAt);
   return {
-    checkedCount: dataset.entities.filter(candidate => candidate.schema_id === schema.id).length,
-    violationCount
+    checkedCount: evaluatedEntityIds.length,
+    violationCount,
+    evaluatedEntityIds
   };
+};
+
+const queryPolicyPopulation = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  definition: Extract<ConformanceCheckDefinition, { type: 'query_policy' }>
+): Promise<EntityDbResult[]> => {
+  const entities = await listAllCatalogEntities(db, workspace);
+  if (!definition.query.schemaId) return entities;
+  return entities.filter(entity => entity.schema_id === definition.query.schemaId);
 };
 
 const evaluateQueryPolicy = async (
@@ -172,6 +186,7 @@ const evaluateQueryPolicy = async (
     limit: null,
     offset: 0
   });
+  const population = await queryPolicyPopulation(db, check.workspace, definition);
   for (const entity of result.items) {
     const violation = await db.conformance.upsertViolation({
       id: randomUUID(),
@@ -195,7 +210,11 @@ const evaluateQueryPolicy = async (
     runId,
     seenAt
   );
-  return { checkedCount: result.total, violationCount: result.items.length };
+  return {
+    checkedCount: population.length,
+    violationCount: result.items.length,
+    evaluatedEntityIds: population.map(entity => entity.id)
+  };
 };
 
 const buildAiEntityInput = (
@@ -245,9 +264,11 @@ const evaluateAiPrompt = async (
   const adapter = createAiTextAdapter(aiConfig);
   const entities = dataset.entities.filter(candidate => candidate.schema_id === schema.id);
   const seenEntityIds: string[] = [];
+  const evaluatedEntityIds: string[] = [];
   let violationCount = 0;
 
   for (const entity of entities) {
+    evaluatedEntityIds.push(entity.id);
     const selectedFields = buildAiEntityInput(entity, schema, authCtx, definition.fieldIds);
     const prompt = [
       'You are a conformance evaluator.',
@@ -285,7 +306,7 @@ const evaluateAiPrompt = async (
     violationCount += 1;
   }
   await resolveUnseen(db, check, seenEntityIds, runId, seenAt);
-  return { checkedCount: entities.length, violationCount };
+  return { checkedCount: evaluatedEntityIds.length, violationCount, evaluatedEntityIds };
 };
 
 export const evaluateConformanceCheck = async (
@@ -339,6 +360,17 @@ export const executeConformanceRun = async (
     );
     for (const check of enabledChecks) {
       const totals = await evaluateConformanceCheck(db, check, run.id, startedAt);
+      const evaluatedAt = new Date();
+      await db.conformance.recordEntityEvaluations(
+        totals.evaluatedEntityIds.map(entityId => ({
+          workspace,
+          check_id: check.id,
+          entity_id: entityId,
+          check_revision: check.revision,
+          run_id: run.id,
+          evaluated_at: evaluatedAt
+        }))
+      );
       checkedCount += totals.checkedCount;
       violationCount += totals.violationCount;
     }

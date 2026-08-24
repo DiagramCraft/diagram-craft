@@ -1,4 +1,5 @@
 import type { EntityRecord } from '@arch-register/api-types/entityContract';
+import type { EntityConformanceStatus } from '@arch-register/api-types/conformanceContract';
 import type { ProjectionField } from '@arch-register/api-types/entityQueryIR';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { BrowserView } from '@arch-register/api-types/viewContract';
@@ -38,6 +39,7 @@ const STANDARD_FIELDS: EntityDisplayField[] = [
   { id: '_description', label: 'Description', group: 'General' },
   { id: '_owner', label: 'Owner', group: 'General' },
   { id: '_lifecycle', label: 'Status', group: 'General' },
+  { id: '_conformanceStatus', label: 'Conformance status', group: 'General' },
   { id: '_slug', label: 'Slug', group: 'General' },
   { id: '_namespace', label: 'Namespace', group: 'General' },
   { id: '_tags', label: 'Tags', group: 'General' },
@@ -67,6 +69,14 @@ const SCALAR_TYPES = new Set([
   'select',
   'derived'
 ]);
+
+const CONFORMANCE_STATUS_LABELS: Record<EntityConformanceStatus, string> = {
+  conformant: 'Conformant',
+  violating: 'Violating',
+  acknowledged: 'Acknowledged',
+  exempt: 'Exempt',
+  not_evaluated: 'Not evaluated'
+};
 
 export const buildEntityDisplayFields = (
   schemas: EntitySchema[],
@@ -203,6 +213,12 @@ export const formatEntityDisplayValue = (
   if (field.id === '_description') return entity._description ?? null;
   if (field.id === '_owner') return entity._owner?.name ?? null;
   if (field.id === '_lifecycle') return entity._lifecycle?.name ?? null;
+  if (field.id === '_conformanceStatus') {
+    const status = entity._conformanceStatus;
+    if (status == null) return null;
+    const label = CONFORMANCE_STATUS_LABELS[status];
+    return entity._conformanceStale ? `${label} (stale)` : label;
+  }
   if (field.id === '_slug') return entity._slug ?? null;
   if (field.id === '_namespace') return entity._namespace ?? null;
   if (field.id === '_tags') return entity._tags.length ? entity._tags.join(', ') : null;

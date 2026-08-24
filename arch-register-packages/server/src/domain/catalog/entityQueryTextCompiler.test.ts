@@ -958,6 +958,19 @@ describe('printEntityQueryText', () => {
     expect(parseOk(printEntityQueryText(query, schemas))).toEqual(query);
   });
 
+  it('accepts conformance status pseudo-fields in saved-view query text', () => {
+    const query = parseOk('schema:Component _conformanceStatus = "unresolved"');
+    expect(query.root).toMatchObject({ kind: 'and' });
+    expect(query.root.kind === 'and' ? query.root.children : []).toContainEqual({
+      kind: 'predicate',
+      path: [],
+      fieldId: '_conformanceStatus',
+      op: 'equals',
+      value: 'unresolved'
+    });
+    expect(parseOk(printEntityQueryText(query, schemas))).toEqual(query);
+  });
+
   it('always prints an explicit owner schema for backward steps', () => {
     const query = parseOk(
       'schema:Domain <-domain.<-Component.system.technology_releases.technology._slug = "go"'

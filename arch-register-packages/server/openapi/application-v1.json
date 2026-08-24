@@ -29690,6 +29690,32 @@
                             ],
                             "description": "Validation diagnostics produced by the most recent mutation response"
                           },
+                          "_conformanceStatus": {
+                            "enum": [
+                              "conformant",
+                              "violating",
+                              "acknowledged",
+                              "exempt",
+                              "not_evaluated"
+                            ],
+                            "type": "string",
+                            "description": "Aggregate conformance status from the most recent applicable evaluations"
+                          },
+                          "_conformanceEvaluatedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                          },
+                          "_conformanceStale": {
+                            "type": "boolean",
+                            "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                          },
                           "_projections": {
                             "type": "object",
                             "propertyNames": {
@@ -30585,6 +30611,32 @@
                         "warnings"
                       ],
                       "description": "Validation diagnostics produced by the most recent mutation response"
+                    },
+                    "_conformanceStatus": {
+                      "enum": [
+                        "conformant",
+                        "violating",
+                        "acknowledged",
+                        "exempt",
+                        "not_evaluated"
+                      ],
+                      "type": "string",
+                      "description": "Aggregate conformance status from the most recent applicable evaluations"
+                    },
+                    "_conformanceEvaluatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                    },
+                    "_conformanceStale": {
+                      "type": "boolean",
+                      "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                     },
                     "_projections": {
                       "type": "object",
@@ -33325,6 +33377,32 @@
                             ],
                             "description": "Validation diagnostics produced by the most recent mutation response"
                           },
+                          "_conformanceStatus": {
+                            "enum": [
+                              "conformant",
+                              "violating",
+                              "acknowledged",
+                              "exempt",
+                              "not_evaluated"
+                            ],
+                            "type": "string",
+                            "description": "Aggregate conformance status from the most recent applicable evaluations"
+                          },
+                          "_conformanceEvaluatedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                          },
+                          "_conformanceStale": {
+                            "type": "boolean",
+                            "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                          },
                           "_projections": {
                             "type": "object",
                             "propertyNames": {
@@ -33856,6 +33934,32 @@
                               "warnings"
                             ],
                             "description": "Validation diagnostics produced by the most recent mutation response"
+                          },
+                          "_conformanceStatus": {
+                            "enum": [
+                              "conformant",
+                              "violating",
+                              "acknowledged",
+                              "exempt",
+                              "not_evaluated"
+                            ],
+                            "type": "string",
+                            "description": "Aggregate conformance status from the most recent applicable evaluations"
+                          },
+                          "_conformanceEvaluatedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                          },
+                          "_conformanceStale": {
+                            "type": "boolean",
+                            "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                           },
                           "_projections": {
                             "type": "object",
@@ -34391,6 +34495,32 @@
                                   "warnings"
                                 ],
                                 "description": "Validation diagnostics produced by the most recent mutation response"
+                              },
+                              "_conformanceStatus": {
+                                "enum": [
+                                  "conformant",
+                                  "violating",
+                                  "acknowledged",
+                                  "exempt",
+                                  "not_evaluated"
+                                ],
+                                "type": "string",
+                                "description": "Aggregate conformance status from the most recent applicable evaluations"
+                              },
+                              "_conformanceEvaluatedAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                              },
+                              "_conformanceStale": {
+                                "type": "boolean",
+                                "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                               },
                               "_projections": {
                                 "type": "object",
@@ -38721,6 +38851,32 @@
                             ],
                             "description": "Validation diagnostics produced by the most recent mutation response"
                           },
+                          "_conformanceStatus": {
+                            "enum": [
+                              "conformant",
+                              "violating",
+                              "acknowledged",
+                              "exempt",
+                              "not_evaluated"
+                            ],
+                            "type": "string",
+                            "description": "Aggregate conformance status from the most recent applicable evaluations"
+                          },
+                          "_conformanceEvaluatedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                          },
+                          "_conformanceStale": {
+                            "type": "boolean",
+                            "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                          },
                           "_projections": {
                             "type": "object",
                             "propertyNames": {
@@ -39319,6 +39475,32 @@
                         "warnings"
                       ],
                       "description": "Validation diagnostics produced by the most recent mutation response"
+                    },
+                    "_conformanceStatus": {
+                      "enum": [
+                        "conformant",
+                        "violating",
+                        "acknowledged",
+                        "exempt",
+                        "not_evaluated"
+                      ],
+                      "type": "string",
+                      "description": "Aggregate conformance status from the most recent applicable evaluations"
+                    },
+                    "_conformanceEvaluatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                    },
+                    "_conformanceStale": {
+                      "type": "boolean",
+                      "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                     },
                     "_projections": {
                       "type": "object",
@@ -40209,6 +40391,32 @@
                         "warnings"
                       ],
                       "description": "Validation diagnostics produced by the most recent mutation response"
+                    },
+                    "_conformanceStatus": {
+                      "enum": [
+                        "conformant",
+                        "violating",
+                        "acknowledged",
+                        "exempt",
+                        "not_evaluated"
+                      ],
+                      "type": "string",
+                      "description": "Aggregate conformance status from the most recent applicable evaluations"
+                    },
+                    "_conformanceEvaluatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                    },
+                    "_conformanceStale": {
+                      "type": "boolean",
+                      "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                     },
                     "_projections": {
                       "type": "object",
@@ -41918,6 +42126,32 @@
                         ],
                         "description": "Validation diagnostics produced by the most recent mutation response"
                       },
+                      "_conformanceStatus": {
+                        "enum": [
+                          "conformant",
+                          "violating",
+                          "acknowledged",
+                          "exempt",
+                          "not_evaluated"
+                        ],
+                        "type": "string",
+                        "description": "Aggregate conformance status from the most recent applicable evaluations"
+                      },
+                      "_conformanceEvaluatedAt": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                      },
+                      "_conformanceStale": {
+                        "type": "boolean",
+                        "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                      },
                       "_projections": {
                         "type": "object",
                         "propertyNames": {
@@ -42484,6 +42718,32 @@
                         "warnings"
                       ],
                       "description": "Validation diagnostics produced by the most recent mutation response"
+                    },
+                    "_conformanceStatus": {
+                      "enum": [
+                        "conformant",
+                        "violating",
+                        "acknowledged",
+                        "exempt",
+                        "not_evaluated"
+                      ],
+                      "type": "string",
+                      "description": "Aggregate conformance status from the most recent applicable evaluations"
+                    },
+                    "_conformanceEvaluatedAt": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                    },
+                    "_conformanceStale": {
+                      "type": "boolean",
+                      "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                     },
                     "_projections": {
                       "type": "object",
@@ -68155,6 +68415,32 @@
                                 ],
                                 "description": "Validation diagnostics produced by the most recent mutation response"
                               },
+                              "_conformanceStatus": {
+                                "enum": [
+                                  "conformant",
+                                  "violating",
+                                  "acknowledged",
+                                  "exempt",
+                                  "not_evaluated"
+                                ],
+                                "type": "string",
+                                "description": "Aggregate conformance status from the most recent applicable evaluations"
+                              },
+                              "_conformanceEvaluatedAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                              },
+                              "_conformanceStale": {
+                                "type": "boolean",
+                                "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                              },
                               "_projections": {
                                 "type": "object",
                                 "propertyNames": {
@@ -68821,6 +69107,32 @@
                             "warnings"
                           ],
                           "description": "Validation diagnostics produced by the most recent mutation response"
+                        },
+                        "_conformanceStatus": {
+                          "enum": [
+                            "conformant",
+                            "violating",
+                            "acknowledged",
+                            "exempt",
+                            "not_evaluated"
+                          ],
+                          "type": "string",
+                          "description": "Aggregate conformance status from the most recent applicable evaluations"
+                        },
+                        "_conformanceEvaluatedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                        },
+                        "_conformanceStale": {
+                          "type": "boolean",
+                          "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                         },
                         "_projections": {
                           "type": "object",
@@ -69586,6 +69898,32 @@
                                   "warnings"
                                 ],
                                 "description": "Validation diagnostics produced by the most recent mutation response"
+                              },
+                              "_conformanceStatus": {
+                                "enum": [
+                                  "conformant",
+                                  "violating",
+                                  "acknowledged",
+                                  "exempt",
+                                  "not_evaluated"
+                                ],
+                                "type": "string",
+                                "description": "Aggregate conformance status from the most recent applicable evaluations"
+                              },
+                              "_conformanceEvaluatedAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                              },
+                              "_conformanceStale": {
+                                "type": "boolean",
+                                "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                               },
                               "_projections": {
                                 "type": "object",
@@ -148165,6 +148503,32 @@
                           ],
                           "description": "Validation diagnostics produced by the most recent mutation response"
                         },
+                        "_conformanceStatus": {
+                          "enum": [
+                            "conformant",
+                            "violating",
+                            "acknowledged",
+                            "exempt",
+                            "not_evaluated"
+                          ],
+                          "type": "string",
+                          "description": "Aggregate conformance status from the most recent applicable evaluations"
+                        },
+                        "_conformanceEvaluatedAt": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                        },
+                        "_conformanceStale": {
+                          "type": "boolean",
+                          "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                        },
                         "_projections": {
                           "type": "object",
                           "propertyNames": {
@@ -158881,6 +159245,32 @@
                             ],
                             "description": "Validation diagnostics produced by the most recent mutation response"
                           },
+                          "_conformanceStatus": {
+                            "enum": [
+                              "conformant",
+                              "violating",
+                              "acknowledged",
+                              "exempt",
+                              "not_evaluated"
+                            ],
+                            "type": "string",
+                            "description": "Aggregate conformance status from the most recent applicable evaluations"
+                          },
+                          "_conformanceEvaluatedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                          },
+                          "_conformanceStale": {
+                            "type": "boolean",
+                            "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                          },
                           "_projections": {
                             "type": "object",
                             "propertyNames": {
@@ -162245,6 +162635,32 @@
                             ],
                             "description": "Validation diagnostics produced by the most recent mutation response"
                           },
+                          "_conformanceStatus": {
+                            "enum": [
+                              "conformant",
+                              "violating",
+                              "acknowledged",
+                              "exempt",
+                              "not_evaluated"
+                            ],
+                            "type": "string",
+                            "description": "Aggregate conformance status from the most recent applicable evaluations"
+                          },
+                          "_conformanceEvaluatedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                          },
+                          "_conformanceStale": {
+                            "type": "boolean",
+                            "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
+                          },
                           "_projections": {
                             "type": "object",
                             "propertyNames": {
@@ -162775,6 +163191,32 @@
                               "warnings"
                             ],
                             "description": "Validation diagnostics produced by the most recent mutation response"
+                          },
+                          "_conformanceStatus": {
+                            "enum": [
+                              "conformant",
+                              "violating",
+                              "acknowledged",
+                              "exempt",
+                              "not_evaluated"
+                            ],
+                            "type": "string",
+                            "description": "Aggregate conformance status from the most recent applicable evaluations"
+                          },
+                          "_conformanceEvaluatedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                          },
+                          "_conformanceStale": {
+                            "type": "boolean",
+                            "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                           },
                           "_projections": {
                             "type": "object",
@@ -163309,6 +163751,32 @@
                                   "warnings"
                                 ],
                                 "description": "Validation diagnostics produced by the most recent mutation response"
+                              },
+                              "_conformanceStatus": {
+                                "enum": [
+                                  "conformant",
+                                  "violating",
+                                  "acknowledged",
+                                  "exempt",
+                                  "not_evaluated"
+                                ],
+                                "type": "string",
+                                "description": "Aggregate conformance status from the most recent applicable evaluations"
+                              },
+                              "_conformanceEvaluatedAt": {
+                                "anyOf": [
+                                  {
+                                    "type": "string"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ],
+                                "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                              },
+                              "_conformanceStale": {
+                                "type": "boolean",
+                                "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                               },
                               "_projections": {
                                 "type": "object",
@@ -169626,6 +170094,32 @@
                               "warnings"
                             ],
                             "description": "Validation diagnostics produced by the most recent mutation response"
+                          },
+                          "_conformanceStatus": {
+                            "enum": [
+                              "conformant",
+                              "violating",
+                              "acknowledged",
+                              "exempt",
+                              "not_evaluated"
+                            ],
+                            "type": "string",
+                            "description": "Aggregate conformance status from the most recent applicable evaluations"
+                          },
+                          "_conformanceEvaluatedAt": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Timestamp of the most recent successful applicable conformance evaluation"
+                          },
+                          "_conformanceStale": {
+                            "type": "boolean",
+                            "description": "Whether conformance coverage is incomplete, old, or predates the entity update"
                           },
                           "_projections": {
                             "type": "object",

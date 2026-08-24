@@ -6,6 +6,7 @@ import type {
   ConformanceCheckDbCreate,
   ConformanceCheckDbUpdate,
   ConformanceDatabase,
+  ConformanceEntityEvaluationUpsert,
   ConformanceExemptionDbResult,
   ConformanceRunDbCreate,
   ConformanceRunDbUpdate,
@@ -169,6 +170,23 @@ export class PostgresConformanceDatabase
       WHERE workspace = ${workspace} AND id = ${id}
     `;
     return await this.getRun(workspace, id);
+  }
+
+  async recordEntityEvaluations(input: ConformanceEntityEvaluationUpsert[]) {
+    for (const evaluation of input) {
+      await this.sql`
+        INSERT INTO conformance_entity_evaluation
+          (workspace, check_id, entity_id, check_revision, run_id, evaluated_at)
+        VALUES
+          (${evaluation.workspace}, ${evaluation.check_id}, ${evaluation.entity_id},
+           ${evaluation.check_revision}, ${evaluation.run_id}, ${evaluation.evaluated_at})
+        ON CONFLICT (workspace, check_id, entity_id) DO UPDATE SET
+          check_revision = EXCLUDED.check_revision,
+          run_id = EXCLUDED.run_id,
+          evaluated_at = EXCLUDED.evaluated_at
+        WHERE EXCLUDED.evaluated_at >= conformance_entity_evaluation.evaluated_at
+      `;
+    }
   }
 
   async getViolation(workspace: string, id: string) {

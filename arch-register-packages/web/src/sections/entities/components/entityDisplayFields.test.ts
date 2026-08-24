@@ -91,6 +91,28 @@ describe('entity display fields', () => {
     );
   });
 
+  it('exposes conformance status and marks stale coverage separately', () => {
+    const fields = buildEntityDisplayFields([schema], false);
+    const statusField = fields.find(field => field.id === '_conformanceStatus');
+
+    expect(statusField).toMatchObject({ label: 'Conformance status', group: 'General' });
+    expect(
+      formatEntityDisplayValue(
+        { _conformanceStatus: 'violating', _conformanceStale: true } as unknown as EntityRecord,
+        statusField!
+      )
+    ).toBe('Violating (stale)');
+    expect(
+      formatEntityDisplayValue(
+        {
+          _conformanceStatus: 'not_evaluated',
+          _conformanceStale: false
+        } as unknown as EntityRecord,
+        statusField!
+      )
+    ).toBe('Not evaluated');
+  });
+
   it('exposes and formats structured query projections', () => {
     const fields = buildEntityDisplayFields([schema], false, null, [
       {

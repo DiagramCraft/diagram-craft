@@ -5,6 +5,7 @@ import type {
   ConformanceCheckDbCreate,
   ConformanceCheckDbUpdate,
   ConformanceDatabase,
+  ConformanceEntityEvaluationUpsert,
   ConformanceExemptionDbResult,
   ConformanceRunDbCreate,
   ConformanceRunDbUpdate,
@@ -200,6 +201,29 @@ export class SqliteConformanceDatabase extends SqliteDatabaseBase implements Con
       ]
     );
     return await this.getRun(workspace, id);
+  }
+
+  async recordEntityEvaluations(input: ConformanceEntityEvaluationUpsert[]) {
+    for (const evaluation of input) {
+      this.run(
+        `INSERT INTO conformance_entity_evaluation
+           (workspace, check_id, entity_id, check_revision, run_id, evaluated_at)
+         VALUES (?, ?, ?, ?, ?, ?)
+         ON CONFLICT (workspace, check_id, entity_id) DO UPDATE SET
+           check_revision = excluded.check_revision,
+           run_id = excluded.run_id,
+           evaluated_at = excluded.evaluated_at
+         WHERE excluded.evaluated_at >= conformance_entity_evaluation.evaluated_at`,
+        [
+          evaluation.workspace,
+          evaluation.check_id,
+          evaluation.entity_id,
+          evaluation.check_revision,
+          evaluation.run_id,
+          evaluation.evaluated_at.toISOString()
+        ]
+      );
+    }
   }
 
   private mapViolation(row: DatabaseRow): ConformanceViolationDbResult {

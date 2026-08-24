@@ -467,6 +467,47 @@ describe('structured entity query view persistence', () => {
     });
   });
 
+  it('persists a conformance status filter through browser and saved-view state', () => {
+    const conditions = [
+      { fieldId: '_conformanceStatus', op: 'equals' as const, value: 'unresolved' }
+    ];
+    const query = buildEntityQueryFromBrowserFilters({
+      typeFilter: null,
+      conditions
+    });
+
+    expect(query).toEqual({
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [],
+            fieldId: '_conformanceStatus',
+            op: 'equals',
+            value: 'unresolved'
+          }
+        ]
+      }
+    });
+    expect(entityQueryToBrowserFilters(query)).toEqual({ conditions, q: '' });
+
+    const payload = buildSavedViewPayload({
+      scope: 'workspace',
+      name: 'Unresolved entities',
+      description: '',
+      view: 'table',
+      typeFilter: null,
+      statusFilter: null,
+      ownerFilter: null,
+      q: '',
+      sort: 'name',
+      conditions,
+      viewConfigs: {}
+    });
+    expect(payload.filters).toEqual(query);
+  });
+
   it('groups multiple facet values with OR and different facets with AND', () => {
     expect(
       buildEntityQueryFromBrowserFilters({

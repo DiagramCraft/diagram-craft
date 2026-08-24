@@ -96,6 +96,12 @@ const SCOPE_CTE = 'scoped_entity';
 const RELATION_SCOPE_CTE = 'scoped_relation';
 const ROOT_ALIAS = 'e0';
 
+const ENTITY_CONFORMANCE_FIELD_IDS = new Set([
+  '_conformanceStatus',
+  '_conformanceEvaluatedAt',
+  '_conformanceStale'
+]);
+
 type CompileState = EntityQueryPermissionPlan & {
   dialect: EntityQueryDialect;
   dialectAdapter: EntityQueryDialectAdapter;
@@ -125,6 +131,159 @@ const addParam = (state: CompileState, value: unknown): string => {
 
 const nextAlias = (state: CompileState): string => `e${state.nextAliasIndex++}`;
 const nextRelationAlias = (state: CompileState): string => `r${state.nextRelationAliasIndex++}`;
+
+const conformanceJsonText = (column: string, path: string, dialect: EntityQueryDialect): string =>
+  dialect === 'postgres' ? `${column}->>'${path}'` : `json_extract(${column}, '$.${path}')`;
+
+const conformanceApplicableCheckClause = (
+  checkAlias: string,
+  entityAlias: string,
+  dialect: EntityQueryDialect
+): string => {
+  const type = conformanceJsonText(`${checkAlias}.definition`, 'type', dialect);
+  const schemaId = conformanceJsonText(`${checkAlias}.definition`, 'schemaId', dialect);
+  const querySchemaId =
+    dialect === 'postgres'
+      ? `${checkAlias}.definition->'query'->>'schemaId'`
+      : `json_extract(${checkAlias}.definition, '$.query.schemaId')`;
+  const entitySchemaId =
+    dialect === 'postgres' ? `${entityAlias}.schema_id::text` : `${entityAlias}.schema_id`;
+  return `(
+    ((${type} = 'scheduled_validation' OR ${type} = 'ai_prompt') AND ${schemaId} = ${entitySchemaId})
+    OR (${type} = 'query_policy' AND (${querySchemaId} IS NULL OR ${querySchemaId} = ${entitySchemaId}))
+  )`;
+};
+
+const conformanceEffectiveStatus = (
+  violationAlias: string,
+  dialect: EntityQueryDialect
+): string => {
+  const now = dialect === 'postgres' ? 'NOW()' : "datetime('now')";
+  const expiresAt = dialect === 'postgres' ? 'ce.expires_at' : 'datetime(ce.expires_at)';
+  return `CASE
+    WHEN ${violationAlias}.status != 'resolved'
+      AND EXISTS (
+        SELECT 1
+        FROM conformance_exemption ce
+        WHERE ce.violation_id = ${violationAlias}.id
+          AND ce.revoked_at IS NULL
+          AND (ce.expires_at IS NULL OR ${expiresAt} > ${now})
+      )
+    THEN 'exempt'
+    ELSE ${violationAlias}.status
+  END`;
+};
+
+const buildConformanceStatusCte = (state: CompileState): string => {
+  const enabled = state.dialect === 'postgres' ? 'TRUE' : '1';
+  const applicable = conformanceApplicableCheckClause('c', 'e', state.dialect);
+  const effectiveStatus = conformanceEffectiveStatus('v', state.dialect);
+  const staleThreshold =
+    state.dialect === 'postgres'
+      ? "ea.oldest_evaluated_at < CURRENT_TIMESTAMP - INTERVAL '24 hours'"
+      : "datetime(ea.oldest_evaluated_at) < datetime('now', '-24 hours')";
+  const updatedAfterEvaluation =
+    state.dialect === 'postgres'
+      ? 'e.updated_at > ea.last_evaluated_at'
+      : 'datetime(e.updated_at) > datetime(ea.last_evaluated_at)';
+  const falseValue = state.dialect === 'postgres' ? 'FALSE' : '0';
+  const trueValue = state.dialect === 'postgres' ? 'TRUE' : '1';
+
+  return `
+    conformance_violation_aggregate AS (
+      SELECT v.workspace, v.entity_id,
+        SUM(CASE WHEN ${effectiveStatus} = 'active' THEN 1 ELSE 0 END) AS active_count,
+        SUM(CASE WHEN ${effectiveStatus} = 'acknowledged' THEN 1 ELSE 0 END) AS acknowledged_count,
+        SUM(CASE WHEN ${effectiveStatus} = 'exempt' THEN 1 ELSE 0 END) AS exempt_count
+      FROM conformance_violation v
+      JOIN conformance_check c
+        ON c.id = v.check_id
+       AND c.workspace = v.workspace
+       AND c.enabled = ${enabled}
+      JOIN catalog_record e
+        ON e.id = v.entity_id
+       AND e.workspace = v.workspace
+       AND e.kind = 'entity'
+      WHERE ${conformanceApplicableCheckClause('c', 'e', state.dialect)}
+      GROUP BY v.workspace, v.entity_id
+    ),
+    conformance_evaluation_aggregate AS (
+      SELECT e.workspace, e.id AS entity_id,
+        COUNT(DISTINCT c.id) AS applicable_check_count,
+        COUNT(DISTINCT CASE WHEN ee.entity_id IS NOT NULL THEN c.id END) AS covered_check_count,
+        MAX(ee.evaluated_at) AS last_evaluated_at,
+        MIN(ee.evaluated_at) AS oldest_evaluated_at
+      FROM catalog_record e
+      LEFT JOIN conformance_check c
+        ON c.workspace = e.workspace
+       AND c.enabled = ${enabled}
+       AND ${applicable}
+      LEFT JOIN conformance_entity_evaluation ee
+        ON ee.workspace = e.workspace
+       AND ee.entity_id = e.id
+       AND ee.check_id = c.id
+       AND ee.check_revision = c.revision
+      WHERE e.kind = 'entity'
+        AND e.deleted_at IS NULL
+      GROUP BY e.workspace, e.id
+    ),
+    ${'conformance_entity_status'} AS (
+      SELECT e.workspace, e.id AS entity_id,
+        CASE
+          WHEN COALESCE(va.active_count, 0) > 0 THEN 'violating'
+          WHEN COALESCE(va.acknowledged_count, 0) > 0 THEN 'acknowledged'
+          WHEN COALESCE(va.exempt_count, 0) > 0 THEN 'exempt'
+          WHEN COALESCE(ea.covered_check_count, 0) = 0 THEN 'not_evaluated'
+          ELSE 'conformant'
+        END AS conformance_status,
+        ea.last_evaluated_at AS conformance_evaluated_at,
+        CASE
+          WHEN COALESCE(ea.applicable_check_count, 0) = 0 THEN ${falseValue}
+          WHEN COALESCE(ea.covered_check_count, 0) < ea.applicable_check_count THEN ${trueValue}
+          WHEN ${staleThreshold} THEN ${trueValue}
+          WHEN ea.last_evaluated_at IS NOT NULL AND ${updatedAfterEvaluation} THEN ${trueValue}
+          ELSE ${falseValue}
+        END AS conformance_stale
+      FROM catalog_record e
+      LEFT JOIN conformance_violation_aggregate va
+        ON va.workspace = e.workspace
+       AND va.entity_id = e.id
+      LEFT JOIN conformance_evaluation_aggregate ea
+        ON ea.workspace = e.workspace
+       AND ea.entity_id = e.id
+      WHERE e.kind = 'entity'
+        AND e.deleted_at IS NULL
+    )`;
+};
+
+const buildConformanceStatusConditionClause = (
+  fieldId: string,
+  column: string,
+  op: FilterCondition['op'],
+  value: unknown,
+  addParam: (value: unknown) => string
+): string | null => {
+  if (fieldId !== '_conformanceStatus') return null;
+
+  if (op === 'equals' && value === 'unresolved') {
+    return `(${column} = ${addParam('violating')} OR ${column} = ${addParam('acknowledged')})`;
+  }
+
+  if (op === 'not_equals' && value === 'unresolved') {
+    return `(${column} != ${addParam('violating')} AND ${column} != ${addParam('acknowledged')} OR ${column} IS NULL)`;
+  }
+
+  if (op === 'in' && Array.isArray(value) && value.includes('unresolved')) {
+    const expandedValues = value.flatMap(item =>
+      item === 'unresolved' ? ['violating', 'acknowledged'] : [item]
+    );
+    return expandedValues.length === 0
+      ? '1=0'
+      : `${column} IN (${expandedValues.map(item => addParam(item)).join(', ')})`;
+  }
+
+  return null;
+};
 
 const relationEndpointSchemaClause = (
   alias: string,
@@ -289,6 +448,23 @@ const relationJoinClause = (
   return `EXISTS (SELECT 1 FROM json_each(${ownerAlias}.data, '$.${fieldId}') WHERE value = ${targetAlias}.id)`;
 };
 
+// Projection bindings need to retain the order of ids in a reference/containment array. The
+// membership predicate above deliberately uses EXISTS, which is enough for filtering but loses
+// that order when the binding CTE is materialized. Keep the position as a separate binding column
+// so multi-valued projections remain faithful to the stored array on both database drivers.
+const jsonArrayElementPosition = (
+  ownerAlias: string,
+  fieldId: string,
+  targetId: string,
+  dialect: EntityQueryDialect
+): string => {
+  assertValidFieldId(fieldId);
+  if (dialect === 'postgres') {
+    return `(SELECT array_item.ordinal FROM jsonb_array_elements_text(${ownerAlias}.data->'${fieldId}') WITH ORDINALITY AS array_item(value, ordinal) WHERE array_item.value = ${targetId}::text LIMIT 1)`;
+  }
+  return `(SELECT array_item.key FROM json_each(${ownerAlias}.data, '$.${fieldId}') AS array_item WHERE array_item.value = ${targetId} LIMIT 1)`;
+};
+
 const resolveColumn = (
   alias: string,
   fieldId: string,
@@ -297,6 +473,15 @@ const resolveColumn = (
   currencyAmount = false
 ): { col: string; kind: 'scalar' | 'array' | 'currency-array' } | null => {
   if (fieldId === '_id') return { col: `${alias}.id`, kind: 'scalar' };
+  if (fieldId === '_conformanceStatus') {
+    return { col: `${alias}.conformance_status`, kind: 'scalar' };
+  }
+  if (fieldId === '_conformanceEvaluatedAt') {
+    return { col: `${alias}.conformance_evaluated_at`, kind: 'scalar' };
+  }
+  if (fieldId === '_conformanceStale') {
+    return { col: `${alias}.conformance_stale`, kind: 'scalar' };
+  }
   if (Object.hasOwn(ENTITY_BUILTIN_COLUMNS, fieldId)) {
     return {
       col: `${alias}.${ENTITY_BUILTIN_COLUMNS[fieldId]!.slice('e.'.length)}`,
@@ -380,6 +565,7 @@ const projectionEntityFieldSchemaClause = (
   // target-schema join still prevents a missing target schema from contributing a value.
   if (
     fieldId === '_id' ||
+    ENTITY_CONFORMANCE_FIELD_IDS.has(fieldId) ||
     fieldId === ASSESSMENT_PRESENCE_FIELD_ID ||
     fieldId.startsWith(ASSESSMENT_FIELD_PREFIX) ||
     Object.hasOwn(ENTITY_BUILTIN_COLUMNS, fieldId) ||
@@ -529,13 +715,17 @@ const compilePredicateTerminal =
     // The visibility expression is rendered before the predicate in the CASE wrapper, so its
     // parameters must be allocated first as well.
     const scopeClause = schemaScopeClause(alias, fieldId, schemas, state);
-    const clause = buildConditionClause(
-      resolved.col,
-      { fieldId, op, value },
-      v => addParam(state, v),
-      dialect,
-      resolved.kind
-    );
+    const clause =
+      buildConformanceStatusConditionClause(fieldId, resolved.col, op, value, v =>
+        addParam(state, v)
+      ) ??
+      buildConditionClause(
+        resolved.col,
+        { fieldId, op, value },
+        v => addParam(state, v),
+        dialect,
+        resolved.kind
+      );
     if (!clause) {
       throw new UnsupportedEntityQueryIRError(
         `Operator '${op}' has no SQL translation for field '${fieldId}'`
@@ -1088,7 +1278,8 @@ const buildProjectionBindings = (
         selectParts.push(
           `${targetAlias}.id AS hop_${stepIndex + 1}_id`,
           `${targetAlias}.name AS hop_${stepIndex + 1}_name`,
-          `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`
+          `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`,
+          `${targetAlias}.id AS hop_${stepIndex + 1}_order`
         );
         currentAlias = targetAlias;
         return;
@@ -1143,7 +1334,8 @@ const buildProjectionBindings = (
           `${relationAlias}.data AS relation_${stepIndex + 1}_data`,
           `${targetAlias}.id AS hop_${stepIndex + 1}_id`,
           `${targetAlias}.name AS hop_${stepIndex + 1}_name`,
-          `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`
+          `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`,
+          `${relationAlias}.created_at AS hop_${stepIndex + 1}_order`
         );
         currentAlias = targetAlias;
         return;
@@ -1174,7 +1366,8 @@ const buildProjectionBindings = (
         selectParts.push(
           `${targetAlias}.id AS hop_${stepIndex + 1}_id`,
           `${targetAlias}.name AS hop_${stepIndex + 1}_name`,
-          `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`
+          `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`,
+          `${jsonArrayElementPosition(currentAlias, step.fieldId, `${targetAlias}.id`, state.dialect)} AS hop_${stepIndex + 1}_order`
         );
         currentAlias = targetAlias;
         return;
@@ -1201,7 +1394,8 @@ const buildProjectionBindings = (
         from += `\n      JOIN ${RELATION_SCOPE_CTE} ${relationAlias} ON ${relationAlias}.schema_id = ${relationSchemaParam} AND ${relation}${filter}`;
         selectParts.push(
           `${relationAlias}.id AS relation_${stepIndex + 1}_id`,
-          `${relationAlias}.data AS relation_${stepIndex + 1}_data`
+          `${relationAlias}.data AS relation_${stepIndex + 1}_data`,
+          `${jsonArrayElementPosition(relationAlias, step.fieldId, `${currentAlias}.id`, state.dialect)} AS hop_${stepIndex + 1}_order`
         );
         currentAlias = relationAlias;
         return;
@@ -1237,7 +1431,13 @@ const buildProjectionBindings = (
       selectParts.push(
         `${targetAlias}.id AS hop_${stepIndex + 1}_id`,
         `${targetAlias}.name AS hop_${stepIndex + 1}_name`,
-        `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`
+        `${targetAlias}.schema_id AS hop_${stepIndex + 1}_schema_id`,
+        `${jsonArrayElementPosition(
+          step.kind === 'forward' ? currentAlias : targetAlias,
+          step.fieldId,
+          step.kind === 'forward' ? `${targetAlias}.id` : `${currentAlias}.id`,
+          state.dialect
+        )} AS hop_${stepIndex + 1}_order`
       );
       currentAlias = targetAlias;
     });
@@ -1266,6 +1466,21 @@ const projectionRawValue = (
   fieldId: string,
   dialect: EntityQueryDialect
 ): string => {
+  if (fieldId === '_conformanceStatus') {
+    return dialect === 'postgres'
+      ? `to_jsonb(${alias}.conformance_status)`
+      : `${alias}.conformance_status`;
+  }
+  if (fieldId === '_conformanceEvaluatedAt') {
+    return dialect === 'postgres'
+      ? `to_jsonb(${alias}.conformance_evaluated_at)`
+      : `${alias}.conformance_evaluated_at`;
+  }
+  if (fieldId === '_conformanceStale') {
+    return dialect === 'postgres'
+      ? `to_jsonb(${alias}.conformance_stale)`
+      : `${alias}.conformance_stale`;
+  }
   if (fieldId === ASSESSMENT_PRESENCE_FIELD_ID) {
     return dialect === 'postgres'
       ? `to_jsonb(${alias}.assessment_values IS NOT NULL)`
@@ -1293,6 +1508,24 @@ const projectionRawValue = (
     ? `${alias}.data->'${fieldId}'`
     : `json_extract(${alias}.data, '$.${fieldId}')`;
 };
+
+const orderedJsonAggregate = (
+  value: string,
+  source: string,
+  orderBy: string,
+  state: CompileState,
+  valueIsJson = false
+): string => {
+  const orderedRows = `(SELECT ${value} AS ordered_value ${source} ORDER BY ${orderBy})`;
+  if (state.dialect === 'postgres') {
+    return `COALESCE((SELECT jsonb_agg(ordered_value) FROM ${orderedRows} AS ordered_values), '[]'::jsonb)`;
+  }
+  const sqliteValue = valueIsJson ? 'json(ordered_value)' : 'json(json_quote(ordered_value))';
+  return `COALESCE((SELECT json_group_array(${sqliteValue}) FROM ${orderedRows} AS ordered_values), json('[]'))`;
+};
+
+const projectionBindingOrderBy = (binding: ProjectionBinding, bindingAlias: string): string =>
+  binding.path.map((_, index) => `${bindingAlias}.hop_${index + 1}_order`).join(', ');
 
 const projectionValue = (
   projection: ProjectionField,
@@ -1354,12 +1587,15 @@ const projectionValue = (
       state.dialect === 'postgres'
         ? `jsonb_build_array(${chainArrayEntries})`
         : `json_array(${chainArrayEntries})`;
-    const aggregate =
-      state.dialect === 'postgres'
-        ? `COALESCE(jsonb_agg(${chainArray}), '[]'::jsonb)`
-        : `COALESCE(json_group_array(${chainArray}), json('[]'))`;
+    const aggregate = orderedJsonAggregate(
+      chainArray,
+      `FROM ${binding.name} ${chainBindingAlias} WHERE ${chainBindingAlias}.root_id = ${ROOT_ALIAS}.id`,
+      projectionBindingOrderBy(binding, chainBindingAlias),
+      state,
+      true
+    );
     return {
-      value: `(SELECT ${aggregate} FROM ${binding.name} ${chainBindingAlias} WHERE ${chainBindingAlias}.root_id = ${ROOT_ALIAS}.id)`,
+      value: `(SELECT ${aggregate})`,
       isArray: true
     };
   }
@@ -1408,7 +1644,12 @@ const projectionValue = (
   }
 
   return {
-    value: `(SELECT ${state.dialectAdapter.jsonAggregate(raw)} ${source})`,
+    value: `(SELECT ${orderedJsonAggregate(
+      raw,
+      source,
+      projectionBindingOrderBy(binding, bindingAlias),
+      state
+    )})`,
     isArray: true
   };
 };
@@ -1718,10 +1959,11 @@ const buildScopeCte = (state: CompileState): string => {
       ? 'NULL::jsonb AS assessment_values'
       : 'NULL AS assessment_values';
   const source = state.asOf ? buildTemporalSource(state) : '';
+  const conformanceStatusCte = buildConformanceStatusCte(state);
 
   if (state.asOf) {
     const assessmentParam = hasAssessment ? addParam(state, state.assessmentId) : null;
-    return `${source},\n    ${SCOPE_CTE} AS (\n      SELECT s.*, ${assessmentColumn}\n      FROM temporal_entity_source s\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = s.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = s.workspace\n    )`;
+    return `${source},\n    ${conformanceStatusCte},\n    ${SCOPE_CTE} AS (\n      SELECT s.*, ${assessmentColumn},\n             cs.conformance_status,\n             cs.conformance_evaluated_at,\n             cs.conformance_stale\n      FROM temporal_entity_source s\n      LEFT JOIN conformance_entity_status cs ON cs.entity_id = s.id\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = s.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = s.workspace\n    )`;
   }
 
   const assessmentParam = hasAssessment ? addParam(state, state.assessmentId) : null;
@@ -1747,7 +1989,7 @@ const buildScopeCte = (state: CompileState): string => {
         ? '1=0'
         : `e.id IN (${state.collectionEntityIds.map(id => addParam(state, id)).join(', ')})`;
   const scopedWhere = `${scopeClause} AND ${visibleClause || '1=1'} AND ${collectionClause || '1=1'} AND ${permissionScope.predicate}`;
-  return `${permissionScope.cte ? `${permissionScope.cte},\n    ` : ''}${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn}\n      FROM catalog_record e\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.kind = 'entity'\n        AND e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopedWhere}\n    )`;
+  return `${permissionScope.cte ? `${permissionScope.cte},\n    ` : ''}${conformanceStatusCte},\n    ${SCOPE_CTE} AS (\n      SELECT e.*, ${assessmentColumn},\n             cs.conformance_status,\n             cs.conformance_evaluated_at,\n             cs.conformance_stale\n      FROM catalog_record e\n      LEFT JOIN conformance_entity_status cs ON cs.entity_id = e.id\n      LEFT JOIN assessment_response ar\n        ON ar.entity_id = e.id\n       AND ar.assessment_id = ${assessmentParam ?? 'NULL'}\n       AND ar.workspace = e.workspace\n      WHERE e.kind = 'entity'\n        AND e.workspace = ${workspaceParam}\n        AND e.deleted_at IS NULL\n        AND ${scopedWhere}\n    )`;
 };
 
 // JSON/JSONB shape matching relationToBaseState (relationHelpers.ts) — this is exactly what

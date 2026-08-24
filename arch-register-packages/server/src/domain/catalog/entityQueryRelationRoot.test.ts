@@ -480,6 +480,20 @@ describe('relation-rooted query pagination (#2700)', () => {
     expect(compiled.sql).toMatch(/LIMIT \$\d+\s*OFFSET \$\d+\s*$/);
   });
 
+  it('casts conformance schema ids before comparing JSON text on postgres', () => {
+    const compiled = compileEntityQueryIR(
+      { root: { kind: 'and', children: [] } },
+      schemas,
+      'postgres',
+      'ws-1',
+      {},
+      null,
+      relationSchemas
+    );
+    expect(compiled.sql).toContain("c.definition->>'schemaId' = e.schema_id::text");
+    expect(compiled.sql).toContain("c.definition->'query'->>'schemaId' = e.schema_id::text");
+  });
+
   it('compiles a COUNT(*) query with the same WHERE clause and no ORDER BY/LIMIT/OFFSET', () => {
     const filtered: EntityQuery = {
       schemaId: dataFlow.id,
