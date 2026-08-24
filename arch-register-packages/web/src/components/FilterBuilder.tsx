@@ -134,6 +134,10 @@ type Props = {
   // Defaults to unrestricted (matches the hook's own no-context fallback) so this stays a pure,
   // presentational component usable without an auth context (e.g. in Storybook).
   getFieldGroupAccess?: (accessControl: FieldGroupAccessControl | undefined) => FieldGroupAccess;
+  // Extra controls rendered in the header next to "Clear all" — e.g. a Basic/Advanced mode
+  // toggle for callers that embed this inline rather than in a Popover, so they don't need a
+  // second header row of their own (which just doubles the header padding).
+  headerActions?: React.ReactNode;
 };
 
 export const FilterBuilder = ({
@@ -146,7 +150,8 @@ export const FilterBuilder = ({
   enums,
   selectedSchemaId,
   joinedAssessment,
-  getFieldGroupAccess = () => 'edit'
+  getFieldGroupAccess = () => 'edit',
+  headerActions
 }: Props) => {
   const fields = React.useMemo(() => {
     const builtIn: FieldDef[] = [
@@ -273,11 +278,14 @@ export const FilterBuilder = ({
     <div className={styles.container} onKeyDown={handleKeyDown}>
       <div className={styles.header}>
         <span className={styles.headerTitle}>Filters</span>
-        {conditions.length > 0 && (
-          <button type="button" className={styles.clearAll} onClick={clearAll}>
-            Clear all
-          </button>
-        )}
+        <div className={styles.headerActions}>
+          {conditions.length > 0 && (
+            <button type="button" className={styles.clearAll} onClick={clearAll}>
+              Clear all
+            </button>
+          )}
+          {headerActions}
+        </div>
       </div>
 
       <div className={styles.rows}>
