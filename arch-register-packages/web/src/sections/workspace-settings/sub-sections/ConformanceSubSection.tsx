@@ -510,7 +510,7 @@ const CheckDialog = ({
                 />
               </div>
             ) : (
-              <div className={styles.form + ' ' + styles.filter}>
+              <div className={`${styles.form} ${styles.filter}`}>
                 <div className={styles.queryHeader}>
                   <span className={styles.dsectionLabel}>Entity query conditions</span>
                   <Button variant="secondary" size="sm" onClick={switchToBasic}>
