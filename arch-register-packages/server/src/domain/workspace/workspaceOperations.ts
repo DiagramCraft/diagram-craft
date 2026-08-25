@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import type { DatabaseAdapter } from '../../db/database';
 import type { StorageAdapter } from '../../storage/storage';
 import type { AuthenticatedEvent } from '../../middleware/auth';
@@ -12,8 +12,7 @@ import { toApiWorkspace } from './workspaceHelpers';
 import { instantiateTemplateComposition } from '../catalog/schemaTemplates';
 import type { WorkspaceDbResult } from './db/workspaceDatabase';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
-import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
-import type { GovernanceWorkflowConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
+import { parseGovernanceWorkflowConfig } from '../governance/governanceWorkflowConfig';
 import { formatPublicId, validatePublicIdPrefix } from '../../utils/publicIds';
 import { ensureNotificationDeliverySchedule } from '../notification/emailDelivery';
 import { ensureGovernanceDeadlineScanSchedule } from '../governance/governanceDeadlineScanJob';
@@ -35,6 +34,15 @@ import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 import { createLogger } from '../../utils/logger';
 import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
 import { listWorkspaceCapabilityConfigurations } from './workspaceCapabilityOperations';
+import {
+  generateSchemaKeyPrefix,
+  remapDocumentLinks,
+  remapDocumentMetadataValues,
+  remapGovernanceConfigTeams,
+  resolveMappedId,
+  resolveMappedIdOrNull,
+  resolveStorageScope
+} from './workspaceRemapping';
 
 const shortCodeFrom = (name: string): string =>
   name
@@ -44,46 +52,6 @@ const shortCodeFrom = (name: string): string =>
     .slice(0, 5);
 
 const logger = createLogger('workspace-operations');
-
-const generateCopiedSchemaKeyPrefix = (seed: string) => {
-  const bytes = createHash('sha1').update(seed).digest();
-  let prefix = '';
-  for (const byte of bytes) {
-    prefix += String.fromCharCode(65 + (byte % 26));
-    if (prefix.length === 5) break;
-  }
-  return prefix;
-};
-
-const remapGovernanceConfigTeams = (
-  config: Record<string, unknown>,
-  teamMap: Map<string, string>
-): GovernanceWorkflowConfig => {
-  const remapTargets = (value: unknown) => {
-    if (value == null || typeof value !== 'object' || Array.isArray(value)) return value;
-    const targets = value as Record<string, unknown>;
-    return {
-      ...targets,
-      ...(Array.isArray(targets['fallbackTeamIds']) && {
-        fallbackTeamIds: (targets['fallbackTeamIds'] as unknown[]).map(id =>
-          typeof id === 'string' ? (teamMap.get(id) ?? id) : id
-        )
-      })
-    };
-  };
-
-  return {
-    ...config,
-    ...(config['approvals'] !== undefined && { approvals: remapTargets(config['approvals']) }),
-    ...(config['escalation'] !== undefined && {
-      escalation: remapTargets(config['escalation'])
-    }),
-    extensions:
-      config['extensions'] != null && typeof config['extensions'] === 'object'
-        ? (config['extensions'] as Record<string, unknown>)
-        : {}
-  } as GovernanceWorkflowConfig;
-};
 
 const remappedCloneGovernanceSubkind = (
   caseKind: string,
@@ -237,26 +205,6 @@ const buildDefaultWorkspaceTeams = (workspace: string, createdAt: Date) => [
 const normalizeInclude = (include: string[] | undefined): Set<string> =>
   new Set<string>(include ?? ['schemas', 'settings']);
 
-const remapDocumentMetadataValues = (
-  fields: DocumentField[],
-  sourceValues: DocumentMetadata,
-  resolveEntity: (id: string) => string | undefined,
-  resolveDocument: (id: string) => string | undefined
-) => {
-  const values = { ...sourceValues };
-  for (const field of fields) {
-    if (field.type !== 'entity_link' && field.type !== 'document_link') continue;
-    const raw = values[field.id];
-    if (raw === undefined) continue;
-    const sourceIds = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : [];
-    const mapped = sourceIds
-      .map(id => (field.type === 'entity_link' ? resolveEntity(id) : resolveDocument(id)))
-      .filter((id): id is string => !!id);
-    values[field.id] = Array.isArray(raw) ? mapped : (mapped[0] ?? null);
-  }
-  return values;
-};
-
 const copyTypedWorkspaceDocuments = async (
   db: DatabaseAdapter,
   storage: StorageAdapter | undefined,
@@ -318,12 +266,13 @@ const copyTypedWorkspaceDocuments = async (
   for (const sourceNode of sourceNodes) {
     const nodeId = nodeMap.get(sourceNode.id);
     if (!nodeId) continue;
-    const sourceStorageScope = sourceNode.project_id ?? sourceNode.entity_id ?? sourceWorkspace;
-    const targetStorageScope = sourceNode.project_id
-      ? (projectMap.get(sourceNode.project_id) ?? targetWorkspace)
-      : sourceNode.entity_id
-        ? (entityMap.get(sourceNode.entity_id) ?? targetWorkspace)
-        : targetWorkspace;
+    const projectId = resolveMappedIdOrNull(projectMap, sourceNode.project_id);
+    const entityId = resolveMappedIdOrNull(entityMap, sourceNode.entity_id);
+    const sourceStorageScope = resolveStorageScope(sourceWorkspace, sourceNode);
+    const targetStorageScope = resolveStorageScope(targetWorkspace, {
+      project_id: projectId,
+      entity_id: entityId
+    });
     const content =
       sourceNode.type === 'folder' || !storage
         ? null
@@ -350,11 +299,9 @@ const copyTypedWorkspaceDocuments = async (
         await tx.project.upsertContentNode({
           id: nodeId,
           workspace: targetWorkspace,
-          project_id: sourceNode.project_id
-            ? (projectMap.get(sourceNode.project_id) ?? null)
-            : null,
-          entity_id: sourceNode.entity_id ? (entityMap.get(sourceNode.entity_id) ?? null) : null,
-          parent_id: sourceNode.parent_id ? (nodeMap.get(sourceNode.parent_id) ?? null) : null,
+          project_id: projectId,
+          entity_id: entityId,
+          parent_id: resolveMappedIdOrNull(nodeMap, sourceNode.parent_id),
           path: sourceNode.path,
           name: sourceNode.name,
           role: sourceNode.role,
@@ -379,19 +326,19 @@ const copyTypedWorkspaceDocuments = async (
     if (!targetNodeId) continue;
     const state = sourceStates.get(nodeId);
     const sourceTypeId = state?.document_type_id ?? null;
-    const targetTypeId = sourceTypeId ? (typeMap.get(sourceTypeId) ?? null) : null;
+    const targetTypeId = resolveMappedIdOrNull(typeMap, sourceTypeId);
+    const documentReferenceMaps = {
+      entityMap,
+      documentMap: nodeMap,
+      entityIdentifierMap: sourceEntityIdByIdentifier
+    };
     if (sourceTypeId && !targetTypeId) continue;
     if (state) {
       const sourceType = sourceTypeId
         ? await db.document.getDocumentType(sourceWorkspace, sourceTypeId)
         : null;
       const values = sourceType
-        ? remapDocumentMetadataValues(
-            sourceType.fields,
-            state.values,
-            id => entityMap.get(sourceEntityIdByIdentifier.get(id) ?? id),
-            id => nodeMap.get(id)
-          )
+        ? remapDocumentMetadataValues(sourceType.fields, state.values, documentReferenceMaps)
         : state.values;
       await db.document.upsertDocumentMetadata({
         workspace: targetWorkspace,
@@ -401,13 +348,10 @@ const copyTypedWorkspaceDocuments = async (
         generated_metadata: state.generated_metadata,
         updated_at: timestamp
       });
-      const links = (await db.document.listDocumentLinks(sourceWorkspace, nodeId)).flatMap(link => {
-        const targetId =
-          link.target_type === 'entity'
-            ? entityMap.get(sourceEntityIdByIdentifier.get(link.target_id) ?? link.target_id)
-            : nodeMap.get(link.target_id);
-        return targetId ? [{ ...link, target_id: targetId }] : [];
-      });
+      const links = remapDocumentLinks(
+        await db.document.listDocumentLinks(sourceWorkspace, nodeId),
+        documentReferenceMaps
+      );
       await db.document.replaceDocumentLinks(targetWorkspace, targetNodeId, links);
     }
 
@@ -421,12 +365,7 @@ const copyTypedWorkspaceDocuments = async (
         ? await db.document.getDocumentType(sourceWorkspace, revision.document_type_id)
         : null;
       const revisionValues = revisionType
-        ? remapDocumentMetadataValues(
-            revisionType.fields,
-            revision.metadata,
-            id => entityMap.get(sourceEntityIdByIdentifier.get(id) ?? id),
-            id => nodeMap.get(id)
-          )
+        ? remapDocumentMetadataValues(revisionType.fields, revision.metadata, documentReferenceMaps)
         : revision.metadata;
       await db.project.createMarkdownRevision({
         id: revisionId,
@@ -440,9 +379,7 @@ const copyTypedWorkspaceDocuments = async (
         restored_from_revision_id: revision.restored_from_revision_id
           ? (revisionMap.get(revision.restored_from_revision_id) ?? null)
           : null,
-        document_type_id: revision.document_type_id
-          ? (typeMap.get(revision.document_type_id) ?? null)
-          : null,
+        document_type_id: resolveMappedIdOrNull(typeMap, revision.document_type_id),
         metadata: revisionValues
       });
     }
@@ -587,26 +524,26 @@ export const createWorkspace = async (
             for (const schema of srcSchemas) {
               const remappedFields = schema.fields.map(field => {
                 if (field.groupId && sharedFieldGroupMap.has(field.groupId)) {
-                  return { ...field, groupId: sharedFieldGroupMap.get(field.groupId)! };
+                  return { ...field, groupId: resolveMappedId(sharedFieldGroupMap, field.groupId) };
                 }
                 if (isReferenceOrContainmentField(field)) {
-                  return { ...field, schemaId: schemaMap.get(field.schemaId) ?? field.schemaId };
+                  return { ...field, schemaId: resolveMappedId(schemaMap, field.schemaId) };
                 }
                 return field;
               });
               const remappedGroups = (schema.groups ?? []).map(group => ({
                 ...group,
-                id: sharedFieldGroupMap.get(group.id) ?? group.id,
+                id: resolveMappedId(sharedFieldGroupMap, group.id),
                 accessControl: group.accessControl
                   ? {
-                      teamIds: group.accessControl.teamIds.map(id => teamMap.get(id) ?? id)
+                      teamIds: group.accessControl.teamIds.map(id => resolveMappedId(teamMap, id))
                     }
                   : undefined
               }));
               const remappedSharedLinks = (schema.shared_field_group_links ?? []).map(link => ({
                 ...link,
-                groupId: sharedFieldGroupMap.get(link.groupId) ?? link.groupId,
-                teamIds: link.teamIds?.map(id => teamMap.get(id) ?? id)
+                groupId: resolveMappedId(sharedFieldGroupMap, link.groupId),
+                teamIds: link.teamIds?.map(id => resolveMappedId(teamMap, id))
               }));
               const relationshipFieldIds = new Set(
                 schema.fields.filter(isReferenceOrContainmentField).map(field => field.id)
@@ -623,15 +560,16 @@ export const createWorkspace = async (
                     ...template.values,
                     fields: templateFields,
                     owner: template.values.owner
-                      ? (teamMap.get(template.values.owner) ?? undefined)
+                      ? (resolveMappedIdOrNull(teamMap, template.values.owner) ?? undefined)
                       : undefined,
                     lifecycle: template.values.lifecycle
-                      ? (lifecycleMap.get(template.values.lifecycle) ?? undefined)
+                      ? (resolveMappedIdOrNull(lifecycleMap, template.values.lifecycle) ??
+                        undefined)
                       : undefined
                   }
                 };
               });
-              const keyPrefix = generateCopiedSchemaKeyPrefix(`${row.id}:${schema.id}`);
+              const keyPrefix = generateSchemaKeyPrefix(`${row.id}:${schema.id}`);
               await db.catalog.createSchema({
                 id: schemaMap.get(schema.id)!,
                 workspace: row.id,
@@ -646,7 +584,7 @@ export const createWorkspace = async (
                 groups: remappedGroups,
                 shared_field_group_links: remappedSharedLinks,
                 default_owner: schema.default_owner
-                  ? (teamMap.get(schema.default_owner) ?? null)
+                  ? resolveMappedIdOrNull(teamMap, schema.default_owner)
                   : null,
                 created_at: timestamp,
                 updated_at: timestamp
@@ -680,7 +618,10 @@ export const createWorkspace = async (
                 case_kind: config.case_kind,
                 case_subkind: caseSubkind,
                 enabled: config.enabled,
-                config: remapGovernanceConfigTeams(config.config, teamMap),
+                config: remapGovernanceConfigTeams(
+                  parseGovernanceWorkflowConfig(config.config, config.enabled),
+                  teamMap
+                ),
                 updated_at: timestamp,
                 updated_by: null
               });
@@ -706,7 +647,7 @@ export const createWorkspace = async (
                   public_id: publicId,
                   name: project.name,
                   description: project.description,
-                  owner: project.owner ? (teamMap.get(project.owner) ?? null) : null,
+                  owner: project.owner ? resolveMappedIdOrNull(teamMap, project.owner) : null,
                   status: project.status,
                   color: project.color,
                   start_date: project.start_date,
@@ -725,12 +666,12 @@ export const createWorkspace = async (
               );
               const sourceEntities = await db.catalog.listEntities(replicate_from);
               for (const entity of sourceEntities) {
-                const schemaId = schemaMap.get(entity.schema_id);
+                const schemaId = resolveMappedIdOrNull(schemaMap, entity.schema_id);
                 if (!schemaId) continue;
                 entityMap.set(entity.id, randomUUID());
               }
               for (const entity of sourceEntities) {
-                const schemaId = schemaMap.get(entity.schema_id);
+                const schemaId = resolveMappedIdOrNull(schemaMap, entity.schema_id);
                 const id = entityMap.get(entity.id);
                 if (!schemaId || !id) continue;
                 const sourceSchema = srcSchemas.find(schema => schema.id === entity.schema_id);
@@ -742,7 +683,7 @@ export const createWorkspace = async (
                   const raw = data[field.id];
                   const linked = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : [];
                   const mapped = linked
-                    .map(targetId => entityMap.get(targetId))
+                    .map(targetId => resolveMappedIdOrNull(entityMap, targetId))
                     .filter((targetId): targetId is string => !!targetId);
                   data[field.id] = Array.isArray(raw) ? mapped : (mapped[0] ?? null);
                 }
@@ -751,9 +692,11 @@ export const createWorkspace = async (
                   fields: data,
                   supportedCurrencies
                 });
-                const mappedOwner = entity.owner ? (teamMap.get(entity.owner) ?? null) : null;
+                const mappedOwner = entity.owner
+                  ? resolveMappedIdOrNull(teamMap, entity.owner)
+                  : null;
                 const mappedLifecycle = entity.lifecycle
-                  ? (lifecycleMap.get(entity.lifecycle) ?? null)
+                  ? resolveMappedIdOrNull(lifecycleMap, entity.lifecycle)
                   : null;
                 await db.catalog.createEntity({
                   ...entity,
@@ -768,7 +711,7 @@ export const createWorkspace = async (
                   owner: mappedOwner,
                   lifecycle: mappedLifecycle,
                   target_lifecycle: entity.target_lifecycle
-                    ? (lifecycleMap.get(entity.target_lifecycle) ?? null)
+                    ? resolveMappedIdOrNull(lifecycleMap, entity.target_lifecycle)
                     : null,
                   data: normalizedData,
                   created_at: timestamp,
@@ -814,7 +757,10 @@ export const createWorkspace = async (
               )) {
                 const separator = config.case_subkind?.indexOf(':') ?? -1;
                 if (separator <= 0) continue;
-                const targetTypeId = typeMap.get(config.case_subkind!.slice(0, separator));
+                const targetTypeId = resolveMappedIdOrNull(
+                  typeMap,
+                  config.case_subkind!.slice(0, separator)
+                );
                 if (!targetTypeId) continue;
                 await db.governanceCaseConfig.upsertCaseConfig({
                   workspace: row.id,
@@ -824,7 +770,10 @@ export const createWorkspace = async (
                     config.case_subkind!.slice(separator + 1)
                   ),
                   enabled: config.enabled,
-                  config: config.config,
+                  config: remapGovernanceConfigTeams(
+                    parseGovernanceWorkflowConfig(config.config, config.enabled),
+                    teamMap
+                  ),
                   updated_at: timestamp,
                   updated_by: null
                 });
@@ -844,10 +793,9 @@ export const createWorkspace = async (
                 undefined,
                 true
               )) {
-                const projectId =
-                  template.project_id == null ? null : projectMap.get(template.project_id);
+                const projectId = resolveMappedIdOrNull(projectMap, template.project_id);
                 if (template.project_id != null && !projectId) continue;
-                const documentTypeId = typeMap.get(template.document_type_id);
+                const documentTypeId = resolveMappedIdOrNull(typeMap, template.document_type_id);
                 const sourceType = sourceTypes.find(type => type.id === template.document_type_id);
                 if (!documentTypeId) continue;
                 const copiedTemplate = await db.document.createDocumentTemplate({
@@ -857,12 +805,11 @@ export const createWorkspace = async (
                   project_id: projectId ?? null,
                   document_type_id: documentTypeId,
                   metadata_defaults: sourceType
-                    ? remapDocumentMetadataValues(
-                        sourceType.fields,
-                        template.metadata_defaults,
-                        id => entityMap.get(sourceEntityIdByIdentifier.get(id) ?? id),
-                        id => nodeMap.get(id)
-                      )
+                    ? remapDocumentMetadataValues(sourceType.fields, template.metadata_defaults, {
+                        entityMap,
+                        documentMap: nodeMap,
+                        entityIdentifierMap: sourceEntityIdByIdentifier
+                      })
                     : template.metadata_defaults,
                   created_at: timestamp,
                   updated_at: timestamp
@@ -888,7 +835,9 @@ export const createWorkspace = async (
                       : binding.target.kind === 'document_type'
                         ? documentTypeMap
                         : null;
-                  const targetId = targetMap?.get(binding.target.id);
+                  const targetId = targetMap
+                    ? resolveMappedIdOrNull(targetMap, binding.target.id)
+                    : null;
                   return targetId
                     ? [
                         [

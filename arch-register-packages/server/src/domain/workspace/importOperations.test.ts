@@ -31,7 +31,15 @@ vi.mock('../../utils/logger', () => ({
 import { exportWorkspace } from './exportOperations';
 import { parseImport } from './importParseOperations';
 import { executeImport } from './importExecutionOperations';
-import { importEntities, importRelations, importSchemas } from './importAppliers';
+import { buildImportPlan } from './importPlanningOperations';
+import {
+  importContentNodes,
+  importDocuments,
+  importEntities,
+  importRelations,
+  importSchemas
+} from './importAppliers';
+import type { ExportDataType } from './exportTypes';
 
 const makeAuthCtx = (): AuthorizationContext => ({ userId: 'user-1' }) as AuthorizationContext;
 
@@ -97,12 +105,23 @@ const makeDb = () =>
     },
     document: {
       listDocumentTypes: vi.fn(async () => []),
-      listDocumentTemplates: vi.fn(async () => [])
+      getDocumentType: vi.fn(async () => null),
+      createDocumentType: vi.fn(async input => input),
+      updateDocumentType: vi.fn(async (_workspace, _id, input) => input),
+      archiveDocumentType: vi.fn(async () => {}),
+      listDocumentTemplates: vi.fn(async () => []),
+      createDocumentTemplate: vi.fn(async input => input),
+      updateDocumentTemplate: vi.fn(async (_workspace, _id, input) => input),
+      archiveDocumentTemplate: vi.fn(async () => {}),
+      upsertDocumentMetadata: vi.fn(async () => {}),
+      listDocumentLinks: vi.fn(async () => []),
+      replaceDocumentLinks: vi.fn(async () => {})
     },
     project: {
       listProjects: vi.fn(async () => []),
       listAllContentNodes: vi.fn(async () => []),
       createProject: vi.fn(async input => input),
+      createMarkdownRevision: vi.fn(async input => input),
       updateProject: vi.fn(async (_ws, _id, input) => ({
         id: _id,
         workspace: _ws,
@@ -138,6 +157,11 @@ const makeDb = () =>
       updateContentNodeDerivedData: vi.fn(async () => {}),
       updateWorkspaceContentNodeDerivedData: vi.fn(async () => {}),
       updateContentNodeTemplateStatus: vi.fn(async () => {})
+    },
+    governanceCaseConfig: {
+      listCaseConfig: vi.fn(async () => []),
+      listCaseConfigForKind: vi.fn(async () => []),
+      upsertCaseConfig: vi.fn(async input => input)
     }
   }) as any;
 
@@ -377,6 +401,233 @@ describe('workspace export/import guards', () => {
     expect(result.imported.content_nodes).toEqual({ created: 1, updated: 0 });
     expect(db.project.createProject).toHaveBeenCalledTimes(1);
     expect(storage.write).toHaveBeenCalledTimes(1);
+  });
+
+  it('uses the same mapped storage scope during import planning and apply', async () => {
+    hasWorkspaceCapability.mockReturnValue(true);
+    const db = makeDb();
+    const contentBuffer = Buffer.from('diagram payload', 'utf8');
+    const data = {
+      projects: [
+        {
+          id: 'project-old',
+          name: 'Imported project',
+          description: '',
+          owner: null,
+          status: 'active' as const,
+          color: null
+        }
+      ],
+      content_nodes: [
+        {
+          id: 'node-old',
+          project_id: 'project-old',
+          entity_id: null,
+          parent_id: null,
+          path: 'diagram.json',
+          name: 'diagram',
+          type: 'diagram' as const,
+          size_bytes: contentBuffer.length,
+          is_template: false,
+          is_workspace_template: false,
+          content_file: 'content/diagrams/node-old.json'
+        }
+      ]
+    };
+    const options = {
+      import_id: 'import-1',
+      include: ['projects', 'content_nodes'] as ExportDataType[],
+      conflict_resolutions: {},
+      preserve_ids: false
+    };
+    const contentFiles = new Map([['content/diagrams/node-old.json', contentBuffer]]);
+    const planned = await buildImportPlan(
+      db,
+      makeAuthCtx(),
+      'workspace-1',
+      options,
+      data,
+      contentFiles
+    );
+    const targetProjectId = planned.mapping.projects.get('project-old');
+    const targetNodeId = planned.mapping.content_nodes.get('node-old');
+    expect(planned.plan.storage_writes).toEqual([
+      expect.objectContaining({ storage_id: targetProjectId, node_id: targetNodeId })
+    ]);
+
+    const stageWrite = vi.fn(async () => ({
+      commit: vi.fn(async () => {}),
+      rollback: vi.fn(async () => {}),
+      finalize: vi.fn(async () => {})
+    }));
+    await importContentNodes(
+      db,
+      {
+        write: vi.fn(),
+        read: vi.fn(),
+        delete: vi.fn(),
+        deleteAll: vi.fn(),
+        stageWrite
+      } as any,
+      makeAuthCtx(),
+      'workspace-1',
+      data.content_nodes,
+      false,
+      {},
+      planned.mapping,
+      contentFiles
+    );
+
+    expect(stageWrite).toHaveBeenCalledWith(
+      'workspace-1',
+      targetProjectId,
+      targetNodeId,
+      contentBuffer,
+      expect.any(String)
+    );
+  });
+
+  it('remaps document workflow teams, metadata values, and indexed links during import', async () => {
+    const db = makeDb();
+    const documentFields = [
+      {
+        id: 'entity',
+        name: 'Entity',
+        type: 'entity_link' as const,
+        requirement: 'optional' as const,
+        maxCardinality: 1,
+        retired: false
+      },
+      {
+        id: 'documents',
+        name: 'Documents',
+        type: 'document_link' as const,
+        requirement: 'optional' as const,
+        maxCardinality: 3,
+        retired: false
+      }
+    ];
+    const documents = {
+      types: [
+        {
+          id: 'source-type',
+          workspace: 'source-workspace',
+          name: 'Source document',
+          description: '',
+          fields: documentFields,
+          color: null,
+          icon: null,
+          archived: false,
+          created_at: '2026-01-01T00:00:00.000Z',
+          updated_at: '2026-01-01T00:00:00.000Z'
+        }
+      ],
+      templates: [],
+      metadata: [
+        {
+          node_id: 'source-node',
+          document_type_id: 'source-type',
+          values: {
+            entity: 'SOURCE-1',
+            documents: ['source-related-node', 'missing-node']
+          },
+          generated_metadata: {},
+          links: [
+            {
+              field_id: 'entity',
+              target_type: 'entity' as const,
+              target_id: 'SOURCE-1',
+              position: 0
+            },
+            {
+              field_id: 'documents',
+              target_type: 'document' as const,
+              target_id: 'source-related-node',
+              position: 0
+            },
+            {
+              field_id: 'documents',
+              target_type: 'document' as const,
+              target_id: 'missing-node',
+              position: 1
+            }
+          ]
+        }
+      ],
+      revisions: [],
+      workflow_configs: [
+        {
+          case_kind: 'document.status',
+          case_subkind: 'source-type:status',
+          enabled: true,
+          config: {
+            approvals: {
+              requiredApprovals: 1,
+              strategyConfig: {},
+              fallbackTeamIds: ['source-team'],
+              fallbackUserIds: []
+            },
+            extensions: {}
+          }
+        }
+      ]
+    };
+    const idMapping = {
+      schemas: new Map<string, string>(),
+      shared_field_groups: new Map<string, string>(),
+      relation_schemas: new Map<string, string>(),
+      entities: new Map([['source-entity', 'target-entity']]),
+      relations: new Map<string, string>(),
+      teams: new Map([['source-team', 'target-team']]),
+      lifecycle_states: new Map<string, string>(),
+      projects: new Map<string, string>(),
+      content_nodes: new Map([
+        ['source-node', 'target-node'],
+        ['source-related-node', 'target-related-node']
+      ]),
+      document_types: new Map<string, string>()
+    };
+
+    await importDocuments(db, 'target-workspace', documents, false, {}, idMapping, [
+      { id: 'source-entity', public_id: 'SOURCE-1' } as any
+    ]);
+
+    const targetDocumentTypeId = idMapping.document_types.get('source-type');
+    expect(db.governanceCaseConfig.upsertCaseConfig).toHaveBeenCalledWith(
+      expect.objectContaining({
+        case_subkind: `${targetDocumentTypeId}:status`,
+        config: expect.objectContaining({
+          approvals: expect.objectContaining({ fallbackTeamIds: ['target-team'] })
+        })
+      })
+    );
+    expect(db.document.upsertDocumentMetadata).toHaveBeenCalledWith(
+      expect.objectContaining({
+        node_id: 'target-node',
+        values: {
+          entity: 'target-entity',
+          documents: ['target-related-node']
+        }
+      })
+    );
+    expect(db.document.replaceDocumentLinks).toHaveBeenCalledWith(
+      'target-workspace',
+      'target-node',
+      [
+        {
+          field_id: 'entity',
+          target_type: 'entity',
+          target_id: 'target-entity',
+          position: 0
+        },
+        {
+          field_id: 'documents',
+          target_type: 'document',
+          target_id: 'target-related-node',
+          position: 0
+        }
+      ]
+    );
   });
 
   it('requires explicit resolutions before mutating conflicting imports', async () => {
