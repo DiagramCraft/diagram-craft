@@ -2,11 +2,15 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { TbX } from 'react-icons/tb';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import { MultiValueEditor } from '../components/MultiValueEditor';
 import { isMultiValuedScalarField } from '../lib/scalarFieldValues';
 import { selectableEnumOptions } from '../utils/enumOptions';
+import { Chip } from '../components/Chip';
+import { UserGroupPicker } from '../components/UserGroupPicker';
+import { usePrincipalLabel } from '../hooks/usePrincipalLabel';
 
 export const EntityFieldInput = ({
   field,
@@ -179,6 +183,9 @@ export const EntityFieldInput = ({
           />
         );
       }
+      if (field.type === 'principal') {
+        return <PrincipalInput value={item} onChange={update} disabled={disabled} />;
+      }
       return (
         <TextInput
           value={typeof item === 'string' ? item : ''}
@@ -335,6 +342,14 @@ export const EntityFieldInput = ({
     );
   }
 
+  if (field.type === 'principal') {
+    return (
+      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+        <PrincipalInput value={value} onChange={onChange} disabled={disabled} />
+      </FormElement>
+    );
+  }
+
   return (
     <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
       <TextInput
@@ -344,5 +359,60 @@ export const EntityFieldInput = ({
         style={{ width: '100%' }}
       />
     </FormElement>
+  );
+};
+
+type PrincipalValue = { principal_type?: string; principal_id?: string } | null | undefined;
+
+const PrincipalInput = ({
+  value,
+  onChange,
+  disabled
+}: {
+  value: unknown;
+  onChange: (value: unknown) => void;
+  disabled?: boolean;
+}) => {
+  const resolveLabel = usePrincipalLabel();
+  const principal = (typeof value === 'object' && value !== null ? value : {}) as PrincipalValue;
+  const kind: 'user' | 'team' = principal?.principal_type === 'team' ? 'team' : 'user';
+
+  if (principal?.principal_id) {
+    return (
+      <Chip tone="ghost">
+        <span>{resolveLabel(principal) ?? principal.principal_id}</span>
+        {!disabled && (
+          <button
+            type="button"
+            aria-label="Clear"
+            onClick={() => onChange(undefined)}
+            style={{ marginLeft: 4, border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
+          >
+            <TbX size={10} />
+          </button>
+        )}
+      </Chip>
+    );
+  }
+
+  if (disabled) return <span>—</span>;
+
+  return (
+    <div style={{ display: 'flex', gap: 6 }}>
+      <Select.Root
+        value={kind}
+        onChange={next => onChange({ principal_type: next ?? 'user', principal_id: '' })}
+        placeholder="Type"
+        style={{ width: 110 }}
+      >
+        <Select.Item value="user">User</Select.Item>
+        <Select.Item value="team">Team</Select.Item>
+      </Select.Root>
+      <UserGroupPicker
+        kind={kind}
+        onSelect={item => onChange({ principal_type: item.kind, principal_id: item.id })}
+        placeholder={kind === 'user' ? 'Search users…' : 'Search teams…'}
+      />
+    </div>
   );
 };

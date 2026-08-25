@@ -1,6 +1,9 @@
 import { MultiSelect, MultiSelectItem } from '@diagram-craft/app-components/MultiSelect';
 import { Select } from '@diagram-craft/app-components/Select';
+import { TbX } from 'react-icons/tb';
 import { Chip } from '../../../components/Chip';
+import { UserGroupPicker } from '../../../components/UserGroupPicker';
+import { usePrincipalLabel } from '../../../hooks/usePrincipalLabel';
 import { formatDate } from '../../../utils/dateFormat';
 import { formatCurrencyValue } from '../../../utils/currencyFormat';
 import { relationIds } from '../../../lib/entityEditState';
@@ -23,6 +26,65 @@ import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
 import { resolveEntityReference } from '../entityDetailHelpers';
 import type { TypedRelationFieldEditState } from '../../../lib/entityEditState';
 import { selectableEnumOptions } from '../../../utils/enumOptions';
+
+const asPrincipal = (value: unknown): { principal_type?: string; principal_id?: string } =>
+  (typeof value === 'object' && value !== null ? value : {}) as {
+    principal_type?: string;
+    principal_id?: string;
+  };
+
+const PrincipalChip = ({ value }: { value: unknown }) => {
+  const resolveLabel = usePrincipalLabel();
+  const principal = asPrincipal(value);
+  if (!principal.principal_id) return <span className={sharedStyles.dim}>—</span>;
+  return <Chip tone="ghost">{resolveLabel(principal) ?? principal.principal_id}</Chip>;
+};
+
+const PrincipalEditor = ({
+  value,
+  onChange
+}: {
+  value: unknown;
+  onChange: (value: unknown) => void;
+}) => {
+  const resolveLabel = usePrincipalLabel();
+  const principal = asPrincipal(value);
+  const kind: 'user' | 'team' = principal.principal_type === 'team' ? 'team' : 'user';
+
+  if (principal.principal_id) {
+    return (
+      <Chip tone="ghost">
+        <span>{resolveLabel(principal) ?? principal.principal_id}</span>
+        <button
+          type="button"
+          aria-label="Clear"
+          onClick={() => onChange(undefined)}
+          style={{ marginLeft: 4, border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
+        >
+          <TbX size={10} />
+        </button>
+      </Chip>
+    );
+  }
+
+  return (
+    <div style={{ display: 'flex', gap: 6 }}>
+      <Select.Root
+        value={kind}
+        onChange={next => onChange({ principal_type: next ?? 'user', principal_id: '' })}
+        style={{ width: 100 }}
+      >
+        <Select.Item value="user">User</Select.Item>
+        <Select.Item value="team">Team</Select.Item>
+      </Select.Root>
+      <UserGroupPicker
+        kind={kind}
+        onSelect={item => onChange({ principal_type: item.kind, principal_id: item.id })}
+        placeholder={kind === 'user' ? 'Search users…' : 'Search teams…'}
+      />
+    </div>
+  );
+};
 
 export const PropertyRow = ({
   field,
@@ -187,6 +249,9 @@ export const PropertyRow = ({
             </div>
           );
         }
+        if (field.type === 'principal') {
+          return <PrincipalEditor value={item} onChange={update} />;
+        }
         if (field.type === 'number') {
           return (
             <input
@@ -318,6 +383,9 @@ export const PropertyRow = ({
         />
       );
     }
+    if (field.type === 'principal') {
+      return <PrincipalEditor value={editValue} onChange={onChange} />;
+    }
     return (
       <input
         className={styles.inputInline}
@@ -387,9 +455,19 @@ export const PropertyRow = ({
       if (field.type === 'currency') {
         return <span>{value.map(item => formatCurrencyValue(item)).join(', ')}</span>;
       }
+      if (field.type === 'principal') {
+        return (
+          <span style={{ display: 'inline-flex', gap: 4, flexWrap: 'wrap' }}>
+            {value.map((item, index) => (
+              <PrincipalChip key={index} value={item} />
+            ))}
+          </span>
+        );
+      }
       return <span>{value.map(item => String(item)).join(', ')}</span>;
     }
     if (value == null || value === '') return <span className={sharedStyles.dim}>—</span>;
+    if (field.type === 'principal') return <PrincipalChip value={value} />;
     if (field.type === 'derived') {
       if (field.resultType === 'boolean') return <span>{value ? 'Yes' : 'No'}</span>;
       if (field.resultType === 'currency') return <span>{formatCurrencyValue(value)}</span>;

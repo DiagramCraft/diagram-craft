@@ -193,6 +193,20 @@ describe('validateCsvData', () => {
     const result = validateCsvData(rows, [typedRelationField]);
     expect(result[0]!.errors).toHaveLength(0);
   });
+
+  it('accepts a valid principal reference', () => {
+    const field: SchemaField = { id: 'steward', name: 'Steward', type: 'principal' };
+    const rows = [{ rowNumber: 2, data: { Steward: 'user:user-1' }, errors: [] }];
+    expect(validateCsvData(rows, [field])[0]!.errors).toHaveLength(0);
+  });
+
+  it('rejects a malformed principal reference', () => {
+    const field: SchemaField = { id: 'steward', name: 'Steward', type: 'principal' };
+    const rows = [{ rowNumber: 2, data: { Steward: 'user-1' }, errors: [] }];
+    expect(validateCsvData(rows, [field])[0]!.errors).toContain(
+      'Steward must be in the format user:<id> or team:<id>'
+    );
+  });
 });
 
 // ── csvRowToEntity ────────────────────────────────────────────
@@ -328,5 +342,11 @@ describe('csvRowToEntity', () => {
       typedRelationField
     ]);
     expect(result).not.toHaveProperty('deps');
+  });
+
+  it('parses a principal reference into { principal_type, principal_id }', () => {
+    const field: SchemaField = { id: 'steward', name: 'Steward', type: 'principal' };
+    const result = csvRowToEntity({ Name: 'X', Steward: 'team:team-1' }, [field]);
+    expect(result['steward']).toEqual({ principal_type: 'team', principal_id: 'team-1' });
   });
 });

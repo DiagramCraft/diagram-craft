@@ -43,6 +43,8 @@ export const createSchemaFieldForType = (
       return { ...base, type: 'boolean' };
     case 'select':
       return { ...base, type: 'select', enumId: firstEnumId ?? '', options: [] } as SchemaField;
+    case 'principal':
+      return { ...base, type: 'principal' };
     case 'reference':
       return {
         ...base,

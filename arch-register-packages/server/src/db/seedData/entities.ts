@@ -13,6 +13,7 @@ import {
   TEAM_IDS,
   TECHNOLOGY_IDS,
   TECHNOLOGY_RELEASE_IDS,
+  USER_IDS,
   WORKSPACE2_ID,
   WORKSPACE_ID,
   now
@@ -1454,7 +1455,16 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
     tags: [],
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000008',
-    data: { classification: 'sensitive' },
+    // Full stewardship, review date a few weeks out (demonstrates the "approaching" status).
+    data: {
+      classification: 'sensitive',
+      steward: { principal_type: 'user', principal_id: USER_IDS.securityteamadmin },
+      custodian: { principal_type: 'team', principal_id: TEAM_IDS.platform },
+      review_date: '2026-09-10',
+      regulatory_tags: ['gdpr', 'pci-dss'],
+      processing_purposes: ['fraud-prevention'],
+      permitted_residency_regions: ['eu', 'us']
+    },
     project_id: null,
     created_at: now,
     updated_at: now
@@ -1474,7 +1484,14 @@ export const seedEntitiesRaw: SeedEntityInput[] = [
     tags: [],
     links: [],
     schema_id: '00000000-0000-0000-0000-000000000008',
-    data: { classification: 'non-sensitive' },
+    // Steward set but custodian missing (partial stewardship), review date in the past
+    // (demonstrates the "overdue" status).
+    data: {
+      classification: 'non-sensitive',
+      steward: { principal_type: 'team', principal_id: TEAM_IDS.platform },
+      review_date: '2025-06-01',
+      processing_purposes: ['analytics']
+    },
     project_id: null,
     created_at: now,
     updated_at: now

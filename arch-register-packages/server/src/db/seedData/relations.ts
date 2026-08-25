@@ -715,5 +715,17 @@ export const seedRelations: RelationDbCreate[] = [
     data: { activated_from: '2018-01-01' },
     created_at: now,
     updated_at: now
+  },
+  {
+    id: RETENTION_IDS.assignments.customerCredentials,
+    workspace: WORKSPACE_ID,
+    schema_id: RETENTION_IDS.assignmentRelationSchema,
+    // Customer Credentials (Data Entity DE-1) -> three-year operational retention policy —
+    // demonstrates retention assigned directly to a Data Entity, not just a System.
+    in_entity_id: '00000000-0000-0000-0008-000000000001',
+    out_entity_id: RETENTION_IDS.policies.threeYearOperational,
+    data: { activated_from: '2024-01-15' },
+    created_at: now,
+    updated_at: now
   }
 ];

@@ -255,7 +255,8 @@ export const SchemaFieldRow = ({
       field.type === 'longtext' ||
       field.type === 'boolean' ||
       field.type === 'date' ||
-      field.type === 'currency'
+      field.type === 'currency' ||
+      field.type === 'principal'
     ) {
       return <ScalarCardinalityControls field={field} onUpdate={onUpdate} disabled={!canEdit} />;
     }

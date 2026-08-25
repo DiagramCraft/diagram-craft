@@ -7,7 +7,7 @@ import type { WorkspaceEnumDbResult } from './db/catalogDatabase';
 export type ScalarSchemaField = Extract<
   SchemaField,
   {
-    type: 'text' | 'longtext' | 'boolean' | 'date' | 'currency' | 'number' | 'select';
+    type: 'text' | 'longtext' | 'boolean' | 'date' | 'currency' | 'number' | 'select' | 'principal';
   }
 >;
 
@@ -33,7 +33,8 @@ export const isScalarSchemaField = (field: SchemaField): field is ScalarSchemaFi
   field.type === 'date' ||
   field.type === 'currency' ||
   field.type === 'number' ||
-  field.type === 'select';
+  field.type === 'select' ||
+  field.type === 'principal';
 
 export const isMultiValuedScalarField = (field: SchemaField): boolean =>
   isScalarSchemaField(field) &&
@@ -109,6 +110,28 @@ const validateCurrency = (
   return parsed;
 };
 
+/**
+ * Validates only the shape of a principal reference (`principal_type`/`principal_id`), matching
+ * the existing entity-grant precedent (`buildEntityGrantInputs`) which also does not resolve the
+ * id against real user/team records.
+ */
+const validatePrincipal = (field: ScalarSchemaField, value: unknown): { principal_type: 'user' | 'team'; principal_id: string } => {
+  httpAssert.true(
+    typeof value === 'object' &&
+      value !== null &&
+      ((value as Record<string, unknown>).principal_type === 'user' ||
+        (value as Record<string, unknown>).principal_type === 'team') &&
+      typeof (value as Record<string, unknown>).principal_id === 'string' &&
+      (value as Record<string, unknown>).principal_id !== '',
+    {
+      status: 400,
+      message: `${field.name} must contain a { principal_type: 'user' | 'team', principal_id } reference`
+    }
+  );
+  const principal = value as { principal_type: 'user' | 'team'; principal_id: string };
+  return { principal_type: principal.principal_type, principal_id: principal.principal_id };
+};
+
 const normalizeScalarItem = (
   field: ScalarSchemaField,
   value: unknown,
@@ -135,6 +158,8 @@ const normalizeScalarItem = (
       return validateNumber(field, value);
     case 'currency':
       return validateCurrency(field, value, supportedCurrencies);
+    case 'principal':
+      return validatePrincipal(field, value);
   }
 };
 
@@ -253,7 +278,16 @@ export const normalizeEntityScalarFields = ({
   const normalized = { ...fields };
   for (const field of schemaFields) {
     if (
-      !['text', 'longtext', 'boolean', 'date', 'currency', 'number', 'select'].includes(field.type)
+      ![
+        'text',
+        'longtext',
+        'boolean',
+        'date',
+        'currency',
+        'number',
+        'select',
+        'principal'
+      ].includes(field.type)
     )
       continue;
     if (!Object.hasOwn(normalized, field.id)) {

@@ -203,6 +203,11 @@ export const exportEntitiesCsv = async (
           row[field.name] = JSON.stringify(values);
         } else if (field.type === 'boolean') {
           row[field.name] = value === true ? 'true' : value === false ? 'false' : '';
+        } else if (field.type === 'principal') {
+          const principal = value as { principal_type?: string; principal_id?: string } | null;
+          row[field.name] = principal?.principal_type
+            ? `${principal.principal_type}:${principal.principal_id}`
+            : '';
         } else if (Array.isArray(value)) {
           row[field.name] = formatArrayForCsv(value);
         } else {

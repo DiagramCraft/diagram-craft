@@ -162,8 +162,17 @@ export const RETENTION_IDS = {
   },
   assignments: {
     customerPortal: '00000000-0000-0000-0042-000000000201',
-    identityPlatform: '00000000-0000-0000-0042-000000000202'
+    identityPlatform: '00000000-0000-0000-0042-000000000202',
+    customerCredentials: '00000000-0000-0000-0042-000000000203'
   }
+} as const;
+
+export const INFO_ASSET_FIELD_GROUP_ID = '00000000-0000-0000-0000-f00000000002';
+
+export const INFO_ASSET_IDS = {
+  regulatoryTagsEnum: '00000000-0000-0000-0043-000000000001',
+  processingPurposesEnum: '00000000-0000-0000-0043-000000000002',
+  residencyRegionsEnum: '00000000-0000-0000-0043-000000000003'
 } as const;
 
 export const PROJECT_ENTITY_TYPE_IDS = {

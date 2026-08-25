@@ -297,25 +297,54 @@ describe('instantiateTemplate', () => {
   it('materializes information governance as reusable enums plus a retention policy schema/relation', () => {
     const definitions = instantiateTemplateDefinitions('ws-1', 'information-governance');
 
-    expect(definitions.schemas.map(schema => schema.name)).toEqual(['Retention Policy']);
+    expect(definitions.schemas.map(schema => schema.name)).toEqual([
+      'Retention Policy',
+      'Data Entity'
+    ]);
     expect(definitions.enums.map(enumeration => enumeration.name)).toEqual([
       'Regulatory Tags',
       'Processing Purposes',
       'Residency Regions',
-      'Retention Time Unit'
+      'Retention Time Unit',
+      'PII Classification'
     ]);
     expect(
       definitions.enums
-        .filter(enumeration => enumeration.name !== 'Retention Time Unit')
+        .filter(
+          enumeration => !['Retention Time Unit', 'PII Classification'].includes(enumeration.name)
+        )
         .every(enumeration => enumeration.options.length === 0)
     ).toBe(true);
+
+    expect(definitions.fieldGroups.map(fieldGroup => fieldGroup.name)).toEqual([
+      'Information Asset Stewardship'
+    ]);
+    expect(definitions.fieldGroups[0]!.fields.map(field => field.id)).toEqual([
+      'steward',
+      'custodian',
+      'review_date',
+      'regulatory_tags',
+      'processing_purposes',
+      'permitted_residency_regions'
+    ]);
+    expect(
+      definitions.fieldGroups[0]!.fields.filter(field => field.type === 'principal').map(f => f.id)
+    ).toEqual(['steward', 'custodian']);
+
+    const [retentionPolicySchema, dataEntitySchema] = definitions.schemas;
+    expect(
+      dataEntitySchema!.shared_field_group_links?.map(link => link.groupId)
+    ).toEqual([definitions.fieldGroups[0]!.id]);
+    expect(dataEntitySchema!.fields).toEqual([
+      expect.objectContaining({ id: 'classification', type: 'select' })
+    ]);
 
     expect(definitions.relationSchemas.map(relationSchema => relationSchema.name)).toEqual([
       'Subject to Retention Policy'
     ]);
     const [assignmentRelationSchema] = definitions.relationSchemas;
     expect(assignmentRelationSchema!.in_schema_ids).toBe('any');
-    expect(assignmentRelationSchema!.out_schema_ids).toEqual([definitions.schemas[0]!.id]);
+    expect(assignmentRelationSchema!.out_schema_ids).toEqual([retentionPolicySchema!.id]);
     expect(assignmentRelationSchema!.fields).toEqual([
       expect.objectContaining({ id: 'activated_from', type: 'date' })
     ]);
@@ -324,7 +353,7 @@ describe('instantiateTemplate', () => {
       {
         type: 'retention',
         bindings: {
-          policy: { target: { kind: 'entity_schema', id: definitions.schemas[0]!.id } },
+          policy: { target: { kind: 'entity_schema', id: retentionPolicySchema!.id } },
           assignment: {
             target: { kind: 'relation_schema', id: assignmentRelationSchema!.id }
           }
