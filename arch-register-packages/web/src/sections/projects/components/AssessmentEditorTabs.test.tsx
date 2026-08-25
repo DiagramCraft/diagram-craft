@@ -1,5 +1,7 @@
 import { renderToStaticMarkup } from 'react-dom/server';
 import { describe, expect, it } from 'vitest';
+import { DndProvider } from 'react-dnd';
+import { HTML5Backend } from 'react-dnd-html5-backend';
 import { DialogContextProvider } from '@diagram-craft/app-components/Dialog';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import {
@@ -57,6 +59,7 @@ const makeEditor = (): AssessmentEditorController => {
     addField: () => undefined,
     updateField: () => undefined,
     removeField: () => undefined,
+    reorderFields: () => undefined,
     fieldKey: id => id,
     openNewGroup: () => undefined,
     openEditGroup: () => undefined,
@@ -125,9 +128,11 @@ describe('assessment editor tabs', () => {
 
   it('renders the empty fields state and group entry point independently', () => {
     const markup = renderToStaticMarkup(
-      <DialogContextProvider onDialogShow={() => undefined} onDialogHide={() => undefined}>
-        <AssessmentFieldsTab editor={makeEditor()} />
-      </DialogContextProvider>
+      <DndProvider backend={HTML5Backend}>
+        <DialogContextProvider onDialogShow={() => undefined} onDialogHide={() => undefined}>
+          <AssessmentFieldsTab editor={makeEditor()} />
+        </DialogContextProvider>
+      </DndProvider>
     );
 
     expect(markup).toContain('Fields');

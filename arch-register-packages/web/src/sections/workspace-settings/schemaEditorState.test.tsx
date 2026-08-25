@@ -255,4 +255,33 @@ describe('useSchemaEditorController', () => {
     expect(remove).toHaveBeenCalledWith(selectedA);
     expect(onSelect).toHaveBeenLastCalledWith('schema-b');
   });
+
+  it('reorders fields within a bucket while leaving other fields untouched', () => {
+    const adapter = makeAdapter();
+    const onSelect = vi.fn();
+
+    act(() => {
+      root.render(
+        <Harness selected={selectedA} items={[selectedA]} adapter={adapter} onSelect={onSelect} />
+      );
+    });
+    act(() => {
+      latest.addField();
+    });
+    act(() => latest.updateField('new_field', { id: 'field_two' }));
+    act(() => {
+      latest.addField();
+    });
+    act(() => latest.updateField('new_field', { id: 'field_three' }));
+
+    const idsBefore = latest.draft!.fields.map(field => field.id);
+    expect(idsBefore).toEqual(['title', 'field_two', 'field_three']);
+    const bucketIds = idsBefore.slice(1);
+
+    act(() => latest.reorderFields(bucketIds, 0, 1));
+
+    const idsAfter = latest.draft!.fields.map(field => field.id);
+    expect(idsAfter[0]).toBe(idsBefore[0]);
+    expect(idsAfter.slice(1)).toEqual([bucketIds[1], bucketIds[0]]);
+  });
 });

@@ -50,6 +50,7 @@ export const SchemaEditorForm = ({
   onUpdateField,
   onChangeFieldType,
   onRemoveField,
+  onReorderField,
   onEditGroup,
   onAccessGroup,
   onRemoveGroup,
@@ -103,6 +104,7 @@ export const SchemaEditorForm = ({
   onUpdateField: (fieldId: string, patch: Partial<SchemaField>) => void;
   onChangeFieldType: (fieldId: string, type: FieldType) => void;
   onRemoveField: (fieldId: string) => void;
+  onReorderField: (bucketFieldIds: string[], fromIndex: number, toIndex: number) => void;
   onEditGroup: (group: SchemaGroup) => void;
   onAccessGroup: (groupId: string) => void;
   onRemoveGroup: (groupId: string) => void;
@@ -170,6 +172,7 @@ export const SchemaEditorForm = ({
       onUpdateField={onUpdateField}
       onChangeFieldType={onChangeFieldType}
       onRemoveField={onRemoveField}
+      onReorderField={onReorderField}
       onEditGroup={onEditGroup}
       onAccessGroup={onAccessGroup}
       onRemoveGroup={onRemoveGroup}

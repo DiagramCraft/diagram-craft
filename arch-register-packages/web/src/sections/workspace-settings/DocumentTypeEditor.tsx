@@ -35,7 +35,11 @@ import { FieldMigrationDialog, FieldMigrationChoices } from '../../dialogs/Field
 import { settingsSectionTarget } from '../../routes/settingsNavigation';
 import { DocumentTypeVersionHistorySubSection } from './sub-sections/DocumentTypeVersionHistorySubSection';
 import { AiActionDialog } from './AiActionDialog';
+import { FieldConfigList } from '../../components/FieldConfigList';
+import { moveInArray } from '../../utils/arrayReorder';
 import styles from './DocumentSettingsScreen.module.css';
+
+const FIELDS_LIST_ID = 'document-fields';
 
 const newDocumentField = (existingIds: ReadonlySet<string> = new Set<string>()): DocumentField => {
   let id = 'new_field';
@@ -148,6 +152,11 @@ export const DocumentTypeEditor = ({
     const field = newDocumentField(new Set(fields.map(item => item.id)));
     fieldKeysRef.current.set(field.id, crypto.randomUUID());
     setFields(current => [...current, field]);
+    setDirty(true);
+  };
+
+  const reorderFields = (fromIndex: number, toIndex: number) => {
+    setFields(current => moveInArray(current, fromIndex, toIndex));
     setDirty(true);
   };
 
@@ -357,14 +366,20 @@ export const DocumentTypeEditor = ({
 
               {fields.length > 0 ? (
                 <div className={styles.fieldsTable}>
-                  {fields.map(field => (
-                    <DocumentFieldRow
-                      key={fieldKeysRef.current.get(field.id) ?? field.id}
-                      field={field}
-                      onUpdate={patch => updateField(field.id, patch)}
-                      onRemove={() => removeField(field)}
-                    />
-                  ))}
+                  <FieldConfigList
+                    items={fields}
+                    getId={field => fieldKeysRef.current.get(field.id) ?? field.id}
+                    listId={FIELDS_LIST_ID}
+                    onReorder={reorderFields}
+                    renderItem={(field, _index, drag) => (
+                      <DocumentFieldRow
+                        field={field}
+                        onUpdate={patch => updateField(field.id, patch)}
+                        onRemove={() => removeField(field)}
+                        dragHandleRef={drag.ref}
+                      />
+                    )}
+                  />
                 </div>
               ) : (
                 <div className={styles.fieldsTable}>

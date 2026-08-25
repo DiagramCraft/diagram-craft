@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type RefCallback } from 'react';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextArea } from '@diagram-craft/app-components/TextArea';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
@@ -37,7 +37,8 @@ export const SchemaFieldRow = ({
   onChangeType,
   onRemove,
   containmentDisabled,
-  canEdit
+  canEdit,
+  dragHandleRef
 }: {
   field: SchemaField;
   schemas: EntitySchema[];
@@ -49,6 +50,7 @@ export const SchemaFieldRow = ({
   onRemove?: () => void;
   containmentDisabled: boolean;
   canEdit: boolean;
+  dragHandleRef: RefCallback<HTMLElement>;
 }) => {
   const [idUserEdited, setIdUserEdited] = useState(() => field.id !== toFieldId(field.name));
   const [expressionTestOpen, setExpressionTestOpen] = useState(false);
@@ -355,7 +357,7 @@ export const SchemaFieldRow = ({
 
   return (
     <>
-      <FieldConfig dragHandle options={optionsDisplay()} menu={menu}>
+      <FieldConfig dragHandleRef={dragHandleRef} options={optionsDisplay()} menu={menu}>
         <FieldConfig.Cell label="Id" mono flexBasis={160}>
           <TextInput
             value={field.id}

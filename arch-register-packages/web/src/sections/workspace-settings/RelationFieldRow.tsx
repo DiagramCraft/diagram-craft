@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type RefCallback } from 'react';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
@@ -25,7 +25,8 @@ export const RelationFieldRow = ({
   onUpdate,
   onChangeType,
   onRemove,
-  canEdit
+  canEdit,
+  dragHandleRef
 }: {
   field: RelationField;
   schemas: EntitySchema[];
@@ -35,6 +36,7 @@ export const RelationFieldRow = ({
   onChangeType: (type: RelationFieldType) => void;
   onRemove?: () => void;
   canEdit: boolean;
+  dragHandleRef: RefCallback<HTMLElement>;
 }) => {
   const [idUserEdited, setIdUserEdited] = useState(() => field.id !== toFieldId(field.name));
 
@@ -201,7 +203,7 @@ export const RelationFieldRow = ({
   ) : undefined;
 
   return (
-    <FieldConfig dragHandle options={optionsDisplay()} menu={menu}>
+    <FieldConfig dragHandleRef={dragHandleRef} options={optionsDisplay()} menu={menu}>
       <FieldConfig.Cell label="Id" mono flexBasis={160}>
         <TextInput
           value={field.id}

@@ -1,11 +1,14 @@
-import { Fragment, type ReactNode } from 'react';
+import type { ReactNode } from 'react';
 import { Button } from '@diagram-craft/app-components/Button';
 import { MenuButton } from '@diagram-craft/app-components/MenuButton';
 import { Menu } from '@diagram-craft/app-components/Menu';
 import { TbDots, TbLock, TbPlus } from 'react-icons/tb';
 import type { SharedFieldGroupLink } from '@arch-register/api-types/schemaContract';
 import { resolveGroupAccessControl } from '../../lib/fieldGroupAccess';
+import { FieldConfigList, type FieldConfigDragHandle } from '../../components/FieldConfigList';
 import styles from './SchemaSettingsScreen.module.css';
+
+const UNGROUPED_LIST_ID = '__ungrouped__';
 
 export type FieldGroupsEditorField = {
   id: string;
@@ -35,7 +38,12 @@ export type FieldGroupsEditorProps<
   onAccessGroup: (groupId: string) => void;
   onRemoveGroup: (groupId: string) => void;
   onRemoveSharedGroup: (groupId: string) => void;
-  renderField: (field: Field, options: { inherited: boolean; canEdit: boolean }) => ReactNode;
+  onReorderField: (bucketFieldIds: string[], fromIndex: number, toIndex: number) => void;
+  renderField: (
+    field: Field,
+    options: { inherited: boolean; canEdit: boolean },
+    drag: FieldConfigDragHandle
+  ) => ReactNode;
 };
 
 export function FieldGroupsEditor<
@@ -54,6 +62,7 @@ export function FieldGroupsEditor<
   onAccessGroup,
   onRemoveGroup,
   onRemoveSharedGroup,
+  onReorderField,
   renderField
 }: FieldGroupsEditorProps<Field, Group>) {
   const groupIds = new Set(groups.map(group => group.id));
@@ -63,12 +72,6 @@ export function FieldGroupsEditor<
   for (const field of fields) {
     if (field.groupId && groupIds.has(field.groupId)) fieldsByGroup.get(field.groupId)!.push(field);
   }
-
-  const renderFieldRow = (field: Field, inherited: boolean) => (
-    <Fragment key={fieldKeys.get(field.id) ?? field.id}>
-      {renderField(field, { inherited, canEdit: canEdit && !inherited })}
-    </Fragment>
-  );
 
   return (
     <>
@@ -88,7 +91,21 @@ export function FieldGroupsEditor<
 
       {fields.length > 0 || groups.length > 0 ? (
         <div className={styles.fieldsTable}>
-          {ungroupedFields.map(field => renderFieldRow(field, false))}
+          <FieldConfigList
+            items={ungroupedFields}
+            getId={field => fieldKeys.get(field.id) ?? field.id}
+            listId={UNGROUPED_LIST_ID}
+            onReorder={(from, to) =>
+              onReorderField(
+                ungroupedFields.map(field => field.id),
+                from,
+                to
+              )
+            }
+            renderItem={(field, _index, drag) =>
+              renderField(field, { inherited: false, canEdit }, drag)
+            }
+          />
           {groups.map(group => {
             const inherited = sharedFieldGroupLinks.some(link => link.groupId === group.id);
             const groupFields = fieldsByGroup.get(group.id) ?? [];
@@ -162,7 +179,21 @@ export function FieldGroupsEditor<
                   )}
                 </div>
                 {groupFields.length > 0 ? (
-                  groupFields.map(field => renderFieldRow(field, inherited))
+                  <FieldConfigList
+                    items={groupFields}
+                    getId={field => fieldKeys.get(field.id) ?? field.id}
+                    listId={group.id}
+                    onReorder={(from, to) =>
+                      onReorderField(
+                        groupFields.map(field => field.id),
+                        from,
+                        to
+                      )
+                    }
+                    renderItem={(field, _index, drag) =>
+                      renderField(field, { inherited, canEdit: canEdit && !inherited }, drag)
+                    }
+                  />
                 ) : (
                   <div className={styles.groupEmpty}>No fields in this group.</div>
                 )}

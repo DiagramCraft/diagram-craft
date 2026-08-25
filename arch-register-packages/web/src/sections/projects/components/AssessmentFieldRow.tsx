@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, type RefCallback } from 'react';
 import { TbAlignLeft, TbDatabase, TbDots, TbEdit, TbStar } from 'react-icons/tb';
 import type { AssessmentField, AssessmentGroup } from '@arch-register/api-types/assessmentContract';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -40,13 +40,15 @@ export type AssessmentFieldRowProps = {
   groups: AssessmentGroup[];
   onUpdate: (changes: Partial<AssessmentField>) => void;
   onRemove: () => void;
+  dragHandleRef: RefCallback<HTMLElement>;
 };
 
 export const AssessmentFieldRow = ({
   field,
   groups,
   onUpdate,
-  onRemove
+  onRemove,
+  dragHandleRef
 }: AssessmentFieldRowProps) => {
   const { enums } = useWorkspaceContext();
   const portal = usePortal();
@@ -212,7 +214,7 @@ export const AssessmentFieldRow = ({
 
   return (
     <>
-      <FieldConfig dragHandle options={options} menu={menu}>
+      <FieldConfig dragHandleRef={dragHandleRef} options={options} menu={menu}>
         <FieldConfig.Cell label="Id" mono flexBasis={140}>
           <TextInput
             value={field.id}

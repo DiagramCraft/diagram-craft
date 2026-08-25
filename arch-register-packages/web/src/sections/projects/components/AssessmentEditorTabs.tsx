@@ -16,7 +16,10 @@ import { AssessmentScopeFilterBuilder } from './AssessmentScopeFilterBuilder';
 import { PickedTeams } from './AssessmentList';
 import { AssessmentFieldRow, FIELD_TYPE_OPTIONS } from './AssessmentFieldRow';
 import type { AssessmentEditorController } from './assessmentEditorState';
+import { FieldConfigList } from '../../../components/FieldConfigList';
 import styles from '../ProjectAssessments.module.css';
+
+const UNGROUPED_LIST_ID = '__ungrouped__';
 
 export const AssessmentEditorTabs = ({
   editor,
@@ -253,15 +256,27 @@ export const AssessmentFieldsTab = ({ editor }: { editor: AssessmentEditorContro
           </div>
         ) : (
           <div className={styles.fieldsList}>
-            {editor.ungroupedFields.map(field => (
-              <AssessmentFieldRow
-                key={actions.fieldKey(field.id)}
-                field={field}
-                groups={draft.groups}
-                onUpdate={changes => actions.updateField(field.id, changes)}
-                onRemove={() => actions.removeField(field.id)}
-              />
-            ))}
+            <FieldConfigList
+              items={editor.ungroupedFields}
+              getId={field => actions.fieldKey(field.id)}
+              listId={UNGROUPED_LIST_ID}
+              onReorder={(from, to) =>
+                actions.reorderFields(
+                  editor.ungroupedFields.map(field => field.id),
+                  from,
+                  to
+                )
+              }
+              renderItem={(field, _index, drag) => (
+                <AssessmentFieldRow
+                  field={field}
+                  groups={draft.groups}
+                  onUpdate={changes => actions.updateField(field.id, changes)}
+                  onRemove={() => actions.removeField(field.id)}
+                  dragHandleRef={drag.ref}
+                />
+              )}
+            />
             {draft.groups.map(group => (
               <div className={styles.groupSection} key={group.id}>
                 <div className={styles.groupHeader}>
@@ -290,15 +305,27 @@ export const AssessmentFieldsTab = ({ editor }: { editor: AssessmentEditorContro
                   </div>
                 </div>
                 {(editor.fieldsByGroup.get(group.id) ?? []).length > 0 ? (
-                  (editor.fieldsByGroup.get(group.id) ?? []).map(field => (
-                    <AssessmentFieldRow
-                      key={actions.fieldKey(field.id)}
-                      field={field}
-                      groups={draft.groups}
-                      onUpdate={changes => actions.updateField(field.id, changes)}
-                      onRemove={() => actions.removeField(field.id)}
-                    />
-                  ))
+                  <FieldConfigList
+                    items={editor.fieldsByGroup.get(group.id) ?? []}
+                    getId={field => actions.fieldKey(field.id)}
+                    listId={group.id}
+                    onReorder={(from, to) =>
+                      actions.reorderFields(
+                        (editor.fieldsByGroup.get(group.id) ?? []).map(field => field.id),
+                        from,
+                        to
+                      )
+                    }
+                    renderItem={(field, _index, drag) => (
+                      <AssessmentFieldRow
+                        field={field}
+                        groups={draft.groups}
+                        onUpdate={changes => actions.updateField(field.id, changes)}
+                        onRemove={() => actions.removeField(field.id)}
+                        dragHandleRef={drag.ref}
+                      />
+                    )}
+                  />
                 ) : (
                   <div className={styles.groupEmpty}>No fields in this group.</div>
                 )}

@@ -1,0 +1,14 @@
+.row {
+  transition: opacity 0.1s ease;
+}
+
+.dragPreview {
+  position: fixed;
+  top: 0;
+  left: 0;
+  z-index: 1000;
+  pointer-events: none;
+  box-shadow: var(--shadow-3, 0 8px 24px rgba(0, 0, 0, 0.25));
+  border-radius: var(--r-md);
+  opacity: 0.9;
+}

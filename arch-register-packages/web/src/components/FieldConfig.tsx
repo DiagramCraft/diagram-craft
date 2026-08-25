@@ -1,24 +1,22 @@
-import { type ReactNode } from 'react';
+import { type ReactNode, type RefCallback } from 'react';
 
 import { TbGripVertical } from 'react-icons/tb';
 
 import styles from './FieldConfig.module.css';
 
 type FieldConfigProps = {
-  dragHandle?: boolean;
+  dragHandleRef: RefCallback<HTMLElement>;
   menu?: ReactNode;
   options?: ReactNode;
   children: ReactNode;
 };
 
-export const FieldConfig = ({ dragHandle, menu, options, children }: FieldConfigProps) => (
+export const FieldConfig = ({ dragHandleRef, menu, options, children }: FieldConfigProps) => (
   <div className={styles.card}>
     <div className={styles.head}>
-      {dragHandle && (
-        <span className={styles.handle}>
-          <TbGripVertical size={14} />
-        </span>
-      )}
+      <span className={styles.handle} ref={dragHandleRef}>
+        <TbGripVertical size={14} />
+      </span>
       {children}
       {menu && <span className={styles.menu}>{menu}</span>}
     </div>

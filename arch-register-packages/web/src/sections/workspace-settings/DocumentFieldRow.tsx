@@ -1,6 +1,6 @@
-import { useState } from 'react';
+import { useState, type RefCallback } from 'react';
 
-import { TbEye, TbGripVertical, TbDots } from 'react-icons/tb';
+import { TbEye, TbDots } from 'react-icons/tb';
 
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { Select } from '@diagram-craft/app-components/Select';
@@ -28,37 +28,44 @@ const NOT_EXTERNAL = '__not_external__';
 export const DocumentFieldRow = ({
   field,
   onUpdate,
-  onRemove
+  onRemove,
+  dragHandleRef
 }: {
   field: DocumentField;
   onUpdate: (patch: Partial<DocumentField>) => void;
   onRemove: () => void;
+  dragHandleRef: RefCallback<HTMLElement>;
 }) => {
   const [idUserEdited, setIdUserEdited] = useState(() => field.id !== toFieldId(field.name));
 
   if (field.retired) {
     return (
-      <div className={`${styles.fieldRow} ${styles.fieldRowRetired}`}>
-        <span className={styles.fieldHandle}>
-          <TbGripVertical size={14} />
-        </span>
-        <span className={styles.fieldId}>{field.id}</span>
-        <span>{field.name}</span>
-        <span className="dim">{field.type}</span>
-        <span className="dim">—</span>
-        <span>
+      <FieldConfig
+        dragHandleRef={dragHandleRef}
+        menu={
+          <button
+            type="button"
+            className={styles.iconBtn}
+            title="Restore field"
+            onClick={() => onUpdate({ retired: false })}
+          >
+            <TbEye size={13} />
+          </button>
+        }
+      >
+        <FieldConfig.Cell label="Id" mono flexBasis={140}>
+          {field.id}
+        </FieldConfig.Cell>
+        <FieldConfig.Cell label="Label" flexBasis={160}>
+          {field.name}
+        </FieldConfig.Cell>
+        <FieldConfig.Cell label="Type" flexBasis={130}>
+          {field.type}
+        </FieldConfig.Cell>
+        <FieldConfig.Cell label="Status" flexBasis={120}>
           <Chip tone="ghost">Retired</Chip>
-        </span>
-        <span className="dim">—</span>
-        <button
-          type="button"
-          className={styles.iconBtn}
-          title="Restore field"
-          onClick={() => onUpdate({ retired: false })}
-        >
-          <TbEye size={13} />
-        </button>
-      </div>
+        </FieldConfig.Cell>
+      </FieldConfig>
     );
   }
 
@@ -132,7 +139,7 @@ export const DocumentFieldRow = ({
 
   return (
     <FieldConfig
-      dragHandle
+      dragHandleRef={dragHandleRef}
       options={options}
       menu={
         <MenuButton.Root>

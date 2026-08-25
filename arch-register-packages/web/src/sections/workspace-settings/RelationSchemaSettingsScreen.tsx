@@ -254,6 +254,7 @@ export const RelationSchemaSettingsScreen = () => {
             onUpdateField={editor.updateField}
             onChangeFieldType={editor.changeFieldType}
             onRemoveField={editor.removeField}
+            onReorderField={editor.reorderFields}
             onEditGroup={group => {
               editor.setEditingGroup(group);
               editor.setGroupDialogOpen(true);
