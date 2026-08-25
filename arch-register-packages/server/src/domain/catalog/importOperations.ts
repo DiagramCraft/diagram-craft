@@ -26,6 +26,7 @@ import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaCo
 import { createEntityWithAudit, updateEntityWithAudit } from './entityMutations';
 import { withCatalogMutationTransaction } from './mutationTransaction';
 import { normalizeEntityScalarFields } from './entityScalarValues';
+import { getWorkspaceEnumDefinitions } from './enumOptions';
 
 const checker = new PermissionChecker();
 
@@ -232,7 +233,7 @@ export const importCommit = async (
       getTeamIds(db, workspace),
       listAllCatalogEntities(db, workspace),
       currencyConfigPromise,
-      db.catalog.listEnums(workspace)
+      getWorkspaceEnumDefinitions(db, workspace)
     ]);
   const supportedCurrencies = new Set(currencyConfig.currencies.map(currency => currency.code));
 

@@ -219,7 +219,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
   });
 
   describe('enums', () => {
-    it('creates, updates and deletes an enum with JSON options round-tripped', async () => {
+    it('creates, updates and deletes an enum with normalized options round-tripped', async () => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
 
@@ -236,8 +236,8 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         updated_at: new Date()
       });
       expect(created.options).toEqual([
-        { value: 'low', label: 'Low' },
-        { value: 'high', label: 'High' }
+        { value: 'low', label: 'Low', description: null, retired: false, restricted: false },
+        { value: 'high', label: 'High', description: null, retired: false, restricted: false }
       ]);
 
       const updated = await db.catalog.updateEnum(workspace, created.id, {
@@ -246,7 +246,9 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         sort_order: 1,
         updated_at: new Date()
       });
-      expect(updated!.options).toEqual([{ value: 'low', label: 'Low' }]);
+      expect(updated!.options).toEqual([
+        { value: 'low', label: 'Low', description: null, retired: false, restricted: false }
+      ]);
 
       const deleted = await db.catalog.deleteEnum(workspace, created.id);
       expect(deleted!.id).toBe(created.id);

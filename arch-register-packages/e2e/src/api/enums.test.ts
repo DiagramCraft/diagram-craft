@@ -14,7 +14,15 @@ test.describe('GET /api/:workspace/enums', () => {
           id: seededEnumId,
           workspace: seedIds.workspace.default,
           name: 'API Type',
-          options: expect.arrayContaining([{ value: 'openapi', label: 'OpenAPI' }]),
+          options: expect.arrayContaining([
+            expect.objectContaining({
+              value: 'openapi',
+              label: 'OpenAPI',
+              description: null,
+              retired: false,
+              restricted: false
+            })
+          ]),
           created_at: expect.any(String),
           updated_at: expect.any(String)
         })
