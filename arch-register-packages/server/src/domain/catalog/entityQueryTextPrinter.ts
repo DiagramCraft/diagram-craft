@@ -195,13 +195,11 @@ const printPredicateOrRelationExists = (
     return `schema:${printSchemaRef(schemaNameById(schemas, node.value as string))}`;
   }
 
-  const { text: pathText, endSchemaId, endRelationSchemaId } = printPathSteps(
-    node.path,
-    schemaId,
-    schemas,
-    relationSchemas,
-    relationSchemaId
-  );
+  const {
+    text: pathText,
+    endSchemaId,
+    endRelationSchemaId
+  } = printPathSteps(node.path, schemaId, schemas, relationSchemas, relationSchemaId);
   const fieldType = endRelationSchemaId
     ? relationFieldTypeAt(node.fieldId, endRelationSchemaId, relationSchemas)
     : fieldTypeAt(node.fieldId, endSchemaId, schemas);
@@ -270,9 +268,4 @@ export const printEntityQueryText = (
   schemas: SchemaCatalog,
   relationSchemas: RelationSchemaCatalog = new Map()
 ): string =>
-  printTextQueryNode(
-    query.root,
-    deriveRootSchemaIdFromIR(query.root),
-    schemas,
-    relationSchemas
-  );
+  printTextQueryNode(query.root, deriveRootSchemaIdFromIR(query.root), schemas, relationSchemas);

@@ -183,10 +183,7 @@ const tryParseSchemaPredicate = (state: ParserState): TextQueryNode | undefined 
   const save = state.pos;
   advance(state);
   const comparator = peek(state);
-  if (
-    comparator.kind !== 'COMPARATOR' ||
-    (comparator.text !== ':' && comparator.text !== '=')
-  ) {
+  if (comparator.kind !== 'COMPARATOR' || (comparator.text !== ':' && comparator.text !== '=')) {
     state.pos = save;
     return undefined;
   }
@@ -203,10 +200,7 @@ const tryParseFreeTextPredicate = (state: ParserState): TextQueryNode | undefine
   const token = peek(state);
   if (token.kind !== 'IDENT' || token.text !== 'text') return undefined;
   const comparator = state.tokens[state.pos + 1];
-  if (
-    comparator?.kind !== 'COMPARATOR' ||
-    (comparator.text !== ':' && comparator.text !== '=')
-  ) {
+  if (comparator?.kind !== 'COMPARATOR' || (comparator.text !== ':' && comparator.text !== '=')) {
     return undefined;
   }
   advance(state);

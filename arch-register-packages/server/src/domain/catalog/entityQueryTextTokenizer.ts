@@ -108,8 +108,7 @@ export const tokenize = (input: string): Token[] => {
         text = input.slice(i, k);
         j = k;
       }
-      const kind =
-        text === 'AND' ? 'AND' : text === 'OR' ? 'OR' : text === 'NOT' ? 'NOT' : 'IDENT';
+      const kind = text === 'AND' ? 'AND' : text === 'OR' ? 'OR' : text === 'NOT' ? 'NOT' : 'IDENT';
       tokens.push({ kind, text, offset });
       i = j;
       continue;

@@ -66,11 +66,7 @@ const schemaNameMap = (schemas: SchemaCatalog): Map<string, string> => {
 export const schemaNameById = (schemas: SchemaCatalog, schemaId: string): string =>
   schemas.get(schemaId)?.name ?? schemaId;
 
-export const resolveSchemaRef = (
-  schemas: SchemaCatalog,
-  ref: string,
-  offset: number
-): string => {
+export const resolveSchemaRef = (schemas: SchemaCatalog, ref: string, offset: number): string => {
   const id = schemaNameMap(schemas).get(ref);
   if (!id) throw new TextCompileError(`Unknown schema '${ref}'`, offset);
   return id;
@@ -451,7 +447,8 @@ const relationTargetSchemaId = (
   direction: 'in' | 'out'
 ): string | undefined => {
   const relationSchema = relationSchemas.get(relationSchemaId);
-  const targetSchemaIds = direction === 'in' ? relationSchema?.out_schema_ids : relationSchema?.in_schema_ids;
+  const targetSchemaIds =
+    direction === 'in' ? relationSchema?.out_schema_ids : relationSchema?.in_schema_ids;
   return targetSchemaIds?.length === 1 ? targetSchemaIds[0] : undefined;
 };
 
@@ -470,7 +467,8 @@ function resolveStep(
 ): ResolvedStep {
   const { schemas, relationSchemas, authCtx } = state;
   if (currentRelationSchemaId) {
-    const fieldId = syntaxStep.kind === 'typedRelation' ? syntaxStep.relationRef.value : syntaxStep.field.value;
+    const fieldId =
+      syntaxStep.kind === 'typedRelation' ? syntaxStep.relationRef.value : syntaxStep.field.value;
     if (syntaxStep.kind === 'typedRelation') {
       throw new TextCompileError(
         `Relation schema '${relationSchemaNameById(relationSchemas, currentRelationSchemaId)}' does not define a viewable field '${fieldId}'`,
@@ -533,7 +531,11 @@ function resolveStep(
         ...(filter ? { filter } : {})
       },
       fieldId: `${syntaxStep.direction === 'in' ? '->' : '<-'}${syntaxStep.relationRef.value}`,
-      resolution: { kind: 'unboundTypedRelation', relationSchemaId, direction: syntaxStep.direction },
+      resolution: {
+        kind: 'unboundTypedRelation',
+        relationSchemaId,
+        direction: syntaxStep.direction
+      },
       nextSchemaId: relationTargetSchemaId(relationSchemas, relationSchemaId, syntaxStep.direction),
       nextRelationSchemaId: undefined
     };
@@ -778,12 +780,7 @@ function resolveNode(
         value: resolveSchemaRef(state.schemas, node.schemaRef.value, node.schemaRef.offset)
       };
     case 'path':
-      return resolvePathExpression(
-        node,
-        currentSchemaId,
-        currentRelationSchemaId,
-        state
-      );
+      return resolvePathExpression(node, currentSchemaId, currentRelationSchemaId, state);
   }
 }
 

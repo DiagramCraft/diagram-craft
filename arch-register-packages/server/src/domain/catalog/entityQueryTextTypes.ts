@@ -1,8 +1,5 @@
 import type { EntityQuery, FilterOp } from '@arch-register/api-types/entityQueryIR';
-import type {
-  RelationSchemaCatalog,
-  SchemaCatalog
-} from './entityQueryIRResolution';
+import type { RelationSchemaCatalog, SchemaCatalog } from './entityQueryIRResolution';
 import type { WorkspaceEnumDbResult } from './db/catalogDatabase';
 
 export type EnumCatalog = Map<string, WorkspaceEnumDbResult>;

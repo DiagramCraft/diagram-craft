@@ -1,18 +1,11 @@
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
-import {
-  TextCompileError,
-  type EnumCatalog,
-  type TextParseResult
-} from './entityQueryTextTypes';
+import { TextCompileError, type EnumCatalog, type TextParseResult } from './entityQueryTextTypes';
 import { parseTextQuery } from './entityQueryTextParser';
 import { resolveTextQuery } from './entityQueryTextResolver';
 import { printEntityQueryText as printText } from './entityQueryTextPrinter';
 import { tokenize } from './entityQueryTextTokenizer';
-import type {
-  RelationSchemaCatalog,
-  SchemaCatalog
-} from './entityQueryIRResolution';
+import type { RelationSchemaCatalog, SchemaCatalog } from './entityQueryIRResolution';
 
 // Public façade for the text ⇄ IR compiler. The individual stages are intentionally kept in
 // sibling modules so tokenization, parsing, resolution, and printing can be tested independently.
