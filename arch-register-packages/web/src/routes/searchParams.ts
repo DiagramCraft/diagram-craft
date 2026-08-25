@@ -1,467 +1,330 @@
-export type EntityBrowserSidebarTab = 'home' | 'views' | 'bookmarks' | 'baselines';
+import {
+  defineSearchParamSchema,
+  enumCodec,
+  mapCodec,
+  numberInRangeCodec,
+  omitDefaultCodec,
+  parseSearchParams,
+  positivePageCodec,
+  stringCodec,
+  type SearchParamCodecOutput,
+  type SearchParamsFromSchema
+} from './searchParamCodecs';
 
-export type SharedEntityBrowserSearchParams = {
-  type?: string;
-  status?: string;
-  owner?: string;
-  q?: string;
-  viewId?: string;
-  viewMode?:
-    | 'table'
-    | 'cards'
-    | 'tree'
-    | 'radar'
-    | 'timeline'
-    | 'matrix'
-    | 'explore'
-    | 'bubble'
-    | 'heatmap'
-    | 'map'
-    | 'diff'
-    | 'graph'
-    | 'traceability';
-  sort?: string;
-  projectScope?: 'project' | 'all';
-  viewConfigs?: string;
-  sidebarTab?: EntityBrowserSidebarTab;
-  baselineId?: string;
-  collectionId?: string;
-  filters?: string; // JSON string of FilterCondition[]
-  entityQuery?: string; // JSON string of structured EntityQuery IR
-  asOf?: string; // ISO 8601 date — when set, browser enters read-only point-in-time snapshot mode
-  asOfIncludeProjects?: 'true' | 'false'; // whether asOf reconstruction applies project future_update snapshots; defaults to 'true'
-  joinAssessmentId?: string; // joined assessment identifier for display, filtering, and view attributes
-};
+const entityBrowserSidebarValues = enumCodec(['home', 'views', 'bookmarks', 'baselines'] as const);
 
-const validateSharedEntityBrowserSearch = (
-  raw: Record<string, unknown>
-): SharedEntityBrowserSearchParams => ({
-  type: typeof raw.type === 'string' ? raw.type : undefined,
-  status: typeof raw.status === 'string' ? raw.status : undefined,
-  owner: typeof raw.owner === 'string' ? raw.owner : undefined,
-  q: typeof raw.q === 'string' ? raw.q : undefined,
-  viewId: typeof raw.viewId === 'string' ? raw.viewId : undefined,
-  viewMode:
-    raw.viewMode === 'table' ||
-    raw.viewMode === 'cards' ||
-    raw.viewMode === 'tree' ||
-    raw.viewMode === 'radar' ||
-    raw.viewMode === 'timeline' ||
-    raw.viewMode === 'matrix' ||
-    raw.viewMode === 'explore' ||
-    raw.viewMode === 'bubble' ||
-    raw.viewMode === 'heatmap' ||
-    raw.viewMode === 'map' ||
-    raw.viewMode === 'diff' ||
-    raw.viewMode === 'graph' ||
-    raw.viewMode === 'traceability'
-      ? raw.viewMode
-      : undefined,
-  sort: typeof raw.sort === 'string' ? raw.sort : undefined,
-  projectScope:
-    raw.projectScope === 'project' || raw.projectScope === 'all' ? raw.projectScope : undefined,
-  viewConfigs: typeof raw.viewConfigs === 'string' ? raw.viewConfigs : undefined,
-  sidebarTab:
-    raw.sidebarTab === 'home' ||
-    raw.sidebarTab === 'views' ||
-    raw.sidebarTab === 'bookmarks' ||
-    raw.sidebarTab === 'baselines'
-      ? raw.sidebarTab
-      : raw.sidebarTab === 'filters'
-        ? 'home'
-        : raw.sidebarTab === 'pinned' || raw.sidebarTab === 'collections'
-          ? 'bookmarks'
-          : undefined,
-  baselineId: typeof raw.baselineId === 'string' ? raw.baselineId : undefined,
-  collectionId: typeof raw.collectionId === 'string' ? raw.collectionId : undefined,
-  filters: typeof raw.filters === 'string' ? raw.filters : undefined,
-  entityQuery: typeof raw.entityQuery === 'string' ? raw.entityQuery : undefined,
-  asOf: typeof raw.asOf === 'string' ? raw.asOf : undefined,
-  asOfIncludeProjects:
-    raw.asOfIncludeProjects === 'true' || raw.asOfIncludeProjects === 'false'
-      ? raw.asOfIncludeProjects
-      : undefined,
-  joinAssessmentId: typeof raw.joinAssessmentId === 'string' ? raw.joinAssessmentId : undefined
+export type EntityBrowserSidebarTab = SearchParamCodecOutput<typeof entityBrowserSidebarValues>;
+
+const entityBrowserSidebarCodec = mapCodec(
+  enumCodec([
+    'home',
+    'views',
+    'bookmarks',
+    'baselines',
+    'filters',
+    'pinned',
+    'collections'
+  ] as const),
+  (value): EntityBrowserSidebarTab => {
+    if (value === 'filters') return 'home';
+    if (value === 'pinned' || value === 'collections') return 'bookmarks';
+    return value;
+  }
+);
+
+const sharedEntityBrowserSearchSchema = defineSearchParamSchema({
+  type: stringCodec,
+  status: stringCodec,
+  owner: stringCodec,
+  q: stringCodec,
+  viewId: stringCodec,
+  viewMode: enumCodec([
+    'table',
+    'cards',
+    'tree',
+    'radar',
+    'timeline',
+    'matrix',
+    'explore',
+    'bubble',
+    'heatmap',
+    'map',
+    'diff',
+    'graph',
+    'traceability'
+  ] as const),
+  sort: stringCodec,
+  projectScope: enumCodec(['project', 'all'] as const),
+  viewConfigs: stringCodec,
+  sidebarTab: entityBrowserSidebarCodec,
+  baselineId: stringCodec,
+  collectionId: stringCodec,
+  filters: stringCodec,
+  entityQuery: stringCodec,
+  asOf: stringCodec,
+  asOfIncludeProjects: enumCodec(['true', 'false'] as const),
+  joinAssessmentId: stringCodec
 });
+
+export type SharedEntityBrowserSearchParams = SearchParamsFromSchema<
+  typeof sharedEntityBrowserSearchSchema
+>;
 
 // Entity browser filters
 export type EntitySearchParams = SharedEntityBrowserSearchParams;
 
 export const validateEntitySearch = (raw: Record<string, unknown>): EntitySearchParams =>
-  validateSharedEntityBrowserSearch(raw);
+  parseSearchParams(sharedEntityBrowserSearchSchema, raw);
 
 // Relation browser params
-export type RelationSearchParams = {
-  viewId?: string;
-  viewMode?: 'table' | 'graph';
-  entityQuery?: string; // JSON string of structured EntityQuery IR (root_kind: 'relation')
-  edgeLabelFieldId?: string;
-  edgeColorFieldId?: string;
-};
-
-export const validateRelationSearch = (raw: Record<string, unknown>): RelationSearchParams => ({
-  viewId: typeof raw.viewId === 'string' ? raw.viewId : undefined,
-  viewMode: raw.viewMode === 'graph' ? 'graph' : raw.viewMode === 'table' ? 'table' : undefined,
-  entityQuery: typeof raw.entityQuery === 'string' ? raw.entityQuery : undefined,
-  edgeLabelFieldId: typeof raw.edgeLabelFieldId === 'string' ? raw.edgeLabelFieldId : undefined,
-  edgeColorFieldId: typeof raw.edgeColorFieldId === 'string' ? raw.edgeColorFieldId : undefined
+const relationSearchSchema = defineSearchParamSchema({
+  viewId: stringCodec,
+  viewMode: enumCodec(['table', 'graph'] as const),
+  entityQuery: stringCodec, // JSON string of structured EntityQuery IR (root_kind: 'relation')
+  edgeLabelFieldId: stringCodec,
+  edgeColorFieldId: stringCodec
 });
 
-// Entity detail params
-export type EntityDetailSearchParams = {
-  contentQuery?: string;
-  contentView?: 'grid' | 'list';
-  sidebarTab?: SharedEntityBrowserSearchParams['sidebarTab'];
-  collectionId?: string;
-  apiQ?: string;
-  apiResource?: string;
-  apiAction?: string;
-  apiTag?: string;
-  apiDeprecated?: 'true' | 'false';
-  apiPage?: number;
-  apiArtifactId?: string;
-  apiRevisionId?: string;
-  // Most values are the fixed TabId set (api/topology/graph/relations/...); the rest are dynamic
-  // per-schema detail-layout tab ids (see entityDetailTypes.ts), so this accepts any string.
-  tab?: string;
-};
+export type RelationSearchParams = SearchParamsFromSchema<typeof relationSearchSchema>;
 
-export type SharedContentBrowserSearchParams = {
-  contentQuery?: string;
-  contentView?: 'grid' | 'list';
-};
+export const validateRelationSearch = (raw: Record<string, unknown>): RelationSearchParams =>
+  parseSearchParams(relationSearchSchema, raw);
 
-const validateSharedContentBrowserSearch = (
-  raw: Record<string, unknown>
-): SharedContentBrowserSearchParams => ({
-  contentQuery: typeof raw.contentQuery === 'string' ? raw.contentQuery : undefined,
-  contentView:
-    raw.contentView === 'grid' || raw.contentView === 'list' ? raw.contentView : undefined
+const sharedContentBrowserSearchSchema = defineSearchParamSchema({
+  contentQuery: stringCodec,
+  contentView: enumCodec(['grid', 'list'] as const)
 });
 
-const validatePositivePage = (value: unknown) => {
-  if (typeof value === 'number' && Number.isInteger(value) && value > 0) return value;
-  if (typeof value === 'string' && /^\d+$/.test(value)) {
-    const page = Number(value);
-    return Number.isSafeInteger(page) && page > 0 ? page : undefined;
-  }
-  return undefined;
-};
+export type SharedContentBrowserSearchParams = SearchParamsFromSchema<
+  typeof sharedContentBrowserSearchSchema
+>;
 
 export type WorkspaceContentSearchParams = SharedContentBrowserSearchParams;
 
 export const validateWorkspaceContentSearch = (
   raw: Record<string, unknown>
-): WorkspaceContentSearchParams => validateSharedContentBrowserSearch(raw);
+): WorkspaceContentSearchParams => parseSearchParams(sharedContentBrowserSearchSchema, raw);
+
+// Entity detail params
+const entityDetailSearchSchema = defineSearchParamSchema({
+  ...sharedContentBrowserSearchSchema,
+  sidebarTab: entityBrowserSidebarCodec,
+  collectionId: stringCodec,
+  apiQ: stringCodec,
+  apiResource: stringCodec,
+  apiAction: stringCodec,
+  apiTag: stringCodec,
+  apiDeprecated: enumCodec(['true', 'false'] as const),
+  apiPage: positivePageCodec,
+  apiArtifactId: stringCodec,
+  apiRevisionId: stringCodec,
+  // Most values are the fixed TabId set (api/topology/graph/relations/...); the rest are dynamic
+  // per-schema detail-layout tab ids (see entityDetailTypes.ts), so this accepts any string.
+  tab: stringCodec
+});
+
+export type EntityDetailSearchParams = SearchParamsFromSchema<typeof entityDetailSearchSchema>;
 
 export const validateEntityDetailSearch = (
   raw: Record<string, unknown>
-): EntityDetailSearchParams => ({
-  ...validateSharedContentBrowserSearch(raw),
-  sidebarTab: validateSharedEntityBrowserSearch(raw).sidebarTab,
-  collectionId: typeof raw.collectionId === 'string' ? raw.collectionId : undefined,
-  apiQ: typeof raw.apiQ === 'string' ? raw.apiQ : undefined,
-  apiResource: typeof raw.apiResource === 'string' ? raw.apiResource : undefined,
-  apiAction: typeof raw.apiAction === 'string' ? raw.apiAction : undefined,
-  apiTag: typeof raw.apiTag === 'string' ? raw.apiTag : undefined,
-  apiDeprecated:
-    raw.apiDeprecated === 'true' || raw.apiDeprecated === 'false' ? raw.apiDeprecated : undefined,
-  apiPage: validatePositivePage(raw.apiPage),
-  apiArtifactId: typeof raw.apiArtifactId === 'string' ? raw.apiArtifactId : undefined,
-  apiRevisionId: typeof raw.apiRevisionId === 'string' ? raw.apiRevisionId : undefined,
-  tab: typeof raw.tab === 'string' ? raw.tab : undefined
+): EntityDetailSearchParams => parseSearchParams(entityDetailSearchSchema, raw);
+
+const markdownSearchSchema = defineSearchParamSchema({
+  commentId: stringCodec,
+  draftName: stringCodec,
+  draftFolder: stringCodec,
+  draftType: stringCodec,
+  draftTemplate: stringCodec,
+  mode: enumCodec(['edit', 'preview'] as const),
+  panel: enumCodec(['preview', 'history'] as const),
+  revisionId: stringCodec,
+  historyMode: enumCodec(['preview', 'compare'] as const),
+  compareMode: enumCodec(['to-current', 'changes-in-version'] as const),
+  diagramSessionId: stringCodec
 });
 
-export type MarkdownSearchParams = {
-  commentId?: string;
-  draftName?: string;
-  draftFolder?: string;
-  draftType?: string;
-  draftTemplate?: string;
-  mode?: 'edit' | 'preview';
-  panel?: 'preview' | 'history';
-  revisionId?: string;
-  historyMode?: 'preview' | 'compare';
-  compareMode?: 'to-current' | 'changes-in-version';
-  diagramSessionId?: string;
-};
+export type MarkdownSearchParams = SearchParamsFromSchema<typeof markdownSearchSchema>;
 
-export const validateMarkdownSearch = (raw: Record<string, unknown>): MarkdownSearchParams => ({
-  commentId: typeof raw.commentId === 'string' ? raw.commentId : undefined,
-  draftName: typeof raw.draftName === 'string' ? raw.draftName : undefined,
-  draftFolder: typeof raw.draftFolder === 'string' ? raw.draftFolder : undefined,
-  draftType: typeof raw.draftType === 'string' ? raw.draftType : undefined,
-  draftTemplate: typeof raw.draftTemplate === 'string' ? raw.draftTemplate : undefined,
-  mode: raw.mode === 'edit' || raw.mode === 'preview' ? raw.mode : undefined,
-  panel: raw.panel === 'preview' || raw.panel === 'history' ? raw.panel : undefined,
-  revisionId: typeof raw.revisionId === 'string' ? raw.revisionId : undefined,
-  historyMode:
-    raw.historyMode === 'preview' || raw.historyMode === 'compare' ? raw.historyMode : undefined,
-  compareMode:
-    raw.compareMode === 'to-current' || raw.compareMode === 'changes-in-version'
-      ? raw.compareMode
-      : undefined,
-  diagramSessionId: typeof raw.diagramSessionId === 'string' ? raw.diagramSessionId : undefined
-});
+export const validateMarkdownSearch = (raw: Record<string, unknown>): MarkdownSearchParams =>
+  parseSearchParams(markdownSearchSchema, raw);
 
 // Project detail params
-export type ProjectSearchParams = {
-  tab?: 'projects' | 'archive';
-  section?: 'home' | 'entities' | 'assessments' | 'milestones';
-  assessmentId?: string;
-  assessmentTab?: 'details' | 'summary' | 'discussion';
-  dialog?: 'add-entity';
-} & SharedEntityBrowserSearchParams &
-  SharedContentBrowserSearchParams;
-
-export const validateProjectSearch = (raw: Record<string, unknown>): ProjectSearchParams => ({
-  ...validateSharedEntityBrowserSearch(raw),
-  ...validateSharedContentBrowserSearch(raw),
-  tab: raw.tab === 'projects' || raw.tab === 'archive' ? raw.tab : undefined,
-  section:
-    raw.section === 'home' ||
-    raw.section === 'entities' ||
-    raw.section === 'assessments' ||
-    raw.section === 'milestones'
-      ? raw.section
-      : undefined,
-  assessmentId: typeof raw.assessmentId === 'string' ? raw.assessmentId : undefined,
-  assessmentTab:
-    raw.assessmentTab === 'details' ||
-    raw.assessmentTab === 'summary' ||
-    raw.assessmentTab === 'discussion'
-      ? raw.assessmentTab
-      : undefined,
-  dialog: raw.dialog === 'add-entity' ? raw.dialog : undefined
+const projectSearchSchema = defineSearchParamSchema({
+  ...sharedEntityBrowserSearchSchema,
+  ...sharedContentBrowserSearchSchema,
+  tab: enumCodec(['projects', 'archive'] as const),
+  section: enumCodec(['home', 'entities', 'assessments', 'milestones'] as const),
+  assessmentId: stringCodec,
+  assessmentTab: enumCodec(['details', 'summary', 'discussion'] as const),
+  dialog: enumCodec(['add-entity'] as const)
 });
+
+export type ProjectSearchParams = SearchParamsFromSchema<typeof projectSearchSchema>;
+
+export const validateProjectSearch = (raw: Record<string, unknown>): ProjectSearchParams =>
+  parseSearchParams(projectSearchSchema, raw);
 
 // Settings params
-export type SettingsSearchParams = {
-  auditEntityType?: string;
-  auditOperation?: 'create' | 'update' | 'delete';
-  auditStartDate?: string;
-  auditEndDate?: string;
-  analyticsView?: 'stale';
-};
-
-export const validateSettingsSearch = (raw: Record<string, unknown>): SettingsSearchParams => ({
-  auditEntityType: typeof raw.auditEntityType === 'string' ? raw.auditEntityType : undefined,
-  auditOperation:
-    raw.auditOperation === 'create' ||
-    raw.auditOperation === 'update' ||
-    raw.auditOperation === 'delete'
-      ? raw.auditOperation
-      : undefined,
-  auditStartDate: typeof raw.auditStartDate === 'string' ? raw.auditStartDate : undefined,
-  auditEndDate: typeof raw.auditEndDate === 'string' ? raw.auditEndDate : undefined,
-  analyticsView: raw.analyticsView === 'stale' ? raw.analyticsView : undefined
+const settingsSearchSchema = defineSearchParamSchema({
+  auditEntityType: stringCodec,
+  auditOperation: enumCodec(['create', 'update', 'delete'] as const),
+  auditStartDate: stringCodec,
+  auditEndDate: stringCodec,
+  analyticsView: enumCodec(['stale'] as const)
 });
 
+export type SettingsSearchParams = SearchParamsFromSchema<typeof settingsSearchSchema>;
+
+export const validateSettingsSearch = (raw: Record<string, unknown>): SettingsSearchParams =>
+  parseSearchParams(settingsSearchSchema, raw);
+
 // Legacy `?section=` support for the bare `/settings` redirect route
-export type LegacySettingsSearchParams = SettingsSearchParams & { section?: string };
+const legacySettingsSearchSchema = defineSearchParamSchema({
+  ...settingsSearchSchema,
+  section: stringCodec
+});
+
+export type LegacySettingsSearchParams = SearchParamsFromSchema<typeof legacySettingsSearchSchema>;
 
 export const validateLegacySettingsSearch = (
   raw: Record<string, unknown>
-): LegacySettingsSearchParams => ({
-  ...validateSettingsSearch(raw),
-  section: typeof raw.section === 'string' ? raw.section : undefined
-});
+): LegacySettingsSearchParams => parseSearchParams(legacySettingsSearchSchema, raw);
 
 // Account settings params
-export type AccountSettingsSearchParams = {
-  section?: string;
-};
+const accountSettingsSearchSchema = defineSearchParamSchema({
+  section: stringCodec
+});
+
+export type AccountSettingsSearchParams = SearchParamsFromSchema<
+  typeof accountSettingsSearchSchema
+>;
 
 export const validateAccountSettingsSearch = (
   raw: Record<string, unknown>
-): AccountSettingsSearchParams => ({
-  section: typeof raw.section === 'string' ? raw.section : undefined
-});
+): AccountSettingsSearchParams => parseSearchParams(accountSettingsSearchSchema, raw);
 
 // Search params
-export type SearchRouteSearchParams = {
-  q?: string;
-  category?: 'all' | 'entities' | 'projects' | 'files' | 'schemas' | 'relations';
-};
-
-export const validateSearchSearch = (raw: Record<string, unknown>): SearchRouteSearchParams => ({
-  q: typeof raw.q === 'string' ? raw.q : undefined,
-  category:
-    raw.category === 'all' ||
-    raw.category === 'entities' ||
-    raw.category === 'projects' ||
-    raw.category === 'files' ||
-    raw.category === 'schemas' ||
-    raw.category === 'relations'
-      ? raw.category
-      : undefined
+const searchRouteSearchSchema = defineSearchParamSchema({
+  q: stringCodec,
+  category: enumCodec(['all', 'entities', 'projects', 'files', 'schemas', 'relations'] as const)
 });
+
+export type SearchRouteSearchParams = SearchParamsFromSchema<typeof searchRouteSearchSchema>;
+
+export const validateSearchSearch = (raw: Record<string, unknown>): SearchRouteSearchParams =>
+  parseSearchParams(searchRouteSearchSchema, raw);
 
 // Diagram params
-export type DiagramSearchParams = {
-  returnTo?: string;
-  markdownSessionId?: string;
-};
-
-export const validateDiagramSearch = (raw: Record<string, unknown>): DiagramSearchParams => ({
-  returnTo: typeof raw.returnTo === 'string' ? raw.returnTo : undefined,
-  markdownSessionId: typeof raw.markdownSessionId === 'string' ? raw.markdownSessionId : undefined
+const diagramSearchSchema = defineSearchParamSchema({
+  returnTo: stringCodec,
+  markdownSessionId: stringCodec
 });
+
+export type DiagramSearchParams = SearchParamsFromSchema<typeof diagramSearchSchema>;
+
+export const validateDiagramSearch = (raw: Record<string, unknown>): DiagramSearchParams =>
+  parseSearchParams(diagramSearchSchema, raw);
 
 // Data model params
-export type ModelSearchParams = {
-  tab?: 'types' | 'enums' | 'graph';
-  schema?: string;
-  enumId?: string;
-};
-
-export const validateModelSearch = (raw: Record<string, unknown>): ModelSearchParams => ({
-  tab: raw.tab === 'types' || raw.tab === 'enums' || raw.tab === 'graph' ? raw.tab : undefined,
-  schema: typeof raw.schema === 'string' ? raw.schema : undefined,
-  enumId: typeof raw.enumId === 'string' ? raw.enumId : undefined
+const modelSearchSchema = defineSearchParamSchema({
+  tab: enumCodec(['types', 'enums', 'graph'] as const),
+  schema: stringCodec,
+  enumId: stringCodec
 });
 
+export type ModelSearchParams = SearchParamsFromSchema<typeof modelSearchSchema>;
+
+export const validateModelSearch = (raw: Record<string, unknown>): ModelSearchParams =>
+  parseSearchParams(modelSearchSchema, raw);
+
 // Schema settings params (for settings/schemas route)
-export type SchemaSettingsSearchParams = {
-  tab?: 'types' | 'enums' | 'fieldgroups' | 'relation-types';
-  schema?: string;
-  enumId?: string;
-  fieldGroupId?: string;
-  relationSchema?: string;
-};
+const schemaSettingsSearchSchema = defineSearchParamSchema({
+  tab: enumCodec(['types', 'enums', 'fieldgroups', 'relation-types'] as const),
+  schema: stringCodec,
+  enumId: stringCodec,
+  fieldGroupId: stringCodec,
+  relationSchema: stringCodec
+});
+
+export type SchemaSettingsSearchParams = SearchParamsFromSchema<typeof schemaSettingsSearchSchema>;
 
 export const validateSchemaSettingsSearch = (
   raw: Record<string, unknown>
-): SchemaSettingsSearchParams => ({
-  tab:
-    raw.tab === 'types' ||
-    raw.tab === 'enums' ||
-    raw.tab === 'fieldgroups' ||
-    raw.tab === 'relation-types'
-      ? raw.tab
-      : undefined,
-  schema: typeof raw.schema === 'string' ? raw.schema : undefined,
-  enumId: typeof raw.enumId === 'string' ? raw.enumId : undefined,
-  fieldGroupId: typeof raw.fieldGroupId === 'string' ? raw.fieldGroupId : undefined,
-  relationSchema: typeof raw.relationSchema === 'string' ? raw.relationSchema : undefined
-});
+): SchemaSettingsSearchParams => parseSearchParams(schemaSettingsSearchSchema, raw);
 
 // Document settings params (for settings/documents route)
-export type DocumentSettingsSearchParams = {
-  tab?: 'types' | 'templates';
-  type?: string;
-  template?: string;
-};
+const documentSettingsSearchSchema = defineSearchParamSchema({
+  tab: enumCodec(['types', 'templates'] as const),
+  type: stringCodec,
+  template: stringCodec
+});
+
+export type DocumentSettingsSearchParams = SearchParamsFromSchema<
+  typeof documentSettingsSearchSchema
+>;
 
 export const validateDocumentSettingsSearch = (
   raw: Record<string, unknown>
-): DocumentSettingsSearchParams => ({
-  tab: raw.tab === 'types' || raw.tab === 'templates' ? raw.tab : undefined,
-  type: typeof raw.type === 'string' ? raw.type : undefined,
-  template: typeof raw.template === 'string' ? raw.template : undefined
+): DocumentSettingsSearchParams => parseSearchParams(documentSettingsSearchSchema, raw);
+
+const modelOverviewSearchSchema = defineSearchParamSchema({
+  layout: omitDefaultCodec(
+    enumCodec(['hierarchy', 'layered', 'force', 'tree'] as const),
+    'hierarchy'
+  ),
+  horizontalSpacing: numberInRangeCodec({ min: 50, max: 500, defaultValue: 200 }),
+  verticalSpacing: numberInRangeCodec({ min: 50, max: 300, defaultValue: 108 }),
+  crossingMinimizationIterations: numberInRangeCodec({
+    min: 1,
+    max: 50,
+    defaultValue: 10,
+    integer: true
+  }),
+  iterations: numberInRangeCodec({ min: 50, max: 1000, defaultValue: 300, integer: true }),
+  springStrength: numberInRangeCodec({ min: 0.1, max: 2.0, defaultValue: 0.5 }),
+  repulsionStrength: numberInRangeCodec({ min: 0.1, max: 3.0, defaultValue: 1.0 }),
+  idealEdgeLength: numberInRangeCodec({ min: 50, max: 500, defaultValue: 160 }),
+  categoryStates: stringCodec,
+  typedRelationMode: omitDefaultCodec(enumCodec(['entity', 'reference'] as const), 'entity')
 });
 
-export type ModelOverviewSearchParams = {
-  layout?: 'hierarchy' | 'layered' | 'force' | 'tree';
-  horizontalSpacing?: number;
-  verticalSpacing?: number;
-  crossingMinimizationIterations?: number;
-  iterations?: number;
-  springStrength?: number;
-  repulsionStrength?: number;
-  idealEdgeLength?: number;
-  categoryStates?: string; // JSON string of Record<string, 'collapsed' | 'hidden'>
-  typedRelationMode?: 'entity' | 'reference';
-};
-
-const parseNumberInRange = (
-  value: unknown,
-  min: number,
-  max: number,
-  defaultValue: number,
-  integer = false
-): number | undefined => {
-  const parsed =
-    typeof value === 'number'
-      ? value
-      : typeof value === 'string' && value.trim() !== ''
-        ? Number(value)
-        : NaN;
-
-  if (!Number.isFinite(parsed)) return undefined;
-  if (integer && !Number.isInteger(parsed)) return undefined;
-  if (parsed < min || parsed > max) return undefined;
-  return parsed === defaultValue ? undefined : parsed;
-};
+export type ModelOverviewSearchParams = SearchParamsFromSchema<typeof modelOverviewSearchSchema>;
 
 export const validateModelOverviewSearch = (
   raw: Record<string, unknown>
-): ModelOverviewSearchParams => ({
-  layout:
-    raw.layout === 'hierarchy' ||
-    raw.layout === 'layered' ||
-    raw.layout === 'force' ||
-    raw.layout === 'tree'
-      ? raw.layout === 'hierarchy'
-        ? undefined
-        : raw.layout
-      : undefined,
-  horizontalSpacing: parseNumberInRange(raw.horizontalSpacing, 50, 500, 200),
-  verticalSpacing: parseNumberInRange(raw.verticalSpacing, 50, 300, 108),
-  crossingMinimizationIterations: parseNumberInRange(
-    raw.crossingMinimizationIterations,
-    1,
-    50,
-    10,
-    true
-  ),
-  iterations: parseNumberInRange(raw.iterations, 50, 1000, 300, true),
-  springStrength: parseNumberInRange(raw.springStrength, 0.1, 2.0, 0.5),
-  repulsionStrength: parseNumberInRange(raw.repulsionStrength, 0.1, 3.0, 1.0),
-  idealEdgeLength: parseNumberInRange(raw.idealEdgeLength, 50, 500, 160),
-  categoryStates: typeof raw.categoryStates === 'string' ? raw.categoryStates : undefined,
-  typedRelationMode: raw.typedRelationMode === 'reference' ? 'reference' : undefined
-});
+): ModelOverviewSearchParams => parseSearchParams(modelOverviewSearchSchema, raw);
 
 // Assistant params
-export type AssistantSearchParams = {
-  conversation?: string;
-  layout?: 'conversation' | 'split';
-};
-
-export const validateAssistantSearch = (raw: Record<string, unknown>): AssistantSearchParams => ({
-  conversation: typeof raw.conversation === 'string' ? raw.conversation : undefined,
-  layout: raw.layout === 'conversation' || raw.layout === 'split' ? raw.layout : undefined
+const assistantSearchSchema = defineSearchParamSchema({
+  conversation: stringCodec,
+  layout: enumCodec(['conversation', 'split'] as const)
 });
+
+export type AssistantSearchParams = SearchParamsFromSchema<typeof assistantSearchSchema>;
+
+export const validateAssistantSearch = (raw: Record<string, unknown>): AssistantSearchParams =>
+  parseSearchParams(assistantSearchSchema, raw);
 
 // Glossary params
-export type GlossarySearchParams = {
-  q?: string;
-  categoryIds?: string; // comma-joined TermCategory entity ids
-  quality?: 'unused' | 'conflicting' | 'deprecated' | 'ownerless';
-  owner?: string;
-  lifecycle?: string;
-};
-
-export const validateGlossarySearch = (raw: Record<string, unknown>): GlossarySearchParams => ({
-  q: typeof raw.q === 'string' ? raw.q : undefined,
-  categoryIds: typeof raw.categoryIds === 'string' ? raw.categoryIds : undefined,
-  quality:
-    raw.quality === 'unused' ||
-    raw.quality === 'conflicting' ||
-    raw.quality === 'deprecated' ||
-    raw.quality === 'ownerless'
-      ? raw.quality
-      : undefined,
-  owner: typeof raw.owner === 'string' ? raw.owner : undefined,
-  lifecycle: typeof raw.lifecycle === 'string' ? raw.lifecycle : undefined
+const glossarySearchSchema = defineSearchParamSchema({
+  q: stringCodec,
+  categoryIds: stringCodec, // comma-joined TermCategory entity ids
+  quality: enumCodec(['unused', 'conflicting', 'deprecated', 'ownerless'] as const),
+  owner: stringCodec,
+  lifecycle: stringCodec
 });
+
+export type GlossarySearchParams = SearchParamsFromSchema<typeof glossarySearchSchema>;
+
+export const validateGlossarySearch = (raw: Record<string, unknown>): GlossarySearchParams =>
+  parseSearchParams(glossarySearchSchema, raw);
 
 // Home params
-export type HomeSearchParams = {
-  dashboard?: string;
-};
-
-export const validateHomeSearch = (raw: Record<string, unknown>): HomeSearchParams => ({
-  dashboard: typeof raw.dashboard === 'string' ? raw.dashboard : undefined
+const homeSearchSchema = defineSearchParamSchema({
+  dashboard: stringCodec
 });
+
+export type HomeSearchParams = SearchParamsFromSchema<typeof homeSearchSchema>;
+
+export const validateHomeSearch = (raw: Record<string, unknown>): HomeSearchParams =>
+  parseSearchParams(homeSearchSchema, raw);
