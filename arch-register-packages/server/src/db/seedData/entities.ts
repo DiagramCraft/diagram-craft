@@ -1218,7 +1218,8 @@ const seedRetentionPolicyEntities: SeedEntityInput[] = [
     slug: 'three-year-operational',
     namespace: 'default',
     name: 'Three-Year Operational',
-    description: 'Standard retention for operational system data with no specific regulatory driver.',
+    description:
+      'Standard retention for operational system data with no specific regulatory driver.',
     owner: TEAM_IDS.platform,
     lifecycle: LIFECYCLE_IDS.production,
     target_lifecycle: null,
