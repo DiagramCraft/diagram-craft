@@ -5,6 +5,7 @@ import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Tabs } from '@diagram-craft/app-components/Tabs';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
+import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import {
   getWorkspaceCapabilityDefinition,
   resolveCapabilityFieldId,
@@ -12,7 +13,8 @@ import {
 } from '@arch-register/api-types/integrationCatalog';
 import type {
   WorkspaceCapabilityBinding,
-  WorkspaceCapabilityBindings
+  WorkspaceCapabilityBindings,
+  WorkspaceCapabilityTargetKind
 } from '@arch-register/api-types/workspaceCapabilityContract';
 import {
   useDeleteWorkspaceCapabilityConfiguration,
@@ -21,17 +23,33 @@ import {
 } from '../../../hooks/useWorkspaceConfig';
 import styles from './LifecycleSubSection.module.css';
 
-type CapabilityType = 'api-specification' | 'business-glossary';
+type CapabilityType = 'api-specification' | 'business-glossary' | 'retention';
 
-const capabilityTypes: CapabilityType[] = ['api-specification', 'business-glossary'];
+const capabilityTypes: CapabilityType[] = ['api-specification', 'business-glossary', 'retention'];
+
+/** A target-kind-agnostic view of the schemas a binding role can pick from and resolve fields on. */
+type BindingTarget = { id: string; name: string; fields: EntitySchema['fields'] };
+
+const targetsFor = (
+  kind: WorkspaceCapabilityTargetKind,
+  schemas: EntitySchema[],
+  relationSchemas: RelationSchema[]
+): BindingTarget[] => {
+  if (kind === 'entity_schema') return schemas;
+  if (kind === 'relation_schema')
+    return relationSchemas.map(schema => ({ ...schema, fields: schema.fields as never }));
+  return [];
+};
 
 export const WorkspaceCapabilitiesSubSection = ({
   workspaceSlug,
   schemas,
+  relationSchemas,
   onActionsChange
 }: {
   workspaceSlug: string;
   schemas: EntitySchema[];
+  relationSchemas: RelationSchema[];
   onActionsChange: (actions: ReactNode | undefined) => void;
 }) => {
   const [activeTab, setActiveTab] = useState<CapabilityType>('api-specification');
@@ -162,8 +180,9 @@ export const WorkspaceCapabilitiesSubSection = ({
             <div className={styles.sectionBody}>
               {definition.bindingRoles.map(role => {
                 const binding = bindings[role.id];
-                const schemaId = binding?.target.kind === 'entity_schema' ? binding.target.id : '';
-                const schema = schemas.find(item => item.id === schemaId);
+                const targets = targetsFor(role.targetKind, schemas, relationSchemas);
+                const schemaId = binding?.target.kind === role.targetKind ? binding.target.id : '';
+                const schema = targets.find(item => item.id === schemaId);
                 const draftBinding: WorkspaceCapabilityBinding = {
                   target: { kind: role.targetKind, id: schemaId },
                   ...(binding?.fieldMappings ? { fieldMappings: binding.fieldMappings } : {})
@@ -179,29 +198,33 @@ export const WorkspaceCapabilitiesSubSection = ({
                     style={{ gridTemplateColumns: '1fr' }}
                   >
                     <FormElement label={role.label} required={role.required}>
-                      {role.targetKind === 'entity_schema' ? (
+                      {role.targetKind === 'document_type' ? (
+                        <div className={styles.sectionSub}>
+                          Document bindings are not used by this capability.
+                        </div>
+                      ) : (
                         <Select.Root
                           value={schemaId}
                           disabled={
                             !enabled || isLoading || mutation.isPending || deleteMutation.isPending
                           }
-                          placeholder="Select an entity schema..."
+                          placeholder={
+                            role.targetKind === 'entity_schema'
+                              ? 'Select an entity schema...'
+                              : 'Select a relation schema...'
+                          }
                           onChange={value =>
                             updateBinding(role.id, {
                               target: { kind: role.targetKind, id: value ?? '' }
                             })
                           }
                         >
-                          {schemas.map(candidate => (
+                          {targets.map(candidate => (
                             <Select.Item key={candidate.id} value={candidate.id}>
                               {candidate.name}
                             </Select.Item>
                           ))}
                         </Select.Root>
-                      ) : (
-                        <div className={styles.sectionSub}>
-                          Document and relation bindings are not used by this capability.
-                        </div>
                       )}
                     </FormElement>
 
@@ -210,7 +233,7 @@ export const WorkspaceCapabilitiesSubSection = ({
                         <div>
                           <div className={styles.sectionTitle}>Field mappings</div>
                           <div className={styles.sectionSub}>
-                            Map the required glossary roles to fields on this schema.
+                            Map the required roles to fields on this schema.
                           </div>
                         </div>
                         {role.fieldRoles.map(fieldRole => {

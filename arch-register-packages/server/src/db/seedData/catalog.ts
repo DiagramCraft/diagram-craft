@@ -21,6 +21,7 @@ import {
   OBJECTIVE_SUPPORTS_BUSINESS_CAPABILITY_RELATION_SCHEMA_ID,
   OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
   PII_FIELD_GROUP_ID,
+  RETENTION_IDS,
   RISK_AFFECTS_RELATION_SCHEMA_ID,
   STRATEGY_IDS,
   WORKSPACE2_ID,
@@ -243,6 +244,19 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
       { value: 'abandoned', label: 'Abandoned' }
     ],
     sort_order: 14,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: RETENTION_IDS.timeUnitEnum,
+    workspace: WORKSPACE_ID,
+    name: 'Retention Time Unit',
+    options: [
+      { value: 'days', label: 'Days' },
+      { value: 'months', label: 'Months' },
+      { value: 'years', label: 'Years' }
+    ],
+    sort_order: 15,
     created_at: now,
     updated_at: now
   },
@@ -1174,6 +1188,34 @@ export const seedSchemas: SchemaDbResult[] = (
       icon: 'chart-bar',
       default_owner: null,
       key_prefix: 'MEAS',
+      created_at: now,
+      updated_at: now
+    },
+    {
+      id: RETENTION_IDS.policySchema,
+      workspace: WORKSPACE_ID,
+      name: 'Retention Policy',
+      category: 'Governance',
+      description:
+        'A named retention policy defining how long data governed by it may be retained, in a ' +
+        'given time unit.',
+      fields: [
+        { id: 'duration', name: 'Duration', type: 'number', min: 1 },
+        { id: 'time_unit', name: 'Time Unit', type: 'select', enumId: RETENTION_IDS.timeUnitEnum },
+        {
+          id: 'governed_entities',
+          name: 'Governed Entities',
+          type: 'typedRelation',
+          relationSchemaId: RETENTION_IDS.assignmentRelationSchema,
+          direction: 'out',
+          minCount: 0,
+          maxCount: -1
+        }
+      ],
+      color: AR_COLOR_RED,
+      icon: 'clock',
+      default_owner: null,
+      key_prefix: 'RETN',
       created_at: now,
       updated_at: now
     },

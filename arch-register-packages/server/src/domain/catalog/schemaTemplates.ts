@@ -159,13 +159,21 @@ export type SymbolicRelationSchema = {
   outLabel: string;
   inSymSchemaIds: string[] | 'any';
   outSymSchemaIds: string[] | 'any';
-  fields: Array<{
-    id: string;
-    name: string;
-    type: 'select';
-    enumId: string;
-    requirementLevel: 'required' | 'expected' | 'optional';
-  }>;
+  fields: Array<
+    | {
+        id: string;
+        name: string;
+        type: 'select';
+        enumId: string;
+        requirementLevel: 'required' | 'expected' | 'optional';
+      }
+    | {
+        id: string;
+        name: string;
+        type: 'date';
+        requirementLevel: 'required' | 'expected' | 'optional';
+      }
+  >;
   color: string;
   icon: string;
 };
@@ -910,8 +918,53 @@ const riskComplianceEnums = [
 const informationGovernanceEnums = [
   enumDefinition('regulatory-tags', 'Regulatory Tags', []),
   enumDefinition('processing-purposes', 'Processing Purposes', []),
-  enumDefinition('residency-regions', 'Residency Regions', [])
+  enumDefinition('residency-regions', 'Residency Regions', []),
+  enumDefinition('retention-time-unit', 'Retention Time Unit', [
+    { value: 'days', label: 'Days' },
+    { value: 'months', label: 'Months' },
+    { value: 'years', label: 'Years' }
+  ])
 ];
+
+const retentionPolicySchema: TemplateSchema = {
+  symId: 'retention-policy',
+  name: 'Retention Policy',
+  description:
+    'A named retention policy defining how long data governed by it may be retained, in a given time unit.',
+  category: 'Governance',
+  color: AR_COLOR_RED,
+  icon: 'clock',
+  fields: [
+    { id: 'duration', name: 'Duration', type: 'number', min: 1 },
+    { id: 'time_unit', name: 'Time Unit', type: 'select', enumId: 'retention-time-unit' },
+    {
+      id: 'governed_entities',
+      name: 'Governed Entities',
+      type: 'typedRelation',
+      symRelationSchemaId: 'retention-assignment',
+      direction: 'out',
+      minCount: 0,
+      maxCount: -1
+    }
+  ]
+};
+
+const retentionAssignmentRelationSchema: SymbolicRelationSchema = {
+  symId: 'retention-assignment',
+  name: 'Subject to Retention Policy',
+  description:
+    'Assigns a retention policy to a governed entity, recording the date it became subject to it.',
+  category: 'Governance',
+  inLabel: 'Subject to Retention Policy',
+  outLabel: 'Governs',
+  inSymSchemaIds: 'any',
+  outSymSchemaIds: ['retention-policy'],
+  fields: [
+    { id: 'activated_from', name: 'Activated From', type: 'date', requirementLevel: 'required' }
+  ],
+  color: AR_COLOR_RED,
+  icon: 'clock'
+};
 
 export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   {
@@ -937,11 +990,23 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     id: 'information-governance',
     category: 'cross-cutting',
     name: 'Information Governance',
-    description: 'Reusable option sets for information governance metadata.',
-    schemas: [],
+    description:
+      'Reusable option sets for information governance metadata, plus retention policies and ' +
+      'policy assignment for governed entities.',
+    schemas: [retentionPolicySchema],
     enums: informationGovernanceEnums,
+    relationSchemas: [retentionAssignmentRelationSchema],
     documentTypes: [],
-    documentTemplates: []
+    documentTemplates: [],
+    capabilityConfigurations: [
+      {
+        type: 'retention',
+        bindings: {
+          policy: { target: { kind: 'entity_schema', symId: 'retention-policy' } },
+          assignment: { target: { kind: 'relation_schema', symId: 'retention-assignment' } }
+        }
+      }
+    ]
   },
   {
     id: 'default',
@@ -2795,13 +2860,20 @@ export const instantiateTemplateDefinitions = (
       out_label: relationSchema.outLabel,
       fields: relationSchema.fields.map(
         field =>
-          ({
-            id: field.id,
-            name: field.name,
-            type: field.type,
-            enumId: enumIdMap.get(field.enumId) ?? field.enumId,
-            requirementLevel: field.requirementLevel
-          }) as RelationField
+          (field.type === 'select'
+            ? {
+                id: field.id,
+                name: field.name,
+                type: field.type,
+                enumId: enumIdMap.get(field.enumId) ?? field.enumId,
+                requirementLevel: field.requirementLevel
+              }
+            : {
+                id: field.id,
+                name: field.name,
+                type: field.type,
+                requirementLevel: field.requirementLevel
+              }) as RelationField
       ),
       groups: [],
       shared_field_group_links: [],

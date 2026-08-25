@@ -7,6 +7,7 @@ import {
   GLOSSARY_IDS,
   LIFECYCLE2_IDS,
   LIFECYCLE_IDS,
+  RETENTION_IDS,
   STRATEGY_IDS,
   TEAM2_IDS,
   TEAM_IDS,
@@ -1209,11 +1210,55 @@ const seedStrategyEntities: SeedEntityInput[] = [
   }
 ];
 
+const seedRetentionPolicyEntities: SeedEntityInput[] = [
+  {
+    id: RETENTION_IDS.policies.threeYearOperational,
+    workspace: WORKSPACE_ID,
+    public_id: 'RETN-1',
+    slug: 'three-year-operational',
+    namespace: 'default',
+    name: 'Three-Year Operational',
+    description: 'Standard retention for operational system data with no specific regulatory driver.',
+    owner: TEAM_IDS.platform,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['governance', 'retention'],
+    links: [],
+    schema_id: RETENTION_IDS.policySchema,
+    data: { duration: 3, time_unit: 'years' },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: RETENTION_IDS.policies.sevenYearFinancial,
+    workspace: WORKSPACE_ID,
+    public_id: 'RETN-2',
+    slug: 'seven-year-financial',
+    namespace: 'default',
+    name: 'Seven-Year Financial',
+    description: 'Extended retention for financial and identity/compliance data.',
+    owner: TEAM_IDS.security,
+    lifecycle: LIFECYCLE_IDS.production,
+    target_lifecycle: null,
+    target_lifecycle_date: null,
+    tags: ['governance', 'retention', 'compliance'],
+    links: [],
+    schema_id: RETENTION_IDS.policySchema,
+    data: { duration: 7, time_unit: 'years' },
+    project_id: null,
+    created_at: now,
+    updated_at: now
+  }
+];
+
 export const seedEntitiesRaw: SeedEntityInput[] = [
   ...seedTechnologies,
   ...seedTechnologyReleases,
   ...seedRiskComplianceEntities,
   ...seedStrategyEntities,
+  ...seedRetentionPolicyEntities,
   {
     id: '00000000-0000-0000-0001-000000000001',
     workspace: WORKSPACE_ID,

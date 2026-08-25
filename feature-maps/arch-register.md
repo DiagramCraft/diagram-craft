@@ -45,7 +45,14 @@
           remove, resize, and reposition widgets and save the layout; other users see the active dashboard read-only.
           Schema templates can seed a complete default dashboard layout when a workspace adopts the template. The
           optional Information Governance cross-cutting template contributes reusable, initially empty enums for
-          regulatory tags, processing purposes, and residency regions without adding a new semantic enum type.
+          regulatory tags, processing purposes, and residency regions without adding a new semantic enum type. It
+          also contributes a Retention Policy entity schema (duration and time unit) and a "Subject to Retention
+          Policy" relation schema (an "activated from" date) bound together via the `retention` workspace
+          capability, without adding a bespoke retention data model: any governed entity records its retention
+          obligation as an ordinary typed-relation assignment to a policy entity, and the assignment's computed
+          expiry status (active, approaching expiry, expired, or incomplete when the policy or activation date is
+          missing) is available to `resolveEntityRetentionStatus` for later surfacing in queries, views, and
+          exports.
           The home sidebar's Data model section groups schema links by schema category.
           Every widget shows a title bar (an icon and a title, separated from the widget's content by a divider); the
           stat-metric widget's title is configurable (via its label setting), while other widget types show a fixed
@@ -98,8 +105,8 @@
             one-hop JSON entity context (`entity`, including direct references, containment, and typed-relation targets), with a
             declared text, number, currency, select, boolean, or rating result type,
             configure workspace-scoped integration capabilities from a dedicated integration catalog, with each capability
-            binding semantic roles to entity schemas, typed relation schemas, or document types and declaring its available
-            features and required fields; schema-level Bonsai validation rules with blocking errors or non-blocking warnings, field-specific messages,
+            binding semantic roles to entity schemas or typed relation schemas (document-type-targeted roles are
+            reserved for future use) and declaring its available features and required fields; schema-level Bonsai validation rules with blocking errors or non-blocking warnings, field-specific messages,
             activation/deactivation, revision through schema versioning, and preview testing against existing entities;
             relation types use the same Bonsai rule model over a depth-1 relation context (`relation`, including its
             typed fields and `in`/`out` endpoint projections),
