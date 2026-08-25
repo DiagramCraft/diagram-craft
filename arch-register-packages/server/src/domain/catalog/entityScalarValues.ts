@@ -115,7 +115,10 @@ const validateCurrency = (
  * the existing entity-grant precedent (`buildEntityGrantInputs`) which also does not resolve the
  * id against real user/team records.
  */
-const validatePrincipal = (field: ScalarSchemaField, value: unknown): { principal_type: 'user' | 'team'; principal_id: string } => {
+const validatePrincipal = (
+  field: ScalarSchemaField,
+  value: unknown
+): { principal_type: 'user' | 'team'; principal_id: string } => {
   httpAssert.true(
     typeof value === 'object' &&
       value !== null &&

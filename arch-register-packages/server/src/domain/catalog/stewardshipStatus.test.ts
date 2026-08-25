@@ -63,10 +63,7 @@ const unrelatedSchema = {
 
 describe('computeStewardshipCompleteness', () => {
   it('reports missing steward/custodian when a schema opted into the field group', () => {
-    const result = computeStewardshipCompleteness(
-      { owner: 'team-a', data: {} },
-      stewardshipSchema
-    );
+    const result = computeStewardshipCompleteness({ owner: 'team-a', data: {} }, stewardshipSchema);
     expect(result.notApplicable).toBe(false);
     expect(result.missingOwner).toBe(false);
     expect(result.missingFieldIds).toEqual(['steward', 'custodian']);

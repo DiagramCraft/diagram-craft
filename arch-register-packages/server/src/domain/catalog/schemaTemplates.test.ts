@@ -332,9 +332,9 @@ describe('instantiateTemplate', () => {
     ).toEqual(['steward', 'custodian']);
 
     const [retentionPolicySchema, dataEntitySchema] = definitions.schemas;
-    expect(
-      dataEntitySchema!.shared_field_group_links?.map(link => link.groupId)
-    ).toEqual([definitions.fieldGroups[0]!.id]);
+    expect(dataEntitySchema!.shared_field_group_links?.map(link => link.groupId)).toEqual([
+      definitions.fieldGroups[0]!.id
+    ]);
     expect(dataEntitySchema!.fields).toEqual([
       expect.objectContaining({ id: 'classification', type: 'select' })
     ]);

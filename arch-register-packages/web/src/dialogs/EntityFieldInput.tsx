@@ -386,7 +386,13 @@ const PrincipalInput = ({
             type="button"
             aria-label="Clear"
             onClick={() => onChange(undefined)}
-            style={{ marginLeft: 4, border: 'none', background: 'none', cursor: 'pointer', padding: 0 }}
+            style={{
+              marginLeft: 4,
+              border: 'none',
+              background: 'none',
+              cursor: 'pointer',
+              padding: 0
+            }}
           >
             <TbX size={10} />
           </button>

@@ -1014,7 +1014,9 @@ const dataEntitySchema: TemplateSchema = {
   category: 'Data',
   color: AR_COLOR_CYAN,
   icon: 'tag',
-  fields: [{ id: 'classification', name: 'Classification', type: 'select', enumId: 'pii-classification' }],
+  fields: [
+    { id: 'classification', name: 'Classification', type: 'select', enumId: 'pii-classification' }
+  ],
   sharedFieldGroupIds: ['information-asset-stewardship']
 };
 

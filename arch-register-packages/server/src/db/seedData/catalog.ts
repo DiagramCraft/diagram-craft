@@ -1388,8 +1388,7 @@ export const seedSchemas: SchemaDbResult[] = (
         {
           id: INFO_ASSET_FIELD_GROUP_ID,
           name: 'Information Asset Stewardship',
-          description:
-            'Accountable people and handling metadata for a governed information asset.'
+          description: 'Accountable people and handling metadata for a governed information asset.'
         }
       ],
       shared_field_group_links: [

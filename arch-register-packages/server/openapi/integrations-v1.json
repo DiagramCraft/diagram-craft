@@ -758,6 +758,88 @@
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
                                 },
+                                "minCardinality": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of scalar values required"
+                                },
+                                "maxCardinality": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of scalar values (-1 for unlimited; omitted means one)"
+                                },
+                                "type": {
+                                  "const": "principal",
+                                  "description": "Reference to a user or team; cardinality controls whether it accepts one or many values"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "type"
+                              ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "anyOf": [
+                                    {
+                                      "enum": [
+                                        "required",
+                                        "expected",
+                                        "optional"
+                                      ],
+                                      "type": "string"
+                                    },
+                                    {
+                                      "type": "null"
+                                    }
+                                  ],
+                                  "description": "Whether the field is required, expected, or optional"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "enum": [
+                                    "ai",
+                                    "integration",
+                                    "automation"
+                                  ],
+                                  "type": "string",
+                                  "description": "Producer that manages this field"
+                                },
+                                "refresh_mode": {
+                                  "enum": [
+                                    "on_change",
+                                    "scheduled"
+                                  ],
+                                  "type": "string",
+                                  "description": "How the external value is expected to be refreshed"
+                                },
                                 "type": {
                                   "const": "reference",
                                   "description": "Reference to other entities"
