@@ -294,16 +294,43 @@ describe('instantiateTemplate', () => {
     }
   });
 
-  it('materializes information governance as optional empty reusable enums', () => {
+  it('materializes information governance as reusable enums plus a retention policy schema/relation', () => {
     const definitions = instantiateTemplateDefinitions('ws-1', 'information-governance');
 
-    expect(definitions.schemas).toEqual([]);
+    expect(definitions.schemas.map(schema => schema.name)).toEqual(['Retention Policy']);
     expect(definitions.enums.map(enumeration => enumeration.name)).toEqual([
       'Regulatory Tags',
       'Processing Purposes',
-      'Residency Regions'
+      'Residency Regions',
+      'Retention Time Unit'
     ]);
-    expect(definitions.enums.every(enumeration => enumeration.options.length === 0)).toBe(true);
+    expect(
+      definitions.enums
+        .filter(enumeration => enumeration.name !== 'Retention Time Unit')
+        .every(enumeration => enumeration.options.length === 0)
+    ).toBe(true);
+
+    expect(definitions.relationSchemas.map(relationSchema => relationSchema.name)).toEqual([
+      'Subject to Retention Policy'
+    ]);
+    const [assignmentRelationSchema] = definitions.relationSchemas;
+    expect(assignmentRelationSchema!.in_schema_ids).toBe('any');
+    expect(assignmentRelationSchema!.out_schema_ids).toEqual([definitions.schemas[0]!.id]);
+    expect(assignmentRelationSchema!.fields).toEqual([
+      expect.objectContaining({ id: 'activated_from', type: 'date' })
+    ]);
+
+    expect(definitions.capabilityConfigurations).toEqual([
+      {
+        type: 'retention',
+        bindings: {
+          policy: { target: { kind: 'entity_schema', id: definitions.schemas[0]!.id } },
+          assignment: {
+            target: { kind: 'relation_schema', id: assignmentRelationSchema!.id }
+          }
+        }
+      }
+    ]);
   });
 
   it('materializes enums and document definitions with remapped references', () => {

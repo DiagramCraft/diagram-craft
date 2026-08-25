@@ -284,13 +284,20 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
     out_label: relationSchema.outLabel,
     fields: relationSchema.fields.map(
       field =>
-        ({
-          id: field.id,
-          name: field.name,
-          type: field.type,
-          enumId: field.enumId,
-          requirementLevel: field.requirementLevel
-        }) as RelationField
+        (field.type === 'select'
+          ? {
+              id: field.id,
+              name: field.name,
+              type: field.type,
+              enumId: field.enumId,
+              requirementLevel: field.requirementLevel
+            }
+          : {
+              id: field.id,
+              name: field.name,
+              type: field.type,
+              requirementLevel: field.requirementLevel
+            }) as RelationField
     ),
     groups: [],
     shared_field_group_links: [],

@@ -6,7 +6,14 @@ import {
 } from './workspaceCapabilityContract';
 import { z } from 'zod';
 
-const capabilityFieldTypeSchema = z.enum(['text', 'longtext', 'select', 'reference']);
+const capabilityFieldTypeSchema = z.enum([
+  'text',
+  'longtext',
+  'select',
+  'reference',
+  'number',
+  'date'
+]);
 
 /** Integration-owned semantic field role metadata. */
 export const capabilityFieldRoleSchema = z.object({
@@ -144,8 +151,62 @@ const businessGlossaryFieldRoles: CapabilityFieldRole[] = [
   }
 ];
 
+const retentionPolicyFieldRoles: CapabilityFieldRole[] = [
+  {
+    id: 'duration',
+    label: 'Duration',
+    description: 'The numeric length of the retention period.',
+    required: true,
+    defaultFieldId: 'duration',
+    allowedTypes: ['number']
+  },
+  {
+    id: 'timeUnit',
+    label: 'Time unit',
+    description: 'The unit the duration is measured in (days, months, or years).',
+    required: true,
+    defaultFieldId: 'time_unit',
+    allowedTypes: ['select']
+  }
+];
+
+const retentionAssignmentFieldRoles: CapabilityFieldRole[] = [
+  {
+    id: 'activatedFrom',
+    label: 'Activated from',
+    description: 'The date the governed entity became subject to the assigned retention policy.',
+    required: true,
+    defaultFieldId: 'activated_from',
+    allowedTypes: ['date']
+  }
+];
+
 /** Integration-owned capabilities that can be configured at workspace scope. */
 export const workspaceCapabilityDefinitions: WorkspaceCapabilityDefinition[] = [
+  {
+    type: 'retention',
+    label: 'Retention policy',
+    description: 'Retention policy assignment and expiry evaluation for information assets.',
+    features: ['expiry-status'],
+    bindingRoles: [
+      {
+        id: 'policy',
+        label: 'Retention policy entity schema',
+        description: 'The entity schema used for retention policy records.',
+        required: true,
+        targetKind: 'entity_schema',
+        fieldRoles: retentionPolicyFieldRoles
+      },
+      {
+        id: 'assignment',
+        label: 'Retention assignment relation schema',
+        description: 'The relation schema linking a governed entity to its retention policy.',
+        required: true,
+        targetKind: 'relation_schema',
+        fieldRoles: retentionAssignmentFieldRoles
+      }
+    ]
+  },
   {
     type: 'strategy-model',
     label: 'Strategy model',

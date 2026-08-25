@@ -151,6 +151,21 @@ export const seedIds = {
   users: USER_IDS
 } as const;
 
+export const RETENTION_IDS = {
+  timeUnitEnum: '00000000-0000-0000-0042-000000000003',
+  policySchema: '00000000-0000-0000-0042-000000000001',
+  assignmentRelationSchema: '00000000-0000-0000-0042-000000000002',
+  capabilityConfiguration: '00000000-0000-0000-0042-000000000004',
+  policies: {
+    threeYearOperational: '00000000-0000-0000-0042-000000000101',
+    sevenYearFinancial: '00000000-0000-0000-0042-000000000102'
+  },
+  assignments: {
+    customerPortal: '00000000-0000-0000-0042-000000000201',
+    identityPlatform: '00000000-0000-0000-0042-000000000202'
+  }
+} as const;
+
 export const PROJECT_ENTITY_TYPE_IDS = {
   introduced: '90000000-0000-0000-0000-000000000201',
   decommissioned: '90000000-0000-0000-0000-000000000202',

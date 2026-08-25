@@ -267,6 +267,7 @@ export const WorkspaceSettingsScreen = () => {
         <WorkspaceCapabilitiesSubSection
           workspaceSlug={workspaceSlug}
           schemas={ctx.schemas}
+          relationSchemas={ctx.relationSchemas}
           onActionsChange={setCapabilityActions}
         />
       )}

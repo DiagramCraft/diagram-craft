@@ -19,6 +19,7 @@ import {
   DATA_FLOW_SCHEMA_ID,
   OBJECTIVE_SUPPORTS_BUSINESS_CAPABILITY_RELATION_SCHEMA_ID,
   OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
+  RETENTION_IDS,
   RISK_AFFECTS_RELATION_SCHEMA_ID,
   RISK_CONTROL_SCHEMA_ID,
   STRATEGY_IDS,
@@ -297,6 +298,33 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
     shared_field_group_links: [],
     color: AR_COLOR_BLUE,
     icon: 'target',
+    relation_approval_policy: 'disabled',
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: RETENTION_IDS.assignmentRelationSchema,
+    workspace: WORKSPACE_ID,
+    name: 'Subject to Retention Policy',
+    category: 'Governance',
+    description:
+      'Assigns a retention policy to a governed entity, recording the date it became subject to it.',
+    in_label: 'Subject to Retention Policy',
+    out_label: 'Governs',
+    in_schema_ids: 'any',
+    out_schema_ids: [RETENTION_IDS.policySchema],
+    fields: [
+      {
+        id: 'activated_from',
+        name: 'Activated From',
+        type: 'date',
+        requirementLevel: 'required'
+      }
+    ],
+    groups: [],
+    shared_field_group_links: [],
+    color: AR_COLOR_RED,
+    icon: 'clock',
     relation_approval_policy: 'disabled',
     created_at: now,
     updated_at: now
@@ -660,6 +688,31 @@ export const seedRelations: RelationDbCreate[] = [
     in_entity_id: STRATEGY_IDS.objectives.strengthenPlatformReliability,
     out_entity_id: '00000000-0000-0000-0005-000000000002',
     data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: RETENTION_IDS.assignments.customerPortal,
+    workspace: WORKSPACE_ID,
+    schema_id: RETENTION_IDS.assignmentRelationSchema,
+    // Customer Portal -> three-year operational retention policy, expiring soon (demonstrates
+    // the "approaching" status).
+    in_entity_id: '00000000-0000-0000-0002-000000000001',
+    out_entity_id: RETENTION_IDS.policies.threeYearOperational,
+    data: { activated_from: '2023-09-15' },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: RETENTION_IDS.assignments.identityPlatform,
+    workspace: WORKSPACE_ID,
+    schema_id: RETENTION_IDS.assignmentRelationSchema,
+    // Identity Platform -> seven-year financial/compliance retention policy, already past its
+    // expiry date (demonstrates the "expired" status). Other systems are left unassigned to
+    // demonstrate the "incomplete" status.
+    in_entity_id: '00000000-0000-0000-0002-000000000002',
+    out_entity_id: RETENTION_IDS.policies.sevenYearFinancial,
+    data: { activated_from: '2018-01-01' },
     created_at: now,
     updated_at: now
   }
