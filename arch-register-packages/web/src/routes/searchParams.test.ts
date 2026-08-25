@@ -2,10 +2,13 @@ import { describe, expect, it } from 'vitest';
 import {
   validateEntityDetailSearch,
   validateEntitySearch,
+  validateLegacySettingsSearch,
   validateModelOverviewSearch,
   validateMarkdownSearch,
   validateProjectSearch,
+  validateRelationSearch,
   validateSearchSearch,
+  validateSettingsSearch,
   validateWorkspaceContentSearch
 } from './searchParams';
 
@@ -102,6 +105,27 @@ describe('validateEntityDetailSearch', () => {
       tab: 'api',
       apiDeprecated: undefined,
       apiPage: undefined
+    });
+  });
+});
+
+describe('validateRelationSearch', () => {
+  it('accepts relation browser state and drops invalid values independently', () => {
+    expect(
+      validateRelationSearch({
+        viewId: 'view-1',
+        viewMode: 'graph',
+        entityQuery: '{"root_kind":"relation"}',
+        edgeLabelFieldId: 123,
+        edgeColorFieldId: 'field-color',
+        ignored: 'value'
+      })
+    ).toEqual({
+      viewId: 'view-1',
+      viewMode: 'graph',
+      entityQuery: '{"root_kind":"relation"}',
+      edgeLabelFieldId: undefined,
+      edgeColorFieldId: 'field-color'
     });
   });
 });
@@ -237,6 +261,41 @@ describe('validateProjectSearch', () => {
   });
 });
 
+describe('validateSettingsSearch', () => {
+  it('keeps both audit dates and validates settings enums', () => {
+    expect(
+      validateSettingsSearch({
+        auditEntityType: 'application',
+        auditOperation: 'update',
+        auditStartDate: '2026-01-01T00:00:00.000Z',
+        auditEndDate: '2026-01-31T00:00:00.000Z',
+        analyticsView: 'stale',
+        section: 'audit'
+      })
+    ).toEqual({
+      auditEntityType: 'application',
+      auditOperation: 'update',
+      auditStartDate: '2026-01-01T00:00:00.000Z',
+      auditEndDate: '2026-01-31T00:00:00.000Z',
+      analyticsView: 'stale'
+    });
+  });
+
+  it('retains legacy settings section support while dropping invalid values', () => {
+    expect(
+      validateLegacySettingsSearch({
+        section: 'audit',
+        auditOperation: 'unknown',
+        auditStartDate: 123
+      })
+    ).toMatchObject({
+      section: 'audit',
+      auditOperation: undefined,
+      auditStartDate: undefined
+    });
+  });
+});
+
 describe('validateMarkdownSearch', () => {
   it('parses markdown screen params', () => {
     expect(
@@ -354,7 +413,19 @@ describe('validateModelOverviewSearch', () => {
   });
 
   it('drops the default hierarchy layout marker', () => {
-    expect(validateModelOverviewSearch({ layout: 'hierarchy' })).toEqual({
+    expect(
+      validateModelOverviewSearch({
+        layout: 'hierarchy',
+        horizontalSpacing: '200',
+        verticalSpacing: 108,
+        crossingMinimizationIterations: '10',
+        iterations: 300,
+        springStrength: '0.5',
+        repulsionStrength: 1,
+        idealEdgeLength: '160',
+        typedRelationMode: 'entity'
+      })
+    ).toEqual({
       layout: undefined,
       horizontalSpacing: undefined,
       verticalSpacing: undefined,
