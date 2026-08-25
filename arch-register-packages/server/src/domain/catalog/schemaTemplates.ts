@@ -105,7 +105,13 @@ export type TemplateSchema = {
 export type SymbolicEnum = {
   id: string;
   name: string;
-  options: Array<{ value: string; label: string }>;
+  options: Array<{
+    value: string;
+    label: string;
+    description?: string | null;
+    retired?: boolean;
+    restricted?: boolean;
+  }>;
 };
 
 export type SymbolicDocumentType = {
@@ -248,15 +254,19 @@ const apiParticipationField = (
 const enumDefinition = (
   id: string,
   name: string,
-  options: Array<{ value: string; label: string }>
+  options: SymbolicEnum['options']
 ): SymbolicEnum => ({ id, name, options });
 
 const piiClassificationEnum = enumDefinition('pii-classification', 'PII Classification', [
-  { value: 'none', label: 'None' },
-  { value: 'public', label: 'Public' },
-  { value: 'non-sensitive', label: 'Non-Sensitive' },
-  { value: 'sensitive', label: 'Sensitive' },
-  { value: 'highly-sensitive', label: 'Highly Sensitive' }
+  { value: 'none', label: 'None', restricted: false },
+  { value: 'public', label: 'Public', restricted: false },
+  {
+    value: 'non-sensitive',
+    label: 'Non-Sensitive',
+    restricted: false
+  },
+  { value: 'sensitive', label: 'Sensitive', restricted: true },
+  { value: 'highly-sensitive', label: 'Highly Sensitive', restricted: true }
 ]);
 
 const contractPurposeEnum = enumDefinition('contract-purpose', 'Contract Purpose', [
@@ -897,6 +907,12 @@ const riskComplianceEnums = [
   ])
 ];
 
+const informationGovernanceEnums = [
+  enumDefinition('regulatory-tags', 'Regulatory Tags', []),
+  enumDefinition('processing-purposes', 'Processing Purposes', []),
+  enumDefinition('residency-regions', 'Residency Regions', [])
+];
+
 export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   {
     id: 'glossary',
@@ -916,6 +932,16 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         }
       }
     ]
+  },
+  {
+    id: 'information-governance',
+    category: 'cross-cutting',
+    name: 'Information Governance',
+    description: 'Reusable option sets for information governance metadata.',
+    schemas: [],
+    enums: informationGovernanceEnums,
+    documentTypes: [],
+    documentTemplates: []
   },
   {
     id: 'default',

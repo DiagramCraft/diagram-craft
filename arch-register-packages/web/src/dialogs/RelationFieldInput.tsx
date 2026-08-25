@@ -7,6 +7,7 @@ import { MultiSelect, type MultiSelectItem } from '@diagram-craft/app-components
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import { useEntitiesBySchema } from '../hooks/useEntities';
 import { relationIds } from '../lib/entityEditState';
+import { selectableEnumOptions } from '../utils/enumOptions';
 
 export const RelationFieldInput = ({
   workspaceId,
@@ -57,7 +58,7 @@ export const RelationFieldInput = ({
           placeholder="—"
           style={{ width: '100%' }}
         >
-          {field.options.map(option => (
+          {selectableEnumOptions(field.options, value).map(option => (
             <Select.Item key={option.value} value={option.value}>
               {option.label}
             </Select.Item>

@@ -2,9 +2,26 @@ import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { ws, wsAndUUID } from '@arch-register/api-types/common';
 
-const enumOptionSchema = z.object({
+const enumOptionInputSchema = z.object({
   value: z.string().describe('Internal option value used in data storage'),
-  label: z.string().describe('Display label for the option')
+  label: z.string().describe('Display label for the option'),
+  description: z.string().nullable().optional().describe('Optional explanation of the option'),
+  retired: z
+    .boolean()
+    .optional()
+    .describe('Whether the option is retained for historical data but unavailable for new data'),
+  restricted: z
+    .boolean()
+    .optional()
+    .describe('Whether the option represents restricted or sensitive data')
+});
+
+const enumOptionSchema = enumOptionInputSchema.extend({
+  description: z.string().nullable().describe('Optional explanation of the option'),
+  retired: z
+    .boolean()
+    .describe('Whether the option is retained for historical data but unavailable for new data'),
+  restricted: z.boolean().describe('Whether the option represents restricted or sensitive data')
 });
 
 const workspaceEnumSchema = z.object({
@@ -21,7 +38,7 @@ const createEnumBodySchema = z.object({
   name: z.string().describe('Enumeration name (must be unique within workspace)'),
   options: z.preprocess(
     value => (Array.isArray(value) ? value : undefined),
-    z.array(enumOptionSchema).optional().describe('Initial enumeration options (can be empty)')
+    z.array(enumOptionInputSchema).optional().describe('Initial enumeration options (can be empty)')
   ),
   sort_order: z.preprocess(
     value => (typeof value === 'number' ? value : undefined),
@@ -118,6 +135,10 @@ export const workspaceEnumContract = oc.tag('Enums').router({
 });
 
 export type WorkspaceEnum = z.infer<typeof workspaceEnumSchema>;
+
+export type WorkspaceEnumOption = z.infer<typeof enumOptionSchema>;
+
+export type WorkspaceEnumOptionInput = z.infer<typeof enumOptionInputSchema>;
 
 export type CreateEnumRequest = z.infer<typeof createEnumBodySchema>;
 

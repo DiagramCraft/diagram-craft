@@ -23,6 +23,7 @@ import { allocateEntityPublicId } from '../catalog/entityMutationOperations';
 import { entityRequiresApproval } from '../catalog/entityChangeOperations';
 import { assertNoExternalEntityFieldWrites } from '../catalog/entityValidation';
 import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
+import { getWorkspaceEnumDefinitions } from '../catalog/enumOptions';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { valueEquals } from '../externalMetadata/externalMetadataHelpers';
@@ -149,11 +150,12 @@ export const runEntitySyncInTransaction = async (
         payload,
         recordId
       }) => {
-        const [oldRow, schema, entities, currencyConfig] = await Promise.all([
+        const [oldRow, schema, entities, currencyConfig, enumDefinitions] = await Promise.all([
           tx.catalog.getEntity(ws, recordId),
           tx.catalog.getSchema(ws, payload.schemaId),
           listAllCatalogEntities(tx, ws),
-          tx.workspace.getSupportedCurrencies(ws)
+          tx.workspace.getSupportedCurrencies(ws),
+          getWorkspaceEnumDefinitions(tx, ws)
         ]);
         httpAssert.present(oldRow, {
           status: 404,
@@ -190,7 +192,9 @@ export const runEntitySyncInTransaction = async (
         normalizedFields = normalizeEntityScalarFields({
           schemaFields: schema.fields,
           fields: normalizedFields,
-          supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code))
+          supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code)),
+          enumDefinitions,
+          previousFields: oldRow.data
         });
         assertNoExternalEntityFieldWrites(schema.fields, oldRow.data, normalizedFields);
         if (syncAuthCtx) {
@@ -262,10 +266,11 @@ export const runEntitySyncInTransaction = async (
       prepareCreate: async ({ db: tx, workspace: ws, authCtx: syncAuthCtx, payload }) => {
         // No existing identity — creating a new entity requires the same ownership/parent-tier
         // permissions as a regular entity creation, in addition to the integration capability.
-        const [schema, entities, currencyConfig] = await Promise.all([
+        const [schema, entities, currencyConfig, enumDefinitions] = await Promise.all([
           tx.catalog.getSchema(ws, payload.schemaId),
           listAllCatalogEntities(tx, ws),
-          tx.workspace.getSupportedCurrencies(ws)
+          tx.workspace.getSupportedCurrencies(ws),
+          getWorkspaceEnumDefinitions(tx, ws)
         ]);
         httpAssert.present(schema, {
           status: 404,
@@ -281,7 +286,8 @@ export const runEntitySyncInTransaction = async (
         normalizedFields = normalizeEntityScalarFields({
           schemaFields: schema.fields,
           fields: normalizedFields,
-          supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code))
+          supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code)),
+          enumDefinitions
         });
         assertNoExternalEntityFieldWrites(schema.fields, {}, normalizedFields);
         if (syncAuthCtx) {

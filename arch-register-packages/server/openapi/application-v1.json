@@ -669,6 +669,25 @@
                                       "label": {
                                         "type": "string",
                                         "description": "Display label"
+                                      },
+                                      "description": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "Optional option description"
+                                      },
+                                      "retired": {
+                                        "type": "boolean",
+                                        "description": "Whether the option is retired"
+                                      },
+                                      "restricted": {
+                                        "type": "boolean",
+                                        "description": "Whether the option represents restricted data"
                                       }
                                     },
                                     "required": [
@@ -1037,6 +1056,25 @@
                                       "label": {
                                         "type": "string",
                                         "description": "Display label"
+                                      },
+                                      "description": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "Optional option description"
+                                      },
+                                      "retired": {
+                                        "type": "boolean",
+                                        "description": "Whether the option is retired"
+                                      },
+                                      "restricted": {
+                                        "type": "boolean",
+                                        "description": "Whether the option represents restricted data"
                                       }
                                     },
                                     "required": [
@@ -3595,6 +3633,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -3963,6 +4020,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -5120,6 +5196,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -5488,6 +5583,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -8083,6 +8197,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -8451,6 +8584,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -9817,6 +9969,25 @@
                                       "label": {
                                         "type": "string",
                                         "description": "Display label"
+                                      },
+                                      "description": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "Optional option description"
+                                      },
+                                      "retired": {
+                                        "type": "boolean",
+                                        "description": "Whether the option is retired"
+                                      },
+                                      "restricted": {
+                                        "type": "boolean",
+                                        "description": "Whether the option represents restricted data"
                                       }
                                     },
                                     "required": [
@@ -10185,6 +10356,25 @@
                                       "label": {
                                         "type": "string",
                                         "description": "Display label"
+                                      },
+                                      "description": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "Optional option description"
+                                      },
+                                      "retired": {
+                                        "type": "boolean",
+                                        "description": "Whether the option is retired"
+                                      },
+                                      "restricted": {
+                                        "type": "boolean",
+                                        "description": "Whether the option represents restricted data"
                                       }
                                     },
                                     "required": [
@@ -11054,6 +11244,25 @@
                                       "label": {
                                         "type": "string",
                                         "description": "Display label"
+                                      },
+                                      "description": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "Optional option description"
+                                      },
+                                      "retired": {
+                                        "type": "boolean",
+                                        "description": "Whether the option is retired"
+                                      },
+                                      "restricted": {
+                                        "type": "boolean",
+                                        "description": "Whether the option represents restricted data"
                                       }
                                     },
                                     "required": [
@@ -12626,6 +12835,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -13464,6 +13692,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -15073,6 +15320,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -15965,6 +16231,25 @@
                                       "label": {
                                         "type": "string",
                                         "description": "Display label"
+                                      },
+                                      "description": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "Optional option description"
+                                      },
+                                      "retired": {
+                                        "type": "boolean",
+                                        "description": "Whether the option is retired"
+                                      },
+                                      "restricted": {
+                                        "type": "boolean",
+                                        "description": "Whether the option represents restricted data"
                                       }
                                     },
                                     "required": [
@@ -73699,11 +73984,33 @@
                             "label": {
                               "type": "string",
                               "description": "Display label for the option"
+                            },
+                            "description": {
+                              "anyOf": [
+                                {
+                                  "type": "string"
+                                },
+                                {
+                                  "type": "null"
+                                }
+                              ],
+                              "description": "Optional explanation of the option"
+                            },
+                            "retired": {
+                              "type": "boolean",
+                              "description": "Whether the option is retained for historical data but unavailable for new data"
+                            },
+                            "restricted": {
+                              "type": "boolean",
+                              "description": "Whether the option represents restricted or sensitive data"
                             }
                           },
                           "required": [
                             "value",
-                            "label"
+                            "label",
+                            "description",
+                            "retired",
+                            "restricted"
                           ]
                         },
                         "description": "Available enumeration options"
@@ -73780,6 +74087,25 @@
                         "label": {
                           "type": "string",
                           "description": "Display label for the option"
+                        },
+                        "description": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Optional explanation of the option"
+                        },
+                        "retired": {
+                          "type": "boolean",
+                          "description": "Whether the option is retained for historical data but unavailable for new data"
+                        },
+                        "restricted": {
+                          "type": "boolean",
+                          "description": "Whether the option represents restricted or sensitive data"
                         }
                       },
                       "required": [
@@ -73835,11 +74161,33 @@
                           "label": {
                             "type": "string",
                             "description": "Display label for the option"
+                          },
+                          "description": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Optional explanation of the option"
+                          },
+                          "retired": {
+                            "type": "boolean",
+                            "description": "Whether the option is retained for historical data but unavailable for new data"
+                          },
+                          "restricted": {
+                            "type": "boolean",
+                            "description": "Whether the option represents restricted or sensitive data"
                           }
                         },
                         "required": [
                           "value",
-                          "label"
+                          "label",
+                          "description",
+                          "retired",
+                          "restricted"
                         ]
                       },
                       "description": "Available enumeration options"
@@ -73935,11 +74283,33 @@
                           "label": {
                             "type": "string",
                             "description": "Display label for the option"
+                          },
+                          "description": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Optional explanation of the option"
+                          },
+                          "retired": {
+                            "type": "boolean",
+                            "description": "Whether the option is retained for historical data but unavailable for new data"
+                          },
+                          "restricted": {
+                            "type": "boolean",
+                            "description": "Whether the option represents restricted or sensitive data"
                           }
                         },
                         "required": [
                           "value",
-                          "label"
+                          "label",
+                          "description",
+                          "retired",
+                          "restricted"
                         ]
                       },
                       "description": "Available enumeration options"
@@ -74024,6 +74394,25 @@
                         "label": {
                           "type": "string",
                           "description": "Display label for the option"
+                        },
+                        "description": {
+                          "anyOf": [
+                            {
+                              "type": "string"
+                            },
+                            {
+                              "type": "null"
+                            }
+                          ],
+                          "description": "Optional explanation of the option"
+                        },
+                        "retired": {
+                          "type": "boolean",
+                          "description": "Whether the option is retained for historical data but unavailable for new data"
+                        },
+                        "restricted": {
+                          "type": "boolean",
+                          "description": "Whether the option represents restricted or sensitive data"
                         }
                       },
                       "required": [
@@ -74079,11 +74468,33 @@
                           "label": {
                             "type": "string",
                             "description": "Display label for the option"
+                          },
+                          "description": {
+                            "anyOf": [
+                              {
+                                "type": "string"
+                              },
+                              {
+                                "type": "null"
+                              }
+                            ],
+                            "description": "Optional explanation of the option"
+                          },
+                          "retired": {
+                            "type": "boolean",
+                            "description": "Whether the option is retained for historical data but unavailable for new data"
+                          },
+                          "restricted": {
+                            "type": "boolean",
+                            "description": "Whether the option represents restricted or sensitive data"
                           }
                         },
                         "required": [
                           "value",
-                          "label"
+                          "label",
+                          "description",
+                          "retired",
+                          "restricted"
                         ]
                       },
                       "description": "Available enumeration options"
@@ -74816,6 +75227,25 @@
                                       "label": {
                                         "type": "string",
                                         "description": "Display label"
+                                      },
+                                      "description": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "Optional option description"
+                                      },
+                                      "retired": {
+                                        "type": "boolean",
+                                        "description": "Whether the option is retired"
+                                      },
+                                      "restricted": {
+                                        "type": "boolean",
+                                        "description": "Whether the option represents restricted data"
                                       }
                                     },
                                     "required": [
@@ -75184,6 +75614,25 @@
                                       "label": {
                                         "type": "string",
                                         "description": "Display label"
+                                      },
+                                      "description": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "Optional option description"
+                                      },
+                                      "retired": {
+                                        "type": "boolean",
+                                        "description": "Whether the option is retired"
+                                      },
+                                      "restricted": {
+                                        "type": "boolean",
+                                        "description": "Whether the option represents restricted data"
                                       }
                                     },
                                     "required": [
@@ -76856,6 +77305,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -77224,6 +77692,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -77929,6 +78416,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -78297,6 +78803,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -80006,6 +80531,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -80374,6 +80918,25 @@
                                     "label": {
                                       "type": "string",
                                       "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
                                     }
                                   },
                                   "required": [
@@ -115483,6 +116046,7 @@
                       "entity_type": {
                         "enum": [
                           "workspace",
+                          "workspace_enum",
                           "entity_schema",
                           "workspace_field_group",
                           "entity",

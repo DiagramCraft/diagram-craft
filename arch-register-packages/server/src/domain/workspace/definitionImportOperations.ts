@@ -81,7 +81,13 @@ type ImportableSchema = {
 type ImportableEnum = {
   id: string;
   name: string;
-  options: Array<{ value: string; label: string }>;
+  options: Array<{
+    value: string;
+    label: string;
+    description?: string | null;
+    retired?: boolean;
+    restricted?: boolean;
+  }>;
   sort_order: number;
 };
 
@@ -1011,6 +1017,18 @@ export const executeDefinitionImport = async (
             updated_at: now
           };
           await tx.catalog.createEnum(row);
+          await writeAudit(tx, {
+            userId: authCtx.userId,
+            workspace: ws,
+            operation: 'create',
+            entityType: 'workspace_enum',
+            entityId: row.id,
+            entityName: row.name,
+            changes: {
+              new: { ...row, created_at: now.toISOString(), updated_at: now.toISOString() }
+            },
+            metadata: { importedFrom: input.source }
+          });
         }
 
         for (const [sourceId, group] of sharedGroupSources) {

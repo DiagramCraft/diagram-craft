@@ -15,6 +15,7 @@ import { computeEntityCompleteness } from '../../utils/completeness';
 import { assertTechnologyEolMapping, isTechnologyEolMapping } from './technologyEolMapping';
 import { withCatalogMutationTransaction } from '../catalog/mutationTransaction';
 import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
+import { getWorkspaceEnumDefinitions } from '../catalog/enumOptions';
 
 export const TECHNOLOGY_EOL_JOB_TYPE = 'technology-eol';
 export const TECHNOLOGY_EOL_SYSTEM_IDENTITY = 'technology-eol';
@@ -153,7 +154,9 @@ const applyRelease = async (
   const normalizedData = normalizeEntityScalarFields({
     schemaFields: schema.fields,
     fields: nextData,
-    validateMissing: false
+    validateMissing: false,
+    enumDefinitions: await getWorkspaceEnumDefinitions(db, entity.workspace),
+    previousFields: entity.data
   });
 
   let remainingFields: Array<{ id: string; external_kind?: 'ai' | 'automation' | 'integration' }> =

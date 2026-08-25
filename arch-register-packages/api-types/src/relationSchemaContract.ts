@@ -98,7 +98,10 @@ export const relationFieldInputSchema = z
 
 const fieldOptionSchema = z.object({
   value: z.string().describe('Internal option value'),
-  label: z.string().describe('Display label')
+  label: z.string().describe('Display label'),
+  description: z.string().nullable().optional().describe('Optional option description'),
+  retired: z.boolean().optional().describe('Whether the option is retired'),
+  restricted: z.boolean().optional().describe('Whether the option represents restricted data')
 });
 
 const selectRelationFieldResponseSchema = selectRelationFieldInputSchema.extend({

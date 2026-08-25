@@ -226,12 +226,14 @@ export const importCommit = async (
   const currencyConfigPromise = currencyLookup
     ? currencyLookup.call(db.workspace, workspace)
     : Promise.resolve({ currencies: [] });
-  const [lifecycleValues, teamIds, allEntities, currencyConfig] = await Promise.all([
-    getLifecycleValues(db, workspace),
-    getTeamIds(db, workspace),
-    listAllCatalogEntities(db, workspace),
-    currencyConfigPromise
-  ]);
+  const [lifecycleValues, teamIds, allEntities, currencyConfig, enumDefinitions] =
+    await Promise.all([
+      getLifecycleValues(db, workspace),
+      getTeamIds(db, workspace),
+      listAllCatalogEntities(db, workspace),
+      currencyConfigPromise,
+      db.catalog.listEnums(workspace)
+    ]);
   const supportedCurrencies = new Set(currencyConfig.currencies.map(currency => currency.code));
 
   const nameToId = new Map(allEntities.map(e => [e.name.toLowerCase(), e.id]));
@@ -327,7 +329,9 @@ export const importCommit = async (
         schemaFields: schema.fields,
         fields: normalizedRelationFields,
         supportedCurrencies,
-        validateMissing: !isUpdate
+        validateMissing: !isUpdate,
+        enumDefinitions,
+        previousFields: existingEntity?.data
       });
 
       const changedFieldIds =

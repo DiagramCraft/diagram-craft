@@ -34,11 +34,15 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
     workspace: WORKSPACE_ID,
     name: 'PII Classification',
     options: [
-      { value: 'none', label: 'None' },
-      { value: 'public', label: 'Public' },
-      { value: 'non-sensitive', label: 'Non-Sensitive' },
-      { value: 'sensitive', label: 'Sensitive' },
-      { value: 'highly-sensitive', label: 'Highly Sensitive' }
+      { value: 'none', label: 'None', restricted: false },
+      { value: 'public', label: 'Public', restricted: false },
+      {
+        value: 'non-sensitive',
+        label: 'Non-Sensitive',
+        restricted: false
+      },
+      { value: 'sensitive', label: 'Sensitive', restricted: true },
+      { value: 'highly-sensitive', label: 'Highly Sensitive', restricted: true }
     ],
     sort_order: 3,
     created_at: now,

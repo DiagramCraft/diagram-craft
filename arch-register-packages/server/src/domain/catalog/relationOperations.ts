@@ -45,6 +45,8 @@ import type {
 } from '@arch-register/api-types/relationContract';
 import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import { listRelationsWithCount, type RelationListPage } from './entityQueryOperations';
+import { validateSelectEnumValues } from './entityScalarValues';
+import { getWorkspaceEnumDefinitions } from './enumOptions';
 
 const dbErrorMessages = {
   foreign: 'Relation endpoints or schema could not be resolved'
@@ -260,12 +262,20 @@ export const createWorkspaceRelation = async (
       const data = extractRelationFieldData(body);
       requireNoRestrictedFieldWrites(authCtx, schema, Object.keys(data));
 
-      const entities = await db.catalog.listEntities(ws);
+      const [entities, enumDefinitions] = await Promise.all([
+        db.catalog.listEntities(ws),
+        getWorkspaceEnumDefinitions(db, ws)
+      ]);
       const normalizedData = normalizeRelationEntityFields({
         schema,
         workspace: ws,
         data,
         entities
+      });
+      validateSelectEnumValues({
+        schemaFields: schema.fields.filter(field => field.type === 'select'),
+        fields: normalizedData,
+        enumDefinitions
       });
 
       // Default-copy owner/lifecycle from the "in" entity at creation time, unless the caller
@@ -364,12 +374,21 @@ export const updateWorkspaceRelation = async (
         });
       }
 
-      const entities = await db.catalog.listEntities(ws);
+      const [entities, enumDefinitions] = await Promise.all([
+        db.catalog.listEntities(ws),
+        getWorkspaceEnumDefinitions(db, ws)
+      ]);
       const nextData = normalizeRelationEntityFields({
         schema,
         workspace: ws,
         data: { ...oldRow.data, ...data },
         entities
+      });
+      validateSelectEnumValues({
+        schemaFields: schema.fields.filter(field => field.type === 'select'),
+        fields: nextData,
+        enumDefinitions,
+        previousFields: oldRow.data
       });
       const row = await withCatalogMutationTransaction(db, async tx =>
         updateRelationWithAudit(tx, {

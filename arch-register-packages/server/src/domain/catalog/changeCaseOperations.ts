@@ -29,6 +29,7 @@ import {
   resolveCreateOwner
 } from './dataHelpers';
 import { normalizeEntityScalarFields } from './entityScalarValues';
+import { getWorkspaceEnumDefinitions } from './enumOptions';
 import { listAllCatalogEntities } from './entityLoader';
 import type {
   ChangeCaseDbResult,
@@ -376,11 +377,14 @@ const normalizeCaseMemberState = async (
     entities: allEntities
   });
   const currencyConfig = await db.workspace.getSupportedCurrencies(workspace);
+  const enumDefinitions = await getWorkspaceEnumDefinitions(db, workspace);
   const normalizedScalarData = normalizeEntityScalarFields({
     schemaFields: schema.fields,
     fields: normalizedData,
     supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code)),
-    validateMissing: false
+    validateMissing: false,
+    enumDefinitions,
+    previousFields: entity.data
   });
   return {
     ...state,
@@ -516,6 +520,7 @@ const createProjectScopedDraftEntities = async (
   const fallbackOwner = (await tx.workspace.listTeams(workspace))[0]?.id ?? null;
   const currencyConfig = await tx.workspace.getSupportedCurrencies(workspace);
   const supportedCurrencies = new Set(currencyConfig.currencies.map(currency => currency.code));
+  const enumDefinitions = await getWorkspaceEnumDefinitions(tx, workspace);
 
   for (const [draftId, entity] of draftEntities) {
     const schema = schemaById.get(entity.schema_id)!;
@@ -527,7 +532,9 @@ const createProjectScopedDraftEntities = async (
     entity.data = normalizeEntityScalarFields({
       schemaFields: schema.fields,
       fields: normalizedRelationData,
-      supportedCurrencies
+      supportedCurrencies,
+      enumDefinitions,
+      previousFields: entity.data
     });
     const parents = getEntityParentsFromPayload(schema, entity.data, entityLookup);
     entity.owner = resolveCreateOwner(entity.owner, parents, schema, teamIds, fallbackOwner);

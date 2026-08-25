@@ -65,6 +65,7 @@ import { assertTypedRelationCardinality } from './relationHelpers';
 import { withCatalogMutationTransaction } from './mutationTransaction';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
 import { assertEntityGraphValid, validateEntityGraph } from './entityValidationRules';
+import { getWorkspaceEnumDefinitions } from './enumOptions';
 
 type SupportedCurrencyLookup = (
   workspace: string
@@ -123,10 +124,11 @@ export const createEntityWithPayload = async (
   const teamIds = await getTeamIds(db, workspace);
 
   try {
-    const [schema, entities, currencyConfig] = await Promise.all([
+    const [schema, entities, currencyConfig, enumDefinitions] = await Promise.all([
       db.catalog.getSchema(workspace, payload.schemaId),
       listAllCatalogEntities(db, workspace),
-      getSupportedCurrencyCodes(db, workspace)
+      getSupportedCurrencyCodes(db, workspace),
+      getWorkspaceEnumDefinitions(db, workspace)
     ]);
     httpAssert.present(schema, {
       status: 404,
@@ -140,7 +142,8 @@ export const createEntityWithPayload = async (
     normalizedFields = normalizeEntityScalarFields({
       schemaFields: schema.fields,
       fields: normalizedFields,
-      supportedCurrencies: currencyConfig ?? undefined
+      supportedCurrencies: currencyConfig ?? undefined,
+      enumDefinitions
     });
     assertNoDerivedFieldWrites(schema.fields, normalizedFields);
     assertNoExternalEntityFieldWrites(schema.fields, {}, normalizedFields);
@@ -345,14 +348,21 @@ export const bulkCreateEntitiesWithPayloads = async (
         nameToId.set(key, randomUUID());
       }
 
-      const [schemas, existingEntities, lifecycleValues, teamRows, currencyConfig] =
-        await Promise.all([
-          tx.catalog.listSchemas(workspace),
-          listAllCatalogEntities(tx, workspace),
-          getLifecycleValues(tx, workspace),
-          tx.workspace.listTeams(workspace),
-          getSupportedCurrencyCodes(tx, workspace)
-        ]);
+      const [
+        schemas,
+        existingEntities,
+        lifecycleValues,
+        teamRows,
+        currencyConfig,
+        enumDefinitions
+      ] = await Promise.all([
+        tx.catalog.listSchemas(workspace),
+        listAllCatalogEntities(tx, workspace),
+        getLifecycleValues(tx, workspace),
+        tx.workspace.listTeams(workspace),
+        getSupportedCurrencyCodes(tx, workspace),
+        getWorkspaceEnumDefinitions(tx, workspace)
+      ]);
       const schemaById = new Map(schemas.map(schema => [schema.id, schema]));
       const teamIds = new Set(teamRows.map(team => team.id));
       const fallbackOwner = teamRows[0]?.id ?? null;
@@ -414,7 +424,8 @@ export const bulkCreateEntitiesWithPayloads = async (
         draft.entity.data = normalizeEntityScalarFields({
           schemaFields: draft.schema.fields,
           fields: draft.entity.data,
-          supportedCurrencies: currencyConfig ?? undefined
+          supportedCurrencies: currencyConfig ?? undefined,
+          enumDefinitions
         });
         assertNoDerivedFieldWrites(draft.schema.fields, draft.entity.data);
         assertNoExternalEntityFieldWrites(draft.schema.fields, {}, draft.entity.data);
@@ -531,7 +542,7 @@ export const updateEntityWithPayload = async (
 
   try {
     return await db.core.transaction(async tx => {
-      const [oldRow, schema, globalEntities, projectEntities] = await Promise.all([
+      const [oldRow, schema, globalEntities, projectEntities, enumDefinitions] = await Promise.all([
         tx.catalog.getEntity(workspace, id),
         tx.catalog.getSchema(workspace, payload.schemaId),
         listAllCatalogEntities(tx, workspace),
@@ -540,7 +551,8 @@ export const updateEntityWithPayload = async (
               projectId: versionOptions.projectId,
               projectScope: 'project'
             })
-          : Promise.resolve([])
+          : Promise.resolve([]),
+        getWorkspaceEnumDefinitions(tx, workspace)
       ]);
       const entities = [
         ...new Map(
@@ -605,7 +617,9 @@ export const updateEntityWithPayload = async (
       normalizedFields = normalizeEntityScalarFields({
         schemaFields: schema.fields,
         fields: normalizedFields,
-        supportedCurrencies: currencyConfig ?? undefined
+        supportedCurrencies: currencyConfig ?? undefined,
+        enumDefinitions,
+        previousFields: oldRow.data
       });
       assertNoDerivedFieldWrites(schema.fields, normalizedFields);
       if (authCtx) {
@@ -883,7 +897,8 @@ export const cloneEntity = async (
       const normalizedData = normalizeEntityScalarFields({
         schemaFields: schema.fields,
         fields: source.data,
-        supportedCurrencies: (await getSupportedCurrencyCodes(tx, workspace)) ?? undefined
+        supportedCurrencies: (await getSupportedCurrencyCodes(tx, workspace)) ?? undefined,
+        enumDefinitions: await getWorkspaceEnumDefinitions(tx, workspace)
       });
 
       const baseName = source.name ? `${source.name} (copy)` : source.slug;

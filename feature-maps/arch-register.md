@@ -43,7 +43,9 @@
           least one dashboard. Administrators can create a dashboard from the sidebar (added at the end of the order),
           and rename or delete a dashboard via its context menu. Administrators can also enter edit mode to add,
           remove, resize, and reposition widgets and save the layout; other users see the active dashboard read-only.
-          Schema templates can seed a complete default dashboard layout when a workspace adopts the template.
+          Schema templates can seed a complete default dashboard layout when a workspace adopts the template. The
+          optional Information Governance cross-cutting template contributes reusable, initially empty enums for
+          regulatory tags, processing purposes, and residency regions without adding a new semantic enum type.
           The home sidebar's Data model section groups schema links by schema category.
           Every widget shows a title bar (an icon and a title, separated from the widget's content by a divider); the
           stat-metric widget's title is configurable (via its label setting), while other widget types show a fixed
@@ -82,6 +84,11 @@
               diagnostic.
 
             - @id:ar.workspace.configuration.schemas Administrators can define entity schemas, fields, select options,
+            and reusable workspace enums. Enum options have stable values, editable labels and descriptions, an
+            optional restricted/sensitive marker, ordering, and a retired state that preserves historical values while
+            keeping them out of new record edits. Removing an unused option deletes it; an option still in use is
+            automatically retained as retired. Enum names and field references provide context without a hard-coded
+            enum category set.
             reusable shared fieldgroups, relationships, and schema-specific behavior, including currency fields and
             ordered multi-valued scalar fields (text, long text, boolean, date, number, currency, and select) with
             minimum/maximum cardinality,

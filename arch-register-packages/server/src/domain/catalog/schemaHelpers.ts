@@ -16,6 +16,7 @@ import {
   isTypedRelationField
 } from '@arch-register/api-types/schemaContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
+import { normalizeWorkspaceEnumOptions } from './enumOptions';
 import { normalizePublicIdPrefix, validatePublicIdPrefix } from '../../utils/publicIds';
 import { buildDerivedPlan } from '../derived/derivedFields';
 import { assertValidationRulesValid, normalizeValidationRules } from './entityValidationRules';
@@ -584,7 +585,7 @@ export const toApiEnum = (e: InternalWorkspaceEnum): WorkspaceEnum => ({
   id: e.id,
   workspace: e.workspace,
   name: e.name,
-  options: e.options,
+  options: normalizeWorkspaceEnumOptions(e.options),
   sort_order: e.sort_order,
   created_at: e.created_at.toISOString(),
   updated_at: e.updated_at.toISOString()

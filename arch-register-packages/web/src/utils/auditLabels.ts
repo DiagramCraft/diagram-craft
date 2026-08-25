@@ -12,6 +12,7 @@ export const ENTITY_TYPE_LABELS: Record<AuditEntityType, string> = {
   content_node: 'diagram',
   entity_schema: 'schema',
   workspace_field_group: 'shared fieldgroup',
+  workspace_enum: 'enum',
   workspace: 'workspace',
   assessment: 'assessment',
   assessment_response: 'assessment response',

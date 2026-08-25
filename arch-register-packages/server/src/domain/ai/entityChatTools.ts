@@ -13,6 +13,7 @@ import { equalEntityValue } from '../catalog/entityDiff';
 import { listAllCatalogEntities } from '../catalog/entityLoader';
 import { entityRequiresApproval } from '../catalog/entityChangeOperations';
 import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
+import { getWorkspaceEnumDefinitions } from '../catalog/enumOptions';
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { formatPublicId } from '../../utils/publicIds';
 import { filterRelationFieldData } from '../catalog/relationHelpers';
@@ -525,13 +526,17 @@ const createCreateEntityTool = (context: AiChatToolContext) =>
       typeof args.lifecycle === 'string' && lifecycleValues.has(args.lifecycle)
         ? args.lifecycle
         : null;
-    const currencyConfig = await context.db.workspace.getSupportedCurrencies?.(context.workspaceId);
+    const [currencyConfig, enumDefinitions] = await Promise.all([
+      context.db.workspace.getSupportedCurrencies?.(context.workspaceId),
+      getWorkspaceEnumDefinitions(context.db, context.workspaceId)
+    ]);
     const normalizedFields = normalizeEntityScalarFields({
       schemaFields: schema.fields,
       fields: args.fields ?? {},
       supportedCurrencies: currencyConfig
         ? new Set(currencyConfig.currencies.map(currency => currency.code))
-        : undefined
+        : undefined,
+      enumDefinitions
     });
 
     if (context.authCtx !== null) {
@@ -650,16 +655,21 @@ const createUpdateEntityTool = (context: AiChatToolContext) =>
       ...current.data,
       ...(args.fields ?? {})
     };
-    const currencyConfig = schema
-      ? await context.db.workspace.getSupportedCurrencies?.(context.workspaceId)
-      : null;
+    const [currencyConfig, enumDefinitions] = schema
+      ? await Promise.all([
+          context.db.workspace.getSupportedCurrencies?.(context.workspaceId),
+          getWorkspaceEnumDefinitions(context.db, context.workspaceId)
+        ])
+      : [null, undefined];
     const normalizedNextData = schema
       ? normalizeEntityScalarFields({
           schemaFields: schema.fields,
           fields: nextData,
           supportedCurrencies: currencyConfig
             ? new Set(currencyConfig.currencies.map(currency => currency.code))
-            : undefined
+            : undefined,
+          enumDefinitions,
+          previousFields: current.data
         })
       : nextData;
 

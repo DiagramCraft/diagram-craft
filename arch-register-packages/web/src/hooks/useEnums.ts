@@ -1,6 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { orpcClient } from '../lib/orpcClient';
 import { enumsQuery, invalidateDeletedEnum, invalidateEnumQueries } from '../queries/enums';
+import type { WorkspaceEnumOptionInput } from '@arch-register/api-types/enumContract';
 
 export const useEnums = (workspaceSlug: string, enabled = true) => {
   return useQuery(enumsQuery(workspaceSlug, enabled));
@@ -10,7 +11,7 @@ export const useCreateEnum = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
 
   return useMutation({
-    mutationFn: (body: { name: string; options?: Array<{ value: string; label: string }> }) =>
+    mutationFn: (body: { name: string; options?: WorkspaceEnumOptionInput[] }) =>
       orpcClient.enums.create({ params: { workspace: workspaceSlug }, body }),
     onSuccess: () => invalidateEnumQueries(queryClient, workspaceSlug)
   });
@@ -25,7 +26,7 @@ export const useUpdateEnum = (workspaceSlug: string) => {
       data
     }: {
       enumId: string;
-      data: { name: string; options: Array<{ value: string; label: string }> };
+      data: { name: string; options: WorkspaceEnumOptionInput[] };
     }) => orpcClient.enums.update({ params: { workspace: workspaceSlug, id: enumId }, body: data }),
     onSuccess: (_, variables) => invalidateEnumQueries(queryClient, workspaceSlug, variables.enumId)
   });
