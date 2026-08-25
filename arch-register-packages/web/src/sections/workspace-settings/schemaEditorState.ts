@@ -10,6 +10,7 @@ import type {
 import type { SharedFieldGroup } from '@arch-register/api-types/fieldGroupContract';
 import type { FieldMigrationChoices } from '../../dialogs/FieldMigrationDialog';
 import { toFieldId } from '../../utils/fieldId';
+import { moveWithinBucket } from '../../utils/arrayReorder';
 
 export type EditorField = {
   id: string;
@@ -124,6 +125,7 @@ export type SchemaEditorController<
   updateField: (fieldId: string, patch: Partial<Field>) => void;
   changeFieldType: (fieldId: string, newType: FieldType) => void;
   removeField: (fieldId: string) => void;
+  reorderFields: (bucketFieldIds: string[], fromIndex: number, toIndex: number) => void;
   addValidationRule: () => void;
   updateValidationRule: (index: number, patch: Partial<ValidationRule>) => void;
   toggleValidationRule: (index: number) => void;
@@ -304,6 +306,16 @@ export const useSchemaEditorController = <
         fieldKeysRef.current.delete(fieldId);
         return adapterRef.current.onFieldRemoved?.(next, fieldId) ?? next;
       });
+    },
+    [updateDraft]
+  );
+
+  const reorderFields = useCallback(
+    (bucketFieldIds: string[], fromIndex: number, toIndex: number) => {
+      updateDraft(current => ({
+        ...current,
+        fields: moveWithinBucket(current.fields, bucketFieldIds, fromIndex, toIndex)
+      }));
     },
     [updateDraft]
   );
@@ -523,6 +535,7 @@ export const useSchemaEditorController = <
     updateField,
     changeFieldType,
     removeField,
+    reorderFields,
     addValidationRule,
     updateValidationRule,
     toggleValidationRule,

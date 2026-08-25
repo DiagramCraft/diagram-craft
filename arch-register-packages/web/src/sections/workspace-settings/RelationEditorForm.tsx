@@ -46,6 +46,7 @@ export const RelationEditorForm = ({
   onUpdateField,
   onChangeFieldType,
   onRemoveField,
+  onReorderField,
   onEditGroup,
   onAccessGroup,
   onRemoveGroup,
@@ -87,6 +88,7 @@ export const RelationEditorForm = ({
   onUpdateField: (fieldId: string, patch: Partial<RelationField>) => void;
   onChangeFieldType: (fieldId: string, type: RelationFieldType) => void;
   onRemoveField: (fieldId: string) => void;
+  onReorderField: (bucketFieldIds: string[], fromIndex: number, toIndex: number) => void;
   onEditGroup: (group: RelationSchemaGroup) => void;
   onAccessGroup: (groupId: string) => void;
   onRemoveGroup: (groupId: string) => void;
@@ -150,6 +152,7 @@ export const RelationEditorForm = ({
       onUpdateField={onUpdateField}
       onChangeFieldType={onChangeFieldType}
       onRemoveField={onRemoveField}
+      onReorderField={onReorderField}
       onEditGroup={onEditGroup}
       onAccessGroup={onAccessGroup}
       onRemoveGroup={onRemoveGroup}

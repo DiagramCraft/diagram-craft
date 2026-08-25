@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useCallback, useEffect, useState, type RefCallback } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import { TbPlus, TbTrash } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
@@ -17,7 +17,11 @@ import {
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import { FIELD_TYPES, type FieldType } from '../../lib/schemaPresentation';
 import { toFieldId } from '../../utils/fieldId';
+import { FieldConfigList } from '../../components/FieldConfigList';
+import { moveInArray } from '../../utils/arrayReorder';
 import styles from './SchemaSettingsScreen.module.css';
+
+const FIELDS_LIST_ID = 'shared-fieldgroup-fields';
 import { ScalarCardinalityControls } from './ScalarCardinalityControls';
 import {
   isScalarCardinalityField,
@@ -35,7 +39,8 @@ const SharedFieldRow = ({
   onChangeType,
   onRemove,
   containmentDisabled,
-  canEdit
+  canEdit,
+  dragHandleRef
 }: {
   field: SchemaField;
   schemas: { id: string; name: string }[];
@@ -46,6 +51,7 @@ const SharedFieldRow = ({
   onRemove?: () => void;
   containmentDisabled: boolean;
   canEdit: boolean;
+  dragHandleRef: RefCallback<HTMLElement>;
 }) => {
   const [idUserEdited, setIdUserEdited] = useState(() => field.id !== toFieldId(field.name));
 
@@ -180,7 +186,7 @@ const SharedFieldRow = ({
   };
 
   return (
-    <FieldConfig options={options()}>
+    <FieldConfig dragHandleRef={dragHandleRef} options={options()}>
       <FieldConfig.Cell label="Id" mono flexBasis={160}>
         <TextInput
           value={field.id}
@@ -332,6 +338,11 @@ export const FieldGroupEditorScreen = () => {
     setDirty(true);
   };
 
+  const reorderFields = (fromIndex: number, toIndex: number) => {
+    setFields(current => moveInArray(current, fromIndex, toIndex));
+    setDirty(true);
+  };
+
   const changeType = (fieldId: string, type: FieldType) => {
     setFields(current =>
       current.map(field => {
@@ -441,36 +452,42 @@ export const FieldGroupEditorScreen = () => {
               </Button>
             )}
           </div>
-          {fields.map(field => (
-            <SharedFieldRow
-              key={field.id}
-              field={field}
-              schemas={schemas}
-              relationSchemas={relationSchemas}
-              enums={enums}
-              onUpdate={patch => {
-                setFields(current =>
-                  current.map(item =>
-                    item.id === field.id ? ({ ...item, ...patch } as SchemaField) : item
-                  )
-                );
-                setDirty(true);
-              }}
-              onChangeType={type => changeType(field.id, type)}
-              onRemove={
-                canEdit
-                  ? () => {
-                      setFields(current => current.filter(item => item.id !== field.id));
-                      setDirty(true);
-                    }
-                  : undefined
-              }
-              containmentDisabled={fields.some(
-                item => item.id !== field.id && item.type === 'containment'
-              )}
-              canEdit={canEdit}
-            />
-          ))}
+          <FieldConfigList
+            items={fields}
+            getId={field => field.id}
+            listId={FIELDS_LIST_ID}
+            onReorder={reorderFields}
+            renderItem={(field, _index, drag) => (
+              <SharedFieldRow
+                field={field}
+                schemas={schemas}
+                relationSchemas={relationSchemas}
+                enums={enums}
+                onUpdate={patch => {
+                  setFields(current =>
+                    current.map(item =>
+                      item.id === field.id ? ({ ...item, ...patch } as SchemaField) : item
+                    )
+                  );
+                  setDirty(true);
+                }}
+                onChangeType={type => changeType(field.id, type)}
+                onRemove={
+                  canEdit
+                    ? () => {
+                        setFields(current => current.filter(item => item.id !== field.id));
+                        setDirty(true);
+                      }
+                    : undefined
+                }
+                containmentDisabled={fields.some(
+                  item => item.id !== field.id && item.type === 'containment'
+                )}
+                canEdit={canEdit}
+                dragHandleRef={drag.ref}
+              />
+            )}
+          />
           <div className={styles.formActions}>
             {canEdit && (
               <Button variant="danger" icon={<TbTrash size={12} />} onClick={() => void remove()}>

@@ -15,6 +15,7 @@ const renderField = (field: AssessmentField) =>
           groups={[{ id: 'governance', name: 'Governance' }]}
           onUpdate={() => undefined}
           onRemove={() => undefined}
+          dragHandleRef={() => undefined}
         />
       </WorkspaceContext.Provider>
     </DialogContextProvider>

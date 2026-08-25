@@ -24,6 +24,7 @@ import {
   assessmentTemplates,
   cloneAssessmentTemplateValues
 } from '../../../lib/assessmentTemplates';
+import { moveWithinBucket } from '../../../utils/arrayReorder';
 
 export type AssessmentFormData = Omit<CreateAssessmentRequest, 'project_id'>;
 
@@ -59,6 +60,7 @@ export type AssessmentEditorActions = {
   addField: (type: AssessmentField['type'], groupId?: string) => void;
   updateField: (id: string, changes: Partial<AssessmentField>) => void;
   removeField: (id: string) => void;
+  reorderFields: (bucketFieldIds: string[], fromIndex: number, toIndex: number) => void;
   fieldKey: (id: string) => string;
   openNewGroup: () => void;
   openEditGroup: (group: AssessmentGroup) => void;
@@ -324,6 +326,13 @@ export const useAssessmentEditorController = ({
       setDraft(current => ({
         ...current,
         fields: current.fields.filter(field => field.id !== id)
+      }));
+    },
+    reorderFields: (bucketFieldIds, fromIndex, toIndex) => {
+      markDirty();
+      setDraft(current => ({
+        ...current,
+        fields: moveWithinBucket(current.fields, bucketFieldIds, fromIndex, toIndex)
       }));
     },
     fieldKey: id => {

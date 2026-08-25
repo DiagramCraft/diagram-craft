@@ -21,6 +21,7 @@ type RelationFieldsEditorProps = {
   onUpdateField: (fieldId: string, patch: Partial<RelationField>) => void;
   onChangeFieldType: (fieldId: string, type: RelationFieldType) => void;
   onRemoveField: (fieldId: string) => void;
+  onReorderField: (bucketFieldIds: string[], fromIndex: number, toIndex: number) => void;
   onEditGroup: (group: RelationSchemaGroup) => void;
   onAccessGroup: (groupId: string) => void;
   onRemoveGroup: (groupId: string) => void;
@@ -41,6 +42,7 @@ export const RelationFieldsEditor = ({
   onUpdateField,
   onChangeFieldType,
   onRemoveField,
+  onReorderField,
   onEditGroup,
   onAccessGroup,
   onRemoveGroup,
@@ -59,7 +61,8 @@ export const RelationFieldsEditor = ({
     onAccessGroup={onAccessGroup}
     onRemoveGroup={onRemoveGroup}
     onRemoveSharedGroup={onRemoveSharedGroup}
-    renderField={(field, options) => (
+    onReorderField={onReorderField}
+    renderField={(field, options, drag) => (
       <RelationFieldRow
         field={field}
         schemas={schemas}
@@ -69,6 +72,7 @@ export const RelationFieldsEditor = ({
         onChangeType={type => onChangeFieldType(field.id, type)}
         onRemove={options.canEdit ? () => onRemoveField(field.id) : undefined}
         canEdit={options.canEdit}
+        dragHandleRef={drag.ref}
       />
     )}
   />

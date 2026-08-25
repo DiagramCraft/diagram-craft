@@ -27,6 +27,7 @@ export const SchemaFieldsEditor = ({
   onUpdateField,
   onChangeFieldType,
   onRemoveField,
+  onReorderField,
   onEditGroup,
   onAccessGroup,
   onRemoveGroup,
@@ -46,6 +47,7 @@ export const SchemaFieldsEditor = ({
   onUpdateField: (fieldId: string, patch: Partial<SchemaField>) => void;
   onChangeFieldType: (fieldId: string, type: FieldType) => void;
   onRemoveField: (fieldId: string) => void;
+  onReorderField: (bucketFieldIds: string[], fromIndex: number, toIndex: number) => void;
   onEditGroup: (group: SchemaGroup) => void;
   onAccessGroup: (groupId: string) => void;
   onRemoveGroup: (groupId: string) => void;
@@ -65,7 +67,8 @@ export const SchemaFieldsEditor = ({
       onAccessGroup={onAccessGroup}
       onRemoveGroup={onRemoveGroup}
       onRemoveSharedGroup={onRemoveSharedGroup}
-      renderField={(field, options) => (
+      onReorderField={onReorderField}
+      renderField={(field, options, drag) => (
         <SchemaFieldRow
           field={field}
           schemas={schemas}
@@ -79,6 +82,7 @@ export const SchemaFieldsEditor = ({
             other => other.id !== field.id && other.type === 'containment'
           )}
           canEdit={options.canEdit}
+          dragHandleRef={drag.ref}
         />
       )}
     />

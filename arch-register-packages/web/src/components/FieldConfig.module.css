@@ -20,6 +20,10 @@
   margin-top: 6px;
 }
 
+.handle:active {
+  cursor: grabbing;
+}
+
 .menu {
   flex: none;
   margin-top: 1px;

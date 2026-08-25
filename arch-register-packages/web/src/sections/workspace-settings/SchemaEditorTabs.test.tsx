@@ -20,6 +20,7 @@ const props: ComponentProps<typeof SchemaEditorTabs> = {
   onUpdateField: vi.fn(),
   onChangeFieldType: vi.fn(),
   onRemoveField: vi.fn(),
+  onReorderField: vi.fn(),
   onEditGroup: vi.fn(),
   onAccessGroup: vi.fn(),
   onRemoveGroup: vi.fn(),
