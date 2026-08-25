@@ -19,13 +19,10 @@ import type {
 } from './exportTypes';
 
 import { parseImport } from './importParseOperations';
+import { resolveMappedId, resolveStorageScope } from './workspaceRemapping';
 
 type ImportResolution = { action: string; new_name?: string };
 
-const resolveMappedId = (mapping: Map<string, string>, id: string | null | undefined) => {
-  if (id == null) return null;
-  return mapping.get(id) ?? id;
-};
 const createIdMapping = (): IdMapping => ({
   schemas: new Map(),
   shared_field_groups: new Map(),
@@ -220,7 +217,10 @@ export const buildImportPlan = async (
     const entityId = resolveMappedId(mapping.entities, node.entity_id);
     storage_writes.push({
       workspace,
-      storage_id: storageScope(workspace, { project_id: projectId, entity_id: entityId }),
+      storage_id: resolveStorageScope(workspace, {
+        project_id: projectId,
+        entity_id: entityId
+      }),
       node_id: mapping.content_nodes.get(node.id)!,
       source_path: node.content_file
     });
@@ -312,8 +312,3 @@ export const applyConflictRenames = <
   },
   relations: data.relations
 });
-
-const storageScope = (
-  workspace: string,
-  node: { project_id: string | null; entity_id: string | null }
-) => node.project_id ?? node.entity_id ?? workspace;

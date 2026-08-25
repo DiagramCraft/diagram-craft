@@ -1,4 +1,4 @@
-import { createHash, randomUUID } from 'node:crypto';
+import { randomUUID } from 'node:crypto';
 import type {
   DatabaseAdapter,
   ContentNodeDbUpsert,
@@ -16,8 +16,6 @@ import { httpAssert } from '../../utils/httpAssert';
 
 import { entityRequiresApproval } from '../catalog/entityChangeOperations';
 import { computeEntityCompleteness } from '../../utils/completeness';
-import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
-import type { GovernanceWorkflowConfig } from '@arch-register/api-types/governanceCaseConfigSchemas';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import type {
   ExportConfig,
@@ -48,6 +46,15 @@ import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
+import {
+  generateSchemaKeyPrefix,
+  remapDocumentLinks,
+  remapDocumentMetadataValues,
+  remapGovernanceConfigTeams,
+  resolveMappedId,
+  resolveMappedIdOrNull,
+  resolveStorageScope
+} from './workspaceRemapping';
 
 type ImportResolution = { action: string; new_name?: string };
 
@@ -89,47 +96,8 @@ const toWorkspaceCapabilities = (capabilities: string[]): WorkspaceCapability[] 
   return parsed;
 };
 
-const resolveMappedId = (mapping: Map<string, string>, id: string | null | undefined) => {
-  if (id == null) return null;
-  return mapping.get(id) ?? id;
-};
-
 const hasSkipResolution = (resolutions: Record<string, ImportResolution>, id: string) =>
   resolutions[id]?.action === 'skip';
-
-const remapGovernanceConfigTeams = (
-  config: GovernanceWorkflowConfig,
-  teamMapping: Map<string, string>
-): GovernanceWorkflowConfig => {
-  const remapTargets = (value: GovernanceWorkflowConfig['approvals']) => {
-    if (!value) return value;
-    return {
-      ...value,
-      fallbackTeamIds: value.fallbackTeamIds.map(id => teamMapping.get(id) ?? id)
-    };
-  };
-  return {
-    ...config,
-    ...(config.approvals && { approvals: remapTargets(config.approvals) }),
-    ...(config.escalation && {
-      escalation: {
-        ...config.escalation,
-        fallbackTeamIds: config.escalation.fallbackTeamIds.map(id => teamMapping.get(id) ?? id)
-      }
-    })
-  };
-};
-
-const generateSchemaKeyPrefix = (seed: string) => {
-  const bytes = createHash('sha1').update(seed).digest();
-  let prefix = '';
-
-  for (let i = 0; prefix.length < 5 && i < bytes.length; i++) {
-    prefix += String.fromCharCode(65 + (bytes[i]! % 26));
-  }
-
-  return prefix.length >= 2 ? prefix : 'SCM';
-};
 
 const importSharedFieldGroups = async (
   db: DatabaseAdapter,
@@ -409,7 +377,7 @@ export const importSchemas = async (
       if (isReferenceOrContainmentField(withGroup)) {
         return {
           ...withGroup,
-          schemaId: resolveMappedId(idMapping.schemas, withGroup.schemaId) ?? withGroup.schemaId
+          schemaId: resolveMappedId(idMapping.schemas, withGroup.schemaId)
         };
       }
       return withGroup;
@@ -429,9 +397,12 @@ export const importSchemas = async (
           templateFields[fieldId] = value;
         }
       }
-      const owner = template.values.owner ? idMapping.teams.get(template.values.owner) : undefined;
+      const owner = template.values.owner
+        ? (resolveMappedIdOrNull(idMapping.teams, template.values.owner) ?? undefined)
+        : undefined;
       const lifecycle = template.values.lifecycle
-        ? idMapping.lifecycle_states.get(template.values.lifecycle)
+        ? (resolveMappedIdOrNull(idMapping.lifecycle_states, template.values.lifecycle) ??
+          undefined)
         : undefined;
       return {
         ...template,
@@ -451,15 +422,15 @@ export const importSchemas = async (
       fields,
       groups: (schema.groups ?? []).map(group => ({
         ...group,
-        id: idMapping.shared_field_groups.get(group.id) ?? group.id,
+        id: resolveMappedId(idMapping.shared_field_groups, group.id),
         accessControl: group.accessControl
-          ? { teamIds: group.accessControl.teamIds.map(id => idMapping.teams.get(id) ?? id) }
+          ? { teamIds: group.accessControl.teamIds.map(id => resolveMappedId(idMapping.teams, id)) }
           : undefined
       })),
       shared_field_group_links: (schema.shared_field_group_links ?? []).map(link => ({
         ...link,
-        groupId: idMapping.shared_field_groups.get(link.groupId) ?? link.groupId,
-        teamIds: link.teamIds?.map(id => idMapping.teams.get(id) ?? id)
+        groupId: resolveMappedId(idMapping.shared_field_groups, link.groupId),
+        teamIds: link.teamIds?.map(id => resolveMappedId(idMapping.teams, id))
       })),
       templates,
       color: schema.color,
@@ -551,10 +522,10 @@ export const importRelationSchemas = async (
     if (resolutions[source.id]?.action === 'merge') continue;
 
     const existing =
-      existingById.get(idMapping.relation_schemas.get(source.id) ?? source.id) ??
+      existingById.get(resolveMappedId(idMapping.relation_schemas, source.id)) ??
       existingByName.get(source.name.toLowerCase());
     const nextId =
-      idMapping.relation_schemas.get(source.id) ??
+      resolveMappedIdOrNull(idMapping.relation_schemas, source.id) ??
       existing?.id ??
       (preserveIds ? source.id : randomUUID());
     idMapping.relation_schemas.set(source.id, nextId);
@@ -572,7 +543,7 @@ export const importRelationSchemas = async (
       if (withGroup.type !== 'entityRelation') return withGroup;
       return {
         ...withGroup,
-        schemaId: resolveMappedId(idMapping.schemas, withGroup.schemaId) ?? withGroup.schemaId
+        schemaId: resolveMappedId(idMapping.schemas, withGroup.schemaId)
       };
     });
     const input = {
@@ -587,25 +558,25 @@ export const importRelationSchemas = async (
       in_schema_ids:
         source.in_schema_ids === 'any'
           ? ('any' as const)
-          : source.in_schema_ids.map(id => resolveMappedId(idMapping.schemas, id)!),
+          : source.in_schema_ids.map(id => resolveMappedId(idMapping.schemas, id)),
       out_schema_ids:
         source.out_schema_ids === 'any'
           ? ('any' as const)
-          : source.out_schema_ids.map(id => resolveMappedId(idMapping.schemas, id)!),
+          : source.out_schema_ids.map(id => resolveMappedId(idMapping.schemas, id)),
       in_label: source.in_label ?? null,
       out_label: source.out_label ?? null,
       fields,
       groups: (source.groups ?? []).map(group => ({
         ...group,
-        id: idMapping.shared_field_groups.get(group.id) ?? group.id,
+        id: resolveMappedId(idMapping.shared_field_groups, group.id),
         accessControl: group.accessControl
-          ? { teamIds: group.accessControl.teamIds.map(id => idMapping.teams.get(id) ?? id) }
+          ? { teamIds: group.accessControl.teamIds.map(id => resolveMappedId(idMapping.teams, id)) }
           : undefined
       })),
       shared_field_group_links: (source.shared_field_group_links ?? []).map(link => ({
         ...link,
-        groupId: idMapping.shared_field_groups.get(link.groupId) ?? link.groupId,
-        teamIds: link.teamIds?.map(id => idMapping.teams.get(id) ?? id)
+        groupId: resolveMappedId(idMapping.shared_field_groups, link.groupId),
+        teamIds: link.teamIds?.map(id => resolveMappedId(idMapping.teams, id))
       })),
       color: source.color,
       icon: source.icon,
@@ -686,7 +657,7 @@ export const importEntities = async (
 
   for (const { entity, nextId } of mappedEntities) {
     const existing = existingEntities.get(nextId);
-    const schemaId = resolveMappedId(idMapping.schemas, entity.schema_id) ?? entity.schema_id;
+    const schemaId = resolveMappedId(idMapping.schemas, entity.schema_id);
     const schema = await db.catalog.getSchema(workspace, schemaId);
     httpAssert.present(schema, {
       status: 409,
@@ -715,7 +686,7 @@ export const importEntities = async (
 
   for (const { entity, nextId } of mappedEntities) {
     const existing = existingEntities.get(nextId);
-    const schemaId = resolveMappedId(idMapping.schemas, entity.schema_id) ?? entity.schema_id;
+    const schemaId = resolveMappedId(idMapping.schemas, entity.schema_id);
     const schema = schemasById.get(schemaId)!;
     const normalizedData = normalizedDataByEntityId.get(nextId) ?? entity.data;
     let publicId = preserveIds ? (entity.public_id ?? nextId) : null;
@@ -728,9 +699,8 @@ export const importEntities = async (
       } while (usedPublicIds.has(publicId));
     }
     usedPublicIds.add(publicId);
-    const mappedOwner = entity.owner == null ? null : (idMapping.teams.get(entity.owner) ?? null);
-    const mappedLifecycle =
-      entity.lifecycle == null ? null : (idMapping.lifecycle_states.get(entity.lifecycle) ?? null);
+    const mappedOwner = resolveMappedIdOrNull(idMapping.teams, entity.owner);
+    const mappedLifecycle = resolveMappedIdOrNull(idMapping.lifecycle_states, entity.lifecycle);
     const completeness = schema
       ? computeEntityCompleteness(
           {
@@ -753,10 +723,7 @@ export const importEntities = async (
       description: entity.description,
       owner: mappedOwner,
       lifecycle: mappedLifecycle,
-      target_lifecycle:
-        entity.target_lifecycle == null
-          ? null
-          : (idMapping.lifecycle_states.get(entity.target_lifecycle) ?? null),
+      target_lifecycle: resolveMappedIdOrNull(idMapping.lifecycle_states, entity.target_lifecycle),
       target_lifecycle_date: entity.target_lifecycle_date,
       tags: entity.tags,
       links: entity.links,
@@ -866,8 +833,8 @@ export const importRelations = async (
     });
 
     const [inEntity, outEntity] = await Promise.all([
-      db.catalog.getEntity(workspace, resolveMappedId(idMapping.entities, relation.in_entity_id)!),
-      db.catalog.getEntity(workspace, resolveMappedId(idMapping.entities, relation.out_entity_id)!)
+      db.catalog.getEntity(workspace, resolveMappedId(idMapping.entities, relation.in_entity_id)),
+      db.catalog.getEntity(workspace, resolveMappedId(idMapping.entities, relation.out_entity_id))
     ]);
     validateRelationEndpoints(schema, inEntity, outEntity);
     const [inSchema, outSchema] = await Promise.all([
@@ -1071,11 +1038,6 @@ export const importProjects = async (
   return { created, updated };
 };
 
-const storageScope = (
-  workspace: string,
-  node: { project_id: string | null; entity_id: string | null }
-) => node.project_id ?? node.entity_id ?? workspace;
-
 export const importContentNodes = async (
   db: DatabaseAdapter,
   storage: StorageAdapter | undefined,
@@ -1113,7 +1075,7 @@ export const importContentNodes = async (
     const projectId = resolveMappedId(idMapping.projects, node.project_id);
     const entityId = resolveMappedId(idMapping.entities, node.entity_id);
     const parentId = resolveMappedId(idMapping.content_nodes, node.parent_id);
-    const storageProjectId = storageScope(workspace, {
+    const storageProjectId = resolveStorageScope(workspace, {
       project_id: projectId,
       entity_id: entityId
     });
@@ -1217,26 +1179,6 @@ export const importContentNodes = async (
   return { created, updated };
 };
 
-const remapDocumentMetadataValues = (
-  fields: DocumentField[],
-  sourceValues: DocumentMetadata,
-  resolveEntity: (id: string) => string | undefined,
-  resolveDocument: (id: string) => string | undefined
-) => {
-  const values = { ...sourceValues };
-  for (const field of fields) {
-    if (field.type !== 'entity_link' && field.type !== 'document_link') continue;
-    const raw = values[field.id];
-    if (raw === undefined) continue;
-    const sourceIds = Array.isArray(raw) ? raw : typeof raw === 'string' ? [raw] : [];
-    const mapped = sourceIds
-      .map(id => (field.type === 'entity_link' ? resolveEntity(id) : resolveDocument(id)))
-      .filter((id): id is string => !!id);
-    values[field.id] = Array.isArray(raw) ? mapped : (mapped[0] ?? null);
-  }
-  return values;
-};
-
 export const importDocuments = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -1252,6 +1194,11 @@ export const importDocuments = async (
     sourceEntityIdByIdentifier.set(entity.id, entity.id);
     if (entity.public_id) sourceEntityIdByIdentifier.set(entity.public_id, entity.id);
   }
+  const documentReferenceMaps = {
+    entityMap: idMapping.entities,
+    documentMap: idMapping.content_nodes,
+    entityIdentifierMap: sourceEntityIdByIdentifier
+  };
   const existingTypes = await db.document.listDocumentTypes(workspace, true);
   let created = 0;
   for (const type of documents.types) {
@@ -1298,7 +1245,7 @@ export const importDocuments = async (
       case_kind: config.case_kind ?? DOCUMENT_STATUS_CASE_KIND,
       case_subkind: encodeCaseSubkind(documentTypeId, fieldId),
       enabled: config.enabled,
-      config: config.config,
+      config: remapGovernanceConfigTeams(config.config, idMapping.teams),
       updated_at: new Date(),
       updated_by: null
     });
@@ -1308,9 +1255,8 @@ export const importDocuments = async (
   for (const template of documents.templates) {
     if (hasSkipResolution(resolutions, template.id)) continue;
     if (template.project_id != null && !idMapping.projects.has(template.project_id)) continue;
-    const projectId =
-      template.project_id == null ? null : (idMapping.projects.get(template.project_id) ?? null);
-    const documentTypeId = typeMapping.get(template.document_type_id);
+    const projectId = resolveMappedIdOrNull(idMapping.projects, template.project_id);
+    const documentTypeId = resolveMappedIdOrNull(typeMapping, template.document_type_id);
     if (!documentTypeId) continue;
     const resolution = resolutions[template.id];
     const existing = existingTemplates.find(
@@ -1330,8 +1276,7 @@ export const importDocuments = async (
       ? remapDocumentMetadataValues(
           sourceType.fields,
           template.metadata_defaults,
-          id => idMapping.entities.get(sourceEntityIdByIdentifier.get(id) ?? id),
-          id => idMapping.content_nodes.get(id)
+          documentReferenceMaps
         )
       : template.metadata_defaults;
     const input = {
@@ -1364,22 +1309,15 @@ export const importDocuments = async (
   }
   let metadataCount = 0;
   for (const item of documents.metadata) {
-    const nodeId = idMapping.content_nodes.get(item.node_id);
+    const nodeId = resolveMappedIdOrNull(idMapping.content_nodes, item.node_id);
     if (!nodeId) continue;
-    const documentTypeId = item.document_type_id
-      ? (typeMapping.get(item.document_type_id) ?? null)
-      : null;
+    const documentTypeId = resolveMappedIdOrNull(typeMapping, item.document_type_id);
     if (item.document_type_id && !documentTypeId) continue;
     const sourceType = item.document_type_id
       ? documents.types.find(type => type.id === item.document_type_id)
       : null;
     const values = sourceType
-      ? remapDocumentMetadataValues(
-          sourceType.fields,
-          item.values,
-          id => idMapping.entities.get(sourceEntityIdByIdentifier.get(id) ?? id),
-          id => idMapping.content_nodes.get(id)
-        )
+      ? remapDocumentMetadataValues(sourceType.fields, item.values, documentReferenceMaps)
       : item.values;
     await db.document.upsertDocumentMetadata({
       workspace,
@@ -1389,13 +1327,7 @@ export const importDocuments = async (
       generated_metadata: item.generated_metadata ?? {},
       updated_at: new Date()
     });
-    const links = item.links.flatMap(link => {
-      const targetId =
-        link.target_type === 'entity'
-          ? idMapping.entities.get(sourceEntityIdByIdentifier.get(link.target_id) ?? link.target_id)
-          : idMapping.content_nodes.get(link.target_id);
-      return targetId == null ? [] : [{ ...link, target_id: targetId }];
-    });
+    const links = remapDocumentLinks(item.links, documentReferenceMaps);
     await db.document.replaceDocumentLinks(workspace, nodeId, links);
     metadataCount++;
   }
@@ -1406,16 +1338,14 @@ export const importDocuments = async (
       left.node_id.localeCompare(right.node_id) || left.revision_number - right.revision_number
   );
   for (const revision of orderedRevisions) {
-    const nodeId = idMapping.content_nodes.get(revision.node_id);
+    const nodeId = resolveMappedIdOrNull(idMapping.content_nodes, revision.node_id);
     if (!nodeId) continue;
     const id = preserveIds ? revision.id : randomUUID();
     const createdBy =
       revision.created_by && (await db.auth.getUser(revision.created_by))
         ? revision.created_by
         : null;
-    const documentTypeId = revision.document_type_id
-      ? (typeMapping.get(revision.document_type_id) ?? null)
-      : null;
+    const documentTypeId = resolveMappedIdOrNull(typeMapping, revision.document_type_id);
     if (revision.document_type_id && !documentTypeId) continue;
     revisionMapping.set(revision.id, id);
     await db.project.createMarkdownRevision({
@@ -1436,12 +1366,7 @@ export const importDocuments = async (
           ? documents.types.find(type => type.id === revision.document_type_id)
           : null;
         return sourceType
-          ? remapDocumentMetadataValues(
-              sourceType.fields,
-              revision.metadata,
-              id => idMapping.entities.get(sourceEntityIdByIdentifier.get(id) ?? id),
-              id => idMapping.content_nodes.get(id)
-            )
+          ? remapDocumentMetadataValues(sourceType.fields, revision.metadata, documentReferenceMaps)
           : revision.metadata;
       })()
     });
