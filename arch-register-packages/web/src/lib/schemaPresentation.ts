@@ -13,6 +13,7 @@ export const FIELD_TYPES: { value: FieldType; label: string }[] = [
   { value: 'currency', label: 'Currency' },
   { value: 'number', label: 'Number' },
   { value: 'select', label: 'Select' },
+  { value: 'principal', label: 'Person or team' },
   { value: 'reference', label: 'Reference' },
   { value: 'containment', label: 'Containment' },
   { value: 'typedRelation', label: 'Typed relation' },

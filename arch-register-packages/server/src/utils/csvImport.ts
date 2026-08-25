@@ -221,6 +221,11 @@ export const validateCsvData = (rows: ParsedCsvRow[], fields: SchemaField[]): Pa
           case 'typedRelation':
             errors.push(`${field.name} is a typed relation field and cannot be set via CSV import`);
             break;
+          case 'principal':
+            if (!/^(user|team):.+$/.test(value)) {
+              errors.push(`${field.name} must be in the format user:<id> or team:<id>`);
+            }
+            break;
         }
       }
     }
@@ -352,6 +357,18 @@ export const csvRowToEntity = (
       case 'typedRelation':
         // Rejected in validateCsvData — relation instances aren't part of the entity's data blob.
         break;
+      case 'principal': {
+        const parsePrincipal = (raw: unknown) => {
+          const match = typeof raw === 'string' ? /^(user|team):(.+)$/.exec(raw) : null;
+          return match ? { principal_type: match[1], principal_id: match[2] } : undefined;
+        };
+        entity[field.id] = multiValue
+          ? (parsedMultiValue ?? [])
+              .map(value => parsePrincipal(value))
+              .filter((value): value is { principal_type: string; principal_id: string } => !!value)
+          : parsePrincipal(trimmedValue);
+        break;
+      }
     }
   }
 

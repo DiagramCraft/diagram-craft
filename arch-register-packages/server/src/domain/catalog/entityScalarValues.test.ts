@@ -166,4 +166,47 @@ describe('entity scalar values', () => {
       labels: []
     });
   });
+
+  it('validates the shape of principal (user/team reference) fields', () => {
+    const field: SchemaField = {
+      id: 'steward',
+      name: 'Steward',
+      type: 'principal'
+    };
+
+    expect(
+      normalizeEntityScalarFields({
+        schemaFields: [field],
+        fields: { steward: { principal_type: 'user', principal_id: 'user-1' } }
+      })
+    ).toEqual({ steward: { principal_type: 'user', principal_id: 'user-1' } });
+
+    expect(
+      normalizeEntityScalarFields({
+        schemaFields: [field],
+        fields: { steward: { principal_type: 'team', principal_id: 'team-1' } }
+      })
+    ).toEqual({ steward: { principal_type: 'team', principal_id: 'team-1' } });
+
+    expect(() =>
+      normalizeEntityScalarFields({
+        schemaFields: [field],
+        fields: { steward: { principal_type: 'robot', principal_id: 'robot-1' } }
+      })
+    ).toThrow("Steward must contain a { principal_type: 'user' | 'team', principal_id } reference");
+
+    expect(() =>
+      normalizeEntityScalarFields({
+        schemaFields: [field],
+        fields: { steward: 'user-1' }
+      })
+    ).toThrow("Steward must contain a { principal_type: 'user' | 'team', principal_id } reference");
+
+    expect(() =>
+      normalizeEntityScalarFields({
+        schemaFields: [field],
+        fields: { steward: { principal_type: 'user', principal_id: '' } }
+      })
+    ).toThrow("Steward must contain a { principal_type: 'user' | 'team', principal_id } reference");
+  });
 });

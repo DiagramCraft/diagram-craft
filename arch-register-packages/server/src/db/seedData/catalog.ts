@@ -21,6 +21,8 @@ import {
   OBJECTIVE_SUPPORTS_BUSINESS_CAPABILITY_RELATION_SCHEMA_ID,
   OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
   PII_FIELD_GROUP_ID,
+  INFO_ASSET_FIELD_GROUP_ID,
+  INFO_ASSET_IDS,
   RETENTION_IDS,
   RISK_AFFECTS_RELATION_SCHEMA_ID,
   STRATEGY_IDS,
@@ -260,6 +262,48 @@ export const seedEnums: WorkspaceEnumDbResult[] = [
     created_at: now,
     updated_at: now
   },
+  {
+    id: INFO_ASSET_IDS.regulatoryTagsEnum,
+    workspace: WORKSPACE_ID,
+    name: 'Regulatory Tags',
+    options: [
+      { value: 'gdpr', label: 'GDPR' },
+      { value: 'ccpa', label: 'CCPA' },
+      { value: 'hipaa', label: 'HIPAA' },
+      { value: 'pci-dss', label: 'PCI-DSS' }
+    ],
+    sort_order: 16,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: INFO_ASSET_IDS.processingPurposesEnum,
+    workspace: WORKSPACE_ID,
+    name: 'Processing Purposes',
+    options: [
+      { value: 'marketing', label: 'Marketing' },
+      { value: 'analytics', label: 'Analytics' },
+      { value: 'fraud-prevention', label: 'Fraud Prevention' },
+      { value: 'customer-support', label: 'Customer Support' }
+    ],
+    sort_order: 17,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: INFO_ASSET_IDS.residencyRegionsEnum,
+    workspace: WORKSPACE_ID,
+    name: 'Residency Regions',
+    options: [
+      { value: 'eu', label: 'EU' },
+      { value: 'us', label: 'US' },
+      { value: 'uk', label: 'UK' },
+      { value: 'apac', label: 'APAC' }
+    ],
+    sort_order: 18,
+    created_at: now,
+    updated_at: now
+  },
   // Second workspace enums
   {
     id: '00000000-0000-0000-0000-e00000000002',
@@ -298,6 +342,57 @@ const PII_FIELDS: SchemaField[] = [
   { id: 'pii_scope', name: 'PII Scope', type: 'text' as const, groupId: PII_FIELD_GROUP_ID }
 ];
 
+const INFO_ASSET_FIELDS: SchemaField[] = [
+  {
+    id: 'steward',
+    name: 'Steward',
+    type: 'principal' as const,
+    requirementLevel: 'expected' as const,
+    groupId: INFO_ASSET_FIELD_GROUP_ID
+  },
+  {
+    id: 'custodian',
+    name: 'Custodian',
+    type: 'principal' as const,
+    requirementLevel: 'expected' as const,
+    groupId: INFO_ASSET_FIELD_GROUP_ID
+  },
+  {
+    id: 'review_date',
+    name: 'Review Date',
+    type: 'date' as const,
+    requirementLevel: 'expected' as const,
+    groupId: INFO_ASSET_FIELD_GROUP_ID
+  },
+  {
+    id: 'regulatory_tags',
+    name: 'Regulatory Tags',
+    type: 'select' as const,
+    enumId: INFO_ASSET_IDS.regulatoryTagsEnum,
+    minCardinality: 0,
+    maxCardinality: -1,
+    groupId: INFO_ASSET_FIELD_GROUP_ID
+  },
+  {
+    id: 'processing_purposes',
+    name: 'Processing Purposes',
+    type: 'select' as const,
+    enumId: INFO_ASSET_IDS.processingPurposesEnum,
+    minCardinality: 0,
+    maxCardinality: -1,
+    groupId: INFO_ASSET_FIELD_GROUP_ID
+  },
+  {
+    id: 'permitted_residency_regions',
+    name: 'Permitted Residency Regions',
+    type: 'select' as const,
+    enumId: INFO_ASSET_IDS.residencyRegionsEnum,
+    minCardinality: 0,
+    maxCardinality: -1,
+    groupId: INFO_ASSET_FIELD_GROUP_ID
+  }
+];
+
 export const seedSharedFieldGroups: SharedFieldGroupDbResult[] = [
   {
     id: PII_FIELD_GROUP_ID,
@@ -306,6 +401,18 @@ export const seedSharedFieldGroups: SharedFieldGroupDbResult[] = [
     description: 'Classifies personal data handled by the entity and documents its scope.',
     fields: PII_FIELDS,
     sort_order: 3,
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: INFO_ASSET_FIELD_GROUP_ID,
+    workspace: WORKSPACE_ID,
+    name: 'Information Asset Stewardship',
+    description:
+      'Accountable people and handling metadata for a governed information asset: steward, ' +
+      'custodian, review date, regulatory tags, processing purposes, and permitted residency regions.',
+    fields: INFO_ASSET_FIELDS,
+    sort_order: 4,
     created_at: now,
     updated_at: now
   }
@@ -1257,20 +1364,38 @@ export const seedSchemas: SchemaDbResult[] = (
     }
   ] as SchemaDbResult[]
 ).map((schema): SchemaDbResult => {
-  if (schema.workspace !== WORKSPACE_ID || !['API', 'Component', 'System'].includes(schema.name)) {
-    return schema;
+  if (schema.workspace === WORKSPACE_ID && ['API', 'Component', 'System'].includes(schema.name)) {
+    return {
+      ...schema,
+      fields: [...schema.fields, ...PII_FIELDS],
+      groups: [
+        ...(schema.groups ?? []),
+        {
+          id: PII_FIELD_GROUP_ID,
+          name: 'PII Classification',
+          description: 'Classifies personal data handled by the entity and documents its scope.'
+        }
+      ],
+      shared_field_group_links: [{ groupId: PII_FIELD_GROUP_ID }]
+    };
   }
-  return {
-    ...schema,
-    fields: [...schema.fields, ...PII_FIELDS],
-    groups: [
-      ...(schema.groups ?? []),
-      {
-        id: PII_FIELD_GROUP_ID,
-        name: 'PII Classification',
-        description: 'Classifies personal data handled by the entity and documents its scope.'
-      }
-    ],
-    shared_field_group_links: [{ groupId: PII_FIELD_GROUP_ID }]
-  };
+  if (schema.workspace === WORKSPACE_ID && schema.name === 'Data Entity') {
+    return {
+      ...schema,
+      fields: [...schema.fields, ...INFO_ASSET_FIELDS],
+      groups: [
+        ...(schema.groups ?? []),
+        {
+          id: INFO_ASSET_FIELD_GROUP_ID,
+          name: 'Information Asset Stewardship',
+          description: 'Accountable people and handling metadata for a governed information asset.'
+        }
+      ],
+      shared_field_group_links: [
+        ...(schema.shared_field_group_links ?? []),
+        { groupId: INFO_ASSET_FIELD_GROUP_ID }
+      ]
+    };
+  }
+  return schema;
 });

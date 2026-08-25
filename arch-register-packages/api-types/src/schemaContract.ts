@@ -88,6 +88,15 @@ const selectFieldInputSchema = baseFieldSchema.extend({
   enumId: z.string().describe('Enumeration identifier for dropdown options')
 });
 
+const principalFieldSchema = baseFieldSchema.extend({
+  ...scalarCardinalitySchema,
+  type: z
+    .literal('principal')
+    .describe(
+      'Reference to a user or team; cardinality controls whether it accepts one or many values'
+    )
+});
+
 const referenceFieldSchema = baseFieldSchema.extend({
   type: z.literal('reference').describe('Reference to other entities'),
   predicate: z
@@ -180,6 +189,7 @@ export const schemaFieldInputSchema = z
     currencyFieldSchema,
     numberFieldSchema,
     selectFieldInputSchema,
+    principalFieldSchema,
     referenceFieldSchema,
     containmentFieldSchema,
     typedRelationFieldSchema,
@@ -261,6 +271,7 @@ export const schemaFieldResponseSchema = z
     currencyFieldSchema,
     numberFieldSchema,
     selectFieldResponseSchema,
+    principalFieldSchema,
     referenceFieldSchema,
     containmentFieldSchema,
     typedRelationFieldSchema,
@@ -688,6 +699,17 @@ export type ApiSelectField = z.infer<typeof selectFieldResponseSchema>;
 export type ReferenceField = Extract<SchemaField, { type: 'reference' }>;
 export type ContainmentField = Extract<SchemaField, { type: 'containment' }>;
 export type TypedRelationField = Extract<SchemaField, { type: 'typedRelation' }>;
+export type PrincipalField = Extract<SchemaField, { type: 'principal' }>;
+
+export const isPrincipalField = (field: SchemaField): field is PrincipalField =>
+  field.type === 'principal';
+
+export const principalValueSchema = z.object({
+  principal_type: z.enum(['user', 'team']).describe('Whether the reference is to a user or a team'),
+  principal_id: z.string().min(1).describe('Identifier of the referenced user or team')
+});
+
+export type PrincipalValue = z.infer<typeof principalValueSchema>;
 
 export const isReferenceOrContainmentField = (
   field: SchemaField

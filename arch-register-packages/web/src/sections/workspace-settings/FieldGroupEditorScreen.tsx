@@ -355,6 +355,7 @@ export const FieldGroupEditorScreen = () => {
           case 'currency':
           case 'boolean':
           case 'number':
+          case 'principal':
             return { ...base, type } as SchemaField;
           case 'select':
             return { ...base, type, enumId: enums[0]?.id ?? '' } as SchemaField;

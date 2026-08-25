@@ -1,6 +1,7 @@
 import {
   AR_COLOR_GREEN,
   AR_COLOR_BLUE,
+  AR_COLOR_CYAN,
   AR_COLOR_ORANGE,
   AR_COLOR_PURPLE,
   AR_COLOR_YELLOW,
@@ -34,9 +35,10 @@ export type SymbolicField =
   | {
       id: string;
       name: string;
-      type: 'text' | 'longtext' | 'boolean' | 'date' | 'currency';
+      type: 'text' | 'longtext' | 'boolean' | 'date' | 'currency' | 'principal';
       minCardinality?: number;
       maxCardinality?: number;
+      requirementLevel?: 'required' | 'expected' | 'optional';
     }
   | {
       id: string;
@@ -966,6 +968,58 @@ const retentionAssignmentRelationSchema: SymbolicRelationSchema = {
   icon: 'clock'
 };
 
+const informationAssetFieldGroup: SymbolicFieldGroup = {
+  id: 'information-asset-stewardship',
+  name: 'Information Asset Stewardship',
+  description:
+    'Accountable people and handling metadata for a governed information asset: steward, ' +
+    'custodian, review date, regulatory tags, processing purposes, and permitted residency regions.',
+  fields: [
+    { id: 'steward', name: 'Steward', type: 'principal', requirementLevel: 'expected' },
+    { id: 'custodian', name: 'Custodian', type: 'principal', requirementLevel: 'expected' },
+    { id: 'review_date', name: 'Review Date', type: 'date', requirementLevel: 'expected' },
+    {
+      id: 'regulatory_tags',
+      name: 'Regulatory Tags',
+      type: 'select',
+      enumId: 'regulatory-tags',
+      minCardinality: 0,
+      maxCardinality: -1
+    },
+    {
+      id: 'processing_purposes',
+      name: 'Processing Purposes',
+      type: 'select',
+      enumId: 'processing-purposes',
+      minCardinality: 0,
+      maxCardinality: -1
+    },
+    {
+      id: 'permitted_residency_regions',
+      name: 'Permitted Residency Regions',
+      type: 'select',
+      enumId: 'residency-regions',
+      minCardinality: 0,
+      maxCardinality: -1
+    }
+  ]
+};
+
+const dataEntitySchema: TemplateSchema = {
+  symId: 'data-entity',
+  name: 'Data Entity',
+  description:
+    'A named category of data (e.g. a business object or record type) that can be governed as ' +
+    'an information asset, with classification, handling metadata, and accountable stewardship.',
+  category: 'Data',
+  color: AR_COLOR_CYAN,
+  icon: 'tag',
+  fields: [
+    { id: 'classification', name: 'Classification', type: 'select', enumId: 'pii-classification' }
+  ],
+  sharedFieldGroupIds: ['information-asset-stewardship']
+};
+
 export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
   {
     id: 'glossary',
@@ -991,10 +1045,11 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     category: 'cross-cutting',
     name: 'Information Governance',
     description:
-      'Reusable option sets for information governance metadata, plus retention policies and ' +
-      'policy assignment for governed entities.',
-    schemas: [retentionPolicySchema],
-    enums: informationGovernanceEnums,
+      'Reusable option sets for information governance metadata, plus retention policies, policy ' +
+      'assignment, and a governed Data Entity schema for information-asset stewardship.',
+    schemas: [retentionPolicySchema, dataEntitySchema],
+    enums: [...informationGovernanceEnums, piiClassificationEnum],
+    fieldGroups: [informationAssetFieldGroup],
     relationSchemas: [retentionAssignmentRelationSchema],
     documentTypes: [],
     documentTemplates: [],
@@ -2804,7 +2859,8 @@ export const instantiateTemplateDefinitions = (
       name: field.name,
       type: field.type,
       minCardinality: field.minCardinality,
-      maxCardinality: field.maxCardinality
+      maxCardinality: field.maxCardinality,
+      requirementLevel: field.requirementLevel
     };
   };
 

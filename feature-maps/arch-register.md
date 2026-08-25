@@ -53,6 +53,14 @@
           expiry status (active, approaching expiry, expired, or incomplete when the policy or activation date is
           missing) is available to `resolveEntityRetentionStatus` for later surfacing in queries, views, and
           exports.
+          The same template also contributes a Data Entity schema and an "Information Asset Stewardship" shared
+          field group carrying steward and custodian principal-reference fields, a review date, and multi-valued
+          regulatory tags, processing purposes, and permitted residency regions, alongside the entity's existing
+          owner (reused as the data-owner team) and classification field; a governed Data Entity can be linked to a
+          retention policy through the same "Subject to Retention Policy" relation as any other entity. The bundled
+          demo workspace seeds this schema and field group directly, with example Data Entities showing the full
+          spread of stewardship states (complete, partial, and missing) and review-date states (approaching and
+          overdue).
           The home sidebar's Data model section groups schema links by schema category.
           Every widget shows a title bar (an icon and a title, separated from the widget's content by a divider); the
           stat-metric widget's title is configurable (via its label setting), while other widget types show a fixed
@@ -162,7 +170,9 @@
           descendants and related records.
 
         - @id:ar.entities.fields Users can view and edit standard and schema-defined fields, including owners,
-          lifecycle, links, references, typed relations, currency values, ordered multi-valued scalar values, and custom values. A schema field marked as externally
+          lifecycle, links, references, typed relations, currency values, ordered multi-valued scalar values, custom
+          values, and principal fields that reference a user or a team (for example, a steward or custodian
+          assignment). A schema field marked as externally
           managed (by AI, an integration, or an internal automation) is read-only to users; its current value stays
           visible alongside the latest update's source, timestamp, status, and any explanation or findings. A user
           edit to any other field on the entity marks that entity's external field results outdated. Fields belonging
