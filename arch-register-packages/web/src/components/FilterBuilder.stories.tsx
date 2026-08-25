@@ -72,9 +72,15 @@ const mockEnums: WorkspaceEnum[] = [
     workspace: 'test',
     name: 'Environment',
     options: [
-      { value: 'dev', label: 'Development' },
-      { value: 'staging', label: 'Staging' },
-      { value: 'prod', label: 'Production' }
+      { value: 'dev', label: 'Development', description: null, retired: false, restricted: false },
+      {
+        value: 'staging',
+        label: 'Staging',
+        description: null,
+        retired: false,
+        restricted: false
+      },
+      { value: 'prod', label: 'Production', description: null, retired: false, restricted: false }
     ],
     sort_order: 0,
     created_at: '2024-01-01T00:00:00Z',
@@ -85,9 +91,21 @@ const mockEnums: WorkspaceEnum[] = [
     workspace: 'test',
     name: 'Database Engine',
     options: [
-      { value: 'postgres', label: 'PostgreSQL' },
-      { value: 'mysql', label: 'MySQL' },
-      { value: 'mongodb', label: 'MongoDB' }
+      {
+        value: 'postgres',
+        label: 'PostgreSQL',
+        description: null,
+        retired: false,
+        restricted: false
+      },
+      { value: 'mysql', label: 'MySQL', description: null, retired: false, restricted: false },
+      {
+        value: 'mongodb',
+        label: 'MongoDB',
+        description: null,
+        retired: false,
+        restricted: false
+      }
     ],
     sort_order: 1,
     created_at: '2024-01-01T00:00:00Z',

@@ -11,6 +11,7 @@ import { isChannelEnabled } from '../notification/notificationPreferences';
 import { assertNoExternalEntityFieldWrites } from '../catalog/entityValidation';
 import { normalizeEntityRelationFields, relationFields } from '../catalog/dataHelpers';
 import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
+import { getWorkspaceEnumDefinitions } from '../catalog/enumOptions';
 import { updateEntityWithAudit, type EntityMutationActor } from '../catalog/entityMutations';
 import { RetryableJobError } from '../jobs/jobRetry';
 import { computeEntityCompleteness } from '../../utils/completeness';
@@ -298,13 +299,18 @@ const handleSetFieldValue: AutomationActionHandler = async context => {
     const entities = await db.catalog.listEntities(event.workspace);
     nextData = normalizeEntityRelationFields({ schema, fields: nextData, entities });
   }
-  const currencyConfig = await db.workspace?.getSupportedCurrencies?.(event.workspace);
+  const [currencyConfig, enumDefinitions] = await Promise.all([
+    db.workspace?.getSupportedCurrencies?.(event.workspace),
+    getWorkspaceEnumDefinitions(db, event.workspace)
+  ]);
   nextData = normalizeEntityScalarFields({
     schemaFields: schema.fields,
     fields: nextData,
     supportedCurrencies: currencyConfig
       ? new Set(currencyConfig.currencies.map(currency => currency.code))
-      : undefined
+      : undefined,
+    enumDefinitions,
+    previousFields: entity.data
   });
 
   // Threading `automationRuleChain` through `auditMetadata` is what lets `writeAudit` (re-entered

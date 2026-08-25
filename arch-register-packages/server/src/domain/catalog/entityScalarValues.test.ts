@@ -1,8 +1,64 @@
 import { describe, expect, it } from 'vitest';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import { convertScalarFieldCardinality, normalizeEntityScalarFields } from './entityScalarValues';
+import type { WorkspaceEnumDbResult } from './db/catalogDatabase';
 
 describe('entity scalar values', () => {
+  it('validates enum values while preserving historical retired and unknown values', () => {
+    const field = {
+      id: 'classification',
+      name: 'Classification',
+      type: 'select' as const,
+      enumId: 'classification-enum'
+    };
+    const enumeration: WorkspaceEnumDbResult = {
+      id: 'classification-enum',
+      workspace: 'ws-1',
+      name: 'Classification',
+      options: [
+        { value: 'public', label: 'Public' },
+        { value: 'legacy', label: 'Legacy', retired: true }
+      ],
+      sort_order: 0,
+      created_at: new Date(),
+      updated_at: new Date()
+    };
+
+    expect(
+      normalizeEntityScalarFields({
+        schemaFields: [field],
+        fields: { classification: 'public' },
+        enumDefinitions: [enumeration]
+      })
+    ).toEqual({ classification: 'public' });
+
+    expect(() =>
+      normalizeEntityScalarFields({
+        schemaFields: [field],
+        fields: { classification: 'legacy' },
+        enumDefinitions: [enumeration]
+      })
+    ).toThrow("cannot be changed to retired enum option 'legacy'");
+
+    expect(
+      normalizeEntityScalarFields({
+        schemaFields: [field],
+        fields: { classification: 'legacy' },
+        previousFields: { classification: 'legacy' },
+        enumDefinitions: [enumeration]
+      })
+    ).toEqual({ classification: 'legacy' });
+
+    expect(
+      normalizeEntityScalarFields({
+        schemaFields: [field],
+        fields: { classification: 'old-workspace-value' },
+        previousFields: { classification: 'old-workspace-value' },
+        enumDefinitions: [enumeration]
+      })
+    ).toEqual({ classification: 'old-workspace-value' });
+  });
+
   it('wraps legacy scalar values when a field becomes multi-valued', () => {
     const field: SchemaField = {
       id: 'labels',

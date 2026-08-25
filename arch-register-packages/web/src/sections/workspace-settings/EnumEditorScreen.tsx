@@ -1,9 +1,14 @@
 import { useState, useEffect, useCallback } from 'react';
 import { getRouteApi } from '@tanstack/react-router';
 import styles from './SchemaSettingsScreen.module.css';
-import { TbPlus, TbTrash, TbChevronUp, TbChevronDown } from 'react-icons/tb';
+import { TbPlus, TbTrash, TbDots } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
+import { Checkbox } from '@diagram-craft/app-components/Checkbox';
+import type { WorkspaceEnumOption } from '@arch-register/api-types/enumContract';
+import { MenuButton } from '@diagram-craft/app-components/MenuButton';
+import { Menu } from '@diagram-craft/app-components/Menu';
+import { FieldConfig } from '../../components/FieldConfig';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useCreateEnum, useUpdateEnum, useDeleteEnum } from '../../hooks/useEnums';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
@@ -11,6 +16,24 @@ import { EmptyState } from '../../components/EmptyState';
 import { Title } from '../../components/Title';
 
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
+
+type EditableOption = WorkspaceEnumOption & {
+  originalValue?: string;
+  pendingRemoval?: boolean;
+};
+
+const toEditableOption = (option: WorkspaceEnumOption): EditableOption => ({
+  ...option,
+  originalValue: option.value
+});
+
+const newEditableOption = (): EditableOption => ({
+  value: '',
+  label: '',
+  description: null,
+  retired: false,
+  restricted: false
+});
 
 export const EnumEditorScreen = () => {
   const navigate = routeApi.useNavigate();
@@ -20,7 +43,7 @@ export const EnumEditorScreen = () => {
   const canEdit = permissions.canEditSchemas;
 
   const [name, setName] = useState('');
-  const [options, setOptions] = useState<Array<{ value: string; label: string }>>([]);
+  const [options, setOptions] = useState<EditableOption[]>([]);
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
 
@@ -33,7 +56,7 @@ export const EnumEditorScreen = () => {
   useEffect(() => {
     if (selected) {
       setName(selected.name);
-      setOptions(selected.options);
+      setOptions(selected.options.map(toEditableOption));
       setDirty(false);
     }
   }, [selected]);
@@ -53,10 +76,15 @@ export const EnumEditorScreen = () => {
 
   const handleSave = useCallback(async () => {
     if (!selected || !dirty) return;
+    const parsedOptions: WorkspaceEnumOption[] = options
+      .filter(option => !option.pendingRemoval)
+      .map(
+        ({ originalValue: _originalValue, pendingRemoval: _pendingRemoval, ...option }) => option
+      );
     try {
       await updateEnumMutation.mutateAsync({
         enumId: selected.id,
-        data: { name, options }
+        data: { name, options: parsedOptions }
       });
       setDirty(false);
     } catch {
@@ -79,16 +107,21 @@ export const EnumEditorScreen = () => {
   }, [selected, deleteEnumMutation, navigate, workspaceSlug]);
 
   const addOption = () => {
-    setOptions(prev => [...prev, { value: '', label: '' }]);
+    setOptions(prev => [...prev, newEditableOption()]);
     setDirty(true);
   };
 
-  const updateOption = (index: number, patch: Partial<{ value: string; label: string }>) => {
+  const updateOption = (index: number, patch: Partial<EditableOption>) => {
     setOptions(prev => prev.map((o, i) => (i === index ? { ...o, ...patch } : o)));
     setDirty(true);
   };
 
   const removeOption = (index: number) => {
+    const option = options[index];
+    if (option?.originalValue !== undefined) {
+      updateOption(index, { retired: true, pendingRemoval: true });
+      return;
+    }
     setOptions(prev => prev.filter((_, i) => i !== index));
     setDirty(true);
   };
@@ -164,99 +197,100 @@ export const EnumEditorScreen = () => {
 
             {options.length > 0 ? (
               <div className={styles.fieldsTable}>
-                <div
-                  style={{
-                    display: 'grid',
-                    gridTemplateColumns: '52px 1fr 1fr 28px',
-                    gap: 10,
-                    padding: '8px 10px',
-                    fontSize: 11,
-                    color: 'var(--cmp-fg-disabled)',
-                    textTransform: 'uppercase',
-                    letterSpacing: '0.5px',
-                    background: 'var(--panel-bg)',
-                    borderBottom: '1px solid var(--panel-border)'
-                  }}
-                >
-                  <span />
-                  <span>Value</span>
-                  <span>Label</span>
-                  <span />
-                </div>
                 {options.map((opt, i) => (
-                  <div
-                    key={i}
-                    style={{
-                      display: 'grid',
-                      gridTemplateColumns: '52px 1fr 1fr 28px',
-                      gap: 10,
-                      padding: '8px 10px',
-                      fontSize: 12,
-                      alignItems: 'center',
-                      borderBottom:
-                        i < options.length - 1 ? '1px solid var(--panel-border)' : 'none'
-                    }}
-                  >
-                    {canEdit ? (
-                      <div style={{ display: 'flex', gap: 2 }}>
-                        <button
-                          type="button"
-                          className={styles.iconBtn}
-                          disabled={i === 0}
-                          onClick={() => moveOption(i, -1)}
-                          aria-label="Move option up"
-                        >
-                          <TbChevronUp size={13} />
-                        </button>
-                        <button
-                          type="button"
-                          className={styles.iconBtn}
-                          disabled={i === options.length - 1}
-                          onClick={() => moveOption(i, 1)}
-                          aria-label="Move option down"
-                        >
-                          <TbChevronDown size={13} />
-                        </button>
+                  <FieldConfig
+                    key={opt.originalValue ?? `new-${i}`}
+                    dragHandle
+                    menu={
+                      canEdit ? (
+                        <MenuButton.Root>
+                          <MenuButton.Trigger
+                            element={
+                              <button type="button" className={styles.iconBtn}>
+                                <TbDots size={13} />
+                              </button>
+                            }
+                          />
+                          <MenuButton.Menu>
+                            <Menu.Item disabled={i === 0} onClick={() => moveOption(i, -1)}>
+                              Move up
+                            </Menu.Item>
+                            <Menu.Item
+                              disabled={i === options.length - 1}
+                              onClick={() => moveOption(i, 1)}
+                            >
+                              Move down
+                            </Menu.Item>
+                            <Menu.Separator />
+                            <Menu.Item type="danger" onClick={() => removeOption(i)}>
+                              Remove option
+                            </Menu.Item>
+                          </MenuButton.Menu>
+                        </MenuButton.Root>
+                      ) : undefined
+                    }
+                    options={
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+                        <div style={{ display: 'flex', alignItems: 'center' }}>
+                          <Checkbox
+                            value={opt.restricted}
+                            disabled={!canEdit}
+                            label="Restricted / sensitive"
+                            onChange={value => updateOption(i, { restricted: value ?? false })}
+                          />
+                        </div>
+                        {opt.retired && (
+                          <div style={{ display: 'flex', alignItems: 'center' }}>
+                            <Checkbox
+                              value={opt.retired}
+                              disabled={!canEdit}
+                              label="Retired"
+                              onChange={value => {
+                                const retired = value ?? false;
+                                updateOption(i, {
+                                  retired,
+                                  ...(retired ? {} : { pendingRemoval: false })
+                                });
+                              }}
+                            />
+                          </div>
+                        )}
                       </div>
-                    ) : (
-                      <span />
-                    )}
-                    <TextInput
-                      value={opt.value}
-                      readOnly={!canEdit}
-                      placeholder="value"
-                      onChange={value => updateOption(i, { value: value ?? '' })}
-                    />
-                    <TextInput
-                      value={opt.label}
-                      readOnly={!canEdit}
-                      placeholder="label"
-                      onChange={value => updateOption(i, { label: value ?? '' })}
-                    />
-                    {canEdit && (
-                      <button
-                        type="button"
-                        className={styles.iconBtn}
-                        onClick={() => removeOption(i)}
-                      >
-                        <TbTrash size={13} />
-                      </button>
-                    )}
-                  </div>
+                    }
+                  >
+                    <FieldConfig.Cell label="Value" mono flexBasis={180}>
+                      <TextInput
+                        value={opt.value}
+                        readOnly={!canEdit || opt.originalValue !== undefined}
+                        placeholder="value"
+                        style={{ width: '100%' }}
+                        onChange={value => updateOption(i, { value: value ?? '' })}
+                      />
+                    </FieldConfig.Cell>
+                    <FieldConfig.Cell label="Label" flexBasis={200}>
+                      <TextInput
+                        value={opt.label}
+                        readOnly={!canEdit}
+                        placeholder="label"
+                        style={{ width: '100%' }}
+                        onChange={value => updateOption(i, { label: value ?? '' })}
+                      />
+                    </FieldConfig.Cell>
+                    <FieldConfig.Cell label="Description" flexBasis={260}>
+                      <TextInput
+                        value={opt.description ?? ''}
+                        readOnly={!canEdit}
+                        placeholder="optional description"
+                        style={{ width: '100%' }}
+                        onChange={value => updateOption(i, { description: value ?? null })}
+                      />
+                    </FieldConfig.Cell>
+                  </FieldConfig>
                 ))}
               </div>
             ) : (
-              <div className={styles.fieldsTable}>
-                <div
-                  style={{
-                    padding: '16px',
-                    color: 'var(--cmp-fg-disabled)',
-                    textAlign: 'center',
-                    fontSize: 12
-                  }}
-                >
-                  No options defined yet. Click "Add option" to get started.
-                </div>
+              <div className={styles.fieldsEmpty}>
+                No options defined yet. Click "Add option" to get started.
               </div>
             )}
 

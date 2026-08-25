@@ -2,6 +2,7 @@ import type { CurrencyValue } from '@arch-register/api-types/common';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import { httpAssert } from '../../utils/httpAssert';
 import { parseCurrencyValue } from '../../utils/currencyValue';
+import type { WorkspaceEnumDbResult } from './db/catalogDatabase';
 
 export type ScalarSchemaField = Extract<
   SchemaField,
@@ -13,6 +14,8 @@ export type ScalarSchemaField = Extract<
 export type EntityScalarValueOptions = {
   supportedCurrencies?: ReadonlySet<string>;
   validateMissing?: boolean;
+  enumDefinitions?: readonly WorkspaceEnumDbResult[];
+  previousFields?: Record<string, unknown>;
 };
 
 const DATE_PATTERN = /^\d{4}-\d{2}-\d{2}$/;
@@ -163,6 +166,75 @@ const normalizeFieldValues = (
       : normalizedValues[0];
 };
 
+type SelectEnumField = {
+  id: string;
+  name: string;
+  type: 'select';
+  enumId?: string;
+};
+
+const asValueList = (value: unknown): unknown[] => {
+  if (value == null || value === '') return [];
+  return Array.isArray(value) ? value : [value];
+};
+
+/**
+ * Validates select values against workspace enums without assigning meaning to enum names or
+ * categories. Existing unknown/retired values are allowed when they are preserved from the
+ * previous record, keeping historical data editable through unrelated changes.
+ */
+export const validateSelectEnumValues = ({
+  schemaFields,
+  fields,
+  enumDefinitions,
+  previousFields = {}
+}: {
+  schemaFields: readonly SelectEnumField[];
+  fields: Record<string, unknown>;
+  enumDefinitions?: readonly WorkspaceEnumDbResult[];
+  previousFields?: Record<string, unknown>;
+}) => {
+  if (enumDefinitions === undefined) return;
+
+  const enumById = new Map(enumDefinitions.map(enumeration => [enumeration.id, enumeration]));
+  for (const field of schemaFields) {
+    if (field.type !== 'select' || !Object.hasOwn(fields, field.id)) continue;
+    const enumId = field.enumId;
+    httpAssert.string(enumId, {
+      status: 409,
+      message: `Select field '${field.name}' does not reference an enum`
+    });
+    const enumeration = enumById.get(enumId);
+    httpAssert.present(enumeration, {
+      status: 409,
+      message: `Select field '${field.name}' references unknown enum '${enumId}'`
+    });
+    const previousValues = new Set(asValueList(previousFields[field.id]));
+    const optionsByValue = new Map(enumeration.options.map(option => [option.value, option]));
+
+    for (const value of asValueList(fields[field.id])) {
+      httpAssert.string(value, {
+        status: 400,
+        message: `${field.name} must contain strings`
+      });
+      const option = optionsByValue.get(value);
+      if (option === undefined) {
+        httpAssert.true(previousValues.has(value), {
+          status: 400,
+          message: `${field.name} contains unknown enum option '${value}'`
+        });
+        continue;
+      }
+      if (option.retired === true) {
+        httpAssert.true(previousValues.has(value), {
+          status: 400,
+          message: `${field.name} cannot be changed to retired enum option '${value}'`
+        });
+      }
+    }
+  }
+};
+
 /**
  * Normalizes and validates the declared scalar fields in an entity data object.
  * Unknown fields and relation fields are intentionally preserved for their existing validators.
@@ -171,7 +243,9 @@ export const normalizeEntityScalarFields = ({
   schemaFields,
   fields,
   supportedCurrencies,
-  validateMissing = true
+  validateMissing = true,
+  enumDefinitions,
+  previousFields
 }: {
   schemaFields: readonly SchemaField[];
   fields: Record<string, unknown>;
@@ -201,6 +275,14 @@ export const normalizeEntityScalarFields = ({
     if (value === undefined) delete normalized[field.id];
     else normalized[field.id] = value;
   }
+  validateSelectEnumValues({
+    schemaFields: schemaFields.filter(
+      (field): field is SchemaField & SelectEnumField => field.type === 'select'
+    ),
+    fields: normalized,
+    enumDefinitions,
+    previousFields
+  });
   return normalized;
 };
 

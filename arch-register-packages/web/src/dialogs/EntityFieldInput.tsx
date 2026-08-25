@@ -6,6 +6,7 @@ import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import { MultiValueEditor } from '../components/MultiValueEditor';
 import { isMultiValuedScalarField } from '../lib/scalarFieldValues';
+import { selectableEnumOptions } from '../utils/enumOptions';
 
 export const EntityFieldInput = ({
   field,
@@ -80,7 +81,7 @@ export const EntityFieldInput = ({
             style={{ width: '100%' }}
           >
             <option value="">—</option>
-            {field.options.map(option => (
+            {selectableEnumOptions(field.options, item).map(option => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -218,7 +219,7 @@ export const EntityFieldInput = ({
           placeholder="—"
           style={{ width: '100%' }}
         >
-          {field.options.map(option => (
+          {selectableEnumOptions(field.options, value).map(option => (
             <Select.Item key={option.value} value={option.value}>
               {option.label}
             </Select.Item>

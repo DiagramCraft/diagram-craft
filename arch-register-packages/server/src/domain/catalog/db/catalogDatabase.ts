@@ -32,6 +32,7 @@ import {
 } from '../../../db/rowMappers';
 import { ENTITY_DEFAULTS } from '../../../constants';
 import type { EntityViewPermissionScope } from './entityPermissionScope';
+import { normalizeWorkspaceEnumOptions } from '../enumOptions';
 
 export const ENTITY_SELECT_SQL = `
   SELECT e.*,
@@ -144,7 +145,13 @@ export type WorkspaceEnumDbResult = {
   id: string;
   workspace: string;
   name: string;
-  options: Array<{ value: string; label: string }>;
+  options: Array<{
+    value: string;
+    label: string;
+    description?: string | null;
+    retired?: boolean;
+    restricted?: boolean;
+  }>;
   sort_order: number;
   created_at: Date;
   updated_at: Date;
@@ -520,7 +527,9 @@ export const catalogMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
-    options: parseDatabaseJson(row['options'], [], 'workspace_enum.options'),
+    options: normalizeWorkspaceEnumOptions(
+      parseDatabaseJson(row['options'], [], 'workspace_enum.options')
+    ),
     sort_order: Number(row['sort_order'] ?? 0),
     created_at: databaseDate(row['created_at']),
     updated_at: databaseDate(row['updated_at'])

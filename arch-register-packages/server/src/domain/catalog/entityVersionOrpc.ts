@@ -18,6 +18,7 @@ import { entityVersionContract } from '@arch-register/api-types/entityVersionCon
 import type { SchemaDbResult, SchemaVersionDbResult } from './db/catalogDatabase';
 import { withCatalogMutationTransaction } from './mutationTransaction';
 import { normalizeEntityScalarFields } from './entityScalarValues';
+import { getWorkspaceEnumDefinitions } from './enumOptions';
 
 type ORPCContext = {
   db: DatabaseAdapter;
@@ -235,7 +236,9 @@ const entityVersionHandlers = {
     const normalizedRestoredData = normalizeEntityScalarFields({
       schemaFields: schema.fields,
       fields: restoredData as Record<string, unknown>,
-      supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code))
+      supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code)),
+      enumDefinitions: await getWorkspaceEnumDefinitions(context.db, workspace),
+      previousFields: entity.data
     });
     assertVersionDataCanBeRestored(
       authCtx,

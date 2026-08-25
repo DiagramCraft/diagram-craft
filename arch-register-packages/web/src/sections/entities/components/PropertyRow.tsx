@@ -22,6 +22,7 @@ import { MultiValueEditor } from '../../../components/MultiValueEditor';
 import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
 import { resolveEntityReference } from '../entityDetailHelpers';
 import type { TypedRelationFieldEditState } from '../../../lib/entityEditState';
+import { selectableEnumOptions } from '../../../utils/enumOptions';
 
 export const PropertyRow = ({
   field,
@@ -114,7 +115,7 @@ export const PropertyRow = ({
               onChange={event => update(event.target.value)}
             >
               <option value="">—</option>
-              {field.options.map(option => (
+              {selectableEnumOptions(field.options, item).map(option => (
                 <option key={option.value} value={option.value}>
                   {option.label}
                 </option>
@@ -234,7 +235,7 @@ export const PropertyRow = ({
           onChange={e => onChange(e.target.value)}
         >
           <option value="">—</option>
-          {field.options.map(o => (
+          {selectableEnumOptions(field.options, editValue).map(o => (
             <option key={o.value} value={o.value}>
               {o.label}
             </option>

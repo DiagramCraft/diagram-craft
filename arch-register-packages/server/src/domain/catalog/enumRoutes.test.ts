@@ -67,7 +67,15 @@ describe('enum route helpers', () => {
 
     expect(result).toEqual({
       name: 'Status Updated',
-      options: existingEnum.options,
+      options: [
+        {
+          value: 'draft',
+          label: 'Draft',
+          description: null,
+          retired: false,
+          restricted: false
+        }
+      ],
       sort_order: existingEnum.sort_order,
       updated_at: now
     });
@@ -86,10 +94,78 @@ describe('enum route helpers', () => {
 
     expect(result).toEqual({
       name: 'Status Updated',
-      options: [{ value: 'active', label: 'Active' }],
+      options: [
+        {
+          value: 'active',
+          label: 'Active',
+          description: null,
+          retired: false,
+          restricted: false
+        },
+        {
+          value: 'draft',
+          label: 'Draft',
+          description: null,
+          retired: true,
+          restricted: false
+        }
+      ],
       sort_order: 2,
       updated_at: now
     });
+  });
+
+  it('removes omitted unused options and retires omitted used options', () => {
+    const existing: WorkspaceEnumDbResult = {
+      ...existingEnum,
+      options: [
+        { value: 'used', label: 'Used' },
+        { value: 'unused', label: 'Unused' }
+      ]
+    };
+
+    expect(
+      buildUpdateEnumInput({ name: 'Status', options: [] }, existing, now, new Set(['used']))
+        .options
+    ).toEqual([
+      {
+        value: 'used',
+        label: 'Used',
+        description: null,
+        retired: true,
+        restricted: false
+      }
+    ]);
+  });
+
+  it('preserves option metadata and allows reactivating retired values', () => {
+    const retired = {
+      value: 'draft',
+      label: 'Draft',
+      description: 'No longer used for new records',
+      retired: true,
+      restricted: true
+    };
+    const existing: WorkspaceEnumDbResult = { ...existingEnum, options: [retired] };
+
+    expect(
+      buildUpdateEnumInput({ name: 'Status', options: [retired] }, existing, now).options
+    ).toEqual([retired]);
+    expect(
+      buildUpdateEnumInput(
+        { name: 'Status', options: [{ value: 'draft', label: 'Draft', retired: false }] },
+        existing,
+        now
+      ).options
+    ).toEqual([
+      {
+        value: 'draft',
+        label: 'Draft',
+        description: null,
+        retired: false,
+        restricted: false
+      }
+    ]);
   });
 
   it('detects when an enum is referenced by a select field', () => {
@@ -133,5 +209,15 @@ describe('enum route helpers', () => {
     ];
 
     expect(isEnumReferencedBySchemas(schemas, 'enum-1')).toBe(false);
+  });
+
+  it('detects references from relation schemas', () => {
+    expect(
+      isEnumReferencedBySchemas([], 'enum-1', [
+        {
+          fields: [{ id: 'purpose', name: 'Purpose', type: 'select', enumId: 'enum-1' }]
+        } as never
+      ])
+    ).toBe(true);
   });
 });

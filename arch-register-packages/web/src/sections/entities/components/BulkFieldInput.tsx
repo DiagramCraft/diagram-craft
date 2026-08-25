@@ -13,6 +13,7 @@ import type { BulkEditableField } from './bulkEditFields';
 import styles from './BulkEditToolbar.module.css';
 import { MultiValueEditor } from '../../../components/MultiValueEditor';
 import { isMultiValuedScalarField } from '../../../lib/scalarFieldValues';
+import { selectableEnumOptions } from '../../../utils/enumOptions';
 
 export type BulkFieldInputProps = {
   workspaceId: string;
@@ -108,7 +109,7 @@ export const BulkFieldInput = ({
             onChange={event => update(event.target.value)}
           >
             <option value="">—</option>
-            {schemaField.options.map(option => (
+            {selectableEnumOptions(schemaField.options, item).map(option => (
               <option key={option.value} value={option.value}>
                 {option.label}
               </option>
@@ -215,7 +216,7 @@ export const BulkFieldInput = ({
   if (schemaField.type === 'select') {
     return (
       <Select.Root value={value} placeholder="No change" onChange={v => onValue(v ?? '')}>
-        {schemaField.options.map(option => (
+        {selectableEnumOptions(schemaField.options, value).map(option => (
           <Select.Item key={option.value} value={option.value}>
             {option.label}
           </Select.Item>

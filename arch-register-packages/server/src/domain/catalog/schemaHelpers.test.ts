@@ -31,7 +31,9 @@ describe('toApiEnum', () => {
     };
     const result = toApiEnum(e);
     expect(result.id).toBe('enum-1');
-    expect(result.options).toEqual([{ value: 'active', label: 'Active' }]);
+    expect(result.options).toEqual([
+      { value: 'active', label: 'Active', description: null, retired: false, restricted: false }
+    ]);
     expect(result.created_at).toBe(nowIso);
     expect(result.updated_at).toBe(nowIso);
   });

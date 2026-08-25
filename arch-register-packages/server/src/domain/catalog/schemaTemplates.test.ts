@@ -42,7 +42,7 @@ describe('instantiateTemplate', () => {
     ]);
     expect(
       SCHEMA_TEMPLATES.filter(template => template.category === 'cross-cutting').map(t => t.id)
-    ).toEqual(['glossary', 'security', 'risk-compliance', 'strategy']);
+    ).toEqual(['glossary', 'information-governance', 'security', 'risk-compliance', 'strategy']);
 
     const definitions = instantiateTemplateComposition('ws-1', 'default', [
       'glossary',
@@ -287,8 +287,23 @@ describe('instantiateTemplate', () => {
       );
 
       expect(selectFields.every(field => enumIds.has(field.enumId))).toBe(true);
-      expect(template.enums.every(enumeration => enumeration.options.length > 0)).toBe(true);
+      expect(
+        template.id === 'information-governance' ||
+          template.enums.every(enumeration => enumeration.options.length > 0)
+      ).toBe(true);
     }
+  });
+
+  it('materializes information governance as optional empty reusable enums', () => {
+    const definitions = instantiateTemplateDefinitions('ws-1', 'information-governance');
+
+    expect(definitions.schemas).toEqual([]);
+    expect(definitions.enums.map(enumeration => enumeration.name)).toEqual([
+      'Regulatory Tags',
+      'Processing Purposes',
+      'Residency Regions'
+    ]);
+    expect(definitions.enums.every(enumeration => enumeration.options.length === 0)).toBe(true);
   });
 
   it('materializes enums and document definitions with remapped references', () => {

@@ -171,7 +171,7 @@ CREATE TABLE audit_log (
   timestamp       TIMESTAMPTZ NOT NULL,
   user_id         UUID,
   operation       TEXT        NOT NULL CHECK (operation IN ('create', 'update', 'delete')),
-  entity_type     TEXT        NOT NULL CHECK (entity_type IN ('workspace', 'entity_schema', 'workspace_field_group', 'entity', 'project', 'content_node', 'assessment', 'assessment_response', 'project_milestone', 'relation_schema', 'relation', 'automation_note')),
+  entity_type     TEXT        NOT NULL CHECK (entity_type IN ('workspace', 'workspace_enum', 'entity_schema', 'workspace_field_group', 'entity', 'project', 'content_node', 'assessment', 'assessment_response', 'project_milestone', 'relation_schema', 'relation', 'automation_note')),
   entity_id       UUID        NOT NULL,
   entity_name     TEXT        NOT NULL,
   entity_slug     TEXT,

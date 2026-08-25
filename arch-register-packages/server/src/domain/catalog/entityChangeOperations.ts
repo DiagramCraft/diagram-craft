@@ -11,6 +11,7 @@ import {
   parseEntityMutationPayload
 } from './dataHelpers';
 import { normalizeEntityScalarFields } from './entityScalarValues';
+import { getWorkspaceEnumDefinitions } from './enumOptions';
 import { listAllCatalogEntities } from './entityLoader';
 import { updateEntityWithAuditIfVersion } from './entityMutations';
 import { computeEntityCompleteness } from '../../utils/completeness';
@@ -252,10 +253,13 @@ const buildProposedEntity = async (
     entities
   });
   const currencyConfig = await db.workspace.getSupportedCurrencies(workspace);
+  const enumDefinitions = await getWorkspaceEnumDefinitions(db, workspace);
   const normalizedData = normalizeEntityScalarFields({
     schemaFields: schema.fields,
     fields: data,
-    supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code))
+    supportedCurrencies: new Set(currencyConfig.currencies.map(currency => currency.code)),
+    enumDefinitions,
+    previousFields: entity.data
   });
   if (authCtx) {
     const changedFieldIds = Object.keys(normalizedData).filter(

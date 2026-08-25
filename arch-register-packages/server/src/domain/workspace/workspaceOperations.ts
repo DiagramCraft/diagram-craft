@@ -19,6 +19,7 @@ import { ensureGovernanceDeadlineScanSchedule } from '../governance/governanceDe
 import { computeEntityCompleteness } from '../../utils/completeness';
 import { isReferenceOrContainmentField } from '@arch-register/api-types/schemaContract';
 import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
+import { getWorkspaceEnumDefinitions } from '../catalog/enumOptions';
 import { DOCUMENT_STATUS_CASE_KIND } from '../document/documentWorkflowOperations';
 import { FIELD_DATE_REMINDER_CASE_KIND } from '../catalog/fieldDateReminderJob';
 import {
@@ -660,7 +661,10 @@ export const createWorkspace = async (
             }
             const entityMap = new Map<string, string>();
             if (includeSet.has('entities') && includeSet.has('schemas')) {
-              const currencyConfig = await db.workspace.getSupportedCurrencies(row.id);
+              const [currencyConfig, enumDefinitions] = await Promise.all([
+                db.workspace.getSupportedCurrencies(row.id),
+                getWorkspaceEnumDefinitions(db, row.id)
+              ]);
               const supportedCurrencies = new Set(
                 currencyConfig.currencies.map(currency => currency.code)
               );
@@ -690,7 +694,9 @@ export const createWorkspace = async (
                 const normalizedData = normalizeEntityScalarFields({
                   schemaFields: targetSchema.fields,
                   fields: data,
-                  supportedCurrencies
+                  supportedCurrencies,
+                  enumDefinitions,
+                  previousFields: entity.data
                 });
                 const mappedOwner = entity.owner
                   ? resolveMappedIdOrNull(teamMap, entity.owner)

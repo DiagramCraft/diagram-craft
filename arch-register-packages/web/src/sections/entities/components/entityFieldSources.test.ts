@@ -92,8 +92,8 @@ const enums: WorkspaceEnum[] = [
     workspace: 'ws-1',
     name: 'Risk',
     options: [
-      { value: 'low', label: 'Low' },
-      { value: 'high', label: 'High' }
+      { value: 'low', label: 'Low', description: null, retired: false, restricted: false },
+      { value: 'high', label: 'High', description: null, retired: false, restricted: false }
     ],
     sort_order: 0,
     created_at: '',

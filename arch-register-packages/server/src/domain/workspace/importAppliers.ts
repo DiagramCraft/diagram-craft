@@ -43,6 +43,7 @@ import {
   normalizeSchemaCategory
 } from '../catalog/schemaHelpers';
 import { normalizeEntityScalarFields } from '../catalog/entityScalarValues';
+import { getWorkspaceEnumDefinitions } from '../catalog/enumOptions';
 import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
 import { coordinateContentWrite } from '../project/contentWriteCoordinator';
 import type { WorkspaceCapabilityBindings } from '@arch-register/api-types/workspaceCapabilityContract';
@@ -627,6 +628,7 @@ export const importEntities = async (
 ): Promise<{ created: number; updated: number; skipped: number }> => {
   const now = new Date();
   const currencyConfig = await db.workspace?.getSupportedCurrencies?.(workspace);
+  const enumDefinitions = await getWorkspaceEnumDefinitions(db, workspace);
   const supportedCurrencies = currencyConfig
     ? new Set(currencyConfig.currencies.map(currency => currency.code))
     : undefined;
@@ -667,7 +669,9 @@ export const importEntities = async (
     const normalizedData = normalizeEntityScalarFields({
       schemaFields: schema.fields,
       fields: entity.data,
-      supportedCurrencies
+      supportedCurrencies,
+      enumDefinitions,
+      previousFields: existing?.data
     });
     normalizedDataByEntityId.set(nextId, normalizedData);
     requireNoRestrictedFieldWrites(

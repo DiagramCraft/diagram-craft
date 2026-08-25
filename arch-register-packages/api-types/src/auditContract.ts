@@ -18,6 +18,7 @@ const auditLogEntrySchema = z.object({
   entity_type: z
     .enum([
       'workspace',
+      'workspace_enum',
       'entity_schema',
       'workspace_field_group',
       'entity',
