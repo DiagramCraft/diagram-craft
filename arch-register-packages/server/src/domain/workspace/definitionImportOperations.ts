@@ -237,6 +237,53 @@ const toCanonicalField = (field: SymbolicField): SchemaField => {
   return field as SchemaField;
 };
 
+const toCanonicalRelationField = (
+  field: NonNullable<SchemaTemplate['relationSchemas']>[number]['fields'][number]
+): RelationField => {
+  const requirement =
+    field.requirementLevel === undefined ? {} : { requirementLevel: field.requirementLevel };
+
+  if (field.type === 'select') {
+    return {
+      id: field.id,
+      name: field.name,
+      type: field.type,
+      enumId: symbolicReferenceId(field.enumId),
+      ...(field.minCardinality === undefined ? {} : { minCardinality: field.minCardinality }),
+      ...(field.maxCardinality === undefined ? {} : { maxCardinality: field.maxCardinality }),
+      ...requirement
+    };
+  }
+  if (field.type === 'number') {
+    return {
+      id: field.id,
+      name: field.name,
+      type: field.type,
+      ...(field.min === undefined ? {} : { min: field.min }),
+      ...(field.max === undefined ? {} : { max: field.max }),
+      ...requirement
+    };
+  }
+  if (field.type === 'entityRelation') {
+    return {
+      id: field.id,
+      name: field.name,
+      type: field.type,
+      ...(field.predicate === undefined ? {} : { predicate: field.predicate }),
+      schemaId: symbolicReferenceId(field.schemaId),
+      minCount: field.minCount,
+      maxCount: field.maxCount,
+      ...requirement
+    };
+  }
+  return {
+    id: field.id,
+    name: field.name,
+    type: field.type,
+    ...requirement
+  };
+};
+
 const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
   kind: 'builtin',
   id: template.id,
@@ -292,23 +339,7 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
         : relationSchema.outSymSchemaIds.map(symbolicReferenceId),
     in_label: relationSchema.inLabel,
     out_label: relationSchema.outLabel,
-    fields: relationSchema.fields.map(
-      field =>
-        (field.type === 'select'
-          ? {
-              id: field.id,
-              name: field.name,
-              type: field.type,
-              enumId: symbolicReferenceId(field.enumId),
-              requirementLevel: field.requirementLevel
-            }
-          : {
-              id: field.id,
-              name: field.name,
-              type: field.type,
-              requirementLevel: field.requirementLevel
-            }) as RelationField
-    ),
+    fields: relationSchema.fields.map(toCanonicalRelationField),
     groups: [],
     shared_field_group_links: [],
     shared_field_groups: [],

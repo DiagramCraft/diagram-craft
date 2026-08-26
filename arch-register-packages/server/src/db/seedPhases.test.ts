@@ -78,7 +78,13 @@ describe('composable seed phases', () => {
         (
           await provisioned.db.workspace.listWorkspaceCapabilityConfigurations(defaultWorkspace)
         ).map(configuration => ({ type: configuration.type, bindings: configuration.bindings }))
-      ).toEqual(seedTemplateDefinitions.capabilityConfigurations);
+      ).toEqual(
+        seedTemplateDefinitions.capabilityConfigurations.filter(configuration =>
+          Object.values(configuration.bindings).every(
+            binding => binding.target.kind !== 'relation_schema'
+          )
+        )
+      );
       expect(await provisioned.db.catalog.listSharedFieldGroups(defaultWorkspace)).toEqual([]);
       expect(await provisioned.db.catalog.listEntities(defaultWorkspace)).toEqual([]);
       expect(await provisioned.db.project.listProjects(defaultWorkspace)).toEqual([]);

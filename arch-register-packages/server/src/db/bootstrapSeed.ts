@@ -30,6 +30,7 @@ import {
   seedCatalogEntities,
   seedCatalogViews,
   seedPublicIdCounters,
+  seedTemplateRelationCapabilityConfigurations,
   seedWorkspaceBase,
   seedWorkspaceConfiguration
 } from './seedPhases';
@@ -238,6 +239,7 @@ export const seedBootstrapData = async (
   for (const relation of seedRelations) {
     await db.relation.createRelation(relation);
   }
+  await seedTemplateRelationCapabilityConfigurations(db);
   await recalculateEntityDerivedFields(db, seededWorkspaces.default.id);
   for (const assessment of seedAssessments) {
     await db.project.createAssessment(assessment);

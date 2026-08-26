@@ -1356,7 +1356,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           technologyReleaseReference(),
           {
             id: 'system',
-            name: 'Used by',
+            name: 'System',
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'system',

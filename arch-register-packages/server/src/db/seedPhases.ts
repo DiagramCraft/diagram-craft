@@ -50,6 +50,52 @@ export type CatalogSeedOptions = {
   schemas?: boolean;
 };
 
+type SeedTemplateCapabilityConfiguration =
+  (typeof seedTemplateDefinitions.capabilityConfigurations)[number];
+
+const seedCapabilitiesWithoutRelationSchemas: SeedTemplateCapabilityConfiguration[] =
+  seedTemplateDefinitions.capabilityConfigurations.filter(configuration =>
+    Object.values(configuration.bindings).every(
+      binding => binding.target.kind !== 'relation_schema'
+    )
+  );
+
+export const seedTemplateCapabilityConfigurations = async (
+  db: DatabaseAdapter,
+  configurations: readonly SeedTemplateCapabilityConfiguration[] = seedCapabilitiesWithoutRelationSchemas
+): Promise<void> => {
+  for (const configuration of configurations) {
+    const capabilityId =
+      SEED_CAPABILITY_CONFIGURATION_IDS[
+        configuration.type as keyof typeof SEED_CAPABILITY_CONFIGURATION_IDS
+      ];
+    if (!capabilityId) {
+      throw new Error(`No stable seed id configured for capability '${configuration.type}'`);
+    }
+    await db.workspace.upsertWorkspaceCapabilityConfiguration({
+      id: capabilityId,
+      workspace: WORKSPACE_ID,
+      type: configuration.type,
+      bindings: configuration.bindings,
+      created_at: now,
+      updated_at: now
+    });
+  }
+};
+
+export const seedTemplateRelationCapabilityConfigurations = async (
+  db: DatabaseAdapter
+): Promise<void> => {
+  await seedTemplateCapabilityConfigurations(
+    db,
+    seedTemplateDefinitions.capabilityConfigurations.filter(configuration =>
+      Object.values(configuration.bindings).some(
+        binding => binding.target.kind === 'relation_schema'
+      )
+    )
+  );
+};
+
 export type SeedLocalUser = {
   id: string;
   user_id: string;
@@ -174,23 +220,7 @@ export const seedCatalogDefinitions = async (
       );
     }
 
-    for (const configuration of seedTemplateDefinitions.capabilityConfigurations) {
-      const capabilityId =
-        SEED_CAPABILITY_CONFIGURATION_IDS[
-          configuration.type as keyof typeof SEED_CAPABILITY_CONFIGURATION_IDS
-        ];
-      if (!capabilityId) {
-        throw new Error(`No stable seed id configured for capability '${configuration.type}'`);
-      }
-      await db.workspace.upsertWorkspaceCapabilityConfiguration({
-        id: capabilityId,
-        workspace: WORKSPACE_ID,
-        type: configuration.type,
-        bindings: configuration.bindings,
-        created_at: now,
-        updated_at: now
-      });
-    }
+    await seedTemplateCapabilityConfigurations(db);
   }
 };
 

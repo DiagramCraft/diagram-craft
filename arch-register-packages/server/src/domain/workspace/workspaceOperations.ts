@@ -10,8 +10,6 @@ import { handleDbError, slugify } from '../../utils/http';
 import { AR_COLOR_BLUE, AR_COLOR_GREEN, AR_COLOR_YELLOW } from '@arch-register/api-types/colors';
 import { toApiWorkspace } from './workspaceHelpers';
 import { instantiateTemplateComposition } from '../catalog/schemaTemplates';
-import { compileSchemaWithSharedGroups } from '../catalog/fieldGroupHelpers';
-import { compileRelationSchemaWithSharedGroups } from '../catalog/relationSchemaHelpers';
 import type { WorkspaceDbResult } from './db/workspaceDatabase';
 import { Workspace } from '@arch-register/api-types/workspaceContract';
 import { parseGovernanceWorkflowConfig } from '../governance/governanceWorkflowConfig';
@@ -898,21 +896,18 @@ export const createWorkspace = async (
               await db.catalog.createSharedFieldGroup(fieldGroup);
             }
             for (const schema of definitions.schemas) {
-              const compiledSchema = compileSchemaWithSharedGroups(schema, definitions.fieldGroups);
-              await db.catalog.createSchema(compiledSchema);
-              if (compiledSchema.key_prefix) {
+              await db.catalog.createSchema(schema);
+              if (schema.key_prefix) {
                 await db.workspace.registerPublicIdPrefix(
-                  compiledSchema.key_prefix,
+                  schema.key_prefix,
                   'schema',
-                  compiledSchema.id,
+                  schema.id,
                   timestamp
                 );
               }
             }
             for (const relationSchema of definitions.relationSchemas) {
-              await db.relation.createRelationSchema(
-                compileRelationSchemaWithSharedGroups(relationSchema, definitions.fieldGroups)
-              );
+              await db.relation.createRelationSchema(relationSchema);
             }
             for (const documentType of definitions.documentTypes) {
               await db.document.createDocumentType(documentType);
