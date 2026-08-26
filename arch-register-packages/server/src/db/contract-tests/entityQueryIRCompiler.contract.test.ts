@@ -3067,6 +3067,74 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(page.items[0]!['status']).toBe('active');
   });
 
+  it('resolves owner and lifecycle names (not just ids) for relation-rooted queries', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+    const schema = await createSchema(db, workspace, { name: 'System' });
+    const now = new Date();
+
+    const [platformTeam] = await db.workspace.replaceTeams(workspace, [
+      {
+        id: randomUUID(),
+        workspace,
+        name: 'Platform',
+        sort_order: 0,
+        color: null,
+        description: '',
+        created_at: now
+      }
+    ]);
+    const [activeState] = await db.workspace.replaceLifecycleStates(workspace, [
+      {
+        id: randomUUID(),
+        workspace,
+        label: 'Active',
+        color: '#000000',
+        sort_order: 0,
+        created_at: now
+      }
+    ]);
+
+    const relationSchema = await db.relation.createRelationSchema({
+      id: randomUUID(),
+      workspace,
+      name: 'Depends On',
+      description: '',
+      in_schema_ids: [schema.id],
+      out_schema_ids: [schema.id],
+      fields: [],
+      groups: [],
+      shared_field_group_links: [],
+      color: null,
+      icon: null,
+      relation_approval_policy: 'disabled',
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+    const entityA = await createFixtureEntity(db, workspace, schema.id, { name: 'A' });
+    const entityB = await createFixtureEntity(db, workspace, schema.id, { name: 'B' });
+    await db.relation.createRelation({
+      id: randomUUID(),
+      workspace,
+      schema_id: relationSchema.id,
+      in_entity_id: entityA.id,
+      out_entity_id: entityB.id,
+      data: {},
+      owner: platformTeam!.id,
+      lifecycle: activeState!.id,
+      created_at: new Date(),
+      updated_at: new Date()
+    });
+
+    const { listRelationsWithCount } = await import('../../domain/catalog/entityQueryOperations');
+    const page = await listRelationsWithCount(db, workspace, null, {
+      relationQuery: { schemaId: relationSchema.id, root: { kind: 'and', children: [] } }
+    });
+
+    expect(page.items[0]!._owner).toEqual({ id: platformTeam!.id, name: 'Platform' });
+    expect(page.items[0]!._lifecycle).toEqual({ id: activeState!.id, name: 'Active' });
+  });
+
   it('paginates relation-rooted queries via SQL LIMIT/OFFSET with an accurate total across pages (#2700)', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);

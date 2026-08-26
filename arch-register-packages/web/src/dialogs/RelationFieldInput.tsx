@@ -9,6 +9,14 @@ import { useEntitiesBySchema } from '../hooks/useEntities';
 import { relationIds } from '../lib/entityEditState';
 import { selectableEnumOptions } from '../utils/enumOptions';
 
+export const isMultiValuedRelationSelectField = (
+  field: RelationSchema['fields'][number]
+): boolean => {
+  if (field.type !== 'select') return false;
+  const max = field.maxCardinality ?? 1;
+  return max === -1 || max > 1;
+};
+
 export const RelationFieldInput = ({
   workspaceId,
   field,
@@ -47,6 +55,24 @@ export const RelationFieldInput = ({
   }
 
   const stringValue = typeof value === 'string' ? value : '';
+
+  if (field.type === 'select' && isMultiValuedRelationSelectField(field)) {
+    const availableItems: MultiSelectItem[] = selectableEnumOptions(field.options, value).map(
+      option => ({ value: option.value, label: option.label })
+    );
+    return (
+      <FormElement label={field.name} required={field.requirementLevel !== 'optional'}>
+        <MultiSelect
+          selectedValues={relationIds(value)}
+          availableItems={availableItems}
+          onSelectionChange={onChange}
+          disabled={disabled}
+          placeholder={`Select ${field.name.toLowerCase()}...`}
+          style={{ width: '100%' }}
+        />
+      </FormElement>
+    );
+  }
 
   if (field.type === 'select') {
     return (

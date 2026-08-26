@@ -421,6 +421,112 @@ describe('parseRelationsImport', () => {
   });
 });
 
+describe('parseRelationsImport — multi-valued select fields', () => {
+  const makeMultiSelectSchema = () =>
+    makeRelationSchema('relation-schema', 'Data Flow', [
+      {
+        id: 'regulatory_tags',
+        name: 'Regulatory Tags',
+        type: 'select',
+        enumId: 'regulatory-tags',
+        minCardinality: 0,
+        maxCardinality: -1
+      }
+    ]);
+
+  const withRegulatoryTagsEnum = (db: MockDb) => {
+    db.catalog.listEnums = vi.fn(async () => [
+      {
+        id: 'regulatory-tags',
+        workspace: 'ws-1',
+        name: 'Regulatory Tags',
+        options: [
+          { value: 'gdpr', label: 'GDPR' },
+          { value: 'ccpa', label: 'CCPA' }
+        ],
+        sort_order: 0,
+        created_at: now,
+        updated_at: now
+      }
+    ]);
+    return db;
+  };
+
+  it('parses a comma-separated cell into an array of option values', async () => {
+    const relationSchema = makeMultiSelectSchema();
+    const entities = [makeEntity('in-1'), makeEntity('out-1')];
+    const db = withRegulatoryTagsEnum(makeDb({ relationSchemas: [relationSchema], entities }));
+
+    const result = await parseRelationsImport(
+      db,
+      'ws-1',
+      authCtx,
+      '_schemaId;_inEntityId;_outEntityId;Regulatory Tags\nrelation-schema;in-1;out-1;"gdpr, ccpa"'
+    );
+
+    expect(result.validRows).toBe(1);
+    expect(result.relations[0]).toMatchObject({
+      relation: { regulatory_tags: ['gdpr', 'ccpa'] }
+    });
+  });
+
+  it('reports an error when any option in the list is unknown', async () => {
+    const relationSchema = makeMultiSelectSchema();
+    const entities = [makeEntity('in-1'), makeEntity('out-1')];
+    const db = withRegulatoryTagsEnum(makeDb({ relationSchemas: [relationSchema], entities }));
+
+    const result = await parseRelationsImport(
+      db,
+      'ws-1',
+      authCtx,
+      '_schemaId;_inEntityId;_outEntityId;Regulatory Tags\nrelation-schema;in-1;out-1;"gdpr, hipaa"'
+    );
+
+    expect(result.validRows).toBe(0);
+    expect(result.relations[0]?.errors).toEqual(
+      expect.arrayContaining(['Regulatory Tags contains an invalid option'])
+    );
+  });
+});
+
+describe('exportRelationsCsv — multi-valued select fields', () => {
+  it('joins array values with a comma when exporting', async () => {
+    const relationSchema = makeRelationSchema('relation-schema', 'Data Flow', [
+      {
+        id: 'regulatory_tags',
+        name: 'Regulatory Tags',
+        type: 'select',
+        enumId: 'regulatory-tags',
+        minCardinality: 0,
+        maxCardinality: -1
+      }
+    ]);
+    const entities = [makeEntity('in-1'), makeEntity('out-1')];
+    collectRelationsFromIRMock.mockResolvedValueOnce([
+      {
+        _uid: 'relation-1',
+        _schema: { id: relationSchema.id, name: relationSchema.name },
+        _in: { id: 'in-1', name: 'In' },
+        _out: { id: 'out-1', name: 'Out' },
+        regulatory_tags: ['gdpr', 'ccpa']
+      }
+    ]);
+
+    const response = await exportRelationsCsv(
+      makeDb({ relationSchemas: [relationSchema], entities }),
+      'ws-1',
+      authCtx,
+      { root_kind: 'relation', root: { kind: 'and', children: [] } },
+      now
+    );
+    const csv = await response.body.text();
+
+    const rows = csv.split('\n');
+    expect(rows[0]).toBe('_schemaId;_inEntityId;_outEntityId;Regulatory Tags');
+    expect(rows[1]).toContain('gdpr, ccpa');
+  });
+});
+
 describe('parseRelationsImport — entityRelation fields', () => {
   it('resolves entity names to ids for an entityRelation field', async () => {
     const relationSchema = makeRelationSchema('relation-schema', 'Data Flow', [

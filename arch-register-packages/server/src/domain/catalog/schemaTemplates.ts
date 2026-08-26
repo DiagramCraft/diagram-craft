@@ -1005,6 +1005,50 @@ const informationAssetFieldGroup: SymbolicFieldGroup = {
   ]
 };
 
+// Mirrors the "Data Flow Governance" group added directly to the bundled demo workspace's Data
+// Flow relation (#3065's seedData/relations.ts) — same fields, same vocabularies. Not yet attached
+// to any relation schema here: the Data Flow relation itself isn't templated (see #3084), and
+// SymbolicRelationSchema (unlike TemplateSchema) has no sharedFieldGroupIds/groups support to
+// attach it to today. Defining the group now lets it be materialized and manually attached (or
+// wired up by #3084 once Data Flow is templated) without waiting on that larger change.
+const dataFlowGovernanceFieldGroup: SymbolicFieldGroup = {
+  id: 'data-flow-governance',
+  name: 'Data Flow Governance',
+  description:
+    'Transfer-specific handling metadata for a governed data flow: regulatory tags, processing ' +
+    'purposes, and source/destination residency regions.',
+  fields: [
+    {
+      id: 'regulatory_tags',
+      name: 'Regulatory Tags',
+      type: 'select',
+      enumId: 'regulatory-tags',
+      minCardinality: 0,
+      maxCardinality: -1
+    },
+    {
+      id: 'processing_purposes',
+      name: 'Processing Purposes',
+      type: 'select',
+      enumId: 'processing-purposes',
+      minCardinality: 0,
+      maxCardinality: -1
+    },
+    {
+      id: 'source_residency_region',
+      name: 'Source Residency Region',
+      type: 'select',
+      enumId: 'residency-regions'
+    },
+    {
+      id: 'destination_residency_region',
+      name: 'Destination Residency Region',
+      type: 'select',
+      enumId: 'residency-regions'
+    }
+  ]
+};
+
 const dataEntitySchema: TemplateSchema = {
   symId: 'data-entity',
   name: 'Data Entity',
@@ -1049,7 +1093,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       'assignment, and a governed Data Entity schema for information-asset stewardship.',
     schemas: [retentionPolicySchema, dataEntitySchema],
     enums: [...informationGovernanceEnums, piiClassificationEnum],
-    fieldGroups: [informationAssetFieldGroup],
+    fieldGroups: [informationAssetFieldGroup, dataFlowGovernanceFieldGroup],
     relationSchemas: [retentionAssignmentRelationSchema],
     documentTypes: [],
     documentTemplates: [],
