@@ -70,7 +70,7 @@ const resolveRetentionBindings = async (db: DatabaseAdapter, workspace: string) 
     workspace,
     RETENTION_CAPABILITY_TYPE
   );
-  if (!configuration || !configuration.valid) return null;
+  if (!configuration?.valid) return null;
 
   const policyRole = definition.bindingRoles.find(role => role.id === 'policy');
   const assignmentRole = definition.bindingRoles.find(role => role.id === 'assignment');
