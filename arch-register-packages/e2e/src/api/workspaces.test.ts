@@ -33,7 +33,9 @@ test.describe('workspace routes', () => {
     );
     expect(
       templates.filter(template => template.category === 'cross-cutting').map(t => t.id)
-    ).toEqual(expect.arrayContaining(['glossary', 'security', 'risk-compliance']));
+    ).toEqual(
+      expect.arrayContaining(['glossary', 'information-governance', 'security', 'risk-compliance'])
+    );
   });
 
   test('GET /api/workspaces returns 401 without token', async ({ server }) => {
@@ -162,6 +164,53 @@ test.describe('workspace routes', () => {
     const schemas = await server.db.catalog.listSchemas(created.id);
     expect(schemas.map(schema => schema.name)).toEqual(
       expect.arrayContaining(['Term', 'Term Category'])
+    );
+  });
+
+  test('POST /api/workspaces materializes information governance stewardship metadata', async ({
+    server,
+    orpc
+  }) => {
+    const created = await orpc.workspaces.create({
+      body: {
+        name: 'Information Governance Workspace',
+        cross_cutting_templates: ['information-governance']
+      }
+    });
+
+    const [schemas, enums, fieldGroups] = await Promise.all([
+      server.db.catalog.listSchemas(created.id),
+      server.db.catalog.listEnums(created.id),
+      server.db.catalog.listSharedFieldGroups(created.id)
+    ]);
+    const dataEntity = schemas.find(schema => schema.name === 'Data Entity');
+    const stewardshipGroup = fieldGroups.find(
+      fieldGroup => fieldGroup.name === 'Information Asset Stewardship'
+    );
+
+    expect(dataEntity).toBeDefined();
+    expect(dataEntity?.fields).toEqual([
+      expect.objectContaining({ id: 'classification', type: 'select' })
+    ]);
+    expect(dataEntity?.shared_field_group_links).toEqual([
+      expect.objectContaining({ groupId: stewardshipGroup?.id })
+    ]);
+    expect(stewardshipGroup?.fields.map(field => field.id)).toEqual([
+      'steward',
+      'custodian',
+      'review_date',
+      'regulatory_tags',
+      'processing_purposes',
+      'permitted_residency_regions'
+    ]);
+    expect(enums.map(enumeration => enumeration.name)).toEqual(
+      expect.arrayContaining([
+        'Regulatory Tags',
+        'Processing Purposes',
+        'Residency Regions',
+        'Retention Time Unit',
+        'PII Classification'
+      ])
     );
   });
 
