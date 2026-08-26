@@ -233,6 +233,7 @@ export const CONTENT_IDS = {
 } as const;
 
 export const DATA_FLOW_SCHEMA_ID = '00000000-0000-0000-0000-000000000030';
+export const DATA_FLOW_GOVERNANCE_FIELD_GROUP_ID = '00000000-0000-0000-0000-f00000000003';
 export const RISK_AFFECTS_RELATION_SCHEMA_ID = '00000000-0000-0000-0000-000000000036';
 // Domain, System, Component, API, Resource, Technology Release, Technology, Data Entity, Contract, Vendor.
 export const RISK_AFFECTS_TARGET_SCHEMA_IDS = [

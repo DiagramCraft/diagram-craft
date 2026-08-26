@@ -16,7 +16,9 @@ import {
   API_PROVIDER_RELATION_SCHEMA_ID,
   BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
   CONTROL_REQUIREMENT_SCHEMA_ID,
+  DATA_FLOW_GOVERNANCE_FIELD_GROUP_ID,
   DATA_FLOW_SCHEMA_ID,
+  INFO_ASSET_IDS,
   OBJECTIVE_SUPPORTS_BUSINESS_CAPABILITY_RELATION_SCHEMA_ID,
   OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
   RETENTION_IDS,
@@ -150,9 +152,54 @@ export const seedRelationSchemas: RelationSchemaDbResult[] = [
         schemaId: '00000000-0000-0000-0000-000000000008',
         minCount: 0,
         maxCount: -1
+      },
+      // Transfer-specific governance metadata (#3065): shares the regulatory-tags,
+      // processing-purposes, and residency-regions vocabularies configured for information
+      // assets (#3062/#3064), but records them at the flow level.
+      {
+        id: 'regulatory_tags',
+        name: 'Regulatory Tags',
+        type: 'select',
+        enumId: INFO_ASSET_IDS.regulatoryTagsEnum,
+        minCardinality: 0,
+        maxCardinality: -1,
+        groupId: DATA_FLOW_GOVERNANCE_FIELD_GROUP_ID
+      },
+      {
+        id: 'processing_purposes',
+        name: 'Processing Purposes',
+        type: 'select',
+        enumId: INFO_ASSET_IDS.processingPurposesEnum,
+        minCardinality: 0,
+        maxCardinality: -1,
+        groupId: DATA_FLOW_GOVERNANCE_FIELD_GROUP_ID
+      },
+      {
+        id: 'source_residency_region',
+        name: 'Source Residency Region',
+        type: 'select',
+        enumId: INFO_ASSET_IDS.residencyRegionsEnum,
+        requirementLevel: 'optional',
+        groupId: DATA_FLOW_GOVERNANCE_FIELD_GROUP_ID
+      },
+      {
+        id: 'destination_residency_region',
+        name: 'Destination Residency Region',
+        type: 'select',
+        enumId: INFO_ASSET_IDS.residencyRegionsEnum,
+        requirementLevel: 'optional',
+        groupId: DATA_FLOW_GOVERNANCE_FIELD_GROUP_ID
       }
     ],
-    groups: [],
+    groups: [
+      {
+        id: DATA_FLOW_GOVERNANCE_FIELD_GROUP_ID,
+        name: 'Data Flow Governance',
+        description:
+          'Regulatory tags, processing purposes, and source/destination residency regions for ' +
+          'this data flow.'
+      }
+    ],
     shared_field_group_links: [],
     color: AR_COLOR_TEAL,
     icon: 'network',

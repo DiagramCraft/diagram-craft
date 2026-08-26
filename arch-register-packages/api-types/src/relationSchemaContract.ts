@@ -54,8 +54,24 @@ const numberRelationFieldSchema = baseRelationFieldSchema.extend({
   max: z.number().int().optional().describe('Maximum allowed value')
 });
 
+const selectRelationCardinalitySchema = {
+  minCardinality: z
+    .number()
+    .int()
+    .min(0)
+    .optional()
+    .describe('Minimum number of selected values required'),
+  maxCardinality: z
+    .union([z.literal(-1), z.number().int().min(0)])
+    .optional()
+    .describe('Maximum number of selected values (-1 for unlimited; omitted means one)')
+};
+
 const selectRelationFieldInputSchema = baseRelationFieldSchema.extend({
-  type: z.literal('select').describe('Single-select dropdown field'),
+  ...selectRelationCardinalitySchema,
+  type: z
+    .literal('select')
+    .describe('Select dropdown field; cardinality controls whether it accepts one or many values'),
   enumId: z.string().describe('Enumeration identifier for dropdown options')
 });
 
@@ -93,6 +109,19 @@ export const relationFieldInputSchema = z
   .superRefine((field, ctx) => {
     const issue = assertRefreshModeRequiresExternalKind(field);
     if (issue) ctx.addIssue({ code: z.ZodIssueCode.custom, ...issue });
+    if (
+      field.type === 'select' &&
+      field.minCardinality !== undefined &&
+      field.maxCardinality !== undefined &&
+      field.maxCardinality !== -1 &&
+      field.minCardinality > field.maxCardinality
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['minCardinality'],
+        message: 'minCardinality must be less than or equal to maxCardinality'
+      });
+    }
   })
   .describe('Relation field definition');
 
@@ -121,6 +150,19 @@ export const relationFieldResponseSchema = z
   .superRefine((field, ctx) => {
     const issue = assertRefreshModeRequiresExternalKind(field);
     if (issue) ctx.addIssue({ code: z.ZodIssueCode.custom, ...issue });
+    if (
+      field.type === 'select' &&
+      field.minCardinality !== undefined &&
+      field.maxCardinality !== undefined &&
+      field.maxCardinality !== -1 &&
+      field.minCardinality > field.maxCardinality
+    ) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['minCardinality'],
+        message: 'minCardinality must be less than or equal to maxCardinality'
+      });
+    }
   })
   .describe('Relation field with resolved options');
 

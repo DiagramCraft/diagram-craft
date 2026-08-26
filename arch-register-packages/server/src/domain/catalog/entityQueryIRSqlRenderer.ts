@@ -2396,11 +2396,15 @@ const renderEntityQueryRows = (fragments: EntityQueryFragments): CompiledEntityQ
       rs.name    AS schema_name,
       in_e.name  AS in_entity_name,
       out_e.name AS out_entity_name,
+      wo.name    AS owner_name,
+      ls.label   AS lifecycle_label,
       ${projectionObject} AS projections
     FROM ${RELATION_SCOPE_CTE} ${ROOT_ALIAS}
     JOIN relation_schema rs        ON rs.id = ${ROOT_ALIAS}.schema_id
     LEFT JOIN catalog_record in_e  ON in_e.id = ${ROOT_ALIAS}.in_record_id
     LEFT JOIN catalog_record out_e ON out_e.id = ${ROOT_ALIAS}.out_record_id
+    LEFT JOIN workspace_owner wo           ON wo.id = ${ROOT_ALIAS}.owner
+    LEFT JOIN workspace_lifecycle_state ls ON ls.id = ${ROOT_ALIAS}.lifecycle
     WHERE ${whereParts.join(' AND ')}
     ORDER BY in_e.name, out_e.name, ${ROOT_ALIAS}.id${limitOffsetClause}
   `

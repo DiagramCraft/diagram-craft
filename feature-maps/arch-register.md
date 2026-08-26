@@ -61,6 +61,14 @@
           demo workspace seeds this schema and field group directly, with example Data Entities showing the full
           spread of stewardship states (complete, partial, and missing) and review-date states (approaching and
           overdue).
+          The bundled demo workspace's "Data Flow" relation (a first-class System-to-System relation recording
+          direction, protocol, and the Data Entity/Entities it carries) is likewise extended with transfer-specific
+          governance metadata under a "Data Flow Governance" field group: flow-level classification, multi-valued
+          regulatory tags and processing purposes, and single-valued source and destination residency regions, all
+          drawn from the same configurable vocabularies as the Data Entity stewardship fields. Whether a flow crosses
+          a residency boundary (source and destination regions differ) and whether its destination region is
+          permitted by every carried Data Entity's permitted-residency-regions are available as deterministic,
+          permission-aware compute helpers for later surfacing in governance analysis views.
           The home sidebar's Data model section groups schema links by schema category.
           Every widget shows a title bar (an icon and a title, separated from the widget's content by a divider); the
           stat-metric widget's title is configurable (via its label setting), while other widget types show a fixed

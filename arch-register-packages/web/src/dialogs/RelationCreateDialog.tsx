@@ -4,9 +4,11 @@ import { Dialog } from '@diagram-craft/app-components/Dialog';
 import { FormElement } from '@diagram-craft/app-components/FormElement';
 import { Select } from '@diagram-craft/app-components/Select';
 import { Banner } from '../components/Banner';
-import { RelationFieldInput } from './RelationFieldInput';
+import { RelationFieldInput, isMultiValuedRelationSelectField } from './RelationFieldInput';
 import { useCreateRelation } from '../hooks/useRelations';
 import { useEntities } from '../hooks/useEntities';
+import { groupRelationFields } from '../lib/relationFieldGroups';
+import { RelationFieldGroupSection } from '../components/RelationFieldGroupSection';
 import type { EntitySummary } from '@arch-register/api-types/entityContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
@@ -29,7 +31,9 @@ const toFieldValue = (
   field: RelationSchema['fields'][number],
   value: string | string[]
 ): unknown => {
-  if (field.type === 'entityRelation') return Array.isArray(value) ? value : [];
+  if (field.type === 'entityRelation' || isMultiValuedRelationSelectField(field)) {
+    return Array.isArray(value) ? value : [];
+  }
   if (value === '') return null;
   if (field.type === 'boolean') return value === 'true';
   if (field.type === 'number') return Number(value);
@@ -102,7 +106,9 @@ export const RelationCreateDialog = ({
       _outEntityId: direction === 'in' ? target._uid : currentEntityId
     };
     for (const field of activeFields) {
-      const value = values[field.id] ?? (field.type === 'entityRelation' ? [] : '');
+      const value =
+        values[field.id] ??
+        (field.type === 'entityRelation' || isMultiValuedRelationSelectField(field) ? [] : '');
       if (value !== '' && (!Array.isArray(value) || value.length > 0)) {
         data[field.id] = toFieldValue(field, value);
       }
@@ -211,15 +217,33 @@ export const RelationCreateDialog = ({
               autoFocus
             />
           </FormElement>
-          {activeFields.map(field => (
-            <RelationFieldInput
-              key={field.id}
-              workspaceId={workspaceId}
-              field={field}
-              value={values[field.id] ?? (field.type === 'entityRelation' ? [] : '')}
-              onChange={value => setValues(previous => ({ ...previous, [field.id]: value }))}
-            />
-          ))}
+          {groupRelationFields(activeFields, selectedRelation?.groups).map(segment => {
+            const inputs = segment.fields.map(field => (
+              <RelationFieldInput
+                key={field.id}
+                workspaceId={workspaceId}
+                field={field}
+                value={
+                  values[field.id] ??
+                  (field.type === 'entityRelation' || isMultiValuedRelationSelectField(field)
+                    ? []
+                    : '')
+                }
+                onChange={value => setValues(previous => ({ ...previous, [field.id]: value }))}
+              />
+            ));
+            return segment.group ? (
+              <RelationFieldGroupSection
+                key={segment.group.id}
+                name={segment.group.name}
+                description={segment.group.description}
+              >
+                {inputs}
+              </RelationFieldGroupSection>
+            ) : (
+              inputs
+            );
+          })}
           {error && <Banner variant="error">{error}</Banner>}
         </div>
       )}

@@ -7,8 +7,10 @@ import { Banner } from '../components/Banner';
 import { useRelation, useUpdateRelation } from '../hooks/useRelations';
 import { useRelationSchemas } from '../hooks/useRelationSchemas';
 import { useTeams, useLifecycleStates } from '../hooks/useWorkspaceConfig';
-import { RelationFieldInput } from './RelationFieldInput';
+import { RelationFieldInput, isMultiValuedRelationSelectField } from './RelationFieldInput';
 import { relationIds } from '../lib/entityEditState';
+import { groupRelationFields } from '../lib/relationFieldGroups';
+import { RelationFieldGroupSection } from '../components/RelationFieldGroupSection';
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 
 type Props = {
@@ -25,14 +27,16 @@ const initialFieldValue = (
   field: RelationSchema['fields'][number],
   record: Record<string, unknown>
 ): string | string[] =>
-  field.type === 'entityRelation' ? relationIds(record[field.id]) : String(record[field.id] ?? '');
+  field.type === 'entityRelation' || isMultiValuedRelationSelectField(field)
+    ? relationIds(record[field.id])
+    : String(record[field.id] ?? '');
 
 const fieldValueChanged = (
   field: RelationSchema['fields'][number],
   next: string | string[],
   record: Record<string, unknown>
 ): boolean => {
-  if (field.type === 'entityRelation') {
+  if (field.type === 'entityRelation' || isMultiValuedRelationSelectField(field)) {
     const nextIds = relationIds(next);
     const prevIds = relationIds(record[field.id]);
     return nextIds.length !== prevIds.length || nextIds.some((id, i) => id !== prevIds[i]);
@@ -41,7 +45,9 @@ const fieldValueChanged = (
 };
 
 const toFieldValue = (field: RelationSchema['fields'][number], raw: string | string[]): unknown => {
-  if (field.type === 'entityRelation') return relationIds(raw);
+  if (field.type === 'entityRelation' || isMultiValuedRelationSelectField(field)) {
+    return relationIds(raw);
+  }
   if (raw === '') return null;
   if (field.type === 'boolean') return raw === 'true';
   if (field.type === 'number') return Number(raw);
@@ -82,7 +88,9 @@ export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: P
     setError('');
     const data: Record<string, unknown> = {};
     for (const field of activeFields) {
-      const raw = values[field.id] ?? (field.type === 'entityRelation' ? [] : '');
+      const raw =
+        values[field.id] ??
+        (field.type === 'entityRelation' || isMultiValuedRelationSelectField(field) ? [] : '');
       if (!fieldValueChanged(field, raw, record)) continue;
       data[field.id] = toFieldValue(field, raw);
     }
@@ -157,15 +165,33 @@ export const RelationEditDialog = ({ open, onClose, workspaceId, relationId }: P
           {activeFields.length === 0 ? (
             <div className="dim">This relation type has no other editable fields.</div>
           ) : (
-            activeFields.map(field => (
-              <RelationFieldInput
-                key={field.id}
-                workspaceId={workspaceId}
-                field={field}
-                value={values[field.id] ?? (field.type === 'entityRelation' ? [] : '')}
-                onChange={value => setValues(v => ({ ...v, [field.id]: value }))}
-              />
-            ))
+            groupRelationFields(activeFields, relationSchema?.groups).map(segment => {
+              const inputs = segment.fields.map(field => (
+                <RelationFieldInput
+                  key={field.id}
+                  workspaceId={workspaceId}
+                  field={field}
+                  value={
+                    values[field.id] ??
+                    (field.type === 'entityRelation' || isMultiValuedRelationSelectField(field)
+                      ? []
+                      : '')
+                  }
+                  onChange={value => setValues(v => ({ ...v, [field.id]: value }))}
+                />
+              ));
+              return segment.group ? (
+                <RelationFieldGroupSection
+                  key={segment.group.id}
+                  name={segment.group.name}
+                  description={segment.group.description}
+                >
+                  {inputs}
+                </RelationFieldGroupSection>
+              ) : (
+                inputs
+              );
+            })
           )}
           {error && <Banner variant="error">{error}</Banner>}
         </div>

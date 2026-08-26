@@ -317,7 +317,8 @@ describe('instantiateTemplate', () => {
     ).toBe(true);
 
     expect(definitions.fieldGroups.map(fieldGroup => fieldGroup.name)).toEqual([
-      'Information Asset Stewardship'
+      'Information Asset Stewardship',
+      'Data Flow Governance'
     ]);
     expect(definitions.fieldGroups[0]!.fields.map(field => field.id)).toEqual([
       'steward',
@@ -330,6 +331,12 @@ describe('instantiateTemplate', () => {
     expect(
       definitions.fieldGroups[0]!.fields.filter(field => field.type === 'principal').map(f => f.id)
     ).toEqual(['steward', 'custodian']);
+    expect(definitions.fieldGroups[1]!.fields.map(field => field.id)).toEqual([
+      'regulatory_tags',
+      'processing_purposes',
+      'source_residency_region',
+      'destination_residency_region'
+    ]);
 
     const [retentionPolicySchema, dataEntitySchema] = definitions.schemas;
     expect(dataEntitySchema!.shared_field_group_links?.map(link => link.groupId)).toEqual([

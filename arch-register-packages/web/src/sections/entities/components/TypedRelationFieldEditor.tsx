@@ -15,7 +15,12 @@ import { relationIds, type TypedRelationFieldEditState } from '../../../lib/enti
 import { useEntitiesBySchema } from '../../../hooks/useEntities';
 import { useTeams, useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { RelationFieldInput } from '../../../dialogs/RelationFieldInput';
+import {
+  RelationFieldInput,
+  isMultiValuedRelationSelectField
+} from '../../../dialogs/RelationFieldInput';
+import { groupRelationFields } from '../../../lib/relationFieldGroups';
+import { RelationFieldGroupSection } from '../../../components/RelationFieldGroupSection';
 import { KEY_FIELD_COUNT, formatRelationFieldValue } from './RelationRecordList';
 import sharedStyles from '../EntityDetailScreen.module.css';
 import styles from './EntityRelationsTab.module.css';
@@ -24,7 +29,9 @@ const toRelationFieldValue = (
   field: RelationSchema['fields'][number],
   value: string | string[]
 ): unknown => {
-  if (field.type === 'entityRelation') return relationIds(value);
+  if (field.type === 'entityRelation' || isMultiValuedRelationSelectField(field)) {
+    return relationIds(value);
+  }
   if (value === '') return null;
   if (field.type === 'boolean') return value === 'true';
   if (field.type === 'number') return Number(value);
@@ -85,6 +92,7 @@ export const TypedRelationFieldEditor = ({
   );
 
   const activeFields = (relationSchema?.fields ?? []).filter(f => !f.archived);
+  const activeFieldGroups = groupRelationFields(activeFields, relationSchema?.groups);
   const activeExistingCount = existingRecords.filter(
     record => !fieldState.remove.has(record._uid)
   ).length;
@@ -221,13 +229,17 @@ export const TypedRelationFieldEditor = ({
                     </Select.Root>
                   </FormElement>
                 </div>
-                {activeFields.map((f, index) => (
-                  <div key={f.id} style={{ marginBottom: index < activeFields.length - 1 ? 8 : 0 }}>
+                {activeFieldGroups.map((segment, index) => {
+                  const wrapperStyle = {
+                    marginBottom: index < activeFieldGroups.length - 1 ? 8 : 0
+                  };
+                  const inputs = segment.fields.map(f => (
                     <RelationFieldInput
+                      key={f.id}
                       workspaceId={workspaceId}
                       field={f}
                       value={
-                        f.type === 'entityRelation'
+                        f.type === 'entityRelation' || isMultiValuedRelationSelectField(f)
                           ? relationIds(pendingFieldValue(pendingUpdate, f.id, record[f.id]))
                           : String(pendingFieldValue(pendingUpdate, f.id, record[f.id]) ?? '')
                       }
@@ -235,8 +247,22 @@ export const TypedRelationFieldEditor = ({
                         onUpdateField(record._uid, f.id, toRelationFieldValue(f, value))
                       }
                     />
-                  </div>
-                ))}
+                  ));
+                  return segment.group ? (
+                    <div key={segment.group.id} style={wrapperStyle}>
+                      <RelationFieldGroupSection
+                        name={segment.group.name}
+                        description={segment.group.description}
+                      >
+                        {inputs}
+                      </RelationFieldGroupSection>
+                    </div>
+                  ) : (
+                    <div key={segment.fields[0]!.id} style={wrapperStyle}>
+                      {inputs}
+                    </div>
+                  );
+                })}
               </div>
             )}
           </div>
@@ -285,6 +311,7 @@ export const TypedRelationFieldEditor = ({
           <NewRelationDraftForm
             workspaceId={workspaceId}
             fields={activeFields}
+            groups={relationSchema?.groups}
             candidates={otherEntityCandidates}
             teams={teams}
             lifecycleStates={lifecycleStates}
@@ -318,6 +345,7 @@ export const TypedRelationFieldEditor = ({
 const NewRelationDraftForm = ({
   workspaceId,
   fields,
+  groups,
   candidates,
   teams,
   lifecycleStates,
@@ -326,6 +354,7 @@ const NewRelationDraftForm = ({
 }: {
   workspaceId: string;
   fields: RelationSchema['fields'];
+  groups: RelationSchema['groups'] | undefined;
   candidates: { _uid: string; _name?: string | null; _slug: string }[];
   teams: WorkspaceOwnerOption[];
   lifecycleStates: WorkspaceLifecycleState[];
@@ -345,7 +374,7 @@ const NewRelationDraftForm = ({
     const data: Record<string, unknown> = {};
     for (const f of fields) {
       const val = values[f.id];
-      if (f.type === 'entityRelation') {
+      if (f.type === 'entityRelation' || isMultiValuedRelationSelectField(f)) {
         const ids = relationIds(val);
         if (ids.length > 0) data[f.id] = ids;
         continue;
@@ -415,16 +444,34 @@ const NewRelationDraftForm = ({
           </Select.Root>
         </FormElement>
       </div>
-      {fields.map(f => (
-        <div key={f.id} style={{ marginBottom: 8 }}>
+      {groupRelationFields(fields, groups).map(segment => {
+        const inputs = segment.fields.map(f => (
           <RelationFieldInput
+            key={f.id}
             workspaceId={workspaceId}
             field={f}
-            value={values[f.id] ?? (f.type === 'entityRelation' ? [] : '')}
+            value={
+              values[f.id] ??
+              (f.type === 'entityRelation' || isMultiValuedRelationSelectField(f) ? [] : '')
+            }
             onChange={value => setField(f.id, value)}
           />
-        </div>
-      ))}
+        ));
+        return (
+          <div key={segment.group?.id ?? segment.fields[0]!.id} style={{ marginBottom: 8 }}>
+            {segment.group ? (
+              <RelationFieldGroupSection
+                name={segment.group.name}
+                description={segment.group.description}
+              >
+                {inputs}
+              </RelationFieldGroupSection>
+            ) : (
+              inputs
+            )}
+          </div>
+        );
+      })}
       <div style={{ display: 'flex', gap: 6, marginTop: 16 }}>
         <Button onClick={onCancel} style={{ marginLeft: 'auto' }}>
           Cancel

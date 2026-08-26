@@ -193,6 +193,12 @@ const isIsoDate = (value: string) => {
   return !Number.isNaN(date.getTime()) && date.toISOString().slice(0, 10) === value;
 };
 
+const isMultiValuedRelationSelectField = (field: RelationField): boolean => {
+  if (field.type !== 'select') return false;
+  const max = field.maxCardinality ?? 1;
+  return max === -1 || max > 1;
+};
+
 const enumOptionValues = (
   field: RelationField,
   enums: Awaited<ReturnType<DatabaseAdapter['catalog']['listEnums']>>
@@ -257,6 +263,17 @@ const parseFieldValue = (
     }
     case 'select': {
       const values = enumOptionValues(field, enums);
+      if (isMultiValuedRelationSelectField(field)) {
+        const parts = value
+          .split(',')
+          .map(part => part.trim())
+          .filter(Boolean);
+        if (values && parts.some(part => !values.has(part))) {
+          errors.push(`${field.name} contains an invalid option`);
+          return undefined;
+        }
+        return parts;
+      }
       if (values && !values.has(value)) {
         errors.push(`${field.name} contains an invalid option`);
         return undefined;

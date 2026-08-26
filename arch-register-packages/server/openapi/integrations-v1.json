@@ -2146,9 +2146,28 @@
                                   "type": "string",
                                   "description": "How the external value is expected to be refreshed"
                                 },
+                                "minCardinality": {
+                                  "type": "integer",
+                                  "minimum": 0,
+                                  "maximum": 9007199254740991,
+                                  "description": "Minimum number of selected values required"
+                                },
+                                "maxCardinality": {
+                                  "anyOf": [
+                                    {
+                                      "const": -1
+                                    },
+                                    {
+                                      "type": "integer",
+                                      "minimum": 0,
+                                      "maximum": 9007199254740991
+                                    }
+                                  ],
+                                  "description": "Maximum number of selected values (-1 for unlimited; omitted means one)"
+                                },
                                 "type": {
                                   "const": "select",
-                                  "description": "Single-select dropdown field"
+                                  "description": "Select dropdown field; cardinality controls whether it accepts one or many values"
                                 },
                                 "enumId": {
                                   "type": "string",
@@ -3003,9 +3022,28 @@
                                 "type": "string",
                                 "description": "How the external value is expected to be refreshed"
                               },
+                              "minCardinality": {
+                                "type": "integer",
+                                "minimum": 0,
+                                "maximum": 9007199254740991,
+                                "description": "Minimum number of selected values required"
+                              },
+                              "maxCardinality": {
+                                "anyOf": [
+                                  {
+                                    "const": -1
+                                  },
+                                  {
+                                    "type": "integer",
+                                    "minimum": 0,
+                                    "maximum": 9007199254740991
+                                  }
+                                ],
+                                "description": "Maximum number of selected values (-1 for unlimited; omitted means one)"
+                              },
                               "type": {
                                 "const": "select",
-                                "description": "Single-select dropdown field"
+                                "description": "Select dropdown field; cardinality controls whether it accepts one or many values"
                               },
                               "enumId": {
                                 "type": "string",

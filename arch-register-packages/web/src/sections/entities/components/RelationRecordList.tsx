@@ -23,6 +23,7 @@ export const formatRelationFieldValue = (field: RelationField, value: unknown): 
   if (value === undefined || value === null || value === '') return null;
   if (field.type === 'boolean') return value ? 'Yes' : 'No';
   if (field.type === 'entityRelation') return relationIds(value).join(', ') || null;
+  if (Array.isArray(value)) return value.join(', ') || null;
   return String(value);
 };
 
