@@ -61,8 +61,7 @@ function initialsOf(s: string) {
   return s.trim().slice(0, 2).toUpperCase();
 }
 
-const templateObjectLabel = (count: number) =>
-  `${count} template object${count === 1 ? '' : 's'}`;
+const templateObjectLabel = (count: number) => `${count} template object${count === 1 ? '' : 's'}`;
 
 const CrossCuttingTemplateSection = ({
   templates,
