@@ -5,7 +5,8 @@ import {
   AR_COLOR_ORANGE,
   AR_COLOR_PURPLE,
   AR_COLOR_YELLOW,
-  AR_COLOR_RED
+  AR_COLOR_RED,
+  AR_COLOR_TEAL
 } from '@arch-register/api-types/colors';
 import { createHash, randomUUID } from 'node:crypto';
 import type {
@@ -14,7 +15,7 @@ import type {
   WorkspaceEnumDbCreate
 } from '../../db/database';
 import type { DocumentField, DocumentMetadata } from '@arch-register/api-types/documentContract';
-import type { SchemaField } from '@arch-register/api-types/schemaContract';
+import type { SchemaField, ValidationRule } from '@arch-register/api-types/schemaContract';
 import type {
   WorkspaceCapabilityBindings,
   WorkspaceCapabilityTargetKind
@@ -31,6 +32,8 @@ import type { RelationSchemaDbCreate } from './db/relationDatabase';
 import type { SavedViewDbCreate } from './db/catalogDatabase';
 import { normalizePublicIdPrefix } from '../../utils/publicIds';
 
+export type SymbolicReference = string | { templateId: string; symId: string };
+
 export type SymbolicField =
   | {
       id: string;
@@ -44,9 +47,10 @@ export type SymbolicField =
       id: string;
       name: string;
       type: 'select';
-      enumId: string;
+      enumId: SymbolicReference;
       minCardinality?: number;
       maxCardinality?: number;
+      requirementLevel?: 'required' | 'expected' | 'optional' | null;
     }
   | {
       id: string;
@@ -63,14 +67,14 @@ export type SymbolicField =
       type: 'derived';
       expression: string;
       resultType: 'text' | 'number' | 'currency' | 'select' | 'boolean' | 'rating';
-      enumId?: string;
+      enumId?: SymbolicReference;
     }
   | {
       id: string;
       name: string;
       predicate?: string;
       type: 'reference';
-      symSchemaId: string;
+      symSchemaId: SymbolicReference;
       minCount: number;
       maxCount: number;
     }
@@ -79,7 +83,7 @@ export type SymbolicField =
       name: string;
       predicate?: string;
       type: 'containment';
-      symSchemaId: string;
+      symSchemaId: SymbolicReference;
       minCount: 0 | 1;
       maxCount: 1;
     }
@@ -87,10 +91,11 @@ export type SymbolicField =
       id: string;
       name: string;
       type: 'typedRelation';
-      symRelationSchemaId: string;
+      symRelationSchemaId: SymbolicReference;
       direction: 'in' | 'out';
       minCount: number;
       maxCount: number;
+      requirementLevel?: 'required' | 'expected' | 'optional' | null;
     };
 
 export type TemplateSchema = {
@@ -101,12 +106,14 @@ export type TemplateSchema = {
   color: string;
   icon: string;
   fields: SymbolicField[];
-  sharedFieldGroupIds?: string[];
+  sharedFieldGroupIds?: SymbolicReference[];
+  validationRules?: ValidationRule[];
 };
 
 export type SymbolicEnum = {
   id: string;
   name: string;
+  sharedId?: string;
   options: Array<{
     value: string;
     label: string;
@@ -129,7 +136,7 @@ export type SymbolicDocumentTemplate = {
   id: string;
   name: string;
   body: string;
-  documentTypeId: string;
+  documentTypeId: SymbolicReference;
   metadataDefaults: DocumentMetadata;
 };
 
@@ -159,23 +166,50 @@ export type SymbolicRelationSchema = {
   category: string;
   inLabel: string;
   outLabel: string;
-  inSymSchemaIds: string[] | 'any';
-  outSymSchemaIds: string[] | 'any';
+  inSymSchemaIds: SymbolicReference[] | 'any';
+  outSymSchemaIds: SymbolicReference[] | 'any';
   fields: Array<
     | {
         id: string;
         name: string;
         type: 'select';
-        enumId: string;
-        requirementLevel: 'required' | 'expected' | 'optional';
+        enumId: SymbolicReference;
+        requirementLevel?: 'required' | 'expected' | 'optional' | null;
+        minCardinality?: number;
+        maxCardinality?: number;
       }
     | {
         id: string;
         name: string;
         type: 'date';
-        requirementLevel: 'required' | 'expected' | 'optional';
+        requirementLevel?: 'required' | 'expected' | 'optional' | null;
+      }
+    | {
+        id: string;
+        name: string;
+        type: 'text' | 'longtext' | 'boolean';
+        requirementLevel?: 'required' | 'expected' | 'optional' | null;
+      }
+    | {
+        id: string;
+        name: string;
+        type: 'number';
+        min?: number;
+        max?: number;
+        requirementLevel?: 'required' | 'expected' | 'optional' | null;
+      }
+    | {
+        id: string;
+        name: string;
+        type: 'entityRelation';
+        predicate?: string;
+        schemaId: SymbolicReference;
+        minCount: number;
+        maxCount: number;
+        requirementLevel?: 'required' | 'expected' | 'optional' | null;
       }
   >;
+  sharedFieldGroupIds?: SymbolicReference[];
   color: string;
   icon: string;
 };
@@ -194,6 +228,7 @@ export type SchemaTemplate = {
   dashboardWidgets?: SymbolicDashboardWidget[];
   capabilityConfigurations?: SymbolicCapabilityConfiguration[];
   views?: SymbolicSavedView[];
+  compositionExtensions?: SymbolicTemplateCompositionExtension[];
 };
 
 export type SymbolicCapabilityConfiguration = {
@@ -204,7 +239,7 @@ export type SymbolicCapabilityConfiguration = {
 export type SymbolicCapabilityBinding = {
   target: {
     kind: WorkspaceCapabilityTargetKind;
-    symId: string;
+    symId: SymbolicReference;
   };
   fieldMappings?: Record<string, string>;
 };
@@ -212,8 +247,19 @@ export type SymbolicCapabilityBinding = {
 export type SymbolicFieldGroup = {
   id: string;
   name: string;
+  sharedId?: string;
   description?: string;
   fields: SymbolicField[];
+};
+
+export type SymbolicTemplateCompositionExtension = {
+  id: string;
+  requiredTemplateIds: string[];
+  relationSchemas?: SymbolicRelationSchema[];
+  schemaFields?: Array<{
+    target: SymbolicReference;
+    fields: SymbolicField[];
+  }>;
 };
 
 const apiProviderRelationSchema: SymbolicRelationSchema = {
@@ -249,7 +295,7 @@ const apiParticipationRelationSchemas = [apiProviderRelationSchema, apiConsumerR
 const apiParticipationField = (
   id: string,
   name: string,
-  relationSchemaId: string,
+  relationSchemaId: SymbolicReference,
   direction: 'in' | 'out'
 ): SymbolicField => ({
   id,
@@ -258,26 +304,33 @@ const apiParticipationField = (
   symRelationSchemaId: relationSchemaId,
   direction,
   minCount: 0,
-  maxCount: -1
+  maxCount: -1,
+  requirementLevel: null
 });
 
 const enumDefinition = (
   id: string,
   name: string,
-  options: SymbolicEnum['options']
-): SymbolicEnum => ({ id, name, options });
+  options: SymbolicEnum['options'],
+  sharedId?: string
+): SymbolicEnum => ({ id, name, options, ...(sharedId ? { sharedId } : {}) });
 
-const piiClassificationEnum = enumDefinition('pii-classification', 'PII Classification', [
-  { value: 'none', label: 'None', restricted: false },
-  { value: 'public', label: 'Public', restricted: false },
-  {
-    value: 'non-sensitive',
-    label: 'Non-Sensitive',
-    restricted: false
-  },
-  { value: 'sensitive', label: 'Sensitive', restricted: true },
-  { value: 'highly-sensitive', label: 'Highly Sensitive', restricted: true }
-]);
+const piiClassificationEnum = enumDefinition(
+  'pii-classification',
+  'PII Classification',
+  [
+    { value: 'none', label: 'None', restricted: false },
+    { value: 'public', label: 'Public', restricted: false },
+    {
+      value: 'non-sensitive',
+      label: 'Non-Sensitive',
+      restricted: false
+    },
+    { value: 'sensitive', label: 'Sensitive', restricted: true },
+    { value: 'highly-sensitive', label: 'Highly Sensitive', restricted: true }
+  ],
+  'pii-classification'
+);
 
 const contractPurposeEnum = enumDefinition('contract-purpose', 'Contract Purpose', [
   { value: 'license', label: 'License' },
@@ -288,9 +341,22 @@ const contractPurposeEnum = enumDefinition('contract-purpose', 'Contract Purpose
   { value: 'other', label: 'Other' }
 ]);
 
+const communicationProtocolEnum = enumDefinition(
+  'communication-protocol',
+  'Communication Protocol',
+  [
+    { value: 'https-rest', label: 'HTTPS / REST' },
+    { value: 'grpc', label: 'gRPC' },
+    { value: 'kafka', label: 'Kafka' },
+    { value: 'file-transfer', label: 'Batch File Transfer' },
+    { value: 'database-replication', label: 'Database Replication' }
+  ]
+);
+
 const piiClassificationFieldGroup: SymbolicFieldGroup = {
   id: 'pii-classification',
   name: 'PII Classification',
+  sharedId: 'pii-classification',
   description: 'Classifies personal data handled by the entity and documents its scope.',
   fields: [
     {
@@ -918,9 +984,28 @@ const riskComplianceEnums = [
 ];
 
 const informationGovernanceEnums = [
-  enumDefinition('regulatory-tags', 'Regulatory Tags', []),
-  enumDefinition('processing-purposes', 'Processing Purposes', []),
-  enumDefinition('residency-regions', 'Residency Regions', []),
+  enumDefinition('data-flow-direction', 'Data Flow Direction', [
+    { value: 'one-way', label: 'One-way' },
+    { value: 'bidirectional', label: 'Bidirectional' }
+  ]),
+  enumDefinition('regulatory-tags', 'Regulatory Tags', [
+    { value: 'gdpr', label: 'GDPR' },
+    { value: 'ccpa', label: 'CCPA' },
+    { value: 'hipaa', label: 'HIPAA' },
+    { value: 'pci-dss', label: 'PCI-DSS' }
+  ]),
+  enumDefinition('processing-purposes', 'Processing Purposes', [
+    { value: 'marketing', label: 'Marketing' },
+    { value: 'analytics', label: 'Analytics' },
+    { value: 'fraud-prevention', label: 'Fraud Prevention' },
+    { value: 'customer-support', label: 'Customer Support' }
+  ]),
+  enumDefinition('residency-regions', 'Residency Regions', [
+    { value: 'eu', label: 'EU' },
+    { value: 'us', label: 'US' },
+    { value: 'uk', label: 'UK' },
+    { value: 'apac', label: 'APAC' }
+  ]),
   enumDefinition('retention-time-unit', 'Retention Time Unit', [
     { value: 'days', label: 'Days' },
     { value: 'months', label: 'Months' },
@@ -1005,12 +1090,10 @@ const informationAssetFieldGroup: SymbolicFieldGroup = {
   ]
 };
 
-// Mirrors the "Data Flow Governance" group added directly to the bundled demo workspace's Data
-// Flow relation (#3065's seedData/relations.ts) — same fields, same vocabularies. Not yet attached
-// to any relation schema here: the Data Flow relation itself isn't templated (see #3084), and
-// SymbolicRelationSchema (unlike TemplateSchema) has no sharedFieldGroupIds/groups support to
-// attach it to today. Defining the group now lets it be materialized and manually attached (or
-// wired up by #3084 once Data Flow is templated) without waiting on that larger change.
+// Mirrors the governance metadata on the bundled demo workspace's Data Flow relation. The group
+// is attached through the information-governance composition extension below, so the same fields
+// and vocabularies are available whenever the default and information-governance templates are
+// composed together.
 const dataFlowGovernanceFieldGroup: SymbolicFieldGroup = {
   id: 'data-flow-governance',
   name: 'Data Flow Governance',
@@ -1038,13 +1121,15 @@ const dataFlowGovernanceFieldGroup: SymbolicFieldGroup = {
       id: 'source_residency_region',
       name: 'Source Residency Region',
       type: 'select',
-      enumId: 'residency-regions'
+      enumId: 'residency-regions',
+      requirementLevel: 'optional'
     },
     {
       id: 'destination_residency_region',
       name: 'Destination Residency Region',
       type: 'select',
-      enumId: 'residency-regions'
+      enumId: 'residency-regions',
+      requirementLevel: 'optional'
     }
   ]
 };
@@ -1059,9 +1144,65 @@ const dataEntitySchema: TemplateSchema = {
   color: AR_COLOR_CYAN,
   icon: 'tag',
   fields: [
-    { id: 'classification', name: 'Classification', type: 'select', enumId: 'pii-classification' }
+    {
+      id: 'classification',
+      name: 'Classification',
+      type: 'select',
+      enumId: 'pii-classification',
+      requirementLevel: 'optional'
+    }
   ],
   sharedFieldGroupIds: ['information-asset-stewardship']
+};
+
+const dataFlowExtensionTemplateId = 'information-governance:data-flow';
+
+const dataFlowRelationSchema: SymbolicRelationSchema = {
+  symId: 'data-flow',
+  name: 'Data Flow',
+  description:
+    'Models data moving from one System to another: its direction, the sensitivity of the data carried, and the protocol used to move it.',
+  category: 'Data',
+  inLabel: 'Sends data to System',
+  outLabel: 'Receives data from System',
+  inSymSchemaIds: [{ templateId: 'default', symId: 'system' }],
+  outSymSchemaIds: [{ templateId: 'default', symId: 'system' }],
+  fields: [
+    {
+      id: 'direction',
+      name: 'Direction',
+      type: 'select',
+      enumId: { templateId: 'information-governance', symId: 'data-flow-direction' },
+      requirementLevel: 'required'
+    },
+    {
+      id: 'data_classification',
+      name: 'Data Classification',
+      type: 'select',
+      enumId: { templateId: 'information-governance', symId: 'pii-classification' },
+      requirementLevel: 'required'
+    },
+    {
+      id: 'protocol',
+      name: 'Protocol',
+      type: 'select',
+      enumId: { templateId: 'default', symId: 'communication-protocol' },
+      requirementLevel: 'optional'
+    },
+    {
+      id: 'data_entities',
+      name: 'Data',
+      type: 'entityRelation',
+      predicate: 'carries',
+      schemaId: { templateId: 'information-governance', symId: 'data-entity' },
+      minCount: 0,
+      maxCount: -1,
+      requirementLevel: 'optional'
+    }
+  ],
+  sharedFieldGroupIds: [{ templateId: 'information-governance', symId: 'data-flow-governance' }],
+  color: AR_COLOR_TEAL,
+  icon: 'network'
 };
 
 export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
@@ -1104,6 +1245,46 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           policy: { target: { kind: 'entity_schema', symId: 'retention-policy' } },
           assignment: { target: { kind: 'relation_schema', symId: 'retention-assignment' } }
         }
+      }
+    ],
+    compositionExtensions: [
+      {
+        id: 'data-flow',
+        requiredTemplateIds: ['default'],
+        relationSchemas: [dataFlowRelationSchema],
+        schemaFields: [
+          {
+            target: { templateId: 'default', symId: 'system' },
+            fields: [
+              {
+                id: 'data_flows_out',
+                name: 'Sends data to',
+                type: 'typedRelation',
+                symRelationSchemaId: {
+                  templateId: dataFlowExtensionTemplateId,
+                  symId: 'data-flow'
+                },
+                direction: 'out',
+                minCount: 0,
+                maxCount: -1,
+                requirementLevel: null
+              },
+              {
+                id: 'data_flows_in',
+                name: 'Receives data from',
+                type: 'typedRelation',
+                symRelationSchemaId: {
+                  templateId: dataFlowExtensionTemplateId,
+                  symId: 'data-flow'
+                },
+                direction: 'in',
+                minCount: 0,
+                maxCount: -1,
+                requirementLevel: null
+              }
+            ]
+          }
+        ]
       }
     ]
   },
@@ -1148,9 +1329,18 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             name: 'Uses',
             type: 'typedRelation',
             symRelationSchemaId: 'system-contract',
-            direction: 'out',
+            direction: 'in',
             minCount: 0,
-            maxCount: -1
+            maxCount: -1,
+            requirementLevel: null
+          },
+          {
+            id: 'budget',
+            name: 'Budget',
+            type: 'derived',
+            expression:
+              'entity.contracts.map(.allocation * .entity.annual_cost.amount / 100) |> sum',
+            resultType: 'number'
           }
         ],
         sharedFieldGroupIds: ['pii-classification']
@@ -1166,7 +1356,7 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           technologyReleaseReference(),
           {
             id: 'system',
-            name: 'Used by',
+            name: 'System',
             predicate: 'belongs to',
             type: 'containment',
             symSchemaId: 'system',
@@ -1196,6 +1386,15 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         icon: 'api',
         fields: [
           { id: 'api_type', name: 'Type', type: 'select', enumId: 'api-type' },
+          {
+            id: 'protocols',
+            name: 'Protocols',
+            type: 'select',
+            enumId: 'communication-protocol',
+            requirementLevel: 'required',
+            minCardinality: 1,
+            maxCardinality: -1
+          },
           {
             id: 'system',
             name: 'System',
@@ -1255,13 +1454,32 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           { id: 'annual_cost', name: 'Annual Cost', type: 'currency' },
           { id: 'setup_fee', name: 'Setup Fee', type: 'currency' },
           {
+            id: 'allocated',
+            name: 'Allocated',
+            type: 'derived',
+            expression: 'entity.system.map(.allocation) |> sum',
+            resultType: 'number'
+          },
+          {
             id: 'system',
-            name: 'System',
+            name: 'Used by',
             type: 'typedRelation',
             symRelationSchemaId: 'system-contract',
-            direction: 'in',
+            direction: 'out',
             minCount: 0,
-            maxCount: -1
+            maxCount: -1,
+            requirementLevel: null
+          }
+        ],
+        validationRules: [
+          {
+            id: 'allocated-at-most-100',
+            name: 'Allocated cannot exceed 100%',
+            expression: 'entity.allocated <= 100',
+            message: 'A Contract cannot be allocated to more than 100% of its capacity.',
+            severity: 'error',
+            fieldId: 'allocated',
+            active: true
           }
         ]
       },
@@ -1277,7 +1495,13 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
       technologySchema,
       technologyReleaseSchema
     ],
-    enums: [backstageEnums[0]!, piiClassificationEnum, contractPurposeEnum, ...technologyEnums],
+    enums: [
+      backstageEnums[0]!,
+      communicationProtocolEnum,
+      piiClassificationEnum,
+      contractPurposeEnum,
+      ...technologyEnums
+    ],
     fieldGroups: [piiClassificationFieldGroup],
     relationSchemas: [
       ...apiParticipationRelationSchemas,
@@ -1297,6 +1521,14 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             name: 'Purpose',
             type: 'select',
             enumId: 'contract-purpose',
+            requirementLevel: 'required'
+          },
+          {
+            id: 'allocation',
+            name: 'Allocation',
+            type: 'number',
+            min: 0,
+            max: 100,
             requirementLevel: 'required'
           }
         ],
@@ -2165,6 +2397,15 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           { id: 'status', name: 'Status', type: 'select', enumId: 'risk-status' },
           { id: 'treatment_target_date', name: 'Treatment Target Date', type: 'date' },
           {
+            id: 'affected_entities',
+            name: 'Affects',
+            type: 'typedRelation',
+            symRelationSchemaId: 'risk-affects',
+            direction: 'in',
+            minCount: 0,
+            maxCount: -1
+          },
+          {
             id: 'mitigating_controls',
             name: 'Mitigated by',
             type: 'typedRelation',
@@ -2273,7 +2514,24 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         outLabel: 'Mitigates Risk',
         inSymSchemaIds: ['risk'],
         outSymSchemaIds: ['control'],
-        fields: [],
+        fields: [
+          {
+            id: 'effectiveness',
+            name: 'Effectiveness',
+            type: 'select',
+            enumId: 'risk-mitigation-effectiveness',
+            requirementLevel: 'required'
+          },
+          {
+            id: 'coverage',
+            name: 'Coverage',
+            type: 'number',
+            min: 0,
+            max: 100,
+            requirementLevel: 'required'
+          },
+          { id: 'reviewed_on', name: 'Reviewed On', type: 'date' }
+        ],
         color: AR_COLOR_RED,
         icon: 'shield-check'
       },
@@ -2286,9 +2544,32 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         outLabel: 'Satisfied by Control',
         inSymSchemaIds: ['control'],
         outSymSchemaIds: ['compliance_requirement'],
-        fields: [],
+        fields: [
+          {
+            id: 'status',
+            name: 'Status',
+            type: 'select',
+            enumId: 'requirement-status',
+            requirementLevel: 'required'
+          },
+          { id: 'evidence', name: 'Evidence', type: 'text' },
+          { id: 'verified_on', name: 'Verified On', type: 'date' }
+        ],
         color: AR_COLOR_GREEN,
         icon: 'check-circle'
+      },
+      {
+        symId: 'risk-affects',
+        name: 'Risk Affects',
+        description: 'Associates a Risk with an architecture entity affected by it.',
+        category: 'Governance',
+        inLabel: 'Affects Entities',
+        outLabel: 'Affected by Risk',
+        inSymSchemaIds: ['risk'],
+        outSymSchemaIds: 'any',
+        fields: [],
+        color: AR_COLOR_RED,
+        icon: 'alert-triangle'
       }
     ],
     documentTypes: commonDocumentTypes,
@@ -2768,306 +3049,40 @@ export type InstantiatedTemplate = {
   views: SavedViewDbCreate[];
 };
 
-export const instantiateTemplateDefinitions = (
-  workspaceId: string,
-  templateId: string,
-  now = new Date()
-): InstantiatedTemplate => {
-  const template = SCHEMA_TEMPLATES.find(t => t.id === templateId);
-  if (!template) {
-    return {
-      schemas: [],
-      enums: [],
-      fieldGroups: [],
-      relationSchemas: [],
-      documentTypes: [],
-      documentTemplates: [],
-      dashboardWidgets: [],
-      capabilityConfigurations: [],
-      dashboardGroups: [],
-      views: []
-    };
-  }
+export type TemplateDefinitionKind =
+  | 'schema'
+  | 'enum'
+  | 'fieldGroup'
+  | 'relationSchema'
+  | 'documentType'
+  | 'documentTemplate';
 
-  const idMap = new Map<string, string>();
-  for (const schema of template.schemas) {
-    idMap.set(schema.symId, randomUUID());
-  }
-  const enumIdMap = new Map<string, string>();
-  for (const enumeration of template.enums) {
-    enumIdMap.set(enumeration.id, randomUUID());
-  }
-  const documentTypeIdMap = new Map<string, string>();
-  for (const documentType of template.documentTypes) {
-    documentTypeIdMap.set(documentType.id, randomUUID());
-  }
-
-  const resolveCapabilityTargetId = (target: {
-    kind: WorkspaceCapabilityTargetKind;
-    symId: string;
-  }) => {
-    switch (target.kind) {
-      case 'entity_schema':
-        return idMap.get(target.symId);
-      case 'relation_schema':
-        return relationSchemaIdMap.get(target.symId);
-      case 'document_type':
-        return documentTypeIdMap.get(target.symId);
-    }
-  };
-
-  const fieldGroupIdMap = new Map<string, string>();
-  for (const fieldGroup of template.fieldGroups ?? []) {
-    fieldGroupIdMap.set(fieldGroup.id, randomUUID());
-  }
-
-  const relationSchemaIdMap = new Map<string, string>();
-  for (const relationSchema of template.relationSchemas ?? []) {
-    relationSchemaIdMap.set(relationSchema.symId, randomUUID());
-  }
-
-  const resolveField = (field: SymbolicField): SchemaField => {
-    if (field.type === 'reference') {
-      const resolvedId = idMap.get(field.symSchemaId) ?? field.symSchemaId;
-      return {
-        id: field.id,
-        name: field.name,
-        predicate: field.predicate,
-        type: 'reference',
-        schemaId: resolvedId,
-        minCount: field.minCount,
-        maxCount: field.maxCount,
-        requirementLevel: field.minCount > 0 ? 'required' : 'optional'
-      };
-    }
-    if (field.type === 'containment') {
-      const resolvedId = idMap.get(field.symSchemaId) ?? field.symSchemaId;
-      return {
-        id: field.id,
-        name: field.name,
-        predicate: field.predicate,
-        type: 'containment',
-        schemaId: resolvedId,
-        minCount: field.minCount,
-        maxCount: field.maxCount,
-        requirementLevel: field.minCount > 0 ? 'required' : 'optional'
-      };
-    }
-    if (field.type === 'select') {
-      return {
-        id: field.id,
-        name: field.name,
-        type: field.type,
-        enumId: enumIdMap.get(field.enumId) ?? field.enumId,
-        minCardinality: field.minCardinality,
-        maxCardinality: field.maxCardinality
-      };
-    }
-    if (field.type === 'typedRelation') {
-      return {
-        id: field.id,
-        name: field.name,
-        type: field.type,
-        relationSchemaId:
-          relationSchemaIdMap.get(field.symRelationSchemaId) ?? field.symRelationSchemaId,
-        direction: field.direction,
-        minCount: field.minCount,
-        maxCount: field.maxCount
-      };
-    }
-    if (field.type === 'number') {
-      return {
-        id: field.id,
-        name: field.name,
-        type: 'number',
-        min: field.min,
-        max: field.max,
-        minCardinality: field.minCardinality,
-        maxCardinality: field.maxCardinality
-      };
-    }
-    if (field.type === 'derived') {
-      return {
-        id: field.id,
-        name: field.name,
-        type: 'derived',
-        requirementLevel: 'optional',
-        expression: field.expression,
-        resultType: field.resultType,
-        enumId:
-          field.resultType === 'select' ? (enumIdMap.get(field.enumId!) ?? field.enumId) : undefined
-      };
-    }
-    return {
-      id: field.id,
-      name: field.name,
-      type: field.type,
-      minCardinality: field.minCardinality,
-      maxCardinality: field.maxCardinality,
-      requirementLevel: field.requirementLevel
-    };
-  };
-
-  const fieldGroups: SharedFieldGroupDbCreate[] = (template.fieldGroups ?? []).map(
-    (fieldGroup, index) => ({
-      id: fieldGroupIdMap.get(fieldGroup.id)!,
-      workspace: workspaceId,
-      name: fieldGroup.name,
-      description: fieldGroup.description ?? null,
-      fields: fieldGroup.fields.map(resolveField),
-      sort_order: index,
-      created_at: now,
-      updated_at: now
-    })
-  );
-
-  const schemas = template.schemas.map(schema => {
-    const resolvedFields: SchemaField[] = schema.fields.map(resolveField);
-
-    return {
-      id: idMap.get(schema.symId)!,
-      workspace: workspaceId,
-      name: schema.name,
-      category: schema.category,
-      description: schema.description,
-      key_prefix: normalizePublicIdPrefix(
-        generateTemplateSchemaKeyPrefix(workspaceId, schema.symId)
-      ),
-      color: schema.color,
-      icon: schema.icon,
-      fields: resolvedFields,
-      shared_field_group_links: (schema.sharedFieldGroupIds ?? []).map(id => ({
-        groupId: fieldGroupIdMap.get(id) ?? id
-      })),
-      default_owner: null,
-      created_at: now,
-      updated_at: now
-    };
-  });
-
-  const resolveEndpointSchemaIds = (schemaIds: string[] | 'any') =>
-    schemaIds === 'any' ? 'any' : schemaIds.map(symId => idMap.get(symId) ?? symId);
-  const relationSchemas: RelationSchemaDbCreate[] = (template.relationSchemas ?? []).map(
-    relationSchema => ({
-      id: relationSchemaIdMap.get(relationSchema.symId)!,
-      workspace: workspaceId,
-      name: relationSchema.name,
-      category: relationSchema.category,
-      description: relationSchema.description,
-      in_schema_ids: resolveEndpointSchemaIds(relationSchema.inSymSchemaIds),
-      out_schema_ids: resolveEndpointSchemaIds(relationSchema.outSymSchemaIds),
-      in_label: relationSchema.inLabel,
-      out_label: relationSchema.outLabel,
-      fields: relationSchema.fields.map(
-        field =>
-          (field.type === 'select'
-            ? {
-                id: field.id,
-                name: field.name,
-                type: field.type,
-                enumId: enumIdMap.get(field.enumId) ?? field.enumId,
-                requirementLevel: field.requirementLevel
-              }
-            : {
-                id: field.id,
-                name: field.name,
-                type: field.type,
-                requirementLevel: field.requirementLevel
-              }) as RelationField
-      ),
-      groups: [],
-      shared_field_group_links: [],
-      color: relationSchema.color,
-      icon: relationSchema.icon,
-      relation_approval_policy: 'disabled',
-      created_at: now,
-      updated_at: now
-    })
-  );
-
-  const enums: WorkspaceEnumDbCreate[] = template.enums.map(enumeration => ({
-    id: enumIdMap.get(enumeration.id)!,
-    workspace: workspaceId,
-    name: enumeration.name,
-    options: enumeration.options,
-    sort_order: template.enums.indexOf(enumeration),
-    created_at: now,
-    updated_at: now
-  }));
-
-  const documentTypes: DocumentTypeDbCreate[] = template.documentTypes.map(documentType => ({
-    id: documentTypeIdMap.get(documentType.id)!,
-    workspace: workspaceId,
-    name: documentType.name,
-    description: documentType.description,
-    fields: documentType.fields,
-    color: documentType.color,
-    icon: documentType.icon,
-    created_at: now,
-    updated_at: now
-  }));
-
-  const documentTemplates: DocumentTemplateDbCreate[] = template.documentTemplates.map(
-    documentTemplate => ({
-      id: randomUUID(),
-      workspace: workspaceId,
-      project_id: null,
-      name: documentTemplate.name,
-      body: documentTemplate.body,
-      document_type_id: documentTypeIdMap.get(documentTemplate.documentTypeId)!,
-      metadata_defaults: { ...documentTemplate.metadataDefaults },
-      created_at: now,
-      updated_at: now
-    })
-  );
-
-  const capabilityConfigurations = (template.capabilityConfigurations ?? []).map(configuration => {
-    const bindings = Object.fromEntries(
-      Object.entries(configuration.bindings).map(([bindingId, binding]) => [
-        bindingId,
-        {
-          ...binding,
-          target: {
-            kind: binding.target.kind,
-            id: resolveCapabilityTargetId(binding.target) ?? binding.target.symId
-          }
-        }
-      ])
-    ) as WorkspaceCapabilityBindings;
-    return { type: configuration.type, bindings };
-  });
-
-  return {
-    schemas,
-    enums,
-    fieldGroups,
-    relationSchemas,
-    documentTypes,
-    documentTemplates,
-    dashboardWidgets: resolveTemplateDashboardWidgets(template.dashboardWidgets ?? [], idMap),
-    capabilityConfigurations,
-    dashboardGroups:
-      template.dashboardWidgets && template.dashboardWidgets.length > 0
-        ? [
-            {
-              name: template.category === 'full' ? 'Overview' : template.name,
-              widgets: resolveTemplateDashboardWidgets(template.dashboardWidgets, idMap)
-            }
-          ]
-        : [],
-    views: resolveTemplateSavedViews(
-      template.views ?? [],
-      workspaceId,
-      idMap,
-      relationSchemaIdMap,
-      now
-    )
-  };
+export type TemplateInstantiationOptions = {
+  idFactory?: (
+    kind: TemplateDefinitionKind,
+    templateId: string,
+    symbolicId: string,
+    sharedId?: string
+  ) => string;
+  schemaKeyPrefixFactory?: (workspaceId: string, templateId: string, symbolicId: string) => string;
 };
 
 export type InstantiatedTemplateComposition = InstantiatedTemplate & {
   selectedTemplates: Array<Pick<SchemaTemplate, 'id' | 'name' | 'category'>>;
 };
+
+const emptyInstantiatedTemplate = (): InstantiatedTemplate => ({
+  schemas: [],
+  enums: [],
+  fieldGroups: [],
+  relationSchemas: [],
+  documentTypes: [],
+  documentTemplates: [],
+  dashboardWidgets: [],
+  capabilityConfigurations: [],
+  dashboardGroups: [],
+  views: []
+});
 
 const uniqueDefinitionName = (
   usedNames: Set<string>,
@@ -3091,6 +3106,487 @@ const uniqueDefinitionName = (
   return qualified;
 };
 
+type TemplateFragment = {
+  ownerId: string;
+  template: SchemaTemplate;
+  schemaFields: Array<{ target: SymbolicReference; fields: SymbolicField[] }>;
+};
+
+type MaterializedTemplateModule = InstantiatedTemplate & {
+  ownerId: string;
+  template: SchemaTemplate;
+};
+
+type SymbolicIdMaps = Map<TemplateDefinitionKind, Map<string, Map<string, string>>>;
+
+const definitionKey = (kind: TemplateDefinitionKind, ownerId: string, symbolicId: string) =>
+  `${kind}:${ownerId}:${symbolicId}`;
+
+const extensionTemplate = (
+  parent: SchemaTemplate,
+  extension: SymbolicTemplateCompositionExtension
+): SchemaTemplate => ({
+  id: `${parent.id}:${extension.id}`,
+  category: parent.category,
+  name: `${parent.name} — ${extension.id}`,
+  description: '',
+  schemas: [],
+  enums: [],
+  fieldGroups: [],
+  relationSchemas: extension.relationSchemas ?? [],
+  documentTypes: [],
+  documentTemplates: []
+});
+
+const createTemplateFragments = (
+  selected: readonly SchemaTemplate[],
+  includeExtensions: boolean
+): TemplateFragment[] => {
+  const selectedIds = new Set(selected.map(template => template.id));
+  const fragments: TemplateFragment[] = selected.map(template => ({
+    ownerId: template.id,
+    template,
+    schemaFields: []
+  }));
+
+  if (!includeExtensions) return fragments;
+
+  for (const parent of selected) {
+    for (const extension of parent.compositionExtensions ?? []) {
+      if (!extension.requiredTemplateIds.every(templateId => selectedIds.has(templateId))) {
+        continue;
+      }
+      fragments.push({
+        ownerId: `${parent.id}:${extension.id}`,
+        template: extensionTemplate(parent, extension),
+        schemaFields: extension.schemaFields ?? []
+      });
+    }
+  }
+  return fragments;
+};
+
+const materializeTemplateFragments = (
+  workspaceId: string,
+  fragments: readonly TemplateFragment[],
+  now: Date,
+  options: TemplateInstantiationOptions = {}
+): MaterializedTemplateModule[] => {
+  const ids: SymbolicIdMaps = new Map();
+  const sharedIds = new Map<string, string>();
+
+  const ownerMap = (kind: TemplateDefinitionKind, ownerId: string) => {
+    const byOwner = ids.get(kind) ?? new Map<string, Map<string, string>>();
+    ids.set(kind, byOwner);
+    const map = byOwner.get(ownerId) ?? new Map<string, string>();
+    byOwner.set(ownerId, map);
+    return map;
+  };
+
+  const allocateId = (
+    kind: TemplateDefinitionKind,
+    ownerId: string,
+    symbolicId: string,
+    sharedId?: string
+  ) => {
+    const local = ownerMap(kind, ownerId);
+    const existing = local.get(symbolicId);
+    if (existing) return existing;
+
+    const sharedKey = sharedId ? `${kind}:${sharedId}` : undefined;
+    const shared = sharedKey ? sharedIds.get(sharedKey) : undefined;
+    const id = shared ?? options.idFactory?.(kind, ownerId, symbolicId, sharedId) ?? randomUUID();
+    local.set(symbolicId, id);
+    if (sharedKey) sharedIds.set(sharedKey, id);
+    return id;
+  };
+
+  const schemaSources = new Map<string, TemplateSchema>();
+  for (const fragment of fragments) {
+    for (const schema of fragment.template.schemas) {
+      schemaSources.set(definitionKey('schema', fragment.ownerId, schema.symId), {
+        ...schema,
+        fields: [...schema.fields]
+      });
+      allocateId('schema', fragment.ownerId, schema.symId);
+    }
+    for (const enumeration of fragment.template.enums) {
+      allocateId('enum', fragment.ownerId, enumeration.id, enumeration.sharedId);
+    }
+    for (const fieldGroup of fragment.template.fieldGroups ?? []) {
+      allocateId('fieldGroup', fragment.ownerId, fieldGroup.id, fieldGroup.sharedId);
+    }
+    for (const relationSchema of fragment.template.relationSchemas ?? []) {
+      allocateId('relationSchema', fragment.ownerId, relationSchema.symId);
+    }
+    for (const documentType of fragment.template.documentTypes) {
+      allocateId('documentType', fragment.ownerId, documentType.id);
+    }
+    for (const documentTemplate of fragment.template.documentTemplates) {
+      allocateId('documentTemplate', fragment.ownerId, documentTemplate.id);
+    }
+  }
+
+  const normalizeReference = (ownerId: string, reference: SymbolicReference) =>
+    typeof reference === 'string' ? { templateId: ownerId, symId: reference } : reference;
+
+  const resolveDefinitionId = (
+    kind: TemplateDefinitionKind,
+    ownerId: string,
+    reference: SymbolicReference
+  ) => {
+    const normalized = normalizeReference(ownerId, reference);
+    const id = ids.get(kind)?.get(normalized.templateId)?.get(normalized.symId);
+    if (!id) {
+      throw new Error(
+        `Template '${ownerId}' references unknown ${kind} '${normalized.templateId}:${normalized.symId}'`
+      );
+    }
+    return id;
+  };
+
+  for (const fragment of fragments) {
+    for (const patch of fragment.schemaFields) {
+      const target = normalizeReference(fragment.ownerId, patch.target);
+      const key = definitionKey('schema', target.templateId, target.symId);
+      const schema = schemaSources.get(key);
+      if (!schema) {
+        throw new Error(
+          `Template '${fragment.ownerId}' extends unknown schema '${target.templateId}:${target.symId}'`
+        );
+      }
+      schema.fields = [...schema.fields, ...patch.fields];
+    }
+  }
+
+  const resolveField = (ownerId: string, field: SymbolicField): SchemaField => {
+    if (field.type === 'reference') {
+      return {
+        id: field.id,
+        name: field.name,
+        predicate: field.predicate,
+        type: 'reference',
+        schemaId: resolveDefinitionId('schema', ownerId, field.symSchemaId),
+        minCount: field.minCount,
+        maxCount: field.maxCount,
+        requirementLevel: field.minCount > 0 ? 'required' : 'optional'
+      };
+    }
+    if (field.type === 'containment') {
+      return {
+        id: field.id,
+        name: field.name,
+        predicate: field.predicate,
+        type: 'containment',
+        schemaId: resolveDefinitionId('schema', ownerId, field.symSchemaId),
+        minCount: field.minCount,
+        maxCount: field.maxCount,
+        requirementLevel: field.minCount > 0 ? 'required' : 'optional'
+      };
+    }
+    if (field.type === 'select') {
+      return {
+        id: field.id,
+        name: field.name,
+        type: field.type,
+        enumId: resolveDefinitionId('enum', ownerId, field.enumId),
+        minCardinality: field.minCardinality,
+        maxCardinality: field.maxCardinality,
+        requirementLevel: field.requirementLevel
+      };
+    }
+    if (field.type === 'typedRelation') {
+      return {
+        id: field.id,
+        name: field.name,
+        type: field.type,
+        relationSchemaId: resolveDefinitionId('relationSchema', ownerId, field.symRelationSchemaId),
+        direction: field.direction,
+        minCount: field.minCount,
+        maxCount: field.maxCount,
+        requirementLevel: field.requirementLevel
+      };
+    }
+    if (field.type === 'number') {
+      return {
+        id: field.id,
+        name: field.name,
+        type: 'number',
+        min: field.min,
+        max: field.max,
+        minCardinality: field.minCardinality,
+        maxCardinality: field.maxCardinality
+      };
+    }
+    if (field.type === 'derived') {
+      return {
+        id: field.id,
+        name: field.name,
+        type: 'derived',
+        requirementLevel: 'optional',
+        expression: field.expression,
+        resultType: field.resultType,
+        enumId:
+          field.resultType === 'select' && field.enumId !== undefined
+            ? resolveDefinitionId('enum', ownerId, field.enumId)
+            : undefined
+      };
+    }
+    return {
+      id: field.id,
+      name: field.name,
+      type: field.type,
+      minCardinality: field.minCardinality,
+      maxCardinality: field.maxCardinality,
+      requirementLevel: field.requirementLevel
+    };
+  };
+
+  const resolveRelationField = (
+    ownerId: string,
+    field: SymbolicRelationSchema['fields'][number]
+  ) => {
+    if (field.type === 'select') {
+      return {
+        id: field.id,
+        name: field.name,
+        type: field.type,
+        enumId: resolveDefinitionId('enum', ownerId, field.enumId),
+        minCardinality: field.minCardinality,
+        maxCardinality: field.maxCardinality,
+        requirementLevel: field.requirementLevel
+      } as RelationField;
+    }
+    if (field.type === 'entityRelation') {
+      return {
+        id: field.id,
+        name: field.name,
+        type: field.type,
+        predicate: field.predicate,
+        schemaId: resolveDefinitionId('schema', ownerId, field.schemaId),
+        minCount: field.minCount,
+        maxCount: field.maxCount,
+        requirementLevel: field.requirementLevel
+      } as RelationField;
+    }
+    if (field.type === 'number') {
+      return {
+        id: field.id,
+        name: field.name,
+        type: field.type,
+        min: field.min,
+        max: field.max,
+        requirementLevel: field.requirementLevel
+      } as RelationField;
+    }
+    return {
+      id: field.id,
+      name: field.name,
+      type: field.type,
+      requirementLevel: field.requirementLevel
+    } as RelationField;
+  };
+
+  const materialized = fragments.map<MaterializedTemplateModule>(fragment => {
+    const schemaIds = ownerMap('schema', fragment.ownerId);
+    const relationSchemaIds = ownerMap('relationSchema', fragment.ownerId);
+    const documentTypeIds = ownerMap('documentType', fragment.ownerId);
+
+    const fieldGroups: SharedFieldGroupDbCreate[] = (fragment.template.fieldGroups ?? []).map(
+      (fieldGroup, index) => ({
+        id: ownerMap('fieldGroup', fragment.ownerId).get(fieldGroup.id)!,
+        workspace: workspaceId,
+        name: fieldGroup.name,
+        description: fieldGroup.description ?? null,
+        fields: fieldGroup.fields.map(field => resolveField(fragment.ownerId, field)),
+        sort_order: index,
+        created_at: now,
+        updated_at: now
+      })
+    );
+
+    const schemas: SchemaDbCreate[] = fragment.template.schemas.map(schema => {
+      const source = schemaSources.get(definitionKey('schema', fragment.ownerId, schema.symId))!;
+      const keyPrefix = normalizePublicIdPrefix(
+        options.schemaKeyPrefixFactory?.(workspaceId, fragment.ownerId, schema.symId) ??
+          generateTemplateSchemaKeyPrefix(workspaceId, schema.symId)
+      );
+      return {
+        id: schemaIds.get(schema.symId)!,
+        workspace: workspaceId,
+        name: source.name,
+        category: source.category,
+        description: source.description,
+        key_prefix: keyPrefix,
+        color: source.color,
+        icon: source.icon,
+        fields: source.fields.map(field => resolveField(fragment.ownerId, field)),
+        shared_field_group_links: (source.sharedFieldGroupIds ?? []).map(groupId => ({
+          groupId: resolveDefinitionId('fieldGroup', fragment.ownerId, groupId)
+        })),
+        default_owner: null,
+        created_at: now,
+        updated_at: now,
+        ...(source.validationRules ? { validation_rules: source.validationRules } : {})
+      };
+    });
+
+    const resolveEndpointSchemaIds = (schemaIds: SymbolicReference[] | 'any') =>
+      schemaIds === 'any'
+        ? 'any'
+        : schemaIds.map(schemaId => resolveDefinitionId('schema', fragment.ownerId, schemaId));
+    const relationSchemas: RelationSchemaDbCreate[] = (fragment.template.relationSchemas ?? []).map(
+      relationSchema => ({
+        id: relationSchemaIds.get(relationSchema.symId)!,
+        workspace: workspaceId,
+        name: relationSchema.name,
+        category: relationSchema.category,
+        description: relationSchema.description,
+        in_schema_ids: resolveEndpointSchemaIds(relationSchema.inSymSchemaIds),
+        out_schema_ids: resolveEndpointSchemaIds(relationSchema.outSymSchemaIds),
+        in_label: relationSchema.inLabel,
+        out_label: relationSchema.outLabel,
+        fields: relationSchema.fields.map(field => resolveRelationField(fragment.ownerId, field)),
+        groups: [],
+        shared_field_group_links: (relationSchema.sharedFieldGroupIds ?? []).map(groupId => ({
+          groupId: resolveDefinitionId('fieldGroup', fragment.ownerId, groupId)
+        })),
+        color: relationSchema.color,
+        icon: relationSchema.icon,
+        relation_approval_policy: 'disabled',
+        created_at: now,
+        updated_at: now
+      })
+    );
+
+    const enums: WorkspaceEnumDbCreate[] = fragment.template.enums.map((enumeration, index) => ({
+      id: ownerMap('enum', fragment.ownerId).get(enumeration.id)!,
+      workspace: workspaceId,
+      name: enumeration.name,
+      options: enumeration.options,
+      sort_order: index,
+      created_at: now,
+      updated_at: now
+    }));
+
+    const documentTypes: DocumentTypeDbCreate[] = fragment.template.documentTypes.map(
+      documentType => ({
+        id: documentTypeIds.get(documentType.id)!,
+        workspace: workspaceId,
+        name: documentType.name,
+        description: documentType.description,
+        fields: documentType.fields,
+        color: documentType.color,
+        icon: documentType.icon,
+        created_at: now,
+        updated_at: now
+      })
+    );
+
+    const documentTemplates: DocumentTemplateDbCreate[] = fragment.template.documentTemplates.map(
+      documentTemplate => ({
+        id: ownerMap('documentTemplate', fragment.ownerId).get(documentTemplate.id)!,
+        workspace: workspaceId,
+        project_id: null,
+        name: documentTemplate.name,
+        body: documentTemplate.body,
+        document_type_id: resolveDefinitionId(
+          'documentType',
+          fragment.ownerId,
+          documentTemplate.documentTypeId
+        ),
+        metadata_defaults: { ...documentTemplate.metadataDefaults },
+        created_at: now,
+        updated_at: now
+      })
+    );
+
+    const resolveCapabilityTargetId = (target: {
+      kind: WorkspaceCapabilityTargetKind;
+      symId: SymbolicReference;
+    }) => {
+      const kind =
+        target.kind === 'entity_schema'
+          ? 'schema'
+          : target.kind === 'relation_schema'
+            ? 'relationSchema'
+            : 'documentType';
+      return resolveDefinitionId(kind, fragment.ownerId, target.symId);
+    };
+    const capabilityConfigurations = (fragment.template.capabilityConfigurations ?? []).map(
+      configuration => ({
+        type: configuration.type,
+        bindings: Object.fromEntries(
+          Object.entries(configuration.bindings).map(([bindingId, binding]) => [
+            bindingId,
+            {
+              ...binding,
+              target: {
+                kind: binding.target.kind,
+                id: resolveCapabilityTargetId(binding.target)
+              }
+            }
+          ])
+        ) as WorkspaceCapabilityBindings
+      })
+    );
+
+    return {
+      ownerId: fragment.ownerId,
+      template: fragment.template,
+      schemas,
+      enums,
+      fieldGroups,
+      relationSchemas,
+      documentTypes,
+      documentTemplates,
+      dashboardWidgets: resolveTemplateDashboardWidgets(
+        fragment.template.dashboardWidgets ?? [],
+        schemaIds
+      ),
+      capabilityConfigurations,
+      dashboardGroups:
+        fragment.template.dashboardWidgets && fragment.template.dashboardWidgets.length > 0
+          ? [
+              {
+                name: fragment.template.category === 'full' ? 'Overview' : fragment.template.name,
+                widgets: resolveTemplateDashboardWidgets(
+                  fragment.template.dashboardWidgets,
+                  schemaIds
+                )
+              }
+            ]
+          : [],
+      views: resolveTemplateSavedViews(
+        fragment.template.views ?? [],
+        workspaceId,
+        schemaIds,
+        relationSchemaIds,
+        now
+      )
+    };
+  });
+
+  return materialized;
+};
+
+export const instantiateTemplateDefinitions = (
+  workspaceId: string,
+  templateId: string,
+  now = new Date(),
+  options: TemplateInstantiationOptions = {}
+): InstantiatedTemplate => {
+  const template = SCHEMA_TEMPLATES.find(item => item.id === templateId);
+  if (!template) return emptyInstantiatedTemplate();
+  const [module] = materializeTemplateFragments(
+    workspaceId,
+    createTemplateFragments([template], false),
+    now,
+    options
+  );
+  return module ?? emptyInstantiatedTemplate();
+};
+
 /**
  * Instantiates one full template and any number of cross-cutting templates.
  * Definitions from later modules are qualified only when their names collide
@@ -3100,7 +3596,8 @@ export const instantiateTemplateComposition = (
   workspaceId: string,
   fullTemplateId: string | undefined,
   crossCuttingTemplateIds: readonly string[] = [],
-  now = new Date()
+  now = new Date(),
+  options: TemplateInstantiationOptions = {}
 ): InstantiatedTemplateComposition => {
   const requested = new Set<string>();
   const selected: SchemaTemplate[] = [];
@@ -3128,16 +3625,7 @@ export const instantiateTemplateComposition = (
   }
 
   const result: InstantiatedTemplateComposition = {
-    schemas: [],
-    enums: [],
-    fieldGroups: [],
-    relationSchemas: [],
-    documentTypes: [],
-    documentTemplates: [],
-    dashboardWidgets: [],
-    capabilityConfigurations: [],
-    dashboardGroups: [],
-    views: [],
+    ...emptyInstantiatedTemplate(),
     selectedTemplates: selected.map(({ id, name, category }) => ({ id, name, category }))
   };
   const usedNames = new Map<string, Set<string>>();
@@ -3148,19 +3636,34 @@ export const instantiateTemplateComposition = (
   };
   const usedPrefixes = new Set<string>();
   const documentTypeByName = new Map<string, string>();
+  const emittedDefinitionIds = new Map<string, Set<string>>();
+  const emitOnce = (kind: string, id: string) => {
+    const emitted = emittedDefinitionIds.get(kind) ?? new Set<string>();
+    emittedDefinitionIds.set(kind, emitted);
+    if (emitted.has(id)) return false;
+    emitted.add(id);
+    return true;
+  };
 
-  for (const template of selected) {
-    const module = instantiateTemplateDefinitions(workspaceId, template.id, now);
+  const modules = materializeTemplateFragments(
+    workspaceId,
+    createTemplateFragments(selected, true),
+    now,
+    options
+  );
+  for (const module of modules) {
     for (const enumeration of module.enums) {
+      if (!emitOnce('enum', enumeration.id)) continue;
       result.enums.push({
         ...enumeration,
-        name: uniqueDefinitionName(namesFor('enum'), enumeration.name, template.name)
+        name: uniqueDefinitionName(namesFor('enum'), enumeration.name, module.template.name)
       });
     }
     for (const fieldGroup of module.fieldGroups) {
+      if (!emitOnce('fieldGroup', fieldGroup.id)) continue;
       result.fieldGroups.push({
         ...fieldGroup,
-        name: uniqueDefinitionName(namesFor('fieldGroup'), fieldGroup.name, template.name)
+        name: uniqueDefinitionName(namesFor('fieldGroup'), fieldGroup.name, module.template.name)
       });
     }
     for (const schema of module.schemas) {
@@ -3169,20 +3672,27 @@ export const instantiateTemplateComposition = (
       while (usedPrefixes.has(keyPrefix)) {
         prefixSeed += 1;
         keyPrefix = normalizePublicIdPrefix(
-          generateTemplateSchemaKeyPrefix(`${workspaceId}:${template.id}:${prefixSeed}`, schema.id)
+          generateTemplateSchemaKeyPrefix(
+            `${workspaceId}:${module.ownerId}:${prefixSeed}`,
+            schema.id
+          )
         );
       }
       usedPrefixes.add(keyPrefix);
       result.schemas.push({
         ...schema,
-        name: uniqueDefinitionName(namesFor('schema'), schema.name, template.name),
+        name: uniqueDefinitionName(namesFor('schema'), schema.name, module.template.name),
         key_prefix: keyPrefix
       });
     }
     for (const relationSchema of module.relationSchemas) {
       result.relationSchemas.push({
         ...relationSchema,
-        name: uniqueDefinitionName(namesFor('relationSchema'), relationSchema.name, template.name)
+        name: uniqueDefinitionName(
+          namesFor('relationSchema'),
+          relationSchema.name,
+          module.template.name
+        )
       });
     }
 
@@ -3193,7 +3703,11 @@ export const instantiateTemplateComposition = (
         documentTypeIdMap.set(documentType.id, existingId);
         continue;
       }
-      const name = uniqueDefinitionName(namesFor('documentType'), documentType.name, template.name);
+      const name = uniqueDefinitionName(
+        namesFor('documentType'),
+        documentType.name,
+        module.template.name
+      );
       documentTypeByName.set(documentType.name.toLocaleLowerCase(), documentType.id);
       documentTypeIdMap.set(documentType.id, documentType.id);
       result.documentTypes.push({ ...documentType, name });
@@ -3207,20 +3721,20 @@ export const instantiateTemplateComposition = (
         name: uniqueDefinitionName(
           namesFor('documentTemplate'),
           documentTemplate.name,
-          template.name
+          module.template.name
         )
       });
     }
     result.capabilityConfigurations.push(...module.capabilityConfigurations);
     if (module.dashboardWidgets.length > 0) {
-      const groupName = template.category === 'full' ? 'Overview' : template.name;
+      const groupName = module.template.category === 'full' ? 'Overview' : module.template.name;
       result.dashboardGroups.push({ name: groupName, widgets: module.dashboardWidgets });
       result.dashboardWidgets.push(...module.dashboardWidgets);
     }
     for (const view of module.views) {
       result.views.push({
         ...view,
-        name: uniqueDefinitionName(namesFor('savedView'), view.name, template.name)
+        name: uniqueDefinitionName(namesFor('savedView'), view.name, module.template.name)
       });
     }
   }
@@ -3231,12 +3745,14 @@ export const instantiateTemplateComposition = (
 export const instantiateTemplateDocuments = (
   workspaceId: string,
   templateId: string,
-  now = new Date()
+  now = new Date(),
+  options: TemplateInstantiationOptions = {}
 ) => {
   const { documentTypes, documentTemplates } = instantiateTemplateDefinitions(
     workspaceId,
     templateId,
-    now
+    now,
+    options
   );
   return { documentTypes, documentTemplates };
 };
@@ -3244,5 +3760,7 @@ export const instantiateTemplateDocuments = (
 export const instantiateTemplate = (
   workspaceId: string,
   templateId: string,
-  now?: Date
-): SchemaDbCreate[] => instantiateTemplateDefinitions(workspaceId, templateId, now).schemas;
+  now?: Date,
+  options?: TemplateInstantiationOptions
+): SchemaDbCreate[] =>
+  instantiateTemplateDefinitions(workspaceId, templateId, now, options).schemas;

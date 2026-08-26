@@ -4,8 +4,7 @@ import type { GlobalRoleAssignmentDbResult, UserDbCreate } from '../domain/auth/
 import type {
   MemberDbResult,
   TeamMembershipDbResult,
-  WorkspaceDbResult,
-  WorkspaceCapabilityConfigurationDbCreate
+  WorkspaceDbResult
 } from '../domain/workspace/db/workspaceDatabase';
 import type { DatabaseAdapter } from './database';
 import { seedAiConfig } from './seedData/ai';
@@ -27,7 +26,11 @@ import {
   seedSharedFieldGroups,
   seedSupportedCurrencies
 } from './seedData/catalog';
-import { GLOSSARY_IDS, STRATEGY_IDS, WORKSPACE_ID } from './seedData/constants';
+import {
+  SEED_CAPABILITY_CONFIGURATION_IDS,
+  seedTemplateDefinitions
+} from './seedData/templateDefinitions';
+import { WORKSPACE_ID, now } from './seedData/constants';
 import { seedSavedViews } from './seedData/views';
 import { seededTestPassword } from './seedFixtures';
 import { hashPassword } from '../utils/password';
@@ -45,6 +48,52 @@ export type CatalogSeedOptions = {
   enums?: boolean;
   sharedFieldGroups?: boolean;
   schemas?: boolean;
+};
+
+type SeedTemplateCapabilityConfiguration =
+  (typeof seedTemplateDefinitions.capabilityConfigurations)[number];
+
+const seedCapabilitiesWithoutRelationSchemas: SeedTemplateCapabilityConfiguration[] =
+  seedTemplateDefinitions.capabilityConfigurations.filter(configuration =>
+    Object.values(configuration.bindings).every(
+      binding => binding.target.kind !== 'relation_schema'
+    )
+  );
+
+export const seedTemplateCapabilityConfigurations = async (
+  db: DatabaseAdapter,
+  configurations: readonly SeedTemplateCapabilityConfiguration[] = seedCapabilitiesWithoutRelationSchemas
+): Promise<void> => {
+  for (const configuration of configurations) {
+    const capabilityId =
+      SEED_CAPABILITY_CONFIGURATION_IDS[
+        configuration.type as keyof typeof SEED_CAPABILITY_CONFIGURATION_IDS
+      ];
+    if (!capabilityId) {
+      throw new Error(`No stable seed id configured for capability '${configuration.type}'`);
+    }
+    await db.workspace.upsertWorkspaceCapabilityConfiguration({
+      id: capabilityId,
+      workspace: WORKSPACE_ID,
+      type: configuration.type,
+      bindings: configuration.bindings,
+      created_at: now,
+      updated_at: now
+    });
+  }
+};
+
+export const seedTemplateRelationCapabilityConfigurations = async (
+  db: DatabaseAdapter
+): Promise<void> => {
+  await seedTemplateCapabilityConfigurations(
+    db,
+    seedTemplateDefinitions.capabilityConfigurations.filter(configuration =>
+      Object.values(configuration.bindings).some(
+        binding => binding.target.kind === 'relation_schema'
+      )
+    )
+  );
 };
 
 export type SeedLocalUser = {
@@ -171,80 +220,7 @@ export const seedCatalogDefinitions = async (
       );
     }
 
-    const apiSchema = await db.catalog.getSchema(
-      WORKSPACE_ID,
-      '00000000-0000-0000-0000-000000000004'
-    );
-    if (apiSchema) {
-      const capabilityConfiguration: WorkspaceCapabilityConfigurationDbCreate = {
-        id: '00000000-0000-0000-0000-000000000007',
-        workspace: WORKSPACE_ID,
-        type: 'api-specification',
-        bindings: {
-          api: {
-            target: { kind: 'entity_schema', id: apiSchema.id }
-          }
-        },
-        created_at: apiSchema.created_at,
-        updated_at: apiSchema.updated_at
-      };
-      await db.workspace.upsertWorkspaceCapabilityConfiguration(capabilityConfiguration);
-    }
-
-    const termSchema = await db.catalog.getSchema(WORKSPACE_ID, GLOSSARY_IDS.termSchema);
-    const termCategorySchema = await db.catalog.getSchema(
-      WORKSPACE_ID,
-      GLOSSARY_IDS.termCategorySchema
-    );
-    if (termSchema && termCategorySchema) {
-      await db.workspace.upsertWorkspaceCapabilityConfiguration({
-        id: '00000000-0000-0000-0000-000000000008',
-        workspace: WORKSPACE_ID,
-        type: 'business-glossary',
-        bindings: {
-          term: { target: { kind: 'entity_schema', id: termSchema.id } },
-          category: { target: { kind: 'entity_schema', id: termCategorySchema.id } }
-        },
-        created_at: termSchema.created_at,
-        updated_at: termSchema.updated_at
-      });
-    }
-
-    const objectiveSchema = await db.catalog.getSchema(WORKSPACE_ID, STRATEGY_IDS.objectiveSchema);
-    const outcomeSchema = await db.catalog.getSchema(WORKSPACE_ID, STRATEGY_IDS.outcomeSchema);
-    const initiativeSchema = await db.catalog.getSchema(
-      WORKSPACE_ID,
-      STRATEGY_IDS.initiativeSchema
-    );
-    const measureSchema = await db.catalog.getSchema(WORKSPACE_ID, STRATEGY_IDS.measureSchema);
-    const businessCapabilitySchema = await db.catalog.getSchema(
-      WORKSPACE_ID,
-      STRATEGY_IDS.businessCapabilitySchema
-    );
-    if (
-      objectiveSchema &&
-      outcomeSchema &&
-      initiativeSchema &&
-      measureSchema &&
-      businessCapabilitySchema
-    ) {
-      await db.workspace.upsertWorkspaceCapabilityConfiguration({
-        id: '00000000-0000-0000-0000-00000000000a',
-        workspace: WORKSPACE_ID,
-        type: 'strategy-model',
-        bindings: {
-          objective: { target: { kind: 'entity_schema', id: objectiveSchema.id } },
-          outcome: { target: { kind: 'entity_schema', id: outcomeSchema.id } },
-          initiative: { target: { kind: 'entity_schema', id: initiativeSchema.id } },
-          measure: { target: { kind: 'entity_schema', id: measureSchema.id } },
-          business_capability: {
-            target: { kind: 'entity_schema', id: businessCapabilitySchema.id }
-          }
-        },
-        created_at: objectiveSchema.created_at,
-        updated_at: objectiveSchema.updated_at
-      });
-    }
+    await seedTemplateCapabilityConfigurations(db);
   }
 };
 

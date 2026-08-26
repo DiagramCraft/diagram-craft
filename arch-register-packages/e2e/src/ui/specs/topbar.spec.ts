@@ -75,11 +75,11 @@ test.describe('topbar', () => {
     const dialog = homePage.workspaceShell.topBar.addWorkspaceDialog();
     await dialog.getByRole('button', { name: 'Template', exact: true }).click();
     await expect(dialog.getByRole('button', { name: /^Default/ })).toContainText(
-      '18 template objects'
+      '19 template objects'
     );
     await expect(
       dialog.locator('label').filter({ hasText: 'Information Governance' })
-    ).toContainText('10 template objects');
+    ).toContainText('11 template objects');
     await expect(dialog).not.toContainText('entity types');
 
     await page.keyboard.press('Escape');

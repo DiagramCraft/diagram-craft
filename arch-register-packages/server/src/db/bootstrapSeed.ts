@@ -10,7 +10,6 @@ import {
 import { seedAdrDocuments, seedProjectFiles, seedWikiPageBodies } from './seedData/documents';
 import { seedNotificationEvents, seedUserWatches } from './seedData/notifications';
 import { seedRelationSchemas, seedRelations } from './seedData/relations';
-import { RETENTION_IDS, now as seedNow } from './seedData/constants';
 import { seededWorkspaces } from './seedFixtures';
 import { decodeRefs } from '../types';
 import { ContainmentField, ReferenceField } from '@arch-register/api-types/schemaContract';
@@ -31,6 +30,7 @@ import {
   seedCatalogEntities,
   seedCatalogViews,
   seedPublicIdCounters,
+  seedTemplateRelationCapabilityConfigurations,
   seedWorkspaceBase,
   seedWorkspaceConfiguration
 } from './seedPhases';
@@ -239,19 +239,7 @@ export const seedBootstrapData = async (
   for (const relation of seedRelations) {
     await db.relation.createRelation(relation);
   }
-  await db.workspace.upsertWorkspaceCapabilityConfiguration({
-    id: RETENTION_IDS.capabilityConfiguration,
-    workspace: seededWorkspaces.default.id,
-    type: 'retention',
-    bindings: {
-      policy: { target: { kind: 'entity_schema', id: RETENTION_IDS.policySchema } },
-      assignment: {
-        target: { kind: 'relation_schema', id: RETENTION_IDS.assignmentRelationSchema }
-      }
-    },
-    created_at: seedNow,
-    updated_at: seedNow
-  });
+  await seedTemplateRelationCapabilityConfigurations(db);
   await recalculateEntityDerivedFields(db, seededWorkspaces.default.id);
   for (const assessment of seedAssessments) {
     await db.project.createAssessment(assessment);

@@ -2,12 +2,14 @@ import { describe, expect, it } from 'vitest';
 import { seedEntities } from './seedData/entities';
 import { seedRelationSchemas, seedRelations } from './seedData/relations';
 import { seedAssessments, seedProjectEntities } from './seedData/projects';
-import { seedEnums, seedSchemas } from './seedData/catalog';
+import { seedEnums, seedSchemas, seedSharedFieldGroups } from './seedData/catalog';
 import {
   BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
   GLOSSARY_IDS,
-  STRATEGY_IDS
+  STRATEGY_IDS,
+  WORKSPACE_ID
 } from './seedData/constants';
+import { seedTemplateDefinitions } from './seedData/templateDefinitions';
 import { seededProjects } from './seedFixtures';
 import { seedAssessmentTypes } from './seedData/workspace';
 import { seedWorkspaceDashboards } from './seedData/views';
@@ -26,6 +28,60 @@ describe('schema presentation categories', () => {
     expect(seedSchemas.find(schema => schema.name === 'Business Capability')?.category).toBe(
       'Strategy'
     );
+  });
+});
+
+describe('template-backed catalog seed data', () => {
+  it('uses the composed templates for every default-workspace definition', () => {
+    const defaultSchemas = seedSchemas.filter(schema => schema.workspace === WORKSPACE_ID);
+    const defaultEnums = seedEnums.filter(enumeration => enumeration.workspace === WORKSPACE_ID);
+    const defaultFieldGroups = seedSharedFieldGroups.filter(
+      fieldGroup => fieldGroup.workspace === WORKSPACE_ID
+    );
+
+    expect(seedTemplateDefinitions.selectedTemplates.map(template => template.id)).toEqual([
+      'default',
+      'glossary',
+      'information-governance',
+      'risk-compliance',
+      'strategy'
+    ]);
+    expect(defaultSchemas).toEqual(seedTemplateDefinitions.schemas);
+    expect(defaultEnums).toEqual(seedTemplateDefinitions.enums);
+    expect(defaultFieldGroups).toEqual(seedTemplateDefinitions.fieldGroups);
+    expect(seedRelationSchemas).toEqual(seedTemplateDefinitions.relationSchemas);
+  });
+
+  it('has no unresolved template references in the generated catalog definitions', () => {
+    const schemaIds = new Set(seedSchemas.map(schema => schema.id));
+    const enumIds = new Set(seedEnums.map(enumeration => enumeration.id));
+    const fieldGroupIds = new Set(seedSharedFieldGroups.map(fieldGroup => fieldGroup.id));
+    const relationSchemaIds = new Set(seedRelationSchemas.map(relationSchema => relationSchema.id));
+
+    for (const schema of seedSchemas.filter(item => item.workspace === WORKSPACE_ID)) {
+      for (const field of schema.fields) {
+        if (field.type === 'select') expect(enumIds.has(field.enumId)).toBe(true);
+        if (field.type === 'reference' || field.type === 'containment') {
+          expect(schemaIds.has(field.schemaId)).toBe(true);
+        }
+        if (field.type === 'typedRelation') {
+          expect(relationSchemaIds.has(field.relationSchemaId)).toBe(true);
+        }
+      }
+      for (const link of schema.shared_field_group_links ?? []) {
+        expect(fieldGroupIds.has(link.groupId)).toBe(true);
+      }
+    }
+
+    for (const relationSchema of seedRelationSchemas) {
+      for (const field of relationSchema.fields) {
+        if (field.type === 'select') expect(enumIds.has(field.enumId)).toBe(true);
+        if (field.type === 'entityRelation') expect(schemaIds.has(field.schemaId)).toBe(true);
+      }
+      for (const link of relationSchema.shared_field_group_links ?? []) {
+        expect(fieldGroupIds.has(link.groupId)).toBe(true);
+      }
+    }
   });
 });
 

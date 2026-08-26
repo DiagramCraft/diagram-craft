@@ -11,6 +11,7 @@ import {
 } from './seedPhases';
 import { seedEntities } from './seedData/entities';
 import { seedEnums, seedSchemas } from './seedData/catalog';
+import { seedTemplateDefinitions } from './seedData/templateDefinitions';
 import { seedLifecycleStates, seedOwners, seedWorkspaces } from './seedData/workspace';
 import { provisionSqliteDatabase } from './testSupport/provisionDatabase';
 
@@ -72,6 +73,17 @@ describe('composable seed phases', () => {
       );
       expect(await provisioned.db.catalog.listSchemas(defaultWorkspace)).toHaveLength(
         seedSchemas.filter(schema => schema.workspace === defaultWorkspace).length
+      );
+      expect(
+        (
+          await provisioned.db.workspace.listWorkspaceCapabilityConfigurations(defaultWorkspace)
+        ).map(configuration => ({ type: configuration.type, bindings: configuration.bindings }))
+      ).toEqual(
+        seedTemplateDefinitions.capabilityConfigurations.filter(configuration =>
+          Object.values(configuration.bindings).every(
+            binding => binding.target.kind !== 'relation_schema'
+          )
+        )
       );
       expect(await provisioned.db.catalog.listSharedFieldGroups(defaultWorkspace)).toEqual([]);
       expect(await provisioned.db.catalog.listEntities(defaultWorkspace)).toEqual([]);

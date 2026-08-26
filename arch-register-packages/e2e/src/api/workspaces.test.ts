@@ -45,10 +45,10 @@ test.describe('workspace routes', () => {
         expect.objectContaining({ template_object_count: templateObjectCount(sourceTemplate) })
       );
     }
-    expect(templates.find(template => template.id === 'default')?.template_object_count).toBe(18);
+    expect(templates.find(template => template.id === 'default')?.template_object_count).toBe(19);
     expect(
       templates.find(template => template.id === 'information-governance')?.template_object_count
-    ).toBe(10);
+    ).toBe(11);
     expect(
       templates.filter(template => template.category === 'cross-cutting').map(t => t.id)
     ).toEqual(
