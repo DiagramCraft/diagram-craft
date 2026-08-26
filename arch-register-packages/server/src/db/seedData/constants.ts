@@ -250,3 +250,103 @@ export const RISK_AFFECTS_TARGET_SCHEMA_IDS = [
 ];
 export const RISK_CONTROL_SCHEMA_ID = '00000000-0000-0000-0000-000000000032';
 export const CONTROL_REQUIREMENT_SCHEMA_ID = '00000000-0000-0000-0000-000000000033';
+
+// Stable identifiers used by the deterministic template materialization that backs the bundled
+// demo catalog. Keeping these separate from the template's symbolic ids lets normal workspace
+// creation continue to allocate fresh ids while preserving the existing seed fixture contract.
+export const SEED_SCHEMA_IDS = {
+  domain: '00000000-0000-0000-0000-000000000001',
+  system: '00000000-0000-0000-0000-000000000002',
+  component: '00000000-0000-0000-0000-000000000003',
+  api: '00000000-0000-0000-0000-000000000004',
+  resource: '00000000-0000-0000-0000-000000000005',
+  technologyRelease: '00000000-0000-0000-0000-000000000006',
+  technology: '00000000-0000-0000-0000-000000000007',
+  dataEntity: '00000000-0000-0000-0000-000000000008',
+  contract: '00000000-0000-0000-0000-000000000009',
+  vendor: '00000000-0000-0000-0000-000000000010',
+  risk: '00000000-0000-0000-0000-000000000013',
+  control: '00000000-0000-0000-0000-000000000014',
+  framework: '00000000-0000-0000-0000-000000000015',
+  complianceRequirement: '00000000-0000-0000-0000-000000000016',
+  termCategory: GLOSSARY_IDS.termCategorySchema,
+  term: GLOSSARY_IDS.termSchema,
+  businessCapability: STRATEGY_IDS.businessCapabilitySchema,
+  objective: STRATEGY_IDS.objectiveSchema,
+  outcome: STRATEGY_IDS.outcomeSchema,
+  initiative: STRATEGY_IDS.initiativeSchema,
+  measure: STRATEGY_IDS.measureSchema,
+  retentionPolicy: RETENTION_IDS.policySchema,
+  application: '00000000-0000-0000-0000-000000000011',
+  service: '00000000-0000-0000-0000-000000000012'
+} as const;
+
+export const SEED_ENUM_IDS = {
+  apiType: '00000000-0000-0000-0000-e00000000001',
+  platform: '00000000-0000-0000-0000-e00000000002',
+  technologyCategory: '00000000-0000-0000-0000-e00000000003',
+  technologyRadarStatus: '00000000-0000-0000-0000-e00000000004',
+  piiClassification: '00000000-0000-0000-0000-e00000000005',
+  dataFlowDirection: '00000000-0000-0000-0000-e00000000006',
+  communicationProtocol: '00000000-0000-0000-0000-e00000000007',
+  contractPurpose: '00000000-0000-0000-0000-e00000000008',
+  riskStatus: '00000000-0000-0000-0000-e00000000009',
+  mitigationEffectiveness: '00000000-0000-0000-0000-e0000000000a',
+  controlType: '00000000-0000-0000-0000-e0000000000b',
+  controlEffectiveness: '00000000-0000-0000-0000-e0000000000c',
+  frameworkKind: '00000000-0000-0000-0000-e0000000000d',
+  requirementStatus: '00000000-0000-0000-0000-e0000000000e',
+  glossaryStatus: GLOSSARY_IDS.statusEnum,
+  strategyStatus: STRATEGY_IDS.statusEnum,
+  regulatoryTags: INFO_ASSET_IDS.regulatoryTagsEnum,
+  processingPurposes: INFO_ASSET_IDS.processingPurposesEnum,
+  residencyRegions: INFO_ASSET_IDS.residencyRegionsEnum,
+  retentionTimeUnit: RETENTION_IDS.timeUnitEnum
+} as const;
+
+export const SEED_RELATION_SCHEMA_IDS = {
+  dataFlow: DATA_FLOW_SCHEMA_ID,
+  systemContract: '00000000-0000-0000-0000-000000000031',
+  riskMitigation: RISK_CONTROL_SCHEMA_ID,
+  controlCompliance: CONTROL_REQUIREMENT_SCHEMA_ID,
+  providesApi: API_PROVIDER_RELATION_SCHEMA_ID,
+  consumesApi: API_CONSUMER_RELATION_SCHEMA_ID,
+  riskAffects: RISK_AFFECTS_RELATION_SCHEMA_ID,
+  objectiveSupportsCapability: OBJECTIVE_SUPPORTS_BUSINESS_CAPABILITY_RELATION_SCHEMA_ID,
+  objectiveAffectsEntity: OBJECTIVE_AFFECTS_ENTITY_RELATION_SCHEMA_ID,
+  capabilitySupportsEntity: BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
+  retentionAssignment: RETENTION_IDS.assignmentRelationSchema
+} as const;
+
+export const SEED_FIELD_GROUP_IDS = {
+  piiClassification: PII_FIELD_GROUP_ID,
+  informationAssetStewardship: INFO_ASSET_FIELD_GROUP_ID,
+  dataFlowGovernance: DATA_FLOW_GOVERNANCE_FIELD_GROUP_ID
+} as const;
+
+export const SEED_SCHEMA_KEY_PREFIXES = {
+  domain: 'DOM',
+  system: 'SYS',
+  component: 'CMP',
+  api: 'API',
+  resource: 'RES',
+  contract: 'CON',
+  vendor: 'VND',
+  technology: 'TECH',
+  technologyRelease: 'TEC',
+  dataEntity: 'DE',
+  risk: 'RISK',
+  control: 'CTRL',
+  framework: 'FRWK',
+  complianceRequirement: 'CREQ',
+  termCategory: 'TCAT',
+  term: 'TERM',
+  businessCapability: 'CAP',
+  objective: 'OBJ',
+  outcome: 'OUTC',
+  initiative: 'INIT',
+  measure: 'MEAS',
+  retentionPolicy: 'RETN',
+  application: 'APP',
+  service: 'SVC'
+} as const;

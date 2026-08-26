@@ -8,6 +8,7 @@ import {
   type SymbolicSavedView
 } from './schemaTemplates';
 import { buildDerivedPlan, evaluateDerivedFields } from '../derived/derivedFields';
+import { compileRelationSchemaWithSharedGroups } from './relationSchemaHelpers';
 
 describe('instantiateTemplate', () => {
   it('assigns a presentation category to every built-in entity and relation schema', () => {
@@ -286,11 +287,10 @@ describe('instantiateTemplate', () => {
         schema.fields.filter(field => field.type === 'select')
       );
 
-      expect(selectFields.every(field => enumIds.has(field.enumId))).toBe(true);
       expect(
-        template.id === 'information-governance' ||
-          template.enums.every(enumeration => enumeration.options.length > 0)
+        selectFields.every(field => typeof field.enumId === 'string' && enumIds.has(field.enumId))
       ).toBe(true);
+      expect(template.enums.every(enumeration => enumeration.options.length > 0)).toBe(true);
     }
   });
 
@@ -302,6 +302,7 @@ describe('instantiateTemplate', () => {
       'Data Entity'
     ]);
     expect(definitions.enums.map(enumeration => enumeration.name)).toEqual([
+      'Data Flow Direction',
       'Regulatory Tags',
       'Processing Purposes',
       'Residency Regions',
@@ -309,12 +310,14 @@ describe('instantiateTemplate', () => {
       'PII Classification'
     ]);
     expect(
-      definitions.enums
-        .filter(
-          enumeration => !['Retention Time Unit', 'PII Classification'].includes(enumeration.name)
-        )
-        .every(enumeration => enumeration.options.length === 0)
-    ).toBe(true);
+      definitions.enums.find(enumeration => enumeration.name === 'Regulatory Tags')?.options
+    ).toEqual(expect.arrayContaining([{ value: 'gdpr', label: 'GDPR' }]));
+    expect(
+      definitions.enums.find(enumeration => enumeration.name === 'Processing Purposes')?.options
+    ).toEqual(expect.arrayContaining([{ value: 'analytics', label: 'Analytics' }]));
+    expect(
+      definitions.enums.find(enumeration => enumeration.name === 'Residency Regions')?.options
+    ).toEqual(expect.arrayContaining([{ value: 'eu', label: 'EU' }]));
 
     expect(definitions.fieldGroups.map(fieldGroup => fieldGroup.name)).toEqual([
       'Information Asset Stewardship',
@@ -367,6 +370,79 @@ describe('instantiateTemplate', () => {
         }
       }
     ]);
+  });
+
+  it('materializes the Data Flow composition extension with shared governance fields', () => {
+    const informationGovernanceOnly = instantiateTemplateComposition('ws-1', undefined, [
+      'information-governance'
+    ]);
+    expect(
+      informationGovernanceOnly.relationSchemas.some(relation => relation.name === 'Data Flow')
+    ).toBe(false);
+
+    const definitions = instantiateTemplateComposition('ws-1', 'default', [
+      'information-governance'
+    ]);
+    const system = definitions.schemas.find(schema => schema.name === 'System');
+    const dataFlow = definitions.relationSchemas.find(relation => relation.name === 'Data Flow');
+    const governanceGroup = definitions.fieldGroups.find(
+      fieldGroup => fieldGroup.name === 'Data Flow Governance'
+    );
+
+    expect(dataFlow).toBeDefined();
+    expect(dataFlow?.in_schema_ids).toEqual([system?.id]);
+    expect(dataFlow?.out_schema_ids).toEqual([system?.id]);
+    expect(dataFlow?.shared_field_group_links).toEqual([{ groupId: governanceGroup?.id }]);
+    expect(dataFlow?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'direction', type: 'select' }),
+        expect.objectContaining({ id: 'data_classification', type: 'select' }),
+        expect.objectContaining({ id: 'protocol', type: 'select' }),
+        expect.objectContaining({
+          id: 'data_entities',
+          type: 'entityRelation',
+          schemaId: definitions.schemas.find(schema => schema.name === 'Data Entity')?.id
+        })
+      ])
+    );
+    expect(system?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({
+          id: 'data_flows_out',
+          type: 'typedRelation',
+          relationSchemaId: dataFlow?.id,
+          direction: 'out'
+        }),
+        expect.objectContaining({
+          id: 'data_flows_in',
+          type: 'typedRelation',
+          relationSchemaId: dataFlow?.id,
+          direction: 'in'
+        })
+      ])
+    );
+
+    const compiledDataFlow = compileRelationSchemaWithSharedGroups(
+      dataFlow!,
+      definitions.fieldGroups
+    );
+    expect(compiledDataFlow.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'regulatory_tags', groupId: governanceGroup?.id }),
+        expect.objectContaining({ id: 'processing_purposes', groupId: governanceGroup?.id }),
+        expect.objectContaining({ id: 'source_residency_region', groupId: governanceGroup?.id }),
+        expect.objectContaining({
+          id: 'destination_residency_region',
+          groupId: governanceGroup?.id
+        })
+      ])
+    );
+    expect(compiledDataFlow.groups).toEqual([
+      expect.objectContaining({ id: governanceGroup?.id, name: 'Data Flow Governance' })
+    ]);
+    expect(
+      definitions.enums.filter(enumeration => enumeration.name === 'PII Classification')
+    ).toHaveLength(1);
   });
 
   it('materializes enums and document definitions with remapped references', () => {
@@ -432,7 +508,7 @@ describe('instantiateTemplate', () => {
         id: 'contracts',
         type: 'typedRelation',
         relationSchemaId: relation?.id,
-        direction: 'out'
+        direction: 'in'
       })
     );
     expect(contract?.fields).toContainEqual(
@@ -440,7 +516,7 @@ describe('instantiateTemplate', () => {
         id: 'system',
         type: 'typedRelation',
         relationSchemaId: relation?.id,
-        direction: 'in'
+        direction: 'out'
       })
     );
   });

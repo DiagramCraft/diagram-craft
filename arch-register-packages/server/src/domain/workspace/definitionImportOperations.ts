@@ -29,7 +29,8 @@ import {
   SCHEMA_TEMPLATES,
   resolveTemplateDashboardWidgets,
   type SchemaTemplate,
-  type SymbolicField
+  type SymbolicField,
+  type SymbolicReference
 } from '../catalog/schemaTemplates';
 import type {
   SchemaDbCreate,
@@ -182,6 +183,9 @@ const checker = new PermissionChecker();
 const lower = (value: string) => value.toLocaleLowerCase();
 const renameKey = (kind: DefinitionImportRename['kind'], id: string) => `${kind}:${id}`;
 
+const symbolicReferenceId = (reference: SymbolicReference): string =>
+  typeof reference === 'string' ? reference : `${reference.templateId}:${reference.symId}`;
+
 const stableStringify = (value: unknown): string => {
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
   if (value && typeof value === 'object') {
@@ -203,7 +207,7 @@ const toCanonicalField = (field: SymbolicField): SchemaField => {
       name: field.name,
       predicate: field.predicate,
       type: 'reference',
-      schemaId: field.symSchemaId,
+      schemaId: symbolicReferenceId(field.symSchemaId),
       minCount: field.minCount,
       maxCount: field.maxCount
     };
@@ -214,7 +218,7 @@ const toCanonicalField = (field: SymbolicField): SchemaField => {
       name: field.name,
       predicate: field.predicate,
       type: 'containment',
-      schemaId: field.symSchemaId,
+      schemaId: symbolicReferenceId(field.symSchemaId),
       minCount: field.minCount,
       maxCount: field.maxCount
     };
@@ -224,7 +228,7 @@ const toCanonicalField = (field: SymbolicField): SchemaField => {
       id: field.id,
       name: field.name,
       type: 'typedRelation',
-      relationSchemaId: field.symRelationSchemaId,
+      relationSchemaId: symbolicReferenceId(field.symRelationSchemaId),
       direction: field.direction,
       minCount: field.minCount,
       maxCount: field.maxCount
@@ -278,8 +282,14 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
     name: relationSchema.name,
     category: null,
     description: relationSchema.description,
-    in_schema_ids: relationSchema.inSymSchemaIds,
-    out_schema_ids: relationSchema.outSymSchemaIds,
+    in_schema_ids:
+      relationSchema.inSymSchemaIds === 'any'
+        ? 'any'
+        : relationSchema.inSymSchemaIds.map(symbolicReferenceId),
+    out_schema_ids:
+      relationSchema.outSymSchemaIds === 'any'
+        ? 'any'
+        : relationSchema.outSymSchemaIds.map(symbolicReferenceId),
     in_label: relationSchema.inLabel,
     out_label: relationSchema.outLabel,
     fields: relationSchema.fields.map(
@@ -289,7 +299,7 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
               id: field.id,
               name: field.name,
               type: field.type,
-              enumId: field.enumId,
+              enumId: symbolicReferenceId(field.enumId),
               requirementLevel: field.requirementLevel
             }
           : {
@@ -322,7 +332,7 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
           bindingId,
           {
             ...binding,
-            target: { kind: binding.target.kind, id: binding.target.symId }
+            target: { kind: binding.target.kind, id: symbolicReferenceId(binding.target.symId) }
           }
         ])
       ) as WorkspaceCapabilityBindings

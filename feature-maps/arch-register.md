@@ -44,8 +44,9 @@
           and rename or delete a dashboard via its context menu. Administrators can also enter edit mode to add,
           remove, resize, and reposition widgets and save the layout; other users see the active dashboard read-only.
           Schema templates can seed a complete default dashboard layout when a workspace adopts the template. The
-          optional Information Governance cross-cutting template contributes reusable, initially empty enums for
-          regulatory tags, processing purposes, and residency regions without adding a new semantic enum type. It
+          optional Information Governance cross-cutting template contributes reusable built-in vocabularies for data
+          flow direction, regulatory tags, processing purposes, and residency regions without adding a new semantic
+          enum type. It
           also contributes a Retention Policy entity schema (duration and time unit) and a "Subject to Retention
           Policy" relation schema (an "activated from" date) bound together via the `retention` workspace
           capability, without adding a bespoke retention data model: any governed entity records its retention
@@ -58,17 +59,17 @@
           regulatory tags, processing purposes, and permitted residency regions, alongside the entity's existing
           owner (reused as the data-owner team) and classification field; a governed Data Entity can be linked to a
           retention policy through the same "Subject to Retention Policy" relation as any other entity. The bundled
-          demo workspace seeds this schema and field group directly, with example Data Entities showing the full
-          spread of stewardship states (complete, partial, and missing) and review-date states (approaching and
-          overdue).
-          The bundled demo workspace's "Data Flow" relation (a first-class System-to-System relation recording
-          direction, protocol, and the Data Entity/Entities it carries) is likewise extended with transfer-specific
-          governance metadata under a "Data Flow Governance" field group: flow-level classification, multi-valued
-          regulatory tags and processing purposes, and single-valued source and destination residency regions, all
-          drawn from the same configurable vocabularies as the Data Entity stewardship fields. Whether a flow crosses
-          a residency boundary (source and destination regions differ) and whether its destination region is
-          permitted by every carried Data Entity's permitted-residency-regions are available as deterministic,
-          permission-aware compute helpers for later surfacing in governance analysis views.
+          demo workspace composes this schema and field group from the same templates, with example Data Entities
+          showing the full spread of stewardship states (complete, partial, and missing) and review-date states
+          (approaching and overdue). When Default and Information Governance are composed together, the templates
+          also provide a "Data Flow" relation (a first-class System-to-System relation recording direction, protocol,
+          and the Data Entity/Entities it carries) extended with transfer-specific governance metadata under a
+          "Data Flow Governance" field group: flow-level classification, multi-valued regulatory tags and processing
+          purposes, and single-valued source and destination residency regions, all drawn from the same configurable
+          vocabularies as the Data Entity stewardship fields. Whether a flow crosses a residency boundary (source
+          and destination regions differ) and whether its destination region is permitted by every carried Data
+          Entity's permitted-residency-regions are available as deterministic, permission-aware compute helpers for
+          later surfacing in governance analysis views.
           The home sidebar's Data model section groups schema links by schema category.
           Every widget shows a title bar (an icon and a title, separated from the widget's content by a divider); the
           stat-metric widget's title is configurable (via its label setting), while other widget types show a fixed
@@ -89,7 +90,8 @@
           select-option enums, document types and associated templates, and saved views scoped to the template's
           schemas; conflicting later definition names are qualified, and concern dashboards are kept separate from
           the full template's Overview dashboard. Template objects include entity schemas, enums, typed relation
-          schemas, and shared field groups.
+          schemas, shared field groups, and composition extensions for definitions that depend on more than one
+          selected template.
 
         - @id:ar.workspace.configuration Administrators can configure workspace lifecycle states, assessment types, teams, roles, members,
           supported currencies and the workspace's default currency, document types, templates, AI, analytics, audit,
@@ -253,8 +255,9 @@
           provider and consumer views; these relations are available to the same graph, topology, search, and
           permission surfaces as other typed relations. Endpoint labels are contextual to the entity at each side,
           so inverse relation views remain understandable without relying on the relation schema name.
-          The seeded architecture catalog provides a `Risk Affects` relation from each Risk to any entity schema,
-          with an inline `Affects` field on Risk; target schemas do not need inverse projection fields
+          The built-in Risk & Compliance template provides a `Risk Affects` relation from each Risk to any entity
+          schema, with an inline `Affects` field on Risk; the bundled demo composes that template and seeds example
+          relations. Target schemas do not need inverse projection fields
           because the relation endpoint definition is sufficient. On the entity Overview page, valid
           unprojected endpoints appear in contextual-label accordions and support the same add, edit, and remove
           lifecycle as projected typed-relation fields.
