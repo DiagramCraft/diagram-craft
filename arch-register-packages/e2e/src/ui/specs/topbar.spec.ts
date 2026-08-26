@@ -1,4 +1,5 @@
 import { test } from '../fixtures';
+import { expect } from '@playwright/test';
 import { HomePage } from '../pages/HomePage';
 import { LoginPage } from '../pages/LoginPage';
 import { SearchPage } from '../pages/SearchPage';
@@ -61,6 +62,26 @@ test.describe('topbar', () => {
       { name: workspaceName, slug: workspaceSlug },
       defaultWorkspace
     );
+    await page.keyboard.press('Escape');
+  });
+
+  test('shows template object counts in the workspace creation dialog', async ({ page }) => {
+    const homePage = new HomePage(page, defaultWorkspace.slug);
+
+    await homePage.goto();
+    await homePage.expectLoaded(defaultWorkspace.name);
+    await homePage.workspaceShell.topBar.openAddWorkspaceFromSwitcher();
+
+    const dialog = homePage.workspaceShell.topBar.addWorkspaceDialog();
+    await dialog.getByRole('button', { name: 'Template', exact: true }).click();
+    await expect(dialog.getByRole('button', { name: /^Default/ })).toContainText(
+      '18 template objects'
+    );
+    await expect(
+      dialog.locator('label').filter({ hasText: 'Information Governance' })
+    ).toContainText('10 template objects');
+    await expect(dialog).not.toContainText('entity types');
+
     await page.keyboard.press('Escape');
   });
 

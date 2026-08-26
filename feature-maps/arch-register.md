@@ -88,7 +88,8 @@
           Security / Threat Model, Risk & Compliance, and Strategy. Each selected template contributes its entity schemas,
           select-option enums, document types and associated templates, and saved views scoped to the template's
           schemas; conflicting later definition names are qualified, and concern dashboards are kept separate from
-          the full template's Overview dashboard.
+          the full template's Overview dashboard. Template objects include entity schemas, enums, typed relation
+          schemas, and shared field groups.
 
         - @id:ar.workspace.configuration Administrators can configure workspace lifecycle states, assessment types, teams, roles, members,
           supported currencies and the workspace's default currency, document types, templates, AI, analytics, audit,

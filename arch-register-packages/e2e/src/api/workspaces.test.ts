@@ -1,6 +1,13 @@
 import { test, expect, createTestORPCClient } from '../helpers/fixtures';
 import { seedIds } from '../helpers/seedHelper';
 import { NONEXISTENT_UUID } from '../helpers/testIds';
+import { SCHEMA_TEMPLATES } from '@arch-register/server/domain/catalog/schemaTemplates';
+
+const templateObjectCount = (template: (typeof SCHEMA_TEMPLATES)[number]) =>
+  template.schemas.length +
+  template.enums.length +
+  (template.relationSchemas?.length ?? 0) +
+  (template.fieldGroups?.length ?? 0);
 
 test.describe('workspace routes', () => {
   test('GET /api/workspaces returns seeded workspaces', async ({ orpc }) => {
@@ -28,9 +35,20 @@ test.describe('workspace routes', () => {
         name: expect.any(String),
         description: expect.any(String),
         category: expect.stringMatching(/^(full|cross-cutting)$/),
+        template_object_count: expect.any(Number),
         entity_types: expect.any(Array)
       })
     );
+    expect(templates).toHaveLength(SCHEMA_TEMPLATES.length);
+    for (const sourceTemplate of SCHEMA_TEMPLATES) {
+      expect(templates.find(template => template.id === sourceTemplate.id)).toEqual(
+        expect.objectContaining({ template_object_count: templateObjectCount(sourceTemplate) })
+      );
+    }
+    expect(templates.find(template => template.id === 'default')?.template_object_count).toBe(18);
+    expect(
+      templates.find(template => template.id === 'information-governance')?.template_object_count
+    ).toBe(10);
     expect(
       templates.filter(template => template.category === 'cross-cutting').map(t => t.id)
     ).toEqual(

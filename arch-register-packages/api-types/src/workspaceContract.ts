@@ -28,6 +28,13 @@ const workspaceTemplateSchema = z.object({
   name: z.string().describe('Template name'),
   description: z.string().describe('Template description'),
   category: z.enum(['full', 'cross-cutting']).describe('Template category'),
+  template_object_count: z
+    .number()
+    .int()
+    .nonnegative()
+    .describe(
+      'Number of schemas, enums, typed relation schemas, and field groups included in the template'
+    ),
   entity_types: z.array(z.string()).describe('Entity types included in the template')
 });
 

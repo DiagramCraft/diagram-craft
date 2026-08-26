@@ -61,6 +61,9 @@ function initialsOf(s: string) {
   return s.trim().slice(0, 2).toUpperCase();
 }
 
+const templateObjectLabel = (count: number) =>
+  `${count} template object${count === 1 ? '' : 's'}`;
+
 const CrossCuttingTemplateSection = ({
   templates,
   selected,
@@ -96,7 +99,7 @@ const CrossCuttingTemplateSection = ({
               </div>
               <div className={styles.templateCardDesc}>{template.description}</div>
               <div className={`${styles.templateCardMeta} ${styles.mono}`}>
-                {template.entity_types.length} entity types
+                {templateObjectLabel(template.template_object_count)}
               </div>
             </label>
           );
@@ -370,7 +373,7 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                     </div>
                     <div className={styles.templateCardDesc}>{t.description}</div>
                     <div className={`${styles.templateCardMeta} ${styles.mono}`}>
-                      {t.entity_types.length} entity types
+                      {templateObjectLabel(t.template_object_count)}
                     </div>
                   </button>
                 ))}
