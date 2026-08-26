@@ -15,7 +15,10 @@ import { relationIds, type TypedRelationFieldEditState } from '../../../lib/enti
 import { useEntitiesBySchema } from '../../../hooks/useEntities';
 import { useTeams, useLifecycleStates } from '../../../hooks/useWorkspaceConfig';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
-import { RelationFieldInput, isMultiValuedRelationSelectField } from '../../../dialogs/RelationFieldInput';
+import {
+  RelationFieldInput,
+  isMultiValuedRelationSelectField
+} from '../../../dialogs/RelationFieldInput';
 import { groupRelationFields } from '../../../lib/relationFieldGroups';
 import { RelationFieldGroupSection } from '../../../components/RelationFieldGroupSection';
 import { KEY_FIELD_COUNT, formatRelationFieldValue } from './RelationRecordList';

@@ -62,7 +62,12 @@ const dataFlowSchema = {
   created_at: now,
   updated_at: now,
   fields: [
-    { id: 'source_residency_region', name: 'Source Residency Region', type: 'select', enumId: 'residency-regions' },
+    {
+      id: 'source_residency_region',
+      name: 'Source Residency Region',
+      type: 'select',
+      enumId: 'residency-regions'
+    },
     {
       id: 'destination_residency_region',
       name: 'Destination Residency Region',

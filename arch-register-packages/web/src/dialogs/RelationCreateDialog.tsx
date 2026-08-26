@@ -106,7 +106,8 @@ export const RelationCreateDialog = ({
       _outEntityId: direction === 'in' ? target._uid : currentEntityId
     };
     for (const field of activeFields) {
-      const value = values[field.id] ??
+      const value =
+        values[field.id] ??
         (field.type === 'entityRelation' || isMultiValuedRelationSelectField(field) ? [] : '');
       if (value !== '' && (!Array.isArray(value) || value.length > 0)) {
         data[field.id] = toFieldValue(field, value);
