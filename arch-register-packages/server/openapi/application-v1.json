@@ -46855,6 +46855,12 @@
                         "type": "string",
                         "description": "Template category"
                       },
+                      "template_object_count": {
+                        "type": "integer",
+                        "minimum": 0,
+                        "maximum": 9007199254740991,
+                        "description": "Number of schemas, enums, typed relation schemas, and field groups included in the template"
+                      },
                       "entity_types": {
                         "type": "array",
                         "items": {
@@ -46868,6 +46874,7 @@
                       "name",
                       "description",
                       "category",
+                      "template_object_count",
                       "entity_types"
                     ]
                   }

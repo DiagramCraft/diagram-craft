@@ -73,6 +73,11 @@ export const workspaceManagementORPCRouter = wsRouter.router({
         name: template.name,
         description: template.description,
         category: template.category,
+        template_object_count:
+          template.schemas.length +
+          template.enums.length +
+          (template.relationSchemas?.length ?? 0) +
+          (template.fieldGroups?.length ?? 0),
         entity_types: template.schemas.map(schema => schema.name)
       }));
     }),
