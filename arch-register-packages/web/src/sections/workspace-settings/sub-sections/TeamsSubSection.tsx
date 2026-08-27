@@ -18,6 +18,8 @@ import type {
   WorkspaceTeamInput
 } from '@arch-register/api-types/workspaceConfigContract';
 import { useWorkspaceUsers } from '../../../hooks/useWorkspaceMembers';
+import { useAuthConfig } from '../../../hooks/useAuthConfig';
+import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import {
   useTeamAssignments,
   useTeams,
@@ -29,6 +31,7 @@ import { useAutoFocus } from '../../../hooks/useAutoFocus';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { WorkspaceUserInfo } from '@arch-register/api-types/workspaceContract';
+import { UserDialog } from '../../../components/UserDialog';
 
 type TeamDraft = {
   id: string;
@@ -167,6 +170,10 @@ export const TeamsSubSection = ({
     error: assignmentsError
   } = useTeamAssignments(workspaceSlug);
   const { data: users = [], isLoading: isLoadingUsers } = useWorkspaceUsers(workspaceSlug, true);
+  const { data: authConfig } = useAuthConfig();
+  const { hasGlobalPermission } = useWorkspaceAuthorization(workspaceSlug);
+  const canCreateUsers =
+    authConfig != null && authConfig.mode !== 'oidc' && hasGlobalPermission('admin_platform');
   const updateTeams = useUpdateTeams(workspaceSlug);
   const updateTeamAssignments = useUpdateTeamAssignments(workspaceSlug);
   const [openId, setOpenId] = useState<string | null>(null);
@@ -416,6 +423,7 @@ export const TeamsSubSection = ({
           setAddMembersTeamId(null);
         }}
         isSaving={isSaving}
+        canCreateUsers={canCreateUsers}
       />
     </div>
   );
@@ -550,7 +558,8 @@ const AddMembersDialog = ({
   loadingUsers,
   onClose,
   onSave,
-  isSaving
+  isSaving,
+  canCreateUsers
 }: {
   open: boolean;
   teamName: string;
@@ -560,12 +569,16 @@ const AddMembersDialog = ({
   onClose: () => void;
   onSave: (assignments: EditAssignment[]) => Promise<void>;
   isSaving: boolean;
+  canCreateUsers: boolean;
 }) => {
   const [assignments, setAssignments] = useState<EditAssignment[]>([]);
+  const [createdUser, setCreatedUser] = useState<WorkspaceUserInfo | null>(null);
+  const [createUserDialogOpen, setCreateUserDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
     setAssignments([]);
+    setCreatedUser(null);
   }, [open]);
 
   if (!open) return null;
@@ -595,7 +608,9 @@ const AddMembersDialog = ({
         ) : (
           <>
             {assignments.map((assignment, index) => {
-              const user = users.find(u => u.id === assignment.user_id);
+              const user =
+                users.find(u => u.id === assignment.user_id) ??
+                (createdUser?.id === assignment.user_id ? createdUser : undefined);
               return (
                 <div key={assignment.user_id} className={styles.pickedRow}>
                   <MemberAvatar
@@ -626,18 +641,24 @@ const AddMembersDialog = ({
               );
             })}
 
-            {availableUsers.length > 0 ? (
+            {availableUsers.length > 0 && (
               <UserGroupPicker
                 kind="user"
                 excludeIds={[...existingUserIds, ...pickedUserIds]}
                 onSelect={item => pickUser(item.id)}
                 placeholder="Search people to add…"
               />
-            ) : assignments.length === 0 ? (
+            )}
+            {availableUsers.length === 0 && assignments.length === 0 && (
               <div className={styles.emptyInline}>
                 All workspace users are already in this team.
               </div>
-            ) : null}
+            )}
+            {canCreateUsers && (
+              <Button variant="secondary" onClick={() => setCreateUserDialogOpen(true)}>
+                Create new user
+              </Button>
+            )}
           </>
         )}
 
@@ -653,6 +674,22 @@ const AddMembersDialog = ({
             {isSaving ? 'Saving…' : 'Add members'}
           </Button>
         </div>
+        <UserDialog
+          open={createUserDialogOpen}
+          onClose={() => setCreateUserDialogOpen(false)}
+          onCreated={created => {
+            setCreatedUser({
+              id: created.id,
+              email: created.email,
+              display_name: created.display_name ?? '',
+              auth_provider: 'local',
+              is_active: created.is_active,
+              color: created.color
+            });
+            pickUser(created.id);
+            setCreateUserDialogOpen(false);
+          }}
+        />
       </div>
     </Dialog>
   );

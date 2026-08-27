@@ -8,6 +8,8 @@ import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar, stableHue } from '../../../components/MemberAvatar';
 import { SearchInput } from '../../../components/SearchInput';
 import { useAuth } from '../../../auth/AuthContext';
+import { useAuthConfig } from '../../../hooks/useAuthConfig';
+import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { getUserLabel } from '../../../utils/userLabel';
 import { formatDate } from '../../../utils/dateFormat';
 import {
@@ -22,6 +24,7 @@ import styles from './MembersSubSection.module.css';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
 import { WorkspaceRoleDefinition } from '@arch-register/api-types/workspaceContract';
+import { UserDialog } from '../../../components/UserDialog';
 
 const TeamChip = ({ teamId, label }: { teamId: string; label: string }) => {
   const h = stableHue(teamId);
@@ -79,6 +82,10 @@ export const MembersSubSection = ({
   const { data: teamAssignments = [] } = useTeamAssignments(workspaceSlug);
   const updateMemberRole = useUpdateWorkspaceMemberRole(workspaceSlug);
   const { user, reloadUser } = useAuth();
+  const { data: authConfig } = useAuthConfig();
+  const { hasGlobalPermission } = useWorkspaceAuthorization(workspaceSlug);
+  const canCreateUsers =
+    authConfig != null && authConfig.mode !== 'oidc' && hasGlobalPermission('admin_platform');
 
   const [query, setQuery] = useState('');
   const [roleFilter, setRoleFilter] = useState('');
@@ -267,6 +274,7 @@ export const MembersSubSection = ({
         }}
         isSaving={updateMemberRole.isPending}
         roles={roles}
+        canCreateUsers={canCreateUsers}
       />
     </div>
   );
@@ -279,7 +287,8 @@ const AddMemberDialog = ({
   onClose,
   onSave,
   isSaving,
-  roles
+  roles,
+  canCreateUsers
 }: {
   open: boolean;
   users: Array<{
@@ -293,25 +302,54 @@ const AddMemberDialog = ({
   onSave: (userId: string, role: string) => Promise<void>;
   isSaving: boolean;
   roles: WorkspaceRoleDefinition[];
+  canCreateUsers: boolean;
 }) => {
   const [selectedUserId, setSelectedUserId] = useState('');
   const [selectedRole, setSelectedRole] = useState('viewer');
+  const [createdUser, setCreatedUser] = useState<{
+    id: string;
+    email: string | null;
+    display_name: string;
+    is_active: boolean;
+  } | null>(null);
+  const [createUserDialogOpen, setCreateUserDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
-    setSelectedUserId(users[0]?.id ?? '');
+    setCreatedUser(null);
+    setSelectedUserId('');
     setSelectedRole(roles.find(role => role.id === 'viewer')?.id ?? roles[0]?.id ?? '');
-  }, [open, roles, users]);
+  }, [open, roles]);
+
+  useEffect(() => {
+    if (open && !selectedUserId && users.length > 0) {
+      setSelectedUserId(users[0]!.id);
+    }
+  }, [open, selectedUserId, users]);
 
   if (!open) return null;
+
+  const selectableUsers =
+    createdUser && !users.some(user => user.id === createdUser.id)
+      ? [...users, createdUser]
+      : users;
 
   return (
     <Dialog open={open} onClose={onClose} title="Add workspace member">
       <div className={styles.dialogBody}>
         {loading ? (
           <EmptyState compact title="Loading users…" />
-        ) : users.length === 0 ? (
-          <EmptyState compact title="All existing users are already members of this workspace." />
+        ) : selectableUsers.length === 0 ? (
+          <>
+            <EmptyState compact title="All existing users are already members of this workspace." />
+            {canCreateUsers && (
+              <div className={styles.dialogActions}>
+                <Button variant="secondary" onClick={() => setCreateUserDialogOpen(true)}>
+                  Create new user
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <>
             <div className={styles.field}>
@@ -327,7 +365,7 @@ const AddMemberDialog = ({
                   onChange={value => setSelectedUserId(value ?? '')}
                   style={{ width: '100%' }}
                 >
-                  {users.map(user => (
+                  {selectableUsers.map(user => (
                     <Select.Item key={user.id} value={user.id}>
                       {getUserLabel(user)}
                       {user.email && user.email !== getUserLabel(user) ? ` (${user.email})` : ''}
@@ -359,6 +397,11 @@ const AddMemberDialog = ({
               </div>
             </div>
             <div className={styles.dialogActions}>
+              {canCreateUsers && (
+                <Button variant="secondary" onClick={() => setCreateUserDialogOpen(true)}>
+                  Create new user
+                </Button>
+              )}
               <Button onClick={onClose} disabled={isSaving}>
                 Cancel
               </Button>
@@ -372,6 +415,20 @@ const AddMemberDialog = ({
             </div>
           </>
         )}
+        <UserDialog
+          open={createUserDialogOpen}
+          onClose={() => setCreateUserDialogOpen(false)}
+          onCreated={created => {
+            setCreatedUser({
+              id: created.id,
+              email: created.email,
+              display_name: created.display_name ?? '',
+              is_active: created.is_active
+            });
+            setSelectedUserId(created.id);
+            setCreateUserDialogOpen(false);
+          }}
+        />
       </div>
     </Dialog>
   );

@@ -19,6 +19,14 @@ type UserUpdateBody = {
   display_name?: unknown;
 };
 
+export type ManagedUserUpdateBody = {
+  email?: string | null;
+  display_name?: string;
+  password?: string;
+  is_active?: boolean;
+  color?: string | null;
+};
+
 type WorkspaceMembershipData = {
   workspace_id: string;
   team_assignments: Array<{ team_id: string; role: TeamRole }>;
@@ -90,6 +98,33 @@ export const buildAuthMeResponse = (
     teams_by_workspace: teamsByWorkspace
   };
 };
+
+export const serializeUser = (user: UserDbResult) => ({
+  id: user.id,
+  user_id: user.user_id,
+  email: user.email,
+  display_name: user.display_name,
+  auth_provider: user.auth_provider,
+  is_active: user.is_active,
+  is_system_actor: user.is_system_actor,
+  color: user.color,
+  created_at: user.created_at.toISOString(),
+  updated_at: user.updated_at.toISOString(),
+  last_login_at: user.last_login_at?.toISOString() ?? null
+});
+
+export const buildManagedUserUpdateInput = (
+  body: ManagedUserUpdateBody,
+  passwordHash: string | undefined,
+  updatedAt: Date
+) => ({
+  ...(body.email !== undefined ? { email: body.email } : {}),
+  ...(body.display_name !== undefined ? { display_name: body.display_name } : {}),
+  ...(passwordHash !== undefined ? { password_hash: passwordHash } : {}),
+  ...(body.is_active !== undefined ? { is_active: body.is_active } : {}),
+  ...(body.color !== undefined ? { color: body.color } : {}),
+  updated_at: updatedAt
+});
 
 export const buildUserUpdateInput = (body: UserUpdateBody, updatedAt: Date) => {
   if (body.color !== undefined && body.color !== null) {

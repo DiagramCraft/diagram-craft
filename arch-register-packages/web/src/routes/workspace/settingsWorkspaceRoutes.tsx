@@ -145,6 +145,24 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     })
   );
 
+  const globalUsersSettingsRoute = withWorkspaceShell(
+    createRoute({
+      getParentRoute: () => workspaceRoute,
+      path: 'settings/global/users',
+      component: LazyGlobalSettingsScreen
+    }),
+    ctx => ({
+      variant: 'standard',
+      activeRailItem: null,
+      breadcrumbs: buildSettingsBreadcrumbs(
+        ctx,
+        'Global Settings',
+        '/$workspaceSlug/settings/global'
+      ),
+      primarySidebar: <GlobalSettingsSidebar />
+    })
+  );
+
   const schemaSettingsRoute = withWorkspaceShell(
     createRoute({
       getParentRoute: () => workspaceRoute,
@@ -286,6 +304,7 @@ export const createSettingsWorkspaceRoutes = <TParentRoute extends AnyRoute>(
     modelOverviewRoute,
     schemaValidationRoute,
     globalSettingsRoute,
+    globalUsersSettingsRoute,
     accountSettingsRoute,
     accountSectionRoute
   ] as const;

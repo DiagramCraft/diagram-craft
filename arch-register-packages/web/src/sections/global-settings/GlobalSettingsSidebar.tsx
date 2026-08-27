@@ -1,10 +1,12 @@
 import { useMemo } from 'react';
-import { useNavigate } from '@tanstack/react-router';
+import { useLocation, useNavigate } from '@tanstack/react-router';
 import styles from '../../shell/SidePanel.module.css';
 import { TreeRow } from '../../components/TreeRow';
-import { TbShieldLock } from 'react-icons/tb';
+import { TbShieldLock, TbUsers } from 'react-icons/tb';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { SidebarGroupLabel, SidebarTitleHeader } from '../../components/sidebar/SidebarPrimitives';
+import { useAuthConfig } from '../../hooks/useAuthConfig';
+import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
 
 type GlobalSettingsNavItem = {
   id: string;
@@ -22,19 +24,34 @@ const GLOBAL_SETTINGS_SECTIONS: GlobalSettingsNavItem[] = [
   }
 ];
 
+const USERS_SETTINGS_ITEM: GlobalSettingsNavItem = {
+  id: 'users',
+  label: 'Users',
+  icon: <TbUsers size={12} />,
+  group: 'Administration'
+};
+
 export const GlobalSettingsSidebar = () => {
   const navigate = useNavigate();
+  const location = useLocation();
   const ctx = useWorkspaceContext();
   const workspaceSlug = ctx.workspaceSlug;
-  const section = 'global-permissions'; // Currently only one section
+  const { data: authConfig } = useAuthConfig();
+  const { hasGlobalPermission } = useWorkspaceAuthorization(ctx.workspace?.id);
+  const canManageUsers =
+    authConfig != null && authConfig.mode !== 'oidc' && hasGlobalPermission('admin_platform');
+  const section = location.pathname.endsWith('/users') ? 'users' : 'global-permissions';
 
   const groups = useMemo(() => {
     const g: Record<string, GlobalSettingsNavItem[]> = {};
-    GLOBAL_SETTINGS_SECTIONS.forEach(s => {
+    const sections = canManageUsers
+      ? [...GLOBAL_SETTINGS_SECTIONS, USERS_SETTINGS_ITEM]
+      : GLOBAL_SETTINGS_SECTIONS;
+    sections.forEach(s => {
       (g[s.group] ??= []).push(s);
     });
     return Object.entries(g);
-  }, []);
+  }, [canManageUsers]);
 
   return (
     <div className={styles.panel}>
@@ -51,7 +68,10 @@ export const GlobalSettingsSidebar = () => {
                 active={section === s.id}
                 onClick={() =>
                   navigate({
-                    to: '/$workspaceSlug/settings/global',
+                    to:
+                      s.id === 'users'
+                        ? '/$workspaceSlug/settings/global/users'
+                        : '/$workspaceSlug/settings/global',
                     params: { workspaceSlug }
                   })
                 }

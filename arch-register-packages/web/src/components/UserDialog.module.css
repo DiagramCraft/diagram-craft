@@ -1,0 +1,47 @@
+.body {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.fieldGrid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 14px 16px;
+}
+
+.providerNote {
+  grid-column: 1 / -1;
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+  line-height: 1.45;
+}
+
+.activeRow {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--base-fg);
+  font-size: 12px;
+}
+
+.activeRow label {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.activeRow input {
+  margin: 0;
+}
+
+.hint {
+  color: var(--cmp-fg-disabled);
+  font-size: 11px;
+}
+
+@media (max-width: 620px) {
+  .fieldGrid {
+    grid-template-columns: 1fr;
+  }
+}
