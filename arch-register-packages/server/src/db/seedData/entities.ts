@@ -19,7 +19,7 @@ import {
   now
 } from './constants';
 
-type SeedEntityInput = Omit<Entity, 'completeness'>;
+export type SeedEntityInput = Omit<Entity, 'completeness'>;
 
 const seedTechnologies: SeedEntityInput[] = [
   {
@@ -2729,21 +2729,28 @@ const stripSeedApiRelationshipFields = (data: SeedEntityInput['data']): SeedEnti
   return remaining;
 };
 
-export const seedEntities: Entity[] = seedEntitiesRaw.map(entity => {
-  const schema = seedSchemaById.get(entity.schema_id);
-  if (!schema)
-    throw new Error(`Seed entity '${entity.id}' references unknown schema '${entity.schema_id}'`);
-  // Seed fixtures are inserted directly (bootstrapSeed.ts), bypassing the normal create path that
-  // materializes `type: 'derived'` fields on write - do it here so seeded entities carry computed
-  // derived values (e.g. Risk's residual_risk_score) just like entities created through the app.
-  // Relations are inserted after entities during bootstrap. bootstrapSeed recalculates all
-  // relation-dependent derived fields after the relation rows have been inserted.
-  const entityData = stripSeedApiRelationshipFields(entity.data);
-  const data = materializeDerivedFields(
-    schema.fields,
-    entityData,
-    { objectType: 'entity', objectId: entity.id },
-    schema.groups
-  );
-  return { ...entity, data, completeness: computeEntityCompleteness({ ...entity, data }, schema) };
-});
+export const normalizeSeedEntities = (raw: SeedEntityInput[]): Entity[] =>
+  raw.map(entity => {
+    const schema = seedSchemaById.get(entity.schema_id);
+    if (!schema)
+      throw new Error(`Seed entity '${entity.id}' references unknown schema '${entity.schema_id}'`);
+    // Seed fixtures are inserted directly (bootstrapSeed.ts), bypassing the normal create path that
+    // materializes `type: 'derived'` fields on write - do it here so seeded entities carry computed
+    // derived values (e.g. Risk's residual_risk_score) just like entities created through the app.
+    // Relations are inserted after entities during bootstrap. bootstrapSeed recalculates all
+    // relation-dependent derived fields after the relation rows have been inserted.
+    const entityData = stripSeedApiRelationshipFields(entity.data);
+    const data = materializeDerivedFields(
+      schema.fields,
+      entityData,
+      { objectType: 'entity', objectId: entity.id },
+      schema.groups
+    );
+    return {
+      ...entity,
+      data,
+      completeness: computeEntityCompleteness({ ...entity, data }, schema)
+    };
+  });
+
+export const seedEntities: Entity[] = normalizeSeedEntities(seedEntitiesRaw);

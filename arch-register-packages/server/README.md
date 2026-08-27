@@ -146,6 +146,14 @@ This is an explicitly destructive local-development operation. It recreates the 
 NODE_ENV=development pnpm bootstrap -- --reset
 ```
 
+By default this loads the "demo" dataset — a richer catalog (including a full three-level Business
+Capability tree for a fictional online retailer) meant for exploring the app. Pass `--dataset test`
+to load the smaller "test" dataset instead — the exact seed data `seedData.test.ts` asserts on:
+
+```bash
+NODE_ENV=development pnpm bootstrap -- --reset --dataset test
+```
+
 To seed enabled AI configuration for all bootstrap workspaces, provide the dedicated bootstrap variables and use the
 explicit switch:
 

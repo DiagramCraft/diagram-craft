@@ -1,6 +1,11 @@
 import { seedCollectionEntities, seedCollections, seedWorkspaceDashboards } from './seedData/views';
 import { seedEntities } from './seedData/entities';
 import {
+  demoSeedEntities,
+  demoSeedProjectEntities,
+  demoSeedRelations
+} from './seedData/demoDataset';
+import {
   seedAssessments,
   seedChangeCases,
   seedMilestones,
@@ -39,6 +44,9 @@ type Database = DatabaseAdapter;
 
 export type BootstrapSeedOptions = {
   aiConfig?: AiConfigInputDbUpsert;
+  // 'test' (default) loads the exact dataset seedData.test.ts asserts on; 'demo' loads the richer
+  // e-commerce Business Capability tree used for the bootstrap CLI's default demo dataset.
+  dataset?: 'test' | 'demo';
 };
 
 export const validateBootstrapSeed = async (db: Database) => {
@@ -204,6 +212,10 @@ export const seedBootstrapData = async (
   options: BootstrapSeedOptions = {}
 ) => {
   const syncTimestamp = new Date();
+  const entities = options.dataset === 'demo' ? demoSeedEntities : seedEntities;
+  const relations = options.dataset === 'demo' ? demoSeedRelations : seedRelations;
+  const projectEntities =
+    options.dataset === 'demo' ? demoSeedProjectEntities : seedProjectEntities;
   await seedWorkspaceBase(db);
   await seedWorkspaceConfiguration(db);
   await seedCatalogDefinitions(db);
@@ -211,7 +223,7 @@ export const seedBootstrapData = async (
   for (const project of seedProjects) {
     await db.project.createProject(project);
   }
-  await seedCatalogEntities(db, seedEntities);
+  await seedCatalogEntities(db, entities);
   for (const relationSchema of seedRelationSchemas) {
     const createdSchema = await db.relation.createRelationSchema(relationSchema);
     await db.relation.createRelationSchemaVersion({
@@ -236,7 +248,7 @@ export const seedBootstrapData = async (
       created_at: createdSchema.created_at
     });
   }
-  for (const relation of seedRelations) {
+  for (const relation of relations) {
     await db.relation.createRelation(relation);
   }
   await seedTemplateRelationCapabilityConfigurations(db);
@@ -247,11 +259,11 @@ export const seedBootstrapData = async (
   for (const milestone of seedMilestones) {
     await db.project.createMilestone(milestone);
   }
-  for (const link of seedProjectEntities) {
+  for (const link of projectEntities) {
     await db.project.addProjectEntity(link);
   }
 
-  await seedPublicIdCounters(db, [...seedProjects, ...seedEntities], syncTimestamp);
+  await seedPublicIdCounters(db, [...seedProjects, ...entities], syncTimestamp);
   await seedCatalogViews(db);
   for (const dashboard of seedWorkspaceDashboards) {
     const created = await db.dashboard.create({
