@@ -536,6 +536,14 @@ export const AddWorkspaceDialog = ({ open, onClose, onCreated }: AddWorkspaceDia
                 selected={crossCuttingTemplateIds}
                 onToggle={toggleCrossCutting}
               />
+              <TemplateDependencyMappingSection
+                dependencies={activeDependencies}
+                templates={templates.filter(template =>
+                  crossCuttingTemplateIds.includes(template.id)
+                )}
+                mappings={dependencyMappings}
+                onToggle={toggleDependencyTarget}
+              />
             </>
           )}
 

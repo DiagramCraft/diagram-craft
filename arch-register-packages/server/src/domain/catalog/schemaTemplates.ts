@@ -3387,9 +3387,13 @@ const materializeTemplateFragments = (
     }
   }
 
-  const dependencyMappings = new Map(
-    (options.dependencyMappings ?? []).map(mapping => [mapping.dependencyId, mapping.targets])
-  );
+  const dependencyMappings = new Map<string, readonly TemplateDependencyTarget[]>();
+  for (const mapping of options.dependencyMappings ?? []) {
+    if (dependencyMappings.has(mapping.dependencyId)) {
+      throw new Error(`Template dependency '${mapping.dependencyId}' has multiple mappings`);
+    }
+    dependencyMappings.set(mapping.dependencyId, mapping.targets);
+  }
   for (const dependencyId of dependencyMappings.keys()) {
     if (!dependencySources.has(dependencyId)) {
       throw new Error(`Template dependency '${dependencyId}' is not active in this composition`);

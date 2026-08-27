@@ -762,7 +762,7 @@ test.describe('definition import', () => {
     server
   }) => {
     const target = await orpc.workspaces.create({
-      body: { name: `Data Flow dependency target ${randomUUID()}` }
+      body: { name: `Data Flow dependency target ${randomUUID()}`, badge: 'DFT' }
     });
     const system = await orpc.schemas.create({
       params: { workspace: target.url_slug },
