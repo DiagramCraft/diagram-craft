@@ -8,6 +8,16 @@ import { DB_DEFAULTS } from '../constants';
 import { createStorage } from '../storage/storage';
 import { hasBootstrapAiFlag, resolveBootstrapAiConfig } from './bootstrapAi';
 
+const resolveDataset = (args: readonly string[]): 'test' | 'demo' => {
+  const flagIndex = args.indexOf('--dataset');
+  if (flagIndex === -1) return 'demo';
+  const value = args[flagIndex + 1];
+  if (value !== 'test' && value !== 'demo') {
+    throw new Error(`--dataset must be "test" or "demo", got "${value ?? ''}"`);
+  }
+  return value;
+};
+
 async function main() {
   const args = process.argv.slice(2);
   if (!args.includes('--reset')) {
@@ -17,6 +27,7 @@ async function main() {
     throw new Error('Destructive bootstrap requires NODE_ENV=development or NODE_ENV=test');
   }
 
+  const dataset = resolveDataset(args);
   const bootstrapAiConfig = hasBootstrapAiFlag(args) ? resolveBootstrapAiConfig() : undefined;
 
   console.log('Bootstrapping database...');
@@ -39,8 +50,8 @@ async function main() {
 
   console.log('Schema created.');
 
-  console.log('Seeding data...');
-  await seedBootstrapData(db, storage, { aiConfig: bootstrapAiConfig });
+  console.log(`Seeding data (dataset: ${dataset})...`);
+  await seedBootstrapData(db, storage, { aiConfig: bootstrapAiConfig, dataset });
   console.log('Seed data loaded.');
 
   console.log('Validating seed...');

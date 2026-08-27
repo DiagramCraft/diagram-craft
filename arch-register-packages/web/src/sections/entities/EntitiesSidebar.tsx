@@ -24,7 +24,6 @@ import {
   TbLayoutSidebarLeftExpand,
   TbArrowsRightLeft
 } from 'react-icons/tb';
-import { TbBook } from 'react-icons/tb';
 import { groupSchemasByCategory, resolveSchemaColor } from '../../lib/schemaPresentation';
 import type { SavedView } from '@arch-register/api-types/viewContract';
 import { useSavedViews, useDeleteSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
@@ -60,8 +59,6 @@ import { toSavedRelationViewSearch } from '../relations/relationBrowserState';
 import type { Collection } from '@arch-register/api-types/collectionContract';
 import { BaselineSidebarSection } from '../baselines/BaselineSidebarSection';
 import type { EntityBrowserSidebarTab } from '../../routes/searchParams';
-import { useQuery } from '@tanstack/react-query';
-import { glossaryConfigQuery } from '../../queries/glossary';
 
 const FacetRow = ({
   icon,
@@ -124,7 +121,6 @@ export const EntitiesSidebar = ({
   const onRelationsRoute = pathname.includes('/entities/relations');
   const schemaGroups = useMemo(() => groupSchemasByCategory(schemas), [schemas]);
   const { permissions } = useWorkspaceContext();
-  const { data: glossaryConfig } = useQuery(glossaryConfigQuery(workspaceSlug));
   const search = useSearch({ strict: false });
   const sidebarTab = search.sidebarTab ?? 'home';
 
@@ -363,19 +359,6 @@ export const EntitiesSidebar = ({
               onClick={clearFacetSelection}
               trailing={<span className="dim mono">{totalEntities}</span>}
             />
-            {glossaryConfig && (
-              <TreeRow
-                icon={<TbBook size={12} />}
-                label="Business glossary"
-                testId="entity-filter-glossary"
-                onClick={() =>
-                  navigate({
-                    to: '/$workspaceSlug/glossary',
-                    params: { workspaceSlug }
-                  })
-                }
-              />
-            )}
             <TreeRow
               icon={<TbArrowsRightLeft size={12} />}
               label="All relations"
