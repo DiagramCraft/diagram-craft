@@ -251,6 +251,14 @@ export class PostgresRelationDatabase extends PostgresDatabaseBase implements Re
     }
   }
 
+  async updateRelationDerivedFields(workspace: string, id: string, data: Record<string, unknown>) {
+    await this.sql`
+      UPDATE catalog_record
+      SET data = ${this.json(data)}
+      WHERE workspace = ${workspace} AND id = ${id} AND kind = 'relation'
+    `;
+  }
+
   async deleteRelation(workspace: string, id: string) {
     const existing = await this.getRelation(workspace, id);
     if (!existing) return null;

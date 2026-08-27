@@ -57,8 +57,8 @@ const relationUnchanged = (
   oldRow.owner === next.owner &&
   oldRow.lifecycle === next.lifecycle &&
   valuesUnchanged(
-    filterRestrictedFieldGroups(authCtx, schema, oldRow.data),
-    filterRestrictedFieldGroups(authCtx, schema, next.data)
+    filterRestrictedFieldGroups(authCtx, schema, oldRow.data, 'relation'),
+    filterRestrictedFieldGroups(authCtx, schema, next.data, 'relation')
   );
 
 const parseRelationSyncPayload = (body: Record<string, unknown>) => {

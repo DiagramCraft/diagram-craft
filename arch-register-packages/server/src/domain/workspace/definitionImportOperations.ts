@@ -1096,8 +1096,6 @@ const buildPlan = async (
     }
   }
 
-  // Relation fields have no 'derived' type by design (relationSchemaContract.ts), so
-  // validateDerivedFieldGroupAccess is structurally inapplicable here and intentionally skipped.
   for (const relationSchema of relationSchemas) {
     const unresolved = findUnresolvedFieldGroupReferences(
       relationSchema.fields,
@@ -1109,6 +1107,16 @@ const buildPlan = async (
           reference =>
             `Relation schema '${relationSchema.name}' field '${reference.fieldName}' references missing field group '${reference.groupId}'`
         )
+      );
+      continue;
+    }
+    try {
+      validateDerivedFieldGroupAccess(relationSchema.fields, relationSchema.groups, 'relation');
+    } catch (error) {
+      errors.push(
+        error instanceof Error
+          ? `Relation schema '${relationSchema.name}': ${error.message}`
+          : String(error)
       );
     }
   }
@@ -1705,6 +1713,9 @@ export const executeDefinitionImport = async (
         if (field.type === 'select') {
           return { ...field, ...group, enumId: enumIdMap.get(field.enumId) ?? field.enumId };
         }
+        if (field.type === 'derived' && field.enumId !== undefined) {
+          return { ...field, ...group, enumId: enumIdMap.get(field.enumId) ?? field.enumId };
+        }
         return { ...field, ...group };
       };
       const now = new Date();
@@ -1845,9 +1856,8 @@ export const executeDefinitionImport = async (
                 }
               : undefined
           }));
-          // Relation fields have no 'derived' type by design, so validateDerivedFieldGroupAccess
-          // (which only matters for derived fields) is intentionally not called here.
           assertResolvedFieldGroupReferences(fields, groups);
+          validateDerivedFieldGroupAccess(fields, groups, 'relation');
 
           const row: RelationSchemaDbCreate = {
             id: relationSchemaIdMap.get(relationSchema.id)!,

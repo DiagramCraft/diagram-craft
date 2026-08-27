@@ -4,6 +4,7 @@ import type { RelationDbResult } from '../catalog/db/relationDatabase';
 import { decodeRefs } from '../../types';
 import { materializeDerivedFields } from './derivedFields';
 import { buildEntityProjection } from './entityProjection';
+import { buildRelationProjection } from './relationProjection';
 import { createLogger } from '../../utils/logger';
 
 const logger = createLogger('derived-recalculation');
@@ -100,7 +101,8 @@ const affectedEntityIds = (
  * The default is a full workspace scan. Callers may provide changed entity ids to limit the
  * recalculation to their connected components, but no persistent dependency index is maintained.
  * This function is transaction-safe and intentionally does not create audit/version records for
- * derived-only updates.
+ * derived-only updates. After the entity pass it also re-materializes relation derived fields
+ * (#3091) whose relation touches a changed/affected entity.
  */
 export const recalculateEntityDerivedFields = async (
   db: DatabaseAdapter,
@@ -209,5 +211,87 @@ export const recalculateEntityDerivedFields = async (
     if (!original || !recalculated || valuesEqual(original.data, recalculated.data)) continue;
     await db.catalog.updateEntityDerivedFields(workspace, entityId, recalculated.data);
   }
+
+  await recalculateRelationDerivedFields({
+    db,
+    workspace,
+    relations: allTypedRelations,
+    relationSchemas,
+    entities: [...workingEntities.values()],
+    schemas,
+    affected,
+    fullScan: !changedEntityIds || changedEntityIds.length === 0
+  });
+
   return true;
+};
+
+/**
+ * Second recalculation direction (#3091): a relation's derived fields are a pure function of the
+ * relation's own fields plus the entities it connects (`in` / `out` endpoints and `entityRelation`
+ * targets). Relations never reference other relations, so a single pass after the entity fixpoint
+ * is sufficient — there is nothing to converge.
+ */
+const recalculateRelationDerivedFields = async ({
+  db,
+  workspace,
+  relations,
+  relationSchemas,
+  entities,
+  schemas,
+  affected,
+  fullScan
+}: {
+  db: DatabaseAdapter;
+  workspace: string;
+  relations: RelationDbResult[];
+  relationSchemas: Awaited<ReturnType<DatabaseAdapter['relation']['listRelationSchemas']>>;
+  entities: EntityDbResult[];
+  schemas: SchemaDbResult[];
+  affected: Set<string>;
+  fullScan: boolean;
+}) => {
+  if (typeof db.relation.updateRelationDerivedFields !== 'function') return;
+
+  const relationSchemaById = new Map(relationSchemas.map(schema => [schema.id, schema]));
+  const touchesAffected = (
+    relation: RelationDbResult,
+    schema: (typeof relationSchemas)[number]
+  ) => {
+    if (fullScan) return true;
+    if (affected.has(relation.in_entity_id) || affected.has(relation.out_entity_id)) return true;
+    return schema.fields.some(field => {
+      if (field.type !== 'entityRelation') return false;
+      const raw = relation.data[field.id];
+      return (
+        Array.isArray(raw) && raw.some(id => typeof id === 'string' && affected.has(id as string))
+      );
+    });
+  };
+
+  for (const relation of relations) {
+    const schema = relationSchemaById.get(relation.schema_id);
+    if (!schema) continue;
+    if (!schema.fields.some(field => field.type === 'derived')) continue;
+    if (!touchesAffected(relation, schema)) continue;
+
+    const projection = buildRelationProjection(
+      relation,
+      entities,
+      schemas,
+      relations,
+      relationSchemas,
+      { depth: 1 }
+    );
+    const nextData = materializeDerivedFields(
+      schema.fields,
+      relation.data,
+      { objectType: 'relation', objectId: relation.id },
+      schema.groups ?? [],
+      projection
+    );
+    if (valuesEqual(relation.data, nextData)) continue;
+    relation.data = nextData;
+    await db.relation.updateRelationDerivedFields(workspace, relation.id, nextData);
+  }
 };

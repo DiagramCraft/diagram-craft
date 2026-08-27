@@ -6,6 +6,7 @@ import {
   type SchemaField,
   type SchemaGroup
 } from '@arch-register/api-types/schemaContract';
+import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
 import { currencyValueSchema } from '@arch-register/api-types/common';
 import { createLogger } from '../../utils/logger';
 import { httpAssert } from '../../utils/httpAssert';
@@ -17,7 +18,24 @@ export type DerivedFieldDefinition = {
 };
 
 export type DerivedEntityContext = Record<string, unknown>;
-export type DerivedRoot = 'entity' | 'assessment';
+export type DerivedRoot = 'entity' | 'assessment' | 'relation';
+
+/** Any field shape that can carry a `type: 'derived'` variant. */
+export type DerivableField = SchemaField | AssessmentField | RelationField;
+
+/** Minimal field-group shape the group-access checks need — entity or relation schema groups. */
+export type DerivedFieldGroup = {
+  id: string;
+  name?: string;
+  accessControl?: { teamIds: string[] } | undefined;
+};
+
+/**
+ * Pseudo-field names a relation-rooted derived expression may read in addition to the schema's
+ * declared fields: `relation._in` / `relation._out` are the projected endpoint entities. The
+ * underscore prefix keeps them out of the field-id namespace and avoids the `in` reserved word.
+ */
+export const RELATION_ROOT_PSEUDO_FIELDS = new Set(['_in', '_out']);
 
 type DerivedPlan = {
   fields: DerivedFieldDefinition[];
@@ -30,6 +48,7 @@ type DerivedPlan = {
 type EvaluationContext = {
   entity?: DerivedEntityContext;
   assessment?: DerivedEntityContext;
+  relation?: DerivedEntityContext;
 };
 
 type GroupAccessBoundary =
@@ -45,7 +64,7 @@ const engine = bonsai<EvaluationContext>({ timeout: 50, maxDepth: 50 })
   .use(strings)
   .use(types);
 
-const derivedField = (field: SchemaField | AssessmentField): DerivedFieldDefinition | null =>
+const derivedField = (field: DerivableField): DerivedFieldDefinition | null =>
   field.type === 'derived'
     ? {
         id: field.id,
@@ -109,14 +128,17 @@ const collectObjectLiteralKeys = (node: ASTNode, keys: Set<string>) => {
   }
 };
 
-const inferRoot = (fields: Array<SchemaField | AssessmentField>): DerivedRoot =>
+const inferRoot = (fields: DerivableField[]): DerivedRoot =>
   fields.some(field => 'name' in field) ? 'entity' : 'assessment';
 
 export const buildDerivedPlan = (
-  fields: Array<SchemaField | AssessmentField>,
+  fields: DerivableField[],
   root: DerivedRoot = inferRoot(fields)
 ): DerivedPlan => {
   const allFieldIds = new Set(fields.map(field => field.id));
+  const isKnownDependency = (dependency: string) =>
+    allFieldIds.has(dependency) ||
+    (root === 'relation' && RELATION_ROOT_PSEUDO_FIELDS.has(dependency));
   const definitions = fields.flatMap(field => {
     const definition = derivedField(field);
     return definition ? [definition] : [];
@@ -150,7 +172,7 @@ export const buildDerivedPlan = (
     collectRootDependencies(validation.ast, root, fieldDependencies);
     const uniqueDependencies = [...new Set(fieldDependencies)];
     for (const dependency of uniqueDependencies) {
-      if (!allFieldIds.has(dependency)) {
+      if (!isKnownDependency(dependency)) {
         throw new Error(
           `Derived field '${definition.id}' references unknown ${root} field '${dependency}'`
         );
@@ -197,7 +219,7 @@ const groupAccessBoundary = (
 
 const collectTransitiveDependencies = (
   plan: DerivedPlan,
-  fieldById: Map<string, SchemaField | AssessmentField>
+  fieldById: Map<string, DerivableField>
 ) => {
   const dependenciesByDerivedId = new Map<string, Set<string>>();
 
@@ -228,10 +250,11 @@ const collectTransitiveDependencies = (
  * These values must not be materialized or returned through an authenticated redaction path.
  */
 export const getDerivedFieldIdsWithUnresolvedGroups = (
-  fields: Array<SchemaField | AssessmentField>,
-  groups: ReadonlyArray<Pick<SchemaGroup, 'id' | 'accessControl'>> = []
+  fields: DerivableField[],
+  groups: ReadonlyArray<DerivedFieldGroup> = [],
+  root: DerivedRoot = 'entity'
 ): Set<string> => {
-  const plan = buildDerivedPlan(fields, 'entity');
+  const plan = buildDerivedPlan(fields, root);
   const fieldById = new Map(fields.map(field => [field.id, field]));
   const dependenciesByDerivedId = collectTransitiveDependencies(plan, fieldById);
   const unresolved = new Set<string>();
@@ -263,10 +286,11 @@ export const getDerivedFieldIdsWithUnresolvedGroups = (
  * group is rejected rather than treated as an unrestricted field/group.
  */
 export const validateDerivedFieldGroupAccess = (
-  fields: SchemaField[],
-  groups: SchemaGroup[] = []
+  fields: DerivableField[],
+  groups: ReadonlyArray<DerivedFieldGroup> = [],
+  root: DerivedRoot = 'entity'
 ) => {
-  const plan = buildDerivedPlan(fields);
+  const plan = buildDerivedPlan(fields, root);
   const fieldById = new Map(fields.map(field => [field.id, field]));
   const dependenciesByDerivedId = collectTransitiveDependencies(plan, fieldById);
 
@@ -339,14 +363,18 @@ const coerceResult = (field: DerivedFieldDefinition, value: unknown): unknown =>
 export const evaluateDerivedFields = (
   plan: DerivedPlan,
   inputValues: Record<string, unknown>,
-  context: { objectType: 'entity' | 'assessment'; objectId: string },
+  context: { objectType: DerivedRoot; objectId: string },
   unsafeDerivedFieldIds: ReadonlySet<string> = new Set(),
   entityContext: DerivedEntityContext = inputValues
 ): Record<string, unknown> => {
   const values = { ...inputValues };
   const rootContext = { ...entityContext };
-  const evaluationContext =
-    plan.root === 'entity' ? { entity: rootContext } : { assessment: rootContext };
+  const evaluationContext: EvaluationContext =
+    plan.root === 'entity'
+      ? { entity: rootContext }
+      : plan.root === 'relation'
+        ? { relation: rootContext }
+        : { assessment: rootContext };
   for (const field of plan.fields) {
     if (unsafeDerivedFieldIds.has(field.id)) {
       delete values[field.id];
@@ -384,19 +412,27 @@ export const evaluateDerivedFields = (
 };
 
 export const materializeDerivedFields = (
-  fields: Array<SchemaField | AssessmentField>,
+  fields: DerivableField[],
   values: Record<string, unknown>,
-  context: { objectType: 'entity' | 'assessment'; objectId: string },
-  groups?: SchemaGroup[],
+  context: { objectType: DerivedRoot; objectId: string },
+  groups?: ReadonlyArray<DerivedFieldGroup>,
   entityContext?: DerivedEntityContext
 ) => {
   const plan = buildDerivedPlan(fields, context.objectType);
   const unsafeDerivedFieldIds = groups
-    ? getDerivedFieldIdsWithUnresolvedGroups(fields, groups)
+    ? getDerivedFieldIdsWithUnresolvedGroups(fields, groups, context.objectType)
     : new Set<string>();
-  const relationFieldIds = new Set(
-    fields.filter(field => 'name' in field && isRelationLikeField(field)).map(field => field.id)
-  );
+  const relationFieldIds =
+    context.objectType === 'relation'
+      ? new Set<string>([
+          ...fields.filter(field => field.type === 'entityRelation').map(field => field.id),
+          ...RELATION_ROOT_PSEUDO_FIELDS
+        ])
+      : new Set(
+          fields
+            .filter(field => 'name' in field && isRelationLikeField(field as SchemaField))
+            .map(field => field.id)
+        );
   const relationDependentDerivedFieldIds =
     entityContext === undefined
       ? new Set(
@@ -419,7 +455,7 @@ export const materializeDerivedFields = (
 };
 
 export const assertNoDerivedFieldWrites = (
-  fields: Array<SchemaField | AssessmentField>,
+  fields: DerivableField[],
   values: Record<string, unknown>
 ) => {
   const derivedIds = new Set(

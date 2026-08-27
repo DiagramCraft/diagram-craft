@@ -26,6 +26,8 @@ import type {
   RelationSchemaVersion,
   UpdateRelationSchemaRequest
 } from '@arch-register/api-types/relationSchemaContract';
+import { validateDerivedFieldGroupAccess } from '../derived/derivedFields';
+import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
 
 const dbErrorMessages = {
   unique: 'A relation schema with that name already exists in this workspace',
@@ -104,6 +106,7 @@ export const createWorkspaceRelationSchema = async (
       const knownEntitySchemaIds = new Set(entitySchemas.map(schema => schema.id));
       const requested = buildCreateRelationSchemaInput(ws, body, knownEntitySchemaIds, timestamp);
       const compiled = compileRelationSchemaWithSharedGroups(requested, sharedGroups);
+      validateDerivedFieldGroupAccess(compiled.fields, compiled.groups ?? [], 'relation');
       const row = await db.relation.createRelationSchema(compiled);
 
       await db.relation.createRelationSchemaVersion({
@@ -221,6 +224,8 @@ export const updateWorkspaceRelationSchema = async (
         }
       }
 
+      validateDerivedFieldGroupAccess(finalFields, compiledNext.groups ?? [], 'relation');
+
       const changeSummary = buildFieldChangeSummary(
         toFieldMigrationFields(oldRow.fields),
         toFieldMigrationFields(finalFields),
@@ -287,6 +292,15 @@ export const updateWorkspaceRelationSchema = async (
 
         return updated;
       });
+
+      // A derived-field or its dependency may have been added/changed/removed — re-materialize
+      // relation derived values across the workspace, mirroring the entity schema update path.
+      const derivedFieldsTouched =
+        oldRow.fields.some(field => field.type === 'derived') ||
+        row.fields.some(field => field.type === 'derived');
+      if (relationCount > 0 && derivedFieldsTouched) {
+        await recalculateEntityDerivedFields(db, ws);
+      }
 
       const changes = computeChanges(extractEntityFields(oldRow), extractEntityFields(row));
 

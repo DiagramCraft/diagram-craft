@@ -1,6 +1,7 @@
 import { describe, expect, it } from 'vitest';
 import {
   isEntityRelationField,
+  isRelationDerivedField,
   relationEndpointSchema,
   relationFieldInputSchema,
   type RelationField
@@ -98,6 +99,65 @@ describe('relationEndpointSchema', () => {
     const result = relationEndpointSchema.safeParse({ schemaIds: 'all' });
 
     expect(result.success).toBe(false);
+  });
+});
+
+describe('derivedRelationFieldInputSchema', () => {
+  it('parses a valid derived relation field', () => {
+    const result = relationFieldInputSchema.safeParse({
+      ...baseField,
+      type: 'derived',
+      requirementLevel: 'optional',
+      expression: "relation._in.residency == relation._out.residency ? 'no' : 'yes'",
+      resultType: 'text'
+    });
+    expect(result.success).toBe(true);
+  });
+
+  it('requires enumId for a derived select result', () => {
+    const result = relationFieldInputSchema.safeParse({
+      ...baseField,
+      type: 'derived',
+      requirementLevel: 'optional',
+      expression: 'relation.region',
+      resultType: 'select'
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects enumId on a non-select derived result', () => {
+    const result = relationFieldInputSchema.safeParse({
+      ...baseField,
+      type: 'derived',
+      requirementLevel: 'optional',
+      expression: 'relation.region',
+      resultType: 'text',
+      enumId: 'regions'
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('rejects a required derived field', () => {
+    const result = relationFieldInputSchema.safeParse({
+      ...baseField,
+      type: 'derived',
+      requirementLevel: 'required',
+      expression: 'relation.region',
+      resultType: 'text'
+    });
+    expect(result.success).toBe(false);
+  });
+
+  it('is recognised by isRelationDerivedField', () => {
+    const derived: RelationField = {
+      ...baseField,
+      type: 'derived',
+      requirementLevel: 'optional',
+      expression: 'relation.region',
+      resultType: 'text'
+    };
+    expect(isRelationDerivedField(derived)).toBe(true);
+    expect(isRelationDerivedField({ ...baseField, type: 'text' } as RelationField)).toBe(false);
   });
 });
 

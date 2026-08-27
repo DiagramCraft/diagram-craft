@@ -4,8 +4,12 @@ import {
   type FieldGroupAccess
 } from '@arch-register/permissions';
 import { schemaFieldInputSchema, type SchemaGroup } from '@arch-register/api-types/schemaContract';
+import { relationFieldInputSchema } from '@arch-register/api-types/relationSchemaContract';
 import { httpAssert } from '../../utils/httpAssert';
 import { getDerivedFieldIdsWithUnresolvedGroups } from '../derived/derivedFields';
+
+/** Which derived-field root a `FieldGroupSchemaShape` describes — entity/shared-group or relation. */
+export type FieldGroupSchemaRoot = 'entity' | 'relation';
 
 export type FieldGroupSchemaShape = {
   fields: Array<{ id: string; name?: string; groupId?: string; [key: string]: unknown }>;
@@ -33,18 +37,27 @@ const groupAccessByFieldId = (
   return byField;
 };
 
-const unresolvedDerivedFieldIds = (schema: FieldGroupSchemaShape): Set<string> => {
-  const parsedFields = schemaFieldInputSchema.array().safeParse(schema.fields);
+const allDerivedFieldIds = (schema: FieldGroupSchemaShape): Set<string> =>
+  new Set(schema.fields.filter(field => field.type === 'derived').map(field => field.id));
+
+const unresolvedDerivedFieldIds = (
+  schema: FieldGroupSchemaShape,
+  root: FieldGroupSchemaRoot = 'entity'
+): Set<string> => {
+  const parsedFields =
+    root === 'relation'
+      ? relationFieldInputSchema.array().safeParse(schema.fields)
+      : schemaFieldInputSchema.array().safeParse(schema.fields);
   if (!parsedFields.success) {
     // A malformed legacy derived definition must not make an external serializer fail open.
-    return new Set(schema.fields.filter(field => field.type === 'derived').map(field => field.id));
+    return allDerivedFieldIds(schema);
   }
 
   try {
-    return getDerivedFieldIdsWithUnresolvedGroups(parsedFields.data, schema.groups ?? []);
+    return getDerivedFieldIdsWithUnresolvedGroups(parsedFields.data, schema.groups ?? [], root);
   } catch {
     // A malformed derived expression must not make an external serializer fail open.
-    return new Set(schema.fields.filter(field => field.type === 'derived').map(field => field.id));
+    return allDerivedFieldIds(schema);
   }
 };
 
@@ -113,11 +126,12 @@ export const restrictedFieldIds = (
 export const filterRestrictedFieldGroups = (
   authCtx: WorkspaceAuthorizationContext | null,
   schema: FieldGroupSchemaShape | null | undefined,
-  data: Record<string, unknown>
+  data: Record<string, unknown>,
+  schemaRoot: FieldGroupSchemaRoot = 'entity'
 ): Record<string, unknown> => {
   if (!authCtx || !schema) return data;
   const byField = groupAccessByFieldId(authCtx, schema);
-  const unsafeDerivedIds = unresolvedDerivedFieldIds(schema);
+  const unsafeDerivedIds = unresolvedDerivedFieldIds(schema, schemaRoot);
   if (byField.size === 0 && unsafeDerivedIds.size === 0) return data;
 
   const result: Record<string, unknown> = {};
