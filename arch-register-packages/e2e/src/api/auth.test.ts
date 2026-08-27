@@ -2,7 +2,7 @@ import { test, expect, createTestORPCClient } from '../helpers/fixtures';
 import type { DatabaseAdapter } from '@arch-register/server/db/database';
 import { createFixtureUser } from '@arch-register/server/db/testSupport/fixtures';
 import { generateTokenPair } from '@arch-register/server/utils/jwt';
-import { seedIds, TEST_ADMIN } from '../helpers/seedHelper';
+import { makeAuthHeader, seedIds, TEST_ADMIN } from '../helpers/seedHelper';
 import {
   INACTIVE_USER_ID,
   ROLES_USER_ID,
@@ -262,6 +262,169 @@ test.describe('auth protected routes', () => {
         })
       ])
     );
+  });
+
+  test('managed user CRUD supports password changes and soft deactivation', async ({
+    server,
+    orpc
+  }) => {
+    const created = await orpc.authProtected.createUser({
+      body: {
+        user_id: 'managed-user',
+        email: 'managed-user@e2e.test',
+        display_name: 'Managed User',
+        password: 'InitialPassword123!',
+        color: '#336699'
+      }
+    });
+    expect(created).toMatchObject({
+      user_id: 'managed-user',
+      email: 'managed-user@e2e.test',
+      display_name: 'Managed User',
+      auth_provider: 'local',
+      is_active: true,
+      color: '#336699'
+    });
+    expect(created).not.toHaveProperty('password');
+    expect(created).not.toHaveProperty('password_hash');
+
+    const listed = await orpc.authProtected.listUsers(undefined);
+    expect(listed).toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: created.id, user_id: 'managed-user' })])
+    );
+
+    const fetched = await orpc.authProtected.getUser({ params: { id: created.id } });
+    expect(fetched).toMatchObject({ id: created.id, user_id: 'managed-user' });
+
+    await orpc.authProtected.replaceGlobalRoles({
+      params: { id: created.id },
+      body: { roles: ['workspace_admin'] }
+    });
+    const assignmentsBefore = await server.db.auth.listGlobalRoleAssignments(created.id);
+    expect(assignmentsBefore).toHaveLength(1);
+
+    const initialLogin = await orpc.auth.login({
+      body: { username: 'managed-user', password: 'InitialPassword123!' }
+    });
+    const updated = await orpc.authProtected.updateManagedUser({
+      params: { id: created.id },
+      body: {
+        email: 'managed-renamed@e2e.test',
+        display_name: 'Managed User Renamed',
+        password: 'ReplacementPassword123!'
+      }
+    });
+    expect(updated).toMatchObject({
+      email: 'managed-renamed@e2e.test',
+      display_name: 'Managed User Renamed'
+    });
+    await expect(
+      orpc.auth.refresh({ body: { refresh_token: initialLogin.refresh_token } })
+    ).rejects.toMatchObject({ code: 'UNAUTHORIZED' });
+
+    const replacementLogin = await orpc.auth.login({
+      body: { username: 'managed-user', password: 'ReplacementPassword123!' }
+    });
+    const deactivated = await orpc.authProtected.deactivateUser({
+      params: { id: created.id }
+    });
+    expect(deactivated).toMatchObject({ id: created.id, is_active: false });
+    expect(await server.db.auth.getUser(created.id)).toMatchObject({ is_active: false });
+    expect(await server.db.auth.listGlobalRoleAssignments(created.id)).toEqual(assignmentsBefore);
+
+    await expect(
+      orpc.auth.login({ body: { username: 'managed-user', password: 'ReplacementPassword123!' } })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN', message: 'User account is inactive' });
+    await expect(
+      orpc.auth.refresh({ body: { refresh_token: replacementLogin.refresh_token } })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN', message: 'User account is inactive' });
+
+    const reactivated = await orpc.authProtected.updateManagedUser({
+      params: { id: created.id },
+      body: { is_active: true }
+    });
+    expect(reactivated).toMatchObject({ id: created.id, is_active: true });
+    await expect(
+      orpc.auth.login({ body: { username: 'managed-user', password: 'ReplacementPassword123!' } })
+    ).resolves.toMatchObject({ token_type: 'Bearer' });
+  });
+
+  test('managed user operations require a platform administrator', async ({ server, orpc }) => {
+    const userId = '00000000-0000-0000-0000-e2e000000012';
+    await createLocalUser(server.db, {
+      id: userId,
+      userId: 'workspace-admin-user',
+      email: 'workspace-admin@e2e.test'
+    });
+    await server.db.auth.replaceGlobalRoleAssignments(userId, ['workspace_admin'], new Date());
+    const workspaceAdmin = createTestORPCClient(
+      server.baseUrl,
+      await makeAuthHeader(server.db, userId)
+    );
+
+    await expect(workspaceAdmin.authProtected.listUsers(undefined)).resolves.toEqual(
+      expect.arrayContaining([expect.objectContaining({ id: TEST_ADMIN.id })])
+    );
+    await expect(
+      workspaceAdmin.authProtected.createUser({
+        body: {
+          user_id: 'forbidden-managed-user',
+          email: 'forbidden-managed-user@e2e.test',
+          display_name: 'Forbidden Managed User',
+          password: 'Password123!'
+        }
+      })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      workspaceAdmin.authProtected.updateManagedUser({
+        params: { id: TEST_ADMIN.id },
+        body: { display_name: 'Nope' }
+      })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      workspaceAdmin.authProtected.deactivateUser({ params: { id: TEST_ADMIN.id } })
+    ).rejects.toMatchObject({ code: 'FORBIDDEN' });
+    await expect(
+      orpc.authProtected.deactivateUser({ params: { id: TEST_ADMIN.id } })
+    ).rejects.toMatchObject({
+      code: 'FORBIDDEN',
+      message: 'You cannot deactivate your own account'
+    });
+  });
+
+  test('managed user operations are disabled in OIDC mode', async ({ orpc }) => {
+    const originalAuthMode = process.env['AUTH_MODE'];
+    process.env['AUTH_MODE'] = 'oidc';
+    try {
+      await expect(
+        orpc.authProtected.createUser({
+          body: {
+            user_id: 'oidc-managed-user',
+            email: 'oidc-managed-user@e2e.test',
+            display_name: 'OIDC Managed User',
+            password: 'Password123!'
+          }
+        })
+      ).rejects.toMatchObject({
+        code: 'BAD_REQUEST',
+        message: 'User management is not available when OIDC authentication is enabled'
+      });
+      await expect(
+        orpc.authProtected.getUser({ params: { id: TEST_ADMIN.id } })
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+      await expect(
+        orpc.authProtected.updateManagedUser({
+          params: { id: TEST_ADMIN.id },
+          body: { display_name: 'OIDC update' }
+        })
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+      await expect(
+        orpc.authProtected.deactivateUser({ params: { id: TEST_ADMIN.id } })
+      ).rejects.toMatchObject({ code: 'BAD_REQUEST' });
+    } finally {
+      if (originalAuthMode === undefined) delete process.env['AUTH_MODE'];
+      else process.env['AUTH_MODE'] = originalAuthMode;
+    }
   });
 
   test('GET and PUT /api/auth/users/:id/global-roles manage global role assignments', async ({

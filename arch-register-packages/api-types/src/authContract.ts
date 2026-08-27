@@ -82,10 +82,30 @@ export const userSummarySchema = z.object({
   color: z.string().nullable().describe('User color preference (hex format)')
 });
 
-const userDetailSchema = userSummarySchema.extend({
+export const userDetailSchema = userSummarySchema.extend({
   created_at: z.string().describe('ISO 8601 account creation timestamp'),
   updated_at: z.string().describe('ISO 8601 last update timestamp'),
   last_login_at: z.string().nullable().describe('ISO 8601 last login timestamp')
+});
+
+export type UserSummary = z.infer<typeof userSummarySchema>;
+export type UserDetail = z.infer<typeof userDetailSchema>;
+
+const managedUserCreateSchema = z.object({
+  user_id: z.string().min(1).describe('Unique username for the local account'),
+  email: z.string().nullable().optional().describe('User email address'),
+  display_name: z.string().min(1).describe('User display name'),
+  password: z.string().min(1).describe('Initial password for the local account'),
+  is_active: z.boolean().optional().describe('Whether the account can sign in (defaults to true)'),
+  color: z.string().nullable().optional().describe('User color preference (hex format)')
+});
+
+const managedUserUpdateSchema = z.object({
+  email: z.string().nullable().optional().describe('User email address'),
+  display_name: z.string().min(1).optional().describe('User display name'),
+  password: z.string().min(1).optional().describe('Replacement password for local accounts'),
+  is_active: z.boolean().optional().describe('Whether the account can sign in'),
+  color: z.string().nullable().optional().describe('User color preference (hex format)')
 });
 
 const globalRoleAssignmentSchema = z.object({
@@ -237,10 +257,72 @@ export const authProtectedContract = oc.tag('Auth').router({
         method: 'GET',
         path: '/auth/users',
         summary: 'List all users',
-        description: 'Retrieves a list of all users in the system. Requires admin permissions.',
+        description:
+          'Retrieves a list of users for global-role assignment. Requires permission to manage workspace roles.',
         tags: ['Auth']
       })
       .output(z.array(userSummarySchema)),
+    createUser: oc
+      .route({
+        method: 'POST',
+        path: '/auth/users',
+        inputStructure: 'detailed',
+        summary: 'Create a local user',
+        description:
+          'Creates a local user account for global administration. Only platform administrators can use this when OIDC is not enabled.',
+        tags: ['Auth']
+      })
+      .input(z.object({ body: managedUserCreateSchema }))
+      .output(userDetailSchema),
+    getUser: oc
+      .route({
+        method: 'GET',
+        path: '/auth/users/{id}',
+        inputStructure: 'detailed',
+        summary: 'Get a managed user',
+        description:
+          'Retrieves one user for global user administration. Only platform administrators can use this when OIDC is not enabled.',
+        tags: ['Auth']
+      })
+      .input(
+        z.object({
+          params: z.object({ id: z.string().regex(UUID_REGEX).describe('User identifier (UUID)') })
+        })
+      )
+      .output(userDetailSchema),
+    updateManagedUser: oc
+      .route({
+        method: 'PATCH',
+        path: '/auth/users/{id}',
+        inputStructure: 'detailed',
+        summary: 'Update a managed user',
+        description:
+          'Updates a user account, including profile fields, active state, and an optional local password reset. Only platform administrators can use this when OIDC is not enabled.',
+        tags: ['Auth']
+      })
+      .input(
+        z.object({
+          params: z.object({ id: z.string().regex(UUID_REGEX).describe('User identifier (UUID)') }),
+          body: managedUserUpdateSchema
+        })
+      )
+      .output(userDetailSchema),
+    deactivateUser: oc
+      .route({
+        method: 'DELETE',
+        path: '/auth/users/{id}',
+        inputStructure: 'detailed',
+        summary: 'Deactivate a user',
+        description:
+          'Deactivates a user account without deleting its memberships, roles, or history. Only platform administrators can use this when OIDC is not enabled.',
+        tags: ['Auth']
+      })
+      .input(
+        z.object({
+          params: z.object({ id: z.string().regex(UUID_REGEX).describe('User identifier (UUID)') })
+        })
+      )
+      .output(userDetailSchema),
     getGlobalRoles: oc
       .route({
         method: 'GET',

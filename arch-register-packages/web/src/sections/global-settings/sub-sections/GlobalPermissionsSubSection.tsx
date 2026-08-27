@@ -11,10 +11,15 @@ import { DropdownMenu } from '../../../components/DropdownMenu';
 import { MemberAvatar } from '../../../components/MemberAvatar';
 import { getUserLabel } from '../../../utils/userLabel';
 import { useAuthUsers, useUpdateUserGlobalRoles } from '../../../hooks/useGlobalRoles';
+import { useAuthConfig } from '../../../hooks/useAuthConfig';
+import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
+import { useWorkspaceAuthorization } from '../../../auth/WorkspaceAuthorizationContext';
 import { userGlobalRolesQuery } from '../../../queries/globalRoles';
 import { Table } from '../../../components/table/Table';
 import { EmptyState } from '../../../components/EmptyState';
 import { LoadingState } from '../../../components/LoadingState';
+import { UserDialog } from '../../../components/UserDialog';
+import type { UserDetail } from '@arch-register/api-types/authContract';
 import styles from './GlobalPermissionsSubSection.module.css';
 
 type AuthUserInfo = {
@@ -81,6 +86,9 @@ export const GlobalPermissionsSubSection = ({
   onCloseAddDialog: () => void;
 }) => {
   const { user, reloadUser } = useAuth();
+  const workspaceContext = useWorkspaceContext();
+  const { hasGlobalPermission } = useWorkspaceAuthorization(workspaceContext.workspace?.id);
+  const { data: authConfig } = useAuthConfig();
   const { data: users = [], isLoading: isLoadingUsers, error } = useAuthUsers();
   const [selectedUserId, setSelectedUserId] = useState<string | null>(null);
   const updateMutation = useUpdateUserGlobalRoles();
@@ -122,6 +130,8 @@ export const GlobalPermissionsSubSection = ({
 
   const isLoadingRoles = roleQueries.some(query => query.isLoading);
   const rolesError = roleQueries.find(query => query.error)?.error;
+  const canCreateUsers =
+    authConfig != null && authConfig.mode !== 'oidc' && hasGlobalPermission('admin_platform');
 
   if (error) {
     return (
@@ -226,6 +236,7 @@ export const GlobalPermissionsSubSection = ({
       <AddUserDialog
         open={addDialogOpen}
         users={unassignedUsers}
+        canCreateUsers={canCreateUsers}
         onClose={onCloseAddDialog}
         onSelect={userId => {
           onCloseAddDialog();
@@ -313,15 +324,18 @@ const RoleAssignmentDialog = ({
 const AddUserDialog = ({
   open,
   users,
+  canCreateUsers,
   onClose,
   onSelect
 }: {
   open: boolean;
   users: AuthUserInfo[];
+  canCreateUsers: boolean;
   onClose: () => void;
   onSelect: (userId: string) => void;
 }) => {
   const [selectedUserId, setSelectedUserId] = useState<string>('');
+  const [createUserDialogOpen, setCreateUserDialogOpen] = useState(false);
 
   useEffect(() => {
     if (!open) return;
@@ -334,9 +348,18 @@ const AddUserDialog = ({
     <Dialog open={open} onClose={onClose} title="Add user to global roles">
       <div className={styles.dialogBody}>
         {users.length === 0 ? (
-          <div className={styles.emptyInline}>
-            All existing users already have a global role assignment.
-          </div>
+          <>
+            <div className={styles.emptyInline}>
+              All existing users already have a global role assignment.
+            </div>
+            {canCreateUsers && (
+              <div className={styles.dialogActions}>
+                <Button variant="secondary" onClick={() => setCreateUserDialogOpen(true)}>
+                  Create new user
+                </Button>
+              </div>
+            )}
+          </>
         ) : (
           <>
             <div className={styles.field}>
@@ -362,6 +385,11 @@ const AddUserDialog = ({
               </div>
             </div>
             <div className={styles.dialogActions}>
+              {canCreateUsers && (
+                <Button variant="secondary" onClick={() => setCreateUserDialogOpen(true)}>
+                  Create new user
+                </Button>
+              )}
               <Button onClick={onClose}>Cancel</Button>
               <Button
                 variant="primary"
@@ -373,6 +401,14 @@ const AddUserDialog = ({
             </div>
           </>
         )}
+        <UserDialog
+          open={createUserDialogOpen}
+          onClose={() => setCreateUserDialogOpen(false)}
+          onCreated={(createdUser: UserDetail) => {
+            setCreateUserDialogOpen(false);
+            onSelect(createdUser.id);
+          }}
+        />
       </div>
     </Dialog>
   );

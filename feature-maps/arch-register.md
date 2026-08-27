@@ -9,6 +9,9 @@
         - @id:ar.access.login Users can sign in through the configured local authentication flow and maintain an
           authenticated session.
 
+        - @id:ar.access.user-management Platform administrators can create, update, deactivate, reactivate, and
+          change passwords for local user accounts when OIDC authentication is not enabled.
+
         - @id:ar.access.account Users can manage account settings and personal API tokens.
 
         - @id:ar.access.oidc @status:experimental Deployments can expose OIDC-based authentication flows when
@@ -715,7 +718,8 @@
 
     - @id:ar.authorization Administrators can control who can access, modify, review, and administer workspace content.
 
-        - @id:ar.authorization.global-roles Platform administrators can manage global roles and platform-level access.
+        - @id:ar.authorization.global-roles Platform administrators can manage global roles, platform-level access,
+          and user assignments.
 
         - @id:ar.authorization.workspace-roles Administrators can assign workspace roles such as owner, administrator,
           editor, reviewer, and viewer.

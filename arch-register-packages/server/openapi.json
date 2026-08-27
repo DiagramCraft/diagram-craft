@@ -693,7 +693,7 @@
       "get": {
         "operationId": "authProtected.listUsers",
         "summary": "List all users",
-        "description": "Retrieves a list of all users in the system. Requires admin permissions.",
+        "description": "Retrieves a list of users for global-role assignment. Requires permission to manage workspace roles.",
         "tags": [
           "Auth",
           "Auth"
@@ -773,6 +773,582 @@
                       "color"
                     ]
                   }
+                }
+              }
+            }
+          }
+        }
+      },
+      "post": {
+        "operationId": "authProtected.createUser",
+        "summary": "Create a local user",
+        "description": "Creates a local user account for global administration. Only platform administrators can use this when OIDC is not enabled.",
+        "tags": [
+          "Auth",
+          "Auth"
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "user_id": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Unique username for the local account"
+                  },
+                  "email": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "User email address"
+                  },
+                  "display_name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "User display name"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Initial password for the local account"
+                  },
+                  "is_active": {
+                    "type": "boolean",
+                    "description": "Whether the account can sign in (defaults to true)"
+                  },
+                  "color": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "User color preference (hex format)"
+                  }
+                },
+                "required": [
+                  "user_id",
+                  "display_name",
+                  "password"
+                ]
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "User identifier"
+                    },
+                    "user_id": {
+                      "type": "string",
+                      "description": "Unique user identifier"
+                    },
+                    "email": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User email address (may be null)"
+                    },
+                    "display_name": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User display name"
+                    },
+                    "auth_provider": {
+                      "type": "string",
+                      "description": "Authentication provider (local or oidc)"
+                    },
+                    "is_active": {
+                      "type": "boolean",
+                      "description": "Whether the user account is active"
+                    },
+                    "is_system_actor": {
+                      "type": "boolean",
+                      "description": "Whether this is a system-managed actor, not a real user account"
+                    },
+                    "color": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User color preference (hex format)"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "ISO 8601 account creation timestamp"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    },
+                    "last_login_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 last login timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "email",
+                    "display_name",
+                    "auth_provider",
+                    "is_active",
+                    "is_system_actor",
+                    "color",
+                    "created_at",
+                    "updated_at",
+                    "last_login_at"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/auth/users/{id}": {
+      "get": {
+        "operationId": "authProtected.getUser",
+        "summary": "Get a managed user",
+        "description": "Retrieves one user for global user administration. Only platform administrators can use this when OIDC is not enabled.",
+        "tags": [
+          "Auth",
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+              "description": "User identifier (UUID)"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "User identifier"
+                    },
+                    "user_id": {
+                      "type": "string",
+                      "description": "Unique user identifier"
+                    },
+                    "email": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User email address (may be null)"
+                    },
+                    "display_name": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User display name"
+                    },
+                    "auth_provider": {
+                      "type": "string",
+                      "description": "Authentication provider (local or oidc)"
+                    },
+                    "is_active": {
+                      "type": "boolean",
+                      "description": "Whether the user account is active"
+                    },
+                    "is_system_actor": {
+                      "type": "boolean",
+                      "description": "Whether this is a system-managed actor, not a real user account"
+                    },
+                    "color": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User color preference (hex format)"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "ISO 8601 account creation timestamp"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    },
+                    "last_login_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 last login timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "email",
+                    "display_name",
+                    "auth_provider",
+                    "is_active",
+                    "is_system_actor",
+                    "color",
+                    "created_at",
+                    "updated_at",
+                    "last_login_at"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "patch": {
+        "operationId": "authProtected.updateManagedUser",
+        "summary": "Update a managed user",
+        "description": "Updates a user account, including profile fields, active state, and an optional local password reset. Only platform administrators can use this when OIDC is not enabled.",
+        "tags": [
+          "Auth",
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+              "description": "User identifier (UUID)"
+            }
+          }
+        ],
+        "requestBody": {
+          "required": true,
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object",
+                "properties": {
+                  "email": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "User email address"
+                  },
+                  "display_name": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "User display name"
+                  },
+                  "password": {
+                    "type": "string",
+                    "minLength": 1,
+                    "description": "Replacement password for local accounts"
+                  },
+                  "is_active": {
+                    "type": "boolean",
+                    "description": "Whether the account can sign in"
+                  },
+                  "color": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "User color preference (hex format)"
+                  }
+                }
+              }
+            }
+          }
+        },
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "User identifier"
+                    },
+                    "user_id": {
+                      "type": "string",
+                      "description": "Unique user identifier"
+                    },
+                    "email": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User email address (may be null)"
+                    },
+                    "display_name": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User display name"
+                    },
+                    "auth_provider": {
+                      "type": "string",
+                      "description": "Authentication provider (local or oidc)"
+                    },
+                    "is_active": {
+                      "type": "boolean",
+                      "description": "Whether the user account is active"
+                    },
+                    "is_system_actor": {
+                      "type": "boolean",
+                      "description": "Whether this is a system-managed actor, not a real user account"
+                    },
+                    "color": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User color preference (hex format)"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "ISO 8601 account creation timestamp"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    },
+                    "last_login_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 last login timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "email",
+                    "display_name",
+                    "auth_provider",
+                    "is_active",
+                    "is_system_actor",
+                    "color",
+                    "created_at",
+                    "updated_at",
+                    "last_login_at"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      },
+      "delete": {
+        "operationId": "authProtected.deactivateUser",
+        "summary": "Deactivate a user",
+        "description": "Deactivates a user account without deleting its memberships, roles, or history. Only platform administrators can use this when OIDC is not enabled.",
+        "tags": [
+          "Auth",
+          "Auth"
+        ],
+        "parameters": [
+          {
+            "name": "id",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string",
+              "pattern": "^[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}$",
+              "description": "User identifier (UUID)"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "type": "object",
+                  "properties": {
+                    "id": {
+                      "type": "string",
+                      "description": "User identifier"
+                    },
+                    "user_id": {
+                      "type": "string",
+                      "description": "Unique user identifier"
+                    },
+                    "email": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User email address (may be null)"
+                    },
+                    "display_name": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User display name"
+                    },
+                    "auth_provider": {
+                      "type": "string",
+                      "description": "Authentication provider (local or oidc)"
+                    },
+                    "is_active": {
+                      "type": "boolean",
+                      "description": "Whether the user account is active"
+                    },
+                    "is_system_actor": {
+                      "type": "boolean",
+                      "description": "Whether this is a system-managed actor, not a real user account"
+                    },
+                    "color": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "User color preference (hex format)"
+                    },
+                    "created_at": {
+                      "type": "string",
+                      "description": "ISO 8601 account creation timestamp"
+                    },
+                    "updated_at": {
+                      "type": "string",
+                      "description": "ISO 8601 last update timestamp"
+                    },
+                    "last_login_at": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "ISO 8601 last login timestamp"
+                    }
+                  },
+                  "required": [
+                    "id",
+                    "user_id",
+                    "email",
+                    "display_name",
+                    "auth_provider",
+                    "is_active",
+                    "is_system_actor",
+                    "color",
+                    "created_at",
+                    "updated_at",
+                    "last_login_at"
+                  ]
                 }
               }
             }

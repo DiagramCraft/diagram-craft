@@ -1,3 +1,4 @@
+import { randomUUID } from 'node:crypto';
 import { implement, ORPCError } from '@orpc/server';
 import { orpcAssert } from '../../utils/orpcAssert';
 import type { H3Event } from 'h3';
@@ -14,8 +15,10 @@ import type { JWTPayload } from '../../types';
 import { buildApiAuthCtx, GLOBAL_WS, requireGlobalPermission } from './authorization';
 import {
   buildAuthMeResponse,
+  buildManagedUserUpdateInput,
   buildUserUpdateInput,
   parseRequestedGlobalRoles,
+  serializeUser,
   selectRefreshToken,
   verifyLoginPassword
 } from './authHelpers';
@@ -25,8 +28,27 @@ import type { UserDbResult } from './db/authDatabase';
 import { authProtectedContract, authPublicContract } from '@arch-register/api-types/authContract';
 import { createUserApiToken, listUserApiTokens, revokeUserApiToken } from './apiTokenOperations';
 import { issueTokenPair, revokeRefreshToken, rotateRefreshToken } from './refreshSessions';
+import { hashPassword } from '../../utils/password';
 
 const getAuthMode = () => process.env['AUTH_MODE'] ?? 'local';
+
+const normalizeNullableText = (value: string | null | undefined) => {
+  if (value == null) return null;
+  const trimmed = value.trim();
+  return trimmed.length > 0 ? trimmed : null;
+};
+
+const requireUserManagementMode = () => {
+  orpcAssert.true(getAuthMode() !== 'oidc', {
+    code: 'BAD_REQUEST',
+    message: 'User management is not available when OIDC authentication is enabled'
+  });
+};
+
+const requirePlatformAdmin = async (db: DatabaseAdapter, event: AuthenticatedEvent) => {
+  const authCtx = await buildApiAuthCtx(db, GLOBAL_WS, event);
+  requireGlobalPermission(authCtx, 'admin_platform');
+};
 
 // ── Public ORPC (no auth required) ───────────────────────────
 
@@ -233,24 +255,14 @@ export const authProtectedORPCRouter = protectedRouter.router({
       );
       orpcAssert.present(updatedUser, { code: 'NOT_FOUND', message: 'User not found' });
       return {
-        id: updatedUser.id,
-        user_id: updatedUser.user_id,
-        email: updatedUser.email,
-        display_name: updatedUser.display_name,
-        auth_provider: updatedUser.auth_provider,
-        is_active: updatedUser.is_active,
-        is_system_actor: updatedUser.is_system_actor,
-        color: updatedUser.color,
-        created_at: updatedUser.created_at.toISOString(),
-        updated_at: updatedUser.updated_at.toISOString(),
-        last_login_at: updatedUser.last_login_at?.toISOString() ?? null
+        ...serializeUser(updatedUser)
       };
     }),
 
     listUsers: protectedRouter.authProtected.listUsers.handler(async ({ context }) => {
       requireInteractiveSession(context.event);
       const authCtx = await buildApiAuthCtx(context.db, GLOBAL_WS, context.event);
-      requireGlobalPermission(authCtx, 'admin_platform');
+      requireGlobalPermission(authCtx, 'manage_workspace_roles');
       return (await context.db.auth.listUsers()).map(user => ({
         id: user.id,
         user_id: user.user_id,
@@ -262,6 +274,123 @@ export const authProtectedORPCRouter = protectedRouter.router({
         color: user.color
       }));
     }),
+
+    createUser: protectedRouter.authProtected.createUser.handler(async ({ input, context }) => {
+      requireInteractiveSession(context.event);
+      await requirePlatformAdmin(context.db, context.event);
+      requireUserManagementMode();
+
+      const userId = input.body.user_id.trim();
+      const displayName = input.body.display_name.trim();
+      orpcAssert.true(userId.length > 0, {
+        code: 'BAD_REQUEST',
+        message: 'Username is required'
+      });
+      orpcAssert.true(displayName.length > 0, {
+        code: 'BAD_REQUEST',
+        message: 'Display name is required'
+      });
+
+      const now = new Date();
+      const user = await context.db.auth.createUser({
+        id: randomUUID(),
+        user_id: userId,
+        email: normalizeNullableText(input.body.email),
+        display_name: displayName,
+        auth_provider: 'local',
+        password_hash: await hashPassword(input.body.password),
+        oidc_issuer: null,
+        oidc_subject: null,
+        is_active: input.body.is_active ?? true,
+        color: input.body.color ?? null,
+        created_at: now,
+        updated_at: now,
+        last_login_at: null
+      });
+      return serializeUser(user);
+    }),
+
+    getUser: protectedRouter.authProtected.getUser.handler(async ({ input, context }) => {
+      requireInteractiveSession(context.event);
+      await requirePlatformAdmin(context.db, context.event);
+      requireUserManagementMode();
+
+      const user = await context.db.auth.getUser(input.params.id);
+      orpcAssert.present(user, { code: 'NOT_FOUND', message: 'User not found' });
+      return serializeUser(user);
+    }),
+
+    updateManagedUser: protectedRouter.authProtected.updateManagedUser.handler(
+      async ({ input, context }) => {
+        requireInteractiveSession(context.event);
+        await requirePlatformAdmin(context.db, context.event);
+        requireUserManagementMode();
+
+        const existingUser = await context.db.auth.getUser(input.params.id);
+        orpcAssert.present(existingUser, { code: 'NOT_FOUND', message: 'User not found' });
+        orpcAssert.true(!existingUser.is_system_actor, {
+          code: 'FORBIDDEN',
+          message: 'System users cannot be modified'
+        });
+
+        let passwordHash: string | undefined;
+        if (input.body.password !== undefined) {
+          orpcAssert.true(existingUser.auth_provider === 'local', {
+            code: 'BAD_REQUEST',
+            message: 'OIDC users do not have a local password'
+          });
+          passwordHash = await hashPassword(input.body.password);
+        }
+
+        const displayName = input.body.display_name?.trim();
+        orpcAssert.true(displayName === undefined || displayName.length > 0, {
+          code: 'BAD_REQUEST',
+          message: 'Display name cannot be empty'
+        });
+        const managedUpdates = {
+          ...(input.body.email !== undefined
+            ? { email: normalizeNullableText(input.body.email) }
+            : {}),
+          ...(displayName !== undefined ? { display_name: displayName } : {}),
+          ...(input.body.is_active !== undefined ? { is_active: input.body.is_active } : {}),
+          ...(input.body.color !== undefined ? { color: input.body.color } : {})
+        };
+        const updatedUser = await context.db.auth.updateUser(
+          input.params.id,
+          buildManagedUserUpdateInput(managedUpdates, passwordHash, new Date())
+        );
+        orpcAssert.present(updatedUser, { code: 'NOT_FOUND', message: 'User not found' });
+        return serializeUser(updatedUser);
+      }
+    ),
+
+    deactivateUser: protectedRouter.authProtected.deactivateUser.handler(
+      async ({ input, context }) => {
+        requireInteractiveSession(context.event);
+        await requirePlatformAdmin(context.db, context.event);
+        requireUserManagementMode();
+
+        const authenticatedUser = context.event.context.user as UserDbResult;
+        orpcAssert.true(input.params.id !== authenticatedUser.id, {
+          code: 'FORBIDDEN',
+          message: 'You cannot deactivate your own account'
+        });
+
+        const existingUser = await context.db.auth.getUser(input.params.id);
+        orpcAssert.present(existingUser, { code: 'NOT_FOUND', message: 'User not found' });
+        orpcAssert.true(!existingUser.is_system_actor, {
+          code: 'FORBIDDEN',
+          message: 'System users cannot be modified'
+        });
+
+        const deactivatedUser = await context.db.auth.updateUser(input.params.id, {
+          is_active: false,
+          updated_at: new Date()
+        });
+        orpcAssert.present(deactivatedUser, { code: 'NOT_FOUND', message: 'User not found' });
+        return serializeUser(deactivatedUser);
+      }
+    ),
 
     getGlobalRoles: protectedRouter.authProtected.getGlobalRoles.handler(
       async ({ input, context }) => {

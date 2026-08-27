@@ -114,7 +114,10 @@ configuration.
 ## Authentication
 
 **Local authentication.** Users can sign in with a username and password. Passwords are hashed with Argon2. Account
-management is available through a personal account settings page.
+management is available through a personal account settings page, and platform administrators can manage local users
+from Global settings, including password resets and reversible deactivation. Local users can also be created while
+assigning them to global roles, workspace roles, or teams.
 
 **OIDC integration.** Arch-register supports OpenID Connect for single sign-on with an external identity provider. User
-accounts are provisioned automatically on first login via OIDC.
+accounts are provisioned automatically on first login via OIDC; local user management and user creation are unavailable
+while OIDC authentication is enabled, although existing users remain selectable for assignments.
