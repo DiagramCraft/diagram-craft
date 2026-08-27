@@ -203,11 +203,12 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createEnum(input: WorkspaceEnumDbCreate) {
     this.run(
-      'INSERT INTO workspace_enum (id, workspace, name, options, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO workspace_enum (id, workspace, name, category, options, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
         input.name,
+        input.category,
         JSON.stringify(input.options),
         input.sort_order,
         input.created_at.toISOString(),
@@ -219,9 +220,10 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateEnum(workspace: string, id: string, input: WorkspaceEnumDbUpdate) {
     this.run(
-      'UPDATE workspace_enum SET name = ?, options = ?, sort_order = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE workspace_enum SET name = ?, category = ?, options = ?, sort_order = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
+        input.category,
         JSON.stringify(input.options),
         input.sort_order,
         input.updated_at.toISOString(),
@@ -257,11 +259,12 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSharedFieldGroup(input: SharedFieldGroupDbCreate) {
     this.run(
-      'INSERT INTO workspace_field_group (id, workspace, name, description, fields, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO workspace_field_group (id, workspace, name, category, description, fields, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
         input.name,
+        input.category,
         input.description,
         JSON.stringify(input.fields),
         input.sort_order,
@@ -274,9 +277,10 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateSharedFieldGroup(workspace: string, id: string, input: SharedFieldGroupDbUpdate) {
     this.run(
-      'UPDATE workspace_field_group SET name = ?, description = ?, fields = ?, sort_order = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE workspace_field_group SET name = ?, category = ?, description = ?, fields = ?, sort_order = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
+        input.category,
         input.description,
         JSON.stringify(input.fields),
         input.sort_order,

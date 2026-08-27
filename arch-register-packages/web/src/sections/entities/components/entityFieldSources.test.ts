@@ -91,6 +91,7 @@ const enums: WorkspaceEnum[] = [
     id: 'risk-enum',
     workspace: 'ws-1',
     name: 'Risk',
+    category: null,
     options: [
       { value: 'low', label: 'Low', description: null, retired: false, restricted: false },
       { value: 'high', label: 'High', description: null, retired: false, restricted: false }

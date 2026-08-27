@@ -145,6 +145,7 @@ export type WorkspaceEnumDbResult = {
   id: string;
   workspace: string;
   name: string;
+  category?: string | null;
   options: Array<{
     value: string;
     label: string;
@@ -165,6 +166,7 @@ export type SharedFieldGroupDbResult = {
   id: string;
   workspace: string;
   name: string;
+  category?: string | null;
   description: string | null;
   fields: SchemaField[];
   sort_order: number;
@@ -527,6 +529,7 @@ export const catalogMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
+    category: row['category'] == null ? null : String(row['category']),
     options: normalizeWorkspaceEnumOptions(
       parseDatabaseJson(row['options'], [], 'workspace_enum.options')
     ),
@@ -538,6 +541,7 @@ export const catalogMappers = {
     id: String(row['id']),
     workspace: String(row['workspace']),
     name: String(row['name']),
+    category: row['category'] == null ? null : String(row['category']),
     description: row['description'] == null ? null : String(row['description']),
     fields: parseDatabaseJson(row['fields'], [], 'workspace_field_group.fields'),
     sort_order: Number(row['sort_order'] ?? 0),

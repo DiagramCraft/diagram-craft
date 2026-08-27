@@ -28,6 +28,10 @@ const workspaceEnumSchema = z.object({
   id: z.string().describe('Unique enumeration identifier (UUID)'),
   workspace: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Enumeration name (must be unique within workspace)'),
+  category: z
+    .string()
+    .nullable()
+    .describe('Optional free-text presentation category for organizing enumerations'),
   options: z.array(enumOptionSchema).describe('Available enumeration options'),
   sort_order: z.number().int().min(0).describe('Display order (0-based)'),
   created_at: z.string().describe('ISO 8601 creation timestamp'),
@@ -36,6 +40,11 @@ const workspaceEnumSchema = z.object({
 
 const createEnumBodySchema = z.object({
   name: z.string().describe('Enumeration name (must be unique within workspace)'),
+  category: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Optional free-text presentation category for organizing enumerations'),
   options: z.preprocess(
     value => (Array.isArray(value) ? value : undefined),
     z.array(enumOptionInputSchema).optional().describe('Initial enumeration options (can be empty)')

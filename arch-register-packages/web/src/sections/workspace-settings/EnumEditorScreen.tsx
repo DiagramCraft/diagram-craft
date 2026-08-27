@@ -47,6 +47,7 @@ export const EnumEditorScreen = () => {
   const canEdit = permissions.canEditSchemas;
 
   const [name, setName] = useState('');
+  const [category, setCategory] = useState('');
   const [options, setOptions] = useState<EditableOption[]>([]);
   const [dirty, setDirty] = useState(false);
   const [confirmDelete, setConfirmDelete] = useState(false);
@@ -60,6 +61,7 @@ export const EnumEditorScreen = () => {
   useEffect(() => {
     if (selected) {
       setName(selected.name);
+      setCategory(selected.category ?? '');
       setOptions(selected.options.map(toEditableOption));
       setDirty(false);
     }
@@ -88,13 +90,13 @@ export const EnumEditorScreen = () => {
     try {
       await updateEnumMutation.mutateAsync({
         enumId: selected.id,
-        data: { name, options: parsedOptions }
+        data: { name, category: category.trim() === '' ? null : category, options: parsedOptions }
       });
       setDirty(false);
     } catch {
       // error handled by mutation
     }
-  }, [selected, dirty, updateEnumMutation, name, options]);
+  }, [selected, dirty, updateEnumMutation, name, category, options]);
 
   const doDelete = useCallback(async () => {
     if (!selected) return;
@@ -180,6 +182,22 @@ export const EnumEditorScreen = () => {
                     setName(value ?? '');
                     setDirty(true);
                   }}
+                />
+              </div>
+            </div>
+
+            <div className={styles.formRow}>
+              <div>
+                <div className={styles.formLabel}>Category</div>
+                <TextInput
+                  value={category}
+                  readOnly={!canEdit}
+                  placeholder="Optional presentation category"
+                  onChange={value => {
+                    setCategory(value ?? '');
+                    setDirty(true);
+                  }}
+                  style={{ width: '100%' }}
                 />
               </div>
             </div>

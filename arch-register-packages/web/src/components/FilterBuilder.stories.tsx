@@ -71,6 +71,7 @@ const mockEnums: WorkspaceEnum[] = [
     id: 'env',
     workspace: 'test',
     name: 'Environment',
+    category: null,
     options: [
       { value: 'dev', label: 'Development', description: null, retired: false, restricted: false },
       {
@@ -90,6 +91,7 @@ const mockEnums: WorkspaceEnum[] = [
     id: 'dbEngine',
     workspace: 'test',
     name: 'Database Engine',
+    category: null,
     options: [
       {
         value: 'postgres',

@@ -273,6 +273,7 @@ export const FieldGroupEditorScreen = () => {
   const selected = fieldGroups.find(group => group.id === search.fieldGroupId) ?? null;
   const canEdit = permissions.canEditSchemas;
   const [name, setName] = useState('');
+  const [category, setCategory] = useState('');
   const [description, setDescription] = useState('');
   const [fields, setFields] = useState<SchemaField[]>([]);
   const [dirty, setDirty] = useState(false);
@@ -284,6 +285,7 @@ export const FieldGroupEditorScreen = () => {
   useEffect(() => {
     if (!selected) return;
     setName(selected.name);
+    setCategory(selected.category ?? '');
     setDescription(selected.description ?? '');
     setFields(selected.fields as SchemaField[]);
     setDirty(false);
@@ -314,7 +316,7 @@ export const FieldGroupEditorScreen = () => {
     try {
       await updateMutation.mutateAsync({
         fieldGroupId: selected.id,
-        data: { name, description, fields }
+        data: { name, category: category.trim() === '' ? null : category, description, fields }
       });
       setDirty(false);
     } catch (cause) {
@@ -428,6 +430,21 @@ export const FieldGroupEditorScreen = () => {
                   setName(value ?? '');
                   setDirty(true);
                 }}
+              />
+            </div>
+          </div>
+          <div className={styles.formRow}>
+            <div>
+              <div className={styles.formLabel}>Category</div>
+              <TextInput
+                value={category}
+                readOnly={!canEdit}
+                placeholder="Optional presentation category"
+                onChange={value => {
+                  setCategory(value ?? '');
+                  setDirty(true);
+                }}
+                style={{ width: '100%' }}
               />
             </div>
           </div>
