@@ -92,10 +92,54 @@ const entityRelationFieldSchema = baseRelationFieldSchema.extend({
     .describe('Maximum number of entity references (-1 for unlimited)')
 });
 
-// Note: unlike EntitySchema fields, relation fields intentionally exclude `containment` and
-// `derived` — a relation's structural connections to entities are its `in`/`out` endpoints
-// below, plus any `entityRelation` fields it declares; there is no notion of a relation
-// "containing" an entity, and derived fields are not yet supported on relation schemas.
+const derivedRelationResultTypeSchema = z.enum([
+  'text',
+  'number',
+  'currency',
+  'select',
+  'boolean',
+  'rating'
+]);
+
+const derivedRelationFieldBaseSchema = baseRelationFieldSchema
+  .omit({ external_kind: true, refresh_mode: true })
+  .extend({
+    external_kind: z.never().optional(),
+    refresh_mode: z.never().optional()
+  });
+
+const derivedRelationFieldInputSchema = derivedRelationFieldBaseSchema
+  .extend({
+    type: z
+      .literal('derived')
+      .describe('Read-only value derived from the relation and the entities it connects'),
+    requirementLevel: z.literal('optional').describe('Derived fields are never required'),
+    expression: z.string().min(1).describe('Sandboxed expression used to calculate the value'),
+    resultType: derivedRelationResultTypeSchema.describe('Underlying type of the calculated value'),
+    enumId: z.string().optional().describe('Workspace enumeration for a derived select result')
+  })
+  .superRefine((field, ctx) => {
+    if (field.resultType === 'select' && !field.enumId) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['enumId'],
+        message: 'Derived select fields require enumId'
+      });
+    }
+    if (field.resultType !== 'select' && field.enumId !== undefined) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['enumId'],
+        message: 'enumId is only valid for derived select fields'
+      });
+    }
+  });
+
+// Note: unlike EntitySchema fields, relation fields intentionally exclude `containment` — a
+// relation's structural connections to entities are its `in`/`out` endpoints below, plus any
+// `entityRelation` fields it declares; there is no notion of a relation "containing" an entity.
+// `derived` fields are supported (#3091): they read the relation's own fields and, via
+// `entityRelation` fields or the `in`/`out` endpoints, the connected entities' fields.
 export const relationFieldInputSchema = z
   .discriminatedUnion('type', [
     textRelationFieldSchema,
@@ -104,7 +148,8 @@ export const relationFieldInputSchema = z
     dateRelationFieldSchema,
     numberRelationFieldSchema,
     selectRelationFieldInputSchema,
-    entityRelationFieldSchema
+    entityRelationFieldSchema,
+    derivedRelationFieldInputSchema
   ])
   .superRefine((field, ctx) => {
     const issue = assertRefreshModeRequiresExternalKind(field);
@@ -137,6 +182,20 @@ const selectRelationFieldResponseSchema = selectRelationFieldInputSchema.extend(
   options: z.array(fieldOptionSchema).describe('Available dropdown options')
 });
 
+const derivedRelationFieldResponseSchema = derivedRelationFieldInputSchema
+  .extend({
+    options: z.array(fieldOptionSchema).optional().describe('Resolved options for a derived select')
+  })
+  .superRefine((field, ctx) => {
+    if (field.resultType === 'select' && (!field.options || field.options.length === 0)) {
+      ctx.addIssue({
+        code: z.ZodIssueCode.custom,
+        path: ['options'],
+        message: 'Derived select fields require resolved options'
+      });
+    }
+  });
+
 export const relationFieldResponseSchema = z
   .discriminatedUnion('type', [
     textRelationFieldSchema,
@@ -145,7 +204,8 @@ export const relationFieldResponseSchema = z
     dateRelationFieldSchema,
     numberRelationFieldSchema,
     selectRelationFieldResponseSchema,
-    entityRelationFieldSchema
+    entityRelationFieldSchema,
+    derivedRelationFieldResponseSchema
   ])
   .superRefine((field, ctx) => {
     const issue = assertRefreshModeRequiresExternalKind(field);
@@ -416,6 +476,11 @@ export type EntityRelationField = Extract<RelationField, { type: 'entityRelation
 
 export const isEntityRelationField = (field: RelationField): field is EntityRelationField =>
   field.type === 'entityRelation';
+
+export type RelationDerivedField = Extract<RelationField, { type: 'derived' }>;
+
+export const isRelationDerivedField = (field: RelationField): field is RelationDerivedField =>
+  field.type === 'derived';
 
 // ── Relation Schema ────────────────────────────────────────────
 

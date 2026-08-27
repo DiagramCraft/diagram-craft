@@ -266,6 +266,13 @@ export class SqliteRelationDatabase extends SqliteDatabaseBase implements Relati
     return await this.getRelation(workspace, id);
   }
 
+  async updateRelationDerivedFields(workspace: string, id: string, data: Record<string, unknown>) {
+    this.run(
+      "UPDATE catalog_record SET data = ? WHERE workspace = ? AND id = ? AND kind = 'relation'",
+      [JSON.stringify(data), workspace, id]
+    );
+  }
+
   async deleteRelation(workspace: string, id: string) {
     const existing = await this.getRelation(workspace, id);
     if (!existing) return null;

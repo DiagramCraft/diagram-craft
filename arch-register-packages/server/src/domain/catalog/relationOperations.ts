@@ -12,6 +12,7 @@ import { runAuthorizedOperation } from '../operation';
 import { httpAssert } from '../../utils/httpAssert';
 import { orpcAssert } from '../../utils/orpcAssert';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
+import { assertNoDerivedFieldWrites } from '../derived/derivedFields';
 import {
   extractRelationFieldData,
   extractRelationOwnerOrLifecycleId,
@@ -260,6 +261,7 @@ export const createWorkspaceRelation = async (
       );
 
       const data = extractRelationFieldData(body);
+      assertNoDerivedFieldWrites(schema.fields, data);
       requireNoRestrictedFieldWrites(authCtx, schema, Object.keys(data));
 
       const [entities, enumDefinitions] = await Promise.all([
@@ -357,6 +359,7 @@ export const updateWorkspaceRelation = async (
       assertRelationMutationsSupported(schema, oldRow);
 
       const data = extractRelationFieldData(body);
+      assertNoDerivedFieldWrites(schema.fields, data);
       const changedFieldIds = Object.keys(data).filter(
         key => JSON.stringify(oldRow.data[key] ?? null) !== JSON.stringify(data[key] ?? null)
       );

@@ -3,6 +3,7 @@ import type { DatabaseAdapter } from '../../db/database';
 import { PermissionChecker, type AuthorizationContext } from '@arch-register/permissions';
 import { httpAssert } from '../../utils/httpAssert';
 import { requireNoRestrictedFieldWrites } from '../auth/fieldGroupAccessControl';
+import { assertNoDerivedFieldWrites } from '../derived/derivedFields';
 import {
   extractRelationOwnerOrLifecycleId,
   assertRelationMutationsSupported,
@@ -175,6 +176,7 @@ export const applyRelationFieldDelta = async (
       ...createFieldData
     } = draft.data;
 
+    assertNoDerivedFieldWrites(schema.fields, createFieldData);
     if (authCtx) requireNoRestrictedFieldWrites(authCtx, schema, Object.keys(createFieldData));
 
     // Default-copy owner/lifecycle from the "in" entity, matching createWorkspaceRelation
@@ -233,6 +235,7 @@ export const applyRelationFieldDelta = async (
     // as extractRelationFieldData for the standalone /relations endpoints.
     const { _owner: ownerRaw, _lifecycle: lifecycleRaw, ...fieldData } = update.data;
 
+    assertNoDerivedFieldWrites(schema.fields, fieldData);
     const changedFieldIds = Object.keys(fieldData).filter(
       key => JSON.stringify(oldRow.data[key] ?? null) !== JSON.stringify(fieldData[key] ?? null)
     );

@@ -137,6 +137,34 @@ describe('relation response redaction', () => {
       data: ['data-1', 'data-2']
     });
   });
+
+  it('redacts a derived field whose group cannot be resolved (#3091)', () => {
+    const derivedSchema: RelationSchemaDbResult = {
+      ...schema,
+      fields: [
+        { id: 'note', name: 'Note', type: 'text', requirementLevel: 'optional' },
+        {
+          id: 'note_copy',
+          name: 'Note copy',
+          type: 'derived',
+          requirementLevel: 'optional',
+          expression: 'relation.note',
+          resultType: 'text',
+          groupId: 'missing-group'
+        }
+      ],
+      groups: []
+    };
+    const relationWithDerived: RelationDbResult = {
+      ...relation,
+      data: { note: 'known', note_copy: 'known' }
+    };
+    const viewer = authCtxWithTeamRoles({});
+
+    expect(filterRelationFieldData(viewer, derivedSchema, relationWithDerived.data)).toEqual({
+      note: 'known'
+    });
+  });
 });
 
 const makeEntity = (overrides: Partial<Entity> & { id: string; schema_id: string }): Entity => ({

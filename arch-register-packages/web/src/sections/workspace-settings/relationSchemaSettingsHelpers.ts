@@ -29,6 +29,14 @@ export const createRelationFieldForType = (
         minCount: 0,
         maxCount: -1
       };
+    case 'derived':
+      return {
+        ...base,
+        type: 'derived',
+        requirementLevel: 'optional',
+        expression: '',
+        resultType: 'text'
+      };
   }
 };
 

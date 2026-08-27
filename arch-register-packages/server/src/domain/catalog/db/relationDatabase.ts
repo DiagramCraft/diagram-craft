@@ -334,6 +334,12 @@ export type RelationDatabase = {
   getRelation(ws: string, id: string): Promise<RelationDbResult | null>;
   createRelation(input: RelationDbCreate): Promise<RelationDbResult>;
   updateRelation(ws: string, id: string, input: RelationDbUpdate): Promise<RelationDbResult | null>;
+  /**
+   * System-maintained derived-field recompute only (relation create/update, carried/endpoint
+   * entity change, schema edit). Does not bump `version` or `updated_at` and creates no
+   * record_version snapshot, mirroring `updateEntityDerivedFields`.
+   */
+  updateRelationDerivedFields(ws: string, id: string, data: Record<string, unknown>): Promise<void>;
   deleteRelation(ws: string, id: string): Promise<RelationDbResult | null>;
 
   listRelationsForEntity(

@@ -10,6 +10,7 @@ import {
   assertTypedRelationCardinality
 } from './relationHelpers';
 import { assertCatalogMutationTransaction } from './mutationTransaction';
+import { materializeDerivedFields } from '../derived/derivedFields';
 import { recalculateEntityDerivedFields } from '../derived/derivedRecalculation';
 import { assertEntityGraphValid, validateEntityGraph } from './entityValidationRules';
 
@@ -69,7 +70,22 @@ export const createRelationWithAudit = async (
       }
     ]);
   }
-  const row = await db.relation.createRelation(params.relation);
+  const createSchema =
+    typeof db.relation.getRelationSchema === 'function'
+      ? await db.relation.getRelationSchema(params.workspace, params.relation.schema_id)
+      : null;
+  const relationInput = createSchema
+    ? {
+        ...params.relation,
+        data: materializeDerivedFields(
+          createSchema.fields,
+          params.relation.data,
+          { objectType: 'relation', objectId: params.relation.id },
+          createSchema.groups ?? []
+        )
+      }
+    : params.relation;
+  const row = await db.relation.createRelation(relationInput);
 
   await logAudit(db, {
     userId: params.actor.id,
@@ -179,7 +195,22 @@ export const updateRelationWithAudit = async (
   params: UpdateRelationWithAuditParams
 ): Promise<RelationDbResult | null> => {
   assertCatalogMutationTransaction(db);
-  const row = await db.relation.updateRelation(params.workspace, params.relationId, params.next);
+  const updateSchema =
+    typeof db.relation.getRelationSchema === 'function'
+      ? await db.relation.getRelationSchema(params.workspace, params.previous.schema_id)
+      : null;
+  const nextInput = updateSchema
+    ? {
+        ...params.next,
+        data: materializeDerivedFields(
+          updateSchema.fields,
+          params.next.data,
+          { objectType: 'relation', objectId: params.relationId },
+          updateSchema.groups ?? []
+        )
+      }
+    : params.next;
+  const row = await db.relation.updateRelation(params.workspace, params.relationId, nextInput);
   if (row == null) return null;
 
   const changes = computeChanges(

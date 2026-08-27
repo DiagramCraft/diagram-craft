@@ -509,7 +509,7 @@ export const filterRelationFieldData = (
   const declaredData = Object.fromEntries(
     Object.entries(data).filter(([fieldId]) => fieldIds.has(fieldId))
   );
-  return filterRestrictedFieldGroups(authCtx, schema, declaredData);
+  return filterRestrictedFieldGroups(authCtx, schema, declaredData, 'relation');
 };
 
 export const toRedactedApiRelation = (

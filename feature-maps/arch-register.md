@@ -125,7 +125,9 @@
             date fields that can generate schema-field-scoped approaching and overdue governance reminders,
             the built-in Vendor/Contract model where Contract records contain exactly one Vendor,
             read-only derived fields calculated using a sandboxed expression over sibling fields and a bounded
-            one-hop JSON entity context (`entity`, including direct references, containment, and typed-relation targets), with a
+            one-hop JSON context — on entity schemas the `entity` root (direct references, containment, and
+            typed-relation targets); on relation schemas the `relation` root (the relation's own fields, its
+            `_in`/`_out` endpoint entities, and `entityRelation` targets) — with a
             declared text, number, currency, select, boolean, or rating result type,
             configure workspace-scoped integration capabilities from a dedicated integration catalog, with each capability
             binding semantic roles to entity schemas or typed relation schemas (document-type-targeted roles are
@@ -135,7 +137,8 @@
             typed fields and `in`/`out` endpoint projections),
             and externally managed fields (by AI, an integration, or an internal automation) with a refresh mode of
             on-change or scheduled. Derived values are materialized and synchronously recalculated for affected
-            entities when inputs, relations, or definitions change, and are excluded
+            entities and relations when inputs, relations, or definitions change (a relation's derived
+            values also re-materialize when a connected or carried entity's fields change), and are excluded
             from required-field completeness. Fields can be organized into named, presentation-only groups (with an
             optional description) that render as labeled sections wherever fields appear as a form or list; this has no
             effect on validation, required-ness, or completeness. A group — a schema-local group, or a schema's
@@ -155,8 +158,8 @@
             dedicated relation-types admin screen alongside entity types, enums, and shared fieldgroups; relation
             types support the same field-group access control, shared-fieldgroup inclusion, field migrations,
             version history, and externally managed fields (by AI, an integration, or an internal automation) with a
-            refresh mode of on-change or scheduled, as entity schemas, but only text, long text, boolean, date,
-            number, currency, and select field types (no reference, containment, or derived fields, and no templates or
+            refresh mode of on-change or scheduled, as entity schemas, plus text, long text, boolean, date,
+            number, currency, select, entity-relation, and derived field types (no containment fields, and no templates or
             approval/deprecation policy).
             The model overview visualizes entity schemas and typed relation schemas as graph nodes, showing generic
             references, relation endpoints, and relation-owned entity links; relation nodes and typed edges link to
