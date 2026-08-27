@@ -2316,6 +2316,110 @@
                                 "minCount",
                                 "maxCount"
                               ]
+                            },
+                            {
+                              "type": "object",
+                              "properties": {
+                                "id": {
+                                  "type": "string",
+                                  "description": "Unique field identifier"
+                                },
+                                "name": {
+                                  "type": "string",
+                                  "description": "Field name"
+                                },
+                                "requirementLevel": {
+                                  "const": "optional",
+                                  "description": "Derived fields are never required"
+                                },
+                                "archived": {
+                                  "type": "boolean",
+                                  "description": "Whether the field is archived (hidden, but data is retained)"
+                                },
+                                "groupId": {
+                                  "type": "string",
+                                  "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                                },
+                                "external_kind": {
+                                  "not": {}
+                                },
+                                "refresh_mode": {
+                                  "not": {}
+                                },
+                                "type": {
+                                  "const": "derived",
+                                  "description": "Read-only value derived from the relation and the entities it connects"
+                                },
+                                "expression": {
+                                  "type": "string",
+                                  "minLength": 1,
+                                  "description": "Sandboxed expression used to calculate the value"
+                                },
+                                "resultType": {
+                                  "enum": [
+                                    "text",
+                                    "number",
+                                    "currency",
+                                    "select",
+                                    "boolean",
+                                    "rating"
+                                  ],
+                                  "type": "string",
+                                  "description": "Underlying type of the calculated value"
+                                },
+                                "enumId": {
+                                  "type": "string",
+                                  "description": "Workspace enumeration for a derived select result"
+                                },
+                                "options": {
+                                  "type": "array",
+                                  "items": {
+                                    "type": "object",
+                                    "properties": {
+                                      "value": {
+                                        "type": "string",
+                                        "description": "Internal option value"
+                                      },
+                                      "label": {
+                                        "type": "string",
+                                        "description": "Display label"
+                                      },
+                                      "description": {
+                                        "anyOf": [
+                                          {
+                                            "type": "string"
+                                          },
+                                          {
+                                            "type": "null"
+                                          }
+                                        ],
+                                        "description": "Optional option description"
+                                      },
+                                      "retired": {
+                                        "type": "boolean",
+                                        "description": "Whether the option is retired"
+                                      },
+                                      "restricted": {
+                                        "type": "boolean",
+                                        "description": "Whether the option represents restricted data"
+                                      }
+                                    },
+                                    "required": [
+                                      "value",
+                                      "label"
+                                    ]
+                                  },
+                                  "description": "Resolved options for a derived select"
+                                }
+                              },
+                              "required": [
+                                "id",
+                                "name",
+                                "requirementLevel",
+                                "type",
+                                "expression",
+                                "resultType"
+                              ]
                             }
                           ],
                           "description": "Relation field with resolved options"
@@ -3191,6 +3295,110 @@
                               "schemaId",
                               "minCount",
                               "maxCount"
+                            ]
+                          },
+                          {
+                            "type": "object",
+                            "properties": {
+                              "id": {
+                                "type": "string",
+                                "description": "Unique field identifier"
+                              },
+                              "name": {
+                                "type": "string",
+                                "description": "Field name"
+                              },
+                              "requirementLevel": {
+                                "const": "optional",
+                                "description": "Derived fields are never required"
+                              },
+                              "archived": {
+                                "type": "boolean",
+                                "description": "Whether the field is archived (hidden, but data is retained)"
+                              },
+                              "groupId": {
+                                "type": "string",
+                                "description": "Id of the presentation-only group this field belongs to; omitted means ungrouped"
+                              },
+                              "external_kind": {
+                                "not": {}
+                              },
+                              "refresh_mode": {
+                                "not": {}
+                              },
+                              "type": {
+                                "const": "derived",
+                                "description": "Read-only value derived from the relation and the entities it connects"
+                              },
+                              "expression": {
+                                "type": "string",
+                                "minLength": 1,
+                                "description": "Sandboxed expression used to calculate the value"
+                              },
+                              "resultType": {
+                                "enum": [
+                                  "text",
+                                  "number",
+                                  "currency",
+                                  "select",
+                                  "boolean",
+                                  "rating"
+                                ],
+                                "type": "string",
+                                "description": "Underlying type of the calculated value"
+                              },
+                              "enumId": {
+                                "type": "string",
+                                "description": "Workspace enumeration for a derived select result"
+                              },
+                              "options": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "value": {
+                                      "type": "string",
+                                      "description": "Internal option value"
+                                    },
+                                    "label": {
+                                      "type": "string",
+                                      "description": "Display label"
+                                    },
+                                    "description": {
+                                      "anyOf": [
+                                        {
+                                          "type": "string"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ],
+                                      "description": "Optional option description"
+                                    },
+                                    "retired": {
+                                      "type": "boolean",
+                                      "description": "Whether the option is retired"
+                                    },
+                                    "restricted": {
+                                      "type": "boolean",
+                                      "description": "Whether the option represents restricted data"
+                                    }
+                                  },
+                                  "required": [
+                                    "value",
+                                    "label"
+                                  ]
+                                },
+                                "description": "Resolved options for a derived select"
+                              }
+                            },
+                            "required": [
+                              "id",
+                              "name",
+                              "requirementLevel",
+                              "type",
+                              "expression",
+                              "resultType"
                             ]
                           }
                         ],
