@@ -13,7 +13,10 @@ import {
   ASSESSMENT_PRESENCE_FIELD_ID,
   ASSESSMENT_FIELD_PREFIX
 } from '@arch-register/api-types/assessmentFilter';
+import { isNowDateLiteral } from '@arch-register/api-types/nowDateLiteral';
+import type { RelationField as RelationSchemaField } from '@arch-register/api-types/relationSchemaContract';
 import { isFieldViewRestricted } from '../auth/fieldGroupAccessControl';
+import { isMultiValuedScalarField } from './entityScalarValues';
 import type { WorkspaceAuthorizationContext } from '@arch-register/permissions';
 
 import {
@@ -93,6 +96,56 @@ const isKnownEntityRelationFieldId = (
     }
   }
   return false;
+};
+
+// Looks up an entity-schema field's type by id, across every schema that defines it.
+const entityFieldFor = (fieldId: string, schemas: SchemaCatalog): SchemaField | undefined => {
+  for (const schema of schemas.values()) {
+    const field = schemaFieldById(schema, fieldId);
+    if (field) return field;
+  }
+  return undefined;
+};
+
+// Looks up a relation-schema field's type by id, across every relation schema that defines it.
+const relationFieldFor = (
+  fieldId: string,
+  relationSchemas: RelationSchemaCatalog
+): RelationSchemaField | undefined => {
+  for (const schema of relationSchemas.values()) {
+    const field = relationFieldById(schema, fieldId);
+    if (field) return field;
+  }
+  return undefined;
+};
+
+// Validates a `{ $now, offsetDays }` marker's op/field-type restrictions once its shape has
+// already been confirmed via `isNowDateLiteral`: only valid for the `before`/`after`/`on` ops,
+// only against a scalar (non-multi-valued) date field.
+const validateNowDateLiteralUsage = (
+  op: string,
+  fieldId: string,
+  fieldType: string | undefined,
+  isMultiValued: boolean,
+  path: (string | number)[],
+  errors: ValidationError[]
+): void => {
+  if (op !== 'before' && op !== 'after' && op !== 'on') {
+    errors.push({
+      path: [...path, 'value'],
+      message: `'$now' is only valid with 'before'/'after'/'on', not '${op}'`
+    });
+  } else if (fieldType !== 'date') {
+    errors.push({
+      path: [...path, 'value'],
+      message: `'$now' is only valid for date fields, not field '${fieldId}'`
+    });
+  } else if (isMultiValued) {
+    errors.push({
+      path: [...path, 'value'],
+      message: `'$now' is not supported for multi-valued date field '${fieldId}'`
+    });
+  }
 };
 
 /**
@@ -202,9 +255,29 @@ const validateRelationNode = (
         if (landingKind === 'relation') {
           if (!isKnownRelationFieldId(node.fieldId, relationSchemas, authCtx)) {
             errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
+          } else if (isNowDateLiteral(node.value)) {
+            const field = relationFieldFor(node.fieldId, relationSchemas);
+            validateNowDateLiteralUsage(
+              node.op,
+              node.fieldId,
+              field?.type,
+              false,
+              [...path, 'value'],
+              errors
+            );
           }
         } else if (!isKnownFieldId(node.fieldId, schemas, authCtx)) {
           errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
+        } else if (isNowDateLiteral(node.value)) {
+          const field = entityFieldFor(node.fieldId, schemas);
+          validateNowDateLiteralUsage(
+            node.op,
+            node.fieldId,
+            field?.type,
+            field != null && isMultiValuedScalarField(field),
+            [...path, 'value'],
+            errors
+          );
         }
         return hopsAfterPath;
       }
@@ -220,6 +293,15 @@ const validateRelationNode = (
           path: [...path, 'fieldId'],
           message: `Relation schema '${relationSchema.name}' does not define a viewable scalar field '${node.fieldId}'`
         });
+      } else if (isNowDateLiteral(node.value)) {
+        validateNowDateLiteralUsage(
+          node.op,
+          node.fieldId,
+          field.type,
+          false,
+          [...path, 'value'],
+          errors
+        );
       }
       return hopsUsedBefore;
     }
@@ -546,6 +628,16 @@ const validateNode = (
       if (landingKind === 'relation') {
         if (!isKnownRelationFieldId(node.fieldId, relationSchemas, authCtx)) {
           errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
+        } else if (isNowDateLiteral(node.value)) {
+          const field = relationFieldFor(node.fieldId, relationSchemas);
+          validateNowDateLiteralUsage(
+            node.op,
+            node.fieldId,
+            field?.type,
+            false,
+            [...path, 'value'],
+            errors
+          );
         }
       } else if (!isKnownFieldId(node.fieldId, schemas, authCtx)) {
         errors.push({ path: [...path, 'fieldId'], message: `Unknown field '${node.fieldId}'` });
@@ -558,6 +650,16 @@ const validateNode = (
           path: [...path, 'fieldId'],
           message: `Field '${node.fieldId}' is a typed relation and is not queryable`
         });
+      } else if (isNowDateLiteral(node.value)) {
+        const field = entityFieldFor(node.fieldId, schemas);
+        validateNowDateLiteralUsage(
+          node.op,
+          node.fieldId,
+          field?.type,
+          field != null && isMultiValuedScalarField(field),
+          [...path, 'value'],
+          errors
+        );
       }
       return hopsAfterPath;
     }

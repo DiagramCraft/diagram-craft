@@ -470,6 +470,10 @@
           filter/sort option and is treated as unrecognized if referenced directly in an Advanced-mode query,
           matching how the field is hidden elsewhere. Advanced queries can traverse typed relations and filter or
           project their scalar relation fields; entity-valued relation fields are deferred to follow-up issue #2670.
+          A before/after/on date filter (on a scalar entity or relation date field) can be set relative to today
+          instead of a fixed date, with an optional day offset, so a saved view re-evaluates against the current
+          date each time it runs (e.g. "review date before today" for an overdue view); the filter popover offers a
+          toggle between a fixed date and this relative mode.
 
         - @id:ar.search.navigation Search results provide context and links into the relevant entity, project, document,
           or workspace surface.
