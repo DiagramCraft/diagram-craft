@@ -5,9 +5,14 @@
   background: var(--panel-bg);
 }
 
+/* overscroll-behavior-x only: containing just the horizontal axis stops a scroll gesture from
+   triggering browser back/forward navigation at the scroll edge, without blocking the vertical
+   component of the gesture from chaining up to the page (overflow-x: auto implicitly makes the
+   computed overflow-y auto too, so a blanket `overscroll-behavior: none` here would trap vertical
+   scrolling whenever the mouse is over the table). */
 .wrapScroll {
   overflow-x: auto;
-  overscroll-behavior: none;
+  overscroll-behavior-x: contain;
 }
 
 /* .wrap's own `overflow: visible` shorthand sets overflow-y too; declaring this after .wrap in
