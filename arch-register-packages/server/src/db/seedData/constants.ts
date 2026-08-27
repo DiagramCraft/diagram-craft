@@ -220,6 +220,130 @@ export const TECHNOLOGY_RELEASE_IDS = {
   elasticsearch8: '00000000-0000-0000-0006-00000000000a'
 } as const;
 
+// Fresh id ranges for the demo dataset's technology stack (Technology, Technology Release,
+// Resource) - distinct from the test dataset's `...01XX` ranges above and from every other demo
+// id range used elsewhere in this file.
+export const DEMO_TECHNOLOGY_IDS = {
+  technologies: {
+    nodejs: '00000000-0000-0000-0007-000000000301',
+    typescript: '00000000-0000-0000-0007-000000000302',
+    react: '00000000-0000-0000-0007-000000000303',
+    go: '00000000-0000-0000-0007-000000000304',
+    python: '00000000-0000-0000-0007-000000000305',
+    java: '00000000-0000-0000-0007-000000000306',
+    postgresql: '00000000-0000-0000-0007-000000000307',
+    redis: '00000000-0000-0000-0007-000000000308',
+    kafka: '00000000-0000-0000-0007-000000000309',
+    elasticsearch: '00000000-0000-0000-0007-00000000030a',
+    rust: '00000000-0000-0000-0007-00000000030b',
+    kubernetes: '00000000-0000-0000-0007-00000000030c',
+    docker: '00000000-0000-0000-0007-00000000030d',
+    snowflake: '00000000-0000-0000-0007-00000000030e'
+  },
+  releases: {
+    nodejs22: '00000000-0000-0000-0006-000000000301',
+    typescript54: '00000000-0000-0000-0006-000000000302',
+    react19: '00000000-0000-0000-0006-000000000303',
+    go123: '00000000-0000-0000-0006-000000000304',
+    python313: '00000000-0000-0000-0006-000000000305',
+    java21: '00000000-0000-0000-0006-000000000306',
+    postgres16: '00000000-0000-0000-0006-000000000307',
+    redis75: '00000000-0000-0000-0006-000000000308',
+    kafka38: '00000000-0000-0000-0006-000000000309',
+    elasticsearch815: '00000000-0000-0000-0006-00000000030a',
+    rust182: '00000000-0000-0000-0006-00000000030b',
+    kubernetes130: '00000000-0000-0000-0006-00000000030c',
+    docker27: '00000000-0000-0000-0006-00000000030d',
+    snowflake: '00000000-0000-0000-0006-00000000030e',
+    // Extra historical releases (Node.js, PostgreSQL, Kubernetes) showcasing the one-to-many
+    // relationship between a Technology and its Technology Releases.
+    nodejs18: '00000000-0000-0000-0006-00000000030f',
+    nodejs20: '00000000-0000-0000-0006-000000000310',
+    postgres14: '00000000-0000-0000-0006-000000000311',
+    postgres15: '00000000-0000-0000-0006-000000000312',
+    kubernetes128: '00000000-0000-0000-0006-000000000313',
+    kubernetes129: '00000000-0000-0000-0006-000000000314'
+  },
+  resources: {
+    postgresMain: '00000000-0000-0000-0005-000000000301',
+    redisCache: '00000000-0000-0000-0005-000000000302',
+    kafkaEventBus: '00000000-0000-0000-0005-000000000303',
+    s3DataLake: '00000000-0000-0000-0005-000000000304',
+    paymentsPostgres: '00000000-0000-0000-0005-000000000305',
+    elasticsearchCluster: '00000000-0000-0000-0005-000000000306',
+    analyticsWarehouse: '00000000-0000-0000-0005-000000000307',
+    cdn: '00000000-0000-0000-0005-000000000308',
+    identitySessionCache: '00000000-0000-0000-0005-000000000309',
+    paymentsKubernetesCluster: '00000000-0000-0000-0005-00000000030a',
+    notificationPostgres: '00000000-0000-0000-0005-00000000030b',
+    searchQueryCache: '00000000-0000-0000-0005-00000000030c'
+  }
+} as const;
+
+// Additive ids for the demo dataset's extra Domain/System/Component/API/Data Entity rows. Unlike
+// every other DEMO_*_IDS block, these are NOT a replacement for the test dataset's architecture
+// entities - Domain/System/Component/API/Data Entity are referenced by literal id from many other
+// demo files (resources, governance relations, project links), so the base rows stay and these are
+// added alongside them, continuing the public_id numbering (DOM-4+, SYS-7+, CMP-17+, API-7+, DE-4+).
+export const DEMO_ARCHITECTURE_IDS = {
+  domains: {
+    catalogMerchandising: '00000000-0000-0000-0001-000000000301',
+    orderFulfillmentSupplyChain: '00000000-0000-0000-0001-000000000302',
+    marketingGrowth: '00000000-0000-0000-0001-000000000303'
+  },
+  systems: {
+    productCatalogService: '00000000-0000-0000-0002-000000000301',
+    orderManagementSystem: '00000000-0000-0000-0002-000000000302',
+    fulfillmentLogisticsPlatform: '00000000-0000-0000-0002-000000000303',
+    marketingAutomationPlatform: '00000000-0000-0000-0002-000000000304'
+  },
+  components: {
+    catalogService: '00000000-0000-0000-0003-000000000301',
+    pricingEngine: '00000000-0000-0000-0003-000000000302',
+    catalogSyncWorker: '00000000-0000-0000-0003-000000000303',
+    orderOrchestrator: '00000000-0000-0000-0003-000000000304',
+    inventoryService: '00000000-0000-0000-0003-000000000305',
+    shippingIntegrationService: '00000000-0000-0000-0003-000000000306',
+    warehouseManagementService: '00000000-0000-0000-0003-000000000307',
+    campaignService: '00000000-0000-0000-0003-000000000308',
+    promotionsEngine: '00000000-0000-0000-0003-000000000309',
+    personalizationService: '00000000-0000-0000-0003-00000000030a'
+  },
+  apis: {
+    catalogApi: '00000000-0000-0000-0004-000000000301',
+    orderApi: '00000000-0000-0000-0004-000000000302',
+    inventoryApi: '00000000-0000-0000-0004-000000000303',
+    shippingApi: '00000000-0000-0000-0004-000000000304',
+    marketingApi: '00000000-0000-0000-0004-000000000305'
+  },
+  dataEntities: {
+    productCatalogData: '00000000-0000-0000-0008-000000000301',
+    orderRecords: '00000000-0000-0000-0008-000000000302',
+    inventoryLevels: '00000000-0000-0000-0008-000000000303',
+    marketingConsentRecords: '00000000-0000-0000-0008-000000000304'
+  }
+} as const;
+
+// Additive ids for the demo dataset's extra Vendor/Contract rows - same rationale as
+// DEMO_ARCHITECTURE_IDS: Vendor/Contract are referenced by literal id from relations.ts
+// (system-contract) and demoGovernanceRelations.ts (risk-affects), so the base VND-1/2 and
+// CON-1/2/3 rows stay and these are added alongside them, continuing the public_id numbering.
+export const DEMO_VENDOR_IDS = {
+  vendors: {
+    meridianPayments: '00000000-0000-0000-000b-000000000301',
+    northwindLogistics: '00000000-0000-0000-000b-000000000302',
+    brightWaveMarketing: '00000000-0000-0000-000b-000000000303',
+    snowcapData: '00000000-0000-0000-000b-000000000304'
+  },
+  contracts: {
+    meridianGatewayLicense: '00000000-0000-0000-000a-000000000301',
+    meridianGatewaySupport: '00000000-0000-0000-000a-000000000302',
+    northwindCarrierLicense: '00000000-0000-0000-000a-000000000303',
+    brightWavePlatformLicense: '00000000-0000-0000-000a-000000000304',
+    snowcapWarehouseLicense: '00000000-0000-0000-000a-000000000305'
+  }
+} as const;
+
 export const USER_IDS = {
   globaladmin: seededUsers.globalAdmin.id,
   workspaceadmin: seededUsers.workspaceAdmin.id,

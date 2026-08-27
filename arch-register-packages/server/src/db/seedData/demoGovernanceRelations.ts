@@ -3,6 +3,8 @@ import {
   CONTROL_REQUIREMENT_SCHEMA_ID,
   DEMO_RETENTION_IDS,
   DEMO_RISK_COMPLIANCE_IDS,
+  DEMO_TECHNOLOGY_IDS,
+  DEMO_VENDOR_IDS,
   RETENTION_IDS,
   RISK_AFFECTS_RELATION_SCHEMA_ID,
   RISK_CONTROL_SCHEMA_ID,
@@ -251,7 +253,7 @@ export const demoGovernanceRelations: RelationDbCreate[] = [
     schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
     // Plaintext Customer PII at Rest -> Postgres Main.
     in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.plaintextCustomerPiiAtRest,
-    out_entity_id: '00000000-0000-0000-0005-000000000001',
+    out_entity_id: DEMO_TECHNOLOGY_IDS.resources.postgresMain,
     data: {},
     created_at: now,
     updated_at: now
@@ -274,6 +276,17 @@ export const demoGovernanceRelations: RelationDbCreate[] = [
     // Third-Party Vendor Data Breach -> Acme Cloud.
     in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.thirdPartyVendorDataBreach,
     out_entity_id: '00000000-0000-0000-000b-000000000001',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0015-00000000020d',
+    workspace: WORKSPACE_ID,
+    schema_id: RISK_AFFECTS_RELATION_SCHEMA_ID,
+    // Third-Party Vendor Data Breach -> Meridian Payments.
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.thirdPartyVendorDataBreach,
+    out_entity_id: DEMO_VENDOR_IDS.vendors.meridianPayments,
     data: {},
     created_at: now,
     updated_at: now

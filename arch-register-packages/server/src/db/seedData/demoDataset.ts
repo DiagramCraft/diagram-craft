@@ -21,7 +21,29 @@ import {
 } from './demoGovernanceEntities';
 import { demoGovernanceRelations } from './demoGovernanceRelations';
 import { demoTermCategoryEntities, demoTermEntities } from './demoGlossaryEntities';
-import { GLOSSARY_IDS, RETENTION_IDS, SEED_SCHEMA_IDS, STRATEGY_IDS } from './constants';
+import {
+  demoResourceEntities,
+  demoTechnologyEntities,
+  demoTechnologyReleaseEntities
+} from './demoTechnologyEntities';
+import {
+  demoApiEntities,
+  demoComponentEntities,
+  demoDataEntityEntities,
+  demoDomainEntities,
+  demoSystemEntities
+} from './demoArchitectureEntities';
+import { demoArchitectureRelations } from './demoArchitectureRelations';
+import { demoContractEntities, demoVendorEntities } from './demoVendorEntities';
+import { demoVendorRelations } from './demoVendorRelations';
+import {
+  DEMO_TECHNOLOGY_IDS,
+  GLOSSARY_IDS,
+  RETENTION_IDS,
+  SEED_SCHEMA_IDS,
+  STRATEGY_IDS,
+  TECHNOLOGY_RELEASE_IDS
+} from './constants';
 
 // Composition point for the "demo" bootstrap dataset (`pnpm bootstrap -- --reset`, the default
 // dataset). Each domain file (demoStrategyEntities.ts, demoGovernanceEntities.ts, ...) defines only
@@ -42,11 +64,43 @@ const DEMO_REPLACED_SCHEMA_IDS: string[] = [
   SEED_SCHEMA_IDS.complianceRequirement,
   RETENTION_IDS.policySchema,
   GLOSSARY_IDS.termCategorySchema,
-  GLOSSARY_IDS.termSchema
+  GLOSSARY_IDS.termSchema,
+  SEED_SCHEMA_IDS.technology,
+  SEED_SCHEMA_IDS.technologyRelease,
+  SEED_SCHEMA_IDS.resource
 ];
 
+// The test-dataset Components (kept as-is since Component isn't a replaced schema) reference
+// specific Technology Release ids in their data.technology_releases field - a plain reference, not
+// a relation row, so it isn't caught by the entity-existence relation filter below. Remap them to
+// their matching new demo Technology Release instead of leaving them dangling.
+const OLD_TO_DEMO_TECHNOLOGY_RELEASE_ID: Record<string, string> = {
+  [TECHNOLOGY_RELEASE_IDS.nodejs20]: DEMO_TECHNOLOGY_IDS.releases.nodejs22,
+  [TECHNOLOGY_RELEASE_IDS.react18]: DEMO_TECHNOLOGY_IDS.releases.react19,
+  [TECHNOLOGY_RELEASE_IDS.go122]: DEMO_TECHNOLOGY_IDS.releases.go123,
+  [TECHNOLOGY_RELEASE_IDS.python312]: DEMO_TECHNOLOGY_IDS.releases.python313,
+  [TECHNOLOGY_RELEASE_IDS.java21]: DEMO_TECHNOLOGY_IDS.releases.java21,
+  [TECHNOLOGY_RELEASE_IDS.rust182]: DEMO_TECHNOLOGY_IDS.releases.rust182,
+  [TECHNOLOGY_RELEASE_IDS.postgres15]: DEMO_TECHNOLOGY_IDS.releases.postgres16,
+  [TECHNOLOGY_RELEASE_IDS.redis7]: DEMO_TECHNOLOGY_IDS.releases.redis75,
+  [TECHNOLOGY_RELEASE_IDS.kafka37]: DEMO_TECHNOLOGY_IDS.releases.kafka38,
+  [TECHNOLOGY_RELEASE_IDS.elasticsearch8]: DEMO_TECHNOLOGY_IDS.releases.elasticsearch815
+};
+
 export const demoSeedEntitiesRaw: SeedEntityInput[] = [
-  ...seedEntitiesRaw.filter(entity => !DEMO_REPLACED_SCHEMA_IDS.includes(entity.schema_id)),
+  ...seedEntitiesRaw
+    .filter(entity => !DEMO_REPLACED_SCHEMA_IDS.includes(entity.schema_id))
+    .map(entity => {
+      const releases = entity.data['technology_releases'] as string[] | undefined;
+      if (!releases) return entity;
+      return {
+        ...entity,
+        data: {
+          ...entity.data,
+          technology_releases: releases.map(id => OLD_TO_DEMO_TECHNOLOGY_RELEASE_ID[id] ?? id)
+        }
+      };
+    }),
   ...demoBusinessCapabilityEntities,
   ...demoObjectiveEntities,
   ...demoOutcomeEntities,
@@ -58,7 +112,17 @@ export const demoSeedEntitiesRaw: SeedEntityInput[] = [
   ...demoRiskEntities,
   ...demoRetentionPolicyEntities,
   ...demoTermCategoryEntities,
-  ...demoTermEntities
+  ...demoTermEntities,
+  ...demoTechnologyEntities,
+  ...demoTechnologyReleaseEntities,
+  ...demoResourceEntities,
+  ...demoDomainEntities,
+  ...demoSystemEntities,
+  ...demoComponentEntities,
+  ...demoApiEntities,
+  ...demoDataEntityEntities,
+  ...demoVendorEntities,
+  ...demoContractEntities
 ];
 
 export const demoSeedEntities: Entity[] = normalizeSeedEntities(demoSeedEntitiesRaw);
@@ -75,7 +139,9 @@ export const demoSeedRelations: RelationDbCreate[] = [
       demoEntityIds.has(relation.in_entity_id) && demoEntityIds.has(relation.out_entity_id)
   ),
   ...demoStrategyRelations,
-  ...demoGovernanceRelations
+  ...demoGovernanceRelations,
+  ...demoArchitectureRelations,
+  ...demoVendorRelations
 ];
 
 export const demoSeedProjectEntities = seedProjectEntities.filter(link =>

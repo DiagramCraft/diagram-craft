@@ -14,7 +14,21 @@ import {
   demoRiskEntities
 } from './demoGovernanceEntities';
 import { demoTermCategoryEntities, demoTermEntities } from './demoGlossaryEntities';
-import { demoSeedRelations } from './demoDataset';
+import {
+  demoResourceEntities,
+  demoTechnologyEntities,
+  demoTechnologyReleaseEntities
+} from './demoTechnologyEntities';
+import {
+  demoApiEntities,
+  demoComponentEntities,
+  demoDataEntityEntities,
+  demoDomainEntities,
+  demoSystemEntities
+} from './demoArchitectureEntities';
+import { demoContractEntities, demoVendorEntities } from './demoVendorEntities';
+import { demoSeedEntitiesRaw, demoSeedRelations } from './demoDataset';
+import { SEED_RELATION_SCHEMA_IDS } from './constants';
 import {
   CONTROL_REQUIREMENT_SCHEMA_ID,
   OBJECTIVE_SUPPORTS_BUSINESS_CAPABILITY_RELATION_SCHEMA_ID,
@@ -113,5 +127,97 @@ describe('demo bootstrap dataset: business glossary', () => {
       expect(categories.length).toBeGreaterThan(0);
       for (const id of categories) expect(categoryIds.has(id)).toBe(true);
     }
+  });
+});
+
+describe('demo bootstrap dataset: technology stack', () => {
+  it('has no duplicate ids and every technology/resource reference resolves', () => {
+    const allEntities = [
+      ...demoTechnologyEntities,
+      ...demoTechnologyReleaseEntities,
+      ...demoResourceEntities
+    ];
+    const byId = new Map(allEntities.map(entity => [entity.id, entity]));
+    expect(byId.size).toBe(allEntities.length);
+
+    const technologyIds = new Set(demoTechnologyEntities.map(entity => entity.id));
+    const releaseIds = new Set(demoTechnologyReleaseEntities.map(entity => entity.id));
+
+    for (const release of demoTechnologyReleaseEntities) {
+      for (const id of release.data['technology'] as string[])
+        expect(technologyIds.has(id)).toBe(true);
+    }
+    for (const resource of demoResourceEntities) {
+      const releases = resource.data['technology_releases'] as string[] | undefined;
+      for (const id of releases ?? []) expect(releaseIds.has(id)).toBe(true);
+    }
+  });
+});
+
+describe('demo bootstrap dataset: additional architecture entities', () => {
+  it('has no id collisions with the rest of the demo dataset and every domain/system reference resolves', () => {
+    const newEntities = [
+      ...demoDomainEntities,
+      ...demoSystemEntities,
+      ...demoComponentEntities,
+      ...demoApiEntities,
+      ...demoDataEntityEntities
+    ];
+    const newIds = new Set(newEntities.map(entity => entity.id));
+    expect(newIds.size).toBe(newEntities.length);
+
+    // The whole demo dataset (base + all additions) must still have no duplicate ids - these
+    // architecture entities are additive, not a replacement, so this is the one place that would
+    // catch an accidental id collision with the base test dataset.
+    const allDemoIds = new Set(demoSeedEntitiesRaw.map(entity => entity.id));
+    expect(allDemoIds.size).toBe(demoSeedEntitiesRaw.length);
+
+    const domainIds = new Set(
+      demoSeedEntitiesRaw
+        .filter(e => e.schema_id === demoDomainEntities[0]!.schema_id)
+        .map(e => e.id)
+    );
+    const systemIds = new Set(
+      demoSeedEntitiesRaw
+        .filter(e => e.schema_id === demoSystemEntities[0]!.schema_id)
+        .map(e => e.id)
+    );
+
+    for (const system of demoSystemEntities) {
+      for (const id of system.data['domain'] as string[]) expect(domainIds.has(id)).toBe(true);
+    }
+    for (const component of demoComponentEntities) {
+      for (const id of component.data['system'] as string[]) expect(systemIds.has(id)).toBe(true);
+    }
+    for (const api of demoApiEntities) {
+      for (const id of api.data['system'] as string[]) expect(systemIds.has(id)).toBe(true);
+    }
+  });
+});
+
+describe('demo bootstrap dataset: additional vendors and contracts', () => {
+  it('has no duplicate ids, every contract vendor resolves, and system-contract relations are valid', () => {
+    const allEntities = [...demoVendorEntities, ...demoContractEntities];
+    const byId = new Map(allEntities.map(entity => [entity.id, entity]));
+    expect(byId.size).toBe(allEntities.length);
+
+    const vendorIds = new Set(demoVendorEntities.map(entity => entity.id));
+    const contractIds = new Set(demoContractEntities.map(entity => entity.id));
+
+    for (const contract of demoContractEntities) {
+      for (const id of contract.data['vendor'] as string[]) expect(vendorIds.has(id)).toBe(true);
+    }
+
+    const allocationByContract = new Map<string, number>();
+    for (const relation of demoSeedRelations) {
+      if (relation.schema_id !== SEED_RELATION_SCHEMA_IDS.systemContract) continue;
+      if (!contractIds.has(relation.out_entity_id)) continue;
+      const allocation = (relation.data as { allocation?: number }).allocation ?? 0;
+      allocationByContract.set(
+        relation.out_entity_id,
+        (allocationByContract.get(relation.out_entity_id) ?? 0) + allocation
+      );
+    }
+    for (const total of allocationByContract.values()) expect(total).toBeLessThanOrEqual(100);
   });
 });
