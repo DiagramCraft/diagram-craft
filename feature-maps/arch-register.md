@@ -166,8 +166,8 @@
             approval/deprecation policy).
             The model overview visualizes entity schemas and typed relation schemas as graph nodes, showing generic
             references, relation endpoints, and relation-owned entity links; relation nodes and typed edges link to
-            their definitions. The entity types sidebar groups schemas by category, with uncategorized schemas shown
-            in a final Uncategorized group.
+            their definitions. The schema settings sidebar groups every tab's list (entity types, relation types,
+            enums, and shared fieldgroups) by category, with uncategorized items shown in a final Uncategorized group.
 
             - @id:ar.workspace.configuration.document-types Administrators can define document types, templates, fields,
               versions, validation rules, and AI actions for structured content, including marking a field as externally
