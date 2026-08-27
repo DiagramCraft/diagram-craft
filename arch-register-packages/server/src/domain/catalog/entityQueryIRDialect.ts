@@ -12,6 +12,12 @@ export type EntityQueryDialectAdapter = {
   jsonObject: (entries: string[]) => string;
   jsonAggregate: (expression: string) => string;
   mergeJson: (left: string, right: string) => string;
+  /**
+   * A raw, dialect-specific SQL expression for "today, UTC, as yyyy-mm-dd text" (optionally offset
+   * by `offsetDays`), matching the format date fields are stored/compared in as JSON text. Used to
+   * render the `{ $now, offsetDays }` filter-value marker instead of a bound parameter.
+   */
+  nowDateLiteral: (offsetDays?: number) => string;
 };
 
 const assertSafeJsonFieldId = (fieldId: string): void => {
@@ -56,7 +62,16 @@ export const createEntityQueryDialectAdapter = (
         ? `COALESCE(jsonb_agg(${expression}), '[]'::jsonb)`
         : `COALESCE(json_group_array(json(json_quote(${expression}))), json('[]'))`,
     mergeJson: (left, right) =>
-      dialect === 'postgres' ? `${left} || ${right}` : `json_patch(${left}, ${right})`
+      dialect === 'postgres' ? `${left} || ${right}` : `json_patch(${left}, ${right})`,
+    nowDateLiteral: offsetDays => {
+      const n = Number.isInteger(offsetDays) ? (offsetDays as number) : 0;
+      if (dialect === 'postgres') {
+        return n === 0
+          ? `to_char((NOW() AT TIME ZONE 'UTC')::date, 'YYYY-MM-DD')`
+          : `to_char((NOW() AT TIME ZONE 'UTC')::date + INTERVAL '${n} days', 'YYYY-MM-DD')`;
+      }
+      return n === 0 ? `date('now')` : `date('now', '${n >= 0 ? '+' : ''}${n} days')`;
+    }
   };
 };
 

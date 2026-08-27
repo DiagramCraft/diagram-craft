@@ -1,4 +1,6 @@
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import { isNowDateLiteral } from '@arch-register/api-types/nowDateLiteral';
+import { createEntityQueryDialectAdapter } from '../entityQueryIRDialect';
 
 // Maps built-in FilterCondition fieldIds to their actual SQL column expressions.
 // Any fieldId not in this map is treated as a custom JSON field.
@@ -154,11 +156,17 @@ export const buildConditionClause = (
     case 'lt':
       return `CAST(${col} AS NUMERIC) < CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`;
     case 'before':
-      return `${col} < ${addParam(cond.value ?? '')}`;
+      return isNowDateLiteral(cond.value)
+        ? `${col} < ${createEntityQueryDialectAdapter(dialect).nowDateLiteral(cond.value.offsetDays)}`
+        : `${col} < ${addParam(cond.value ?? '')}`;
     case 'after':
-      return `${col} > ${addParam(cond.value ?? '')}`;
+      return isNowDateLiteral(cond.value)
+        ? `${col} > ${createEntityQueryDialectAdapter(dialect).nowDateLiteral(cond.value.offsetDays)}`
+        : `${col} > ${addParam(cond.value ?? '')}`;
     case 'on':
-      return `${col} = ${addParam(cond.value ?? '')}`;
+      return isNowDateLiteral(cond.value)
+        ? `${col} = ${createEntityQueryDialectAdapter(dialect).nowDateLiteral(cond.value.offsetDays)}`
+        : `${col} = ${addParam(cond.value ?? '')}`;
     case 'gte':
       return `CAST(${col} AS NUMERIC) >= CAST(${addParam(cond.value ?? 0)} AS NUMERIC)`;
     case 'lte':
