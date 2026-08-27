@@ -5,6 +5,46 @@ import { dashboardWidgetSchema } from '@arch-register/api-types/dashboardContrac
 
 // ── Shared sub-schemas ────────────────────────────────────────
 
+const templateDependencyKindSchema = z.enum([
+  'schema',
+  'enum',
+  'fieldGroup',
+  'relationSchema',
+  'documentType'
+]);
+
+const templateDefinitionSummarySchema = z.object({
+  kind: templateDependencyKindSchema,
+  id: z.string(),
+  name: z.string(),
+  template_id: z.string(),
+  symbolic_id: z.string()
+});
+
+const templateDependencyDescriptorSchema = z.object({
+  id: z.string().describe('Stable dependency identifier'),
+  owner_id: z.string().describe('Template or composition extension that owns the dependency'),
+  name: z.string(),
+  description: z.string(),
+  target_kind: templateDependencyKindSchema,
+  min_targets: z.number().int().positive(),
+  max_targets: z.number().int().positive().optional(),
+  required_template_ids: z.array(z.string()),
+  required_template_categories: z.array(z.enum(['full', 'cross-cutting'])),
+  required_by: z.array(templateDefinitionSummarySchema)
+});
+
+const definitionImportDependencyMappingSchema = z.object({
+  dependencyId: z.string().min(1),
+  targetIds: z.array(z.string().min(1)).min(1)
+});
+
+const definitionImportSchemaPatchSchema = z.object({
+  targetSchemaId: z.string(),
+  targetSchemaName: z.string(),
+  fields: z.array(z.record(z.string(), z.unknown()))
+});
+
 export const workspaceSchema = z.object({
   id: z.string().describe('Unique workspace identifier'),
   name: z.string().describe('Workspace name'),
@@ -35,7 +75,9 @@ const workspaceTemplateSchema = z.object({
     .describe(
       'Number of schemas, enums, typed relation schemas, and field groups included in the template'
     ),
-  entity_types: z.array(z.string()).describe('Entity types included in the template')
+  entity_types: z.array(z.string()).describe('Entity types included in the template'),
+  definitions: z.array(templateDefinitionSummarySchema),
+  dependencies: z.array(templateDependencyDescriptorSchema)
 });
 
 const definitionImportSourceSchema = z.discriminatedUnion('kind', [
@@ -79,7 +121,8 @@ const definitionImportSourceOptionSchema = z.object({
   documentTypes: z.array(z.object({ id: z.string(), name: z.string() })),
   relationSchemas: z.array(z.object({ id: z.string(), name: z.string() })),
   fieldGroups: z.array(z.object({ id: z.string(), name: z.string() })),
-  dashboardWidgets: z.array(dashboardWidgetSchema)
+  dashboardWidgets: z.array(dashboardWidgetSchema),
+  dependencies: z.array(templateDependencyDescriptorSchema)
 });
 
 const definitionImportConflictSchema = z.object({
@@ -99,6 +142,8 @@ const definitionImportPreviewSchema = z.object({
   relationSchemas: z.array(definitionImportDefinitionSchema),
   fieldGroups: z.array(definitionImportDefinitionSchema),
   dashboardWidgets: z.array(dashboardWidgetSchema),
+  dependencyMappings: z.array(definitionImportDependencyMappingSchema).default([]),
+  schemaPatches: z.array(definitionImportSchemaPatchSchema).default([]),
   conflicts: z.array(definitionImportConflictSchema),
   keyPrefixRemaps: z.array(
     z.object({ sourceId: z.string(), name: z.string(), from: z.string(), to: z.string() })
@@ -110,7 +155,8 @@ const definitionImportPreviewSchema = z.object({
 const definitionImportPreviewRequestSchema = z.object({
   source: definitionImportSourceSchema,
   selection: definitionImportSelectionSchema,
-  renames: z.array(definitionImportRenameSchema).default([])
+  renames: z.array(definitionImportRenameSchema).default([]),
+  dependencyMappings: z.array(definitionImportDependencyMappingSchema).default([])
 });
 
 const definitionImportExecuteRequestSchema = z.object({
@@ -123,6 +169,8 @@ const definitionImportExecuteRequestSchema = z.object({
   relationSchemas: z.array(definitionImportDefinitionSchema),
   fieldGroups: z.array(definitionImportDefinitionSchema),
   dashboardWidgets: z.array(dashboardWidgetSchema),
+  dependencyMappings: z.array(definitionImportDependencyMappingSchema).default([]),
+  schemaPatches: z.array(definitionImportSchemaPatchSchema).default([]),
   keyPrefixRemaps: z.array(
     z.object({ sourceId: z.string(), name: z.string(), from: z.string(), to: z.string() })
   ),
@@ -136,7 +184,8 @@ const definitionImportExecuteResponseSchema = z.object({
   documentTypes: z.number().int(),
   relationSchemas: z.number().int(),
   fieldGroups: z.number().int(),
-  dashboardWidgets: z.number().int()
+  dashboardWidgets: z.number().int(),
+  updatedSchemas: z.number().int()
 });
 
 // ── Export/Import schemas ─────────────────────────────────────
@@ -452,6 +501,22 @@ export const workspaceManagementContract = oc.tag('Workspaces').router({
               .array(z.string())
               .optional()
               .describe('Cross-cutting template IDs to add to the workspace'),
+            template_dependency_mappings: z
+              .array(
+                z.object({
+                  dependency_id: z.string().min(1),
+                  targets: z
+                    .array(
+                      z.object({
+                        template_id: z.string().min(1),
+                        sym_id: z.string().min(1)
+                      })
+                    )
+                    .min(1)
+                })
+              )
+              .optional()
+              .describe('Mappings for dependencies required by selected templates'),
             replicate_from: z.string().optional().describe('Workspace ID to replicate from'),
             include: z
               .array(z.string())
@@ -710,3 +775,9 @@ export type DefinitionImportPreviewRequest = z.infer<typeof definitionImportPrev
 export type DefinitionImportExecuteRequest = z.infer<typeof definitionImportExecuteRequestSchema>;
 export type DefinitionImportExecuteResponse = z.infer<typeof definitionImportExecuteResponseSchema>;
 export type WorkspaceTemplate = z.infer<typeof workspaceTemplateSchema>;
+export type TemplateDependencyDescriptor = z.infer<typeof templateDependencyDescriptorSchema>;
+export type TemplateDefinitionSummary = z.infer<typeof templateDefinitionSummarySchema>;
+export type DefinitionImportDependencyMapping = z.infer<
+  typeof definitionImportDependencyMappingSchema
+>;
+export type DefinitionImportSchemaPatch = z.infer<typeof definitionImportSchemaPatchSchema>;

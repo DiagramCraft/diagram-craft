@@ -16,7 +16,11 @@ import { parseImport } from './importParseOperations';
 import { executeImport } from './importExecutionOperations';
 import { storeImportCache, getImportCache, deleteImportCache } from './importCache';
 import { ImportArchiveValidationError, ZipBuilder, ZipExtractor } from '../../utils/zipBuilder';
-import { SCHEMA_TEMPLATES } from '../catalog/schemaTemplates';
+import {
+  getTemplateDefinitionSummaries,
+  getTemplateDependencyDescriptors,
+  SCHEMA_TEMPLATES
+} from '../catalog/schemaTemplates';
 import { workspaceManagementContract } from '@arch-register/api-types/workspaceContract';
 import {
   executeDefinitionImport,
@@ -78,7 +82,38 @@ export const workspaceManagementORPCRouter = wsRouter.router({
           template.enums.length +
           (template.relationSchemas?.length ?? 0) +
           (template.fieldGroups?.length ?? 0),
-        entity_types: template.schemas.map(schema => schema.name)
+        entity_types: template.schemas.map(schema => schema.name),
+        definitions: getTemplateDefinitionSummaries(template).map(definition => ({
+          kind: definition.kind,
+          id:
+            definition.templateId === template.id
+              ? definition.symbolicId
+              : `${definition.templateId}:${definition.symbolicId}`,
+          name: definition.name,
+          template_id: definition.templateId,
+          symbolic_id: definition.symbolicId
+        })),
+        dependencies: getTemplateDependencyDescriptors(template).map(dependency => ({
+          id: dependency.key,
+          owner_id: dependency.ownerId,
+          name: dependency.name,
+          description: dependency.description,
+          target_kind: dependency.kind,
+          min_targets: dependency.minTargets,
+          ...(dependency.maxTargets === undefined ? {} : { max_targets: dependency.maxTargets }),
+          required_template_ids: dependency.requiredTemplateIds,
+          required_template_categories: dependency.requiredTemplateCategories,
+          required_by: dependency.requiredBy.map(definition => ({
+            kind: definition.kind,
+            id:
+              definition.templateId === template.id
+                ? definition.symbolicId
+                : `${definition.templateId}:${definition.symbolicId}`,
+            name: definition.name,
+            template_id: definition.templateId,
+            symbolic_id: definition.symbolicId
+          }))
+        }))
       }));
     }),
     definitionImportSources: workspaceScopedRouter.workspaces.definitionImportSources.handler(

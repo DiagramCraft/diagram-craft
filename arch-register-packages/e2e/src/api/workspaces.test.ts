@@ -48,7 +48,7 @@ test.describe('workspace routes', () => {
     expect(templates.find(template => template.id === 'default')?.template_object_count).toBe(19);
     expect(
       templates.find(template => template.id === 'information-governance')?.template_object_count
-    ).toBe(11);
+    ).toBe(12);
     expect(
       templates.filter(template => template.category === 'cross-cutting').map(t => t.id)
     ).toEqual(
@@ -170,6 +170,59 @@ test.describe('workspace routes', () => {
     );
     const dashboards = await orpc.dashboard.list({ params: { workspace: created.url_slug } });
     expect(dashboards.map(dashboard => dashboard.name)).toEqual(['Overview', 'Risk & Compliance']);
+  });
+
+  test('POST /api/workspaces resolves cross-cutting template dependencies atomically', async ({
+    server,
+    orpc
+  }) => {
+    const missingMappingName = 'Unresolved Data Flow Workspace';
+    await expect(
+      orpc.workspaces.create({
+        body: {
+          name: missingMappingName,
+          template: 'default',
+          cross_cutting_templates: ['information-governance']
+        }
+      })
+    ).rejects.toBeDefined();
+    expect(
+      (await server.db.workspace.listWorkspaces()).some(ws => ws.name === missingMappingName)
+    ).toBe(false);
+
+    const created = await orpc.workspaces.create({
+      body: {
+        name: 'Mapped Data Flow Workspace',
+        template: 'default',
+        cross_cutting_templates: ['information-governance'],
+        template_dependency_mappings: [
+          {
+            dependency_id: 'information-governance:data-flow:system',
+            targets: [
+              { template_id: 'default', sym_id: 'system' },
+              { template_id: 'default', sym_id: 'component' }
+            ]
+          }
+        ]
+      }
+    });
+    const [schemas, relationSchemas] = await Promise.all([
+      server.db.catalog.listSchemas(created.id),
+      server.db.relation.listRelationSchemas(created.id)
+    ]);
+    const dataFlow = relationSchemas.find(schema => schema.name === 'Data Flow')!;
+    const system = schemas.find(schema => schema.name === 'System')!;
+    const component = schemas.find(schema => schema.name === 'Component')!;
+    expect(dataFlow.in_schema_ids).toEqual(expect.arrayContaining([system.id, component.id]));
+    expect(dataFlow.out_schema_ids).toEqual(expect.arrayContaining([system.id, component.id]));
+    for (const schema of [system, component]) {
+      expect(schema.fields).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'data_flows_out', relationSchemaId: dataFlow.id }),
+          expect.objectContaining({ id: 'data_flows_in', relationSchemaId: dataFlow.id })
+        ])
+      );
+    }
   });
 
   test('POST /api/workspaces adds concerns to an otherwise blank workspace', async ({

@@ -157,7 +157,13 @@ const schemaKeyPrefix = (_workspaceId: string, templateId: string, symbolicId: s
 
 const seedTemplateInstantiationOptions: TemplateInstantiationOptions = {
   idFactory: definitionId,
-  schemaKeyPrefixFactory: schemaKeyPrefix
+  schemaKeyPrefixFactory: schemaKeyPrefix,
+  dependencyMappings: [
+    {
+      dependencyId: 'information-governance:data-flow:system',
+      targets: [{ templateId: 'default', symId: 'system' }]
+    }
+  ]
 };
 
 const rawSeedTemplateDefinitions = instantiateTemplateComposition(

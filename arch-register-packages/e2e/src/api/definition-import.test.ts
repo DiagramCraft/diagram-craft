@@ -130,7 +130,8 @@ test.describe('definition import', () => {
       documentTypes: preview.documentTypes.length,
       relationSchemas: preview.relationSchemas.length,
       fieldGroups: preview.fieldGroups.length,
-      dashboardWidgets: preview.dashboardWidgets.length
+      dashboardWidgets: preview.dashboardWidgets.length,
+      updatedSchemas: preview.schemaPatches.length
     });
 
     const [schemas, enums, documentTypes] = await Promise.all([
@@ -375,7 +376,8 @@ test.describe('definition import', () => {
       documentTypes: preview.documentTypes.length,
       relationSchemas: preview.relationSchemas.length,
       fieldGroups: 1,
-      dashboardWidgets: preview.dashboardWidgets.length
+      dashboardWidgets: preview.dashboardWidgets.length,
+      updatedSchemas: preview.schemaPatches.length
     });
 
     const [createdSchemas, createdEnums, createdRelationSchemas, createdFieldGroups] =
@@ -753,5 +755,108 @@ test.describe('definition import', () => {
     expect(createdSchemas).toHaveLength(0);
     expect(createdFieldGroups).toHaveLength(1);
     expect(createdFieldGroups[0]!.name).toBe('PII Classification');
+  });
+
+  test('maps a cross-cutting Data Flow extension onto existing destination schemas', async ({
+    orpc,
+    server
+  }) => {
+    const target = await orpc.workspaces.create({
+      body: { name: `Data Flow dependency target ${randomUUID()}` }
+    });
+    const system = await orpc.schemas.create({
+      params: { workspace: target.url_slug },
+      body: { name: 'Imported System', key_prefix: 'ISYS', fields: [] }
+    });
+    const sources = await orpc.workspaces.definitionImportSources({
+      params: { workspace: target.url_slug }
+    });
+    const builtin = sources.find(
+      source => source.kind === 'builtin' && source.id === 'information-governance'
+    )!;
+    const dataFlow = builtin.relationSchemas.find(schema => schema.name === 'Data Flow')!;
+    const selection = {
+      schemas: [],
+      enums: [],
+      documentTypes: [],
+      relationSchemas: [dataFlow.id],
+      fieldGroups: [],
+      dashboard: false
+    };
+
+    const missingMappingPreview = await orpc.workspaces.definitionImportPreview({
+      params: { workspace: target.url_slug },
+      body: {
+        source: { kind: 'builtin', id: builtin.id },
+        selection
+      }
+    });
+    expect(missingMappingPreview.errors).toEqual(
+      expect.arrayContaining([
+        expect.stringContaining(
+          "Template dependency 'information-governance:data-flow:system' requires a mapping"
+        )
+      ])
+    );
+
+    const preview = await orpc.workspaces.definitionImportPreview({
+      params: { workspace: target.url_slug },
+      body: {
+        source: { kind: 'builtin', id: builtin.id },
+        selection,
+        dependencyMappings: [
+          { dependencyId: 'information-governance:data-flow:system', targetIds: [system.id] }
+        ]
+      }
+    });
+    expect(preview.errors).toEqual([]);
+    expect(preview.schemaPatches).toEqual([
+      expect.objectContaining({
+        targetSchemaId: system.id,
+        fields: expect.arrayContaining([
+          expect.objectContaining({ id: 'data_flows_out' }),
+          expect.objectContaining({ id: 'data_flows_in' })
+        ])
+      })
+    ]);
+
+    const result = await orpc.workspaces.definitionImportExecute({
+      params: { workspace: target.url_slug },
+      body: {
+        source: preview.source,
+        selection: preview.selection,
+        renames: preview.renames,
+        schemas: preview.schemas,
+        enums: preview.enums,
+        documentTypes: preview.documentTypes,
+        relationSchemas: preview.relationSchemas,
+        fieldGroups: preview.fieldGroups,
+        dashboardWidgets: preview.dashboardWidgets,
+        dependencyMappings: preview.dependencyMappings,
+        schemaPatches: preview.schemaPatches,
+        keyPrefixRemaps: preview.keyPrefixRemaps,
+        fingerprint: preview.fingerprint,
+        confirmed: true
+      }
+    });
+    expect(result.updatedSchemas).toBe(1);
+
+    const [schemas, relationSchemas] = await Promise.all([
+      server.db.catalog.listSchemas(target.id),
+      server.db.relation.listRelationSchemas(target.id)
+    ]);
+    const importedDataEntity = schemas.find(schema => schema.name === 'Data Entity')!;
+    const importedDataFlow = relationSchemas.find(schema => schema.name === 'Data Flow')!;
+    expect(importedDataFlow.in_schema_ids).toEqual([system.id]);
+    expect(importedDataFlow.out_schema_ids).toEqual([system.id]);
+    expect(importedDataFlow.fields).toContainEqual(
+      expect.objectContaining({ id: 'data_entities', schemaId: importedDataEntity.id })
+    );
+    expect(schemas.find(schema => schema.id === system.id)?.fields).toEqual(
+      expect.arrayContaining([
+        expect.objectContaining({ id: 'data_flows_out', relationSchemaId: importedDataFlow.id }),
+        expect.objectContaining({ id: 'data_flows_in', relationSchemaId: importedDataFlow.id })
+      ])
+    );
   });
 });

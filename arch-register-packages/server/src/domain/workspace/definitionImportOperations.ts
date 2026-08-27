@@ -5,7 +5,9 @@ import type {
   DefinitionImportPreview,
   DefinitionImportRename,
   DefinitionImportSelection,
-  DefinitionImportSource
+  DefinitionImportSource,
+  DefinitionImportDependencyMapping,
+  TemplateDependencyDescriptor
 } from '@arch-register/api-types/workspaceContract';
 import type {
   SchemaField,
@@ -27,6 +29,8 @@ import { httpAssert } from '../../utils/httpAssert';
 import { resolveWorkspace } from './resolveWorkspace';
 import {
   SCHEMA_TEMPLATES,
+  getTemplateDependencyDescriptors,
+  type TemplateDependencyKind,
   resolveTemplateDashboardWidgets,
   type SchemaTemplate,
   type SymbolicField,
@@ -140,6 +144,18 @@ type ImportableCapabilityConfiguration = {
   bindings: WorkspaceCapabilityBindings;
 };
 
+type ImportableSchemaPatch = {
+  ownerId: string;
+  target: string;
+  fields: SchemaField[];
+};
+
+type PlannedSchemaPatch = {
+  targetSchemaId: string;
+  targetSchemaName: string;
+  fields: SchemaField[];
+};
+
 type DefinitionSource = {
   kind: DefinitionImportSource['kind'];
   id: string;
@@ -153,6 +169,8 @@ type DefinitionSource = {
   fieldGroups: ImportableFieldGroup[];
   capabilityConfigurations: ImportableCapabilityConfiguration[];
   dashboardWidgets: DashboardWidget[];
+  dependencies: TemplateDependencyDescriptor[];
+  schemaPatches: ImportableSchemaPatch[];
   teamNames: Record<string, string>;
 };
 
@@ -167,6 +185,8 @@ type DefinitionImportPlan = {
   fieldGroups: ImportableFieldGroup[];
   capabilityConfigurations: ImportableCapabilityConfiguration[];
   dashboardWidgets: DashboardWidget[];
+  dependencyMappings: DefinitionImportDependencyMapping[];
+  schemaPatches: PlannedSchemaPatch[];
   conflicts: Array<{
     kind: 'schema' | 'enum' | 'documentType' | 'relationSchema' | 'fieldGroup';
     id: string;
@@ -183,8 +203,24 @@ const checker = new PermissionChecker();
 const lower = (value: string) => value.toLocaleLowerCase();
 const renameKey = (kind: DefinitionImportRename['kind'], id: string) => `${kind}:${id}`;
 
-const symbolicReferenceId = (reference: SymbolicReference): string =>
-  typeof reference === 'string' ? reference : `${reference.templateId}:${reference.symId}`;
+const dependencyReferencePrefix = '__template_dependency__:';
+const dependencyReference = (id: string) => `${dependencyReferencePrefix}${id}`;
+const isDependencyReference = (id: string) => id.startsWith(dependencyReferencePrefix);
+
+const sourceDefinitionId = (ownerId: string, rootTemplateId: string, symbolicId: string) =>
+  ownerId === rootTemplateId ? symbolicId : `${ownerId}:${symbolicId}`;
+
+const symbolicReferenceId = (
+  reference: SymbolicReference,
+  ownerId: string,
+  rootTemplateId: string
+): string => {
+  if (typeof reference === 'string') return reference;
+  if ('dependencyId' in reference) {
+    return dependencyReference(`${ownerId}:${reference.dependencyId}`);
+  }
+  return sourceDefinitionId(reference.templateId, rootTemplateId, reference.symId);
+};
 
 const stableStringify = (value: unknown): string => {
   if (Array.isArray(value)) return `[${value.map(stableStringify).join(',')}]`;
@@ -200,16 +236,21 @@ const stableStringify = (value: unknown): string => {
 const fingerprint = (value: unknown) =>
   createHash('sha256').update(stableStringify(value)).digest('hex');
 
-const toCanonicalField = (field: SymbolicField): SchemaField => {
+const toCanonicalField = (
+  field: SymbolicField,
+  ownerId: string,
+  rootTemplateId: string
+): SchemaField => {
   if (field.type === 'reference') {
     return {
       id: field.id,
       name: field.name,
       predicate: field.predicate,
       type: 'reference',
-      schemaId: symbolicReferenceId(field.symSchemaId),
+      schemaId: symbolicReferenceId(field.symSchemaId, ownerId, rootTemplateId),
       minCount: field.minCount,
-      maxCount: field.maxCount
+      maxCount: field.maxCount,
+      requirementLevel: field.minCount > 0 ? 'required' : 'optional'
     };
   }
   if (field.type === 'containment') {
@@ -218,9 +259,10 @@ const toCanonicalField = (field: SymbolicField): SchemaField => {
       name: field.name,
       predicate: field.predicate,
       type: 'containment',
-      schemaId: symbolicReferenceId(field.symSchemaId),
+      schemaId: symbolicReferenceId(field.symSchemaId, ownerId, rootTemplateId),
       minCount: field.minCount,
-      maxCount: field.maxCount
+      maxCount: field.maxCount,
+      requirementLevel: field.minCount > 0 ? 'required' : 'optional'
     };
   }
   if (field.type === 'typedRelation') {
@@ -228,17 +270,33 @@ const toCanonicalField = (field: SymbolicField): SchemaField => {
       id: field.id,
       name: field.name,
       type: 'typedRelation',
-      relationSchemaId: symbolicReferenceId(field.symRelationSchemaId),
+      relationSchemaId: symbolicReferenceId(field.symRelationSchemaId, ownerId, rootTemplateId),
       direction: field.direction,
       minCount: field.minCount,
-      maxCount: field.maxCount
+      maxCount: field.maxCount,
+      ...(field.requirementLevel === undefined ? {} : { requirementLevel: field.requirementLevel })
+    };
+  }
+  if (field.type === 'select') {
+    return {
+      ...field,
+      enumId: symbolicReferenceId(field.enumId, ownerId, rootTemplateId)
+    };
+  }
+  if (field.type === 'derived' && field.enumId !== undefined) {
+    return {
+      ...field,
+      requirementLevel: 'optional',
+      enumId: symbolicReferenceId(field.enumId, ownerId, rootTemplateId)
     };
   }
   return field as SchemaField;
 };
 
 const toCanonicalRelationField = (
-  field: NonNullable<SchemaTemplate['relationSchemas']>[number]['fields'][number]
+  field: NonNullable<SchemaTemplate['relationSchemas']>[number]['fields'][number],
+  ownerId: string,
+  rootTemplateId: string
 ): RelationField => {
   const requirement =
     field.requirementLevel === undefined ? {} : { requirementLevel: field.requirementLevel };
@@ -248,7 +306,7 @@ const toCanonicalRelationField = (
       id: field.id,
       name: field.name,
       type: field.type,
-      enumId: symbolicReferenceId(field.enumId),
+      enumId: symbolicReferenceId(field.enumId, ownerId, rootTemplateId),
       ...(field.minCardinality === undefined ? {} : { minCardinality: field.minCardinality }),
       ...(field.maxCardinality === undefined ? {} : { maxCardinality: field.maxCardinality }),
       ...requirement
@@ -270,7 +328,7 @@ const toCanonicalRelationField = (
       name: field.name,
       type: field.type,
       ...(field.predicate === undefined ? {} : { predicate: field.predicate }),
-      schemaId: symbolicReferenceId(field.schemaId),
+      schemaId: symbolicReferenceId(field.schemaId, ownerId, rootTemplateId),
       minCount: field.minCount,
       maxCount: field.maxCount,
       ...requirement
@@ -284,38 +342,136 @@ const toCanonicalRelationField = (
   };
 };
 
-const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
-  kind: 'builtin',
-  id: template.id,
-  name: template.name,
-  description: template.description,
-  category: template.category,
-  schemas: template.schemas.map(schema => ({
-    id: schema.symId,
-    name: schema.name,
-    category: null,
-    description: schema.description,
-    key_prefix: schema.symId
-      .replace(/[^a-z]/gi, '')
-      .slice(0, 5)
-      .toUpperCase(),
-    fields: schema.fields.map(toCanonicalField),
-    groups: [],
-    shared_field_group_links: [],
-    shared_field_groups: [],
-    color: schema.color,
-    icon: schema.icon,
-    default_owner_name: null,
-    entity_approval_policy: 'disabled',
-    deprecation_policy: 'disabled'
-  })),
-  enums: template.enums.map((enumeration, index) => ({
+const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => {
+  const rootOwnerId = template.id;
+  const fieldGroupSources = new Map(
+    (template.fieldGroups ?? []).map((fieldGroup, index) => [
+      fieldGroup.id,
+      {
+        id: fieldGroup.id,
+        name: fieldGroup.name,
+        description: fieldGroup.description ?? null,
+        fields: fieldGroup.fields.map(field => toCanonicalField(field, rootOwnerId, template.id)),
+        sort_order: index
+      } satisfies ImportableFieldGroup
+    ])
+  );
+  const canonicalSharedFieldGroupLinks = (
+    references: SymbolicReference[] | undefined,
+    ownerId: string
+  ): SharedFieldGroupLink[] =>
+    (references ?? []).map(reference => ({
+      groupId: symbolicReferenceId(reference, ownerId, template.id)
+    }));
+  const sharedGroupsFor = (links: SharedFieldGroupLink[]) =>
+    links.flatMap(link => {
+      const group = fieldGroupSources.get(link.groupId);
+      return group ? [{ ...group, fields: [...group.fields] }] : [];
+    });
+  const schemaSource = (schema: SchemaTemplate['schemas'][number], ownerId: string) => {
+    const sharedFieldGroupLinks = canonicalSharedFieldGroupLinks(
+      schema.sharedFieldGroupIds,
+      ownerId
+    );
+    return {
+      id: sourceDefinitionId(ownerId, template.id, schema.symId),
+      name: schema.name,
+      category: null,
+      description: schema.description,
+      key_prefix: schema.symId
+        .replace(/[^a-z]/gi, '')
+        .slice(0, 5)
+        .toUpperCase(),
+      fields: schema.fields.map(field => toCanonicalField(field, ownerId, template.id)),
+      groups: [],
+      shared_field_group_links: sharedFieldGroupLinks,
+      shared_field_groups: sharedGroupsFor(sharedFieldGroupLinks),
+      color: schema.color,
+      icon: schema.icon,
+      default_owner_name: null,
+      entity_approval_policy: 'disabled' as const,
+      deprecation_policy: 'disabled' as const
+    } satisfies ImportableSchema;
+  };
+  const relationSchemaSource = (
+    relationSchema: NonNullable<SchemaTemplate['relationSchemas']>[number],
+    ownerId: string
+  ) => {
+    const sharedFieldGroupLinks = canonicalSharedFieldGroupLinks(
+      relationSchema.sharedFieldGroupIds,
+      ownerId
+    );
+    return {
+      id: sourceDefinitionId(ownerId, template.id, relationSchema.symId),
+      name: relationSchema.name,
+      category: null,
+      description: relationSchema.description,
+      in_schema_ids:
+        relationSchema.inSymSchemaIds === 'any'
+          ? 'any'
+          : relationSchema.inSymSchemaIds.map(reference =>
+              symbolicReferenceId(reference, ownerId, template.id)
+            ),
+      out_schema_ids:
+        relationSchema.outSymSchemaIds === 'any'
+          ? 'any'
+          : relationSchema.outSymSchemaIds.map(reference =>
+              symbolicReferenceId(reference, ownerId, template.id)
+            ),
+      in_label: relationSchema.inLabel,
+      out_label: relationSchema.outLabel,
+      fields: relationSchema.fields.map(field =>
+        toCanonicalRelationField(field, ownerId, template.id)
+      ),
+      groups: [],
+      shared_field_group_links: sharedFieldGroupLinks,
+      shared_field_groups: sharedGroupsFor(sharedFieldGroupLinks),
+      color: relationSchema.color,
+      icon: relationSchema.icon,
+      relation_approval_policy: 'disabled' as const
+    } satisfies ImportableRelationSchema;
+  };
+  const extensionSources = (template.compositionExtensions ?? []).flatMap(extension => {
+    const ownerId = `${template.id}:${extension.id}`;
+    return {
+      ownerId,
+      relationSchemas: (extension.relationSchemas ?? []).map(relationSchema =>
+        relationSchemaSource(relationSchema, ownerId)
+      ),
+      schemaPatches: (extension.schemaFields ?? []).map(patch => ({
+        ownerId,
+        target: symbolicReferenceId(patch.target, ownerId, template.id),
+        fields: patch.fields.map(field => toCanonicalField(field, ownerId, template.id))
+      }))
+    };
+  });
+  const dependencies = getTemplateDependencyDescriptors(template).map(dependency => ({
+    id: dependency.key,
+    owner_id: dependency.ownerId,
+    name: dependency.name,
+    description: dependency.description,
+    target_kind: dependency.kind,
+    min_targets: dependency.minTargets,
+    ...(dependency.maxTargets === undefined ? {} : { max_targets: dependency.maxTargets }),
+    required_template_ids: dependency.requiredTemplateIds,
+    required_template_categories: dependency.requiredTemplateCategories,
+    required_by: dependency.requiredBy.map(definition => ({
+      kind: definition.kind,
+      id: sourceDefinitionId(definition.templateId, template.id, definition.symbolicId),
+      name: definition.name,
+      template_id: definition.templateId,
+      symbolic_id: definition.symbolicId
+    }))
+  }));
+  const schemas = template.schemas.map(schema => schemaSource(schema, rootOwnerId));
+  const enums = template.enums.map((enumeration, index) => ({
     id: enumeration.id,
     name: enumeration.name,
     options: enumeration.options,
     sort_order: index
-  })),
-  documentTypes: template.documentTypes.map(documentType => ({
+  }));
+  const fieldGroups = [...fieldGroupSources.values()];
+  const documentTypes = template.documentTypes.map(documentType => ({
     id: documentType.id,
     name: documentType.name,
     description: documentType.description,
@@ -323,55 +479,49 @@ const sourceFromBuiltin = (template: SchemaTemplate): DefinitionSource => ({
     aiActions: [],
     color: documentType.color,
     icon: documentType.icon
-  })),
-  relationSchemas: (template.relationSchemas ?? []).map(relationSchema => ({
-    id: relationSchema.symId,
-    name: relationSchema.name,
-    category: null,
-    description: relationSchema.description,
-    in_schema_ids:
-      relationSchema.inSymSchemaIds === 'any'
-        ? 'any'
-        : relationSchema.inSymSchemaIds.map(symbolicReferenceId),
-    out_schema_ids:
-      relationSchema.outSymSchemaIds === 'any'
-        ? 'any'
-        : relationSchema.outSymSchemaIds.map(symbolicReferenceId),
-    in_label: relationSchema.inLabel,
-    out_label: relationSchema.outLabel,
-    fields: relationSchema.fields.map(toCanonicalRelationField),
-    groups: [],
-    shared_field_group_links: [],
-    shared_field_groups: [],
-    color: relationSchema.color,
-    icon: relationSchema.icon,
-    relation_approval_policy: 'disabled' as const
-  })),
-  fieldGroups: (template.fieldGroups ?? []).map((fieldGroup, index) => ({
-    id: fieldGroup.id,
-    name: fieldGroup.name,
-    description: fieldGroup.description ?? null,
-    fields: fieldGroup.fields.map(toCanonicalField),
-    sort_order: index
-  })),
-  capabilityConfigurations: (template.capabilityConfigurations ?? []).map(
-    (configuration, index) => ({
-      id: `${template.id}:${configuration.type}:${index}`,
-      type: configuration.type,
-      bindings: Object.fromEntries(
-        Object.entries(configuration.bindings).map(([bindingId, binding]) => [
-          bindingId,
-          {
-            ...binding,
-            target: { kind: binding.target.kind, id: symbolicReferenceId(binding.target.symId) }
-          }
-        ])
-      ) as WorkspaceCapabilityBindings
-    })
-  ),
-  dashboardWidgets: template.dashboardWidgets ?? [],
-  teamNames: {}
-});
+  }));
+  const relationSchemas = [
+    ...(template.relationSchemas ?? []).map(relationSchema =>
+      relationSchemaSource(relationSchema, rootOwnerId)
+    ),
+    ...extensionSources.flatMap(extension => extension.relationSchemas)
+  ];
+
+  return {
+    kind: 'builtin',
+    id: template.id,
+    name: template.name,
+    description: template.description,
+    category: template.category,
+    schemas,
+    enums,
+    documentTypes,
+    relationSchemas,
+    fieldGroups,
+    capabilityConfigurations: (template.capabilityConfigurations ?? []).map(
+      (configuration, index) => ({
+        id: `${template.id}:${configuration.type}:${index}`,
+        type: configuration.type,
+        bindings: Object.fromEntries(
+          Object.entries(configuration.bindings).map(([bindingId, binding]) => [
+            bindingId,
+            {
+              ...binding,
+              target: {
+                kind: binding.target.kind,
+                id: symbolicReferenceId(binding.target.symId, rootOwnerId, template.id)
+              }
+            }
+          ])
+        ) as WorkspaceCapabilityBindings
+      })
+    ),
+    dashboardWidgets: template.dashboardWidgets ?? [],
+    dependencies,
+    schemaPatches: extensionSources.flatMap(extension => extension.schemaPatches),
+    teamNames: {}
+  };
+};
 
 const sourceFromWorkspace = async (
   db: DatabaseAdapter,
@@ -476,6 +626,8 @@ const sourceFromWorkspace = async (
       bindings: configuration.bindings
     })),
     dashboardWidgets: [],
+    dependencies: [],
+    schemaPatches: [],
     category: null,
     teamNames: Object.fromEntries(teamNames)
   };
@@ -505,12 +657,229 @@ const getSource = async (
   return sourceFromWorkspace(db, sourceWorkspace);
 };
 
+const dependencyIdFromReference = (reference: string) =>
+  reference.slice(dependencyReferencePrefix.length);
+
+const addUniqueError = (errors: string[], message: string) => {
+  if (!errors.includes(message)) errors.push(message);
+};
+
+const validateDependencyMappings = (
+  source: DefinitionSource,
+  mappings: DefinitionImportDependencyMapping[],
+  activeDependencyIds: ReadonlySet<string>,
+  targetIdsByKind: ReadonlyMap<TemplateDependencyKind, ReadonlySet<string>>,
+  errors: string[]
+) => {
+  const descriptors = new Map(source.dependencies.map(dependency => [dependency.id, dependency]));
+  const mappingsById = new Map<string, DefinitionImportDependencyMapping>();
+  for (const mapping of mappings) {
+    if (mappingsById.has(mapping.dependencyId)) {
+      addUniqueError(errors, `Multiple mappings were provided for '${mapping.dependencyId}'`);
+      continue;
+    }
+    mappingsById.set(mapping.dependencyId, mapping);
+    if (!descriptors.has(mapping.dependencyId)) {
+      addUniqueError(
+        errors,
+        `Template dependency '${mapping.dependencyId}' is not active in the import source`
+      );
+    }
+  }
+
+  for (const dependencyId of activeDependencyIds) {
+    const dependency = descriptors.get(dependencyId);
+    if (!dependency) {
+      addUniqueError(errors, `Template dependency '${dependencyId}' was not found in the source`);
+      continue;
+    }
+    const mapping = mappingsById.get(dependencyId);
+    if (!mapping) {
+      addUniqueError(
+        errors,
+        `Template dependency '${dependencyId}' requires a mapping to destination definitions`
+      );
+      continue;
+    }
+    if (mapping.targetIds.length < dependency.min_targets) {
+      addUniqueError(
+        errors,
+        `Template dependency '${dependencyId}' requires at least ${dependency.min_targets} target${dependency.min_targets === 1 ? '' : 's'}`
+      );
+    }
+    if (dependency.max_targets !== undefined && mapping.targetIds.length > dependency.max_targets) {
+      addUniqueError(
+        errors,
+        `Template dependency '${dependencyId}' accepts at most ${dependency.max_targets} target${dependency.max_targets === 1 ? '' : 's'}`
+      );
+    }
+    if (new Set(mapping.targetIds).size !== mapping.targetIds.length) {
+      addUniqueError(errors, `Template dependency '${dependencyId}' contains duplicate targets`);
+    }
+    const targetIds = targetIdsByKind.get(dependency.target_kind) ?? new Set<string>();
+    for (const targetId of mapping.targetIds) {
+      if (!targetIds.has(targetId)) {
+        addUniqueError(
+          errors,
+          `Template dependency '${dependencyId}' targets unknown ${dependency.target_kind} '${targetId}' in the destination workspace`
+        );
+      }
+    }
+  }
+
+  return { descriptors, mappingsById };
+};
+
+const resolveImportReferenceId = (
+  kind: TemplateDependencyKind,
+  reference: string,
+  mappingsById: ReadonlyMap<string, DefinitionImportDependencyMapping>,
+  descriptors: ReadonlyMap<string, TemplateDependencyDescriptor>,
+  errors: string[]
+) => {
+  if (!isDependencyReference(reference)) return reference;
+  const dependencyId = dependencyIdFromReference(reference);
+  const dependency = descriptors.get(dependencyId);
+  if (!dependency) {
+    addUniqueError(errors, `Template dependency '${dependencyId}' was not found in the source`);
+    return reference;
+  }
+  if (dependency.target_kind !== kind) {
+    addUniqueError(
+      errors,
+      `Template dependency '${dependencyId}' targets ${dependency.target_kind}, not ${kind}`
+    );
+    return reference;
+  }
+  const mapping = mappingsById.get(dependencyId);
+  if (!mapping) return reference;
+  if (mapping.targetIds.length !== 1) {
+    addUniqueError(
+      errors,
+      `Template dependency '${dependencyId}' requires exactly one target for this reference`
+    );
+    return reference;
+  }
+  return mapping.targetIds[0]!;
+};
+
+const resolveImportReferenceIds = (
+  kind: TemplateDependencyKind,
+  references: string[],
+  mappingsById: ReadonlyMap<string, DefinitionImportDependencyMapping>,
+  descriptors: ReadonlyMap<string, TemplateDependencyDescriptor>,
+  errors: string[]
+) =>
+  references.flatMap(reference => {
+    if (!isDependencyReference(reference)) return [reference];
+    const dependencyId = dependencyIdFromReference(reference);
+    const dependency = descriptors.get(dependencyId);
+    if (!dependency) {
+      addUniqueError(errors, `Template dependency '${dependencyId}' was not found in the source`);
+      return [reference];
+    }
+    if (dependency.target_kind !== kind) {
+      addUniqueError(
+        errors,
+        `Template dependency '${dependencyId}' targets ${dependency.target_kind}, not ${kind}`
+      );
+      return [reference];
+    }
+    const mapping = mappingsById.get(dependencyId);
+    return mapping?.targetIds ?? [reference];
+  });
+
+const resolveImportField = (
+  field: SchemaField,
+  mappingsById: ReadonlyMap<string, DefinitionImportDependencyMapping>,
+  descriptors: ReadonlyMap<string, TemplateDependencyDescriptor>,
+  errors: string[]
+): SchemaField => {
+  const groupId = field.groupId
+    ? resolveImportReferenceId('fieldGroup', field.groupId, mappingsById, descriptors, errors)
+    : field.groupId;
+  if (isReferenceOrContainmentField(field)) {
+    return {
+      ...field,
+      ...(groupId === undefined ? {} : { groupId }),
+      schemaId: resolveImportReferenceId(
+        'schema',
+        field.schemaId,
+        mappingsById,
+        descriptors,
+        errors
+      )
+    };
+  }
+  if (field.type === 'typedRelation') {
+    return {
+      ...field,
+      ...(groupId === undefined ? {} : { groupId }),
+      relationSchemaId: resolveImportReferenceId(
+        'relationSchema',
+        field.relationSchemaId,
+        mappingsById,
+        descriptors,
+        errors
+      )
+    };
+  }
+  if (field.type === 'select') {
+    return {
+      ...field,
+      ...(groupId === undefined ? {} : { groupId }),
+      enumId: resolveImportReferenceId('enum', field.enumId, mappingsById, descriptors, errors)
+    };
+  }
+  if (field.type === 'derived' && field.enumId !== undefined) {
+    return {
+      ...field,
+      ...(groupId === undefined ? {} : { groupId }),
+      enumId: resolveImportReferenceId('enum', field.enumId, mappingsById, descriptors, errors)
+    };
+  }
+  return groupId === undefined ? field : { ...field, groupId };
+};
+
+const resolveImportRelationField = (
+  field: RelationField,
+  mappingsById: ReadonlyMap<string, DefinitionImportDependencyMapping>,
+  descriptors: ReadonlyMap<string, TemplateDependencyDescriptor>,
+  errors: string[]
+): RelationField => {
+  const groupId = field.groupId
+    ? resolveImportReferenceId('fieldGroup', field.groupId, mappingsById, descriptors, errors)
+    : field.groupId;
+  if (isEntityRelationField(field)) {
+    return {
+      ...field,
+      ...(groupId === undefined ? {} : { groupId }),
+      schemaId: resolveImportReferenceId(
+        'schema',
+        field.schemaId,
+        mappingsById,
+        descriptors,
+        errors
+      )
+    };
+  }
+  if (field.type === 'select') {
+    return {
+      ...field,
+      ...(groupId === undefined ? {} : { groupId }),
+      enumId: resolveImportReferenceId('enum', field.enumId, mappingsById, descriptors, errors)
+    };
+  }
+  return groupId === undefined ? field : { ...field, groupId };
+};
+
 const buildPlan = async (
   db: DatabaseAdapter,
   targetWorkspace: string,
   source: DefinitionImportSource,
   selection: DefinitionImportSelection,
   renames: DefinitionImportRename[],
+  dependencyMappings: DefinitionImportDependencyMapping[],
   event: AuthenticatedEvent
 ): Promise<DefinitionImportPlan> => {
   const sourceData = await getSource(db, targetWorkspace, source, event);
@@ -602,23 +971,26 @@ const buildPlan = async (
       resolvedSchemaIds.add(schemaId);
       for (const field of schema.fields) {
         if (isReferenceOrContainmentField(field)) {
-          if (!schemaById.has(field.schemaId)) {
+          if (!isDependencyReference(field.schemaId) && !schemaById.has(field.schemaId)) {
             errors.push(`Schema '${schema.name}' references missing schema '${field.schemaId}'`);
-          } else {
+          } else if (!isDependencyReference(field.schemaId)) {
             schemaQueue.push(field.schemaId);
           }
         } else if (field.type === 'typedRelation') {
-          if (!relationSchemaById.has(field.relationSchemaId)) {
+          if (
+            !isDependencyReference(field.relationSchemaId) &&
+            !relationSchemaById.has(field.relationSchemaId)
+          ) {
             errors.push(
               `Schema '${schema.name}' references missing relation schema '${field.relationSchemaId}'`
             );
-          } else {
+          } else if (!isDependencyReference(field.relationSchemaId)) {
             relationSchemaQueue.push(field.relationSchemaId);
           }
         } else if (field.type === 'select') {
-          if (!enumById.has(field.enumId)) {
+          if (!isDependencyReference(field.enumId) && !enumById.has(field.enumId)) {
             errors.push(`Schema '${schema.name}' references missing enum '${field.enumId}'`);
-          } else {
+          } else if (!isDependencyReference(field.enumId)) {
             resolvedEnumIds.add(field.enumId);
           }
         }
@@ -638,29 +1010,29 @@ const buildPlan = async (
         ...(relationSchema.in_schema_ids === 'any' ? [] : relationSchema.in_schema_ids),
         ...(relationSchema.out_schema_ids === 'any' ? [] : relationSchema.out_schema_ids)
       ]) {
-        if (!schemaById.has(schemaId)) {
+        if (!isDependencyReference(schemaId) && !schemaById.has(schemaId)) {
           errors.push(
             `Relation schema '${relationSchema.name}' references missing schema '${schemaId}'`
           );
-        } else {
+        } else if (!isDependencyReference(schemaId)) {
           schemaQueue.push(schemaId);
         }
       }
       for (const field of relationSchema.fields) {
         if (isEntityRelationField(field)) {
-          if (!schemaById.has(field.schemaId)) {
+          if (!isDependencyReference(field.schemaId) && !schemaById.has(field.schemaId)) {
             errors.push(
               `Relation schema '${relationSchema.name}' references missing schema '${field.schemaId}'`
             );
-          } else {
+          } else if (!isDependencyReference(field.schemaId)) {
             schemaQueue.push(field.schemaId);
           }
         } else if (field.type === 'select') {
-          if (!enumById.has(field.enumId)) {
+          if (!isDependencyReference(field.enumId) && !enumById.has(field.enumId)) {
             errors.push(
               `Relation schema '${relationSchema.name}' references missing enum '${field.enumId}'`
             );
-          } else {
+          } else if (!isDependencyReference(field.enumId)) {
             resolvedEnumIds.add(field.enumId);
           }
         }
@@ -754,6 +1126,205 @@ const buildPlan = async (
     db.relation.listRelationSchemas(targetWorkspace),
     db.catalog.listSharedFieldGroups(targetWorkspace)
   ]);
+
+  const activeDependencyIds = new Set<string>();
+  const collectDependencyReference = (reference: string) => {
+    if (isDependencyReference(reference))
+      activeDependencyIds.add(dependencyIdFromReference(reference));
+  };
+  const collectSchemaFieldDependencies = (field: SchemaField) => {
+    collectDependencyReference(field.groupId ?? '');
+    if (isReferenceOrContainmentField(field)) collectDependencyReference(field.schemaId);
+    else if (field.type === 'typedRelation') collectDependencyReference(field.relationSchemaId);
+    else if (field.type === 'select') collectDependencyReference(field.enumId);
+    else if (field.type === 'derived' && field.enumId !== undefined)
+      collectDependencyReference(field.enumId);
+  };
+  const collectRelationFieldDependencies = (field: RelationField) => {
+    collectDependencyReference(field.groupId ?? '');
+    if (isEntityRelationField(field)) collectDependencyReference(field.schemaId);
+    else if (field.type === 'select') collectDependencyReference(field.enumId);
+  };
+  for (const schema of schemas) {
+    for (const field of schema.fields) collectSchemaFieldDependencies(field);
+    for (const link of schema.shared_field_group_links) collectDependencyReference(link.groupId);
+  }
+  for (const relationSchema of relationSchemas) {
+    for (const schemaId of [
+      ...(relationSchema.in_schema_ids === 'any' ? [] : relationSchema.in_schema_ids),
+      ...(relationSchema.out_schema_ids === 'any' ? [] : relationSchema.out_schema_ids)
+    ]) {
+      collectDependencyReference(schemaId);
+    }
+    for (const field of relationSchema.fields) collectRelationFieldDependencies(field);
+    for (const link of relationSchema.shared_field_group_links)
+      collectDependencyReference(link.groupId);
+  }
+  for (const fieldGroup of fieldGroups) {
+    for (const field of fieldGroup.fields) collectSchemaFieldDependencies(field);
+  }
+  const isSelectedDefinition = (definition: TemplateDependencyDescriptor['required_by'][number]) =>
+    definition.kind === 'schema'
+      ? resolvedSchemaIds.has(definition.id)
+      : definition.kind === 'relationSchema'
+        ? resolvedRelationSchemaIds.has(definition.id)
+        : definition.kind === 'enum'
+          ? resolvedEnumIds.has(definition.id)
+          : definition.kind === 'fieldGroup'
+            ? selectedFieldGroupIds.has(definition.id)
+            : selectedDocumentTypeIds.has(definition.id);
+  const activeExtensionOwners = new Set(
+    sourceData.dependencies
+      .filter(dependency => dependency.required_by.some(isSelectedDefinition))
+      .map(dependency => dependency.owner_id)
+  );
+  for (const patch of sourceData.schemaPatches) {
+    if (!activeExtensionOwners.has(patch.ownerId)) continue;
+    collectDependencyReference(patch.target);
+    for (const field of patch.fields) collectSchemaFieldDependencies(field);
+  }
+  const targetIdsByKind = new Map<TemplateDependencyKind, ReadonlySet<string>>([
+    ['schema', new Set(existingSchemas.map(schema => schema.id))],
+    ['enum', new Set(existingEnums.map(enumeration => enumeration.id))],
+    ['documentType', new Set(existingDocumentTypes.map(documentType => documentType.id))],
+    ['relationSchema', new Set(existingRelationSchemas.map(schema => schema.id))],
+    ['fieldGroup', new Set(existingFieldGroups.map(group => group.id))]
+  ]);
+  const { descriptors, mappingsById } = validateDependencyMappings(
+    sourceData,
+    dependencyMappings,
+    activeDependencyIds,
+    targetIdsByKind,
+    errors
+  );
+
+  const mappedSchemas = schemas.map(schema => ({
+    ...schema,
+    fields: schema.fields.map(field =>
+      resolveImportField(field, mappingsById, descriptors, errors)
+    ),
+    shared_field_group_links: schema.shared_field_group_links.flatMap(link =>
+      resolveImportReferenceIds(
+        'fieldGroup',
+        [link.groupId],
+        mappingsById,
+        descriptors,
+        errors
+      ).map(groupId => ({ ...link, groupId }))
+    )
+  }));
+  const mappedRelationSchemas = relationSchemas.map(relationSchema => ({
+    ...relationSchema,
+    in_schema_ids:
+      relationSchema.in_schema_ids === 'any'
+        ? ('any' as const)
+        : resolveImportReferenceIds(
+            'schema',
+            relationSchema.in_schema_ids,
+            mappingsById,
+            descriptors,
+            errors
+          ),
+    out_schema_ids:
+      relationSchema.out_schema_ids === 'any'
+        ? ('any' as const)
+        : resolveImportReferenceIds(
+            'schema',
+            relationSchema.out_schema_ids,
+            mappingsById,
+            descriptors,
+            errors
+          ),
+    fields: relationSchema.fields.map(field =>
+      resolveImportRelationField(field, mappingsById, descriptors, errors)
+    ),
+    shared_field_group_links: relationSchema.shared_field_group_links.flatMap(link =>
+      resolveImportReferenceIds(
+        'fieldGroup',
+        [link.groupId],
+        mappingsById,
+        descriptors,
+        errors
+      ).map(groupId => ({ ...link, groupId }))
+    )
+  }));
+  const mappedFieldGroups = fieldGroups.map(group => ({
+    ...group,
+    fields: group.fields.map(field => resolveImportField(field, mappingsById, descriptors, errors))
+  }));
+  const mappedCapabilityConfigurations = capabilityConfigurations.map(configuration => ({
+    ...configuration,
+    bindings: Object.fromEntries(
+      Object.entries(configuration.bindings).map(([bindingId, binding]) => {
+        const kind =
+          binding.target.kind === 'entity_schema'
+            ? 'schema'
+            : binding.target.kind === 'relation_schema'
+              ? 'relationSchema'
+              : 'documentType';
+        return [
+          bindingId,
+          {
+            ...binding,
+            target: {
+              ...binding.target,
+              id: resolveImportReferenceId(
+                kind,
+                binding.target.id,
+                mappingsById,
+                descriptors,
+                errors
+              )
+            }
+          }
+        ];
+      })
+    ) as WorkspaceCapabilityBindings
+  }));
+
+  const existingSchemaById = new Map(existingSchemas.map(schema => [schema.id, schema]));
+  const schemaPatches: PlannedSchemaPatch[] = [];
+  for (const patch of sourceData.schemaPatches) {
+    if (!activeExtensionOwners.has(patch.ownerId)) continue;
+    const targetSchemaIds = resolveImportReferenceIds(
+      'schema',
+      [patch.target],
+      mappingsById,
+      descriptors,
+      errors
+    );
+    for (const targetSchemaId of targetSchemaIds) {
+      const targetSchema =
+        existingSchemaById.get(targetSchemaId) ??
+        mappedSchemas.find(schema => schema.id === targetSchemaId);
+      if (!targetSchema) {
+        addUniqueError(
+          errors,
+          `Schema patch target '${targetSchemaId}' was not found in the source or destination`
+        );
+        continue;
+      }
+      const fields = patch.fields.map(field =>
+        resolveImportField(field, mappingsById, descriptors, errors)
+      );
+      const existingFieldIds = new Set(targetSchema.fields.map(field => field.id));
+      const patchFieldIds = new Set<string>();
+      for (const field of fields) {
+        if (existingFieldIds.has(field.id) || patchFieldIds.has(field.id)) {
+          addUniqueError(
+            errors,
+            `Schema patch '${targetSchema.name}' adds duplicate field '${field.id}'`
+          );
+        }
+        patchFieldIds.add(field.id);
+      }
+      schemaPatches.push({
+        targetSchemaId,
+        targetSchemaName: targetSchema.name,
+        fields
+      });
+    }
+  }
   const conflicts: DefinitionImportPlan['conflicts'] = [];
   const checkNames = (
     kind: DefinitionImportPlan['conflicts'][number]['kind'],
@@ -771,16 +1342,16 @@ const buildPlan = async (
       seen.add(key);
     }
   };
-  checkNames('schema', schemas, existingSchemas);
+  checkNames('schema', mappedSchemas, existingSchemas);
   checkNames('enum', enums, existingEnums);
   checkNames('documentType', documentTypes, existingDocumentTypes);
-  checkNames('relationSchema', relationSchemas, existingRelationSchemas);
-  checkNames('fieldGroup', fieldGroups, existingFieldGroups);
+  checkNames('relationSchema', mappedRelationSchemas, existingRelationSchemas);
+  checkNames('fieldGroup', mappedFieldGroups, existingFieldGroups);
 
   const usedPrefixes = new Set(existingSchemas.map(schema => lower(schema.key_prefix)));
   const keyPrefixRemaps: DefinitionImportPlan['keyPrefixRemaps'] = [];
   const resolvedSchemas = [] as ImportableSchema[];
-  for (const schema of schemas) {
+  for (const schema of mappedSchemas) {
     const original = schema.key_prefix;
     let next = original;
     const isPrefixUsed = async (prefix: string) =>
@@ -822,19 +1393,30 @@ const buildPlan = async (
       dependency: false,
       definition: documentType
     })),
-    relationSchemas: relationSchemas.map(schema => ({
+    relationSchemas: mappedRelationSchemas.map(schema => ({
       id: schema.id,
       name: schema.name,
       dependency: !selectedRelationSchemaIds.has(schema.id),
       definition: schema
     })),
-    fieldGroups: fieldGroups.map(group => ({
+    fieldGroups: mappedFieldGroups.map(group => ({
       id: group.id,
       name: group.name,
       dependency: false,
       definition: group
     })),
-    capabilityConfigurations,
+    capabilityConfigurations: mappedCapabilityConfigurations,
+    dependencyMappings,
+    schemaPatches,
+    schemaPatchTargets: schemaPatches.map(patch => ({
+      targetSchemaId: patch.targetSchemaId,
+      current: existingSchemaById.get(patch.targetSchemaId)
+        ? {
+            version: existingSchemaById.get(patch.targetSchemaId)!.version,
+            fields: existingSchemaById.get(patch.targetSchemaId)!.fields
+          }
+        : null
+    })),
     dashboardWidgets: selection.dashboard ? sourceData.dashboardWidgets : [],
     keyPrefixRemaps,
     errors,
@@ -847,9 +1429,11 @@ const buildPlan = async (
     schemas: resolvedSchemas,
     enums,
     documentTypes,
-    relationSchemas,
-    fieldGroups,
-    capabilityConfigurations,
+    relationSchemas: mappedRelationSchemas,
+    fieldGroups: mappedFieldGroups,
+    capabilityConfigurations: mappedCapabilityConfigurations,
+    dependencyMappings,
+    schemaPatches,
     dashboardWidgets: selection.dashboard ? sourceData.dashboardWidgets : [],
     conflicts,
     keyPrefixRemaps,
@@ -893,6 +1477,8 @@ const toPreview = (plan: DefinitionImportPlan): DefinitionImportPreview => ({
     definition: group
   })),
   dashboardWidgets: plan.dashboardWidgets,
+  dependencyMappings: plan.dependencyMappings,
+  schemaPatches: plan.schemaPatches,
   conflicts: plan.conflicts,
   keyPrefixRemaps: plan.keyPrefixRemaps,
   errors: plan.errors,
@@ -910,7 +1496,8 @@ const sourceOption = (source: DefinitionSource) => ({
   documentTypes: source.documentTypes.map(type => ({ id: type.id, name: type.name })),
   relationSchemas: source.relationSchemas.map(schema => ({ id: schema.id, name: schema.name })),
   fieldGroups: source.fieldGroups.map(group => ({ id: group.id, name: group.name })),
-  dashboardWidgets: source.dashboardWidgets
+  dashboardWidgets: source.dashboardWidgets,
+  dependencies: source.dependencies
 });
 
 const canAdminister = async (db: DatabaseAdapter, workspace: string, event: AuthenticatedEvent) => {
@@ -956,6 +1543,7 @@ export const previewDefinitionImport = async (
     source: DefinitionImportSource;
     selection: DefinitionImportSelection;
     renames: DefinitionImportRename[];
+    dependencyMappings: DefinitionImportDependencyMapping[];
   },
   event: AuthenticatedEvent
 ) =>
@@ -967,7 +1555,15 @@ export const previewDefinitionImport = async (
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceAdmin(authCtx, 'You must administer the destination workspace');
       return toPreview(
-        await buildPlan(db, ws, input.source, input.selection, input.renames, event)
+        await buildPlan(
+          db,
+          ws,
+          input.source,
+          input.selection,
+          input.renames,
+          input.dependencyMappings ?? [],
+          event
+        )
       );
     }
   });
@@ -985,7 +1581,15 @@ export const executeDefinitionImport = async (
     fallback: 'Failed to execute definition import',
     operation: async ({ ws, authCtx }) => {
       requireWorkspaceAdmin(authCtx, 'You must administer the destination workspace');
-      const plan = await buildPlan(db, ws, input.source, input.selection, input.renames, event);
+      const plan = await buildPlan(
+        db,
+        ws,
+        input.source,
+        input.selection,
+        input.renames,
+        input.dependencyMappings ?? [],
+        event
+      );
       httpAssert.true(plan.errors.length === 0, { status: 409, message: plan.errors.join('; ') });
       httpAssert.true(plan.conflicts.length === 0, {
         status: 409,
@@ -1005,6 +1609,8 @@ export const executeDefinitionImport = async (
           relationSchemas: input.relationSchemas,
           fieldGroups: input.fieldGroups,
           dashboardWidgets: input.dashboardWidgets,
+          dependencyMappings: input.dependencyMappings ?? [],
+          schemaPatches: input.schemaPatches ?? [],
           renames: input.renames,
           keyPrefixRemaps: input.keyPrefixRemaps
         }) ===
@@ -1015,6 +1621,8 @@ export const executeDefinitionImport = async (
             relationSchemas: expected.relationSchemas,
             fieldGroups: expected.fieldGroups,
             dashboardWidgets: expected.dashboardWidgets,
+            dependencyMappings: expected.dependencyMappings,
+            schemaPatches: expected.schemaPatches,
             renames: expected.renames,
             keyPrefixRemaps: expected.keyPrefixRemaps
           }),
@@ -1052,6 +1660,53 @@ export const executeDefinitionImport = async (
           }
         )
       );
+      const remapSchemaField = (field: SchemaField): SchemaField => {
+        const groupId =
+          field.groupId && sharedFieldGroupMap.has(field.groupId)
+            ? sharedFieldGroupMap.get(field.groupId)!
+            : field.groupId;
+        const group = groupId === undefined ? {} : { groupId };
+        if (isReferenceOrContainmentField(field)) {
+          return {
+            ...field,
+            ...group,
+            schemaId: schemaIdMap.get(field.schemaId) ?? field.schemaId
+          };
+        }
+        if (field.type === 'typedRelation') {
+          return {
+            ...field,
+            ...group,
+            relationSchemaId:
+              relationSchemaIdMap.get(field.relationSchemaId) ?? field.relationSchemaId
+          };
+        }
+        if (field.type === 'select') {
+          return { ...field, ...group, enumId: enumIdMap.get(field.enumId) ?? field.enumId };
+        }
+        if (field.type === 'derived' && field.enumId !== undefined) {
+          return { ...field, ...group, enumId: enumIdMap.get(field.enumId) ?? field.enumId };
+        }
+        return { ...field, ...group };
+      };
+      const remapRelationField = (field: RelationField): RelationField => {
+        const groupId =
+          field.groupId && sharedFieldGroupMap.has(field.groupId)
+            ? sharedFieldGroupMap.get(field.groupId)!
+            : field.groupId;
+        const group = groupId === undefined ? {} : { groupId };
+        if (isEntityRelationField(field)) {
+          return {
+            ...field,
+            ...group,
+            schemaId: schemaIdMap.get(field.schemaId) ?? field.schemaId
+          };
+        }
+        if (field.type === 'select') {
+          return { ...field, ...group, enumId: enumIdMap.get(field.enumId) ?? field.enumId };
+        }
+        return { ...field, ...group };
+      };
       const now = new Date();
       await db.core.transaction(async tx => {
         for (const enumeration of plan.enums) {
@@ -1085,7 +1740,7 @@ export const executeDefinitionImport = async (
             workspace: ws,
             name: group.name,
             description: group.description,
-            fields: group.fields,
+            fields: group.fields.map(remapSchemaField),
             sort_order: group.sort_order,
             created_at: now,
             updated_at: now
@@ -1108,29 +1763,7 @@ export const executeDefinitionImport = async (
         }
 
         for (const schema of plan.schemas) {
-          const fields = schema.fields.map(field => {
-            const resolvedField =
-              field.groupId && sharedFieldGroupMap.has(field.groupId)
-                ? { ...field, groupId: sharedFieldGroupMap.get(field.groupId)! }
-                : field;
-            if (isReferenceOrContainmentField(field)) {
-              return {
-                ...resolvedField,
-                schemaId: schemaIdMap.get(field.schemaId) ?? field.schemaId
-              };
-            }
-            if (field.type === 'typedRelation') {
-              return {
-                ...resolvedField,
-                relationSchemaId:
-                  relationSchemaIdMap.get(field.relationSchemaId) ?? field.relationSchemaId
-              };
-            }
-            if (field.type === 'select') {
-              return { ...resolvedField, enumId: enumIdMap.get(field.enumId) ?? field.enumId };
-            }
-            return resolvedField;
-          });
+          const fields = schema.fields.map(remapSchemaField);
           const groups = schema.groups.map(group => ({
             ...group,
             id: sharedFieldGroupMap.get(group.id) ?? group.id,
@@ -1202,18 +1835,7 @@ export const executeDefinitionImport = async (
         }
 
         for (const relationSchema of plan.relationSchemas) {
-          const fields = relationSchema.fields.map(field => {
-            if (field.groupId && sharedFieldGroupMap.has(field.groupId)) {
-              return { ...field, groupId: sharedFieldGroupMap.get(field.groupId)! };
-            }
-            if (isEntityRelationField(field)) {
-              return { ...field, schemaId: schemaIdMap.get(field.schemaId) ?? field.schemaId };
-            }
-            if (field.type === 'select') {
-              return { ...field, enumId: enumIdMap.get(field.enumId) ?? field.enumId };
-            }
-            return field;
-          }) as RelationField[];
+          const fields = relationSchema.fields.map(remapRelationField);
           const groups = relationSchema.groups.map(group => ({
             ...group,
             id: sharedFieldGroupMap.get(group.id) ?? group.id,
@@ -1288,6 +1910,84 @@ export const executeDefinitionImport = async (
               new: { ...row, created_at: now.toISOString(), updated_at: now.toISOString() }
             },
             metadata: { importedFrom: input.source }
+          });
+        }
+
+        const patchesByTarget = new Map<string, PlannedSchemaPatch[]>();
+        for (const patch of plan.schemaPatches) {
+          const targetSchemaId = schemaIdMap.get(patch.targetSchemaId) ?? patch.targetSchemaId;
+          const patches = patchesByTarget.get(targetSchemaId) ?? [];
+          patches.push(patch);
+          patchesByTarget.set(targetSchemaId, patches);
+        }
+        for (const [targetSchemaId, patches] of patchesByTarget) {
+          const current = await tx.catalog.getSchema(ws, targetSchemaId);
+          httpAssert.present(current, {
+            status: 409,
+            message: `Schema patch target '${targetSchemaId}' no longer exists`
+          });
+          const fields = [
+            ...current.fields,
+            ...patches.flatMap(patch => patch.fields.map(remapSchemaField))
+          ];
+          const groups = current.groups ?? [];
+          assertResolvedFieldGroupReferences(fields, groups);
+          validateDerivedFieldGroupAccess(fields, groups);
+          const updated = await tx.catalog.updateSchema(ws, targetSchemaId, {
+            name: current.name,
+            category: current.category,
+            description: current.description,
+            fields,
+            templates: current.templates ?? [],
+            groups,
+            shared_field_group_links: current.shared_field_group_links ?? [],
+            validation_rules: current.validation_rules ?? [],
+            detail_layout: current.detail_layout,
+            color: current.color,
+            icon: current.icon,
+            default_owner: current.default_owner,
+            key_prefix: current.key_prefix,
+            version: (current.version ?? 1) + 1,
+            updated_at: now
+          });
+          httpAssert.present(updated, {
+            status: 409,
+            message: `Schema patch target '${targetSchemaId}' could not be updated`
+          });
+          await tx.catalog.createSchemaVersion({
+            id: randomUUID(),
+            workspace: ws,
+            schema_id: updated.id,
+            version: updated.version ?? 1,
+            name: updated.name,
+            category: updated.category ?? null,
+            description: updated.description,
+            fields: updated.fields,
+            templates: updated.templates ?? [],
+            groups: updated.groups ?? [],
+            shared_field_group_links: updated.shared_field_group_links ?? [],
+            validation_rules: updated.validation_rules ?? [],
+            color: updated.color,
+            icon: updated.icon,
+            change_summary: buildFieldChangeSummary(
+              toSchemaFieldMigrationFields(current.fields),
+              toSchemaFieldMigrationFields(updated.fields)
+            ),
+            created_by: authCtx.userId,
+            created_at: now
+          });
+          await writeAudit(tx, {
+            userId: authCtx.userId,
+            workspace: ws,
+            operation: 'update',
+            entityType: 'entity_schema',
+            entityId: updated.id,
+            entityName: updated.name,
+            changes: {
+              old: { fields: current.fields, version: current.version ?? 1 },
+              new: { fields: updated.fields, version: updated.version ?? 1 }
+            },
+            metadata: { importedFrom: input.source, schemaPatch: true }
           });
         }
 
@@ -1376,7 +2076,8 @@ export const executeDefinitionImport = async (
         documentTypes: plan.documentTypes.length,
         relationSchemas: plan.relationSchemas.length,
         fieldGroups: plan.fieldGroups.length,
-        dashboardWidgets: plan.dashboardWidgets.length
+        dashboardWidgets: plan.dashboardWidgets.length,
+        updatedSchemas: new Set(plan.schemaPatches.map(patch => patch.targetSchemaId)).size
       };
     }
   });
