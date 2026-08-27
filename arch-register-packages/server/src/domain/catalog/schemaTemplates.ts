@@ -164,6 +164,7 @@ export type TemplateSchema = {
 export type SymbolicEnum = {
   id: string;
   name: string;
+  category?: string;
   sharedId?: string;
   options: Array<{
     value: string;
@@ -299,6 +300,7 @@ export type SymbolicCapabilityBinding = {
 export type SymbolicFieldGroup = {
   id: string;
   name: string;
+  category?: string;
   sharedId?: string;
   description?: string;
   fields: SymbolicField[];
@@ -441,8 +443,9 @@ const enumDefinition = (
   id: string,
   name: string,
   options: SymbolicEnum['options'],
+  category: string,
   sharedId?: string
-): SymbolicEnum => ({ id, name, options, ...(sharedId ? { sharedId } : {}) });
+): SymbolicEnum => ({ id, name, category, options, ...(sharedId ? { sharedId } : {}) });
 
 const piiClassificationEnum = enumDefinition(
   'pii-classification',
@@ -458,17 +461,23 @@ const piiClassificationEnum = enumDefinition(
     { value: 'sensitive', label: 'Sensitive', restricted: true },
     { value: 'highly-sensitive', label: 'Highly Sensitive', restricted: true }
   ],
+  'Governance',
   'pii-classification'
 );
 
-const contractPurposeEnum = enumDefinition('contract-purpose', 'Contract Purpose', [
-  { value: 'license', label: 'License' },
-  { value: 'support', label: 'Support' },
-  { value: 'maintenance', label: 'Maintenance' },
-  { value: 'hosting', label: 'Hosting' },
-  { value: 'professional-services', label: 'Professional Services' },
-  { value: 'other', label: 'Other' }
-]);
+const contractPurposeEnum = enumDefinition(
+  'contract-purpose',
+  'Contract Purpose',
+  [
+    { value: 'license', label: 'License' },
+    { value: 'support', label: 'Support' },
+    { value: 'maintenance', label: 'Maintenance' },
+    { value: 'hosting', label: 'Hosting' },
+    { value: 'professional-services', label: 'Professional Services' },
+    { value: 'other', label: 'Other' }
+  ],
+  'Vendor'
+);
 
 const communicationProtocolEnum = enumDefinition(
   'communication-protocol',
@@ -480,12 +489,14 @@ const communicationProtocolEnum = enumDefinition(
     { value: 'file-transfer', label: 'Batch File Transfer' },
     { value: 'database-replication', label: 'Database Replication' }
   ],
+  'Architecture',
   'communication-protocol'
 );
 
 const piiClassificationFieldGroup: SymbolicFieldGroup = {
   id: 'pii-classification',
   name: 'PII Classification',
+  category: 'Governance',
   sharedId: 'pii-classification',
   description: 'Classifies personal data handled by the entity and documents its scope.',
   fields: [
@@ -615,115 +626,195 @@ const lightweightDocumentTypes = [LADR_DOCUMENT_TYPE_DEFINITION];
 const lightweightDocumentTemplates = [LADR_DOCUMENT_TEMPLATE_DEFINITION];
 
 const backstageEnums = [
-  enumDefinition('api-type', 'API Type', [
-    { value: 'openapi', label: 'OpenAPI' },
-    { value: 'grpc', label: 'gRPC' },
-    { value: 'graphql', label: 'GraphQL' },
-    { value: 'asyncapi', label: 'AsyncAPI' }
-  ]),
-  enumDefinition('component-kind', 'Component Kind', [
-    { value: 'service', label: 'Service' },
-    { value: 'library', label: 'Library' },
-    { value: 'website', label: 'Website' },
-    { value: 'documentation', label: 'Documentation' }
-  ]),
-  enumDefinition('resource-kind', 'Resource Kind', [
-    { value: 'database', label: 'Database' },
-    { value: 'cache', label: 'Cache' },
-    { value: 'queue', label: 'Queue' },
-    { value: 'blob-storage', label: 'Blob Storage' }
-  ])
+  enumDefinition(
+    'api-type',
+    'API Type',
+    [
+      { value: 'openapi', label: 'OpenAPI' },
+      { value: 'grpc', label: 'gRPC' },
+      { value: 'graphql', label: 'GraphQL' },
+      { value: 'asyncapi', label: 'AsyncAPI' }
+    ],
+    'Architecture'
+  ),
+  enumDefinition(
+    'component-kind',
+    'Component Kind',
+    [
+      { value: 'service', label: 'Service' },
+      { value: 'library', label: 'Library' },
+      { value: 'website', label: 'Website' },
+      { value: 'documentation', label: 'Documentation' }
+    ],
+    'Architecture'
+  ),
+  enumDefinition(
+    'resource-kind',
+    'Resource Kind',
+    [
+      { value: 'database', label: 'Database' },
+      { value: 'cache', label: 'Cache' },
+      { value: 'queue', label: 'Queue' },
+      { value: 'blob-storage', label: 'Blob Storage' }
+    ],
+    'Architecture'
+  )
 ];
 
 const itilEnums = [
-  enumDefinition('application-tier', 'Application Tier', [
-    { value: 'strategic', label: 'Strategic' },
-    { value: 'tactical', label: 'Tactical' },
-    { value: 'commodity', label: 'Commodity' }
-  ]),
-  enumDefinition('host-type', 'Host Type', [
-    { value: 'physical', label: 'Physical' },
-    { value: 'virtual', label: 'Virtual' },
-    { value: 'container', label: 'Container' }
-  ]),
-  enumDefinition('environment', 'Environment', [
-    { value: 'development', label: 'Development' },
-    { value: 'test', label: 'Test' },
-    { value: 'staging', label: 'Staging' },
-    { value: 'production', label: 'Production' }
-  ])
+  enumDefinition(
+    'application-tier',
+    'Application Tier',
+    [
+      { value: 'strategic', label: 'Strategic' },
+      { value: 'tactical', label: 'Tactical' },
+      { value: 'commodity', label: 'Commodity' }
+    ],
+    'Architecture'
+  ),
+  enumDefinition(
+    'host-type',
+    'Host Type',
+    [
+      { value: 'physical', label: 'Physical' },
+      { value: 'virtual', label: 'Virtual' },
+      { value: 'container', label: 'Container' }
+    ],
+    'Technology'
+  ),
+  enumDefinition(
+    'environment',
+    'Environment',
+    [
+      { value: 'development', label: 'Development' },
+      { value: 'test', label: 'Test' },
+      { value: 'staging', label: 'Staging' },
+      { value: 'production', label: 'Production' }
+    ],
+    'Technology'
+  )
 ];
 
 const dddEnums = [
-  enumDefinition('service-kind', 'Service Kind', [
-    { value: 'domain', label: 'Domain' },
-    { value: 'application', label: 'Application' },
-    { value: 'infrastructure', label: 'Infrastructure' }
-  ]),
-  enumDefinition('event-type', 'Event Type', [
-    { value: 'command', label: 'Command' },
-    { value: 'event', label: 'Event' },
-    { value: 'query', label: 'Query' }
-  ])
+  enumDefinition(
+    'service-kind',
+    'Service Kind',
+    [
+      { value: 'domain', label: 'Domain' },
+      { value: 'application', label: 'Application' },
+      { value: 'infrastructure', label: 'Infrastructure' }
+    ],
+    'Architecture'
+  ),
+  enumDefinition(
+    'event-type',
+    'Event Type',
+    [
+      { value: 'command', label: 'Command' },
+      { value: 'event', label: 'Event' },
+      { value: 'query', label: 'Query' }
+    ],
+    'Architecture'
+  )
 ];
 
 const teamTopologiesEnums = [
-  enumDefinition('team-type', 'Team Type', [
-    { value: 'stream-aligned', label: 'Stream-aligned' },
-    { value: 'platform', label: 'Platform' },
-    { value: 'enabling', label: 'Enabling' },
-    { value: 'complicated-subsystem', label: 'Complicated Subsystem' }
-  ]),
-  enumDefinition('interaction-mode', 'Interaction Mode', [
-    { value: 'collaboration', label: 'Collaboration' },
-    { value: 'x-as-a-service', label: 'X-as-a-Service' },
-    { value: 'facilitating', label: 'Facilitating' }
-  ])
+  enumDefinition(
+    'team-type',
+    'Team Type',
+    [
+      { value: 'stream-aligned', label: 'Stream-aligned' },
+      { value: 'platform', label: 'Platform' },
+      { value: 'enabling', label: 'Enabling' },
+      { value: 'complicated-subsystem', label: 'Complicated Subsystem' }
+    ],
+    'Organization'
+  ),
+  enumDefinition(
+    'interaction-mode',
+    'Interaction Mode',
+    [
+      { value: 'collaboration', label: 'Collaboration' },
+      { value: 'x-as-a-service', label: 'X-as-a-Service' },
+      { value: 'facilitating', label: 'Facilitating' }
+    ],
+    'Organization'
+  )
 ];
 
 const dataMeshEnums = [
-  enumDefinition('data-product-type', 'Data Product Type', [
-    { value: 'source-aligned', label: 'Source-aligned' },
-    { value: 'aggregate', label: 'Aggregate' },
-    { value: 'consumer-aligned', label: 'Consumer-aligned' }
-  ]),
-  enumDefinition('dataset-format', 'Dataset Format', [
-    { value: 'csv', label: 'CSV' },
-    { value: 'json', label: 'JSON' },
-    { value: 'avro', label: 'Avro' },
-    { value: 'parquet', label: 'Parquet' },
-    { value: 'relational', label: 'Relational' }
-  ])
+  enumDefinition(
+    'data-product-type',
+    'Data Product Type',
+    [
+      { value: 'source-aligned', label: 'Source-aligned' },
+      { value: 'aggregate', label: 'Aggregate' },
+      { value: 'consumer-aligned', label: 'Consumer-aligned' }
+    ],
+    'Data'
+  ),
+  enumDefinition(
+    'dataset-format',
+    'Dataset Format',
+    [
+      { value: 'csv', label: 'CSV' },
+      { value: 'json', label: 'JSON' },
+      { value: 'avro', label: 'Avro' },
+      { value: 'parquet', label: 'Parquet' },
+      { value: 'relational', label: 'Relational' }
+    ],
+    'Data'
+  )
 ];
 
 const archimateEnums = [
-  enumDefinition('layer', 'Layer', [
-    { value: 'business', label: 'Business' },
-    { value: 'application', label: 'Application' },
-    { value: 'technology', label: 'Technology' }
-  ]),
-  enumDefinition('technology-kind', 'Technology Kind', [
-    { value: 'device', label: 'Device' },
-    { value: 'system-software', label: 'System Software' },
-    { value: 'artifact', label: 'Artifact' }
-  ])
+  enumDefinition(
+    'layer',
+    'Layer',
+    [
+      { value: 'business', label: 'Business' },
+      { value: 'application', label: 'Application' },
+      { value: 'technology', label: 'Technology' }
+    ],
+    'Architecture'
+  ),
+  enumDefinition(
+    'technology-kind',
+    'Technology Kind',
+    [
+      { value: 'device', label: 'Device' },
+      { value: 'system-software', label: 'System Software' },
+      { value: 'artifact', label: 'Artifact' }
+    ],
+    'Architecture'
+  )
 ];
 
 const technologyEnums = [
-  enumDefinition('technology-category', 'Technology Category', [
-    { value: 'language', label: 'Language' },
-    { value: 'framework', label: 'Framework' },
-    { value: 'database', label: 'Database' },
-    { value: 'operating-system', label: 'Operating System' },
-    { value: 'runtime', label: 'Runtime' },
-    { value: 'library', label: 'Library' }
-  ]),
-  enumDefinition('technology-radar-status', 'Technology Radar Status', [
-    { value: 'adopt', label: 'Adopt' },
-    { value: 'trial', label: 'Trial' },
-    { value: 'assess', label: 'Assess' },
-    { value: 'hold', label: 'Hold' }
-  ])
+  enumDefinition(
+    'technology-category',
+    'Technology Category',
+    [
+      { value: 'language', label: 'Language' },
+      { value: 'framework', label: 'Framework' },
+      { value: 'database', label: 'Database' },
+      { value: 'operating-system', label: 'Operating System' },
+      { value: 'runtime', label: 'Runtime' },
+      { value: 'library', label: 'Library' }
+    ],
+    'Technology'
+  ),
+  enumDefinition(
+    'technology-radar-status',
+    'Technology Radar Status',
+    [
+      { value: 'adopt', label: 'Adopt' },
+      { value: 'trial', label: 'Trial' },
+      { value: 'assess', label: 'Assess' },
+      { value: 'hold', label: 'Hold' }
+    ],
+    'Technology'
+  )
 ];
 
 const technologySchema: TemplateSchema = {
@@ -783,11 +874,16 @@ const technologyReleaseReference = (): SymbolicField => ({
   maxCount: -1
 });
 
-const glossaryStatusEnum = enumDefinition('glossary-status', 'Glossary Status', [
-  { value: 'draft', label: 'Draft' },
-  { value: 'proposed', label: 'Proposed' },
-  { value: 'approved', label: 'Approved' }
-]);
+const glossaryStatusEnum = enumDefinition(
+  'glossary-status',
+  'Glossary Status',
+  [
+    { value: 'draft', label: 'Draft' },
+    { value: 'proposed', label: 'Proposed' },
+    { value: 'approved', label: 'Approved' }
+  ],
+  'Glossary'
+);
 
 const businessGlossarySchemas: TemplateSchema[] = [
   {
@@ -836,12 +932,17 @@ const businessGlossarySchemas: TemplateSchema[] = [
   }
 ];
 
-const strategyStatusEnum = enumDefinition('strategy-status', 'Strategy Status', [
-  { value: 'draft', label: 'Draft' },
-  { value: 'active', label: 'Active' },
-  { value: 'achieved', label: 'Achieved' },
-  { value: 'abandoned', label: 'Abandoned' }
-]);
+const strategyStatusEnum = enumDefinition(
+  'strategy-status',
+  'Strategy Status',
+  [
+    { value: 'draft', label: 'Draft' },
+    { value: 'active', label: 'Active' },
+    { value: 'achieved', label: 'Achieved' },
+    { value: 'abandoned', label: 'Abandoned' }
+  ],
+  'Strategy'
+);
 
 const strategySchemas: TemplateSchema[] = [
   {
@@ -1037,110 +1138,195 @@ const strategyRelationSchemas: SymbolicRelationSchema[] = [
 ];
 
 const securityEnums = [
-  enumDefinition('classification', 'Classification', [
-    { value: 'public', label: 'Public' },
-    { value: 'internal', label: 'Internal' },
-    { value: 'confidential', label: 'Confidential' },
-    { value: 'restricted', label: 'Restricted' }
-  ]),
-  enumDefinition('asset-type', 'Asset Type', [
-    { value: 'data', label: 'Data' },
-    { value: 'service', label: 'Service' },
-    { value: 'infrastructure', label: 'Infrastructure' },
-    { value: 'credential', label: 'Credential' }
-  ]),
-  enumDefinition('stride-category', 'STRIDE Category', [
-    { value: 'spoofing', label: 'Spoofing' },
-    { value: 'tampering', label: 'Tampering' },
-    { value: 'repudiation', label: 'Repudiation' },
-    { value: 'information-disclosure', label: 'Information Disclosure' },
-    { value: 'denial-of-service', label: 'Denial of Service' },
-    { value: 'elevation-of-privilege', label: 'Elevation of Privilege' }
-  ]),
-  enumDefinition('control-type', 'Control Type', [
-    { value: 'preventive', label: 'Preventive' },
-    { value: 'detective', label: 'Detective' },
-    { value: 'corrective', label: 'Corrective' }
-  ]),
-  enumDefinition('likelihood', 'Likelihood', [
-    { value: 'low', label: 'Low' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'high', label: 'High' }
-  ]),
-  enumDefinition('impact', 'Impact', [
-    { value: 'low', label: 'Low' },
-    { value: 'medium', label: 'Medium' },
-    { value: 'high', label: 'High' }
-  ])
+  enumDefinition(
+    'classification',
+    'Classification',
+    [
+      { value: 'public', label: 'Public' },
+      { value: 'internal', label: 'Internal' },
+      { value: 'confidential', label: 'Confidential' },
+      { value: 'restricted', label: 'Restricted' }
+    ],
+    'Security'
+  ),
+  enumDefinition(
+    'asset-type',
+    'Asset Type',
+    [
+      { value: 'data', label: 'Data' },
+      { value: 'service', label: 'Service' },
+      { value: 'infrastructure', label: 'Infrastructure' },
+      { value: 'credential', label: 'Credential' }
+    ],
+    'Security'
+  ),
+  enumDefinition(
+    'stride-category',
+    'STRIDE Category',
+    [
+      { value: 'spoofing', label: 'Spoofing' },
+      { value: 'tampering', label: 'Tampering' },
+      { value: 'repudiation', label: 'Repudiation' },
+      { value: 'information-disclosure', label: 'Information Disclosure' },
+      { value: 'denial-of-service', label: 'Denial of Service' },
+      { value: 'elevation-of-privilege', label: 'Elevation of Privilege' }
+    ],
+    'Security'
+  ),
+  enumDefinition(
+    'control-type',
+    'Control Type',
+    [
+      { value: 'preventive', label: 'Preventive' },
+      { value: 'detective', label: 'Detective' },
+      { value: 'corrective', label: 'Corrective' }
+    ],
+    'Security'
+  ),
+  enumDefinition(
+    'likelihood',
+    'Likelihood',
+    [
+      { value: 'low', label: 'Low' },
+      { value: 'medium', label: 'Medium' },
+      { value: 'high', label: 'High' }
+    ],
+    'Security'
+  ),
+  enumDefinition(
+    'impact',
+    'Impact',
+    [
+      { value: 'low', label: 'Low' },
+      { value: 'medium', label: 'Medium' },
+      { value: 'high', label: 'High' }
+    ],
+    'Security'
+  )
 ];
 
 const riskComplianceEnums = [
-  enumDefinition('risk-status', 'Risk Status', [
-    { value: 'open', label: 'Open' },
-    { value: 'mitigating', label: 'Mitigating' },
-    { value: 'accepted', label: 'Accepted' },
-    { value: 'closed', label: 'Closed' }
-  ]),
-  enumDefinition('risk-mitigation-effectiveness', 'Mitigation Effectiveness', [
-    { value: 'none', label: 'None' },
-    { value: 'partial', label: 'Partial' },
-    { value: 'substantial', label: 'Substantial' },
-    { value: 'full', label: 'Full' }
-  ]),
-  enumDefinition('rc-control-type', 'Control Type', [
-    { value: 'preventive', label: 'Preventive' },
-    { value: 'detective', label: 'Detective' },
-    { value: 'corrective', label: 'Corrective' },
-    { value: 'compensating', label: 'Compensating' }
-  ]),
-  enumDefinition('control-effectiveness', 'Control Effectiveness', [
-    { value: 'effective', label: 'Effective' },
-    { value: 'partially-effective', label: 'Partially Effective' },
-    { value: 'ineffective', label: 'Ineffective' },
-    { value: 'not-tested', label: 'Not Tested' }
-  ]),
-  enumDefinition('framework-kind', 'Framework Kind', [
-    { value: 'soc2', label: 'SOC 2' },
-    { value: 'iso27001', label: 'ISO 27001' },
-    { value: 'nist', label: 'NIST' },
-    { value: 'custom', label: 'Custom' }
-  ]),
-  enumDefinition('requirement-status', 'Requirement Status', [
-    { value: 'not-started', label: 'Not Started' },
-    { value: 'in-progress', label: 'In Progress' },
-    { value: 'met', label: 'Met' },
-    { value: 'not-applicable', label: 'Not Applicable' }
-  ])
+  enumDefinition(
+    'risk-status',
+    'Risk Status',
+    [
+      { value: 'open', label: 'Open' },
+      { value: 'mitigating', label: 'Mitigating' },
+      { value: 'accepted', label: 'Accepted' },
+      { value: 'closed', label: 'Closed' }
+    ],
+    'Governance'
+  ),
+  enumDefinition(
+    'risk-mitigation-effectiveness',
+    'Mitigation Effectiveness',
+    [
+      { value: 'none', label: 'None' },
+      { value: 'partial', label: 'Partial' },
+      { value: 'substantial', label: 'Substantial' },
+      { value: 'full', label: 'Full' }
+    ],
+    'Governance'
+  ),
+  enumDefinition(
+    'rc-control-type',
+    'Control Type',
+    [
+      { value: 'preventive', label: 'Preventive' },
+      { value: 'detective', label: 'Detective' },
+      { value: 'corrective', label: 'Corrective' },
+      { value: 'compensating', label: 'Compensating' }
+    ],
+    'Governance'
+  ),
+  enumDefinition(
+    'control-effectiveness',
+    'Control Effectiveness',
+    [
+      { value: 'effective', label: 'Effective' },
+      { value: 'partially-effective', label: 'Partially Effective' },
+      { value: 'ineffective', label: 'Ineffective' },
+      { value: 'not-tested', label: 'Not Tested' }
+    ],
+    'Governance'
+  ),
+  enumDefinition(
+    'framework-kind',
+    'Framework Kind',
+    [
+      { value: 'soc2', label: 'SOC 2' },
+      { value: 'iso27001', label: 'ISO 27001' },
+      { value: 'nist', label: 'NIST' },
+      { value: 'custom', label: 'Custom' }
+    ],
+    'Governance'
+  ),
+  enumDefinition(
+    'requirement-status',
+    'Requirement Status',
+    [
+      { value: 'not-started', label: 'Not Started' },
+      { value: 'in-progress', label: 'In Progress' },
+      { value: 'met', label: 'Met' },
+      { value: 'not-applicable', label: 'Not Applicable' }
+    ],
+    'Governance'
+  )
 ];
 
 const informationGovernanceEnums = [
-  enumDefinition('data-flow-direction', 'Data Flow Direction', [
-    { value: 'one-way', label: 'One-way' },
-    { value: 'bidirectional', label: 'Bidirectional' }
-  ]),
-  enumDefinition('regulatory-tags', 'Regulatory Tags', [
-    { value: 'gdpr', label: 'GDPR' },
-    { value: 'ccpa', label: 'CCPA' },
-    { value: 'hipaa', label: 'HIPAA' },
-    { value: 'pci-dss', label: 'PCI-DSS' }
-  ]),
-  enumDefinition('processing-purposes', 'Processing Purposes', [
-    { value: 'marketing', label: 'Marketing' },
-    { value: 'analytics', label: 'Analytics' },
-    { value: 'fraud-prevention', label: 'Fraud Prevention' },
-    { value: 'customer-support', label: 'Customer Support' }
-  ]),
-  enumDefinition('residency-regions', 'Residency Regions', [
-    { value: 'eu', label: 'EU' },
-    { value: 'us', label: 'US' },
-    { value: 'uk', label: 'UK' },
-    { value: 'apac', label: 'APAC' }
-  ]),
-  enumDefinition('retention-time-unit', 'Retention Time Unit', [
-    { value: 'days', label: 'Days' },
-    { value: 'months', label: 'Months' },
-    { value: 'years', label: 'Years' }
-  ]),
+  enumDefinition(
+    'data-flow-direction',
+    'Data Flow Direction',
+    [
+      { value: 'one-way', label: 'One-way' },
+      { value: 'bidirectional', label: 'Bidirectional' }
+    ],
+    'Data'
+  ),
+  enumDefinition(
+    'regulatory-tags',
+    'Regulatory Tags',
+    [
+      { value: 'gdpr', label: 'GDPR' },
+      { value: 'ccpa', label: 'CCPA' },
+      { value: 'hipaa', label: 'HIPAA' },
+      { value: 'pci-dss', label: 'PCI-DSS' }
+    ],
+    'Data'
+  ),
+  enumDefinition(
+    'processing-purposes',
+    'Processing Purposes',
+    [
+      { value: 'marketing', label: 'Marketing' },
+      { value: 'analytics', label: 'Analytics' },
+      { value: 'fraud-prevention', label: 'Fraud Prevention' },
+      { value: 'customer-support', label: 'Customer Support' }
+    ],
+    'Data'
+  ),
+  enumDefinition(
+    'residency-regions',
+    'Residency Regions',
+    [
+      { value: 'eu', label: 'EU' },
+      { value: 'us', label: 'US' },
+      { value: 'uk', label: 'UK' },
+      { value: 'apac', label: 'APAC' }
+    ],
+    'Data'
+  ),
+  enumDefinition(
+    'retention-time-unit',
+    'Retention Time Unit',
+    [
+      { value: 'days', label: 'Days' },
+      { value: 'months', label: 'Months' },
+      { value: 'years', label: 'Years' }
+    ],
+    'Governance'
+  ),
   communicationProtocolEnum
 ];
 
@@ -1187,6 +1373,7 @@ const retentionAssignmentRelationSchema: SymbolicRelationSchema = {
 const informationAssetFieldGroup: SymbolicFieldGroup = {
   id: 'information-asset-stewardship',
   name: 'Information Asset Stewardship',
+  category: 'Data',
   description:
     'Accountable people and handling metadata for a governed information asset: steward, ' +
     'custodian, review date, regulatory tags, processing purposes, and permitted residency regions.',
@@ -1228,6 +1415,7 @@ const informationAssetFieldGroup: SymbolicFieldGroup = {
 const dataFlowGovernanceFieldGroup: SymbolicFieldGroup = {
   id: 'data-flow-governance',
   name: 'Data Flow Governance',
+  category: 'Data',
   description:
     'Transfer-specific handling metadata for a governed data flow: regulatory tags, processing ' +
     'purposes, and source/destination residency regions.',
@@ -3650,6 +3838,7 @@ const materializeTemplateFragments = (
         id: ownerMap('fieldGroup', fragment.ownerId).get(fieldGroup.id)!,
         workspace: workspaceId,
         name: fieldGroup.name,
+        category: fieldGroup.category ?? null,
         description: fieldGroup.description ?? null,
         fields: fieldGroup.fields.map(field => resolveField(fragment.ownerId, field)),
         sort_order: index,
@@ -3720,6 +3909,7 @@ const materializeTemplateFragments = (
       id: ownerMap('enum', fragment.ownerId).get(enumeration.id)!,
       workspace: workspaceId,
       name: enumeration.name,
+      category: enumeration.category ?? null,
       options: enumeration.options,
       sort_order: index,
       created_at: now,

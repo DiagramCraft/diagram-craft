@@ -585,6 +585,7 @@ export const toApiEnum = (e: InternalWorkspaceEnum): WorkspaceEnum => ({
   id: e.id,
   workspace: e.workspace,
   name: e.name,
+  category: e.category ?? null,
   options: normalizeWorkspaceEnumOptions(e.options),
   sort_order: e.sort_order,
   created_at: e.created_at.toISOString(),
@@ -635,6 +636,7 @@ export const toApiSharedFieldGroup = (
     id: string;
     workspace: string;
     name: string;
+    category?: string | null;
     description: string | null;
     fields: SchemaField[];
     sort_order: number;
@@ -646,6 +648,7 @@ export const toApiSharedFieldGroup = (
   id: group.id,
   workspace: group.workspace,
   name: group.name,
+  category: group.category ?? null,
   ...(group.description ? { description: group.description } : {}),
   fields: resolveSelectFieldOptions(group.fields, enums),
   sort_order: group.sort_order,

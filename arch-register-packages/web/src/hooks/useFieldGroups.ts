@@ -13,8 +13,12 @@ export const useFieldGroups = (workspaceSlug: string, enabled = true) =>
 export const useCreateFieldGroup = (workspaceSlug: string) => {
   const queryClient = useQueryClient();
   return useMutation({
-    mutationFn: (body: { name: string; description?: string; fields?: SchemaField[] }) =>
-      orpcClient.fieldGroups.create({ params: { workspace: workspaceSlug }, body }),
+    mutationFn: (body: {
+      name: string;
+      category?: string | null;
+      description?: string;
+      fields?: SchemaField[];
+    }) => orpcClient.fieldGroups.create({ params: { workspace: workspaceSlug }, body }),
     onSuccess: () => invalidateFieldGroupQueries(queryClient, workspaceSlug)
   });
 };
@@ -29,6 +33,7 @@ export const useUpdateFieldGroup = (workspaceSlug: string) => {
       fieldGroupId: string;
       data: {
         name: string;
+        category?: string | null;
         description?: string;
         fields: SchemaField[];
         fieldMigrations?: Record<

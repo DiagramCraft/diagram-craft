@@ -15,6 +15,10 @@ const sharedFieldGroupSchema = z.object({
   id: z.string().describe('Unique shared fieldgroup identifier (UUID)'),
   workspace: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Fieldgroup name (unique within workspace)'),
+  category: z
+    .string()
+    .nullable()
+    .describe('Optional free-text presentation category for organizing fieldgroups'),
   description: z.string().optional().describe('Optional fieldgroup description'),
   fields: z.array(schemaFieldResponseSchema).describe('Reusable field definitions'),
   sort_order: z.number().int().min(0).describe('Display order (0-based)'),
@@ -24,6 +28,11 @@ const sharedFieldGroupSchema = z.object({
 
 const sharedFieldGroupBodySchema = z.object({
   name: z.string().describe('Fieldgroup name (unique within workspace)'),
+  category: z
+    .string()
+    .nullable()
+    .optional()
+    .describe('Optional free-text presentation category for organizing fieldgroups'),
   description: z.string().optional().describe('Optional fieldgroup description'),
   fields: z
     .array(schemaFieldInputSchema)

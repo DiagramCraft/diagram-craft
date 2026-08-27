@@ -20,6 +20,7 @@ const secondWorkspaceEnums: WorkspaceEnumDbResult[] = [
     id: SEED_ENUM_IDS.platform,
     workspace: WORKSPACE2_ID,
     name: 'Platform',
+    category: 'Architecture',
     options: [
       { value: 'ios', label: 'iOS' },
       { value: 'android', label: 'Android' },

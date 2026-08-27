@@ -185,8 +185,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createEnum(input: WorkspaceEnumDbCreate) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`
-        INSERT INTO workspace_enum (id, workspace, name, options, sort_order, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${this.json(input.options)}, ${input.sort_order}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO workspace_enum (id, workspace, name, category, options, sort_order, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.category ?? null}, ${this.json(input.options)}, ${input.sort_order}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
       return catalogMappers.workspaceEnum(row!);
@@ -200,6 +200,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       const [row] = await this.sql<DatabaseRow[]>`
         UPDATE workspace_enum
         SET name = ${input.name},
+            category = ${input.category ?? null},
             options = ${this.json(input.options)},
             sort_order = ${input.sort_order},
             updated_at = ${input.updated_at}
@@ -242,8 +243,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createSharedFieldGroup(input: SharedFieldGroupDbCreate) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`
-        INSERT INTO workspace_field_group (id, workspace, name, description, fields, sort_order, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.description}, ${this.json(input.fields)}, ${input.sort_order}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO workspace_field_group (id, workspace, name, category, description, fields, sort_order, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.category ?? null}, ${input.description}, ${this.json(input.fields)}, ${input.sort_order}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
       return catalogMappers.sharedFieldGroup(row!);
@@ -256,7 +257,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     try {
       const [row] = await this.sql<DatabaseRow[]>`
         UPDATE workspace_field_group
-        SET name = ${input.name}, description = ${input.description}, fields = ${this.json(input.fields)}, sort_order = ${input.sort_order}, updated_at = ${input.updated_at}
+        SET name = ${input.name}, category = ${input.category ?? null}, description = ${input.description}, fields = ${this.json(input.fields)}, sort_order = ${input.sort_order}, updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
       `;
