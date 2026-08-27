@@ -274,6 +274,128 @@ runContractSuiteAgainstBothDrivers('entityQueryIRCompiler', (getDb, driver) => {
     expect(matches.map(e => e.id)).toEqual([componentAtRisk.id]);
   });
 
+  it('matches "before/after/on $now" against a date field, consistently on both dialects', async () => {
+    const db = getDb();
+    const workspace = await createFixtureWorkspace(db);
+
+    const schema = await createSchema(db, workspace, {
+      name: 'Component',
+      fields: [{ id: 'review_date', name: 'Review Date', type: 'date' }]
+    });
+
+    const toIsoDate = (offsetDays: number): string => {
+      const d = new Date();
+      d.setUTCHours(0, 0, 0, 0);
+      d.setUTCDate(d.getUTCDate() + offsetDays);
+      return d.toISOString().slice(0, 10);
+    };
+
+    const yesterday = await createFixtureEntity(db, workspace, schema.id, {
+      data: { review_date: toIsoDate(-1) }
+    });
+    const today = await createFixtureEntity(db, workspace, schema.id, {
+      data: { review_date: toIsoDate(0) }
+    });
+    const in30Days = await createFixtureEntity(db, workspace, schema.id, {
+      data: { review_date: toIsoDate(30) }
+    });
+    const in60Days = await createFixtureEntity(db, workspace, schema.id, {
+      data: { review_date: toIsoDate(60) }
+    });
+    const sevenDaysAgo = await createFixtureEntity(db, workspace, schema.id, {
+      data: { review_date: toIsoDate(-7) }
+    });
+
+    const schemas: SchemaCatalog = new Map([[schema.id, schema]]);
+
+    const beforeNow = await runQuery(db, driver, workspace, schemas, {
+      schemaId: schema.id,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'review_date',
+        op: 'before',
+        value: { $now: true }
+      }
+    });
+    expect(beforeNow.map(e => e.id).sort()).toEqual([yesterday.id, sevenDaysAgo.id].sort());
+
+    const afterNow = await runQuery(db, driver, workspace, schemas, {
+      schemaId: schema.id,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'review_date',
+        op: 'after',
+        value: { $now: true }
+      }
+    });
+    expect(afterNow.map(e => e.id).sort()).toEqual([in30Days.id, in60Days.id].sort());
+
+    const onNow = await runQuery(db, driver, workspace, schemas, {
+      schemaId: schema.id,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'review_date',
+        op: 'on',
+        value: { $now: true }
+      }
+    });
+    expect(onNow.map(e => e.id)).toEqual([today.id]);
+
+    // Composite "approaching within 30 days" window: after $now AND before/on $now+30d.
+    const approaching = await runQuery(db, driver, workspace, schemas, {
+      schemaId: schema.id,
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [],
+            fieldId: 'review_date',
+            op: 'after',
+            value: { $now: true }
+          },
+          {
+            kind: 'predicate',
+            path: [],
+            fieldId: 'review_date',
+            op: 'on',
+            value: { $now: true, offsetDays: 30 }
+          }
+        ]
+      }
+    });
+    expect(approaching.map(e => e.id)).toEqual([in30Days.id]);
+
+    // Negative offset — "7 days ago or before".
+    const beforeSevenDaysAgo = await runQuery(db, driver, workspace, schemas, {
+      schemaId: schema.id,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'review_date',
+        op: 'on',
+        value: { $now: true, offsetDays: -7 }
+      }
+    });
+    expect(beforeSevenDaysAgo.map(e => e.id)).toEqual([sevenDaysAgo.id]);
+
+    // Regression: an existing plain-literal date filter is unaffected by the $now support.
+    const literalBefore = await runQuery(db, driver, workspace, schemas, {
+      schemaId: schema.id,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'review_date',
+        op: 'before',
+        value: toIsoDate(0)
+      }
+    });
+    expect(literalBefore.map(e => e.id).sort()).toEqual([yesterday.id, sevenDaysAgo.id].sort());
+  });
+
   it('resolves a backward single-hop with an explicit ownerSchemaId', async () => {
     const db = getDb();
     const workspace = await createFixtureWorkspace(db);

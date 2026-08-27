@@ -1,9 +1,10 @@
 import React from 'react';
-import { TbPlus, TbX } from 'react-icons/tb';
+import { TbCalendar, TbCalendarTime, TbPlus, TbX } from 'react-icons/tb';
 import { Select } from '@diagram-craft/app-components/Select';
 import { TextInput } from '@diagram-craft/app-components/TextInput';
 import { DateInput } from '@diagram-craft/app-components/DateInput';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import { isNowDateLiteral } from '@arch-register/api-types/nowDateLiteral';
 import styles from './FilterBuilder.module.css';
 import { EmptyState } from './EmptyState';
 import { EntitySchema } from '@arch-register/api-types/schemaContract';
@@ -407,10 +408,50 @@ export const FilterRow = ({
               ))}
             </Select.Root>
           ) : field.type === 'date' ? (
-            <DateInput
-              value={(condition.value as string) ?? ''}
-              onChange={v => onUpdate({ value: v })}
-            />
+            isNowDateLiteral(condition.value) ? (
+              <div className={styles.relativeDateRow}>
+                <span>Today</span>
+                <input
+                  type="number"
+                  step="1"
+                  className={styles.relativeDateOffset}
+                  value={condition.value.offsetDays ?? 0}
+                  onChange={e => {
+                    const offsetDays = Number(e.target.value);
+                    onUpdate({
+                      value: {
+                        $now: true,
+                        ...(Number.isInteger(offsetDays) && offsetDays !== 0 ? { offsetDays } : {})
+                      }
+                    });
+                  }}
+                />
+                <span>days</span>
+                <button
+                  type="button"
+                  className={styles.relativeDateToggle}
+                  onClick={() => onUpdate({ value: '' })}
+                  title="Use a fixed date"
+                >
+                  <TbCalendar size={12} />
+                </button>
+              </div>
+            ) : (
+              <div className={styles.relativeDateRow}>
+                <DateInput
+                  value={(condition.value as string) ?? ''}
+                  onChange={v => onUpdate({ value: v })}
+                />
+                <button
+                  type="button"
+                  className={styles.relativeDateToggle}
+                  onClick={() => onUpdate({ value: { $now: true } })}
+                  title="Relative to today"
+                >
+                  <TbCalendarTime size={12} />
+                </button>
+              </div>
+            )
           ) : field.type === 'number' ? (
             <input
               type="number"

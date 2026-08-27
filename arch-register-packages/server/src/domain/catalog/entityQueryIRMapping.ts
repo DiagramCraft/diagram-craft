@@ -21,6 +21,9 @@ export const filterConditionsToEntityQueryIR = (
       path: [],
       fieldId: condition.fieldId,
       op: condition.op,
+      // A `$now` relative-date marker (see `@arch-register/api-types/nowDateLiteral`) passes
+      // through untouched here — it's opaque to mapping and interpreted downstream by
+      // `filterBuilder.ts`/`dataHelpers.ts`.
       value: condition.value
     }))
   };

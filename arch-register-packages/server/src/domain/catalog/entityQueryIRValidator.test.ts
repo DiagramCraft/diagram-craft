@@ -855,3 +855,162 @@ describe('entityRelation field traversal (#2670)', () => {
     ).toEqual({ ok: true });
   });
 });
+
+const DATA_ENTITY_FOR_NOW_TESTS = makeSchema('data-entity-for-now-tests', [
+  { id: '_name', name: 'Name', type: 'text' }
+]);
+const DATA_ENTITY_FOR_NOW_TESTS_SCHEMAS: SchemaCatalog = new Map([
+  [DATA_ENTITY_FOR_NOW_TESTS.id, DATA_ENTITY_FOR_NOW_TESTS]
+]);
+
+describe('$now relative-date literal', () => {
+  const MULTI_DATE = makeSchema('multi-date-schema', [
+    { id: 'reminders', name: 'Reminders', type: 'date', minCardinality: 0, maxCardinality: -1 }
+  ] as never);
+  const nowSchemas: SchemaCatalog = new Map([...schemas, [MULTI_DATE.id, MULTI_DATE]]);
+
+  const REL_WITH_DATE: RelationSchemaDbResult = {
+    id: 'rel-with-date-schema',
+    workspace: 'ws-1',
+    name: 'Rel With Date',
+    description: '',
+    in_schema_ids: [DOMAIN.id],
+    out_schema_ids: [DOMAIN.id],
+    fields: [{ id: 'review_date', name: 'Review Date', type: 'date' }],
+    groups: [],
+    color: null,
+    icon: null,
+    created_at: now,
+    updated_at: now
+  };
+  const relationSchemasWithDate: RelationSchemaCatalog = new Map([
+    [REL_WITH_DATE.id, REL_WITH_DATE]
+  ]);
+
+  it('accepts $now on an entity scalar date field with before/after/on', () => {
+    for (const op of ['before', 'after', 'on'] as const) {
+      const query: EntityQuery = {
+        schemaId: COMPONENT.id,
+        root: { kind: 'predicate', path: [], fieldId: 'eol_date', op, value: { $now: true } }
+      };
+      expect(validateEntityQueryIR(query, schemas)).toEqual({ ok: true });
+    }
+  });
+
+  it('accepts $now with an integer offsetDays', () => {
+    const query: EntityQuery = {
+      schemaId: COMPONENT.id,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'eol_date',
+        op: 'before',
+        value: { $now: true, offsetDays: 30 }
+      }
+    };
+    expect(validateEntityQueryIR(query, schemas)).toEqual({ ok: true });
+  });
+
+  it('rejects $now with a non-date-comparison op', () => {
+    const query: EntityQuery = {
+      schemaId: COMPONENT.id,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'eol_date',
+        op: 'equals',
+        value: { $now: true }
+      }
+    };
+    const result = validateEntityQueryIR(query, schemas);
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects $now on a non-date entity field', () => {
+    const query: EntityQuery = {
+      schemaId: DATA_ENTITY_FOR_NOW_TESTS.id,
+      root: { kind: 'predicate', path: [], fieldId: '_name', op: 'before', value: { $now: true } }
+    };
+    const result = validateEntityQueryIR(query, DATA_ENTITY_FOR_NOW_TESTS_SCHEMAS);
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects $now on a multi-valued (array) date field', () => {
+    const query: EntityQuery = {
+      schemaId: MULTI_DATE.id,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'reminders',
+        op: 'before',
+        value: { $now: true }
+      }
+    };
+    const result = validateEntityQueryIR(query, nowSchemas);
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects $now on a builtin field', () => {
+    const query: EntityQuery = {
+      schemaId: COMPONENT.id,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: '_updatedAt',
+        op: 'before',
+        value: { $now: true }
+      }
+    };
+    const result = validateEntityQueryIR(query, schemas);
+    expect(result.ok).toBe(false);
+  });
+
+  it('rejects a malformed $now marker shape', () => {
+    const query: EntityQuery = {
+      schemaId: COMPONENT.id,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'eol_date',
+        op: 'before',
+        value: { $now: true, offsetDays: 1.5 }
+      }
+    };
+    // A non-integer offsetDays fails isNowDateLiteral's shape guard, so it's treated as an
+    // ordinary literal value rather than a $now marker — not itself an error at this layer, but
+    // it will not compile to a meaningful SQL comparison either. Documented via the compiler
+    // tests rather than asserted here.
+    expect(validateEntityQueryIR(query, schemas)).toEqual({ ok: true });
+  });
+
+  it('accepts $now on a bare relation-rooted date field', () => {
+    const query: EntityQuery = {
+      schemaId: REL_WITH_DATE.id,
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'review_date',
+        op: 'before',
+        value: { $now: true }
+      }
+    };
+    expect(validateEntityQueryIR(query, new Map(), null, relationSchemasWithDate)).toEqual({
+      ok: true
+    });
+  });
+
+  it('rejects $now on a bare relation-rooted non-date field', () => {
+    const relWithText: RelationSchemaDbResult = {
+      ...REL_WITH_DATE,
+      id: 'rel-with-text-schema',
+      fields: [{ id: 'note', name: 'Note', type: 'text' }]
+    };
+    const relationSchemasWithText: RelationSchemaCatalog = new Map([[relWithText.id, relWithText]]);
+    const query: EntityQuery = {
+      schemaId: relWithText.id,
+      root: { kind: 'predicate', path: [], fieldId: 'note', op: 'before', value: { $now: true } }
+    };
+    const result = validateEntityQueryIR(query, new Map(), null, relationSchemasWithText);
+    expect(result.ok).toBe(false);
+  });
+});

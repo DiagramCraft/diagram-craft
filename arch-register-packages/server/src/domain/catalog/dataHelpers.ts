@@ -20,6 +20,7 @@ import {
 import { filterRelationFieldData } from './relationHelpers';
 import { canViewTypedRelationFromEndpoint, canViewTypedRelation } from './relationAccessControl';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
+import { isNowDateLiteral } from '@arch-register/api-types/nowDateLiteral';
 import {
   externalUpdateEnvelopeSchema,
   type ExternalUpdateEnvelope
@@ -55,6 +56,20 @@ const comparableFilterValue = (value: unknown): unknown => {
   return value;
 };
 
+// Resolves a filter's expected date, including the `{ $now, offsetDays }` relative-date marker
+// (see `@arch-register/api-types/nowDateLiteral`) to UTC-midnight-of-today (optionally offset) —
+// matching the UTC anchoring the SQL dialect adapter uses for the same marker, so both evaluation
+// paths agree.
+const resolveExpectedDate = (value: unknown): Date => {
+  if (isNowDateLiteral(value)) {
+    const d = new Date();
+    d.setUTCHours(0, 0, 0, 0);
+    if (value.offsetDays) d.setUTCDate(d.getUTCDate() + value.offsetDays);
+    return d;
+  }
+  return new Date(String(value));
+};
+
 const matchesScalarFilterCondition = (value: unknown, condition: FilterCondition): boolean => {
   const comparable = comparableFilterValue(value);
   const expected = condition.value;
@@ -80,19 +95,19 @@ const matchesScalarFilterCondition = (value: unknown, condition: FilterCondition
     case 'before': {
       const valueTime =
         comparable instanceof Date ? comparable.getTime() : new Date(String(comparable)).getTime();
-      const expectedTime = new Date(String(expected)).getTime();
+      const expectedTime = resolveExpectedDate(expected).getTime();
       return !Number.isNaN(valueTime) && !Number.isNaN(expectedTime) && valueTime < expectedTime;
     }
     case 'after': {
       const valueTime =
         comparable instanceof Date ? comparable.getTime() : new Date(String(comparable)).getTime();
-      const expectedTime = new Date(String(expected)).getTime();
+      const expectedTime = resolveExpectedDate(expected).getTime();
       return !Number.isNaN(valueTime) && !Number.isNaN(expectedTime) && valueTime > expectedTime;
     }
     case 'on': {
       const valueTime =
         comparable instanceof Date ? comparable.getTime() : new Date(String(comparable)).getTime();
-      const expectedTime = new Date(String(expected)).getTime();
+      const expectedTime = resolveExpectedDate(expected).getTime();
       return !Number.isNaN(valueTime) && !Number.isNaN(expectedTime) && valueTime === expectedTime;
     }
     default:

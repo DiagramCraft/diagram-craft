@@ -325,5 +325,94 @@ describe('filterBuilder', () => {
         ).toBe("CAST(json_extract(e.data, '$.cost.amount') AS NUMERIC) > CAST($100 AS NUMERIC)");
       });
     });
+
+    describe('$now relative-date literal', () => {
+      it('renders a raw postgres now-date expression for before/after/on, not a bound param', () => {
+        expect(
+          buildConditionClause(
+            'e.review_date',
+            { fieldId: 'reviewDate', op: 'before', value: { $now: true } },
+            mockAddParam,
+            'postgres'
+          )
+        ).toBe(`e.review_date < to_char((NOW() AT TIME ZONE 'UTC')::date, 'YYYY-MM-DD')`);
+
+        expect(
+          buildConditionClause(
+            'e.review_date',
+            { fieldId: 'reviewDate', op: 'after', value: { $now: true, offsetDays: 30 } },
+            mockAddParam,
+            'postgres'
+          )
+        ).toBe(
+          `e.review_date > to_char((NOW() AT TIME ZONE 'UTC')::date + INTERVAL '30 days', 'YYYY-MM-DD')`
+        );
+
+        expect(
+          buildConditionClause(
+            'e.review_date',
+            { fieldId: 'reviewDate', op: 'on', value: { $now: true, offsetDays: -7 } },
+            mockAddParam,
+            'postgres'
+          )
+        ).toBe(
+          `e.review_date = to_char((NOW() AT TIME ZONE 'UTC')::date + INTERVAL '-7 days', 'YYYY-MM-DD')`
+        );
+      });
+
+      it('renders a raw sqlite now-date expression for before/after/on, not a bound param', () => {
+        expect(
+          buildConditionClause(
+            'e.review_date',
+            { fieldId: 'reviewDate', op: 'before', value: { $now: true } },
+            mockAddParam,
+            'sqlite'
+          )
+        ).toBe(`e.review_date < date('now')`);
+
+        expect(
+          buildConditionClause(
+            'e.review_date',
+            { fieldId: 'reviewDate', op: 'after', value: { $now: true, offsetDays: 30 } },
+            mockAddParam,
+            'sqlite'
+          )
+        ).toBe(`e.review_date > date('now', '+30 days')`);
+
+        expect(
+          buildConditionClause(
+            'e.review_date',
+            { fieldId: 'reviewDate', op: 'on', value: { $now: true, offsetDays: -7 } },
+            mockAddParam,
+            'sqlite'
+          )
+        ).toBe(`e.review_date = date('now', '-7 days')`);
+      });
+
+      it('leaves plain literal date values routed through addParam unaffected', () => {
+        expect(
+          buildConditionClause(
+            'e.review_date',
+            { fieldId: 'reviewDate', op: 'before', value: '2026-01-01' },
+            mockAddParam,
+            'postgres'
+          )
+        ).toBe('e.review_date < $2026-01-01');
+      });
+
+      it('does not special-case $now for array-valued (kind: array) date columns', () => {
+        const result = buildConditionClause(
+          'e.tags',
+          { fieldId: '_tags', op: 'before', value: { $now: true } },
+          mockAddParam,
+          'postgres',
+          'array'
+        );
+        // Falls through to the array-clause's normal String() coercion of the raw value.
+        expect(result).toBe(
+          "EXISTS (SELECT 1 FROM jsonb_array_elements_text(CASE WHEN jsonb_typeof(e.tags) = 'array' THEN e.tags ELSE '[]'::jsonb END) t WHERE t < $[object Object])"
+        );
+      });
+    });
   });
 });
