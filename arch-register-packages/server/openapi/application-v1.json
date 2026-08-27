@@ -75769,6 +75769,17 @@
                         "type": "string",
                         "description": "Enumeration name (must be unique within workspace)"
                       },
+                      "category": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Optional free-text presentation category for organizing enumerations"
+                      },
                       "options": {
                         "type": "array",
                         "items": {
@@ -75831,6 +75842,7 @@
                       "id",
                       "workspace",
                       "name",
+                      "category",
                       "options",
                       "sort_order",
                       "created_at",
@@ -75871,6 +75883,17 @@
                   "name": {
                     "type": "string",
                     "description": "Enumeration name (must be unique within workspace)"
+                  },
+                  "category": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional free-text presentation category for organizing enumerations"
                   },
                   "options": {
                     "type": "array",
@@ -75946,6 +75969,17 @@
                       "type": "string",
                       "description": "Enumeration name (must be unique within workspace)"
                     },
+                    "category": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional free-text presentation category for organizing enumerations"
+                    },
                     "options": {
                       "type": "array",
                       "items": {
@@ -76008,6 +76042,7 @@
                     "id",
                     "workspace",
                     "name",
+                    "category",
                     "options",
                     "sort_order",
                     "created_at",
@@ -76068,6 +76103,17 @@
                       "type": "string",
                       "description": "Enumeration name (must be unique within workspace)"
                     },
+                    "category": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional free-text presentation category for organizing enumerations"
+                    },
                     "options": {
                       "type": "array",
                       "items": {
@@ -76130,6 +76176,7 @@
                     "id",
                     "workspace",
                     "name",
+                    "category",
                     "options",
                     "sort_order",
                     "created_at",
@@ -76178,6 +76225,17 @@
                   "name": {
                     "type": "string",
                     "description": "Enumeration name (must be unique within workspace)"
+                  },
+                  "category": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional free-text presentation category for organizing enumerations"
                   },
                   "options": {
                     "type": "array",
@@ -76253,6 +76311,17 @@
                       "type": "string",
                       "description": "Enumeration name (must be unique within workspace)"
                     },
+                    "category": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional free-text presentation category for organizing enumerations"
+                    },
                     "options": {
                       "type": "array",
                       "items": {
@@ -76315,6 +76384,7 @@
                     "id",
                     "workspace",
                     "name",
+                    "category",
                     "options",
                     "sort_order",
                     "created_at",
@@ -76420,6 +76490,17 @@
                       "name": {
                         "type": "string",
                         "description": "Fieldgroup name (unique within workspace)"
+                      },
+                      "category": {
+                        "anyOf": [
+                          {
+                            "type": "string"
+                          },
+                          {
+                            "type": "null"
+                          }
+                        ],
+                        "description": "Optional free-text presentation category for organizing fieldgroups"
                       },
                       "description": {
                         "type": "string",
@@ -77555,6 +77636,7 @@
                       "id",
                       "workspace",
                       "name",
+                      "category",
                       "fields",
                       "sort_order",
                       "created_at",
@@ -77594,6 +77676,17 @@
                   "name": {
                     "type": "string",
                     "description": "Fieldgroup name (unique within workspace)"
+                  },
+                  "category": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional free-text presentation category for organizing fieldgroups"
                   },
                   "description": {
                     "type": "string",
@@ -78663,6 +78756,17 @@
                       "type": "string",
                       "description": "Fieldgroup name (unique within workspace)"
                     },
+                    "category": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional free-text presentation category for organizing fieldgroups"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Optional fieldgroup description"
@@ -79797,6 +79901,7 @@
                     "id",
                     "workspace",
                     "name",
+                    "category",
                     "fields",
                     "sort_order",
                     "created_at",
@@ -79856,6 +79961,17 @@
                       "type": "string",
                       "description": "Fieldgroup name (unique within workspace)"
                     },
+                    "category": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional free-text presentation category for organizing fieldgroups"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Optional fieldgroup description"
@@ -80990,6 +81106,7 @@
                     "id",
                     "workspace",
                     "name",
+                    "category",
                     "fields",
                     "sort_order",
                     "created_at",
@@ -81037,6 +81154,17 @@
                   "name": {
                     "type": "string",
                     "description": "Fieldgroup name (unique within workspace)"
+                  },
+                  "category": {
+                    "anyOf": [
+                      {
+                        "type": "string"
+                      },
+                      {
+                        "type": "null"
+                      }
+                    ],
+                    "description": "Optional free-text presentation category for organizing fieldgroups"
                   },
                   "description": {
                     "type": "string",
@@ -82135,6 +82263,17 @@
                       "type": "string",
                       "description": "Fieldgroup name (unique within workspace)"
                     },
+                    "category": {
+                      "anyOf": [
+                        {
+                          "type": "string"
+                        },
+                        {
+                          "type": "null"
+                        }
+                      ],
+                      "description": "Optional free-text presentation category for organizing fieldgroups"
+                    },
                     "description": {
                       "type": "string",
                       "description": "Optional fieldgroup description"
@@ -83269,6 +83408,7 @@
                     "id",
                     "workspace",
                     "name",
+                    "category",
                     "fields",
                     "sort_order",
                     "created_at",

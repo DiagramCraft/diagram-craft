@@ -18,8 +18,7 @@ export const useCreateFieldGroup = (workspaceSlug: string) => {
       category?: string | null;
       description?: string;
       fields?: SchemaField[];
-    }) =>
-      orpcClient.fieldGroups.create({ params: { workspace: workspaceSlug }, body }),
+    }) => orpcClient.fieldGroups.create({ params: { workspace: workspaceSlug }, body }),
     onSuccess: () => invalidateFieldGroupQueries(queryClient, workspaceSlug)
   });
 };

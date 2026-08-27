@@ -15,8 +15,7 @@ export const useCreateEnum = (workspaceSlug: string) => {
       name: string;
       category?: string | null;
       options?: WorkspaceEnumOptionInput[];
-    }) =>
-      orpcClient.enums.create({ params: { workspace: workspaceSlug }, body }),
+    }) => orpcClient.enums.create({ params: { workspace: workspaceSlug }, body }),
     onSuccess: () => invalidateEnumQueries(queryClient, workspaceSlug)
   });
 };
