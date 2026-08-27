@@ -41,6 +41,9 @@ export const SchemaSettingsSidebar = ({
   const fieldGroupId = search.fieldGroupId ?? null;
   const relationSchemaId = search.relationSchema ?? null;
   const schemaGroups = groupSchemasByCategory(schemas);
+  const relationSchemaGroups = groupSchemasByCategory(relationSchemas);
+  const enumGroups = groupSchemasByCategory(enums);
+  const fieldGroupGroups = groupSchemasByCategory(fieldGroups);
 
   const activateTab = (tab: SchemaSettingsTab) => {
     navigate({
@@ -100,75 +103,92 @@ export const SchemaSettingsSidebar = ({
         </div>
       ) : activeTab === 'relation-types' ? (
         <div className={styles.scroll}>
-          <SidebarGroupLabel>Relation types</SidebarGroupLabel>
           {relationSchemas.length === 0 && (
             <div className={`${styles.emptyState} dim`}>No relation types defined.</div>
           )}
-          {relationSchemas.map((s, i) => (
-            <TreeRow
-              key={s.id}
-              testId={`relation-schema-type-${s.name}`}
-              icon={
-                <TypeBadge color={resolveSchemaColor(s, i)} name={s.name} icon={s.icon} size={14} />
-              }
-              label={s.name}
-              active={relationSchemaId === s.id}
-              onClick={() =>
-                navigate({
-                  to: '/$workspaceSlug/settings/schemas',
-                  params: { workspaceSlug },
-                  search: { tab: 'relation-types', relationSchema: s.id }
-                })
-              }
-              tagColor={resolveSchemaColor(s, i)}
-              trailing={<span className="dim mono">{s.relation_count}</span>}
-            />
+          {relationSchemaGroups.map(group => (
+            <div key={group.category}>
+              <SidebarGroupLabel>{group.category}</SidebarGroupLabel>
+              {group.items.map(({ schema: s, index: i }) => (
+                <TreeRow
+                  key={s.id}
+                  testId={`relation-schema-type-${s.name}`}
+                  icon={
+                    <TypeBadge
+                      color={resolveSchemaColor(s, i)}
+                      name={s.name}
+                      icon={s.icon}
+                      size={14}
+                    />
+                  }
+                  label={s.name}
+                  active={relationSchemaId === s.id}
+                  onClick={() =>
+                    navigate({
+                      to: '/$workspaceSlug/settings/schemas',
+                      params: { workspaceSlug },
+                      search: { tab: 'relation-types', relationSchema: s.id }
+                    })
+                  }
+                  tagColor={resolveSchemaColor(s, i)}
+                  trailing={<span className="dim mono">{s.relation_count}</span>}
+                />
+              ))}
+            </div>
           ))}
         </div>
       ) : activeTab === 'enums' ? (
         <div className={styles.scroll}>
-          <SidebarGroupLabel>Enums</SidebarGroupLabel>
           {enums.length === 0 && (
             <div className={`${styles.emptyState} dim`}>No enums defined.</div>
           )}
-          {enums.map(e => (
-            <TreeRow
-              key={e.id}
-              icon={<TbTable size={12} />}
-              label={e.name}
-              active={enumId === e.id}
-              onClick={() =>
-                navigate({
-                  to: '/$workspaceSlug/settings/schemas',
-                  params: { workspaceSlug },
-                  search: { tab: 'enums', enumId: e.id }
-                })
-              }
-              trailing={<span className="dim mono">{e.options.length}</span>}
-            />
+          {enumGroups.map(group => (
+            <div key={group.category}>
+              <SidebarGroupLabel>{group.category}</SidebarGroupLabel>
+              {group.items.map(({ schema: e }) => (
+                <TreeRow
+                  key={e.id}
+                  icon={<TbTable size={12} />}
+                  label={e.name}
+                  active={enumId === e.id}
+                  onClick={() =>
+                    navigate({
+                      to: '/$workspaceSlug/settings/schemas',
+                      params: { workspaceSlug },
+                      search: { tab: 'enums', enumId: e.id }
+                    })
+                  }
+                  trailing={<span className="dim mono">{e.options.length}</span>}
+                />
+              ))}
+            </div>
           ))}
         </div>
       ) : (
         <div className={styles.scroll}>
-          <SidebarGroupLabel>Shared fieldgroups</SidebarGroupLabel>
           {fieldGroups.length === 0 && (
             <div className={`${styles.emptyState} dim`}>No fieldgroups defined.</div>
           )}
-          {fieldGroups.map(group => (
-            <TreeRow
-              key={group.id}
-              icon={<TbLayoutGrid size={12} />}
-              label={group.name}
-              active={fieldGroupId === group.id}
-              onClick={() =>
-                navigate({
-                  to: '/$workspaceSlug/settings/schemas',
-                  params: { workspaceSlug },
-                  search: { tab: 'fieldgroups', fieldGroupId: group.id }
-                })
-              }
-              trailing={<span className="dim mono">{group.fields.length}</span>}
-            />
+          {fieldGroupGroups.map(group => (
+            <div key={group.category}>
+              <SidebarGroupLabel>{group.category}</SidebarGroupLabel>
+              {group.items.map(({ schema: fg }) => (
+                <TreeRow
+                  key={fg.id}
+                  icon={<TbLayoutGrid size={12} />}
+                  label={fg.name}
+                  active={fieldGroupId === fg.id}
+                  onClick={() =>
+                    navigate({
+                      to: '/$workspaceSlug/settings/schemas',
+                      params: { workspaceSlug },
+                      search: { tab: 'fieldgroups', fieldGroupId: fg.id }
+                    })
+                  }
+                  trailing={<span className="dim mono">{fg.fields.length}</span>}
+                />
+              ))}
+            </div>
           ))}
         </div>
       )}
