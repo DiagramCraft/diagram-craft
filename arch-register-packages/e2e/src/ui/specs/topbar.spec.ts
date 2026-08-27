@@ -79,7 +79,7 @@ test.describe('topbar', () => {
     );
     await expect(
       dialog.locator('label').filter({ hasText: 'Information Governance' })
-    ).toContainText('11 template objects');
+    ).toContainText('12 template objects');
     await expect(dialog).not.toContainText('entity types');
 
     await page.keyboard.press('Escape');
