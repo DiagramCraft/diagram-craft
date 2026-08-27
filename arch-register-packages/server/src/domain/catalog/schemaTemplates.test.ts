@@ -307,6 +307,7 @@ describe('instantiateTemplate', () => {
       'Processing Purposes',
       'Residency Regions',
       'Retention Time Unit',
+      'Communication Protocol',
       'PII Classification'
     ]);
     expect(
@@ -380,9 +381,20 @@ describe('instantiateTemplate', () => {
       informationGovernanceOnly.relationSchemas.some(relation => relation.name === 'Data Flow')
     ).toBe(false);
 
-    const definitions = instantiateTemplateComposition('ws-1', 'default', [
-      'information-governance'
-    ]);
+    const definitions = instantiateTemplateComposition(
+      'ws-1',
+      'default',
+      ['information-governance'],
+      new Date(),
+      {
+        dependencyMappings: [
+          {
+            dependencyId: 'information-governance:data-flow:system',
+            targets: [{ templateId: 'default', symId: 'system' }]
+          }
+        ]
+      }
+    );
     const system = definitions.schemas.find(schema => schema.name === 'System');
     const dataFlow = definitions.relationSchemas.find(relation => relation.name === 'Data Flow');
     const governanceGroup = definitions.fieldGroups.find(
@@ -443,6 +455,46 @@ describe('instantiateTemplate', () => {
     expect(
       definitions.enums.filter(enumeration => enumeration.name === 'PII Classification')
     ).toHaveLength(1);
+  });
+
+  it('requires and applies one-to-many mappings for cross-cutting dependencies', () => {
+    expect(() =>
+      instantiateTemplateComposition('ws-1', 'default', ['information-governance'])
+    ).toThrow("Template dependency 'information-governance:data-flow:system' has no mapping");
+
+    const definitions = instantiateTemplateComposition(
+      'ws-1',
+      'default',
+      ['information-governance'],
+      new Date(),
+      {
+        dependencyMappings: [
+          {
+            dependencyId: 'information-governance:data-flow:system',
+            targets: [
+              { templateId: 'default', symId: 'system' },
+              { templateId: 'default', symId: 'component' }
+            ]
+          }
+        ]
+      }
+    );
+    const dataFlow = definitions.relationSchemas.find(relation => relation.name === 'Data Flow');
+    const dataFlowTargets = new Set(dataFlow?.in_schema_ids);
+    expect(dataFlowTargets).toEqual(
+      new Set([
+        definitions.schemas.find(schema => schema.name === 'System')?.id,
+        definitions.schemas.find(schema => schema.name === 'Component')?.id
+      ])
+    );
+    for (const schemaName of ['System', 'Component']) {
+      expect(definitions.schemas.find(schema => schema.name === schemaName)?.fields).toEqual(
+        expect.arrayContaining([
+          expect.objectContaining({ id: 'data_flows_out', relationSchemaId: dataFlow?.id }),
+          expect.objectContaining({ id: 'data_flows_in', relationSchemaId: dataFlow?.id })
+        ])
+      );
+    }
   });
 
   it('materializes enums and document definitions with remapped references', () => {

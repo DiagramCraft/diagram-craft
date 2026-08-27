@@ -8,7 +8,8 @@ import type {
   DefinitionImportPreview,
   DefinitionImportRename,
   DefinitionImportSelection,
-  DefinitionImportSource
+  DefinitionImportSource,
+  TemplateDependencyDescriptor
 } from '@arch-register/api-types/workspaceContract';
 import { useWorkspaceContext } from '../../../layouts/WorkspaceContext';
 import { orpcClient } from '../../../lib/orpcClient';
@@ -17,6 +18,11 @@ import {
   definitionImportSourcesQuery,
   invalidateDefinitionImportQueries
 } from '../../../queries/definitionImports';
+import { useSchemas } from '../../../hooks/useSchemas';
+import { useEnums } from '../../../hooks/useEnums';
+import { useRelationSchemas } from '../../../hooks/useRelationSchemas';
+import { useFieldGroups } from '../../../hooks/useFieldGroups';
+import { useDocumentTypes } from '../../../hooks/useDocuments';
 import styles from './ExportImportSubSection.module.css';
 
 const sourceKey = (source: DefinitionImportSource) => `${source.kind}:${source.id}`;
@@ -77,6 +83,7 @@ export const DefinitionImportSubSection = () => {
   const [sourceKeyValue, setSourceKeyValue] = useState('');
   const [selection, setSelection] = useState<DefinitionImportSelection>(emptySelection);
   const [renames, setRenames] = useState<DefinitionImportRename[]>([]);
+  const [dependencyMappings, setDependencyMappings] = useState<Record<string, string[]>>({});
   const [preview, setPreview] = useState<DefinitionImportPreview | null>(null);
   const [confirmed, setConfirmed] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -84,6 +91,12 @@ export const DefinitionImportSubSection = () => {
   const sourcesQuery = useQuery(
     definitionImportSourcesQuery(workspaceSlug, permissions.canAdministerWorkspace ?? false)
   );
+  const definitionsEnabled = permissions.canAdministerWorkspace ?? false;
+  const { data: schemas = [] } = useSchemas(workspaceSlug, definitionsEnabled);
+  const { data: enums = [] } = useEnums(workspaceSlug, definitionsEnabled);
+  const { data: relationSchemas = [] } = useRelationSchemas(workspaceSlug, definitionsEnabled);
+  const { data: fieldGroups = [] } = useFieldGroups(workspaceSlug, definitionsEnabled);
+  const { data: documentTypes = [] } = useDocumentTypes(workspaceSlug, definitionsEnabled);
 
   const source = useMemo(() => {
     return sourcesQuery.data?.find(
@@ -91,15 +104,59 @@ export const DefinitionImportSubSection = () => {
     );
   }, [sourceKeyValue, sourcesQuery.data]);
 
+  const activeDependencies = useMemo(() => {
+    if (!source) return [];
+    const isSelected = (dependency: TemplateDependencyDescriptor['required_by'][number]) => {
+      if (dependency.kind === 'schema') return selection.schemas.includes(dependency.id);
+      if (dependency.kind === 'enum') return selection.enums.includes(dependency.id);
+      if (dependency.kind === 'fieldGroup') return selection.fieldGroups.includes(dependency.id);
+      if (dependency.kind === 'relationSchema')
+        return selection.relationSchemas.includes(dependency.id);
+      return selection.documentTypes.includes(dependency.id);
+    };
+    return source.dependencies.filter(
+      dependency => dependency.required_by.length === 0 || dependency.required_by.some(isSelected)
+    );
+  }, [selection, source]);
+
+  const dependencyTargetDefinitions = useMemo<
+    Record<TemplateDependencyDescriptor['target_kind'], Array<{ id: string; name: string }>>
+  >(
+    () => ({
+      schema: schemas.map(schema => ({ id: schema.id, name: schema.name })),
+      enum: enums.map(enumeration => ({ id: enumeration.id, name: enumeration.name })),
+      relationSchema: relationSchemas.map(schema => ({ id: schema.id, name: schema.name })),
+      fieldGroup: fieldGroups.map(group => ({ id: group.id, name: group.name })),
+      documentType: documentTypes.map(type => ({ id: type.id, name: type.name }))
+    }),
+    [documentTypes, enums, fieldGroups, relationSchemas, schemas]
+  );
+
+  const dependencyMappingPayload = activeDependencies.flatMap(dependency => {
+    const targetIds = dependencyMappings[dependency.id] ?? [];
+    return targetIds.length > 0 ? [{ dependencyId: dependency.id, targetIds }] : [];
+  });
+
   const previewMutation = useMutation({
     mutationFn: () =>
       orpcClient.workspaces.definitionImportPreview({
         params: { workspace: workspaceSlug },
-        body: { source: { kind: source!.kind, id: source!.id }, selection, renames }
+        body: {
+          source: { kind: source!.kind, id: source!.id },
+          selection,
+          renames,
+          dependencyMappings: dependencyMappingPayload
+        }
       }),
     onSuccess: result => {
-      setPreview(result as DefinitionImportPreview);
-      setRenames((result as DefinitionImportPreview).renames);
+      const nextPreview = result as DefinitionImportPreview;
+      setPreview(nextPreview);
+      setRenames(nextPreview.renames);
+      setDependencyMappings(
+        Object.fromEntries(
+          nextPreview.dependencyMappings.map(mapping => [mapping.dependencyId, mapping.targetIds])
+        )
+      );
       setConfirmed(false);
       setError(null);
     },
@@ -121,6 +178,8 @@ export const DefinitionImportSubSection = () => {
           relationSchemas: preview!.relationSchemas,
           fieldGroups: preview!.fieldGroups,
           dashboardWidgets: preview!.dashboardWidgets,
+          dependencyMappings: preview!.dependencyMappings,
+          schemaPatches: preview!.schemaPatches,
           keyPrefixRemaps: preview!.keyPrefixRemaps,
           fingerprint: preview!.fingerprint,
           confirmed: true
@@ -131,6 +190,7 @@ export const DefinitionImportSubSection = () => {
       setPreview(null);
       setSelection(emptySelection);
       setRenames([]);
+      setDependencyMappings({});
       setConfirmed(false);
       setError(null);
     },
@@ -149,6 +209,20 @@ export const DefinitionImportSubSection = () => {
 
   const toggleDashboard = (value: boolean) => {
     setSelection(previous => ({ ...previous, dashboard: value }));
+    setPreview(null);
+    setConfirmed(false);
+  };
+
+  const toggleDependencyTarget = (dependencyId: string, targetId: string, value: boolean) => {
+    setDependencyMappings(previous => {
+      const current = previous[dependencyId] ?? [];
+      return {
+        ...previous,
+        [dependencyId]: value
+          ? [...current, targetId].filter((item, index, all) => all.indexOf(item) === index)
+          : current.filter(item => item !== targetId)
+      };
+    });
     setPreview(null);
     setConfirmed(false);
   };
@@ -194,6 +268,7 @@ export const DefinitionImportSubSection = () => {
                 setSourceKeyValue(value ?? '');
                 setSelection(emptySelection);
                 setRenames([]);
+                setDependencyMappings({});
                 setPreview(null);
                 setConfirmed(false);
               }}
@@ -242,6 +317,58 @@ export const DefinitionImportSubSection = () => {
             );
           })}
 
+        {source && activeDependencies.length > 0 && (
+          <div className={styles.field}>
+            <div className={styles.fieldLeft}>
+              <div className={styles.fieldLabel}>Resolve dependencies</div>
+              <div className={styles.fieldHint}>
+                Choose existing destination definitions for the selected cross-cutting extension.
+                The import and its schema updates are atomic.
+              </div>
+            </div>
+            <div className={styles.fieldRight}>
+              {activeDependencies.map(dependency => {
+                const targets = dependencyTargetDefinitions[dependency.target_kind];
+                const selectedTargets = dependencyMappings[dependency.id] ?? [];
+                return (
+                  <div className={styles.dependencyMapping} key={dependency.id}>
+                    <div className={styles.dependencyMappingTitle}>{dependency.name}</div>
+                    <div className={styles.dependencyMappingDescription}>
+                      {dependency.description}
+                    </div>
+                    <div className={styles.checkboxGroup}>
+                      {targets.map(target => (
+                        <label className={styles.checkboxRow} key={target.id}>
+                          <Checkbox
+                            value={selectedTargets.includes(target.id)}
+                            onChange={value =>
+                              toggleDependencyTarget(dependency.id, target.id, value ?? false)
+                            }
+                          />
+                          <span>{target.name}</span>
+                        </label>
+                      ))}
+                      {targets.length === 0 && (
+                        <div className={styles.note}>
+                          No destination {dependency.target_kind} definitions are available.
+                        </div>
+                      )}
+                    </div>
+                    <div className={styles.dependencyMappingRequirement}>
+                      Select at least {dependency.min_targets} target
+                      {dependency.min_targets === 1 ? '' : 's'}
+                      {dependency.max_targets === undefined
+                        ? ''
+                        : ` and at most ${dependency.max_targets}`}
+                      .
+                    </div>
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
         {source && source.dashboardWidgets.length > 0 && (
           <div className={styles.field}>
             <div className={styles.fieldLeft}>
@@ -281,6 +408,10 @@ export const DefinitionImportSubSection = () => {
                 <div className={styles.summaryItem}>
                   <span className={styles.summaryCount}>{preview.dashboardWidgets.length}</span>
                   <span className={styles.summaryLabel}>dashboard widgets</span>
+                </div>
+                <div className={styles.summaryItem}>
+                  <span className={styles.summaryCount}>{preview.schemaPatches.length}</span>
+                  <span className={styles.summaryLabel}>schema updates</span>
                 </div>
               </div>
               {preview.errors.length > 0 && (

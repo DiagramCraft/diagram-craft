@@ -32,7 +32,58 @@ import type { RelationSchemaDbCreate } from './db/relationDatabase';
 import type { SavedViewDbCreate } from './db/catalogDatabase';
 import { normalizePublicIdPrefix } from '../../utils/publicIds';
 
-export type SymbolicReference = string | { templateId: string; symId: string };
+export type TemplateDependencyKind =
+  | 'schema'
+  | 'enum'
+  | 'fieldGroup'
+  | 'relationSchema'
+  | 'documentType';
+
+export type SymbolicDependencyReference = { dependencyId: string };
+
+export type SymbolicReference =
+  | string
+  | { templateId: string; symId: string }
+  | SymbolicDependencyReference;
+
+export type SymbolicTemplateDependency = {
+  id: string;
+  name: string;
+  description: string;
+  kind: TemplateDependencyKind;
+  minTargets: number;
+  maxTargets?: number;
+};
+
+export type TemplateDependencyTarget = { templateId: string; symId: string };
+
+export type TemplateDependencyMapping = {
+  dependencyId: string;
+  targets: readonly TemplateDependencyTarget[];
+};
+
+export const templateDependencyKey = (ownerId: string, dependencyId: string) =>
+  `${ownerId}:${dependencyId}`;
+
+export type TemplateDefinitionSummary = {
+  kind: Exclude<TemplateDefinitionKind, 'documentTemplate'>;
+  templateId: string;
+  symbolicId: string;
+  name: string;
+};
+
+export type TemplateDependencyDescriptor = SymbolicTemplateDependency & {
+  key: string;
+  ownerId: string;
+  requiredTemplateIds: string[];
+  requiredTemplateCategories: SchemaTemplate['category'][];
+  requiredBy: Array<{
+    kind: TemplateDependencyKind;
+    templateId: string;
+    symbolicId: string;
+    name: string;
+  }>;
+};
 
 export type SymbolicField =
   | {
@@ -228,6 +279,7 @@ export type SchemaTemplate = {
   dashboardWidgets?: SymbolicDashboardWidget[];
   capabilityConfigurations?: SymbolicCapabilityConfiguration[];
   views?: SymbolicSavedView[];
+  dependencies?: SymbolicTemplateDependency[];
   compositionExtensions?: SymbolicTemplateCompositionExtension[];
 };
 
@@ -255,12 +307,89 @@ export type SymbolicFieldGroup = {
 export type SymbolicTemplateCompositionExtension = {
   id: string;
   requiredTemplateIds: string[];
+  requiredTemplateCategories?: SchemaTemplate['category'][];
+  dependencies?: SymbolicTemplateDependency[];
   relationSchemas?: SymbolicRelationSchema[];
   schemaFields?: Array<{
     target: SymbolicReference;
     fields: SymbolicField[];
   }>;
 };
+
+export const getTemplateDefinitionSummaries = (
+  template: SchemaTemplate
+): TemplateDefinitionSummary[] => [
+  ...template.schemas.map(schema => ({
+    kind: 'schema' as const,
+    templateId: template.id,
+    symbolicId: schema.symId,
+    name: schema.name
+  })),
+  ...template.enums.map(enumeration => ({
+    kind: 'enum' as const,
+    templateId: template.id,
+    symbolicId: enumeration.id,
+    name: enumeration.name
+  })),
+  ...(template.fieldGroups ?? []).map(fieldGroup => ({
+    kind: 'fieldGroup' as const,
+    templateId: template.id,
+    symbolicId: fieldGroup.id,
+    name: fieldGroup.name
+  })),
+  ...(template.relationSchemas ?? []).map(relationSchema => ({
+    kind: 'relationSchema' as const,
+    templateId: template.id,
+    symbolicId: relationSchema.symId,
+    name: relationSchema.name
+  })),
+  ...template.documentTypes.map(documentType => ({
+    kind: 'documentType' as const,
+    templateId: template.id,
+    symbolicId: documentType.id,
+    name: documentType.name
+  })),
+  ...(template.compositionExtensions ?? []).flatMap(extension =>
+    (extension.relationSchemas ?? []).map(relationSchema => ({
+      kind: 'relationSchema' as const,
+      templateId: `${template.id}:${extension.id}`,
+      symbolicId: relationSchema.symId,
+      name: relationSchema.name
+    }))
+  )
+];
+
+export const getTemplateDependencyDescriptors = (
+  template: SchemaTemplate
+): TemplateDependencyDescriptor[] => [
+  ...(template.dependencies ?? []).map(dependency => ({
+    ...dependency,
+    key: templateDependencyKey(template.id, dependency.id),
+    ownerId: template.id,
+    requiredTemplateIds: [],
+    requiredTemplateCategories: [],
+    requiredBy: []
+  })),
+  ...(template.compositionExtensions ?? []).flatMap(extension => {
+    const ownerId = `${template.id}:${extension.id}`;
+    const requiredBy = [
+      ...(extension.relationSchemas ?? []).map(relationSchema => ({
+        kind: 'relationSchema' as const,
+        templateId: ownerId,
+        symbolicId: relationSchema.symId,
+        name: relationSchema.name
+      }))
+    ];
+    return (extension.dependencies ?? []).map(dependency => ({
+      ...dependency,
+      key: templateDependencyKey(ownerId, dependency.id),
+      ownerId,
+      requiredTemplateIds: [...extension.requiredTemplateIds],
+      requiredTemplateCategories: [...(extension.requiredTemplateCategories ?? [])],
+      requiredBy
+    }));
+  })
+];
 
 const apiProviderRelationSchema: SymbolicRelationSchema = {
   symId: 'provides-api',
@@ -350,7 +479,8 @@ const communicationProtocolEnum = enumDefinition(
     { value: 'kafka', label: 'Kafka' },
     { value: 'file-transfer', label: 'Batch File Transfer' },
     { value: 'database-replication', label: 'Database Replication' }
-  ]
+  ],
+  'communication-protocol'
 );
 
 const piiClassificationFieldGroup: SymbolicFieldGroup = {
@@ -1010,7 +1140,8 @@ const informationGovernanceEnums = [
     { value: 'days', label: 'Days' },
     { value: 'months', label: 'Months' },
     { value: 'years', label: 'Years' }
-  ])
+  ]),
+  communicationProtocolEnum
 ];
 
 const retentionPolicySchema: TemplateSchema = {
@@ -1165,8 +1296,8 @@ const dataFlowRelationSchema: SymbolicRelationSchema = {
   category: 'Data',
   inLabel: 'Sends data to System',
   outLabel: 'Receives data from System',
-  inSymSchemaIds: [{ templateId: 'default', symId: 'system' }],
-  outSymSchemaIds: [{ templateId: 'default', symId: 'system' }],
+  inSymSchemaIds: [{ dependencyId: 'system' }],
+  outSymSchemaIds: [{ dependencyId: 'system' }],
   fields: [
     {
       id: 'direction',
@@ -1186,7 +1317,7 @@ const dataFlowRelationSchema: SymbolicRelationSchema = {
       id: 'protocol',
       name: 'Protocol',
       type: 'select',
-      enumId: { templateId: 'default', symId: 'communication-protocol' },
+      enumId: { templateId: 'information-governance', symId: 'communication-protocol' },
       requirementLevel: 'optional'
     },
     {
@@ -1250,11 +1381,21 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
     compositionExtensions: [
       {
         id: 'data-flow',
-        requiredTemplateIds: ['default'],
+        requiredTemplateIds: [],
+        requiredTemplateCategories: ['full'],
+        dependencies: [
+          {
+            id: 'system',
+            name: 'System schema',
+            description: 'The schema or schemas that represent systems in this workspace.',
+            kind: 'schema',
+            minTargets: 1
+          }
+        ],
         relationSchemas: [dataFlowRelationSchema],
         schemaFields: [
           {
-            target: { templateId: 'default', symId: 'system' },
+            target: { dependencyId: 'system' },
             fields: [
               {
                 id: 'data_flows_out',
@@ -3065,6 +3206,7 @@ export type TemplateInstantiationOptions = {
     sharedId?: string
   ) => string;
   schemaKeyPrefixFactory?: (workspaceId: string, templateId: string, symbolicId: string) => string;
+  dependencyMappings?: readonly TemplateDependencyMapping[];
 };
 
 export type InstantiatedTemplateComposition = InstantiatedTemplate & {
@@ -3135,7 +3277,8 @@ const extensionTemplate = (
   fieldGroups: [],
   relationSchemas: extension.relationSchemas ?? [],
   documentTypes: [],
-  documentTemplates: []
+  documentTemplates: [],
+  dependencies: extension.dependencies
 });
 
 const createTemplateFragments = (
@@ -3153,7 +3296,13 @@ const createTemplateFragments = (
 
   for (const parent of selected) {
     for (const extension of parent.compositionExtensions ?? []) {
-      if (!extension.requiredTemplateIds.every(templateId => selectedIds.has(templateId))) {
+      const requiredIdsPresent = extension.requiredTemplateIds.every(templateId =>
+        selectedIds.has(templateId)
+      );
+      const requiredCategoriesPresent = (extension.requiredTemplateCategories ?? []).every(
+        category => selected.some(template => template.category === category)
+      );
+      if (!requiredIdsPresent || !requiredCategoriesPresent) {
         continue;
       }
       fragments.push({
@@ -3227,35 +3376,139 @@ const materializeTemplateFragments = (
     }
   }
 
-  const normalizeReference = (ownerId: string, reference: SymbolicReference) =>
-    typeof reference === 'string' ? { templateId: ownerId, symId: reference } : reference;
+  const dependencySources = new Map<string, SymbolicTemplateDependency>();
+  for (const fragment of fragments) {
+    for (const dependency of fragment.template.dependencies ?? []) {
+      const key = templateDependencyKey(fragment.ownerId, dependency.id);
+      if (dependencySources.has(key)) {
+        throw new Error(`Template dependency '${key}' is declared more than once`);
+      }
+      dependencySources.set(key, dependency);
+    }
+  }
+
+  const dependencyMappings = new Map<string, readonly TemplateDependencyTarget[]>();
+  for (const mapping of options.dependencyMappings ?? []) {
+    if (dependencyMappings.has(mapping.dependencyId)) {
+      throw new Error(`Template dependency '${mapping.dependencyId}' has multiple mappings`);
+    }
+    dependencyMappings.set(mapping.dependencyId, mapping.targets);
+  }
+  for (const dependencyId of dependencyMappings.keys()) {
+    if (!dependencySources.has(dependencyId)) {
+      throw new Error(`Template dependency '${dependencyId}' is not active in this composition`);
+    }
+  }
+
+  const normalizeReference = (
+    ownerId: string,
+    reference: SymbolicReference
+  ): { templateId: string; symId: string } => {
+    if (typeof reference === 'string') return { templateId: ownerId, symId: reference };
+    if ('dependencyId' in reference) {
+      throw new Error(`Template '${ownerId}' cannot use a dependency as a direct definition`);
+    }
+    return reference;
+  };
+
+  const resolveReferenceTargets = (
+    kind: TemplateDependencyKind,
+    ownerId: string,
+    reference: SymbolicReference
+  ): Array<{ templateId: string; symId: string }> => {
+    if (typeof reference === 'object' && 'dependencyId' in reference) {
+      const dependencyKey = templateDependencyKey(ownerId, reference.dependencyId);
+      const dependency = dependencySources.get(dependencyKey);
+      if (!dependency) {
+        throw new Error(
+          `Template '${ownerId}' references unknown dependency '${reference.dependencyId}'`
+        );
+      }
+      if (dependency.kind !== kind) {
+        throw new Error(
+          `Template dependency '${dependencyKey}' targets ${dependency.kind}, not ${kind}`
+        );
+      }
+      const targets = dependencyMappings.get(dependencyKey);
+      if (!targets) {
+        throw new Error(`Template dependency '${dependencyKey}' has no mapping`);
+      }
+      if (targets.length < dependency.minTargets) {
+        throw new Error(
+          `Template dependency '${dependencyKey}' requires at least ${dependency.minTargets} target${dependency.minTargets === 1 ? '' : 's'}`
+        );
+      }
+      if (dependency.maxTargets !== undefined && targets.length > dependency.maxTargets) {
+        throw new Error(
+          `Template dependency '${dependencyKey}' accepts at most ${dependency.maxTargets} target${dependency.maxTargets === 1 ? '' : 's'}`
+        );
+      }
+      const uniqueTargets = new Set(targets.map(target => `${target.templateId}:${target.symId}`));
+      if (uniqueTargets.size !== targets.length) {
+        throw new Error(`Template dependency '${dependencyKey}' contains duplicate targets`);
+      }
+      for (const target of targets) {
+        if (!ids.get(kind)?.get(target.templateId)?.has(target.symId)) {
+          throw new Error(
+            `Template dependency '${dependencyKey}' targets unknown ${kind} '${target.templateId}:${target.symId}'`
+          );
+        }
+      }
+      return [...targets];
+    }
+    return [normalizeReference(ownerId, reference)];
+  };
+
+  const resolveDefinitionIds = (
+    kind: TemplateDependencyKind,
+    ownerId: string,
+    reference: SymbolicReference
+  ) =>
+    resolveReferenceTargets(kind, ownerId, reference).map(normalized => {
+      const id = ids.get(kind)?.get(normalized.templateId)?.get(normalized.symId);
+      if (!id) {
+        throw new Error(
+          `Template '${ownerId}' references unknown ${kind} '${normalized.templateId}:${normalized.symId}'`
+        );
+      }
+      return id;
+    });
 
   const resolveDefinitionId = (
-    kind: TemplateDefinitionKind,
+    kind: TemplateDependencyKind,
     ownerId: string,
     reference: SymbolicReference
   ) => {
-    const normalized = normalizeReference(ownerId, reference);
-    const id = ids.get(kind)?.get(normalized.templateId)?.get(normalized.symId);
-    if (!id) {
+    const resolved = resolveDefinitionIds(kind, ownerId, reference);
+    if (resolved.length !== 1) {
       throw new Error(
-        `Template '${ownerId}' references unknown ${kind} '${normalized.templateId}:${normalized.symId}'`
+        `Template '${ownerId}' requires exactly one ${kind} target for this reference`
       );
     }
-    return id;
+    return resolved[0]!;
   };
 
   for (const fragment of fragments) {
     for (const patch of fragment.schemaFields) {
-      const target = normalizeReference(fragment.ownerId, patch.target);
-      const key = definitionKey('schema', target.templateId, target.symId);
-      const schema = schemaSources.get(key);
-      if (!schema) {
-        throw new Error(
-          `Template '${fragment.ownerId}' extends unknown schema '${target.templateId}:${target.symId}'`
+      const targets = resolveReferenceTargets('schema', fragment.ownerId, patch.target);
+      for (const target of targets) {
+        const key = definitionKey('schema', target.templateId, target.symId);
+        const schema = schemaSources.get(key);
+        if (!schema) {
+          throw new Error(
+            `Template '${fragment.ownerId}' extends unknown schema '${target.templateId}:${target.symId}'`
+          );
+        }
+        const duplicateField = patch.fields.find(field =>
+          schema.fields.some(existing => existing.id === field.id)
         );
+        if (duplicateField) {
+          throw new Error(
+            `Template '${fragment.ownerId}' adds duplicate field '${duplicateField.id}' to schema '${target.templateId}:${target.symId}'`
+          );
+        }
+        schema.fields = [...schema.fields, ...patch.fields];
       }
-      schema.fields = [...schema.fields, ...patch.fields];
     }
   }
 
@@ -3421,9 +3674,11 @@ const materializeTemplateFragments = (
         color: source.color,
         icon: source.icon,
         fields: source.fields.map(field => resolveField(fragment.ownerId, field)),
-        shared_field_group_links: (source.sharedFieldGroupIds ?? []).map(groupId => ({
-          groupId: resolveDefinitionId('fieldGroup', fragment.ownerId, groupId)
-        })),
+        shared_field_group_links: (source.sharedFieldGroupIds ?? []).flatMap(groupId =>
+          resolveDefinitionIds('fieldGroup', fragment.ownerId, groupId).map(resolvedId => ({
+            groupId: resolvedId
+          }))
+        ),
         default_owner: null,
         created_at: now,
         updated_at: now,
@@ -3434,7 +3689,7 @@ const materializeTemplateFragments = (
     const resolveEndpointSchemaIds = (schemaIds: SymbolicReference[] | 'any') =>
       schemaIds === 'any'
         ? 'any'
-        : schemaIds.map(schemaId => resolveDefinitionId('schema', fragment.ownerId, schemaId));
+        : schemaIds.flatMap(schemaId => resolveDefinitionIds('schema', fragment.ownerId, schemaId));
     const relationSchemas: RelationSchemaDbCreate[] = (fragment.template.relationSchemas ?? []).map(
       relationSchema => ({
         id: relationSchemaIds.get(relationSchema.symId)!,
@@ -3448,9 +3703,11 @@ const materializeTemplateFragments = (
         out_label: relationSchema.outLabel,
         fields: relationSchema.fields.map(field => resolveRelationField(fragment.ownerId, field)),
         groups: [],
-        shared_field_group_links: (relationSchema.sharedFieldGroupIds ?? []).map(groupId => ({
-          groupId: resolveDefinitionId('fieldGroup', fragment.ownerId, groupId)
-        })),
+        shared_field_group_links: (relationSchema.sharedFieldGroupIds ?? []).flatMap(groupId =>
+          resolveDefinitionIds('fieldGroup', fragment.ownerId, groupId).map(resolvedId => ({
+            groupId: resolvedId
+          }))
+        ),
         color: relationSchema.color,
         icon: relationSchema.icon,
         relation_approval_policy: 'disabled',

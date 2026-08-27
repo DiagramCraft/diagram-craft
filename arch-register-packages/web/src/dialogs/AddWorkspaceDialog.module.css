@@ -247,6 +247,41 @@
   margin-top: 3px;
 }
 
+.dependencyMapping {
+  margin-top: 10px;
+  padding: 9px 10px;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r-md);
+  background: var(--panel-bg);
+}
+
+.dependencyMappingTitle {
+  color: var(--base-fg);
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.dependencyMappingDescription,
+.dependencyMappingRequirement,
+.dependencyTargetTemplate {
+  color: var(--base-fg-more-dim);
+  font-size: 11px;
+}
+
+.dependencyMappingDescription {
+  margin-top: 3px;
+  line-height: 1.4;
+}
+
+.dependencyMappingRequirement {
+  margin-top: 7px;
+  font-family: var(--font-mono);
+}
+
+.dependencyTargetTemplate {
+  margin-left: 4px;
+}
+
 /* ── Copy panel ─────────────────────────────────────────────── */
 
 .copyPanel {

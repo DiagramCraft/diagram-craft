@@ -61,12 +61,15 @@
           retention policy through the same "Subject to Retention Policy" relation as any other entity. The bundled
           demo workspace composes this schema and field group from the same templates, with example Data Entities
           showing the full spread of stewardship states (complete, partial, and missing) and review-date states
-          (approaching and overdue). When Default and Information Governance are composed together, the templates
-          also provide a "Data Flow" relation (a first-class System-to-System relation recording direction, protocol,
-          and the Data Entity/Entities it carries) extended with transfer-specific governance metadata under a
+          (approaching and overdue). When Information Governance is composed with any full architecture template, the
+          templates also provide a "Data Flow" relation (a first-class relation between mapped system schemas recording
+          direction, protocol, and the Data Entity/Entities it carries) extended with transfer-specific governance metadata under a
           "Data Flow Governance" field group: flow-level classification, multi-valued regulatory tags and processing
           purposes, and single-valued source and destination residency regions, all drawn from the same configurable
-          vocabularies as the Data Entity stewardship fields. Whether a flow crosses a residency boundary (source
+          vocabularies as the Data Entity stewardship fields. The Protocol vocabulary is owned by Information
+          Governance and retains its built-in values. When the concern is added, administrators map its System
+          dependency to one or more schemas in the selected workspace model; an unresolved mapping blocks the operation.
+          Whether a flow crosses a residency boundary (source
           and destination regions differ) and whether its destination region is permitted by every carried Data
           Entity's permitted-residency-regions are available as deterministic, permission-aware compute helpers for
           later surfacing in governance analysis views.
@@ -91,7 +94,8 @@
           schemas; conflicting later definition names are qualified, and concern dashboards are kept separate from
           the full template's Overview dashboard. Template objects include entity schemas, enums, typed relation
           schemas, shared field groups, and composition extensions for definitions that depend on more than one
-          selected template.
+          selected template. Cross-cutting dependencies are declared explicitly and resolved by an administrator
+          during workspace creation; the same mapping flow is used when importing a concern into an existing workspace.
 
         - @id:ar.workspace.configuration Administrators can configure workspace lifecycle states, assessment types, teams, roles, members,
           supported currencies and the workspace's default currency, document types, templates, AI, analytics, audit,
@@ -742,9 +746,11 @@
           workspace-local identifiers.
 
         - @id:ar.import-export.definition-import Workspace administrators can preview and atomically import selected
-          schemas, reusable enums, and active document types from built-in templates or another administered workspace,
-          including recursively resolved dependencies and remapped references; built-in templates also apply their
-          declared dashboard layout to the default dashboard when the administrator opts in.
+          schemas, reusable enums, active document types, and typed relation schemas from built-in templates or another
+          administered workspace, including recursively resolved dependencies and remapped references. Cross-cutting
+          dependencies can be mapped to one or more existing destination definitions; dependent schema patches are
+          applied with the import atomically and versioned/audited. Built-in templates also apply their declared
+          dashboard layout to the default dashboard when the administrator opts in.
 
         - @id:ar.import-export.entity-csv Users can import and export entity collections through CSV workflows.
           Columns for fields in access-restricted field groups are omitted from exported CSVs and import templates
