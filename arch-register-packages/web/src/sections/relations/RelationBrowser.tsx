@@ -70,7 +70,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
   const edgeColorFieldId = search.edgeColorFieldId ?? RELATION_GRAPH_TYPE_LABEL;
   const relationGraphMode = search.relationGraphMode ?? undefined;
   const configuredTableFieldIds = useMemo(
-    () => parseRelationTableFieldIdsFromSearch(search),
+    () => parseRelationTableFieldIdsFromSearch({ tableFieldIds: search.tableFieldIds }),
     [search.tableFieldIds]
   );
   const {
