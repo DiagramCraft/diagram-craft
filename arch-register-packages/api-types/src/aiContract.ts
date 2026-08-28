@@ -76,7 +76,89 @@ const aiUiMessageSchema = z
   })
   .passthrough();
 
-export const aiChatMessageSchema = z.union([aiModelMessageSchema, aiUiMessageSchema]);
+// TanStack AI 0.49 serializes UI messages using the AG-UI wire format. Keep
+// accepting the older model/UI shapes above for API compatibility, while also
+// validating the roles and content parts emitted by the upgraded client.
+const aiAguiInputSourceSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('data'), value: z.string(), mimeType: z.string() }).passthrough(),
+  z
+    .object({ type: z.literal('url'), value: z.string(), mimeType: z.string().optional() })
+    .passthrough()
+]);
+
+const aiAguiInputContentSchema = z.discriminatedUnion('type', [
+  z.object({ type: z.literal('text'), text: z.string() }).passthrough(),
+  z
+    .object({
+      type: z.enum(['image', 'audio', 'video', 'document']),
+      source: aiAguiInputSourceSchema,
+      metadata: z.unknown().optional()
+    })
+    .passthrough(),
+  z
+    .object({
+      type: z.literal('binary'),
+      mimeType: z.string(),
+      id: z.string().optional(),
+      url: z.string().optional(),
+      data: z.string().optional(),
+      filename: z.string().optional()
+    })
+    .passthrough()
+]);
+
+const aiAguiToolCallSchema = z
+  .object({
+    id: z.string(),
+    type: z.literal('function'),
+    function: z.object({ name: z.string(), arguments: z.string() }).passthrough(),
+    encryptedValue: z.string().optional()
+  })
+  .passthrough();
+
+const aiAguiMessageSchema = z.union([
+  z.object({ id: z.string(), role: z.literal('developer'), content: z.string() }).passthrough(),
+  z.object({ id: z.string(), role: z.literal('system'), content: z.string() }).passthrough(),
+  z
+    .object({
+      id: z.string(),
+      role: z.literal('assistant'),
+      content: z.string().optional(),
+      toolCalls: z.array(aiAguiToolCallSchema).optional()
+    })
+    .passthrough(),
+  z
+    .object({
+      id: z.string(),
+      role: z.literal('user'),
+      content: z.union([z.string(), z.array(aiAguiInputContentSchema)])
+    })
+    .passthrough(),
+  z
+    .object({
+      id: z.string(),
+      role: z.literal('tool'),
+      content: z.string(),
+      toolCallId: z.string(),
+      error: z.string().optional()
+    })
+    .passthrough(),
+  z
+    .object({
+      id: z.string(),
+      role: z.literal('activity'),
+      activityType: z.string(),
+      content: z.record(z.string(), z.unknown())
+    })
+    .passthrough(),
+  z.object({ id: z.string(), role: z.literal('reasoning'), content: z.string() }).passthrough()
+]);
+
+export const aiChatMessageSchema = z.union([
+  aiModelMessageSchema,
+  aiUiMessageSchema,
+  aiAguiMessageSchema
+]);
 
 const aiMessageSchema = z.object({
   id: z.string().describe('Unique message identifier'),

@@ -26,7 +26,50 @@ const mockAiChatOverrides = {
       );
     }
 
+    if (JSON.stringify(options['messages']).includes('provider error')) {
+      throw new Error('mock provider failure');
+    }
+
     return (async function* () {
+      if (JSON.stringify(options['messages']).includes('exercise tool events')) {
+        yield {
+          type: 'TOOL_CALL_START',
+          toolCallId: 'call-a',
+          toolCallName: 'create_entity'
+        };
+        yield { type: 'TOOL_CALL_ARGS', toolCallId: 'call-a', delta: '{"name":"A"' };
+        yield {
+          type: 'TOOL_CALL_START',
+          toolCallId: 'call-b',
+          toolCallName: 'delete_entity'
+        };
+        yield {
+          type: 'TOOL_CALL_END',
+          toolCallId: 'call-b',
+          input: { id: 'entity-b' }
+        };
+        yield {
+          type: 'TOOL_CALL_RESULT',
+          messageId: 'message-b',
+          toolCallId: 'call-b',
+          content: 'deleted'
+        };
+        yield { type: 'TOOL_CALL_ARGS', toolCallId: 'call-a', delta: ',"schema":"api"}' };
+        yield {
+          type: 'TOOL_CALL_END',
+          toolCallId: 'call-a',
+          input: { name: 'A', schema: 'api' }
+        };
+        yield {
+          type: 'TOOL_CALL_RESULT',
+          messageId: 'message-a',
+          toolCallId: 'call-a',
+          content: 'created'
+        };
+        yield { type: 'TEXT_MESSAGE_CONTENT', delta: 'Tool call reply' };
+        return;
+      }
+
       yield { type: 'TEXT_MESSAGE_CONTENT', delta: 'Mock assistant ' };
       yield { type: 'TEXT_MESSAGE_CONTENT', delta: 'reply' };
     })();
@@ -327,6 +370,46 @@ test.describe('ai chat routes', () => {
     expect(conversation?.title).toBe('Explain the authentication flow between the fro...');
   });
 
+  test('POST /api/:workspace/ai/chat preserves tool-call ids and parsed inputs', async ({
+    server,
+    auth,
+    orpc,
+    seeded: _
+  }) => {
+    const createdConversation = await orpc.ai.createConversation({
+      params: { workspace: 'default' },
+      body: { title: 'New conversation' }
+    });
+    const conversationId = createdConversation.id;
+
+    const res = await fetch(`${server.baseUrl}/api/application/v1/default/ai/chat`, {
+      method: 'POST',
+      headers: { Authorization: auth, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        threadId: 'thread-tools',
+        runId: 'run-tools',
+        forwardedProps: { conversationId },
+        messages: [{ role: 'user', content: 'exercise tool events' }]
+      })
+    });
+
+    expect(res.status).toBe(200);
+    expect(res.headers.get('content-type')).toContain('text/event-stream');
+    expect(await res.text()).toContain('Tool call reply');
+
+    const messages = await server.db.ai.listMessages(conversationId);
+    const assistantMessage = messages.find(message => message.role === 'assistant');
+    expect(assistantMessage).toMatchObject({
+      content: 'Tool call reply',
+      metadata: {
+        toolCalls: [
+          { name: 'create_entity', args: '{"name":"A","schema":"api"}', result: 'created' },
+          { name: 'delete_entity', args: '{"id":"entity-b"}', result: 'deleted' }
+        ]
+      }
+    });
+  });
+
   test('POST /api/:workspace/ai/chat validates auth, workspace, config, and request JSON', async ({
     server,
     auth,
@@ -369,6 +452,17 @@ test.describe('ai chat routes', () => {
       })
     });
     expect(noConfigRes.status).toBe(503);
+
+    const providerErrorRes = await fetch(`${server.baseUrl}/api/application/v1/default/ai/chat`, {
+      method: 'POST',
+      headers: { Authorization: auth, 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        threadId: 'thread-error',
+        runId: 'run-error',
+        messages: [{ role: 'user', content: 'provider error' }]
+      })
+    });
+    expect(providerErrorRes.status).toBe(500);
   });
 
   test('POST /api/:workspace/ai/extract returns parsed entities from the mocked chat result', async ({

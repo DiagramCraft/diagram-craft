@@ -20,7 +20,7 @@ export const useAiChat = (
   );
 
   return useChat({
-    id: sessionId ?? 'new',
+    threadId: sessionId ?? 'new',
     connection,
     forwardedProps: conversationId ? { conversationId } : undefined,
     initialMessages

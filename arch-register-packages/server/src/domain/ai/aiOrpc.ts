@@ -21,6 +21,7 @@ import { createAiChatTools } from './chatTools';
 import { httpAssert } from '@arch-register/server/utils/httpAssert';
 import { orpcAssert } from '@arch-register/server/utils/orpcAssert';
 import { AiEncryptionError } from '../../utils/encryption';
+import { createAiToolCallAccumulator } from './aiStreamHelpers';
 
 const toConversationResponse = (c: {
   id: string;
@@ -340,7 +341,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
 
         return (async function* () {
           const capturedContent: string[] = [];
-          const capturedToolCalls: Array<{ name: string; args: string; result?: unknown }> = [];
+          const toolCallAccumulator = createAiToolCallAccumulator();
 
           try {
             for await (const chunk of stream) {
@@ -353,39 +354,14 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
               ) {
                 capturedContent.push(chunk.delta);
               }
-              if (
-                chunk.type === 'TOOL_CALL_START' &&
-                'toolCallName' in chunk &&
-                typeof chunk.toolCallName === 'string' &&
-                chunk.toolCallName.length > 0
-              ) {
-                capturedToolCalls.push({
-                  name: chunk.toolCallName,
-                  args: '',
-                  result: undefined
-                });
-              }
-              if (
-                chunk.type === 'TOOL_CALL_ARGS' &&
-                capturedToolCalls.length > 0 &&
-                'delta' in chunk
-              ) {
-                capturedToolCalls[capturedToolCalls.length - 1]!.args +=
-                  typeof chunk.delta === 'string' ? chunk.delta : '';
-              }
-              if (
-                chunk.type === 'TOOL_CALL_RESULT' &&
-                capturedToolCalls.length > 0 &&
-                'content' in chunk
-              ) {
-                capturedToolCalls[capturedToolCalls.length - 1]!.result = chunk.content;
-              }
+              toolCallAccumulator.consume(chunk);
 
               yield chunk;
             }
 
             if (conversationId && capturedContent.length > 0) {
               const metadata: Record<string, unknown> = {};
+              const capturedToolCalls = toolCallAccumulator.getCalls();
               if (capturedToolCalls.length > 0) metadata.toolCalls = capturedToolCalls;
               await context.db.ai.createMessage({
                 id: makeId(),
@@ -402,6 +378,7 @@ export const createAiORPCRouter = (deps: AiORPCDeps = {}) => {
               (error.name === 'AbortError' || error.message.includes('aborted'));
             if (isAbort && conversationId && capturedContent.length > 0) {
               const metadata: Record<string, unknown> = {};
+              const capturedToolCalls = toolCallAccumulator.getCalls();
               if (capturedToolCalls.length > 0) metadata.toolCalls = capturedToolCalls;
               await context.db.ai
                 .createMessage({

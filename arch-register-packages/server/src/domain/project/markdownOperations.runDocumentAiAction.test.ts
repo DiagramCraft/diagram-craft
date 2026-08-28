@@ -287,6 +287,69 @@ describe('runDocumentAiAction', () => {
     );
   });
 
+  it('correlates interleaved tool results when testing an interactive action', async () => {
+    chat.mockImplementation(async function* () {
+      yield {
+        type: 'TOOL_CALL_START',
+        toolCallId: 'call-a',
+        toolCallName: 'read_document'
+      };
+      yield {
+        type: 'TOOL_CALL_START',
+        toolCallId: 'call-b',
+        toolCallName: 'query_entities'
+      };
+      yield {
+        type: 'TOOL_CALL_RESULT',
+        toolCallId: 'call-b',
+        content: 'Error: query failed'
+      };
+      yield {
+        type: 'TOOL_CALL_END',
+        toolCallId: 'call-a',
+        input: { path: 'notes/decision.md' }
+      };
+      yield {
+        type: 'TOOL_CALL_RESULT',
+        toolCallId: 'call-a',
+        content: 'ok'
+      };
+      yield { type: 'TEXT_MESSAGE_CONTENT', delta: 'Checked.' };
+    } as never);
+
+    const generator = await testDocumentAiAction(
+      makeDb(),
+      makeStorage(),
+      'ws-1',
+      'node-1',
+      'type-1',
+      {
+        id: 'draft-action',
+        name: 'Draft action',
+        kind: 'interactive',
+        prompt: 'Inspect the document.',
+        enabled: false,
+        tools: []
+      },
+      event
+    );
+    const events = [];
+    for await (const next of generator) events.push(next);
+
+    expect(events).toEqual([
+      { type: 'delta', delta: 'Checked.' },
+      expect.objectContaining({
+        type: 'done',
+        status: 'success',
+        errors: ['query_entities: Error: query failed'],
+        toolCalls: [
+          { name: 'read_document', status: 'completed', error: null },
+          { name: 'query_entities', status: 'failed', error: 'Error: query failed' }
+        ]
+      })
+    ]);
+  });
+
   it('tests metadata-generator actions with structured output', async () => {
     chat.mockImplementation((async (options: { outputSchema?: unknown }) =>
       options.outputSchema

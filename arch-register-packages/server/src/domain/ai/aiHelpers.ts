@@ -10,6 +10,12 @@ import { z } from 'zod';
 const isRecord = (value: unknown): value is Record<string, unknown> =>
   value !== null && typeof value === 'object';
 
+const getTextPartContent = (part: Record<string, unknown>): string => {
+  if (typeof part['content'] === 'string') return part['content'];
+  if (typeof part['text'] === 'string') return part['text'];
+  return '';
+};
+
 const extractedEntitySchema = z.object({
   name: z.string(),
   schema_id: z.string(),
@@ -39,7 +45,7 @@ export const extractUserTextContent = (message: unknown): string => {
     return parts
       .filter(isRecord)
       .filter(part => part['type'] === 'text')
-      .map(part => (typeof part['content'] === 'string' ? part['content'] : ''))
+      .map(getTextPartContent)
       .join('');
   }
 
@@ -51,7 +57,7 @@ export const extractUserTextContent = (message: unknown): string => {
     return content
       .filter(isRecord)
       .filter(part => part['type'] === 'text')
-      .map(part => (typeof part['content'] === 'string' ? part['content'] : ''))
+      .map(getTextPartContent)
       .join('');
   }
   return '';
