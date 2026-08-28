@@ -4,6 +4,7 @@ import {
   CardsViewConfig,
   ExploreViewConfig,
   FilterCondition,
+  GraphViewConfig,
   MapViewConfig,
   MatrixViewConfig,
   RadarViewConfig,
@@ -771,6 +772,7 @@ export type SavedViewDbResult = {
     explore?: ExploreViewConfig;
     bubble?: BubbleViewConfig;
     map?: MapViewConfig;
+    graph?: GraphViewConfig;
   } | null;
   created_at: Date;
   updated_at: Date;

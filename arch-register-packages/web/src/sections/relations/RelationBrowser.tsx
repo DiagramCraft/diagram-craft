@@ -1,7 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
-  TbFilter,
   TbDots,
   TbCheck,
   TbCopy,
@@ -13,7 +12,6 @@ import {
   TbChevronRight
 } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import styles from './RelationBrowser.module.css';
 import filterStyles from '../entities/components/EntityBrowser.module.css';
@@ -24,22 +22,26 @@ import { useTableSort } from '../../components/table/useTableSort';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { EntityNavigationLink } from '../../components/EntityNavigationLink';
 import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
-import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useTeams, useLifecycleStates } from '../../hooks/useWorkspaceConfig';
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { useDeleteRelation } from '../../hooks/useRelations';
+import { useEntitiesByIds } from '../../hooks/useEntities';
+import { relationIds } from '../../lib/entityEditState';
 import { RelationDetailPopover } from '../entities/components/RelationDetailPopover';
 import { SaveViewDialog } from '../entities/components/EntityBrowser';
 import { RelationEditDialog } from '../../dialogs/RelationEditDialog';
 import { useRelationBrowserData } from './useRelationBrowserData';
-import { RelationFilterBuilder } from './RelationFilterBuilder';
+import { RelationQueryModeControls } from './RelationQueryModeControls';
 import {
   buildRelationQueryFromFilters,
   buildRelationSavedViewPayload,
+  formatFieldValue,
+  parseRelationTableFieldIdsFromSearch,
   type RelationBrowserView,
   RELATION_GRAPH_TYPE_LABEL
 } from './relationBrowserState';
+import { PROJECTION_FIELD_PREFIX } from '../entities/components/entityDisplayFields';
 import { exportRelationsToCSV } from '../../lib/relationCsv';
 import { downloadBlob } from '../../lib/browserDownload';
 import { RelationGraphView } from './RelationGraphView';
@@ -66,12 +68,20 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
   const view: RelationBrowserView = search.viewMode === 'graph' ? 'graph' : 'table';
   const edgeLabelFieldId = search.edgeLabelFieldId ?? RELATION_GRAPH_TYPE_LABEL;
   const edgeColorFieldId = search.edgeColorFieldId ?? RELATION_GRAPH_TYPE_LABEL;
+  const relationGraphMode = search.relationGraphMode ?? undefined;
+  const configuredTableFieldIds = useMemo(
+    () => parseRelationTableFieldIdsFromSearch({ tableFieldIds: search.tableFieldIds }),
+    [search.tableFieldIds]
+  );
   const {
     relationSchemas,
     entitySchemas,
     enums,
     conditions,
     setConditions,
+    relationQuery,
+    setRelationQuery,
+    representable,
     activeSchema,
     relations,
     total,
@@ -82,10 +92,8 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     pageIndex,
     pageSize
   } = useRelationBrowserData(workspaceId, view);
-  const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
   const { data: owners = [] } = useTeams(workspaceId);
   const { data: lifecycleStates = [] } = useLifecycleStates(workspaceId);
-  const filterPopoverRef = useRef<PopoverActions | null>(null);
   const navigate = useNavigate();
   const { permissions } = useWorkspaceContext();
 
@@ -173,8 +181,45 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     });
   }, [navigate, workspaceId]);
 
-  const fieldIds = activeSchema?.fields.map(field => field.id) ?? [];
+  // A saved view's config.table.fieldIds (curated columns, possibly including `_projection:`
+  // aliases from the query's own `projections`) takes precedence when set; otherwise every field
+  // on the active relation schema shows, as before.
+  const fieldIds = configuredTableFieldIds ?? activeSchema?.fields.map(field => field.id) ?? [];
   const columnCount = 7 + fieldIds.length;
+  const fieldLabelById = (fieldId: string): string =>
+    fieldId.startsWith(PROJECTION_FIELD_PREFIX)
+      ? fieldId.slice(PROJECTION_FIELD_PREFIX.length)
+      : (activeSchema?.fields.find(field => field.id === fieldId)?.name ?? fieldId);
+  const getFieldValue = (relation: (typeof relations)[number], fieldId: string): unknown =>
+    fieldId.startsWith(PROJECTION_FIELD_PREFIX)
+      ? (relation._projections as Record<string, unknown> | undefined)?.[
+          fieldId.slice(PROJECTION_FIELD_PREFIX.length)
+        ]
+      : relation[fieldId];
+  const fieldTypeById = useMemo(
+    () => new Map((activeSchema?.fields ?? []).map(field => [field.id, field.type])),
+    [activeSchema]
+  );
+  // entityRelation-valued columns (e.g. a Data Flow's carried Data Entities) store raw entity ids
+  // — resolve them to names up front so the table can render a plain "A, B, C" list rather than a
+  // JSON array of uuids.
+  const entityRelationFieldIds = useMemo(
+    () =>
+      (activeSchema?.fields ?? [])
+        .filter(field => field.type === 'entityRelation')
+        .map(field => field.id),
+    [activeSchema]
+  );
+  const referenceIds = useMemo(
+    () =>
+      entityRelationFieldIds.length
+        ? (relations ?? []).flatMap(relation =>
+            entityRelationFieldIds.flatMap(fieldId => relationIds(relation[fieldId]))
+          )
+        : [],
+    [relations, entityRelationFieldIds]
+  );
+  const referenceLookup = useEntitiesByIds(workspaceId, referenceIds);
 
   const comparators: Record<
     string,
@@ -189,7 +234,8 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     _updatedAt: (a, b) => a._updatedAt.localeCompare(b._updatedAt)
   };
   for (const fieldId of fieldIds) {
-    comparators[fieldId] = (a, b) => compareFieldValues(a[fieldId], b[fieldId]);
+    comparators[fieldId] = (a, b) =>
+      compareFieldValues(getFieldValue(a, fieldId), getFieldValue(b, fieldId));
   }
   const { sorted, sort, toggleSort } = useTableSort(relations, comparators);
 
@@ -300,42 +346,19 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
       </div>
 
       <div className={filterStyles.toolbar}>
-        <Popover.Root actionsRef={filterPopoverRef}>
-          <Popover.Trigger
-            element={
-              <Button
-                size="sm"
-                variant={conditions.length > 0 ? 'primary' : 'secondary'}
-                icon={<TbFilter size={12} />}
-                aria-label="Filter"
-                title="Filter"
-              >
-                {conditions.length > 0 && (
-                  <span className={filterStyles.filterCount}>{conditions.length}</span>
-                )}
-              </Button>
-            }
-          />
-          <Popover.Content
-            sideOffset={4}
-            align="start"
-            arrow={false}
-            closeButton={false}
-            className={filterStyles.filterPopover}
-          >
-            <RelationFilterBuilder
-              conditions={conditions}
-              onChange={setConditions}
-              onClose={() => filterPopoverRef.current?.close()}
-              relationSchemas={relationSchemas}
-              entitySchemas={entitySchemas}
-              enums={enums}
-              owners={owners}
-              lifecycleStates={lifecycleStates}
-              getFieldGroupAccess={getFieldGroupAccess}
-            />
-          </Popover.Content>
-        </Popover.Root>
+        <RelationQueryModeControls
+          workspaceId={workspaceId}
+          conditions={conditions}
+          setConditions={setConditions}
+          relationQuery={relationQuery}
+          setRelationQuery={setRelationQuery}
+          representable={representable}
+          relationSchemas={relationSchemas}
+          entitySchemas={entitySchemas}
+          enums={enums}
+          owners={owners}
+          lifecycleStates={lifecycleStates}
+        />
         <div style={{ marginLeft: 'auto' }}>
           <FilterDropdown
             label="View"
@@ -385,7 +408,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
                   sort={sort}
                   onSort={toggleSort}
                 >
-                  {fieldId}
+                  {fieldLabelById(fieldId)}
                 </Table.SortableHeaderCell>
               ))}
               <Table.SortableHeaderCell sortKey="_updatedAt" sort={sort} onSort={toggleSort}>
@@ -429,7 +452,13 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
                   <Table.Cell>{relation._owner?.name ?? ''}</Table.Cell>
                   <Table.Cell>{relation._lifecycle?.name ?? ''}</Table.Cell>
                   {fieldIds.map(fieldId => (
-                    <Table.Cell key={fieldId}>{formatFieldValue(relation[fieldId])}</Table.Cell>
+                    <Table.Cell key={fieldId}>
+                      {formatFieldValue(
+                        getFieldValue(relation, fieldId),
+                        fieldTypeById.get(fieldId),
+                        referenceLookup
+                      )}
+                    </Table.Cell>
                   ))}
                   <Table.Cell>{new Date(relation._updatedAt).toLocaleString()}</Table.Cell>
                   <Table.Cell interactive>
@@ -489,6 +518,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
             onEdgeLabelFieldIdChange={setEdgeLabelFieldId}
             edgeColorFieldId={edgeColorFieldId}
             onEdgeColorFieldIdChange={setEdgeColorFieldId}
+            typedRelationMode={relationGraphMode}
             onEntityClick={entityId =>
               navigate(entityDetailRoute(workspaceId, asEntityPublicId(entityId)))
             }
@@ -590,12 +620,4 @@ const compareFieldValues = (a: unknown, b: unknown): number => {
   if (typeof a === 'number' && typeof b === 'number') return a - b;
   if (typeof a === 'boolean' && typeof b === 'boolean') return Number(a) - Number(b);
   return String(a).localeCompare(String(b));
-};
-
-const formatFieldValue = (value: unknown): string => {
-  if (value == null) return '';
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return String(value);
-  }
-  return JSON.stringify(value);
 };

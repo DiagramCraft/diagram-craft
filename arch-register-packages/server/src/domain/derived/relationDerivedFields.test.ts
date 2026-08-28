@@ -10,6 +10,8 @@ import {
 } from './derivedFields';
 import { buildRelationProjection } from './relationProjection';
 import { recalculateEntityDerivedFields } from './derivedRecalculation';
+import { computeCrossBoundary, computeResidencyInvalid } from '../catalog/dataFlowResidency';
+import { SCHEMA_TEMPLATES } from '../catalog/schemaTemplates';
 
 const relationContext = { objectType: 'relation' as const, objectId: 'relation-1' };
 
@@ -302,5 +304,71 @@ describe('relation derived recalculation', () => {
     entities[2]!.data.permitted_regions = ['us', 'eu'];
     await recalculateEntityDerivedFields(db, 'workspace-1', ['asset-1']);
     expect(relations[0]!.data.permitted_count).toBe(2);
+  });
+});
+
+// -- #3066: Data Flow's cross_boundary / residency_invalid derived fields ---------------------
+
+describe('Data Flow cross_boundary / residency_invalid derived fields', () => {
+  const dataFlowGovernanceGroup = SCHEMA_TEMPLATES.flatMap(
+    template => template.fieldGroups ?? []
+  ).find(group => group.id === 'data-flow-governance')!;
+
+  const crossBoundaryField = dataFlowGovernanceGroup.fields.find(
+    field => field.id === 'cross_boundary'
+  )!;
+  const residencyInvalidField = dataFlowGovernanceGroup.fields.find(
+    field => field.id === 'residency_invalid'
+  )!;
+
+  if (crossBoundaryField.type !== 'derived' || residencyInvalidField.type !== 'derived') {
+    throw new Error('cross_boundary/residency_invalid must be derived fields');
+  }
+
+  const crossBoundaryDerived = () => derivedField('cross_boundary', crossBoundaryField.expression);
+  const residencyInvalidDerived = () =>
+    derivedField('residency_invalid', residencyInvalidField.expression);
+
+  it.each([
+    ['missing source', undefined, 'us', 'incomplete'],
+    ['missing destination', 'eu', undefined, 'incomplete'],
+    ['same region', 'eu', 'eu', 'same-region'],
+    ['different regions', 'eu', 'us', 'cross-boundary']
+  ] as const)('cross_boundary: %s', (_label, source, destination, expected) => {
+    const fields = [
+      textField('source_residency_region'),
+      textField('destination_residency_region'),
+      crossBoundaryDerived()
+    ];
+    const data = {
+      source_residency_region: source ?? null,
+      destination_residency_region: destination ?? null
+    };
+    const result = materializeDerivedFields(fields, data, relationContext, []);
+    expect(result.cross_boundary).toBe(computeCrossBoundary(source, destination));
+    expect(result.cross_boundary).toBe(expected);
+  });
+
+  it.each([
+    ['no carried entities declare permitted regions', 'us', [[]], 'not-applicable'],
+    ['missing destination region', undefined, [['eu']], 'incomplete'],
+    ['destination permitted by every constraining entity', 'eu', [['eu', 'us'], []], 'valid'],
+    ['destination not permitted by a constraining entity', 'us', [['eu'], []], 'invalid']
+  ] as const)('residency_invalid: %s', (_label, destination, permittedRegionsList, expected) => {
+    const fields = [
+      textField('destination_residency_region'),
+      entityRelationField('data_entities', 'data-entity'),
+      residencyInvalidDerived()
+    ];
+    const projection = {
+      destination_residency_region: destination ?? null,
+      data_entities: permittedRegionsList.map(regions => ({ permitted_residency_regions: regions }))
+    };
+    const data = { destination_residency_region: destination ?? null };
+    const result = materializeDerivedFields(fields, data, relationContext, [], projection);
+    expect(result.residency_invalid).toBe(
+      computeResidencyInvalid(destination, permittedRegionsList)
+    );
+    expect(result.residency_invalid).toBe(expected);
   });
 });

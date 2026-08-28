@@ -1449,6 +1449,28 @@ const dataFlowGovernanceFieldGroup: SymbolicFieldGroup = {
       type: 'select',
       enumId: 'residency-regions',
       requirementLevel: 'optional'
+    },
+    {
+      id: 'cross_boundary',
+      name: 'Cross-Boundary Transfer',
+      type: 'derived',
+      // Mirrors dataFlowResidency.ts's computeCrossBoundary. A missing region is never treated as
+      // compliant — it is reported as 'incomplete', distinct from 'same-region'.
+      expression:
+        "relation.source_residency_region == null || relation.source_residency_region == '' || relation.destination_residency_region == null || relation.destination_residency_region == '' ? 'incomplete' : relation.source_residency_region == relation.destination_residency_region ? 'same-region' : 'cross-boundary'",
+      resultType: 'text'
+    },
+    {
+      id: 'residency_invalid',
+      name: 'Residency-Invalid Transfer',
+      type: 'derived',
+      // Mirrors dataFlowResidency.ts's computeResidencyInvalid. 'not-applicable' when no carried
+      // Data Entity declares any permitted regions; 'incomplete' when the destination region
+      // itself is missing; 'invalid' when the destination region is absent from any carried
+      // entity's permitted-regions list.
+      expression:
+        "relation.data_entities.filter(.permitted_residency_regions.length > 0).length == 0 ? 'not-applicable' : (relation.destination_residency_region == null || relation.destination_residency_region == '') ? 'incomplete' : relation.data_entities.filter(.permitted_residency_regions.length > 0).some(.permitted_residency_regions.filter(. == relation.destination_residency_region).length == 0) ? 'invalid' : 'valid'",
+      resultType: 'text'
     }
   ]
 };

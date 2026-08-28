@@ -66,12 +66,6 @@ const schemaNameMap = (schemas: SchemaCatalog): Map<string, string> => {
 export const schemaNameById = (schemas: SchemaCatalog, schemaId: string): string =>
   schemas.get(schemaId)?.name ?? schemaId;
 
-export const resolveSchemaRef = (schemas: SchemaCatalog, ref: string, offset: number): string => {
-  const id = schemaNameMap(schemas).get(ref);
-  if (!id) throw new TextCompileError(`Unknown schema '${ref}'`, offset);
-  return id;
-};
-
 const relationSchemaNameMap = (relationSchemas: RelationSchemaCatalog): Map<string, string> => {
   const byName = new Map<string, string>();
   for (const schema of relationSchemas.values()) byName.set(schema.name, schema.id);
@@ -361,10 +355,15 @@ const resolveOpAndValue = (
       offset
     );
   }
+  if (parsed.kind === 'now' && !isDateField) {
+    throw new TextCompileError(`'now(...)' is only valid against a date field`, offset);
+  }
 
   let value: unknown;
   if (parsed.kind === 'date') {
     value = parsed.value;
+  } else if (parsed.kind === 'now') {
+    value = { $now: true, ...(parsed.offsetDays ? { offsetDays: parsed.offsetDays } : {}) };
   } else if (parsed.kind === 'enumValue') {
     value = parsed.value;
   } else if (parsed.kind === 'enumLabel') {
@@ -765,20 +764,47 @@ function resolveNode(
         throw new TextCompileError('Free-text search value must not be empty', node.valueOffset);
       }
       return { kind: 'freeText', value: node.value };
-    case 'schema':
-      if (currentRelationSchemaId) {
+    case 'schema': {
+      // Blocked only when nested inside an already-scoped relation row (a relationBackward/
+      // typedRelation step's own bracketed filter — always resolved with allowFreeText=false —
+      // where the schema was already fixed by that step, making a further `schema:` redundant).
+      // At the outermost query tree (allowFreeText=true) `currentRelationSchemaId` instead means
+      // "this query is itself relation-rooted" (see the root_kind:'relation' branch below), where
+      // its own `schema:` qualifier is the primary, valid declaration of that fact.
+      if (currentRelationSchemaId && !allowFreeText) {
         throw new TextCompileError(
           `Relation schema '${relationSchemaNameById(state.relationSchemas, currentRelationSchemaId)}' does not define a viewable field 'schema'`,
           node.offset
         );
       }
-      return {
-        kind: 'predicate',
-        path: [],
-        fieldId: '_schemaId',
-        op: 'equals',
-        value: resolveSchemaRef(state.schemas, node.schemaRef.value, node.schemaRef.offset)
-      };
+      const entitySchemaId = schemaNameMap(state.schemas).get(node.schemaRef.value);
+      if (entitySchemaId) {
+        return {
+          kind: 'predicate',
+          path: [],
+          fieldId: '_schemaId',
+          op: 'equals',
+          value: entitySchemaId
+        };
+      }
+      // A root-level `schema:` qualifier naming a relation (not entity) schema is how a
+      // relation-rooted query expresses its own type filter (see #3066's Relations browser
+      // saved views) — only meaningful at the true top level, not on an entity reached via
+      // traversal, which `allowFreeText` (true only for the outermost query tree) also gates.
+      const relationSchemaId = allowFreeText
+        ? relationSchemaNameMap(state.relationSchemas).get(node.schemaRef.value)
+        : undefined;
+      if (relationSchemaId) {
+        return {
+          kind: 'predicate',
+          path: [],
+          fieldId: '_schemaId',
+          op: 'equals',
+          value: relationSchemaId
+        };
+      }
+      throw new TextCompileError(`Unknown schema '${node.schemaRef.value}'`, node.schemaRef.offset);
+    }
     case 'path':
       return resolvePathExpression(node, currentSchemaId, currentRelationSchemaId, state);
   }
@@ -795,13 +821,39 @@ const deriveRootSchemaId = (
   return undefined;
 };
 
+// Counterpart to deriveRootSchemaId for a query rooted at a relation instead of an entity (#3066):
+// a top-level `schema:` qualifier naming a relation schema — not reachable via any entity schema
+// name — means the whole query is relation-rooted, mirroring how `schema:` inside a
+// relationBackward/typedRelation step's own bracketed filter already fixes that step's relation
+// context.
+const deriveRootRelationSchemaId = (
+  syntax: TextQuerySyntax,
+  relationSchemas: RelationSchemaCatalog
+): string | undefined => {
+  for (const ref of syntax.topLevelSchemaRefs) {
+    const id = relationSchemaNameMap(relationSchemas).get(ref.value);
+    if (id) return id;
+  }
+  return undefined;
+};
+
 export const resolveTextQuery = (
   syntax: TextQuerySyntax,
   context: TextResolverContext
 ): EntityQuery => {
   const state: ResolutionState = { ...context, hopsUsed: 0 };
   const rootSchemaId = deriveRootSchemaId(syntax, context.schemas);
+  if (rootSchemaId) {
+    return { root: resolveNode(syntax.root, rootSchemaId, undefined, state, true) };
+  }
+  const rootRelationSchemaId = deriveRootRelationSchemaId(syntax, context.relationSchemas);
+  if (rootRelationSchemaId) {
+    return {
+      root_kind: 'relation',
+      root: resolveNode(syntax.root, undefined, rootRelationSchemaId, state, true)
+    };
+  }
   return {
-    root: resolveNode(syntax.root, rootSchemaId, undefined, state, true)
+    root: resolveNode(syntax.root, undefined, undefined, state, true)
   };
 };

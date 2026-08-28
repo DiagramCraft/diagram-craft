@@ -9,6 +9,7 @@ import {
   getFirstFilteredSchemaId,
   isBasicRepresentable,
   isEntityInProject,
+  parseConditionsFromSearch,
   parseJsonConfig,
   parseEntityQueryFromSearch,
   parseFacetSelectionFromConditions,
@@ -749,6 +750,38 @@ describe('Basic/Advanced query mode representability', () => {
       conditions: [{ fieldId: '_schemaId', op: 'equals', value: 'component' }],
       q: ''
     });
+  });
+});
+
+// Regression: a saved view whose filter isn't captured by the legacy `type`/`status`/`owner`
+// facet params (e.g. #3066's "Review Overdue", filtering on `review_date`) must still show its
+// real condition(s) in Basic mode — parseConditionsFromSearch already prefers `entityQuery` when
+// present, but a caller building the search object it's fed has to actually pass `entityQuery`
+// through, or that preference never triggers and conditions silently fall back to the narrow
+// type/status/owner-only encoding (empty for a query that only touches other fields).
+describe('parseConditionsFromSearch', () => {
+  it('derives conditions from entityQuery when present, not just the legacy facet params', () => {
+    const query: EntityQuery = {
+      schemaId: 'data-entity',
+      root: {
+        kind: 'predicate',
+        path: [],
+        fieldId: 'review_date',
+        op: 'before',
+        value: { $now: true }
+      }
+    };
+
+    expect(parseConditionsFromSearch({ entityQuery: JSON.stringify(query) } as never)).toEqual([
+      { fieldId: 'review_date', op: 'before', value: { $now: true } }
+    ]);
+  });
+
+  it('falls back to the legacy type/status/owner facet params when entityQuery is absent', () => {
+    expect(parseConditionsFromSearch({ type: 'data-entity', status: 'active' } as never)).toEqual([
+      { fieldId: '_schemaId', op: 'equals', value: 'data-entity' },
+      { fieldId: '_lifecycle', op: 'equals', value: 'active' }
+    ]);
   });
 });
 

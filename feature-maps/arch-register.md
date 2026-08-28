@@ -74,8 +74,10 @@
           dependency to one or more schemas in the selected workspace model; an unresolved mapping blocks the operation.
           Whether a flow crosses a residency boundary (source
           and destination regions differ) and whether its destination region is permitted by every carried Data
-          Entity's permitted-residency-regions are available as deterministic, permission-aware compute helpers for
-          later surfacing in governance analysis views.
+          Entity's permitted-residency-regions are exposed as ordinary read-only derived Data Flow relation fields
+          (`cross_boundary`, `residency_invalid`), computed in the same field group as their source inputs so
+          redaction stays consistent, and queryable/filterable through the standard query engine like any other
+          field.
           The home sidebar's Data model section groups schema links by schema category.
           Every widget shows a title bar (an icon and a title, separated from the widget's content by a divider); the
           stat-metric widget's title is configurable (via its label setting), while other widget types show a fixed
@@ -297,7 +299,23 @@
           relation instances; the Graph view does not perform further traversal. This remains separate from the
           entity-embedded Relations tab above, which is unaffected. Graph edges can be labelled and coloured from
           relation field values, with deterministic palette colours; saved views can persist the relation-rooted
-          query, selected display mode, and graph field settings the same way entity views do.
+          query, selected display mode, and graph field settings the same way entity views do. A saved view's graph
+          configuration can opt into an alternate node style, mirroring how the workspace model-overview graph
+          renders relation *schemas* as their own boxes with "in"/"out" fan edges: each matching relation *instance*
+          becomes its own node, fan-connected to its endpoint entities and to whatever entities its entityRelation
+          fields reference (e.g. a Data Flow relation's carried Data Entities), instead of one direct
+          endpoint-to-endpoint edge per relation. An entity the viewer cannot see is omitted from the graph rather
+          than rendered blank, in either node style. The Relations browser's Basic (flat condition-row) and Advanced
+          (text-query) filter modes mirror the entity browser's, letting a query use grouping or a relationForward
+          traversal through an entityRelation field when Basic mode's flat conditions can't express it; a saved view
+          built around either opens directly in Advanced mode.
+          A set of built-in, workspace-pinned canonical views cover information-governance analysis:
+          restricted-data-flow exposure (flagging either the flow's own classification or a carried Data Entity's
+          classification, shown as separate columns so a result can explain which one triggered it), missing or
+          incomplete data stewardship, overdue stewardship review, cross-boundary transfers, and residency-invalid
+          transfers — all composed from the standard relation/entity query engine, saved-view mechanism, and the
+          table/graph views described above, with no bespoke computation beyond the Data Flow relation's
+          `cross_boundary` and `residency_invalid` derived fields.
 
         - @id:ar.entities.content Users can attach and manage structured or Markdown-based content associated with an
           entity.

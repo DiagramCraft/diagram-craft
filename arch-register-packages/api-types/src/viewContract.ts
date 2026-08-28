@@ -293,7 +293,17 @@ export const graphViewConfigSchema = z.object({
     .string()
     .nullable()
     .optional()
-    .describe('Relation field identifier used for graph edge colors')
+    .describe('Relation field identifier used for graph edge colors'),
+  // 'flat' (default) draws one direct edge per relation instance between its two endpoint
+  // entities, unchanged from the original relation graph. 'entity' instead renders each relation
+  // instance as its own node — mirroring how the workspace model-overview graph renders relation
+  // *schemas* as boxes with "in"/"out" fan edges (schemaGraphState.ts) — with additional fan
+  // edges to whatever entities its entityRelation fields reference (e.g. a Data Flow relation's
+  // carried Data Entities), so those become visible graph nodes too instead of implicit metadata.
+  typedRelationMode: z
+    .enum(['flat', 'entity'])
+    .optional()
+    .describe('How relation instances render in the relation graph view')
 });
 
 const viewConfigSchema = z
@@ -563,6 +573,8 @@ export type BubbleViewConfig = z.infer<typeof bubbleViewConfigSchema>;
 export type HeatmapViewConfig = z.infer<typeof heatmapViewConfigSchema>;
 
 export type MapViewConfig = z.infer<typeof mapViewConfigSchema>;
+
+export type GraphViewConfig = z.infer<typeof graphViewConfigSchema>;
 
 export type SavedView = z.infer<typeof savedViewSchema>;
 

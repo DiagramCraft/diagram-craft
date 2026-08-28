@@ -1,5 +1,6 @@
 import { useMemo } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
+import type { EntityQuery } from '@arch-register/api-types/entityQueryIR';
 import type { FilterCondition } from '@arch-register/api-types/viewContract';
 import { useRelationSchemas } from '../../hooks/useRelationSchemas';
 import { useRelationsQuery } from '../../hooks/useRelations';
@@ -9,6 +10,7 @@ import { useRelationBrowserPagination } from './useRelationBrowserPagination';
 import {
   buildRelationQueryFromFilters,
   filterConditionsFromRelationQuery,
+  isRelationBasicRepresentable,
   parseRelationQueryFromSearch,
   resolveSingleSchemaFilter
 } from './relationBrowserState';
@@ -34,10 +36,19 @@ export const useRelationBrowserData = (workspaceId: string, view: RelationBrowse
   const search = useSearch({ strict: false });
   const navigate = useNavigate();
 
-  const conditions = useMemo(() => {
-    const query = parseRelationQueryFromSearch(search);
-    return query ? filterConditionsFromRelationQuery(query) : [];
-  }, [search]);
+  // The query as actually stored (URL search param / saved view) — the full structured query,
+  // unmodified. `conditions` is a best-effort flattening of it for Basic mode's condition-row UI;
+  // `representable` says whether that flattening is lossless. Only when it's NOT (an `or` root, a
+  // `relationForward` step, or a projection — see isRelationBasicRepresentable) do we send
+  // `parsedQuery` to the API as-is instead of rebuilding it from `conditions`, so a saved view
+  // built around those constructs (e.g. #3066's governance views) executes correctly rather than
+  // silently losing the parts Basic mode can't represent.
+  const parsedQuery = useMemo(() => parseRelationQueryFromSearch(search), [search]);
+  const conditions = useMemo(
+    () => (parsedQuery ? filterConditionsFromRelationQuery(parsedQuery) : []),
+    [parsedQuery]
+  );
+  const representable = parsedQuery == null || isRelationBasicRepresentable(parsedQuery);
 
   const setConditions = (next: FilterCondition[]) => {
     navigate({
@@ -52,7 +63,24 @@ export const useRelationBrowserData = (workspaceId: string, view: RelationBrowse
     });
   };
 
-  const relationQuery = useMemo(() => buildRelationQueryFromFilters(conditions), [conditions]);
+  // Advanced mode writes a full EntityQuery (possibly non-representable) directly, bypassing the
+  // conditions round-trip entirely.
+  const setRelationQuery = (next: EntityQuery | null) => {
+    navigate({
+      to: '/$workspaceSlug/entities/relations',
+      params: { workspaceSlug: workspaceId },
+      search: (prev: Record<string, unknown>) => ({
+        ...prev,
+        entityQuery: next ? JSON.stringify(next) : undefined,
+        viewId: undefined
+      })
+    });
+  };
+
+  const relationQuery = useMemo(
+    () => (parsedQuery && !representable ? parsedQuery : buildRelationQueryFromFilters(conditions)),
+    [parsedQuery, representable, conditions]
+  );
 
   const { goToNextPage, goToPreviousPage, handlePageSizeChange, pageIndex, pageSize } =
     useRelationBrowserPagination(conditions);
@@ -89,6 +117,9 @@ export const useRelationBrowserData = (workspaceId: string, view: RelationBrowse
     enums,
     conditions,
     setConditions,
+    relationQuery,
+    setRelationQuery,
+    representable,
     activeSchema,
     relations,
     total: total ?? 0,
