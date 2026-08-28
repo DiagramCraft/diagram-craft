@@ -4,7 +4,7 @@
 
 /* region Component CSS modules **************************************************************** */
 
-@import "@diagram-craft/canvas/components/DragLabelComponent.component.css";
+@import "../../canvas/src/components/DragLabelComponent.component.css";
 
 /* endregion */
 
