@@ -10,7 +10,7 @@
   "keywords": [],
   "author": "Magnus Johansson",
   "dependencies": {
-    "@base-ui/react": "1.4.1",
+    "@base-ui/react": "1.7.0",
     "@diagram-craft/utils": "workspace:^",
     "@diagram-craft/utils-dom": "workspace:^",
     "@radix-ui/colors": "^3.0.0",
