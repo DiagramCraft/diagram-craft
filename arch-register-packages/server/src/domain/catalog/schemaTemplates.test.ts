@@ -7,7 +7,11 @@ import {
   SCHEMA_TEMPLATES,
   type SymbolicSavedView
 } from './schemaTemplates';
-import { buildDerivedPlan, evaluateDerivedFields } from '../derived/derivedFields';
+import {
+  buildDerivedPlan,
+  evaluateDerivedFields,
+  validateDerivedFieldGroupAccess
+} from '../derived/derivedFields';
 import { compileRelationSchemaWithSharedGroups } from './relationSchemaHelpers';
 
 describe('instantiateTemplate', () => {
@@ -339,7 +343,9 @@ describe('instantiateTemplate', () => {
       'regulatory_tags',
       'processing_purposes',
       'source_residency_region',
-      'destination_residency_region'
+      'destination_residency_region',
+      'cross_boundary',
+      'residency_invalid'
     ]);
 
     const [retentionPolicySchema, dataEntitySchema] = definitions.schemas;
@@ -446,6 +452,16 @@ describe('instantiateTemplate', () => {
         expect.objectContaining({
           id: 'destination_residency_region',
           groupId: governanceGroup?.id
+        }),
+        expect.objectContaining({
+          id: 'cross_boundary',
+          type: 'derived',
+          groupId: governanceGroup?.id
+        }),
+        expect.objectContaining({
+          id: 'residency_invalid',
+          type: 'derived',
+          groupId: governanceGroup?.id
         })
       ])
     );
@@ -455,6 +471,17 @@ describe('instantiateTemplate', () => {
     expect(
       definitions.enums.filter(enumeration => enumeration.name === 'PII Classification')
     ).toHaveLength(1);
+
+    // #3066: cross_boundary/residency_invalid derive from the same-group residency fields, so the
+    // restricted-input/unrestricted-output boundary check must accept them regardless of whether
+    // the group is access-controlled.
+    expect(() =>
+      validateDerivedFieldGroupAccess(
+        compiledDataFlow.fields,
+        compiledDataFlow.groups ?? [],
+        'relation'
+      )
+    ).not.toThrow();
   });
 
   it('requires and applies one-to-many mappings for cross-cutting dependencies', () => {

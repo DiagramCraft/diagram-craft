@@ -8,7 +8,7 @@ import { INACTIVE_USER_ID } from '../helpers/testIds';
 test.describe('dev user switcher (enabled)', () => {
   test('GET /api/dev/config reports enabled', async ({ orpc }) => {
     const result = await orpc.dev.config(undefined);
-    expect(result).toEqual({ enabled: true });
+    expect(result).toEqual({ enabled: true, tracingEnabled: false });
   });
 
   test('GET /api/dev/users lists seeded users', async ({ orpc }) => {

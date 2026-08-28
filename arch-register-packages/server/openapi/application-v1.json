@@ -87479,6 +87479,14 @@
                                       }
                                     ],
                                     "description": "Relation field identifier used for graph edge colors"
+                                  },
+                                  "typedRelationMode": {
+                                    "enum": [
+                                      "flat",
+                                      "entity"
+                                    ],
+                                    "type": "string",
+                                    "description": "How relation instances render in the relation graph view"
                                   }
                                 },
                                 "description": "Configuration for entity and relation graph views"
@@ -91326,6 +91334,14 @@
                                   }
                                 ],
                                 "description": "Relation field identifier used for graph edge colors"
+                              },
+                              "typedRelationMode": {
+                                "enum": [
+                                  "flat",
+                                  "entity"
+                                ],
+                                "type": "string",
+                                "description": "How relation instances render in the relation graph view"
                               }
                             },
                             "description": "Configuration for entity and relation graph views"
@@ -95563,6 +95579,14 @@
                                     }
                                   ],
                                   "description": "Relation field identifier used for graph edge colors"
+                                },
+                                "typedRelationMode": {
+                                  "enum": [
+                                    "flat",
+                                    "entity"
+                                  ],
+                                  "type": "string",
+                                  "description": "How relation instances render in the relation graph view"
                                 }
                               },
                               "description": "Configuration for entity and relation graph views"
@@ -100001,6 +100025,14 @@
                                   }
                                 ],
                                 "description": "Relation field identifier used for graph edge colors"
+                              },
+                              "typedRelationMode": {
+                                "enum": [
+                                  "flat",
+                                  "entity"
+                                ],
+                                "type": "string",
+                                "description": "How relation instances render in the relation graph view"
                               }
                             },
                             "description": "Configuration for entity and relation graph views"
@@ -104233,6 +104265,14 @@
                                     }
                                   ],
                                   "description": "Relation field identifier used for graph edge colors"
+                                },
+                                "typedRelationMode": {
+                                  "enum": [
+                                    "flat",
+                                    "entity"
+                                  ],
+                                  "type": "string",
+                                  "description": "How relation instances render in the relation graph view"
                                 }
                               },
                               "description": "Configuration for entity and relation graph views"

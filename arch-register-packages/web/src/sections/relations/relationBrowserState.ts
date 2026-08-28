@@ -106,6 +106,25 @@ export const filterConditionsFromRelationQuery = (query: EntityQuery): FilterCon
     .map(nodeToCondition)
     .filter((c): c is FilterCondition => c != null);
 
+// True when `query` round-trips exactly through the flat Basic-mode condition list above — every
+// top-level node is a plain predicate on the relation's own field (`path: []`) or a single
+// `endpoint` hop, and there's no projection. An `or` root, a `relationForward` path step (or
+// anything deeper), or a projection is NOT representable: #3066 found that
+// filterConditionsFromRelationQuery/nodeToCondition silently drop these, which used to mean a
+// saved view built around them (e.g. a "restricted flows" view combining the relation's own
+// classification with a carried entity's via relationForward, joined by `or`) would silently
+// execute an emptied-out or wrong query when opened. Non-representable queries now stay in
+// Advanced (text) mode and are sent to the API unmodified — see useRelationBrowserData.ts.
+const isRelationConditionNode = (node: QueryNode): boolean =>
+  node.kind === 'predicate' &&
+  (node.path.length === 0 || (node.path.length === 1 && node.path[0]!.kind === 'endpoint'));
+
+export const isRelationBasicRepresentable = (query: EntityQuery): boolean =>
+  !query.projections?.length &&
+  (query.root.kind === 'and'
+    ? query.root.children.every(isRelationConditionNode)
+    : isRelationConditionNode(query.root));
+
 export const parseRelationQueryFromSearch = (
   search: Pick<RelationSearchParams, 'entityQuery'>
 ): EntityQuery | null => {
@@ -113,6 +132,18 @@ export const parseRelationQueryFromSearch = (
   try {
     const parsed: unknown = JSON.parse(search.entityQuery);
     return parsed != null && typeof parsed === 'object' ? (parsed as EntityQuery) : null;
+  } catch {
+    return null;
+  }
+};
+
+export const parseRelationTableFieldIdsFromSearch = (
+  search: Pick<RelationSearchParams, 'tableFieldIds'>
+): string[] | null => {
+  if (!search.tableFieldIds) return null;
+  try {
+    const parsed: unknown = JSON.parse(search.tableFieldIds);
+    return Array.isArray(parsed) && parsed.every(id => typeof id === 'string') ? parsed : null;
   } catch {
     return null;
   }
@@ -129,6 +160,18 @@ export const toSavedRelationViewSearch = (view: SavedView): RelationSearchParams
   edgeColorFieldId:
     view.viewMode === 'graph' && view.config?.graph?.edgeColorFieldId != null
       ? view.config.graph.edgeColorFieldId
+      : undefined,
+  // #3066: not user-editable via the save dialog (no config UI for it yet) — carried through from
+  // a seeded/admin-authored view's config so its graph renders relations-as-nodes correctly.
+  relationGraphMode:
+    view.viewMode === 'graph' && view.config?.graph?.typedRelationMode != null
+      ? view.config.graph.typedRelationMode
+      : undefined,
+  // #3066: same reasoning — a curated table column set (including `_projection:` columns) is
+  // only ever set by a seeded/admin-authored view for now, not user-editable via the save dialog.
+  tableFieldIds:
+    view.viewMode === 'table' && view.config?.table?.fieldIds != null
+      ? JSON.stringify(view.config.table.fieldIds)
       : undefined
 });
 
@@ -182,4 +225,29 @@ export const resolveSingleSchemaFilter = (conditions: FilterCondition[]): string
     .filter(c => c.fieldId === RELATION_TYPE_FIELD_ID && c.op === 'equals')
     .map(c => c.value);
   return equalsValues.length === 1 && typeof equalsValues[0] === 'string' ? equalsValues[0] : null;
+};
+
+// #3066: renders a table cell's raw field value as readable plain text. A multi-valued select
+// stores plain strings (joined as-is); an entityRelation field (e.g. a Data Flow's carried Data
+// Entities) stores referenced entity ids — resolve those via `referenceLookup` before joining, so
+// the column shows "Customer Credentials, Order Records" rather than a JSON array of uuids.
+export const formatFieldValue = (
+  value: unknown,
+  fieldType?: string,
+  referenceLookup: ReadonlyMap<string, { name: string }> = new Map()
+): string => {
+  if (value == null) return '';
+  if (Array.isArray(value)) {
+    return value
+      .map(item =>
+        typeof item === 'string' && fieldType === 'entityRelation'
+          ? (referenceLookup.get(item)?.name ?? item)
+          : formatFieldValue(item)
+      )
+      .join(', ');
+  }
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return JSON.stringify(value);
 };

@@ -1922,10 +1922,162 @@
                     "enabled": {
                       "type": "boolean",
                       "description": "Whether dev-mode tooling is enabled"
+                    },
+                    "tracingEnabled": {
+                      "type": "boolean",
+                      "description": "Whether dev-mode request/SQL tracing is enabled"
                     }
                   },
                   "required": [
-                    "enabled"
+                    "enabled",
+                    "tracingEnabled"
+                  ]
+                }
+              }
+            }
+          }
+        }
+      }
+    },
+    "/dev/trace/{traceId}": {
+      "get": {
+        "operationId": "dev.trace",
+        "summary": "Get a captured dev-mode trace (dev mode only)",
+        "description": "Returns the request and SQL spans captured for a trace id. Only available when dev-mode tracing is enabled.",
+        "tags": [
+          "Dev",
+          "Dev"
+        ],
+        "parameters": [
+          {
+            "name": "traceId",
+            "in": "path",
+            "required": true,
+            "schema": {
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "description": "OK",
+            "content": {
+              "application/json": {
+                "schema": {
+                  "anyOf": [
+                    {
+                      "type": "object",
+                      "properties": {
+                        "traceId": {
+                          "type": "string"
+                        },
+                        "interaction": {
+                          "type": "string"
+                        },
+                        "requests": {
+                          "type": "array",
+                          "items": {
+                            "type": "object",
+                            "properties": {
+                              "spanId": {
+                                "type": "string"
+                              },
+                              "method": {
+                                "type": "string"
+                              },
+                              "path": {
+                                "type": "string"
+                              },
+                              "interaction": {
+                                "type": "string"
+                              },
+                              "durationMs": {
+                                "anyOf": [
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "status": {
+                                "anyOf": [
+                                  {
+                                    "type": "number"
+                                  },
+                                  {
+                                    "type": "null"
+                                  }
+                                ]
+                              },
+                              "error": {
+                                "type": "string"
+                              },
+                              "sql": {
+                                "type": "array",
+                                "items": {
+                                  "type": "object",
+                                  "properties": {
+                                    "id": {
+                                      "type": "string"
+                                    },
+                                    "durationMs": {
+                                      "type": "number"
+                                    },
+                                    "sql": {
+                                      "type": "string"
+                                    },
+                                    "params": {
+                                      "type": "array",
+                                      "items": {
+                                        "type": "string"
+                                      },
+                                      "description": "Bound parameter values, stringified"
+                                    },
+                                    "rowCount": {
+                                      "anyOf": [
+                                        {
+                                          "type": "number"
+                                        },
+                                        {
+                                          "type": "null"
+                                        }
+                                      ]
+                                    },
+                                    "error": {
+                                      "type": "string"
+                                    }
+                                  },
+                                  "required": [
+                                    "id",
+                                    "durationMs",
+                                    "sql",
+                                    "params",
+                                    "rowCount"
+                                  ]
+                                }
+                              }
+                            },
+                            "required": [
+                              "spanId",
+                              "method",
+                              "path",
+                              "durationMs",
+                              "status",
+                              "sql"
+                            ]
+                          }
+                        }
+                      },
+                      "required": [
+                        "traceId",
+                        "requests"
+                      ]
+                    },
+                    {
+                      "type": "null"
+                    }
                   ]
                 }
               }

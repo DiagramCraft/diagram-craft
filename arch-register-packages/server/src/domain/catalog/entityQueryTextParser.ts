@@ -41,6 +41,18 @@ const parseWrapperCall = (state: ParserState): string => {
   return value;
 };
 
+// `now()` or `now(N)` — N (positive or negative) is the optional day offset.
+const parseNowCall = (state: ParserState): number | undefined => {
+  expect(state, 'LPAREN');
+  if (peek(state).kind === 'RPAREN') {
+    advance(state);
+    return undefined;
+  }
+  const offsetDays = expect(state, 'NUMBER').value as number;
+  expect(state, 'RPAREN');
+  return offsetDays;
+};
+
 const parseValue = (state: ParserState): TextValue => {
   const token = peek(state);
   if (token.kind === 'STRING') {
@@ -54,6 +66,10 @@ const parseValue = (state: ParserState): TextValue => {
   if (token.kind === 'IDENT' && token.text === 'date') {
     advance(state);
     return { kind: 'date', value: parseWrapperCall(state), offset: token.offset };
+  }
+  if (token.kind === 'IDENT' && token.text === 'now') {
+    advance(state);
+    return { kind: 'now', offsetDays: parseNowCall(state), offset: token.offset };
   }
   if (token.kind === 'IDENT' && token.text === 'enumValue') {
     advance(state);
