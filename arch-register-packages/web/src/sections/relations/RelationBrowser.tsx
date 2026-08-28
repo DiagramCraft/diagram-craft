@@ -1,7 +1,6 @@
-import { useCallback, useMemo, useRef, useState } from 'react';
+import { useCallback, useMemo, useState } from 'react';
 import { useNavigate, useSearch } from '@tanstack/react-router';
 import {
-  TbFilter,
   TbDots,
   TbCheck,
   TbCopy,
@@ -13,7 +12,6 @@ import {
   TbChevronRight
 } from 'react-icons/tb';
 import { Button } from '@diagram-craft/app-components/Button';
-import { Popover, type PopoverActions } from '@diagram-craft/app-components/Popover';
 import { DeleteConfirmationDialog } from '@diagram-craft/app-components/DeleteConfirmationDialog';
 import styles from './RelationBrowser.module.css';
 import filterStyles from '../entities/components/EntityBrowser.module.css';
@@ -24,7 +22,6 @@ import { useTableSort } from '../../components/table/useTableSort';
 import { DropdownMenu, type MenuItem } from '../../components/DropdownMenu';
 import { EntityNavigationLink } from '../../components/EntityNavigationLink';
 import { asEntityPublicId, entityDetailRoute } from '../../routes/publicObjectRoutes';
-import { useWorkspaceAuthorization } from '../../auth/WorkspaceAuthorizationContext';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useTeams, useLifecycleStates } from '../../hooks/useWorkspaceConfig';
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
@@ -33,7 +30,7 @@ import { RelationDetailPopover } from '../entities/components/RelationDetailPopo
 import { SaveViewDialog } from '../entities/components/EntityBrowser';
 import { RelationEditDialog } from '../../dialogs/RelationEditDialog';
 import { useRelationBrowserData } from './useRelationBrowserData';
-import { RelationFilterBuilder } from './RelationFilterBuilder';
+import { RelationQueryModeControls } from './RelationQueryModeControls';
 import {
   buildRelationQueryFromFilters,
   buildRelationSavedViewPayload,
@@ -66,12 +63,16 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
   const view: RelationBrowserView = search.viewMode === 'graph' ? 'graph' : 'table';
   const edgeLabelFieldId = search.edgeLabelFieldId ?? RELATION_GRAPH_TYPE_LABEL;
   const edgeColorFieldId = search.edgeColorFieldId ?? RELATION_GRAPH_TYPE_LABEL;
+  const relationGraphMode = search.relationGraphMode ?? undefined;
   const {
     relationSchemas,
     entitySchemas,
     enums,
     conditions,
     setConditions,
+    relationQuery,
+    setRelationQuery,
+    representable,
     activeSchema,
     relations,
     total,
@@ -82,10 +83,8 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     pageIndex,
     pageSize
   } = useRelationBrowserData(workspaceId, view);
-  const { getFieldGroupAccess } = useWorkspaceAuthorization(workspaceId);
   const { data: owners = [] } = useTeams(workspaceId);
   const { data: lifecycleStates = [] } = useLifecycleStates(workspaceId);
-  const filterPopoverRef = useRef<PopoverActions | null>(null);
   const navigate = useNavigate();
   const { permissions } = useWorkspaceContext();
 
@@ -300,42 +299,19 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
       </div>
 
       <div className={filterStyles.toolbar}>
-        <Popover.Root actionsRef={filterPopoverRef}>
-          <Popover.Trigger
-            element={
-              <Button
-                size="sm"
-                variant={conditions.length > 0 ? 'primary' : 'secondary'}
-                icon={<TbFilter size={12} />}
-                aria-label="Filter"
-                title="Filter"
-              >
-                {conditions.length > 0 && (
-                  <span className={filterStyles.filterCount}>{conditions.length}</span>
-                )}
-              </Button>
-            }
-          />
-          <Popover.Content
-            sideOffset={4}
-            align="start"
-            arrow={false}
-            closeButton={false}
-            className={filterStyles.filterPopover}
-          >
-            <RelationFilterBuilder
-              conditions={conditions}
-              onChange={setConditions}
-              onClose={() => filterPopoverRef.current?.close()}
-              relationSchemas={relationSchemas}
-              entitySchemas={entitySchemas}
-              enums={enums}
-              owners={owners}
-              lifecycleStates={lifecycleStates}
-              getFieldGroupAccess={getFieldGroupAccess}
-            />
-          </Popover.Content>
-        </Popover.Root>
+        <RelationQueryModeControls
+          workspaceId={workspaceId}
+          conditions={conditions}
+          setConditions={setConditions}
+          relationQuery={relationQuery}
+          setRelationQuery={setRelationQuery}
+          representable={representable}
+          relationSchemas={relationSchemas}
+          entitySchemas={entitySchemas}
+          enums={enums}
+          owners={owners}
+          lifecycleStates={lifecycleStates}
+        />
         <div style={{ marginLeft: 'auto' }}>
           <FilterDropdown
             label="View"
@@ -489,6 +465,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
             onEdgeLabelFieldIdChange={setEdgeLabelFieldId}
             edgeColorFieldId={edgeColorFieldId}
             onEdgeColorFieldIdChange={setEdgeColorFieldId}
+            typedRelationMode={relationGraphMode}
             onEntityClick={entityId =>
               navigate(entityDetailRoute(workspaceId, asEntityPublicId(entityId)))
             }

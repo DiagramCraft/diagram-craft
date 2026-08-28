@@ -82,7 +82,10 @@ const relationSearchSchema = defineSearchParamSchema({
   viewMode: enumCodec(['table', 'graph'] as const),
   entityQuery: stringCodec, // JSON string of structured EntityQuery IR (root_kind: 'relation')
   edgeLabelFieldId: stringCodec,
-  edgeColorFieldId: stringCodec
+  edgeColorFieldId: stringCodec,
+  // Distinct name from the model-overview route's own `typedRelationMode` (below) — `useSearch`
+  // unions search params across routes, so a shared name would collide on type.
+  relationGraphMode: enumCodec(['flat', 'entity'] as const)
 });
 
 export type RelationSearchParams = SearchParamsFromSchema<typeof relationSearchSchema>;

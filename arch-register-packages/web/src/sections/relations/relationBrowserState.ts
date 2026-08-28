@@ -106,6 +106,25 @@ export const filterConditionsFromRelationQuery = (query: EntityQuery): FilterCon
     .map(nodeToCondition)
     .filter((c): c is FilterCondition => c != null);
 
+// True when `query` round-trips exactly through the flat Basic-mode condition list above — every
+// top-level node is a plain predicate on the relation's own field (`path: []`) or a single
+// `endpoint` hop, and there's no projection. An `or` root, a `relationForward` path step (or
+// anything deeper), or a projection is NOT representable: #3066 found that
+// filterConditionsFromRelationQuery/nodeToCondition silently drop these, which used to mean a
+// saved view built around them (e.g. a "restricted flows" view combining the relation's own
+// classification with a carried entity's via relationForward, joined by `or`) would silently
+// execute an emptied-out or wrong query when opened. Non-representable queries now stay in
+// Advanced (text) mode and are sent to the API unmodified — see useRelationBrowserData.ts.
+const isRelationConditionNode = (node: QueryNode): boolean =>
+  node.kind === 'predicate' &&
+  (node.path.length === 0 || (node.path.length === 1 && node.path[0]!.kind === 'endpoint'));
+
+export const isRelationBasicRepresentable = (query: EntityQuery): boolean =>
+  !query.projections?.length &&
+  (query.root.kind === 'and'
+    ? query.root.children.every(isRelationConditionNode)
+    : isRelationConditionNode(query.root));
+
 export const parseRelationQueryFromSearch = (
   search: Pick<RelationSearchParams, 'entityQuery'>
 ): EntityQuery | null => {
@@ -129,6 +148,12 @@ export const toSavedRelationViewSearch = (view: SavedView): RelationSearchParams
   edgeColorFieldId:
     view.viewMode === 'graph' && view.config?.graph?.edgeColorFieldId != null
       ? view.config.graph.edgeColorFieldId
+      : undefined,
+  // #3066: not user-editable via the save dialog (no config UI for it yet) — carried through from
+  // a seeded/admin-authored view's config so its graph renders relations-as-nodes correctly.
+  relationGraphMode:
+    view.viewMode === 'graph' && view.config?.graph?.typedRelationMode != null
+      ? view.config.graph.typedRelationMode
       : undefined
 });
 

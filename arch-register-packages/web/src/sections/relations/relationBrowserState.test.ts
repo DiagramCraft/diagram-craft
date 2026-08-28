@@ -3,7 +3,9 @@ import {
   buildRelationQueryFromFilters,
   buildRelationSavedViewPayload,
   endpointFieldId,
+  filterConditionsFromRelationQuery,
   getRelationGraphLabelOptions,
+  isRelationBasicRepresentable,
   parseEndpointFieldId,
   RELATION_GRAPH_TYPE_LABEL,
   resolveSingleSchemaFilter,
@@ -176,5 +178,108 @@ describe('relation saved view display mode', () => {
       { value: RELATION_GRAPH_TYPE_LABEL, label: 'Relation type' },
       { value: 'status', label: 'Status' }
     ]);
+  });
+});
+
+// #3066: saved views built around OR-grouping or a relationForward traversal (e.g. "restricted
+// data flows" combining the flow's own classification with a carried entity's) used to be
+// silently flattened/dropped by the Basic-mode round-trip below. isRelationBasicRepresentable
+// detects that case so callers can keep the raw query and open in Advanced (text) mode instead.
+describe('isRelationBasicRepresentable', () => {
+  it('is representable for a flat AND of own-field and endpoint predicates', () => {
+    const query = buildRelationQueryFromFilters([
+      { fieldId: '_schemaId', op: 'equals', value: 'data-flow' },
+      { fieldId: 'in:status', op: 'equals', value: 'active' }
+    ]);
+    expect(isRelationBasicRepresentable(query)).toBe(true);
+  });
+
+  it('is representable for a single top-level predicate root (not wrapped in and)', () => {
+    expect(
+      isRelationBasicRepresentable({
+        root_kind: 'relation',
+        root: { kind: 'predicate', path: [], fieldId: 'status', op: 'equals', value: 'active' }
+      })
+    ).toBe(true);
+  });
+
+  it('is not representable when the root contains an or node', () => {
+    expect(
+      isRelationBasicRepresentable({
+        root_kind: 'relation',
+        root: {
+          kind: 'and',
+          children: [
+            { kind: 'predicate', path: [], fieldId: '_schemaId', op: 'equals', value: 'data-flow' },
+            {
+              kind: 'or',
+              children: [
+                { kind: 'predicate', path: [], fieldId: 'a', op: 'equals', value: '1' },
+                { kind: 'predicate', path: [], fieldId: 'b', op: 'equals', value: '2' }
+              ]
+            }
+          ]
+        }
+      })
+    ).toBe(false);
+  });
+
+  it('is not representable when a predicate traverses via relationForward', () => {
+    expect(
+      isRelationBasicRepresentable({
+        root_kind: 'relation',
+        root: {
+          kind: 'predicate',
+          path: [{ kind: 'relationForward', fieldId: 'data_entities' }],
+          fieldId: 'classification',
+          op: 'in',
+          value: ['sensitive']
+        }
+      })
+    ).toBe(false);
+  });
+
+  it('is not representable when the query carries projections', () => {
+    expect(
+      isRelationBasicRepresentable({
+        root_kind: 'relation',
+        root: { kind: 'and', children: [] },
+        projections: [{ path: [], fieldId: 'name', alias: 'x' }]
+      })
+    ).toBe(false);
+  });
+
+  it('drops the or node when flattened, matching what triggered the bug', () => {
+    const query = {
+      root_kind: 'relation' as const,
+      root: {
+        kind: 'and' as const,
+        children: [
+          {
+            kind: 'predicate' as const,
+            path: [],
+            fieldId: '_schemaId',
+            op: 'equals' as const,
+            value: 'data-flow'
+          },
+          {
+            kind: 'or' as const,
+            children: [
+              {
+                kind: 'predicate' as const,
+                path: [],
+                fieldId: 'a',
+                op: 'equals' as const,
+                value: '1'
+              }
+            ]
+          }
+        ]
+      }
+    };
+    expect(filterConditionsFromRelationQuery(query)).toEqual([
+      { fieldId: '_schemaId', op: 'equals', value: 'data-flow' }
+    ]);
+    expect(isRelationBasicRepresentable(query)).toBe(false);
   });
 });
