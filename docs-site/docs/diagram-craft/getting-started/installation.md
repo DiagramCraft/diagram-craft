@@ -20,6 +20,8 @@ If you have installed the desktop app, open Diagram Craft from your applications
 
 Choose the desktop app when you want a packaged editor experience instead of running in a browser tab.
 
+The Electron 44 desktop build requires macOS 13 (Ventura) or later and is available only for 64-bit architectures. This migration has been validated on macOS arm64; Windows and Linux packaging targets remain configured but are not covered by this validation.
+
 ## Self-Hosting
 
 If you need deployment or hosting details, use [Self-hosting](../developing/self-hosting).
