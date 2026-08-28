@@ -47,7 +47,7 @@ export type SchemaEditorAdapter<
   Extra extends object = Record<never, never>,
   FieldType extends string = string
 > = {
-  createDraft: (selected: Selected) => SchemaEditorDraft<Field, Group, Extra>;
+  createDraft: (selected: Selected | null) => SchemaEditorDraft<Field, Group, Extra>;
   createField: (id: string, groupId?: string) => Field;
   changeFieldType: (
     field: Field,
@@ -74,7 +74,8 @@ export type SchemaEditorAdapter<
     draft: SchemaEditorDraft<Field, Group, Extra>,
     fieldMigrations?: FieldMigrations
   ) => Promise<void>;
-  create: () => Promise<{ id: string }>;
+  create: (draft: SchemaEditorDraft<Field, Group, Extra>) => Promise<{ id: string }>;
+  isValid?: (draft: SchemaEditorDraft<Field, Group, Extra>) => boolean;
   remove: (selected: Selected) => Promise<void>;
   getMigrationRequired: (error: unknown) => { pendingChanges: PendingFieldChange[] } | null;
   validationRuleDefaults: () => ValidationRule;
@@ -137,7 +138,6 @@ export type SchemaEditorController<
   removeGroup: (groupId: string) => void;
   save: (fieldMigrations?: FieldMigrations) => Promise<void>;
   confirmFieldMigrations: (choices: FieldMigrationChoices) => void;
-  create: () => Promise<void>;
   deleteSelected: () => Promise<void>;
 };
 
@@ -165,6 +165,7 @@ type Options<
   FieldType extends string
 > = {
   selected: Selected | null;
+  isNew: boolean;
   items: Selected[];
   fieldGroups: SharedFieldGroup[];
   firstEnumId?: string;
@@ -180,6 +181,7 @@ export const useSchemaEditorController = <
   FieldType extends string = string
 >({
   selected,
+  isNew,
   items,
   fieldGroups,
   firstEnumId,
@@ -193,9 +195,9 @@ export const useSchemaEditorController = <
   FieldType
 > => {
   const [draft, setDraft] = useState<SchemaEditorDraft<Field, Group, Extra> | null>(() =>
-    selected ? adapter.createDraft(selected) : null
+    selected ? adapter.createDraft(selected) : isNew ? adapter.createDraft(null) : null
   );
-  const [dirty, setDirty] = useState(false);
+  const [dirty, setDirty] = useState(isNew);
   const [pendingFieldChanges, setPendingFieldChanges] = useState<PendingFieldChange[] | null>(null);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -206,8 +208,10 @@ export const useSchemaEditorController = <
   const fieldKeysRef = useRef<Map<string, string>>(new Map());
   const adapterRef = useRef(adapter);
   const selectedIdRef = useRef(selected?.id);
+  const isNewRef = useRef(isNew);
   adapterRef.current = adapter;
   selectedIdRef.current = selected?.id;
+  isNewRef.current = isNew;
 
   const resetTransientState = useCallback(() => {
     setDirty(false);
@@ -222,14 +226,20 @@ export const useSchemaEditorController = <
   }, []);
 
   useEffect(() => {
-    if (!selected) {
-      setDraft(null);
+    if (selected) {
+      setDraft(adapterRef.current.createDraft(selected));
       resetTransientState();
       return;
     }
-    setDraft(adapterRef.current.createDraft(selected));
+    if (isNew) {
+      setDraft(adapterRef.current.createDraft(null));
+      resetTransientState();
+      setDirty(true);
+      return;
+    }
+    setDraft(null);
     resetTransientState();
-  }, [selected, resetTransientState]);
+  }, [selected, isNew, resetTransientState]);
 
   const updateDraft = useCallback(
     (
@@ -454,8 +464,14 @@ export const useSchemaEditorController = <
 
   const save = useCallback(
     async (fieldMigrations?: FieldMigrations) => {
-      if (!selected || !draft || (!dirty && fieldMigrations === undefined)) return;
+      if (!draft || (!dirty && fieldMigrations === undefined)) return;
+      if (!selected && !isNewRef.current) return;
       try {
+        if (!selected) {
+          const created = await adapterRef.current.create(draft);
+          onSelect(created.id);
+          return;
+        }
         const shouldSave =
           fieldMigrations !== undefined ||
           adapterRef.current.hasChanges?.(draft, selected) !== false;
@@ -471,11 +487,15 @@ export const useSchemaEditorController = <
           return;
         }
         setErrorMessage(
-          error instanceof Error ? error.message : adapterRef.current.labels.saveError
+          error instanceof Error
+            ? error.message
+            : selected
+              ? adapterRef.current.labels.saveError
+              : adapterRef.current.labels.createError
         );
       }
     },
-    [dirty, draft, selected]
+    [dirty, draft, selected, onSelect]
   );
 
   const confirmFieldMigrations = useCallback(
@@ -485,17 +505,6 @@ export const useSchemaEditorController = <
     },
     [pendingFieldChanges, save]
   );
-
-  const create = useCallback(async () => {
-    try {
-      const created = await adapterRef.current.create();
-      onSelect(created.id);
-    } catch (error: unknown) {
-      setErrorMessage(
-        error instanceof Error ? error.message : adapterRef.current.labels.createError
-      );
-    }
-  }, [onSelect]);
 
   const deleteSelected = useCallback(async () => {
     if (!selected) return;
@@ -547,7 +556,6 @@ export const useSchemaEditorController = <
     removeGroup,
     save,
     confirmFieldMigrations,
-    create,
     deleteSelected
   };
 };

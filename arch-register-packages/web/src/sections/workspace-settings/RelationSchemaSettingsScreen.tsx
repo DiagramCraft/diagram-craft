@@ -30,7 +30,11 @@ import {
 } from './schemaEditorState';
 
 const EMPTY_ENDPOINT: RelationEndpoint = { schemaIds: [] };
+export const NEW_RELATION_SCHEMA_ID = 'new';
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
+
+const isValidEndpoint = (endpoint: RelationEndpoint): boolean =>
+  endpoint.schemaIds === 'any' || endpoint.schemaIds.length > 0;
 
 type RelationEditorExtra = {
   category: string;
@@ -42,6 +46,7 @@ export const RelationSchemaSettingsScreen = () => {
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
   const selectedRelationSchemaId = search.relationSchema;
+  const isNew = selectedRelationSchemaId === NEW_RELATION_SCHEMA_ID;
   const {
     workspaceSlug,
     schemas,
@@ -80,19 +85,34 @@ export const RelationSchemaSettingsScreen = () => {
     >
   >(
     () => ({
-      createDraft: schema => ({
-        name: schema.name,
-        category: schema.category ?? '',
-        description: schema.description,
-        inEndpoint: schema.in,
-        outEndpoint: schema.out,
-        fields: schema.fields,
-        groups: schema.groups,
-        sharedFieldGroupLinks: schema.shared_field_group_links ?? [],
-        validationRules: schema.validation_rules ?? [],
-        color: schema.color,
-        icon: schema.icon
-      }),
+      createDraft: schema =>
+        schema
+          ? {
+              name: schema.name,
+              category: schema.category ?? '',
+              description: schema.description,
+              inEndpoint: schema.in,
+              outEndpoint: schema.out,
+              fields: schema.fields,
+              groups: schema.groups,
+              sharedFieldGroupLinks: schema.shared_field_group_links ?? [],
+              validationRules: schema.validation_rules ?? [],
+              color: schema.color,
+              icon: schema.icon
+            }
+          : {
+              name: '',
+              category: '',
+              description: '',
+              inEndpoint: EMPTY_ENDPOINT,
+              outEndpoint: EMPTY_ENDPOINT,
+              fields: [],
+              groups: [],
+              sharedFieldGroupLinks: [],
+              validationRules: [],
+              color: null,
+              icon: null
+            },
       createField: (id, groupId) =>
         ({ id, name: 'new_field', type: 'text', ...(groupId ? { groupId } : {}) }) as RelationField,
       changeFieldType: (field, newType, _fields, firstEnumId) =>
@@ -129,13 +149,24 @@ export const RelationSchemaSettingsScreen = () => {
           }
         });
       },
-      create: () =>
+      create: draft =>
         createRelationSchemaMutation.mutateAsync({
-          name: 'New relation type',
-          in: EMPTY_ENDPOINT,
-          out: EMPTY_ENDPOINT,
-          fields: []
+          name: draft.name,
+          category: draft.category,
+          description: draft.description,
+          in: draft.inEndpoint,
+          out: draft.outEndpoint,
+          fields: draft.fields,
+          groups: draft.groups,
+          shared_field_group_links: draft.sharedFieldGroupLinks,
+          validation_rules: draft.validationRules,
+          color: draft.color,
+          icon: draft.icon
         }),
+      isValid: draft =>
+        draft.name.trim() !== '' &&
+        isValidEndpoint(draft.inEndpoint) &&
+        isValidEndpoint(draft.outEndpoint),
       remove: schema => deleteRelationSchemaMutation.mutateAsync(schema.id).then(() => undefined),
       getMigrationRequired: getRelationSchemaMigrationRequired,
       validationRuleDefaults: () => ({
@@ -162,6 +193,7 @@ export const RelationSchemaSettingsScreen = () => {
 
   const editor = useSchemaEditorController({
     selected,
+    isNew,
     items: relationSchemas,
     fieldGroups,
     firstEnumId: enums[0]?.id,
@@ -172,12 +204,12 @@ export const RelationSchemaSettingsScreen = () => {
 
   const { data: versions, isLoading: versionsLoading } = useRelationSchemaVersions(
     workspaceSlug,
-    editor.showHistory ? (selectedRelationSchemaId ?? null) : null
+    editor.showHistory && selected ? (selectedRelationSchemaId ?? null) : null
   );
 
   return (
     <SchemaEditorScreenShell
-      hasSelection={Boolean(selected && draft)}
+      hasSelection={Boolean((selected || isNew) && draft)}
       breadcrumb={[
         {
           label: 'Home',
@@ -187,10 +219,13 @@ export const RelationSchemaSettingsScreen = () => {
       ]}
       titleTestId="relation-schema-editor-title"
       icon={
-        selected && draft ? (
+        (selected || isNew) && draft ? (
           <TypeBadge
-            color={draft.color ?? resolveSchemaColor(selected, selectedIndex)}
-            name={selected.name}
+            color={
+              draft.color ??
+              (selected ? resolveSchemaColor(selected, selectedIndex) : 'var(--base-fg-dim)')
+            }
+            name={selected?.name ?? draft.name}
             icon={draft.icon}
             size={26}
           />
@@ -201,9 +236,11 @@ export const RelationSchemaSettingsScreen = () => {
         selected ? `${selected.relation_count} relations · version ${selected.version}` : undefined
       }
       headerAction={
-        <Button variant="ghost" onClick={() => editor.setShowHistory(current => !current)}>
-          {editor.showHistory ? 'Back to fields' : 'View history'}
-        </Button>
+        selected ? (
+          <Button variant="ghost" onClick={() => editor.setShowHistory(current => !current)}>
+            {editor.showHistory ? 'Back to fields' : 'View history'}
+          </Button>
+        ) : undefined
       }
       history={
         editor.showHistory ? (
@@ -211,7 +248,7 @@ export const RelationSchemaSettingsScreen = () => {
         ) : null
       }
       editor={
-        selected && draft ? (
+        (selected || isNew) && draft ? (
           <RelationEditorForm
             name={draft.name}
             category={draft.category}
@@ -222,7 +259,10 @@ export const RelationSchemaSettingsScreen = () => {
             icon={draft.icon}
             dirty={editor.dirty}
             canEdit={canEdit}
-            updatePending={updateRelationSchemaMutation.isPending}
+            updatePending={
+              updateRelationSchemaMutation.isPending || createRelationSchemaMutation.isPending
+            }
+            saveBlocked={!editor.dirty || !adapter.isValid?.(draft)}
             fields={draft.fields}
             groups={draft.groups}
             sharedFieldGroupLinks={draft.sharedFieldGroupLinks}
@@ -266,7 +306,7 @@ export const RelationSchemaSettingsScreen = () => {
             onUpdateValidationRule={editor.updateValidationRule}
             onToggleValidationRule={editor.toggleValidationRule}
             onDeleteValidationRule={editor.deleteValidationRule}
-            onDelete={() => editor.setConfirmDelete(true)}
+            onDelete={selected ? () => editor.setConfirmDelete(true) : undefined}
             onSave={() => void editor.save()}
           />
         ) : null
@@ -279,7 +319,7 @@ export const RelationSchemaSettingsScreen = () => {
           <Button
             variant="primary"
             icon={<TbPlus size={12} />}
-            onClick={() => void editor.create()}
+            onClick={() => onSelectRelationSchema(NEW_RELATION_SCHEMA_ID)}
           >
             New relation type
           </Button>

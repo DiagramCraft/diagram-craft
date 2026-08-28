@@ -15,6 +15,10 @@
   padding: 0 6px 0 8px;
   height: 32px;
   gap: 6px;
+
+  [role="tablist"] {
+    border-bottom-width: 0 !important;
+  }
 }
 
 .tabHeader {
@@ -65,6 +69,13 @@
   flex: 1;
   overflow: auto;
   padding: 4px 0;
+
+  scrollbar-color: var(--gray-5) transparent;
+  scrollbar-width: thin;
+}
+
+[data-theme="light"] .scroll {
+  scrollbar-color: oklch(0.82 0.005 260) transparent;
 }
 
 .groupLabel {

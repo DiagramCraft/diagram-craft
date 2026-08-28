@@ -17,6 +17,7 @@ export const SchemaEditorFormShell = ({
   dirty,
   canEdit,
   updatePending,
+  saveBlocked = false,
   descriptionPlaceholder,
   beforeDescription,
   afterDescription,
@@ -37,6 +38,7 @@ export const SchemaEditorFormShell = ({
   dirty: boolean;
   canEdit: boolean;
   updatePending: boolean;
+  saveBlocked?: boolean;
   descriptionPlaceholder: string;
   beforeDescription?: ReactNode;
   afterDescription?: ReactNode;
@@ -46,7 +48,7 @@ export const SchemaEditorFormShell = ({
   onDescriptionChange: (value: string) => void;
   onColorChange: (value: string) => void;
   onIconChange: (value: string) => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   onSave: () => void;
 }) => (
   <div className={styles.editor}>
@@ -127,14 +129,14 @@ export const SchemaEditorFormShell = ({
     </div>
     {children}
     <div className={styles.formActions}>
-      {canEdit && (
+      {canEdit && onDelete && (
         <Button variant="danger" icon={<TbTrash size={12} />} onClick={onDelete}>
           Delete type
         </Button>
       )}
       <div style={{ flex: 1 }} />
       {canEdit && dirty && (
-        <Button variant="primary" onClick={onSave} disabled={updatePending}>
+        <Button variant="primary" onClick={onSave} disabled={updatePending || saveBlocked}>
           {updatePending ? 'Saving...' : 'Save'}
         </Button>
       )}

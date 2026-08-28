@@ -41,17 +41,30 @@ const makeAdapter = (
     TestExtra,
     'text' | 'number'
   > = {
-    createDraft: selected => ({
-      name: selected.name,
-      description: '',
-      fields: [{ id: 'title', name: 'Title', type: 'text' }],
-      groups: [],
-      sharedFieldGroupLinks: [],
-      validationRules: [],
-      color: null,
-      icon: null,
-      marker: selected.id
-    }),
+    createDraft: selected =>
+      selected
+        ? {
+            name: selected.name,
+            description: '',
+            fields: [{ id: 'title', name: 'Title', type: 'text' }],
+            groups: [],
+            sharedFieldGroupLinks: [],
+            validationRules: [],
+            color: null,
+            icon: null,
+            marker: selected.id
+          }
+        : {
+            name: '',
+            description: '',
+            fields: [],
+            groups: [],
+            sharedFieldGroupLinks: [],
+            validationRules: [],
+            color: null,
+            icon: null,
+            marker: 'new'
+          },
     createField: (id, groupId) => ({
       id,
       name: 'New field',
@@ -115,17 +128,20 @@ describe('useSchemaEditorController', () => {
 
   const Harness = ({
     selected,
+    isNew = false,
     items,
     adapter,
     onSelect
   }: {
     selected: TestSelected | null;
+    isNew?: boolean;
     items: TestSelected[];
     adapter: SchemaEditorAdapter<TestSelected, TestField, TestGroup, TestExtra, 'text' | 'number'>;
     onSelect: (id: string) => void;
   }) => {
     latest = useSchemaEditorController({
       selected,
+      isNew,
       items,
       fieldGroups: [
         {
@@ -219,10 +235,9 @@ describe('useSchemaEditorController', () => {
     expect(latest.dirty).toBe(false);
   });
 
-  it('shares field, group, access, validation, create, and delete actions', async () => {
-    const create = vi.fn(async () => ({ id: 'created' }));
+  it('shares field, group, access, validation, and delete actions', async () => {
     const remove = vi.fn(async () => undefined);
-    const adapter = makeAdapter({ create, remove });
+    const adapter = makeAdapter({ remove });
     const onSelect = vi.fn();
 
     act(() => {
@@ -247,14 +262,37 @@ describe('useSchemaEditorController', () => {
     expect(latest.draft?.groups).toEqual([{ id: 'shared', name: 'Shared group' }]);
     expect(latest.draft?.validationRules).toHaveLength(1);
 
-    await act(async () => latest.create());
-    expect(create).toHaveBeenCalledOnce();
-    expect(onSelect).toHaveBeenCalledWith('created');
-
     act(() => latest.setConfirmDelete(true));
     await act(async () => latest.deleteSelected());
     expect(remove).toHaveBeenCalledWith(selectedA);
     expect(onSelect).toHaveBeenLastCalledWith('schema-b');
+  });
+
+  it('creates a new item on save when there is no selection yet', async () => {
+    const create = vi.fn(async () => ({ id: 'created' }));
+    const adapter = makeAdapter({ create });
+    const onSelect = vi.fn();
+
+    act(() => {
+      root.render(
+        <Harness
+          selected={null}
+          isNew={true}
+          items={[selectedA, selectedB]}
+          adapter={adapter}
+          onSelect={onSelect}
+        />
+      );
+    });
+
+    expect(latest.dirty).toBe(true);
+    expect(latest.draft?.name).toBe('');
+
+    act(() => latest.updateDraft(current => ({ ...current, name: 'New schema' })));
+
+    await act(async () => latest.save());
+    expect(create).toHaveBeenCalledWith(expect.objectContaining({ name: 'New schema' }));
+    expect(onSelect).toHaveBeenCalledWith('created');
   });
 
   it('reorders fields within a bucket while leaving other fields untouched', () => {
