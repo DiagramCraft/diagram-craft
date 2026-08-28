@@ -20,7 +20,7 @@
     "@diagram-craft/utils": "workspace:^",
     "electron-log": "^5.4.4"
   },
-    "devDependencies": {
+  "devDependencies": {
     "electron": "^44.0.0",
     "electron-builder": "^26.15.0",
     "npm-run-all": "^4.1.5",
