@@ -14,9 +14,9 @@
   "dependencies": {
     "@arch-register/api-types": "workspace:*",
     "@arch-register/server": "workspace:*",
-    "@orpc/client": "^1.14.13",
-    "@orpc/contract": "^1.14.13",
-    "@orpc/openapi-client": "^1.14.13",
+    "@orpc/client": "^1.15.0",
+    "@orpc/contract": "^1.15.0",
+    "@orpc/openapi-client": "^1.15.0",
     "h3": "2.0.1-rc.29",
     "postgres": "^3.4.5"
   },
