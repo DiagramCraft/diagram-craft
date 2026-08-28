@@ -57,12 +57,15 @@ type EntityEditorExtra = {
   detailLayout: DetailLayoutConfig | undefined;
 };
 
+export const NEW_SCHEMA_ID = 'new';
+
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
 export const SchemaSettingsScreen = () => {
   const navigate = routeApi.useNavigate();
   const search = routeApi.useSearch();
   const selectedSchemaId = search.schema;
+  const isNew = selectedSchemaId === NEW_SCHEMA_ID;
   const activeTab = search.tab ?? 'types';
   const {
     workspaceSlug,
@@ -98,21 +101,38 @@ export const SchemaSettingsScreen = () => {
     SchemaEditorAdapter<EntitySchema, SchemaField, SchemaGroup, EntityEditorExtra, FieldType>
   >(
     () => ({
-      createDraft: schema => ({
-        name: schema.name,
-        keyPrefix: schema.key_prefix,
-        category: schema.category ?? '',
-        description: schema.description,
-        fields: schema.fields,
-        templates: schema.templates,
-        groups: schema.groups,
-        sharedFieldGroupLinks: schema.shared_field_group_links ?? [],
-        validationRules: schema.validation_rules ?? [],
-        detailLayoutEnabled: schema.detail_layout !== undefined,
-        detailLayout: schema.detail_layout,
-        color: schema.color,
-        icon: schema.icon
-      }),
+      createDraft: schema =>
+        schema
+          ? {
+              name: schema.name,
+              keyPrefix: schema.key_prefix,
+              category: schema.category ?? '',
+              description: schema.description,
+              fields: schema.fields,
+              templates: schema.templates,
+              groups: schema.groups,
+              sharedFieldGroupLinks: schema.shared_field_group_links ?? [],
+              validationRules: schema.validation_rules ?? [],
+              detailLayoutEnabled: schema.detail_layout !== undefined,
+              detailLayout: schema.detail_layout,
+              color: schema.color,
+              icon: schema.icon
+            }
+          : {
+              name: '',
+              keyPrefix: '',
+              category: '',
+              description: '',
+              fields: [],
+              templates: [],
+              groups: [],
+              sharedFieldGroupLinks: [],
+              validationRules: [],
+              detailLayoutEnabled: false,
+              detailLayout: undefined,
+              color: null,
+              icon: null
+            },
       createField: (id, groupId) =>
         ({ id, name: 'new_field', type: 'text', ...(groupId ? { groupId } : {}) }) as SchemaField,
       changeFieldType: (field, newType, fields, firstEnumId) =>
@@ -164,12 +184,22 @@ export const SchemaSettingsScreen = () => {
           }
         });
       },
-      create: () =>
+      create: draft =>
         createSchemaMutation.mutateAsync({
-          name: 'New type',
-          key_prefix: 'TYPE',
-          fields: []
+          name: draft.name,
+          key_prefix: draft.keyPrefix,
+          category: draft.category,
+          description: draft.description,
+          fields: draft.fields,
+          templates: draft.templates,
+          groups: draft.groups,
+          shared_field_group_links: draft.sharedFieldGroupLinks,
+          validation_rules: draft.validationRules,
+          detail_layout: draft.detailLayoutEnabled ? (draft.detailLayout ?? null) : null,
+          color: draft.color,
+          icon: draft.icon
         }),
+      isValid: draft => draft.name.trim() !== '' && /^[A-Z]{2,5}$/.test(draft.keyPrefix),
       remove: schema => deleteSchemaMutation.mutateAsync(schema.id).then(() => undefined),
       getMigrationRequired: getSchemaMigrationRequired,
       validationRuleDefaults: () => ({
@@ -196,6 +226,7 @@ export const SchemaSettingsScreen = () => {
 
   const editor = useSchemaEditorController({
     selected,
+    isNew,
     items: schemas,
     fieldGroups,
     firstEnumId: enums[0]?.id,
@@ -210,7 +241,7 @@ export const SchemaSettingsScreen = () => {
 
   const { data: schemaVersions, isLoading: schemaVersionsLoading } = useSchemaVersions(
     workspaceSlug,
-    editor.showHistory ? (selectedSchemaId ?? null) : null
+    editor.showHistory && selected ? (selectedSchemaId ?? null) : null
   );
 
   useEffect(() => {
@@ -244,7 +275,7 @@ export const SchemaSettingsScreen = () => {
 
   return (
     <SchemaEditorScreenShell
-      hasSelection={Boolean(selected && draft)}
+      hasSelection={Boolean((selected || isNew) && draft)}
       breadcrumb={[
         {
           label: 'Home',
@@ -254,10 +285,13 @@ export const SchemaSettingsScreen = () => {
       ]}
       titleTestId="schema-editor-title"
       icon={
-        selected && draft ? (
+        (selected || isNew) && draft ? (
           <TypeBadge
-            color={draft.color ?? resolveSchemaColor(selected, selectedIndex)}
-            name={selected.name}
+            color={
+              draft.color ??
+              (selected ? resolveSchemaColor(selected, selectedIndex) : 'var(--base-fg-dim)')
+            }
+            name={selected?.name ?? draft.name}
             icon={draft.icon}
             size={26}
           />
@@ -268,9 +302,11 @@ export const SchemaSettingsScreen = () => {
         selected ? `${selected.entity_count} entities · version ${selected.version}` : undefined
       }
       headerAction={
-        <Button variant="ghost" onClick={() => editor.setShowHistory(current => !current)}>
-          {editor.showHistory ? 'Back to fields' : 'View history'}
-        </Button>
+        selected ? (
+          <Button variant="ghost" onClick={() => editor.setShowHistory(current => !current)}>
+            {editor.showHistory ? 'Back to fields' : 'View history'}
+          </Button>
+        ) : undefined
       }
       history={
         editor.showHistory ? (
@@ -281,7 +317,7 @@ export const SchemaSettingsScreen = () => {
         ) : null
       }
       editor={
-        selected && draft ? (
+        (selected || isNew) && draft ? (
           <SchemaEditorForm
             name={draft.name}
             keyPrefix={draft.keyPrefix}
@@ -291,7 +327,8 @@ export const SchemaSettingsScreen = () => {
             icon={draft.icon}
             dirty={editor.dirty}
             canEdit={canEdit}
-            updatePending={updateSchemaMutation.isPending}
+            updatePending={updateSchemaMutation.isPending || createSchemaMutation.isPending}
+            saveBlocked={!editor.dirty || !adapter.isValid?.(draft)}
             panelTab={schemaPanelTab}
             fields={draft.fields}
             groups={draft.groups}
@@ -390,7 +427,7 @@ export const SchemaSettingsScreen = () => {
             onDetailLayoutChange={layout =>
               editor.updateDraft(current => ({ ...current, detailLayout: layout }))
             }
-            onDelete={() => editor.setConfirmDelete(true)}
+            onDelete={selected ? () => editor.setConfirmDelete(true) : undefined}
             onSave={() => void editor.save()}
           />
         ) : null
@@ -403,7 +440,7 @@ export const SchemaSettingsScreen = () => {
           <Button
             variant="primary"
             icon={<TbPlus size={12} />}
-            onClick={() => void editor.create()}
+            onClick={() => onSelectSchema(NEW_SCHEMA_ID)}
           >
             New entity type
           </Button>

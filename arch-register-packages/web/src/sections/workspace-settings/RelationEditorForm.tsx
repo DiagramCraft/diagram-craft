@@ -26,6 +26,7 @@ export const RelationEditorForm = ({
   dirty,
   canEdit,
   updatePending,
+  saveBlocked,
   fields,
   groups,
   sharedFieldGroupLinks,
@@ -68,6 +69,7 @@ export const RelationEditorForm = ({
   dirty: boolean;
   canEdit: boolean;
   updatePending: boolean;
+  saveBlocked?: boolean;
   fields: RelationField[];
   groups: RelationSchemaGroup[];
   sharedFieldGroupLinks: SharedFieldGroupLink[];
@@ -97,7 +99,7 @@ export const RelationEditorForm = ({
   onUpdateValidationRule: (index: number, patch: Partial<ValidationRule>) => void;
   onToggleValidationRule: (index: number) => void;
   onDeleteValidationRule: (index: number) => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   onSave: () => void;
 }) => (
   <SchemaEditorFormShell
@@ -109,6 +111,7 @@ export const RelationEditorForm = ({
     dirty={dirty}
     canEdit={canEdit}
     updatePending={updatePending}
+    saveBlocked={saveBlocked}
     descriptionPlaceholder="What does this relation type represent?"
     afterDescription={
       <div className={styles.formRow}>

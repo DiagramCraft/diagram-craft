@@ -47,6 +47,12 @@ export const normalizeSchemaCategory = (category?: string | null): string => {
   return trimmed === undefined || trimmed.length === 0 ? UNCATEGORIZED_SCHEMA_CATEGORY : trimmed;
 };
 
+export const compareSchemaCategories = (left: string, right: string): number => {
+  if (left === UNCATEGORIZED_SCHEMA_CATEGORY) return 1;
+  if (right === UNCATEGORIZED_SCHEMA_CATEGORY) return -1;
+  return left.localeCompare(right);
+};
+
 export type SchemaCategoryGroup<T> = {
   category: string;
   items: Array<{ schema: T; index: number }>;
@@ -65,11 +71,7 @@ export const groupSchemasByCategory = <T extends { category?: string | null; nam
   });
 
   return [...groups.entries()]
-    .sort(([left], [right]) => {
-      if (left === UNCATEGORIZED_SCHEMA_CATEGORY) return 1;
-      if (right === UNCATEGORIZED_SCHEMA_CATEGORY) return -1;
-      return left.localeCompare(right);
-    })
+    .sort(([left], [right]) => compareSchemaCategories(left, right))
     .map(([category, items]) => ({
       category,
       items: items.sort((left, right) => left.schema.name.localeCompare(right.schema.name))

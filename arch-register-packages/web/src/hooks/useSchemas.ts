@@ -45,7 +45,15 @@ export const useCreateSchema = (workspaceId: string) => {
       name: string;
       key_prefix: string;
       category?: string | null;
+      description?: string;
       fields: SchemaField[];
+      templates?: EntityTemplate[];
+      groups?: SchemaGroup[];
+      shared_field_group_links?: SharedFieldGroupLink[];
+      validation_rules?: ValidationRule[];
+      detail_layout?: DetailLayoutConfig | null;
+      color?: string | null;
+      icon?: string | null;
     }) => orpcClient.schemas.create({ params: { workspace: workspaceId }, body }),
     onSuccess: async () => {
       await invalidateSchemaCreate(queryClient, workspaceId);

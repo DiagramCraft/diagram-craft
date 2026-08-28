@@ -25,6 +25,7 @@ export const SchemaEditorForm = ({
   dirty,
   canEdit,
   updatePending,
+  saveBlocked,
   panelTab,
   fields,
   groups,
@@ -79,6 +80,7 @@ export const SchemaEditorForm = ({
   dirty: boolean;
   canEdit: boolean;
   updatePending: boolean;
+  saveBlocked?: boolean;
   panelTab: SchemaPanelTab;
   fields: SchemaField[];
   groups: SchemaGroup[];
@@ -121,7 +123,7 @@ export const SchemaEditorForm = ({
   onToggleDetailLayoutEnabled: (enabled: boolean) => void;
   detailLayout: DetailLayoutConfig;
   onDetailLayoutChange: (layout: DetailLayoutConfig) => void;
-  onDelete: () => void;
+  onDelete?: () => void;
   onSave: () => void;
 }) => (
   <SchemaEditorFormShell
@@ -133,6 +135,7 @@ export const SchemaEditorForm = ({
     dirty={dirty}
     canEdit={canEdit}
     updatePending={updatePending}
+    saveBlocked={saveBlocked}
     descriptionPlaceholder="What does this entity type represent?"
     beforeDescription={
       <div className={styles.formRow}>

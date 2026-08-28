@@ -28,6 +28,8 @@ import {
   scalarCardinalityPatchForRequirement
 } from './scalarCardinality';
 
+export const NEW_FIELD_GROUP_ID = 'new';
+
 const routeApi = getRouteApi('/authenticated/$workspaceSlug/settings/schemas');
 
 const SharedFieldRow = ({
@@ -271,6 +273,7 @@ export const FieldGroupEditorScreen = () => {
     permissions
   } = useWorkspaceContext();
   const selected = fieldGroups.find(group => group.id === search.fieldGroupId) ?? null;
+  const isNew = search.fieldGroupId === NEW_FIELD_GROUP_ID;
   const canEdit = permissions.canEditSchemas;
   const [name, setName] = useState('');
   const [category, setCategory] = useState('');
@@ -283,13 +286,20 @@ export const FieldGroupEditorScreen = () => {
   const deleteMutation = useDeleteFieldGroup(workspaceSlug);
 
   useEffect(() => {
-    if (!selected) return;
-    setName(selected.name);
-    setCategory(selected.category ?? '');
-    setDescription(selected.description ?? '');
-    setFields(selected.fields as SchemaField[]);
-    setDirty(false);
-  }, [selected]);
+    if (selected) {
+      setName(selected.name);
+      setCategory(selected.category ?? '');
+      setDescription(selected.description ?? '');
+      setFields(selected.fields as SchemaField[]);
+      setDirty(false);
+    } else if (isNew) {
+      setName('');
+      setCategory('');
+      setDescription('');
+      setFields([]);
+      setDirty(true);
+    }
+  }, [selected, isNew]);
 
   const selectGroup = useCallback(
     (id: string | undefined) => {
@@ -302,25 +312,28 @@ export const FieldGroupEditorScreen = () => {
     [navigate, workspaceSlug]
   );
 
-  const create = async () => {
-    try {
-      const group = await createMutation.mutateAsync({ name: 'New fieldgroup', fields: [] });
-      selectGroup(group.id);
-    } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Failed to create fieldgroup');
-    }
-  };
+  const create = () => selectGroup(NEW_FIELD_GROUP_ID);
 
   const save = async () => {
-    if (!selected || !dirty) return;
+    if (!dirty) return;
     try {
-      await updateMutation.mutateAsync({
-        fieldGroupId: selected.id,
-        data: { name, category: category.trim() === '' ? null : category, description, fields }
-      });
-      setDirty(false);
+      if (isNew) {
+        const group = await createMutation.mutateAsync({
+          name,
+          category: category.trim() === '' ? null : category,
+          description,
+          fields
+        });
+        selectGroup(group.id);
+      } else if (selected) {
+        await updateMutation.mutateAsync({
+          fieldGroupId: selected.id,
+          data: { name, category: category.trim() === '' ? null : category, description, fields }
+        });
+        setDirty(false);
+      }
     } catch (cause) {
-      setError(cause instanceof Error ? cause.message : 'Failed to update fieldgroup');
+      setError(cause instanceof Error ? cause.message : 'Failed to save fieldgroup');
     }
   };
 
@@ -409,14 +422,14 @@ export const FieldGroupEditorScreen = () => {
           description="Reusable field definitions included by multiple entity types."
           buttons={
             canEdit ? (
-              <Button variant="primary" icon={<TbPlus size={12} />} onClick={() => void create()}>
+              <Button variant="primary" icon={<TbPlus size={12} />} onClick={create}>
                 New fieldgroup
               </Button>
             ) : undefined
           }
         />
       </div>
-      {selected ? (
+      {selected || isNew ? (
         <div className={styles.editor}>
           <Title title={name} description={`${fields.length} fields`} />
           {error && <div role="alert">{error}</div>}
@@ -507,7 +520,7 @@ export const FieldGroupEditorScreen = () => {
             )}
           />
           <div className={styles.formActions}>
-            {canEdit && (
+            {canEdit && selected && (
               <Button variant="danger" icon={<TbTrash size={12} />} onClick={() => void remove()}>
                 Delete fieldgroup
               </Button>
@@ -517,9 +530,9 @@ export const FieldGroupEditorScreen = () => {
               <Button
                 variant="primary"
                 onClick={() => void save()}
-                disabled={updateMutation.isPending}
+                disabled={updateMutation.isPending || createMutation.isPending || !name.trim()}
               >
-                Save
+                {updateMutation.isPending || createMutation.isPending ? 'Saving...' : 'Save'}
               </Button>
             )}
           </div>
