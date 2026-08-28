@@ -2,6 +2,9 @@ name: Benchmarks
 
 on:
   pull_request:
+    paths:
+      - 'package.json'
+      - 'packages/**'
   workflow_dispatch:
   push:
     branches:
