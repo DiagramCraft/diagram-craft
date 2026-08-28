@@ -6,6 +6,14 @@ import { contractSurfaceManifest } from '@arch-register/api-types/contractSurfac
 import { fetchWithAuthResponse } from '../auth/authClient';
 import { resolveApiUrl } from './apiUrl';
 import { normalizeApiError } from './http';
+import {
+  INTERACTION_HEADER,
+  SPAN_ID_HEADER,
+  TRACE_ID_HEADER,
+  finishRequest,
+  isDevTracingEnabled,
+  startRequest
+} from '../dev/devTrace';
 
 const CORE_API_PATH = '/api';
 const APPLICATION_API_PATH = '/api/application/v1';
@@ -25,15 +33,33 @@ const fetchApiRequest = async (
     method === 'GET' || method === 'HEAD' || request.body === null
       ? undefined
       : await request.clone().arrayBuffer();
+  const headers = new Headers(request.headers);
   const nextInit: RequestInit = {
     ...init,
     method,
-    headers: new Headers(request.headers),
+    headers,
     body,
     signal: options?.signal ?? init?.signal ?? request.signal
   };
 
-  return fetchWithAuthResponse(request.url, nextInit);
+  // Never trace the dev tooling's own requests (trace polling, dev config, ...).
+  const traceable =
+    isDevTracingEnabled() && !new URL(request.url).pathname.includes('/dev/');
+  const handle = traceable ? startRequest(method, request.url) : null;
+  if (handle) {
+    headers.set(TRACE_ID_HEADER, handle.traceId);
+    headers.set(SPAN_ID_HEADER, handle.spanId);
+    headers.set(INTERACTION_HEADER, encodeURIComponent(handle.interaction.label));
+  }
+
+  try {
+    const response = await fetchWithAuthResponse(request.url, nextInit);
+    finishRequest(handle, { status: response.status });
+    return response;
+  } catch (error) {
+    finishRequest(handle, { error: error instanceof Error ? error.message : String(error) });
+    throw error;
+  }
 };
 
 const createApiClient = <T extends AnyContractRouter>(contracts: T, apiPath: string) => {

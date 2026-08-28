@@ -14,7 +14,7 @@ export const devConfigQuery = () =>
       try {
         return await orpcClient.dev.config();
       } catch {
-        return { enabled: false };
+        return { enabled: false, tracingEnabled: false };
       }
     },
     staleTime: Infinity,

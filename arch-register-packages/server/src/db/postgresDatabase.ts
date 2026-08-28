@@ -45,6 +45,8 @@ import { apiSpecificationArtifactProcessor } from '../domain/artifact/apiSpecifi
 import { createArtifactProcessorRegistry } from '../domain/artifact/artifactProcessor';
 import type { ArtifactProcessorRegistry } from '../domain/artifact/artifactProcessor';
 import { createLogger } from '../utils/logger';
+import { recordSqlSpan } from '../dev/devTrace';
+import { isDevTracingEnabled } from '../domain/dev/devMode';
 import { PostgresPublicCatalogDatabase } from '../domain/publicCatalog/db/postgresPublicCatalog';
 import { PostgresConformanceDatabase } from '../domain/conformance/db/postgresConformance';
 
@@ -164,6 +166,15 @@ export class PostgresDatabase implements DatabaseAdapter {
       idle_timeout: SERVER_DEFAULTS.DB_IDLE_TIMEOUT,
       connect_timeout: SERVER_DEFAULTS.DB_CONNECT_TIMEOUT,
       ...(schema ? { connection: { search_path: schema } } : {}),
+      ...(isDevTracingEnabled()
+        ? {
+            debug: (_connection: number, query: string, params: unknown[]) => {
+              // postgres.js fires `debug` when the query is dispatched; timing and
+              // row counts are not available here, so spans record 0ms duration.
+              recordSqlSpan({ sql: query, params, durationMs: 0 });
+            }
+          }
+        : {}),
       onnotice: notice => {
         const message = notice.message ?? '';
         if (

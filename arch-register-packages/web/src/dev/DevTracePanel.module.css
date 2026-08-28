@@ -1,0 +1,112 @@
+.root {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-family: var(--font-mono, monospace);
+  font-size: 11px;
+}
+
+.toolbar {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  color: var(--cmp-fg-disabled);
+}
+
+.toolbar button {
+  font: inherit;
+  background: none;
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  color: var(--base-fg);
+  padding: 1px 6px;
+  cursor: pointer;
+}
+
+.pending {
+  color: var(--cmp-fg-disabled);
+  padding: 2px 4px;
+}
+
+.interaction,
+.request {
+  border: 1px solid var(--panel-border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.request {
+  margin: 3px 0 3px 8px;
+}
+
+.sql {
+  margin-left: 8px;
+  border-top: 1px solid var(--panel-border);
+}
+
+.interactionHead,
+.requestHead,
+.sqlHead {
+  width: 100%;
+  display: flex;
+  gap: 6px;
+  align-items: baseline;
+  padding: 4px 6px;
+  background: none;
+  border: none;
+  font: inherit;
+  color: var(--base-fg);
+  cursor: pointer;
+  text-align: left;
+}
+
+.interactionHead {
+  background: color-mix(in oklch, var(--accent-fg) 12%, var(--panel-bg));
+}
+
+.interactionHead:hover,
+.requestHead:hover,
+.sqlHead:hover {
+  background: color-mix(in oklch, var(--accent-fg) 8%, var(--panel-bg));
+}
+
+.kind,
+.method {
+  font-weight: 700;
+  text-transform: uppercase;
+  font-size: 9.5px;
+  color: var(--accent-fg);
+  flex: none;
+}
+
+.label,
+.path,
+.sqlText {
+  flex: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.time,
+.rows,
+.status {
+  flex: none;
+  color: var(--cmp-fg-disabled);
+  font-size: 10px;
+}
+
+.status[data-error='true'] {
+  color: var(--error-fg, crimson);
+  font-weight: 700;
+}
+
+.sqlFull {
+  margin: 0;
+  padding: 6px 8px;
+  white-space: pre-wrap;
+  word-break: break-word;
+  background: var(--base-bg);
+  border-top: 1px solid var(--panel-border);
+  font-size: 10.5px;
+}

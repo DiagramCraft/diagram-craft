@@ -146,6 +146,31 @@ Both must be set — the switcher stays disabled if either is missing, and it is
 `NODE_ENV=production` regardless of the flag. When enabled, a floating dev toolbar appears in the web app (even on
 the login screen) listing all users; picking one signs you in as that user immediately.
 
+### Request Tracing In Development
+
+A dev-only tracer correlates a UI interaction with the work it triggers:
+
+```
+interaction (click / navigation)
+  └─ API request (oRPC operation)
+       └─ SQL statement
+```
+
+Configure these environment variables in `server/.env`:
+
+```bash
+NODE_ENV=development
+DEV_TRACING_ENABLED=true
+```
+
+Both must be set (and it is always off when `NODE_ENV=production`). When enabled, the `DEV` panel in the web app
+gains a **Traces** tab showing the interaction → request → SQL tree with per-span timings, full SQL text, and bound
+parameters. The same spans are logged to the server console (namespace `trace`), and every server log line emitted
+during a traced request is prefixed with `[trace:… span:…]`.
+
+Traces are held in a small in-memory ring buffer (last ~50) and are never persisted. Postgres SQL spans do not
+carry a duration (postgres.js reports queries before they execute); SQLite spans do.
+
 ## 🧪 Testing
 
 ### Type Checking

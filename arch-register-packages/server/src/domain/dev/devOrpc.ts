@@ -8,7 +8,8 @@ import { orpcErrorMiddleware } from '../../utils/orpcErrors';
 import { getTokenExpirySeconds } from '../../utils/jwt';
 import { setAuthCookies } from '../../utils/cookies';
 import { devContract } from '@arch-register/api-types/devContract';
-import { isDevUserSwitcherEnabled } from './devMode';
+import { isDevTracingEnabled, isDevUserSwitcherEnabled } from './devMode';
+import { getTrace } from '../../dev/devTrace';
 import { issueTokenPair } from '../auth/refreshSessions';
 
 type DevORPCContext = {
@@ -21,7 +22,48 @@ const devRouter = implement(devContract).$context<DevORPCContext>().use(orpcErro
 export const devORPCRouter = devRouter.router({
   dev: {
     config: devRouter.dev.config.handler(async () => {
-      return { enabled: isDevUserSwitcherEnabled() };
+      return { enabled: isDevUserSwitcherEnabled(), tracingEnabled: isDevTracingEnabled() };
+    }),
+
+    trace: devRouter.dev.trace.handler(async ({ input }) => {
+      orpcAssert.true(isDevTracingEnabled(), {
+        code: 'FORBIDDEN',
+        message: 'Dev-mode tracing is disabled'
+      });
+
+      const record = getTrace(input.params.traceId);
+      if (!record) return null;
+
+      const stringifyParam = (value: unknown): string => {
+        if (typeof value === 'string') return value;
+        try {
+          return JSON.stringify(value) ?? String(value);
+        } catch {
+          return String(value);
+        }
+      };
+
+      return {
+        traceId: record.traceId,
+        interaction: record.interaction,
+        requests: record.requests.map(request => ({
+          spanId: request.spanId,
+          method: request.method,
+          path: request.path,
+          interaction: request.interaction,
+          durationMs: request.durationMs,
+          status: request.status,
+          error: request.error,
+          sql: request.sql.map(sql => ({
+            id: sql.id,
+            durationMs: sql.durationMs,
+            sql: sql.sql,
+            params: sql.params.map(stringifyParam),
+            rowCount: sql.rowCount,
+            error: sql.error
+          }))
+        }))
+      };
     }),
 
     listUsers: devRouter.dev.listUsers.handler(async ({ context }) => {
