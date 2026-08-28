@@ -1,5 +1,7 @@
 import { readFileSync } from 'node:fs';
 import Database from 'better-sqlite3';
+import { instrumentSqliteDatabase } from '../dev/devTrace';
+import { isDevTracingEnabled } from '../domain/dev/devMode';
 import type { ArtifactProjectionDatabases, DatabaseAdapter } from './database';
 import { runSqliteMigrations } from './migrate';
 import { SqliteAuditDatabase } from '../domain/audit/db/sqliteAudit';
@@ -87,7 +89,8 @@ export class SqliteDatabase implements DatabaseAdapter {
   private savepointCounter = 0;
 
   constructor(filePath: string) {
-    this.db = new Database(filePath);
+    const rawDb = new Database(filePath);
+    this.db = isDevTracingEnabled() ? instrumentSqliteDatabase(rawDb) : rawDb;
     this.configure();
     this.initializeSchema();
 

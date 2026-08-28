@@ -3,7 +3,7 @@ import { test, expect } from '../helpers/fixtures';
 test.describe('dev user switcher (disabled by default)', () => {
   test('GET /api/dev/config reports disabled', async ({ orpc }) => {
     const result = await orpc.dev.config(undefined);
-    expect(result).toEqual({ enabled: false });
+    expect(result).toEqual({ enabled: false, tracingEnabled: false });
   });
 
   test('GET /api/dev/users is forbidden when disabled', async ({ orpc }) => {
