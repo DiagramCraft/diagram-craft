@@ -1,3 +1,5 @@
+import { getTraceContext } from '../dev/traceContext';
+
 type LogLevel = 'trace' | 'debug' | 'info' | 'warn' | 'error' | 'fatal';
 
 const LEVELS: Record<LogLevel, number> = {
@@ -17,8 +19,13 @@ export const setLogLevel = (level: LogLevel) => {
 
 const isEnabled = (level: LogLevel) => LEVELS[level] >= LEVELS[activeLevel];
 
+const tracePrefix = () => {
+  const ctx = getTraceContext();
+  return ctx ? `[trace:${ctx.traceId.slice(0, 8)} span:${ctx.spanId.slice(0, 4)}] ` : '';
+};
+
 const format = (level: LogLevel, ns: string, msg: string) =>
-  `${new Date().toISOString()} [${level.toUpperCase()}] [${ns}] ${msg}`;
+  `${new Date().toISOString()} [${level.toUpperCase()}] [${ns}] ${tracePrefix()}${msg}`;
 
 const extra = (context?: unknown) => (context !== undefined ? [context] : []);
 

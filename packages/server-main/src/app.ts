@@ -12,15 +12,15 @@ export const createServerApp = (servers: ServerModules) => {
   const app = new H3();
   app.use(
     defineHandler(event => {
-      const didHandleCors = handleCors(event, {
+      const corsResponse = handleCors(event, {
         origin: '*',
         preflight: {
           statusCode: 204
         },
         methods: '*'
       });
-      if (didHandleCors) {
-        return;
+      if (corsResponse !== false) {
+        return corsResponse;
       }
     })
   );

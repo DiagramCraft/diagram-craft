@@ -12,14 +12,18 @@ import type {
 import { LoadingState } from '../../components/LoadingState';
 import { TypeBadge } from '../../components/TypeBadge';
 import { Select } from '@diagram-craft/app-components/Select';
-import { useEntitiesByIds } from '../../hooks/useEntities';
+import { useEntitiesByIds, useEntitiesByIdSet } from '../../hooks/useEntities';
 import { relationIds } from '../../lib/entityEditState';
 import { resolveSchemaColor } from '../../lib/schemaPresentation';
 import { TbVectorTriangle } from 'react-icons/tb';
 import { RelationDetailPopover } from '../entities/components/RelationDetailPopover';
 import { GraphLayoutToolbar } from '../entities/components/GraphLayoutToolbar';
 import styles from '../entities/components/EntityGraphView.module.css';
-import { buildRelationGraphData, type RelationGraphNodeData } from './relationGraphState';
+import {
+  buildRelationGraphData,
+  type RelationGraphNodeData,
+  type TypedRelationGraphMode
+} from './relationGraphState';
 import { getRelationGraphLabelOptions, RELATION_GRAPH_TYPE_LABEL } from './relationBrowserState';
 
 const defaultLayoutOptions: LayoutOptions = {
@@ -43,6 +47,13 @@ type Props = {
   edgeColorFieldId: string;
   onEdgeColorFieldIdChange: (fieldId: string) => void;
   onEntityClick: (id: string) => void;
+  // #3066: 'entity' (opt-in per saved view via config.graph.typedRelationMode) renders each
+  // matching relation instance as its own node — mirroring how the workspace model-overview
+  // graph renders relation *schemas* as boxes — with fan edges to its endpoint entities and to
+  // whatever entities its entityRelation fields reference (e.g. a Data Flow relation's carried
+  // Data Entities). Undefined/'flat' leaves every relation graph exactly as before: one direct
+  // edge per relation instance between its two endpoints.
+  typedRelationMode?: TypedRelationGraphMode;
 };
 
 export const RelationGraphView = ({
@@ -55,7 +66,8 @@ export const RelationGraphView = ({
   onEdgeLabelFieldIdChange,
   edgeColorFieldId,
   onEdgeColorFieldIdChange,
-  onEntityClick
+  onEntityClick,
+  typedRelationMode = 'flat'
 }: Props) => {
   const [layout, setLayout] = useState<LayoutAlgorithm>('hierarchy');
   const [layoutOptions, setLayoutOptions] = useState<LayoutOptions>(defaultLayoutOptions);
@@ -88,6 +100,35 @@ export const RelationGraphView = ({
     [relations, selectedEdgeLabelFieldId, selectedFieldIsReference]
   );
   const referenceLookup = useEntitiesByIds(workspaceId, referenceIds);
+
+  // In 'entity' mode, every entityRelation field on a matching relation schema fans out to the
+  // entities it references (not just one designated field) — collect every such id across every
+  // visible relation up front, and batch-resolve them in one query.
+  const fieldEntityIds = useMemo(() => {
+    if (typedRelationMode !== 'entity') return [];
+    const relationSchemaById = new Map(relationSchemas.map(schema => [schema.id, schema]));
+    return relations.flatMap(relation => {
+      const relationSchema = relationSchemaById.get(relation._schema.id);
+      return (relationSchema?.fields ?? [])
+        .filter(field => field.type === 'entityRelation')
+        .flatMap(field => relationIds(relation[field.id]));
+    });
+  }, [relations, relationSchemas, typedRelationMode]);
+  const fieldEntitiesById = useEntitiesByIdSet(workspaceId, fieldEntityIds);
+  const fieldEntityLookup = useMemo(
+    () =>
+      new Map(
+        [...fieldEntitiesById.entries()].map(([id, entity]) => [
+          id,
+          {
+            name: entity._name,
+            schemaId: typeof entity._schemaId === 'string' ? entity._schemaId : undefined
+          }
+        ])
+      ),
+    [fieldEntitiesById]
+  );
+
   const { nodes, edges } = useMemo(
     () =>
       buildRelationGraphData(
@@ -95,23 +136,49 @@ export const RelationGraphView = ({
         relationSchemas,
         selectedEdgeLabelFieldId,
         selectedEdgeColorFieldId,
-        referenceLookup
+        referenceLookup,
+        typedRelationMode,
+        fieldEntityLookup
       ),
     [
       relations,
       relationSchemas,
       selectedEdgeLabelFieldId,
       selectedEdgeColorFieldId,
-      referenceLookup
+      referenceLookup,
+      typedRelationMode,
+      fieldEntityLookup
     ]
   );
   const schemaMap = useMemo(
     () => new Map(entitySchemas.map((schema, index) => [schema.id, { schema, index }])),
     [entitySchemas]
   );
+  const relationSchemaMap = useMemo(
+    () => new Map(relationSchemas.map((schema, index) => [schema.id, { schema, index }])),
+    [relationSchemas]
+  );
 
   const renderNode = useCallback(
     (node: DependencyGraphNode<RelationGraphNodeData>) => {
+      if (node.data.kind === 'relation') {
+        const relationSchemaEntry = relationSchemaMap.get(node.data.relationSchemaId);
+        const color = relationSchemaEntry
+          ? resolveSchemaColor(relationSchemaEntry.schema, relationSchemaEntry.index)
+          : 'var(--accent-fg)';
+        return (
+          <>
+            <TypeBadge
+              color={color}
+              name={relationSchemaEntry?.schema.name}
+              icon={relationSchemaEntry?.schema.icon}
+              size={16}
+            />
+            <span className={styles.eNodeName}>{node.data.relationName}</span>
+          </>
+        );
+      }
+
       const schemaEntry = node.data.entitySchemaId
         ? schemaMap.get(node.data.entitySchemaId)
         : undefined;
@@ -130,7 +197,24 @@ export const RelationGraphView = ({
         </>
       );
     },
-    [schemaMap]
+    [schemaMap, relationSchemaMap]
+  );
+
+  const nodeKindOf = useCallback(
+    (node: DependencyGraphNode<RelationGraphNodeData>) => node.data.kind,
+    []
+  );
+
+  // Relation nodes aren't entities — clicking one opens the same detail popover its fan edges
+  // already do, rather than navigating to a (nonexistent) entity route.
+  const nodeById = useMemo(() => new Map(nodes.map(node => [node.id, node])), [nodes]);
+  const handleNodeClick = useCallback(
+    (id: string) => {
+      const node = nodeById.get(id);
+      if (node?.data.kind === 'relation') return;
+      onEntityClick(id);
+    },
+    [nodeById, onEntityClick]
   );
 
   const handleEdgeClick = useCallback((edge: DependencyGraphEdge, event: React.MouseEvent) => {
@@ -195,8 +279,9 @@ export const RelationGraphView = ({
             layoutOptions={layoutOptions}
             nodeWidth={200}
             nodeHeight={52}
+            nodeKind={nodeKindOf}
             renderNode={renderNode}
-            onNodeClick={onEntityClick}
+            onNodeClick={handleNodeClick}
             onEdgeClick={handleEdgeClick}
           />
         )}

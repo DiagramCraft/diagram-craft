@@ -3,8 +3,12 @@ import {
   buildRelationQueryFromFilters,
   buildRelationSavedViewPayload,
   endpointFieldId,
+  filterConditionsFromRelationQuery,
+  formatFieldValue,
   getRelationGraphLabelOptions,
+  isRelationBasicRepresentable,
   parseEndpointFieldId,
+  parseRelationTableFieldIdsFromSearch,
   RELATION_GRAPH_TYPE_LABEL,
   resolveSingleSchemaFilter,
   toSavedRelationViewSearch
@@ -176,5 +180,172 @@ describe('relation saved view display mode', () => {
       { value: RELATION_GRAPH_TYPE_LABEL, label: 'Relation type' },
       { value: 'status', label: 'Status' }
     ]);
+  });
+});
+
+// #3066: saved views built around OR-grouping or a relationForward traversal (e.g. "restricted
+// data flows" combining the flow's own classification with a carried entity's) used to be
+// silently flattened/dropped by the Basic-mode round-trip below. isRelationBasicRepresentable
+// detects that case so callers can keep the raw query and open in Advanced (text) mode instead.
+describe('isRelationBasicRepresentable', () => {
+  it('is representable for a flat AND of own-field and endpoint predicates', () => {
+    const query = buildRelationQueryFromFilters([
+      { fieldId: '_schemaId', op: 'equals', value: 'data-flow' },
+      { fieldId: 'in:status', op: 'equals', value: 'active' }
+    ]);
+    expect(isRelationBasicRepresentable(query)).toBe(true);
+  });
+
+  it('is representable for a single top-level predicate root (not wrapped in and)', () => {
+    expect(
+      isRelationBasicRepresentable({
+        root_kind: 'relation',
+        root: { kind: 'predicate', path: [], fieldId: 'status', op: 'equals', value: 'active' }
+      })
+    ).toBe(true);
+  });
+
+  it('is not representable when the root contains an or node', () => {
+    expect(
+      isRelationBasicRepresentable({
+        root_kind: 'relation',
+        root: {
+          kind: 'and',
+          children: [
+            { kind: 'predicate', path: [], fieldId: '_schemaId', op: 'equals', value: 'data-flow' },
+            {
+              kind: 'or',
+              children: [
+                { kind: 'predicate', path: [], fieldId: 'a', op: 'equals', value: '1' },
+                { kind: 'predicate', path: [], fieldId: 'b', op: 'equals', value: '2' }
+              ]
+            }
+          ]
+        }
+      })
+    ).toBe(false);
+  });
+
+  it('is not representable when a predicate traverses via relationForward', () => {
+    expect(
+      isRelationBasicRepresentable({
+        root_kind: 'relation',
+        root: {
+          kind: 'predicate',
+          path: [{ kind: 'relationForward', fieldId: 'data_entities' }],
+          fieldId: 'classification',
+          op: 'in',
+          value: ['sensitive']
+        }
+      })
+    ).toBe(false);
+  });
+
+  it('is not representable when the query carries projections', () => {
+    expect(
+      isRelationBasicRepresentable({
+        root_kind: 'relation',
+        root: { kind: 'and', children: [] },
+        projections: [{ path: [], fieldId: 'name', alias: 'x' }]
+      })
+    ).toBe(false);
+  });
+
+  it('drops the or node when flattened, matching what triggered the bug', () => {
+    const query = {
+      root_kind: 'relation' as const,
+      root: {
+        kind: 'and' as const,
+        children: [
+          {
+            kind: 'predicate' as const,
+            path: [],
+            fieldId: '_schemaId',
+            op: 'equals' as const,
+            value: 'data-flow'
+          },
+          {
+            kind: 'or' as const,
+            children: [
+              {
+                kind: 'predicate' as const,
+                path: [],
+                fieldId: 'a',
+                op: 'equals' as const,
+                value: '1'
+              }
+            ]
+          }
+        ]
+      }
+    };
+    expect(filterConditionsFromRelationQuery(query)).toEqual([
+      { fieldId: '_schemaId', op: 'equals', value: 'data-flow' }
+    ]);
+    expect(isRelationBasicRepresentable(query)).toBe(false);
+  });
+});
+
+// #3066: an entityRelation-valued table cell (e.g. a Data Flow's carried Data Entities) used to
+// render as a raw JSON array of uuids ("["id-1","id-2"]") — it should resolve to names and join
+// them as plain text instead.
+describe('formatFieldValue', () => {
+  it('resolves entityRelation ids to names and joins them without brackets', () => {
+    const referenceLookup = new Map([
+      ['de-1', { name: 'Customer Credentials' }],
+      ['de-2', { name: 'Order Records' }]
+    ]);
+    expect(formatFieldValue(['de-1', 'de-2'], 'entityRelation', referenceLookup)).toBe(
+      'Customer Credentials, Order Records'
+    );
+  });
+
+  it('falls back to the raw id when a reference cannot be resolved (redacted/inaccessible)', () => {
+    expect(formatFieldValue(['de-1'], 'entityRelation', new Map())).toBe('de-1');
+  });
+
+  it('joins a plain multi-valued select as text, not JSON', () => {
+    expect(formatFieldValue(['gdpr', 'pci-dss'], 'select')).toBe('gdpr, pci-dss');
+  });
+
+  it('formats scalar values and empty values as before', () => {
+    expect(formatFieldValue('active')).toBe('active');
+    expect(formatFieldValue(3)).toBe('3');
+    expect(formatFieldValue(null)).toBe('');
+    expect(formatFieldValue(undefined)).toBe('');
+  });
+});
+
+// #3066: a saved view's config.table.fieldIds (a curated column set, possibly including
+// `_projection:`-prefixed projected columns) needs to round-trip through the URL so the Relations
+// browser can show it instead of every field on the active schema.
+describe('table column configuration (config.table.fieldIds)', () => {
+  it('carries table fieldIds through to search for a table-mode saved view', () => {
+    const search = toSavedRelationViewSearch({
+      id: 'view-1',
+      viewMode: 'table',
+      filters: buildRelationQueryFromFilters([]),
+      config: { table: { fieldIds: ['data_classification', '_projection:carried_classification'] } }
+    } as never);
+    expect(parseRelationTableFieldIdsFromSearch(search)).toEqual([
+      'data_classification',
+      '_projection:carried_classification'
+    ]);
+  });
+
+  it('omits tableFieldIds for a graph-mode saved view even if config.table is set', () => {
+    const search = toSavedRelationViewSearch({
+      id: 'view-1',
+      viewMode: 'graph',
+      filters: buildRelationQueryFromFilters([]),
+      config: { table: { fieldIds: ['x'] } }
+    } as never);
+    expect(search.tableFieldIds).toBeUndefined();
+  });
+
+  it('returns null for missing or malformed tableFieldIds', () => {
+    expect(parseRelationTableFieldIdsFromSearch({ tableFieldIds: undefined })).toBeNull();
+    expect(parseRelationTableFieldIdsFromSearch({ tableFieldIds: '{' })).toBeNull();
+    expect(parseRelationTableFieldIdsFromSearch({ tableFieldIds: '"not-an-array"' })).toBeNull();
   });
 });

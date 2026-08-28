@@ -10,7 +10,7 @@ This page focuses on failure modes that are real in the current monorepo and the
 
 Check the expected toolchain first:
 
-- Node.js 18 or newer
+- Node.js 20.11.1 or newer for the standalone server; the Arch Register server requires Node.js 22+
 - `pnpm`
 
 Then retry from the repo root:

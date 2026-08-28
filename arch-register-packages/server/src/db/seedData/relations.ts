@@ -102,14 +102,18 @@ export const seedRelations: RelationDbCreate[] = [
     id: '00000000-0000-0000-0009-000000000001',
     workspace: WORKSPACE_ID,
     schema_id: DATA_FLOW_SCHEMA_ID,
-    // Customer Portal -> Identity Platform: login credentials for authentication.
+    // Customer Portal -> Identity Platform: login credentials for authentication. Destination
+    // region ('apac') isn't in Customer Credentials' permitted regions (eu/us) and differs from
+    // the source region: a cross-boundary, residency-invalid example for #3066's analysis views.
     in_entity_id: '00000000-0000-0000-0002-000000000001',
     out_entity_id: '00000000-0000-0000-0002-000000000002',
     data: {
       direction: 'one-way',
       data_classification: 'sensitive',
       protocol: 'https-rest',
-      data_entities: ['00000000-0000-0000-0008-000000000001']
+      data_entities: ['00000000-0000-0000-0008-000000000001'],
+      source_residency_region: 'eu',
+      destination_residency_region: 'apac'
     },
     created_at: now,
     updated_at: now
@@ -118,14 +122,17 @@ export const seedRelations: RelationDbCreate[] = [
     id: '00000000-0000-0000-0009-000000000002',
     workspace: WORKSPACE_ID,
     schema_id: DATA_FLOW_SCHEMA_ID,
-    // Payments Platform -> Analytics Platform: transaction events for reporting.
+    // Payments Platform -> Analytics Platform: transaction events for reporting. Same-region,
+    // and Transaction Events declares no permitted-regions constraint (residency not-applicable).
     in_entity_id: '00000000-0000-0000-0002-000000000003',
     out_entity_id: '00000000-0000-0000-0002-000000000004',
     data: {
       direction: 'one-way',
       data_classification: 'non-sensitive',
       protocol: 'kafka',
-      data_entities: ['00000000-0000-0000-0008-000000000002']
+      data_entities: ['00000000-0000-0000-0008-000000000002'],
+      source_residency_region: 'us',
+      destination_residency_region: 'us'
     },
     created_at: now,
     updated_at: now
@@ -134,7 +141,8 @@ export const seedRelations: RelationDbCreate[] = [
     id: '00000000-0000-0000-0009-000000000003',
     workspace: WORKSPACE_ID,
     schema_id: DATA_FLOW_SCHEMA_ID,
-    // Customer Portal -> Analytics Platform: user behaviour/clickstream events.
+    // Customer Portal -> Analytics Platform: user behaviour/clickstream events. Residency regions
+    // intentionally left unset: an incomplete cross-boundary/residency-invalid example.
     in_entity_id: '00000000-0000-0000-0002-000000000001',
     out_entity_id: '00000000-0000-0000-0002-000000000004',
     data: {

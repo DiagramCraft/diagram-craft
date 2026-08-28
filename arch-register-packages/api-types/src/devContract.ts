@@ -2,6 +2,32 @@ import { oc } from '@orpc/contract';
 import { z } from 'zod';
 import { userSummarySchema } from '@arch-register/api-types/authContract';
 
+const traceSqlSpanSchema = z.object({
+  id: z.string(),
+  durationMs: z.number(),
+  sql: z.string(),
+  params: z.array(z.string()).describe('Bound parameter values, stringified'),
+  rowCount: z.number().nullable(),
+  error: z.string().optional()
+});
+
+const traceRequestSpanSchema = z.object({
+  spanId: z.string(),
+  method: z.string(),
+  path: z.string(),
+  interaction: z.string().optional(),
+  durationMs: z.number().nullable(),
+  status: z.number().nullable(),
+  error: z.string().optional(),
+  sql: z.array(traceSqlSpanSchema)
+});
+
+const traceRecordSchema = z.object({
+  traceId: z.string(),
+  interaction: z.string().optional(),
+  requests: z.array(traceRequestSpanSchema)
+});
+
 export const devContract = oc.tag('Dev').router({
   dev: {
     config: oc
@@ -13,7 +39,24 @@ export const devContract = oc.tag('Dev').router({
           'Reports whether development-only tooling (such as the user switcher) is enabled. Always callable; reports disabled when the dev router is not mounted.',
         tags: ['Dev']
       })
-      .output(z.object({ enabled: z.boolean().describe('Whether dev-mode tooling is enabled') })),
+      .output(
+        z.object({
+          enabled: z.boolean().describe('Whether dev-mode tooling is enabled'),
+          tracingEnabled: z.boolean().describe('Whether dev-mode request/SQL tracing is enabled')
+        })
+      ),
+    trace: oc
+      .route({
+        method: 'GET',
+        path: '/dev/trace/{traceId}',
+        inputStructure: 'detailed',
+        summary: 'Get a captured dev-mode trace (dev mode only)',
+        description:
+          'Returns the request and SQL spans captured for a trace id. Only available when dev-mode tracing is enabled.',
+        tags: ['Dev']
+      })
+      .input(z.object({ params: z.object({ traceId: z.string() }) }))
+      .output(traceRecordSchema.nullable()),
     listUsers: oc
       .route({
         method: 'GET',

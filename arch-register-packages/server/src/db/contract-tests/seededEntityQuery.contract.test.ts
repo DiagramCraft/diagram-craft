@@ -7,7 +7,10 @@ import { seedSchemas } from '../seedData/catalog';
 import { seedProjects } from '../seedData/projects';
 import type { StorageAdapter } from '../../storage/storage.types';
 import { runContractSuiteAgainstBothDrivers } from './harness';
-import { listEntitiesWithCount } from '../../domain/catalog/entityQueryOperations';
+import {
+  listEntitiesWithCount,
+  listRelationsWithCount
+} from '../../domain/catalog/entityQueryOperations';
 import { getEntityJsonProjection } from '../../domain/catalog/entityProjectionOperations';
 
 const noopStorage: StorageAdapter = {
@@ -120,5 +123,49 @@ runContractSuiteAgainstBothDrivers('seededEntityQuery', getDb => {
       _uid: seededEntities.default.authMigrationAdapter.id,
       _projectId: seededProjects.authMigration.id
     });
+
+    // #3066: information-governance canonical views, run through the real query engine against
+    // this same seed dataset's deliberately-varied governance fixtures (see relations.ts/entities.ts
+    // comments: restricted/cross-boundary/residency-invalid Data Flows, and complete/partial/missing
+    // stewardship + approaching/overdue review Data Entities).
+    const runTableView = async (viewId: string) => {
+      const view = await db.view.getSavedView(workspace, viewId);
+      expect(view).toBeDefined();
+      expect(view?.is_admin_view).toBe(true);
+      if (view?.filters.root_kind === 'relation') {
+        return listRelationsWithCount(db, workspace, null, {
+          relationQuery: view.filters,
+          view: 'full'
+        });
+      }
+      return listEntitiesWithCount(db, workspace, null, {
+        entityQuery: view!.filters,
+        view: 'full'
+      });
+    };
+
+    const restricted = await runTableView('00000000-0000-0000-0020-000000000009');
+    expect(restricted.total).toBe(2);
+    expect(new Set(restricted.items.map(item => item._uid))).toEqual(
+      new Set(['00000000-0000-0000-0009-000000000001', '00000000-0000-0000-0009-000000000003'])
+    );
+
+    const missingStewardship = await runTableView('00000000-0000-0000-0020-00000000000b');
+    expect(missingStewardship.total).toBe(2);
+    expect(new Set(missingStewardship.items.map(item => item._uid))).toEqual(
+      new Set(['00000000-0000-0000-0008-000000000002', '00000000-0000-0000-0008-000000000003'])
+    );
+
+    const reviewOverdue = await runTableView('00000000-0000-0000-0020-00000000000c');
+    expect(reviewOverdue.total).toBe(1);
+    expect(reviewOverdue.items[0]?._uid).toBe('00000000-0000-0000-0008-000000000002');
+
+    const crossBoundary = await runTableView('00000000-0000-0000-0020-00000000000d');
+    expect(crossBoundary.total).toBe(1);
+    expect(crossBoundary.items[0]?._uid).toBe('00000000-0000-0000-0009-000000000001');
+
+    const residencyInvalid = await runTableView('00000000-0000-0000-0020-00000000000f');
+    expect(residencyInvalid.total).toBe(1);
+    expect(residencyInvalid.items[0]?._uid).toBe('00000000-0000-0000-0009-000000000001');
   });
 });
