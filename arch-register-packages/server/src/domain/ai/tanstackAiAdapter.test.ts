@@ -1,6 +1,29 @@
 import { beforeEach, describe, expect, it, vi } from 'vitest';
 import type { DatabaseAdapter } from '../../db/database';
-import { resolveAiConfig } from './tanstackAiAdapter';
+import { createAiTextAdapter, resolveAiConfig, type EffectiveAiConfig } from './tanstackAiAdapter';
+
+const adapterMocks = vi.hoisted(() => ({
+  openRouterText: vi.fn((model: string) => ({ provider: 'openrouter-env', model })),
+  createOpenRouterText: vi.fn((model: string, apiKey: string) => ({
+    provider: 'openrouter-workspace',
+    model,
+    apiKey
+  })),
+  openaiText: vi.fn((model: string, options?: Record<string, unknown>) => ({
+    provider: 'openai-env',
+    model,
+    options
+  })),
+  createOpenaiChat: vi.fn((model: string, apiKey: string, options?: Record<string, unknown>) => ({
+    provider: 'openai-workspace',
+    model,
+    apiKey,
+    options
+  }))
+}));
+
+vi.mock('@tanstack/ai-openrouter', () => adapterMocks);
+vi.mock('@tanstack/ai-openai', () => adapterMocks);
 
 vi.mock('../../utils/encryption', () => ({
   decrypt: vi.fn(() => 'decrypted-key')
@@ -30,6 +53,10 @@ describe('resolveAiConfig', () => {
   beforeEach(() => {
     delete process.env['OPENROUTER_API_KEY'];
     delete process.env['OPENAI_API_KEY'];
+    adapterMocks.openRouterText.mockClear();
+    adapterMocks.createOpenRouterText.mockClear();
+    adapterMocks.openaiText.mockClear();
+    adapterMocks.createOpenaiChat.mockClear();
   });
 
   it('resolves an effective config when a workspace config is enabled with an api key', async () => {
@@ -64,5 +91,74 @@ describe('resolveAiConfig', () => {
     const result = await resolveAiConfig(db, 'ws-1');
 
     expect(result?.apiKey).toBe('env-key');
+  });
+});
+
+const makeEffectiveConfig = (overrides: Partial<EffectiveAiConfig> = {}): EffectiveAiConfig => ({
+  provider: 'openai',
+  apiKey: 'workspace-key',
+  baseUrl: 'http://localhost:1234/v1',
+  model: 'configured-model',
+  temperature: 0.7,
+  systemPrompt: null,
+  ...overrides
+});
+
+describe('createAiTextAdapter', () => {
+  it('uses the environment OpenAI adapter with the configured model and base URL', () => {
+    process.env['OPENAI_API_KEY'] = 'env-key';
+
+    const adapter = createAiTextAdapter(
+      makeEffectiveConfig({ apiKey: 'env-key', provider: 'openai' })
+    );
+
+    expect(adapterMocks.openaiText).toHaveBeenCalledWith('configured-model', {
+      baseURL: 'http://localhost:1234/v1'
+    });
+    expect(adapter).toEqual({
+      provider: 'openai-env',
+      model: 'configured-model',
+      options: { baseURL: 'http://localhost:1234/v1' }
+    });
+  });
+
+  it('uses the workspace OpenAI adapter with the configured credentials', () => {
+    const adapter = createAiTextAdapter(makeEffectiveConfig({ provider: 'openai' }));
+
+    expect(adapterMocks.createOpenaiChat).toHaveBeenCalledWith(
+      'configured-model',
+      'workspace-key',
+      { baseURL: 'http://localhost:1234/v1' }
+    );
+    expect(adapter).toEqual({
+      provider: 'openai-workspace',
+      model: 'configured-model',
+      apiKey: 'workspace-key',
+      options: { baseURL: 'http://localhost:1234/v1' }
+    });
+  });
+
+  it('uses the environment OpenRouter adapter when the environment key is selected', () => {
+    process.env['OPENROUTER_API_KEY'] = 'env-key';
+
+    const adapter = createAiTextAdapter(
+      makeEffectiveConfig({ provider: 'openrouter', apiKey: 'env-key', model: 'router-model' })
+    );
+
+    expect(adapterMocks.openRouterText).toHaveBeenCalledWith('router-model');
+    expect(adapter).toEqual({ provider: 'openrouter-env', model: 'router-model' });
+  });
+
+  it('uses the workspace OpenRouter adapter when a workspace key is configured', () => {
+    const adapter = createAiTextAdapter(
+      makeEffectiveConfig({ provider: 'openrouter', model: 'router-model' })
+    );
+
+    expect(adapterMocks.createOpenRouterText).toHaveBeenCalledWith('router-model', 'workspace-key');
+    expect(adapter).toEqual({
+      provider: 'openrouter-workspace',
+      model: 'router-model',
+      apiKey: 'workspace-key'
+    });
   });
 });

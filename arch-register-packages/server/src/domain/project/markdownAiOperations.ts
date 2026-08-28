@@ -12,9 +12,10 @@ import type {
   RunAiActionEvent
 } from '@arch-register/api-types/projectDocumentAiContract';
 import type { DocumentAiAction } from '@arch-register/api-types/documentContract';
-import { chat } from '@tanstack/ai';
+import { chat, type StreamChunk } from '@tanstack/ai';
 import { resolveAiConfig, createAiTextAdapter } from '../ai/tanstackAiAdapter';
 import { createAiChatTools } from '../ai/chatTools';
+import { createAiToolCallAccumulator } from '../ai/aiStreamHelpers';
 import { buildDocumentActionPrompt } from '../ai/documentContextPromptBuilder';
 import {
   documentMetadataGenerationOutputSchema,
@@ -109,8 +110,7 @@ export const runDocumentAiAction = async (
 
       return (async function* runAndStreamAnswer(): AsyncGenerator<RunAiActionEvent> {
         const capturedContent: string[] = [];
-        // biome-ignore lint/suspicious/noExplicitAny: Stream chunk type varies by AI provider implementation
-        for await (const chunk of stream as AsyncIterable<any>) {
+        for await (const chunk of stream as AsyncIterable<StreamChunk>) {
           if (
             (chunk.type === 'TEXT_MESSAGE_CONTENT' || chunk.type === 'REASONING_MESSAGE_CONTENT') &&
             chunk.delta
@@ -238,6 +238,11 @@ export const testDocumentAiAction = async (
           status: 'completed' | 'failed';
           error: string | null;
         }> = [];
+        const toolCallsById = new Map<
+          string,
+          { name: string; status: 'completed' | 'failed'; error: string | null }
+        >();
+        const toolCallAccumulator = createAiToolCallAccumulator();
         const errors: string[] = [];
         let streamError: string | null = null;
 
@@ -313,19 +318,24 @@ export const testDocumentAiAction = async (
         }
 
         try {
-          // biome-ignore lint/suspicious/noExplicitAny: Stream chunk type varies by AI provider implementation
-          for await (const chunk of stream as AsyncIterable<any>) {
+          for await (const chunk of stream as AsyncIterable<StreamChunk>) {
+            toolCallAccumulator.consume(chunk);
             if (chunk.type === 'TEXT_MESSAGE_CONTENT' && chunk.delta) {
               capturedContent.push(chunk.delta);
               yield { type: 'delta', delta: chunk.delta };
             }
-            if (chunk.type === 'TOOL_CALL_START' && chunk.toolCallName) {
-              toolCalls.push({ name: chunk.toolCallName, status: 'completed', error: null });
+            if (chunk.type === 'TOOL_CALL_START') {
+              const call = toolCallAccumulator.getCall(chunk.toolCallId);
+              if (call && !toolCallsById.has(chunk.toolCallId)) {
+                const toolCall = { name: call.name, status: 'completed' as const, error: null };
+                toolCallsById.set(chunk.toolCallId, toolCall);
+                toolCalls.push(toolCall);
+              }
             }
-            if (chunk.type === 'TOOL_CALL_RESULT' && toolCalls.length > 0) {
+            if (chunk.type === 'TOOL_CALL_RESULT') {
               const result = chunk.content;
-              if (typeof result === 'string' && /\berror\b/i.test(result)) {
-                const current = toolCalls[toolCalls.length - 1]!;
+              const current = toolCallsById.get(chunk.toolCallId);
+              if (current && typeof result === 'string' && /\berror\b/i.test(result)) {
                 current.status = 'failed';
                 current.error = result;
                 errors.push(`${current.name}: ${result}`);

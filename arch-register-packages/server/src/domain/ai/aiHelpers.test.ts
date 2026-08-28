@@ -50,6 +50,31 @@ describe('ai chat route helpers', () => {
     ).toThrow('Invalid AI chat messages');
   });
 
+  it('accepts the AG-UI messages emitted by the upgraded TanStack client', () => {
+    expect(
+      parseAiChatMessagesFromUnknown([
+        {
+          id: 'user-1',
+          role: 'user',
+          content: [{ type: 'text', text: 'hello from the browser' }]
+        },
+        {
+          id: 'assistant-1',
+          role: 'assistant',
+          toolCalls: [
+            {
+              id: 'call-1',
+              type: 'function',
+              function: { name: 'create_entity', arguments: '{"name":"A"}' }
+            }
+          ]
+        },
+        { id: 'reasoning-1', role: 'reasoning', content: 'thinking' },
+        { id: 'tool-1', role: 'tool', toolCallId: 'call-1', content: 'created' }
+      ])
+    ).toHaveLength(4);
+  });
+
   it('extracts text content from string, array, and parts-based messages', () => {
     expect(extractUserTextContent({ content: 'hello world' })).toBe('hello world');
     expect(
@@ -70,6 +95,11 @@ describe('ai chat route helpers', () => {
         ]
       })
     ).toBe('part 1 part 2');
+    expect(
+      extractUserTextContent({
+        content: [{ type: 'text', text: 'AG-UI text' }]
+      })
+    ).toBe('AG-UI text');
   });
 
   it('builds conversation auto titles with truncation', () => {
