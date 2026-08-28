@@ -4,9 +4,13 @@ REST API server for the Architecture Register. Stores entities (components, syst
 
 ## Prerequisites
 
-- Node.js 20+
+- Node.js 22+
 - pnpm
 - PostgreSQL 15+ running locally for PostgreSQL mode
+
+The server uses Argon2's native N-API binding for password hashing. Supported
+platforms use the published prebuilt binary; on an unsupported OS or architecture,
+install the platform's native build toolchain and run `pnpm --filter @arch-register/server rebuild argon2`.
 
 ## Database configuration
 

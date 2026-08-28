@@ -60,14 +60,14 @@ export const createApp = (
 
   app.use(
     defineHandler(event => {
-      const didHandleCors = handleCors(event, {
+      const corsResponse = handleCors(event, {
         origin: corsOrigin,
         preflight: { statusCode: 204 },
         methods: '*',
         credentials: corsOriginEnv !== '*'
       });
-      if (didHandleCors) {
-        return;
+      if (corsResponse !== false) {
+        return corsResponse;
       }
     })
   );
