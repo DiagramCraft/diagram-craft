@@ -226,3 +226,28 @@ export const resolveSingleSchemaFilter = (conditions: FilterCondition[]): string
     .map(c => c.value);
   return equalsValues.length === 1 && typeof equalsValues[0] === 'string' ? equalsValues[0] : null;
 };
+
+// #3066: renders a table cell's raw field value as readable plain text. A multi-valued select
+// stores plain strings (joined as-is); an entityRelation field (e.g. a Data Flow's carried Data
+// Entities) stores referenced entity ids — resolve those via `referenceLookup` before joining, so
+// the column shows "Customer Credentials, Order Records" rather than a JSON array of uuids.
+export const formatFieldValue = (
+  value: unknown,
+  fieldType?: string,
+  referenceLookup: ReadonlyMap<string, { name: string }> = new Map()
+): string => {
+  if (value == null) return '';
+  if (Array.isArray(value)) {
+    return value
+      .map(item =>
+        typeof item === 'string' && fieldType === 'entityRelation'
+          ? (referenceLookup.get(item)?.name ?? item)
+          : formatFieldValue(item)
+      )
+      .join(', ');
+  }
+  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
+    return String(value);
+  }
+  return JSON.stringify(value);
+};

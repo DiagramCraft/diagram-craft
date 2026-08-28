@@ -621,4 +621,3 @@ const compareFieldValues = (a: unknown, b: unknown): number => {
   if (typeof a === 'boolean' && typeof b === 'boolean') return Number(a) - Number(b);
   return String(a).localeCompare(String(b));
 };
-

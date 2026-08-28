@@ -4,9 +4,11 @@ import {
   buildRelationSavedViewPayload,
   endpointFieldId,
   filterConditionsFromRelationQuery,
+  formatFieldValue,
   getRelationGraphLabelOptions,
   isRelationBasicRepresentable,
   parseEndpointFieldId,
+  parseRelationTableFieldIdsFromSearch,
   RELATION_GRAPH_TYPE_LABEL,
   resolveSingleSchemaFilter,
   toSavedRelationViewSearch
@@ -281,5 +283,69 @@ describe('isRelationBasicRepresentable', () => {
       { fieldId: '_schemaId', op: 'equals', value: 'data-flow' }
     ]);
     expect(isRelationBasicRepresentable(query)).toBe(false);
+  });
+});
+
+// #3066: an entityRelation-valued table cell (e.g. a Data Flow's carried Data Entities) used to
+// render as a raw JSON array of uuids ("["id-1","id-2"]") — it should resolve to names and join
+// them as plain text instead.
+describe('formatFieldValue', () => {
+  it('resolves entityRelation ids to names and joins them without brackets', () => {
+    const referenceLookup = new Map([
+      ['de-1', { name: 'Customer Credentials' }],
+      ['de-2', { name: 'Order Records' }]
+    ]);
+    expect(formatFieldValue(['de-1', 'de-2'], 'entityRelation', referenceLookup)).toBe(
+      'Customer Credentials, Order Records'
+    );
+  });
+
+  it('falls back to the raw id when a reference cannot be resolved (redacted/inaccessible)', () => {
+    expect(formatFieldValue(['de-1'], 'entityRelation', new Map())).toBe('de-1');
+  });
+
+  it('joins a plain multi-valued select as text, not JSON', () => {
+    expect(formatFieldValue(['gdpr', 'pci-dss'], 'select')).toBe('gdpr, pci-dss');
+  });
+
+  it('formats scalar values and empty values as before', () => {
+    expect(formatFieldValue('active')).toBe('active');
+    expect(formatFieldValue(3)).toBe('3');
+    expect(formatFieldValue(null)).toBe('');
+    expect(formatFieldValue(undefined)).toBe('');
+  });
+});
+
+// #3066: a saved view's config.table.fieldIds (a curated column set, possibly including
+// `_projection:`-prefixed projected columns) needs to round-trip through the URL so the Relations
+// browser can show it instead of every field on the active schema.
+describe('table column configuration (config.table.fieldIds)', () => {
+  it('carries table fieldIds through to search for a table-mode saved view', () => {
+    const search = toSavedRelationViewSearch({
+      id: 'view-1',
+      viewMode: 'table',
+      filters: buildRelationQueryFromFilters([]),
+      config: { table: { fieldIds: ['data_classification', '_projection:carried_classification'] } }
+    } as never);
+    expect(parseRelationTableFieldIdsFromSearch(search)).toEqual([
+      'data_classification',
+      '_projection:carried_classification'
+    ]);
+  });
+
+  it('omits tableFieldIds for a graph-mode saved view even if config.table is set', () => {
+    const search = toSavedRelationViewSearch({
+      id: 'view-1',
+      viewMode: 'graph',
+      filters: buildRelationQueryFromFilters([]),
+      config: { table: { fieldIds: ['x'] } }
+    } as never);
+    expect(search.tableFieldIds).toBeUndefined();
+  });
+
+  it('returns null for missing or malformed tableFieldIds', () => {
+    expect(parseRelationTableFieldIdsFromSearch({ tableFieldIds: undefined })).toBeNull();
+    expect(parseRelationTableFieldIdsFromSearch({ tableFieldIds: '{' })).toBeNull();
+    expect(parseRelationTableFieldIdsFromSearch({ tableFieldIds: '"not-an-array"' })).toBeNull();
   });
 });
