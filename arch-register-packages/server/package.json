@@ -19,6 +19,9 @@
   },
   "keywords": [],
   "author": "Magnus Johansson",
+  "engines": {
+    "node": ">=22"
+  },
   "dependencies": {
     "@arch-register/api-types": "workspace:*",
     "@arch-register/permissions": "workspace:*",
@@ -40,11 +43,11 @@
     "@tanstack/ai-openai": "^0.22.0",
     "@tanstack/ai-openrouter": "^0.19.1",
     "archiver": "^8.0.0",
-    "argon2": "^0.44.0",
+    "argon2": "^0.45.1",
     "better-sqlite3": "^13.0.2",
     "bonsai-js": "^0.5.0",
     "dotenv": "^17.2.3",
-    "h3": "^2.0.1-rc.26",
+    "h3": "2.0.1-rc.29",
     "jsonwebtoken": "^9.0.2",
     "lib0": "^0.2.117",
     "nodemailer": "^9.0.1",

@@ -2,6 +2,11 @@
 
 A standalone REST API server that provides data and schema endpoints for the RESTDataProvider. The server is completely decoupled from the frontend code and can be deployed independently.
 
+## Prerequisites
+
+- Node.js 20.11.1+
+- pnpm
+
 ## Features
 
 - **Standalone deployment**: No dependencies on frontend code
