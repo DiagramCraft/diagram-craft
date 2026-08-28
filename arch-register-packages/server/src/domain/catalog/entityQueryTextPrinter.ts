@@ -13,6 +13,7 @@ import {
 } from './entityQueryIRResolution';
 import type { SchemaField } from '@arch-register/api-types/schemaContract';
 import type { RelationField } from '@arch-register/api-types/relationSchemaContract';
+import { isNowDateLiteral } from '@arch-register/api-types/nowDateLiteral';
 import { relationSchemaNameById, schemaNameById } from './entityQueryTextResolver';
 
 const quoteString = (value: string): string =>
@@ -43,6 +44,9 @@ const printValueLiteral = (
   value: unknown,
   fieldType: SchemaField['type'] | RelationField['type'] | undefined
 ): string => {
+  if (fieldType === 'date' && isNowDateLiteral(value)) {
+    return value.offsetDays ? `now(${value.offsetDays})` : 'now()';
+  }
   if (fieldType === 'date') return `date(${quoteString(String(value))})`;
   if (typeof value === 'number') return String(value);
   return quoteString(String(value));
@@ -192,7 +196,14 @@ const printPredicateOrRelationExists = (
   if (node.kind !== 'predicate') throw new Error('unreachable');
 
   if (node.path.length === 0 && node.fieldId === '_schemaId' && node.op === 'equals') {
-    return `schema:${printSchemaRef(schemaNameById(schemas, node.value as string))}`;
+    // A path-less `_schemaId` predicate names whatever schema kind the *current* row is — an
+    // entity schema normally, but a relation schema for a relation-rooted query's own root-level
+    // type filter (or, mid-query, a relation row reached via a relationBackward/typedRelation
+    // step — `relationSchemaId` is already threaded through for that case). Printing this via the
+    // entity-only `schemaNameById` for a relation id previously fell through to the raw UUID.
+    return relationSchemaId
+      ? `schema:${printSchemaRef(relationSchemaNameById(relationSchemas, node.value as string))}`
+      : `schema:${printSchemaRef(schemaNameById(schemas, node.value as string))}`;
   }
 
   const {
@@ -253,12 +264,16 @@ export const printTextQueryNode = (
   }
 };
 
+const isRootSchemaPredicate = (
+  node: QueryNode
+): node is Extract<QueryNode, { kind: 'predicate' }> =>
+  node.kind === 'predicate' && node.path.length === 0 && node.fieldId === '_schemaId';
+
 const deriveRootSchemaIdFromIR = (node: QueryNode): string | undefined => {
+  if (isRootSchemaPredicate(node)) return node.value as string;
   if (node.kind !== 'and') return undefined;
   for (const child of node.children) {
-    if (child.kind === 'predicate' && child.path.length === 0 && child.fieldId === '_schemaId') {
-      return child.value as string;
-    }
+    if (isRootSchemaPredicate(child)) return child.value as string;
   }
   return undefined;
 };
@@ -267,5 +282,13 @@ export const printEntityQueryText = (
   query: EntityQuery,
   schemas: SchemaCatalog,
   relationSchemas: RelationSchemaCatalog = new Map()
-): string =>
-  printTextQueryNode(query.root, deriveRootSchemaIdFromIR(query.root), schemas, relationSchemas);
+): string => {
+  const rootId = deriveRootSchemaIdFromIR(query.root);
+  // `root_kind` (independent of any `_schemaId` predicate that may also appear in `root` — see
+  // entityQueryIR.ts's own doc comment) says whether the current row is an entity or a relation;
+  // seed the correct side so nested field-type lookups and the `_schemaId` print branch above
+  // resolve against the right schema catalog from the very first step.
+  return query.root_kind === 'relation'
+    ? printTextQueryNode(query.root, undefined, schemas, relationSchemas, rootId)
+    : printTextQueryNode(query.root, rootId, schemas, relationSchemas);
+};

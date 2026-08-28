@@ -137,6 +137,18 @@ export const parseRelationQueryFromSearch = (
   }
 };
 
+export const parseRelationTableFieldIdsFromSearch = (
+  search: Pick<RelationSearchParams, 'tableFieldIds'>
+): string[] | null => {
+  if (!search.tableFieldIds) return null;
+  try {
+    const parsed: unknown = JSON.parse(search.tableFieldIds);
+    return Array.isArray(parsed) && parsed.every(id => typeof id === 'string') ? parsed : null;
+  } catch {
+    return null;
+  }
+};
+
 export const toSavedRelationViewSearch = (view: SavedView): RelationSearchParams => ({
   viewId: view.id,
   viewMode: view.viewMode === 'graph' ? 'graph' : undefined,
@@ -154,6 +166,12 @@ export const toSavedRelationViewSearch = (view: SavedView): RelationSearchParams
   relationGraphMode:
     view.viewMode === 'graph' && view.config?.graph?.typedRelationMode != null
       ? view.config.graph.typedRelationMode
+      : undefined,
+  // #3066: same reasoning — a curated table column set (including `_projection:` columns) is
+  // only ever set by a seeded/admin-authored view for now, not user-editable via the save dialog.
+  tableFieldIds:
+    view.viewMode === 'table' && view.config?.table?.fieldIds != null
+      ? JSON.stringify(view.config.table.fieldIds)
       : undefined
 });
 

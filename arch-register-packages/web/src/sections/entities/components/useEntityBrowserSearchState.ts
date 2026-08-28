@@ -31,9 +31,10 @@ export const useEntityBrowserSearchState = ({
         filters: search.filters,
         owner: search.owner,
         status: search.status,
-        type: search.type
+        type: search.type,
+        entityQuery: search.entityQuery
       } as BrowserSearch),
-    [search.filters, search.owner, search.status, search.type]
+    [search.filters, search.owner, search.status, search.type, search.entityQuery]
   );
   const entityQuery = useMemo(
     () =>

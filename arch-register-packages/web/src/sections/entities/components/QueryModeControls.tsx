@@ -79,6 +79,14 @@ export const QueryModeControls = (props: QueryModeControlsProps) => {
   const [mode, setMode] = useState<Mode>(() =>
     entityQuery && !isBasicRepresentable(entityQuery) ? 'advanced' : 'basic'
   );
+  // The mount-time initializer above only fires once — this keeps the mode in sync when a new,
+  // non-representable query arrives later (e.g. selecting a saved view built around grouping,
+  // NOT, or relation traversal while a previously-selected representable view left mode at
+  // 'basic'), so its filter isn't silently under-displayed by a Basic mode that can't express it.
+  // Never forces the reverse: once representable, the user's own Basic/Advanced choice persists.
+  useEffect(() => {
+    if (entityQuery && !isBasicRepresentable(entityQuery)) setMode('advanced');
+  }, [entityQuery]);
   const [advancedText, setAdvancedText] = useState('');
   const [advancedErrors, setAdvancedErrors] = useState<EntityQueryParseError[]>([]);
   const [pendingSwitch, setPendingSwitch] = useState(false);

@@ -26,6 +26,8 @@ import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { useTeams, useLifecycleStates } from '../../hooks/useWorkspaceConfig';
 import { useSavedViews, useCreateSavedView, useUpdateSavedView } from '../../hooks/useSavedViews';
 import { useDeleteRelation } from '../../hooks/useRelations';
+import { useEntitiesByIds } from '../../hooks/useEntities';
+import { relationIds } from '../../lib/entityEditState';
 import { RelationDetailPopover } from '../entities/components/RelationDetailPopover';
 import { SaveViewDialog } from '../entities/components/EntityBrowser';
 import { RelationEditDialog } from '../../dialogs/RelationEditDialog';
@@ -34,9 +36,12 @@ import { RelationQueryModeControls } from './RelationQueryModeControls';
 import {
   buildRelationQueryFromFilters,
   buildRelationSavedViewPayload,
+  formatFieldValue,
+  parseRelationTableFieldIdsFromSearch,
   type RelationBrowserView,
   RELATION_GRAPH_TYPE_LABEL
 } from './relationBrowserState';
+import { PROJECTION_FIELD_PREFIX } from '../entities/components/entityDisplayFields';
 import { exportRelationsToCSV } from '../../lib/relationCsv';
 import { downloadBlob } from '../../lib/browserDownload';
 import { RelationGraphView } from './RelationGraphView';
@@ -64,6 +69,10 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
   const edgeLabelFieldId = search.edgeLabelFieldId ?? RELATION_GRAPH_TYPE_LABEL;
   const edgeColorFieldId = search.edgeColorFieldId ?? RELATION_GRAPH_TYPE_LABEL;
   const relationGraphMode = search.relationGraphMode ?? undefined;
+  const configuredTableFieldIds = useMemo(
+    () => parseRelationTableFieldIdsFromSearch(search),
+    [search.tableFieldIds]
+  );
   const {
     relationSchemas,
     entitySchemas,
@@ -172,8 +181,45 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     });
   }, [navigate, workspaceId]);
 
-  const fieldIds = activeSchema?.fields.map(field => field.id) ?? [];
+  // A saved view's config.table.fieldIds (curated columns, possibly including `_projection:`
+  // aliases from the query's own `projections`) takes precedence when set; otherwise every field
+  // on the active relation schema shows, as before.
+  const fieldIds = configuredTableFieldIds ?? activeSchema?.fields.map(field => field.id) ?? [];
   const columnCount = 7 + fieldIds.length;
+  const fieldLabelById = (fieldId: string): string =>
+    fieldId.startsWith(PROJECTION_FIELD_PREFIX)
+      ? fieldId.slice(PROJECTION_FIELD_PREFIX.length)
+      : (activeSchema?.fields.find(field => field.id === fieldId)?.name ?? fieldId);
+  const getFieldValue = (relation: (typeof relations)[number], fieldId: string): unknown =>
+    fieldId.startsWith(PROJECTION_FIELD_PREFIX)
+      ? (relation._projections as Record<string, unknown> | undefined)?.[
+          fieldId.slice(PROJECTION_FIELD_PREFIX.length)
+        ]
+      : relation[fieldId];
+  const fieldTypeById = useMemo(
+    () => new Map((activeSchema?.fields ?? []).map(field => [field.id, field.type])),
+    [activeSchema]
+  );
+  // entityRelation-valued columns (e.g. a Data Flow's carried Data Entities) store raw entity ids
+  // — resolve them to names up front so the table can render a plain "A, B, C" list rather than a
+  // JSON array of uuids.
+  const entityRelationFieldIds = useMemo(
+    () =>
+      (activeSchema?.fields ?? [])
+        .filter(field => field.type === 'entityRelation')
+        .map(field => field.id),
+    [activeSchema]
+  );
+  const referenceIds = useMemo(
+    () =>
+      entityRelationFieldIds.length
+        ? (relations ?? []).flatMap(relation =>
+            entityRelationFieldIds.flatMap(fieldId => relationIds(relation[fieldId]))
+          )
+        : [],
+    [relations, entityRelationFieldIds]
+  );
+  const referenceLookup = useEntitiesByIds(workspaceId, referenceIds);
 
   const comparators: Record<
     string,
@@ -188,7 +234,8 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
     _updatedAt: (a, b) => a._updatedAt.localeCompare(b._updatedAt)
   };
   for (const fieldId of fieldIds) {
-    comparators[fieldId] = (a, b) => compareFieldValues(a[fieldId], b[fieldId]);
+    comparators[fieldId] = (a, b) =>
+      compareFieldValues(getFieldValue(a, fieldId), getFieldValue(b, fieldId));
   }
   const { sorted, sort, toggleSort } = useTableSort(relations, comparators);
 
@@ -361,7 +408,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
                   sort={sort}
                   onSort={toggleSort}
                 >
-                  {fieldId}
+                  {fieldLabelById(fieldId)}
                 </Table.SortableHeaderCell>
               ))}
               <Table.SortableHeaderCell sortKey="_updatedAt" sort={sort} onSort={toggleSort}>
@@ -405,7 +452,13 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
                   <Table.Cell>{relation._owner?.name ?? ''}</Table.Cell>
                   <Table.Cell>{relation._lifecycle?.name ?? ''}</Table.Cell>
                   {fieldIds.map(fieldId => (
-                    <Table.Cell key={fieldId}>{formatFieldValue(relation[fieldId])}</Table.Cell>
+                    <Table.Cell key={fieldId}>
+                      {formatFieldValue(
+                        getFieldValue(relation, fieldId),
+                        fieldTypeById.get(fieldId),
+                        referenceLookup
+                      )}
+                    </Table.Cell>
                   ))}
                   <Table.Cell>{new Date(relation._updatedAt).toLocaleString()}</Table.Cell>
                   <Table.Cell interactive>
@@ -569,10 +622,3 @@ const compareFieldValues = (a: unknown, b: unknown): number => {
   return String(a).localeCompare(String(b));
 };
 
-const formatFieldValue = (value: unknown): string => {
-  if (value == null) return '';
-  if (typeof value === 'string' || typeof value === 'number' || typeof value === 'boolean') {
-    return String(value);
-  }
-  return JSON.stringify(value);
-};

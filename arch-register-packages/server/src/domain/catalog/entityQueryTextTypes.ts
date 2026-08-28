@@ -53,7 +53,11 @@ export type TextValue =
   | { kind: 'enumValue'; value: string; offset: number }
   | { kind: 'enumLabel'; value: string; offset: number }
   | { kind: 'empty'; offset: number }
-  | { kind: 'notEmpty'; offset: number };
+  | { kind: 'notEmpty'; offset: number }
+  // A relative-date literal (#3090's `{ $now: true, offsetDays? }`) — `now()` or `now(N)`, valid
+  // only against a date field's before/after/on comparison, printed/parsed symmetrically with
+  // `date(...)` so a saved view built around it round-trips through Advanced mode.
+  | { kind: 'now'; offsetDays?: number; offset: number };
 
 export type TextComparator = {
   text: string;

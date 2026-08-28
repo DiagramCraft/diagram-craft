@@ -58,6 +58,14 @@ export const RelationQueryModeControls = ({
 }: RelationQueryModeControlsProps) => {
   const filterPopoverRef = useRef<PopoverActions | null>(null);
   const [mode, setMode] = useState<Mode>(() => (representable ? 'basic' : 'advanced'));
+  // The mount-time initializer above only fires once — this keeps the mode in sync when a newly
+  // selected saved view's query isn't Basic-representable (an `or` root, a `relationForward`
+  // step, or a projection) while a previously-selected representable view left mode at 'basic',
+  // so its filter isn't silently under-displayed/dropped by a Basic mode that can't express it.
+  // Never forces the reverse: once representable, the user's own Basic/Advanced choice persists.
+  useEffect(() => {
+    if (!representable) setMode('advanced');
+  }, [representable]);
   const [advancedText, setAdvancedText] = useState('');
   const [advancedErrors, setAdvancedErrors] = useState<EntityQueryParseError[]>([]);
   const [pendingSwitch, setPendingSwitch] = useState(false);

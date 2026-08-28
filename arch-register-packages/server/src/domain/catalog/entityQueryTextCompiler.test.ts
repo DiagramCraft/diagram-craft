@@ -1128,3 +1128,163 @@ describe('parseEntityQueryText field-group restriction', () => {
     expect(result.ok).toBe(true);
   });
 });
+
+// #3066: found live in the Relations browser's Advanced mode — a relation-rooted saved view's
+// top-level `_schemaId equals <relationSchemaId>` predicate (the same pattern the Relations
+// browser's "Type" filter and the seeded governance views use) printed the raw UUID instead of
+// the schema name, and re-parsing that text as `schema:"Data Flow"` threw "Unknown schema" since
+// root-schema resolution only ever consulted the entity schema catalog.
+describe('relation-rooted queries — root-level schema: qualifier (#3066)', () => {
+  const relationRootedQuery: EntityQuery = {
+    root_kind: 'relation',
+    root: {
+      kind: 'and',
+      children: [
+        { kind: 'predicate', path: [], fieldId: '_schemaId', op: 'equals', value: DATA_FLOW.id },
+        { kind: 'predicate', path: [], fieldId: 'status', op: 'equals', value: 'active' }
+      ]
+    }
+  };
+
+  it('prints the relation schema name, not its raw id', () => {
+    expect(printEntityQueryText(relationRootedQuery, schemas, relationSchemas)).toBe(
+      'schema:"Data Flow" AND status = "active"'
+    );
+  });
+
+  it('parses schema:"Data Flow" at the root into a root_kind: relation query', () => {
+    const result = parseEntityQueryText(
+      'schema:"Data Flow" AND status = "active"',
+      schemas,
+      enums,
+      null,
+      relationSchemas
+    );
+    expect(result).toEqual({ ok: true, query: relationRootedQuery });
+  });
+
+  it('round-trips print -> parse back to the same query', () => {
+    const printed = printEntityQueryText(relationRootedQuery, schemas, relationSchemas);
+    const result = parseEntityQueryText(printed, schemas, enums, null, relationSchemas);
+    expect(result).toEqual({ ok: true, query: relationRootedQuery });
+  });
+
+  it('still rejects schema: nested inside an already-scoped relation row', () => {
+    // <-"Data Flow".data reaches Data Entity rows through the relation's own entityRelation
+    // field; a further schema: inside that bracket would be redundant/invalid, unchanged from
+    // before this fix.
+    const result = parseEntityQueryText(
+      '<-"Data Flow".data[schema:"Data Flow"]',
+      schemas,
+      enums,
+      null,
+      relationSchemas
+    );
+    expect(result.ok).toBe(false);
+  });
+});
+
+// #3066: found live via the seeded "Review Overdue" view — printing a `{ $now: true }` relative-
+// date literal (#3090) against a date field produced `date("[object Object]")` since the printer
+// naively stringified the object. now()/now(N) closes the round trip through Advanced mode.
+describe('relative-date literal — now()/now(N) (#3090, #3066)', () => {
+  const reviewDateField = makeSchema('review-entity-id', 'Reviewable', [
+    { id: 'review_date', name: 'Review Date', type: 'date' }
+  ]);
+  const reviewSchemas: SchemaCatalog = new Map([...schemas, [reviewDateField.id, reviewDateField]]);
+
+  it('prints a bare $now literal as now()', () => {
+    const query: EntityQuery = {
+      schemaId: reviewDateField.id,
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [],
+            fieldId: '_schemaId',
+            op: 'equals',
+            value: reviewDateField.id
+          },
+          {
+            kind: 'predicate',
+            path: [],
+            fieldId: 'review_date',
+            op: 'before',
+            value: { $now: true }
+          }
+        ]
+      }
+    };
+    expect(printEntityQueryText(query, reviewSchemas)).toBe(
+      'schema:Reviewable AND review_date < now()'
+    );
+  });
+
+  it('prints a $now literal with an offset as now(N)', () => {
+    const printed = printValueForOffset(30);
+    expect(printed).toBe('schema:Reviewable AND review_date < now(30)');
+  });
+
+  it('parses now() into a bare $now literal', () => {
+    const result = parseEntityQueryText('review_date < now()', reviewSchemas, enums);
+    expect(result).toEqual({
+      ok: true,
+      query: {
+        root: {
+          kind: 'predicate',
+          path: [],
+          fieldId: 'review_date',
+          op: 'before',
+          value: { $now: true }
+        }
+      }
+    });
+  });
+
+  it('parses now(N), including a negative offset', () => {
+    expect(parseEntityQueryText('review_date > now(-7)', reviewSchemas, enums)).toEqual({
+      ok: true,
+      query: {
+        root: {
+          kind: 'predicate',
+          path: [],
+          fieldId: 'review_date',
+          op: 'after',
+          value: { $now: true, offsetDays: -7 }
+        }
+      }
+    });
+  });
+
+  it('rejects now() against a non-date field', () => {
+    const result = parseEntityQueryText('status = now()', schemas, enums, null, relationSchemas);
+    expect(result.ok).toBe(false);
+  });
+
+  function printValueForOffset(offsetDays: number): string {
+    const query: EntityQuery = {
+      schemaId: reviewDateField.id,
+      root: {
+        kind: 'and',
+        children: [
+          {
+            kind: 'predicate',
+            path: [],
+            fieldId: '_schemaId',
+            op: 'equals',
+            value: reviewDateField.id
+          },
+          {
+            kind: 'predicate',
+            path: [],
+            fieldId: 'review_date',
+            op: 'before',
+            value: { $now: true, offsetDays }
+          }
+        ]
+      }
+    };
+    return printEntityQueryText(query, reviewSchemas);
+  }
+});

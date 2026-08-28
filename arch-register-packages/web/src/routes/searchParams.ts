@@ -85,7 +85,11 @@ const relationSearchSchema = defineSearchParamSchema({
   edgeColorFieldId: stringCodec,
   // Distinct name from the model-overview route's own `typedRelationMode` (below) — `useSearch`
   // unions search params across routes, so a shared name would collide on type.
-  relationGraphMode: enumCodec(['flat', 'entity'] as const)
+  relationGraphMode: enumCodec(['flat', 'entity'] as const),
+  // JSON-encoded string[] — a saved view's config.table.fieldIds, restricting the Table view to a
+  // curated column set (including `_projection:`-prefixed projected columns) instead of every
+  // field on the active relation schema.
+  tableFieldIds: stringCodec
 });
 
 export type RelationSearchParams = SearchParamsFromSchema<typeof relationSearchSchema>;
