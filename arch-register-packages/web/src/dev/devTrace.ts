@@ -64,7 +64,8 @@ let activeTraceId: string | null = null;
 let activeExpiresAt = 0;
 const listeners = new Set<() => void>();
 
-const genId = () => Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
+const genId = () =>
+  Math.random().toString(36).slice(2, 10) + Math.random().toString(36).slice(2, 6);
 
 const emit = () => {
   interactions = interactions.slice();

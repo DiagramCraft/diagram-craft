@@ -51,8 +51,7 @@ export const DevTools = () => {
 
   const config = { enabled: data?.enabled ?? false, tracingEnabled };
   const visibleTools = devTools.filter(tool => tool.visible(config));
-  const activeTool =
-    visibleTools.find(tool => tool.label === activeLabel) ?? visibleTools[0];
+  const activeTool = visibleTools.find(tool => tool.label === activeLabel) ?? visibleTools[0];
 
   return (
     <>

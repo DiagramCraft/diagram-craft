@@ -96,7 +96,7 @@
   font-size: 10px;
 }
 
-.status[data-error='true'] {
+.status[data-error="true"] {
   color: var(--error-fg, crimson);
   font-weight: 700;
 }

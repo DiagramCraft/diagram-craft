@@ -43,8 +43,7 @@ const fetchApiRequest = async (
   };
 
   // Never trace the dev tooling's own requests (trace polling, dev config, ...).
-  const traceable =
-    isDevTracingEnabled() && !new URL(request.url).pathname.includes('/dev/');
+  const traceable = isDevTracingEnabled() && !new URL(request.url).pathname.includes('/dev/');
   const handle = traceable ? startRequest(method, request.url) : null;
   if (handle) {
     headers.set(TRACE_ID_HEADER, handle.traceId);

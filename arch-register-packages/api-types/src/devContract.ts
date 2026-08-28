@@ -42,9 +42,7 @@ export const devContract = oc.tag('Dev').router({
       .output(
         z.object({
           enabled: z.boolean().describe('Whether dev-mode tooling is enabled'),
-          tracingEnabled: z
-            .boolean()
-            .describe('Whether dev-mode request/SQL tracing is enabled')
+          tracingEnabled: z.boolean().describe('Whether dev-mode request/SQL tracing is enabled')
         })
       ),
     trace: oc

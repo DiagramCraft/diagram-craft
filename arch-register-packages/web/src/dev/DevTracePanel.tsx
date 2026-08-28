@@ -97,9 +97,8 @@ const InteractionRow = ({ interaction }: { interaction: Interaction }) => {
         <span className={styles.label}>{interaction.label}</span>
         <span className={styles.rows}>{interaction.requests.length} req</span>
       </button>
-      {open && interaction.requests.map(request => (
-        <RequestRow key={request.spanId} request={request} />
-      ))}
+      {open &&
+        interaction.requests.map(request => <RequestRow key={request.spanId} request={request} />)}
       {open && interaction.requests.length === 0 && (
         <div className={styles.pending}>no API requests</div>
       )}
