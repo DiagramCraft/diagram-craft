@@ -1,5 +1,6 @@
 import type { RelationDbCreate } from '../../domain/catalog/db/relationDatabase';
 import {
+  CONTROL_AFFECTS_RELATION_SCHEMA_ID,
   CONTROL_REQUIREMENT_SCHEMA_ID,
   DEMO_RETENTION_IDS,
   DEMO_RISK_COMPLIANCE_IDS,
@@ -342,6 +343,31 @@ export const demoGovernanceRelations: RelationDbCreate[] = [
     // Non-Compliant Data Subject Erasure Requests -> Customer Portal.
     in_entity_id: DEMO_RISK_COMPLIANCE_IDS.risks.nonCompliantErasureRequests,
     out_entity_id: '00000000-0000-0000-0002-000000000001',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+
+  // Control Protection (control -> information asset). Leaves Transaction Events (DE-2) with
+  // neither a Risk nor a Control link, so the "Without Risk or Control Coverage" view is non-empty.
+  {
+    id: '00000000-0000-0000-0016-000000000201',
+    workspace: WORKSPACE_ID,
+    schema_id: CONTROL_AFFECTS_RELATION_SCHEMA_ID,
+    // Encryption at Rest -> Customer Credentials (Data Entity DE-1).
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.controls.encryptionAtRest,
+    out_entity_id: '00000000-0000-0000-0008-000000000001',
+    data: {},
+    created_at: now,
+    updated_at: now
+  },
+  {
+    id: '00000000-0000-0000-0016-000000000202',
+    workspace: WORKSPACE_ID,
+    schema_id: CONTROL_AFFECTS_RELATION_SCHEMA_ID,
+    // SIEM Alerting -> Clickstream Events (Data Entity DE-3).
+    in_entity_id: DEMO_RISK_COMPLIANCE_IDS.controls.siemAlerting,
+    out_entity_id: '00000000-0000-0000-0008-000000000003',
     data: {},
     created_at: now,
     updated_at: now

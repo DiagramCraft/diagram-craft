@@ -17,6 +17,7 @@ import {
   BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
   CONTROL_REQUIREMENT_SCHEMA_ID,
   DATA_FLOW_GOVERNANCE_FIELD_GROUP_ID,
+  CONTROL_AFFECTS_RELATION_SCHEMA_ID,
   DATA_FLOW_SCHEMA_ID,
   GLOSSARY_IDS,
   INFO_ASSET_FIELD_GROUP_ID,
@@ -106,6 +107,7 @@ const definitionId = (
     'relationSchema:risk-compliance:risk-control': RISK_CONTROL_SCHEMA_ID,
     'relationSchema:risk-compliance:control-requirement': CONTROL_REQUIREMENT_SCHEMA_ID,
     'relationSchema:risk-compliance:risk-affects': RISK_AFFECTS_RELATION_SCHEMA_ID,
+    'relationSchema:risk-compliance:control-affects': CONTROL_AFFECTS_RELATION_SCHEMA_ID,
     'relationSchema:strategy:business-capability-supports-entity':
       BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
     'relationSchema:strategy:objective-supports-business-capability':
@@ -235,6 +237,7 @@ const relationOrder = [
   SEED_RELATION_SCHEMA_IDS.systemContract,
   DATA_FLOW_SCHEMA_ID,
   RISK_AFFECTS_RELATION_SCHEMA_ID,
+  CONTROL_AFFECTS_RELATION_SCHEMA_ID,
   RISK_CONTROL_SCHEMA_ID,
   CONTROL_REQUIREMENT_SCHEMA_ID,
   BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,

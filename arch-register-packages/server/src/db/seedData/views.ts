@@ -10,8 +10,10 @@ import {
 } from '../../domain/catalog/schemaTemplates';
 import {
   COLLECTION_IDS,
+  CONTROL_AFFECTS_RELATION_SCHEMA_ID,
   DATA_FLOW_SCHEMA_ID,
   LIFECYCLE_IDS,
+  RISK_AFFECTS_RELATION_SCHEMA_ID,
   SEED_SCHEMA_IDS,
   TEAM_IDS,
   USER_IDS,
@@ -554,6 +556,76 @@ export const seedSavedViews: SavedViewDbResult[] = [
     },
     config: {
       graph: { typedRelationMode: 'entity' }
+    },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    // #3069: trace information assets to the Risks and Controls that concern them.
+    id: '00000000-0000-0000-0020-000000000011',
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    project_scope: null,
+    name: 'Information Asset Governance Map',
+    description:
+      'Data Entities with the Risks that affect them and the Controls that protect them, as a graph.',
+    is_admin_view: true,
+    view_mode: 'graph',
+    filters: {
+      schemaId: SEED_SCHEMA_IDS.dataEntity,
+      root: { kind: 'and', children: [] }
+    },
+    config: {
+      graph: { typedRelationMode: 'entity' }
+    },
+    created_at: now,
+    updated_at: now
+  },
+  {
+    // #3069: information assets with no inbound Risk or Control link, so gaps in governance
+    // traceability are visible without creating a duplicate Information Asset entity.
+    id: '00000000-0000-0000-0020-000000000012',
+    workspace: WORKSPACE_ID,
+    project_id: null,
+    project_scope: null,
+    name: 'Information Assets Without Risk or Control Coverage',
+    description:
+      'Data Entities that no Risk affects and no Control protects.',
+    is_admin_view: true,
+    view_mode: 'table',
+    filters: {
+      schemaId: SEED_SCHEMA_IDS.dataEntity,
+      root: {
+        kind: 'not',
+        child: {
+          kind: 'or',
+          children: [
+            {
+              kind: 'relationExists',
+              path: [
+                {
+                  kind: 'unboundTypedRelation',
+                  relationSchemaId: RISK_AFFECTS_RELATION_SCHEMA_ID,
+                  direction: 'out'
+                }
+              ]
+            },
+            {
+              kind: 'relationExists',
+              path: [
+                {
+                  kind: 'unboundTypedRelation',
+                  relationSchemaId: CONTROL_AFFECTS_RELATION_SCHEMA_ID,
+                  direction: 'out'
+                }
+              ]
+            }
+          ]
+        }
+      }
+    },
+    config: {
+      table: { fieldIds: ['classification', 'steward', 'custodian'] }
     },
     created_at: now,
     updated_at: now
