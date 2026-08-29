@@ -4,6 +4,7 @@ import {
   createEmailDeliveryConfigFromEnv,
   PermanentEmailError,
   RetryableEmailError,
+  ResendEmailProvider,
   SmtpEmailProvider,
   overrideRecipientDomain
 } from './emailDelivery';
@@ -95,6 +96,81 @@ describe('SmtpEmailProvider', () => {
     await expect(provider.send(message, new AbortController().signal)).rejects.toBeInstanceOf(
       PermanentEmailError
     );
+  });
+});
+
+describe('ResendEmailProvider', () => {
+  it('sends the email contents with an idempotency key and returns the message ID', async () => {
+    const send = vi.fn().mockResolvedValue({ data: { id: 'resend-message-1' }, error: null });
+    const client = { emails: { send } } as unknown as ConstructorParameters<
+      typeof ResendEmailProvider
+    >[0];
+    const provider = new ResendEmailProvider(client);
+
+    await expect(provider.send(message, new AbortController().signal)).resolves.toEqual({
+      id: 'resend-message-1'
+    });
+    expect(send).toHaveBeenCalledWith(
+      {
+        from: message.from,
+        to: [message.to],
+        subject: message.subject,
+        html: message.html,
+        text: message.text
+      },
+      { idempotencyKey: message.idempotencyKey }
+    );
+  });
+
+  it('classifies transient Resend responses as retryable', async () => {
+    for (const statusCode of [408, 429, 503]) {
+      const send = vi.fn().mockResolvedValue({
+        data: null,
+        error: Object.assign(new Error(`Resend status ${statusCode}`), { statusCode })
+      });
+      const client = { emails: { send } } as unknown as ConstructorParameters<
+        typeof ResendEmailProvider
+      >[0];
+
+      await expect(
+        new ResendEmailProvider(client).send(message, new AbortController().signal)
+      ).rejects.toBeInstanceOf(RetryableEmailError);
+    }
+  });
+
+  it('classifies permanent responses and missing IDs correctly', async () => {
+    const permanentSend = vi.fn().mockResolvedValue({
+      data: null,
+      error: Object.assign(new Error('invalid recipient'), { statusCode: 400 })
+    });
+    const permanentClient = {
+      emails: { send: permanentSend }
+    } as unknown as ConstructorParameters<typeof ResendEmailProvider>[0];
+    await expect(
+      new ResendEmailProvider(permanentClient).send(message, new AbortController().signal)
+    ).rejects.toBeInstanceOf(PermanentEmailError);
+
+    const missingIdSend = vi.fn().mockResolvedValue({ data: {}, error: null });
+    const missingIdClient = {
+      emails: { send: missingIdSend }
+    } as unknown as ConstructorParameters<typeof ResendEmailProvider>[0];
+    await expect(
+      new ResendEmailProvider(missingIdClient).send(message, new AbortController().signal)
+    ).rejects.toBeInstanceOf(RetryableEmailError);
+  });
+
+  it('does not call Resend when delivery is already aborted', async () => {
+    const send = vi.fn();
+    const client = { emails: { send } } as unknown as ConstructorParameters<
+      typeof ResendEmailProvider
+    >[0];
+    const controller = new AbortController();
+    controller.abort(new Error('cancelled'));
+
+    await expect(new ResendEmailProvider(client).send(message, controller.signal)).rejects.toThrow(
+      'cancelled'
+    );
+    expect(send).not.toHaveBeenCalled();
   });
 });
 
