@@ -537,7 +537,8 @@ const sourceFromWorkspace = async (
     sharedFieldGroups,
     policiesBySchema,
     relationSchemas,
-    capabilityConfigurations
+    capabilityConfigurations,
+    categories
   ] = await Promise.all([
     db.catalog.listSchemas(workspace),
     db.catalog.listEnums(workspace),
@@ -546,9 +547,11 @@ const sourceFromWorkspace = async (
     db.catalog.listSharedFieldGroups(workspace),
     getSchemaGovernancePoliciesBySchema(db, workspace),
     db.relation.listRelationSchemas(workspace),
-    db.workspace.listWorkspaceCapabilityConfigurations(workspace)
+    db.workspace.listWorkspaceCapabilityConfigurations(workspace),
+    db.catalog.listCategories(workspace)
   ]);
   const teamNames = new Map(teams.map(team => [team.id, team.name]));
+  const categoryNamesById = new Map(categories.map(category => [category.id, category.name]));
 
   return {
     kind: 'workspace',
@@ -558,7 +561,7 @@ const sourceFromWorkspace = async (
     schemas: schemas.map(schema => ({
       id: schema.id,
       name: schema.name,
-      category: schema.category ?? null,
+      category: (schema.category_id && categoryNamesById.get(schema.category_id)) ?? null,
       description: schema.description,
       key_prefix: schema.key_prefix,
       fields: schema.fields,
@@ -596,7 +599,7 @@ const sourceFromWorkspace = async (
     relationSchemas: relationSchemas.map(schema => ({
       id: schema.id,
       name: schema.name,
-      category: schema.category ?? null,
+      category: (schema.category_id && categoryNamesById.get(schema.category_id)) ?? null,
       description: schema.description,
       in_schema_ids: schema.in_schema_ids,
       out_schema_ids: schema.out_schema_ids,
@@ -1720,6 +1723,27 @@ export const executeDefinitionImport = async (
       };
       const now = new Date();
       await db.core.transaction(async tx => {
+        const categoryIdCache = new Map<string, string>();
+        const resolveCategoryId = async (rawName: string | null): Promise<string | null> => {
+          if (!rawName) return null;
+          const key = rawName.toLowerCase();
+          const cached = categoryIdCache.get(key);
+          if (cached) return cached;
+          const existing = await tx.catalog.getCategoryByName(ws, rawName);
+          if (existing) {
+            categoryIdCache.set(key, existing.id);
+            return existing.id;
+          }
+          const created = await tx.catalog.createCategory({
+            id: randomUUID(),
+            workspace: ws,
+            name: rawName,
+            created_at: now,
+            updated_at: now
+          });
+          categoryIdCache.set(key, created.id);
+          return created.id;
+        };
         for (const enumeration of plan.enums) {
           const row: WorkspaceEnumDbCreate = {
             id: enumIdMap.get(enumeration.id)!,
@@ -1791,7 +1815,7 @@ export const executeDefinitionImport = async (
             id: schemaIdMap.get(schema.id)!,
             workspace: ws,
             name: schema.name,
-            category: schema.category,
+            category_id: await resolveCategoryId(schema.category),
             description: schema.description,
             key_prefix: schema.key_prefix,
             fields,
@@ -1820,7 +1844,7 @@ export const executeDefinitionImport = async (
             schema_id: row.id,
             version: 1,
             name: row.name,
-            category: row.category ?? null,
+            category: schema.category,
             description: row.description,
             fields,
             templates: [],
@@ -1863,7 +1887,7 @@ export const executeDefinitionImport = async (
             id: relationSchemaIdMap.get(relationSchema.id)!,
             workspace: ws,
             name: relationSchema.name,
-            category: relationSchema.category,
+            category_id: await resolveCategoryId(relationSchema.category),
             description: relationSchema.description,
             in_schema_ids:
               relationSchema.in_schema_ids === 'any'
@@ -1895,7 +1919,7 @@ export const executeDefinitionImport = async (
             schema_id: row.id,
             version: 1,
             name: row.name,
-            category: row.category ?? null,
+            category: relationSchema.category,
             description: row.description,
             in_schema_ids: row.in_schema_ids,
             out_schema_ids: row.out_schema_ids,
@@ -1945,7 +1969,7 @@ export const executeDefinitionImport = async (
           validateDerivedFieldGroupAccess(fields, groups);
           const updated = await tx.catalog.updateSchema(ws, targetSchemaId, {
             name: current.name,
-            category: current.category,
+            category_id: current.category_id,
             description: current.description,
             fields,
             templates: current.templates ?? [],
@@ -1964,13 +1988,16 @@ export const executeDefinitionImport = async (
             status: 409,
             message: `Schema patch target '${targetSchemaId}' could not be updated`
           });
+          const patchCategoryName = updated.category_id
+            ? ((await tx.catalog.getCategory(ws, updated.category_id))?.name ?? null)
+            : null;
           await tx.catalog.createSchemaVersion({
             id: randomUUID(),
             workspace: ws,
             schema_id: updated.id,
             version: updated.version ?? 1,
             name: updated.name,
-            category: updated.category ?? null,
+            category: patchCategoryName,
             description: updated.description,
             fields: updated.fields,
             templates: updated.templates ?? [],

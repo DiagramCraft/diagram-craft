@@ -9,6 +9,7 @@ import {
   fieldMigrationsSchema
 } from '@arch-register/api-types/common';
 import { validationRuleSchema } from '@arch-register/api-types/schemaContract';
+import { categoryRefSchema } from '@arch-register/api-types/categoryContract';
 
 const requirementLevelSchema = z
   .enum(['required', 'expected', 'optional'])
@@ -266,10 +267,9 @@ export const relationSchemaSchema = z.object({
   id: z.string().describe('Unique relation schema identifier'),
   workspace: z.string().describe('Parent workspace identifier'),
   name: z.string().describe('Relation schema name'),
-  category: z
-    .string()
+  category: categoryRefSchema
     .nullable()
-    .describe('Optional free-text presentation category for organizing relation schemas'),
+    .describe('Workspace category used to group this relation schema'),
   description: z.string().describe('Relation schema description'),
   in: relationEndpointSchema.describe('Allowed entity schemas and label for the "in" endpoint'),
   out: relationEndpointSchema.describe('Allowed entity schemas and label for the "out" endpoint'),
@@ -331,11 +331,11 @@ const relationSchemaVersionSchema = z.object({
 
 const createRelationSchemaBodySchema = z.object({
   name: z.string().describe('Relation schema name'),
-  category: z
+  category_id: z
     .string()
     .nullable()
     .optional()
-    .describe('Optional free-text presentation category; blank values are stored as null'),
+    .describe('Workspace category id used to group this relation schema'),
   description: z.preprocess(
     v => (v === undefined ? undefined : typeof v === 'string' ? v : ''),
     z.string().optional().describe('Relation schema description')

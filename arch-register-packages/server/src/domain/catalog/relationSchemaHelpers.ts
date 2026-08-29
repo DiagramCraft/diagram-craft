@@ -9,9 +9,11 @@ import { httpAssert } from '../../utils/httpAssert';
 import {
   clearOrphanedGroupIds,
   normalizeSchemaGroups,
-  normalizeSchemaCategory,
+  normalizeCategoryId,
   normalizeSharedFieldGroupLinks,
-  resolveSelectFieldOptions
+  resolveSelectFieldOptions,
+  resolveCategoryRef,
+  type CategoryLookup
 } from './schemaHelpers';
 import type { WorkspaceEnumDbResult as InternalWorkspaceEnum } from './db/catalogDatabase';
 import {
@@ -99,7 +101,7 @@ export const buildCreateRelationSchemaInput = (
 ) => {
   const {
     name,
-    category,
+    category_id,
     description = '',
     in: inEndpoint,
     out: outEndpoint,
@@ -129,7 +131,7 @@ export const buildCreateRelationSchemaInput = (
     id: idFactory(),
     workspace,
     name,
-    category: normalizeSchemaCategory(category),
+    category_id: normalizeCategoryId(category_id),
     description: typeof description === 'string' ? description : '',
     in_schema_ids: normalizedInEndpoint.schemaIds,
     out_schema_ids: normalizedOutEndpoint.schemaIds,
@@ -155,7 +157,7 @@ export const buildUpdateRelationSchemaInput = (
 ) => {
   const {
     name,
-    category,
+    category_id,
     description,
     in: inEndpoint,
     out: outEndpoint,
@@ -188,8 +190,8 @@ export const buildUpdateRelationSchemaInput = (
 
   return {
     name,
-    category:
-      category !== undefined ? normalizeSchemaCategory(category) : (current.category ?? null),
+    category_id:
+      category_id !== undefined ? normalizeCategoryId(category_id) : (current.category_id ?? null),
     description:
       description !== undefined
         ? typeof description === 'string'
@@ -307,14 +309,15 @@ export const compileRelationSchemaWithSharedGroups = (
 export const toApiRelationSchema = (
   schema: InternalRelationSchema,
   relationCount: number,
-  enums: InternalWorkspaceEnum[]
+  enums: InternalWorkspaceEnum[],
+  categories: CategoryLookup
 ): RelationSchema => {
   const fields = resolveSelectFieldOptions(schema.fields, enums) as RelationSchema['fields'];
   return {
     id: schema.id,
     workspace: schema.workspace,
     name: schema.name,
-    category: schema.category ?? null,
+    category: resolveCategoryRef(schema.category_id, categories),
     description: schema.description,
     in: {
       schemaIds: schema.in_schema_ids,

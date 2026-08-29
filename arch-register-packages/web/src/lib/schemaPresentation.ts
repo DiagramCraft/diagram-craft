@@ -42,10 +42,7 @@ export const resolveSchemaColor = (schema: { color: string | null }, index: numb
 
 export const UNCATEGORIZED_SCHEMA_CATEGORY = 'Uncategorized';
 
-export const normalizeSchemaCategory = (category?: string | null): string => {
-  const trimmed = category?.trim();
-  return trimmed === undefined || trimmed.length === 0 ? UNCATEGORIZED_SCHEMA_CATEGORY : trimmed;
-};
+export type NamedCategory = { id: string; name: string };
 
 export const compareSchemaCategories = (left: string, right: string): number => {
   if (left === UNCATEGORIZED_SCHEMA_CATEGORY) return 1;
@@ -54,27 +51,40 @@ export const compareSchemaCategories = (left: string, right: string): number => 
 };
 
 export type SchemaCategoryGroup<T> = {
+  /** null for the synthetic Uncategorized bucket — never a real category row. */
+  categoryId: string | null;
+  /** Display name ("Uncategorized" when the item has no category). */
   category: string;
   items: Array<{ schema: T; index: number }>;
 };
 
-export const groupSchemasByCategory = <T extends { category?: string | null; name: string }>(
+// Items with no embedded category fall back to a synthetic "Uncategorized" bucket rather than a
+// real category row — see [[project_category_table]].
+export const groupSchemasByCategory = <
+  T extends { category?: NamedCategory | null; name: string }
+>(
   schemas: readonly T[]
 ): SchemaCategoryGroup<T>[] => {
-  const groups = new Map<string, Array<{ schema: T; index: number }>>();
+  const groups = new Map<
+    string,
+    { categoryId: string | null; name: string; items: Array<{ schema: T; index: number }> }
+  >();
 
   schemas.forEach((schema, index) => {
-    const category = normalizeSchemaCategory(schema.category);
-    const items = groups.get(category) ?? [];
-    items.push({ schema, index });
-    groups.set(category, items);
+    const categoryId = schema.category?.id ?? null;
+    const name = schema.category?.name ?? UNCATEGORIZED_SCHEMA_CATEGORY;
+    const key = categoryId ?? '';
+    const group = groups.get(key) ?? { categoryId, name, items: [] };
+    group.items.push({ schema, index });
+    groups.set(key, group);
   });
 
-  return [...groups.entries()]
-    .sort(([left], [right]) => compareSchemaCategories(left, right))
-    .map(([category, items]) => ({
-      category,
-      items: items.sort((left, right) => left.schema.name.localeCompare(right.schema.name))
+  return [...groups.values()]
+    .sort((left, right) => compareSchemaCategories(left.name, right.name))
+    .map(group => ({
+      categoryId: group.categoryId,
+      category: group.name,
+      items: group.items.sort((left, right) => left.schema.name.localeCompare(right.schema.name))
     }));
 };
 

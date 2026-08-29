@@ -32,6 +32,7 @@ const workspaceContext = {
   schemas,
   relationSchemas: [],
   enums: [],
+  categories: [],
   projects: [],
   lifecycleStates,
   teams: [],

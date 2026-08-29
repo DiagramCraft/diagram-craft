@@ -30,6 +30,8 @@ import {
   planFieldMigrations
 } from '../fieldMigration/fieldMigrationPlanning';
 import { compileSchemaWithSharedGroups } from './fieldGroupHelpers';
+import { assertCategoryExists, buildCategoryLookup } from './categoryOperations';
+import type { CategoryLookup } from './schemaHelpers';
 import { encodeCaseSubkind } from '../governance/governanceCaseSubkind';
 import {
   materializeDerivedFields,
@@ -93,11 +95,12 @@ export const listWorkspaceSchemas = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
-      const [schemas, enums, allEntities, policiesBySchema] = await Promise.all([
+      const [schemas, enums, allEntities, policiesBySchema, categories] = await Promise.all([
         db.catalog.listSchemas(ws),
         db.catalog.listEnums(ws),
         listAllCatalogEntities(db, ws),
-        getSchemaGovernancePoliciesBySchema(db, ws)
+        getSchemaGovernancePoliciesBySchema(db, ws),
+        buildCategoryLookup(db, ws)
       ]);
       const countBySchema = new Map<string, number>();
       for (const entity of allEntities) {
@@ -108,6 +111,7 @@ export const listWorkspaceSchemas = async (
           schema,
           countBySchema.get(schema.id) ?? 0,
           enums,
+          categories,
           policiesBySchema.get(schema.id)
         )
       );
@@ -157,13 +161,20 @@ export const getWorkspaceSchema = async (
     dbErrorMessages,
     operation: async ({ ws, authCtx }) => {
       requireSchemaRead(authCtx);
-      const [row, enums] = await Promise.all([
+      const [row, enums, categories] = await Promise.all([
         db.catalog.getSchema(ws, id),
-        db.catalog.listEnums(ws)
+        db.catalog.listEnums(ws),
+        buildCategoryLookup(db, ws)
       ]);
       httpAssert.present(row, { status: 404, message: `Schema '${id}' not found` });
       const entityCount = await countEntitiesForSchema(db, ws, id);
-      return toApiSchema(row, entityCount, enums, await getSchemaGovernancePolicies(db, ws, id));
+      return toApiSchema(
+        row,
+        entityCount,
+        enums,
+        categories,
+        await getSchemaGovernancePolicies(db, ws, id)
+      );
     }
   });
 };
@@ -186,6 +197,7 @@ export const createWorkspaceSchema = async (
       const timestamp = new Date();
       const sharedGroups = await db.catalog.listSharedFieldGroups(ws);
       const requested = buildCreateSchemaInput(ws, body, teamIds, timestamp);
+      const categoryName = await assertCategoryExists(db, ws, requested.category_id);
       const compiled = compileSchemaWithSharedGroups(requested, sharedGroups);
       validateDerivedFieldGroupAccess(compiled.fields, compiled.groups ?? []);
       const row = await db.catalog.createSchema(compiled);
@@ -201,7 +213,7 @@ export const createWorkspaceSchema = async (
         schema_id: row.id,
         version: row.version ?? 1,
         name: row.name,
-        category: row.category ?? null,
+        category: categoryName,
         description: row.description,
         fields: row.fields,
         templates: row.templates ?? [],
@@ -226,7 +238,15 @@ export const createWorkspaceSchema = async (
       });
 
       const enums = await db.catalog.listEnums(ws);
-      return toApiSchema(row, 0, enums, await getSchemaGovernancePolicies(db, ws, row.id));
+      const categories: CategoryLookup =
+        row.category_id && categoryName ? new Map([[row.category_id, categoryName]]) : new Map();
+      return toApiSchema(
+        row,
+        0,
+        enums,
+        categories,
+        await getSchemaGovernancePolicies(db, ws, row.id)
+      );
     }
   });
 };
@@ -251,6 +271,7 @@ export const updateWorkspaceSchema = async (
 
       const teamIds = new Set((await db.workspace.listTeams(ws)).map(owner => owner.id));
       const next = buildUpdateSchemaInput(body, oldRow, teamIds, new Date());
+      const categoryName = await assertCategoryExists(db, ws, next.category_id);
       const sharedGroups = await db.catalog.listSharedFieldGroups(ws);
       const compiledNext = compileSchemaWithSharedGroups(
         { ...oldRow, ...next, shared_field_group_links: next.shared_field_group_links },
@@ -417,7 +438,7 @@ export const updateWorkspaceSchema = async (
 
         const updated = await tx.catalog.updateSchema(ws, id, {
           name: next.name,
-          category: next.category,
+          category_id: next.category_id,
           key_prefix: next.key_prefix,
           description: next.description,
           fields: finalFields,
@@ -456,7 +477,7 @@ export const updateWorkspaceSchema = async (
           schema_id: id,
           version: updated.version ?? 1,
           name: updated.name,
-          category: updated.category ?? null,
+          category: categoryName,
           description: updated.description,
           fields: updated.fields,
           templates: updated.templates ?? [],
@@ -531,7 +552,15 @@ export const updateWorkspaceSchema = async (
       });
 
       const enums = await db.catalog.listEnums(ws);
-      return toApiSchema(row, entityCount, enums, await getSchemaGovernancePolicies(db, ws, id));
+      const categories: CategoryLookup =
+        row.category_id && categoryName ? new Map([[row.category_id, categoryName]]) : new Map();
+      return toApiSchema(
+        row,
+        entityCount,
+        enums,
+        categories,
+        await getSchemaGovernancePolicies(db, ws, id)
+      );
     }
   });
 };

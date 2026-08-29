@@ -42,10 +42,7 @@ export const buildCreateSharedFieldGroupInput = (
     id: randomUUID(),
     workspace,
     name: name.trim(),
-    category:
-      typeof body.category === 'string' && body.category.trim() !== ''
-        ? body.category.trim()
-        : null,
+    category_id: typeof body.category_id === 'string' ? body.category_id : null,
     description:
       typeof body.description === 'string' && body.description.trim() !== ''
         ? body.description.trim()
@@ -66,11 +63,11 @@ export const buildUpdateSharedFieldGroupInput = (
   httpAssert.string(name, { message: 'name is required and must be a string' });
   return {
     name: name.trim(),
-    category:
-      body.category === undefined
-        ? existing.category
-        : typeof body.category === 'string' && body.category.trim() !== ''
-          ? body.category.trim()
+    category_id:
+      body.category_id === undefined
+        ? existing.category_id
+        : typeof body.category_id === 'string'
+          ? body.category_id
           : null,
     description:
       body.description === undefined

@@ -10,6 +10,7 @@ import { RelationSchema } from '@arch-register/api-types/relationSchemaContract'
 import { Project } from '@arch-register/api-types/projectCrudContract';
 import { WorkspaceEnum } from '@arch-register/api-types/enumContract';
 import { SharedFieldGroup } from '@arch-register/api-types/fieldGroupContract';
+import { Category } from '@arch-register/api-types/categoryContract';
 export type ProjectEntityType = { id: string; label: string; sort_order: number };
 
 export type WorkspaceContextType = {
@@ -19,6 +20,7 @@ export type WorkspaceContextType = {
   relationSchemas: RelationSchema[];
   enums: WorkspaceEnum[];
   fieldGroups?: SharedFieldGroup[];
+  categories: Category[];
   projects: Project[];
   lifecycleStates: WorkspaceLifecycleState[];
   teams: WorkspaceTeam[];

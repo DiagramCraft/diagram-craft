@@ -4,10 +4,10 @@ import { groupSchemasByCategory, UNCATEGORIZED_SCHEMA_CATEGORY } from './schemaP
 describe('groupSchemasByCategory', () => {
   it('sorts categories and schemas while preserving original indexes', () => {
     const groups = groupSchemasByCategory([
-      { name: 'Zulu', category: ' Architecture ' },
-      { name: 'Alpha', category: 'Architecture' },
+      { name: 'Zulu', category: { id: 'arch', name: 'Architecture' } },
+      { name: 'Alpha', category: { id: 'arch', name: 'Architecture' } },
       { name: 'Beta', category: null },
-      { name: 'Blank', category: '  ' }
+      { name: 'Blank', category: null }
     ]);
 
     expect(groups.map(group => group.category)).toEqual([

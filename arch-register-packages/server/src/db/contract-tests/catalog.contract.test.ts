@@ -3,6 +3,7 @@ import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
 import { DatabaseError, type DatabaseAdapter } from '../database';
 import {
+  createFixtureCategory,
   createFixtureProject,
   createFixtureSchema,
   createFixtureWorkspace
@@ -16,13 +17,14 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
       const db = getDb();
       const workspace = await createFixtureWorkspace(db);
       const id = await createFixtureSchema(db, workspace);
+      const categoryId = await createFixtureCategory(db, workspace, { name: 'Architecture' });
 
       const fetched = await db.catalog.getSchema(workspace, id);
       expect(fetched!.fields).toEqual([]);
 
       const updated = await db.catalog.updateSchema(workspace, id, {
         name: 'renamed schema',
-        category: 'Architecture',
+        category_id: categoryId,
         description: 'updated',
         fields: [],
         templates: [
@@ -39,7 +41,7 @@ runContractSuiteAgainstBothDrivers('CatalogDatabase', getDb => {
         updated_at: new Date()
       });
       expect(updated!.name).toBe('renamed schema');
-      expect(updated!.category).toBe('Architecture');
+      expect(updated!.category_id).toBe(categoryId);
       expect(updated!.templates).toEqual([
         {
           id: 'vendor',

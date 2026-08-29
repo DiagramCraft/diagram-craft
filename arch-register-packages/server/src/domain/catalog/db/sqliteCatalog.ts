@@ -12,6 +12,8 @@ import type {
   SharedFieldGroupDbUpdate,
   SchemaDbUpdate,
   SchemaVersionDbCreate,
+  CategoryDbCreate,
+  CategoryDbUpdate,
   PinnedEntityDbCreate,
   EntityVersionDbCreate,
   EntityVersionKind,
@@ -64,12 +66,12 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSchema(input: SchemaDbCreate) {
     this.run(
-      'INSERT INTO entity_schema (id, workspace, name, category, description, fields, templates, groups, shared_field_group_links, validation_rules, detail_layout, color, icon, default_owner, key_prefix, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO entity_schema (id, workspace, name, category_id, description, fields, templates, groups, shared_field_group_links, validation_rules, detail_layout, color, icon, default_owner, key_prefix, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
         input.name,
-        input.category ?? null,
+        input.category_id ?? null,
         input.description,
         JSON.stringify(input.fields),
         JSON.stringify(input.templates ?? []),
@@ -90,11 +92,11 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateSchema(workspace: string, id: string, input: SchemaDbUpdate) {
     this.run(
-      'UPDATE entity_schema SET name = ?, category = CASE WHEN ? THEN category ELSE ? END, description = ?, fields = ?, templates = ?, groups = ?, shared_field_group_links = ?, validation_rules = ?, detail_layout = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE entity_schema SET name = ?, category_id = CASE WHEN ? THEN category_id ELSE ? END, description = ?, fields = ?, templates = ?, groups = ?, shared_field_group_links = ?, validation_rules = ?, detail_layout = ?, color = ?, icon = ?, default_owner = ?, key_prefix = ?, version = COALESCE(?, version), updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
-        input.category === undefined ? 1 : 0,
-        input.category ?? null,
+        input.category_id === undefined ? 1 : 0,
+        input.category_id ?? null,
         input.description,
         JSON.stringify(input.fields),
         JSON.stringify(input.templates ?? []),
@@ -203,12 +205,12 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createEnum(input: WorkspaceEnumDbCreate) {
     this.run(
-      'INSERT INTO workspace_enum (id, workspace, name, category, options, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO workspace_enum (id, workspace, name, category_id, options, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
         input.name,
-        input.category,
+        input.category_id ?? null,
         JSON.stringify(input.options),
         input.sort_order,
         input.created_at.toISOString(),
@@ -220,10 +222,10 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateEnum(workspace: string, id: string, input: WorkspaceEnumDbUpdate) {
     this.run(
-      'UPDATE workspace_enum SET name = ?, category = ?, options = ?, sort_order = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE workspace_enum SET name = ?, category_id = ?, options = ?, sort_order = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
-        input.category,
+        input.category_id ?? null,
         JSON.stringify(input.options),
         input.sort_order,
         input.updated_at.toISOString(),
@@ -259,12 +261,12 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async createSharedFieldGroup(input: SharedFieldGroupDbCreate) {
     this.run(
-      'INSERT INTO workspace_field_group (id, workspace, name, category, description, fields, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
+      'INSERT INTO workspace_field_group (id, workspace, name, category_id, description, fields, sort_order, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)',
       [
         input.id,
         input.workspace,
         input.name,
-        input.category,
+        input.category_id ?? null,
         input.description,
         JSON.stringify(input.fields),
         input.sort_order,
@@ -277,10 +279,10 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
 
   async updateSharedFieldGroup(workspace: string, id: string, input: SharedFieldGroupDbUpdate) {
     this.run(
-      'UPDATE workspace_field_group SET name = ?, category = ?, description = ?, fields = ?, sort_order = ?, updated_at = ? WHERE workspace = ? AND id = ?',
+      'UPDATE workspace_field_group SET name = ?, category_id = ?, description = ?, fields = ?, sort_order = ?, updated_at = ? WHERE workspace = ? AND id = ?',
       [
         input.name,
-        input.category,
+        input.category_id ?? null,
         input.description,
         JSON.stringify(input.fields),
         input.sort_order,
@@ -297,6 +299,74 @@ export class SqliteCatalogDatabase extends SqliteDatabaseBase implements Catalog
     if (!row) return null;
     this.run('DELETE FROM workspace_field_group WHERE workspace = ? AND id = ?', [workspace, id]);
     return row;
+  }
+
+  async listCategories(workspace: string) {
+    return this.all(
+      'SELECT * FROM workspace_category WHERE workspace = ? ORDER BY name',
+      [workspace],
+      catalogMappers.category
+    );
+  }
+
+  async getCategory(workspace: string, id: string) {
+    return this.get(
+      'SELECT * FROM workspace_category WHERE workspace = ? AND id = ?',
+      [workspace, id],
+      catalogMappers.category
+    );
+  }
+
+  async getCategoryByName(workspace: string, name: string) {
+    return this.get(
+      'SELECT * FROM workspace_category WHERE workspace = ? AND LOWER(name) = LOWER(?)',
+      [workspace, name],
+      catalogMappers.category
+    );
+  }
+
+  async createCategory(input: CategoryDbCreate) {
+    this.run(
+      'INSERT INTO workspace_category (id, workspace, name, created_at, updated_at) VALUES (?, ?, ?, ?, ?)',
+      [
+        input.id,
+        input.workspace,
+        input.name,
+        input.created_at.toISOString(),
+        input.updated_at.toISOString()
+      ]
+    );
+    return (await this.getCategory(input.workspace, input.id))!;
+  }
+
+  async updateCategory(workspace: string, id: string, input: CategoryDbUpdate) {
+    this.run('UPDATE workspace_category SET name = ?, updated_at = ? WHERE workspace = ? AND id = ?', [
+      input.name,
+      input.updated_at.toISOString(),
+      workspace,
+      id
+    ]);
+    return await this.getCategory(workspace, id);
+  }
+
+  async deleteCategory(workspace: string, id: string) {
+    const row = await this.getCategory(workspace, id);
+    if (!row) return null;
+    this.run('DELETE FROM workspace_category WHERE workspace = ? AND id = ?', [workspace, id]);
+    return row;
+  }
+
+  async countCategoryUsage(workspace: string, id: string) {
+    const row = this.get<{ count: number }>(
+      `SELECT (
+         (SELECT COUNT(*) FROM entity_schema WHERE workspace = ? AND category_id = ?) +
+         (SELECT COUNT(*) FROM relation_schema WHERE workspace = ? AND category_id = ?) +
+         (SELECT COUNT(*) FROM workspace_enum WHERE workspace = ? AND category_id = ?) +
+         (SELECT COUNT(*) FROM workspace_field_group WHERE workspace = ? AND category_id = ?)
+       ) AS count`,
+      [workspace, id, workspace, id, workspace, id, workspace, id]
+    );
+    return Number(row?.count ?? 0);
   }
 
   async listEntities(workspace: string) {

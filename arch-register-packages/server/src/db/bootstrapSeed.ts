@@ -15,6 +15,7 @@ import {
 import { seedAdrDocuments, seedProjectFiles, seedWikiPageBodies } from './seedData/documents';
 import { seedNotificationEvents, seedUserWatches } from './seedData/notifications';
 import { seedRelationSchemas, seedRelations } from './seedData/relations';
+import { seedCategories } from './seedData/catalog';
 import { seededWorkspaces } from './seedFixtures';
 import { decodeRefs } from '../types';
 import { ContainmentField, ReferenceField } from '@arch-register/api-types/schemaContract';
@@ -224,6 +225,7 @@ export const seedBootstrapData = async (
     await db.project.createProject(project);
   }
   await seedCatalogEntities(db, entities);
+  const categoryNamesById = new Map(seedCategories.map(category => [category.id, category.name]));
   for (const relationSchema of seedRelationSchemas) {
     const createdSchema = await db.relation.createRelationSchema(relationSchema);
     await db.relation.createRelationSchemaVersion({
@@ -232,7 +234,8 @@ export const seedBootstrapData = async (
       schema_id: createdSchema.id,
       version: createdSchema.version ?? 1,
       name: createdSchema.name,
-      category: createdSchema.category ?? null,
+      category:
+        (createdSchema.category_id && categoryNamesById.get(createdSchema.category_id)) ?? null,
       description: createdSchema.description,
       in_schema_ids: createdSchema.in_schema_ids,
       out_schema_ids: createdSchema.out_schema_ids,

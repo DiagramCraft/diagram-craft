@@ -100,6 +100,36 @@ const toWorkspaceCapabilities = (capabilities: string[]): WorkspaceCapability[] 
 const hasSkipResolution = (resolutions: Record<string, ImportResolution>, id: string) =>
   resolutions[id]?.action === 'skip';
 
+// Import bundles carry the category as a free-text name (for portability across workspaces);
+// resolve it to a workspace_category row, creating one if none matches yet. Cached per import run
+// to avoid creating duplicate rows when many schemas/relation schemas share the same category name.
+const resolveCategoryId = async (
+  db: DatabaseAdapter,
+  workspace: string,
+  cache: Map<string, string>,
+  rawName: string | null
+): Promise<string | null> => {
+  if (!rawName) return null;
+  const key = rawName.toLowerCase();
+  const cached = cache.get(key);
+  if (cached) return cached;
+  const existing = await db.catalog.getCategoryByName(workspace, rawName);
+  if (existing) {
+    cache.set(key, existing.id);
+    return existing.id;
+  }
+  const now = new Date();
+  const created = await db.catalog.createCategory({
+    id: randomUUID(),
+    workspace,
+    name: rawName,
+    created_at: now,
+    updated_at: now
+  });
+  cache.set(key, created.id);
+  return created.id;
+};
+
 const importSharedFieldGroups = async (
   db: DatabaseAdapter,
   workspace: string,
@@ -339,6 +369,7 @@ export const importSchemas = async (
   idMapping: IdMapping
 ): Promise<{ created: number; updated: number }> => {
   const now = new Date();
+  const categoryIdCache = new Map<string, string>();
   await importSharedFieldGroups(db, workspace, schemas, preserveIds, idMapping);
   const existingSchemas = await db.catalog.listSchemas(workspace);
   const existingSchemasById = new Map(existingSchemas.map(schema => [schema.id, schema]));
@@ -415,10 +446,15 @@ export const importSchemas = async (
       id: nextId,
       workspace,
       name: schema.name,
-      category:
+      category_id:
         schema.category !== undefined
-          ? normalizeSchemaCategory(schema.category)
-          : (existing?.category ?? null),
+          ? await resolveCategoryId(
+              db,
+              workspace,
+              categoryIdCache,
+              normalizeSchemaCategory(schema.category)
+            )
+          : (existing?.category_id ?? null),
       description: existing?.description ?? '',
       fields,
       groups: (schema.groups ?? []).map(group => ({
@@ -449,7 +485,7 @@ export const importSchemas = async (
       const previousKeyPrefix = existing.key_prefix;
       const row = await db.catalog.updateSchema(workspace, nextId, {
         name: input.name,
-        category: input.category,
+        category_id: input.category_id,
         description: input.description,
         fields: input.fields,
         templates: input.templates,
@@ -509,6 +545,7 @@ export const importRelationSchemas = async (
   idMapping: IdMapping
 ): Promise<{ created: number; updated: number }> => {
   const now = new Date();
+  const categoryIdCache = new Map<string, string>();
   await importSharedFieldGroups(db, workspace, relationSchemas, preserveIds, idMapping);
   const existingSchemas = await db.relation.listRelationSchemas(workspace);
   const existingById = new Map(existingSchemas.map(schema => [schema.id, schema]));
@@ -551,10 +588,15 @@ export const importRelationSchemas = async (
       id: nextId,
       workspace,
       name: source.name,
-      category:
+      category_id:
         source.category !== undefined
-          ? normalizeSchemaCategory(source.category)
-          : (existing?.category ?? null),
+          ? await resolveCategoryId(
+              db,
+              workspace,
+              categoryIdCache,
+              normalizeSchemaCategory(source.category)
+            )
+          : (existing?.category_id ?? null),
       description: source.description,
       in_schema_ids:
         source.in_schema_ids === 'any'
@@ -592,7 +634,7 @@ export const importRelationSchemas = async (
     if (existing) {
       await db.relation.updateRelationSchema(workspace, nextId, {
         name: input.name,
-        category: input.category,
+        category_id: input.category_id,
         description: input.description,
         in_schema_ids: input.in_schema_ids,
         out_schema_ids: input.out_schema_ids,

@@ -12,6 +12,8 @@ import type {
   SchemaDbCreate,
   SchemaDbUpdate,
   SchemaVersionDbCreate,
+  CategoryDbCreate,
+  CategoryDbUpdate,
   PinnedEntityDbCreate,
   EntityVersionDbCreate,
   EntityVersionKind,
@@ -66,8 +68,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createSchema(input: SchemaDbCreate) {
     try {
       const rows = (await this.sql`
-        INSERT INTO entity_schema (id, workspace, name, category, description, fields, templates, groups, shared_field_group_links, validation_rules, detail_layout, color, icon, default_owner, key_prefix, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.category ?? null}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates ?? [])}, ${this.json(input.groups ?? [])}, ${this.json(input.shared_field_group_links ?? [])}, ${this.json(input.validation_rules ?? [])}, ${input.detail_layout ? this.json(input.detail_layout) : null}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO entity_schema (id, workspace, name, category_id, description, fields, templates, groups, shared_field_group_links, validation_rules, detail_layout, color, icon, default_owner, key_prefix, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.category_id ?? null}, ${input.description}, ${this.json(input.fields)}, ${this.json(input.templates ?? [])}, ${this.json(input.groups ?? [])}, ${this.json(input.shared_field_group_links ?? [])}, ${this.json(input.validation_rules ?? [])}, ${input.detail_layout ? this.json(input.detail_layout) : null}, ${input.color}, ${input.icon}, ${input.default_owner}, ${input.key_prefix}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `) as DatabaseRow[];
       const [row] = rows;
@@ -82,9 +84,9 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       const rows = (await this.sql`
         UPDATE entity_schema
         SET name = ${input.name},
-            category = CASE
-              WHEN ${input.category === undefined} THEN category
-              ELSE ${input.category ?? null}
+            category_id = CASE
+              WHEN ${input.category_id === undefined} THEN category_id
+              ELSE ${input.category_id ?? null}
             END,
             description = ${input.description},
             fields = ${this.json(input.fields)},
@@ -185,8 +187,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createEnum(input: WorkspaceEnumDbCreate) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`
-        INSERT INTO workspace_enum (id, workspace, name, category, options, sort_order, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.category ?? null}, ${this.json(input.options)}, ${input.sort_order}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO workspace_enum (id, workspace, name, category_id, options, sort_order, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.category_id ?? null}, ${this.json(input.options)}, ${input.sort_order}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
       return catalogMappers.workspaceEnum(row!);
@@ -200,7 +202,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
       const [row] = await this.sql<DatabaseRow[]>`
         UPDATE workspace_enum
         SET name = ${input.name},
-            category = ${input.category ?? null},
+            category_id = ${input.category_id ?? null},
             options = ${this.json(input.options)},
             sort_order = ${input.sort_order},
             updated_at = ${input.updated_at}
@@ -243,8 +245,8 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
   async createSharedFieldGroup(input: SharedFieldGroupDbCreate) {
     try {
       const [row] = await this.sql<DatabaseRow[]>`
-        INSERT INTO workspace_field_group (id, workspace, name, category, description, fields, sort_order, created_at, updated_at)
-        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.category ?? null}, ${input.description}, ${this.json(input.fields)}, ${input.sort_order}, ${input.created_at}, ${input.updated_at})
+        INSERT INTO workspace_field_group (id, workspace, name, category_id, description, fields, sort_order, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.category_id ?? null}, ${input.description}, ${this.json(input.fields)}, ${input.sort_order}, ${input.created_at}, ${input.updated_at})
         RETURNING *
       `;
       return catalogMappers.sharedFieldGroup(row!);
@@ -257,7 +259,7 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     try {
       const [row] = await this.sql<DatabaseRow[]>`
         UPDATE workspace_field_group
-        SET name = ${input.name}, category = ${input.category ?? null}, description = ${input.description}, fields = ${this.json(input.fields)}, sort_order = ${input.sort_order}, updated_at = ${input.updated_at}
+        SET name = ${input.name}, category_id = ${input.category_id ?? null}, description = ${input.description}, fields = ${this.json(input.fields)}, sort_order = ${input.sort_order}, updated_at = ${input.updated_at}
         WHERE workspace = ${workspace} AND id = ${id}
         RETURNING *
       `;
@@ -277,6 +279,78 @@ export class PostgresCatalogDatabase extends PostgresDatabaseBase implements Cat
     } catch (error) {
       return normalizePostgresError(error);
     }
+  }
+
+  async listCategories(workspace: string) {
+    const rows = await this.sql<DatabaseRow[]>`
+      SELECT * FROM workspace_category WHERE workspace = ${workspace} ORDER BY name
+    `;
+    return mapDatabaseRows(rows, catalogMappers.category);
+  }
+
+  async getCategory(workspace: string, id: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT * FROM workspace_category WHERE workspace = ${workspace} AND id = ${id}
+    `;
+    return row ? catalogMappers.category(row) : null;
+  }
+
+  async getCategoryByName(workspace: string, name: string) {
+    const [row] = await this.sql<DatabaseRow[]>`
+      SELECT * FROM workspace_category WHERE workspace = ${workspace} AND LOWER(name) = LOWER(${name})
+    `;
+    return row ? catalogMappers.category(row) : null;
+  }
+
+  async createCategory(input: CategoryDbCreate) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        INSERT INTO workspace_category (id, workspace, name, created_at, updated_at)
+        VALUES (${input.id}, ${input.workspace}, ${input.name}, ${input.created_at}, ${input.updated_at})
+        RETURNING *
+      `;
+      return catalogMappers.category(row!);
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async updateCategory(workspace: string, id: string, input: CategoryDbUpdate) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        UPDATE workspace_category
+        SET name = ${input.name}, updated_at = ${input.updated_at}
+        WHERE workspace = ${workspace} AND id = ${id}
+        RETURNING *
+      `;
+      return row ? catalogMappers.category(row) : null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async deleteCategory(workspace: string, id: string) {
+    try {
+      const [row] = await this.sql<DatabaseRow[]>`
+        DELETE FROM workspace_category WHERE workspace = ${workspace} AND id = ${id}
+        RETURNING *
+      `;
+      return row ? catalogMappers.category(row) : null;
+    } catch (error) {
+      return normalizePostgresError(error);
+    }
+  }
+
+  async countCategoryUsage(workspace: string, id: string) {
+    const [row] = await this.sql<{ count: string }[]>`
+      SELECT (
+        (SELECT COUNT(*) FROM entity_schema WHERE workspace = ${workspace} AND category_id = ${id}) +
+        (SELECT COUNT(*) FROM relation_schema WHERE workspace = ${workspace} AND category_id = ${id}) +
+        (SELECT COUNT(*) FROM workspace_enum WHERE workspace = ${workspace} AND category_id = ${id}) +
+        (SELECT COUNT(*) FROM workspace_field_group WHERE workspace = ${workspace} AND category_id = ${id})
+      ) AS count
+    `;
+    return Number(row?.count ?? 0);
   }
 
   async listEntities(workspace: string) {

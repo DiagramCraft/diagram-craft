@@ -6,11 +6,13 @@ import { TbTrash } from 'react-icons/tb';
 import { SCHEMA_COLORS } from '@arch-register/api-types/colors';
 import { ICON_MAP } from '../../components/TypeBadge';
 import { SCHEMA_ICONS } from '../../lib/schemaPresentation';
+import { CategorySelect } from './CategorySelect';
+import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import styles from './SchemaSettingsScreen.module.css';
 
 export const SchemaEditorFormShell = ({
   name,
-  category,
+  categoryId,
   description,
   color,
   icon,
@@ -31,7 +33,7 @@ export const SchemaEditorFormShell = ({
   onSave
 }: {
   name: string;
-  category: string;
+  categoryId: string | null;
   description: string;
   color: string | null;
   icon: string | null;
@@ -44,13 +46,15 @@ export const SchemaEditorFormShell = ({
   afterDescription?: ReactNode;
   children: ReactNode;
   onNameChange: (value: string) => void;
-  onCategoryChange: (value: string) => void;
+  onCategoryChange: (value: string | null) => void;
   onDescriptionChange: (value: string) => void;
   onColorChange: (value: string) => void;
   onIconChange: (value: string) => void;
   onDelete?: () => void;
   onSave: () => void;
-}) => (
+}) => {
+  const { categories } = useWorkspaceContext();
+  return (
   <div className={styles.editor}>
     <div className={styles.formRow}>
       <div>
@@ -67,12 +71,11 @@ export const SchemaEditorFormShell = ({
     <div className={styles.formRow}>
       <div>
         <div className={styles.formLabel}>Category</div>
-        <TextInput
-          value={category}
+        <CategorySelect
+          value={categoryId}
+          categories={categories}
           disabled={!canEdit}
-          placeholder="Optional presentation category"
-          onChange={value => onCategoryChange(value ?? '')}
-          style={{ width: '100%' }}
+          onChange={onCategoryChange}
         />
       </div>
     </div>
@@ -142,4 +145,5 @@ export const SchemaEditorFormShell = ({
       )}
     </div>
   </div>
-);
+  );
+};

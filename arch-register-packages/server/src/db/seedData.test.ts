@@ -2,7 +2,7 @@ import { describe, expect, it } from 'vitest';
 import { seedEntities } from './seedData/entities';
 import { seedRelationSchemas, seedRelations } from './seedData/relations';
 import { seedAssessments, seedProjectEntities } from './seedData/projects';
-import { seedEnums, seedSchemas, seedSharedFieldGroups } from './seedData/catalog';
+import { seedCategories, seedEnums, seedSchemas, seedSharedFieldGroups } from './seedData/catalog';
 import {
   BUSINESS_CAPABILITY_SUPPORTS_ENTITY_RELATION_SCHEMA_ID,
   GLOSSARY_IDS,
@@ -17,17 +17,27 @@ import { materializeDerivedFields } from '../domain/derived/derivedFields';
 import { RISK_AFFECTS_TARGET_SCHEMA_IDS } from './seedData/constants';
 
 describe('schema presentation categories', () => {
+  const categoryNamesById = new Map(seedCategories.map(category => [category.id, category.name]));
+  const categoryNameOf = (categoryId: string | null | undefined) =>
+    categoryId ? categoryNamesById.get(categoryId) : undefined;
+
   it('categorizes every seeded entity and relation schema', () => {
-    expect(seedSchemas.every(schema => (schema.category?.trim() ?? '').length > 0)).toBe(true);
-    expect(seedRelationSchemas.every(schema => (schema.category?.trim() ?? '').length > 0)).toBe(
-      true
-    );
-    expect(seedSchemas.find(schema => schema.name === 'Data Entity')?.category).toBe('Data');
-    expect(seedSchemas.find(schema => schema.name === 'Risk')?.category).toBe('Governance');
-    expect(seedSchemas.find(schema => schema.name === 'Term')?.category).toBe('Glossary');
-    expect(seedSchemas.find(schema => schema.name === 'Business Capability')?.category).toBe(
-      'Strategy'
-    );
+    expect(seedSchemas.every(schema => !!schema.category_id)).toBe(true);
+    expect(seedRelationSchemas.every(schema => !!schema.category_id)).toBe(true);
+    expect(
+      categoryNameOf(seedSchemas.find(schema => schema.name === 'Data Entity')?.category_id)
+    ).toBe('Data');
+    expect(
+      categoryNameOf(seedSchemas.find(schema => schema.name === 'Risk')?.category_id)
+    ).toBe('Governance');
+    expect(
+      categoryNameOf(seedSchemas.find(schema => schema.name === 'Term')?.category_id)
+    ).toBe('Glossary');
+    expect(
+      categoryNameOf(
+        seedSchemas.find(schema => schema.name === 'Business Capability')?.category_id
+      )
+    ).toBe('Strategy');
   });
 });
 

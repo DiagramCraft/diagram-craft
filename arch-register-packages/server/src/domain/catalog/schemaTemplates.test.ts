@@ -23,12 +23,8 @@ describe('instantiateTemplate', () => {
       ).toBe(true);
 
       const definitions = instantiateTemplateDefinitions('ws-1', template.id);
-      expect(definitions.schemas.every(schema => (schema.category?.trim() ?? '').length > 0)).toBe(
-        true
-      );
-      expect(
-        definitions.relationSchemas.every(schema => (schema.category?.trim() ?? '').length > 0)
-      ).toBe(true);
+      expect(definitions.schemas.every(schema => !!schema.category_id)).toBe(true);
+      expect(definitions.relationSchemas.every(schema => !!schema.category_id)).toBe(true);
     }
   });
 
@@ -109,7 +105,8 @@ describe('instantiateTemplate', () => {
     const initiative = definitions.schemas.find(schema => schema.name === 'Initiative');
     const measure = definitions.schemas.find(schema => schema.name === 'Measure');
 
-    expect(businessCapability).toMatchObject({ category: 'Strategy' });
+    const categoryNamesById = new Map(definitions.categories.map(c => [c.id, c.name]));
+    expect(categoryNamesById.get(businessCapability!.category_id!)).toBe('Strategy');
     expect(objective).toBeDefined();
     expect(outcome).toBeDefined();
     expect(initiative).toBeDefined();

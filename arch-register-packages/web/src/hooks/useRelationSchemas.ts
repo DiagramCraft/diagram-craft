@@ -44,7 +44,7 @@ export const useCreateRelationSchema = (workspaceId: string) => {
   return useMutation({
     mutationFn: (body: {
       name: string;
-      category?: string | null;
+      category_id?: string | null;
       description?: string;
       in: RelationEndpoint;
       out: RelationEndpoint;
@@ -73,7 +73,7 @@ export const useUpdateRelationSchema = (workspaceId: string) => {
       relationSchemaId: string;
       data: {
         name: string;
-        category?: string | null;
+        category_id?: string | null;
         description?: string;
         in: RelationEndpoint;
         out: RelationEndpoint;

@@ -18,6 +18,7 @@ import { useSchemas } from '../hooks/useSchemas';
 import { useRelationSchemas } from '../hooks/useRelationSchemas';
 import { useEnums } from '../hooks/useEnums';
 import { useFieldGroups } from '../hooks/useFieldGroups';
+import { useCategories } from '../hooks/useCategories';
 import { useProjects } from '../hooks/useProjects';
 import { useWorkspaceConfig } from '../hooks/useWorkspaceConfig';
 import { useAiConfig } from '../hooks/useAiConfig';
@@ -96,6 +97,10 @@ export const WorkspaceLayout = () => {
   );
   const { data: enums = [], error: enumsError } = useEnums(workspaceSlug, !!workspaceSlug);
   const { data: fieldGroups = [], error: fieldGroupsError } = useFieldGroups(
+    workspaceSlug,
+    !!workspaceSlug
+  );
+  const { data: categories = [], error: categoriesError } = useCategories(
     workspaceSlug,
     !!workspaceSlug
   );
@@ -227,6 +232,7 @@ export const WorkspaceLayout = () => {
       relationSchemas,
       enums,
       fieldGroups,
+      categories,
       projects,
       lifecycleStates,
       teams,
@@ -260,6 +266,7 @@ export const WorkspaceLayout = () => {
       relationSchemas,
       enums,
       fieldGroups,
+      categories,
       projects,
       lifecycleStates,
       teams,
@@ -324,7 +331,8 @@ export const WorkspaceLayout = () => {
     schemasError ||
     relationSchemasError ||
     enumsError ||
-    fieldGroupsError
+    fieldGroupsError ||
+    categoriesError
   ) {
     const error =
       workspacesError ??
@@ -332,7 +340,8 @@ export const WorkspaceLayout = () => {
       schemasError ??
       relationSchemasError ??
       enumsError ??
-      fieldGroupsError;
+      fieldGroupsError ??
+      categoriesError;
     return (
       <AppErrorState
         fullScreen

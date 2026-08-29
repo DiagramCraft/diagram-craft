@@ -1,6 +1,6 @@
 import type { RelationSchema } from '@arch-register/api-types/relationSchemaContract';
 import type { EntitySchema } from '@arch-register/api-types/schemaContract';
-import { normalizeSchemaCategory } from '../../lib/schemaPresentation';
+import { UNCATEGORIZED_SCHEMA_CATEGORY } from '../../lib/schemaPresentation';
 import type { DependencyGraphEdge, DependencyGraphNode } from '../../components/DependencyGraph';
 
 export type SchemaGraphNodeData =
@@ -43,7 +43,7 @@ const buildEntityIdResolver = (
 ): Map<string, string | null> => {
   const resolver = new Map<string, string | null>();
   for (const schema of schemas) {
-    const category = normalizeSchemaCategory(schema.category);
+    const category = schema.category?.name ?? UNCATEGORIZED_SCHEMA_CATEGORY;
     const state = categoryStates.get(category);
     if (state === 'hidden') {
       resolver.set(schema.id, null);
@@ -225,7 +225,7 @@ export const buildSchemaGraphData = (
 
   const categoryCounts = new Map<string, number>();
   for (const schema of schemas) {
-    const category = normalizeSchemaCategory(schema.category);
+    const category = schema.category?.name ?? UNCATEGORIZED_SCHEMA_CATEGORY;
     if (categoryStates.get(category) === 'collapsed') {
       categoryCounts.set(category, (categoryCounts.get(category) ?? 0) + 1);
     }

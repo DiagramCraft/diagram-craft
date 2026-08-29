@@ -2,7 +2,11 @@ import { randomUUID } from 'node:crypto';
 import { describe, expect, it } from 'vitest';
 import { runContractSuiteAgainstBothDrivers } from './harness';
 import type { DatabaseAdapter } from '../database';
-import { createFixtureSchema, createFixtureWorkspace } from '../testSupport/fixtures';
+import {
+  createFixtureCategory,
+  createFixtureSchema,
+  createFixtureWorkspace
+} from '../testSupport/fixtures';
 import { createFixtureEntity } from '../testSupport/fixtures';
 
 const createFixtureTeam = async (db: DatabaseAdapter, workspace: string) => {
@@ -56,6 +60,7 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
       const appSchema = await createFixtureSchema(db, workspace);
       const dbSchema = await createFixtureSchema(db, workspace);
       const id = await createFixtureRelationSchema(db, workspace, [appSchema], [dbSchema]);
+      const categoryId = await createFixtureCategory(db, workspace, { name: 'Connectivity' });
 
       const fetched = await db.relation.getRelationSchema(workspace, id);
       expect(fetched!.in_schema_ids).toEqual([appSchema]);
@@ -64,7 +69,7 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
 
       const updated = await db.relation.updateRelationSchema(workspace, id, {
         name: 'renamed relation schema',
-        category: 'Connectivity',
+        category_id: categoryId,
         description: 'updated',
         in_schema_ids: [appSchema],
         out_schema_ids: [dbSchema],
@@ -77,7 +82,7 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
         updated_at: new Date()
       });
       expect(updated!.name).toBe('renamed relation schema');
-      expect(updated!.category).toBe('Connectivity');
+      expect(updated!.category_id).toBe(categoryId);
       expect(updated!.version).toBe(2);
 
       await db.relation.createRelationSchemaVersion({
@@ -86,7 +91,7 @@ runContractSuiteAgainstBothDrivers('RelationDatabase', getDb => {
         schema_id: id,
         version: 2,
         name: updated!.name,
-        category: updated!.category,
+        category: 'Connectivity',
         description: updated!.description,
         in_schema_ids: updated!.in_schema_ids,
         out_schema_ids: updated!.out_schema_ids,

@@ -9,11 +9,20 @@ import {
 } from './schemaGraphState';
 import { UNCATEGORIZED_SCHEMA_CATEGORY } from '../../lib/schemaPresentation';
 
+// Tests use the category name directly as its id.
 const schema = (
   id: string,
   fields: SchemaField[] = [],
-  category: string | null = null
-): EntitySchema => ({ id, name: id, fields, color: null, icon: null, category }) as EntitySchema;
+  categoryId: string | null = null
+): EntitySchema =>
+  ({
+    id,
+    name: id,
+    fields,
+    color: null,
+    icon: null,
+    category: categoryId ? { id: categoryId, name: categoryId } : null
+  }) as EntitySchema;
 
 const reference = (
   id: string,
@@ -237,7 +246,8 @@ describe('buildSchemaGraphData', () => {
       const result = buildSchemaGraphData(
         [schema('svc-a', [], 'Services'), schema('svc-b', [], 'Services'), schema('team')],
         [],
-        new Map([['Services', 'collapsed']])
+        new Map([['Services', 'collapsed']]),
+        'entity'
       );
 
       expect(result.nodes.map(node => node.id)).toEqual(['team', 'category::Services']);
@@ -255,7 +265,8 @@ describe('buildSchemaGraphData', () => {
           schema('shared')
         ],
         [],
-        new Map([['Services', 'collapsed']])
+        new Map([['Services', 'collapsed']]),
+        'entity'
       );
 
       const genericEdges = result.edges.filter(edge => edge.kind !== 'typed');
@@ -273,7 +284,8 @@ describe('buildSchemaGraphData', () => {
             in: { schemaIds: ['application'] }
           })
         ],
-        new Map([['Services', 'collapsed']])
+        new Map([['Services', 'collapsed']]),
+        'entity'
       );
 
       // No more dedicated relation node/fan-out — a single direct edge into the box (the "in"
@@ -294,7 +306,8 @@ describe('buildSchemaGraphData', () => {
       const result = buildSchemaGraphData(
         [schema('application'), schema('service'), schema('team', [], 'Services')],
         [relationSchema({ out: { schemaIds: ['application'] }, in: { schemaIds: ['service'] } })],
-        new Map([['Services', 'collapsed']])
+        new Map([['Services', 'collapsed']]),
+        'entity'
       );
 
       expect(result.nodes.map(node => node.id)).toContain(relationNodeId('rel-1'));
@@ -317,7 +330,8 @@ describe('buildSchemaGraphData', () => {
           schema('svc-b', [], 'Services')
         ],
         [],
-        new Map([['Services', 'collapsed']])
+        new Map([['Services', 'collapsed']]),
+        'entity'
       );
 
       expect(result.edges).toEqual([]);
@@ -336,7 +350,8 @@ describe('buildSchemaGraphData', () => {
             in: { schemaIds: ['application', 'team'] }
           })
         ],
-        new Map([['Services', 'hidden']])
+        new Map([['Services', 'hidden']]),
+        'entity'
       );
 
       // The relation degrades (an endpoint is hidden) but the hidden side contributes no
@@ -359,7 +374,8 @@ describe('buildSchemaGraphData', () => {
             ]
           })
         ],
-        new Map([['Data', 'collapsed']])
+        new Map([['Data', 'collapsed']]),
+        'entity'
       );
 
       const carriesEdges = result.edges.filter(edge => edge.label === 'carries');
@@ -368,9 +384,9 @@ describe('buildSchemaGraphData', () => {
       ]);
     });
 
-    it('buckets uncategorized entities using the shared normalization', () => {
+    it('buckets entities with no category under Uncategorized', () => {
       const result = buildSchemaGraphData(
-        [schema('svc-a', [], null), schema('svc-b', [], '  ')],
+        [schema('svc-a', [], null), schema('svc-b', [], null)],
         [],
         new Map([[UNCATEGORIZED_SCHEMA_CATEGORY, 'collapsed']])
       );

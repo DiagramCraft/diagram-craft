@@ -238,9 +238,21 @@ test.describe('workspace export/import', () => {
     const source = await orpc.workspaces.create({
       body: { name: `Relation export source ${suffix}`, badge: `R${badgeSuffix}` }
     });
+    const architectureCategory = await orpc.categories.create({
+      params: { workspace: source.url_slug },
+      body: { name: 'Architecture' }
+    });
+    const connectivityCategoryId = randomUUID();
+    await server.db.catalog.createCategory({
+      id: connectivityCategoryId,
+      workspace: source.id,
+      name: 'Connectivity',
+      created_at: new Date(),
+      updated_at: new Date()
+    });
     const schema = await orpc.schemas.create({
       params: { workspace: source.url_slug },
-      body: { name: `Relation entity schema ${suffix}`, category: 'Architecture' }
+      body: { name: `Relation entity schema ${suffix}`, category_id: architectureCategory.id }
     });
     const inEntity = await orpc.entities.create({
       params: { workspace: source.url_slug },
@@ -257,7 +269,7 @@ test.describe('workspace export/import', () => {
       id: relationSchemaId,
       workspace: source.id,
       name: `Relation schema ${suffix}`,
-      category: 'Connectivity',
+      category_id: connectivityCategoryId,
       description: 'Exported relation schema',
       in_schema_ids: [schema.id],
       out_schema_ids: [schema.id],
@@ -324,8 +336,22 @@ test.describe('workspace export/import', () => {
     const importedRelationSchema = (await server.db.relation.listRelationSchemas(target.id)).find(
       item => item.name === `Relation schema ${suffix}`
     );
-    expect(importedEntitySchema?.category).toBe('Architecture');
-    expect(importedRelationSchema?.category).toBe('Connectivity');
+    const targetCategoryNamesById = new Map(
+      (await server.db.catalog.listCategories(target.id)).map(category => [
+        category.id,
+        category.name
+      ])
+    );
+    expect(
+      importedEntitySchema?.category_id
+        ? targetCategoryNamesById.get(importedEntitySchema.category_id)
+        : undefined
+    ).toBe('Architecture');
+    expect(
+      importedRelationSchema?.category_id
+        ? targetCategoryNamesById.get(importedRelationSchema.category_id)
+        : undefined
+    ).toBe('Connectivity');
 
     const targetEntities = await server.db.catalog.listEntities(target.id);
     const targetIn = targetEntities.find(entity => entity.name === inEntity._name);

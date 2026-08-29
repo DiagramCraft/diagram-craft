@@ -21,6 +21,7 @@ import {
 } from './seedData/workspace';
 import { seedEntities } from './seedData/entities';
 import {
+  seedCategories,
   seedEnums,
   seedSchemas,
   seedSharedFieldGroups,
@@ -178,6 +179,10 @@ export const seedCatalogDefinitions = async (
   db: DatabaseAdapter,
   options: CatalogSeedOptions = {}
 ): Promise<void> => {
+  for (const category of seedCategories) {
+    await db.catalog.createCategory(category);
+  }
+
   if (options.enums ?? true) {
     for (const enumeration of seedEnums) {
       await db.catalog.createEnum(enumeration);
@@ -191,6 +196,7 @@ export const seedCatalogDefinitions = async (
   }
 
   if (options.schemas ?? true) {
+    const categoryNamesById = new Map(seedCategories.map(category => [category.id, category.name]));
     for (const schema of seedSchemas) {
       const createdSchema = await db.catalog.createSchema(schema);
       await db.catalog.createSchemaVersion({
@@ -199,7 +205,8 @@ export const seedCatalogDefinitions = async (
         schema_id: createdSchema.id,
         version: createdSchema.version ?? 1,
         name: createdSchema.name,
-        category: createdSchema.category ?? null,
+        category:
+          (createdSchema.category_id && categoryNamesById.get(createdSchema.category_id)) ?? null,
         description: createdSchema.description,
         fields: createdSchema.fields,
         templates: createdSchema.templates ?? [],
