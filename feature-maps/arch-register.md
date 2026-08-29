@@ -321,10 +321,13 @@
           A set of built-in, workspace-pinned canonical views cover information-governance analysis:
           restricted-data-flow exposure (flagging either the flow's own classification or a carried Data Entity's
           classification, shown as separate columns so a result can explain which one triggered it), missing or
-          incomplete data stewardship, overdue stewardship review, cross-boundary transfers, and residency-invalid
-          transfers — all composed from the standard relation/entity query engine, saved-view mechanism, and the
-          table/graph views described above, with no bespoke computation beyond the Data Flow relation's
-          `cross_boundary` and `residency_invalid` derived fields.
+          incomplete data stewardship, overdue stewardship review, cross-boundary transfers, residency-invalid
+          transfers, an information-asset governance map (Data Entities graphed with the Risks that affect them and
+          the Controls that protect them), and information assets with no inbound Risk or Control link — all composed
+          from the standard relation/entity query engine, saved-view mechanism, and the table/graph views described
+          above, with no bespoke computation beyond the Data Flow relation's `cross_boundary` and `residency_invalid`
+          derived fields. The Risk & Compliance template additionally ships a `Control Coverage` traceability view
+          following each Control out to its mitigated Risks and protected entities.
 
         - @id:ar.entities.content Users can attach and manage structured or Markdown-based content associated with an
           entity.
