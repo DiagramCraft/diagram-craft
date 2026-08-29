@@ -155,6 +155,64 @@ export const SaveViewDialog = ({
   );
 };
 
+export const EditViewDialog = ({
+  open,
+  currentName,
+  currentDescription,
+  onSave,
+  onCancel
+}: {
+  open: boolean;
+  currentName: string;
+  currentDescription: string | null;
+  onSave: (name: string, description: string) => void;
+  onCancel: () => void;
+}) => {
+  const [name, setName] = useState(currentName);
+  const [description, setDescription] = useState(currentDescription ?? '');
+
+  useEffect(() => {
+    if (open) {
+      setName(currentName);
+      setDescription(currentDescription ?? '');
+    }
+  }, [open, currentName, currentDescription]);
+
+  const handleSave = () => {
+    onSave(name.trim(), description);
+  };
+
+  return (
+    <Dialog
+      open={open}
+      onClose={onCancel}
+      title="Edit view"
+      buttons={[
+        { label: 'Cancel', type: 'secondary', onClick: onCancel },
+        { label: 'Save', type: 'default', onClick: handleSave, disabled: !name.trim() }
+      ]}
+    >
+      <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
+        <FormElement label="Name" required>
+          <TextInput
+            value={name}
+            onChange={v => setName(v ?? '')}
+            placeholder="e.g. Production components"
+            autoFocus
+          />
+        </FormElement>
+        <FormElement label="Description" required={false}>
+          <TextArea
+            value={description}
+            onChange={v => setDescription(v ?? '')}
+            placeholder="What this view shows…"
+          />
+        </FormElement>
+      </div>
+    </Dialog>
+  );
+};
+
 export const EntityBrowser = ({
   projectContext,
   onCountChange,
