@@ -167,5 +167,11 @@ runContractSuiteAgainstBothDrivers('seededEntityQuery', getDb => {
     const residencyInvalid = await runTableView('00000000-0000-0000-0020-00000000000f');
     expect(residencyInvalid.total).toBe(1);
     expect(residencyInvalid.items[0]?._uid).toBe('00000000-0000-0000-0009-000000000001');
+
+    // #3069: information assets with no inbound Risk (risk-affects) or Control (control-affects)
+    // link. In this seed dataset only Data Entity DE-2 (Transaction Events) has neither.
+    const uncoveredAssets = await runTableView('00000000-0000-0000-0020-000000000012');
+    expect(uncoveredAssets.total).toBe(1);
+    expect(uncoveredAssets.items[0]?._uid).toBe('00000000-0000-0000-0008-000000000002');
   });
 });

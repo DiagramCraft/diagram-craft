@@ -2806,6 +2806,15 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
             direction: 'in',
             minCount: 0,
             maxCount: -1
+          },
+          {
+            id: 'protected_entities',
+            name: 'Protects',
+            type: 'typedRelation',
+            symRelationSchemaId: 'control-affects',
+            direction: 'in',
+            minCount: 0,
+            maxCount: -1
           }
         ]
       },
@@ -2921,6 +2930,19 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
         fields: [],
         color: AR_COLOR_RED,
         icon: 'alert-triangle'
+      },
+      {
+        symId: 'control-affects',
+        name: 'Control Protection',
+        description: 'Associates a Control with an architecture entity it protects.',
+        category: 'Governance',
+        inLabel: 'Protects Entities',
+        outLabel: 'Protected by Control',
+        inSymSchemaIds: ['control'],
+        outSymSchemaIds: 'any',
+        fields: [],
+        color: AR_COLOR_GREEN,
+        icon: 'shield-check'
       }
     ],
     documentTypes: commonDocumentTypes,
@@ -3032,6 +3054,48 @@ export const SCHEMA_TEMPLATES: SchemaTemplate[] = [
           }
         },
         config: { table: { fieldIds: ['likelihood', 'impact', 'mitigating_controls'] } }
+      },
+      {
+        id: 'risk-compliance-control-coverage-traceability',
+        name: 'Control Coverage',
+        description:
+          'Controls with the Risks they mitigate and the entities they protect, including information assets.',
+        viewMode: 'traceability',
+        filters: {
+          schemaId: 'control',
+          root: { kind: 'and', children: [] }
+        },
+        config: {
+          traceability: {
+            paths: [
+              {
+                id: 'mitigated-risks',
+                label: 'Mitigated risks',
+                path: [
+                  {
+                    kind: 'unboundTypedRelation',
+                    relationSchemaId: 'risk-control',
+                    direction: 'out'
+                  }
+                ],
+                targetSchemaIds: ['risk']
+              },
+              {
+                id: 'protected-entities',
+                label: 'Protected entities',
+                path: [
+                  {
+                    kind: 'unboundTypedRelation',
+                    relationSchemaId: 'control-affects',
+                    direction: 'in'
+                  }
+                ],
+                targetSchemaIds: 'any'
+              }
+            ],
+            showOrphanEntities: true
+          }
+        }
       }
     ]
   },

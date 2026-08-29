@@ -273,8 +273,12 @@
           permission surfaces as other typed relations. Endpoint labels are contextual to the entity at each side,
           so inverse relation views remain understandable without relying on the relation schema name.
           The built-in Risk & Compliance template provides a `Risk Affects` relation from each Risk to any entity
-          schema, with an inline `Affects` field on Risk; the bundled demo composes that template and seeds example
-          relations. Target schemas do not need inverse projection fields
+          schema, with an inline `Affects` field on Risk, and a matching `Control Protection` relation from each
+          Control to any entity schema, with an inline `Protects` field on Control; the bundled demo composes that
+          template and seeds example relations. Together these let an information asset (Data Entity) be traced to
+          the Risks that affect it and the Controls that protect it — and back — reusing the same typed-relation
+          machinery, without a parallel asset model; project and documentation associations are the entity's
+          existing generic ones. Target schemas do not need inverse projection fields
           because the relation endpoint definition is sufficient. On the entity Overview page, valid
           unprojected endpoints appear in contextual-label accordions and support the same add, edit, and remove
           lifecycle as projected typed-relation fields.
@@ -317,10 +321,13 @@
           A set of built-in, workspace-pinned canonical views cover information-governance analysis:
           restricted-data-flow exposure (flagging either the flow's own classification or a carried Data Entity's
           classification, shown as separate columns so a result can explain which one triggered it), missing or
-          incomplete data stewardship, overdue stewardship review, cross-boundary transfers, and residency-invalid
-          transfers — all composed from the standard relation/entity query engine, saved-view mechanism, and the
-          table/graph views described above, with no bespoke computation beyond the Data Flow relation's
-          `cross_boundary` and `residency_invalid` derived fields.
+          incomplete data stewardship, overdue stewardship review, cross-boundary transfers, residency-invalid
+          transfers, an information-asset governance map (Data Entities graphed with the Risks that affect them and
+          the Controls that protect them), and information assets with no inbound Risk or Control link — all composed
+          from the standard relation/entity query engine, saved-view mechanism, and the table/graph views described
+          above, with no bespoke computation beyond the Data Flow relation's `cross_boundary` and `residency_invalid`
+          derived fields. The Risk & Compliance template additionally ships a `Control Coverage` traceability view
+          following each Control out to its mitigated Risks and protected entities.
 
         - @id:ar.entities.content Users can attach and manage structured or Markdown-based content associated with an
           entity.
