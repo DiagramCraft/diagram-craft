@@ -28,7 +28,7 @@ import {
 } from 'react-icons/tb';
 import { ContentTree, type ContentTreeHandle } from '../../components/ContentTree';
 import { ContentFolderDialog } from '../../components/ContentFolderDialog';
-import { RenameDialog } from '../../components/RenameDialog';
+import { EditViewDialog } from '../entities/components/EntityBrowser';
 import { SidebarGroupLabel, SidebarHeader } from '../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../components/TreeRow';
 import { useProjectAssessments } from '../../hooks/useAssessments';
@@ -370,12 +370,12 @@ export const ProjectContentSidebar = ({
         </ContextMenu.Imperative>
       )}
       {renameView && (
-        <RenameDialog
+        <EditViewDialog
           open
           currentName={renameView.name}
-          entityType="view"
-          onRename={name => {
-            updateView.mutate({ id: renameView.id, body: { name } });
+          currentDescription={renameView.description}
+          onSave={(name, description) => {
+            updateView.mutate({ id: renameView.id, body: { name, description } });
             setRenameView(null);
           }}
           onCancel={() => setRenameView(null)}

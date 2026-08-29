@@ -36,6 +36,7 @@ import {
 } from '../../hooks/useCollections';
 import { useWorkspaceContext } from '../../layouts/WorkspaceContext';
 import { RenameDialog } from '../../components/RenameDialog';
+import { EditViewDialog } from './components/EntityBrowser';
 import { SidebarGroupLabel } from '../../components/sidebar/SidebarPrimitives';
 import { TreeRow } from '../../components/TreeRow';
 import { TypeBadge } from '../../components/TypeBadge';
@@ -592,12 +593,12 @@ export const EntitiesSidebar = ({
       )}
 
       {renameViewTarget && (
-        <RenameDialog
+        <EditViewDialog
           open={true}
           currentName={renameViewTarget.name}
-          entityType="view"
-          onRename={newName => {
-            updateViewMutation.mutate({ id: renameViewTarget.id, body: { name: newName } });
+          currentDescription={renameViewTarget.description}
+          onSave={(name, description) => {
+            updateViewMutation.mutate({ id: renameViewTarget.id, body: { name, description } });
             setRenameViewTarget(null);
           }}
           onCancel={() => setRenameViewTarget(null)}

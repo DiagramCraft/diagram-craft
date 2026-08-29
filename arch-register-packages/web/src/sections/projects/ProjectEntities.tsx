@@ -376,7 +376,8 @@ export const ProjectEntities = ({
         { label: 'Projects', onClick: onNavigateHome },
         { label: project.name, onClick: onNavigateProject }
       ]}
-      title="Project Entities"
+      title={activeSavedView?.name ?? 'Project Entities'}
+      description={activeSavedView?.description || undefined}
       actions={
         !readOnly && project.canEdit ? (
           <Button variant="primary" icon={<TbPlus size={12} />} onClick={onAddEntity}>

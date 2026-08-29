@@ -323,7 +323,7 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
                 navigate({ to: '/$workspaceSlug', params: { workspaceSlug: workspaceId } })
             }
           ]}
-          title="All Relations"
+          title={activeSavedView?.name ?? 'All Relations'}
           chips={
             !isLoading && (
               <span data-testid="relation-browser-count" className={styles.count}>
@@ -331,7 +331,10 @@ export const RelationBrowser = ({ workspaceId }: { workspaceId: string }) => {
               </span>
             )
           }
-          description="Browse and filter typed relation instances across the workspace."
+          description={
+            activeSavedView?.description ||
+            'Browse and filter typed relation instances across the workspace.'
+          }
           menu={
             menuItems.length > 0 && (
               <DropdownMenu

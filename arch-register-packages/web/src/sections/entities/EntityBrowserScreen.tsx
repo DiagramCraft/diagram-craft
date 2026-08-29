@@ -357,14 +357,17 @@ export const EntityBrowserScreen = () => {
               onClick: () => navigate({ to: '/$workspaceSlug', params: { workspaceSlug } })
             }
           ]}
-          title={typeName}
+          title={activeSavedView?.name ?? typeName}
           titleTestId="entity-browser-title"
           chips={
             <span data-testid="entity-browser-count" className={styles.count}>
               {count}
             </span>
           }
-          description="Search, filter, and inspect everything in the IT landscape."
+          description={
+            activeSavedView?.description ||
+            'Search, filter, and inspect everything in the IT landscape.'
+          }
           buttons={
             !readOnly && permissions.canCreateEntities ? (
               <Button
