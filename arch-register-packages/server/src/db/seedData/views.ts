@@ -589,8 +589,7 @@ export const seedSavedViews: SavedViewDbResult[] = [
     project_id: null,
     project_scope: null,
     name: 'Information Assets Without Risk or Control Coverage',
-    description:
-      'Data Entities that no Risk affects and no Control protects.',
+    description: 'Data Entities that no Risk affects and no Control protects.',
     is_admin_view: true,
     view_mode: 'table',
     filters: {

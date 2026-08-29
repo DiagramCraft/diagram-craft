@@ -273,8 +273,12 @@
           permission surfaces as other typed relations. Endpoint labels are contextual to the entity at each side,
           so inverse relation views remain understandable without relying on the relation schema name.
           The built-in Risk & Compliance template provides a `Risk Affects` relation from each Risk to any entity
-          schema, with an inline `Affects` field on Risk; the bundled demo composes that template and seeds example
-          relations. Target schemas do not need inverse projection fields
+          schema, with an inline `Affects` field on Risk, and a matching `Control Protection` relation from each
+          Control to any entity schema, with an inline `Protects` field on Control; the bundled demo composes that
+          template and seeds example relations. Together these let an information asset (Data Entity) be traced to
+          the Risks that affect it and the Controls that protect it — and back — reusing the same typed-relation
+          machinery, without a parallel asset model; project and documentation associations are the entity's
+          existing generic ones. Target schemas do not need inverse projection fields
           because the relation endpoint definition is sufficient. On the entity Overview page, valid
           unprojected endpoints appear in contextual-label accordions and support the same add, edit, and remove
           lifecycle as projected typed-relation fields.

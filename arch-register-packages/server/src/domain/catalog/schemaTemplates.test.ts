@@ -808,6 +808,24 @@ describe('instantiateTemplate', () => {
         direction: 'out'
       })
     );
+
+    // #3069: Control -> any entity, mirroring risk-affects, so a Control can be linked to an
+    // information asset (Data Entity) without a parallel asset model.
+    const controlAffects = definitions.relationSchemas.find(
+      schema => schema.name === 'Control Protection'
+    );
+    expect(controlAffects?.in_schema_ids).toEqual([control?.id]);
+    expect(controlAffects?.out_schema_ids).toBe('any');
+    expect(controlAffects?.in_label).toBe('Protects Entities');
+    expect(controlAffects?.out_label).toBe('Protected by Control');
+    expect(control?.fields).toContainEqual(
+      expect.objectContaining({
+        id: 'protected_entities',
+        type: 'typedRelation',
+        relationSchemaId: controlAffects?.id,
+        direction: 'in'
+      })
+    );
   });
 
   it('always evaluates the residual risk score to a non-negative integer', () => {
